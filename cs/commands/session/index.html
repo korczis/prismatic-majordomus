@@ -1,0 +1,501 @@
+<!doctype html>
+<html lang="cs" class="scroll-smooth" data-theme-key="color-theme" data-theme-class="dark" data-design="944a896b2646">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>majordomus session — Prismatic Majordomus</title>
+<meta name="description" content="Otevře, prověří a uzavře jednu epizodu provádění.">
+<link rel="canonical" href="https://majordomus.dev/cs/commands/session/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Prismatic Majordomus">
+<meta property="og:title" content="majordomus session — Prismatic Majordomus">
+<meta property="og:description" content="Otevře, prověří a uzavře jednu epizodu provádění.">
+<meta property="og:url" content="https://majordomus.dev/cs/commands/session/">
+<meta property="og:image" content="https://majordomus.dev/images/social-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
+<link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=9d5fef6c2ded00e88e3d">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
+<script>(function(){try{var K="mj-lang",L=["en","cs"],S="en",B="https://majordomus.dev",d=document.documentElement,k;try{k=localStorage.getItem(K)}catch(e){}
+document.addEventListener("click",function(e){var a=e.target.closest&&e.target.closest("[data-i18n-lang]");if(a)try{localStorage.setItem(K,a.getAttribute("data-i18n-lang"))}catch(x){}},true);
+if(d.lang!==S)return;var r=document.referrer;if(r&&r.indexOf(location.origin)===0)return;
+var p=(k?[k]:navigator.languages||[navigator.language||""]).map(function(l){return String(l).slice(0,2).toLowerCase()});
+for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=location.href;if(u.indexOf(B)!==0)return;location.replace(B+"/"+p[i]+u.slice(B.length).replace(/^(?!\/)/,"/"));return}}}catch(e){}})();</script>
+
+<link rel="alternate" hreflang="en" href="https://majordomus.dev/commands/session/">
+<link rel="alternate" hreflang="cs" href="https://majordomus.dev/cs/commands/session/">
+<link rel="alternate" hreflang="x-default" href="https://majordomus.dev/commands/session/">
+</head>
+<body class="min-h-screen bg-neutral-primary text-body antialiased">
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white">Přeskočit na obsah</a>
+
+
+
+<nav class="sticky top-0 z-20 w-full border-b border-default bg-neutral-primary text-base" aria-label="Hlavní">
+  <div class="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between gap-x-2 gap-y-2 px-3 py-3 sm:p-4">
+    <a href="https://majordomus.dev/cs/" class="flex min-w-0 items-center gap-1.5 sm:gap-2.5 rtl:space-x-reverse">
+      <span class="inline-flex h-6 w-6 shrink-0 text-heading sm:h-7 sm:w-7 [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 0.30.2 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span>
+      <span class="self-center whitespace-nowrap text-base font-semibold text-heading sm:text-xl">Majordomus</span>
+      
+      
+      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading" data-release="0.30.2">v0.30.2</span>
+      
+    </a>
+    <div class="flex items-center gap-1 sm:gap-2 md:order-2"><button type="button" data-site-search-open hidden aria-haspopup="dialog" aria-controls="site-search" aria-expanded="false" aria-keyshortcuts="/ Control+K Meta+K" class="inline-flex h-10 min-w-10 items-center justify-center gap-2 rounded-base border border-default px-2.5 text-sm font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">
+        <svg class="h-5 w-5 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z"/></svg> <span class="sr-only lg:not-sr-only">Hledat</span> <kbd class="hidden rounded border border-default-medium px-1.5 font-mono text-xs text-body-subtle lg:inline" aria-hidden="true">/</kbd>
+      </button>
+      <div class="relative" data-i18n-switch>
+  <button type="button" aria-label="Jazyk" data-dropdown-toggle="language-menu" data-dropdown-placement="bottom-end" aria-haspopup="true" aria-controls="language-menu" aria-expanded="false" class="inline-flex h-10 items-center justify-center gap-1.5 rounded-base border border-default px-2.5 text-sm font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">
+    <svg class="h-5 w-5 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0 0c2.2-2.4 3.3-5.4 3.3-9S14.2 5.4 12 3m0 18c-2.2-2.4-3.3-5.4-3.3-9S9.8 5.4 12 3M3.5 9h17M3.5 15h17"/></svg>
+    <span class="font-mono text-xs uppercase" translate="no" data-i18n-current-label>cs</span>
+    <svg class="h-2.5 w-2.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg>
+  </button>
+  <div id="language-menu" class="absolute right-0 top-full z-50 mt-2 hidden w-44 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+    <ul class="p-2 text-sm font-medium text-body" translate="no">
+      <li><a href="https://majordomus.dev/commands/session/" hreflang="en" lang="en" data-i18n-keep data-i18n-current data-i18n-lang="en" class="group flex w-full items-center justify-between gap-3 rounded-sm px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading aria-[current=page]:text-heading"><span class="flex items-center gap-2"><span class="w-6 font-mono text-xs uppercase text-body-subtle">en</span>English</span><svg class="invisible h-4 w-4 text-fg-brand group-aria-[current=page]:visible" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 11.917 9.724 16.5 19 7.5"/></svg></a></li>
+      <li><a href="https://majordomus.dev/cs/commands/session/" hreflang="cs" lang="cs" data-i18n-keep data-i18n-current data-i18n-lang="cs" class="group flex w-full items-center justify-between gap-3 rounded-sm px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading aria-[current=page]:text-heading" aria-current="page"><span class="flex items-center gap-2"><span class="w-6 font-mono text-xs uppercase text-body-subtle">cs</span>Čeština</span><svg class="invisible h-4 w-4 text-fg-brand group-aria-[current=page]:visible" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 11.917 9.724 16.5 19 7.5"/></svg></a></li>
+    </ul>
+  </div>
+</div>
+
+      <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Přepnout tmavý režim">
+  <svg id="theme-toggle-dark-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+  <svg id="theme-toggle-light-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+</button>
+<a href="https://majordomus.dev/ui/" data-nav-primary="ui" class="hidden rounded-base border border-brand-subtle px-3 py-2 text-sm font-semibold text-fg-brand hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary xl:inline-flex">UI produktu</a>
+      <a href="https://github.com/korczis/prismatic-majordomus" class="hidden rounded-base border border-default px-3 py-2 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary sm:inline-flex">GitHub</a>
+      <a href="https://majordomus.dev/cs/getting-started/" class="hidden rounded-base bg-brand px-3 py-2 text-sm font-semibold text-white hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium md:inline-flex">Začít</a>
+      <button data-collapse-toggle="navbar-main" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-base p-2 text-sm text-body hover:bg-neutral-secondary-soft hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:hidden" aria-controls="navbar-main" aria-expanded="false">
+        <span class="sr-only">Otevřít hlavní nabídku</span> <svg class="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h14"/></svg>
+      </button>
+    </div><div class="hidden w-full min-w-0 md:order-1 md:block md:w-auto" id="navbar-main">
+      <ul class="mt-4 flex flex-col rounded-base border border-default bg-neutral-secondary-soft p-4 font-medium md:mt-0 md:flex-row md:flex-wrap md:items-center md:gap-x-2 md:gap-y-1 md:border-0 md:bg-neutral-primary md:p-0">
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          <button id="nav-1" data-dropdown-toggle="nav-menu-1" type="button" aria-controls="nav-menu-1" class="flex w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Produkt<svg class="ms-1.5 h-3 w-3 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-1" class="hidden md:absolute md:left-0 md:top-full md:z-10 md:mt-2 md:w-64 md:rounded-base md:border md:border-default-medium md:bg-neutral-primary-medium md:shadow-lg">
+            <ul class="pb-2 ps-3 text-sm font-medium text-body md:p-2" aria-labelledby="nav-1">
+              <li><a href="https://majordomus.dev/cs/domains/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Produkt podle oblastí</a></li><li><a href="https://majordomus.dev/cs/why/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Proč existuje: způsoby selhání</a></li><li><a href="https://majordomus.dev/cs/features/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Funkce</a></li><li><a href="https://majordomus.dev/cs/use-cases/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Případy užití</a></li><li><a href="https://majordomus.dev/ui/" data-nav-snapshot="ui" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">UI produktu <span data-nav-snapshot-note class="text-xs text-body-subtle">&middot; snímek</span></a></li><li><a href="https://majordomus.dev/cs/docs/cockpit/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Cockpit</a></li>
+              <li class="mt-1 border-t border-default pt-1"><a href="#site-map-1" class="block rounded px-3 py-2 text-body-subtle hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Všech 10 stránek v mapě webu &darr;</a></li>
+            </ul>
+          </div>
+        </li>
+        
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          <button id="nav-2" data-dropdown-toggle="nav-menu-2" type="button" aria-controls="nav-menu-2" class="flex w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Jak funguje<svg class="ms-1.5 h-3 w-3 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-2" class="hidden md:absolute md:left-0 md:top-full md:z-10 md:mt-2 md:w-64 md:rounded-base md:border md:border-default-medium md:bg-neutral-primary-medium md:shadow-lg">
+            <ul class="pb-2 ps-3 text-sm font-medium text-body md:p-2" aria-labelledby="nav-2">
+              <li><a href="https://majordomus.dev/cs/method/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Doktrína, politika, pravidlo, vynucování</a></li><li><a href="https://majordomus.dev/cs/method/argument/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Celá argumentace</a></li><li><a href="https://majordomus.dev/cs/docs/concepts/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Slovník</a></li><li><a href="https://majordomus.dev/cs/sessions/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Relace</a></li>
+              <li class="mt-1 border-t border-default pt-1"><a href="#site-map-2" class="block rounded px-3 py-2 text-body-subtle hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Všech 17 stránek v mapě webu &darr;</a></li>
+            </ul>
+          </div>
+        </li>
+        
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          <button id="nav-3" data-dropdown-toggle="nav-menu-3" type="button" aria-controls="nav-menu-3" class="flex w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Důkazy<svg class="ms-1.5 h-3 w-3 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-3" class="hidden md:absolute md:left-0 md:top-full md:z-10 md:mt-2 md:w-64 md:rounded-base md:border md:border-default-medium md:bg-neutral-primary-medium md:shadow-lg">
+            <ul class="pb-2 ps-3 text-sm font-medium text-body md:p-2" aria-labelledby="nav-3">
+              <li><a href="https://majordomus.dev/cs/challenge/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Výzva: sledujte, jak odmítne agenta</a></li><li><a href="https://majordomus.dev/cs/guarantees/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Záruky</a></li><li><a href="https://majordomus.dev/cs/evidence/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Graf důkazů</a></li><li><a href="https://majordomus.dev/cs/limitations/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Omezení</a></li><li><a href="https://majordomus.dev/cs/roadmap/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Plán rozvoje</a></li>
+              <li class="mt-1 border-t border-default pt-1"><a href="#site-map-3" class="block rounded px-3 py-2 text-body-subtle hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Všech 15 stránek v mapě webu &darr;</a></li>
+            </ul>
+          </div>
+        </li>
+        
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          <button id="nav-4" data-dropdown-toggle="nav-menu-4" type="button" aria-controls="nav-menu-4" class="flex w-full items-center justify-between rounded px-3 py-2 text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Dokumenty<svg class="ms-1.5 h-3 w-3 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-4" class="hidden md:absolute md:left-0 md:top-full md:z-10 md:mt-2 md:w-64 md:rounded-base md:border md:border-default-medium md:bg-neutral-primary-medium md:shadow-lg">
+            <ul class="pb-2 ps-3 text-sm font-medium text-body md:p-2" aria-labelledby="nav-4">
+              <li><a href="https://majordomus.dev/cs/docs/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Všechny dokumenty</a></li><li><a href="https://majordomus.dev/cs/docs/install/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Instalace</a></li><li><a href="https://majordomus.dev/cs/commands/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Příkazy</a></li><li><a href="https://majordomus.dev/cs/docs/api/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">HTTP API</a></li><li><a href="https://majordomus.dev/cs/registry/mcp/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Rozhraní MCP</a></li>
+              <li class="mt-1 border-t border-default pt-1"><a href="#site-map-4" class="block rounded px-3 py-2 text-body-subtle hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Všech 11 stránek v mapě webu &darr;</a></li>
+            </ul>
+          </div>
+        </li>
+        
+        
+        <li class="mt-3 md:hidden"><a href="https://majordomus.dev/ui/" data-nav-primary="ui" class="block rounded-base border border-brand-subtle px-3 py-2 text-center font-semibold text-fg-brand hover:bg-neutral-tertiary">UI produktu</a></li>
+        <li class="mt-3 md:hidden"><a href="https://majordomus.dev/cs/getting-started/" class="block rounded-base bg-brand px-3 py-2 text-center font-semibold text-white hover:bg-brand-strong">Začít</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+<div data-i18n-notice class="border-b border-default bg-neutral-secondary-soft">
+  <p class="mx-auto max-w-screen-xl px-4 py-2 text-xs text-body">Tato stránka byla automaticky přeložena z angličtiny, jediného jazyka, ve kterém se tento web píše. <a href="https://majordomus.dev/commands/session/" hreflang="en" lang="en" data-i18n-keep data-i18n-lang="en" class="font-medium underline">Číst originál</a>.</p>
+</div>
+<main id="main">
+<div class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+    <nav class="flex" aria-label="Drobečková navigace">
+  <ol class="inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2 rtl:space-x-reverse">
+    <li class="inline-flex items-center"><a href="https://majordomus.dev/cs/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Domů</a></li><li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="https://majordomus.dev/cs/commands/" class="font-medium text-body hover:text-fg-brand">Příkazy</a></li>
+    <li aria-hidden="true">/</li>
+    <li aria-current="page" class="font-medium text-heading">majordomus session</li>
+  </ol>
+</nav>
+
+    <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">majordomus session</h1>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">Otevře, prověří a uzavře jednu epizodu provádění.</p>
+  </div>
+</div>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+  <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_16rem]">
+  <div class="min-w-0"><p class="text-lg text-body">Otevře, prověří a uzavře jednu epizodu provádění.</p>
+    <ul class="mt-4 flex flex-wrap gap-2 text-xs">
+      <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">mění stav</span></li>
+      <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">kontext</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">--json</span></li></ul><p class="mt-4 min-w-0 break-words border-l-2 border-default pl-4 text-sm text-body">Jedna otevřená relace na relaci poskytovatele, ne na worktree: druhé okno téhož poskytovatele dostane vlastní epizodu pod state/sessions-open/ a session-current.yaml ukazuje na epizodu tohoto checkoutu. Otevřený záznam se nikdy nesleduje v gitu. Uzavřený záznam je obálka odkazů vybraných podle razítka relace na každém řádku knihy, nikdy podle časového rozsahu. start zmrazí vyřešený kontext do lokálního úložiště pracovního kontextu jako úvodní snímek a `session context` při každém čtení skládá živý pracovní kontext, místo aby vracel tento soubor: identitu epizody, git nyní proti gitu při otevření a kontrolní body, rozhodnutí a otázky, které epizoda zaznamenala, vzaté z řádků knihy nesoucích její vlastní id relace. `--path` vytiskne místo toho snímek. Tělo uzavřeného záznamu se skládá stejně a nikdy není prázdné; pokud epizoda nezaznamenala nic autorského, záznam to říká a jmenuje příkaz, který by to zaznamenal. --if-open a --if-none umožňují hooku poskytovatele spouštět otevření a uzavření při každé události. archive přesune nejstarší uzavřené záznamy nad session.retention_max_files politiky do adresáře archive/ dané sekce, pouze když je spuštěn a pouze když je session.archive true; nic nemaže a odmítne před prvním přesunem, pokud je záznam téhož jména již archivován.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Syntaxe</h2>
+    <div class="mt-3 overflow-x-auto rounded-base border border-default bg-neutral-primary-soft" tabindex="0"><pre class="m-0 p-4 font-mono text-sm leading-relaxed text-heading" tabindex="0">majordomus session &lt;start|status|close|list|show|latest|context|archive&gt; [options]</pre></div><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Životní cyklus</h2>
+    <ol class="mt-3 flex flex-wrap gap-2 text-sm"><li class="rounded-base border px-3 py-1.5 border-default bg-neutral-primary-soft text-body-subtle">Nastavit</li><li class="rounded-base border px-3 py-1.5 border-brand-subtle bg-brand-softer font-medium text-fg-brand-strong" aria-current="step">Začít</li><li class="rounded-base border px-3 py-1.5 border-default bg-neutral-primary-soft text-body-subtle">Pracovat</li><li class="rounded-base border px-3 py-1.5 border-default bg-neutral-primary-soft text-body-subtle">Ověřit</li><li class="rounded-base border px-3 py-1.5 border-default bg-neutral-primary-soft text-body-subtle">Uzavřít</li><li class="rounded-base border px-3 py-1.5 border-default bg-neutral-primary-soft text-body-subtle">Prozkoumat</li></ol>
+    <p class="mt-3 text-sm text-body-subtle">Další příkazy v této fázi:<a href="https://majordomus.dev/cs/commands/start/" class="font-mono text-fg-brand hover:underline">start</a>, <a href="https://majordomus.dev/cs/commands/plan/" class="font-mono text-fg-brand hover:underline">plan</a>.</p><div class="mt-10 grid gap-6 sm:grid-cols-2">
+      <div class="min-w-0">
+        <h2 class="text-xl font-semibold tracking-tight text-heading">Čte</h2><ul class="mt-3 space-y-1 text-sm"><li class="break-all font-mono text-body">.ai/local/state/sessions-open/</li><li class="break-all font-mono text-body">.ai/local/state/session-current.yaml</li><li class="break-all font-mono text-body">.ai/repo/sessions/</li><li class="break-all font-mono text-body">.ai/local/state/ledger.jsonl</li></ul></div>
+      <div class="min-w-0">
+        <h2 class="text-xl font-semibold tracking-tight text-heading">Zapisuje</h2><ul class="mt-3 space-y-1 text-sm"><li class="break-all font-mono text-body">.ai/local/state/sessions-open/</li><li class="break-all font-mono text-body">.ai/local/state/session-current.yaml</li><li class="break-all font-mono text-body">.ai/repo/sessions/</li><li class="break-all font-mono text-body">.ai/local/session-contexts/</li><li class="break-all font-mono text-body">.ai/local/state/ledger.jsonl</li></ul></div>
+    </div><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Návratové kódy</h2>
+    <p class="mt-2 text-sm text-body-subtle">Jen kódy, které tento příkaz může vrátit. Úplný kontrakt je na <a href="https://majordomus.dev/cs/commands/" class="text-fg-brand underline">indexu příkazů</a>.</p>
+    <ul class="mt-3 space-y-1 text-sm"><li><code class="font-mono font-semibold text-heading">0</code> <span class="text-body">ok</span></li><li><code class="font-mono font-semibold text-heading">2</code> <span class="text-body">použití</span></li><li><code class="font-mono font-semibold text-heading">10</code> <span class="text-body">kontrakt nesplněn</span></li><li><code class="font-mono font-semibold text-heading">12</code> <span class="text-body">chybějící artefakt</span></li><li><code class="font-mono font-semibold text-heading">13</code> <span class="text-body">interní chyba</span></li><li><code class="font-mono font-semibold text-heading">15</code> <span class="text-body">odmítnuto</span></li></ul><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Sezení jednoho workera jako trvalá obálka</h2>
+    <p class="mt-2 text-sm text-body">Relace je jedna epizoda provádění v jednom worktree. Nenárokuje žádné cesty a nic nehlídá; existuje proto, aby se záznamy, které epizoda zapsala, daly číst zpět pohromadě, vybrané podle razítka relace, které nese každý řádek ledgeru.</p>
+    <div class="mt-4" x-data="{ s: 'opens' }">
+      <div role="tablist" aria-label="Scénáře" class="flex flex-wrap gap-2"><button type="button" role="tab" x-on:click="s = 'opens'" :aria-selected="s === 'opens' ? 'true' : 'false'"
+          class="rounded-base border px-3 py-1.5 text-left text-sm focus:outline-none focus:ring-2 focus:ring-neutral-tertiary"
+          :class="s === 'opens' ? 'border-brand-subtle bg-brand-softer text-fg-brand-strong font-medium' : 'border-default bg-neutral-primary-soft text-body hover:bg-neutral-secondary-medium hover:text-heading'">Otevření epizody</button><button type="button" role="tab" x-on:click="s = 'refuses-second'" :aria-selected="s === 'refuses-second' ? 'true' : 'false'"
+          class="rounded-base border px-3 py-1.5 text-left text-sm focus:outline-none focus:ring-2 focus:ring-neutral-tertiary"
+          :class="s === 'refuses-second' ? 'border-brand-subtle bg-brand-softer text-fg-brand-strong font-medium' : 'border-default bg-neutral-primary-soft text-body hover:bg-neutral-secondary-medium hover:text-heading'">Otevření druhého zde</button><button type="button" role="tab" x-on:click="s = 'closes'" :aria-selected="s === 'closes' ? 'true' : 'false'"
+          class="rounded-base border px-3 py-1.5 text-left text-sm focus:outline-none focus:ring-2 focus:ring-neutral-tertiary"
+          :class="s === 'closes' ? 'border-brand-subtle bg-brand-softer text-fg-brand-strong font-medium' : 'border-default bg-neutral-primary-soft text-body hover:bg-neutral-secondary-medium hover:text-heading'">Uzavření do obálky</button><button type="button" role="tab" x-on:click="s = 'close-none'" :aria-selected="s === 'close-none' ? 'true' : 'false'"
+          class="rounded-base border px-3 py-1.5 text-left text-sm focus:outline-none focus:ring-2 focus:ring-neutral-tertiary"
+          :class="s === 'close-none' ? 'border-brand-subtle bg-brand-softer text-fg-brand-strong font-medium' : 'border-default bg-neutral-primary-soft text-body hover:bg-neutral-secondary-medium hover:text-heading'">Uzavření, když není nic otevřeno</button><button type="button" role="tab" x-on:click="s = 'working-context'" :aria-selected="s === 'working-context' ? 'true' : 'false'"
+          class="rounded-base border px-3 py-1.5 text-left text-sm focus:outline-none focus:ring-2 focus:ring-neutral-tertiary"
+          :class="s === 'working-context' ? 'border-brand-subtle bg-brand-softer text-fg-brand-strong font-medium' : 'border-default bg-neutral-primary-soft text-body hover:bg-neutral-secondary-medium hover:text-heading'">Pracovní kontext epizody, složený nyní</button><button type="button" role="tab" x-on:click="s = 'working-context-path'" :aria-selected="s === 'working-context-path' ? 'true' : 'false'"
+          class="rounded-base border px-3 py-1.5 text-left text-sm focus:outline-none focus:ring-2 focus:ring-neutral-tertiary"
+          :class="s === 'working-context-path' ? 'border-brand-subtle bg-brand-softer text-fg-brand-strong font-medium' : 'border-default bg-neutral-primary-soft text-body hover:bg-neutral-secondary-medium hover:text-heading'">Kde je úvodní snímek epizody</button></div><div x-show="s === 'opens'" class="mt-4 min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <h3 class="text-base font-semibold text-heading">Otevření epizody</h3>
+        <dl class="mt-3 flex flex-wrap gap-2 text-xs"><div class="flex items-center gap-1.5 rounded border border-default px-2 py-1 bg-neutral-secondary-medium">
+            <dt class="text-body">session open</dt>
+            <dd class="font-mono font-medium text-body-subtle">ne</dd>
+          </div></dl>
+
+        <p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Pro tento repozitář platí</p>
+        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-body" tabindex="0"># A repository with Majordomus installed and projections generated, and one commit of work.
+&quot;$MJ&quot; init &gt;/dev/null
+&quot;$MJ&quot; update &gt;/dev/null
+mkdir -p lib docs
+echo a &gt; lib/a
+echo d &gt; docs/d
+git add . &amp;&amp; git commit -qm base</pre></div><p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Spustit</p>
+        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-sm text-heading" tabindex="0">$ majordomus session start --worker some-provider/some-model</pre></div>
+
+        <p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Výstup obsahuje</p>
+        <ul class="mt-2 space-y-1"><li class="break-all font-mono text-sm text-body">^session s-[0-9]+-[0-9a-f]+ opened at</li></ul>
+        <p class="mt-3 text-sm">
+          <span class="text-body-subtle">ukončení</span>
+          <code class="ml-1 rounded px-1.5 py-0.5 font-mono font-semibold bg-success-soft text-fg-success-strong">0</code>
+        </p>
+        <p class="mt-4 text-sm text-body">Identifikační pole se počítají z gitu. Pracovník se zaznamená jen tehdy, byl-li zadán; nezaznamenaný pracovník zůstane nezaznamenaný a nehádá se.</p>
+      </div><div x-show="s === 'refuses-second'" class="mt-4 min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <h3 class="text-base font-semibold text-heading">Otevření druhého zde</h3>
+        <dl class="mt-3 flex flex-wrap gap-2 text-xs"><div class="flex items-center gap-1.5 rounded border border-default px-2 py-1 bg-success-soft">
+            <dt class="text-body">session open</dt>
+            <dd class="font-mono font-medium text-fg-success-strong">ano</dd>
+          </div></dl>
+
+        <p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Pro tento repozitář platí</p>
+        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-body" tabindex="0"># Installed, with one execution episode open in this worktree.
+. &quot;$FIXTURE_SETUP/installed.sh&quot;
+&quot;$MJ&quot; session start --worker some-provider/some-model &gt;/dev/null</pre></div><p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Spustit</p>
+        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-sm text-heading" tabindex="0">$ majordomus session start</pre></div>
+
+        <p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Výstup obsahuje</p>
+        <ul class="mt-2 space-y-1"><li class="break-all font-mono text-sm text-body">je zde otevřeno</li></ul>
+        <p class="mt-3 text-sm">
+          <span class="text-body-subtle">ukončení</span>
+          <code class="ml-1 rounded px-1.5 py-0.5 font-mono font-semibold bg-danger-soft text-fg-danger-strong">15</code>
+        </p>
+        <p class="mt-4 text-sm text-body">Jedna otevřená relace na worktree. Nahrazení první by osiřelo každý záznam, který označila, takže druhá je odmítnuta a je jí řečeno, co udělat dřív.</p>
+      </div><div x-show="s === 'closes'" class="mt-4 min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <h3 class="text-base font-semibold text-heading">Uzavření do obálky</h3>
+        <dl class="mt-3 flex flex-wrap gap-2 text-xs"><div class="flex items-center gap-1.5 rounded border border-default px-2 py-1 bg-success-soft">
+            <dt class="text-body">session open</dt>
+            <dd class="font-mono font-medium text-fg-success-strong">ano</dd>
+          </div></dl>
+
+        <p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Pro tento repozitář platí</p>
+        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-body" tabindex="0"># Installed, with one execution episode open in this worktree.
+. &quot;$FIXTURE_SETUP/installed.sh&quot;
+&quot;$MJ&quot; session start --worker some-provider/some-model &gt;/dev/null</pre></div><p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Spustit</p>
+        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-sm text-heading" tabindex="0">$ majordomus session close</pre></div>
+
+        <p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Výstup obsahuje</p>
+        <ul class="mt-2 space-y-1"><li class="break-all font-mono text-sm text-body">^\.ai/repo/sessions/</li></ul>
+        <p class="mt-3 text-sm">
+          <span class="text-body-subtle">ukončení</span>
+          <code class="ml-1 rounded px-1.5 py-0.5 font-mono font-semibold bg-success-soft text-fg-success-strong">0</code>
+        </p>
+        <p class="mt-4 text-sm text-body">Uzavřený záznam jmenuje úlohy, checkpointy, předávky, rozhodnutí a otázky epizody a žádnou z nich nekopíruje. Vypsaná cesta je ten záznam, v sledované sekci relací vrstvy: uzavřená epizoda je sdílený objekt (ADR 0014).</p>
+      </div><div x-show="s === 'close-none'" class="mt-4 min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <h3 class="text-base font-semibold text-heading">Uzavření, když není nic otevřeno</h3>
+        <dl class="mt-3 flex flex-wrap gap-2 text-xs"><div class="flex items-center gap-1.5 rounded border border-default px-2 py-1 bg-neutral-secondary-medium">
+            <dt class="text-body">session open</dt>
+            <dd class="font-mono font-medium text-body-subtle">ne</dd>
+          </div></dl>
+
+        <p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Pro tento repozitář platí</p>
+        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-body" tabindex="0"># A repository with Majordomus installed and projections generated, and one commit of work.
+&quot;$MJ&quot; init &gt;/dev/null
+&quot;$MJ&quot; update &gt;/dev/null
+mkdir -p lib docs
+echo a &gt; lib/a
+echo d &gt; docs/d
+git add . &amp;&amp; git commit -qm base</pre></div><p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Spustit</p>
+        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-sm text-heading" tabindex="0">$ majordomus session close</pre></div>
+
+        <p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Výstup obsahuje</p>
+        <ul class="mt-2 space-y-1"><li class="break-all font-mono text-sm text-body">žádná otevřená relace</li></ul>
+        <p class="mt-3 text-sm">
+          <span class="text-body-subtle">ukončení</span>
+          <code class="ml-1 rounded px-1.5 py-0.5 font-mono font-semibold bg-danger-soft text-fg-danger-strong">12</code>
+        </p>
+        <p class="mt-4 text-sm text-body">Absence se hlásí jako chybějící artefakt, exit 12, a nikdy jako tichý úspěch.</p>
+      </div><div x-show="s === 'working-context'" class="mt-4 min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <h3 class="text-base font-semibold text-heading">Pracovní kontext epizody, složený nyní</h3>
+        <dl class="mt-3 flex flex-wrap gap-2 text-xs"><div class="flex items-center gap-1.5 rounded border border-default px-2 py-1 bg-success-soft">
+            <dt class="text-body">session open</dt>
+            <dd class="font-mono font-medium text-fg-success-strong">ano</dd>
+          </div></dl>
+
+        <p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Pro tento repozitář platí</p>
+        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-body" tabindex="0"># Installed, with one execution episode open in this worktree.
+. &quot;$FIXTURE_SETUP/installed.sh&quot;
+&quot;$MJ&quot; session start --worker some-provider/some-model &gt;/dev/null</pre></div><p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Spustit</p>
+        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-sm text-heading" tabindex="0">$ majordomus session context</pre></div>
+
+        <p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Výstup obsahuje</p>
+        <ul class="mt-2 space-y-1"><li class="break-all font-mono text-sm text-body">^# Working context of session s-</li><li class="break-all font-mono text-sm text-body">neukládá se a není to snímek</li></ul>
+        <p class="mt-3 text-sm">
+          <span class="text-body-subtle">ukončení</span>
+          <code class="ml-1 rounded px-1.5 py-0.5 font-mono font-semibold bg-success-soft text-fg-success-strong">0</code>
+        </p>
+        <p class="mt-4 text-sm text-body">`session context` skládá živý pracovní kontext při každém čtení: vlastní záznam epizody, git nyní proti gitu při otevření a řádky knihy epizody. Nic z toho není uložený dokument, který by někdo musel napsat.</p>
+      </div><div x-show="s === 'working-context-path'" class="mt-4 min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <h3 class="text-base font-semibold text-heading">Kde je úvodní snímek epizody</h3>
+        <dl class="mt-3 flex flex-wrap gap-2 text-xs"><div class="flex items-center gap-1.5 rounded border border-default px-2 py-1 bg-success-soft">
+            <dt class="text-body">session open</dt>
+            <dd class="font-mono font-medium text-fg-success-strong">ano</dd>
+          </div></dl>
+
+        <p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Pro tento repozitář platí</p>
+        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-body" tabindex="0"># Installed, with one execution episode open in this worktree.
+. &quot;$FIXTURE_SETUP/installed.sh&quot;
+&quot;$MJ&quot; session start --worker some-provider/some-model &gt;/dev/null</pre></div><p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Spustit</p>
+        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-sm text-heading" tabindex="0">$ majordomus session context --path</pre></div>
+
+        <p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Výstup obsahuje</p>
+        <ul class="mt-2 space-y-1"><li class="break-all font-mono text-sm text-body">^\.ai/local/session-contexts/</li></ul>
+        <p class="mt-3 text-sm">
+          <span class="text-body-subtle">ukončení</span>
+          <code class="ml-1 rounded px-1.5 py-0.5 font-mono font-semibold bg-success-soft text-fg-success-strong">0</code>
+        </p>
+        <p class="mt-4 text-sm text-body">`start` zmrazí to, co builder kontextu vyřešil, do lokálního úložiště pracovního kontextu, a `--path` vypíše, kde tento snímek je, ne jeho obsah.</p>
+      </div></div><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Reference</h2>
+    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_table]:block [&_table]:overflow-x-auto" tabindex="0"><p>Otevřít, prohlédnout a zavřít jednu epizodu provádění. Relace je sedmý trvalý záznam a jediný, který nemá tvar úlohy.</p>
+<p>Úloha je jednotka práce: má rozsah, má profil a může přežít pracovníka, který ji dělá. Relace je jedno sezení jednoho pracovníka: nenárokuje žádné cesty, nekontroluje přijetí a může překročit několik úloh — zatímco jednu úlohu může překročit několik relací. Ani jedno neobsahuje druhé, proto jsou to dva záznamy, a ne jedno pole.</p>
+<p>Relace jsou volitelné. Worker, který žádnou neotevře, přijde o hranici epizody a o nic jiného; každý další záznam se zapisuje přesně jako dřív.</p>
+<ul>
+<li><code>start [--owner &lt;who&gt;] [--worker &lt;id&gt;] [--if-open refuse|keep]</code> otevře epizodu. Jedna otevřená relace na worktree: druhé <code>start</code> se odmítne místo nahrazení první, pokud <code>--if-open keep</code> neříká, že se má ponechat to, co je otevřené — což je to, co předává hook poskytovatele, protože jeho událost start se spustí znovu při obnovení i při kompakci. <code>--worker</code> je volný řetězec identity, zaznamenaný, jen když je zadán — nezaznamenaný pracovník zůstane nezaznamenaný, protože uhodnutý je ve chvíli zápisu k nerozeznání od zaznamenaného. <code>--provider</code> a <code>--provider-session</code> zaznamenávají, událost kterého poskytovatele epizodu otevřela, a vlastní identitu relace tohoto poskytovatele; může je dodat jen něco, co běží uvnitř hooku onoho poskytovatele, a právě to činí <code>opened_by: hook</code> v pracovním kontextu faktem, ne tvrzením.</li>
+<li><code>status</code> vypíše otevřenou relaci se štítkem divergence commitu, na němž se otevřela, nebo oznámí, že žádná není. Pouze pro čtení. Nepřítomnost je odpověď, ne selhání.</li>
+<li><code>close [--outcome closed|interrupted] [--if-none refuse|ignore]</code> uzavře epizodu do neměnného záznamu v sekci relací vrstvy a odstraní otevřený. Na stdin může přijít autorské shrnutí a je volitelné; identifikační pole v něm se odmítají, stejně jako v checkpointu. <code>--if-none ignore</code> dělá z „nic nebylo otevřeno“ běžný případ místo selhání, což je to, co předává koncová událost providera.</li>
+<li><code>context [&lt;session-id&gt;]</code> vypíše cestu k pracovnímu kontextu epizody. Pouze čtení a vypisuje cestu, ne dokument: dokument je lokální důkaz a příkaz, který ho vylije do terminálu, zve ho do něčího kontextu.</li>
+</ul>
+<p><strong>Otevření zmrazí kontext, který dostalo.</strong> <code>start</code> zapíše <code>.ai/local/session-contexts/&lt;stamp&gt;--&lt;session-id&gt;.md</code> — úvodní část epizody, výstup tvůrce kontextu doslova a sekci <code>## Notes</code> pro pracovníka — a <code>close</code> připojí sekci <code>## Close</code> jmenující výsledek a záznam. Do dokumentu se jen připisuje a nikdy se nepřepisuje, takže to, co do něj pracovník napsal, přežije. Úložiště je lokální: jmenuje tento stroj a je snímkem projekce, takže se nikdy nepublikuje ani samo nenačítá do kontextu a <code>doctor</code> odmítne dokument, který nese konverzaci. Hooky, které činí hranici nezávislou na tom, zda si ji někdo pamatuje vést, viz <code>capture session</code>.</p>
+<p><strong>Uzavřený záznam je obálka odkazů.</strong> Jmenuje úlohy, úkoly, milníky, checkpointy, předávky, rozhodnutí, otázky a důkazy epizody a nekopíruje tělo žádného z nich. Nese také commity mezi otevíracím a uzavíracím commitem — nebo jediný záznam <code>diverged</code>, když otevírací commit už není předkem, protože seznam spočítaný napříč historií, která už nesouvisí, je fikce.</p>
+<p><strong>Seznamy se odvozují při uzavření, nehromadí se, dokud je relace otevřená.</strong> Žádný jiný příkaz neví, že relace existují: <code>checkpoint</code>, <code>decision</code>, <code>question</code> a <code>plan</code> zůstávají beze změny. Odkazy se čtou z ledgeru, který už je jen pro připojování, už ho zapisuje jen Majordomus a už je validován.</p>
+<p><strong>Výběr se dělá podle razítka relace na každém řádku ledgeru, ne podle časového rozsahu.</strong> Každý řádek nese relaci, která jej zapsala, vedle commitu a větve, které už nesl. Časový rozsah byl implementován jako první a při prvním spuštění se ukázal jako chybný: ledger je jeden soubor na repozitář, dva workeři do něj zapisovali a žádné časové razítko je neodlišuje, takže obálka jedné epizody si nárokovala úlohy, checkpointy a předávky té druhé. Řádek bez relace nepatří žádné epizodě — relace jsou volitelné a práce mimo ni se nepřipisuje nikomu, místo aby se připsala tomu, kdo měl poblíž otevřenou relaci.</p>
+<p><code>--outcome</code> přijímá <code>closed</code> nebo <code>interrupted</code>. Obojí je sdělováno samotným autorem a nic se neověřuje; <code>interrupted</code> existuje, protože „tato epizoda byla přerušena a její záznamy mohou být neúplné“ je jediná věc o skončené relaci, která mění, co kdo udělá dál.</p>
+<p>Kód <code>12</code> bez otevřené relace, <code>10</code> když souhrn nese pole identity, <code>15</code> když otevřený záznam patří jinému checkoutu.</p>
+<ul>
+<li><code>list [--all]</code> vypíše uzavřené epizody, nejnovější první, s označením odchylky u každé.</li>
+<li><code>show &lt;session-id&gt;</code> vypíše jeden záznam celý.</li>
+<li><code>latest [--path]</code> vypíše nejnovější záznam, který se rozřeší pro tento worktree a větev.</li>
+</ul>
+<p>Všechny tři jsou jen pro čtení a všechny tři vypisují štítek divergence záznamu — <code>exact</code>, <code>advanced</code>, <code>diverged</code>, <code>different_context</code>. Nevymýšlí se druhý slovník pro zastaralost, protože relace napsaná před přepsáním větve a předaná dalšímu pracovníkovi, jako by stále popisovala tuto historii, je přesně to, čemu mají těch čtyři slova zabránit.</p>
+<p>Řešení je pravidlo, které sledují všechny ostatní záznamy: stejný repozitář, stejný worktree a větev, pak stejná větev, pak nic. Záznam z nepříbuzného worktree se nikdy nenabízí — vypůjčený kontext nelze poznat jako chybný, dokud se podle něj nejednalo. <code>--all</code> pravidlo výslovně uvolní a ukáže větev každého záznamu, protože záznam odjinud stojí za zobrazení, když jste žádali o všechno, a nikdy za tiché podání.</p>
+<p><strong>Řadí se podle zaznamenaného časového razítka, přičemž pozice v knize rozhoduje o shodě uvnitř jedné sekundy.</strong> Čas úpravy souboru se nikdy nečte: nepřežije klon a není to čas, který záznam tvrdí, takže dotyk starého záznamu z něj neudělá nejnovější. Pořadí názvů souborů se obvykle shoduje s pořadím knihy, díky čemuž implementace, která sklouzla k názvu souboru, vypadá správně; <code>test/cases/62_session_divergence.sh</code> je záměrně rozejde a selže, když o pořadí nerozhoduje kniha.</p>
+<p>Poškozený záznam se přeskočí s varováním na stderr, nikdy mlčky a nikdy fatálně: jeden nečitelný soubor nesmí stát celý výpis.</p>
+<p><strong>Jedna epizoda na relaci poskytovatele, ne jedna na worktree.</strong> Dvě okna téhož poskytovatele otevřená na jednom checkoutu jsou dva pracovníci. Jejich sloučení do jednoho záznamu označilo řádky knihy jednoho pracovníka id druhého a nechalo koncovou událost kteréhokoli okna zavřít epizodu pro oba; změřeno v tomto repozitáři 2026-09-09, sedm souběžných relací mezi sebou vyprodukovalo jeden záznam. Otevřená epizoda je proto vlastní soubor, <code>state/sessions-open/&lt;provider session&gt;.yaml</code>, klíčovaný relací poskytovatele, která ji otevřela. <code>--if-open keep</code> ponechává <em>vaši</em> epizodu — proto existuje: startovní událost se spouští znovu při obnovení a při kompakci — a jiné relaci poskytovatele dává vlastní epizodu. <code>close --provider-session &lt;id&gt;</code> zavře tuto epizodu a žádnou jinou, což je to, co předává koncová událost poskytovatele. Epizoda, kterou nikdo nepojmenoval, je klíčována <code>hand</code> a je nejvýše jedna: poskytovatel, který neposílá identitu relace, je nerozlišitelný od člověka u terminálu a vymýšlet tam rozdíl by množilo epizody, které nikdo nezavře. Ručně otevřená epizoda nepotřebuje nikde žádného poskytovatele a chová se přesně jako dřív.</p>
+<p><code>state/session-current.yaml</code> je relativní symlink do toho úložiště: ukazatel na epizodu tohoto checkoutu, zaměřený na tu, která byla otevřena zde naposledy, a znovu zaměřený uzavřením na tu, která zůstala otevřená, je-li právě jedna. Kterým epizodám patří příkazy daného procesu, se rozhoduje v <code>mj_session_here_file</code> (<code>lib/common.sh</code>): relace poskytovatele uvedená na příkazové řádce, jinak relace poskytovatele, ve které tento proces běží, je-li zde otevřena epizoda s takovým klíčem (<code>MAJORDOMUS_PROVIDER_SESSION</code>, nebo proměnná, kterou deklaruje adaptér životního cyklu — <code>CLAUDE_CODE_SESSION_ID</code> pro Claude Code), jinak ukazatel. Dvě otevřené epizody a proces, který nemůže jmenovat ani jednu, je jediný případ, který nelze vyřešit: ukazatel jmenuje naposledy otevřenou a <code>session status</code> vypíše ostatní pod <code>Also open:</code>, místo aby nechal hádání projít jako skutečnost.</p>
+<p><strong>Zapisuje:</strong> <code>state/sessions-open/&lt;provider session&gt;.yaml</code>, režim <code>0600</code>, zapsáno atomicky, ukazatel vedle něj a jeden řádek <code>session.started</code> v knize. <code>session_id</code>, <code>repository_id</code>, <code>worktree</code>, <code>branch</code>, <code>start_head</code> a <code>start_working_tree</code> se počítají z gitu a nikdy se nepíší. <code>provider</code> a <code>provider_session</code> se zaznamenávají jen tehdy, když je dodal hook providera, což je také to, co je činí hlásitelnými: <code>continuity.state</code> deklaroval <code>OpenSession.provider</code> na rok, který žádný zapisovatel nemohl vytvořit.</p>
+<p>Nic pod <code>.ai/local/state/</code> není sledováno, včetně záznamů otevřených relací: otevřená relace nenese nic, co by kdokoli jiný potřeboval, a záznam, který by dorazil z jiného checkoutu, by tomuto dal zdědit epizodu, kterou neotevřel. Záznam, který jmenuje jiný worktree, se hlásí a nikdy se neuposlechne, což drží obranu na místě pro každý způsob, jímž může stále dorazit — zkopírovaný pracovní adresář, synchronizovaná složka.</p>
+<p>Exit <code>15</code>, když je vaše vlastní relace zde už otevřena, <code>10</code>, když se záznam neparsuje — poškozený záznam selže nahlas, místo aby se četl jako „žádná relace“, protože čtení jako nepřítomného by druhému <code>start</code> umožnilo přepsat ho.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>$ majordomus session status</span></span>
+<span class="giallo-l"><span>No open session in this worktree.</span></span>
+<span class="giallo-l"><span>next: majordomus session start</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>$ majordomus session start --worker some-provider/some-model</span></span>
+<span class="giallo-l"><span>session s-20260904153733-fc51 opened at 2026-09-04T15:37:33Z (head 9c13909)</span></span>
+<span class="giallo-l"><span>next: majordomus plan next; majordomus context; majordomus session close when the episode ends</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>$ majordomus session start</span></span>
+<span class="giallo-l"><span>majordomus: session s-20260904153733-fc51 is open here since 2026-09-04T15:37:33Z; run majordomus session close first</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>$ majordomus session close &lt;&lt;&#39;EOF&#39;</span></span>
+<span class="giallo-l"><span>The extraction boundary and the session schema landed; the compiler&#39;s discovery stage is next.</span></span>
+<span class="giallo-l"><span>EOF</span></span>
+<span class="giallo-l"><span>.ai/repo/sessions/20260904T171402Z--s-20260904153733-fc51--master--3c9ba2f--c0ffee1234567890.md</span></span></code></pre></article><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Důkazy</h2>
+    <p class="mt-2 text-sm text-body-subtle">Každý případ níže běží v CI na Linuxu i macOS. Web se odmítne sestavit, pokud veřejný příkaz nemá behaviorální případ, negativní případ nebo ukázku.</p>
+    <div class="mt-4 grid gap-4 sm:grid-cols-2">
+      <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+        <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">Chování</h3>
+        <ul class="mt-2 space-y-1 text-sm"><li><a href="https://github.com/korczis/prismatic-majordomus/blob/370fdf4cc57608d09c7b49f54aad6f81a1e750e2/test/cases/108_entry_converges_on_a_server.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">108_entry_converges_on_a_server</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/370fdf4cc57608d09c7b49f54aad6f81a1e750e2/test/cases/111_session_per_provider.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">111_session_per_provider</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/370fdf4cc57608d09c7b49f54aad6f81a1e750e2/test/cases/127_briefing_freshness.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">127_briefing_freshness</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/370fdf4cc57608d09c7b49f54aad6f81a1e750e2/test/cases/136_changed_files_classifier.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">136_changed_files_classifier</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/370fdf4cc57608d09c7b49f54aad6f81a1e750e2/test/cases/210_session_context_is_derived.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">210_session_context_is_derived</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/370fdf4cc57608d09c7b49f54aad6f81a1e750e2/test/cases/220_exactly_once_close.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">220_exactly_once_close</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/370fdf4cc57608d09c7b49f54aad6f81a1e750e2/test/cases/221_the_lifecycle_under_concurrency.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">221_the_lifecycle_under_concurrency</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/370fdf4cc57608d09c7b49f54aad6f81a1e750e2/test/cases/222_an_episode_nobody_ended.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">222_an_episode_nobody_ended</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/370fdf4cc57608d09c7b49f54aad6f81a1e750e2/test/cases/223_an_unsupported_schema_is_a_finding.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">223_an_unsupported_schema_is_a_finding</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/370fdf4cc57608d09c7b49f54aad6f81a1e750e2/test/cases/224_continuity_crosses_machines.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">224_continuity_crosses_machines</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/370fdf4cc57608d09c7b49f54aad6f81a1e750e2/test/cases/281_published_order_is_tracked.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">281_published_order_is_tracked</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/370fdf4cc57608d09c7b49f54aad6f81a1e750e2/test/cases/284_a_record_reads_the_whole_declaration.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">284_a_record_reads_the_whole_declaration</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/370fdf4cc57608d09c7b49f54aad6f81a1e750e2/test/cases/2985_session_records_are_capped_and_archived.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">2985_session_records_are_capped_and_archived</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/370fdf4cc57608d09c7b49f54aad6f81a1e750e2/test/cases/3015_an_unsupervised_repository_exits_12_from_both_tools.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">3015_an_unsupervised_repository_exits_12_from_both_tools</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/370fdf4cc57608d09c7b49f54aad6f81a1e750e2/test/cases/3060_trunk_stays_clean.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">3060_trunk_stays_clean</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/370fdf4cc57608d09c7b49f54aad6f81a1e750e2/test/cases/3063_a_branch_episode_drains_the_outbox.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">3063_a_branch_episode_drains_the_outbox</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/370fdf4cc57608d09c7b49f54aad6f81a1e750e2/test/cases/494_the_mesh_is_declared_and_held.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">494_the_mesh_is_declared_and_held</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/370fdf4cc57608d09c7b49f54aad6f81a1e750e2/test/cases/54_session_lifecycle_hooks.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">54_session_lifecycle_hooks</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/370fdf4cc57608d09c7b49f54aad6f81a1e750e2/test/cases/55_session_context.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">55_session_context</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/370fdf4cc57608d09c7b49f54aad6f81a1e750e2/test/cases/60_session_lifecycle.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">60_session_lifecycle</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/370fdf4cc57608d09c7b49f54aad6f81a1e750e2/test/cases/63_session_records.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">63_session_records</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/370fdf4cc57608d09c7b49f54aad6f81a1e750e2/test/cases/710_briefing_names_the_candidates.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">710_briefing_names_the_candidates</a></li></ul>
+      </div>
+      <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+        <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">Způsoby selhání</h3>
+        <ul class="mt-2 space-y-1 text-sm"><li><a href="https://github.com/korczis/prismatic-majordomus/blob/370fdf4cc57608d09c7b49f54aad6f81a1e750e2/test/cases/111_session_per_provider.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">111_session_per_provider</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/370fdf4cc57608d09c7b49f54aad6f81a1e750e2/test/cases/136_changed_files_classifier.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">136_changed_files_classifier</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/370fdf4cc57608d09c7b49f54aad6f81a1e750e2/test/cases/220_exactly_once_close.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">220_exactly_once_close</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/370fdf4cc57608d09c7b49f54aad6f81a1e750e2/test/cases/221_the_lifecycle_under_concurrency.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">221_the_lifecycle_under_concurrency</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/370fdf4cc57608d09c7b49f54aad6f81a1e750e2/test/cases/222_an_episode_nobody_ended.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">222_an_episode_nobody_ended</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/370fdf4cc57608d09c7b49f54aad6f81a1e750e2/test/cases/223_an_unsupported_schema_is_a_finding.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">223_an_unsupported_schema_is_a_finding</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/370fdf4cc57608d09c7b49f54aad6f81a1e750e2/test/cases/281_published_order_is_tracked.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">281_published_order_is_tracked</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/370fdf4cc57608d09c7b49f54aad6f81a1e750e2/test/cases/3015_an_unsupervised_repository_exits_12_from_both_tools.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">3015_an_unsupervised_repository_exits_12_from_both_tools</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/370fdf4cc57608d09c7b49f54aad6f81a1e750e2/test/cases/3060_trunk_stays_clean.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">3060_trunk_stays_clean</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/370fdf4cc57608d09c7b49f54aad6f81a1e750e2/test/cases/3063_a_branch_episode_drains_the_outbox.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">3063_a_branch_episode_drains_the_outbox</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/370fdf4cc57608d09c7b49f54aad6f81a1e750e2/test/cases/54_session_lifecycle_hooks.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">54_session_lifecycle_hooks</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/370fdf4cc57608d09c7b49f54aad6f81a1e750e2/test/cases/55_session_context.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">55_session_context</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/370fdf4cc57608d09c7b49f54aad6f81a1e750e2/test/cases/565_knowledge_switch_and_failure_leave_evidence.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">565_knowledge_switch_and_failure_leave_evidence</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/370fdf4cc57608d09c7b49f54aad6f81a1e750e2/test/cases/60_session_lifecycle.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">60_session_lifecycle</a></li></ul>
+      </div>
+      <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+        <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">Implementace</h3>
+        <ul class="mt-2 space-y-1 text-sm">
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/370fdf4cc57608d09c7b49f54aad6f81a1e750e2/bin/majordomus" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">bin/majordomus</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/370fdf4cc57608d09c7b49f54aad6f81a1e750e2/lib/session.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">lib/session.sh</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/370fdf4cc57608d09c7b49f54aad6f81a1e750e2/share/commands.yaml" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">share/commands.yaml</a></li>
+        </ul>
+      </div>
+      <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+        <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">Ukázka</h3>
+        <ul class="mt-2 space-y-1 text-sm">
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/370fdf4cc57608d09c7b49f54aad6f81a1e750e2/test/fixtures/commands/session.json" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">fixtures/session.json</a></li>
+        </ul><p class="mt-1 text-xs text-body-subtle">Testuje <a href="https://github.com/korczis/prismatic-majordomus/blob/370fdf4cc57608d09c7b49f54aad6f81a1e750e2/test/cases/34_command_fixtures.sh" class="break-all font-mono text-fg-brand underline inline-block py-1">test/cases/34_command_fixtures.sh</a>, který přehraje fixture a porovná ji s tím, co příkaz vypíše.</p>
+      </div>
+    </div><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Záruky, které tento příkaz nese</h2>
+    <ul class="mt-4 grid gap-3 sm:grid-cols-2"><li><a href="https://majordomus.dev/cs/guarantees/session-records/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed"><span aria-hidden="true">○</span>zaručeno</span> </span><span class="text-sm text-heading">Uzavřená epizoda provádění je sdílený objekt vrstvy, zapsaný nástrojem z gitu a knihy, platný proti smlouvě, která nepřipouští konverzaci ani absolutní cestu, a objevovaný, nikoli registrovaný</span></a></li></ul></div><aside class="min-w-0 lg:sticky lg:top-24 lg:self-start">
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">commands</h2><p class="mb-1 mt-3 text-xs font-medium text-body-subtle">Nastavit</p>
+        <ul class="space-y-1 text-sm"><li><a href="https://majordomus.dev/cs/commands/init/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">init</a></li><li><a href="https://majordomus.dev/cs/commands/update/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">update</a></li><li><a href="https://majordomus.dev/cs/commands/migrate/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">migrate</a></li><li><a href="https://majordomus.dev/cs/commands/recover/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">recover</a></li></ul><p class="mb-1 mt-3 text-xs font-medium text-body-subtle">Začít</p>
+        <ul class="space-y-1 text-sm"><li><a href="https://majordomus.dev/cs/commands/start/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">start</a></li><li><a href="https://majordomus.dev/cs/commands/plan/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">plan</a></li><li><a href="https://majordomus.dev/cs/commands/session/" class="block rounded px-2 py-1 font-mono bg-brand-softer text-fg-brand-strong" aria-current="page">session</a></li></ul><p class="mb-1 mt-3 text-xs font-medium text-body-subtle">Pracovat</p>
+        <ul class="space-y-1 text-sm"><li><a href="https://majordomus.dev/cs/commands/context/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">kontext</a></li><li><a href="https://majordomus.dev/cs/commands/checkpoint/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">kontrolní bod</a></li><li><a href="https://majordomus.dev/cs/commands/decision/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">rozhodnutí</a></li><li><a href="https://majordomus.dev/cs/commands/question/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">otázka</a></li><li><a href="https://majordomus.dev/cs/commands/prompt/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">prompt</a></li><li><a href="https://majordomus.dev/cs/commands/evidence/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">evidence</a></li><li><a href="https://majordomus.dev/cs/commands/skills/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">skills</a></li><li><a href="https://majordomus.dev/cs/commands/capture/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">záznam</a></li></ul><p class="mb-1 mt-3 text-xs font-medium text-body-subtle">Ověřit</p>
+        <ul class="space-y-1 text-sm"><li><a href="https://majordomus.dev/cs/commands/check/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">check</a></li><li><a href="https://majordomus.dev/cs/commands/usecase/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">usecase</a></li></ul><p class="mb-1 mt-3 text-xs font-medium text-body-subtle">Uzavřít</p>
+        <ul class="space-y-1 text-sm"><li><a href="https://majordomus.dev/cs/commands/handover/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">handover</a></li><li><a href="https://majordomus.dev/cs/commands/finish/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">finish</a></li><li><a href="https://majordomus.dev/cs/commands/adr/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">adr</a></li></ul><p class="mb-1 mt-3 text-xs font-medium text-body-subtle">Prozkoumat</p>
+        <ul class="space-y-1 text-sm"><li><a href="https://majordomus.dev/cs/commands/doctor/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">doctor</a></li><li><a href="https://majordomus.dev/cs/commands/watch/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">watch</a></li><li><a href="https://majordomus.dev/cs/commands/history/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">history</a></li><li><a href="https://majordomus.dev/cs/commands/search/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">hledání</a></li><li><a href="https://majordomus.dev/cs/commands/doctrine/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">doktrína</a></li><li><a href="https://majordomus.dev/cs/commands/version/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">verze</a></li><li><a href="https://majordomus.dev/cs/commands/knowledge/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">knowledge</a></li><li><a href="https://majordomus.dev/cs/commands/rules/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">rules</a></li><li><a href="https://majordomus.dev/cs/commands/bench/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">bench</a></li><li><a href="https://majordomus.dev/cs/commands/archive/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">archiv</a></li></ul><p class="mt-4 text-xs text-body-subtle"><a href="https://majordomus.dev/cs/docs/cli-specification/" class="underline">Úplná specifikace shellového CLI →</a></p>
+    </div>
+  </aside>
+</div>
+
+</div>
+
+</main>
+
+<footer id="site-map" class="border-t border-default bg-neutral-primary-soft" aria-label="Mapa webu">
+  <div class="mx-auto w-full max-w-screen-xl p-4 md:py-8">
+    <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
+      
+      <div class="min-w-0 scroll-mt-20" id="site-map-1">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/cs/domains/" class="hover:text-heading hover:underline">Produkt</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/cs/domains/" class="hover:text-heading hover:underline">Produkt podle oblastí</a></li><li><a href="https://majordomus.dev/cs/why/" class="hover:text-heading hover:underline">Proč existuje: způsoby selhání</a></li><li><a href="https://majordomus.dev/cs/features/" class="hover:text-heading hover:underline">Funkce</a></li><li><a href="https://majordomus.dev/cs/features/matrix/" class="hover:text-heading hover:underline">Funkce a rozhraní</a></li><li><a href="https://majordomus.dev/cs/use-cases/" class="hover:text-heading hover:underline">Případy užití</a></li><li><a href="https://majordomus.dev/cs/applications/" class="hover:text-heading hover:underline">Aplikace</a></li><li><a href="https://majordomus.dev/cs/skills/" class="hover:text-heading hover:underline">Dovednosti</a></li><li><a href="https://majordomus.dev/cs/supervises/" class="hover:text-heading hover:underline">Na co dohlíží</a></li><li><a href="https://majordomus.dev/cs/docs/majordomus-ui/" class="hover:text-heading hover:underline">UI produktu</a></li><li><a href="https://majordomus.dev/cs/docs/cockpit/" class="hover:text-heading hover:underline">Cockpit</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0 scroll-mt-20" id="site-map-2">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/cs/method/" class="hover:text-heading hover:underline">Jak funguje</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/cs/method/" class="hover:text-heading hover:underline">Doktrína, politika, pravidlo, vynucování</a></li><li><a href="https://majordomus.dev/cs/method/axes/" class="hover:text-heading hover:underline">Čtyři osy</a></li><li><a href="https://majordomus.dev/cs/method/argument/" class="hover:text-heading hover:underline">Celá argumentace</a></li><li><a href="https://majordomus.dev/cs/docs/concepts/" class="hover:text-heading hover:underline">Slovník</a></li><li><a href="https://majordomus.dev/cs/policy/" class="hover:text-heading hover:underline">Kanonická politika</a></li><li><a href="https://majordomus.dev/cs/context/" class="hover:text-heading hover:underline">Kontrakty adresářů</a></li><li><a href="https://majordomus.dev/cs/sessions/" class="hover:text-heading hover:underline">Relace</a></li><li><a href="https://majordomus.dev/cs/docs/planning/" class="hover:text-heading hover:underline">Jak funguje plánování</a></li><li><a href="https://majordomus.dev/cs/docs/design/" class="hover:text-heading hover:underline">Design</a></li><li><a href="https://majordomus.dev/cs/kit/" class="hover:text-heading hover:underline">Sada komponent</a></li><li><a href="https://majordomus.dev/cs/docs/surfaces/" class="hover:text-heading hover:underline">Jak se odvozují rozhraní</a></li><li><a href="https://majordomus.dev/cs/architecture/" class="hover:text-heading hover:underline">Jak je tento web postaven</a></li><li><a href="https://majordomus.dev/cs/docs/product/" class="hover:text-heading hover:underline">Jak se odvozuje stránka produktu</a></li><li><a href="https://majordomus.dev/cs/proof-carrying-documentation/" class="hover:text-heading hover:underline">Článek: dokumentace nesoucí důkaz</a></li><li><a href="https://majordomus.dev/cs/everything-followed/" class="hover:text-heading hover:underline">Článek: všechno, dohledatelně</a></li><li><a href="https://majordomus.dev/cs/dokumentace-kterou-lze-odmitnout/" class="hover:text-heading hover:underline">Stejná argumentace, napsaná česky</a></li><li><a href="https://majordomus.dev/cs/teze/" class="hover:text-heading hover:underline">Esej v češtině: sázka na vrstvu, ne na model</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0 scroll-mt-20" id="site-map-3">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/cs/challenge/" class="hover:text-heading hover:underline">Důkazy</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/cs/challenge/" class="hover:text-heading hover:underline">Výzva: sledujte, jak odmítne agenta</a></li><li><a href="https://majordomus.dev/cs/guarantees/" class="hover:text-heading hover:underline">Záruky</a></li><li><a href="https://majordomus.dev/cs/evidence/" class="hover:text-heading hover:underline">Graf důkazů</a></li><li><a href="https://majordomus.dev/cs/contract/" class="hover:text-heading hover:underline">Kontrakt dokončení</a></li><li><a href="https://majordomus.dev/cs/doctrines/" class="hover:text-heading hover:underline">Doktrína</a></li><li><a href="https://majordomus.dev/cs/adrs/" class="hover:text-heading hover:underline">Rozhodnutí</a></li><li><a href="https://majordomus.dev/cs/rules/" class="hover:text-heading hover:underline">Platná pravidla</a></li><li><a href="https://majordomus.dev/cs/registry/benchmarks/" class="hover:text-heading hover:underline">Měření výkonu</a></li><li><a href="https://majordomus.dev/cs/economics/" class="hover:text-heading hover:underline">Ekonomika tokenů</a></li><li><a href="https://majordomus.dev/cs/limitations/" class="hover:text-heading hover:underline">Omezení</a></li><li><a href="https://majordomus.dev/cs/roadmap/" class="hover:text-heading hover:underline">Plán rozvoje</a></li><li><a href="https://majordomus.dev/cs/plan/" class="hover:text-heading hover:underline">Milníky a úkoly</a></li><li><a href="https://majordomus.dev/cs/plan/dag/" class="hover:text-heading hover:underline">Graf závislostí</a></li><li><a href="https://majordomus.dev/cs/changelog/" class="hover:text-heading hover:underline">Changelog</a></li><li><a href="https://majordomus.dev/cs/docs/dogfooding/" class="hover:text-heading hover:underline">Dogfooding</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0 scroll-mt-20" id="site-map-4">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/cs/docs/" class="hover:text-heading hover:underline">Dokumenty</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/cs/docs/" class="hover:text-heading hover:underline">Všechny dokumenty</a></li><li><a href="https://majordomus.dev/cs/docs/install/" class="hover:text-heading hover:underline">Instalace</a></li><li><a href="https://majordomus.dev/cs/commands/" class="hover:text-heading hover:underline">Příkazy</a></li><li><a href="https://majordomus.dev/cs/profiles/" class="hover:text-heading hover:underline">Profily provádění</a></li><li><a href="https://majordomus.dev/cs/docs/cli/" class="hover:text-heading hover:underline">Přehled příkazů</a></li><li><a href="https://majordomus.dev/cs/docs/api/" class="hover:text-heading hover:underline">HTTP API</a></li><li><a href="https://majordomus.dev/rustdoc/" class="hover:text-heading hover:underline">Rust API</a></li><li><a href="https://majordomus.dev/cs/registry/mcp/" class="hover:text-heading hover:underline">Rozhraní MCP</a></li><li><a href="https://majordomus.dev/cs/docs/schemas/" class="hover:text-heading hover:underline">Schémata souborů</a></li><li><a href="https://majordomus.dev/cs/registry/" class="hover:text-heading hover:underline">Registr</a></li><li><a href="https://majordomus.dev/cs/map/" class="hover:text-heading hover:underline">Mapa programu</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/370fdf4cc57608d09c7b49f54aad6f81a1e750e2/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/370fdf4cc57608d09c7b49f54aad6f81a1e750e2/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/370fdf4cc57608d09c7b49f54aad6f81a1e750e2/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+        </ul>
+      </div>
+    </div>
+    <hr class="my-6 border-default sm:mx-auto lg:my-8"><div class="space-y-4">
+    <div class="sm:flex sm:items-center sm:justify-between">
+      <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
+    </div>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.30.2 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/370fdf4cc57608d09c7b49f54aad6f81a1e750e2" class="font-mono underline">370fdf4</a> · inputs <span class="font-mono">0e1fe73c6a52</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    </div>
+  </div>
+</footer>
+<dialog id="site-search" data-site-search data-index="https://majordomus.dev/docs/index.json" aria-labelledby="site-search-label" class="m-0 h-dvh max-h-none w-full max-w-none border-0 bg-neutral-primary p-0 text-body backdrop:bg-neutral-primary-strong/80 sm:mx-auto sm:mt-20 sm:h-auto sm:max-h-[75vh] sm:max-w-2xl sm:rounded-base sm:border sm:border-default sm:shadow-lg">
+  <div class="flex h-full max-h-[inherit] flex-col">
+    <div class="flex items-center gap-2 border-b border-default p-3">
+      <label id="site-search-label" for="site-search-input" class="sr-only">Hledat na tomto webu</label>
+      <svg class="h-5 w-5 shrink-0 text-body-subtle" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z"/></svg>
+      <input id="site-search-input" type="search" role="combobox" aria-expanded="false" aria-controls="site-search-results" aria-autocomplete="list" aria-describedby="site-search-status" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go" placeholder="Pravidlo, rozhodnutí, příkaz, stránka…" class="block min-w-0 flex-1 rounded-base border border-default-medium bg-neutral-secondary-medium px-3 py-2.5 text-base text-heading focus:border-brand focus:ring-brand sm:text-sm">
+      <button type="button" data-site-search-close class="inline-flex h-10 shrink-0 items-center rounded-base border border-default px-3 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">Zavřít<span class="sr-only"> vyhledávání</span></button>
+    </div>
+    <p id="site-search-status" class="px-4 pt-3 text-xs text-body-subtle" aria-live="polite" data-site-search-status>Prohledává názvy a popisy všech stránek, které tento web publikuje.</p>
+    <div id="site-search-results" role="listbox" aria-label="Odpovídající stránky" class="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain px-2 py-2" data-site-search-results></div>
+    <template data-site-search-item><a tabindex="-1" class="block rounded-base px-3 py-2 hover:bg-neutral-secondary-medium aria-selected:bg-neutral-secondary-medium aria-selected:ring-2 aria-selected:ring-brand"><span class="block break-words font-medium text-heading" data-slot="title"></span><span class="block break-all font-mono text-xs text-body-subtle" data-slot="meta"></span><span class="mt-0.5 line-clamp-2 text-sm text-body" data-slot="description"></span></a></template>
+  </div>
+</dialog>
+
+<script defer src="https://majordomus.dev/js/nav.js"></script>
+<script defer src="https://majordomus.dev/js/search.js"></script>
+<script src="https://majordomus.dev/js/theme.js"></script>
+<script defer src="https://majordomus.dev/js/alpine.min.js"></script>
+
+</body>
+</html>

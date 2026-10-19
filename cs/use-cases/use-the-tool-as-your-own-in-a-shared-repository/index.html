@@ -1,0 +1,523 @@
+<!doctype html>
+<html lang="cs" class="scroll-smooth" data-theme-key="color-theme" data-theme-class="dark" data-design="944a896b2646">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Používat nástroj jako vlastní ve sdíleném repozitáři a navrhnout ho týmu, až si obhájí své místo — Prismatic Majordomus</title>
+<meta name="description" content="Jeden přepínač nainstaluje stejnou vrstvu jen pro vás: žádný sledovaný soubor se nezmění, do .gitignore se nic nepřidá, git status vypadá stejně — příkaz to ověří — a jeden další příkaz vrstvu předá týmu.">
+<link rel="canonical" href="https://majordomus.dev/cs/use-cases/use-the-tool-as-your-own-in-a-shared-repository/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Prismatic Majordomus">
+<meta property="og:title" content="Používat nástroj jako vlastní ve sdíleném repozitáři a navrhnout ho týmu, až si obhájí své místo — Prismatic Majordomus">
+<meta property="og:description" content="Jeden přepínač nainstaluje stejnou vrstvu jen pro vás: žádný sledovaný soubor se nezmění, do .gitignore se nic nepřidá, git status vypadá stejně — příkaz to ověří — a jeden další příkaz vrstvu předá týmu.">
+<meta property="og:url" content="https://majordomus.dev/cs/use-cases/use-the-tool-as-your-own-in-a-shared-repository/">
+<meta property="og:image" content="https://majordomus.dev/images/social-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
+<link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=9d5fef6c2ded00e88e3d">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
+<script>(function(){try{var K="mj-lang",L=["en","cs"],S="en",B="https://majordomus.dev",d=document.documentElement,k;try{k=localStorage.getItem(K)}catch(e){}
+document.addEventListener("click",function(e){var a=e.target.closest&&e.target.closest("[data-i18n-lang]");if(a)try{localStorage.setItem(K,a.getAttribute("data-i18n-lang"))}catch(x){}},true);
+if(d.lang!==S)return;var r=document.referrer;if(r&&r.indexOf(location.origin)===0)return;
+var p=(k?[k]:navigator.languages||[navigator.language||""]).map(function(l){return String(l).slice(0,2).toLowerCase()});
+for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=location.href;if(u.indexOf(B)!==0)return;location.replace(B+"/"+p[i]+u.slice(B.length).replace(/^(?!\/)/,"/"));return}}}catch(e){}})();</script>
+
+<link rel="alternate" hreflang="en" href="https://majordomus.dev/use-cases/use-the-tool-as-your-own-in-a-shared-repository/">
+<link rel="alternate" hreflang="cs" href="https://majordomus.dev/cs/use-cases/use-the-tool-as-your-own-in-a-shared-repository/">
+<link rel="alternate" hreflang="x-default" href="https://majordomus.dev/use-cases/use-the-tool-as-your-own-in-a-shared-repository/">
+</head>
+<body class="min-h-screen bg-neutral-primary text-body antialiased">
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white">Přeskočit na obsah</a>
+
+
+
+<nav class="sticky top-0 z-20 w-full border-b border-default bg-neutral-primary text-base" aria-label="Hlavní">
+  <div class="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between gap-x-2 gap-y-2 px-3 py-3 sm:p-4">
+    <a href="https://majordomus.dev/cs/" class="flex min-w-0 items-center gap-1.5 sm:gap-2.5 rtl:space-x-reverse">
+      <span class="inline-flex h-6 w-6 shrink-0 text-heading sm:h-7 sm:w-7 [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 0.30.2 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span>
+      <span class="self-center whitespace-nowrap text-base font-semibold text-heading sm:text-xl">Majordomus</span>
+      
+      
+      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading" data-release="0.30.2">v0.30.2</span>
+      
+    </a>
+    <div class="flex items-center gap-1 sm:gap-2 md:order-2"><button type="button" data-site-search-open hidden aria-haspopup="dialog" aria-controls="site-search" aria-expanded="false" aria-keyshortcuts="/ Control+K Meta+K" class="inline-flex h-10 min-w-10 items-center justify-center gap-2 rounded-base border border-default px-2.5 text-sm font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">
+        <svg class="h-5 w-5 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z"/></svg> <span class="sr-only lg:not-sr-only">Hledat</span> <kbd class="hidden rounded border border-default-medium px-1.5 font-mono text-xs text-body-subtle lg:inline" aria-hidden="true">/</kbd>
+      </button>
+      <div class="relative" data-i18n-switch>
+  <button type="button" aria-label="Jazyk" data-dropdown-toggle="language-menu" data-dropdown-placement="bottom-end" aria-haspopup="true" aria-controls="language-menu" aria-expanded="false" class="inline-flex h-10 items-center justify-center gap-1.5 rounded-base border border-default px-2.5 text-sm font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">
+    <svg class="h-5 w-5 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0 0c2.2-2.4 3.3-5.4 3.3-9S14.2 5.4 12 3m0 18c-2.2-2.4-3.3-5.4-3.3-9S9.8 5.4 12 3M3.5 9h17M3.5 15h17"/></svg>
+    <span class="font-mono text-xs uppercase" translate="no" data-i18n-current-label>cs</span>
+    <svg class="h-2.5 w-2.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg>
+  </button>
+  <div id="language-menu" class="absolute right-0 top-full z-50 mt-2 hidden w-44 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+    <ul class="p-2 text-sm font-medium text-body" translate="no">
+      <li><a href="https://majordomus.dev/use-cases/use-the-tool-as-your-own-in-a-shared-repository/" hreflang="en" lang="en" data-i18n-keep data-i18n-current data-i18n-lang="en" class="group flex w-full items-center justify-between gap-3 rounded-sm px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading aria-[current=page]:text-heading"><span class="flex items-center gap-2"><span class="w-6 font-mono text-xs uppercase text-body-subtle">en</span>English</span><svg class="invisible h-4 w-4 text-fg-brand group-aria-[current=page]:visible" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 11.917 9.724 16.5 19 7.5"/></svg></a></li>
+      <li><a href="https://majordomus.dev/cs/use-cases/use-the-tool-as-your-own-in-a-shared-repository/" hreflang="cs" lang="cs" data-i18n-keep data-i18n-current data-i18n-lang="cs" class="group flex w-full items-center justify-between gap-3 rounded-sm px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading aria-[current=page]:text-heading" aria-current="page"><span class="flex items-center gap-2"><span class="w-6 font-mono text-xs uppercase text-body-subtle">cs</span>Čeština</span><svg class="invisible h-4 w-4 text-fg-brand group-aria-[current=page]:visible" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 11.917 9.724 16.5 19 7.5"/></svg></a></li>
+    </ul>
+  </div>
+</div>
+
+      <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Přepnout tmavý režim">
+  <svg id="theme-toggle-dark-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+  <svg id="theme-toggle-light-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+</button>
+<a href="https://majordomus.dev/ui/" data-nav-primary="ui" class="hidden rounded-base border border-brand-subtle px-3 py-2 text-sm font-semibold text-fg-brand hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary xl:inline-flex">UI produktu</a>
+      <a href="https://github.com/korczis/prismatic-majordomus" class="hidden rounded-base border border-default px-3 py-2 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary sm:inline-flex">GitHub</a>
+      <a href="https://majordomus.dev/cs/getting-started/" class="hidden rounded-base bg-brand px-3 py-2 text-sm font-semibold text-white hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium md:inline-flex">Začít</a>
+      <button data-collapse-toggle="navbar-main" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-base p-2 text-sm text-body hover:bg-neutral-secondary-soft hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:hidden" aria-controls="navbar-main" aria-expanded="false">
+        <span class="sr-only">Otevřít hlavní nabídku</span> <svg class="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h14"/></svg>
+      </button>
+    </div><div class="hidden w-full min-w-0 md:order-1 md:block md:w-auto" id="navbar-main">
+      <ul class="mt-4 flex flex-col rounded-base border border-default bg-neutral-secondary-soft p-4 font-medium md:mt-0 md:flex-row md:flex-wrap md:items-center md:gap-x-2 md:gap-y-1 md:border-0 md:bg-neutral-primary md:p-0">
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          <button id="nav-1" data-dropdown-toggle="nav-menu-1" type="button" aria-controls="nav-menu-1" class="flex w-full items-center justify-between rounded px-3 py-2 text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Produkt<svg class="ms-1.5 h-3 w-3 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-1" class="hidden md:absolute md:left-0 md:top-full md:z-10 md:mt-2 md:w-64 md:rounded-base md:border md:border-default-medium md:bg-neutral-primary-medium md:shadow-lg">
+            <ul class="pb-2 ps-3 text-sm font-medium text-body md:p-2" aria-labelledby="nav-1">
+              <li><a href="https://majordomus.dev/cs/domains/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Produkt podle oblastí</a></li><li><a href="https://majordomus.dev/cs/why/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Proč existuje: způsoby selhání</a></li><li><a href="https://majordomus.dev/cs/features/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Funkce</a></li><li><a href="https://majordomus.dev/cs/use-cases/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Případy užití</a></li><li><a href="https://majordomus.dev/ui/" data-nav-snapshot="ui" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">UI produktu <span data-nav-snapshot-note class="text-xs text-body-subtle">&middot; snímek</span></a></li><li><a href="https://majordomus.dev/cs/docs/cockpit/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Cockpit</a></li>
+              <li class="mt-1 border-t border-default pt-1"><a href="#site-map-1" class="block rounded px-3 py-2 text-body-subtle hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Všech 10 stránek v mapě webu &darr;</a></li>
+            </ul>
+          </div>
+        </li>
+        
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          <button id="nav-2" data-dropdown-toggle="nav-menu-2" type="button" aria-controls="nav-menu-2" class="flex w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Jak funguje<svg class="ms-1.5 h-3 w-3 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-2" class="hidden md:absolute md:left-0 md:top-full md:z-10 md:mt-2 md:w-64 md:rounded-base md:border md:border-default-medium md:bg-neutral-primary-medium md:shadow-lg">
+            <ul class="pb-2 ps-3 text-sm font-medium text-body md:p-2" aria-labelledby="nav-2">
+              <li><a href="https://majordomus.dev/cs/method/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Doktrína, politika, pravidlo, vynucování</a></li><li><a href="https://majordomus.dev/cs/method/argument/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Celá argumentace</a></li><li><a href="https://majordomus.dev/cs/docs/concepts/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Slovník</a></li><li><a href="https://majordomus.dev/cs/sessions/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Relace</a></li>
+              <li class="mt-1 border-t border-default pt-1"><a href="#site-map-2" class="block rounded px-3 py-2 text-body-subtle hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Všech 17 stránek v mapě webu &darr;</a></li>
+            </ul>
+          </div>
+        </li>
+        
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          <button id="nav-3" data-dropdown-toggle="nav-menu-3" type="button" aria-controls="nav-menu-3" class="flex w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Důkazy<svg class="ms-1.5 h-3 w-3 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-3" class="hidden md:absolute md:left-0 md:top-full md:z-10 md:mt-2 md:w-64 md:rounded-base md:border md:border-default-medium md:bg-neutral-primary-medium md:shadow-lg">
+            <ul class="pb-2 ps-3 text-sm font-medium text-body md:p-2" aria-labelledby="nav-3">
+              <li><a href="https://majordomus.dev/cs/challenge/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Výzva: sledujte, jak odmítne agenta</a></li><li><a href="https://majordomus.dev/cs/guarantees/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Záruky</a></li><li><a href="https://majordomus.dev/cs/evidence/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Graf důkazů</a></li><li><a href="https://majordomus.dev/cs/limitations/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Omezení</a></li><li><a href="https://majordomus.dev/cs/roadmap/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Plán rozvoje</a></li>
+              <li class="mt-1 border-t border-default pt-1"><a href="#site-map-3" class="block rounded px-3 py-2 text-body-subtle hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Všech 15 stránek v mapě webu &darr;</a></li>
+            </ul>
+          </div>
+        </li>
+        
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          <button id="nav-4" data-dropdown-toggle="nav-menu-4" type="button" aria-controls="nav-menu-4" class="flex w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Dokumenty<svg class="ms-1.5 h-3 w-3 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-4" class="hidden md:absolute md:left-0 md:top-full md:z-10 md:mt-2 md:w-64 md:rounded-base md:border md:border-default-medium md:bg-neutral-primary-medium md:shadow-lg">
+            <ul class="pb-2 ps-3 text-sm font-medium text-body md:p-2" aria-labelledby="nav-4">
+              <li><a href="https://majordomus.dev/cs/docs/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Všechny dokumenty</a></li><li><a href="https://majordomus.dev/cs/docs/install/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Instalace</a></li><li><a href="https://majordomus.dev/cs/commands/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Příkazy</a></li><li><a href="https://majordomus.dev/cs/docs/api/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">HTTP API</a></li><li><a href="https://majordomus.dev/cs/registry/mcp/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Rozhraní MCP</a></li>
+              <li class="mt-1 border-t border-default pt-1"><a href="#site-map-4" class="block rounded px-3 py-2 text-body-subtle hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Všech 11 stránek v mapě webu &darr;</a></li>
+            </ul>
+          </div>
+        </li>
+        
+        
+        <li class="mt-3 md:hidden"><a href="https://majordomus.dev/ui/" data-nav-primary="ui" class="block rounded-base border border-brand-subtle px-3 py-2 text-center font-semibold text-fg-brand hover:bg-neutral-tertiary">UI produktu</a></li>
+        <li class="mt-3 md:hidden"><a href="https://majordomus.dev/cs/getting-started/" class="block rounded-base bg-brand px-3 py-2 text-center font-semibold text-white hover:bg-brand-strong">Začít</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+<div data-i18n-notice class="border-b border-default bg-neutral-secondary-soft">
+  <p class="mx-auto max-w-screen-xl px-4 py-2 text-xs text-body">Tato stránka byla automaticky přeložena z angličtiny, jediného jazyka, ve kterém se tento web píše. <a href="https://majordomus.dev/use-cases/use-the-tool-as-your-own-in-a-shared-repository/" hreflang="en" lang="en" data-i18n-keep data-i18n-lang="en" class="font-medium underline">Číst originál</a>.</p>
+</div>
+<main id="main">
+<div class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+    <nav class="flex" aria-label="Drobečková navigace">
+  <ol class="inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2 rtl:space-x-reverse">
+    <li class="inline-flex items-center"><a href="https://majordomus.dev/cs/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Domů</a></li><li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="https://majordomus.dev/cs/use-cases/" class="font-medium text-body hover:text-fg-brand">Případy užití</a></li>
+    <li aria-hidden="true">/</li>
+    <li aria-current="page" class="font-medium text-heading">Používejte nástroj jako vlastní ve sdíleném repozitáři a navrhněte ho týmu, až obhájí svůj přínos</li>
+  </ol>
+</nav>
+
+    <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">Používejte nástroj jako vlastní ve sdíleném repozitáři a navrhněte ho týmu, až obhájí svůj přínos</h1>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">Jeden přepínač nainstaluje stejnou vrstvu jen pro vás: žádný sledovaný soubor se nezmění, do .gitignore se nic nepřidá, git status vypadá stejně — příkaz to ověří — a jeden další příkaz vrstvu předá týmu.</p>
+  </div>
+</div>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+  <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
+  <div class="min-w-0"><div class="flex flex-wrap items-center gap-2 text-xs">
+      <span><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed"><span aria-hidden="true">○</span>zaručeno</span>
+</span>
+      <a href="https://majordomus.dev/cs/use-cases/adoption/" class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-heading hover:bg-neutral-secondary-medium">Začínáme a převzetí</a><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">základní</span><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">operátor</span><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">maintainer</span><span class="mj-badge mj-badge--neutral">zapisuje stav</span>
+    </div><article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal mt-6 max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_.zola-anchor]:text-inherit [&_.zola-anchor]:no-underline [&_.zola-anchor:hover]:underline" tabindex="0"><h2 id="situation"><a class="zola-anchor" href="#situation" aria-label="Odkaz na kotvu: situation">Situace</a></h2>
+<p>Pracujete v repozitáři, který sdílejí další lidé: vašeho týmu, klienta, open-source projektu. Chcete své vlastní relace agentů v něm supervidovat už dnes, na skutečné práci. Prosté <code>init</code> by přidalo adresář, tři soubory v kořeni a řádek do README — změnu toho, co všichni sdílejí, což je návrh, a vy zatím nemáte co navrhovat.</p>
+<p>Tým přijímá nástroj na základě důkazů. Osobní režim je způsob, jak je jeden člověk nasbírá, aniž by předtím musel kohokoli žádat o změnu.</p>
+<h2 id="scenario"><a class="zola-anchor" href="#scenario" aria-label="Odkaz na kotvu: scenario">Scénář</a></h2>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="yaml"><span class="giallo-l"><span class="z-l-4 z-d-1">s</span><span class="z-l-4 z-d-1">etup</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> b</span><span class="z-l-8 z-d-8">are</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">g</span><span class="z-l-4 z-d-1">iven</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">a shared repository with no AI layer</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">s</span><span class="z-l-4 z-d-1">teps</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-4 z-d-1"> i</span><span class="z-l-4 z-d-1">d</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> i</span><span class="z-l-8 z-d-8">nit</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    r</span><span class="z-l-4 z-d-1">un</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">init</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">--personal</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    n</span><span class="z-l-4 z-d-1">ote</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">the same layer a plain init makes; the difference is whose it is</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    e</span><span class="z-l-4 z-d-1">xpect</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      e</span><span class="z-l-4 z-d-1">xit</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 0</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      s</span><span class="z-l-4 z-d-1">tdout_contains</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">^OK   personal</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">personal: this layer is yours; nothing the repository shares was changed</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      f</span><span class="z-l-4 z-d-1">iles_exist</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">.ai/repo/policy.yaml</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">.ai/manifest.yaml</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-4 z-d-1"> i</span><span class="z-l-4 z-d-1">d</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> u</span><span class="z-l-8 z-d-8">pdate</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    r</span><span class="z-l-4 z-d-1">un</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">update</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    n</span><span class="z-l-4 z-d-1">ote</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">the provider files at the root are covered before they are written</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    e</span><span class="z-l-4 z-d-1">xpect</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      e</span><span class="z-l-4 z-d-1">xit</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 0</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      f</span><span class="z-l-4 z-d-1">iles_exist</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">AGENTS.md</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">CLAUDE.md</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-4 z-d-1"> i</span><span class="z-l-4 z-d-1">d</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> d</span><span class="z-l-8 z-d-8">octor</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    r</span><span class="z-l-4 z-d-1">un</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">doctor</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    n</span><span class="z-l-4 z-d-1">ote</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">doctor holds the layer to its claim on every run; the two hook lines are still yours to add, which is the one thing its exit code is about</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    e</span><span class="z-l-4 z-d-1">xpect</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      e</span><span class="z-l-4 z-d-1">xit</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 10</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      s</span><span class="z-l-4 z-d-1">tdout_contains</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">^OK   personal</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">not asked to name AGENTS.md</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-4 z-d-1"> i</span><span class="z-l-4 z-d-1">d</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> s</span><span class="z-l-8 z-d-8">hare</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    r</span><span class="z-l-4 z-d-1">un</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">init</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">--extend</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">--shared</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    n</span><span class="z-l-4 z-d-1">ote</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">the trial made its case: the cover is removed and the layer is the repository</span><span class="z-l-3 z-d-7">&#39;&#39;</span><span class="z-l-8 z-d-8">s to commit — by you, when you choose to</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    e</span><span class="z-l-4 z-d-1">xpect</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      e</span><span class="z-l-4 z-d-1">xit</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 0</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      s</span><span class="z-l-4 z-d-1">tdout_contains</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">shared: the cover is removed</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">git add .ai/</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">t</span><span class="z-l-4 z-d-1">hen</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">until the last step, git status read the same as before the first one</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">the tracked .gitignore and README.md were untouched until the layer was shared</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">nothing was committed by the tool at any step</span><span class="z-l-8 z-d-8">&#39;</span></span></code></pre><h2 id="what-you-run"><a class="zola-anchor" href="#what-you-run" aria-label="Odkaz na kotvu: what-you-run">Co spouštíte</a></h2>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-1 z-d-3">curl</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">fsSL</span><span class="z-l-8 z-d-8"> https://majordomus.dev/install.sh</span><span class="z-l-16 z-d-16"> |</span><span class="z-l-1 z-d-3"> sh</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">s</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-personal</span></span></code></pre>
+<p>nebo, s již nainstalovaným nástrojem:</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> init</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-personal</span></span></code></pre>
+<p><code>init --personal</code> načte <code>git status</code> dříve, než cokoli zapíše, pokryje <code>.ai/</code> ve vlastním exclude souboru repozitáře, vytvoří vrstvu a skončí s kódem 10, pokud stav po skončení nevypadá stejně. Instalátor pak stav porovná sám, aniž by do něj cokoli zapsal. <code>majordomus update</code> a <code>majordomus capture install</code> pokryjí každý soubor dřív, než jej zapíšou, a soubor, který projekt už sleduje, nechají být — <code>CLAUDE.md</code>, který projekt commituje, patří projektu.</p>
+<p>Když to chceš mít v týmu:</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> init</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-extend</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-shared</span></span></code></pre>
+<p>Odstraní kryt, přidá dva řádky <code>.gitignore</code>, které přidává prostý init, a vypíše, co je nyní k commitu v repozitáři. Nic necommituje.</p>
+<p>Chcete-li místo toho skončit: smažte blok mezi <code># &gt;&gt;&gt; majordomus personal &gt;&gt;&gt;</code> a <code># &lt;&lt;&lt; majordomus personal &lt;&lt;&lt;</code> v <code>.git/info/exclude</code> a odstraňte soubory, které uvádí.</p>
+<h2 id="outcome"><a class="zola-anchor" href="#outcome" aria-label="Odkaz na kotvu: outcome">Výsledek</a></h2>
+<p>Tvé relace jsou dozorované — úlohy s rozsahem, kontrakt dokončení, předávky — v repozitáři, jehož sdílený stav je přesně takový, jaký byl. Vrstva je tvoje a tohoto stroje: neputuje s klonem, pushem ani stashem.</p>
+<p>Co se naučíte, je to, co by dostal tým, protože vrstva je obyčejná; a krok od „moje“ k „naše“ je jeden příkaz a commit, který provedete sami.</p>
+<p>Které soubory jsou pokryty, není seznam, který by někdo udržoval. Vrstva je jeden vzor a každý další záznam je cesta, kterou se zapisovatel chystal zapsat, převzatá z cílů projekce politiky a z adaptérů poskytovatelů v okamžiku zápisu.</p>
+<p>Osobní režim není řízení přístupu ani cesta, jak obejít pravidla organizace o nástrojích; zda smí být nástroj použit na kódovou základnu, je rozhodnutí organizace.</p>
+</article>
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Scénář</h2>
+    <p class="mt-2 text-sm text-body">Provedeno proti skutečnému nástroji v repozitáři připraveném pomocí <code class="font-mono text-heading">bare</code>, při každém generování tohoto webu. To, co následuje, není popis toho, co by se mělo stát; je to to, co se stalo.</p>
+    <div class="mt-4 grid gap-4 sm:grid-cols-3">
+      <div class="min-w-0 break-words rounded-base border border-default bg-neutral-primary-soft p-4">
+        <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">dáno</h3>
+        <ul class="mt-2 space-y-1 text-sm text-heading"><li class="flex gap-2"><span aria-hidden="true">·</span><span class="min-w-0 wrap-anywhere">sdílený repozitář bez vrstvy AI</span></li></ul>
+      </div>
+      <div class="min-w-0 break-words rounded-base border border-default bg-neutral-primary-soft p-4">
+        <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">kdy</h3>
+        <ol class="mt-2 space-y-1 text-sm text-heading"><li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">1</span><code class="min-w-0 break-all font-mono text-xs">majordomus init --personal</code></li><li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">2</span><code class="min-w-0 break-all font-mono text-xs">majordomus update</code></li><li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">3</span><code class="min-w-0 break-all font-mono text-xs">majordomus doctor</code></li><li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">4</span><code class="min-w-0 break-all font-mono text-xs">majordomus init --extend --shared</code></li></ol>
+      </div>
+      <div class="min-w-0 break-words rounded-base border border-default bg-neutral-primary-soft p-4">
+        <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">pak</h3>
+        <ul class="mt-2 space-y-1 text-sm text-heading"><li class="flex gap-2"><span aria-hidden="true">·</span><span class="min-w-0 wrap-anywhere">až do posledního kroku git status vypadal stejně jako před prvním</span></li><li class="flex gap-2"><span aria-hidden="true">·</span><span class="min-w-0 wrap-anywhere">sledovaný .gitignore a README.md zůstaly nedotčeny, dokud vrstva nebyla sdílena</span></li><li class="flex gap-2"><span aria-hidden="true">·</span><span class="min-w-0 wrap-anywhere">nástroj v žádném kroku nic necommitl</span></li></ul>
+      </div>
+    </div>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Co nástroj udělal</h2>
+    <p class="mt-2 text-sm text-body">Důkazy o běhu, ze kterého byla tato stránka vygenerována: <span class="font-mono">pass</span>, kroků: 4. Výstup je normalizovaný: cesta k repozitáři, časová razítka, identifikátory a doby trvání jsou zástupné hodnoty, nic dalšího se neupravuje.</p><p class="mt-1 text-xs text-body-subtle">Testováno v <a href="https://github.com/korczis/prismatic-majordomus/blob/370fdf4cc57608d09c7b49f54aad6f81a1e750e2/test/cases/94_use_cases.sh" class="break-all font-mono text-fg-brand underline inline-block py-1">test/cases/94_use_cases.sh</a>, který spouští každý scénář a odmítne krok, jehož zaznamenaný výstup není tím, co vyprodukoval.</p>
+    <ol class="mt-4 space-y-4"><li id="step-init" class="min-w-0 scroll-mt-20 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span class="font-mono text-xs text-body-subtle">1</span><a href="https://majordomus.dev/cs/commands/init/" class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand hover:underline">$ majordomus init --personal</a>
+          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 0</span></div><p class="mt-2 text-sm text-body">táž vrstva, kterou vytvoří prostý init; rozdíl je v tom, čí je</p><pre class="mt-3 max-h-80 overflow-auto whitespace-pre-wrap break-words rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading" tabindex="0"><code>created
+  .ai/README.md
+  .ai/manifest.yaml
+  .ai/repo/README.md
+  .ai/repo/policy.yaml
+  .ai/repo/scope.yaml
+  .ai/repo/profiles/
+  .ai/repo/prompts/
+  .ai/repo/profiles/README.md
+  .ai/repo/prompts/README.md
+  .ai/repo/rules/README.md
+  .ai/repo/rules/project/README.md
+  .ai/repo/rules/vendor/majordomus/
+  .ai/repo/knowledge/
+  .ai/repo/knowledge/curated/README.md
+  .ai/repo/knowledge/candidates/README.md
+  .ai/repo/workflows/
+  .ai/repo/skills/
+  .ai/repo/adrs/
+  .ai/repo/use-cases/
+  .ai/repo/applications/
+  .ai/repo/why/
+  .ai/repo/features/
+  .ai/repo/sessions/README.md
+  .ai/repo/deployments/README.md
+  .ai/repo/project/README.md
+  &lt;repo&gt;/.git/info/exclude:/.ai/
+scope: no stack recognised at the root (looked for mix.exs, Cargo.toml); seeded only the entries every repository shares; add your own to .ai/repo/scope.yaml
+OK   personal    .ai/ — tracked nowhere, ignored through &lt;repo&gt;/.git/info/exclude, and absent from git status (1 path(s) covered)
+personal: this layer is yours; nothing the repository shares was changed. The cover is &lt;repo&gt;/.git/info/exclude
+personal: it stays on this machine. To propose it to the team: majordomus init --extend --shared
+local state: .ai/local/state/ (ignored by git; this checkout&#39;s own)
+next: majordomus update      # generate the provider instruction files named in the policy
+next: majordomus doctor      # verify nothing is declared that is not wired
+hooks are not installed by init; add these two lines yourself, doctor verifies them:
+  pre-commit: majordomus doctor || exit $?
+  pre-push:   majordomus finish --check || exit $?</code></pre>
+        <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 0</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /^OK personal/</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /personal: this layer is yours; nothing the repository shares was changed/</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">file_exists .ai/repo/policy.yaml</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">file_exists .ai/manifest.yaml</li></ul>
+      </li><li id="step-update" class="min-w-0 scroll-mt-20 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span class="font-mono text-xs text-body-subtle">2</span><a href="https://majordomus.dev/cs/commands/update/" class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand hover:underline">$ majordomus update</a>
+          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 0</span></div><p class="mt-2 text-sm text-body">soubory providerů v kořeni jsou pokryty dříve, než jsou zapsány</p><pre class="mt-3 max-h-80 overflow-auto whitespace-pre-wrap break-words rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading" tabindex="0"><code>create AGENTS.md
+create CLAUDE.md
+create GEMINI.md
+generated 3 target(s) from policy c70f672d1b5f; each carries its own stamp</code></pre>
+        <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 0</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">file_exists AGENTS.md</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">file_exists CLAUDE.md</li></ul>
+      </li><li id="step-doctor" class="min-w-0 scroll-mt-20 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span class="font-mono text-xs text-body-subtle">3</span><a href="https://majordomus.dev/cs/commands/doctor/" class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand hover:underline">$ majordomus doctor</a>
+          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 10</span></div><p class="mt-2 text-sm text-body">doctor drží vrstvu při jejím tvrzení při každém běhu; dva řádky hooku zbývá přidat vám, což je jediná věc, o které je jeho exit kód</p><pre class="mt-3 max-h-80 overflow-auto whitespace-pre-wrap break-words rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading" tabindex="0"><code>OK   knowledge   graph — buildable here: 0 node(s), 0 edge(s), compiled into a temporary file and removed; no stored index to go stale
+OK   knowledge   records — 0 record(s) valid against knowledge/v1; every reference resolves  [reproduce: majordomus knowledge check]
+OK   knowledge   candidates — 0 await review, cap 40
+OK   layout      .ai/manifest.yaml — schema ai-repository/v1
+OK   layout      .ai/repo/scope.yaml — version 1; 14 in pathspec(s); every key is one the schema declares
+OK   layout      .ai/local/ — ignored, and nothing under it is tracked
+OK   personal    .ai/ — tracked nowhere, ignored through &lt;repo&gt;/.git/info/exclude, and absent from git status (7 path(s) covered)
+OK   layout      .ai/ — every section the manifest names exists; the layer is readable without the tool
+OK   layout      .ai/repo/prompts — present
+OK   layout      .ai/local/state/handovers — present, 0 record(s)
+OK   layout      .ai/local/state/checkpoints — present, 0 record(s)
+OK   records     ledger.jsonl — every line is a well-formed event
+OK   policy      39 key(s) — every policy value the code reads is declared, with no reader-side default
+INFO bootstrap   README.md — not asked to name AGENTS.md: the layer is personal, and the README is the project&#39;s
+OK   bootstrap   3 projection(s) — each points at .ai/README.md, carries no rule of its own and names only rules in force
+OK   catalogue   0 use case(s), 0 application(s) — every command, doctrine, claim, responsibility, category, setup and cross-reference resolves, both directions
+OK   context     .ai/ — 19 context document(s) carry the contract; ids unique, references resolve, no final document superseded, no cycle  [reproduce: majordomus context validate]
+OK   policy      .ai/repo/policy.yaml — parsed, version 1
+OK   profiles    4 files — parsed; default &#39;implementation&#39; exists
+INFO adr         .ai/repo/adrs/ — no decisions; nothing to validate
+OK   records     decisions.md — every entry is attributable
+INFO project     .ai/repo/project — no canonical project model here; nothing to validate
+OK   command     surface — 30 public command(s), reconciled against the dispatch table  [reproduce: majordomus doctor]
+OK   doctrine    50 of 61 rule(s) carry a validator — validator, dispatch, propagation, test and CI resolve for every one of the 50; the remaining 11 declare no validator and this check does not examine them
+FAIL wiring      doctor-on-commit — hook .git/hooks/pre-commit does not exist  [reproduce: ls -l .git/hooks/pre-commit]
+FAIL wiring      finish-on-push — hook .git/hooks/pre-push does not exist  [reproduce: ls -l .git/hooks/pre-push]
+OK   command     coverage — every public command is exercised and refuted  [reproduce: bash test/run.sh 31_command_coverage]
+OK   resolver    handovers — no record for this worktree and branch (absence, not a stale match)  [reproduce: majordomus handover --resolve]
+OK   lifecycle   activity — 0 episode(s) opened here; too few to judge whether the writers stopped
+OK   knowledge   wiring — the close path and the compaction adapter call the deriver
+OK   knowledge   deriver — no episode has closed here; nothing to judge
+INFO project     .ai/repo/project — no canonical project model here; nothing to validate
+OK   projection  AGENTS.md — content matches its stamp
+OK   projection  CLAUDE.md — content matches its stamp
+OK   projection  GEMINI.md — content matches its stamp
+OK   budget      AGENTS.md — 42 lines, budget 150
+OK   links       AGENTS.md — all references resolve
+OK   counts      AGENTS.md — no hardcoded counts
+OK   context     builder — 21 lines, budget 300  [reproduce: majordomus context]
+OK   capture     share/schemas/majordomus/capture/capture.v1 — 2 file(s) describe majordomus.capture/v1 at the path the identifier derives: the record as JSON Schema, the document as protobuf
+OK   capture     .ai/local/prompts — ignored and untracked
+OK   capture     .ai/local/prompts — no records yet; the archive is empty
+OK   capture     .ai/local/prompts — every prompt is present as all three: the record, the Markdown and the YAML
+OK   prompts     .ai/local/prompts — the archive and every record in it are readable by their owner only
+OK   prompts     .ai/local/prompts — no records yet; the archive is empty
+OK   prompt      4 asset(s) — front matter valid, every token known
+OK   records     open-questions.md — every entry parses
+OK   retention   ledger — 1 lines, cap 5000
+OK   retention   handovers — 0 files, cap 200
+OK   retention   checkpoints — 0 files, cap 500
+OK   retention   sessions — 0 records, cap 500
+INFO project     .ai/repo/project — no canonical project model here; nothing to validate
+OK   rules       .ai/repo/rules/vendor/majordomus — every file matches the manifest (1 (0.30.2))
+OK   rules       61 rule(s) — resolve in one deterministic order; vendored baseline plus project rules, no override — 51 carry a validator, 10 are normative text this tool does not check
+OK   rules       blocking — all 44 blocking rule(s) carry a validator
+OK   schema      rules — 61 rule(s) resolve in one order: the vendored baseline in manifest order, then the project&#39;s, as a dependency graph
+OK   schema      share/kinds.yaml — 36 kind(s); every one that carries metadata declares a schema
+OK   schema      share/schemas — 53 schema(s), each valid JSON and each applied — by a kind, through an allow-list the tool reads, by a validator that names it, or as a generated document&#39;s contract (15)
+OK   records     0 record(s) — every changed_files names work, not generated or local state
+OK   session     .ai/local/session-contexts — ignored and untracked
+OK   session     .ai/local/session-contexts — no working contexts yet; the store is empty
+INFO skill       .ai/repo/skills/ — no skills; nothing to validate
+INFO use-case    30 advisory gap(s) — not covered by an active use case, and the policy does not require it: command:init command:update command:doctor command:watch command:start command:context command:checkpoint command:handover command:check command:finish command:history command:decision command:question command:prompt command:evidence command:skills command:capture command:search command:doctrine command:plan command:version command:session command:knowledge command:adr command:usecase command:rules command:migrate command:recover command:bench command:archive  [reproduce: majordomus usecase coverage]
+OK   use-case    0 of 30 target(s) covered — every public command the policy requires is named and run by an active use case (policy use_cases.coverage)
+INFO env         - — bash &lt;version&gt;, git &lt;version&gt;, jq &lt;version&gt;, shellcheck present
+WARN clone       unpushed — commits on no remote: main(2) — work on one disk is invisible to every other session and cannot be integrated  [reproduce: git push -u origin &lt;branch&gt;]
+OK   clone       uncommitted — no linked worktree, so no uncommitted work can sit in one
+INFO clone       trunk — no remote-tracking branch, so this checkout&#39;s distance from the remote trunk cannot be measured
+·    reasoning   &lt;decided by the advisors and the executable of the recording machine&gt;
+·    budget      doctor — &lt;timed against the policy budget&gt;
+doctor: 2 failure(s)</code></pre>
+        <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 10</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /^OK personal/</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /not asked to name AGENTS.md/</li></ul>
+      </li><li id="step-share" class="min-w-0 scroll-mt-20 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span class="font-mono text-xs text-body-subtle">4</span><a href="https://majordomus.dev/cs/commands/init/" class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand hover:underline">$ majordomus init --extend --shared</a>
+          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 0</span></div><p class="mt-2 text-sm text-body">zkouška obhájila svůj případ: zakrytí je odstraněno a vrstva je na repozitáři ke commitnutí — vámi, až se k tomu rozhodnete</p><pre class="mt-3 max-h-80 overflow-auto whitespace-pre-wrap break-words rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading" tabindex="0"><code>created
+  .gitignore:.ai/local/
+  .gitignore:.ai/repo/**/.tmp.*
+shared: the cover is removed; these paths are now the repository&#39;s to commit, when you choose to:
+  git add .ai/
+  git add AGENTS.md
+  git add CLAUDE.md
+  git add GEMINI.md
+  git add .gitignore
+shared: .ai/local/ stays this checkout&#39;s own, as in every layer
+local state: .ai/local/state/ (ignored by git; this checkout&#39;s own)
+next: majordomus update      # generate the provider instruction files named in the policy
+next: majordomus doctor      # verify nothing is declared that is not wired
+hooks are not installed by init; add these two lines yourself, doctor verifies them:
+  pre-commit: majordomus doctor || exit $?
+  pre-push:   majordomus finish --check || exit $?</code></pre>
+        <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 0</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /shared: the cover is removed/</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /git add .ai//</li></ul>
+      </li></ol>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Proč to nástroj ví</h2>
+    <p class="mt-2 text-sm text-body">Řetězec od této stránky ke kódu: případ užití jmenuje příkazy, pravidla a tvrzení; každé pravidlo se dispatchuje z registru a každé tvrzení jmenuje test, který ho dokazuje; scénář výše provedl příkazy. Nic v tomto řetězci není text o záměru.</p>
+    <ul class="mt-4 grid gap-3 sm:grid-cols-2"><li><a href="https://majordomus.dev/cs/commands/init/" class="flex h-full flex-col gap-1 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span class="font-mono text-sm font-medium text-fg-brand">majordomus init</span><span class="text-sm text-body">Vytvoří vrstvu .ai/ v tomto repozitáři a odmítne přepsat existující.</span></a></li><li><a href="https://majordomus.dev/cs/commands/update/" class="flex h-full flex-col gap-1 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span class="font-mono text-sm font-medium text-fg-brand">majordomus update</span><span class="text-sm text-body">Deterministicky přegeneruje každý instrukční soubor providera z jediné politiky.</span></a></li><li><a href="https://majordomus.dev/cs/commands/doctor/" class="flex h-full flex-col gap-1 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span class="font-mono text-sm font-medium text-fg-brand">majordomus doctor</span><span class="text-sm text-body">Kontroluje jen governance: je samotný Majordomus zdravý a je každé vynucování, které deklaruje, tady skutečně zapojeno?</span></a></li></ul>
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Pravidla, díky nimž platí</h2>
+    <ul class="mt-4 grid gap-3 sm:grid-cols-2"><li><a href="https://majordomus.dev/cs/doctrines/ai-layout-integrity/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="mj-badge mj-badge--blocking relative" data-status="blocking"><span aria-hidden="true">✕</span>blokující</span> </span><span class="text-sm font-medium text-heading">Integrita AI vrstvy</span><span class="text-sm text-body">AI vrstva repozitáře je skutečná: manifest deklaruje formát, který tento spustitelný soubor čte, a každá sekce, kterou jmenuje, existuje, lokální část checkoutu je ignorovaná gitem a nic pod ní není sledováno a pod cestou .majordomus/ z doby před .ai nezůstala žádná projektová data.</span></a></li></ul>
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Uplatněné záruky</h2>
+    <ul class="mt-4 grid gap-3 sm:grid-cols-2"><li><a href="https://majordomus.dev/cs/guarantees/personal-layer-changes-nothing-shared/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed"><span aria-hidden="true">○</span>zaručeno</span> </span><span class="text-sm text-heading">Vrstva nainstalovaná s --personal je vlastní jednomu člověku ve sdíleném repozitáři: nemění žádný sledovaný soubor, žádný řádek .gitignore ani nic, co ukazuje git status, a příkaz, který toto tvrzení činí, to ověřuje</span></a></li><li><a href="https://majordomus.dev/cs/guarantees/local-state-ignored/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed"><span aria-hidden="true">○</span>zaručeno</span> </span><span class="text-sm text-heading">Stav lokální pro checkout žije pod .ai/local/, git ho ignoruje a v čerstvém klonu či worktree chybí</span></a></li></ul>
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Související případy užití</h2>
+    <p class="mt-2 text-xs text-body-subtle">Vypočteno z toho, co sdílejí: tvrzení, pravidla, příkazy, kategorie, aplikace. Tento seznam nikdo neudržuje.</p>
+    <ul class="mt-4 grid gap-3 sm:grid-cols-2"><li><a href="https://majordomus.dev/cs/use-cases/extend-what-the-executable-serves/" class="flex h-full flex-col gap-1 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span class="text-sm font-medium text-heading">Rozšiřte, co spustitelný soubor poskytuje, přidáním souboru, nikdy jeho přebuildováním</span><span class="text-sm text-body">Přidejte do .ai/ pravidlo, prompt nebo uzel znalostí a nechte je objevit se jako zdroj MCP, HTTP route a položka reference, se stejným binárním souborem.</span></a></li><li><a href="https://majordomus.dev/cs/use-cases/classify-what-belongs-in-the-context/" class="flex h-full flex-col gap-1 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span class="text-sm font-medium text-heading">Určit jako data, co patří do AI kontextu</span><span class="text-sm text-body">Přečtěte si deklarovanou politiku rozsahu repozitáře, zjistěte, které cesty jsou v indexu a které mimo něj, a nechte ji uplatňovat doctor a index znalostí místo pevně zadaného seznamu.</span></a></li><li><a href="https://majordomus.dev/cs/use-cases/install-the-tool-in-one-command/" class="flex h-full flex-col gap-1 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span class="text-sm font-medium text-heading">Nainstalovat nástroj jedním příkazem na stroji bez toolchainu</span><span class="text-sm text-body">Vložte jeden řádek, získejte ověřenou binárku pro tento stroj a spusťte majordomus init — žádný git, žádný Rust, žádný Node, žádný Python, žádný root a žádná možnost nainstalovat archiv, jehož digest nesouhlasí.</span></a></li><li><a href="https://majordomus.dev/cs/use-cases/say-what-the-tool-is-for/" class="flex h-full flex-col gap-1 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span class="text-sm font-medium text-heading">Řekněte jednou, k čemu vaše práce slouží, a nechte to říkat každý povrch</span><span class="text-sm text-body">Zaznamenejte provozní způsob selhání jako jeden soubor a nechte na něj odpovídat příkazovou řádku, API, MCP i web, aniž by se kdekoli registroval.</span></a></li><li><a href="https://majordomus.dev/cs/use-cases/serve-the-layer-to-ai-clients/" class="flex h-full flex-col gap-1 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span class="text-sm font-medium text-heading">Servírujte vrstvu AI repozitáře každému klientu AI přes jeden sdílený server</span><span class="text-sm text-body">Otevřete repozitář v kterémkoli klientu, pro nějž nástroj deklaruje providera (docs/generated/providers.md), a nechte každého číst stejná pravidla, prompty a znalosti přes MCP z jednoho procesu, přičemž se navzájem vidí.</span></a></li></ul>
+
+  </div>
+
+  <aside class="min-w-0 space-y-4 lg:sticky lg:top-24 lg:self-start">
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">provenance</h2>
+      <dl class="space-y-1 text-xs">
+        <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">zdroj</dt><dd class="min-w-0 break-words font-mono text-heading">.ai/repo/use-cases/use-the-tool-as-your-own-in-a-shared-repository.md</dd></div>
+        <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">status</dt><dd class="font-mono text-heading">aktivní</dd></div>
+        <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">cíl</dt><dd class="font-mono text-heading">zaručeno</dd></div>
+        <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">pozorováno</dt><dd class="font-mono text-heading">zaručeno</dd></div>
+      </dl>
+    </div>
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">kde platí</h2>
+      <ul class="space-y-2 text-sm"><li><a href="https://majordomus.dev/cs/applications/repository-opened-in-ai-clients/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Repozitář otevřený v AI klientech, nejen lidmi</a></li></ul>
+    </div>
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">odpovědnosti</h2>
+      <ul class="space-y-1 text-sm"><li><a href="https://majordomus.dev/cs/supervises/layer/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Vrstva</a></li><li><a href="https://majordomus.dev/cs/supervises/doctor/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Doctor</a></li></ul>
+    </div>
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Začínáme a převzetí</h2>
+      <ul class="space-y-1 text-sm"><li><a href="https://majordomus.dev/cs/use-cases/adopt-an-existing-repository/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Převezměte repozitář, který už má vlastní pravidla</a></li><li><a href="https://majordomus.dev/cs/use-cases/install-the-tool-in-one-command/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Nainstalujte nástroj jedním příkazem na stroji bez toolchainu</a></li><li><a href="https://majordomus.dev/cs/use-cases/know-which-tool-is-running/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Před důvěrou v diagnózu zkontrolujte verzi</a></li><li><a href="https://majordomus.dev/cs/use-cases/migrate-from-the-old-layout/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Přesuňte repozitář z rozložení před .ai na vrstvu</a></li><li><a href="https://majordomus.dev/cs/use-cases/use-the-tool-as-your-own-in-a-shared-repository/" class="block rounded px-2 py-1 bg-brand-softer font-medium text-fg-brand-strong" aria-current="page">Používejte nástroj jako vlastní ve sdíleném repozitáři a navrhněte ho týmu, až obhájí svůj přínos</a></li></ul>
+      <a href="https://majordomus.dev/cs/use-cases/" class="mt-3 block text-xs text-fg-brand hover:underline">každý případ užití, podle kategorie</a>
+    </div>
+  </aside>
+</div>
+
+</div>
+
+</main>
+
+<footer id="site-map" class="border-t border-default bg-neutral-primary-soft" aria-label="Mapa webu">
+  <div class="mx-auto w-full max-w-screen-xl p-4 md:py-8">
+    <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
+      
+      <div class="min-w-0 scroll-mt-20" id="site-map-1">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/cs/domains/" class="hover:text-heading hover:underline">Produkt</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/cs/domains/" class="hover:text-heading hover:underline">Produkt podle oblastí</a></li><li><a href="https://majordomus.dev/cs/why/" class="hover:text-heading hover:underline">Proč existuje: způsoby selhání</a></li><li><a href="https://majordomus.dev/cs/features/" class="hover:text-heading hover:underline">Funkce</a></li><li><a href="https://majordomus.dev/cs/features/matrix/" class="hover:text-heading hover:underline">Funkce a rozhraní</a></li><li><a href="https://majordomus.dev/cs/use-cases/" class="hover:text-heading hover:underline">Případy užití</a></li><li><a href="https://majordomus.dev/cs/applications/" class="hover:text-heading hover:underline">Aplikace</a></li><li><a href="https://majordomus.dev/cs/skills/" class="hover:text-heading hover:underline">Dovednosti</a></li><li><a href="https://majordomus.dev/cs/supervises/" class="hover:text-heading hover:underline">Na co dohlíží</a></li><li><a href="https://majordomus.dev/cs/docs/majordomus-ui/" class="hover:text-heading hover:underline">UI produktu</a></li><li><a href="https://majordomus.dev/cs/docs/cockpit/" class="hover:text-heading hover:underline">Cockpit</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0 scroll-mt-20" id="site-map-2">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/cs/method/" class="hover:text-heading hover:underline">Jak funguje</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/cs/method/" class="hover:text-heading hover:underline">Doktrína, politika, pravidlo, vynucování</a></li><li><a href="https://majordomus.dev/cs/method/axes/" class="hover:text-heading hover:underline">Čtyři osy</a></li><li><a href="https://majordomus.dev/cs/method/argument/" class="hover:text-heading hover:underline">Celá argumentace</a></li><li><a href="https://majordomus.dev/cs/docs/concepts/" class="hover:text-heading hover:underline">Slovník</a></li><li><a href="https://majordomus.dev/cs/policy/" class="hover:text-heading hover:underline">Kanonická politika</a></li><li><a href="https://majordomus.dev/cs/context/" class="hover:text-heading hover:underline">Kontrakty adresářů</a></li><li><a href="https://majordomus.dev/cs/sessions/" class="hover:text-heading hover:underline">Relace</a></li><li><a href="https://majordomus.dev/cs/docs/planning/" class="hover:text-heading hover:underline">Jak funguje plánování</a></li><li><a href="https://majordomus.dev/cs/docs/design/" class="hover:text-heading hover:underline">Design</a></li><li><a href="https://majordomus.dev/cs/kit/" class="hover:text-heading hover:underline">Sada komponent</a></li><li><a href="https://majordomus.dev/cs/docs/surfaces/" class="hover:text-heading hover:underline">Jak se odvozují rozhraní</a></li><li><a href="https://majordomus.dev/cs/architecture/" class="hover:text-heading hover:underline">Jak je tento web postaven</a></li><li><a href="https://majordomus.dev/cs/docs/product/" class="hover:text-heading hover:underline">Jak se odvozuje stránka produktu</a></li><li><a href="https://majordomus.dev/cs/proof-carrying-documentation/" class="hover:text-heading hover:underline">Článek: dokumentace nesoucí důkaz</a></li><li><a href="https://majordomus.dev/cs/everything-followed/" class="hover:text-heading hover:underline">Článek: všechno, dohledatelně</a></li><li><a href="https://majordomus.dev/cs/dokumentace-kterou-lze-odmitnout/" class="hover:text-heading hover:underline">Stejná argumentace, napsaná česky</a></li><li><a href="https://majordomus.dev/cs/teze/" class="hover:text-heading hover:underline">Esej v češtině: sázka na vrstvu, ne na model</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0 scroll-mt-20" id="site-map-3">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/cs/challenge/" class="hover:text-heading hover:underline">Důkazy</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/cs/challenge/" class="hover:text-heading hover:underline">Výzva: sledujte, jak odmítne agenta</a></li><li><a href="https://majordomus.dev/cs/guarantees/" class="hover:text-heading hover:underline">Záruky</a></li><li><a href="https://majordomus.dev/cs/evidence/" class="hover:text-heading hover:underline">Graf důkazů</a></li><li><a href="https://majordomus.dev/cs/contract/" class="hover:text-heading hover:underline">Kontrakt dokončení</a></li><li><a href="https://majordomus.dev/cs/doctrines/" class="hover:text-heading hover:underline">Doktrína</a></li><li><a href="https://majordomus.dev/cs/adrs/" class="hover:text-heading hover:underline">Rozhodnutí</a></li><li><a href="https://majordomus.dev/cs/rules/" class="hover:text-heading hover:underline">Platná pravidla</a></li><li><a href="https://majordomus.dev/cs/registry/benchmarks/" class="hover:text-heading hover:underline">Měření výkonu</a></li><li><a href="https://majordomus.dev/cs/economics/" class="hover:text-heading hover:underline">Ekonomika tokenů</a></li><li><a href="https://majordomus.dev/cs/limitations/" class="hover:text-heading hover:underline">Omezení</a></li><li><a href="https://majordomus.dev/cs/roadmap/" class="hover:text-heading hover:underline">Plán rozvoje</a></li><li><a href="https://majordomus.dev/cs/plan/" class="hover:text-heading hover:underline">Milníky a úkoly</a></li><li><a href="https://majordomus.dev/cs/plan/dag/" class="hover:text-heading hover:underline">Graf závislostí</a></li><li><a href="https://majordomus.dev/cs/changelog/" class="hover:text-heading hover:underline">Changelog</a></li><li><a href="https://majordomus.dev/cs/docs/dogfooding/" class="hover:text-heading hover:underline">Dogfooding</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0 scroll-mt-20" id="site-map-4">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/cs/docs/" class="hover:text-heading hover:underline">Dokumenty</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/cs/docs/" class="hover:text-heading hover:underline">Všechny dokumenty</a></li><li><a href="https://majordomus.dev/cs/docs/install/" class="hover:text-heading hover:underline">Instalace</a></li><li><a href="https://majordomus.dev/cs/commands/" class="hover:text-heading hover:underline">Příkazy</a></li><li><a href="https://majordomus.dev/cs/profiles/" class="hover:text-heading hover:underline">Profily provádění</a></li><li><a href="https://majordomus.dev/cs/docs/cli/" class="hover:text-heading hover:underline">Přehled příkazů</a></li><li><a href="https://majordomus.dev/cs/docs/api/" class="hover:text-heading hover:underline">HTTP API</a></li><li><a href="https://majordomus.dev/rustdoc/" class="hover:text-heading hover:underline">Rust API</a></li><li><a href="https://majordomus.dev/cs/registry/mcp/" class="hover:text-heading hover:underline">Rozhraní MCP</a></li><li><a href="https://majordomus.dev/cs/docs/schemas/" class="hover:text-heading hover:underline">Schémata souborů</a></li><li><a href="https://majordomus.dev/cs/registry/" class="hover:text-heading hover:underline">Registr</a></li><li><a href="https://majordomus.dev/cs/map/" class="hover:text-heading hover:underline">Mapa programu</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/370fdf4cc57608d09c7b49f54aad6f81a1e750e2/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/370fdf4cc57608d09c7b49f54aad6f81a1e750e2/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/370fdf4cc57608d09c7b49f54aad6f81a1e750e2/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+        </ul>
+      </div>
+    </div>
+    <hr class="my-6 border-default sm:mx-auto lg:my-8"><div class="space-y-4">
+    <div class="sm:flex sm:items-center sm:justify-between">
+      <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
+    </div>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.30.2 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/370fdf4cc57608d09c7b49f54aad6f81a1e750e2" class="font-mono underline">370fdf4</a> · inputs <span class="font-mono">0e1fe73c6a52</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    </div>
+  </div>
+</footer>
+<dialog id="site-search" data-site-search data-index="https://majordomus.dev/docs/index.json" aria-labelledby="site-search-label" class="m-0 h-dvh max-h-none w-full max-w-none border-0 bg-neutral-primary p-0 text-body backdrop:bg-neutral-primary-strong/80 sm:mx-auto sm:mt-20 sm:h-auto sm:max-h-[75vh] sm:max-w-2xl sm:rounded-base sm:border sm:border-default sm:shadow-lg">
+  <div class="flex h-full max-h-[inherit] flex-col">
+    <div class="flex items-center gap-2 border-b border-default p-3">
+      <label id="site-search-label" for="site-search-input" class="sr-only">Hledat na tomto webu</label>
+      <svg class="h-5 w-5 shrink-0 text-body-subtle" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z"/></svg>
+      <input id="site-search-input" type="search" role="combobox" aria-expanded="false" aria-controls="site-search-results" aria-autocomplete="list" aria-describedby="site-search-status" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go" placeholder="Pravidlo, rozhodnutí, příkaz, stránka…" class="block min-w-0 flex-1 rounded-base border border-default-medium bg-neutral-secondary-medium px-3 py-2.5 text-base text-heading focus:border-brand focus:ring-brand sm:text-sm">
+      <button type="button" data-site-search-close class="inline-flex h-10 shrink-0 items-center rounded-base border border-default px-3 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">Zavřít<span class="sr-only"> vyhledávání</span></button>
+    </div>
+    <p id="site-search-status" class="px-4 pt-3 text-xs text-body-subtle" aria-live="polite" data-site-search-status>Prohledává názvy a popisy všech stránek, které tento web publikuje.</p>
+    <div id="site-search-results" role="listbox" aria-label="Odpovídající stránky" class="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain px-2 py-2" data-site-search-results></div>
+    <template data-site-search-item><a tabindex="-1" class="block rounded-base px-3 py-2 hover:bg-neutral-secondary-medium aria-selected:bg-neutral-secondary-medium aria-selected:ring-2 aria-selected:ring-brand"><span class="block break-words font-medium text-heading" data-slot="title"></span><span class="block break-all font-mono text-xs text-body-subtle" data-slot="meta"></span><span class="mt-0.5 line-clamp-2 text-sm text-body" data-slot="description"></span></a></template>
+  </div>
+</dialog>
+
+<script defer src="https://majordomus.dev/js/nav.js"></script>
+<script defer src="https://majordomus.dev/js/search.js"></script>
+<script src="https://majordomus.dev/js/theme.js"></script>
+<script defer src="https://majordomus.dev/js/alpine.min.js"></script>
+
+</body>
+</html>

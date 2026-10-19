@@ -1,0 +1,936 @@
+<!doctype html>
+<html lang="cs" class="scroll-smooth" data-theme-key="color-theme" data-theme-class="dark" data-design="944a896b2646">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jak Majordomus odvozuje své povrchy — Prismatic Majordomus</title>
+<meta name="description" content="jak do sebe systém zapadá: kanonický stav, objevování, typované registry, odvozené modely, governance a důkazy a každý povrch z nich promítnutý — co se píše, objevuje, odvozuje, pozoruje a usuzuje, schopnost a pravidlo vystopované od začátku do konce, matice generování, audit tvrzení s odkazy na soubory a zbývající architektonický dluh">
+<link rel="canonical" href="https://majordomus.dev/cs/docs/surfaces/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Prismatic Majordomus">
+<meta property="og:title" content="Jak Majordomus odvozuje své povrchy — Prismatic Majordomus">
+<meta property="og:description" content="jak do sebe systém zapadá: kanonický stav, objevování, typované registry, odvozené modely, governance a důkazy a každý povrch z nich promítnutý — co se píše, objevuje, odvozuje, pozoruje a usuzuje, schopnost a pravidlo vystopované od začátku do konce, matice generování, audit tvrzení s odkazy na soubory a zbývající architektonický dluh">
+<meta property="og:url" content="https://majordomus.dev/cs/docs/surfaces/">
+<meta property="og:image" content="https://majordomus.dev/images/social-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
+<link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=9d5fef6c2ded00e88e3d">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
+<script>(function(){try{var K="mj-lang",L=["en","cs"],S="en",B="https://majordomus.dev",d=document.documentElement,k;try{k=localStorage.getItem(K)}catch(e){}
+document.addEventListener("click",function(e){var a=e.target.closest&&e.target.closest("[data-i18n-lang]");if(a)try{localStorage.setItem(K,a.getAttribute("data-i18n-lang"))}catch(x){}},true);
+if(d.lang!==S)return;var r=document.referrer;if(r&&r.indexOf(location.origin)===0)return;
+var p=(k?[k]:navigator.languages||[navigator.language||""]).map(function(l){return String(l).slice(0,2).toLowerCase()});
+for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=location.href;if(u.indexOf(B)!==0)return;location.replace(B+"/"+p[i]+u.slice(B.length).replace(/^(?!\/)/,"/"));return}}}catch(e){}})();</script>
+
+<link rel="alternate" hreflang="en" href="https://majordomus.dev/docs/surfaces/">
+<link rel="alternate" hreflang="cs" href="https://majordomus.dev/cs/docs/surfaces/">
+<link rel="alternate" hreflang="x-default" href="https://majordomus.dev/docs/surfaces/">
+</head>
+<body class="min-h-screen bg-neutral-primary text-body antialiased">
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white">Přeskočit na obsah</a>
+
+
+
+<nav class="sticky top-0 z-20 w-full border-b border-default bg-neutral-primary text-base" aria-label="Hlavní">
+  <div class="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between gap-x-2 gap-y-2 px-3 py-3 sm:p-4">
+    <a href="https://majordomus.dev/cs/" class="flex min-w-0 items-center gap-1.5 sm:gap-2.5 rtl:space-x-reverse">
+      <span class="inline-flex h-6 w-6 shrink-0 text-heading sm:h-7 sm:w-7 [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 0.30.2 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span>
+      <span class="self-center whitespace-nowrap text-base font-semibold text-heading sm:text-xl">Majordomus</span>
+      
+      
+      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading" data-release="0.30.2">v0.30.2</span>
+      
+    </a>
+    <div class="flex items-center gap-1 sm:gap-2 md:order-2"><button type="button" data-site-search-open hidden aria-haspopup="dialog" aria-controls="site-search" aria-expanded="false" aria-keyshortcuts="/ Control+K Meta+K" class="inline-flex h-10 min-w-10 items-center justify-center gap-2 rounded-base border border-default px-2.5 text-sm font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">
+        <svg class="h-5 w-5 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z"/></svg> <span class="sr-only lg:not-sr-only">Hledat</span> <kbd class="hidden rounded border border-default-medium px-1.5 font-mono text-xs text-body-subtle lg:inline" aria-hidden="true">/</kbd>
+      </button>
+      <div class="relative" data-i18n-switch>
+  <button type="button" aria-label="Jazyk" data-dropdown-toggle="language-menu" data-dropdown-placement="bottom-end" aria-haspopup="true" aria-controls="language-menu" aria-expanded="false" class="inline-flex h-10 items-center justify-center gap-1.5 rounded-base border border-default px-2.5 text-sm font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">
+    <svg class="h-5 w-5 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0 0c2.2-2.4 3.3-5.4 3.3-9S14.2 5.4 12 3m0 18c-2.2-2.4-3.3-5.4-3.3-9S9.8 5.4 12 3M3.5 9h17M3.5 15h17"/></svg>
+    <span class="font-mono text-xs uppercase" translate="no" data-i18n-current-label>cs</span>
+    <svg class="h-2.5 w-2.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg>
+  </button>
+  <div id="language-menu" class="absolute right-0 top-full z-50 mt-2 hidden w-44 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+    <ul class="p-2 text-sm font-medium text-body" translate="no">
+      <li><a href="https://majordomus.dev/docs/surfaces/" hreflang="en" lang="en" data-i18n-keep data-i18n-current data-i18n-lang="en" class="group flex w-full items-center justify-between gap-3 rounded-sm px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading aria-[current=page]:text-heading"><span class="flex items-center gap-2"><span class="w-6 font-mono text-xs uppercase text-body-subtle">en</span>English</span><svg class="invisible h-4 w-4 text-fg-brand group-aria-[current=page]:visible" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 11.917 9.724 16.5 19 7.5"/></svg></a></li>
+      <li><a href="https://majordomus.dev/cs/docs/surfaces/" hreflang="cs" lang="cs" data-i18n-keep data-i18n-current data-i18n-lang="cs" class="group flex w-full items-center justify-between gap-3 rounded-sm px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading aria-[current=page]:text-heading" aria-current="page"><span class="flex items-center gap-2"><span class="w-6 font-mono text-xs uppercase text-body-subtle">cs</span>Čeština</span><svg class="invisible h-4 w-4 text-fg-brand group-aria-[current=page]:visible" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 11.917 9.724 16.5 19 7.5"/></svg></a></li>
+    </ul>
+  </div>
+</div>
+
+      <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Přepnout tmavý režim">
+  <svg id="theme-toggle-dark-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+  <svg id="theme-toggle-light-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+</button>
+<a href="https://majordomus.dev/ui/" data-nav-primary="ui" class="hidden rounded-base border border-brand-subtle px-3 py-2 text-sm font-semibold text-fg-brand hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary xl:inline-flex">UI produktu</a>
+      <a href="https://github.com/korczis/prismatic-majordomus" class="hidden rounded-base border border-default px-3 py-2 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary sm:inline-flex">GitHub</a>
+      <a href="https://majordomus.dev/cs/getting-started/" class="hidden rounded-base bg-brand px-3 py-2 text-sm font-semibold text-white hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium md:inline-flex">Začít</a>
+      <button data-collapse-toggle="navbar-main" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-base p-2 text-sm text-body hover:bg-neutral-secondary-soft hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:hidden" aria-controls="navbar-main" aria-expanded="false">
+        <span class="sr-only">Otevřít hlavní nabídku</span> <svg class="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h14"/></svg>
+      </button>
+    </div><div class="hidden w-full min-w-0 md:order-1 md:block md:w-auto" id="navbar-main">
+      <ul class="mt-4 flex flex-col rounded-base border border-default bg-neutral-secondary-soft p-4 font-medium md:mt-0 md:flex-row md:flex-wrap md:items-center md:gap-x-2 md:gap-y-1 md:border-0 md:bg-neutral-primary md:p-0">
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          <button id="nav-1" data-dropdown-toggle="nav-menu-1" type="button" aria-controls="nav-menu-1" class="flex w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Produkt<svg class="ms-1.5 h-3 w-3 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-1" class="hidden md:absolute md:left-0 md:top-full md:z-10 md:mt-2 md:w-64 md:rounded-base md:border md:border-default-medium md:bg-neutral-primary-medium md:shadow-lg">
+            <ul class="pb-2 ps-3 text-sm font-medium text-body md:p-2" aria-labelledby="nav-1">
+              <li><a href="https://majordomus.dev/cs/domains/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Produkt podle oblastí</a></li><li><a href="https://majordomus.dev/cs/why/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Proč existuje: způsoby selhání</a></li><li><a href="https://majordomus.dev/cs/features/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Funkce</a></li><li><a href="https://majordomus.dev/cs/use-cases/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Případy užití</a></li><li><a href="https://majordomus.dev/ui/" data-nav-snapshot="ui" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">UI produktu <span data-nav-snapshot-note class="text-xs text-body-subtle">&middot; snímek</span></a></li><li><a href="https://majordomus.dev/cs/docs/cockpit/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Cockpit</a></li>
+              <li class="mt-1 border-t border-default pt-1"><a href="#site-map-1" class="block rounded px-3 py-2 text-body-subtle hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Všech 10 stránek v mapě webu &darr;</a></li>
+            </ul>
+          </div>
+        </li>
+        
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          <button id="nav-2" data-dropdown-toggle="nav-menu-2" type="button" aria-controls="nav-menu-2" class="flex w-full items-center justify-between rounded px-3 py-2 text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Jak funguje<svg class="ms-1.5 h-3 w-3 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-2" class="hidden md:absolute md:left-0 md:top-full md:z-10 md:mt-2 md:w-64 md:rounded-base md:border md:border-default-medium md:bg-neutral-primary-medium md:shadow-lg">
+            <ul class="pb-2 ps-3 text-sm font-medium text-body md:p-2" aria-labelledby="nav-2">
+              <li><a href="https://majordomus.dev/cs/method/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Doktrína, politika, pravidlo, vynucování</a></li><li><a href="https://majordomus.dev/cs/method/argument/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Celá argumentace</a></li><li><a href="https://majordomus.dev/cs/docs/concepts/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Slovník</a></li><li><a href="https://majordomus.dev/cs/sessions/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Relace</a></li>
+              <li class="mt-1 border-t border-default pt-1"><a href="#site-map-2" class="block rounded px-3 py-2 text-body-subtle hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Všech 17 stránek v mapě webu &darr;</a></li>
+            </ul>
+          </div>
+        </li>
+        
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          <button id="nav-3" data-dropdown-toggle="nav-menu-3" type="button" aria-controls="nav-menu-3" class="flex w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Důkazy<svg class="ms-1.5 h-3 w-3 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-3" class="hidden md:absolute md:left-0 md:top-full md:z-10 md:mt-2 md:w-64 md:rounded-base md:border md:border-default-medium md:bg-neutral-primary-medium md:shadow-lg">
+            <ul class="pb-2 ps-3 text-sm font-medium text-body md:p-2" aria-labelledby="nav-3">
+              <li><a href="https://majordomus.dev/cs/challenge/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Výzva: sledujte, jak odmítne agenta</a></li><li><a href="https://majordomus.dev/cs/guarantees/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Záruky</a></li><li><a href="https://majordomus.dev/cs/evidence/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Graf důkazů</a></li><li><a href="https://majordomus.dev/cs/limitations/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Omezení</a></li><li><a href="https://majordomus.dev/cs/roadmap/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Plán rozvoje</a></li>
+              <li class="mt-1 border-t border-default pt-1"><a href="#site-map-3" class="block rounded px-3 py-2 text-body-subtle hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Všech 15 stránek v mapě webu &darr;</a></li>
+            </ul>
+          </div>
+        </li>
+        
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          <button id="nav-4" data-dropdown-toggle="nav-menu-4" type="button" aria-controls="nav-menu-4" class="flex w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Dokumenty<svg class="ms-1.5 h-3 w-3 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-4" class="hidden md:absolute md:left-0 md:top-full md:z-10 md:mt-2 md:w-64 md:rounded-base md:border md:border-default-medium md:bg-neutral-primary-medium md:shadow-lg">
+            <ul class="pb-2 ps-3 text-sm font-medium text-body md:p-2" aria-labelledby="nav-4">
+              <li><a href="https://majordomus.dev/cs/docs/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Všechny dokumenty</a></li><li><a href="https://majordomus.dev/cs/docs/install/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Instalace</a></li><li><a href="https://majordomus.dev/cs/commands/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Příkazy</a></li><li><a href="https://majordomus.dev/cs/docs/api/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">HTTP API</a></li><li><a href="https://majordomus.dev/cs/registry/mcp/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Rozhraní MCP</a></li>
+              <li class="mt-1 border-t border-default pt-1"><a href="#site-map-4" class="block rounded px-3 py-2 text-body-subtle hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Všech 11 stránek v mapě webu &darr;</a></li>
+            </ul>
+          </div>
+        </li>
+        
+        
+        <li class="mt-3 md:hidden"><a href="https://majordomus.dev/ui/" data-nav-primary="ui" class="block rounded-base border border-brand-subtle px-3 py-2 text-center font-semibold text-fg-brand hover:bg-neutral-tertiary">UI produktu</a></li>
+        <li class="mt-3 md:hidden"><a href="https://majordomus.dev/cs/getting-started/" class="block rounded-base bg-brand px-3 py-2 text-center font-semibold text-white hover:bg-brand-strong">Začít</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+<div data-i18n-notice class="border-b border-default bg-neutral-secondary-soft">
+  <p class="mx-auto max-w-screen-xl px-4 py-2 text-xs text-body">Tato stránka byla automaticky přeložena z angličtiny, jediného jazyka, ve kterém se tento web píše. <a href="https://majordomus.dev/docs/surfaces/" hreflang="en" lang="en" data-i18n-keep data-i18n-lang="en" class="font-medium underline">Číst originál</a>.</p>
+</div>
+<main id="main">
+<div class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+    <nav class="flex" aria-label="Drobečková navigace">
+  <ol class="inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2 rtl:space-x-reverse">
+    <li class="inline-flex items-center"><a href="https://majordomus.dev/cs/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Domů</a></li><li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="https://majordomus.dev/cs/docs/" class="font-medium text-body hover:text-fg-brand">Dokumentace</a></li>
+    <li aria-hidden="true">/</li>
+    <li aria-current="page" class="font-medium text-heading">Jak Majordomus odvozuje své povrchy</li>
+  </ol>
+</nav>
+
+    <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">Jak Majordomus odvozuje své povrchy</h1>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">jak do sebe systém zapadá: kanonický stav, objevování, typované registry, odvozené modely, governance a důkazy a každý povrch z nich promítnutý — co se píše, objevuje, odvozuje, pozoruje a usuzuje, schopnost a pravidlo vystopované od začátku do konce, matice generování, audit tvrzení s odkazy na soubory a zbývající architektonický dluh</p>
+  </div>
+</div>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+  
+<div class="grid gap-10 lg:grid-cols-[16rem_minmax(0,1fr)]">
+  <nav class="lg:sticky lg:top-24 lg:self-start" aria-label="Dokumenty">
+    <p class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">dokumenty</p>
+    <ul class="flex flex-wrap gap-2 text-sm lg:flex-col lg:gap-1"><li><a href="https://majordomus.dev/cs/docs/design/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Prismatic Majordomus</a></li><li><a href="https://majordomus.dev/cs/docs/how-it-works/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Jak Majordomus funguje</a></li><li><a href="https://majordomus.dev/cs/docs/guide/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Průvodce</a></li><li><a href="https://majordomus.dev/cs/docs/two-folder-consolidation/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Konsolidace dvou složek</a></li><li><a href="https://majordomus.dev/cs/docs/cli-specification/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Specifikace CLI</a></li><li><a href="https://majordomus.dev/cs/docs/schemas/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Schémata souborů</a></li><li><a href="https://majordomus.dev/cs/docs/concepts/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Koncepty</a></li><li><a href="https://majordomus.dev/cs/docs/context/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Kontext podle rozsahu</a></li><li><a href="https://majordomus.dev/cs/docs/doctrine/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Doktrína</a></li><li><a href="https://majordomus.dev/cs/docs/continuity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Kontinuita</a></li><li><a href="https://majordomus.dev/cs/docs/knowledge/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Znalosti</a></li><li><a href="https://majordomus.dev/cs/docs/planning/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Plánování</a></li><li><a href="https://majordomus.dev/cs/docs/performance/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Pravda o výkonu</a></li><li><a href="https://majordomus.dev/cs/docs/roadmap/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Plán rozvoje</a></li><li><a href="https://majordomus.dev/cs/docs/dogfooding/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Dogfooding</a></li><li><a href="https://majordomus.dev/cs/docs/launch/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Startovací sada</a></li><li><a href="https://majordomus.dev/cs/docs/archive/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Archivace repozitáře</a></li><li><a href="https://majordomus.dev/cs/docs/install/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Instalace Majordomus</a></li><li><a href="https://majordomus.dev/cs/docs/distribution/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Distribuce</a></li><li><a href="https://majordomus.dev/cs/docs/commit/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Commit</a></li><li><a href="https://majordomus.dev/cs/docs/release/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Release</a></li><li><a href="https://majordomus.dev/cs/docs/catalogue/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Katalog</a></li><li><a href="https://majordomus.dev/cs/docs/adoption/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Adopce</a></li><li><a href="https://majordomus.dev/cs/docs/adoption-first-run/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">První spuštění v cizím repozitáři</a></li><li><a href="https://majordomus.dev/cs/docs/handbook/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Příručka</a></li><li><a href="https://majordomus.dev/cs/docs/personal-mode/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Osobní režim: Majordomus jako nástroj jednoho člověka</a></li><li><a href="https://majordomus.dev/cs/docs/entry/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Vstup do repozitáře</a></li><li><a href="https://majordomus.dev/cs/docs/entry-audit/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Vstup do repozitáře: co je automatické, co dekorativní a kde se to láme</a></li><li><a href="https://majordomus.dev/cs/docs/economics/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Ekonomika</a></li><li><a href="https://majordomus.dev/cs/docs/extraction-report/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Zpráva o extrakci</a></li><li><a href="https://majordomus.dev/cs/docs/commands/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Graf příkazů</a></li><li><a href="https://majordomus.dev/cs/docs/dynamicity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Kanonické vlastnictví a odvozování</a></li><li><a href="https://majordomus.dev/cs/docs/cockpit-ide-audit/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Cockpit jako vývojový povrch: výchozí stav, archeologie a matice mezer</a></li><li><a href="https://majordomus.dev/cs/docs/development-runtime/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Vývojový runtime</a></li><li><a href="https://majordomus.dev/cs/docs/api/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API</a></li><li><a href="https://majordomus.dev/cs/docs/capabilities/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Schopnosti</a></li><li><a href="https://majordomus.dev/cs/docs/surfaces/" class="block rounded px-2 py-1 bg-brand-softer font-medium text-fg-brand-strong" aria-current="page">Jak Majordomus odvozuje své povrchy</a></li><li><a href="https://majordomus.dev/cs/docs/use-cases/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Spustitelné případy užití</a></li><li><a href="https://majordomus.dev/cs/docs/product/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Produkt</a></li><li><a href="https://majordomus.dev/cs/docs/why/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Proč</a></li><li><a href="https://majordomus.dev/cs/docs/scope/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Rozsah repozitáře</a></li><li><a href="https://majordomus.dev/cs/docs/executions/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Provedení</a></li><li><a href="https://majordomus.dev/cs/docs/cockpit/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Cockpit</a></li><li><a href="https://majordomus.dev/cs/docs/majordomus-ui/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">`majordomus ui`</a></li><li><a href="https://majordomus.dev/cs/docs/web/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Webový povrch</a></li><li><a href="https://majordomus.dev/cs/docs/editors/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Editory a agenti</a></li><li><a href="https://majordomus.dev/cs/docs/environment/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Prostředí repozitáře</a></li><li><a href="https://majordomus.dev/cs/docs/preflight/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Preflight</a></li><li><a href="https://majordomus.dev/cs/docs/backlog/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Backlog</a></li><li><a href="https://majordomus.dev/cs/docs/integration/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Integrace pull requestů</a></li><li><a href="https://majordomus.dev/cs/docs/integration-rollout/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Záznam o zavedení integrace</a></li><li><a href="https://majordomus.dev/cs/docs/worktrees/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Worktrees</a></li><li><a href="https://majordomus.dev/cs/docs/offload/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Přenesení derive</a></li><li><a href="https://majordomus.dev/cs/docs/mcp/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Rozhraní MCP</a></li><li><a href="https://majordomus.dev/cs/docs/brief/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Brief relace</a></li><li><a href="https://majordomus.dev/cs/docs/mesh/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Majordomus Mesh</a></li><li><a href="https://majordomus.dev/cs/docs/monitor/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Monitor</a></li><li><a href="https://majordomus.dev/cs/docs/models/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Katalog modelů</a></li><li><a href="https://majordomus.dev/cs/docs/reasoning/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Uvažování</a></li><li><a href="https://majordomus.dev/cs/docs/coverage/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Pokrytí: jedno měření, dvě otázky</a></li><li><a href="https://majordomus.dev/cs/docs/design-system/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Designový systém</a></li><li><a href="https://majordomus.dev/cs/docs/diagrams/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Diagramy a grafy</a></li><li><a href="https://majordomus.dev/cs/docs/ui/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Shoda s UI</a></li><li><a href="https://majordomus.dev/cs/docs/github-pages-architecture/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Architektura GitHub Pages</a></li><li><a href="https://majordomus.dev/cs/docs/quality/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Kvalita veřejného API</a></li><li><a href="https://majordomus.dev/cs/docs/rustdoc/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Reference crate</a></li><li><a href="https://majordomus.dev/cs/docs/evidence/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Důkazy</a></li><li><a href="https://majordomus.dev/cs/docs/delivery/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Dodávka</a></li><li><a href="https://majordomus.dev/cs/docs/ci/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Kontinuální integrace</a></li><li><a href="https://majordomus.dev/cs/docs/shell/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Shellová automatizace</a></li><li><a href="https://majordomus.dev/cs/docs/github-pages-performance/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Výkon GitHub Pages</a></li><li><a href="https://majordomus.dev/cs/docs/pages-status/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Stav výkonu GitHub Pages</a></li><li><a href="https://majordomus.dev/cs/docs/site-review/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Revize webu</a></li><li><a href="https://majordomus.dev/cs/docs/contract/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Kontrakt repozitáře</a></li><li><a href="https://majordomus.dev/cs/docs/web-surface/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Webový povrch</a></li><li><a href="https://majordomus.dev/cs/docs/api/artifacts/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: artifacts</a></li><li><a href="https://majordomus.dev/cs/docs/api/brief/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: brief</a></li><li><a href="https://majordomus.dev/cs/docs/api/capabilities/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: capabilities</a></li><li><a href="https://majordomus.dev/cs/docs/api/commands/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: commands</a></li><li><a href="https://majordomus.dev/cs/docs/api/commit/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: commit</a></li><li><a href="https://majordomus.dev/cs/docs/api/continuity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: continuity</a></li><li><a href="https://majordomus.dev/cs/docs/api/convergence/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: convergence</a></li><li><a href="https://majordomus.dev/cs/docs/api/dashboard/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: dashboard</a></li><li><a href="https://majordomus.dev/cs/docs/api/delivery/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: delivery</a></li><li><a href="https://majordomus.dev/cs/docs/api/deploy/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: deploy</a></li><li><a href="https://majordomus.dev/cs/docs/api/design/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: design</a></li><li><a href="https://majordomus.dev/cs/docs/api/devcontext/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: devcontext</a></li><li><a href="https://majordomus.dev/cs/docs/api/devtask/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: devtask</a></li><li><a href="https://majordomus.dev/cs/docs/api/directories/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: directories</a></li><li><a href="https://majordomus.dev/cs/docs/api/distribution/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: distribution</a></li><li><a href="https://majordomus.dev/cs/docs/api/economics/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: economics</a></li><li><a href="https://majordomus.dev/cs/docs/api/editors/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: editors</a></li><li><a href="https://majordomus.dev/cs/docs/api/entity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: entity</a></li><li><a href="https://majordomus.dev/cs/docs/api/environment/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: environment</a></li><li><a href="https://majordomus.dev/cs/docs/api/episodes/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: episodes</a></li><li><a href="https://majordomus.dev/cs/docs/api/evidence/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: evidence</a></li><li><a href="https://majordomus.dev/cs/docs/api/executions/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: executions</a></li><li><a href="https://majordomus.dev/cs/docs/api/gates/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: gates</a></li><li><a href="https://majordomus.dev/cs/docs/api/graph/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: graph</a></li><li><a href="https://majordomus.dev/cs/docs/api/guard/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: guard</a></li><li><a href="https://majordomus.dev/cs/docs/api/health/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: health</a></li><li><a href="https://majordomus.dev/cs/docs/api/integration/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: integration</a></li><li><a href="https://majordomus.dev/cs/docs/api/intent-realization/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: intent_realization</a></li><li><a href="https://majordomus.dev/cs/docs/api/intents/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: intents</a></li><li><a href="https://majordomus.dev/cs/docs/api/knowledge-base/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: knowledge_base</a></li><li><a href="https://majordomus.dev/cs/docs/api/lifecycle/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: lifecycle</a></li><li><a href="https://majordomus.dev/cs/docs/api/mcp/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: mcp</a></li><li><a href="https://majordomus.dev/cs/docs/api/mesh/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: mesh</a></li><li><a href="https://majordomus.dev/cs/docs/api/models/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: models</a></li><li><a href="https://majordomus.dev/cs/docs/api/monitor/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: monitor</a></li><li><a href="https://majordomus.dev/cs/docs/api/objects/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: objects</a></li><li><a href="https://majordomus.dev/cs/docs/api/obligations/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: obligations</a></li><li><a href="https://majordomus.dev/cs/docs/api/observatory/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: observatory</a></li><li><a href="https://majordomus.dev/cs/docs/api/pack/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: pack</a></li><li><a href="https://majordomus.dev/cs/docs/api/peers/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: peers</a></li><li><a href="https://majordomus.dev/cs/docs/api/perf/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: perf</a></li><li><a href="https://majordomus.dev/cs/docs/api/plan/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: plan</a></li><li><a href="https://majordomus.dev/cs/docs/api/product/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: product</a></li><li><a href="https://majordomus.dev/cs/docs/api/quality/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: quality</a></li><li><a href="https://majordomus.dev/cs/docs/api/reasoning/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: reasoning</a></li><li><a href="https://majordomus.dev/cs/docs/api/recover/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: recover</a></li><li><a href="https://majordomus.dev/cs/docs/api/release/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: release</a></li><li><a href="https://majordomus.dev/cs/docs/api/repository/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: repository</a></li><li><a href="https://majordomus.dev/cs/docs/api/rules/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: rules</a></li><li><a href="https://majordomus.dev/cs/docs/api/served/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: served</a></li><li><a href="https://majordomus.dev/cs/docs/api/server/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: server</a></li><li><a href="https://majordomus.dev/cs/docs/api/session-domain/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: session_domain</a></li><li><a href="https://majordomus.dev/cs/docs/api/shell/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: shell</a></li><li><a href="https://majordomus.dev/cs/docs/api/skills/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: skills</a></li><li><a href="https://majordomus.dev/cs/docs/api/trace/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: trace</a></li><li><a href="https://majordomus.dev/cs/docs/api/web/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: web</a></li><li><a href="https://majordomus.dev/cs/docs/api/why/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: why</a></li><li><a href="https://majordomus.dev/cs/docs/api/worktree/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: worktree</a></li><li><a href="https://majordomus.dev/cs/docs/api/shared/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: sdílené typy</a></li></ul>
+  </nav>
+  <div class="min-w-0">
+    <p class="mb-6 text-sm text-body-subtle">Vykresleno z <a href="https://github.com/korczis/prismatic-majordomus/blob/370fdf4cc57608d09c7b49f54aad6f81a1e750e2/docs/SURFACES.md" class="font-mono underline">docs/SURFACES.md</a> — stejného Markdownu, který ukazuje GitHub.</p>
+    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full [&_.zola-anchor]:text-inherit [&_.zola-anchor]:no-underline [&_.zola-anchor:hover]:underline" tabindex="0"><p>Majordomus je řídicí rovina, která žije uvnitř repozitáře, který řídí. Tento dokument jej vysvětluje jako jeden systém, ne jako seznam funkcí. Fakta se zapisují, objevují nebo pozorují. Stávají se typovanými modely. Tyto modely se validují a kontrolují proti důkazům. Pak se z nich odvozuje každé rozhraní, které člověk nebo agent používá: příkazová řádka, HTTP API, dokument OpenAPI, Swagger UI, MCP, Cockpit a tento web.</p>
+<p>Většina z následujícího je už někde jinde popsána, po jednom subsystému: <a href="https://majordomus.dev/cs/docs/capabilities/"><code>CAPABILITIES.md</code></a> pokrývá model operací, <a href="https://majordomus.dev/cs/docs/dynamicity/"><code>DYNAMICITY.md</code></a> pokrývá, kde fakt žije, <a href="https://majordomus.dev/cs/docs/development-runtime/"><code>DEVELOPMENT_RUNTIME.md</code></a> pokrývá, kde žije sémantika, <a href="https://majordomus.dev/cs/docs/doctrine/"><code>DOCTRINE.md</code></a> pokrývá pravidla a důkaz, <a href="https://majordomus.dev/cs/docs/evidence/"><code>EVIDENCE.md</code></a> pokrývá zaznamenaná provedení, <a href="https://majordomus.dev/cs/docs/github-pages-architecture/"><code>GITHUB_PAGES_ARCHITECTURE.md</code></a> pokrývá web, <a href="https://majordomus.dev/cs/docs/mesh/"><code>MESH.md</code></a> pokrývá objevování a <a href="https://majordomus.dev/cs/docs/planning/"><code>PLANNING.md</code></a> pokrývá plán. Tento dokument je propojuje a otevřeně říká, kde kód zatím nedělá to, co chce návrh.</p>
+<p><strong>Jak číst tvrzení.</strong> Každé strukturální tvrzení bylo ověřeno proti kódu a proti běžícímu exekutoru na commitu, na němž byl tento dokument napsán. Tvrzení nesou štítky v hranatých závorkách, například [C4], které ukazují do <a href="https://majordomus.dev/cs/docs/surfaces/#appendix-e-claim-audit">auditu tvrzení</a>. Audit uvádí soubor a řádek, nebo příkaz, který každé z nich dokládá. Některá prohlášení jsou upřesněna slovem:</p>
+<ul>
+<li><strong>částečné</strong>: implementována je jen část tvrzení;</li>
+<li><strong>neimplementováno</strong>: nic ve stromě to nedělá;</li>
+<li><strong>dluh</strong>: repozitář o mezeře ví. Je uvedena v <a href="https://majordomus.dev/cs/docs/surfaces/#appendix-f-architecture-debt">Architekturním dluhu</a>.</li>
+</ul>
+<p>Nejsou zde žádná čísla o obsahu repozitáře (<code>project.no-counts-in-prose</code>). Všude, kde na počtu záleží, je uveden příkaz, který ho změří.</p>
+<h2 id="contents"><a class="zola-anchor" href="#contents" aria-label="Odkaz na kotvu: contents">Obsah</a></h2>
+<ol>
+<li><a href="https://majordomus.dev/cs/docs/surfaces/#1-the-invariant">Invariant</a></li>
+<li><a href="https://majordomus.dev/cs/docs/surfaces/#2-two-programs-share-one-name">Dva programy sdílejí jedno jméno</a></li>
+<li><a href="https://majordomus.dev/cs/docs/surfaces/#3-where-the-truth-is-five-kinds-of-fact">Kde je pravda: pět druhů faktů</a></li>
+<li><a href="https://majordomus.dev/cs/docs/surfaces/#4-discovery-and-how-it-differs-from-inference">Objevování a čím se liší od odvozování</a></li>
+<li><a href="https://majordomus.dev/cs/docs/surfaces/#5-typed-registries-canonical-ids-and-display-names">Typované registry, kanonická id a zobrazovaná jména</a></li>
+<li><a href="https://majordomus.dev/cs/docs/surfaces/#6-schemas-from-a-rust-type-to-openapi-and-mcp">Schémata: od typu v Rustu k OpenAPI a MCP</a></li>
+<li><a href="https://majordomus.dev/cs/docs/surfaces/#7-the-surfaces-are-projections">Povrchy jsou projekce</a></li>
+<li><a href="https://majordomus.dev/cs/docs/surfaces/#8-the-generation-pipeline">Generační pipeline</a></li>
+<li><a href="https://majordomus.dev/cs/docs/surfaces/#9-governance-doctrine-rule-policy-adr">Správa: doktrína, pravidlo, politika, ADR</a></li>
+<li><a href="https://majordomus.dev/cs/docs/surfaces/#10-a-rule-existing-is-not-the-same-as-a-rule-being-enforced">Existence pravidla není totéž co vynucování pravidla</a></li>
+<li><a href="https://majordomus.dev/cs/docs/surfaces/#11-evidence-freshness-and-claim-drift">Důkazy, čerstvost a drift tvrzení</a></li>
+<li><a href="https://majordomus.dev/cs/docs/surfaces/#12-publication-built-deployed-verified">Publikace: sestaveno, nasazeno, ověřeno</a></li>
+<li><a href="https://majordomus.dev/cs/docs/surfaces/#13-doctor-and-drift-detect-repair-regenerate">Doctor a drift: detekovat, opravit, regenerovat</a></li>
+<li><a href="https://majordomus.dev/cs/docs/surfaces/#14-tests-that-hold-the-surfaces-together">Testy, které drží povrchy pohromadě</a></li>
+<li><a href="https://majordomus.dev/cs/docs/surfaces/#15-sessions-context-handover-planning-environment">Relace, kontext, předávka, plánování, prostředí</a></li>
+<li><a href="https://majordomus.dev/cs/docs/surfaces/#16-mesh-and-the-peer-board">Mesh a nástěnka peerů</a></li>
+<li><a href="https://majordomus.dev/cs/docs/surfaces/#17-walkthroughs">Návody</a></li>
+<li><a href="https://majordomus.dev/cs/docs/surfaces/#18-what-is-not-generated">Co se negeneruje</a></li>
+<li><a href="https://majordomus.dev/cs/docs/surfaces/#19-zero-registration-the-ideal-and-its-exceptions">Nulová registrace: ideál a jeho výjimky</a></li>
+<li><a href="https://majordomus.dev/cs/docs/surfaces/#20-why-generation-matters-and-the-theses">Proč na generování záleží a teze</a></li>
+</ol>
+<p>Přílohy: <a href="https://majordomus.dev/cs/docs/surfaces/#appendix-a-architecture-map">A mapa architektury</a>, <a href="https://majordomus.dev/cs/docs/surfaces/#appendix-b-surface-map">B mapa ploch</a>, <a href="https://majordomus.dev/cs/docs/surfaces/#appendix-c-generation-matrix">C matice generování</a>, <a href="https://majordomus.dev/cs/docs/surfaces/#appendix-d-governance-and-mesh-maps">D mapy správy a meshe</a>, <a href="https://majordomus.dev/cs/docs/surfaces/#appendix-e-claim-audit">E audit tvrzení</a>, <a href="https://majordomus.dev/cs/docs/surfaces/#appendix-f-architecture-debt">F architektonický dluh</a>.</p>
+<h2 id="1-the-invariant"><a class="zola-anchor" href="#1-the-invariant" aria-label="Odkaz na kotvu: 1-the-invariant">1. Invariant</a></h2>
+<blockquote>
+<p>Fakt jednou objevit a namodelovat a z něj odvodit každé rozhraní.</p>
+</blockquote>
+<p>Toto je mechanismus, který brání rozcházení rozhraní. Repozitář, který se popisuje na několika místech, nashromáždí popisy, které si odporují: README, referenci API, seznam nástrojů pro agenta, dashboard, web. Každý může být v den psaní správný a každý zastarává vlastním tempem. Majordomus se tomu vyhýbá tím, že drží jedinou deklaraci a ostatní popisy z ní generuje. Kde popis generovat nelze, kontroluje ho proti deklaraci.</p>
+<p>Repozitář tento invariant jmenuje několikrát. Je to <code>project.interfaces-are-projections</code> a <code>project.rust-canonical-declaration</code> v <code>.ai/repo/rules/project/</code>. Pro operace je to ADR 2, ADR 4 a ADR 5 a pro vývojovou sémantiku ADR 40. Záleží na tom, jak daleko ho kód skutečně ctí:</p>
+<ul>
+<li><strong>Operace</strong> (schopnosti) jej dodržují nejlépe. Nástroje a zdroje MCP, trasy HTTP, dokument OpenAPI, cíle měření výkonu, generovaná reference a stránky registru webu se sestavují průchodem jednoho registru [C1, C5, C6, C7].</li>
+<li><strong>Příkazová řádka</strong> je deklarována podruhé, v clap. Kontroluje se proti registru, neodvozuje se z něj [C8, C9].</li>
+<li><strong>Cockpit</strong> je částečný. Jeho generické stránky schopností, objektů a grafů řídí registr. Jeho stránky oblastí a samotné oblasti jsou psány ručně [C12, C13].</li>
+<li><strong>Vývojová sémantika</strong> (úlohy, relace, předávky, checkpointy, přidělování ADR) stále převážně vlastní shellový kód pod <code>lib/</code>. Pro mutující polovinu neexistuje žádná schopnost a soubor ratchetu eviduje tento dluh [C30].</li>
+</ul>
+<h2 id="2-two-programs-share-one-name"><a class="zola-anchor" href="#2-two-programs-share-one-name" aria-label="Odkaz na kotvu: 2-two-programs-share-one-name">2. Dva programy sdílejí jedno jméno</a></h2>
+<p><code>majordomus</code> jsou dva spustitelné soubory. Tento fakt se snadno přehlédne a závisí na něm každá další sekce.</p>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>Program</th><th>Vstup</th><th>Implementace</th><th>Vlastní</th></tr></thead><tbody>
+<tr><td>nástroj shell</td><td><code>bin/majordomus</code></td><td><code>lib/*.sh</code>, odesílané podle příkazu</td><td><code>start</code>, <code>check</code>, <code>finish</code>, <code>context</code>, <code>handover</code>, <code>session</code>, <code>doctor</code>, <code>update</code>, <code>adr</code>, zápisy plánu, dispečer doktrín</td></tr>
+<tr><td>spustitelný soubor v Rustu</td><td><code>bin/majordomus-cli</code> (spouštěč, který v případě potřeby sestaví)</td><td><code>apps/majordomus-cli/</code></td><td>registr schopností, <code>serve</code>, <code>mcp</code>, <code>generate</code>, <code>rules</code>, <code>evidence</code>, <code>devcontext</code>, <code>mesh</code>, <code>env</code>, <code>worktree</code>, Cockpit</td></tr>
+</tbody></table>
+</div>
+<p>U příkazu, který nezná, vás shellový nástroj odkáže na spustitelný soubor v Rustu. Registr, a tedy každý odvozený povrch, patří spustitelnému souboru v Rustu. Cokoli vlastní jen <code>lib/</code>, nedosáhne na žádnou trasu HTTP, žádný nástroj MCP ani stránku Cockpitu, pokud jeho soubory nečte schopnost v Rustu. <code>DEVELOPMENT_RUNTIME.md</code> je změřený inventář této hranice a <code>scripts/development-semantics-check</code> vynucuje její ratchet.</p>
+<h2 id="3-where-the-truth-is-five-kinds-of-fact"><a class="zola-anchor" href="#3-where-the-truth-is-five-kinds-of-fact" aria-label="Odkaz na kotvu: 3-where-the-truth-is-five-kinds-of-fact">3. Kde je pravda: pět druhů faktů</a></h2>
+<p>Zdrojem pravdy je sledovaný strom. Vrstva <code>.ai/</code> je pojmenována <code>.ai/manifest.yaml</code> a klasifikována <code>.ai/repo/knowledge/sources.yaml</code>. Zdroje v Rustu pod <code>apps/majordomus-cli/src/capability/builtin/</code> deklarují operace a <code>share/</code> drží druhy, schémata a slovníky. Všechno ostatní je jedno z následujícího:</p>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>Druh faktu</th><th>Příklady</th><th>Kdo to vytváří nebo mění</th><th>Autorita</th><th>Může přepsat kanonický stav?</th><th>Jak se zneplatňuje</th></tr></thead><tbody>
+<tr><td><strong>ručně psané</strong></td><td>soubor pravidla, ADR, <code>policy.yaml</code>, blok <code>capability!</code>, <code>docs/*.md</code>, <code>site/data/nav.toml</code>, záznam úkolu, tělo předávky</td><td>člověk, nebo agent jednající za něj, v commitu</td><td>kanonické</td><td><em>je</em> kanonický stav</td><td>dalším commitem, který ho upraví</td></tr>
+<tr><td><strong>objeveno</strong></td><td>index objektů <code>.ai/**</code>, topologie worktree v gitu, efektivní množina pravidel, verze nástrojů ve snímku prostředí</td><td>spustitelný soubor, který při každém běhu čte sledované soubory a git</td><td>tak autoritativní jako jeho vstupy; nikdy se neukládá jako samostatná pravda</td><td>ne</td><td>přepočítáno při každém čtení; index nese otisk a sdílený server jej přestaví, když se strom pohne</td></tr>
+<tr><td><strong>odvozeno</strong></td><td><code>docs/generated/**</code>, <code>site/data/**</code>, <code>site/content/**</code>, spravovaný blok <code>.gitattributes</code>, <code>AGENTS.md</code>/<code>CLAUDE.md</code>, stav úkolu, vlny, stavy důkazů pravidel</td><td>generátory (<code>majordomus generate</code>, <code>scripts/generate-site-data</code>, <code>scripts/gitattributes</code>, <code>majordomus update</code>), nebo čistá funkce při čtení</td><td>žádné vlastní: je to projekce</td><td>ne; ruční úprava je zamítnuta nebo nahlášena (razítko <code>generate --check</code>, <code>update</code>)</td><td>hash vstupu nebo bajtové porovnání (<code>scripts/derive-check</code>, pre-commit <code>scripts/pages current</code>)</td></tr>
+<tr><td><strong>pozorováno</strong></td><td>nástěnka peerů, uzly meshe, služba odpovídající na portu, probíhající provedení, zaznamenaný běh testu v ledgeru důkazů</td><td>běžící proces: sdílený server, poskytovatel mesh, <code>majordomus evidence record</code></td><td>jen pro povědomí; ledger je výjimka, protože je commitnut</td><td>ne; <code>project.mesh-is-observation-not-authority</code> to říká o meshi a nástěnka peerů „nevynucuje nic“</td><td>TTL a časový limit relace pro přítomnost; kontroly digestu a diffu registru důkazů pro běhy</td></tr>
+<tr><td><strong>odhadnuto</strong></td><td>shoda záměru v <code>devcontext</code>, odvozené tělo předávky, implikované zvýšení releasu, navržené ADR z <code>adr propose</code></td><td>deterministická heuristika, nikdy volání modelu</td><td>nejnižší; vždy označeno</td><td>ne; extrahované ADR, které tvrdí <code>accepted</code>, neprojde validací</td><td>přepočteno; jistota je obsažena v hodnotě</td></tr>
+</tbody></table>
+</div>
+<p>Plynou z toho dva důsledky a zbytek tohoto dokumentu na nich závisí.</p>
+<ul>
+<li><strong>Odvozený výstup se nikdy nevrací jako vstup.</strong> <code>scripts/derive</code> uvádí, že žádná fáze nečte svůj vlastní výstup [C15]. Generátor datové sady v shellu vynechává vlastní dokumenty ze svého seznamu vstupů [C16].</li>
+<li><strong>Pozorování se nikdy nestane oprávněním.</strong> Tvrzení peera je pouze poradní. Verdikt důvěry uzlu mesh mění štítky, ne oprávnění [C40, C42].</li>
+</ul>
+<h2 id="4-discovery-and-how-it-differs-from-inference"><a class="zola-anchor" href="#4-discovery-and-how-it-differs-from-inference" aria-label="Odkaz na kotvu: 4-discovery-and-how-it-differs-from-inference">4. Objevování a čím se liší od odvozování</a></h2>
+<p>Objevování je výčet řízený deklarací. Spustitelný soubor v Rustu najde kořen repozitáře. Přečte manifest, načte druhy a schémata (<code>share/kinds.yaml</code>, <code>share/schemas/</code> a doplňky repozitáře pod <code>.ai/repo/knowledge/</code>) a pak vyčte soubory přes třídy <code>sources.yaml</code>, ve výchozím stavu z indexu správy verzí (<code>--discovery vcs</code>). Každý soubor se stane typovaným objektem nebo diagnostikou se stabilním kódem. Nečitelný manifest nebo soubor druhů je chyba. Objekt, který neprojde validací, je vyloučen, index hlásí <code>degraded</code> a povrchy dál obsluhují; <code>--strict</code> degradovaný index odmítne. <code>CAPABILITIES.md</code> („Lifecycle and failure policy“) to popisuje a <code>test/cases/76_capabilities_projections.sh</code> přidá druh definovaný repozitářem a ověří, že se objeví na každém povrchu.</p>
+<p>Odvozování je jiné. Odhaduje relevanci nebo záměr. Žije na několika pojmenovaných místech a samo se označuje:</p>
+<ul>
+<li>Výběr <code>devcontext</code>. Každý selektor kromě <code>IntentMatch</code> je <code>declared()</code> a nese jistotu 1.0. Shoda záměru hodnotí podíl výrazů záměru nalezených v názvu, popisu, identitě nebo štítcích objektu, nikdy v jeho těle [C45].</li>
+<li>Odvozená těla předávek. Sestavují se z gitu, knihy a otevřených otázek a končí patičkou, která říká, že je nenapsal žádný model [C47].</li>
+<li><code>adr propose</code>. Zapisuje <code>proposed</code> a odmítá jakýkoli jiný stav. Přijetí je akt člověka [C34].</li>
+</ul>
+<p>Žádný povrch nespouští jazykový model, aby vytvořil fakt.</p>
+<h2 id="5-typed-registries-canonical-ids-and-display-names"><a class="zola-anchor" href="#5-typed-registries-canonical-ids-and-display-names" aria-label="Odkaz na kotvu: 5-typed-registries-canonical-ids-and-display-names">5. Typované registry, kanonická id a zobrazované názvy</a></h2>
+<p>Každá adresovatelná věc má kanonickou identitu, která není jejím zobrazovaným názvem.</p>
+<ul>
+<li><strong>Schopnosti.</strong> Id je <code>namespace.local</code> (<code>rules.report</code>). Název ("Každé pravidlo proti důkazu, který pro ně existuje") je zobrazovaný text. Registr odmítá duplicitní id, názvy nástrojů MCP, URI zdrojů MCP, trasy HTTP a cesty CLI, ukládá záznamy v <code>BTreeMap</code> a iteruje podle id [C4].</li>
+<li><strong>Deklarativní objekty.</strong> Id je <code>&lt;kind&gt;.&lt;identity&gt;</code> a identita pochází z pravidla identity daného druhu: <code>id@version</code> pro pravidlo (<code>project.english-only@1</code>), číslo pro ADR (<code>adr-0044</code>). Zdroj MCP je <code>majordomus://&lt;kind&gt;/&lt;identity&gt;</code>.</li>
+<li><strong>Pravidla</strong> se uvádějí jako <code>id@version</code> v <code>depends_on</code>. Nová verze je nový soubor (<code>conventional-commits.v2.md</code>).</li>
+<li><strong>Worktrees</strong> se identifikují podle své větve. Cesta <code>&lt;repo&gt;-wt/&lt;branch&gt;</code> se odvozuje z gitu a nikdy neregistruje (<a href="https://majordomus.dev/cs/docs/worktrees/"><code>WORKTREES.md</code></a>).</li>
+<li><strong>Peeři</strong> dostávají pozici na nástěnce (<code>p1</code>, <code>p2</code>), která se při znovupřipojení přiděluje znovu. Není to identita: trvalou polovinou identity peera je checkout, který nese (ADR 44).</li>
+</ul>
+<p>Kanonické je i řazení. <code>apps/majordomus-cli/src/order.rs</code> definuje jedno úplné uspořádání: skupina, pořadí, popisek porovnávaný přirozeně, pak identita. <code>scripts/ci/order-check</code> odmítá komparátory ignorující velikost písmen mimo něj, klíče řazení, které se vykreslují, a nepřipnuté shellové <code>sort</code>. Také ratchetuje zbývající místa řazení v crate v <code>.ai/repo/order-baseline.txt</code> [C19].</p>
+<h2 id="6-schemas-from-a-rust-type-to-openapi-and-mcp"><a class="zola-anchor" href="#6-schemas-from-a-rust-type-to-openapi-and-mcp" aria-label="Odkaz na kotvu: 6-schemas-from-a-rust-type-to-openapi-and-mcp">6. Schémata: od typu v Rustu k OpenAPI a MCP</a></h2>
+<p>Řetězec schémat spustitelné schopnosti je skutečný kód a člověk každý jeho kus píše jen jednou:</p>
+<pre class="mermaid" tabindex="0" id="diagram-6-schemas-from-a-rust-type-to-openapi-and-mcp" data-diagram="6-schemas-from-a-rust-type-to-openapi-and-mcp" data-nodes="ty cs mcp oas sw gen">
+flowchart TD
+  ty["Rust input and output types&lt;br&gt;serde + schemars JsonSchema derive&lt;br&gt;doc comments become descriptions"]
+  cs["CanonicalSchema::of&lt;br&gt;schemars::schema_for, $schema removed,&lt;br&gt;rustdoc translated to CommonMark"]
+  mcp["MCP tool inputSchema and outputSchema&lt;br&gt;for_mcp: inline, $defs kept"]
+  oas["OpenAPI 3.1 operation&lt;br&gt;for_openapi: $defs hoisted into components,&lt;br&gt;refs rewritten; a clash of names is refused"]
+  sw["Swagger UI&lt;br&gt;loads /openapi.json, embeds nothing"]
+  gen["docs/generated/openapi.json and openapi.yaml&lt;br&gt;site /docs/api/"]
+  ty --&gt; cs
+  cs --&gt; mcp
+  cs --&gt; oas
+  oas --&gt; sw
+  oas --&gt; gen
+</pre><div class="mj-diagram-bar" role="toolbar" aria-label="Diagram 6-schemas-from-a-rust-type-to-openapi-and-mcp" aria-controls="diagram-6-schemas-from-a-rust-type-to-openapi-and-mcp" data-diagram-bar="diagram-6-schemas-from-a-rust-type-to-openapi-and-mcp" hidden><button type="button" class="mj-button mj-button--quiet" data-diagram-action="zoom-out" aria-label="Oddálit" title="Oddálit">−</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="zoom-in" aria-label="Přiblížit" title="Přiblížit">+</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="fit" aria-label="Přizpůsobit diagram rámu" title="Přizpůsobit diagram rámu">Přizpůsobit</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="expand" aria-label="Zobrazit na celou obrazovku" title="Zobrazit na celou obrazovku">Rozbalit</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="download" aria-label="Stáhnout SVG" title="Stáhnout SVG">SVG</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="link" aria-label="Odkaz: zkopírovat adresu tohoto diagramu" title="Odkaz: zkopírovat adresu tohoto diagramu">Odkaz</button><span class="mj-diagram-status" role="status"></span></div>
+<p><code>CanonicalSchema::of::&lt;T&gt;()</code> volá <code>schemars::schema_for!</code> [C2]. Názvy komponent OpenAPI pocházejí z titulu schématu. Ten jmenný prostor je plochý, takže dva různé typy se stejným titulem selžou <code>openapi::document</code> s „schema component … is defined twice with different content“ [C3]. Oprava je přejmenovat typ; nic na to před tím bodem neupozorní (<strong>dluh</strong> F-11).</p>
+<p>Deklarativní druh začíná o krok dříve. Jeho schéma dokumentu žije pod <code>share/schemas/majordomus/&lt;kind&gt;/</code>. Popis <code>.proto</code> tam generuje JSON Schema, allow-list front matteru pod <code>share/allow/</code> a požadavky na sekce (<a href="https://majordomus.dev/cs/docs/development-runtime/"><code>DEVELOPMENT_RUNTIME.md</code></a>, „The derivation chain“). Neznámé klíče front matteru jsou chyby (<code>project.unknown-keys-are-errors</code>).</p>
+<h2 id="7-the-surfaces-are-projections"><a class="zola-anchor" href="#7-the-surfaces-are-projections" aria-label="Odkaz na kotvu: 7-the-surfaces-are-projections">7. Povrchy jsou projekce</a></h2>
+<h3 id="7-1-one-declaration"><a class="zola-anchor" href="#7-1-one-declaration" aria-label="Odkaz na kotvu: 7-1-one-declaration">7.1 Jedna deklarace</a></h3>
+<p>Spustitelná schopnost je jeden blok <code>capability!</code> v <code>apps/majordomus-cli/src/capability/builtin/&lt;module&gt;.rs</code>. Vypisuje <code>id</code>, <code>kind</code>, <code>title</code>, <code>description</code>, <code>input</code>, <code>output</code>, <code>stability</code>, <code>exposure</code>, <code>tags</code>, <code>cache</code>, <code>benchmark</code> a <code>handler</code>. Makro také klasifikuje dostupnost, viditelnost a politiku provádění z druhu a vystavení a případy měření výkonu bere z <code>BenchmarkCases</code> vstupního typu [C1]. <code>exposure</code> nastavuje každý povrch explicitně: <code>Exposure { mcp, http, cli }</code>. <code>None</code> znamená, že schopnost tam není vystavena, a nic vystavení nedovozuje [C4]. Moduly se skládají pomocí <code>module!</code> a <code>compose_modules!</code> v <code>builtin/mod.rs</code>.</p>
+<p>Dva modifikátory po makru deklarují to, co druh sám říct nemůže. <code>.cancellable()</code> označuje schopnost, jejíž běh lze zrušit. <code>.writes_repository()</code> označuje schopnost, která zapisuje sledovaný záznam. Dvě schopnosti obsluhované přes HTTP a MCP ho dnes nesou, <code>plan.transition</code> a <code>recover.orphans</code>; vypíšete je hledáním <code>.writes_repository()</code> pod <code>builtin/</code> [C31].</p>
+<h3 id="7-2-mcp"><a class="zola-anchor" href="#7-2-mcp" aria-label="Odkaz na kotvu pro: 7-2-mcp">7.2 MCP</a></h3>
+<p><code>src/mcp/surface.rs</code> o sobě říká „Nothing is declared here“. <code>compute_tools()</code> bere každou schopnost s expozicí <code>mcp.tool</code>. <code>compute_resources()</code> bere každou schopnost s expozicí <code>mcp.resource</code> a každý deklarativní objekt je jednou [C5]. Nástroj nese kanonická vstupní a výstupní schémata, <code>_meta.majordomus.id</code> a <code>readOnlyHint</code> odvozené z druhu. Volání se rozřeší přes <code>by_mcp_tool</code> a běží přes sdílený executor.</p>
+<p>Nástroje, jimiž se agenti koordinují, jsou běžné deklarované schopnosti: <code>majordomus_announce</code> je <code>peers.announce</code>, <code>majordomus_peers</code> je <code>peers.list</code> a <code>majordomus_capabilities</code> je <code>capabilities.list</code>. Nejsou to ručně psané nástroje. Tři kusy kódu o nich přesto vědí jménem: text instrukcí <code>initialize</code>, most stdio-na-HTTP (který po opětovném připojení přehraje oznámení) a handler <code>peers.announce</code> (který odmítne volajícího, který není MCP) [C6].</p>
+<h3 id="7-3-http-api"><a class="zola-anchor" href="#7-3-http-api" aria-label="Odkaz na kotvu: 7-3-http-api">7.3 HTTP API</a></h3>
+<p>Router vyřeší trasu schopnosti pomocí <code>registry.by_http(method, path)</code>. Pro <code>GET</code> naváže parametry dotazu, převedené podle typu ze schématu; pro <code>POST</code> naparsuje tělo JSON. Zavolá executor a mapuje chyby na 400, 404, 422 a 500 [C7]. Router přidává chování transportu a nedrží žádnou obchodní logiku: převody, mapování chyb, odmítání cross-origin požadavků jiných než <code>GET</code>, index tras na <code>/api/v1</code> a cache dokumentu OpenAPI pro každou generaci. Jeho trasy mimo schopnosti jsou infrastruktura: <code>/</code>, <code>/openapi.json</code>, <code>/swagger</code>, <code>/mcp</code>, WebSocket <code>/events</code>, <code>/cockpit/**</code> a generované statické mounty jako <code>/docs/</code> (<a href="https://majordomus.dev/cs/docs/web/"><code>WEB.md</code></a>). Žádná ručně psaná trasa peerů neexistuje: <code>/api/v1/peers</code> je <code>peers.list</code>.</p>
+<h3 id="7-4-openapi"><a class="zola-anchor" href="#7-4-openapi" aria-label="Odkaz na kotvu: 7-4-openapi">7.4 OpenAPI</a></h3>
+<p><code>src/http/openapi.rs</code> sestavuje OpenAPI 3.1 ze stejného registru. <code>operationId</code> je id schopnosti a tagy jsou moduly. Příklady parametrů jsou vlastní případy měření schopnosti, takže pole, které žádný případ nenastavuje, nemá příklad. Rozšíření <code>x-majordomus-*</code> nesou id, druh, stabilitu, provenienci, měření, cache, MCP a CLI; infrastrukturní trasy jsou pod <code>x-majordomus.infrastructure</code> [C7]. Mapy jsou seřazené a nenesou časové razítko. Živý dokument a <code>docs/generated/openapi.json</code> jsou tentýž výpočet.</p>
+<h3 id="7-5-swagger-ui"><a class="zola-anchor" href="#7-5-swagger-ui" aria-label="Odkaz na kotvu: 7-5-swagger-ui">7.5 Swagger UI</a></h3>
+<p><code>src/http/swagger.rs</code> vykreslí jednu statickou HTML skořápku, která míří <code>SwaggerUIBundle</code> na <code>/openapi.json</code>. Jednotkový test ověřuje, že skořápka nevkládá <code>paths</code>, <code>openapi</code> ani <code>components</code>. Vlastní JavaScript a CSS UI se načítají z připnutého <code>swagger-ui-dist</code> na unpkg, takže toto je jediný povrch, který není offline [C10]. Je to čistá projekce UI.</p>
+<h3 id="7-6-the-command-line-declared-twice-and-checked"><a class="zola-anchor" href="#7-6-the-command-line-declared-twice-and-checked" aria-label="Odkaz na kotvu: 7-6-the-command-line-declared-twice-and-checked">7.6 Příkazový řádek: dvakrát deklarován a zkontrolován</a></h3>
+<p>Strom clap v <code>apps/majordomus-cli/src/cli.rs</code> se píše ručně. Je to záměr: clap vlastní parsování, nápovědu, výchozí hodnoty a množiny hodnot („Jediná projekce, která se může rozjet“ v <code>CAPABILITIES.md</code>). <code>CliExposure</code> schopnosti je proto <em>tvrzení</em> o příkazu deklarovaném jinde a toto tvrzení se kontroluje v obou směrech:</p>
+<ul>
+<li><code>capability/closure.rs</code> selže, když tvrzení jmenuje příkaz, který clap nemá, nebo takový, který jen seskupuje jiné příkazy. Běží v <code>tests/projections.rs</code> i v <code>capabilities validate</code> [C8].</li>
+<li><code>cli::LOCAL</code> (<code>src/cli/local.rs</code>) uvádí důvod pro každý příkaz, který žádná schopnost nenárokuje. Existují právě čtyři strukturální důvody: životní cyklus procesu, zapisuje do repozitáře, místní k relaci, nebo vykresluje pojmenovanou schopnost pro terminál. Existuje také forma aliasu. <code>quality::parity</code> ji kontroluje a kontrola <code>projection-closure</code> (<code>scripts/ci/projection-check</code>) selže na příkazu, který žádný důvod neuvádí [C9]. <code>capabilities projections</code> uvádí obě množiny živě: příkazy jen pro CLI jako <code>unbacked</code> a příkazy bez důvodu jako <code>unclassified</code>.</li>
+</ul>
+<p>Co příkaz CLI stále bere ručně [C11]:</p>
+<ul>
+<li>varianta clap a větev dispatch v <code>commands/mod.rs</code>;</li>
+<li>runner v <code>commands/&lt;name&gt;.rs</code>, který mapuje flagy na vstupní JSON (<code>--findings</code> se stane <code>findings_only</code>) a volá <code>ctx.execute(id, input)</code> po <code>registry.by_cli</code>;</li>
+<li>textový renderer. <code>--format json</code> vypíše výstup schopnosti beze změny; <code>--format text</code> je vlastní příkazu. Některá sémantika ukončení žije jen v rendereru: <code>rules report --check</code> tam končí kódem 10, ne v handleru;</li>
+<li>položka v <code>cli::EXAMPLES</code>, jediné ručně psané konstantě <code>CommandExamples</code>. <code>cli::validate</code> odmítne spustitelný příkaz bez příkladu a <code>tests/cli_examples.rs</code> spouští každý příklad proti sestavené binárce.</li>
+</ul>
+<p>Shellové doplňování není <code>clap_complete</code>. <code>commands/completion.rs</code> odpovídá z grafu příkazů, který skládá strom clap, <code>share/commands.yaml</code> shellového nástroje a workflow (<a href="https://majordomus.dev/cs/docs/commands/"><code>COMMANDS.md</code></a>).</p>
+<h3 id="7-7-the-cockpit"><a class="zola-anchor" href="#7-7-the-cockpit" aria-label="Odkaz na kotvu: 7-7-the-cockpit">7.7 Cockpit</a></h3>
+<p>Cockpit (<code>src/cockpit/</code>) je HTML vykreslované na serveru v Rustu; žádný šablonový engine neexistuje. Cesta <code>/cockpit</code> je důležitější než kterákoli funkce, proto tato sekce odděluje to, co se odvozuje, od toho, co se píše:</p>
+<ul>
+<li><strong>Odvozeno.</strong> <code>/cockpit/capabilities/&lt;id&gt;</code> je jedna obecná stránka pro každou schopnost s formulářem pro spuštění vytvořeným ze vstupního schématu. <code>/cockpit/object?uri=</code> vykreslí libovolný objekt; <code>/cockpit/graphs/&lt;id&gt;</code> vykreslí libovolné odvození. Katalogy v postranním panelu pocházejí z <code>registry.modules()</code>, seskupené podle <code>module_area</code> produktového modelu, plus <code>index.kinds()</code> a <code>graph::ids()</code>, vše v kanonickém pořadí [C12].</li>
+<li><strong>Psáno ručně.</strong> Tabulka tras je <code>match</code> v <code>cockpit/mod.rs</code>. Seznam oblastí (Přehled, Schopnosti, Mesh, …) je <code>nav::areas()</code> a komentář modulu uvádí důvod. Stránky oblastí žádají o schopnost jejím doslovným id, například <code>ask(ctx, "health.report", …)</code> nebo <code>ask(ctx, "mesh.status", …)</code> [C13]. Věta v <code>CAPABILITIES.md</code>, že „nic v něm nejmenuje schopnost“, tedy není přesná (<strong>dluh</strong> F-20).</li>
+<li><strong>Frontend není autorita.</strong> JavaScript pod <code>share/cockpit/</code> dělá jen prezentaci a požadavky. <code>runner.js</code> volá skutečnou routu schopnosti z <code>data-mj-method</code>/<code>data-mj-path</code>; <code>palette.js</code> a pohledy grafů čtou <code>/api/v1/*</code>. Nic v prohlížeči nepočítá připravenost, stav ani důkaz. Kontrola <code>development-semantics</code> odmítne jakýkoli odkaz na <code>.ai/repo</code>, <code>.ai/local</code> nebo spustitelný soubor <code>majordomus</code> uvnitř stromů Cockpitu [C14].</li>
+</ul>
+<h3 id="7-8-the-surfaces-compared"><a class="zola-anchor" href="#7-8-the-surfaces-compared" aria-label="Odkaz na kotvu: 7-8-the-surfaces-compared">7.8 Srovnání povrchů</a></h3>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th></th><th>CLI (<code>majordomus-cli</code>)</th><th>HTTP API</th><th>MCP</th><th>Cockpit</th></tr></thead><tbody>
+<tr><td>Deklarováno v</td><td>clap, ručně, kontrolováno proti <code>CliExposure</code></td><td>odvozeno z <code>HttpExposure</code></td><td>odvozeno z <code>McpExposure</code></td><td>směrovací tabulka a oblasti ručně; obecné stránky odvozeny</td></tr>
+<tr><td>Dosahuje</td><td>schopnosti, které si nárokují cestu v CLI, plus lokální příkazy</td><td>každá schopnost s expozicí HTTP</td><td>každá schopnost s vystavením jako nástroj nebo zdroj; každý deklarativní objekt jako zdroj</td><td>každá schopnost (obecná stránka); vybrané oblasti</td></tr>
+<tr><td>Vstup</td><td>příznaky mapované ručně v runneru</td><td>parametry dotazu převedené podle schématu, nebo tělo JSON</td><td><code>arguments</code> validováno proti <code>inputSchema</code></td><td>formulář pro spouštění generovaný ze vstupního schématu</td></tr>
+<tr><td>Výstup</td><td><code>--format json</code> (hodnota schopnosti) nebo <code>text</code> (renderer)</td><td>hodnota JSON, typované chyby</td><td><code>structuredContent</code> plus text</td><td>HTML nad toutéž hodnotou</td></tr>
+<tr><td>Vlastní logika</td><td>renderery, některé exit kódy, lokální příkazy (<code>serve</code>, <code>generate</code>, <code>worktree create</code>)</td><td>jen transport</td><td>pouze transport; přehrání oznámení v mostu</td><td>pouze prezentace</td></tr>
+<tr><td>Změřit</td><td><code>capabilities projections</code> (<code>unbacked</code>)</td><td><code>GET /api/v1</code></td><td><code>tools/list</code>, <code>resources/list</code></td><td><code>GET /cockpit</code></td></tr>
+</tbody></table>
+</div>
+<p>Pokrytí je nerovnoměrné. Méně schopností má cestu v CLI než trasu v HTTP. <code>peers.list</code>, <code>plan.*</code>, <code>objects.*</code>, <code>health.report</code> a <code>environment.status</code> nemají vlastní projekci v CLI; příkazy <code>env</code> jsou vykreslení v CLI zaznamenaná v <code>cli::LOCAL</code>. Spusťte <code>majordomus-cli capabilities projections --format json</code> a porovnejte pole <code>cli</code> a <code>http</code> (<strong>dluh</strong> F-4).</p>
+<h2 id="8-the-generation-pipeline"><a class="zola-anchor" href="#8-the-generation-pipeline" aria-label="Odkaz na kotvu: 8-the-generation-pipeline">8. Generační pipeline</a></h2>
+<h3 id="8-1-the-generators-in-order"><a class="zola-anchor" href="#8-1-the-generators-in-order" aria-label="Odkaz na kotvu: 8-1-the-generators-in-order">8.1 Generátory, v pořadí</a></h3>
+<p><code>scripts/derive</code> je jeden příkaz, který aktualizuje každou commitnutou projekci. Jeho fáze běží v tomto pořadí [C15]:</p>
+<pre class="mermaid" tabindex="0" id="diagram-8-1-the-generators-in-order" data-diagram="8-1-the-generators-in-order" data-nodes="build a b c d check">
+flowchart TD
+  build["build step&lt;br&gt;cargo build, or MAJORDOMUS_BIN"]
+  a["stage A: majordomus generate --strict&lt;br&gt;code-only projections: openapi, registry, cli,&lt;br&gt;capabilities.md, modules/*.md, share/allow, provider bootstraps"]
+  b["stage B: scripts/generate-site-data&lt;br&gt;site/data/generated, site/content, docs/SITE_CLAIMS.md,&lt;br&gt;docs/PLAN_STATUS.md, docs/PAGES_STATUS.md"]
+  c["stage C: majordomus generate&lt;br&gt;projections over the index stage B changed:&lt;br&gt;site/data/registry, benchmarks, artifacts manifest"]
+  d["stage D: scripts/gitattributes&lt;br&gt;the merge=derived block, from the artifact manifest&lt;br&gt;and the published content tree"]
+  check["scripts/derive-check&lt;br&gt;generate --check, generate-site-data --check,&lt;br&gt;gitattributes --check: 0 current, 10 stale, 15 refused"]
+  build --&gt; a --&gt; b --&gt; c --&gt; d
+  d -.-&gt; check
+</pre><div class="mj-diagram-bar" role="toolbar" aria-label="Diagram 8-1-the-generators-in-order" aria-controls="diagram-8-1-the-generators-in-order" data-diagram-bar="diagram-8-1-the-generators-in-order" hidden><button type="button" class="mj-button mj-button--quiet" data-diagram-action="zoom-out" aria-label="Oddálit" title="Oddálit">−</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="zoom-in" aria-label="Přiblížit" title="Přiblížit">+</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="fit" aria-label="Přizpůsobit diagram rámu" title="Přizpůsobit diagram rámu">Přizpůsobit</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="expand" aria-label="Zobrazit na celou obrazovku" title="Zobrazit na celou obrazovku">Rozbalit</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="download" aria-label="Stáhnout SVG" title="Stáhnout SVG">SVG</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="link" aria-label="Odkaz: zkopírovat adresu tohoto diagramu" title="Odkaz: zkopírovat adresu tohoto diagramu">Odkaz</button><span class="mj-diagram-status" role="status"></span></div>
+<ul>
+<li><code>majordomus generate</code> (<code>src/generate.rs</code>) zapisuje do <code>docs/generated/</code> a <code>site/data/registry/</code> z jednoho <code>plan()</code>. Stejný plán běží pro zápis i pro <code>--check</code>. Jeho cíle jsou enum <code>GenerateTarget</code> v <code>cli.rs</code> a výstupní manifest (<code>docs/generated/artifacts.json</code>) vypisuje každý artefakt s jeho zdrojem, schématem a hashem.</li>
+<li><code>scripts/generate-site-data</code> je shellová polovina. Hashuje deklarovaný seznam vstupů (<code>INPUTS</code>) pod <code>LC_ALL=C</code>, zapisuje do staging adresáře a výsledky přesouvá na místo, takže neúspěšný běh nic nezmění. Promítá <code>docs/*.md</code> do <code>site/content/docs/</code> [C16].</li>
+<li>Existují dva zapisovatelé generovaných stromů, <code>src/generate.rs</code> a shellový generátor, a oba zapisují obsah webu (<strong>dluh</strong> F-14).</li>
+</ul>
+<h3 id="8-2-freshness-is-enforced-at-commit-time-and-in-ci"><a class="zola-anchor" href="#8-2-freshness-is-enforced-at-commit-time-and-in-ci" aria-label="Odkaz na kotvu: 8-2-freshness-is-enforced-at-commit-time-and-in-ci">8.2 Čerstvost se vynucuje při commitu a v CI</a></h3>
+<ul>
+<li><code>.githooks/pre-commit</code> spouští <code>bin/majordomus doctor</code>, ochranu worktree a <code>scripts/pages current</code>. Ten poslední příkaz porovná <code>generate-site-data --fingerprint</code> s <code>source_hash</code> v <code>site/data/generated/source.json</code> a poté spustí <code>generate --check</code> [C17]. Pokud spustitelný soubor není sestaven, registrová polovina kontroly se přeskočí se zprávou místo selhání (<strong>dluh</strong> F-16).</li>
+<li>V CI <code>core-check</code> spouští <code>generate-site-data --check</code> a kontrola <code>generation-converges</code> spouští generate a poté <code>generate --check</code>: generátor musí být pevný bod [C18].</li>
+<li><code>.gitattributes</code> označí každou odvozenou cestu <code>merge=derived</code>. <code>scripts/merge-derived</code> ponechá „naši“ verzi a vypíše, že soubor je nyní zastaralý, takže merge nikdy neslučuje projekci ručně; derive ji poté regeneruje. <code>doctor</code> shodí klon, který ovladač neregistroval.</li>
+</ul>
+<h3 id="8-3-how-a-document-becomes-a-page"><a class="zola-anchor" href="#8-3-how-a-document-becomes-a-page" aria-label="Odkaz na kotvu: 8-3-how-a-document-becomes-a-page">8.3 Jak se dokument stane stránkou</a></h3>
+<p>Každý dokument je registrován jedním řádkem v první tabulce <code>docs/README.md</code>. Shellový generátor tyto řádky čte a vytváří <code>/docs/&lt;slug&gt;/</code>. Generuje front matter: titulek z prvního nadpisu, popis z řádku, váhu z pozice řádku. Přepisuje odkazy a odmítne každé <code>docs/*.md</code>, které není v žádné tabulce [C16]. Navigace webu (<code>site/data/nav.toml</code>) se píše ručně a <code>scripts/ci/nav-check</code> ověřuje, že šablony navbaru a patičky z ní vycházejí. Nic nepřidává dokument do navigace automaticky. To je záměr: soubor říká, že navbar není sitemap.</p>
+<h3 id="8-4-generator-and-renderer"><a class="zola-anchor" href="#8-4-generator-and-renderer" aria-label="Odkaz na kotvu: 8-4-generator-and-renderer">8.4 Generátor a renderer</a></h3>
+<p><strong>Generátor</strong> mění kanonický vstup na commitnutý nebo servírovaný artefakt a posuzuje se podle <code>--check</code>: <code>majordomus generate</code>, <code>scripts/generate-site-data</code>, <code>majordomus update</code>, <code>scripts/gitattributes</code>. <strong>Renderer</strong> mění hodnotu, která už existuje, na prezentaci a nedrží žádný fakt: textový renderer CLI, stránka Cockpitu, šablona Zola, banner prostředí (<code>src/environment/render.rs</code>, „čistý pohled bez discovery“). Když renderer počítá něco, co by měl vlastnit generátor, stává se druhou implementací. Kontrola <code>development-semantics</code> říká, že to mechanicky rozhodnout neumí, a tak to dělá recenzent.</p>
+<h3 id="8-5-generators-are-tested"><a class="zola-anchor" href="#8-5-generators-are-tested" aria-label="Odkaz na kotvu: 8-5-generators-are-tested">8.5 Generátory se testují</a></h3>
+<ul>
+<li><code>tests/projections.rs</code>: každá deklarovaná projekce existuje a žádná není sirotek; změna typu nebo popisu dosáhne MCP, OpenAPI i reference; generované artefakty jsou při dvojím generování bajtově totožné a nenesou absolutní cestu [C18].</li>
+<li><code>tests/generate_check.rs</code>: <code>--check</code> souhlasí s tím, co by zápis vyprodukoval, odhalí manipulaci a nikdy nezapisuje.</li>
+<li><code>test/cases/98_cli_reference.sh</code> porovnává dvě generace pomocí <code>cmp</code>. <code>test/cases/28_no_hardcoded_values.sh</code> tvrdí, že pořadí vstupu nezávisí na locale. <code>test/cases/12b_site_data_transactional.sh</code> tvrdí, že neúspěšný běh zanechá artefakty bajtově shodné. <code>test/cases/51_derived_artifacts_committed.sh</code> tvrdí, že <code>derive-check</code> projde a že žádný odvozený soubor nevkládá aktuální commit.</li>
+</ul>
+<h2 id="9-governance-doctrine-rule-policy-adr"><a class="zola-anchor" href="#9-governance-doctrine-rule-policy-adr" aria-label="Odkaz na kotvu: 9-governance-doctrine-rule-policy-adr">9. Governance: doktrína, pravidlo, politika, ADR</a></h2>
+<p>Tento repozitář definuje čtyři pojmy takto. Definice pocházejí z <a href="https://majordomus.dev/cs/docs/doctrine/"><code>DOCTRINE.md</code></a>, souborů pravidel a <code>.ai/repo/policy.yaml</code>.</p>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>Pojem</th><th>Co to je zde</th><th>Kde</th><th>Životní cyklus</th></tr></thead><tbody>
+<tr><td><strong>pravidlo</strong></td><td>soubor Markdown s front matter: <code>id</code>, <code>version</code>, <code>title</code>, <code>statement</code>, <code>status</code> (<code>active</code> nebo <code>deprecated</code>), <code>class</code> (<code>blocking</code> nebo <code>advisory</code>), <code>depends_on</code> a volitelný blok <code>x-majordomus</code> jmenující validátor, testy nebo <code>reviewed_because</code></td><td><code>.ai/repo/rules/project/</code> plus vendorovaný balíček v <code>.ai/repo/rules/vendor/majordomus/</code> (připnutý hashem)</td><td>upraveno v commitu; nový význam je nový soubor verze; žádný krok přijetí</td></tr>
+<tr><td><strong>doktrína</strong></td><td><em>dva významy v tomto repozitáři</em> (<strong>dluh</strong> F-25). V <code>DOCTRINE.md</code> je doktrína pravidlo, jehož blok <code>x-majordomus</code> jmenuje validátor, který volá shellový dispečer (<code>mj_doctrine_dispatch</code>), a registr doktrín se odvozuje ze sady pravidel. Na stránkách metody webu je „doktrína“ vrstva principů nad politikou</td><td><code>DOCTRINE.md</code>; <code>site/content-src/method/</code></td><td>odvozeno z pravidel</td></tr>
+<tr><td><strong>policy</strong></td><td>konfigurace nástroje jednoho repozitáře: rozpočty kontextu, <code>verification.finish_requires</code>, sekce předávek, zapojení vynucování pro hooky</td><td><code>.ai/repo/policy.yaml</code></td><td>upravuje se ručně; projekce poskytovatelů se generují příkazem <code>majordomus update</code></td></tr>
+<tr><td><strong>ADR</strong></td><td>záznam rozhodnutí: <code>schema: adr/v1</code>, <code>status</code> (<code>proposed</code>, <code>accepted</code>, <code>superseded</code> nebo <code>rejected</code>), vzájemné <code>supersedes</code>/<code>superseded_by</code>, typované odkazy <code>related</code>, <code>provenance.origin</code></td><td>jeden soubor na rozhodnutí pod <code>.ai/repo/adrs/</code>, pojmenovaný číslem a slugem</td><td><code>adr propose</code> zapisuje <code>proposed</code>; přijetí je akt člověka, vynucený jen pro záznamy, jejichž původ je <code>extracted</code> [C34]</td></tr>
+</tbody></table>
+</div>
+<p>Řetěz od pravidla k důkazům je:</p>
+<pre class="mermaid" tabindex="0" id="diagram-9-governance-doctrine-rule-policy-adr" data-diagram="9-governance-doctrine-rule-policy-adr" data-nodes="rule mode val gate test ledger state surf">
+flowchart TD
+  rule["rule file&lt;br&gt;class, depends_on, x-majordomus"]
+  mode["enforcement mode, from the block's shape&lt;br&gt;dispatched: validator / gated: tests / reviewed: reason"]
+  val["validator&lt;br&gt;mj_validate_name in lib/, run by the dispatcher&lt;br&gt;at the commands enforced_by names"]
+  gate["CI gate&lt;br&gt;.ai/repo/ci/gates.yaml: id, job, runs, path classes"]
+  test["behavioural case or crate test&lt;br&gt;test/cases/*.sh, apps/majordomus-cli/tests/*.rs"]
+  ledger["recorded execution&lt;br&gt;.ai/repo/evidence/ledger.json"]
+  state["proof state per rule&lt;br&gt;crate::rules, rules report"]
+  surf["surfaces&lt;br&gt;CLI rules report, GET /api/v1/rules,&lt;br&gt;majordomus_rules, generic Cockpit page"]
+  rule --&gt; mode
+  mode --&gt; val
+  mode --&gt; test
+  test --&gt; gate
+  val --&gt; test
+  test --&gt; ledger
+  ledger --&gt; state
+  gate --&gt; state
+  state --&gt; surf
+</pre><div class="mj-diagram-bar" role="toolbar" aria-label="Diagram 9-governance-doctrine-rule-policy-adr" aria-controls="diagram-9-governance-doctrine-rule-policy-adr" data-diagram-bar="diagram-9-governance-doctrine-rule-policy-adr" hidden><button type="button" class="mj-button mj-button--quiet" data-diagram-action="zoom-out" aria-label="Oddálit" title="Oddálit">−</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="zoom-in" aria-label="Přiblížit" title="Přiblížit">+</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="fit" aria-label="Přizpůsobit diagram rámu" title="Přizpůsobit diagram rámu">Přizpůsobit</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="expand" aria-label="Zobrazit na celou obrazovku" title="Zobrazit na celou obrazovku">Rozbalit</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="download" aria-label="Stáhnout SVG" title="Stáhnout SVG">SVG</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="link" aria-label="Odkaz: zkopírovat adresu tohoto diagramu" title="Odkaz: zkopírovat adresu tohoto diagramu">Odkaz</button><span class="mj-diagram-status" role="status"></span></div>
+<p>Jedno spojení v tom řetězu je odvozeno, ne deklarováno. <code>gates.yaml</code> neříká, která pravidla kontrola dokazuje. <code>crate::rules</code> skenuje řádek <code>runs:</code> každé kontroly (čtečka řádků, ne typovaný parser) a naváže cestu pojmenovanou pravidlem na kontrolu ve třech případech: příkaz <em>je</em> ta cesta; cesta je testovací případ a příkaz spouští <code>test/run.sh</code>; nebo cesta je test crate a příkaz obsahuje <code>rust-check</code> [C27]. Kontrola sady se předpokládá jako spouštějící každý případ; nic nekontroluje, že případ skutečně vybrala (<strong>dluh</strong> F-7).</p>
+<h2 id="10-a-rule-existing-is-not-the-same-as-a-rule-being-enforced"><a class="zola-anchor" href="#10-a-rule-existing-is-not-the-same-as-a-rule-being-enforced" aria-label="Odkaz na kotvu: 10-a-rule-existing-is-not-the-same-as-a-rule-being-enforced">10. Existence pravidla není totéž co jeho vynucování</a></h2>
+<p>Pravidlo může být v kterékoli z osmi podmínek a každá je jiné tvrzení. Tabulka mapuje každou podmínku na to, co repozitář dnes skutečně dokáže ukázat.</p>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>Podmínka</th><th>Co to zde dokazuje</th><th>Implementováno?</th></tr></thead><tbody>
+<tr><td>deklarováno</td><td>soubor pod <code>.ai/repo/rules/</code></td><td>ano</td></tr>
+<tr><td>naparsováno</td><td><code>lib/rules.sh</code> a <code>src/rules/mod.rs</code> to čtou; neznámé klíče jsou chyby</td><td>ano (dva čtenáři)</td></tr>
+<tr><td>platné</td><td>vyřešení odmítne chybějící závislosti, cykly a duplicitní identity; loader odmítne napůl deklarovaný blok</td><td>ano</td></tr>
+<tr><td>validátor existuje</td><td><code>rules report</code> označí pojmenovaný validátor <code>present</code>; chybějící činí pravidlo <code>dangling</code></td><td>ano, pro odeslaná pravidla</td></tr>
+<tr><td>zapojeno</td><td><code>doctor</code> prochází řetěz dispatcheru kvůli doktrínám; <code>rule-proof-check</code> odmítne pojmenovanou cestu, která není ve stromu</td><td>ano</td></tr>
+<tr><td>kontrola se provádí</td><td>kontrola v <code>gates.yaml</code>, jejíž <code>runs:</code> pokrývá jmenovanou cestu</td><td>odvozeno z <code>runs:</code> (§9)</td></tr>
+<tr><td>prošlo</td><td>zaznamenané úspěšné provedení, za které se vstupy pravidla nepohnuly</td><td><strong>částečné</strong>: zaznamenávají se jen lokální běhy; CI nezaznamenává nic (<strong>dluh</strong> F-6)</td></tr>
+<tr><td>důkazy zachyceny</td><td><code>.ai/repo/evidence/ledger.json</code>, spojeno při každém čtení</td><td><strong>částečné</strong>: stejné omezení</td></tr>
+</tbody></table>
+</div>
+<p>Strojově čitelná podoba tohoto žebříčku je graf důkazů pravidel (<code>crate::rules</code>, <code>majordomus-cli rules report | show | proves</code>, <code>GET /api/v1/rules</code>, MCP <code>majordomus_rules</code>). Dává každému pravidlu jeden z deseti stavů: <code>proven</code>, <code>inputs unchanged</code>, <code>stale</code>, <code>gated</code>, <code>failing</code>, <code>not run</code>, <code>reviewed</code>, <code>unrunnable</code>, <code>dangling</code>, <code>unproven</code>. Stav pravidla je nejslabší z jeho částí [C23].</p>
+<ul>
+<li><strong>Režimy vynucování plynou z tvaru bloku</strong> [C24]. <em>Odesílané</em> pravidlo jmenuje <code>validator</code>. <em>Kontrolované</em> pravidlo jmenuje <code>tests</code> a žádný validátor. <em>Revidované</em> pravidlo jmenuje větu <code>reviewed_because</code> a nic z toho. Spustitelný důkaz vždy vyhrává. <code>scripts/ci/rule-proof-check</code>, kontrola <code>rule-proof</code>, odmítne nefunkční cestu rovnou a ratchetuje blokující pravidla, která v <code>.ai/repo/rule-proof-baseline.txt</code> nejmenují nic [C25].</li>
+<li><strong>Nález je třída, kterou stav nepodporuje.</strong> <code>dangling</code> je nález pro jakoukoli třídu. U blokujícího pravidla jsou nálezy <code>unproven</code>, <code>failing</code> a <code>unrunnable</code>. <code>gated</code>, <code>reviewed</code> a <code>not run</code> jsou slabší stavy: počítají se, ale nálezy nejsou [C26].</li>
+<li><strong>Na samotný graf důkazů se nic nekontroluje.</strong> Žádný skript, kontrola ani workflow nespouští <code>rules report --check</code> (<strong>dluh</strong> F-8).</li>
+<li><strong>Selhávající běh lze skrýt.</strong> Stav pravidla je <code>max()</code> přes jeho testy a enum řadí <code>Failing</code> před <code>NotRun</code>. Blokující pravidlo s jedním selhávajícím případem a jedním případem, který nikdy neběžel, proto hlásí <code>not run</code>, což není nález. Čtení kódu to ukazuje; v datech to pozorováno nebylo (<strong>dluh</strong> F-9) [C26].</li>
+</ul>
+<p><code>project.never-reported-is-not-green</code> ukazuje celý problém v jednom pravidle. Jeho výrok zní „kontrola, která nehlásila, je neznámá, nikdy ne úspěšná“. Je to <code>class: advisory</code>, nemá blok <code>x-majordomus</code> a říká, že se rozhoduje „posudkem a záznamem, ne kontrolou“. Graf důkazů je hlásí jako <code>unproven</code> a to není zjištění, protože poradní pravidlo nedluží důkaz. Pravidlo existuje, jeho myšlenky utvářely <code>evidence-check</code> (viz <code>EVIDENCE.md</code>) a mechanicky vynucováno není. Graf říká přesně to.</p>
+<p>Chcete-li to změřit sami:</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="shellsession"><span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> bin/majordomus-cli rules report --format json </span><span class="z-l-16 z-d-16">|</span><span class="z-l-1 z-d-3"> jq</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">.states, .coverage</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> scripts/ci/rule-proof-check</span></span>
+<span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> bin/majordomus-cli rules show project.never-reported-is-not-green</span></span></code></pre><h2 id="11-evidence-freshness-and-claim-drift"><a class="zola-anchor" href="#11-evidence-freshness-and-claim-drift" aria-label="Odkaz na kotvu: 11-evidence-freshness-and-claim-drift">11. Důkazy, čerstvost a drift tvrzení</a></h2>
+<p><strong>Ledger.</strong> <code>.ai/repo/evidence/ledger.json</code> drží poslední zaznamenané provedení každého testu. Každý záznam uvádí id testu, runner, zdroj, výsledek, sekundy, commit, stav pracovního stromu, digest <code>sha256</code> vlastního zdroje testu, čas, původ (<code>local</code>, <code>ci</code> nebo <code>release</code>) a příkaz, který jej reprodukuje. <code>majordomus evidence record</code> jej zapisuje z reportu, který běh už vytvořil. Nedrží žádnou historii ani výstup (<a href="https://majordomus.dev/cs/docs/evidence/"><code>EVIDENCE.md</code></a>).</p>
+<p><strong>Čerstvost se odvozuje při každém čtení</strong> [C28]:</p>
+<ul>
+<li>běh, který neprošel, je <code>failing</code>;</li>
+<li>když git nedokáže udělat diff, běh je <code>stale</code>, protože nevědět není důkaz;</li>
+<li>když se zdroj testu nebo soubor pravidla změnil po zaznamenaném commitu, nebo digest již nesouhlasí, běh je <code>stale</code>;</li>
+<li>když se nezměnilo nic jiného než samotná kniha, běh je <code>proven</code>;</li>
+<li>jinak je běh <code>inputs unchanged</code>, tedy žádná známá invalidace, ale není to důkaz proti tomuto commitu.</li>
+</ul>
+<p><strong>Tvrzení.</strong> <code>docs/CLAIMS.yaml</code> váže každé veřejné tvrzení ke zdroji, implementaci a testu, s ručně psaným <code>status</code> ze slovníku deklarovaného v témže souboru. Každé tvrzení má stránku pod <code>docs/claims/</code>. Tři čtenáři kontrolují drift:</p>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>Kontrola</th><th>Otázka</th><th>Kontrola</th></tr></thead><tbody>
+<tr><td><code>scripts/generate-site-data --check</code></td><td>existují jmenované cesty? má každé tvrzení stránku?</td><td><code>core-check</code></td></tr>
+<tr><td><code>scripts/ci/claim-proof-check</code></td><td>pojmenovává pojmenovaný test tvrzení zpět? (ratchet)</td><td><code>claim-proof</code></td></tr>
+<tr><td><code>scripts/evidence-check</code></td><td>jaký je stav důkazu každého tvrzení proti knize? (ratchet při ztraceném nebo staženém důkazu)</td><td><code>evidence-check</code>, vždy zapnuto</td></tr>
+</tbody></table>
+</div>
+<p><strong>Jak důkaz poctivě dosáhne Cockpitu a webu.</strong> Stavy důkazů pravidel a tvrzení se poskytují jako schopnosti (<code>rules.*</code>, <code>evidence.*</code>) přes CLI, HTTP a MCP a každá má obecnou stránku schopnosti v Cockpitu. Cockpit nemá <strong>žádnou</strong> vyhrazenou oblast pravidel, důkazů ani peerů. Stránka webu <code>/evidence/</code> vykresluje <code>data/generated/claims-graph.json</code>, který je sestaven z <code>CLAIMS.yaml</code>: ukazuje psané vazby mezi tvrzeními, zdroji a testy, ne výsledky ledgeru. Jeho stránky záruk ukazují psané <code>status</code>, ne změřený důkaz [C29]. CI důkazy také nezaznamenává: <code>EVIDENCE.md</code> říká „dnes ten krok nespouští nic“ [C29]. <em>Důkaz funkce</em> tedy dosahuje API a MCP jako odvozený stav. Na stránku, kterou člověk prochází, zatím nedosahuje jako cokoli víc než mechanismus (<strong>dluh</strong> F-6, F-10).</p>
+<h2 id="12-publication-built-deployed-verified"><a class="zola-anchor" href="#12-publication-built-deployed-verified" aria-label="Odkaz na kotvu: 12-publication-built-deployed-verified">12. Publikace: sestaveno, nasazeno, ověřeno</a></h2>
+<p>Web je projekce a „publikovaný“ se může říkat třem různým stavům:</p>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>Stav</th><th>Co to zakládá</th><th>Kde</th></tr></thead><tbody>
+<tr><td><strong>sestaveno</strong></td><td><code>scripts/pages build</code> otiskem dokáže, že potvrzená data jsou aktuální, a pak spustí <code>site-build --no-data</code>; neaktuální strom je odmítnut, nikoli přegenerován</td><td>krok <code>.github/workflows/pages.yml</code>, <code>build</code></td></tr>
+<tr><td><strong>nasazeno</strong></td><td><code>scripts/site-deploy --skip-build</code> pushne <code>gh-pages</code>; GitHub pak spustí vlastní build Pages, který čte <code>scripts/pages built</code></td><td>krok <code>publish</code> a krok, který čte build GitHubu</td></tr>
+<tr><td><strong>ověřeno veřejně</strong></td><td><code>scripts/pages verify --commit $GITHUB_SHA</code> polluje živý <code>/build.json</code> (zapsaný příkazem <code>scripts/site-build</code> s commitem, hashem zdroje a otisky). Je <code>continue-on-error</code>: report, ne kontrola</td><td>krok <code>public</code></td></tr>
+<tr><td><strong>ověřeno, jako kontrola</strong></td><td><code>scripts/ci/pages-check</code>, kontrola <code>pages-live</code>: publikovaný commit je na masteru, žádná publikace není dlužná mimo okno deploye, živý web obsluhuje to, co drží <code>gh-pages</code>, a build GitHubu neskončil chybou. Je to <code>at-finish</code>, takže se na to ptá <code>finish</code></td><td><code>.ai/repo/ci/gates.yaml</code> [C21]</td></tr>
+</tbody></table>
+</div>
+<p>To je v praxi <code>project.never-reported-is-not-green</code>. Job nasazení, který hlásí <code>cancelled</code>, protože příliš dlouho čekal na CDN, není důkazem, že se nic nepublikovalo, takže na otázku se odpovídá čtením toho, co web servíruje.</p>
+<h2 id="13-doctor-and-drift-detect-repair-regenerate"><a class="zola-anchor" href="#13-doctor-and-drift-detect-repair-regenerate" aria-label="Odkaz na kotvu: 13-doctor-and-drift-detect-repair-regenerate">13. Doctor a drift: zjistit, opravit, znovu vygenerovat</a></h2>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>Sloveso</th><th>Nástroj</th><th>Zapisuje?</th></tr></thead><tbody>
+<tr><td><strong>detekce</strong></td><td><code>majordomus doctor</code> (shell, jen pro čtení): stavy projekcí poskytovatelů (<code>absent</code>, <code>region_absent</code>, <code>malformed</code>, <code>unstamped</code>, <code>hand_edited</code>, <code>ok</code>), řetězec zapojení doktríny, zapojení hooků a merge driveru, rozpočet vždy načítaného souboru a pevně zapsané počty. <code>majordomus-cli worktree doctor</code>, <code>mesh doctor</code>, <code>capabilities validate</code>, <code>scripts/derive-check</code></td><td>ne</td></tr>
+<tr><td><strong>znovu vygenerovat</strong></td><td><code>majordomus generate</code>, <code>scripts/derive</code>, <code>majordomus update</code> (soubory poskytovatelů; nejdřív vykreslí každý cíl a odmítne přepsat ruční úpravu bez <code>--force</code>)</td><td>ano, jen odvozené soubory</td></tr>
+<tr><td><strong>repair</strong></td><td><code>majordomus-cli worktree repair</code> a <code>worktree migrate</code> (ověřeno otiskem), <code>just derive-merge-driver</code></td><td>ano, místní stav nebo konfigurace</td></tr>
+</tbody></table>
+</div>
+<p><code>doctor</code> nemá <code>--fix</code> [C22]. Každý nález jmenuje příkaz, který jej opraví. Nález, který žádný nejmenuje, kontrola <code>finding-reproduce</code> odmítne. Čerstvost <code>site/</code> a <code>docs/generated/</code> <code>doctor</code> nekontroluje; kontrolují ji pre-commit <code>pages current</code> a <code>derive-check</code>.</p>
+<h2 id="14-tests-that-hold-the-surfaces-together"><a class="zola-anchor" href="#14-tests-that-hold-the-surfaces-together" aria-label="Odkaz na kotvu: 14-tests-that-hold-the-surfaces-together">14. Testy, které drží povrchy pohromadě</a></h2>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>Test</th><th>Co porovnává</th></tr></thead><tbody>
+<tr><td><code>test/cases/76_capabilities_projections.sh</code></td><td><code>capabilities validate</code> prochází pro registr, MCP, HTTP a OpenAPI; jedna schopnost (<code>objects.get</code>) je vysledována k nástroji, trase, <code>operationId</code> a řádku reference; počet operací OpenAPI se rovná počtu vystavení HTTP; poškozený generovaný soubor způsobí, že <code>generate --check</code> skončí s exit 10; žádné řádky <code>closed == false</code>; deklarativní pravidlo a druh definovaný repozitářem dosáhnou každého povrchu</td></tr>
+<tr><td><code>apps/majordomus-cli/tests/http_serve.rs</code></td><td>skutečný socket: <code>mcp_and_http_answer_the_same_capability_with_the_same_result</code> pro <code>objects.get</code>, <code>objects.search</code> a <code>capabilities.describe</code>; <code>the_release_analysis_is_one_value_on_every_surface</code>; každá routa odpovídá svým případům měření výkonu</td></tr>
+<tr><td><code>apps/majordomus-cli/tests/projections.rs</code></td><td>projekce existují bez osiřelých, včetně stromu clap; mutace typu zasáhne každou projekci; generování je bajt po bajtu identické</td></tr>
+<tr><td><code>test/cases/91_canonical_architecture.sh</code></td><td>ID <code>registry.json</code> se rovnají živému <code>describe</code>; pokrytí měřením výkonu je úplné; mnoho požadavků MCP nemění startovní čítače</td></tr>
+<tr><td><code>test/cases/92_openapi_reference.sh</code></td><td>tagy OpenAPI se rovnají modulům; příklady se rovnají benchmarkovým případům</td></tr>
+<tr><td><code>test/cases/46_cross_surface.sh</code></td><td>úkoly plánu, stav READY a hrany se shodují napříč CLI, diagramem Mermaid a projekcí GitHub. Toto je plán, nikoli schopnosti</td></tr>
+<tr><td><code>test/cases/99_plan_capabilities.sh</code></td><td>shellový engine plánu a <code>src/plan.rs</code> dávají bajtově shodné odpovědi</td></tr>
+</tbody></table>
+</div>
+<p>Rovnost hodnot napříč HTTP a MCP se testuje na <strong>vzorku</strong> schopností, negeneruje se pro každou. Žádný test netvrdí, že <code>--format json</code> z CLI se rovná hodnotě HTTP u každé schopnosti vystavené v CLI (<strong>dluh</strong> F-12).</p>
+<h2 id="15-sessions-context-handover-planning-environment"><a class="zola-anchor" href="#15-sessions-context-handover-planning-environment" aria-label="Odkaz na kotvu: 15-sessions-context-handover-planning-environment">15. Relace, kontext, předávka, plánování, prostředí</a></h2>
+<p>Každé z nich sleduje stejný vzor: psaný nebo zaznamenaný stav, odvození a projekce. Vlastník každého odvození se liší a tam je dluh.</p>
+<p><strong>Relace: trvalý záznam plus pomíjivá přítomnost.</strong> <em>Epizoda</em> relace patří relaci poskytovatele. Dokud je otevřená, zaznamenává se pod <code>.ai/local/state/sessions-open/</code> a uzavřená se zapíše do <code>.ai/repo/sessions/</code> jako sledovaný záznam. To je trvalá polovina, zapisovaná <code>lib/session.sh</code> a <code>lib/capture.sh</code> a spouštěná hooky poskytovatele v <code>.claude/settings.json</code> (start relace, konec, compact a odeslání promptu). <em>Přítomnost</em> je nástěnka peerů, držená v paměti sdíleným serverem a ztracená s procesem (§16). <a href="https://majordomus.dev/cs/docs/continuity/"><code>CONTINUITY.md</code></a> uvádí oddělení: „Soubor epizody nezaznamenává žádný proces, nástěnka peerů nezaznamenává žádnou epizodu.“ Typovaná doména relací v Rustu (<code>src/session/</code>) čte; shell stále zapisuje (ADR 47, ADR 52).</p>
+<p><strong>Kompilace kontextu: dva enginy.</strong></p>
+<ul>
+<li>
+<p><code>majordomus context</code> (<code>lib/context.sh</code>) je briefing. Má pevné sekce v pořadí autority (git, peeři, úloha, profil, kontextové dokumenty, otázky, rozhodnutí, checkpoint, předávka, soubory, historie, prompt), rozpočet řádků z politiky (<code>context.builder_budget_lines</code>) a deklarované pořadí vypouštění. Git, úloha, profil a otevřené otázky se nikdy nevypouštějí a každá vypuštěná sekce je uvedena pod <code>EXCLUDED</code>. Je deterministický a nevolá se žádný model.</p>
+</li>
+<li>
+<p><code>devcontext.compile</code> (<code>src/devcontext/</code>) je kompilátor Rustu. Je to schopnost, takže dosáhne na CLI, HTTP i MCP [C44]. Algoritmus:</p>
+<ul>
+<li><em>objevování</em>: semínka, průchod složeným grafem s váhami hran násobenými podél každé cesty, účinné cesty rozsahu (včetně deklarovaného <code>scope</code> úkolu), governance, záznamy relací a lokální předávky a checkpointy a nevyřešené odkazy;</li>
+<li><em>relevance</em>: práh (<code>DEFAULT_FLOOR</code>) a limit hloubky (<code>DEFAULT_MAX_DEPTH</code>);</li>
+<li><em>autorita</em>: úrovně seřazené Task, Governance, Source, Decision, Knowledge, History;</li>
+<li><em>čerstvost</em>: lokální záznam, jehož odchylka od gitu je nedůvěryhodná, má relevanci sníženou na polovinu a dostane diagnostiku <code>stale_record</code>, a zastaralé či nahrazené objekty se vylučují;</li>
+<li><em>rozpočet</em>: tokeny odhadnuté jako bajty dělené <code>BYTES_PER_TOKEN</code>, first fit v pořadí podle úrovně, pak relevance, pak URI; seedy a objekty politiky nebo rozsahu se nikdy nezahazují a <code>over_budget</code> se hlásí, pokud samy překročí rozpočet [C45].</li>
+</ul>
+<p>Odvozuje se pouze shoda záměru (§4). Dva enginy pro jeden koncept jsou <strong>dluh</strong> F-15.</p>
+</li>
+</ul>
+<p><strong>Předávka.</strong> Povinné sekce pocházejí z politiky (<code>handover.required_sections</code>: Objective, Current State, Next Action) a chybějící nebo prázdná sekce je odmítnuta. Identitní pole front matteru (větev, hlava, worktree, změněné soubory, …) se vždy počítají a tělo, které se jedno pokusí napsat, je odmítnuto. S <code>--derive</code> se každá sekce generuje z knihy, gitu a otevřených otázek pomocí <code>mj_derive_sec_&lt;slug&gt;</code> v <code>lib/derive.sh</code> [C47]. <code>--resolve</code> vybere nejnovější předávku pro stejný worktree a větev, poté pro stejnou větev, nikdy napříč repozitářem, a označí její divergenci od gitu.</p>
+<p><strong>Plánování.</strong> Milníky a úkoly jsou psané YAML pod <code>.ai/repo/project/</code>. Stav se <em>odvozuje a nikdy neukládá</em>: klíč <code>status</code> je chyba validace. Validace sestaví DAG závislostí s detekcí cyklů a pak vlny provádění; dva připravené úkoly v jedné vlně, jejichž rozsahy se navzájem obsahují, vyvolají <code>WARN scope_conflict</code> a serializují se [C46]. <code>lib/project.awk</code> je autoritativní engine. <code>src/plan.rs</code> ho zrcadlí a případ 99 ho drží byte-identický; <code>plan.*</code> ho zpřístupňuje přes HTTP a MCP a <code>plan.transition</code> zapisuje jeden záznam přes model (<strong>dluh</strong> F-17). <code>docs/PLAN_STATUS.md</code> generuje stage B.</p>
+<p><strong>RepositoryEnvironment.</strong> <code>environment::RepositoryEnvironment</code> (<code>majordomus/repository-environment/v1</code>) je jeden typovaný snapshot: projekt, repozitář, VCS, toolchainy, vrstva, workflow, provideři a služby, s položkou původu pro každou hodnotu. <code>environment.status</code> a <code>environment.explain</code> jsou schopnosti (HTTP, MCP). Příkazy <code>env</code> a banner shellu jsou jeho vykreslení; banner „je čistý pohled bez discovery“. Jedno omezení je poctivé uvést: služba se kreslí jako dostupná, když uspěje TCP connect, a nic víc [C48] (<strong>dluh</strong> F-18).</p>
+<h2 id="16-mesh-and-the-peer-board"><a class="zola-anchor" href="#16-mesh-and-the-peer-board" aria-label="Odkaz na kotvu: 16-mesh-and-the-peer-board">16. Mesh a nástěnka peers</a></h2>
+<p>Existují dva odlišné mechanismy a třetí neexistuje.</p>
+<p><strong>Nástěnka peerů</strong> (<code>src/peers.rs</code>, ADR 44) drží relace, které na tomto repozitáři pracují <em>právě teď</em>. Je to jedna nástěnka v paměti na sdílený server; <code>peers.list</code> sbírá nástěnku každého checkoutu čtením leasů ostatních checkoutů a jedním dotazem na každý a hlásí <code>complete</code> a <code>boards</code>. Peer je připojen přes relaci MCP a relace HTTP MCP vyprší po <code>SESSION_IDLE_TIMEOUT</code>. <code>majordomus_announce</code> připojí claim (<code>intent</code>, <code>scope</code>) ke spojení. Nástěnka „nic nevynucuje“ a peer, který se znovu připojí, na ní ztratí své místo [C41].</p>
+<p><strong>Mesh</strong> (<code>src/mesh/</code>, ADR 50, <code>docs/MESH.md</code>) objevuje <em>běžící instance Majordomus</em> napříč stroji. Jeho implementovaní poskytovatelé jsou UDP multicast, UDP broadcast a HTTP rendezvous (<code>POST /api/v1/mesh/register</code>), každý je implementací <code>MeshProvider</code>, která manageru jen předává bajty. Manager ověřuje obálky podepsané Ed25519 jednou cestou do jednoho <code>MeshRegistry</code>, omezeného <code>MAX_NODES</code>, s přítomností z <code>PRESENCE_TTL</code> a záznamy uchovávanými po <code>RETENTION</code>. Důvěra (<code>deny_unknown</code> ve výchozím stavu) záznamy označuje a nic neuděluje. Mesh je vypnutý, pokud ho nezapne commitnutá deklarace, a deklarace tohoto repozitáře (<code>.ai/repo/mesh/majordomus.yaml</code>) říká <code>enabled: false</code> [C42]. Řídicí věta zní <strong>„Discovery creates awareness, not authority.“</strong></p>
+<p>Co <strong>neexistuje</strong>, aby to nikdo nehledal: nástěnka oddělená od nástěnky peerů; objevování přes Tailscale, mDNS nebo DNS-SD (jmenováno jen jako možní budoucí poskytovatelé); jakákoli replikace žurnálu, odkazů nebo nároků mezi stroji na masteru; stránka Cockpitu pro nástěnku peerů. ADR 50 je záměrně drží odděleně: „Nástěnka peerů zůstává jediným povrchem spolupráce.“</p>
+<p><strong>Překryv rozsahu je odvozen a poradní.</strong> Překryv počítají tři mechanismy a žádný nic nezamyká:</p>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>Mechanismus</th><th>Čte</th><th>Výsledek</th></tr></thead><tbody>
+<tr><td><code>majordomus start</code> / <code>check --overlap</code> (<code>lib/start.sh</code> <code>mj_report_overlap</code>)</td><td>rozsahy úloh <code>.ai/local/state/current.yaml</code> ostatních worktree, podle obsažení cest</td><td><code>INFO overlap</code> řádků; exit 0</td></tr>
+<tr><td><code>peers::claims_meet</code></td><td>claimy oznámené na nástěnce</td><td>překryv ohlášený vedle peera</td></tr>
+<tr><td><code>scope_conflict</code> plánu</td><td>deklarované rozsahy úkolů v rámci vlny</td><td><code>WARN</code>; úkoly jsou serializovány</td></tr>
+</tbody></table>
+</div>
+<p><code>check --overlap</code> čte jen záznamy úloh, ne nástěnku ani větve. Má také vadu, kterou lze reprodukovat: smyčka běží na pravé straně roury, takže její čítač nálezů se ztratí, a tiskne „žádný jiný worktree nemá claim na překrývající se cestu“ hned po výpisu překryvů [C43] (<strong>dluh</strong> F-13). Commit odmítne skutečně rozsah samotné úlohy, kontrolovaný v <code>finish</code> a hookem pre-push.</p>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>Povrch</th><th>Nástěnka peerů</th><th>Mesh</th></tr></thead><tbody>
+<tr><td>CLI</td><td>žádné pro <code>peers.list</code></td><td><code>mesh identity</code>, <code>mesh doctor</code> (schopnosti); <code>mesh status</code>, <code>mesh nodes</code> (lokální vykreslení)</td></tr>
+<tr><td>HTTP</td><td><code>GET /api/v1/peers</code>, <code>POST /api/v1/peers/announce</code></td><td><code>GET /api/v1/mesh</code>, <code>/mesh/nodes</code>, <code>/mesh/identity</code>, <code>/mesh/doctor</code>; <code>POST /api/v1/mesh/register</code></td></tr>
+<tr><td>MCP</td><td><code>majordomus_peers</code>, <code>majordomus_announce</code></td><td><code>majordomus_mesh</code>, <code>majordomus_mesh_nodes</code>, <code>majordomus_mesh_identity</code>, <code>majordomus_mesh_doctor</code>, <code>majordomus_mesh_register</code></td></tr>
+<tr><td>Cockpit</td><td>žádná oblast (jen generická stránka schopnosti)</td><td><code>/cockpit/mesh</code>, z <code>mesh.status</code> a <code>mesh.nodes</code></td></tr>
+</tbody></table>
+</div>
+<h2 id="17-walkthroughs"><a class="zola-anchor" href="#17-walkthroughs" aria-label="Odkaz na kotvu: 17-walkthroughs">17. Návody krok za krokem</a></h2>
+<h3 id="17-1-one-capability-through-every-surface-rules-report"><a class="zola-anchor" href="#17-1-one-capability-through-every-surface-rules-report" aria-label="Odkaz na kotvu: 17-1-one-capability-through-every-surface-rules-report">17.1 Jedna schopnost přes každý povrch: <code>rules.report</code></a></h3>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>Krok</th><th>Kde</th><th>Automaticky nebo ručně</th></tr></thead><tbody>
+<tr><td>vstupní typ <code>RulesReportInput</code>, výstupní typ, <code>BenchmarkCases</code></td><td><code>src/capability/builtin/rules.rs</code></td><td>ručně (typy)</td></tr>
+<tr><td><code>capability!</code> s <code>id: "rules.report"</code>, <code>mcp("majordomus_rules")</code> plus zdroj <code>majordomus://rules</code>, <code>get("/api/v1/rules")</code>, <code>cli: ["rules", "report"]</code></td><td><code>builtin/rules.rs</code></td><td>ručně, jednou</td></tr>
+<tr><td>Schémata JSON</td><td><code>CanonicalSchema::of</code></td><td>automaticky</td></tr>
+<tr><td>Nástroj MCP <code>majordomus_rules</code> s <code>readOnlyHint</code></td><td><code>mcp/surface.rs</code></td><td>automaticky</td></tr>
+<tr><td><code>GET /api/v1/rules?class=&amp;state=&amp;namespace=&amp;findings_only=</code></td><td><code>http/router.rs</code></td><td>automaticky</td></tr>
+<tr><td>OpenAPI <code>operationId: rules.report</code>, tag <code>rules</code>, <code>x-majordomus-cli: rules report</code>, příklady z případů</td><td><code>http/openapi.rs</code></td><td>automaticky</td></tr>
+<tr><td>Vstup do Swagger UI</td><td><code>/swagger</code></td><td>automaticky</td></tr>
+<tr><td>clap <code>RulesCommand::Report</code>, přepínače <code>--state --class --namespace --findings --check</code></td><td><code>cli.rs</code></td><td><strong>ručně</strong></td></tr>
+<tr><td>runner: příznaky na vstup, <code>by_cli</code>, <code>execute</code>; textový renderer; <code>--check</code> skončí s 10</td><td><code>commands/rules.rs</code></td><td><strong>ručně</strong></td></tr>
+<tr><td>příklad <code>rules-report-json</code></td><td><code>cli::EXAMPLES</code> v <code>cli.rs</code></td><td><strong>ručně</strong></td></tr>
+<tr><td>uzavření: tvrzení <code>rules report</code> se rozliší na spustitelný příkaz clap</td><td><code>capability/closure.rs</code></td><td>automatická kontrola</td></tr>
+<tr><td><code>/cockpit/capabilities/rules.report</code> s formou runneru</td><td><code>cockpit/pages.rs</code> <code>capability</code></td><td>automaticky</td></tr>
+<tr><td><code>docs/generated/capabilities.md</code>, <code>docs/generated/modules/rules.md</code>, <code>registry.json</code></td><td>fáze A</td><td>automaticky</td></tr>
+<tr><td><code>/registry/capabilities/rules-report/</code>, <code>/docs/cli/rules/report/</code></td><td>fáze B (<code>scripts/generate-site-data</code>)</td><td>automaticky</td></tr>
+</tbody></table>
+</div>
+<p>K reprodukci: <code>bin/majordomus-cli capabilities describe rules.report</code>, <code>curl -s localhost:8742/openapi.json | jq '.paths["/api/v1/rules"].get.operationId'</code>.</p>
+<h3 id="17-2-one-rule-from-its-file-to-its-evidence-project-conventional-commits"><a class="zola-anchor" href="#17-2-one-rule-from-its-file-to-its-evidence-project-conventional-commits" aria-label="Odkaz na kotvu: 17-2-one-rule-from-its-file-to-its-evidence-project-conventional-commits">17.2 Jedno pravidlo od souboru k důkazům: <code>project.conventional-commits</code></a></h3>
+<ol>
+<li><strong>Zdroj.</strong> <code>.ai/repo/rules/project/conventional-commits.v2.md</code>, <code>class: blocking</code>, s <code>x-majordomus: tests: [test/cases/274_commit_policy.sh, scripts/ci/commit-policy]</code>. Jmenuje testy a žádný validátor, takže jeho režim je <em>kontrolovaný</em>.</li>
+<li><strong>Kontrola.</strong> <code>commit-policy</code> v <code>.ai/repo/ci/gates.yaml</code>, <code>runs: scripts/ci/commit-policy</code>. Soudce uvnitř je schopnost commit exekutoru; kontrola vybere rozsah a ratchetuje dluh v <code>.ai/repo/commit-policy-baseline.txt</code>.</li>
+<li><strong>Důkaz mutací.</strong> <code>test/cases/274_commit_policy.sh</code> přidá commit, který není conventional, a ověří, že příkaz i kontrola skončí s exit kódem 10, že nový dluh selže po <code>--write-baseline</code> a že selže <code>--strict</code>.</li>
+<li><strong>Důkazy.</strong> Kniha drží lokální úspěšný běh <code>suite:274_commit_policy</code>. Cesta kontroly pravidla je jako důkaz <code>unrunnable</code>, protože žádný runner nezaznamenává verdikt kontroly, takže stav pravidla je <code>gated</code>: mechanismus je ukázán, ne výsledek.</li>
+<li><strong>Povrchy.</strong> <code>bin/majordomus-cli rules show project.conventional-commits</code>, <code>GET /api/v1/rules/rule?rule=project.conventional-commits</code>, MCP <code>majordomus_rule</code> a generická stránka Cockpitu pro <code>rules.show</code>. Stránky <code>/doctrines/</code> webu se generují z registru doktrín (<code>doctrines.json</code> ve fázi B) a nezobrazují stav knihy.</li>
+</ol>
+<h3 id="17-3-one-doctrine-majordomus-use-case-coverage"><a class="zola-anchor" href="#17-3-one-doctrine-majordomus-use-case-coverage" aria-label="Odkaz na kotvu: 17-3-one-doctrine-majordomus-use-case-coverage">17.3 Jedna doktrína: <code>majordomus.use-case-coverage</code></a></h3>
+<p>Je vendorován v <code>.ai/repo/rules/vendor/majordomus/rules/use-case-coverage.v1.md</code>. Jeho blok jmenuje <code>validator: use_case_coverage</code>, <code>enforced_by: [doctor, check, finish]</code>, <code>policy_key: use_cases_covered</code>, <code>exit_code: 10</code> a test (<code>test/cases/94_use_cases.sh</code>). Dispatcher spouští <code>mj_validate_use_case_coverage</code> (<code>lib/usecase.sh</code>) vždy, když běží některý z těchto příkazů, podle politiky pokrytí v <code>policy.yaml</code>. <code>finish</code> vybírá doktríny podle <code>verification.finish_requires</code> a seznam tohoto repozitáře <code>use_cases_covered</code> neuvádí, takže zde je doktrína vynucována při <code>doctor</code> a <code>check</code>, ale ne při <code>finish</code>. Graf důkazů hlásí validátor <code>present</code> a případ <code>not run</code>.</p>
+<h3 id="17-4-one-mesh-example"><a class="zola-anchor" href="#17-4-one-mesh-example" aria-label="Odkaz na kotvu: 17-4-one-mesh-example">17.4 Jeden příklad meshe</a></h3>
+<p>Mesh je v tomto repozitáři implementován a zakázán, takže poctivým živým příkladem je odmítnutí:</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="shellsession"><span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> curl -s localhost:8742/api/v1/mesh </span><span class="z-l-16 z-d-16">|</span><span class="z-l-1 z-d-3"> jq</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">{active, reason}</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> curl -s localhost:8742/api/v1/mesh/nodes </span><span class="z-l-16 z-d-16">|</span><span class="z-l-1 z-d-3"> jq</span><span class="z-l-8 z-d-8"> .count</span></span></code></pre>
+<p>První odpovídá <code>active: false</code> s důvodem „deklarace meshe je vypnutá“; druhá odpovídá nulou uzlů. <code>test/cases/130_mesh.sh</code> a <code>apps/majordomus-cli/tests/mesh.rs</code> zkouší mesh v jednorázových fixture repozitářích, ne na tomto.</p>
+<h3 id="17-5-adding-a-feature-what-actually-happens"><a class="zola-anchor" href="#17-5-adding-a-feature-what-actually-happens" aria-label="Odkaz na kotvu: 17-5-adding-a-feature-what-actually-happens">17.5 Přidání funkce: co se skutečně děje</a></h3>
+<p>Pro novou operaci jen pro čtení:</p>
+<ol>
+<li>Napište vstupní a výstupní typy pomocí <code>serde</code> a <code>JsonSchema</code>, plus <code>BenchmarkCases</code> pro vstup (nebo deklarujte výjimku z měření výkonu). <em>Ručně.</em></li>
+<li>Napište jeden blok <code>capability!</code> s jeho vystavením. Nový modul potřebuje také <code>module!</code> a řádek v <code>compose_modules!</code>. <em>Ručně.</em></li>
+<li>Ujistěte se, že žádný titul schématu nekoliduje s názvem jiné komponenty, jinak generování OpenAPI selže. <em>Ručně; nic na to dřív neupozorní.</em></li>
+<li>Pokud má cestu v CLI: přidejte variantu clap, větev dispatche, runner s mapováním argumentů, textový renderer a položku <code>CommandExamples</code>. Pokud je jen pro CLI, přidejte položku <code>cli::LOCAL</code>. <em>Ručně, a kontroluje <code>cli::validate</code>, <code>tests/cli_examples.rs</code>, uzavřenost a parita.</em></li>
+<li>Vyhrazená oblast Cockpitu potřebuje větev routy, funkci stránky a položku <code>areas()</code>. <em>Ručně. Generická stránka nepotřebuje nic.</em></li>
+<li>Zvláštní třídy cest v <code>.ai/repo/ci/gates.yaml</code> jmenují konkrétní soubory (commit, design, pravidla). Nový builtin soubor už pokrývá třída <code>rust</code>; nový adresář subsystému může potřebovat třídu. <em>Ručně a ne zdokumentováno jako krok.</em></li>
+<li>Spusťte <code>scripts/derive</code> a projekce commitněte. <em>Generování je automatické; jejich staging je ruční.</em></li>
+<li>Následují MCP, HTTP, OpenAPI, Swagger, obecná stránka Cockpitu, cíle měření výkonu, reference a stránky registru. <em>Automaticky.</em></li>
+</ol>
+<p><code>CAPABILITIES.md</code> říká, že nová schopnost je „jeden blok <code>capability!</code> … nic jiného“. To platí jen pro schopnost bez cesty v CLI a bez vyhrazené stránky.</p>
+<h3 id="17-6-adding-a-rule-every-public-capability-has-executable-verification"><a class="zola-anchor" href="#17-6-adding-a-rule-every-public-capability-has-executable-verification" aria-label="Odkaz na kotvu: 17-6-adding-a-rule-every-public-capability-has-executable-verification">17.6 Přidání pravidla: „každá veřejná schopnost má spustitelné ověření“</a></h3>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>Krok</th><th>Existuje dnes?</th></tr></thead><tbody>
+<tr><td>zapsat <code>.ai/repo/rules/project/&lt;name&gt;.v1.md</code> s <code>class: blocking</code> a <code>x-majordomus.tests</code></td><td>ano: formát, loader a validace existují</td></tr>
+<tr><td>nechat <code>rule-proof-check</code> jej odmítnout, pokud nejmenuje žádný důkaz</td><td>ano</td></tr>
+<tr><td>kontrola, která spojuje <em>každou</em> schopnost s behaviorálním testem</td><td><strong>ne.</strong> Blízké části: pokrytí měřením výkonu (každá vystavená schopnost má cíl měření na každém transportu; čas, ne správnost), <code>scripts/ci/command-furnished</code> (veřejné <em>příkazy</em> mají fixtures a případy), <code>scripts/ci/surface-coverage</code> (povrchy mají testy podle přítomnosti souboru), pokrytí případů užití (vyžadováno pro příkazy; nástroje MCP jsou jen doporučené a „pojmenováno“ se počítá jako „spustitelné“)</td></tr>
+<tr><td>kontrola v <code>gates.yaml</code>, která tuto kontrolu spouští, a mutační případ dokazující, že selže</td><td>bylo by nové</td></tr>
+<tr><td>graf důkazů, vazba pravidla na kontrolu</td><td>automaticky, jakmile <code>runs:</code> kontroly jmenuje skript</td></tr>
+<tr><td>zaznamenané úspěšné provedení</td><td>lokální záznam existuje; záznam z CI ne</td></tr>
+<tr><td>stránka Cockpitu nebo webu ukazující výsledek</td><td>neimplementováno (§11)</td></tr>
+</tbody></table>
+</div>
+<h2 id="18-what-is-not-generated"><a class="zola-anchor" href="#18-what-is-not-generated" aria-label="Odkaz na kotvu: 18-what-is-not-generated">18. Co se negeneruje</a></h2>
+<p>Generování končí tam, kde začíná úsudek. Následující je kanonický lidský vstup a stroj neodvozuje nic, co by jej mohlo nahradit:</p>
+<ul>
+<li><strong>intent</strong>: akceptační kritéria úkolu, výsledek milníku, rozsah úlohy, cíl předávky;</li>
+<li><strong>rozhodnutí</strong>: kontext, rozhodnutí a důsledky ADR a jeho přijetí;</li>
+<li><strong>rules</strong>: tvrzení, třída a volba mezi validátorem, testem nebo posouzeným důvodem;</li>
+<li><strong>policy</strong>: rozpočty, požadavky na dokončení, co smí mesh;</li>
+<li><strong>próza</strong>: tento dokument a každý <code>docs/*.md</code>;</li>
+<li><strong>deklarace vkusu</strong>: skupiny navigace, designové tokeny, oblasti Cockpitu.</li>
+</ul>
+<p>Stroj odvozuje to, co se z toho dá přepočítat: stav, vlny, stavy důkazů, schémata, route, reference, web, briefingy a kostry předávek.</p>
+<h2 id="19-zero-registration-the-ideal-and-its-exceptions"><a class="zola-anchor" href="#19-zero-registration-the-ideal-and-its-exceptions" aria-label="Odkaz na kotvu: 19-zero-registration-the-ideal-and-its-exceptions">19. Nulová registrace: ideál a jeho výjimky</a></h2>
+<p>Ideálem je, že přidání faktu nevyžaduje jeho registraci nikde jinde. Platí to pro: deklarativní objekty (soubor ve třídě <code>sources.yaml</code>), projekce schopností do MCP, HTTP, OpenAPI, Swaggeru a obecné stránky Cockpitu, dokumenty na webu (jeden řádek indexu, který generátor vynucuje), poskytovatele meshe a odvozeniny grafu v postranním panelu Cockpitu.</p>
+<p>Současné výjimky jsou všechny zaznamenány a každá je kontrolována nebo držena ratchetem, nikoli tichá: strom clap, <code>cli::EXAMPLES</code>, CLI renderery, <code>cli::LOCAL</code>, směrovací tabulka a oblasti Cockpitu, <code>site/data/nav.toml</code>, třídy cest <code>gates.yaml</code> a shellové příkazy v <code>share/commands.yaml</code>. Příloha F je vypisuje s odkazy na soubory.</p>
+<h2 id="20-why-generation-matters-and-the-theses"><a class="zola-anchor" href="#20-why-generation-matters-and-the-theses" aria-label="Odkaz na kotvu: 20-why-generation-matters-and-the-theses">20. Proč na generování záleží a teze</a></h2>
+<p>Repozitář, který paralelně spouští agenty, píše sám o sobě rychleji, než kdokoli čte. Kdyby měl každý povrch vlastní popis, každý merge by byl příležitostí k rozporu a nikdo by si ho nevšiml, dokud by agent nezačal jednat podle špatného. Generování, běh <code>--check</code> a ratchet mění tento rozpor v selhávající příkaz.</p>
+<p>Teze, každá vyslovená jen tak silně, jak dovolují důkazy výše:</p>
+<ol>
+<li><strong>Majordomus je model nativní pro repozitář a jeho povrchy jsou z něj odvozeny.</strong> Platí to pro operace a deklarativní objekty. Pro příkazovou řádku (kontrolovanou, ne odvozenou) a Cockpit (generické stránky odvozené, oblasti ručně) platí jen částečně a zatím neplatí pro měnící vývojovou sémantiku, kterou vlastní <code>lib/</code>.</li>
+<li><strong>Povrchy jsou projekce jedné typované reality.</strong> HTTP, OpenAPI, Swagger a MCP jsou projekce a testy ukazují, že HTTP a MCP vracejí u vzorkovaných schopností stejné hodnoty. CLI a Cockpit přidávají renderery, které nedrží žádná fakta; zda renderer začal počítat, rozhoduje recenzent, ne kontrola.</li>
+<li><strong>Pravidla záleží, když jejich vztah k validátorům, provádění a důkazům může zkoumat stroj.</strong> Zde může: graf důkazů odvozuje stav každého pravidla z pravidla, stromu, <code>gates.yaml</code> a ledgeru. To, co graf může ukázat, je stále omezeno tím, co je zaznamenáno, a dnes to znamená jen lokální běhy a žádné verdikty kontrol.</li>
+<li><strong>Mesh činí distribuovanou práci viditelnou. Není to magická orchestrace.</strong> Nástěnka peerů a registr meshe pozorují; nároky jsou pouze doporučující; překryv se hlásí, nezamyká; a mesh je v tomto repozitáři vypnutý.</li>
+<li><strong>Generování brání jednomu repozitáři hromadit nekompatibilní popisy sebe sama.</strong> Platí to všude, kde existuje <code>--check</code> nebo kontrola pevného bodu. Kde próza popisuje kód bez kontroly, rozchází se: F-20 až F-24 níže jsou příklady nalezené při psaní tohoto dokumentu.</li>
+</ol>
+<h2 id="appendix-a-architecture-map"><a class="zola-anchor" href="#appendix-a-architecture-map" aria-label="Odkaz na kotvu: appendix-a-architecture-map">Příloha A: mapa architektury</a></h2>
+<pre class="mermaid" tabindex="0" id="diagram-appendix-a-architecture-map" data-diagram="appendix-a-architecture-map" data-nodes="codeN layerN shareN proseN shellN manifestN indexN registryN rulesN planN envN devctxN peersN meshN execN ledgerN gatesN executorN mcpS httpS oasS swS cliS cockS genS siteS">
+flowchart TD
+  subgraph canonical["canonical: tracked, authored"]
+    codeN["capability! blocks&lt;br&gt;apps/majordomus-cli/src/capability/builtin"]
+    layerN[".ai/** objects&lt;br&gt;rules, ADRs, policy, plan, sessions, use cases"]
+    shareN["share/: kinds, schemas, commands, events"]
+    proseN["docs/*.md, site/content-src, nav.toml"]
+    shellN["lib/*.sh: shell tool semantics"]
+  end
+  subgraph discovery["discovery"]
+    manifestN["manifest and sources.yaml"]
+    indexN["index of typed objects&lt;br&gt;fingerprinted"]
+  end
+  subgraph model["typed models"]
+    registryN["CapabilityRegistry&lt;br&gt;builtin plus declarative, frozen"]
+    rulesN["rule proof graph"]
+    planN["plan model: status, DAG, waves"]
+    envN["RepositoryEnvironment"]
+    devctxN["devcontext selection"]
+  end
+  subgraph observed["observed, in process"]
+    peersN["peer board"]
+    meshN["MeshRegistry"]
+    execN["executions"]
+  end
+  ledgerN["evidence ledger&lt;br&gt;.ai/repo/evidence/ledger.json"]
+  gatesN["gates.yaml and scripts/ci"]
+  executorN["one executor"]
+  subgraph surfaces["projections"]
+    mcpS["MCP"]
+    httpS["HTTP API"]
+    oasS["OpenAPI"]
+    swS["Swagger UI"]
+    cliS["CLI, checked by closure"]
+    cockS["Cockpit"]
+    genS["docs/generated"]
+    siteS["site data and pages"]
+  end
+  codeN --&gt; registryN
+  shareN --&gt; manifestN
+  layerN --&gt; manifestN --&gt; indexN --&gt; registryN
+  indexN --&gt; rulesN
+  indexN --&gt; planN
+  ledgerN --&gt; rulesN
+  gatesN --&gt; rulesN
+  registryN --&gt; executorN
+  rulesN --&gt; executorN
+  planN --&gt; executorN
+  envN --&gt; executorN
+  devctxN --&gt; executorN
+  peersN --&gt; executorN
+  meshN --&gt; executorN
+  execN --&gt; executorN
+  executorN --&gt; mcpS
+  executorN --&gt; httpS
+  executorN --&gt; cockS
+  executorN --&gt; cliS
+  registryN --&gt; oasS --&gt; swS
+  registryN --&gt; genS --&gt; siteS
+  proseN --&gt; siteS
+  shellN --&gt; layerN
+</pre><div class="mj-diagram-bar" role="toolbar" aria-label="Diagram appendix-a-architecture-map" aria-controls="diagram-appendix-a-architecture-map" data-diagram-bar="diagram-appendix-a-architecture-map" hidden><button type="button" class="mj-button mj-button--quiet" data-diagram-action="zoom-out" aria-label="Oddálit" title="Oddálit">−</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="zoom-in" aria-label="Přiblížit" title="Přiblížit">+</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="fit" aria-label="Přizpůsobit diagram rámu" title="Přizpůsobit diagram rámu">Přizpůsobit</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="expand" aria-label="Zobrazit na celou obrazovku" title="Zobrazit na celou obrazovku">Rozbalit</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="download" aria-label="Stáhnout SVG" title="Stáhnout SVG">SVG</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="link" aria-label="Odkaz: zkopírovat adresu tohoto diagramu" title="Odkaz: zkopírovat adresu tohoto diagramu">Odkaz</button><span class="mj-diagram-status" role="status"></span></div>
+<h2 id="appendix-b-surface-map"><a class="zola-anchor" href="#appendix-b-surface-map" aria-label="Odkaz na kotvu: appendix-b-surface-map">Příloha B: mapa povrchů</a></h2>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>Koncept</th><th>CLI</th><th>MCP</th><th>API</th><th>Cockpit</th><th>Dokumenty</th></tr></thead><tbody>
+<tr><td>capabilities</td><td><code>majordomus-cli capabilities list / describe / projections / validate</code></td><td><code>majordomus_capabilities</code>, <code>majordomus_capability</code>, <code>majordomus_projections</code></td><td><code>/api/v1/capabilities</code>, <code>/capability</code>, <code>/capabilities/projections</code></td><td><code>/cockpit/capabilities</code></td><td><code>docs/generated/capabilities.md</code>, <code>/registry/</code></td></tr>
+<tr><td>objekty</td><td>žádné (mezera)</td><td><code>majordomus_get</code>, <code>majordomus_list</code>, <code>majordomus_search</code>, jeden zdroj na objekt</td><td><code>/api/v1/object</code>, <code>/objects</code>, <code>/search</code></td><td><code>/cockpit/objects</code>, <code>/cockpit/object</code></td><td>sekce webu specifické pro druh</td></tr>
+<tr><td>pravidla a důkaz</td><td><code>rules report / show / proves</code></td><td><code>majordomus_rules</code>, <code>majordomus_rule</code>, <code>majordomus_rule_proves</code></td><td><code>/api/v1/rules</code>, <code>/rules/rule</code>, <code>/rules/proves</code></td><td>pouze obecná stránka</td><td><code>DOCTRINE.md</code>, <code>/doctrines/</code> (bez stavu důkazu)</td></tr>
+<tr><td>evidence</td><td><code>evidence show / claim / proves / record</code></td><td><code>majordomus_evidence</code>, <code>majordomus_evidence_claim</code>, <code>majordomus_evidence_test</code></td><td><code>/api/v1/evidence</code>, <code>/evidence/claim</code>, <code>/evidence/test</code> (<code>record</code> je jen CLI: zapisuje)</td><td>pouze obecná stránka</td><td><code>EVIDENCE.md</code>, <code>/evidence/</code> (napsaný graf tvrzení)</td></tr>
+<tr><td>plan</td><td>shell <code>majordomus plan …</code></td><td><code>majordomus_plan*</code>, <code>majordomus_plan_transition</code></td><td><code>/api/v1/plan*</code>, <code>POST /plan/transition</code></td><td>obecné stránky</td><td><code>PLANNING.md</code>, <code>/plan/</code>, <code>docs/PLAN_STATUS.md</code></td></tr>
+<tr><td>kontext</td><td>shell <code>context</code>; <code>devcontext compile / explain / policy</code></td><td><code>majordomus_devcontext*</code>, <code>majordomus_continuity</code></td><td><code>/api/v1/devcontext*</code>, <code>/continuity</code></td><td><code>/cockpit/continuity</code></td><td><code>CONTEXT.md</code>, <code>CONTINUITY.md</code></td></tr>
+<tr><td>prostředí</td><td><code>env status / explain / banner / export</code> (vykreslení)</td><td><code>majordomus_environment</code>, <code>majordomus_environment_explain</code></td><td><code>/api/v1/environment</code>, <code>/environment/explain</code></td><td>overview</td><td><code>ENVIRONMENT.md</code></td></tr>
+<tr><td>worktrees</td><td><code>worktree topology / status / inspect / migrate …</code></td><td><code>majordomus_worktrees</code>, …</td><td><code>/api/v1/worktrees*</code></td><td><code>/cockpit/worktrees</code></td><td><code>WORKTREES.md</code></td></tr>
+<tr><td>peers</td><td>žádné</td><td><code>majordomus_peers</code>, <code>majordomus_announce</code></td><td><code>/api/v1/peers</code>, <code>/peers/announce</code></td><td>žádné</td><td><code>MCP.md</code></td></tr>
+<tr><td>mesh</td><td><code>mesh identity / doctor / status / nodes</code></td><td><code>majordomus_mesh*</code></td><td><code>/api/v1/mesh*</code></td><td><code>/cockpit/mesh</code></td><td><code>MESH.md</code></td></tr>
+<tr><td>kontroly a dokončení</td><td>shell <code>check</code>, <code>finish</code></td><td><code>majordomus_gates</code>, <code>majordomus_completion</code></td><td><code>/api/v1/gates</code>, <code>/gates/completion</code></td><td>obecné stránky</td><td><code>CI.md</code></td></tr>
+</tbody></table>
+</div>
+<p>Pro ověření libovolného řádku spusťte <code>bin/majordomus-cli capabilities projections --format json</code>.</p>
+<h2 id="appendix-c-generation-matrix"><a class="zola-anchor" href="#appendix-c-generation-matrix" aria-label="Odkaz na kotvu: appendix-c-generation-matrix">Příloha C: matice generování</a></h2>
+<p>„Odvozeno“ znamená vytvořeno generátorem nebo vypočteno při čtení. Pomlčka znamená, že entita na tomto povrchu není.</p>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>Entita</th><th>Napsáno</th><th>Objeveno</th><th>Odvozeno</th><th>CLI</th><th>API</th><th>MCP</th><th>Cockpit</th><th>Dokumenty</th></tr></thead><tbody>
+<tr><td>vestavěná schopnost</td><td>blok <code>capability!</code>, typy</td><td>složeno, nikoli objeveno</td><td>schémata, trasa, nástroj, operace, cíle měření, reference</td><td>jen s <code>CliExposure</code> a ručně psaným příkazem</td><td>ano</td><td>ano</td><td>obecná stránka</td><td>generovaná reference, <code>/registry/</code></td></tr>
+<tr><td>deklarativní objekt</td><td>soubor <code>.ai/**</code></td><td>třídy <code>sources.yaml</code> do indexu</td><td>schopnost zdroje, <code>&lt;kind&gt;.&lt;identity&gt;</code></td><td>–</td><td><code>/api/v1/object</code></td><td>zdroj</td><td><code>/cockpit/object</code></td><td>podle druhu</td></tr>
+<tr><td>pravidlo</td><td>soubor pravidla</td><td>efektivní množina: vendor plus projekt</td><td>režim vynucování, stav důkazu</td><td><code>rules …</code></td><td>ano</td><td>ano</td><td>obecné</td><td><code>DOCTRINE.md</code>, <code>/doctrines/</code></td></tr>
+<tr><td>ADR</td><td>soubor ADR</td><td>index</td><td>platnost odkazů, hrany grafu</td><td>shell <code>adr</code></td><td>jako objekt</td><td>zdroj</td><td>stránka objektu</td><td>objektový zdroj; žádná vlastní routa webu</td></tr>
+<tr><td>claim</td><td><code>docs/CLAIMS.yaml</code></td><td>–</td><td>stav důkazů vůči knize, graf tvrzení</td><td><code>evidence …</code></td><td>ano</td><td>ano</td><td>obecné</td><td><code>docs/claims/</code>, <code>/guarantees/</code></td></tr>
+<tr><td>běh důkazů</td><td>– (zaznamenáno)</td><td>–</td><td>stav čerstvosti</td><td><code>evidence record</code> zapisuje</td><td>read</td><td>read</td><td>obecné</td><td>–</td></tr>
+<tr><td>úkol a milník</td><td>YAML pod <code>.ai/repo/project/</code></td><td>index</td><td>stav, DAG, vlny, konflikty</td><td>shell <code>plan</code></td><td><code>plan.*</code></td><td><code>plan.*</code></td><td>obecné</td><td><code>/plan/</code>, <code>PLAN_STATUS.md</code></td></tr>
+<tr><td>epizoda relace</td><td>zapisují jej hooky a příkazy shellu</td><td>index (uzavřené záznamy)</td><td>kostra předávky, briefing</td><td>shell</td><td><code>continuity.state</code>, <code>session_domain.*</code></td><td>ano</td><td><code>/cockpit/continuity</code></td><td><code>/sessions/</code></td></tr>
+<tr><td>sestavený kontext</td><td>–</td><td>graf a index</td><td>výběr, rozpočet</td><td><code>devcontext</code></td><td>ano</td><td>ano</td><td>–</td><td>–</td></tr>
+<tr><td>prostředí</td><td>adaptér <code>.envrc</code>, soubory toolchainu</td><td>sondy, git, soubory</td><td>snapshot</td><td><code>env</code></td><td>ano</td><td>ano</td><td>overview</td><td><code>ENVIRONMENT.md</code></td></tr>
+<tr><td>worktree</td><td>–</td><td><code>git worktree list</code></td><td>postavení, očekávaná cesta</td><td><code>worktree</code></td><td>ano</td><td>ano</td><td><code>/cockpit/worktrees</code></td><td><code>WORKTREES.md</code></td></tr>
+<tr><td>peer</td><td>oznámení</td><td>připojení MCP</td><td>překryv</td><td>–</td><td>ano</td><td>ano</td><td>–</td><td>–</td></tr>
+<tr><td>uzel meshe</td><td>deklarace</td><td>providers</td><td>přítomnost, štítek důvěry</td><td>částečně</td><td>ano</td><td>ano</td><td><code>/cockpit/mesh</code></td><td><code>MESH.md</code></td></tr>
+<tr><td>dokument</td><td><code>docs/*.md</code> a jeho řádek indexu</td><td>index (druh <code>document</code>)</td><td>front matter stránky, odkazy</td><td>–</td><td>jako objekt</td><td>zdroj</td><td>stránka objektu</td><td><code>/docs/&lt;slug&gt;/</code></td></tr>
+<tr><td>navigace</td><td><code>site/data/nav.toml</code></td><td>–</td><td>navigační lišta a patička</td><td>–</td><td>–</td><td>–</td><td>Katalogy v postranním panelu Cockpitu jsou odvozené; oblasti jsou ručně psané</td><td>web</td></tr>
+<tr><td>bootstrap poskytovatele</td><td><code>policy.yaml</code>, šablony</td><td>–</td><td><code>AGENTS.md</code>, <code>CLAUDE.md</code></td><td>shell <code>update</code></td><td>–</td><td>–</td><td>–</td><td><code>docs/generated/providers.md</code></td></tr>
+</tbody></table>
+</div>
+<h2 id="appendix-d-governance-and-mesh-maps"><a class="zola-anchor" href="#appendix-d-governance-and-mesh-maps" aria-label="Odkaz na kotvu: appendix-d-governance-and-mesh-maps">Příloha D: mapy governance a meshe</a></h2>
+<pre class="mermaid" tabindex="0" id="diagram-appendix-d-governance-and-mesh-maps" data-diagram="appendix-d-governance-and-mesh-maps" data-nodes="pol vend proj eff disp gy ci rpc proofG adr">
+flowchart TD
+  pol["policy.yaml&lt;br&gt;finish_requires, budgets, hook wiring"]
+  vend["vendored rules&lt;br&gt;.ai/repo/rules/vendor/majordomus"]
+  proj["project rules&lt;br&gt;.ai/repo/rules/project"]
+  eff["effective rule set&lt;br&gt;additive, no override"]
+  disp["doctrine dispatcher&lt;br&gt;lib/doctrine.sh, at doctor, check, finish, watch"]
+  gy["gates.yaml&lt;br&gt;gates and path classes"]
+  ci["validate.yml&lt;br&gt;planner selects gates by changed paths"]
+  rpc["rule-proof-check&lt;br&gt;dangling refused, unproven ratcheted"]
+  proofG["rule proof graph&lt;br&gt;ten states"]
+  adr["ADRs&lt;br&gt;proposed, accepted by a person"]
+  vend --&gt; eff
+  proj --&gt; eff
+  eff --&gt; disp
+  pol --&gt; disp
+  eff --&gt; rpc
+  gy --&gt; ci
+  eff --&gt; proofG
+  gy --&gt; proofG
+  adr -.-&gt; proj
+</pre><div class="mj-diagram-bar" role="toolbar" aria-label="Diagram appendix-d-governance-and-mesh-maps" aria-controls="diagram-appendix-d-governance-and-mesh-maps" data-diagram-bar="diagram-appendix-d-governance-and-mesh-maps" hidden><button type="button" class="mj-button mj-button--quiet" data-diagram-action="zoom-out" aria-label="Oddálit" title="Oddálit">−</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="zoom-in" aria-label="Přiblížit" title="Přiblížit">+</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="fit" aria-label="Přizpůsobit diagram rámu" title="Přizpůsobit diagram rámu">Přizpůsobit</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="expand" aria-label="Zobrazit na celou obrazovku" title="Zobrazit na celou obrazovku">Rozbalit</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="download" aria-label="Stáhnout SVG" title="Stáhnout SVG">SVG</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="link" aria-label="Odkaz: zkopírovat adresu tohoto diagramu" title="Odkaz: zkopírovat adresu tohoto diagramu">Odkaz</button><span class="mj-diagram-status" role="status"></span></div>
+<pre class="mermaid" tabindex="0" id="diagram-appendix-d-governance-and-mesh-maps-2" data-diagram="appendix-d-governance-and-mesh-maps-2" data-nodes="decl prov mgr reg caps board pcap">
+flowchart TD
+  decl["mesh declaration&lt;br&gt;.ai/repo/mesh/majordomus.yaml, enabled false"]
+  prov["providers&lt;br&gt;multicast, broadcast, rendezvous"]
+  mgr["manager&lt;br&gt;one verification path, signatures, skew, trust label"]
+  reg["MeshRegistry&lt;br&gt;presence TTL, retention, bound"]
+  caps["mesh capabilities&lt;br&gt;status, nodes, identity, doctor, register"]
+  board["peer board&lt;br&gt;per shared server, gathered across checkouts"]
+  pcap["peers.list, peers.announce"]
+  decl --&gt; prov
+  prov --&gt; mgr --&gt; reg --&gt; caps
+  board --&gt; pcap
+</pre><div class="mj-diagram-bar" role="toolbar" aria-label="Diagram appendix-d-governance-and-mesh-maps-2" aria-controls="diagram-appendix-d-governance-and-mesh-maps-2" data-diagram-bar="diagram-appendix-d-governance-and-mesh-maps-2" hidden><button type="button" class="mj-button mj-button--quiet" data-diagram-action="zoom-out" aria-label="Oddálit" title="Oddálit">−</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="zoom-in" aria-label="Přiblížit" title="Přiblížit">+</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="fit" aria-label="Přizpůsobit diagram rámu" title="Přizpůsobit diagram rámu">Přizpůsobit</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="expand" aria-label="Zobrazit na celou obrazovku" title="Zobrazit na celou obrazovku">Rozbalit</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="download" aria-label="Stáhnout SVG" title="Stáhnout SVG">SVG</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="link" aria-label="Odkaz: zkopírovat adresu tohoto diagramu" title="Odkaz: zkopírovat adresu tohoto diagramu">Odkaz</button><span class="mj-diagram-status" role="status"></span></div>
+<p>Obě mapy jsou záměrně oddělené. Z registru meshe dnes do nástěnky peers nic neproudí.</p>
+<h2 id="appendix-e-claim-audit"><a class="zola-anchor" href="#appendix-e-claim-audit" aria-label="Odkaz na kotvu: appendix-e-claim-audit">Příloha E: audit tvrzení</a></h2>
+<p>Odkazy míří na strom v commitu, na kterém byl tento dokument napsán. Rozsah jako <code>:439-482</code> udává řádky. Příkaz v posledním sloupci je ten, který můžete spustit.</p>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>#</th><th>Tvrzení</th><th>Důkazy</th><th>Verdikt</th></tr></thead><tbody>
+<tr><td>C1</td><td>jedno <code>capability!</code> staví id, schémata, provenienci, klasifikované provedení a případy</td><td><code>apps/majordomus-cli/src/capability/handler.rs:439-482</code></td><td>ověřeno</td></tr>
+<tr><td>C2</td><td>schémata pocházejí ze schemars přes <code>CanonicalSchema::of</code></td><td><code>src/capability/schema.rs:102-119</code></td><td>ověřeno</td></tr>
+<tr><td>C3</td><td>komponenty OpenAPI sdílejí jeden jmenný prostor a kolize se odmítá</td><td><code>schema.rs:234</code>, <code>:278</code></td><td>ověřeno</td></tr>
+<tr><td>C4</td><td>vystavení je explicitní pro každý povrch; registr odmítá duplicity a prochází v pořadí</td><td><code>src/capability/model.rs:706</code>, <code>:755</code>, <code>:799</code>, <code>:807</code>; <code>registry.rs:86-170</code> (duplicitní id, název MCP, URI MCP, trasa HTTP, cesta CLI)</td><td>ověřeno</td></tr>
+<tr><td>C5</td><td>nástroje a zdroje MCP se počítají z vystavení</td><td><code>src/mcp/surface.rs:4</code>, <code>:263</code>, <code>:332</code></td><td>ověřeno</td></tr>
+<tr><td>C6</td><td>koordinační nástroje jsou deklarované schopnosti a nějaký kód je zná jménem</td><td><code>builtin/peers.rs</code> (<code>peers.list</code>, <code>peers.announce</code>); <code>src/mcp/protocol.rs:312</code>; <code>src/mcp/bridge.rs</code></td><td>ověřeno</td></tr>
+<tr><td>C7</td><td>trasy HTTP se překládají přes registr; OpenAPI <code>operationId</code> je id</td><td><code>src/http/router.rs:774-786</code>; <code>src/http/openapi.rs:81</code>, <code>:110</code></td><td>ověřeno</td></tr>
+<tr><td>C8</td><td>tvrzení o CLI se kontroluje proti clap v obou směrech</td><td><code>src/capability/closure.rs</code>; <code>tests/projections.rs:24</code>; <code>capabilities validate</code></td><td>ověřeno</td></tr>
+<tr><td>C9</td><td>příkazy jen pro CLI nesou strukturní důvod, kontrolovaný kontrolou</td><td><code>src/cli/local.rs:43-66</code>, <code>:137</code>; <code>scripts/ci/projection-check</code>; <code>capabilities projections</code> ukazuje <code>unclassified</code> prázdné</td><td>ověřeno</td></tr>
+<tr><td>C10</td><td>Swagger je shell načítající <code>/openapi.json</code> s assety z unpkg</td><td><code>src/http/swagger.rs:6</code>, <code>:52</code>, <code>:74</code></td><td>ověřeno</td></tr>
+<tr><td>C11</td><td>Runnery CLI, renderery a příklady jsou psány ručně</td><td><code>src/cli.rs:1987</code> (<code>EXAMPLES</code>); <code>src/commands/rules.rs:369</code> (<code>by_cli</code>)</td><td>ověřeno</td></tr>
+<tr><td>C12</td><td>Obecné stránky Cockpitu a katalogy v postranním panelu se odvozují</td><td><code>src/cockpit/pages.rs:673</code>, <code>:928</code>; <code>src/cockpit/nav.rs:1-5</code></td><td>ověřeno</td></tr>
+<tr><td>C13</td><td>Trasy a oblasti Cockpitu se píší ručně; stránky oblastí jmenují id schopností</td><td><code>src/cockpit/mod.rs:161-201</code>; <code>nav.rs:93</code>; <code>pages.rs:131</code>, <code>:135</code>, <code>:2580</code>, <code>:2584</code></td><td>ověřeno; odporuje <code>CAPABILITIES.md</code></td></tr>
+<tr><td>C14</td><td>stromy Cockpitu nesmějí odkazovat na vrstvu ani spustitelný soubor</td><td><code>scripts/development-semantics-check</code>; <code>DEVELOPMENT_RUNTIME.md</code> „Enforcement“</td><td>ověřeno</td></tr>
+<tr><td>C15</td><td>derive spouští fáze A až D; žádná fáze nečte svůj vlastní výstup</td><td><code>scripts/derive:6-21</code>, <code>:72-105</code></td><td>ověřeno; komentář v hlavičce vynechává fázi D</td></tr>
+<tr><td>C16</td><td>generátor webu je transakční, hashuje deklarované vstupy a odmítne neindexovaný dokument</td><td><code>scripts/generate-site-data</code> (<code>INPUTS</code>, <code>.mj-stage</code>, „není v žádné tabulce“ u <code>:1279</code>)</td><td>ověřeno</td></tr>
+<tr><td>C17</td><td>pre-commit spouští doctor, hlídač worktree a <code>pages current</code></td><td><code>.githooks/pre-commit</code>; <code>scripts/pages:76</code>, <code>:106</code>, <code>:515</code></td><td>ověřeno</td></tr>
+<tr><td>C18</td><td>generování je pevný bod a bajtově shodné</td><td><code>.ai/repo/ci/gates.yaml</code> <code>generation-converges</code>; <code>tests/projections.rs:318</code>, <code>:380</code></td><td>ověřeno</td></tr>
+<tr><td>C19</td><td>jedno kanonické pořadí, kontrolované</td><td><code>src/order.rs:141</code>; <code>scripts/ci/order-check</code>; <code>.ai/repo/order-baseline.txt</code></td><td>ověřeno</td></tr>
+<tr><td>C20</td><td>stránky dokumentace se generují z indexu <code>docs/README.md</code></td><td><code>scripts/generate-site-data</code> (index awk; <code>project_doc</code>)</td><td>ověřeno</td></tr>
+<tr><td>C21</td><td><code>pages-live</code> je kontrola při dokončení; <code>pages verify</code> ve workflow je continue-on-error</td><td><code>.ai/repo/ci/gates.yaml:381-385</code>; <code>.github/workflows/pages.yml:213-218</code></td><td>ověřeno</td></tr>
+<tr><td>C22</td><td><code>doctor</code> detekuje a neopravuje</td><td><code>lib/doctor.sh</code> (hlavička jen pro čtení; žádné <code>--fix</code> v <code>bin/majordomus</code> ani <code>lib/</code>)</td><td>ověřeno</td></tr>
+<tr><td>C23</td><td>deset stavů pravidla, vítězí nejslabší část</td><td><code>src/rules/mod.rs:466-492</code>, <code>:1160-1182</code>; <code>DOCTRINE.md</code> „Graf důkazů“</td><td>ověřeno</td></tr>
+<tr><td>C24</td><td>režim určuje tvar bloku; spustitelný důkaz má přednost</td><td><code>DOCTRINE.md</code> „Tři režimy vynucování“; <code>src/rules/mod.rs</code> <code>enforcement_of</code></td><td>ověřeno; komentář modulu stále říká „dva režimy vynucování“ (<code>rules/mod.rs:28</code>)</td></tr>
+<tr><td>C25</td><td><code>rule-proof-check</code> zamítá visící cesty a ratchetuje nedoložená pravidla</td><td><code>scripts/ci/rule-proof-check:1-45</code>; kontrola <code>rule-proof</code> v <code>gates.yaml</code></td><td>ověřeno</td></tr>
+<tr><td>C26</td><td>nálezy podle třídy; <code>Failing</code> se řadí před <code>NotRun</code>, takže může být maskováno</td><td><code>src/rules/mod.rs:1000-1023</code> s <code>:466-492</code> a <code>:1169-1176</code></td><td>ověřeno čtením; nepozorováno v datech</td></tr>
+<tr><td>C27</td><td>vazba pravidlo-kontrola se odvozuje z <code>runs:</code></td><td><code>src/rules/mod.rs:876-916</code></td><td>ověřeno</td></tr>
+<tr><td>C28</td><td>čerstvost se odvozuje z výsledku, git diffu a digestu</td><td><code>src/rules/mod.rs</code> (odvození stavu běhu); <code>EVIDENCE.md</code></td><td>ověřeno</td></tr>
+<tr><td>C29</td><td>CI nezaznamenává žádné důkazy; stránka důkazů webu ukazuje autorský graf tvrzení</td><td><code>docs/EVIDENCE.md:296</code>; <code>site/templates/evidence.html:3</code>; <code>.github/workflows/validate.yml</code> nemá krok <code>evidence record</code></td><td>ověřeno</td></tr>
+<tr><td>C30</td><td>mutující vývojové příkazy nemají schopnost a ratchet to eviduje</td><td><code>.ai/repo/development-semantics-baseline.txt</code> (<code>backing:*</code>)</td><td>ověřeno</td></tr>
+<tr><td>C31</td><td><code>plan.transition</code> a <code>recover.orphans</code> zapisují do repozitáře a jsou vystaveny přes HTTP a MCP</td><td><code>builtin/plan.rs:643-672</code>; <code>builtin/recover.rs:445-465</code>; živé <code>openapi.json</code> má <code>POST /api/v1/plan/transition</code></td><td>ověřeno (z deklarací; nebyl vydán žádný zápis)</td></tr>
+<tr><td>C34</td><td>přijetí se odmítá jen u extrahovaných ADR</td><td><code>lib/adr.sh:207-213</code></td><td>ověřeno</td></tr>
+<tr><td>C40</td><td>nástěnka peerů nevynucuje nic</td><td>dokumentace modulu <code>src/peers.rs</code></td><td>ověřeno</td></tr>
+<tr><td>C41</td><td>přítomnost je vázána na relaci; nástěnka se sbírá po checkoutu</td><td><code>src/http/mcp.rs:34</code>, <code>:190</code>; <code>builtin/peers.rs:15</code>, <code>:112</code></td><td>ověřeno</td></tr>
+<tr><td>C42</td><td>mesh: jeden registr, poskytovatelé jen předávají bajty výš, vypnuto deklarací</td><td><code>src/mesh/provider.rs:155</code>; <code>registry.rs:39-45</code>; <code>.ai/repo/mesh/majordomus.yaml:12</code>; živé <code>GET /api/v1/mesh</code> dává <code>active: false</code></td><td>ověřeno</td></tr>
+<tr><td>C43</td><td>čítač <code>check --overlap</code> se ztratí v subshellu pipeline</td><td><code>lib/start.sh:111-123</code>, <code>lib/check.sh:283-287</code>, <code>lib/common.sh:21</code>; reprodukováno: <code>majordomus check --overlap</code> vypíše překryvy, pak vypíše „no other worktree claims an overlapping path“</td><td>ověřeno, reprodukováno</td></tr>
+<tr><td>C44</td><td><code>devcontext</code> je schopnost v CLI, HTTP a MCP</td><td><code>builtin/devcontext.rs:102</code>; <code>capabilities projections</code></td><td>ověřeno</td></tr>
+<tr><td>C45</td><td>deklarované selektory versus odvození záměru; rozpočet tokenů</td><td><code>src/devcontext/model.rs:232</code>, <code>:1092</code>, <code>:1100</code>; <code>select.rs:758</code></td><td>ověřeno</td></tr>
+<tr><td>C46</td><td>stav plánu odvozen; konflikty rozsahů varovány a serializovány</td><td><code>lib/project.awk:294</code>; <code>src/plan.rs:554</code>; <code>PLANNING.md</code></td><td>ověřeno</td></tr>
+<tr><td>C47</td><td>sekce předávky vyžadované politikou; odvozená těla z ledgeru a gitu</td><td><code>.ai/repo/policy.yaml:34</code>; <code>lib/derive.sh:255</code></td><td>ověřeno</td></tr>
+<tr><td>C48</td><td>služba se při TCP spojení tváří jako dostupná</td><td><code>src/environment/probe.rs:82</code></td><td>ověřeno</td></tr>
+</tbody></table>
+</div>
+<p><strong>Zmírněno při psaní.</strong> Několik tvrzení bylo po kontrole oslabeno:</p>
+<ul>
+<li>„Nic v Cockpitu nejmenuje schopnost“: nepravda (C13).</li>
+<li>„Žádný druh nezapisuje do repozitáře“ (<code>CAPABILITIES.md</code>) a vlastní popis povrchů, že server „nikdy nezapisuje do repozitáře“ (<code>about.rs:40</code>, <code>mcp/protocol.rs:312</code>): vyvráceno <code>plan.transition</code> a <code>recover.orphans</code> (C31).</li>
+<li>„Přidání schopnosti je jeden blok a nic jiného“: pravda jen bez cesty CLI nebo vyhrazené stránky Cockpitu (§17.5).</li>
+<li>„Důkaz funkce dosáhne Cockpitu a dokumentace“: dosáhne API, MCP a obecných stránek jako stav, ne jako vyhrazená stránka (§11).</li>
+<li>„Rovnost napříč povrchy je testována“: vzorkováno, negenerováno (§14).</li>
+<li>„Kontrola dokazuje pravidlo“: odvozeno z <code>runs:</code> a žádný verdikt kontroly není zaznamenán (§9, §10).</li>
+</ul>
+<h2 id="appendix-f-architecture-debt"><a class="zola-anchor" href="#appendix-f-architecture-debt" aria-label="Odkaz na kotvu: appendix-f-architecture-debt">Příloha F: dluh architektury</a></h2>
+<p>Každá položka je formulována tak, aby se z ní mohl stát úkol. Kategorie jsou: <strong>M</strong> registrováno ručně, <strong>D</strong> duplikováno, <strong>N</strong> neodvozeno, <strong>E</strong> nevystaveno na každém relevantním povrchu, <strong>T</strong> netestováno, <strong>V</strong> bez důkazů, <strong>F</strong> nevynuceno úplně, <strong>P</strong> próza, která se s kódem rozchází.</p>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>Id</th><th>Cat.</th><th>Dluh</th><th>Kde</th></tr></thead><tbody>
+<tr><td>F-1</td><td>M</td><td>Strom clap je druhá deklarace CLI; kontroluje se uzavřeností a paritou, neodvozuje se</td><td><code>apps/majordomus-cli/src/cli.rs</code>; <code>src/capability/closure.rs</code>; <code>src/quality/parity.rs</code></td></tr>
+<tr><td>F-2</td><td>M</td><td>Příklady CLI jsou jedna ručně psaná konstanta</td><td><code>src/cli.rs:1987</code> (<code>EXAMPLES</code>)</td></tr>
+<tr><td>F-3</td><td>M</td><td>Běhy CLI mapují příznaky na vstup ručně a některá sémantika exit kódů žije jen v rendereru</td><td><code>src/commands/*.rs</code>, například <code>commands/rules.rs</code> (<code>--check</code>)</td></tr>
+<tr><td>F-4</td><td>E</td><td>Mnoho schopností nemá cestu v CLI (<code>peers.list</code>, <code>plan.*</code>, <code>objects.*</code>, <code>health.report</code>, <code>environment.status</code>); žádná politika neříká, které vynechání jsou záměrná</td><td><code>capabilities projections --format json</code>; <code>DEVELOPMENT_RUNTIME.md</code> mezera 9</td></tr>
+<tr><td>F-5</td><td>E</td><td>Žádná oblast Cockpitu pro důkaz pravidla, důkazy ani nástěnku peerů; jen obecná stránka schopnosti</td><td><code>src/cockpit/mod.rs:161-201</code></td></tr>
+<tr><td>F-6</td><td>V</td><td>CI nezaznamenává žádné důkazy, takže každý stav důkazu spočívá na lokálních během a většina pravidel čte <code>not run</code></td><td><code>docs/EVIDENCE.md:296</code>; <code>.github/workflows/validate.yml</code>; <code>rules report</code> <code>coverage.recorded</code></td></tr>
+<tr><td>F-7</td><td>V</td><td>Verdikty kontrol se nikdy nezaznamenávají; vazba pravidla na kontrolu se odvozuje z <code>runs:</code> řádkovým skenem a u kontroly typu sada se předpokládá, že spouští každý případ</td><td><code>src/rules/mod.rs:876-916</code>; <code>.ai/repo/ci/gates.yaml</code></td></tr>
+<tr><td>F-8</td><td>F</td><td>Žádná kontrola nespouští <code>rules report --check</code>, takže zjištění pravidla neshodí CI přes graf důkazů</td><td><code>scripts/</code>, <code>.ai/repo/ci/gates.yaml</code>, <code>.github/workflows/</code></td></tr>
+<tr><td>F-9</td><td>F</td><td><code>RuleState</code> řadí <code>Failing</code> před <code>NotRun</code>; blokující pravidlo s jedním selhávajícím a jedním nikdy nespuštěným případem hlásí <code>not run</code>, což není nález</td><td><code>src/rules/mod.rs:466-492</code>, <code>:1169-1176</code>, <code>:1000-1023</code></td></tr>
+<tr><td>F-10</td><td>N</td><td>Stránky <code>/evidence/</code> a záruk na webu vykreslují autorská tvrzení a stav, ne naměřený důkaz</td><td><code>site/templates/evidence.html:3</code>; <code>scripts/generate-site-data</code> (graf tvrzení)</td></tr>
+<tr><td>F-11</td><td>M</td><td>názvy komponent OpenAPI sdílejí jeden jmenný prostor a kolize se řeší přejmenováním; žádná dřívější kontrola ani kontrolní seznam</td><td><code>src/capability/schema.rs:272-288</code></td></tr>
+<tr><td>F-12</td><td>T</td><td>CLI JSON rovné hodnotě HTTP se netestuje na každou schopnost; HTTP rovné MCP se testuje na vzorku</td><td><code>tests/http_serve.rs:202</code>, <code>:254</code></td></tr>
+<tr><td>F-13</td><td>F</td><td><code>check --overlap</code> ztrácí počet nálezů v podshellu pipeline a vypíše protichůdný řádek „žádný jiný worktree“; čte jen záznamy úloh, ne nástěnku peerů ani větve</td><td><code>lib/start.sh:111-123</code>; <code>lib/check.sh:283-287</code></td></tr>
+<tr><td>F-14</td><td>D</td><td>Dva zapisovatelé generovaných stromů: <code>src/generate.rs</code> a <code>scripts/generate-site-data</code> (stránky registru a CLI webu zapisuje shell)</td><td><code>src/generate.rs</code>; <code>scripts/generate-site-data</code>; <code>DEVELOPMENT_RUNTIME.md</code> mezera 8</td></tr>
+<tr><td>F-15</td><td>D</td><td>Dva enginy kontextu: shellový briefing a <code>devcontext</code></td><td><code>lib/context.sh</code>; <code>src/devcontext/</code></td></tr>
+<tr><td>F-16</td><td>F</td><td>Kontrola aktuálnosti v pre-commit přeskočí polovinu registru, když není sestaven exekutor</td><td><code>scripts/pages:106-118</code></td></tr>
+<tr><td>F-17</td><td>D</td><td>Dva plánovací enginy držené v rovnosti testem; zápisy plánu vlastní shell s výjimkou <code>plan.transition</code></td><td><code>lib/project.awk</code>; <code>src/plan.rs</code>; <code>test/cases/99_plan_capabilities.sh</code>; <code>lib/plan.sh</code></td></tr>
+<tr><td>F-18</td><td>F</td><td>Služby prostředí se čtou jako dostupné jen podle TCP spojení</td><td><code>src/environment/probe.rs:82</code>; <code>src/environment/render.rs</code></td></tr>
+<tr><td>F-19</td><td>N</td><td>Měnicí vývojové sémantiky (adr, checkpoint, decision, finish, handover, init, migrate, question, rules, session, start, update, usecase) nemají schopnost, takže nemají cestu přes HTTP, MCP ani Cockpit</td><td><code>.ai/repo/development-semantics-baseline.txt</code></td></tr>
+<tr><td>F-20</td><td>P</td><td><code>CAPABILITIES.md</code> říká, že žádná schopnost se v Cockpitu nejmenuje; stránky oblastí ano</td><td><code>docs/CAPABILITIES.md</code> (seznam projekcí); <code>src/cockpit/pages.rs</code></td></tr>
+<tr><td>F-21</td><td>P</td><td><code>CAPABILITIES.md</code> říká, že žádný druh nezapisuje do repozitáře, a <code>about.rs</code> i instrukce MCP říkají, že server nikdy nezapisuje; <code>plan.transition</code> a <code>recover.orphans</code> zapisují sledované soubory a jsou poskytovány</td><td><code>docs/CAPABILITIES.md</code> (tabulka modelů); <code>src/about.rs:40</code>; <code>src/mcp/protocol.rs:312</code>; <code>builtin/plan.rs:643-672</code>; <code>builtin/recover.rs:465</code></td></tr>
+<tr><td>F-22</td><td>P</td><td>ADR 4 a <code>CAPABILITIES.md</code> ukazují starý, krátký seznam <code>compose_modules!</code></td><td><code>.ai/repo/adrs/0004-canonical-architecture-and-performance-truth.md</code>; <code>docs/CAPABILITIES.md</code> („Registr“)</td></tr>
+<tr><td>F-23</td><td>P</td><td>Komentář modulu <code>rules</code> říká „two enforcement modes“; jsou tři plus deklarativní výchozí</td><td><code>src/rules/mod.rs:28</code></td></tr>
+<tr><td>F-24</td><td>P</td><td>Dokumenty meshe říkají druh <code>mesh</code>; kód a deklarace používají <code>mesh-declaration</code>. <code>GITHUB_PAGES_ARCHITECTURE.md</code> označuje <code>site/content</code> za gitignorované; je commitnuté. Hlavička <code>scripts/derive</code> vynechává fázi D a <code>docs/PAGES_STATUS.md</code></td><td><code>docs/MESH.md</code>; <code>src/mesh/config.rs:28</code>; <code>docs/GITHUB_PAGES_ARCHITECTURE.md</code>; <code>.gitignore</code>; <code>scripts/derive:6-21</code></td></tr>
+<tr><td>F-25</td><td>P</td><td>„Doktrína“ znamená odesílané pravidlo v <code>DOCTRINE.md</code> a vrstvu principů na stránkách metody</td><td><code>docs/DOCTRINE.md</code>; <code>site/content-src/method/</code>; <code>scripts/lib/method.jq</code></td></tr>
+<tr><td>F-26</td><td>F</td><td>Přijetí ADR jako „akt osoby“ je vynucováno jen pro extrahované záznamy; napsaný soubor lze upravit na <code>accepted</code></td><td><code>lib/adr.sh:207-213</code></td></tr>
+<tr><td>F-27</td><td>F</td><td><code>project.no-counts-in-prose</code> nemá mechanickou kontrolu nad <code>docs/*.md</code>; jen posouzení</td><td><code>.ai/repo/rules/project/no-counts-in-prose.v1.md</code></td></tr>
+<tr><td>F-28</td><td>F</td><td>Pokrytí případů užití počítá nástroj MCP jako spustitelný a podložený důkazy, když ho případ užití jen jmenuje</td><td><code>lib/usecase.sh:805-811</code></td></tr>
+<tr><td>F-29</td><td>N</td><td>Žádná kontrola nespojuje každou veřejnou schopnost s behaviorálním testem a zaznamenaným úspěšným během</td><td>§17.6</td></tr>
+<tr><td>F-30</td><td>E</td><td>Aktiva Swagger UI pocházejí z CDN; jediný povrch, který nefunguje offline</td><td><code>src/http/swagger.rs:52</code>, <code>:74</code></td></tr>
+<tr><td>F-31</td><td>M</td><td>Oblasti a trasy Cockpitu se píší ručně a nové stránky oblastí pojmenovávají id schopností</td><td><code>src/cockpit/nav.rs:93</code>; <code>src/cockpit/mod.rs:161-201</code></td></tr>
+<tr><td>F-32</td><td>M</td><td><code>gates.yaml</code> třídy cest, které jmenují konkrétní soubory, se musí při růstu subsystému upravovat ručně; nic to nedokumentuje jako krok</td><td><code>.ai/repo/ci/gates.yaml</code> (třídy)</td></tr>
+<tr><td>F-33</td><td>V</td><td>Provedení nejsou trvalá a živý proud provedení a slovník trvalé knihy jsou disjunktní</td><td><code>DEVELOPMENT_RUNTIME.md</code> mezery 4 a 7</td></tr>
+</tbody></table>
+</div>
+</article></div>
+</div>
+
+</div>
+
+</main>
+
+<footer id="site-map" class="border-t border-default bg-neutral-primary-soft" aria-label="Mapa webu">
+  <div class="mx-auto w-full max-w-screen-xl p-4 md:py-8">
+    <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
+      
+      <div class="min-w-0 scroll-mt-20" id="site-map-1">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/cs/domains/" class="hover:text-heading hover:underline">Produkt</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/cs/domains/" class="hover:text-heading hover:underline">Produkt podle oblastí</a></li><li><a href="https://majordomus.dev/cs/why/" class="hover:text-heading hover:underline">Proč existuje: způsoby selhání</a></li><li><a href="https://majordomus.dev/cs/features/" class="hover:text-heading hover:underline">Funkce</a></li><li><a href="https://majordomus.dev/cs/features/matrix/" class="hover:text-heading hover:underline">Funkce a rozhraní</a></li><li><a href="https://majordomus.dev/cs/use-cases/" class="hover:text-heading hover:underline">Případy užití</a></li><li><a href="https://majordomus.dev/cs/applications/" class="hover:text-heading hover:underline">Aplikace</a></li><li><a href="https://majordomus.dev/cs/skills/" class="hover:text-heading hover:underline">Dovednosti</a></li><li><a href="https://majordomus.dev/cs/supervises/" class="hover:text-heading hover:underline">Na co dohlíží</a></li><li><a href="https://majordomus.dev/cs/docs/majordomus-ui/" class="hover:text-heading hover:underline">UI produktu</a></li><li><a href="https://majordomus.dev/cs/docs/cockpit/" class="hover:text-heading hover:underline">Cockpit</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0 scroll-mt-20" id="site-map-2">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/cs/method/" class="hover:text-heading hover:underline">Jak funguje</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/cs/method/" class="hover:text-heading hover:underline">Doktrína, politika, pravidlo, vynucování</a></li><li><a href="https://majordomus.dev/cs/method/axes/" class="hover:text-heading hover:underline">Čtyři osy</a></li><li><a href="https://majordomus.dev/cs/method/argument/" class="hover:text-heading hover:underline">Celá argumentace</a></li><li><a href="https://majordomus.dev/cs/docs/concepts/" class="hover:text-heading hover:underline">Slovník</a></li><li><a href="https://majordomus.dev/cs/policy/" class="hover:text-heading hover:underline">Kanonická politika</a></li><li><a href="https://majordomus.dev/cs/context/" class="hover:text-heading hover:underline">Kontrakty adresářů</a></li><li><a href="https://majordomus.dev/cs/sessions/" class="hover:text-heading hover:underline">Relace</a></li><li><a href="https://majordomus.dev/cs/docs/planning/" class="hover:text-heading hover:underline">Jak funguje plánování</a></li><li><a href="https://majordomus.dev/cs/docs/design/" class="hover:text-heading hover:underline">Design</a></li><li><a href="https://majordomus.dev/cs/kit/" class="hover:text-heading hover:underline">Sada komponent</a></li><li><a href="https://majordomus.dev/cs/docs/surfaces/" class="hover:text-heading hover:underline">Jak se odvozují rozhraní</a></li><li><a href="https://majordomus.dev/cs/architecture/" class="hover:text-heading hover:underline">Jak je tento web postaven</a></li><li><a href="https://majordomus.dev/cs/docs/product/" class="hover:text-heading hover:underline">Jak se odvozuje stránka produktu</a></li><li><a href="https://majordomus.dev/cs/proof-carrying-documentation/" class="hover:text-heading hover:underline">Článek: dokumentace nesoucí důkaz</a></li><li><a href="https://majordomus.dev/cs/everything-followed/" class="hover:text-heading hover:underline">Článek: všechno, dohledatelně</a></li><li><a href="https://majordomus.dev/cs/dokumentace-kterou-lze-odmitnout/" class="hover:text-heading hover:underline">Stejná argumentace, napsaná česky</a></li><li><a href="https://majordomus.dev/cs/teze/" class="hover:text-heading hover:underline">Esej v češtině: sázka na vrstvu, ne na model</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0 scroll-mt-20" id="site-map-3">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/cs/challenge/" class="hover:text-heading hover:underline">Důkazy</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/cs/challenge/" class="hover:text-heading hover:underline">Výzva: sledujte, jak odmítne agenta</a></li><li><a href="https://majordomus.dev/cs/guarantees/" class="hover:text-heading hover:underline">Záruky</a></li><li><a href="https://majordomus.dev/cs/evidence/" class="hover:text-heading hover:underline">Graf důkazů</a></li><li><a href="https://majordomus.dev/cs/contract/" class="hover:text-heading hover:underline">Kontrakt dokončení</a></li><li><a href="https://majordomus.dev/cs/doctrines/" class="hover:text-heading hover:underline">Doktrína</a></li><li><a href="https://majordomus.dev/cs/adrs/" class="hover:text-heading hover:underline">Rozhodnutí</a></li><li><a href="https://majordomus.dev/cs/rules/" class="hover:text-heading hover:underline">Platná pravidla</a></li><li><a href="https://majordomus.dev/cs/registry/benchmarks/" class="hover:text-heading hover:underline">Měření výkonu</a></li><li><a href="https://majordomus.dev/cs/economics/" class="hover:text-heading hover:underline">Ekonomika tokenů</a></li><li><a href="https://majordomus.dev/cs/limitations/" class="hover:text-heading hover:underline">Omezení</a></li><li><a href="https://majordomus.dev/cs/roadmap/" class="hover:text-heading hover:underline">Plán rozvoje</a></li><li><a href="https://majordomus.dev/cs/plan/" class="hover:text-heading hover:underline">Milníky a úkoly</a></li><li><a href="https://majordomus.dev/cs/plan/dag/" class="hover:text-heading hover:underline">Graf závislostí</a></li><li><a href="https://majordomus.dev/cs/changelog/" class="hover:text-heading hover:underline">Changelog</a></li><li><a href="https://majordomus.dev/cs/docs/dogfooding/" class="hover:text-heading hover:underline">Dogfooding</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0 scroll-mt-20" id="site-map-4">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/cs/docs/" class="hover:text-heading hover:underline">Dokumenty</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/cs/docs/" class="hover:text-heading hover:underline">Všechny dokumenty</a></li><li><a href="https://majordomus.dev/cs/docs/install/" class="hover:text-heading hover:underline">Instalace</a></li><li><a href="https://majordomus.dev/cs/commands/" class="hover:text-heading hover:underline">Příkazy</a></li><li><a href="https://majordomus.dev/cs/profiles/" class="hover:text-heading hover:underline">Profily provádění</a></li><li><a href="https://majordomus.dev/cs/docs/cli/" class="hover:text-heading hover:underline">Přehled příkazů</a></li><li><a href="https://majordomus.dev/cs/docs/api/" class="hover:text-heading hover:underline">HTTP API</a></li><li><a href="https://majordomus.dev/rustdoc/" class="hover:text-heading hover:underline">Rust API</a></li><li><a href="https://majordomus.dev/cs/registry/mcp/" class="hover:text-heading hover:underline">Rozhraní MCP</a></li><li><a href="https://majordomus.dev/cs/docs/schemas/" class="hover:text-heading hover:underline">Schémata souborů</a></li><li><a href="https://majordomus.dev/cs/registry/" class="hover:text-heading hover:underline">Registr</a></li><li><a href="https://majordomus.dev/cs/map/" class="hover:text-heading hover:underline">Mapa programu</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/370fdf4cc57608d09c7b49f54aad6f81a1e750e2/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/370fdf4cc57608d09c7b49f54aad6f81a1e750e2/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/370fdf4cc57608d09c7b49f54aad6f81a1e750e2/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+        </ul>
+      </div>
+    </div>
+    <hr class="my-6 border-default sm:mx-auto lg:my-8"><div class="space-y-4">
+    <div class="sm:flex sm:items-center sm:justify-between">
+      <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
+    </div>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.30.2 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/370fdf4cc57608d09c7b49f54aad6f81a1e750e2" class="font-mono underline">370fdf4</a> · inputs <span class="font-mono">0e1fe73c6a52</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    </div>
+  </div>
+</footer>
+<dialog id="site-search" data-site-search data-index="https://majordomus.dev/docs/index.json" aria-labelledby="site-search-label" class="m-0 h-dvh max-h-none w-full max-w-none border-0 bg-neutral-primary p-0 text-body backdrop:bg-neutral-primary-strong/80 sm:mx-auto sm:mt-20 sm:h-auto sm:max-h-[75vh] sm:max-w-2xl sm:rounded-base sm:border sm:border-default sm:shadow-lg">
+  <div class="flex h-full max-h-[inherit] flex-col">
+    <div class="flex items-center gap-2 border-b border-default p-3">
+      <label id="site-search-label" for="site-search-input" class="sr-only">Hledat na tomto webu</label>
+      <svg class="h-5 w-5 shrink-0 text-body-subtle" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z"/></svg>
+      <input id="site-search-input" type="search" role="combobox" aria-expanded="false" aria-controls="site-search-results" aria-autocomplete="list" aria-describedby="site-search-status" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go" placeholder="Pravidlo, rozhodnutí, příkaz, stránka…" class="block min-w-0 flex-1 rounded-base border border-default-medium bg-neutral-secondary-medium px-3 py-2.5 text-base text-heading focus:border-brand focus:ring-brand sm:text-sm">
+      <button type="button" data-site-search-close class="inline-flex h-10 shrink-0 items-center rounded-base border border-default px-3 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">Zavřít<span class="sr-only"> vyhledávání</span></button>
+    </div>
+    <p id="site-search-status" class="px-4 pt-3 text-xs text-body-subtle" aria-live="polite" data-site-search-status>Prohledává názvy a popisy všech stránek, které tento web publikuje.</p>
+    <div id="site-search-results" role="listbox" aria-label="Odpovídající stránky" class="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain px-2 py-2" data-site-search-results></div>
+    <template data-site-search-item><a tabindex="-1" class="block rounded-base px-3 py-2 hover:bg-neutral-secondary-medium aria-selected:bg-neutral-secondary-medium aria-selected:ring-2 aria-selected:ring-brand"><span class="block break-words font-medium text-heading" data-slot="title"></span><span class="block break-all font-mono text-xs text-body-subtle" data-slot="meta"></span><span class="mt-0.5 line-clamp-2 text-sm text-body" data-slot="description"></span></a></template>
+  </div>
+</dialog>
+
+<script defer src="https://majordomus.dev/js/nav.js"></script>
+<script defer src="https://majordomus.dev/js/search.js"></script>
+<script src="https://majordomus.dev/js/theme.js"></script>
+<script defer src="https://majordomus.dev/js/alpine.min.js"></script>
+<script defer src="https://majordomus.dev/js/diagrams.js" data-mermaid-src="https://majordomus.dev/js/mermaid.min.js"></script>
+
+</body>
+</html>
