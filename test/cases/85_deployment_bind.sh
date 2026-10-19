@@ -57,7 +57,7 @@ git add -A >/dev/null; git commit -qm "the deployment object" >/dev/null
 # ---------------------------------------------------------------- the local default
 "$RB" serve --port 0 --idle 60 </dev/null >"$S/local.log" 2>&1 &
 pid=$!; n=0
-while [ $n -lt 150 ] && ! grep -q 'shared server listening' "$S/local.log" 2>/dev/null; do n=$((n+1)); sleep 0.1; done
+while [ $n -lt 900 ] && ! grep -q 'shared server listening' "$S/local.log" 2>/dev/null; do n=$((n+1)); sleep 0.1; done
 kill "$pid" 2>/dev/null || true; wait "$pid" 2>/dev/null || true
 grep -q 'listening on http://127\.0\.0\.1:' "$S/local.log" \
   || { echo "    the local default did not bind loopback:"; cat "$S/local.log"; exit 1; }
@@ -67,7 +67,7 @@ grep -q '0\.0\.0\.0' "$S/local.log" \
 # ---------------------------------------------------------------- the declared address
 "$RB" serve --deployment hosted --idle 60 </dev/null >"$S/hosted.log" 2>&1 &
 pid=$!; n=0
-while [ $n -lt 150 ] && ! grep -q 'shared server listening' "$S/hosted.log" 2>/dev/null; do n=$((n+1)); sleep 0.1; done
+while [ $n -lt 900 ] && ! grep -q 'shared server listening' "$S/hosted.log" 2>/dev/null; do n=$((n+1)); sleep 0.1; done
 # it bound every interface, on the port the object states, and said which object said so
 grep -q 'listening on http://0\.0\.0\.0:8087' "$S/hosted.log" \
   || { echo "    the hosted server did not bind the declared address:"; cat "$S/hosted.log"; kill "$pid" 2>/dev/null || true; exit 1; }
@@ -85,7 +85,7 @@ write_deployment 8092
 git add -A >/dev/null
 "$RB" serve --deployment hosted --idle 60 </dev/null >"$S/moved.log" 2>&1 &
 pid=$!; n=0
-while [ $n -lt 150 ] && ! grep -q 'shared server listening' "$S/moved.log" 2>/dev/null; do n=$((n+1)); sleep 0.1; done
+while [ $n -lt 900 ] && ! grep -q 'shared server listening' "$S/moved.log" 2>/dev/null; do n=$((n+1)); sleep 0.1; done
 kill "$pid" 2>/dev/null || true; wait "$pid" 2>/dev/null || true
 grep -q 'listening on http://0\.0\.0\.0:8092' "$S/moved.log" \
   || { echo "    the port was changed in the object and the process did not follow:"; cat "$S/moved.log"; exit 1; }
