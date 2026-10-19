@@ -40031,6 +40031,46 @@
         }
       },
       {
+        "id": "majordomus://issue/I2985",
+        "kind": "issue",
+        "label": "I2985",
+        "summary": "The Observatory's cooperation scene draws the blackboard, not a second join of the journal",
+        "route": "/cockpit/objects/issue/i2985",
+        "source": ".ai/repo/project/issues/I2985.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The coop scene of a repository with a board peer and no mesh session draws that worker, and one with two meeting claims draws their conflict",
+            "The projection carries no intent text, path, scope or host name, as the scene's rule says"
+          ],
+          "created_at": "2026-10-19",
+          "current_state": "The coop scene reads mesh.state and joins its sessions, claims, reviews and handovers itself.",
+          "depends_on": [
+            "I2983"
+          ],
+          "desired_state": "The coop scene draws the blackboard's workers, conflicts, reviews and handovers, so the wall display and /ui/peers show the same workers.",
+          "evidence_required": [
+            "case_observatory_draws_the_blackboard"
+          ],
+          "milestone": "peer-blackboard",
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/observatory.rs",
+            "share/ui/observatory-kiosk.js",
+            "docs/MAJORDOMUS_UI.md"
+          ],
+          "serves": [
+            "the-peer-blackboard-is-one-reality#every-surface-reads-it"
+          ],
+          "slug": "the-observatory-draws-the-blackboard",
+          "updated_at": "2026-10-19",
+          "validation": [
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I2998",
         "kind": "issue",
         "label": "I2998",
@@ -85060,6 +85100,21 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2985",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2985",
+        "target": "majordomus://issue/I2983",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2985",
+        "target": "majordomus://milestone/peer-blackboard",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I2998",
         "target": "kind:issue",
         "kind": "is_a"
@@ -95131,8 +95186,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2979,
-      "edges": 6542,
+      "nodes": 2980,
+      "edges": 6545,
       "acyclic": false,
       "truncated": false
     }
