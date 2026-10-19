@@ -7,7 +7,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import assert from 'node:assert/strict';
 
-import { breakpointsFromCss, commonPrefix, criticalWidths, discoverPages, tierPages, viewports, REFLOW_FLOOR } from './ui-discover.mjs';
+import { breakpointsFromCss, commonPrefix, criticalWidths, discoverPages, languageSample, tierPages, viewports, REFLOW_FLOOR } from './ui-discover.mjs';
 import { alignCells, escapes, nameTaskCheckboxes, normalise, normaliseRendered, plainClasses, scan, scrollingTags, textOf } from './ui-static.mjs';
 import { contrast, enforce, measure, raise, MINIMUM } from './ui-contrast.mjs';
 import { sample, siblingFamilies } from './ui-routes.mjs';
@@ -15,6 +15,29 @@ import { compare, cut, fragment, GENERATED, VERSION_SLOT } from './ui-navbar.mjs
 
 const tests = [];
 const test = (name, fn) => tests.push([name, fn]);
+
+// ------------------------------------------------------------------ language copies
+test('a language copy is sampled per section at the root and under a mount alike', () => {
+  const site = mkdtempSync(join(tmpdir(), 'mj-lang-'));
+  try {
+    mkdirSync(join(site, 'i18n'));
+    mkdirSync(join(site, 'public'));
+    writeFileSync(join(site, 'i18n', 'languages.json'), JSON.stringify({ source: 'en', languages: ['en', 'cs'] }));
+    const keep = languageSample(join(site, 'public'));
+    const routes = [
+      '/docs/guarantees/a/', '/docs/guarantees/b/',
+      '/docs/cs/guarantees/a/', '/docs/cs/guarantees/b/', '/docs/cs/guarantees/c/', '/docs/cs/adrs/x/',
+      '/cs/', '/cs/roadmap/', '/cs/roadmap/now/',
+    ];
+    assert.deepEqual(routes.filter(keep), [
+      '/docs/guarantees/a/', '/docs/guarantees/b/',
+      '/docs/cs/guarantees/a/', '/docs/cs/adrs/x/',
+      '/cs/', '/cs/roadmap/',
+    ], 'the source keeps every page; a copy keeps the first of each section, mounted or not');
+  } finally {
+    rmSync(site, { recursive: true, force: true });
+  }
+});
 
 // ------------------------------------------------------------------ route sampling
 test('dozens of sibling families that differ in one segment are one renderer, sampled once', () => {

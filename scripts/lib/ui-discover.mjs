@@ -108,7 +108,10 @@ export function commonPrefix(paths) {
  * page. Each copy is audited at its root and the first page of each top-level section, so a
  * layout the translation broke is still met, and the sweep does not double with every
  * language the site declares. site/i18n/languages.json names the copies; a site that
- * declares none keeps every route.
+ * declares none keeps every route. A copy is met where it is mounted as well as at the root:
+ * the documentation's Czech copy is `/docs/cs/...`, whose first segment is the mount, and
+ * missing it kept all of that copy's pages, so the alpha.1 top's audit ran into its 5400 s
+ * bound on 254 Czech guarantee pages before it reached /ui (validate 39317142394).
  */
 export function languageSample(publicDir) {
   let langs = [];
@@ -121,8 +124,10 @@ export function languageSample(publicDir) {
   const seen = new Set();
   return (route) => {
     const parts = route.split('/').filter(Boolean);
-    if (!langs.includes(parts[0])) return true;
-    const key = `${parts[0]}/${parts[1] || ''}`;
+    // the copy's segment: first at the root (/cs/...), second under a mount (/docs/cs/...)
+    const at = langs.includes(parts[0]) ? 0 : langs.includes(parts[1]) ? 1 : -1;
+    if (at < 0) return true;
+    const key = parts.slice(0, at + 2).join('/');
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
