@@ -54,6 +54,11 @@ Current version: **0.30.2**
 
 ## v0.30.0 — 2026-10-18
 
+### Decisions
+
+- **ADR-0175** v1.0.0-alpha.1 declares what it can do and its limits, and every line of the declaration names its proof _(proposed)_
+- **ADR-0172** A client always gets a server, and a session that is opened starts by joining the cluster _(proposed)_
+
 ### Added
 
 - **site**: the homepage counts the delivery the history proves, each count a link (I2851) (`ca277ce74`)
@@ -198,6 +203,11 @@ Current version: **0.30.2**
 
 ## v0.29.0 — 2026-10-17
 
+### Decisions
+
+- **ADR-0169** What an adoption leaves behind is measured, not remembered _(proposed)_
+- **ADR-0167** Work moves through seats on the mesh, lands in combined tops, and every checkout is kept current _(proposed)_
+
 ### Added
 
 - **features**: every capability module and every kind is named by a stable feature (`359f8223f`)
@@ -251,6 +261,15 @@ Current version: **0.30.2**
 
 
 ## v0.28.0 — 2026-10-17
+
+### Decisions
+
+- **ADR-0166** The plan's surfaces are inferred from delivery, and nothing the plan shows is typed beside it _(proposed)_
+- **ADR-0165** A skill is derived for every domain of the registry and shown wherever skills are _(accepted)_
+- **ADR-0164** A durable record names the session that wrote it, and relates a task only when the task is that session's _(proposed)_
+- **ADR-0163** A server serves only a share of its own version, with the surfaces it offers _(proposed)_
+- **ADR-0157** A mesh node may offer a shared build cache, peers discover and select it, and compilation never depends on it _(proposed)_
+- **ADR-0124** An uploaded prompt pack is a provenance-tracked input artifact, not a second intent model _(proposed)_
 
 ### Added
 
@@ -374,6 +393,13 @@ Current version: **0.30.2**
 
 
 ## v0.27.0 — 2026-10-16
+
+### Decisions
+
+- **ADR-0161** A mesh node follows the published release, through the one installer, forward only _(proposed)_
+- **ADR-0160** The kiosk draws what the repository proves, from the sources that already answer it, and draws it with p5 only where the build has it _(proposed)_
+- **ADR-0152** A diagram and a chart on the site are one viewer each, over what the build derived: interactive, linkable, and linked by inference _(proposed)_
+- **ADR-0069** A capability may be scripted, and repository automation is scripted capabilities rather than shell _(proposed)_
 
 ### Added
 
