@@ -22,7 +22,19 @@ satisfaction:
     evidence: test
     ref: test/cases/3382_the_monitor_is_pushed.sh
   - id: the-screen-follows
-    criterion: The UI's Peers screen lists every worker with its intent and claims from the blackboard, is read again on a change frame and after a reconnection but not on a connection's first snapshot, says whether it is live, and is withheld from the published snapshot
+    criterion: The UI's Peers screen lists every worker with its intent and claims from the blackboard, is read again on every snapshot frame, a connection's first one included, one reading at a time, never shows the blackboard from before a change it was told of, says whether it is live, and is withheld from the published snapshot
+    evidence: test
+    ref: test/cases/3383_the_peers_screen_follows_the_blackboard.sh
+  - id: published-safely
+    criterion: The published site shows the blackboard's counts and every source's state with the revision and time they were read, says it is a snapshot and never live, and names no worktree path, scope, intent, session key, node id or endpoint
+    evidence: test
+    ref: test/cases/1092_the_ui_snapshot_holds_every_screen.sh
+  - id: every-surface-reads-it
+    criterion: /cockpit/peers renders the projection /ui/peers renders and follows the same frames, and no page that shows peers asks peers.list or mesh.state for them itself
+    evidence: test
+    ref: test/cases/3383_the_peers_screen_follows_the_blackboard.sh
+  - id: acted-on-through-capabilities
+    criterion: An operator answers a review, takes a handover or releases their own claim from /ui/peers through the capability that owns the record, offered only where that capability admits the caller, and the page shows the result only when the blackboard does
     evidence: test
     ref: test/cases/3383_the_peers_screen_follows_the_blackboard.sh
 governance:

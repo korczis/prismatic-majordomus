@@ -39940,7 +39940,7 @@
         "facts": {
           "acceptance_criteria": [
             "/ui/peers lists a worker announced over MCP with its intent and claim, and its fragment read after a second announcement shows the new intent at once",
-            "live.js reads the screen again on a change frame and after a reconnection, never on a connection's first snapshot, and says live, reconnecting or offline",
+            "live.js reads the screen again on every snapshot frame, a connection's first one included, one reading at a time, and says live, reconnecting or offline",
             "The UI snapshot holds no /ui/peers page and a link to it leads to the live page"
           ],
           "created_at": "2026-10-18",
@@ -39983,6 +39983,136 @@
             "bash test/run.sh 3383_the_peers_screen_follows_the_blackboard"
           ],
           "why": "Who works on what is on the blackboard and on no UI screen; /cockpit/peers reads peers.list, which knows one board's machines and nothing of the mesh."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2984",
+        "kind": "issue",
+        "label": "I2984",
+        "summary": "The published site shows a public-safe blackboard, labelled as the snapshot it is",
+        "route": "/cockpit/objects/issue/i2984",
+        "source": ".ai/repo/project/issues/I2984.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The published /ui/peers shows the blackboard's counts and every source's state with the revision and time it was read, and its state line says snapshot",
+            "The published bundle names no worktree path, scope, intent, session key, node id or endpoint that the blackboard read",
+            "A visitor offline from any runtime is told the page is a snapshot; nothing on it says live"
+          ],
+          "created_at": "2026-10-19",
+          "current_state": "The UI snapshot withholds /ui/peers (I2983). The published /ui home shows the mesh as not observed and names no blackboard source.",
+          "depends_on": [
+            "I2983"
+          ],
+          "desired_state": "The published /ui/peers shows the public-safe counts and source states of the blackboard at the snapshot's revision, says so, and carries nothing private.",
+          "evidence_required": [
+            "case_published_blackboard_is_public_safe"
+          ],
+          "milestone": "peer-blackboard",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/blackboard.rs",
+            "apps/majordomus-cli/src/ui/peers.rs",
+            "apps/majordomus-cli/src/web/report/snapshot.rs",
+            "docs/BLACKBOARD.md",
+            "docs/MAJORDOMUS_UI.md",
+            "test/cases/1092_the_ui_snapshot_holds_every_screen.sh"
+          ],
+          "serves": [
+            "the-peer-blackboard-is-one-reality#published-safely"
+          ],
+          "slug": "the-published-blackboard-is-public-safe",
+          "updated_at": "2026-10-19",
+          "validation": [
+            "majordomus plan validate",
+            "bash test/run.sh 1092_the_ui_snapshot_holds_every_screen"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2998",
+        "kind": "issue",
+        "label": "I2998",
+        "summary": "/cockpit/peers renders the blackboard and follows it live",
+        "route": "/cockpit/objects/issue/i2998",
+        "source": ".ai/repo/project/issues/I2998.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "/cockpit/peers lists a worker announced over MCP with its intent and claim, and a mesh session of a linked runtime, from blackboard.snapshot",
+            "A second announcement reaches an open /cockpit/peers without a reload, and the page says live",
+            "No cockpit or ui page that shows peers asks peers.list or mesh.state for them directly"
+          ],
+          "created_at": "2026-10-19",
+          "current_state": "cockpit/pages.rs peers() asks peers.list and renders it once.",
+          "depends_on": [
+            "I2983"
+          ],
+          "desired_state": "/cockpit/peers shows what /ui/peers shows, from the same frames, and is pushed a change within a second on this machine.",
+          "evidence_required": [
+            "case_cockpit_peers_follows_the_blackboard"
+          ],
+          "milestone": "peer-blackboard",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/cockpit/pages.rs",
+            "share/cockpit/socket.js",
+            "docs/BLACKBOARD.md",
+            "docs/COCKPIT.md"
+          ],
+          "serves": [
+            "the-peer-blackboard-is-one-reality#every-surface-reads-it"
+          ],
+          "slug": "the-cockpit-peers-page-follows-the-blackboard",
+          "updated_at": "2026-10-19",
+          "validation": [
+            "majordomus plan validate"
+          ],
+          "why": "The milestone's invariant is that every surface that shows peers reads the one projection. /cockpit/peers still reads peers.list once: one checkout's boards, nothing of the mesh, never updated."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2999",
+        "kind": "issue",
+        "label": "I2999",
+        "summary": "From /ui/peers an operator answers a review, takes a handover or releases a claim, through its capability",
+        "route": "/cockpit/objects/issue/i2999",
+        "source": ".ai/repo/project/issues/I2999.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Answering an open review on /ui/peers records the answer through mesh.review.answer, and the review leaves the page with the next frame",
+            "An action the capability refuses, or that a caller beyond loopback may not take, is not offered or is shown refused with the capability's reason",
+            "No action on the page changes what it shows before the blackboard shows it"
+          ],
+          "created_at": "2026-10-19",
+          "current_state": "/ui/peers is read-only. The mesh capabilities that change reviews, handovers and claims are reachable only from the command line, MCP and HTTP.",
+          "depends_on": [
+            "I2983"
+          ],
+          "desired_state": "An operator on this machine acts on a review, a handover or their own claim from /ui/peers, and sees the result only when the blackboard shows it.",
+          "evidence_required": [
+            "case_blackboard_actions_go_through_capabilities"
+          ],
+          "milestone": "peer-blackboard",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/peers.rs",
+            "share/ui/ui.js",
+            "docs/BLACKBOARD.md",
+            "docs/MAJORDOMUS_UI.md"
+          ],
+          "serves": [
+            "the-peer-blackboard-is-one-reality#acted-on-through-capabilities"
+          ],
+          "slug": "the-blackboard-is-acted-on-through-its-capabilities",
+          "updated_at": "2026-10-19",
+          "validation": [
+            "majordomus plan validate"
+          ]
         }
       },
       {
@@ -84908,6 +85038,51 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2984",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2984",
+        "target": "majordomus://issue/I2983",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2984",
+        "target": "majordomus://milestone/peer-blackboard",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2998",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2998",
+        "target": "majordomus://issue/I2983",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2998",
+        "target": "majordomus://milestone/peer-blackboard",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2999",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2999",
+        "target": "majordomus://issue/I2983",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2999",
+        "target": "majordomus://milestone/peer-blackboard",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -94944,8 +95119,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2975,
-      "edges": 6532,
+      "nodes": 2978,
+      "edges": 6541,
       "acyclic": false,
       "truncated": false
     }

@@ -6,23 +6,23 @@
     "version": "0.29.0"
   },
   "registry": {
-    "fingerprint": "82db51aba674ec3c8370c549c4f3acb1ce5e1baf5a89d0403900db013942c7e2",
+    "fingerprint": "760f0c6b7c463d2a864ceeff951eaf8dbd48bffeb59ce5c05b58a0cb6c381419",
     "summary": {
-      "total": 2541,
+      "total": 2544,
       "builtin": 203,
-      "declarative": 2338,
+      "declarative": 2341,
       "by_kind": {
         "command": 31,
         "query": 172,
-        "resource": 2338
+        "resource": 2341
       },
       "by_stability": {
         "behaviorally_verified": 141,
         "experimental": 53,
-        "implemented": 2347
+        "implemented": 2350
       },
       "mcp_tools": 193,
-      "mcp_resources": 2393,
+      "mcp_resources": 2396,
       "http_routes": 198,
       "cli_commands": 109,
       "modules": 93,
@@ -84257,7 +84257,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 428,
+        "capabilities": 431,
         "capability_ids": []
       },
       {
@@ -84919,7 +84919,7 @@
     ]
   },
   "index": {
-    "fingerprint": "99c39b703c3b8ff5c362133e644d144e03a27d7b487af8fa74a05983198b4329",
+    "fingerprint": "c21d8477cb57518f898abff63825c281d93a75bfe7a52af7a8596351f7ca2acd",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -84959,7 +84959,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 6,
-      "issue": 428,
+      "issue": 431,
       "knowledge": 4,
       "mesh-declaration": 1,
       "milestone": 42,
@@ -90811,7 +90811,7 @@
         "title": "The peer blackboard",
         "path": "docs/BLACKBOARD.md",
         "source_class": "document",
-        "bytes": 11351
+        "bytes": 11921
       },
       {
         "uri": "majordomus://document/docs/BRIEF.md",
@@ -91180,7 +91180,7 @@
         "title": "`majordomus ui` — the product",
         "path": "docs/MAJORDOMUS_UI.md",
         "source_class": "document",
-        "bytes": 40055
+        "bytes": 40185
       },
       {
         "uri": "majordomus://document/docs/MCP.md",
@@ -91270,7 +91270,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 173560
+        "bytes": 174097
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -94751,7 +94751,7 @@
         "path": ".ai/repo/project/intents/the-peer-blackboard-is-one-reality.yaml",
         "section": "project",
         "source_class": "intent",
-        "bytes": 3056
+        "bytes": 4153
       },
       {
         "uri": "majordomus://issue/I0001",
@@ -99459,7 +99459,40 @@
         "path": ".ai/repo/project/issues/I2983.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2944
+        "bytes": 2943
+      },
+      {
+        "uri": "majordomus://issue/I2984",
+        "kind": "issue",
+        "identity": "I2984",
+        "title": "The published site shows a public-safe blackboard, labelled as the snapshot it is",
+        "description": "Give the UI snapshot (ADR 0141) a /ui/peers page and a home panel built from a public-safe projection of blackboard.snapshot. It shows the counts (workers, present, boards, conflicts, open reviews, untaken handovers), every source with its state and reason, and the revision and time it was read. It names no worktree path, scope, intent, message body, session key, node id or endpoint. The page says it is a snapshot of that revision and never that it is live. A link to the live page leads to it.",
+        "path": ".ai/repo/project/issues/I2984.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2292
+      },
+      {
+        "uri": "majordomus://issue/I2998",
+        "kind": "issue",
+        "identity": "I2998",
+        "title": "/cockpit/peers renders the blackboard and follows it live",
+        "description": "Render /cockpit/peers from blackboard.snapshot instead of peers.list: every worker on every board and linked machine, its claims, the conflicts, the waiting reviews and handovers, and every source. Follow /events?follow=blackboard&frames=snapshot through the one socket client (share/cockpit/socket.js), as /ui/peers does. The page's state line says live, reconnecting or offline truthfully. /ui/peers and /cockpit/peers then render the same projection, and neither joins a fact of its own.",
+        "path": ".ai/repo/project/issues/I2998.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1878
+      },
+      {
+        "uri": "majordomus://issue/I2999",
+        "kind": "issue",
+        "identity": "I2999",
+        "title": "From /ui/peers an operator answers a review, takes a handover or releases a claim, through its capability",
+        "description": "Put the actions the blackboard's records already have next to the records on /ui/peers. An open review is answered (mesh.review.answer), an untaken handover is taken (mesh.handover.consume), and a claim of the caller's own session is released (mesh.release). Each is a form that posts to the capability's own HTTP route and names the record it acts on. It is offered only where the capability admits the caller: loopback, or a remote caller the capability's execution policy admits. The page shows the action pending until the next blackboard frame shows the record changed. A refusal is shown with the capability's own reason. Nothing is done by the page and nothing succeeds on a timer.",
+        "path": ".ai/repo/project/issues/I2999.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2342
       },
       {
         "uri": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
@@ -110220,7 +110253,7 @@
       "identity": [
         "id"
       ],
-      "objects": 428
+      "objects": 431
     },
     {
       "name": "knowledge",

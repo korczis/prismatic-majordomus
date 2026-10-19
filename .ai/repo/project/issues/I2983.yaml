@@ -31,7 +31,7 @@ depends_on:
   - "I2982"
 acceptance_criteria:
   - "/ui/peers lists a worker announced over MCP with its intent and claim, and its fragment read after a second announcement shows the new intent at once"
-  - "live.js reads the screen again on a change frame and after a reconnection, never on a connection's first snapshot, and says live, reconnecting or offline"
+  - "live.js reads the screen again on every snapshot frame, a connection's first one included, one reading at a time, and says live, reconnecting or offline"
   - "The UI snapshot holds no /ui/peers page and a link to it leads to the live page"
 validation:
   - "majordomus plan validate"

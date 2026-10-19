@@ -163,8 +163,12 @@ or refresh: GitHub is read through a cache shared for 30 s, and cannot push.
 
 `/ui/peers` is the screen of the blackboard. It is rendered by the server from the read the
 channel's followers share, and it follows `frames=snapshot` through `share/ui/live.js` and a
-byte copy of the same client (`share/ui/socket.js`). A change frame or a reconnection reads
-the screen again; the first snapshot of a connection does not. Its state line says live,
+byte copy of the same client (`share/ui/socket.js`). Every snapshot frame reads the screen
+again, a connection's first one too: a change made between the page being served and its
+channel opening would otherwise never reach a page that says it is live. One reading runs at a
+time, and a frame that arrives during one asks for one more after it. A reading of the
+blackboard is current only at the blackboard's own change generation, so a screen read after a
+change frame never shows the blackboard from before it. Its state line says live,
 reconnecting or closed, and while the channel is not live the UI's minute refresh reads it
 instead. The UI's published snapshot withholds it (`docs/MAJORDOMUS_UI.md`).
 
@@ -172,8 +176,12 @@ instead. The UI's published snapshot withholds it (`docs/MAJORDOMUS_UI.md`).
 
 These are planned in milestone `peer-blackboard` and are not built:
 
-- the `/cockpit` peer screen and the home page's panel that render the snapshot frames;
-- its public-safe published snapshot, and with it `/ui/peers` on the published site.
+- the `/cockpit` peer screen that renders the snapshot frames, and the home page's panel
+  (I2998);
+- its public-safe published snapshot, and with it `/ui/peers` on the published site (I2984);
+- acting from `/ui/peers` on what waits: answering a review, taking a handover, releasing
+  one's own claim, each through its capability and shown only when the blackboard shows it
+  (I2999).
 
 Until they exist, nothing on this page claims them.
 

@@ -318,12 +318,14 @@ A screen that shows what changes faster than a minute follows the server's live 
 of waiting for the minute's refresh (ADR 0176). Its markup names the channel (`data-follow`)
 and the module that follows it (`data-follow-lib`, `share/ui/live.js`), which opens it through
 `share/ui/socket.js`, a byte copy of the Cockpit's one socket client that
-`scripts/cockpit-assets` keeps. The module draws nothing: when the server says the blackboard
-changed, or after a reconnection, it asks `ui.js` to read the screen again, and the screen is
-rendered by the server through the same shared read the channel's followers take, so it shows
-that change. Its first snapshot on a connection is what the page was served with and is not
-read again. The line marked `data-follow-state` says whether the channel is live, reconnecting
-or closed, and while it is not live the minute's refresh runs as on every other screen.
+`scripts/cockpit-assets` keeps. The module draws nothing: on every snapshot frame, a
+connection's first one included, it asks `ui.js` to read the screen again, and `ui.js` reads one
+screen at a time, asking once more after a reading that a frame arrived during. The screen is
+rendered by the server, and its reading follows the blackboard's own change generation as well
+as the repository's (`crate::change::generation_of`), so a screen read after a change frame
+shows that change or says it is catching up with it. The line marked `data-follow-state` says
+whether the channel is live, reconnecting or closed, and while it is not live the minute's
+refresh runs as on every other screen.
 `/ui/peers` is the first such screen. The published snapshot withholds it (I2984): it names
 every worker's intent, worktree and machine as they are now.
 
