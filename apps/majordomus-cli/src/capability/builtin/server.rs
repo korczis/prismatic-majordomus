@@ -29,6 +29,11 @@
 //! `repository`, the whole list, because that is what every caller of this capability got
 //! before the field existed.
 //!
+//! The wide answer asks sixteen checkouts at a time (`ASKED_AT_ONCE`, `each_checkout`), so its
+//! wait is a few probe timeouts however many checkouts there are, not one per checkout: on
+//! a machine of sixty servers, a few of them wedged, one at a time took more than thirty
+//! seconds (I2987).
+//!
 //! Read on every call and never cached: the lease is written by other processes.
 //!
 //! ```
@@ -562,6 +567,46 @@ pub(crate) fn checkouts_of(
     }
 }
 
+/// How many checkouts one reading asks at once. Each is a lease read and, for a server that
+/// answers, a round trip bounded by the probe timeout.
+pub(crate) const ASKED_AT_ONCE: usize = 16;
+
+/// `ask` applied to every checkout, [`ASKED_AT_ONCE`] at a time, the answers in the order of
+/// the checkouts. A worker the system refuses to start is not needed: the calling thread
+/// asks too, so every checkout is answered with however many threads there are.
+pub(crate) fn each_checkout<C: Sync, T: Send>(
+    checkouts: &[C],
+    ask: impl Fn(&C) -> T + Sync,
+) -> Vec<T> {
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    use std::sync::{Mutex, PoisonError};
+    if checkouts.len() <= 1 {
+        return checkouts.iter().map(ask).collect();
+    }
+    let next = AtomicUsize::new(0);
+    let answers: Vec<Mutex<Option<T>>> = checkouts.iter().map(|_| Mutex::new(None)).collect();
+    std::thread::scope(|scope| {
+        let work = || loop {
+            let i = next.fetch_add(1, Ordering::Relaxed);
+            let Some(checkout) = checkouts.get(i) else {
+                break;
+            };
+            let answer = ask(checkout);
+            *answers[i].lock().unwrap_or_else(PoisonError::into_inner) = Some(answer);
+        };
+        for _ in 1..ASKED_AT_ONCE.min(checkouts.len()) {
+            let _ = std::thread::Builder::new()
+                .name("mj-checkouts".into())
+                .spawn_scoped(scope, work);
+        }
+        work();
+    });
+    answers
+        .into_iter()
+        .filter_map(|a| a.into_inner().unwrap_or_else(PoisonError::into_inner))
+        .collect()
+}
+
 fn server_status(ctx: &Context, input: ServerStatusInput) -> Result<ServerStatus, CapabilityError> {
     let root = PathBuf::from(&ctx.index.repository.root);
     let root = root.canonicalize().unwrap_or(root);
@@ -569,9 +614,8 @@ fn server_status(ctx: &Context, input: ServerStatusInput) -> Result<ServerStatus
     let git = repository::git_identity(&root);
     let linked = git.as_ref().is_some_and(|g| g.linked);
     let checkouts = checkouts_of(&root, git.as_ref(), input.checkouts);
-    let mut servers = Vec::with_capacity(checkouts.len());
-    for (path, branch, primary) in checkouts {
-        let worktree = path.canonicalize().unwrap_or(path);
+    let servers = each_checkout(&checkouts, |(path, branch, primary)| {
+        let worktree = path.canonicalize().unwrap_or(path.clone());
         let (standing, reason, read) = standing_at(&worktree, &local_half);
         let peers = match standing {
             // this process's own board is in memory; asking it over the wire would queue
@@ -587,18 +631,18 @@ fn server_status(ctx: &Context, input: ServerStatusInput) -> Result<ServerStatus
                 .and_then(|url| peers_of(ctx, url)),
             _ => None,
         };
-        servers.push(ServerView {
+        ServerView {
             checkout_id: repository::identity(&worktree),
-            primary,
+            primary: *primary,
             this_checkout: worktree == root,
-            branch,
+            branch: branch.clone(),
             standing,
             reason,
             lease: read.document().map(LeaseView::of),
             peers,
             worktree,
-        });
-    }
+        }
+    });
     let standing = servers
         .iter()
         .find(|s| s.this_checkout)
@@ -670,6 +714,30 @@ pub fn module() -> ModuleDescriptor {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Every checkout is answered, in the order given, and several are asked at once but
+    /// never more than [`ASKED_AT_ONCE`]: one at a time is what made a repository of sixty
+    /// servers wait half a minute.
+    #[test]
+    fn every_checkout_is_asked_at_once_and_answered_in_order() {
+        use std::sync::atomic::{AtomicUsize, Ordering};
+        let asking = AtomicUsize::new(0);
+        let most = AtomicUsize::new(0);
+        let checkouts: Vec<usize> = (0..40).collect();
+        let answers = each_checkout(&checkouts, |i| {
+            let now = asking.fetch_add(1, Ordering::SeqCst) + 1;
+            most.fetch_max(now, Ordering::SeqCst);
+            std::thread::sleep(Duration::from_millis(20));
+            asking.fetch_sub(1, Ordering::SeqCst);
+            i * 2
+        });
+        assert_eq!(answers, (0..40).map(|i| i * 2).collect::<Vec<_>>());
+        let most = most.load(Ordering::SeqCst);
+        assert!(most > 1, "the checkouts were asked one at a time");
+        assert!(most <= ASKED_AT_ONCE, "{most} asked at once");
+        assert_eq!(each_checkout(&[7usize], |i| *i), vec![7]);
+        assert!(each_checkout(&Vec::<usize>::new(), |i| *i).is_empty());
+    }
 
     /// A lease document of a healthy server that published `version`.
     fn serving(version: &str) -> LeaseFile {

@@ -342,9 +342,11 @@ else
   fi
 
   # The second, independent view. The footer of every page names the same commit; when the
-  # two disagree, one of the deploy's two steps ran and the other did not.
+  # two disagree, one of the deploy's two steps ran and the other did not. The commit is read
+  # from the <footer> on: the body links commits of its own (the homepage's delivery counts
+  # name the commit delivery.json observed), and the first of those is not the footer's.
   if [ -n "$body" ] && [ -n "$served" ]; then
-    footer="$(printf '%s' "$body" | sed -n 's|.*/commit/\([0-9a-f]\{7,40\}\).*|\1|p' | head -1)"
+    footer="$(printf '%s\n' "$body" | awk '/<footer[ >]/ { f = 1 } f' | sed -n 's|.*/commit/\([0-9a-f]\{7,40\}\).*|\1|p' | head -1)"
     if [ -z "$footer" ]; then
       bad "the pages name no commit in their footer, though $identity names one"
     elif [ "${served#"$footer"}" = "$served" ]; then

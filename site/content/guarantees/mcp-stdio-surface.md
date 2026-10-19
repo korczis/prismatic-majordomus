@@ -1,6 +1,6 @@
 +++
-title = "The Rust executable serves the repository's AI layer to an MCP client over stdio, read-only, with protocol frames alone on stdout"
-description = "majordomus mcp, the one command of the Rust executable in apps/majordomus-cli/, is a process an MCP client spawns. It reads the .ai/ layer once, answers initialize, resources/list, resources/read, tools/list and tools/call over stdin and stdout, and ends when the client closes the pipe. Nothing but JSON-RPC frames is written to stdout; everything else goes to stderr. It writes no file, touches no git state and listens on no port."
+title = "The Rust executable serves the repository's AI layer to an MCP client over stdio, with protocol frames alone on stdout"
+description = "majordomus mcp, the Rust executable's command in apps/majordomus-cli/ that an MCP client spawns, reads the .ai/ layer, answers initialize, resources/list, resources/read, tools/list and tools/call over stdin and stdout, and ends when the client closes the pipe. Nothing but JSON-RPC frames is written to stdout; everything else goes to stderr. The first one in a checkout becomes its shared server: it binds the loopback HTTP projection and writes one file, its lease under .ai/local/state/mcp/ (docs/MCP.md); --standalone serves this client alone, with no port and no lease. Every tool is announced with what it changes: most read, and the ones whose registry effect is repository_mutation write the repository and are named in the initialize instructions."
 weight = 123
 [extra]
 claim_id = "mcp-stdio-surface"
@@ -11,11 +11,11 @@ source = "docs/claims/mcp-stdio-surface.md"
 
 ## What it means
 
-`majordomus mcp`, the one command of the Rust executable in `apps/majordomus-cli/`, is a process an MCP client spawns. It reads the `.ai/` layer once, answers `initialize`, `resources/list`, `resources/read`, `tools/list` and `tools/call` over stdin and stdout, and ends when the client closes the pipe. Nothing but JSON-RPC frames is written to stdout; everything else goes to stderr. It writes no file, touches no git state and listens on no port.
+`majordomus mcp`, the Rust executable's command in `apps/majordomus-cli/` that an MCP client spawns, reads the `.ai/` layer, answers `initialize`, `resources/list`, `resources/read`, `tools/list` and `tools/call` over stdin and stdout, and ends when the client closes the pipe. Nothing but JSON-RPC frames is written to stdout; everything else goes to stderr. The first one in a checkout becomes its shared server: it binds the loopback HTTP projection and writes one file, its lease under `.ai/local/state/mcp/` ([`docs/MCP.md`](@/docs/mcp.md)); `--standalone` serves this client alone, with no port and no lease. Every tool is announced with what it changes: most read, and the ones whose registry effect is `repository_mutation` write the repository and are named in the `initialize` instructions.
 
 ## How it works
 
-`src/repository.rs` finds the root, `src/index.rs` builds the in-memory index, `src/mcp/surface.rs` projects it into resources and tools, `src/mcp/protocol.rs` speaks the protocol over that surface, and `src/mcp/stdio.rs` moves one frame per line. Logging goes through `tracing` to stderr under `MAJORDOMUS_LOG`. There is no MCP library and no async runtime: the read-only subset a server needs is small enough to keep in one file behind the index.
+`src/repository.rs` finds the root, `src/index.rs` builds the in-memory index, `src/mcp/surface.rs` projects it into resources and tools, `src/mcp/protocol.rs` speaks the protocol over that surface, and `src/mcp/stdio.rs` moves one frame per line. Logging goes through `tracing` to stderr under `MAJORDOMUS_LOG`. There is no MCP library and no async runtime: the subset of the protocol a server needs is small enough to keep in one file behind the index.
 
 ## How to see it
 

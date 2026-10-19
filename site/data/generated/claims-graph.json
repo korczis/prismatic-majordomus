@@ -989,7 +989,7 @@
     {
       "id": "claim:mcp-stdio-surface",
       "kind": "claim",
-      "label": "The Rust executable serves the repository's AI layer to an MCP client over stdio, read-only, with protocol frames alone on stdout",
+      "label": "The Rust executable serves the repository's AI layer to an MCP client over stdio, with protocol frames alone on stdout",
       "status": "guaranteed",
       "route": "/guarantees/mcp-stdio-surface/",
       "external": false,
@@ -1817,7 +1817,7 @@
     {
       "id": "claim:evidence-navigates-both-ways",
       "kind": "claim",
-      "label": "Every claim names the test that proves it and every test names the claims it proves, from one derivation",
+      "label": "Every claim names the test meant to settle it and every test names the claims it is meant to settle, from one derivation",
       "status": "guaranteed",
       "route": "/guarantees/evidence-navigates-both-ways/",
       "external": false,
@@ -1943,7 +1943,7 @@
     {
       "id": "claim:mesh-observation-not-authority",
       "kind": "claim",
-      "label": "A discovered node — trusted or not — gains no execution, no authorization and no write surface; trust labels records under an explicit policy that defaults to deny_unknown",
+      "label": "A discovered node gains no execution and no authorization from being heard; only signed traffic from a linked node may change mesh state, and trust labels records under an explicit policy that defaults to deny_unknown",
       "status": "guaranteed",
       "route": "/guarantees/mesh-observation-not-authority/",
       "external": false,

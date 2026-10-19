@@ -161,11 +161,12 @@ if [ -n "$EXPECT" ] && [ "$tag" != "v${EXPECT#v}" ]; then
 fi
 if [ -n "$pin_env" ]; then
   stable="$(fetch "$latest_url" 2>/dev/null | sed -n 's/.*"tag": "\([^"]*\)".*/\1/p' | head -n 1)"
-  if [ "$stable" = "$tag" ]; then
-    fail "$latest_url names the pre-release $tag; a pre-release is never the latest release"
-    printf 'install-check: %s finding(s)\n' "$findings" >&2
-    exit 10
-  fi
+  case "$stable" in
+    *-alpha.[0-9]*|*-beta.[0-9]*|*-rc.[0-9]*)
+      fail "$latest_url names the pre-release $stable; a pre-release is never the latest release"
+      printf 'install-check: %s finding(s)\n' "$findings" >&2
+      exit 10 ;;
+  esac
   ok "the latest release is ${stable:-not served}, not the pre-release $tag"
 fi
 
@@ -243,7 +244,7 @@ frame() { printf '{"jsonrpc":"2.0","id":%s,"method":"%s"%s}\n' "$1" "$2" "${3:+,
 if [ -x "$BIN/majordomus-mcp" ] && [ -f "${repo:-}/.ai/repo/policy.yaml" ]; then
   served_ok=1
   mkfifo "$WORK/mcp.in"
-  ( cd "$repo" && exec env HOME="$HOMEDIR" MAJORDOMUS_NO_BUILD=1 "$BIN/majordomus-mcp" --http-port 0 \
+  ( cd "$repo" && exec env HOME="$HOMEDIR" MAJORDOMUS_NO_BUILD=1 "$BIN/majordomus-mcp" --http-host 127.0.0.1 --http-port 0 \
       < "$WORK/mcp.in" > "$WORK/mcp.out" 2> "$WORK/mcp.log" ) &
   mcp_pid=$!
   exec 3> "$WORK/mcp.in"
