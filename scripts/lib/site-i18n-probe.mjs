@@ -145,7 +145,7 @@ async function probe(context, path) {
       if (!s) { finding(path, 'switch', `names no ${l} link`); continue; }
       const target = new URL(s.href).pathname;
       if (target !== counterpart(path, l)) finding(path, 'switch', `${l} leads to ${target}, not ${counterpart(path, l)}`);
-      if ((l === lang) !== (s.current === 'page')) finding(path, 'switch', `${l} is${s.current ? '' : ' not'} marked current`);
+      if ((l === lang) !== (s.current === 'true')) finding(path, 'switch', `${l} is${s.current ? '' : ' not'} marked current`);
     }
     // an authored page written in another language at an English address is that language's
     const docLang = lang === config.source ? seen.lang : lang;

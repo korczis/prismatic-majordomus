@@ -2506,7 +2506,8 @@ mj_capture_report_timeouts() {
     mj_err "capture install: the $event handler running \${CLAUDE_PROJECT_DIR}/$rel carries no timeout; add \"timeout\": $secs beside its \"command\""
   done
   [ "$lacking" = 0 ] || mj_warn capture "$(mj_capture_field "$p" 2)" \
-    "$lacking hook(s) carry no timeout, so the provider's default applies; it is not this tool's to rewrite (listed above)"
+    "$lacking hook(s) carry no timeout, so the provider's default applies; it is not this tool's to rewrite (listed above)" \
+    "majordomus capture install --provider $p"
   return 0
 }
 
