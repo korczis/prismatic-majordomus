@@ -568,7 +568,17 @@ export function build({ publicDir, i18nDir, base, missingOut, exclude = [] }) {
       const englishRoute = routeOf(rel);
       const pageLang = /<html[^>]*\slang="([^"]+)"/.exec(html)?.[1] ?? 'en';
       let result;
-      if (pageLang !== config.source) {
+      if (html.includes('<title>Redirect</title>')) {
+        // a Zola alias: no words, only a target; the copy leads to the target's copy in this
+        // language and keeps the marker the site's checks recognise a redirect by
+        const to = (url) => {
+          const path = url.slice(base.length) || '/';
+          return routes.has(path) ? `${base}/${lang}${path}` : url;
+        };
+        const escaped = base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        result = { html: html.replace(new RegExp(`${escaped}/[^"'\\s<>]*`, 'g'), to),
+          total: 0, done: 0, missing: [] };
+      } else if (pageLang !== config.source) {
         // a page already written in another language is carried as it is, its links localised,
         // and names the original canonical: the copy is a duplicate, never a second original
         const original = authoredAlternates(html, base, englishRoute, pageLang);
@@ -612,11 +622,36 @@ export function build({ publicDir, i18nDir, base, missingOut, exclude = [] }) {
   for (const lang of Object.keys(report.languages)) {
     writeFileSync(join(publicDir, lang, 'i18n.json'), `${JSON.stringify(report, null, 2)}\n`);
   }
+  sitemap({ publicDir, base, routes, languages: config.languages, source: config.source });
   if (missingOut) {
     mkdirSync(dirname(missingOut), { recursive: true });
     writeFileSync(missingOut, `${JSON.stringify(missingAll)}\n`);
   }
   return report;
+}
+
+/** Every indexable page in every language, in the sitemap the build wrote: each English entry is
+ *  followed by its copy in every other language, and each names all of them as hreflang
+ *  alternates, the form search engines read a multilingual site in. The English sitemap decides
+ *  which pages are indexable (templates/sitemap.xml, held by scripts/ci/homepage-check); a copy
+ *  is listed exactly when its original is. */
+export function sitemap({ publicDir, base, routes, languages, source }) {
+  const file = join(publicDir, 'sitemap.xml');
+  if (!existsSync(file)) return;
+  const xml = readFileSync(file, 'utf8');
+  if (xml.includes('xmlns:xhtml=')) return;
+  const entry = /<url><loc>([^<]+)<\/loc>((?:<lastmod>[^<]*<\/lastmod>)?)<\/url>/g;
+  const urlOf = (l, path) => `${base}${l === source ? '' : `/${l}`}${path}`;
+  const body = xml.replace(entry, (all, loc, lastmod) => {
+    const path = loc.startsWith(base) ? loc.slice(base.length) || '/' : null;
+    if (!path || !routes.has(path)) return all;
+    const alternates = [...languages.map((l) => `<xhtml:link rel="alternate" hreflang="${l}" href="${urlOf(l, path)}"/>`),
+      `<xhtml:link rel="alternate" hreflang="x-default" href="${urlOf(source, path)}"/>`].join('');
+    return languages.map((l) => `<url><loc>${urlOf(l, path)}</loc>${lastmod}${alternates}</url>`)
+      .join('\n  ');
+  }).replace('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">');
+  writeFileSync(file, body);
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
