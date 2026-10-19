@@ -739,7 +739,9 @@ fn resolve(
             } else {
                 Match::SameBranch
             },
-            divergence: divergence(root, rhead, head),
+            // judged once, for the record that wins, below: it asks git, and a branch as
+            // busy as a trunk carries hundreds of candidates of which one is kept (I2858)
+            divergence: Divergence::Unknown,
             freshness: Freshness::Unknown,
             age_minutes: None,
             freshness_reason: String::new(),
@@ -772,7 +774,11 @@ fn resolve(
             best = Some((tier, key, record));
         }
     }
-    (best.map(|(_, _, r)| r), skipped)
+    let best = best.map(|(_, _, mut r)| {
+        r.divergence = divergence(root, &r.head, head);
+        r
+    });
+    (best, skipped)
 }
 
 /// How many `.md` records a directory holds.
@@ -1604,6 +1610,38 @@ mod tests {
             .0;
             assert_eq!(first, again);
         }
+    }
+
+    /// The record that wins is the one whose divergence is judged, against its own head: the
+    /// losers are not asked of git at all, which is what keeps a briefing on a trunk with
+    /// hundreds of records from waiting on hundreds of git processes (I2858).
+    #[test]
+    fn the_winning_record_carries_the_divergence_of_its_own_head() {
+        let (t, now) = unjudged();
+        let repo = Repo::new();
+        let first = repo.head();
+        repo.git(&["commit", "-q", "--allow-empty", "-m", "two"]);
+        let second = repo.head();
+        let root = repo.root().to_string_lossy().to_string();
+        let unknown = "0000000000000000000000000000000000000000";
+        repo.write(
+            "h/old.md",
+            &record("2026-01-01T00:00:00Z", unknown, "main", &root, "old"),
+        );
+        repo.write(
+            "h/new.md",
+            &record("2026-01-02T00:00:00Z", &first, "main", &root, "new"),
+        );
+        let dir = repo.root().join("h");
+        let won = resolve(repo.root(), &dir, "main", Some(&second), t, now)
+            .0
+            .expect("a record");
+        assert!(won.path.ends_with("new.md"), "{}", won.path);
+        assert_eq!(won.divergence, Divergence::Advanced);
+        let won = resolve(repo.root(), &dir, "main", Some(&first), t, now)
+            .0
+            .expect("a record");
+        assert_eq!(won.divergence, Divergence::Exact);
     }
 
     // ------------------------------------------------------------------ the active task

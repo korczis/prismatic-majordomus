@@ -40860,6 +40860,46 @@
         }
       },
       {
+        "id": "majordomus://issue/I2858",
+        "kind": "issue",
+        "label": "I2858",
+        "summary": "a briefing resolves one handover and one checkpoint with one git call each, not one per record",
+        "route": "/cockpit/objects/issue/i2858",
+        "source": ".ai/repo/project/issues/I2858.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The resolved record's divergence is judged against its own head, exactly as before",
+            "A record that loses the selection is not judged",
+            "continuity.state runs one divergence check per resolved record, not one per candidate"
+          ],
+          "created_at": "2026-10-19",
+          "current_state": "resolve() in capability/builtin/continuity.rs calls divergence() for every candidate record in the loop that selects one.",
+          "depends_on": [],
+          "desired_state": "The loop selects by tier and timestamp alone, as before, and divergence() runs once, for the selected record; what any reader is told about that record is unchanged.",
+          "evidence_required": [
+            "the_winning_record_carries_the_divergence_of_its_own_head"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "The brief's other sections and the context briefing's own cost.",
+            "How long continuity.state is cached.",
+            "The 44 s cold read of the leaseholder's /api/v1/continuity, whose cause is not this loop."
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/continuity.rs"
+          ],
+          "slug": "a-briefing-resolves-one-record-not-every-record",
+          "updated_at": "2026-10-19",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- capability::builtin::continuity"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I2882",
         "kind": "issue",
         "label": "I2882",
@@ -88218,6 +88258,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2858",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2858",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I2882",
         "target": "kind:issue",
         "kind": "is_a"
@@ -98929,8 +98979,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3078,
-      "edges": 6738,
+      "nodes": 3079,
+      "edges": 6740,
       "acyclic": false,
       "truncated": false
     }
