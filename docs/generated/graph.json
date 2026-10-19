@@ -40870,7 +40870,7 @@
           "acceptance_criteria": [
             "The resolved record's divergence is judged against its own head, exactly as before",
             "A record that loses the selection is not judged",
-            "continuity.state runs one divergence check per resolved record, not one per candidate"
+            "continuity.state answers in the primary checkout without one git process per record"
           ],
           "created_at": "2026-10-19",
           "current_state": "resolve() in capability/builtin/continuity.rs calls divergence() for every candidate record in the loop that selects one.",
@@ -40882,8 +40882,7 @@
           "milestone": "development-runtime",
           "non_scope": [
             "The brief's other sections and the context briefing's own cost.",
-            "How long continuity.state is cached.",
-            "The 44 s cold read of the leaseholder's /api/v1/continuity, whose cause is not this loop."
+            "How long continuity.state is cached."
           ],
           "parallel_safe": true,
           "priority": "p1",

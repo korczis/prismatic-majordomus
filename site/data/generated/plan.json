@@ -29646,17 +29646,16 @@
       ],
       "non_scope": [
         "The brief's other sections and the context briefing's own cost.",
-        "How long continuity.state is cached.",
-        "The 44 s cold read of the leaseholder's /api/v1/continuity, whose cause is not this loop."
+        "How long continuity.state is cached."
       ],
       "objective": "continuity's record resolution judges the divergence (a `git merge-base --is-ancestor` process) only for the handover and the checkpoint it resolves, not for every candidate record on the branch, so `continuity.state`, the brief that embeds it and the entry preflight that shares the resolution answer without one git process per record.",
-      "why": "resolve() built a Record for every handover and checkpoint whose branch is this checkout's and computed `divergence` for each (a `git merge-base --is-ancestor` process), then kept one; on master that is up to 85 handovers and 150 checkpoints. Measured 2026-10-19 in the primary checkout, continuity.state answered in-process (`mcp --standalone`, three alternating runs each, load ~32-38): master 0.30.2 (dd4c0a87cba) 1872 / 2423 / 2629 ms, this change 1509 / 1781 / 2274 ms (median 2423 -> 1781 ms). The leaseholder's /api/v1/continuity took 44.2 s on one cold read the same day, and the brief that embeds it 31.9 s and 59.5 s; this change does not explain or remove that, which stays open. The session start event runs `brief --keep-awake`, so every second here is a second before a new session's first answer (the owner's P0 asks for a local bootstrap under 250 ms with network discovery off the blocking path).",
+      "why": "resolve() built a Record for every handover and checkpoint whose branch is this checkout's and computed `divergence` for each, a `git merge-base --is-ancestor` process of about 85 ms here, then kept one: on master that is 85 handovers and 149 checkpoints. Measured 2026-10-19 in the primary checkout, continuity.state answered in-process (`mcp --standalone`, tool majordomus_continuity, three alternating runs, load ~11-30): master 0.30.2 (dd4c0a87cba) 26545 / 30759 / 23657 ms, this change 57 / 14 / 13 ms. The leaseholder's /api/v1/continuity took 37-44 s on every cold read the same day (its cache lives 2 s), and the brief that embeds it 31.9 s and 59.5 s; the session start event runs `brief --keep-awake`, so a new Claude Code session waited up to a minute before its first answer (the owner's P0 asks for a local bootstrap under 250 ms with network discovery off the blocking path).",
       "current_state": "resolve() in capability/builtin/continuity.rs calls divergence() for every candidate record in the loop that selects one.",
       "desired_state": "The loop selects by tier and timestamp alone, as before, and divergence() runs once, for the selected record; what any reader is told about that record is unchanged.",
       "acceptance_criteria": [
         "The resolved record's divergence is judged against its own head, exactly as before",
         "A record that loses the selection is not judged",
-        "continuity.state runs one divergence check per resolved record, not one per candidate"
+        "continuity.state answers in the primary checkout without one git process per record"
       ],
       "validation": [
         "bin/majordomus plan validate",
