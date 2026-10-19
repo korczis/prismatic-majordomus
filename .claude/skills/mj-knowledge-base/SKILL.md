@@ -1,6 +1,6 @@
 ---
 name: mj-knowledge-base
-description: "Majordomus knowledge base: Candidates awaiting review; One knowledge record; Whether the deriver is still writing."
+description: "Majordomus knowledge base: Candidates awaiting review; One knowledge record; The knowledge base; Whether the deriver is still writing."
 argument-hint: "[request]"
 ---
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
@@ -17,6 +17,7 @@ $ARGUMENTS
 |---|---|---|---|---|
 | `knowledge_base.candidates` | Candidates awaiting review | `majordomus_knowledge_candidates` | `majordomus knowledge candidates` | reads |
 | `knowledge_base.record` | One knowledge record | `majordomus_knowledge_record` | `majordomus knowledge record` | reads |
+| `knowledge_base.records` | The knowledge base | `majordomus_knowledge_records` | `majordomus knowledge records` | reads |
 | `knowledge_base.status` | Whether the deriver is still writing | `majordomus_knowledge_status` | `majordomus knowledge status` | reads |
 
 A capability that *changes* something runs only when the person asked for that change: call it once, and if it is refused or its outcome is not known, report that as it is and do not try again by another way. One that *reads* may be called whenever the request needs it.

@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.30.2"
   },
-  "fingerprint": "dd98731edacd876dc9e4767fdc7a1475ac6afb96ed9b95fafb55af6e3ad454f7",
+  "fingerprint": "d8212b17711d1c439c0e963e07fda8fe1c80ba5a08fcb7f0e5e2643f77f1d763",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -629,7 +629,7 @@
         "use_cases": 17,
         "rules": 19,
         "enforced_rules": 16,
-        "capabilities": 37,
+        "capabilities": 38,
         "moments": 32
       },
       "evidence": {
@@ -2634,7 +2634,7 @@
           "id": "observatory",
           "label": "Observatory",
           "title": "The Observatory: the repository and its mesh, drawn for a wall",
-          "headline": "One screen of the UI rotates eight scenes on a display nobody is sitting at, and every mark on it is a value a capability answered; a scene with nothing true to draw says why and is never drawn empty.",
+          "headline": "One screen of the UI rotates sixteen scenes on a display nobody is sitting at, and every mark on it is a value a capability answered; a scene with nothing true to draw says why and is never drawn empty.",
           "route": "/features/observatory/",
           "featured": true,
           "surfaces": {
@@ -3229,7 +3229,7 @@
         "use_cases": 10,
         "rules": 15,
         "enforced_rules": 14,
-        "capabilities": 137,
+        "capabilities": 138,
         "moments": 38
       },
       "evidence": {
@@ -4743,7 +4743,8 @@
               "kind": "query",
               "stability": "behaviorally_verified",
               "tool": "majordomus_peers",
-              "route": "GET /api/v1/peers"
+              "route": "GET /api/v1/peers",
+              "cli": "majordomus peers"
             }
           ]
         },
@@ -5197,7 +5198,7 @@
         "mcp_tools": 18,
         "mcp_resources": 2,
         "http_routes": 18,
-        "cli_paths": 12,
+        "cli_paths": 13,
         "commands": 3,
         "objects": 0,
         "rules": 5,
@@ -7383,7 +7384,7 @@
         {
           "id": "knowledge_base",
           "title": "Knowledge base",
-          "description": "What the knowledge deriver left for review and whether it is still writing: the candidate records awaiting promotion with the branch of the episode each came from, one record by id with every reference it names resolved against the index, the ledger and git, and the derivation status of this checkout judged against the policy's freshness thresholds. Read from the index and the ledger; written by nothing here — the deriver is the shell tool's, and a person promotes.",
+          "description": "What the knowledge deriver left for review and whether it is still writing: every record of the base as its file declares it, the candidate records awaiting promotion with the branch of the episode each came from, one record by id with every reference it names resolved against the index, the ledger and git, and the derivation status of this checkout judged against the policy's freshness thresholds. Read from the index and the ledger; written by nothing here — the deriver is the shell tool's, and a person promotes.",
           "stability": "behaviorally_verified",
           "source_path": "apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
           "capabilities": [
@@ -7405,6 +7406,15 @@
               "tool": "majordomus_knowledge_record",
               "route": "GET /api/v1/knowledge/record",
               "cli": "majordomus knowledge record"
+            },
+            {
+              "id": "knowledge_base.records",
+              "title": "The knowledge base",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_knowledge_records",
+              "route": "GET /api/v1/knowledge/records",
+              "cli": "majordomus knowledge records"
             },
             {
               "id": "knowledge_base.status",
@@ -7460,7 +7470,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 119
+          "objects": 121
         },
         {
           "name": "knowledge",
@@ -7739,13 +7749,13 @@
         "provenance"
       ],
       "counts": {
-        "capabilities": 5,
-        "mcp_tools": 5,
-        "mcp_resources": 476,
-        "http_routes": 5,
-        "cli_paths": 3,
+        "capabilities": 6,
+        "mcp_tools": 6,
+        "mcp_resources": 478,
+        "http_routes": 6,
+        "cli_paths": 4,
         "commands": 6,
-        "objects": 473,
+        "objects": 475,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -7980,7 +7990,7 @@
       "kind_refs": [
         {
           "name": "rule",
-          "objects": 188
+          "objects": 190
         }
       ],
       "rule_refs": [
@@ -8356,11 +8366,11 @@
       "counts": {
         "capabilities": 7,
         "mcp_tools": 5,
-        "mcp_resources": 190,
+        "mcp_resources": 192,
         "http_routes": 7,
         "cli_paths": 4,
         "commands": 5,
-        "objects": 188,
+        "objects": 190,
         "rules": 7,
         "enforced_rules": 7,
         "docs": 2,
@@ -9458,7 +9468,7 @@
       "id": "observatory",
       "title": "The Observatory: the repository and its mesh, drawn for a wall",
       "short_title": "Observatory",
-      "headline": "One screen of the UI rotates eight scenes on a display nobody is sitting at, and every mark on it is a value a capability answered; a scene with nothing true to draw says why and is never drawn empty.",
+      "headline": "One screen of the UI rotates sixteen scenes on a display nobody is sitting at, and every mark on it is a value a capability answered; a scene with nothing true to draw says why and is never drawn empty.",
       "summary": "At /ui/observatory, and at /ui/kiosk filling the window unattended, the shared server draws the machines of the mesh and their runtimes, the newest events of its journal, the milestones of the plan, the dimensions of health, the published releases and the sessions cooperating, from the same capabilities the other screens read. The published site carries it as a snapshot that says which commit it was read at.",
       "status": "stable",
       "weight": 94,
@@ -11861,6 +11871,15 @@
           "source_path": "apps/majordomus-cli/src/capability/builtin/dashboard.rs",
           "capabilities": [
             {
+              "id": "dashboard.cluster",
+              "title": "The cluster: machines, sessions, claims and plan progress",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_dashboard_cluster",
+              "route": "GET /api/v1/dashboard/cluster",
+              "cli": "majordomus dashboard cluster"
+            },
+            {
               "id": "dashboard.overview",
               "title": "The Overview: four questions",
               "kind": "query",
@@ -12052,11 +12071,11 @@
         "ui"
       ],
       "counts": {
-        "capabilities": 8,
-        "mcp_tools": 6,
+        "capabilities": 9,
+        "mcp_tools": 7,
         "mcp_resources": 2,
-        "http_routes": 8,
-        "cli_paths": 1,
+        "http_routes": 9,
+        "cli_paths": 2,
         "commands": 0,
         "objects": 0,
         "rules": 1,
@@ -13224,11 +13243,11 @@
       "kind_refs": [
         {
           "name": "milestone",
-          "objects": 42
+          "objects": 43
         },
         {
           "name": "issue",
-          "objects": 489
+          "objects": 497
         },
         {
           "name": "intent",
@@ -13438,11 +13457,11 @@
       "counts": {
         "capabilities": 26,
         "mcp_tools": 26,
-        "mcp_resources": 547,
+        "mcp_resources": 556,
         "http_routes": 26,
         "cli_paths": 13,
         "commands": 1,
-        "objects": 544,
+        "objects": 553,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -17246,7 +17265,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (119)",
+        "title": "adr (121)",
         "features": [
           "knowledge"
         ]
@@ -17351,7 +17370,7 @@
       },
       {
         "id": "issue",
-        "title": "issue (489)",
+        "title": "issue (497)",
         "features": [
           "planning"
         ]
@@ -17372,7 +17391,7 @@
       },
       {
         "id": "milestone",
-        "title": "milestone (42)",
+        "title": "milestone (43)",
         "features": [
           "planning"
         ]
@@ -17414,7 +17433,7 @@
       },
       {
         "id": "rule",
-        "title": "rule (188)",
+        "title": "rule (190)",
         "features": [
           "doctrine"
         ]
@@ -18372,19 +18391,19 @@
     }
   ],
   "telemetry": {
-    "capabilities": 2645,
-    "builtin": 206,
-    "declarative": 2439,
+    "capabilities": 2668,
+    "builtin": 208,
+    "declarative": 2460,
     "modules": 58,
-    "mcp_tools": 196,
-    "mcp_resources": 2494,
-    "http_routes": 201,
-    "cli_commands": 209,
+    "mcp_tools": 198,
+    "mcp_resources": 2515,
+    "http_routes": 203,
+    "cli_commands": 212,
     "shell_commands": 30,
     "kinds": 34,
-    "objects": 2439,
+    "objects": 2460,
     "by_kind": {
-      "adr": 119,
+      "adr": 121,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -18401,21 +18420,21 @@
       "gap": 4,
       "implementation": 52,
       "intent": 5,
-      "issue": 489,
+      "issue": 497,
       "knowledge": 4,
       "mesh-declaration": 1,
-      "milestone": 42,
+      "milestone": 43,
       "moment": 38,
       "policy": 1,
       "profile": 4,
       "prompt": 5,
       "release-record": 31,
-      "rule": 188,
+      "rule": 190,
       "scope": 1,
       "session": 90,
       "skill": 8,
       "taxonomy": 10,
-      "test": 563,
+      "test": 571,
       "use-case": 49,
       "workspace": 1
     },

@@ -44,22 +44,23 @@ lists it), declared beside the Cockpit in `apps/majordomus-cli/src/web/discover.
 
 | Screen | Route | Reads |
 |---|---|---|
+| Front door | `/` | the process itself (version, revision, and the checkout that answered, as the plain page names it), `distribution.releases`, `repository.info`, the screens of the UI and every public surface of the web topology: a link when it answers, what builds it when it does not |
 | Dashboard | `/ui` | `repository.info`, `health.report`, `release.version`, `distribution.releases`, `plan.status`, `plan.roadmap`, `mesh.peers`; the queue on its own route |
 | Command | `/ui/command` | `commands.list` (its `origin` filter is the screen's tabs), `executions.list`; `capabilities.list` for the capability a command is |
-| Intent workspace | `/ui/idd` | `intents.list`, `plan.roadmap`, `plan.issues`, `plan.waves`, `plan.next`: one intent (`?intent=`, else the first `intents.list` reports executing, then verifying, planned, declared — the rule is printed) with its inspector, the milestones it names in the roadmap's order with what each waits for, every issue of those milestones or naming the intent by wave with its status, priority, blockers and the move its status allows; `?issue=` opens that issue's move panel on the screen itself, the form the Cockpit's issue page renders, wired by the one module both surfaces load (`share/cockpit/moves.js`, named by the page as `data-moves-lib`) and made by `plan.transition` as an execution, which refuses a move the plan does not allow and names why, the waves those issues occupy with the scope conflicts that serialise them, and their dependency graph over a table of the same edges. Why the intent stands where it stands is asked on its own route (`/ui/panels/standing?intent=`, `intent_realization.explain`, which takes seconds): the sentences its stage and verdict rest on, each unmet criterion with its evidence state, the command that reproduces it and the issues serving it, the work realising the intent with each link's provenance, and its drift. `executions.list` gives every `plan.transition` this server ran on the intent's issues, newest first, each leading to its execution on the Cockpit. The screen reads itself again when an execution of its server ends on `/events`, and says what that channel is doing (below). It decides no status, wave or membership of its own |
+| Intent workspace | `/ui/idd` | `intents.list`, `plan.roadmap`, `plan.issues`, `plan.waves`, `plan.next`: one intent (`?intent=`, else the first `intents.list` reports executing, then verifying, planned, declared — the rule is printed) with its inspector, the milestones it names in the roadmap's order with what each waits for, every issue of those milestones or naming the intent by wave with its status, priority, blockers and the move its status allows; `?issue=` opens that issue's move panel on the screen itself, the form the Cockpit's issue page renders, wired by the one module both surfaces load (`share/cockpit/moves.js`, named by the page as `data-moves-lib`) and made by `plan.transition` as an execution, which refuses a move the plan does not allow and names why, the waves those issues occupy with the scope conflicts that serialise them, and their dependency graph over a table of the same edges. Why the intent stands where it stands is asked on its own route (`/ui/panels/standing?intent=`, `intent_realization.explain`, which takes seconds): the sentences its stage and verdict rest on, each unmet criterion with its evidence state, the command that reproduces it and the issues serving it, the work realising the intent with each link's provenance, and its drift. `executions.list` gives every `plan.transition` this server ran on the intent's issues, newest first, each leading to its execution on the Cockpit. The screen reads itself again when an execution of its server ends on `/events`, and says what that channel is doing (below). Last, whichever intent is open or none, the whole plan's waves from `plan.waves`: each wave's size and how many of its issues are still open, those open issues with their milestone, status and priority (the first wave with open work unfolded), and the plan's scope conflicts, each list bounded — what the separate `/ui/waves` screen of #1184 drew, folded into the workspace. It decides no status, wave or membership of its own |
 | Roadmap | `/ui/roadmap` | `plan.roadmap`, `plan.status`, `intents.list`; one milestone (`?milestone=`) in the inspector, with `plan.issues`: its issues, what can start, its critical path and its neighbours; one intent (`?intent=`) in its inspector: its statement, invariants and criteria with their evidence, and the milestones and issues that serve it |
 | Issues & PRs | `/ui/work` | `plan.status`, `plan.issues`; the queue on its own route, one pull request (`?pr=`) in its detail |
 | Issues | `/ui/issues` | `plan.issues`, `plan.status`, `plan.roadmap`: every issue, narrowed by `?status=` (the plan's own statuses as tabs), `?milestone=`, `?priority=` and `?q=`, each leading to its inspector |
 | PR Drain | `/ui/prs` | `plan.issues` (one issue, `?issue=`); `integration.queue` (one count per lane it counted) and `integration.events` on its own route (`/ui/panels/drain`), narrowed by `?disposition=`, `?lane=` and `?q=`, one pull request (`?pr=`) in the inspector with what the executor did to it, the lane's recent activity, and its merges per day over the fortnight the trail ends on |
-| Capabilities | `/ui/capabilities` | `repository.info`, `capabilities.list` by kind; one capability (`?id=`) from `capabilities.describe` |
+| Capabilities | `/ui/capabilities` | `repository.info`, `capabilities.list` by kind: the queries and commands narrowed by kind, module, stability, surface and text, each facet counted; one capability (`?id=`) from `capabilities.describe`, keeping the filters |
 | Mesh | `/ui/mesh` | `mesh.peers`, `mesh.events`, `mesh.state` (live claims); one machine (`?node=`) in the inspector, and who holds each seat of [rule `project.the-cooperation-model-is-the-owners-word`](../.ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v1.md) read from the claims |
 | CI/CD & Releases | `/ui/delivery` | `distribution.releases`, `release.version`, `deploy.list`, `gates.model`, `integration.timings` (each check's median, 90th percentile and longest run, and the open heads that waited longest, each leading to its pull request) |
 | Deployments | `/ui/deployments` | `deploy.list` (what the layer declares); `deploy.observed` (what the forge recorded: where each environment stands, every deployment to every environment — GitHub Pages among them — and every release, each commit, ref, environment, run and release a link); `delivery.report` on its own route |
 | Evidence | `/ui/evidence` | `evidence.report`; one claim (`?claim=`) in its inspector from `evidence.claim`: what settles it, its last run, what changed since, how to reproduce it, and the claims its test also proves |
-| Knowledge | `/ui/knowledge` | `knowledge_base.status`, `knowledge_base.candidates`: the candidates awaiting review, newest first and bounded with what is left out counted, the subjects they are about, and whether the deriver is still writing. The review's commands are named as text; the screen promotes and rejects nothing |
+| Knowledge | `/ui/knowledge` | `knowledge_base.records`, `knowledge_base.status`, `knowledge_base.candidates`: the whole base, curated and candidate, newest first with its class, status and subject; the candidates awaiting review, newest first and bounded with what is left out counted, the subjects they are about, and whether the deriver is still writing. The review's commands are named as text; the screen promotes and rejects nothing |
 | Documentation | `/ui/docs` | `objects.list` (features, documents), `web.surfaces` |
 | Governance | `/ui/governance` | `rules.report`, each rule named and leading to its inspector; one rule (`?rule=`) from `rules.show`: what it states, how it is enforced, the tests that prove it, what is missing, and the rules around it |
-| Observatory | `/ui/observatory`, and `/ui/kiosk` as its preset | `mesh.peers`, `mesh.events`, `mesh.state`, `plan.roadmap`, `distribution.releases`, `release.version`, `health.report`, `economics.runs`, `repository.info`, `rules.report`, `evidence.report`, `quality.report`, `plan.waves`, `distribution.status`, `capabilities.list`: fifteen scenes, each drawn from what its sources answered or named as unavailable with the source's reason ([The Observatory](#the-observatory)) |
+| Observatory | `/ui/observatory`, and `/ui/kiosk` as its preset | `mesh.peers`, `mesh.events`, `mesh.state`, `plan.roadmap`, `distribution.releases`, `release.version`, `health.report`, `economics.runs`, `repository.info`, `rules.report`, `evidence.report`, `quality.report`, `plan.waves`, `distribution.status`, `capabilities.list`, `executions.list`, and the live channel `/events`: sixteen scenes, each drawn from what its sources answered or named as unavailable with the source's reason ([The Observatory](#the-observatory)) |
 
 The navigation is `SCREENS` in `apps/majordomus-cli/src/ui/mod.rs` and nothing else. A test
 compares it with the dispatcher's arms, so a screen without a route, or a route without a
@@ -240,6 +241,14 @@ queue (`integration.queue`) is `/ui/panels/pull-requests`:
   screen has painted;
 - without JavaScript the placeholder is a link to the same route.
 
+The cluster (`dashboard.cluster`, ADR 0159) is another such panel, `/ui/panels/cluster`:
+every machine of the mesh with its active sessions, claims and what its sessions say they
+are doing, how far each open milestone is, and the integration and derive queues. It is a
+panel because it asks the server that holds this checkout's board. The panel draws the
+capability's own `lines` in a `<pre>` as they are, so it is the text
+`majordomus dashboard cluster [--width N]` prints, to the character: the terminal, this
+screen and the report a session gives on its interval (ADR 0136) are one rendering.
+
 While a screen is visible, `ui.js` asks the server for it again every minute, puts the new
 rendering in place, and updates the time in the tool bar. That time is when the page was
 rendered; each source line says when its own reading is older. This is a refresh and is said
@@ -320,6 +329,7 @@ the same facts as rows, how long it stays, and its character:
 |---|---|---|---|
 | `mesh` | Mesh Cosmos | `mesh.peers` | Mesh |
 | `activity` | Event River | `mesh.events` | Mesh |
+| `executions` | Execution Flow | `executions.list`, then `/events` | Command |
 | `intents` | Intent Nebula | `plan.roadmap` | Roadmap |
 | `tokens` | Token Spectrum | `economics.runs` | Evidence |
 | `heartbeat` | System Pulse | `health.report` | Dashboard |
@@ -336,6 +346,20 @@ the same facts as rows, how long it stays, and its character:
 
 The table is a reading aid; the list in the module is what the page, the script and case 3011
 read, and the page prints each scene's own `requires`.
+
+The executions scene is the one scene kept current by a pushed channel rather than by reading
+the page again. The page names the channel (`data-observatory-events`, the server's `/events`),
+the snapshot it brings forward (`data-observatory-executions`, the path the registry declares
+for `executions.list`) and the script that follows it (`data-observatory-stream`,
+`share/ui/observatory-stream.js`). That script opens no channel of its own and writes no frame:
+it reads the snapshot once the channel is ready, folds each execution event into it by its
+dense per-execution sequence, drops a duplicate, reads the snapshot again on a gap or a
+`stream.lagged`, retires a channel silent for 2.5 heartbeats, and reconnects with exponential
+backoff and jitter. While the executions scene is shown, the status word is the channel's:
+`LIVE`, `RECONNECTING`, or `STALE` once it has been down for 30 seconds; a lane moves only when
+one of its events arrives, so a channel that is down moves nothing. With no execution
+remembered the scene is unavailable like any other, and it is drawn once the channel hears one.
+Case 3046 runs the script against a real server.
 
 The last seven (`proof` to `ladder`, ADR 0160) read what the repository proves and need no
 mesh, so they are drawn on the public site too. They are counted, never estimated: a mark is a
@@ -486,12 +510,14 @@ they cost. It renders nothing itself. What it changes is only what a file cannot
 | a link to a surface a publication holds (`/rustdoc`, `/openapi.json`) | unchanged |
 | a link into the served documentation (`/docs/…`) | the same page of the published site |
 | the script reads the screen again every minute and follows the executions of its server | it does neither: the body carries `data-snapshot` |
-| a slow panel is a placeholder (`data-panel-src`) the script fills once the screen has painted | the panel itself, already read: the snapshot asks every page with the `X-Majordomus-Snapshot` header and the UI puts each panel where its placeholder stood |
+| a slow panel is a placeholder (`data-panel-src`) the script fills once the screen has painted | the panel itself, already read: the snapshot asks every page with the `X-Majordomus-Snapshot` header and the UI puts each panel where its placeholder stood; a placeholder the UI still leaves, the snapshot fills itself and names in `snapshot.json` (`panels`), since no process will answer later |
 | "Read at" in the tool bar | also a notice on every page: the commit, the time, the executable, and a link to the live UI |
 
-A snapshot knows what the UI could read where it was taken. A Pages runner has no mesh, no
-recorded forge observation and no running execution, so those panels read `none`, `unknown`
-or `not answered`, never zero. A snapshot is not evidence of the live state of anything: for
+A snapshot knows what the UI could read where it was taken. The publishing job observes the
+forge first (`majordomus prs refresh` for the open pull requests, `majordomus served forge`
+for the deployments and the releases), so the drain and the deployments are the forge's as of that minute. A Pages runner
+has no mesh and no running execution, so those panels read `none`, `unknown` or `not
+answered`, never zero. A snapshot is not evidence of the live state of anything: for
 that, run `majordomus serve` in a checkout and open `/ui`.
 
 **Evidence is the exception.** A Pages runner does have a record of the tests: the `evidence`

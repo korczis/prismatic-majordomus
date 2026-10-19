@@ -52,7 +52,7 @@ modules:
     description: "The Dashboard Suite as a projection of the canonical state: every card is one fact read out of an existing capability's answer, carrying the capability it asked, the input, the JSON pointer its value was read from, the Cockpit page that holds the evidence and the command that acts on it. No dashboard stores, counts or judges anything of its own (ADR 0088)."
     stability: behaviorally_verified
     source: builtin
-    capabilities: 1
+    capabilities: 2
   - id: delivery
     title: Delivery
     description: "Whether each product feature exists, computed and never recorded: on the trunk, deployed, publicly verified, its required tests current, that evidence published and linked from the interface — each a verdict of pass, fail or unknown with the reason and the remediation, and unknown never a pass. A feature short of any of them is not delivered, and its development stage (implemented on a branch, on master, tested, deployed) is a different type from delivery."
@@ -181,10 +181,10 @@ modules:
     capabilities: 7
   - id: knowledge_base
     title: Knowledge base
-    description: "What the knowledge deriver left for review and whether it is still writing: the candidate records awaiting promotion with the branch of the episode each came from, one record by id with every reference it names resolved against the index, the ledger and git, and the derivation status of this checkout judged against the policy's freshness thresholds. Read from the index and the ledger; written by nothing here — the deriver is the shell tool's, and a person promotes."
+    description: "What the knowledge deriver left for review and whether it is still writing: every record of the base as its file declares it, the candidate records awaiting promotion with the branch of the episode each came from, one record by id with every reference it names resolved against the index, the ledger and git, and the derivation status of this checkout judged against the policy's freshness thresholds. Read from the index and the ledger; written by nothing here — the deriver is the shell tool's, and a person promotes."
     stability: behaviorally_verified
     source: builtin
-    capabilities: 3
+    capabilities: 4
   - id: lifecycle
     title: Session lifecycle
     description: "The episode lifecycle as an operator sees it: every open episode of this checkout's store rather than only the one the pointer follows, the episodes that can no longer close themselves, the commit this process is answering about against the commit the repository is on, what each provider's adapter declares it can do, and the tracked records a clone receives. Read from the local half of the layer and from the index; written by nothing here."
@@ -6997,6 +6997,236 @@ capabilities:
       cancellable: false
       concurrency: unrestricted
     source_path: apps/majordomus-cli/src/capability/builtin/convergence.rs
+  - id: dashboard.cluster
+    module: dashboard
+    kind: query
+    title: "The cluster: machines, sessions, claims and plan progress"
+    description: "Who works where and how far each milestone is, as one reading and one rendering: every machine of the mesh with its runtimes, active sessions, claims held and what its sessions say they are doing (`mesh.peers`), the progress of every open milestone (`plan.status`), and the one-line brief with the integration queue, the derive lock and the mesh's links (`brief.session`). It holds no data of its own and names, in `notes`, each source that did not answer. `lines` is the page as console text, cut to the width asked, and is what the command line prints and the /ui panel draws. Composed by the server holding this checkout's lease; the command line asks it. Writes nothing."
+    input:
+      name: ClusterInput
+      schema:
+        type: object
+        properties:
+          local:
+            type: boolean
+            description: "Compose in the process that answers and never ask the checkout's leaseholder: what a forwarded request says, so that it is never forwarded again."
+            default: false
+          width:
+            type:
+              - integer
+              - "null"
+            format: uint16
+            minimum: 0
+            maximum: 65535
+            description: "The console width `lines` is cut to, in characters (40 to 200; 78 when absent)."
+        description: "What to ask of `dashboard.cluster`."
+        title: ClusterInput
+    output:
+      name: DashboardCluster
+      schema:
+        type: object
+        properties:
+          at:
+            type: string
+            description: "When it was composed, RFC 3339."
+          origin:
+            type: string
+            description: "Which process composed it: `leaseholder`, `this_process`, or `forwarded` with the address in `notes`."
+          line:
+            type: string
+            description: "The brief's one line, as a status line shows it."
+          machines:
+            type: array
+            items:
+              "$ref": "#/$defs/ClusterMachine"
+            description: "The machines, this one first."
+          milestones:
+            type: array
+            items:
+              "$ref": "#/$defs/ClusterMilestone"
+            description: "Open milestones, newest id last, at most eight."
+          milestones_done:
+            type: integer
+            format: uint32
+            minimum: 0
+            description: Milestones the plan reports done.
+          milestones_total:
+            type: integer
+            format: uint32
+            minimum: 0
+            description: Every milestone the plan has.
+          milestones_left_out:
+            type: integer
+            format: uint32
+            minimum: 0
+            description: How many open milestones the page left out.
+          integration:
+            type: string
+            description: "The integration queue, as `majordomus prs brief` says it."
+          derive:
+            type: string
+            description: "The derive lock, as the brief says it."
+          mesh:
+            type: string
+            description: "The mesh's links and what its journal addresses to this runtime."
+          notes:
+            type: array
+            items:
+              type: string
+            description: "What could not be read and why, in words."
+          lines:
+            type: array
+            items:
+              type: string
+            description: "The page as console text, cut to the width asked."
+        required:
+          - at
+          - origin
+          - line
+          - machines
+          - milestones
+          - milestones_done
+          - milestones_total
+          - milestones_left_out
+          - integration
+          - derive
+          - mesh
+          - notes
+          - lines
+        description: "The answer of `dashboard.cluster`."
+        title: DashboardCluster
+        "$defs":
+          ClusterMachine:
+            type: object
+            properties:
+              name:
+                type: string
+                description: "The name a person reads: the card's, else the first eight characters of the node id."
+              local:
+                type: boolean
+                description: Whether it is the machine that composed the page.
+              liveness:
+                type: string
+                description: "`own` (this machine), `live` (a runtime beats) or `expired` (none does)."
+              runtimes_live:
+                type: integer
+                format: uint
+                minimum: 0
+                description: How many of its runtimes beat.
+              runtimes:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "How many runtimes it has, expired ones included."
+              sessions:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Active sessions on it.
+              claims:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Claims those sessions hold.
+              activity:
+                type: array
+                items:
+                  type: string
+                description: "What its sessions say they are doing, at most three, cut."
+            required:
+              - name
+              - local
+              - liveness
+              - runtimes_live
+              - runtimes
+              - sessions
+              - claims
+              - activity
+            description: One machine of the mesh and what runs on it.
+          ClusterMilestone:
+            type: object
+            properties:
+              id:
+                type: string
+                description: "The identity (`M003`, or the slug a milestone is named by)."
+              title:
+                type: string
+                description: One line naming the outcome.
+              status:
+                type: string
+                description: The derived status word the plan reports.
+              done:
+                type: integer
+                format: uint32
+                minimum: 0
+                description: Issues done.
+              required:
+                type: integer
+                format: uint32
+                minimum: 0
+                description: "Issues that count (the plan's own denominator: total less cancelled)."
+              percent:
+                type: integer
+                format: uint32
+                minimum: 0
+                description: "`done` over `required`, whole percent; `0` where nothing counts."
+              ready:
+                type: integer
+                format: uint32
+                minimum: 0
+                description: Issues ready to take.
+              blocked:
+                type: integer
+                format: uint32
+                minimum: 0
+                description: Issues waiting on a dependency.
+              active:
+                type: integer
+                format: uint32
+                minimum: 0
+                description: Issues being worked.
+            required:
+              - id
+              - title
+              - status
+              - done
+              - required
+              - percent
+              - ready
+              - blocked
+              - active
+            description: One milestone and how far it is.
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::dashboard
+    exposure:
+      mcp:
+        tool: majordomus_dashboard_cluster
+      http:
+        method: GET
+        path: /api/v1/dashboard/cluster
+      cli:
+        path:
+          - dashboard
+          - cluster
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - dashboard
+      - cluster
+      - peers
+      - plan
+      - introspection
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/dashboard.rs
   - id: dashboard.overview
     module: dashboard
     kind: query
@@ -30866,6 +31096,184 @@ capabilities:
       cancellable: false
       concurrency: unrestricted
     source_path: apps/majordomus-cli/src/capability/builtin/knowledge_base.rs
+  - id: knowledge_base.records
+    module: knowledge_base
+    kind: query
+    title: The knowledge base
+    description: "Every knowledge record of the layer — curated and candidate — as its file declares it: its class, status, epistemics and origin, its assertion and description, the subject it is about and the owner it routes to, its tags, the evidence it names and its typed relations, newest first, with how many records each class and each status holds. Filtered by class, by status and by subject, a subject matching itself and every path beneath it; a class or status outside the schema's vocabulary is refused. Nothing is resolved against the ledger or git, so every clone answers alike; `knowledge_base.record` resolves one record."
+    input:
+      name: KnowledgeRecordsInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          class:
+            type:
+              - string
+              - "null"
+            description: "Only records of this class: `fact`, `convention`, `constraint`, `memory` or `lesson`."
+            default: null
+          status:
+            type:
+              - string
+              - "null"
+            description: "Only records with this status: `candidate`, `verified` or `superseded`."
+            default: null
+          about:
+            type:
+              - string
+              - "null"
+            description: "Only records about this subject, or about a path beneath it."
+            default: null
+        description: "Which records: the input of `knowledge_base.records`. Every filter is optional, and a\nvalue outside its vocabulary is refused rather than answered with nothing, so that a\ntypo never reads as a repository that knows nothing.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::KnowledgeRecordsInput;\nlet all: KnowledgeRecordsInput = serde_json::from_str(\"{}\").unwrap();\nassert!(all.class.is_none() && all.status.is_none() && all.about.is_none());\nlet some: KnowledgeRecordsInput =\n    serde_json::from_str(r#\"{\"class\":\"lesson\",\"about\":\"lib\"}\"#).unwrap();\nassert_eq!(some.about.as_deref(), Some(\"lib\"));\nassert!(serde_json::from_str::<KnowledgeRecordsInput>(r#\"{\"kind\":\"x\"}\"#).is_err());\n```"
+        title: KnowledgeRecordsInput
+    output:
+      name: KnowledgeRecords
+      schema:
+        type: object
+        properties:
+          total:
+            type: integer
+            format: uint
+            minimum: 0
+            description: How many records matched.
+          classes:
+            type: object
+            additionalProperties:
+              type: integer
+              format: uint
+              minimum: 0
+            description: "How many of them each class holds, by class."
+          statuses:
+            type: object
+            additionalProperties:
+              type: integer
+              format: uint
+              minimum: 0
+            description: "How many of them each status holds, by status."
+          records:
+            type: array
+            items:
+              "$ref": "#/$defs/KnowledgeEntry"
+            description: "The records, newest date first and by id within a day."
+        required:
+          - total
+        description: "The base: every record that matched, newest first, with how many of them each class\nand each status holds.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::KnowledgeRecords;\nlet none: KnowledgeRecords = serde_json::from_str(r#\"{\"total\":0}\"#).unwrap();\nassert!(none.records.is_empty() && none.classes.is_empty(), \"an empty base is an answer\");\n```"
+        title: KnowledgeRecords
+        "$defs":
+          KnowledgeEntry:
+            type: object
+            properties:
+              id:
+                type: string
+                description: "The record id, which is also its file name."
+              uri:
+                type: string
+                description: "`majordomus://knowledge/<id>`."
+              path:
+                type: string
+                description: Repository-relative path.
+              source_class:
+                type: string
+                description: "The source class that discovered it: `candidates` or `curated`."
+              class:
+                type: string
+                description: "`fact`, `convention`, `constraint`, `memory` or `lesson`."
+              status:
+                type: string
+                description: "`candidate`, `verified` or `superseded`."
+              epistemics:
+                type: string
+                description: "`observed`, `inferred` or `decided`."
+              origin:
+                type: string
+                description: "`authored` or `extracted`; empty when the record carries no provenance."
+              date:
+                type: string
+                description: "The day the record reached its status, `YYYY-MM-DD`."
+              title:
+                type: string
+                description: "The assertion, in one line."
+              description:
+                type: string
+                description: "The record's own description, when it carries one."
+              about:
+                type: string
+                description: What it is about (ADR 0118); empty for a record that names no subject.
+              route:
+                type: string
+                description: "Which owner should look first, derived from `about` by the deriver."
+              tags:
+                type: array
+                items:
+                  type: string
+                description: "The record's tags, as written."
+              derived_from:
+                type: array
+                items:
+                  type: string
+                description: "The typed references it names as its evidence, as written."
+              relations:
+                type: array
+                items:
+                  "$ref": "#/$defs/KnowledgeLink"
+                description: "Its typed relations, as written."
+              superseded_by:
+                type:
+                  - string
+                  - "null"
+                description: "The record that replaced this one, when the status is `superseded`."
+            required:
+              - id
+              - uri
+              - path
+              - source_class
+              - class
+              - status
+              - epistemics
+              - date
+              - title
+            description: "One record of the base, as its file declares it: nothing here is resolved against the\nledger or git, so the same tree gives the same entry on every machine and in every\nclone, however shallow. `knowledge_base.record` resolves one.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::KnowledgeEntry;\nlet e: KnowledgeEntry = serde_json::from_str(r#\"{\n  \"id\": \"start-here\", \"uri\": \"majordomus://knowledge/start-here\",\n  \"path\": \".ai/repo/knowledge/curated/start-here.md\", \"source_class\": \"curated\",\n  \"class\": \"convention\", \"status\": \"verified\", \"epistemics\": \"decided\",\n  \"date\": \"2026-09-05\", \"title\": \"Read the documents in order\"\n}\"#).unwrap();\nassert!(e.derived_from.is_empty() && e.relations.is_empty());\nassert_eq!(e.superseded_by, None);\n```"
+          KnowledgeLink:
+            type: object
+            properties:
+              type:
+                type: string
+                description: "`relates_to`, `documents`, `supports`, `contradicts`, `supersedes` or `depends_on`."
+              target:
+                type: string
+                description: The typed reference it points at.
+            required:
+              - type
+              - target
+            description: "One typed relation of a record, as the record declares it.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::KnowledgeLink;\nlet l: KnowledgeLink =\n    serde_json::from_str(r#\"{\"type\":\"relates_to\",\"target\":\"file:lib/a.sh\"}\"#).unwrap();\nassert_eq!(l.relation_type, \"relates_to\");\n```"
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::knowledge_base
+    exposure:
+      mcp:
+        tool: majordomus_knowledge_records
+      http:
+        method: GET
+        path: /api/v1/knowledge/records
+      cli:
+        path:
+          - knowledge
+          - records
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - knowledge
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/knowledge_base.rs
   - id: knowledge_base.status
     module: knowledge_base
     kind: query
@@ -40766,6 +41174,9 @@ capabilities:
       http:
         method: GET
         path: /api/v1/peers
+      cli:
+        path:
+          - peers
     availability: runtime
     visibility: public
     stability: behaviorally_verified

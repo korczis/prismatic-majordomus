@@ -3,9 +3,9 @@
      Generator: majordomus-cli 0.30.2 -->
 # Module `knowledge_base` — Knowledge base
 
-What the knowledge deriver left for review and whether it is still writing: the candidate records awaiting promotion with the branch of the episode each came from, one record by id with every reference it names resolved against the index, the ledger and git, and the derivation status of this checkout judged against the policy's freshness thresholds. Read from the index and the ledger; written by nothing here — the deriver is the shell tool's, and a person promotes.
+What the knowledge deriver left for review and whether it is still writing: every record of the base as its file declares it, the candidate records awaiting promotion with the branch of the episode each came from, one record by id with every reference it names resolved against the index, the ledger and git, and the derivation status of this checkout judged against the policy's freshness thresholds. Read from the index and the ledger; written by nothing here — the deriver is the shell tool's, and a person promotes.
 
-Stability: behaviorally_verified. Capabilities: 3.
+Stability: behaviorally_verified. Capabilities: 4.
 
 ## `knowledge_base.candidates` — Candidates awaiting review
 
@@ -49,6 +49,30 @@ One knowledge record by id — candidate or curated — with every reference it 
 | `id` | string | yes | The record id, as the file name and `majordomus://knowledge/<id>` carry it. |
 
 Output: `KnowledgeRecord`.
+
+## `knowledge_base.records` — The knowledge base
+
+Every knowledge record of the layer — curated and candidate — as its file declares it: its class, status, epistemics and origin, its assertion and description, the subject it is about and the owner it routes to, its tags, the evidence it names and its typed relations, newest first, with how many records each class and each status holds. Filtered by class, by status and by subject, a subject matching itself and every path beneath it; a class or status outside the schema's vocabulary is refused. Nothing is resolved against the ledger or git, so every clone answers alike; `knowledge_base.record` resolves one record.
+
+| | |
+|---|---|
+| kind | query |
+| stability | behaviorally_verified |
+| MCP tool | `majordomus_knowledge_records` |
+| HTTP | `GET /api/v1/knowledge/records` |
+| CLI | `majordomus knowledge records` |
+| cache | — |
+| benchmark | required |
+| provenance | builtin majordomus_cli::capability::builtin::knowledge_base |
+| tags | knowledge |
+
+| input | type | required | description |
+|---|---|---|---|
+| `class` | string or null | no | Only records of this class: `fact`, `convention`, `constraint`, `memory` or `lesson`. |
+| `status` | string or null | no | Only records with this status: `candidate`, `verified` or `superseded`. |
+| `about` | string or null | no | Only records about this subject, or about a path beneath it. |
+
+Output: `KnowledgeRecords`.
 
 ## `knowledge_base.status` — Whether the deriver is still writing
 

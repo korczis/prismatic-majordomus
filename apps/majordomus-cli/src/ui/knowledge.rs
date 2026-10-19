@@ -1,5 +1,6 @@
-//! Knowledge: what the deriver left for review and whether it is still writing. Read from
-//! `knowledge_base.status` and `knowledge_base.candidates`.
+//! Knowledge: what the repository knows, what the deriver left for review and whether it is
+//! still writing. Read from `knowledge_base.records`, `knowledge_base.status` and
+//! `knowledge_base.candidates`.
 //!
 //! The screen shows the queue and names the commands a reviewer runs. It promotes and rejects
 //! nothing: a screen reads and never executes (ADR 0142), and promotion is a person's act.
@@ -23,6 +24,7 @@ pub const ROUTE: &str = "/ui/knowledge";
 
 const STATUS: Source = Source::of("knowledge_base.status");
 const CANDIDATES: Source = Source::of("knowledge_base.candidates");
+const RECORDS: Source = Source::of("knowledge_base.records");
 
 /// How many candidates, and how many subjects, the screen draws. The queue has no bound of
 /// its own beyond the policy's cap, and a screen answers within its budget whatever the queue
@@ -60,7 +62,8 @@ const REVIEW: &[(&str, &str)] = &[
 
 /// The Knowledge screen.
 pub fn screen(ctx: &Context) -> View {
-    let answers = ask_all(ctx, &[STATUS, CANDIDATES]);
+    let answers = ask_all(ctx, &[RECORDS, STATUS, CANDIDATES]);
+    let base = &answers[&RECORDS];
     let status = &answers[&STATUS];
     let queue = &answers[&CANDIDATES];
 
@@ -68,9 +71,11 @@ pub fn screen(ctx: &Context) -> View {
         "sparkles",
         "orange",
         "Knowledge",
-        "What the work left behind, awaiting a reviewer.",
-        "The records the deriver wrote down from closed sessions that no person has promoted or rejected yet, what each is about, how to review them, and whether learning keeps up with the sessions that close.",
+        "What the work left behind, and what a reviewer stood behind.",
+        "Every record of the base, curated and candidate, and what each is about; the records the deriver wrote down from closed sessions that no person has promoted or rejected yet, how to review them, and whether learning keeps up with the sessions that close.",
         vec![
+            kpi("In the base", &base.read("/total")),
+            kpi("Verified", &base.read("/statuses/verified")),
             kpi("Awaiting review", &queue.read("/total")),
             kpi("On this branch", &queue.read("/on_this_branch")),
             kpi("From an unknown branch", &queue.read("/unattributed")),
@@ -91,7 +96,7 @@ pub fn screen(ctx: &Context) -> View {
     );
 
     // In the order a reviewer reads: what awaits them, what it is about, how to review it,
-    // and last whether the queue is still being filled.
+    // whether the queue is still being filled, and last the whole base the queue feeds.
     let grid = el("div")
         .class("mj-ui-grid")
         .children(queue_panels(queue))
@@ -106,7 +111,13 @@ pub fn screen(ctx: &Context) -> View {
             "Whether the deriver has written down what the newest closed session left behind, as knowledge status judges it.",
             unanswered(status).unwrap_or_else(|| deriver(status)),
             &[status],
-        ));
+        ))
+        .child(wide(panel(
+            "The base",
+            "Every record, curated and candidate, newest first, each leading to its record.",
+            unanswered(base).unwrap_or_else(|| records(base)),
+            &[base],
+        )));
 
     View::new(
         "Knowledge",
@@ -157,7 +168,7 @@ fn empty_queue() -> El {
     el("p")
         .class("mj-ui-prose")
         .text("Nothing awaits review: no candidate record is tracked here. A record arrives when a session closes and the deriver writes down what it left behind, or when ")
-        .child(el("code").class("mj-ui-code").text("majordomus knowledge observe"))
+        .child(el("code").class("mj-md-code").text("majordomus knowledge observe"))
         .text(" records what was noticed.")
 }
 
@@ -260,7 +271,7 @@ fn no_ledger() -> El {
     el("p")
         .class("mj-ui-prose")
         .text("No session ledger is recorded in this checkout, so whether learning keeps up is not judged here. The published snapshot and a fresh clone carry none; in a working checkout, ")
-        .child(el("code").class("mj-ui-code").text("majordomus knowledge status"))
+        .child(el("code").class("mj-md-code").text("majordomus knowledge status"))
         .text(" judges it, and this panel shows when the deriver last wrote.")
 }
 
@@ -272,7 +283,7 @@ fn review() -> El {
         .class("mj-ui-prose-list")
         .children(REVIEW.iter().map(|(command, does)| {
             el("li")
-                .child(el("code").class("mj-ui-code").text(*command))
+                .child(el("code").class("mj-md-code").text(*command))
                 .text(format!(": {does}."))
         }))
 }
@@ -372,6 +383,45 @@ fn candidates(queue: &Answer) -> El {
     }
 }
 
+/// The base, the newest [`SHOWN`] records of it, each with its class, who stands behind it and
+/// what it is about. The source orders newest first; the order is read as given.
+fn records(base: &Answer) -> El {
+    let all = list(base, "/records");
+    let rows = all
+        .iter()
+        .take(SHOWN)
+        .map(|record| {
+            let about = Some(text(record, "about"))
+                .filter(|about| !about.is_empty())
+                .unwrap_or_else(|| "-".to_string());
+            el("tr")
+                .child(
+                    el("td")
+                        .child(object(&text(record, "uri"), text(record, "id")))
+                        .child(
+                            el("span")
+                                .class("mj-ui-cell-title")
+                                .text(text(record, "title")),
+                        ),
+                )
+                .child(el("td").class("mj-ui-dim").text(text(record, "class")))
+                .child(el("td").child(state(record, "status")))
+                .child(el("td").class("mj-ui-dim").text(about))
+                .child(el("td").class("mj-ui-dim").text(text(record, "date")))
+        })
+        .collect::<Vec<_>>();
+    let shown = rows.len();
+    let body = el("div").class("mj-ui-stack").child(table(
+        &["Record", "Class", "Status", "About", "Date"],
+        rows,
+        "The base holds no record.",
+    ));
+    match more(shown, all.len(), None) {
+        Some(line) => body.child(line),
+        None => body,
+    }
+}
+
 /// How long a record has waited, in the largest whole unit: the source measured it in
 /// minutes, and says in `freshness_reason` when it could not.
 fn waited(record: &Value) -> String {
@@ -414,16 +464,18 @@ mod tests {
         })
     }
 
-    /// The screen names both sources, draws every panel, and its review is text: no form,
+    /// The screen names every source, draws every panel, and its review is text: no form,
     /// no button and no link that would run a command.
     #[test]
-    fn the_screen_reads_two_sources_and_runs_nothing() {
+    fn the_screen_reads_three_sources_and_runs_nothing() {
         let repo = SyntheticRepository::small().expect("a synthetic repository");
         let ctx = repo.context().expect("a context");
         let view = screen(&ctx);
         assert_eq!(view.title, "Knowledge");
         let html = view.main.render();
         for want in [
+            "The base",
+            "knowledge_base.records",
             "Is learning up to date?",
             "How to review",
             "Awaiting review",
@@ -453,7 +505,7 @@ mod tests {
         assert_eq!(html.matches("<li>").count(), REVIEW.len(), "{html}");
         assert!(
             html.contains(
-                "<li><code class=\"mj-ui-code\">majordomus knowledge check</code>: every \
+                "<li><code class=\"mj-md-code\">majordomus knowledge check</code>: every \
                  record is valid, evidenced and resolves what it names.</li>"
             ),
             "{html}"
@@ -530,6 +582,47 @@ mod tests {
         );
     }
 
+    /// The base is drawn as the source orders it, to the bound, and says how many it left
+    /// out; a record with no subject says so with a dash, and an empty base says so in words.
+    #[test]
+    fn the_base_is_bounded_in_the_sources_order_and_an_empty_one_says_so() {
+        let total = SHOWN + 3;
+        let record = |n: usize| {
+            json!({
+                "id": format!("r{n}"), "uri": format!("majordomus://knowledge/r{n}"),
+                "class": "lesson", "status": if n == 0 { "verified" } else { "candidate" },
+                "title": format!("record {n}<"), "date": "2026-10-17",
+                "about": if n == 0 { json!("lib/a.sh") } else { Value::Null },
+            })
+        };
+        let base = answer(
+            RECORDS,
+            json!({ "total": total, "records": (0..total).map(record).collect::<Vec<_>>() }),
+        );
+        let html = records(&base).render();
+        assert_eq!(html.matches("<tr>").count(), SHOWN + 1, "{html}");
+        assert!(html.contains("record 0&lt;"), "the first is drawn: {html}");
+        assert!(
+            !html.contains(&format!("record {}&lt;", total - 1)),
+            "{html}"
+        );
+        assert!(html.contains("lib/a.sh") && html.contains(">-<"), "{html}");
+        assert!(
+            html.contains(&format!(
+                "The first {SHOWN} of {total}; 3 more not shown here."
+            )),
+            "{html}"
+        );
+        assert!(
+            html.contains(&crate::ui::view::object_href("majordomus://knowledge/r0")),
+            "{html}"
+        );
+        let empty = answer(RECORDS, json!({ "total": 0 }));
+        assert!(records(&empty)
+            .render()
+            .contains("The base holds no record."));
+    }
+
     /// An empty queue is an answer, said in words; a wait is told in its largest whole unit.
     #[test]
     fn an_empty_queue_says_so_and_a_wait_is_told_in_whole_units() {
@@ -560,7 +653,7 @@ mod tests {
         let html = render(panels);
         assert!(html.contains("Nothing awaits review"), "{html}");
         assert!(
-            html.contains("<code class=\"mj-ui-code\">majordomus knowledge observe</code>"),
+            html.contains("<code class=\"mj-md-code\">majordomus knowledge observe</code>"),
             "{html}"
         );
         assert!(html.contains("knowledge_base.candidates"), "{html}");

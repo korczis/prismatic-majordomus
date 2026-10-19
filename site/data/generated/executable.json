@@ -358,6 +358,23 @@
       "tool": "majordomus_convergence"
     },
     {
+      "api_anchor": "/docs/api/dashboard/#op-dashboard-cluster",
+      "claims": [],
+      "cli": "majordomus dashboard cluster",
+      "id": "dashboard.cluster",
+      "kind": "query",
+      "module": "dashboard",
+      "module_route": "/registry/modules/dashboard/",
+      "resource": null,
+      "route": "/registry/capabilities/dashboard-cluster/",
+      "slug": "dashboard-cluster",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/dashboard.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/dashboard.rs",
+      "tests": [],
+      "title": "The cluster: machines, sessions, claims and plan progress",
+      "tool": "majordomus_dashboard_cluster"
+    },
+    {
       "api_anchor": "/docs/api/dashboard/#op-dashboard-overview",
       "claims": [],
       "cli": "majordomus dashboard overview",
@@ -1686,6 +1703,33 @@
       "tool": "majordomus_knowledge_record"
     },
     {
+      "api_anchor": "/docs/api/knowledge-base/#op-knowledge_base-records",
+      "claims": [
+        {
+          "id": "knowledge-served-on-every-surface",
+          "implementation": "apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
+          "route": "/guarantees/knowledge-served-on-every-surface/",
+          "status": "guaranteed",
+          "test": "apps/majordomus-cli/tests/knowledge_base.rs"
+        }
+      ],
+      "cli": "majordomus knowledge records",
+      "id": "knowledge_base.records",
+      "kind": "query",
+      "module": "knowledge_base",
+      "module_route": "/registry/modules/knowledge-base/",
+      "resource": null,
+      "route": "/registry/capabilities/knowledge-base-records/",
+      "slug": "knowledge-base-records",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
+      "tests": [
+        "apps/majordomus-cli/tests/knowledge_base.rs"
+      ],
+      "title": "The knowledge base",
+      "tool": "majordomus_knowledge_records"
+    },
+    {
       "api_anchor": "/docs/api/knowledge-base/#op-knowledge_base-status",
       "claims": [
         {
@@ -2570,7 +2614,7 @@
     {
       "api_anchor": "/docs/api/peers/#op-peers-list",
       "claims": [],
-      "cli": null,
+      "cli": "majordomus peers",
       "id": "peers.list",
       "kind": "query",
       "module": "peers",
@@ -4309,7 +4353,7 @@
     ]
   },
   "counts": {
-    "capabilities": 206,
+    "capabilities": 208,
     "claims": 93,
     "modules": 58
   },
@@ -4499,6 +4543,11 @@
     },
     {
       "capabilities": [
+        {
+          "id": "dashboard.cluster",
+          "route": "/registry/capabilities/dashboard-cluster/",
+          "slug": "dashboard-cluster"
+        },
         {
           "id": "dashboard.overview",
           "route": "/registry/capabilities/dashboard-overview/",
@@ -5118,6 +5167,11 @@
           "id": "knowledge_base.record",
           "route": "/registry/capabilities/knowledge-base-record/",
           "slug": "knowledge-base-record"
+        },
+        {
+          "id": "knowledge_base.records",
+          "route": "/registry/capabilities/knowledge-base-records/",
+          "slug": "knowledge-base-records"
         },
         {
           "id": "knowledge_base.status",

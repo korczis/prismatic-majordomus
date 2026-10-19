@@ -1219,6 +1219,9 @@ cmd_verify_ui() {
 }
 
 # one finding of a round: what is wrong, and the command that shows it again
+# The attribute a screen's placeholder names its panel's route with (ui/mod.rs FRAGMENT's
+# counterpart on the page; web/report/snapshot.rs writes the panel in its place).
+UI_DEFERRED=data-panel-src
 ui_finding() { printf 'pages verify-ui: FAIL %s  [reproduce: %s]\n' "$1" "$2" >> "$VR_WORK/findings"; }
 # two statements of one commit agree when one begins with the other and both can name a commit
 ui_same_commit() { [ "${#1}" -ge 7 ] && [ "${#2}" -ge 7 ] && { vr_names "$1" "$2" || vr_names "$2" "$1"; }; }
@@ -1226,7 +1229,7 @@ ui_same_commit() { [ "${#1}" -ge 7 ] && [ "${#2}" -ge 7 ] && { vr_names "$1" "$2
 ui_round() {
   local base="$1" mount="$2" marker="$3" commit="$4" max="$5" bad=0 v at rev stopped left total asked missing
   VR_ANSWERED=0
-  : > "$VR_WORK/findings"; : > "$VR_WORK/summary"
+  : > "$VR_WORK/findings"; : > "$VR_WORK/summary"; : > "$VR_WORK/landing"
   # 1. the snapshot's own declaration, as published beside its pages
   VR_REQ="$base$mount/surface.json"; vr_get "$VR_REQ"
   v="$(jq -r '.built_from // empty' "$VR_WORK/body" 2>/dev/null || true)"
@@ -1265,7 +1268,9 @@ ui_round() {
       else
         vr_line fail "first-screen figure(s) undecided: $undecided"; bad=1
         ui_finding "the first screen of $VR_REQ leads with figure(s) nothing decided ($undecided): a publication shows what the repository says, never unknown" "scripts/pages verify-ui --url $base --commit $commit --timeout 0"
-      fi ;;
+      fi
+      # kept for §3: whether this page may still ask for a panel is the record's to say
+      cp "$VR_WORK/body" "$VR_WORK/landing" ;;
     *) vr_line fail "want 200 text/html"; bad=1
        ui_finding "$VR_REQ answered $VR_STATUS ${VR_TYPE:-with no content type}, not the $VR_NAME's first page" "curl -fsSI $VR_REQ" ;;
   esac
@@ -1287,6 +1292,21 @@ ui_round() {
   else
     vr_line fail "revision=${rev:-absent}, want $commit"; bad=1
     ui_finding "$VR_REQ records a reading at ${rev:-no commit}, not at $commit: the record beside the pages names another commit than the one asked for" "curl -fsS $VR_REQ | jq -r .origin.revision"
+  fi
+  # A running UI asks for a slow panel after the screen has painted ($UI_DEFERRED); a snapshot
+  # has no process to ask, so its writer puts each panel into the page and says so in the
+  # record (.panels). A record that says so, beside a first screen that still carries the
+  # request, is a screen published without its panel. A record that does not carry the field
+  # was written before the writer did this: stated, and not a failure of this publication.
+  if [ -s "$VR_WORK/landing" ] && grep -qF "$UI_DEFERRED=" "$VR_WORK/landing"; then
+    VR_REQ="$base$mount/"; VR_FINAL=""; VR_STATUS=-; VR_TYPE=-
+    if jq -e '(.panels | type) == "array"' "$VR_WORK/snapshot.json" >/dev/null 2>&1; then
+      vr_line fail "still asks for a panel after it has painted ($UI_DEFERRED)"; bad=1
+      ui_finding "$VR_REQ still carries $UI_DEFERRED: the snapshot left a panel as a request no process answers, so the screen is published without it" "curl -fsS $VR_REQ | grep -o '$UI_DEFERRED=\"[^\"]*\"'"
+    else
+      vr_line ok "asks for a panel after it has painted; its record predates panels written into the page (no .panels)"
+    fi
+    VR_REQ="$base$mount/snapshot.json"
   fi
   if [ -z "$stopped" ] || [ -z "$left" ]; then
     vr_line fail "left_out=${left:-absent} stopped_by=${stopped:-absent}"; bad=1

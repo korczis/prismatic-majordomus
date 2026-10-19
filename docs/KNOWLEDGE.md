@@ -266,11 +266,15 @@ then a summary line naming the counts and the episode; with no episode to derive
 so and exits 0 without a ledger line. `--json` on every subcommand is one object with the
 same content as the text.
 
-The Rust executable serves the read side: `bin/majordomus-cli knowledge candidates`,
-`knowledge record <id>` and `knowledge status`, each the command-line projection of a
+The Rust executable serves the read side: `bin/majordomus-cli knowledge records`,
+`knowledge candidates`, `knowledge record <id>` and `knowledge status`, each the command-line projection of a
 capability declared once in `apps/majordomus-cli/src/capability/builtin/knowledge_base.rs`
 and served identically over HTTP, OpenAPI, MCP, the cockpit's catalogue and the benchmark
-inventory (`CAPABILITIES.md`). `record` resolves every reference the record names to an
+inventory (`CAPABILITIES.md`). `records` lists the whole base — curated and candidate — as
+each file declares it, newest first, with the count each class and each status holds, and
+narrows by `--class`, `--status` and `--about` (a subject matches itself and every path
+beneath it); it resolves nothing against the ledger or git, so every clone, however
+shallow, prints the same records, and `/ui/knowledge` presents it as the base. `record` resolves every reference the record names to an
 object of the index, an external fact of the ledger or git, a historical file, or missing; `status` reports the
 last derivation, the newest close, the freshness against the policy and the stopped-writer
 judgement. It writes nothing and reports absence as absence.

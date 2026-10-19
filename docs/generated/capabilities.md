@@ -16,7 +16,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `commit` | Commit | behaviorally_verified | 4 | [`modules/commit.md`](modules/commit.md) |
 | `continuity` | Continuity | behaviorally_verified | 8 | [`modules/continuity.md`](modules/continuity.md) |
 | `convergence` | Convergence | behaviorally_verified | 1 | [`modules/convergence.md`](modules/convergence.md) |
-| `dashboard` | Dashboards | behaviorally_verified | 1 | [`modules/dashboard.md`](modules/dashboard.md) |
+| `dashboard` | Dashboards | behaviorally_verified | 2 | [`modules/dashboard.md`](modules/dashboard.md) |
 | `delivery` | Delivery | experimental | 2 | [`modules/delivery.md`](modules/delivery.md) |
 | `deploy` | Deployment | behaviorally_verified | 4 | [`modules/deploy.md`](modules/deploy.md) |
 | `design` | Design system | behaviorally_verified | 4 | [`modules/design.md`](modules/design.md) |
@@ -38,7 +38,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `integration` | Pull-request integration | experimental | 7 | [`modules/integration.md`](modules/integration.md) |
 | `intent_realization` | Intent realization | behaviorally_verified | 2 | [`modules/intent_realization.md`](modules/intent_realization.md) |
 | `intents` | Intent | behaviorally_verified | 7 | [`modules/intents.md`](modules/intents.md) |
-| `knowledge_base` | Knowledge base | behaviorally_verified | 3 | [`modules/knowledge_base.md`](modules/knowledge_base.md) |
+| `knowledge_base` | Knowledge base | behaviorally_verified | 4 | [`modules/knowledge_base.md`](modules/knowledge_base.md) |
 | `lifecycle` | Session lifecycle | behaviorally_verified | 5 | [`modules/lifecycle.md`](modules/lifecycle.md) |
 | `mcp` | MCP projection | experimental | 1 | [`modules/mcp.md`](modules/mcp.md) |
 | `mesh` | Mesh | experimental | 24 | [`modules/mesh.md`](modules/mesh.md) |
@@ -93,6 +93,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `continuity.status` | `continuity` | query | experimental | `majordomus_continuity_status` | — | `GET /api/v1/continuity/status` | `majordomus continuity status` | — | required |
 | `continuity.sync` | `continuity` | command | experimental | `majordomus_continuity_sync` | — | `POST /api/v1/continuity/sync` | `majordomus continuity sync` | — | waived (external_dependency) |
 | `convergence.report` | `convergence` | query | behaviorally_verified | `majordomus_convergence` | `majordomus://convergence` | `GET /api/v1/convergence` | `majordomus convergence` | — | required |
+| `dashboard.cluster` | `dashboard` | query | behaviorally_verified | `majordomus_dashboard_cluster` | — | `GET /api/v1/dashboard/cluster` | `majordomus dashboard cluster` | — | required |
 | `dashboard.overview` | `dashboard` | query | behaviorally_verified | `majordomus_dashboard_overview` | — | `GET /api/v1/dashboard/overview` | `majordomus dashboard overview` | — | required |
 | `delivery.feature` | `delivery` | query | experimental | `majordomus_delivery_feature` | — | `GET /api/v1/delivery/feature` | `majordomus delivery show` | — | waived (external_dependency) |
 | `delivery.report` | `delivery` | query | experimental | `majordomus_delivery` | — | `GET /api/v1/delivery` | `majordomus delivery report` | — | waived (external_dependency) |
@@ -167,6 +168,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `intents.validate` | `intents` | query | behaviorally_verified | `majordomus_intent_validate` | — | `GET /api/v1/intents/validate` | `majordomus intent validate` | — | required |
 | `knowledge_base.candidates` | `knowledge_base` | query | behaviorally_verified | `majordomus_knowledge_candidates` | `majordomus://knowledge-candidates` | `GET /api/v1/knowledge/candidates` | `majordomus knowledge candidates` | — | required |
 | `knowledge_base.record` | `knowledge_base` | query | behaviorally_verified | `majordomus_knowledge_record` | — | `GET /api/v1/knowledge/record` | `majordomus knowledge record` | — | required |
+| `knowledge_base.records` | `knowledge_base` | query | behaviorally_verified | `majordomus_knowledge_records` | — | `GET /api/v1/knowledge/records` | `majordomus knowledge records` | — | required |
 | `knowledge_base.status` | `knowledge_base` | query | behaviorally_verified | `majordomus_knowledge_status` | `majordomus://knowledge-status` | `GET /api/v1/knowledge/status` | `majordomus knowledge status` | process, 2 entries, 2s | required |
 | `lifecycle.closed` | `lifecycle` | query | behaviorally_verified | `majordomus_lifecycle_closed` | — | `GET /api/v1/lifecycle/closed` | — | process, 2 entries, 30s | required |
 | `lifecycle.episodes` | `lifecycle` | query | behaviorally_verified | `majordomus_lifecycle_episodes` | `majordomus://lifecycle/episodes` | `GET /api/v1/lifecycle/episodes` | — | process, 2 entries, 2s | required |
@@ -213,7 +215,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `pack.plan` | `pack` | query | behaviorally_verified | `majordomus_pack_plan` | — | `GET /api/v1/pack/plan` | `majordomus pack plan` | — | required |
 | `pack.verify` | `pack` | query | behaviorally_verified | `majordomus_pack_verify` | — | `GET /api/v1/pack/verify` | `majordomus pack verify` | — | required |
 | `peers.announce` | `peers` | command | behaviorally_verified | `majordomus_announce` | — | `POST /api/v1/peers/announce` | — | — | required |
-| `peers.list` | `peers` | query | behaviorally_verified | `majordomus_peers` | — | `GET /api/v1/peers` | — | — | required |
+| `peers.list` | `peers` | query | behaviorally_verified | `majordomus_peers` | — | `GET /api/v1/peers` | `majordomus peers` | — | required |
 | `perf.counters` | `perf` | query | behaviorally_verified | `majordomus_perf` | — | `GET /api/v1/perf` | — | — | required |
 | `plan.delivery` | `plan` | query | experimental | `majordomus_plan_delivery` | — | `GET /api/v1/plan/delivery` | `majordomus plan delivery` | — | required |
 | `plan.drift` | `plan` | query | experimental | `majordomus_plan_drift` | — | `GET /api/v1/plan/drift` | `majordomus plan drift` | — | required |

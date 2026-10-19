@@ -49,6 +49,7 @@ Every worker of this repository: id, the client's own name and version from its 
 | stability | behaviorally_verified |
 | MCP tool | `majordomus_peers` |
 | HTTP | `GET /api/v1/peers` |
+| CLI | `majordomus peers` |
 | cache | — |
 | benchmark | required |
 | provenance | builtin majordomus_cli::capability::builtin::peers |

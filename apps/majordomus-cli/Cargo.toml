@@ -35,6 +35,11 @@ schemars = "1"
 # tiny_http: a synchronous HTTP/1.1 server for the loopback `serve` command. No async
 # runtime, no framework; routes are derived from the capability registry, not declared.
 tiny_http = "0.12"
+# pulldown-cmark: the CommonMark parser rustdoc and mdBook read with, for every Markdown body a
+# surface shows (a rule, a decision record, a skill, a pull request's description). Only the
+# parser: the events are drawn through the crate's own HTML builder, so nothing a record
+# holds is ever written as markup. No default features — no SIMD, no command-line binary.
+pulldown-cmark = { version = "0.13", default-features = false }
 # sha2: the registry and index fingerprints (cache keys, generated-file headers, benchmark
 # evidence) need a stable hash across processes; the standard library's is not.
 sha2 = "0.10"

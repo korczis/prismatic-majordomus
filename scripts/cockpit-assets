@@ -19,7 +19,7 @@
 #                                  the Cockpit's interaction needs it on a fresh clone
 #
 #   built       vendor/cytoscape.min.js, vendor/three.module.min.js + three.core.min.js,
-#               vendor/p5.min.js
+#               vendor/p5.min.js, vendor/mermaid.min.js
 #               copied verbatim from their pinned npm packages and NOT committed. Each is
 #               loaded lazily by one page, each page is complete without it, and together
 #               they are two megabytes that nothing on the critical path needs.
@@ -118,6 +118,10 @@ cp "$ROOT/node_modules/cytoscape/dist/cytoscape.min.js" "$OUT/vendor/cytoscape.m
 cp "$ROOT/node_modules/three/build/three.module.min.js" "$OUT/vendor/three.module.min.js"
 cp "$ROOT/node_modules/three/build/three.core.min.js" "$OUT/vendor/three.core.min.js"
 cp "$ROOT/node_modules/p5/lib/p5.min.js" "$OUT/vendor/p5.min.js"
+# a Markdown body's diagrams (a fenced `mermaid` block, drawn by apps/majordomus-cli/src/
+# markdown.rs as its source) are drawn as figures by the same pinned Mermaid the site ships;
+# loaded only by a page that holds one, and the page is complete without it
+cp "$ROOT/node_modules/mermaid/dist/mermaid.min.js" "$OUT/vendor/mermaid.min.js"
 # the UI (ADR 0135) draws its relationship graphs with the same pinned Cytoscape, from its
 # own asset directory; not committed, for the same reason
 mkdir -p "$ROOT/share/ui/vendor"

@@ -1,0 +1,31 @@
+id: I2689
+milestone: development-runtime
+title: "The cluster page is documented once and published on the site and the Pages"
+slug: the-cluster-page-is-documented-and-on-the-site
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Say what the page is, how to read it and what it does not know, from the capability, on the handbook, docs/BRIEF.md, docs/MAJORDOMUS_UI.md and the site."
+why: "The owner, 2026-10-13/14: a brief report every minute with deliveries, plan, charts, dependencies and estimates, for every peer of the mesh, derived and generated, real time in /ui, nice in the console, on every surface and enforced from .ai. See ADR 0159."
+current_state: "Measured on master a3a67a307e on 2026-10-14: docs/BRIEF.md and docs/MAJORDOMUS_UI.md do not name a cluster page."
+desired_state: "A section generated from the capability's own description and a screenshot-free sample of the lines in each document, current by majordomus generate --check."
+scope:
+  - "docs/BRIEF.md"
+  - "docs/MAJORDOMUS_UI.md"
+  - "docs/DASHBOARD.md"
+  - "site/"
+non_scope:
+  - "Private addresses or session intents on a public page"
+depends_on:
+  - I2685
+acceptance_criteria:
+  - "Public pages carry the shape of the page and no real session, address or intent"
+  - "majordomus generate --check and scripts/pages current are clean"
+validation:
+  - "bin/majordomus plan validate"
+  - "majordomus generate --check"
+  - "scripts/pages current"
+evidence_required:
+  - "docs_current"
+created_at: 2026-10-14
+updated_at: 2026-10-14

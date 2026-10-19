@@ -93,10 +93,11 @@ r="$(probe /rustdoc/)"
 case "$r" in 503\ *) ;; *) echo "    unbuilt /rustdoc/ answered '$r', not 503"; serve_down; exit 1 ;; esac
 grep -qF 'scripts/rust-check --doc' "$S/body" || { echo "    the 503 does not name the producer"; cat "$S/body"; serve_down; exit 1; }
 # the home page lists it from the same topology, as not built and naming the producer, with no
-# link that is certain to fail
+# link that is certain to fail; read by what it says, not by the markup it says it in (the
+# plain page and the UI's front door draw the same entries)
 home
-grep -qF '<code>/rustdoc/</code>' "$S/body" || { echo "    the home page does not list /rustdoc/"; serve_down; exit 1; }
-grep -qF 'not built</span> — run <code>scripts/rust-check --doc</code>' "$S/body" \
+grep -qF '>/rustdoc/<' "$S/body" || { echo "    the home page does not list /rustdoc/"; serve_down; exit 1; }
+{ grep -qi 'not built' "$S/body" && grep -qF '>scripts/rust-check --doc<' "$S/body"; } \
   || { echo "    the home page does not say the reference is not built and what builds it"; serve_down; exit 1; }
 grep -qF 'href="/rustdoc/"' "$S/body" && { echo "    the home page links a reference that is not built"; serve_down; exit 1; }
 serve_down

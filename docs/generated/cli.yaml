@@ -22660,6 +22660,99 @@ cli:
               setup: []
               expectation: exits 10
           subcommands: []
+        - path:
+            - majordomus
+            - dashboard
+            - cluster
+          route: /docs/cli/dashboard/cluster/
+          executable: true
+          usage: "majordomus dashboard cluster [OPTIONS]"
+          about: "Who works where and how far each milestone is: every machine with its sessions and claims, the progress of every open milestone, and the integration and derive queues, drawn as console text from `dashboard.cluster`"
+          args:
+            - name: width
+              long: width
+              positional: false
+              help: "The console width the page is cut to, in characters (40 to 200)"
+              value_name: WIDTH
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: dashboard-cluster-json
+              title: "The cluster: machines, sessions, claims and plan progress, with the console text"
+              description: "The same answer `GET /api/v1/dashboard/cluster`, the MCP tool `majordomus_dashboard_cluster` and the /ui cluster panel return: every machine of the mesh with its active sessions and claims, how far each open milestone is, and the integration and derive queues, plus `lines`, the page as console text. A source that did not answer is named in `notes`; the exit code is 0 either way."
+              argv:
+                - dashboard
+                - cluster
+                - "--format"
+                - json
+              command: majordomus dashboard cluster --format json
+              setup: []
+              expectation: exits 0
+          subcommands: []
     - path:
         - majordomus
         - brief
@@ -23363,6 +23456,137 @@ cli:
               command: majordomus knowledge record no-such-record
               setup: []
               expectation: exits 12
+          subcommands: []
+        - path:
+            - majordomus
+            - knowledge
+            - records
+          route: /docs/cli/knowledge/records/
+          executable: true
+          usage: "majordomus knowledge records [OPTIONS]"
+          about: "Every record of the knowledge base, curated and candidate, as its file declares it, newest first, filtered by class, status and subject"
+          args:
+            - name: class
+              long: class
+              positional: false
+              help: Only records of this class
+              value_name: CLASS
+              takes_value: true
+              required: false
+              global: false
+              possible_values:
+                - name: fact
+                  help: Something observed to be true of the repository
+                - name: convention
+                  help: "How things are done here, decided"
+                - name: constraint
+                  help: A limit the repository must respect
+                - name: memory
+                  help: Something remembered across episodes
+                - name: lesson
+                  help: "What a failure, a block or an observation taught"
+              defaults: []
+            - name: status
+              long: status
+              positional: false
+              help: Only records with this status
+              value_name: STATUS
+              takes_value: true
+              required: false
+              global: false
+              possible_values:
+                - name: candidate
+                  help: "Derived by the tool and awaiting a person's review"
+                - name: verified
+                  help: "Promoted by a person, with evidence"
+                - name: superseded
+                  help: "Replaced by another record, or rejected with a reason"
+              defaults: []
+            - name: about
+              long: about
+              positional: false
+              help: "Only records about this subject, or about a path beneath it"
+              value_name: ABOUT
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: knowledge-records-lessons
+              title: The lessons the base holds
+              description: "The same answer `GET /api/v1/knowledge/records?class=lesson` and the MCP tool `majordomus_knowledge_records` serve: every record of that class, curated or candidate, as its file declares it, newest first, with the count each status holds. Nothing is resolved against the ledger or git, so every clone prints the same records."
+              argv:
+                - knowledge
+                - records
+                - "--class"
+                - lesson
+                - "--format"
+                - json
+              command: majordomus knowledge records --class lesson --format json
+              setup: []
+              expectation: exits 0; prints one JSON document carrying /total
           subcommands: []
         - path:
             - majordomus
@@ -24165,3 +24389,97 @@ cli:
               setup: []
               expectation: exits 10
           subcommands: []
+    - path:
+        - majordomus
+        - peers
+      route: /docs/cli/peers/
+      executable: true
+      usage: "majordomus peers [OPTIONS]"
+      about: "Who else is working in this repository: every peer of every checkout's board, the worktree it is attached to and the paths it claimed; exits 12 when no board could be asked"
+      args:
+        - name: repo
+          long: repo
+          positional: false
+          help: "Start the search for the repository root here (default: the current directory)"
+          value_name: PATH
+          takes_value: true
+          required: false
+          global: true
+          possible_values: []
+          defaults: []
+        - name: discovery
+          long: discovery
+          positional: false
+          help: How declarative files are enumerated
+          value_name: DISCOVERY
+          takes_value: true
+          required: false
+          global: true
+          possible_values:
+            - name: vcs
+              help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+            - name: filesystem
+              help: A walk of the work tree with the same glob semantics; untracked files included
+          defaults:
+            - vcs
+        - name: strict
+          long: strict
+          positional: false
+          help: Refuse to proceed when any file of the layer carries an error diagnostic
+          value_name: STRICT
+          takes_value: false
+          required: false
+          global: true
+          possible_values: []
+          defaults:
+            - "false"
+        - name: share
+          long: share
+          positional: false
+          help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+          value_name: DIR
+          takes_value: true
+          required: false
+          global: true
+          possible_values: []
+          defaults: []
+        - name: checkouts
+          long: checkouts
+          positional: false
+          help: "Which checkouts to answer for: every checkout of the repository, or this one alone — which reads no other checkout's lease and asks no other server"
+          value_name: CHECKOUTS
+          takes_value: true
+          required: false
+          global: false
+          possible_values:
+            - name: repository
+              help: "Every checkout git registers for the repository, the primary first — a lease read and a probe each. The default, because it is the answer this capability gave before there was anything to ask"
+            - name: this
+              help: "This checkout alone. No other checkout is enumerated, no other lease is read and no other server is probed; `servers` holds the one entry, and it is this one"
+          defaults:
+            - repository
+        - name: format
+          long: format
+          positional: false
+          help: Output shape
+          value_name: FORMAT
+          takes_value: true
+          required: false
+          global: false
+          possible_values:
+            - name: text
+              help: Lines for a person
+            - name: json
+              help: "One JSON document, deterministic"
+          defaults:
+            - text
+      examples:
+        - id: peers-no-board
+          title: "Who else is working here, and what it says when nobody can be asked"
+          description: "The board of every checkout of the repository: each peer, the worktree it is attached to, whether it is still attached and the paths it claimed, from the same capability the MCP tool majordomus_peers projects. A board is a server's memory, so in a repository where no server answers for any checkout there is none to read: the command prints the checkouts it covered, says on stderr that no board could be asked, and exits 12 rather than reporting an empty board as if it had read one."
+          argv:
+            - peers
+          command: majordomus peers
+          setup: []
+          expectation: exits 12
+      subcommands: []

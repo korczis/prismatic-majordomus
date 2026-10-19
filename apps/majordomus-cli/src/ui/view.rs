@@ -379,6 +379,15 @@ pub fn object_or(uri: &str, label: &str) -> El {
     }
 }
 
+/// A record's lead sentence — a rule's statement, an intent's, an issue's objective — with
+/// the Markdown it was written in drawn by the one renderer every body goes through.
+pub fn lead(prose: &str) -> El {
+    el("p").class("mj-ui-lead").nodes(crate::markdown::inline(
+        prose.trim(),
+        &crate::markdown::Options::plain(),
+    ))
+}
+
 /// A link inside the UI, labelled.
 pub fn link(href: impl Into<String>, label: impl Into<String>) -> El {
     el("a")
@@ -745,6 +754,17 @@ pub fn day(at: &str) -> String {
 
 #[cfg(test)]
 mod tests {
+    /// A lead sentence is drawn with its markup, and whatever it holds is text.
+    #[test]
+    fn a_lead_sentence_is_drawn_with_its_markup() {
+        let html = super::lead("  Every `generate` is **checked**, <b>always</b>.  ").render();
+        assert_eq!(
+            html,
+            "<p class=\"mj-ui-lead\">Every <code class=\"mj-md-code\">generate</code> is \
+             <strong>checked</strong>, &lt;b&gt;always&lt;/b&gt;.</p>"
+        );
+    }
+
     use super::*;
     use crate::ui::source::{Exposure, Source};
     use std::time::Duration;

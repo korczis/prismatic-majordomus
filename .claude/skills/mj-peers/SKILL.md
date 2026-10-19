@@ -16,7 +16,7 @@ $ARGUMENTS
 | Capability | What it is | MCP tool | Command line | Effect |
 |---|---|---|---|---|
 | `peers.announce` | Announce what this peer is working on | `majordomus_announce` | — | changes |
-| `peers.list` | List peers | `majordomus_peers` | — | reads |
+| `peers.list` | List peers | `majordomus_peers` | `majordomus peers` | reads |
 
 A capability that *changes* something runs only when the person asked for that change: call it once, and if it is refused or its outcome is not known, report that as it is and do not try again by another way. One that *reads* may be called whenever the request needs it.
 

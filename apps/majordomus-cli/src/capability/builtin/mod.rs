@@ -39,6 +39,7 @@ pub mod continuity;
 pub(crate) mod continuity_transfer;
 pub(crate) mod convergence;
 pub mod dashboard;
+pub(crate) mod dashboard_cluster;
 pub(crate) mod delivery;
 pub(crate) mod deploy;
 pub(crate) mod design;

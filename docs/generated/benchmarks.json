@@ -5,24 +5,24 @@
   "coverage": [
     {
       "scope": "direct",
-      "required": 206,
-      "covered": 175,
+      "required": 208,
+      "covered": 177,
       "missing": 0,
       "waived": 31,
       "inapplicable": 0
     },
     {
       "scope": "http",
-      "required": 201,
-      "covered": 175,
+      "required": 203,
+      "covered": 177,
       "missing": 0,
       "waived": 26,
       "inapplicable": 0
     },
     {
       "scope": "mcp",
-      "required": 196,
-      "covered": 171,
+      "required": 198,
+      "covered": 173,
       "missing": 0,
       "waived": 25,
       "inapplicable": 0
@@ -37,8 +37,8 @@
     },
     {
       "scope": "total",
-      "required": 617,
-      "covered": 535,
+      "required": 623,
+      "covered": 541,
       "missing": 0,
       "waived": 82,
       "inapplicable": 0
@@ -288,6 +288,18 @@
     {
       "id": "convergence.report",
       "module": "convergence",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "dashboard.cluster",
+      "module": "dashboard",
       "kind": "query",
       "cache": "—",
       "direct": "covered",
@@ -1189,6 +1201,19 @@
       "http": "covered",
       "cases": [
         "first-record"
+      ]
+    },
+    {
+      "id": "knowledge_base.records",
+      "module": "knowledge_base",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "all",
+        "lessons-awaiting-review"
       ]
     },
     {
@@ -2807,6 +2832,12 @@
       "route": "/ui/observatory",
       "view": "live",
       "deferred": false
+    },
+    {
+      "key": "system.http.ui.panels.cluster",
+      "route": "/ui/panels/cluster",
+      "view": "pinned",
+      "deferred": true
     },
     {
       "key": "system.http.ui.panels.pull_requests",

@@ -1,0 +1,105 @@
+---
+schema: adr/v1
+id: adr-0159
+kind: adr
+title: The cluster is drawn once, from the sources that hold its facts, and every session reports it on an interval
+status: proposed
+date: 2026-10-14
+tags:
+  - dashboard
+  - ui
+  - session
+  - mesh
+related:
+  - file:.ai/repo/adrs/0088-a-dashboard-is-a-projection-of-capabilities-and-every-card-names-its-source.md
+  - file:.ai/repo/adrs/0136-every-session-briefs-itself-on-an-interval.md
+  - file:.ai/repo/adrs/0033-an-execution-is-a-watched-capability-call-not-a-second-registry.md
+  - file:.ai/repo/adrs/0142-no-screen-waits-for-a-source.md
+  - file:docs/BRIEF.md
+  - file:docs/MAJORDOMUS_UI.md
+provenance:
+  origin: authored
+---
+
+# 159. The cluster is drawn once, from the sources that hold its facts, and every session reports it on an interval
+
+## Context
+
+On 2026-10-13 the owner asked, three times in one evening, for a short report every minute:
+what was delivered, what runs now, a chart, the dependencies and an estimate — for the
+session and for every peer of the mesh — and then that it be "derived, inferred, generated,
+real time in /ui, nice in the console, visible on every surface, enforced from `.ai/`".
+
+Most of it was already there, in pieces that did not meet:
+
+- `dashboard.overview` (ADR 0088) answers four questions, and the /ui root screen draws it,
+  with a plan panel, a mesh panel and a pull-request queue panel;
+- `brief.session` (ADR 0136) composes what surrounds one session, and `session.brief_on_interval`
+  is already `true` in the policy with a provider mod that wakes the session on it;
+- `mesh.peers`, `plan.status` and `integration.queue` hold the machines, the milestones and
+  the queue.
+
+What did not exist was **one reading** that puts the cluster in one place — machine by
+machine, with what each session says it is doing and how far each milestone is — **and one
+text** of it that the terminal, the /ui and a session's periodic report share. The report
+the owner kept asking for was assembled by hand, from five commands, by whichever session
+was asked, and it was written differently every time.
+
+## Decision
+
+1. **A second page of the Dashboard Suite, `dashboard.cluster`,** composed from the three
+   owners and holding no data of its own, as ADR 0088 requires: `mesh.peers` for machines,
+   runtimes, sessions and claims, `plan.status` for milestone progress, `brief.session` for
+   the integration queue, the derive lock and the mesh's links. A source that did not
+   answer is named in `notes`; its section is empty, never invented.
+2. **The text is generated once.** `lines` is the page as console text, cut to the width the
+   caller asks (40 to 200). The command line prints it (`majordomus dashboard cluster`),
+   the /ui panel draws it as it is, and the keep-awake text every session is told at its
+   start names it as the long form of its report. Three surfaces, one rendering, and none
+   of them renders it.
+3. **The panel is live the way the screens are live** (ADR 0142): a panel with its own route
+   (`/ui/panels/cluster`), pulled in by the page's script and refreshed on its interval,
+   because the cluster page asks the server that holds the board and must never hold the
+   first paint back. A pushed stream is the work of the streaming issue (I2487), and this
+   page will use it when it lands; it does not make a channel of its own (ADR 0033).
+4. **Every session reports it, from policy, without being asked.** `session.brief_on_interval`
+   stays the one switch and `session.brief_interval_minutes` the one interval; the report
+   a session gives names this page. What the owner wants to be one minute is a policy
+   value, not a constant in a mod, and a repository that wants it sets it once for every
+   session of every machine that reads that policy.
+5. **A session that does not report is visible.** The brief already carries the interval;
+   the page marks a machine whose sessions have announced nothing, and ADR 0156's rule
+   (a session is current, announced and useful) makes the absence of a report a finding
+   of the same kind as an absent announcement.
+
+## Consequences
+
+- One edit to the rendering changes the terminal, the /ui and what sessions quote.
+- The page costs what its three sources cost, and is therefore a panel and not part of
+  the first paint.
+- The interval is a policy value with a cost: every session's report is a prompt. The
+  owner's one minute is an expensive default; the policy states it and a repository can
+  say twenty.
+- Estimates, risks and the developer-experience section of the owner's report are not
+  here. They need measurements this repository records elsewhere (`integration.timings`,
+  `bench`) and are the next issues; this page does not state them until it can read them.
+
+## Alternatives rejected
+
+- **A new dashboard beside the existing one.** The suite already has a root screen, a
+  command and a rule that a dashboard has no data of its own; a second dashboard would
+  have its own idea of which sources are cheap and which are true.
+- **A report written by the session.** That is what failed: five commands, assembled
+  differently every time, and a session that does not remember to do it says nothing.
+- **A dashboard server of its own** (a TUI or a web app with a socket). The mesh, the
+  board and the stream already exist; a second channel is the thing ADR 0033 refuses.
+
+## Verification
+
+`test/cases/3012_the_dashboard_is_one_reading.sh` proves, through the built executable, the
+shape of the page, that its milestone tally is `plan.status`'s own counted a second time,
+that no line is wider than the width asked within the floor and the ceiling, that the text
+format is the page's own lines, and that an undeclared page is a usage error. The unit
+tests of the capability hold the composition for fixed answers and the narrowest page; those
+of the screen hold that the panel draws the lines unchanged and says so when the source did
+not answer.

@@ -1,0 +1,40 @@
+id: I2792
+milestone: knowledge-base
+title: "One capability lists the whole knowledge base, and /ui/knowledge browses it"
+slug: the-knowledge-base-is-listed-and-browsed
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Add knowledge_base.records: every curated and candidate record with id, uri, source class, class, status, epistemics, origin, date, title, subject, route, tags and how many of its references resolve, filterable by class, status and subject; project it to the CLI (knowledge records), HTTP and MCP from the one declaration; and give /ui/knowledge a panel that presents the base grouped by class beside the review queue."
+why: "Only the review queue (knowledge_base.candidates) and one record at a time (knowledge_base.record) are readable; objects.list returns summaries without resolution, so no surface can show what the repository knows."
+current_state: "Three knowledge_base capabilities: candidates, record, status. /ui/knowledge reads status and candidates."
+desired_state: "knowledge_base.records answers over CLI, HTTP and MCP; /ui/knowledge shows the base; the published UI snapshot carries it."
+scope:
+  - ".ai/repo/project/milestones/knowledge-base.yaml"
+  - ".ai/repo/project/issues/I2792.yaml"
+  - "apps/majordomus-cli/src/capability/builtin/knowledge_base.rs"
+  - "apps/majordomus-cli/src/ui/knowledge.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/src/commands/knowledge.rs"
+  - "apps/majordomus-cli/tests/knowledge_base.rs"
+  - "test/cases/3191_the_knowledge_base_is_listed.sh"
+  - "docs/KNOWLEDGE.md"
+  - "docs/MAJORDOMUS_UI.md"
+  - "docs/generated"
+non_scope:
+  - "Any write: the capability and the screen read"
+  - "Bumping the version on the feature branch"
+depends_on: []
+acceptance_criteria:
+  - "knowledge_base.records lists every record of both source classes with its resolution count, newest first, and filters by class, status and subject"
+  - "/ui/knowledge renders the base grouped by class and still runs nothing"
+  - "The MCP tool is called in a test and the CLI command has an executed example"
+validation:
+  - "cargo test --lib knowledge_base"
+  - "bash test/run.sh 3191_the_knowledge_base_is_listed"
+  - "bash test/run.sh 3003_the_knowledge_screen_answers"
+evidence_required:
+  - "records_capability_tests"
+  - "case_3191"
+created_at: 2026-10-17
+updated_at: 2026-10-17

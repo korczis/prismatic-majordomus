@@ -51,4 +51,29 @@ out=0; ./mutant --self-check > mutant.txt 2>&1 || out=$?
 grep -q "table.grid' is inside a scroller and must not be named" mutant.txt || {
   echo "    the self-check failed the old walk without naming the misattribution it makes:"
   sed 's/^/    | /' mutant.txt; exit 1; }
-echo "    site-probe names what overflows, and the fixtures fail the walk that did not"
+
+# 3. the rendering budget (I2379): a page that paints and stays put is within its budget; one
+#    that shifts after it painted, the same page against a paint budget lowered below what it
+#    measures, and a declaration with no rendering budget at all each fail, naming the figure,
+#    the measurement and the budget. The self-check above already ran them; these are its lines.
+grep -qE "^OK .*selfcheck.*still: OK +rendering +still @[0-9]+px: largest contentful paint [0-9]+ ms, cumulative layout shift 0\.000" self.txt || {
+  echo "    the page that does not move was not measured within its budget:"; sed 's/^/    | /' self.txt; exit 1; }
+grep -qE "^OK .*selfcheck.*shifter: FAIL rendering +shifter @[0-9]+px: cumulative layout shift 0\.[0-9]+ is over its budget of 0\.05" self.txt || {
+  echo "    the page that shifts after it painted was not refused by its layout-shift budget:"; sed 's/^/    | /' self.txt; exit 1; }
+grep -qE "^OK .*selfcheck.*lowered: FAIL rendering +lowered @[0-9]+px: largest contentful paint [0-9]+ ms is over its budget of 1 ms" self.txt || {
+  echo "    a paint budget below the measurement did not fail naming both numbers:"; sed 's/^/    | /' self.txt; exit 1; }
+grep -qE "^OK .*selfcheck.*undeclared: FAIL rendering .*declares no \[budget\] largest_contentful_paint_ms and cumulative_layout_shift" self.txt || {
+  echo "    a declaration without a rendering budget was not refused as unbounded:"; sed 's/^/    | /' self.txt; exit 1; }
+
+# 4. and that half is a guard too: a measurement that never compares the shift with its budget
+#    must fail the self-check on the page that shifts
+sed 's/    if cls > cls_budget:/    if False:/' "$P" > mutant2
+cmp -s "$P" mutant2 && {
+  echo "    the layout-shift comparison is no longer in scripts/site-probe in the shape this case mutates"; exit 1; }
+chmod +x mutant2
+out=0; ./mutant2 --self-check > mutant2.txt 2>&1 || out=$?
+[ "$out" = 10 ] || {
+  echo "    a probe that ignores layout shift passed the self-check (exit $out):"; sed 's/^/    | /' mutant2.txt; exit 1; }
+grep -q "FAIL selfcheck  shifter: expected" mutant2.txt || {
+  echo "    the self-check failed the blind probe without naming the shifting page:"; sed 's/^/    | /' mutant2.txt; exit 1; }
+echo "    site-probe names what overflows, refuses a page over its rendering budget, and the fixtures fail the probes that did not"

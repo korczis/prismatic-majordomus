@@ -21,6 +21,7 @@
     "op-continuity-status": "docs/api/continuity/",
     "op-continuity-sync": "docs/api/continuity/",
     "op-convergence-report": "docs/api/convergence/",
+    "op-dashboard-cluster": "docs/api/dashboard/",
     "op-dashboard-overview": "docs/api/dashboard/",
     "op-delivery-feature": "docs/api/delivery/",
     "op-delivery-report": "docs/api/delivery/",
@@ -93,6 +94,7 @@
     "op-intents-validate": "docs/api/intents/",
     "op-knowledge_base-candidates": "docs/api/knowledge-base/",
     "op-knowledge_base-record": "docs/api/knowledge-base/",
+    "op-knowledge_base-records": "docs/api/knowledge-base/",
     "op-knowledge_base-status": "docs/api/knowledge-base/",
     "op-lifecycle-closed": "docs/api/lifecycle/",
     "op-lifecycle-episodes": "docs/api/lifecycle/",
@@ -307,6 +309,8 @@
     "schema-ClosedSessions": "docs/api/lifecycle/",
     "schema-Closure": "docs/api/obligations/",
     "schema-ClosureMatrix": "docs/api/capabilities/",
+    "schema-ClusterMachine": "docs/api/dashboard/",
+    "schema-ClusterMilestone": "docs/api/dashboard/",
     "schema-CockpitAreaRef": "docs/api/product/",
     "schema-ColourPart": "docs/api/design/",
     "schema-CommandArgument": "docs/api/commands/",
@@ -375,6 +379,7 @@
     "schema-CritiqueClass": "docs/api/intents/",
     "schema-CritiqueFinding": "docs/api/intents/",
     "schema-DashboardCard": "docs/api/dashboard/",
+    "schema-DashboardCluster": "docs/api/dashboard/",
     "schema-DashboardMeasure": "docs/api/dashboard/",
     "schema-DashboardOverview": "docs/api/dashboard/",
     "schema-DashboardQuestion": "docs/api/dashboard/",
@@ -693,8 +698,11 @@
     "schema-KindRef": "docs/api/product/",
     "schema-KnowledgeCandidate": "docs/api/knowledge-base/",
     "schema-KnowledgeCandidates": "docs/api/knowledge-base/",
+    "schema-KnowledgeEntry": "docs/api/knowledge-base/",
     "schema-KnowledgeGroup": "docs/api/knowledge-base/",
+    "schema-KnowledgeLink": "docs/api/knowledge-base/",
     "schema-KnowledgeRecord": "docs/api/knowledge-base/",
+    "schema-KnowledgeRecords": "docs/api/knowledge-base/",
     "schema-KnowledgeStatus": "docs/api/knowledge-base/",
     "schema-LabelEffect": "docs/api/integration/",
     "schema-LabelPolicy": "docs/api/integration/",
@@ -1267,8 +1275,8 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 201,
-    "schemas": 1005,
+    "operations": 203,
+    "schemas": 1011,
     "tags": 58
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1381,6 +1389,7 @@
     "continuity.status": "continuity",
     "continuity.sync": "continuity",
     "convergence.report": "convergence",
+    "dashboard.cluster": "dashboard",
     "dashboard.overview": "dashboard",
     "delivery.feature": "delivery",
     "delivery.report": "delivery",
@@ -1453,6 +1462,7 @@
     "intents.validate": "intents",
     "knowledge_base.candidates": "knowledge-base",
     "knowledge_base.record": "knowledge-base",
+    "knowledge_base.records": "knowledge-base",
     "knowledge_base.status": "knowledge-base",
     "lifecycle.closed": "lifecycle",
     "lifecycle.episodes": "lifecycle",
@@ -1671,6 +1681,8 @@
     "ClosedSessions": "lifecycle",
     "Closure": "obligations",
     "ClosureMatrix": "capabilities",
+    "ClusterMachine": "dashboard",
+    "ClusterMilestone": "dashboard",
     "CockpitAreaRef": "product",
     "ColourPart": "design",
     "CommandArgument": "commands",
@@ -1739,6 +1751,7 @@
     "CritiqueClass": "intents",
     "CritiqueFinding": "intents",
     "DashboardCard": "dashboard",
+    "DashboardCluster": "dashboard",
     "DashboardMeasure": "dashboard",
     "DashboardOverview": "dashboard",
     "DashboardQuestion": "dashboard",
@@ -2057,8 +2070,11 @@
     "KindRef": "product",
     "KnowledgeCandidate": "knowledge-base",
     "KnowledgeCandidates": "knowledge-base",
+    "KnowledgeEntry": "knowledge-base",
     "KnowledgeGroup": "knowledge-base",
+    "KnowledgeLink": "knowledge-base",
     "KnowledgeRecord": "knowledge-base",
+    "KnowledgeRecords": "knowledge-base",
     "KnowledgeStatus": "knowledge-base",
     "LabelEffect": "integration",
     "LabelPolicy": "integration",
@@ -8109,6 +8125,155 @@
       "variants": []
     },
     {
+      "description": "One machine of the mesh and what runs on it.",
+      "home": "dashboard",
+      "is_enum": false,
+      "name": "ClusterMachine",
+      "properties": [
+        {
+          "description": "The name a person reads: the card's, else the first eight characters of the node id.",
+          "name": "name",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether it is the machine that composed the page.",
+          "name": "local",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "`own` (this machine), `live` (a runtime beats) or `expired` (none does).",
+          "name": "liveness",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How many of its runtimes beat.",
+          "name": "runtimes_live",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many runtimes it has, expired ones included.",
+          "name": "runtimes",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Active sessions on it.",
+          "name": "sessions",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Claims those sessions hold.",
+          "name": "claims",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "What its sessions say they are doing, at most three, cut.",
+          "name": "activity",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DashboardCluster"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One milestone and how far it is.",
+      "home": "dashboard",
+      "is_enum": false,
+      "name": "ClusterMilestone",
+      "properties": [
+        {
+          "description": "The identity (`M003`, or the slug a milestone is named by).",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "One line naming the outcome.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The derived status word the plan reports.",
+          "name": "status",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Issues done.",
+          "name": "done",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "Issues that count (the plan's own denominator: total less cancelled).",
+          "name": "required",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "`done` over `required`, whole percent; `0` where nothing counts.",
+          "name": "percent",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "Issues ready to take.",
+          "name": "ready",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "Issues waiting on a dependency.",
+          "name": "blocked",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "Issues being worked.",
+          "name": "active",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DashboardCluster"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One area of the Cockpit the feature names.",
       "home": "product",
       "is_enum": false,
@@ -12142,6 +12307,116 @@
       "used_by_schemas": [
         "DashboardQuestion"
       ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The answer of `dashboard.cluster`.",
+      "home": "dashboard",
+      "is_enum": false,
+      "name": "DashboardCluster",
+      "properties": [
+        {
+          "description": "When it was composed, RFC 3339.",
+          "name": "at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Which process composed it: `leaseholder`, `this_process`, or `forwarded` with the address in `notes`.",
+          "name": "origin",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The brief's one line, as a status line shows it.",
+          "name": "line",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The machines, this one first.",
+          "name": "machines",
+          "refs": [
+            "ClusterMachine"
+          ],
+          "required": true,
+          "type": "array of ClusterMachine"
+        },
+        {
+          "description": "Open milestones, newest id last, at most eight.",
+          "name": "milestones",
+          "refs": [
+            "ClusterMilestone"
+          ],
+          "required": true,
+          "type": "array of ClusterMilestone"
+        },
+        {
+          "description": "Milestones the plan reports done.",
+          "name": "milestones_done",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "Every milestone the plan has.",
+          "name": "milestones_total",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "How many open milestones the page left out.",
+          "name": "milestones_left_out",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "The integration queue, as `majordomus prs brief` says it.",
+          "name": "integration",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The derive lock, as the brief says it.",
+          "name": "derive",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The mesh's links and what its journal addresses to this runtime.",
+          "name": "mesh",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What could not be read and why, in words.",
+          "name": "notes",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The page as console text, cut to the width asked.",
+          "name": "lines",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "dashboard.cluster"
+      ],
+      "used_by_schemas": [],
       "values": [],
       "variants": []
     },
@@ -19930,6 +20205,7 @@
         "continuity.status",
         "continuity.sync",
         "convergence.report",
+        "dashboard.cluster",
         "dashboard.overview",
         "delivery.report",
         "delivery.feature",
@@ -19993,6 +20269,7 @@
         "intents.validate",
         "knowledge_base.candidates",
         "knowledge_base.record",
+        "knowledge_base.records",
         "knowledge_base.status",
         "lifecycle.closed",
         "lifecycle.episodes",
@@ -30127,6 +30404,142 @@
       "variants": []
     },
     {
+      "description": "One record of the base, as its file declares it: nothing here is resolved against the\nledger or git, so the same tree gives the same entry on every machine and in every\nclone, however shallow. `knowledge_base.record` resolves one.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::KnowledgeEntry;\nlet e: KnowledgeEntry = serde_json::from_str(r#\"{\n  \"id\": \"start-here\", \"uri\": \"majordomus://knowledge/start-here\",\n  \"path\": \".ai/repo/knowledge/curated/start-here.md\", \"source_class\": \"curated\",\n  \"class\": \"convention\", \"status\": \"verified\", \"epistemics\": \"decided\",\n  \"date\": \"2026-09-05\", \"title\": \"Read the documents in order\"\n}\"#).unwrap();\nassert!(e.derived_from.is_empty() && e.relations.is_empty());\nassert_eq!(e.superseded_by, None);\n```",
+      "home": "knowledge-base",
+      "is_enum": false,
+      "name": "KnowledgeEntry",
+      "properties": [
+        {
+          "description": "The record id, which is also its file name.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`majordomus://knowledge/<id>`.",
+          "name": "uri",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Repository-relative path.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The source class that discovered it: `candidates` or `curated`.",
+          "name": "source_class",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`fact`, `convention`, `constraint`, `memory` or `lesson`.",
+          "name": "class",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`candidate`, `verified` or `superseded`.",
+          "name": "status",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`observed`, `inferred` or `decided`.",
+          "name": "epistemics",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`authored` or `extracted`; empty when the record carries no provenance.",
+          "name": "origin",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "The day the record reached its status, `YYYY-MM-DD`.",
+          "name": "date",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The assertion, in one line.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The record's own description, when it carries one.",
+          "name": "description",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "What it is about (ADR 0118); empty for a record that names no subject.",
+          "name": "about",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "Which owner should look first, derived from `about` by the deriver.",
+          "name": "route",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "The record's tags, as written.",
+          "name": "tags",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "The typed references it names as its evidence, as written.",
+          "name": "derived_from",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Its typed relations, as written.",
+          "name": "relations",
+          "refs": [
+            "KnowledgeLink"
+          ],
+          "required": false,
+          "type": "array of KnowledgeLink"
+        },
+        {
+          "description": "The record that replaced this one, when the status is `superseded`.",
+          "name": "superseded_by",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "KnowledgeRecords"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "The records under one subject: every candidate awaiting review and every rejected one,\nwith the episodes behind them (ADR 0118). Recurrence is read here, never written: each\nrecord stays one episode's own file, and a group is how several of them read as one thing.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::KnowledgeGroup;\nlet g: KnowledgeGroup = serde_json::from_str(\n    r#\"{\"about\":\"lib/a.sh\",\"route\":\"project\",\"candidates\":[\"e1-a\",\"e2-b\"],\"episodes\":[\"e1\",\"e2\"]}\"#,\n).unwrap();\nassert_eq!(g.episodes.len(), 2, \"two episodes observed it\");\nassert!(g.rejected.is_empty(), \"and nobody rejected it\");\n```",
       "home": "knowledge-base",
       "is_enum": false,
@@ -30172,6 +30585,35 @@
       "used_by": [],
       "used_by_schemas": [
         "KnowledgeCandidates"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One typed relation of a record, as the record declares it.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::KnowledgeLink;\nlet l: KnowledgeLink =\n    serde_json::from_str(r#\"{\"type\":\"relates_to\",\"target\":\"file:lib/a.sh\"}\"#).unwrap();\nassert_eq!(l.relation_type, \"relates_to\");\n```",
+      "home": "knowledge-base",
+      "is_enum": false,
+      "name": "KnowledgeLink",
+      "properties": [
+        {
+          "description": "`relates_to`, `documents`, `supports`, `contradicts`, `supersedes` or `depends_on`.",
+          "name": "type",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The typed reference it points at.",
+          "name": "target",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "KnowledgeEntry"
       ],
       "values": [],
       "variants": []
@@ -30295,6 +30737,51 @@
       "type": "object",
       "used_by": [
         "knowledge_base.record"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The base: every record that matched, newest first, with how many of them each class\nand each status holds.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::KnowledgeRecords;\nlet none: KnowledgeRecords = serde_json::from_str(r#\"{\"total\":0}\"#).unwrap();\nassert!(none.records.is_empty() && none.classes.is_empty(), \"an empty base is an answer\");\n```",
+      "home": "knowledge-base",
+      "is_enum": false,
+      "name": "KnowledgeRecords",
+      "properties": [
+        {
+          "description": "How many records matched.",
+          "name": "total",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many of them each class holds, by class.",
+          "name": "classes",
+          "refs": [],
+          "required": false,
+          "type": "map of integer (uint)"
+        },
+        {
+          "description": "How many of them each status holds, by status.",
+          "name": "statuses",
+          "refs": [],
+          "required": false,
+          "type": "map of integer (uint)"
+        },
+        {
+          "description": "The records, newest date first and by id within a day.",
+          "name": "records",
+          "refs": [
+            "KnowledgeEntry"
+          ],
+          "required": false,
+          "type": "array of KnowledgeEntry"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "knowledge_base.records"
       ],
       "used_by_schemas": [],
       "values": [],
@@ -60292,6 +60779,85 @@
           "body_schema": "",
           "cache": "disabled",
           "cache_detail": "",
+          "cli": "dashboard cluster",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/dashboard/cluster?local=true&width=78\"",
+          "description": "Who works where and how far each milestone is, as one reading and one rendering: every machine of the mesh with its runtimes, active sessions, claims held and what its sessions say they are doing (`mesh.peers`), the progress of every open milestone (`plan.status`), and the one-line brief with the integration queue, the derive lock and the mesh's links (`brief.session`). It holds no data of its own and names, in `notes`, each source that did not answer. `lines` is the page as console text, cut to the width asked, and is what the command line prints and the /ui panel draws. Composed by the server holding this checkout's lease; the command line asks it. Writes nothing.",
+          "home": "dashboard",
+          "id": "dashboard.cluster",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_dashboard_cluster",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "Compose in the process that answers and never ask the checkout's leaseholder: what a forwarded request says, so that it is never forwarded again.",
+              "examples": [
+                {
+                  "case": "default",
+                  "value": "true"
+                }
+              ],
+              "name": "local",
+              "required": false,
+              "type": "boolean"
+            },
+            {
+              "description": "The console width `lines` is cut to, in characters (40 to 200; 78 when absent).",
+              "examples": [
+                {
+                  "case": "default",
+                  "value": "78"
+                }
+              ],
+              "name": "width",
+              "required": false,
+              "type": "integer (uint16)"
+            }
+          ],
+          "path": "/api/v1/dashboard/cluster",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::dashboard",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The cluster: machines, sessions, claims and plan progress: the result.",
+              "schema": "DashboardCluster",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "DashboardCluster",
+          "stability": "behaviorally_verified",
+          "summary": "The cluster: machines, sessions, claims and plan progress"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
           "cli": "dashboard overview",
           "curl": "curl -s \"http://127.0.0.1:8741/api/v1/dashboard/overview\"",
           "description": "Is it healthy, what changed, what is broken, what needs action — each answered by cards read out of `health.report`, `release.version`, `plan.status`, `worktree.status`, `plan.next`, `continuity.state` and `peers.list` (this checkout's board), asked once each through the executor. Every card carries its source capability, input and RFC 6901 pointer, so asking the source the same question yields the same value; a source that cannot answer makes its cards `unknown`, never `ok`. Nothing here rebuilds canonical state or asks anything beyond this process and its checkout.",
@@ -65191,7 +65757,7 @@
       "slug": "intents"
     },
     {
-      "description": "What the knowledge deriver left for review and whether it is still writing: the candidate records awaiting promotion with the branch of the episode each came from, one record by id with every reference it names resolved against the index, the ledger and git, and the derivation status of this checkout judged against the policy's freshness thresholds. Read from the index and the ledger; written by nothing here — the deriver is the shell tool's, and a person promotes.",
+      "description": "What the knowledge deriver left for review and whether it is still writing: every record of the base as its file declares it, the candidate records awaiting promotion with the branch of the episode each came from, one record by id with every reference it names resolved against the index, the ledger and git, and the derivation status of this checkout judged against the policy's freshness thresholds. Read from the index and the ledger; written by nothing here — the deriver is the shell tool's, and a person promotes.",
       "name": "knowledge_base",
       "operations": [
         {
@@ -65317,6 +65883,97 @@
           "result_schema": "KnowledgeRecord",
           "stability": "behaviorally_verified",
           "summary": "One knowledge record"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "knowledge records",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/knowledge/records?class=lesson&status=candidate&about=.ai\"",
+          "description": "Every knowledge record of the layer — curated and candidate — as its file declares it: its class, status, epistemics and origin, its assertion and description, the subject it is about and the owner it routes to, its tags, the evidence it names and its typed relations, newest first, with how many records each class and each status holds. Filtered by class, by status and by subject, a subject matching itself and every path beneath it; a class or status outside the schema's vocabulary is refused. Nothing is resolved against the ledger or git, so every clone answers alike; `knowledge_base.record` resolves one record.",
+          "home": "knowledge-base",
+          "id": "knowledge_base.records",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_knowledge_records",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "Only records of this class: `fact`, `convention`, `constraint`, `memory` or `lesson`.",
+              "examples": [
+                {
+                  "case": "lessons-awaiting-review",
+                  "value": "\"lesson\""
+                }
+              ],
+              "name": "class",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "Only records with this status: `candidate`, `verified` or `superseded`.",
+              "examples": [
+                {
+                  "case": "lessons-awaiting-review",
+                  "value": "\"candidate\""
+                }
+              ],
+              "name": "status",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "Only records about this subject, or about a path beneath it.",
+              "examples": [
+                {
+                  "case": "lessons-awaiting-review",
+                  "value": "\".ai\""
+                }
+              ],
+              "name": "about",
+              "required": false,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/knowledge/records",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::knowledge_base",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The knowledge base: the result.",
+              "schema": "KnowledgeRecords",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "KnowledgeRecords",
+          "stability": "behaviorally_verified",
+          "summary": "The knowledge base"
         },
         {
           "benchmark": "required",
@@ -68423,7 +69080,7 @@
           "body_schema": "",
           "cache": "disabled",
           "cache_detail": "",
-          "cli": "",
+          "cli": "peers",
           "curl": "curl -s \"http://127.0.0.1:8741/api/v1/peers?checkouts=this\"",
           "description": "Every worker of this repository: id, the client's own name and version from its initialize, transport, when it attached, when it was last seen, what it announced, and which checkout it is attached to. A server serves one checkout, so the board of a repository worked on through linked worktrees is gathered: this checkout's board out of memory, every other checkout's from the server its lease names, asked for its own board alone. 'boards' says which checkouts were covered and 'complete' whether every one of them could be read, so a short board is never mistaken for an empty repository. 'checkouts: this' reads one board and enumerates, probes and asks nothing else. In-memory on every server; gone with the processes.",
           "home": "peers",

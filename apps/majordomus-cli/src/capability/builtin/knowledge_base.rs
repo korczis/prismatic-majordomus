@@ -540,6 +540,166 @@ pub struct KnowledgeStatus {
     pub findings: Vec<String>,
 }
 
+// --------------------------------------------------------------------- records
+
+/// The classes a record may assert, in the order the schema declares them.
+pub const CLASSES: [&str; 5] = ["fact", "convention", "constraint", "memory", "lesson"];
+
+/// The statuses a record may carry: who has stood behind it.
+pub const STATUSES: [&str; 3] = ["candidate", "verified", "superseded"];
+
+/// Which records: the input of `knowledge_base.records`. Every filter is optional, and a
+/// value outside its vocabulary is refused rather than answered with nothing, so that a
+/// typo never reads as a repository that knows nothing.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::knowledge_base::KnowledgeRecordsInput;
+/// let all: KnowledgeRecordsInput = serde_json::from_str("{}").unwrap();
+/// assert!(all.class.is_none() && all.status.is_none() && all.about.is_none());
+/// let some: KnowledgeRecordsInput =
+///     serde_json::from_str(r#"{"class":"lesson","about":"lib"}"#).unwrap();
+/// assert_eq!(some.about.as_deref(), Some("lib"));
+/// assert!(serde_json::from_str::<KnowledgeRecordsInput>(r#"{"kind":"x"}"#).is_err());
+/// ```
+#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct KnowledgeRecordsInput {
+    /// Only records of this class: `fact`, `convention`, `constraint`, `memory` or `lesson`.
+    #[serde(default)]
+    pub class: Option<String>,
+    /// Only records with this status: `candidate`, `verified` or `superseded`.
+    #[serde(default)]
+    pub status: Option<String>,
+    /// Only records about this subject, or about a path beneath it.
+    #[serde(default)]
+    pub about: Option<String>,
+}
+
+impl BenchmarkCases for KnowledgeRecordsInput {
+    fn benchmark_cases(ctx: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        let about = ctx
+            .index
+            .objects
+            .iter()
+            .filter(|o| o.kind == KIND)
+            .map(|o| field(o, "about"))
+            .find(|a| !a.is_empty())
+            .unwrap_or_else(|| ".ai".into());
+        vec![
+            NamedCase::new("all", KnowledgeRecordsInput::default()),
+            NamedCase::new(
+                "lessons-awaiting-review",
+                KnowledgeRecordsInput {
+                    class: Some("lesson".into()),
+                    status: Some("candidate".into()),
+                    about: Some(about),
+                },
+            ),
+        ]
+    }
+}
+
+/// One typed relation of a record, as the record declares it.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::knowledge_base::KnowledgeLink;
+/// let l: KnowledgeLink =
+///     serde_json::from_str(r#"{"type":"relates_to","target":"file:lib/a.sh"}"#).unwrap();
+/// assert_eq!(l.relation_type, "relates_to");
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct KnowledgeLink {
+    /// `relates_to`, `documents`, `supports`, `contradicts`, `supersedes` or `depends_on`.
+    #[serde(rename = "type")]
+    pub relation_type: String,
+    /// The typed reference it points at.
+    pub target: String,
+}
+
+/// One record of the base, as its file declares it: nothing here is resolved against the
+/// ledger or git, so the same tree gives the same entry on every machine and in every
+/// clone, however shallow. `knowledge_base.record` resolves one.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::knowledge_base::KnowledgeEntry;
+/// let e: KnowledgeEntry = serde_json::from_str(r#"{
+///   "id": "start-here", "uri": "majordomus://knowledge/start-here",
+///   "path": ".ai/repo/knowledge/curated/start-here.md", "source_class": "curated",
+///   "class": "convention", "status": "verified", "epistemics": "decided",
+///   "date": "2026-09-05", "title": "Read the documents in order"
+/// }"#).unwrap();
+/// assert!(e.derived_from.is_empty() && e.relations.is_empty());
+/// assert_eq!(e.superseded_by, None);
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct KnowledgeEntry {
+    /// The record id, which is also its file name.
+    pub id: String,
+    /// `majordomus://knowledge/<id>`.
+    pub uri: String,
+    /// Repository-relative path.
+    pub path: String,
+    /// The source class that discovered it: `candidates` or `curated`.
+    pub source_class: String,
+    /// `fact`, `convention`, `constraint`, `memory` or `lesson`.
+    pub class: String,
+    /// `candidate`, `verified` or `superseded`.
+    pub status: String,
+    /// `observed`, `inferred` or `decided`.
+    pub epistemics: String,
+    /// `authored` or `extracted`; empty when the record carries no provenance.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub origin: String,
+    /// The day the record reached its status, `YYYY-MM-DD`.
+    pub date: String,
+    /// The assertion, in one line.
+    pub title: String,
+    /// The record's own description, when it carries one.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub description: String,
+    /// What it is about (ADR 0118); empty for a record that names no subject.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub about: String,
+    /// Which owner should look first, derived from `about` by the deriver.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub route: String,
+    /// The record's tags, as written.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub tags: Vec<String>,
+    /// The typed references it names as its evidence, as written.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub derived_from: Vec<String>,
+    /// Its typed relations, as written.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub relations: Vec<KnowledgeLink>,
+    /// The record that replaced this one, when the status is `superseded`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub superseded_by: Option<String>,
+}
+
+/// The base: every record that matched, newest first, with how many of them each class
+/// and each status holds.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::knowledge_base::KnowledgeRecords;
+/// let none: KnowledgeRecords = serde_json::from_str(r#"{"total":0}"#).unwrap();
+/// assert!(none.records.is_empty() && none.classes.is_empty(), "an empty base is an answer");
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct KnowledgeRecords {
+    /// How many records matched.
+    pub total: usize,
+    /// How many of them each class holds, by class.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub classes: BTreeMap<String, usize>,
+    /// How many of them each status holds, by status.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub statuses: BTreeMap<String, usize>,
+    /// The records, newest date first and by id within a day.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub records: Vec<KnowledgeEntry>,
+}
+
 // --------------------------------------------------------------------- reading
 
 /// A scalar of an object's metadata, or empty.
@@ -1137,6 +1297,95 @@ fn record(ctx: &Context, input: KnowledgeRecordInput) -> Result<KnowledgeRecord,
     })
 }
 
+/// A filter value must be one of `vocabulary`; absent passes.
+fn one_of(name: &str, value: Option<&str>, vocabulary: &[&str]) -> Result<(), CapabilityError> {
+    match value {
+        Some(v) if !vocabulary.contains(&v) => Err(CapabilityError::InvalidInput(format!(
+            "{name} '{v}' is not one of: {}",
+            vocabulary.join(", ")
+        ))),
+        _ => Ok(()),
+    }
+}
+
+/// A record as its file declares it.
+fn entry(o: &Object) -> KnowledgeEntry {
+    KnowledgeEntry {
+        id: o.identity.clone(),
+        uri: o.uri.clone(),
+        path: o.provenance.path.clone(),
+        source_class: o.provenance.source_class.clone(),
+        class: field(o, "class"),
+        status: field(o, "status"),
+        epistemics: field(o, "epistemics"),
+        origin: o
+            .metadata
+            .pointer("/provenance/origin")
+            .and_then(Value::as_str)
+            .unwrap_or_default()
+            .to_string(),
+        date: field(o, "date"),
+        title: o.title.clone().unwrap_or_default(),
+        description: o.description.clone().unwrap_or_default(),
+        about: field(o, "about"),
+        route: field(o, "route"),
+        tags: o.tags().into_iter().map(str::to_string).collect(),
+        derived_from: derived_from_of(o),
+        relations: relations_of(o)
+            .into_iter()
+            .map(|(relation_type, target)| KnowledgeLink {
+                relation_type,
+                target,
+            })
+            .collect(),
+        superseded_by: Some(field(o, "superseded_by")).filter(|s| !s.is_empty()),
+    }
+}
+
+/// Whether `e` passes every filter `input` sets: a subject matches itself and every path
+/// beneath it, never a sibling that merely shares a prefix.
+fn admits(input: &KnowledgeRecordsInput, e: &KnowledgeEntry) -> bool {
+    let about = input.about.as_deref().map(|a| a.trim_end_matches('/'));
+    input.class.as_deref().is_none_or(|c| e.class == c)
+        && input.status.as_deref().is_none_or(|s| e.status == s)
+        && about.is_none_or(|a| {
+            e.about == a || e.about.strip_prefix(a).is_some_and(|r| r.starts_with('/'))
+        })
+}
+
+fn records(
+    ctx: &Context,
+    input: KnowledgeRecordsInput,
+) -> Result<KnowledgeRecords, CapabilityError> {
+    one_of("class", input.class.as_deref(), &CLASSES)?;
+    one_of("status", input.status.as_deref(), &STATUSES)?;
+    let mut classes = BTreeMap::new();
+    let mut statuses = BTreeMap::new();
+    // Keyed newest-first by construction rather than collected and sorted: the date is
+    // `YYYY-MM-DD`, so its reversed text order is its reversed time order, and the id makes
+    // the key total.
+    let mut by: BTreeMap<(std::cmp::Reverse<String>, String), KnowledgeEntry> = BTreeMap::new();
+    for e in ctx
+        .index
+        .objects
+        .iter()
+        .filter(|o| o.kind == KIND)
+        .map(entry)
+        .filter(|e| admits(&input, e))
+    {
+        *classes.entry(e.class.clone()).or_insert(0) += 1;
+        *statuses.entry(e.status.clone()).or_insert(0) += 1;
+        by.insert((std::cmp::Reverse(e.date.clone()), e.id.clone()), e);
+    }
+    let records: Vec<KnowledgeEntry> = by.into_values().collect();
+    Ok(KnowledgeRecords {
+        total: records.len(),
+        classes,
+        statuses,
+        records,
+    })
+}
+
 // --------------------------------------------------------------------- status
 
 /// The `ts` and the episode of a ledger line, the episode read from the field the event
@@ -1309,13 +1558,16 @@ fn status(ctx: &Context, _: Empty) -> Result<KnowledgeStatus, CapabilityError> {
 /// use majordomus_cli::capability::builtin::knowledge_base::module;
 /// let m = module();
 /// let ids: Vec<&str> = m.capabilities.iter().map(|e| e.capability.id.as_str()).collect();
-/// assert_eq!(ids, ["knowledge_base.candidates", "knowledge_base.record", "knowledge_base.status"]);
+/// assert_eq!(
+///     ids,
+///     ["knowledge_base.candidates", "knowledge_base.record", "knowledge_base.records", "knowledge_base.status"]
+/// );
 /// ```
 pub fn module() -> ModuleDescriptor {
     module! {
         id: "knowledge_base",
         title: "Knowledge base",
-        description: "What the knowledge deriver left for review and whether it is still writing: the candidate records awaiting promotion with the branch of the episode each came from, one record by id with every reference it names resolved against the index, the ledger and git, and the derivation status of this checkout judged against the policy's freshness thresholds. Read from the index and the ledger; written by nothing here — the deriver is the shell tool's, and a person promotes.",
+        description: "What the knowledge deriver left for review and whether it is still writing: every record of the base as its file declares it, the candidate records awaiting promotion with the branch of the episode each came from, one record by id with every reference it names resolved against the index, the ledger and git, and the derivation status of this checkout judged against the policy's freshness thresholds. Read from the index and the ledger; written by nothing here — the deriver is the shell tool's, and a person promotes.",
         stability: Stability::BehaviorallyVerified,
         capabilities: [
             capability! {
@@ -1350,6 +1602,21 @@ pub fn module() -> ModuleDescriptor {
                 },
                 tags: ["knowledge"],
                 handler: record,
+            },
+            capability! {
+                id: "knowledge_base.records",
+                title: "The knowledge base",
+                description: "Every knowledge record of the layer — curated and candidate — as its file declares it: its class, status, epistemics and origin, its assertion and description, the subject it is about and the owner it routes to, its tags, the evidence it names and its typed relations, newest first, with how many records each class and each status holds. Filtered by class, by status and by subject, a subject matching itself and every path beneath it; a class or status outside the schema's vocabulary is refused. Nothing is resolved against the ledger or git, so every clone answers alike; `knowledge_base.record` resolves one record.",
+                input: KnowledgeRecordsInput,
+                output: KnowledgeRecords,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_knowledge_records"),
+                    http: get("/api/v1/knowledge/records"),
+                    cli: Some(CliExposure { path: vec!["knowledge".into(), "records".into()] }),
+                },
+                tags: ["knowledge"],
+                handler: records,
             },
             capability! {
                 id: "knowledge_base.status",
@@ -1401,6 +1668,12 @@ mod tests {
                 "majordomus_knowledge_record",
                 "/api/v1/knowledge/record",
                 "knowledge record",
+            ),
+            (
+                "knowledge_base.records",
+                "majordomus_knowledge_records",
+                "/api/v1/knowledge/records",
+                "knowledge records",
             ),
             (
                 "knowledge_base.status",
@@ -2018,6 +2291,131 @@ mod tests {
     /// added it, else at its own date, and a candidate with none of the three has no age.
     /// One whose episode this checkout does not know is unattributed, and a queue longer
     /// than the policy's cap is a finding; the list is in the canonical order.
+    /// The base lists both source classes as their files declare them, newest first and by
+    /// id within a day; every filter narrows, a subject matches itself and what lies beneath
+    /// it but never a sibling sharing its prefix, and a word outside the vocabulary is refused.
+    #[test]
+    fn the_base_lists_every_record_as_declared_and_every_filter_narrows() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let record = |class_dir: &str, id: &str, meta: Value| {
+            let mut o = object(
+                KIND,
+                id,
+                &format!(".ai/repo/knowledge/{class_dir}/{id}.md"),
+                meta,
+            );
+            o.provenance.source_class = class_dir.into();
+            o.title = Some(format!("title of {id}"));
+            o
+        };
+        let mut curated = record(
+            "curated",
+            "start-here",
+            json!({ "class": "convention", "status": "verified", "epistemics": "decided",
+                    "date": "2026-09-05", "tags": ["onboarding"],
+                    "provenance": { "origin": "authored", "derived_from": ["file:docs/DESIGN.md"] },
+                    "relations": [{ "type": "documents", "target": "file:docs/CLAIMS.yaml" }] }),
+        );
+        curated.description = Some("What to read first.".into());
+        let ctx = context_with(
+            &repo,
+            vec![
+                curated,
+                record(
+                    "candidates",
+                    "e1-a",
+                    json!({ "class": "lesson", "status": "candidate", "epistemics": "observed",
+                            "date": "2026-10-17", "about": "lib/a.sh", "route": "project",
+                            "provenance": { "origin": "extracted", "derived_from": ["session:e1"] } }),
+                ),
+                record(
+                    "candidates",
+                    "e1-b",
+                    json!({ "class": "lesson", "status": "candidate", "date": "2026-10-17",
+                            "about": "lib" }),
+                ),
+                record(
+                    "candidates",
+                    "e0-c",
+                    json!({ "class": "fact", "status": "superseded", "date": "2026-10-01",
+                            "about": "library", "superseded_by": "e1-a" }),
+                ),
+            ],
+        );
+        let all = records(&ctx, KnowledgeRecordsInput::default()).unwrap();
+        let ids: Vec<&str> = all.records.iter().map(|e| e.id.as_str()).collect();
+        assert_eq!(ids, ["e1-a", "e1-b", "e0-c", "start-here"]);
+        assert_eq!(all.total, 4);
+        assert_eq!(
+            all.classes,
+            BTreeMap::from([
+                ("convention".into(), 1),
+                ("fact".into(), 1),
+                ("lesson".into(), 2)
+            ])
+        );
+        assert_eq!(all.statuses["candidate"], 2);
+
+        let here = &all.records[3];
+        assert_eq!(
+            (
+                here.source_class.as_str(),
+                here.origin.as_str(),
+                here.description.as_str()
+            ),
+            ("curated", "authored", "What to read first.")
+        );
+        assert_eq!(here.tags, ["onboarding"]);
+        assert_eq!(here.derived_from, ["file:docs/DESIGN.md"]);
+        assert_eq!(
+            here.relations,
+            [KnowledgeLink {
+                relation_type: "documents".into(),
+                target: "file:docs/CLAIMS.yaml".into()
+            }]
+        );
+        assert_eq!(all.records[2].superseded_by.as_deref(), Some("e1-a"));
+        assert_eq!(all.records[0].route, "project");
+        assert!(all.records[1].origin.is_empty(), "no provenance, no origin");
+
+        let ask = |class: Option<&str>, status: Option<&str>, about: Option<&str>| {
+            records(
+                &ctx,
+                KnowledgeRecordsInput {
+                    class: class.map(str::to_string),
+                    status: status.map(str::to_string),
+                    about: about.map(str::to_string),
+                },
+            )
+        };
+        let ids_of =
+            |r: KnowledgeRecords| -> Vec<String> { r.records.into_iter().map(|e| e.id).collect() };
+        assert_eq!(
+            ids_of(ask(Some("lesson"), None, None).unwrap()),
+            ["e1-a", "e1-b"]
+        );
+        assert_eq!(
+            ids_of(ask(None, Some("verified"), None).unwrap()),
+            ["start-here"]
+        );
+        assert_eq!(
+            ids_of(ask(None, None, Some("lib/")).unwrap()),
+            ["e1-a", "e1-b"],
+            "the subject and what lies beneath it, never `library`"
+        );
+        assert_eq!(ids_of(ask(None, None, Some("lib/a.sh")).unwrap()), ["e1-a"]);
+        let none = ask(Some("memory"), None, None).unwrap();
+        assert_eq!((none.total, none.classes.len()), (0, 0));
+        for (class, status) in [(Some("lessons"), None), (None, Some("accepted"))] {
+            match ask(class, status, None) {
+                Err(CapabilityError::InvalidInput(m)) => {
+                    assert!(m.contains("is not one of"), "{m}")
+                }
+                other => panic!("an unknown word answered {other:?}"),
+            }
+        }
+    }
+
     #[test]
     /// ADR 0118: records derived from observations are grouped by what they are about —
     /// candidates and rejected records alike, each episode once, in order of subject — and a

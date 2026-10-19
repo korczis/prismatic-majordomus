@@ -503,6 +503,18 @@ and it is announced to MCP clients as not read-only. Over plain HTTP there is no
 so `POST /api/v1/peers/announce` is refused (422) and `GET /api/v1/peers` answers without
 a `caller`.
 
+The board is also read from the command line: `majordomus peers` is the third projection of
+`peers.list`, for a worker whose client has no `majordomus_*` tools to ask with. It prints
+every checkout the answer covers with where its server stands, each peer under the checkout
+it is attached to, and under each peer the claims it holds with their paths; `--format
+json` prints the capability's answer unchanged, and `--checkouts this` is the same narrowing
+the tool takes. The answer comes from the server holding this checkout's lease when there
+is one; with none, the capability runs in the command's own process and still asks every
+sibling checkout's server. A board is a server's memory, so when no server answers for any
+checkout the answer covers there is no board: the command says so on stderr and exits 12,
+the missing-artifact code, never 0 over an empty board it did not read. Announcing stays an
+act of an attached session, so there is no command for it.
+
 ### The board is the repository's (ADR 0044)
 
 A server serves a checkout, so a repository worked on through linked worktrees has one

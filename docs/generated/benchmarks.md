@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 206 | 175 | 0 | 31 |
-| http | 201 | 175 | 0 | 26 |
-| mcp | 196 | 171 | 0 | 25 |
+| direct | 208 | 177 | 0 | 31 |
+| http | 203 | 177 | 0 | 26 |
+| mcp | 198 | 173 | 0 | 25 |
 | system | 14 | 14 | 0 | 0 |
-| total | 617 | 535 | 0 | 82 |
+| total | 623 | 541 | 0 | 82 |
 
 ## Capabilities
 
@@ -40,6 +40,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `continuity.status` | continuity | query | — | covered | covered | covered | `default` |
 | `continuity.sync` | continuity | command | — | waived | waived | waived | — |
 | `convergence.report` | convergence | query | — | covered | covered | covered | `default` |
+| `dashboard.cluster` | dashboard | query | — | covered | covered | covered | `default` |
 | `dashboard.overview` | dashboard | query | — | covered | covered | covered | `default` |
 | `delivery.feature` | delivery | query | — | waived | waived | waived | — |
 | `delivery.report` | delivery | query | — | waived | waived | waived | — |
@@ -114,6 +115,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `intents.validate` | intents | query | — | covered | covered | covered | `default` |
 | `knowledge_base.candidates` | knowledge_base | query | — | covered | covered | covered | `default` |
 | `knowledge_base.record` | knowledge_base | query | — | covered | covered | covered | `first-record` |
+| `knowledge_base.records` | knowledge_base | query | — | covered | covered | covered | `all`, `lessons-awaiting-review` |
 | `knowledge_base.status` | knowledge_base | query | process, 2 entries, 2s | covered | covered | covered | `default` |
 | `lifecycle.closed` | lifecycle | query | process, 2 entries, 30s | covered | covered | covered | `default` |
 | `lifecycle.episodes` | lifecycle | query | process, 2 entries, 2s | covered | covered | covered | `default` |
@@ -285,6 +287,7 @@ Every screen and panel of the UI's own route list, read with `GET` and `Accept: 
 | `system.http.live.ui.docs` | `/ui/docs` | live | — |
 | `system.http.live.ui.governance` | `/ui/governance` | live | — |
 | `system.http.live.ui.observatory` | `/ui/observatory` | live | — |
+| `system.http.ui.panels.cluster` | `/ui/panels/cluster` | pinned | yes |
 | `system.http.ui.panels.pull_requests` | `/ui/panels/pull-requests` | pinned | yes |
 | `system.http.ui.panels.delivery` | `/ui/panels/delivery` | pinned | yes |
 | `system.http.ui.panels.drain` | `/ui/panels/drain` | pinned | yes |

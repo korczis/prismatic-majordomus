@@ -1,6 +1,6 @@
 ---
 name: mj-dashboard
-description: "Majordomus dashboard: The Overview: four questions."
+description: "Majordomus dashboard: The cluster: machines, sessions, claims and plan progress; The Overview: four questions."
 argument-hint: "[request]"
 ---
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
@@ -15,6 +15,7 @@ $ARGUMENTS
 
 | Capability | What it is | MCP tool | Command line | Effect |
 |---|---|---|---|---|
+| `dashboard.cluster` | The cluster: machines, sessions, claims and plan progress | `majordomus_dashboard_cluster` | `majordomus dashboard cluster` | reads |
 | `dashboard.overview` | The Overview: four questions | `majordomus_dashboard_overview` | `majordomus dashboard overview` | reads |
 
 A capability that *changes* something runs only when the person asked for that change: call it once, and if it is refused or its outcome is not known, report that as it is and do not try again by another way. One that *reads* may be called whenever the request needs it.

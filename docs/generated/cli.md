@@ -235,6 +235,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus pack verify`](#majordomus-pack-verify) | `/docs/cli/pack/verify/` | Verify a written pack against its manifest and the profile it names; exit 10 on a finding, 12 when the manifest cannot be read |
 | [`majordomus dashboard`](#majordomus-dashboard) | `/docs/cli/dashboard/` | The Dashboard Suite: each page a projection of the capabilities that hold its facts, every card carrying its source capability, the JSON pointer its value was read from, the Cockpit page with the evidence and the command that acts on it |
 | [`majordomus dashboard overview`](#majordomus-dashboard-overview) | `/docs/cli/dashboard/overview/` | Is it healthy, what changed, what is broken, what needs action: every card with its value, the source's verdict, and the capability and pointer it was read from; exit 10 when the overview is fail or unknown |
+| [`majordomus dashboard cluster`](#majordomus-dashboard-cluster) | `/docs/cli/dashboard/cluster/` | Who works where and how far each milestone is: every machine with its sessions and claims, the progress of every open milestone, and the integration and derive queues, drawn as console text from `dashboard.cluster` |
 | [`majordomus brief`](#majordomus-brief) | `/docs/cli/brief/` | What surrounds this session, in one line and in a few: its episode and task, the peers of every board, the mesh, the integration queue and the derive queue, asked of the server holding this checkout's lease |
 | [`majordomus skills`](#majordomus-skills) | `/docs/cli/skills/` | Every skill as a proven capability: the tests that name it and the evidence behind them, its page, the doctrine and gates that hold it, what invokes it, and the orphans |
 | [`majordomus skills status`](#majordomus-skills-status) | `/docs/cli/skills/status/` | Every skill with its derived standing: tested, documented, enforced, used |
@@ -243,6 +244,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus knowledge`](#majordomus-knowledge) | `/docs/cli/knowledge/` | What the knowledge deriver left for review and whether it is still writing: the candidate records awaiting promotion, one record by id with every reference it names resolved, and the derivation status of this checkout judged against the policy's freshness thresholds |
 | [`majordomus knowledge candidates`](#majordomus-knowledge-candidates) | `/docs/cli/knowledge/candidates/` | The candidate records awaiting review, with the branch of the episode each came from and how long each has waited |
 | [`majordomus knowledge record`](#majordomus-knowledge-record) | `/docs/cli/knowledge/record/` | One knowledge record by id: its front matter, and every reference it names resolved against the index, the ledger and git |
+| [`majordomus knowledge records`](#majordomus-knowledge-records) | `/docs/cli/knowledge/records/` | Every record of the knowledge base, curated and candidate, as its file declares it, newest first, filtered by class, status and subject |
 | [`majordomus knowledge status`](#majordomus-knowledge-status) | `/docs/cli/knowledge/status/` | Whether the deriver is still writing: the last derivation, the newest closed episode, and the stopped-writer judgement against session.freshness |
 | [`majordomus continuity`](#majordomus-continuity) | `/docs/cli/continuity/` | Continue work on another machine: publish this checkout's newest handover as a signed record in refs/majordomus/continuity, exchange records with a git remote, and plan and resume a handover another device published — with its source compatibility, lineage and trust decided before anything is written |
 | [`majordomus continuity status`](#majordomus-continuity-status) | `/docs/cli/continuity/status/` | This device, the record this checkout continues, the store against its remote (no network), every line of work, and what other devices published that could be resumed here |
@@ -252,13 +254,14 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus continuity publish`](#majordomus-continuity-publish) | `/docs/cli/continuity/publish/` | Publish this checkout's newest handover as a signed record for another machine; refused when it carries a secret or a machine path |
 | [`majordomus continuity sync`](#majordomus-continuity-sync) | `/docs/cli/continuity/sync/` | Exchange published handovers with a git remote: fetch, merge as a union, push; an unreachable remote leaves what is pending pending |
 | [`majordomus continuity resume`](#majordomus-continuity-resume) | `/docs/cli/continuity/resume/` | Resume a published handover when its plan is ready: write it into this checkout's handovers, carry its decisions, and continue its line |
+| [`majordomus peers`](#majordomus-peers) | `/docs/cli/peers/` | Who else is working in this repository: every peer of every checkout's board, the worktree it is attached to and the paths it claimed; exits 12 when no board could be asked |
 
 <a id="majordomus"></a>
 ## `majordomus`
 
 Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer
 
-Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus devtask`](#majordomus-devtask), [`majordomus distribution`](#majordomus-distribution), [`majordomus env`](#majordomus-env), [`majordomus commands`](#majordomus-commands), [`majordomus completion`](#majordomus-completion), [`majordomus worktree`](#majordomus-worktree), [`majordomus prs`](#majordomus-prs), [`majordomus offload`](#majordomus-offload), [`majordomus convergence`](#majordomus-convergence), [`majordomus commit`](#majordomus-commit), [`majordomus product`](#majordomus-product), [`majordomus release`](#majordomus-release), [`majordomus quality`](#majordomus-quality), [`majordomus run`](#majordomus-run), [`majordomus executions`](#majordomus-executions), [`majordomus devcontext`](#majordomus-devcontext), [`majordomus guard`](#majordomus-guard), [`majordomus mesh`](#majordomus-mesh), [`majordomus monitor`](#majordomus-monitor), [`majordomus models`](#majordomus-models), [`majordomus reasoning`](#majordomus-reasoning), [`majordomus evidence`](#majordomus-evidence), [`majordomus served`](#majordomus-served), [`majordomus rules`](#majordomus-rules), [`majordomus intent`](#majordomus-intent), [`majordomus delivery`](#majordomus-delivery), [`majordomus plan`](#majordomus-plan), [`majordomus economics`](#majordomus-economics), [`majordomus entity`](#majordomus-entity), [`majordomus shell`](#majordomus-shell), [`majordomus pack`](#majordomus-pack), [`majordomus dashboard`](#majordomus-dashboard), [`majordomus brief`](#majordomus-brief), [`majordomus skills`](#majordomus-skills), [`majordomus knowledge`](#majordomus-knowledge), [`majordomus continuity`](#majordomus-continuity).
+Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus devtask`](#majordomus-devtask), [`majordomus distribution`](#majordomus-distribution), [`majordomus env`](#majordomus-env), [`majordomus commands`](#majordomus-commands), [`majordomus completion`](#majordomus-completion), [`majordomus worktree`](#majordomus-worktree), [`majordomus prs`](#majordomus-prs), [`majordomus offload`](#majordomus-offload), [`majordomus convergence`](#majordomus-convergence), [`majordomus commit`](#majordomus-commit), [`majordomus product`](#majordomus-product), [`majordomus release`](#majordomus-release), [`majordomus quality`](#majordomus-quality), [`majordomus run`](#majordomus-run), [`majordomus executions`](#majordomus-executions), [`majordomus devcontext`](#majordomus-devcontext), [`majordomus guard`](#majordomus-guard), [`majordomus mesh`](#majordomus-mesh), [`majordomus monitor`](#majordomus-monitor), [`majordomus models`](#majordomus-models), [`majordomus reasoning`](#majordomus-reasoning), [`majordomus evidence`](#majordomus-evidence), [`majordomus served`](#majordomus-served), [`majordomus rules`](#majordomus-rules), [`majordomus intent`](#majordomus-intent), [`majordomus delivery`](#majordomus-delivery), [`majordomus plan`](#majordomus-plan), [`majordomus economics`](#majordomus-economics), [`majordomus entity`](#majordomus-entity), [`majordomus shell`](#majordomus-shell), [`majordomus pack`](#majordomus-pack), [`majordomus dashboard`](#majordomus-dashboard), [`majordomus brief`](#majordomus-brief), [`majordomus skills`](#majordomus-skills), [`majordomus knowledge`](#majordomus-knowledge), [`majordomus continuity`](#majordomus-continuity), [`majordomus peers`](#majordomus-peers).
 
 ```text
 majordomus <COMMAND>
@@ -6688,7 +6691,7 @@ Examples:
 
 The Dashboard Suite: each page a projection of the capabilities that hold its facts, every card carrying its source capability, the JSON pointer its value was read from, the Cockpit page with the evidence and the command that acts on it
 
-Subcommands: [`majordomus dashboard overview`](#majordomus-dashboard-overview).
+Subcommands: [`majordomus dashboard overview`](#majordomus-dashboard-overview), [`majordomus dashboard cluster`](#majordomus-dashboard-cluster).
 
 ```text
 majordomus dashboard [OPTIONS] <COMMAND>
@@ -6728,6 +6731,34 @@ Examples:
   ```
 
   Verified: exits 10.
+
+<a id="majordomus-dashboard-cluster"></a>
+## `majordomus dashboard cluster`
+
+Who works where and how far each milestone is: every machine with its sessions and claims, the progress of every open milestone, and the integration and derive queues, drawn as console text from `dashboard.cluster`
+
+```text
+majordomus dashboard cluster [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--width` | `<WIDTH>` | — | The console width the page is cut to, in characters (40 to 200) |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **The cluster: machines, sessions, claims and plan progress, with the console text** — The same answer `GET /api/v1/dashboard/cluster`, the MCP tool `majordomus_dashboard_cluster` and the /ui cluster panel return: every machine of the mesh with its active sessions and claims, how far each open milestone is, and the integration and derive queues, plus `lines`, the page as console text. A source that did not answer is named in `notes`; the exit code is 0 either way.
+
+  ```console
+  $ majordomus dashboard cluster --format json
+  ```
+
+  Verified: exits 0.
 
 <a id="majordomus-brief"></a>
 ## `majordomus brief`
@@ -6874,7 +6905,7 @@ Examples:
 
 What the knowledge deriver left for review and whether it is still writing: the candidate records awaiting promotion, one record by id with every reference it names resolved, and the derivation status of this checkout judged against the policy's freshness thresholds
 
-Subcommands: [`majordomus knowledge candidates`](#majordomus-knowledge-candidates), [`majordomus knowledge record`](#majordomus-knowledge-record), [`majordomus knowledge status`](#majordomus-knowledge-status).
+Subcommands: [`majordomus knowledge candidates`](#majordomus-knowledge-candidates), [`majordomus knowledge record`](#majordomus-knowledge-record), [`majordomus knowledge records`](#majordomus-knowledge-records), [`majordomus knowledge status`](#majordomus-knowledge-status).
 
 ```text
 majordomus knowledge [OPTIONS] <COMMAND>
@@ -6942,6 +6973,36 @@ Examples:
   ```
 
   Verified: exits 12.
+
+<a id="majordomus-knowledge-records"></a>
+## `majordomus knowledge records`
+
+Every record of the knowledge base, curated and candidate, as its file declares it, newest first, filtered by class, status and subject
+
+```text
+majordomus knowledge records [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--class` | `fact` \| `convention` \| `constraint` \| `memory` \| `lesson` | — | Only records of this class — `fact`: Something observed to be true of the repository; `convention`: How things are done here, decided; `constraint`: A limit the repository must respect; `memory`: Something remembered across episodes; `lesson`: What a failure, a block or an observation taught |
+| `--status` | `candidate` \| `verified` \| `superseded` | — | Only records with this status — `candidate`: Derived by the tool and awaiting a person's review; `verified`: Promoted by a person, with evidence; `superseded`: Replaced by another record, or rejected with a reason |
+| `--about` | `<ABOUT>` | — | Only records about this subject, or about a path beneath it |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **The lessons the base holds** — The same answer `GET /api/v1/knowledge/records?class=lesson` and the MCP tool `majordomus_knowledge_records` serve: every record of that class, curated or candidate, as its file declares it, newest first, with the count each status holds. Nothing is resolved against the ledger or git, so every clone prints the same records.
+
+  ```console
+  $ majordomus knowledge records --class lesson --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /total.
 
 <a id="majordomus-knowledge-status"></a>
 ## `majordomus knowledge status`
@@ -7184,4 +7245,32 @@ Examples:
   ```
 
   Verified: exits 10.
+
+<a id="majordomus-peers"></a>
+## `majordomus peers`
+
+Who else is working in this repository: every peer of every checkout's board, the worktree it is attached to and the paths it claimed; exits 12 when no board could be asked
+
+```text
+majordomus peers [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--checkouts` | `repository` \| `this` | `repository` | Which checkouts to answer for: every checkout of the repository, or this one alone — which reads no other checkout's lease and asks no other server — `repository`: Every checkout git registers for the repository, the primary first — a lease read and a probe each. The default, because it is the answer this capability gave before there was anything to ask; `this`: This checkout alone. No other checkout is enumerated, no other lease is read and no other server is probed; `servers` holds the one entry, and it is this one |
+| `--format` | `text` \| `json` | `text` | Output shape — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Who else is working here, and what it says when nobody can be asked** — The board of every checkout of the repository: each peer, the worktree it is attached to, whether it is still attached and the paths it claimed, from the same capability the MCP tool majordomus_peers projects. A board is a server's memory, so in a repository where no server answers for any checkout there is none to read: the command prints the checkouts it covered, says on stderr that no board could be asked, and exits 12 rather than reporting an empty board as if it had read one.
+
+  ```console
+  $ majordomus peers
+  ```
+
+  Verified: exits 12.
 

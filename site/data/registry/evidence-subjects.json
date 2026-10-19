@@ -149,6 +149,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:dashboard.cluster",
+      "path": "/evidence/capabilities/dashboard-cluster/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:dashboard.overview",
       "path": "/evidence/capabilities/dashboard-overview/"
     },
@@ -516,6 +521,11 @@
       "kind": "capability",
       "subject": "capability:knowledge_base.record",
       "path": "/evidence/capabilities/knowledge-base-record/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:knowledge_base.records",
+      "path": "/evidence/capabilities/knowledge-base-records/"
     },
     {
       "kind": "capability",
@@ -2514,6 +2524,11 @@
     },
     {
       "kind": "command",
+      "subject": "command:dashboard cluster",
+      "path": "/evidence/commands/dashboard-cluster/"
+    },
+    {
+      "kind": "command",
       "subject": "command:dashboard overview",
       "path": "/evidence/commands/dashboard-overview/"
     },
@@ -2844,6 +2859,11 @@
     },
     {
       "kind": "command",
+      "subject": "command:knowledge records",
+      "path": "/evidence/commands/knowledge-records/"
+    },
+    {
+      "kind": "command",
       "subject": "command:knowledge status",
       "path": "/evidence/commands/knowledge-status/"
     },
@@ -3006,6 +3026,11 @@
       "kind": "command",
       "subject": "command:pack verify",
       "path": "/evidence/commands/pack-verify/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:peers",
+      "path": "/evidence/commands/peers/"
     },
     {
       "kind": "command",
@@ -4146,6 +4171,18 @@
       "mechanisms": [],
       "findings": []
     },
+    "capability:dashboard.cluster": {
+      "kind": "capability",
+      "id": "dashboard.cluster",
+      "page": "/evidence/capabilities/dashboard-cluster/",
+      "programs": [],
+      "members": [
+        "command:dashboard cluster"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
     "capability:dashboard.overview": {
       "kind": "capability",
       "id": "dashboard.overview",
@@ -4985,6 +5022,19 @@
       "mechanisms": [],
       "findings": []
     },
+    "capability:knowledge_base.records": {
+      "kind": "capability",
+      "id": "knowledge_base.records",
+      "page": "/evidence/capabilities/knowledge-base-records/",
+      "programs": [],
+      "members": [
+        "claim:knowledge-served-on-every-surface",
+        "command:knowledge records"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
     "capability:knowledge_base.status": {
       "kind": "capability",
       "id": "knowledge_base.status",
@@ -5513,7 +5563,9 @@
       "id": "peers.list",
       "page": "/evidence/capabilities/peers-list/",
       "programs": [],
-      "members": [],
+      "members": [
+        "command:peers"
+      ],
       "routes": [],
       "mechanisms": [],
       "findings": []
@@ -13198,6 +13250,25 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:dashboard cluster": {
+      "kind": "command",
+      "id": "dashboard cluster",
+      "page": "/evidence/commands/dashboard-cluster/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:dashboard overview": {
       "kind": "command",
       "id": "dashboard overview",
@@ -15425,6 +15496,25 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:knowledge records": {
+      "kind": "command",
+      "id": "knowledge records",
+      "page": "/evidence/commands/knowledge-records/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:knowledge status": {
       "kind": "command",
       "id": "knowledge status",
@@ -16024,6 +16114,25 @@
       "kind": "command",
       "id": "pack verify",
       "page": "/evidence/commands/pack-verify/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:peers": {
+      "kind": "command",
+      "id": "peers",
+      "page": "/evidence/commands/peers/",
       "programs": [
         "native"
       ],
@@ -19801,6 +19910,18 @@
       "mechanisms": [],
       "findings": []
     },
+    "mcp:majordomus_dashboard_cluster": {
+      "kind": "mcp",
+      "id": "majordomus_dashboard_cluster",
+      "alias_of": "capability:dashboard.cluster",
+      "programs": [],
+      "members": [
+        "capability:dashboard.cluster"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
     "mcp:majordomus_dashboard_overview": {
       "kind": "mcp",
       "id": "majordomus_dashboard_overview",
@@ -20504,6 +20625,18 @@
       "programs": [],
       "members": [
         "capability:knowledge_base.record"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_knowledge_records": {
+      "kind": "mcp",
+      "id": "majordomus_knowledge_records",
+      "alias_of": "capability:knowledge_base.records",
+      "programs": [],
+      "members": [
+        "capability:knowledge_base.records"
       ],
       "routes": [],
       "mechanisms": [],
@@ -23544,6 +23677,29 @@
       "mechanisms": [],
       "findings": []
     },
+    "rule:project.a-visualisation-is-interactive": {
+      "kind": "rule",
+      "id": "project.a-visualisation-is-interactive",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:1102_a_visualisation_is_interactive",
+          "path": "test/cases/1102_a_visualisation_is_interactive.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/1102_a_visualisation_is_interactive.sh",
+            ".ai/repo/rules/project/a-visualisation-is-interactive.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [
+        "scripts/ci/visualisation-check"
+      ],
+      "findings": []
+    },
     "rule:project.a-worker-that-stops-leaves-its-work-behind": {
       "kind": "rule",
       "id": "project.a-worker-that-stops-leaves-its-work-behind",
@@ -25118,6 +25274,37 @@
           "inputs": [
             "test/cases/97_pages_fast_path.sh",
             ".ai/repo/rules/project/land-and-publish.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "rule:project.markdown-is-rendered-once": {
+      "kind": "rule",
+      "id": "project.markdown-is-rendered-once",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "crate:markdown_bodies",
+          "path": "apps/majordomus-cli/tests/markdown_bodies.rs",
+          "category": "integration",
+          "inputs": [
+            "apps/majordomus-cli/tests/markdown_bodies.rs",
+            ".ai/repo/rules/project/markdown-is-rendered-once.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:1101_markdown_is_rendered_once",
+          "path": "test/cases/1101_markdown_is_rendered_once.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/1101_markdown_is_rendered_once.sh",
+            ".ai/repo/rules/project/markdown-is-rendered-once.v1.md"
           ]
         }
       ],
@@ -28426,6 +28613,8 @@
     "suite:1081_an_intent_opens_what_serves_it",
     "suite:1082_a_claim_opens_its_proof",
     "suite:1083_a_rule_opens_its_proof",
+    "suite:1084_the_capabilities_are_faceted",
+    "suite:1085_the_home_page_is_the_front_door",
     "suite:1086_a_remote_caller_cannot_write",
     "suite:1088_the_command_and_capability_screens_answer",
     "suite:1089_the_work_and_mesh_screens_answer",
@@ -28459,9 +28648,11 @@
     "suite:2978_an_intent_is_proposed_by_a_capability",
     "suite:2981_the_cockpit_snapshot_holds_its_routes",
     "suite:2982_two_snapshots_link_what_the_other_holds",
+    "suite:2993_the_peer_board_is_read_from_the_command_line",
     "suite:2998_evidence_reaches_the_subcommands_the_executable_owns",
     "suite:3003_the_knowledge_screen_answers",
     "suite:300_a_pipeline_cannot_hide_a_failure",
+    "suite:3012_the_dashboard_is_one_reading",
     "suite:3014_the_kiosk_draws_what_the_repository_proves",
     "suite:3016_init_seeds_the_scope_of_the_stack_it_finds",
     "suite:3017_doctor_holds_an_adopter_to_what_it_adopted",
@@ -28481,6 +28672,7 @@
     "suite:303_one_source_serves_two_mounts",
     "suite:3042_the_observatory_asks_again_when_it_is_seen",
     "suite:3043_site_json_cannot_close_its_script",
+    "suite:3046_the_observatory_hears_executions_as_they_happen",
     "suite:3047_a_leak_finding_names_where_it_is",
     "suite:3048_a_derivation_survives_an_unrelated_merge",
     "suite:3049_a_second_workers_record_lands_on_the_first_workers_task",
@@ -28502,6 +28694,7 @@
     "suite:3125_the_reaper_asks_cargo_for_the_build_dir",
     "suite:3131_a_new_worktree_starts_from_the_remote_trunk",
     "suite:318_a_partial_sweep_says_so",
+    "suite:3191_the_knowledge_base_is_listed",
     "suite:3212_a_prerelease_version_is_bumped_and_ordered",
     "suite:3220_the_idd_loop_is_walked_in_a_browser",
     "suite:3222_an_alpha_publishes_beside_the_latest_release",

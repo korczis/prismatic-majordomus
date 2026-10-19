@@ -432,7 +432,7 @@ mod tests {
         let html = inspector_with(&roadmap, &issues, &record, "M004").render();
         for expected in [
             "The problem",
-            "<code class=\"mj-ui-code\">doctor</code>",
+            "<code class=\"mj-md-code\">doctor</code>",
             "?issue=I0002#issue\">I0002</a>",
             "The outcome",
             "<strong>benchmarked</strong>",

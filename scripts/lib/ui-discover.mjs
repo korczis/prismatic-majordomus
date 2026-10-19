@@ -18,9 +18,6 @@ import { collections, family, shape } from './ui-routes.mjs';
 /** The narrowest viewport every page must remain usable at (WCAG 2.2 reflow, 320 CSS px). */
 export const REFLOW_FLOOR = 320;
 
-/** A width to represent the desktop end, above the largest breakpoint. */
-export const DESKTOP = 1440;
-
 /**
  * Every rendered route of a built site, from the filesystem, as paths beginning with `/`.
  * A directory holding `index.html` is a route; a stray `.html` file is one too.
@@ -138,11 +135,15 @@ export function breakpointsFromCss(cssPath) {
 
 /**
  * The widths every page is audited at: the reflow floor, each breakpoint's boundary and the
- * pixel below it — where a layout discontinuity hides — and one desktop width. Deduplicated
- * and sorted, so a theme with two names for one width costs one visit.
+ * pixel below it — where a layout discontinuity hides — and the widths the design declares.
+ * Deduplicated and sorted, so a theme with two names for one width costs one visit.
+ *
+ * No desktop width is chosen here. The widest width the design declares is the desktop end
+ * (1600 today, share/design/tokens.yaml); a desktop literal of this file's own, 1440, was a
+ * second list of widths with one entry, which the design could not move.
  */
 export function viewports(breakpoints, declared = []) {
-  const widths = new Set([REFLOW_FLOOR, DESKTOP, ...declared]);
+  const widths = new Set([REFLOW_FLOOR, ...declared]);
   for (const breakpoint of breakpoints) {
     widths.add(breakpoint - 1);
     widths.add(breakpoint);
@@ -202,10 +203,15 @@ export function tierPages(pages, viewportList) {
   });
 }
 
-/** The widths every page is visited at: the floor, one middle, and the desktop end. */
+/**
+ * The widths every page is visited at: the floor, one middle, and the desktop end — the
+ * widest width of the list, which is the widest the design declares, or with no declaration
+ * the widest boundary the theme compiled.
+ */
 export function criticalWidths(viewportList) {
   const middle = viewportList[Math.floor(viewportList.length / 2)];
-  return [...new Set([REFLOW_FLOOR, middle, DESKTOP])].sort((a, b) => a - b);
+  const widest = viewportList[viewportList.length - 1];
+  return [...new Set([REFLOW_FLOOR, middle, widest])].sort((a, b) => a - b);
 }
 
 /** The whole audit target set for one directory: pages × widths, with the provenance of both. */

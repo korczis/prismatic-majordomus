@@ -1,8 +1,8 @@
 //! Intent workspace: one intent and everything that serves it — its criteria, its
 //! milestones, their issues with what blocks each, the waves those issues occupy and the
 //! dependency graph between them — with every ready issue one link from the move that
-//! starts it. Read from `intents.list`, `plan.roadmap`, `plan.issues`, `plan.waves` and
-//! `plan.next`.
+//! starts it, and beside it the plan's own waves with what is still open in each. Read from
+//! `intents.list`, `plan.roadmap`, `plan.issues`, `plan.waves` and `plan.next`.
 //!
 //! The screen decides nothing. Which issues belong to an intent is the plan's own relation:
 //! the issues of the milestones the intent names, and any issue whose `serves` names it.
@@ -23,12 +23,12 @@ use serde_json::Value;
 use crate::capability::Context;
 use crate::cockpit::html::{el, El};
 
-use super::dashboard::milestone_row;
+use super::dashboard::{milestone_row, ROWS};
 use super::shell::View;
 use super::source::{ask_all, Answer, Source};
 use super::view::{
-    graph, hero, hero_under, kpi, kpi_count, list, nothing, panel, panel_to, state, status_tone,
-    table, text, unanswered, wide, GraphNode, Layout,
+    graph, hero, hero_under, kpi, kpi_count, list, more, nothing, panel, panel_to, state,
+    status_tone, table, text, unanswered, value, wide, GraphNode, Layout,
 };
 
 /// The route of the screen.
@@ -265,6 +265,9 @@ fn render(
                 .child(wide(moves_panel(moves, &mine)));
         }
     }
+    // the whole plan's waves, whichever intent is open or none: what may run at the same
+    // time and what is still open in each, the answer #1184's separate screen drew
+    grid = grid.child(wide(plan_waves(waves, &known(issues, roadmap))));
 
     // the screen follows the executions this server runs and reads itself again when one
     // ends, so a move made anywhere on this server shows here without waiting for the
@@ -673,6 +676,136 @@ fn wave_panel(waves: &Answer, mine: &[Value], known: &super::prose::Known) -> El
         body,
         &[waves],
     )
+}
+
+/// Whether an issue is still to be done: anything the plan has neither finished nor given up.
+fn is_open(issue: &Value) -> bool {
+    !matches!(
+        text(issue, "status").to_ascii_uppercase().as_str(),
+        "DONE" | "CANCELLED"
+    )
+}
+
+/// The whole plan's waves, as `plan.waves` layers it and whichever intent is open: a line per
+/// wave with how many issues it holds and how many are still open, those open issues one click
+/// away, and the scope conflicts that serialise issues of one wave across the plan. The first
+/// wave with open work is unfolded; a done or cancelled issue counts in its wave's size and is
+/// not listed. What #1184's separate `/ui/waves` drew, folded into the workspace.
+fn plan_waves(waves: &Answer, known: &super::prose::Known) -> El {
+    let body = unanswered(waves).unwrap_or_else(|| {
+        let all = list(waves, "/waves");
+        if all.is_empty() {
+            return nothing("The plan has no wave.");
+        }
+        let mut unfolded = false;
+        let mut body = el("div").class("mj-ui-stack");
+        for wave in &all {
+            let (summary, open, issues) = open_wave(wave);
+            let unfold = open > 0 && !unfolded;
+            unfolded |= unfold;
+            body = body.child(
+                el("details")
+                    .attr_if("open", unfold.then_some(""))
+                    .child(el("summary").text(summary))
+                    .child(issues),
+            );
+        }
+        body.child(plan_conflicts(waves, known))
+    });
+    panel(
+        "What is still open in each wave of the plan?",
+        "The whole plan in the order its dependencies allow: an issue of a wave can start once the waves before it are done.",
+        body,
+        &[waves],
+    )
+}
+
+/// One wave of the plan: the line naming it with its size and what is still open in it, how
+/// many that is, and the open issues, each leading to its inspector, bounded at [`ROWS`]. A
+/// wave without a number is `unknown`, never a made-up one.
+fn open_wave(wave: &Value) -> (String, usize, El) {
+    let number = wave
+        .get("wave")
+        .and_then(Value::as_u64)
+        .map(|n| n.to_string())
+        .unwrap_or_else(|| "unknown".into());
+    let issues: Vec<Value> = wave
+        .get("issues")
+        .and_then(Value::as_array)
+        .cloned()
+        .unwrap_or_default();
+    let open: Vec<&Value> = issues.iter().filter(|i| is_open(i)).collect();
+    let rows = open
+        .iter()
+        .take(ROWS)
+        .map(|i| {
+            let milestone = text(i, "milestone");
+            el("tr")
+                .child(
+                    el("td").child(
+                        el("a")
+                            .class("mj-ui-row-link")
+                            .attr("href", issue_href(&text(i, "id")))
+                            .child(
+                                el("span")
+                                    .class("mj-ui-mono mj-ui-dim")
+                                    .text(value(i, "id")),
+                            )
+                            .child(el("span").class("mj-ui-cell-title").text(value(i, "title"))),
+                    ),
+                )
+                .child(el("td").child(if milestone.is_empty() {
+                    super::view::none()
+                } else {
+                    super::view::code_link(super::milestone::href(&milestone), milestone)
+                }))
+                .child(el("td").child(state(i, "status")))
+                .child(el("td").child(state(i, "priority")))
+        })
+        .collect::<Vec<_>>();
+    let body = el("div")
+        .child(table(
+            &["Issue", "Milestone", "Status", "Priority"],
+            rows,
+            "Every issue of this wave is done or cancelled.",
+        ))
+        .children(more(ROWS.min(open.len()), open.len(), None));
+    (
+        format!(
+            "Wave {number}: {} issue(s), {} still open",
+            issues.len(),
+            open.len()
+        ),
+        open.len(),
+        body,
+    )
+}
+
+/// The scope conflicts across the whole plan: issues of one wave the plan will not let run
+/// together because they write the same paths, bounded at [`ROWS`]; none is said in words.
+fn plan_conflicts(waves: &Answer, known: &super::prose::Known) -> El {
+    let found = list(waves, "/serialised_by_scope");
+    if found.is_empty() {
+        return nothing("No two issues of a wave share a scope.");
+    }
+    let rows = found
+        .iter()
+        .take(ROWS)
+        .map(|f| {
+            let subject = text(f, "subject");
+            el("tr")
+                .child(el("td").child(chip(issue_href(&subject), subject)))
+                .child(el("td").child(state(f, "level")))
+                .child(el("td").nodes(super::prose::inline(&text(f, "message"), known)))
+        })
+        .collect::<Vec<_>>();
+    el("details")
+        .child(el("summary").text(format!(
+            "Shared scope across the plan: {} issue(s) may not run with another of their wave",
+            found.len()
+        )))
+        .child(table(&["Issue", "Level", "Why"], rows, ""))
+        .children(more(ROWS.min(found.len()), found.len(), None))
 }
 
 /// The records the workspace's prose may name: every issue and every milestone the plan holds, so
@@ -1495,7 +1628,7 @@ mod tests {
             "{html}"
         );
         assert!(
-            html.contains("<li>the scope drifted past <code class=\"mj-ui-code\">src/a.rs</code> (<a class=\"mj-ui-link mj-ui-mono\" href=\"/ui/prs?issue=I7#issue\">I7</a>), not I99</li>"),
+            html.contains("<li>the scope drifted past <code class=\"mj-md-code\">src/a.rs</code> (<a class=\"mj-md-ref\" href=\"/ui/prs?issue=I7#issue\">I7</a>), not I99</li>"),
             "a drift message is prose: its path is code, the issue the plan holds a link, one it does not hold text (I3000): {html}"
         );
         assert!(
@@ -1712,6 +1845,105 @@ mod tests {
         assert!(!html.contains(">7</td>"), "{html}");
         assert!(!html.contains("OTHER"), "{html}");
         assert!(html.contains("shares lib/a.rs"), "{html}");
+    }
+
+    /// A wave of the plan lists what is still open and says how many of its issues that is; a
+    /// done or cancelled issue is counted in the wave's size and not drawn as work (#1184).
+    #[test]
+    fn a_wave_of_the_plan_lists_what_is_open_and_not_what_is_done() {
+        let wave = serde_json::json!({ "wave": 2, "issues": [
+            { "id": "I0001", "title": "Open work", "milestone": "M1", "status": "READY", "priority": "p1" },
+            { "id": "I0002", "title": "Finished work", "milestone": "M1", "status": "DONE", "priority": "p1" },
+            { "id": "I0003", "title": "Dropped work", "milestone": "M1", "status": "CANCELLED", "priority": "p2" }
+        ]});
+        let (summary, open, body) = open_wave(&wave);
+        assert_eq!(summary, "Wave 2: 3 issue(s), 1 still open");
+        assert_eq!(open, 1);
+        let html = body.render();
+        assert!(
+            html.contains("I0001") && html.contains("Open work"),
+            "{html}"
+        );
+        assert!(!html.contains("I0002") && !html.contains("I0003"), "{html}");
+        assert!(
+            html.contains("href=\"/ui/prs?issue=I0001#issue\""),
+            "{html}"
+        );
+    }
+
+    /// A wave with nothing open says so in words, and a wave without a number is `unknown`,
+    /// never a made-up one (#1184).
+    #[test]
+    fn a_finished_wave_says_so_and_an_unnumbered_one_is_unknown() {
+        let done = serde_json::json!({ "wave": 0, "issues": [
+            { "id": "I0001", "title": "t", "status": "DONE", "priority": "p0" }
+        ]});
+        let (summary, open, body) = open_wave(&done);
+        assert_eq!(summary, "Wave 0: 1 issue(s), 0 still open");
+        assert_eq!(open, 0);
+        let html = body.render();
+        assert!(
+            html.contains("Every issue of this wave is done or cancelled."),
+            "{html}"
+        );
+        let (summary, _, _) = open_wave(&serde_json::json!({ "issues": [] }));
+        assert!(summary.starts_with("Wave unknown"), "{summary}");
+    }
+
+    /// The plan's scope conflicts are drawn from the answer and bounded; none is said in words
+    /// (#1184).
+    #[test]
+    fn the_plans_scope_conflicts_are_bounded_and_none_is_said() {
+        let many: Vec<Value> = (0..ROWS + 5)
+            .map(|i| serde_json::json!({ "level": "WARN", "subject": format!("I{i:04}"), "message": "shares share with I9999" }))
+            .collect();
+        let waves = answer(
+            WAVES,
+            Ok(serde_json::json!({ "serialised_by_scope": many })),
+        );
+        let html = plan_conflicts(&waves, &Default::default()).render();
+        assert!(
+            html.contains("I0000") && html.contains("5 more not shown"),
+            "{html}"
+        );
+        let waves = answer(WAVES, Ok(serde_json::json!({ "serialised_by_scope": [] })));
+        let html = plan_conflicts(&waves, &Default::default()).render();
+        assert!(
+            html.contains("No two issues of a wave share a scope."),
+            "{html}"
+        );
+    }
+
+    /// The workspace draws the whole plan's waves from a real plan, whichever intent is open
+    /// and when none is recorded, and only the first wave with open work is unfolded; the
+    /// separate `/ui/waves` screen it replaces is not a screen of the UI (#1184).
+    #[test]
+    fn the_workspace_draws_the_plans_waves_with_or_without_an_intent() {
+        const TITLE: &str = "What is still open in each wave of the plan?";
+        let repo = planned_with_an_intent();
+        let ctx = repo.context().expect("a context");
+        let html = screen(&ctx, &[]).main.render();
+        assert!(html.contains(TITLE), "{html}");
+        assert!(html.contains("Wave 0: "), "{html}");
+        assert!(html.matches("<details open").count() <= 1, "{html}");
+        let titles = texts_of(&html, "mj-ui-panel-title");
+        assert_eq!(
+            titles.last().map(String::as_str),
+            Some(TITLE),
+            "the plan's waves close the workspace: {titles:?}"
+        );
+
+        let empty = SyntheticRepository::planned();
+        let html = screen(&empty.context().expect("a context"), &[])
+            .main
+            .render();
+        assert!(html.contains(TITLE), "{html}");
+        assert!(html.contains("plan.waves"), "{html}");
+
+        assert!(
+            crate::ui::SCREENS.iter().all(|s| s.route != "/ui/waves"),
+            "the plan's waves are a panel of the workspace, not a screen of their own"
+        );
     }
 
     /// A dependency outside the intent is drawn small, and one the plan does not hold reads

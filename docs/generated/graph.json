@@ -259,6 +259,15 @@
         "status": "query"
       },
       {
+        "id": "capability:dashboard.cluster",
+        "kind": "capability",
+        "label": "dashboard.cluster",
+        "summary": "The cluster: machines, sessions, claims and plan progress",
+        "route": "/cockpit/capabilities/dashboard.cluster",
+        "source": "apps/majordomus-cli/src/capability/builtin/dashboard.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:dashboard.overview",
         "kind": "capability",
         "label": "dashboard.overview",
@@ -921,6 +930,15 @@
         "label": "knowledge_base.record",
         "summary": "One knowledge record",
         "route": "/cockpit/capabilities/knowledge_base.record",
+        "source": "apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:knowledge_base.records",
+        "kind": "capability",
+        "label": "knowledge_base.records",
+        "summary": "The knowledge base",
+        "route": "/cockpit/capabilities/knowledge_base.records",
         "source": "apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
         "status": "query"
       },
@@ -2206,6 +2224,14 @@
         "external": true
       },
       {
+        "id": "file:.ai/repo/visualisation-baseline.txt",
+        "kind": "file",
+        "label": "visualisation-baseline.txt",
+        "summary": "named by the layer; not an object of this index",
+        "source": ".ai/repo/visualisation-baseline.txt",
+        "external": true
+      },
+      {
         "id": "file:.githooks/commit-msg",
         "kind": "file",
         "label": "commit-msg",
@@ -3070,6 +3096,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/markdown.rs",
+        "kind": "file",
+        "label": "markdown.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/markdown.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/mcp/protocol.rs",
         "kind": "file",
         "label": "protocol.rs",
@@ -3427,6 +3461,14 @@
         "label": "observatory.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/ui/observatory.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/ui/prose.rs",
+        "kind": "file",
+        "label": "prose.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/ui/prose.rs",
         "external": true
       },
       {
@@ -3830,6 +3872,14 @@
         "external": true
       },
       {
+        "id": "file:scripts/ci/visualisation-check",
+        "kind": "file",
+        "label": "visualisation-check",
+        "summary": "named by the layer; not an object of this index",
+        "source": "scripts/ci/visualisation-check",
+        "external": true
+      },
+      {
         "id": "file:scripts/cockpit-probe",
         "kind": "file",
         "label": "cockpit-probe",
@@ -4083,6 +4133,14 @@
         "label": "rule.txt",
         "summary": "named by the layer; not an object of this index",
         "source": "share/allow/rule.txt",
+        "external": true
+      },
+      {
+        "id": "file:share/cockpit/cockpit.js",
+        "kind": "file",
+        "label": "cockpit.js",
+        "summary": "named by the layer; not an object of this index",
+        "source": "share/cockpit/cockpit.js",
         "external": true
       },
       {
@@ -7446,6 +7504,43 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0148",
+        "kind": "adr",
+        "label": "adr-0148",
+        "summary": "Markdown is drawn by one renderer in the executable, and every drawing on a served surface can be acted on",
+        "route": "/cockpit/objects/adr/adr-0148",
+        "source": ".ai/repo/adrs/0148-markdown-is-drawn-by-one-renderer-and-a-drawing-is-acted-on.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-12",
+          "related": [
+            "file:.ai/repo/adrs/0012-the-cockpit-is-a-projection-not-an-application.md",
+            "file:.ai/repo/adrs/0135-majordomus-ui-is-the-primary-surface.md",
+            "file:.ai/repo/adrs/0141-the-ui-is-published-as-a-snapshot-read-at-one-commit.md",
+            "file:.ai/repo/rules/project/markdown-is-rendered-once.v1.md",
+            "file:.ai/repo/rules/project/a-visualisation-is-interactive.v1.md",
+            "file:.ai/repo/visualisation-baseline.txt",
+            "file:apps/majordomus-cli/src/markdown.rs",
+            "file:apps/majordomus-cli/src/cockpit/pages.rs",
+            "file:apps/majordomus-cli/src/ui/prose.rs",
+            "file:share/cockpit/cockpit.js",
+            "file:share/design/primitives.css",
+            "file:scripts/ci/visualisation-check",
+            "file:test/cases/1101_markdown_is_rendered_once.sh",
+            "file:test/cases/1102_a_visualisation_is_interactive.sh",
+            "file:docs/COCKPIT.md"
+          ],
+          "tags": [
+            "architecture",
+            "interface",
+            "ui",
+            "cockpit",
+            "markdown",
+            "visualisation"
+          ]
+        }
+      },
+      {
         "id": "majordomus://adr/adr-0149",
         "kind": "adr",
         "label": "adr-0149",
@@ -7592,6 +7687,32 @@
             "ui",
             "observatory",
             "evidence",
+            "mesh"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0159",
+        "kind": "adr",
+        "label": "adr-0159",
+        "summary": "The cluster is drawn once, from the sources that hold its facts, and every session reports it on an interval",
+        "route": "/cockpit/objects/adr/adr-0159",
+        "source": ".ai/repo/adrs/0159-the-cluster-is-drawn-once-and-every-session-reports-it.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-14",
+          "related": [
+            "file:.ai/repo/adrs/0088-a-dashboard-is-a-projection-of-capabilities-and-every-card-names-its-source.md",
+            "file:.ai/repo/adrs/0136-every-session-briefs-itself-on-an-interval.md",
+            "file:.ai/repo/adrs/0033-an-execution-is-a-watched-capability-call-not-a-second-registry.md",
+            "file:.ai/repo/adrs/0142-no-screen-waits-for-a-source.md",
+            "file:docs/BRIEF.md",
+            "file:docs/MAJORDOMUS_UI.md"
+          ],
+          "tags": [
+            "dashboard",
+            "ui",
+            "session",
             "mesh"
           ]
         }
@@ -18769,7 +18890,6 @@
           ],
           "domain": "surfaces",
           "featured": true,
-          "headline": "One screen of the UI rotates eight scenes on a display nobody is sitting at, and every mark on it is a value a capability answered; a scene with nothing true to draw says why and is never drawn empty.",
           "kinds": [
             "deployment"
           ],
@@ -32607,6 +32727,8 @@
             "The command is a projection of the registry's capability: no board logic is written a second time for the command line",
             "With no server running it reports that no board could be asked and does not exit 0"
           ],
+          "completed_at": "2026-10-13T11:04:59Z",
+          "completed_event": "sha256:51c52e92d07852f493efb65d4924389e966ee4649be63441a88db77eefc2d392",
           "created_at": "2026-10-08",
           "evidence_required": [
             "cli_peers_lists_an_mcp_peer_case",
@@ -32624,11 +32746,15 @@
             "test/cases"
           ],
           "slug": "the-peer-board-can-be-read-from-the-command-line",
-          "updated_at": "2026-10-08",
+          "started_at": "2026-10-13T09:56:20Z",
+          "started_event": "sha256:1403e0d64fd40b84f69925da613c4b2d24d6e35dba7cc276326b09710f758c0d",
+          "updated_at": "2026-10-13T11:04:59Z",
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
-          ]
+          ],
+          "verified_at": "2026-10-13T11:04:40Z",
+          "verified_event": "sha256:8cdf5c9aecd81e5a2c1d09b36ef5963756d24e040d4ba69ff5244b6ee97b4115"
         }
       },
       {
@@ -36283,6 +36409,94 @@
         }
       },
       {
+        "id": "majordomus://issue/I2479",
+        "kind": "issue",
+        "label": "I2479",
+        "summary": "The capabilities are searched and faceted: kind, module, stability, surface and text, each counted",
+        "route": "/cockpit/objects/issue/i2479",
+        "source": ".ai/repo/project/issues/I2479.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "kind, module, stability, surface and text narrow the capabilities together, each facet counted among what the other picks admit",
+            "a row opens its declaration and keeps the filters",
+            "a value that is no word of the registry is dropped and never echoed"
+          ],
+          "created_at": "2026-10-11",
+          "current_state": "Two fixed tables of commands and queries; nothing narrows them; a row's link drops whatever the reader was looking at.",
+          "depends_on": [
+            "I2462"
+          ],
+          "evidence_required": [
+            "ui_capabilities_unit_tests",
+            "ui_capabilities_case_1084"
+          ],
+          "milestone": "development-runtime",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/capabilities.rs",
+            ".ai/repo/project/issues/I2479.yaml",
+            "docs/MAJORDOMUS_UI.md",
+            "test/cases/1084_the_capabilities_are_faceted.sh"
+          ],
+          "slug": "the-capabilities-are-faceted",
+          "updated_at": "2026-10-11",
+          "validation": [
+            "cargo test --lib ui::capabilities",
+            "test/run.sh 1084_the_capabilities_are_faceted"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2480",
+        "kind": "issue",
+        "label": "I2480",
+        "summary": "The home page is the UI's front door: every screen and every surface one click away, in the UI's design",
+        "route": "/cockpit/objects/issue/i2480",
+        "source": ".ai/repo/project/issues/I2480.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "/ answers the UI's front door in the UI's frame, linking every screen of the UI and every public surface that answers",
+            "a surface that is not built is named with what builds it and not linked; the page does not link itself",
+            "every value on it is read from the process, a capability or the web topology; nothing is written into the page"
+          ],
+          "created_at": "2026-10-11",
+          "current_state": "/ answers a plain page of surfaces in tables, outside the UI's frame and design, with no link to any screen of the UI; the UI's top bar links /docs whether or not it is built.",
+          "depends_on": [
+            "I2462"
+          ],
+          "evidence_required": [
+            "ui_front_unit_tests",
+            "ui_front_case_1085"
+          ],
+          "milestone": "development-runtime",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/front.rs",
+            "apps/majordomus-cli/src/ui/mod.rs",
+            "apps/majordomus-cli/src/ui/shell.rs",
+            "apps/majordomus-cli/src/web/home.rs",
+            "apps/majordomus-cli/src/http/router.rs",
+            "share/ui/src/ui.css",
+            "share/ui/ui.css",
+            ".ai/repo/project/issues/I2480.yaml",
+            "docs/MAJORDOMUS_UI.md",
+            "test/cases/89_web_surface.sh",
+            "test/cases/488_rustdoc_discoverable.sh",
+            "test/cases/1085_the_home_page_is_the_front_door.sh"
+          ],
+          "slug": "the-home-page-is-the-front-door",
+          "updated_at": "2026-10-11",
+          "validation": [
+            "cargo test --lib ui::front",
+            "test/run.sh 1085_the_home_page_is_the_front_door 89_web_surface 488_rustdoc_discoverable"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I2481",
         "kind": "issue",
         "label": "I2481",
@@ -37879,6 +38093,225 @@
           "updated_at": "2026-10-14T12:31:43Z",
           "validation": [
             "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2685",
+        "kind": "issue",
+        "label": "I2685",
+        "summary": "The cluster page is one reading with one generated text on the command line and in the UI",
+        "route": "/cockpit/objects/issue/i2685",
+        "source": ".ai/repo/project/issues/I2685.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The page's milestone tally is plan.status's own",
+            "No line is wider than the width asked, within a floor of 40 and a ceiling of 200",
+            "The text format prints the page's lines unchanged",
+            "A source that did not answer is named in notes and its section is empty",
+            "The /ui panel draws the lines unchanged and says when the source did not answer"
+          ],
+          "created_at": "2026-10-14",
+          "desired_state": "dashboard.cluster, majordomus dashboard cluster [--width], GET /api/v1/dashboard/cluster, the MCP tool, and a /ui/panels/cluster panel that draws the lines unchanged.",
+          "evidence_required": [
+            "cluster_unit_tests",
+            "cluster_case_3012",
+            "cluster_panel_unit_test"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Estimates, risks and developer-experience measurements: I2686",
+            "A pushed stream: I2487"
+          ],
+          "objective": "Compose machines, sessions, claims, milestone progress and the queue lines from their owners in one capability and draw it once as console text, so that the terminal and the /ui panel are one text.",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/dashboard_cluster.rs",
+            "apps/majordomus-cli/src/capability/builtin/dashboard.rs",
+            "apps/majordomus-cli/src/commands/dashboard.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/ui/dashboard.rs",
+            "apps/majordomus-cli/src/ui/mod.rs",
+            "test/cases/3012_the_dashboard_is_one_reading.sh"
+          ],
+          "slug": "the-cluster-page-is-one-reading-with-one-text",
+          "updated_at": "2026-10-14",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib dashboard",
+            "MJ_TEST_JOBS=2 bash test/run.sh 3012_the_dashboard_is_one_reading"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2686",
+        "kind": "issue",
+        "label": "I2686",
+        "summary": "The cluster page states estimates, risks and timings only where a source records them",
+        "route": "/cockpit/objects/issue/i2686",
+        "source": ".ai/repo/project/issues/I2686.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "An estimate names the recorded durations it is the median of and how many",
+            "With fewer than three samples the page says there is no estimate",
+            "A risk is a finding another capability reported, with its pointer"
+          ],
+          "created_at": "2026-10-14",
+          "depends_on": [
+            "I2685"
+          ],
+          "evidence_required": [
+            "estimate_basis_case",
+            "risk_pointer_case"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Predicting the unmeasured"
+          ],
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/dashboard_cluster.rs",
+            "apps/majordomus-cli/src/integration/timings.rs",
+            "test/cases/3012_the_dashboard_is_one_reading.sh"
+          ],
+          "slug": "the-cluster-page-states-estimates-risks-and-timings-it-can-read",
+          "updated_at": "2026-10-14",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=2 bash test/run.sh 3012_the_dashboard_is_one_reading"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2687",
+        "kind": "issue",
+        "label": "I2687",
+        "summary": "The /ui cluster panel is updated by the stream, not by polling, when the readings stream exists",
+        "route": "/cockpit/objects/issue/i2687",
+        "source": ".ai/repo/project/issues/I2687.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A session opening on another machine appears on the panel without a reload within the stream's lifetime",
+            "With no stream the panel still refreshes on its interval"
+          ],
+          "created_at": "2026-10-14",
+          "current_state": "Measured on master a3a67a307e on 2026-10-14: the UI polls fragments on a 60 s interval (share/ui/ui.js); I2487 plans one WebSocket telling the page which readings changed.",
+          "depends_on": [
+            "I2685",
+            "I2487"
+          ],
+          "desired_state": "The cluster panel subscribes to the readings that feed it and re-asks on change; the polling interval is its fallback.",
+          "evidence_required": [
+            "panel_live_probe"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "A channel of its own (ADR 0033)"
+          ],
+          "objective": "Use the one streaming mechanism of I2487 for the cluster panel so that a session that starts, ends or claims is on the screen within the stream's lifetime.",
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/dashboard.rs",
+            "share/ui/ui.js"
+          ],
+          "slug": "the-cluster-page-is-pushed-when-the-stream-lands",
+          "updated_at": "2026-10-14",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=2 bash test/run.sh 3012_the_dashboard_is_one_reading"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2688",
+        "kind": "issue",
+        "label": "I2688",
+        "summary": "Every session reports the cluster on the policy's interval, and a session that does not is visible",
+        "route": "/cockpit/objects/issue/i2688",
+        "source": ".ai/repo/project/issues/I2688.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A checkout with the switch on and the mod not installed fails doctor naming the command",
+            "The interval prompt carries the cluster page",
+            "A machine with no report in two intervals is marked on the page"
+          ],
+          "created_at": "2026-10-14",
+          "depends_on": [
+            "I2685"
+          ],
+          "evidence_required": [
+            "mod_wiring_finding",
+            "silent_machine_marked"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Providers that publish no session events"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "share/mods/claude-code/majordomus-brief/",
+            "apps/majordomus-cli/src/capability/builtin/brief.rs",
+            "apps/majordomus-cli/src/capability/builtin/dashboard_cluster.rs",
+            "lib/doctor.sh",
+            ".ai/repo/policy.yaml"
+          ],
+          "slug": "every-session-reports-the-cluster-on-the-policys-interval",
+          "updated_at": "2026-10-14",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=2 bash test/run.sh 1065_a_session_briefs_itself"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2689",
+        "kind": "issue",
+        "label": "I2689",
+        "summary": "The cluster page is documented once and published on the site and the Pages",
+        "route": "/cockpit/objects/issue/i2689",
+        "source": ".ai/repo/project/issues/I2689.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Public pages carry the shape of the page and no real session, address or intent",
+            "majordomus generate --check and scripts/pages current are clean"
+          ],
+          "created_at": "2026-10-14",
+          "current_state": "Measured on master a3a67a307e on 2026-10-14: docs/BRIEF.md and docs/MAJORDOMUS_UI.md do not name a cluster page.",
+          "depends_on": [
+            "I2685"
+          ],
+          "desired_state": "A section generated from the capability's own description and a screenshot-free sample of the lines in each document, current by majordomus generate --check.",
+          "evidence_required": [
+            "docs_current"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Private addresses or session intents on a public page"
+          ],
+          "objective": "Say what the page is, how to read it and what it does not know, from the capability, on the handbook, docs/BRIEF.md, docs/MAJORDOMUS_UI.md and the site.",
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "docs/BRIEF.md",
+            "docs/MAJORDOMUS_UI.md",
+            "docs/DASHBOARD.md",
+            "site/"
+          ],
+          "slug": "the-cluster-page-is-documented-and-on-the-site",
+          "updated_at": "2026-10-14",
+          "validation": [
+            "bin/majordomus plan validate",
+            "majordomus generate --check",
+            "scripts/pages current"
           ]
         }
       },
@@ -40230,6 +40663,57 @@
           "validation": [
             "majordomus plan validate",
             "cargo test --test ui_idd_evidence"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2792",
+        "kind": "issue",
+        "label": "I2792",
+        "summary": "One capability lists the whole knowledge base, and /ui/knowledge browses it",
+        "route": "/cockpit/objects/issue/i2792",
+        "source": ".ai/repo/project/issues/I2792.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "knowledge_base.records lists every record of both source classes with its resolution count, newest first, and filters by class, status and subject",
+            "/ui/knowledge renders the base grouped by class and still runs nothing",
+            "The MCP tool is called in a test and the CLI command has an executed example"
+          ],
+          "created_at": "2026-10-17",
+          "current_state": "Three knowledge_base capabilities: candidates, record, status. /ui/knowledge reads status and candidates.",
+          "depends_on": [],
+          "desired_state": "knowledge_base.records answers over CLI, HTTP and MCP; /ui/knowledge shows the base; the published UI snapshot carries it.",
+          "evidence_required": [
+            "records_capability_tests",
+            "case_3191"
+          ],
+          "milestone": "knowledge-base",
+          "non_scope": [
+            "Any write: the capability and the screen read",
+            "Bumping the version on the feature branch"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/milestones/knowledge-base.yaml",
+            ".ai/repo/project/issues/I2792.yaml",
+            "apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
+            "apps/majordomus-cli/src/ui/knowledge.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/commands/knowledge.rs",
+            "apps/majordomus-cli/tests/knowledge_base.rs",
+            "test/cases/3191_the_knowledge_base_is_listed.sh",
+            "docs/KNOWLEDGE.md",
+            "docs/MAJORDOMUS_UI.md",
+            "docs/generated"
+          ],
+          "slug": "the-knowledge-base-is-listed-and-browsed",
+          "updated_at": "2026-10-17",
+          "validation": [
+            "cargo test --lib knowledge_base",
+            "bash test/run.sh 3191_the_knowledge_base_is_listed",
+            "bash test/run.sh 3003_the_knowledge_screen_answers"
           ]
         }
       },
@@ -43933,9 +44417,6 @@
           ],
           "order": 147,
           "priority": "p0",
-          "risks": [
-            "#1184 (/ui/waves) and #1302 (roadmap reads delivery) touch ui/mod.rs's screen list; each lands as a textual neighbour and needs one merge."
-          ],
           "scope": [
             "apps/majordomus-cli/src/ui",
             "share/ui",
@@ -44100,6 +44581,68 @@
             "majordomus intent validate",
             "cargo test --test intent_plan",
             "bash test/run.sh 386_a_plan_is_held_to_its_intent"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/knowledge-base",
+        "kind": "milestone",
+        "label": "knowledge-base",
+        "summary": "The repository's knowledge base is derived from every source that carries know-how, and every surface presents it",
+        "route": "/cockpit/objects/milestone/knowledge-base",
+        "source": ".ai/repo/project/milestones/knowledge-base.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every distilled observation carries at least one evidence reference that resolves, and knowledge check passes over the whole base",
+            "knowledge_base.records lists curated and candidate records with class, status, subject, route and resolution, over CLI, HTTP and MCP",
+            "/ui/knowledge presents the base beside the review queue, read from the capability, with nothing written",
+            "The site carries a generated knowledge section, one page per record, derived only from tracked records, held by generate --check",
+            "product validate reports no uncovered module and no uncovered kind"
+          ],
+          "created_at": "2026-10-17",
+          "depends_on": [],
+          "evidence_required": [
+            "knowledge_check_clean",
+            "records_capability_tests",
+            "site_section_case"
+          ],
+          "non_scope": [
+            "Promoting a candidate or writing status verified; promotion is a person's act with evidence",
+            "Deriving a record from a conversation, a prompt or a model; the deriver stays deterministic and reads the ledger and git",
+            "Reading git refs, the network or the clock at generate time; a derived page reads tracked records only",
+            "Bumping the version on a feature branch; a new capability rides the landing seat's top that carries the bump"
+          ],
+          "order": 106,
+          "priority": "p1",
+          "risks": [
+            "The distilled candidates exceed the policy's review cap of 40; doctor warns until a person reviews them, which is the queue doing its job.",
+            "Distillation is a worker's judgement of what is durable; the deriver records it as an observed lesson and the class is a person's decision at promotion."
+          ],
+          "scope": [
+            ".ai/repo/knowledge",
+            ".ai/repo/project",
+            ".ai/repo/adrs",
+            ".ai/repo/features",
+            "apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
+            "apps/majordomus-cli/src/ui/knowledge.rs",
+            "apps/majordomus-cli/src/site.rs",
+            "apps/majordomus-cli/src/generate.rs",
+            "scripts/generate-site-data",
+            "site/templates",
+            "site/data/nav.toml",
+            "site/data/publication.toml",
+            "site/content/knowledge",
+            "docs/KNOWLEDGE.md",
+            "test/cases"
+          ],
+          "slug": "knowledge-base",
+          "updated_at": "2026-10-17",
+          "validation": [
+            "bin/majordomus knowledge check",
+            "bin/majordomus plan validate",
+            "bin/majordomus-cli product validate",
+            "scripts/derive-check",
+            "bash test/run.sh"
           ]
         }
       },
@@ -50183,6 +50726,30 @@
         }
       },
       {
+        "id": "majordomus://rule/project.a-visualisation-is-interactive@1",
+        "kind": "rule",
+        "label": "project.a-visualisation-is-interactive@1",
+        "summary": "A graph, a chart or a diagram is something a reader can act on, never a picture",
+        "route": "/cockpit/objects/rule/project-a-visualisation-is-interactive-1",
+        "source": ".ai/repo/rules/project/a-visualisation-is-interactive.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.ui-derived-state@1",
+            "project.ui-conformance@1",
+            "project.every-link-and-control-is-tested@1",
+            "project.markdown-is-rendered-once@1"
+          ],
+          "tags": [
+            "ui",
+            "cockpit",
+            "visualisation",
+            "accessibility"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.a-worker-that-stops-leaves-its-work-behind@2",
         "kind": "rule",
         "label": "project.a-worker-that-stops-leaves-its-work-behind@2",
@@ -51110,6 +51677,31 @@
             "integration",
             "deployment",
             "evidence"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/project.markdown-is-rendered-once@1",
+        "kind": "rule",
+        "label": "project.markdown-is-rendered-once@1",
+        "summary": "A Markdown body is drawn by one renderer, wherever it is shown",
+        "route": "/cockpit/objects/rule/project-markdown-is-rendered-once-1",
+        "source": ".ai/repo/rules/project/markdown-is-rendered-once.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.interfaces-are-projections@1",
+            "project.ui-conformance@1",
+            "project.ui-derived-state@1",
+            "project.derived-once@1"
+          ],
+          "tags": [
+            "ui",
+            "cockpit",
+            "markdown",
+            "projections",
+            "security"
           ]
         }
       },
@@ -59249,6 +59841,20 @@
         "source": "test/cases/1083_a_rule_opens_its_proof.sh"
       },
       {
+        "id": "majordomus://test/test/cases/1084_the_capabilities_are_faceted.sh",
+        "kind": "test",
+        "label": "test/cases/1084_the_capabilities_are_faceted.sh",
+        "route": "/cockpit/objects/test/test-cases-1084-the-capabilities-are-faceted-sh",
+        "source": "test/cases/1084_the_capabilities_are_faceted.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/1085_the_home_page_is_the_front_door.sh",
+        "kind": "test",
+        "label": "test/cases/1085_the_home_page_is_the_front_door.sh",
+        "route": "/cockpit/objects/test/test-cases-1085-the-home-page-is-the-front-door-sh",
+        "source": "test/cases/1085_the_home_page_is_the_front_door.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/1086_a_remote_caller_cannot_write.sh",
         "kind": "test",
         "label": "test/cases/1086_a_remote_caller_cannot_write.sh",
@@ -59359,6 +59965,20 @@
         "label": "test/cases/10_site_data.sh",
         "route": "/cockpit/objects/test/test-cases-10-site-data-sh",
         "source": "test/cases/10_site_data.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/1101_markdown_is_rendered_once.sh",
+        "kind": "test",
+        "label": "test/cases/1101_markdown_is_rendered_once.sh",
+        "route": "/cockpit/objects/test/test-cases-1101-markdown-is-rendered-once-sh",
+        "source": "test/cases/1101_markdown_is_rendered_once.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/1102_a_visualisation_is_interactive.sh",
+        "kind": "test",
+        "label": "test/cases/1102_a_visualisation_is_interactive.sh",
+        "route": "/cockpit/objects/test/test-cases-1102-a-visualisation-is-interactive-sh",
+        "source": "test/cases/1102_a_visualisation_is_interactive.sh"
       },
       {
         "id": "majordomus://test/test/cases/110_lease_reader.sh",
@@ -60075,6 +60695,13 @@
         "source": "test/cases/2988_a_scope_admits_what_its_derive_wrote.sh"
       },
       {
+        "id": "majordomus://test/test/cases/2993_the_peer_board_is_read_from_the_command_line.sh",
+        "kind": "test",
+        "label": "test/cases/2993_the_peer_board_is_read_from_the_command_line.sh",
+        "route": "/cockpit/objects/test/test-cases-2993-the-peer-board-is-read-from-the-command-line-sh",
+        "source": "test/cases/2993_the_peer_board_is_read_from_the_command_line.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/2998_evidence_reaches_the_subcommands_the_executable_owns.sh",
         "kind": "test",
         "label": "test/cases/2998_evidence_reaches_the_subcommands_the_executable_owns.sh",
@@ -60136,6 +60763,13 @@
         "label": "test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh",
         "route": "/cockpit/objects/test/test-cases-3011-the-observatory-draws-nothing-it-did-not-read-sh",
         "source": "test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3012_the_dashboard_is_one_reading.sh",
+        "kind": "test",
+        "label": "test/cases/3012_the_dashboard_is_one_reading.sh",
+        "route": "/cockpit/objects/test/test-cases-3012-the-dashboard-is-one-reading-sh",
+        "source": "test/cases/3012_the_dashboard_is_one_reading.sh"
       },
       {
         "id": "majordomus://test/test/cases/3014_the_kiosk_draws_what_the_repository_proves.sh",
@@ -60311,6 +60945,13 @@
         "label": "test/cases/3043_site_json_cannot_close_its_script.sh",
         "route": "/cockpit/objects/test/test-cases-3043-site-json-cannot-close-its-script-sh",
         "source": "test/cases/3043_site_json_cannot_close_its_script.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3046_the_observatory_hears_executions_as_they_happen.sh",
+        "kind": "test",
+        "label": "test/cases/3046_the_observatory_hears_executions_as_they_happen.sh",
+        "route": "/cockpit/objects/test/test-cases-3046-the-observatory-hears-executions-as-they-happen-sh",
+        "source": "test/cases/3046_the_observatory_hears_executions_as_they_happen.sh"
       },
       {
         "id": "majordomus://test/test/cases/3047_a_leak_finding_names_where_it_is.sh",
@@ -60612,6 +61253,13 @@
         "label": "test/cases/3190_a_scope_of_dot_is_the_repository.sh",
         "route": "/cockpit/objects/test/test-cases-3190-a-scope-of-dot-is-the-repository-sh",
         "source": "test/cases/3190_a_scope_of_dot_is_the_repository.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3191_the_knowledge_base_is_listed.sh",
+        "kind": "test",
+        "label": "test/cases/3191_the_knowledge_base_is_listed.sh",
+        "route": "/cockpit/objects/test/test-cases-3191-the-knowledge-base-is-listed-sh",
+        "source": "test/cases/3191_the_knowledge_base_is_listed.sh"
       },
       {
         "id": "majordomus://test/test/cases/3196_stale_crate_artifacts_are_pruned_under_cargos_lock.sh",
@@ -65633,6 +66281,26 @@
         "kind": "projects"
       },
       {
+        "source": "capability:dashboard.cluster",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:dashboard.cluster",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:dashboard.cluster",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:dashboard.cluster",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
         "source": "capability:dashboard.overview",
         "target": "projection:cli",
         "kind": "projects"
@@ -66938,6 +67606,26 @@
         "kind": "projects"
       },
       {
+        "source": "capability:knowledge_base.records",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:knowledge_base.records",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:knowledge_base.records",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:knowledge_base.records",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
         "source": "capability:knowledge_base.status",
         "target": "projection:cli",
         "kind": "projects"
@@ -67650,6 +68338,11 @@
       {
         "source": "capability:peers.announce",
         "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:peers.list",
+        "target": "projection:cli",
         "kind": "projects"
       },
       {
@@ -72963,6 +73656,86 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0148",
+        "target": "file:.ai/repo/visualisation-baseline.txt",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0148",
+        "target": "file:apps/majordomus-cli/src/cockpit/pages.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0148",
+        "target": "file:apps/majordomus-cli/src/markdown.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0148",
+        "target": "file:apps/majordomus-cli/src/ui/prose.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0148",
+        "target": "file:scripts/ci/visualisation-check",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0148",
+        "target": "file:share/cockpit/cockpit.js",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0148",
+        "target": "file:share/design/primitives.css",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0148",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0148",
+        "target": "majordomus://adr/adr-0012",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0148",
+        "target": "majordomus://adr/adr-0135",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0148",
+        "target": "majordomus://adr/adr-0141",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0148",
+        "target": "majordomus://document/docs/COCKPIT.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0148",
+        "target": "majordomus://rule/project.a-visualisation-is-interactive@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0148",
+        "target": "majordomus://rule/project.markdown-is-rendered-once@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0148",
+        "target": "majordomus://test/test/cases/1101_markdown_is_rendered_once.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0148",
+        "target": "majordomus://test/test/cases/1102_a_visualisation_is_interactive.sh",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://adr/adr-0149",
         "target": "file:handbook/build.py",
         "kind": "put_in_force"
@@ -73230,6 +74003,41 @@
       {
         "source": "majordomus://adr/adr-0158",
         "target": "majordomus://test/test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0159",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0159",
+        "target": "majordomus://adr/adr-0033",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0159",
+        "target": "majordomus://adr/adr-0088",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0159",
+        "target": "majordomus://adr/adr-0136",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0159",
+        "target": "majordomus://adr/adr-0142",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0159",
+        "target": "majordomus://document/docs/BRIEF.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0159",
+        "target": "majordomus://document/docs/MAJORDOMUS_UI.md",
         "kind": "put_in_force"
       },
       {
@@ -86938,6 +87746,36 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2479",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2479",
+        "target": "majordomus://issue/I2462",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2479",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2480",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2480",
+        "target": "majordomus://issue/I2462",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2480",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I2481",
         "target": "kind:issue",
         "kind": "is_a"
@@ -87384,6 +88222,81 @@
       },
       {
         "source": "majordomus://issue/I2680",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2685",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2685",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2686",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2686",
+        "target": "majordomus://issue/I2685",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2686",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2687",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2687",
+        "target": "majordomus://issue/I2487",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2687",
+        "target": "majordomus://issue/I2685",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2687",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2688",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2688",
+        "target": "majordomus://issue/I2685",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2688",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2689",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2689",
+        "target": "majordomus://issue/I2685",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2689",
         "target": "majordomus://milestone/development-runtime",
         "kind": "belongs_to"
       },
@@ -88055,6 +88968,16 @@
       {
         "source": "majordomus://issue/I2789",
         "target": "majordomus://milestone/idd-workspace",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2792",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2792",
+        "target": "majordomus://milestone/knowledge-base",
         "kind": "belongs_to"
       },
       {
@@ -88871,6 +89794,11 @@
         "source": "majordomus://milestone/intent-planning",
         "target": "majordomus://milestone/intent-lifecycle",
         "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://milestone/knowledge-base",
+        "target": "kind:milestone",
+        "kind": "is_a"
       },
       {
         "source": "majordomus://milestone/mcp-transports-are-reliable",
@@ -90203,6 +91131,31 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/project.a-visualisation-is-interactive@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.a-visualisation-is-interactive@1",
+        "target": "majordomus://rule/project.every-link-and-control-is-tested@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.a-visualisation-is-interactive@1",
+        "target": "majordomus://rule/project.markdown-is-rendered-once@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.a-visualisation-is-interactive@1",
+        "target": "majordomus://rule/project.ui-conformance@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.a-visualisation-is-interactive@1",
+        "target": "majordomus://rule/project.ui-derived-state@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.a-worker-that-stops-leaves-its-work-behind@2",
         "target": "kind:rule",
         "kind": "is_a"
@@ -90795,6 +91748,31 @@
       {
         "source": "majordomus://rule/project.land-and-publish@1",
         "target": "majordomus://rule/project.interfaces-are-projections@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.markdown-is-rendered-once@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.markdown-is-rendered-once@1",
+        "target": "majordomus://rule/project.derived-once@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.markdown-is-rendered-once@1",
+        "target": "majordomus://rule/project.interfaces-are-projections@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.markdown-is-rendered-once@1",
+        "target": "majordomus://rule/project.ui-conformance@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.markdown-is-rendered-once@1",
+        "target": "majordomus://rule/project.ui-derived-state@1",
         "kind": "depends_on"
       },
       {
@@ -92523,6 +93501,16 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/1084_the_capabilities_are_faceted.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/1085_the_home_page_is_the_front_door.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/1086_a_remote_caller_cannot_write.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -92599,6 +93587,16 @@
       },
       {
         "source": "majordomus://test/test/cases/10_site_data.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/1101_markdown_is_rendered_once.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/1102_a_visualisation_is_interactive.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -93113,6 +94111,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/2993_the_peer_board_is_read_from_the_command_line.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/2998_evidence_reaches_the_subcommands_the_executable_owns.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -93154,6 +94157,11 @@
       },
       {
         "source": "majordomus://test/test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3012_the_dashboard_is_one_reading.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -93279,6 +94287,11 @@
       },
       {
         "source": "majordomus://test/test/cases/3043_site_json_cannot_close_its_script.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3046_the_observatory_hears_executions_as_they_happen.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -93494,6 +94507,11 @@
       },
       {
         "source": "majordomus://test/test/cases/3190_a_scope_of_dot_is_the_repository.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3191_the_knowledge_base_is_listed.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -98004,6 +99022,11 @@
       },
       {
         "source": "module:dashboard",
+        "target": "capability:dashboard.cluster",
+        "kind": "composes"
+      },
+      {
+        "source": "module:dashboard",
         "target": "capability:dashboard.overview",
         "kind": "composes"
       },
@@ -98370,6 +99393,11 @@
       {
         "source": "module:knowledge_base",
         "target": "capability:knowledge_base.record",
+        "kind": "composes"
+      },
+      {
+        "source": "module:knowledge_base",
+        "target": "capability:knowledge_base.records",
         "kind": "composes"
       },
       {
@@ -98929,8 +99957,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3078,
-      "edges": 6738,
+      "nodes": 3106,
+      "edges": 6814,
       "acyclic": false,
       "truncated": false
     }

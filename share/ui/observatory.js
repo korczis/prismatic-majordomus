@@ -59,6 +59,8 @@
     warn: 'orange', stale: 'orange', BLOCKED: 'orange', VERIFY: 'orange', suspect: 'orange',
     fail: 'rose', failed: 'rose', conflicted: 'rose',
     ACTIVE: 'violet', READY: 'blue', PLANNED: 'blue', open: 'violet',
+    // the states of an execution (the executions scene)
+    queued: 'blue', running: 'violet', cancelling: 'orange', succeeded: 'cyan', cancelled: 'orange',
   };
   function colour(word) {
     const t = TONES[word];
@@ -80,6 +82,13 @@
     return ((h >>> 0) % 100000) / 100000;
   }
   const TAU = Math.PI * 2;
+
+  // The live channel of the executions scene, once the display has opened it: what it heard
+  // (`lanes()`), whether it is live (`status()`), and when each execution's last event
+  // arrived (`pulses`). One display per page, so one channel.
+  let channel = null;
+  // How long the pulse of one event runs along its lane, in seconds.
+  const PULSE_S = 2.4;
 
   // ---------------------------------------------------------------- the scenes
   // Each takes the drawing context, the stage's box, the scene's model, the time in seconds
@@ -338,6 +347,56 @@
       return `${sessions.length} session(s) on ${nodes.length} machine(s) · ${active} active`;
     },
 
+    executions(c, box, m, t, moving) {
+      // the lanes the channel brought forward, or the snapshot the page carries before it opened
+      const lanes = channel ? channel.lanes() : (m.executions || []);
+      const live = Boolean(channel) && channel.status() === 'live';
+      const word = channel ? channel.status() : (m.replayed ? 'replay' : 'not connected');
+      if (!lanes.length) {
+        label(c, box, 'QUIET', box.cx, box.cy - box.u * 1.2, 1.5);
+        label(c, box, live ? 'no execution has run in this process; listening on the live channel'
+          : 'no execution has run in this process', box.cx, box.cy + box.u * 1.2, 0.7);
+        return `0 executions · channel ${word}`;
+      }
+      const shown = lanes.slice(0, 16);
+      const left = box.x + box.w * 0.08;
+      const right = box.x + box.w * 0.92;
+      const top = box.y + box.h * 0.18;
+      const row = Math.min(box.u * 2.2, (box.h * 0.64) / shown.length);
+      const now = performance.now();
+      let active = 0;
+      shown.forEach((l, i) => {
+        const y = top + i * row;
+        if (l.state === 'running' || l.state === 'queued' || l.state === 'cancelling') active += 1;
+        c.strokeStyle = withAlpha(colour(l.state), live ? 0.35 : 0.18);
+        c.lineWidth = box.u * 0.12;
+        c.beginPath();
+        c.moveTo(left, y);
+        c.lineTo(right, y);
+        c.stroke();
+        c.beginPath();
+        c.arc(left, y, box.u * 0.42, 0, TAU);
+        c.fillStyle = colour(l.state);
+        c.globalAlpha = live ? 1 : 0.5;
+        c.fill();
+        c.globalAlpha = 1;
+        label(c, box, `${l.capability || l.id} · ${l.state} · #${l.last_sequence}`, left + box.u * 1.2, y - box.u * 0.45, 0.55, 'left');
+        // a pulse is an event this display heard; with the channel down nothing runs
+        const at = channel && channel.pulses.get(l.id);
+        if (live && at !== undefined) {
+          const age = (now - at) / 1000;
+          if (age >= 0 && age < PULSE_S) {
+            const x = left + (right - left) * (moving ? age / PULSE_S : 1);
+            c.beginPath();
+            c.arc(x, y, box.u * (0.5 + 0.4 * (1 - age / PULSE_S)), 0, TAU);
+            c.fillStyle = withAlpha(colour(l.state), 1 - age / PULSE_S);
+            c.fill();
+          }
+        }
+      });
+      return `${lanes.length} execution(s) · ${active} active · channel ${word}`;
+    },
+
     ambient(c, box, m, t, moving) {
       for (let i = 0; i < 5; i += 1) {
         const r = box.u * (2 + i * 1.6) + (moving ? Math.sin(t * 0.25 + i) * box.u * 0.3 : 0);
@@ -450,8 +509,11 @@
     // A scene whose renderer threw is quarantined for the rest of this display's life: the
     // rotation skips it, the others go on, and the scene says why when a reader asks for it.
     const quarantined = new Map(); // scene id -> what it threw
+    // a scene is drawable when the page says so, or, for the executions scene, once its live
+    // channel has heard an execution the page's reading did not yet hold
+    const drawable = (s) => s.available || (s.id === 'executions' && !s.replay && channel !== null && channel.lanes().length > 0);
     const eligible = () => data.scenes
-      .map((s, i) => (s.available && !quarantined.has(s.id) ? i : -1))
+      .map((s, i) => (drawable(s) && !quarantined.has(s.id) ? i : -1))
       .filter((i) => i >= 0);
     function select(index, reason) {
       if (index === current && reason !== 'start') return;
@@ -517,6 +579,41 @@
     }
     ingest(data, true);
     let readAt = Date.now();
+
+    // ------------------------------------------------------------ the live channel
+    // The executions scene is kept current by the channel every client of this process
+    // reads (`/events`), never by reading the page again: the script that follows it is
+    // loaded from the URL the page names, and so are the channel and the snapshot it brings
+    // forward. A published snapshot opens nothing.
+    const flowScene = () => data.scenes.find((s) => s.id === 'executions');
+    async function listen() {
+      const scene = flowScene();
+      const lib = holder.dataset.observatoryStream;
+      if (snapshot || !scene || scene.replay || !lib || !holder.dataset.observatoryEvents) return;
+      if (!window.mjObservatoryStream) {
+        await new Promise((resolve, reject) => {
+          const tag = document.createElement('script');
+          tag.src = lib;
+          tag.onload = resolve;
+          tag.onerror = reject;
+          document.head.append(tag);
+        });
+      }
+      const pulses = new Map();
+      const stream = window.mjObservatoryStream.connect({
+        path: holder.dataset.observatoryEvents,
+        snapshot: holder.dataset.observatoryExecutions,
+        initial: (scene.available && scene.model && scene.model.executions) || [],
+        on: {
+          change(_state, event) {
+            if (event && event.execution_id) pulses.set(event.execution_id, performance.now());
+            if (pulses.size > 400) pulses.delete(pulses.keys().next().value);
+          },
+        },
+      });
+      channel = { lanes: stream.lanes, status: stream.status, pulses, close: stream.close };
+    }
+    listen().catch(() => { channel = null; });
     let failures = 0;
     let timer = null;
     let controller = null;
@@ -662,7 +759,7 @@
           interrupt = null;
         }
         const scene = data.scenes[current];
-        if ((now - since) / 1000 > scene.dwell_seconds || !scene.available || quarantined.has(scene.id)) step(1, 'rotation');
+        if ((now - since) / 1000 > scene.dwell_seconds || !drawable(scene) || quarantined.has(scene.id)) step(1, 'rotation');
       }
 
       const u = Math.min(width, height) / 44;
@@ -695,9 +792,9 @@
         label(c, box, 'QUARANTINED', box.cx, box.cy - u * 1.2, 1.5);
         label(c, box, `its renderer failed: ${quarantined.get(scene.id)}`, box.cx, box.cy + u * 1.2, 0.7);
         line = 'nothing is drawn: this scene\'s renderer failed, and the others go on';
-      } else if (scene.available && painter) {
+      } else if (drawable(scene) && painter) {
         // a replayed model says so to the scene that draws it, and its marks are not news
-        const model = scene.replay ? { ...scene.model, replayed: true } : scene.model;
+        const model = scene.replay ? { ...scene.model, replayed: true } : (scene.model || {});
         try {
           line = painter(c, box, model, t, moving, scene.replay ? new Map() : born);
         } catch (e) {
@@ -717,7 +814,10 @@
       const age = Date.now() - readAt;
       // a replayed scene is a replay whatever the page is: it shows when it was recorded
       const resynced = Date.now() - resyncedAt < 10000;
-      const word = scene.replay ? 'REPLAY' : snapshot ? 'SNAPSHOT' : resynced ? 'RESYNCED' : age < LIVE_WITHIN_MS ? 'LIVE' : 'STALE';
+      // the executions scene says what its channel is doing, not when the page was last read
+      const flowing = scene.id === 'executions' && channel && !scene.replay && !snapshot;
+      const word = scene.replay ? 'REPLAY' : snapshot ? 'SNAPSHOT' : flowing ? channel.status().toUpperCase()
+        : resynced ? 'RESYNCED' : age < LIVE_WITHIN_MS ? 'LIVE' : 'STALE';
       // why a reading is old: only an asking that failed blames the server
       const silence = failures || streamFailures ? 'the server is not answering'
         : pollOwed || streamOwed ? 'not asked while the page was hidden'
@@ -740,7 +840,7 @@
         fact.textContent = line;
         legend.textContent = `${scene.meaning} Background dust and slow motion are decoration. Source: ${scene.requires.join(', ') || 'none'}.`;
         autoButton.setAttribute('aria-pressed', String(auto));
-        dots.textContent = data.scenes.map((s, i) => (i === current ? '◉' : s.available ? '●' : '○')).join(' ');
+        dots.textContent = data.scenes.map((s, i) => (i === current ? '◉' : drawable(s) ? '●' : '○')).join(' ');
       }
       head.style.transform = `translate(${drift[0]}px, ${drift[1]}px)`;
       foot.style.transform = `translate(${-drift[0]}px, ${-drift[1]}px)`;
@@ -775,6 +875,8 @@
       // the projection the display is drawing now, and the scenes it quarantined: what an
       // inspector or an evidence run reads, never a second model
       data: () => data,
+      // the executions channel as the display hears it: its word and its lanes
+      channel: () => (channel ? { status: channel.status(), lanes: channel.lanes() } : null),
       quarantined: () => Object.fromEntries(quarantined),
       policy: { min_dwell_seconds: MIN_DWELL_S, interrupt_cooldown_seconds: INTERRUPT_COOLDOWN_S, manual_hold_seconds: MANUAL_HOLD_S },
       dispose() {
@@ -782,6 +884,7 @@
         if (controller) controller.abort();
         if (streamTimer) clearTimeout(streamTimer);
         if (streamController) streamController.abort();
+        if (channel) { channel.close(); channel = null; }
         if (frame !== null) { cancelAnimationFrame(frame); clearTimeout(frame); }
         observer.disconnect();
         document.removeEventListener('keydown', onKey);
