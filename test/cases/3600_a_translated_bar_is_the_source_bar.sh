@@ -33,7 +33,7 @@ const { applyLocaleDrift, measureNavbar } = await import(localeLib);
 
 // one bar, a row of items in a box narrower than the viewport, and a menu button that shows
 // below 700px and opens the list as a column
-const page = (lang, labels, { clipped = false } = {}) => `<!doctype html><html lang="${lang}"><head>
+const page = (lang, labels, { clipped = false } = {}) => `<!doctype html><html lang="${lang}" data-theme-class="dark"><head>
 <meta charset="utf-8"><title>${lang}</title><style>
   body { margin: 0; font: 16px/1.5 sans-serif; }
   nav { max-width: 480px; }
@@ -61,9 +61,10 @@ const page = (lang, labels, { clipped = false } = {}) => `<!doctype html><html l
 </script></body></html>`;
 
 const EN = ['Docs', 'Guarantees', 'Cockpit', 'Releases'];
-const CS_LONG = ['Dokumentace k produktu', 'Záruky a jejich důkazy', 'Řídicí panel', 'Vydání a změny'];
-const CS_SHORT = ['Dokumenty', 'Záruky', 'Panel', 'Vydání'];
-const CS_MANY = [...CS_SHORT, 'Další', 'Ještě', 'A další'];
+// stand-ins for Czech labels: what is measured is their length, and the repository is English
+const CS_LONG = ['Documentation of the product', 'Guarantees and their proofs', 'Control panel', 'Releases and changes'];
+const CS_SHORT = ['Documents', 'Promises', 'Panel', 'Releases'];
+const CS_MANY = [...CS_SHORT, 'More', 'Still more', 'And more'];
 
 const browser = await launch();
 if (!browser) { console.log('NO-BROWSER'); process.exit(4); }

@@ -30,7 +30,7 @@ export const HEIGHT_TOLERANCE = 1;
 /** How long an opened menu is given to finish appearing. */
 export const SETTLE_MS = 250;
 
-/** The themes the bar is measured in, by the class the site's theme switch sets on <html>. */
+/** The themes the bar is measured in: without and with the page's declared theme class. */
 export const THEMES = [['light', false], ['dark', true]];
 
 /**
@@ -146,15 +146,22 @@ export async function measureNavbar(page, route) {
       toggle: toggle ? toggle.getAttribute('data-collapse-toggle') : null,
     };
   });
-  const theme = (dark) => page.evaluate((dark) => {
-    document.documentElement.classList.toggle('dark', dark);
-  }, dark);
+  // the class the page's own theme switch sets, as the page declares it (data-theme-class on
+  // <html>, as the site does, or on <body>, as the Cockpit does); a page that declares none has
+  // one theme, and only that one is measured
+  const themeClass = await page.evaluate(() =>
+    document.documentElement.dataset.themeClass || document.body?.dataset.themeClass || null);
+  const theme = (dark) => page.evaluate(([cls, dark]) => {
+    if (cls) document.documentElement.classList.toggle(cls, dark);
+  }, [themeClass, dark]);
 
   const lang = await page.evaluate(() => document.documentElement.lang || null);
-  const wasDark = await page.evaluate(() => document.documentElement.classList.contains('dark'));
+  const wasDark = themeClass
+    ? await page.evaluate((cls) => document.documentElement.classList.contains(cls), themeClass)
+    : false;
   const measures = [];
   const full = isFront(route, lang);
-  const themes = full ? THEMES : [[wasDark ? 'dark' : 'light', wasDark]];
+  const themes = full && themeClass ? THEMES : [[wasDark ? 'dark' : 'light', wasDark]];
   for (const [name, dark] of themes) {
     await theme(dark);
     const closed = await read();
