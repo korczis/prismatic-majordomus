@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 156,
+      "count": 157,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 156
+      "count": 157
     },
     {
       "kind": "application",
@@ -93,7 +93,7 @@
       "route": null,
       "title": null,
       "reason": "A critique is the adversarial pass over one intent's plan, written by a worker, and work started under the intent without it or with a blocking finding open fails intent validation (ADR 0073). It is planning state of this repository; what the plan became is published on /plan/.",
-      "count": 27
+      "count": 29
     },
     {
       "kind": "deployment",
@@ -165,7 +165,7 @@
       "route": null,
       "title": null,
       "reason": "An intent's stage and criteria are derived on every read from the plan and the evidence ledger (ADR 0070); a static page would freeze a derivation at the commit the site was built from. The milestones that realise an intent are published on /plan/, and `majordomus intent show` and the Cockpit's /cockpit/intents answer for the intent itself.",
-      "count": 28
+      "count": 30
     },
     {
       "kind": "issue",
@@ -173,7 +173,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 704
+      "count": 790
     },
     {
       "kind": "knowledge",
@@ -181,7 +181,7 @@
       "route": null,
       "title": null,
       "reason": "Curated knowledge is written for the worker reading the layer, not for a visitor: it is the orientation a session starts from, and it changes with the work rather than with the product.",
-      "count": 49
+      "count": 50
     },
     {
       "kind": "mesh-declaration",
@@ -197,7 +197,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 85
+      "count": 100
     },
     {
       "kind": "moment",
@@ -484,6 +484,13 @@
           "label": "adr-0149",
           "kind": "adr",
           "route": "/adrs/adr-0149/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0217",
+          "kind": "adr",
+          "route": "/adrs/adr-0217/",
           "external": false
         }
       ]
@@ -6304,6 +6311,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0183/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0217",
+          "kind": "adr",
+          "route": "/adrs/adr-0217/",
+          "external": false
         }
       ]
     },
@@ -6427,7 +6441,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0217",
+          "kind": "adr",
+          "route": "/adrs/adr-0217/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -7482,6 +7504,13 @@
           "label": "adr-0204",
           "kind": "adr",
           "route": "/adrs/adr-0204/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0217",
+          "kind": "adr",
+          "route": "/adrs/adr-0217/",
           "external": false
         }
       ]
@@ -10273,6 +10302,13 @@
         },
         {
           "edge": "put_in_force",
+          "label": "a-prompt-pack-in-the-owners-word",
+          "kind": "knowledge",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
           "label": "campaigns-are-read-as-provenance",
           "kind": "milestone",
           "route": "/plan/",
@@ -10299,6 +10335,13 @@
           "label": "adr-0194",
           "kind": "adr",
           "route": "/adrs/adr-0194/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0217",
+          "kind": "adr",
+          "route": "/adrs/adr-0217/",
           "external": false
         }
       ]
@@ -10695,6 +10738,20 @@
         },
         {
           "edge": "put_in_force",
+          "label": "a-plan-on-an-unlanded-branch-is-planned-again",
+          "kind": "knowledge",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "do-less-work-before-doing-it-faster",
+          "kind": "knowledge",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
           "label": "a-change-is-judged-in-minutes",
           "kind": "milestone",
           "route": "/plan/",
@@ -10839,6 +10896,20 @@
         },
         {
           "edge": "put_in_force",
+          "label": "a-speed-up-that-hides-a-check-is-not-one",
+          "kind": "knowledge",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "do-less-work-before-doing-it-faster",
+          "kind": "knowledge",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
           "label": "a-change-is-judged-in-minutes",
           "kind": "milestone",
           "route": "/plan/",
@@ -10934,6 +11005,13 @@
         },
         {
           "edge": "put_in_force",
+          "label": "do-less-work-before-doing-it-faster",
+          "kind": "knowledge",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
           "label": "a-change-is-judged-in-minutes",
           "kind": "milestone",
           "route": "/plan/",
@@ -11017,6 +11095,13 @@
           "label": "I3112",
           "kind": "issue",
           "route": "/plan/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "declared-is-not-enforced",
+          "kind": "knowledge",
+          "route": null,
           "external": false
         },
         {
@@ -11119,6 +11204,13 @@
           "label": "I3125",
           "kind": "issue",
           "route": "/plan/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "not-run-on-master-means-the-ledger-lacks-ci-runs",
+          "kind": "knowledge",
+          "route": null,
           "external": false
         }
       ],
@@ -11276,6 +11368,13 @@
         },
         {
           "edge": "put_in_force",
+          "label": "what-idd-is-not",
+          "kind": "knowledge",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
           "label": "project.no-new-nouns@1",
           "kind": "rule",
           "route": "/rules/project-no-new-nouns-1/",
@@ -11360,6 +11459,13 @@
           "label": "I3250",
           "kind": "issue",
           "route": "/plan/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "what-idd-is-not",
+          "kind": "knowledge",
+          "route": null,
           "external": false
         },
         {
@@ -11723,6 +11829,13 @@
         },
         {
           "edge": "put_in_force",
+          "label": "integration-capacity-bounds-the-backlog",
+          "kind": "knowledge",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
           "label": "delivery-flow-is-measured",
           "kind": "milestone",
           "route": "/plan/",
@@ -11810,7 +11923,21 @@
         },
         {
           "edge": "put_in_force",
+          "label": "a-partial-green-is-not-the-verdict",
+          "kind": "knowledge",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
           "label": "evidence-machinery-must-end-in-a-shipped-result",
+          "kind": "knowledge",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "integration-capacity-bounds-the-backlog",
           "kind": "knowledge",
           "route": null,
           "external": false
@@ -11893,6 +12020,13 @@
           "label": "I3184",
           "kind": "issue",
           "route": "/plan/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "lundra-is-the-always-on-hub",
+          "kind": "knowledge",
+          "route": null,
           "external": false
         },
         {
@@ -12354,6 +12488,13 @@
         },
         {
           "edge": "put_in_force",
+          "label": "lundra-is-the-always-on-hub",
+          "kind": "knowledge",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
           "label": "the-hub-is-reached-from-any-device",
           "kind": "milestone",
           "route": "/plan/",
@@ -12482,6 +12623,13 @@
           "label": "I3129",
           "kind": "issue",
           "route": "/plan/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "public-writing-is-evidence-led",
+          "kind": "knowledge",
+          "route": null,
           "external": false
         },
         {
@@ -12866,6 +13014,13 @@
           "label": "I3135",
           "kind": "issue",
           "route": "/plan/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "positioning-leads-with-the-outcome",
+          "kind": "knowledge",
+          "route": null,
           "external": false
         },
         {
@@ -13331,6 +13486,20 @@
         },
         {
           "edge": "put_in_force",
+          "label": "a-worktree-is-not-a-security-boundary",
+          "kind": "knowledge",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "claude-code-mods-are-unsandboxed-hooks-in-plugins",
+          "kind": "knowledge",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
           "label": "a-provider-carries-the-contract-natively",
           "kind": "milestone",
           "route": "/plan/",
@@ -13578,6 +13747,121 @@
           "label": "every-surface-follows-what-changed",
           "kind": "milestone",
           "route": "/plan/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0217",
+      "identity": "adr-0217",
+      "slug": "adr-0217",
+      "cockpit": "/cockpit/objects/adr/adr-0217",
+      "title": "A change is reconciled by the modules that own its state: hooks only sense, reconciliation is derived on read and says how each join is known, a private read stays on its machine, and verified is answered only by proof",
+      "status": "proposed",
+      "tags": [
+        "fabric",
+        "chatgpt-project"
+      ],
+      "source": ".ai/repo/adrs/0217-a-change-is-reconciled-by-the-modules-that-own-its-state-hooks-o.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/capability/builtin/entity.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/capability/model.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0004",
+          "kind": "adr",
+          "route": "/adrs/adr-0004/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0091",
+          "kind": "adr",
+          "route": "/adrs/adr-0091/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0098",
+          "kind": "adr",
+          "route": "/adrs/adr-0098/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0126",
+          "kind": "adr",
+          "route": "/adrs/adr-0126/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0180",
+          "kind": "adr",
+          "route": "/adrs/adr-0180/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/REASONING.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/SURFACES.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "lib/capture.sh",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "lib/start.sh",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.derived-once@1",
+          "kind": "rule",
+          "route": "/rules/project-derived-once-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.never-store-transcripts@1",
+          "kind": "rule",
+          "route": "/rules/project-never-store-transcripts-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.no-new-nouns@1",
+          "kind": "rule",
+          "route": "/rules/project-no-new-nouns-1/",
           "external": false
         }
       ],
@@ -17936,6 +18220,13 @@
           "external": false
         },
         {
+          "edge": "put_in_force",
+          "label": "adr-0217",
+          "kind": "adr",
+          "route": "/adrs/adr-0217/",
+          "external": false
+        },
+        {
           "edge": "depends_on",
           "label": "project.a-checkout-serves-the-current-trunk@1",
           "kind": "rule",
@@ -20339,6 +20630,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0213/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0217",
+          "kind": "adr",
+          "route": "/adrs/adr-0217/",
+          "external": false
         }
       ]
     },
@@ -20846,6 +21144,13 @@
           "label": "adr-0211",
           "kind": "adr",
           "route": "/adrs/adr-0211/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0217",
+          "kind": "adr",
+          "route": "/adrs/adr-0217/",
           "external": false
         },
         {

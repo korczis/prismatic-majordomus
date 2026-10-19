@@ -21,6 +21,7 @@ related:
   - file:.ai/repo/project/issues/I3112.yaml
   - file:.ai/repo/project/milestones/a-claim-stands-only-on-its-evidence.yaml
   - file:.ai/repo/project/intents/a-claim-stands-only-on-its-evidence.yaml
+  - file:.ai/repo/knowledge/curated/declared-is-not-enforced.md
 provenance:
   origin: extracted
   derived_from:
@@ -35,6 +36,7 @@ provenance:
     - file:.ai/repo/project/issues/I3112.yaml
     - file:.ai/repo/project/milestones/a-claim-stands-only-on-its-evidence.yaml
     - file:.ai/repo/project/intents/a-claim-stands-only-on-its-evidence.yaml
+    - file:.ai/repo/knowledge/curated/declared-is-not-enforced.md
 ---
 
 # 188. A rule's proof of effect is a recorded refusal of its violation, not the presence of its wiring

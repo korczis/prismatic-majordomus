@@ -1,6 +1,6 @@
 intent: a-brief-is-reconciled-into-the-plan
 reviewed_at: 707a04c7ce8
-reviewed_by: "claude-code subagent (read-only, fresh context, Plan type, same model family as the author) dispatched by session 82f2734c over the staged records of branch docs/the-chatgpt-project-is-promoted and the ChatGPT-conversation sources they were promoted from; resolved by a second fresh subagent acting as the plan author. Read only: nothing was run. Disposition: Accept with required changes: all 10 findings planned, 6 of them blocking. The noun is 'campaign' (ADR 0180, project.no-new-nouns): ADR 0194 is reconciled onto it, and I3272 is folded into I3167 and I3169. Classification, segment identity and sources are reworked onto I3251, I3254, I3280, I3281 and I3283, and held to a committed fixture. ADR 0180's acceptance remains the owner's act."
+reviewed_by: "claude-code subagent (read-only, fresh context, Plan type, same model family as the author) dispatched by session 82f2734c over the staged records of branch docs/the-chatgpt-project-is-promoted and the ChatGPT-conversation sources they were promoted from; resolved by a second fresh subagent acting as the plan author. Read only: nothing was run. Disposition: Accept with required changes: all 10 findings planned, 6 of them blocking. The noun is 'campaign' (ADR 0180, project.no-new-nouns): ADR 0194 is reconciled onto it, and I3272 is folded into I3167 and I3169. Classification, segment identity and sources are reworked onto I3251, I3254, I3280, I3281 and I3283, and held to a committed fixture. ADR 0180's acceptance remains the owner's act. A second review on 2026-10-19, by a fresh read-only subagent over the decompose-a-brief skill and its wiring (the owner's order that a pasted intent is decomposed by an LLM skill), added 14 findings, resolved by a second fresh subagent acting as the author: 13 planned and 1 left open for the owner."
 findings:
   - id: two-adrs-pick-opposite-nouns
     class: unproven_assumption
@@ -92,3 +92,128 @@ findings:
       state: planned
       issue: I3273
       because: "Accepted. I3273 now carries a committed synthetic brief under test/fixtures, with two revisions and an expected class for each requirement. tests/intake.rs runs over it, and a test/cases case runs the built executable. I3274 reuses the fixture's two revisions. The milestone's import criterion is replaced by this fixture in its acceptance criteria, because the import cannot be committed under project.never-store-transcripts."
+  - id: wave0-not-startable-host-records-unlanded
+    class: unproven_assumption
+    subject: "I3400, I3401 (wave 0)"
+    finding: "The notes say I3400 and I3401 'both start now'. On origin/master (9904000d2df), git cat-file fails for .ai/repo/project/intents/a-brief-is-reconciled-into-the-plan.yaml, its critique, I3168, I3169, I3251, I3273, milestone an-outcome-becomes-a-reviewed-plan and ADRs 0180 and 0211. They are tracked only on docs/the-chatgpt-project-is-promoted, which is 6 commits ahead of master and has no remote head (git ls-remote is empty). A worker branched from master whose issue says serves: a-brief-is-reconciled-into-the-plan#... is refused at preflight, because the intent does not exist there. The critique (reviewed_at 707a04c7ce8) is also older than the two new criteria, as the plan's own notes admit. Fix: make it an explicit precondition, not a note, that this planning branch lands (records plus a fresh read-only critique) before wave 0. Otherwise workers stack on this branch. I3400's skill text names I3169, I3251, I3254, I3168 and ADR 0211, so it must not reach master before they do."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3400
+      because: "The milestone's current_state opens with a PRECONDITION, and its acceptance requires that no issue started before docs/the-chatgpt-project-is-promoted was on master. Every issue's first acceptance criterion is that intent preflight passes from a branch of master. The writer records this critique, reviewed against the three new criteria, as .ai/repo/project/critiques/a-brief-is-reconciled-into-the-plan.yaml on the planning branch, so the critique and the records land together. I3400 is wave 0 and alone, so its references to I3168, I3169, I3251, I3254 and ADR 0211 arrive with that branch before it does."
+  - id: domain-skills-still-forbid-following-the-refusal
+    class: surface_missing
+    subject: "I3402"
+    finding: "I3402 changes only the /intent command alias, and its non_scope excludes the mj-* domain skills. The generic domain-skill text at apps/majordomus-cli/src/editors/claude.rs:179, projected into every .claude/skills/mj-*/SKILL.md (for example mj-intents/SKILL.md:26), tells a model that a capability which changes something is called once, 'and do not try again by another way'. mj-intents is model-invocable. It is the most likely way an agent reaches majordomus_intent_propose, and on that path a refused paste ends the turn. That contradicts the milestone's desired_state that every paste follows one path whatever surface it arrives by. Fix: put the same rule in the claude.rs:179 text ('a refusal that names majordomus://skill/<id> is followed with the same text; the capability is never called again with altered text'), regenerate and list the mj-* projections (or split that into its own issue), and keep the phrase pinned by claude.rs:338 and case 2980:57 or update both."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3405
+      because: "A new issue, I3405, puts the rule into the generic domain-skill text at claude.rs:179, shares one sentence with the alias, and lists all 58 tracked .claude/skills/mj-*/SKILL.md projections exactly. It keeps 'do not try again by another way' for a refusal naming no skill, so the pins at claude.rs:338 and case 2980:57 keep passing. It depends on I3402 because both edit claude.rs, case 2980 and docs/EDITORS.md. The new criterion a-refused-paste-leads-to-the-skill names the domain skills."
+  - id: refused-digest-cannot-equal-the-stored-file
+    class: unproven_assumption
+    subject: "I3401, I3404, skill step 2"
+    finding: "The refusal's digest is sha256 of the trimmed statement (apps/majordomus-cli/src/intent.rs:2327 trims before anything else). Skill step 2 stores 'exactly the text that was pasted' as a file, and campaigns-check hashes the file's bytes. Leading or trailing whitespace, or the trailing newline an editor or write tool adds, makes the two digests differ. Through MCP or the alias, the worker also holds the model's copy of the text, not the original bytes. I3404 can pass by construction while every live run fails the criterion's 'manifest digest equals the refused digest'. Fix: define one canonical byte form, for example the trimmed text plus exactly one LF. The refusal digests that form and prints its byte length, the skill writes the file in that form, and I3404 asserts the same form."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3401
+      because: "One canonical byte form is defined: the statement with whitespace removed at both ends, followed by exactly one line feed. I3401 digests that form and prints its byte length. Skill step 2 writes the campaign file in that form and compares digests, and reports a mismatch (for example a copy relayed through a model) rather than hiding it. I3404 asserts both the digest and the size, plus the single trailing line feed, and I3401's test passes a statement that has leading and trailing whitespace."
+  - id: skills-explain-does-not-print-the-procedure
+    class: missed_requirement
+    subject: "I3402"
+    finding: "The objective has the alias read the skill with `majordomus skills explain <id>`. That command answers tests, page, gates and invocations, not the body: skills_explain returns SkillStatus (capability/builtin/skills.rs:142), and cli.rs:6421 describes its output. The procedure is printed by `majordomus skills show <id>` (lib/skills.sh:29) or served as the MCP resource majordomus://skill/<id>. The alias text must name one of those, or the agent follows nothing."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3402
+      because: "The alias and the domain text now name majordomus skills show <id> (lib/skills.sh:29, which prints the file as written) or the MCP resource majordomus://skill/<id>. skills explain stays only where tests and invocations are checked."
+  - id: runner-js-link-is-untested-and-misses-the-execution-path
+    class: delivery_verification
+    subject: "I3403"
+    finding: "No test runs share/cockpit/runner.js. tests/cockpit.rs:251-273 checks only the HTML the server renders, and no case loads runner.js, so acceptance criteria 1-2 (an anchor is rendered, markup is shown literally) cannot be checked by the listed validation. A writer's form also carries data-mj-start (cockpit/pages.rs:1240) and is run through share/cockpit/executions.js, which renders the refusal as 'code: message' (executions.js:91-95). That file is not in scope. Fix: render the skill link in the Rust-rendered page or in both scripts, and prove it with an existing browser case that loads the runner (the plan allows no new case numbers), or drop the JS claim."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3403
+      because: "share/cockpit/executions.js is now in scope beside runner.js. tests/cockpit.rs, which cannot execute either script, is dropped. The proof is a new step in the existing browser case 3220 of the ui job, which submits a two-paragraph statement and a markup message, with ten consecutive local runs and a green ui job. No new case number is used."
+  - id: projection-scopes-incomplete
+    class: insufficient_work
+    subject: "I3400, I3401, I3402"
+    finding: "I3400: when evolve was added (a9d7b21157b), the change also touched .gitattributes (merge=derived lines for both skill pointers), docs/generated/artifacts.{json,md,yaml} and docs/generated/graph.json. Today site/data/generated/{artifacts,context,source}.json also name skills/evolve. None of these is in I3400's scope. I3401: the propose description also lives in docs/generated/cli.{json,md,yaml}, site/content/registry/capabilities/intents-propose.md, site/data/generated/{cli,openapi}.json and site/data/registry/registry.json (git grep 'no work can serve it until it is planned'). .ai/repo/project/intents/README.md:30-40 documents propose and should state the refusal, and cli.rs:6655 holds its command example. I3402: site/content/docs/editors.md is the generated projection of docs/EDITORS.md. check and finish refuse paths outside the scope, so list them now."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3401
+      because: "I3400 now lists .gitattributes, docs/generated/artifacts.{json,md,yaml}, docs/generated/graph.json, site/data/generated/{artifacts,context,source,skills,plan}.json and site/data/registry/registry.json, which is what evolve's commit a9d7b21157b and git grep 'skills/evolve' show. I3401 lists all 15 files that git grep 'no work can serve it until it is planned' names, including .ai/repo/project/intents/README.md and cli.rs. I3402 and I3405 list site/content/docs/editors.md."
+  - id: fixture-test-does-not-settle-a-skill-run
+    class: unproven_assumption
+    subject: "I3404 / a-decomposed-paste-passes-the-plan-checks"
+    finding: "The test checks records committed inline and labelled 'from one recorded run'. A hand-written or hand-edited fixture passes the same way, so the criterion's verdict ('one recorded run of the skill writes...') is not what the test settles. The test proves that the checks accept a decomposition of the right shape and that the digests agree, not that the skill produces one. Fix: reword the criterion to what the test proves, and settle 'the skill produces valid records' from a live run's PR (plan validate and intent validate as recorded evidence), for example the three untracked pastes with the owner's consent. Also align the counts: I3404 requires exactly 'one issue in the first wave' while the criterion says 'at least one'."
+    blocking: false
+    resolution:
+      state: open
+      because: "Planned in part. The criterion is reworded to what the test settles: the checks accept a decomposition in the skill's output shape, and the digests agree. It says outright that it does not settle a live run. Both the criterion and I3404 now say 'at least one' first-wave issue. Settling that a live run produces valid records needs the owner's consent to run the skill over the three untracked pastes, so that half stays an owner question and no criterion claims it."
+  - id: pasted-model-answer-classified-as-a-brief
+    class: regression_risk
+    subject: "skill step 2"
+    finding: "The step 2 table sends 'a document handed over: a report' to campaigns/ and only 'an exchange between several speakers' to workspace references. The three pastes are model answers taken from a conversation: the first title carries a link with utm_source=chatgpt.com. The intent's non-goal forbids 'Keeping a conversation's bytes under .ai/repo/ or campaigns/', and ADR 0211 cites a workspace message by reference. The plan lists this as an open question for the owner, yet the skill answers it silently in favour of storing. Fix: step 2 treats a pasted answer from an AI conversation as a conversation message (a workspace reference, or ask the person) until the owner rules otherwise."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3400
+      because: "Step 2 now treats an AI assistant's answer, or a text that quotes one, as a conversation message. It is cited by workspace reference when a synced workspace holds it (ADR 0211). Otherwise the person is asked whether it may be kept, until the owner rules otherwise, and the owner question is recorded."
+  - id: offering-by-announce-claims-the-scope
+    class: regression_risk
+    subject: "skill step 9"
+    finding: "Announcing every first-wave issue 'as offered, with its id and its scope' through peers.announce makes the announcer the holder of those scopes, and board announcements replicate on the mesh as advisory claims (repository CLAUDE.md). The decomposer would appear to claim work it is told not to take ('Take one at most yourself'), which keeps away the workers it is offering to. Offer without a scope claim (mesh handover publish or review request, or point to plan next), and announce only the issue actually taken."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3400
+      because: "Step 9 announces with a scope only the one issue the decomposer takes. The rest are offered by a handover published on the mesh that names their ids and claims no scope, and plan next picks for the takers."
+  - id: skill-task-scope-and-manifest-steps-incomplete
+    class: insufficient_work
+    subject: "skill steps 1, 2, 8"
+    finding: "`majordomus start ... --scope campaigns,.ai/repo/project` leaves out scripts/ci/english-only-allow.txt, which step 2 edits for a non-English paste. It also leaves out the projections that new plan records derive into: site/content/plan/<id>.md, site/data/generated/plan.json and entities.json, and docs/generated/graph.json (I3272 appears in all four). The procedure never runs the derive. campaigns/README.md is itself listed in MANIFEST.sha256, so adding a row changes its digest: 'add its line' leaves campaigns-check red. The skill should regenerate the manifest with the command campaigns-check prints. The directory pattern `<date>-<slug>` also differs from the existing names (slug, or slug-date)."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3400
+      because: "The task scope in step 1 now names scripts/ci/english-only-allow.txt and the projections that plan records derive into (site/content/plan, site/data/generated/{plan,entities,delivery,source}.json, site/data/registry/registry.json, docs/generated/graph.json, docs/PLAN_STATUS.md). Step 8 runs majordomus generate and scripts/generate-site-data before validating. Step 2 regenerates the manifest with the command campaigns-check prints, because README.md is itself in the manifest. The directory follows the existing <slug>-<yyyymmdd> pattern."
+  - id: single-line-paste-still-kept-verbatim
+    class: missed_requirement
+    subject: "I3401"
+    finding: "The detector is structural only, and I3401's doctest explicitly accepts 'a single long line'. A paste with its newlines stripped, or any one-paragraph text of any length, is still written verbatim, which falls short of the owner's order that a paste be decomposed. Add a length bound, derived from the measured maximum statement length of the tracked intents on master and stated in ADR 0144, so the threshold is a measured value and not an invented one."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3401
+      because: "A length bound is added: the smallest power of two above the longest statement of a tracked intent on the issue's base. The longest statement line on 9904000d2df measures 846 bytes, which gives 1024 unless the base measures otherwise. ADR 0144 states it with the command that measured it, and a test asserts that every tracked statement stays within it, so the constant stays pinned by what it measures."
+  - id: adr-0144-decision-and-error-variant
+    class: regression_risk
+    subject: "I3401"
+    finding: "ADR 0144's Decision says the statement is written verbatim. One of its rejected alternatives turns down plan records shaped by 'the model's guess at milestones and criteria'. I3401 adds only a Consequence. The Decision must state the refusal, and the alternatives section must say why a decomposition drafted by the worker and held to a critique and to plan validate differs from the rejected guess. 'ProposeError::Exists-style refusal' is ambiguous: reusing Exists mislabels the error, whose doc reads 'A record with this identity exists'. A new variant extends a public, exhaustive enum (intent.rs:2251, not non_exhaustive), and release analysis judges that change. Name the variant and accept the contract effect explicitly."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3401
+      because: "The refusal reuses ProposeError::Invalid, whose doc already reads 'the input cannot make a record' and which maps to invalid_input (intents.rs:460). The public, exhaustive enum and the release contract stay unchanged, and no new variant is added. The criterion now says invalid_input, not refused. I3401 amends ADR 0144's Decision as well as its Alternatives."
+  - id: order-pay-70-before-its-referrers
+    class: regression_risk
+    subject: "I3401, I3402, I3403 depends_on"
+    finding: "I3401, I3402 and I3403 name the decompose-a-brief skill that I3400 adds, so a merge order that lands them first would point readers at a skill that does not exist yet; each must depend on the skill issue."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3401
+      because: "I3401 now depends on I3400. I3402, I3403 and I3404 depend on I3400 and I3401, and I3405 depends on I3402. Waves: 0 = I3400; 1 = I3401; 2 = I3402, I3403, I3404; 3 = I3405."
+  - id: criterion-names-untested-transports
+    class: delivery_verification
+    subject: "a-paste-is-decomposed-not-stored-verbatim"
+    finding: "The criterion claims the command line, MCP, HTTP and the /intent alias. I3401 tests only the command line and MCP. No issue posts to POST /api/v1/intents/propose, and the alias is a text file that no test executes (I3402 asserts its sentences, not its behaviour). Add the HTTP form to I3401's test (the Served helper is already used in tests/intent_plan.rs), and word the alias part as 'the generated alias carries the rule', or drop those transports from the verdict."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3401
+      because: "I3401's test now covers HTTP POST /api/v1/intents/propose through the Served helper, as well as the command line and MCP. The alias and the domain skills moved to a separate criterion, a-refused-paste-leads-to-the-skill, which is worded as 'the generated text carries the rule', the thing a test can check."

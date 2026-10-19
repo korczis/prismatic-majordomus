@@ -22,6 +22,7 @@ related:
   - file:.ai/repo/project/milestones/campaigns-are-read-as-provenance.yaml
   - file:.ai/repo/project/intents/campaigns-are-provenance-the-plan-reads.yaml
   - file:.ai/repo/project/intents/a-brief-is-reconciled-into-the-plan.yaml
+  - file:.ai/repo/knowledge/curated/a-prompt-pack-in-the-owners-word.md
 provenance:
   origin: extracted
   derived_from:
@@ -37,6 +38,7 @@ provenance:
     - file:.ai/repo/project/milestones/campaigns-are-read-as-provenance.yaml
     - file:.ai/repo/project/intents/campaigns-are-provenance-the-plan-reads.yaml
     - file:.ai/repo/project/intents/a-brief-is-reconciled-into-the-plan.yaml
+    - file:.ai/repo/knowledge/curated/a-prompt-pack-in-the-owners-word.md
 ---
 
 # 180. A prompt pack is a campaign: kept as received, indexed as a kind, and cited by the records it drove

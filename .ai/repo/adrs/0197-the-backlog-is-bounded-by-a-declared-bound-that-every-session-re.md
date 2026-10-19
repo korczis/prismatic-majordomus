@@ -18,6 +18,7 @@ related:
   - file:.ai/repo/project/issues/I3212.yaml
   - file:.ai/repo/project/milestones/delivery-flow-is-measured.yaml
   - file:.ai/repo/project/intents/finished-work-reaches-a-verified-release.yaml
+  - file:.ai/repo/knowledge/curated/integration-capacity-bounds-the-backlog.md
 provenance:
   origin: extracted
   derived_from:
@@ -29,6 +30,7 @@ provenance:
     - file:.ai/repo/project/issues/I3212.yaml
     - file:.ai/repo/project/milestones/delivery-flow-is-measured.yaml
     - file:.ai/repo/project/intents/finished-work-reaches-a-verified-release.yaml
+    - file:.ai/repo/knowledge/curated/integration-capacity-bounds-the-backlog.md
 ---
 
 # 197. The backlog is bounded by a declared bound that every session reads at start, and the bound reports rather than refuses

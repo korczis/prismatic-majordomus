@@ -18,6 +18,7 @@ related:
   - file:.ai/repo/project/issues/I3248.yaml
   - file:.ai/repo/project/issues/I3249.yaml
   - file:.ai/repo/project/issues/I3250.yaml
+  - file:.ai/repo/knowledge/curated/what-idd-is-not.md
 provenance:
   origin: extracted
   derived_from:
@@ -30,6 +31,7 @@ provenance:
     - file:.ai/repo/project/issues/I3248.yaml
     - file:.ai/repo/project/issues/I3249.yaml
     - file:.ai/repo/project/issues/I3250.yaml
+    - file:.ai/repo/knowledge/curated/what-idd-is-not.md
 ---
 
 # 192. Replanning is bounded, idempotent and never weakens its intent

@@ -15,6 +15,7 @@ related:
   - file:.ai/repo/project/issues/I3196.yaml
   - file:.ai/repo/project/milestones/the-hub-is-reached-from-any-device.yaml
   - file:.ai/repo/project/intents/the-mesh-is-operated-from-any-device.yaml
+  - file:.ai/repo/knowledge/curated/lundra-is-the-always-on-hub.md
 provenance:
   origin: extracted
   derived_from:
@@ -25,6 +26,7 @@ provenance:
     - file:.ai/repo/project/issues/I3196.yaml
     - file:.ai/repo/project/milestones/the-hub-is-reached-from-any-device.yaml
     - file:.ai/repo/project/intents/the-mesh-is-operated-from-any-device.yaml
+    - file:.ai/repo/knowledge/curated/lundra-is-the-always-on-hub.md
 ---
 
 # 204. The hub is reached privately over the tailnet first; a public ingress is a deployment target, never an application change

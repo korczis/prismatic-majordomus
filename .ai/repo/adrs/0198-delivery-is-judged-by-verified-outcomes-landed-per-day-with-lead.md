@@ -18,6 +18,8 @@ related:
   - file:.ai/repo/project/intents/finished-work-reaches-a-verified-release.yaml
   - file:.ai/repo/project/issues/I3276.yaml
   - file:.ai/repo/adrs/0196-delivery-latency-targets-are-budgets-of-benchmark-policy-measure.md
+  - file:.ai/repo/knowledge/curated/integration-capacity-bounds-the-backlog.md
+  - file:.ai/repo/knowledge/curated/a-partial-green-is-not-the-verdict.md
 provenance:
   origin: extracted
   derived_from:
@@ -30,6 +32,8 @@ provenance:
     - file:.ai/repo/project/intents/finished-work-reaches-a-verified-release.yaml
     - file:.ai/repo/project/issues/I3276.yaml
     - file:.ai/repo/adrs/0196-delivery-latency-targets-are-budgets-of-benchmark-policy-measure.md
+    - file:.ai/repo/knowledge/curated/integration-capacity-bounds-the-backlog.md
+    - file:.ai/repo/knowledge/curated/a-partial-green-is-not-the-verdict.md
 ---
 
 # 198. Delivery is judged by verified outcomes landed per day, with lead time p95 as its control, never by commits, pull requests or sessions

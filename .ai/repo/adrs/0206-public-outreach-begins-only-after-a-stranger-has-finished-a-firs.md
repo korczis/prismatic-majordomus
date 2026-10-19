@@ -17,6 +17,7 @@ related:
   - file:.ai/repo/project/issues/I3129.yaml
   - file:.ai/repo/project/milestones/a-stranger-adopts-it-unaided.yaml
   - file:.ai/repo/project/intents/a-stranger-adopts-it-unaided.yaml
+  - file:.ai/repo/knowledge/curated/public-writing-is-evidence-led.md
 provenance:
   origin: extracted
   derived_from:
@@ -29,6 +30,7 @@ provenance:
     - file:.ai/repo/project/issues/I3129.yaml
     - file:.ai/repo/project/milestones/a-stranger-adopts-it-unaided.yaml
     - file:.ai/repo/project/intents/a-stranger-adopts-it-unaided.yaml
+    - file:.ai/repo/knowledge/curated/public-writing-is-evidence-led.md
 ---
 
 # 206. Public outreach begins only after a stranger has finished a first task unaided

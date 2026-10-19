@@ -39,5 +39,9 @@ satisfaction:
     criterion: "A kiosk left running keeps showing what changed: a lost drawing context is redrawn, and static marks drift, within bounds the Observatory benchmark manifest declares (planned proof: observatory_gate_burn_in_drift (to be written by I3232))"
     evidence: command
     ref: "majordomus intent explain every-surface-follows-what-changed"
+  - id: a-record-written-outside-the-server-reaches-an-open-view
+    criterion: "A record that a process outside the server writes reaches an open /ui view within one 20 s heartbeat of the live channel: a knowledge record that git brings into the index, a ledger line or a captured prompt. It arrives without a reload, a watcher or a per-object stat, and a woken reader writes nothing (planned proof: a_record_written_outside_reaches_an_open_view in apps/majordomus-cli/src/http/events.rs written by I3431)"
+    evidence: command
+    ref: "majordomus intent explain every-surface-follows-what-changed"
 created_at: 2026-10-18
-updated_at: 2026-10-18
+updated_at: 2026-10-19

@@ -22,6 +22,8 @@ related:
   - file:.ai/repo/project/issues/I3308.yaml
   - file:.ai/repo/project/milestones/a-provider-carries-the-contract-natively.yaml
   - file:.ai/repo/project/intents/a-provider-carries-the-contract-natively.yaml
+  - file:.ai/repo/knowledge/curated/claude-code-mods-are-unsandboxed-hooks-in-plugins.md
+  - file:.ai/repo/knowledge/curated/a-worktree-is-not-a-security-boundary.md
 provenance:
   origin: extracted
   derived_from:
@@ -38,6 +40,8 @@ provenance:
     - file:.ai/repo/project/issues/I3308.yaml
     - file:.ai/repo/project/milestones/a-provider-carries-the-contract-natively.yaml
     - file:.ai/repo/project/intents/a-provider-carries-the-contract-natively.yaml
+    - file:.ai/repo/knowledge/curated/claude-code-mods-are-unsandboxed-hooks-in-plugins.md
+    - file:.ai/repo/knowledge/curated/a-worktree-is-not-a-security-boundary.md
 ---
 
 # 214. A provider's native extension points carry the contract as generated projections; Majordomus neither embeds nor patches the worker's runtime

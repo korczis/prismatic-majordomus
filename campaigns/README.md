@@ -70,6 +70,7 @@ survived only on one disk, in a directory git was told to ignore. `.ai/repo/scop
 | `majordomus-worktree-cleanup-pack` | 2026-09-09 | 16 | Majordomus Worktree Cleanup & Merge Campaign | `~/Downloads/majordomus-worktree-cleanup-pack` |
 | `operation-zero-autonomous-night-shift` | 2026-10-11 | 11 | Operation Zero: Autonomous Night Shift | `~/Downloads/operation-zero-autonomous-night-shift.zip` (and a copy; three loose copies of its orchestrator file, all the same bytes) |
 | `prismatic-majordomus-evening-project-v0.1` | 2026-09-03 | 43 | Prismatic Majordomus | `~/Downloads/prismatic-majordomus` |
+| `prismatic-way-cognitive-fabric-prompt-pack` | 2026-10-19 | 15 | Prismatic Way \| Cognitive Fabric integration prompt pack | `~/Downloads/prismatic-way-cognitive-fabric-claude-code-prompt-pack.zip` (its own SHA256SUMS.txt verified on intake) |
 
 ## What came of them
 

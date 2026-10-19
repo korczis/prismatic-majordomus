@@ -16,6 +16,7 @@ related:
   - file:.ai/repo/project/issues/I3124.yaml
   - file:.ai/repo/project/issues/I3125.yaml
   - file:.ai/repo/project/intents/a-claim-stands-only-on-its-evidence.yaml
+  - file:.ai/repo/knowledge/curated/not-run-on-master-means-the-ledger-lacks-ci-runs.md
 provenance:
   origin: extracted
   derived_from:
@@ -27,6 +28,7 @@ provenance:
     - file:.ai/repo/project/issues/I3124.yaml
     - file:.ai/repo/project/issues/I3125.yaml
     - file:.ai/repo/project/intents/a-claim-stands-only-on-its-evidence.yaml
+    - file:.ai/repo/knowledge/curated/not-run-on-master-means-the-ledger-lacks-ci-runs.md
 ---
 
 # 189. JUnit and Cobertura are formats evidence is imported from and exported to; the tracked ledger stays the only store

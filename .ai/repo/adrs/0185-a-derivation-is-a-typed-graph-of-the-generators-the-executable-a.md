@@ -23,6 +23,8 @@ related:
   - file:.ai/repo/project/issues/I3233.yaml
   - file:.ai/repo/project/issues/I3234.yaml
   - file:.ai/repo/project/issues/I3236.yaml
+  - file:.ai/repo/knowledge/curated/do-less-work-before-doing-it-faster.md
+  - file:.ai/repo/knowledge/curated/a-plan-on-an-unlanded-branch-is-planned-again.md
 provenance:
   origin: extracted
   derived_from:
@@ -37,6 +39,8 @@ provenance:
     - file:.ai/repo/project/issues/I3233.yaml
     - file:.ai/repo/project/issues/I3234.yaml
     - file:.ai/repo/project/issues/I3236.yaml
+    - file:.ai/repo/knowledge/curated/do-less-work-before-doing-it-faster.md
+    - file:.ai/repo/knowledge/curated/a-plan-on-an-unlanded-branch-is-planned-again.md
 ---
 
 # 185. A derivation is a typed graph of the generators the executable already plans, keyed by the content of what each node reads, and the full derive stays its oracle

@@ -19,6 +19,7 @@ related:
   - file:.ai/repo/project/issues/I3184.yaml
   - file:.ai/repo/project/intents/nothing-in-the-mesh-waits-on-something-dead.yaml
   - file:.ai/repo/project/milestones/the-runtime-supervises-itself.yaml
+  - file:.ai/repo/knowledge/curated/lundra-is-the-always-on-hub.md
 provenance:
   origin: extracted
   derived_from:
@@ -32,6 +33,7 @@ provenance:
     - file:.ai/repo/project/issues/I3184.yaml
     - file:.ai/repo/project/intents/nothing-in-the-mesh-waits-on-something-dead.yaml
     - file:.ai/repo/project/milestones/the-runtime-supervises-itself.yaml
+    - file:.ai/repo/knowledge/curated/lundra-is-the-always-on-hub.md
 ---
 
 # 199. A hub is a declared host service; a working checkout's server stays a client's child

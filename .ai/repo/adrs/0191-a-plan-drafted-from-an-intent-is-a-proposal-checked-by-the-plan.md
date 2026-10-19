@@ -21,6 +21,7 @@ related:
   - file:.ai/repo/project/issues/I3254.yaml
   - file:.ai/repo/project/issues/I3246.yaml
   - file:.ai/repo/project/issues/I3247.yaml
+  - file:.ai/repo/knowledge/curated/what-idd-is-not.md
 provenance:
   origin: extracted
   derived_from:
@@ -36,6 +37,7 @@ provenance:
     - file:.ai/repo/project/issues/I3254.yaml
     - file:.ai/repo/project/issues/I3246.yaml
     - file:.ai/repo/project/issues/I3247.yaml
+    - file:.ai/repo/knowledge/curated/what-idd-is-not.md
 ---
 
 # 191. A plan drafted from an intent is a proposal, checked by the plan's own validators before any record is written

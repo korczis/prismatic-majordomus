@@ -17,6 +17,7 @@ related:
   - file:.ai/repo/project/issues/I3134.yaml
   - file:.ai/repo/project/issues/I3135.yaml
   - file:.ai/repo/project/intents/a-visitor-understands-and-checks-majordomus.yaml
+  - file:.ai/repo/knowledge/curated/positioning-leads-with-the-outcome.md
 provenance:
   origin: extracted
   derived_from:
@@ -28,6 +29,7 @@ provenance:
     - file:.ai/repo/project/issues/I3134.yaml
     - file:.ai/repo/project/issues/I3135.yaml
     - file:.ai/repo/project/intents/a-visitor-understands-and-checks-majordomus.yaml
+    - file:.ai/repo/knowledge/curated/positioning-leads-with-the-outcome.md
 ---
 
 # 210. The sentence that says what Majordomus is has one declaration, and every surface reads it

@@ -19,6 +19,7 @@ related:
   - file:.ai/repo/project/issues/I3238.yaml
   - file:.ai/repo/project/milestones/a-change-is-judged-in-minutes.yaml
   - file:.ai/repo/project/issues/I3240.yaml
+  - file:.ai/repo/knowledge/curated/do-less-work-before-doing-it-faster.md
 provenance:
   origin: extracted
   derived_from:
@@ -32,6 +33,7 @@ provenance:
     - file:.ai/repo/project/issues/I3238.yaml
     - file:.ai/repo/project/milestones/a-change-is-judged-in-minutes.yaml
     - file:.ai/repo/project/issues/I3240.yaml
+    - file:.ai/repo/knowledge/curated/do-less-work-before-doing-it-faster.md
 ---
 
 # 187. Tests are selected by the impact of a change, derived from what each case declares it reads, and a change of unknown impact runs every case

@@ -22,6 +22,8 @@ related:
   - file:.ai/repo/project/milestones/a-change-is-judged-in-minutes.yaml
   - file:.ai/repo/project/issues/I3240.yaml
   - file:.ai/repo/project/issues/I3242.yaml
+  - file:.ai/repo/knowledge/curated/do-less-work-before-doing-it-faster.md
+  - file:.ai/repo/knowledge/curated/a-speed-up-that-hides-a-check-is-not-one.md
 provenance:
   origin: extracted
   derived_from:
@@ -38,6 +40,8 @@ provenance:
     - file:.ai/repo/project/milestones/a-change-is-judged-in-minutes.yaml
     - file:.ai/repo/project/issues/I3240.yaml
     - file:.ai/repo/project/issues/I3242.yaml
+    - file:.ai/repo/knowledge/curated/do-less-work-before-doing-it-faster.md
+    - file:.ai/repo/knowledge/curated/a-speed-up-that-hides-a-check-is-not-one.md
 ---
 
 # 186. A pull request's required verdict is the feedback lane, a gate whose inputs did not change is reused as inputs_unchanged, and the proof lane judges the combined top before it lands
