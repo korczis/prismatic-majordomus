@@ -1025,7 +1025,16 @@ fn inspector(a: &Value, all: &[Value], repository: &str, filter: &Filter) -> El 
             if dependencies.is_empty() {
                 nothing("It depends on no other pull request.")
             } else {
-                dep_list
+                // a pull request that depends on another is a link of a train: the Trains
+                // screen draws the whole stack in landing order (I3601)
+                el("div").child(dep_list).child(
+                    el("p").class("mj-ui-line").child(
+                        el("a")
+                            .class("mj-ui-more")
+                            .attr("href", super::trains::ROUTE)
+                            .text("See its train, in landing order"),
+                    ),
+                )
             },
         ))
         .child(section(
@@ -1564,6 +1573,10 @@ mod tests {
         assert!(html.contains("/ui/prs?pr=820&amp;issue=I1403"), "{html}");
         let stacked = drain(&a, &Filter::from_query(&q(&[("pr", "914")]))).render();
         assert!(stacked.contains("inferred · not satisfied"));
+        assert!(
+            stacked.contains("href=\"/ui/trains\""),
+            "a pull request with a dependency leads to its train: {stacked}"
+        );
         let gone = drain(&a, &Filter::from_query(&q(&[("pr", "1")]))).render();
         assert!(gone.contains("#1 is not among the open pull requests"));
     }

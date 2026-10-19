@@ -3,26 +3,26 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and the index of this repository's layer; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.30.1"
+    "version": "0.30.2"
   },
   "registry": {
-    "fingerprint": "338221eed0e0921948a340d8013165e58b90de88847312b40b0188135ccfd3af",
+    "fingerprint": "071f9be3ff5b44493a6d2544a2822fbe601bb2f07d295f622a7078e112b5127e",
     "summary": {
-      "total": 2642,
+      "total": 2646,
       "builtin": 206,
-      "declarative": 2436,
+      "declarative": 2440,
       "by_kind": {
         "command": 31,
         "query": 175,
-        "resource": 2436
+        "resource": 2440
       },
       "by_stability": {
         "behaviorally_verified": 142,
         "experimental": 55,
-        "implemented": 2445
+        "implemented": 2449
       },
       "mcp_tools": 196,
-      "mcp_resources": 2491,
+      "mcp_resources": 2495,
       "http_routes": 201,
       "cli_commands": 111,
       "modules": 92,
@@ -85404,7 +85404,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 488,
+        "capabilities": 490,
         "capability_ids": []
       },
       {
@@ -85807,7 +85807,7 @@
         "title": "release-record",
         "description": "Declarative objects of kind 'release-record' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 30,
+        "capabilities": 31,
         "capability_ids": []
       },
       {
@@ -85978,7 +85978,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 562,
+        "capabilities": 563,
         "capability_ids": []
       },
       {
@@ -86070,7 +86070,7 @@
     ]
   },
   "index": {
-    "fingerprint": "e52982eaf000ca01d05d3b35f2170c9beffacafb7997a8bcbad48a406fd5843d",
+    "fingerprint": "2ddffd65a5adc0fc1580277dc8c1bfa29a69fa94cb3f88a164ae97abfa0193f4",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -86110,7 +86110,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 5,
-      "issue": 488,
+      "issue": 490,
       "knowledge": 4,
       "mesh-declaration": 1,
       "milestone": 42,
@@ -86118,13 +86118,13 @@
       "policy": 1,
       "profile": 4,
       "prompt": 5,
-      "release-record": 30,
+      "release-record": 31,
       "rule": 188,
       "scope": 1,
       "session": 90,
       "skill": 8,
       "taxonomy": 10,
-      "test": 562,
+      "test": 563,
       "use-case": 49,
       "workspace": 1
     },
@@ -92312,7 +92312,7 @@
         "title": "Installing Majordomus",
         "path": "docs/INSTALL.md",
         "source_class": "document",
-        "bytes": 15228
+        "bytes": 15333
       },
       {
         "uri": "majordomus://document/docs/INTEGRATION.md",
@@ -92375,7 +92375,7 @@
         "title": "Majordomus Mesh",
         "path": "docs/MESH.md",
         "source_class": "document",
-        "bytes": 66994
+        "bytes": 67825
       },
       {
         "uri": "majordomus://document/docs/MODELS.md",
@@ -92447,7 +92447,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 198460
+        "bytes": 202767
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -100820,6 +100820,17 @@
         "bytes": 2328
       },
       {
+        "uri": "majordomus://issue/I2853",
+        "kind": "issue",
+        "identity": "I2853",
+        "title": "a Pages deploy on a fresh master is not refused for claims newer than the ledger it reads",
+        "description": "`scripts/pages published-evidence` reads a `not run` claim whose test exists at none of the commits the ledger was recorded against as not yet recorded: it is named in the output and is not held against the published-not-run baseline. A claim whose test existed when the ledger was recorded still counts, and every claim counts when no commit of the ledger is in the history.",
+        "path": ".ai/repo/project/issues/I2853.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2837
+      },
+      {
         "uri": "majordomus://issue/I2882",
         "kind": "issue",
         "identity": "I2882",
@@ -101015,7 +101026,7 @@
         "path": ".ai/repo/project/issues/I2917.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1204
+        "bytes": 1337
       },
       {
         "uri": "majordomus://issue/I2918",
@@ -101191,7 +101202,7 @@
         "path": ".ai/repo/project/issues/I3001.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1060
+        "bytes": 1192
       },
       {
         "uri": "majordomus://issue/I3002",
@@ -101258,6 +101269,17 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 1844
+      },
+      {
+        "uri": "majordomus://issue/I3010",
+        "kind": "issue",
+        "identity": "I3010",
+        "title": "The mesh manual says the edit guard is not wired, and how to wire it by hand",
+        "description": "docs/MESH.md stops saying the edit guard is wired in the provider's configuration. It says that `capture install` writes no PreToolUse entry, so `session.edits_require_claim` refuses nothing in Claude Code yet; that the hook script and guard.edit exist; how a person wires it by hand (the entry, which settings file, a new session); and that wiring it and refusing an unclaimed edit are the generated-plugin work after the alpha.",
+        "path": ".ai/repo/project/issues/I3010.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1784
       },
       {
         "uri": "majordomus://issue/I3020",
@@ -102848,6 +102870,16 @@
         "identity": "v0.30.0",
         "title": "v0.30.0",
         "path": ".ai/repo/releases/v0.30.0.yaml",
+        "section": "releases",
+        "source_class": "release",
+        "bytes": 2442
+      },
+      {
+        "uri": "majordomus://release-record/v0.30.1",
+        "kind": "release-record",
+        "identity": "v0.30.1",
+        "title": "v0.30.1",
+        "path": ".ai/repo/releases/v0.30.1.yaml",
         "section": "releases",
         "source_class": "release",
         "bytes": 2442
@@ -109204,7 +109236,7 @@
         "identity": "test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh",
         "path": "test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh",
         "source_class": "case",
-        "bytes": 18717
+        "bytes": 20416
       },
       {
         "uri": "majordomus://test/test/cases/3221_a_bare_session_start_joins_the_cluster.sh",
@@ -109261,6 +109293,14 @@
         "path": "test/cases/3240_the_published_screens_carry_their_slow_panels.sh",
         "source_class": "case",
         "bytes": 3179
+      },
+      {
+        "uri": "majordomus://test/test/cases/3242_a_claim_newer_than_the_ledger_is_not_yet_recorded.sh",
+        "kind": "test",
+        "identity": "test/cases/3242_a_claim_newer_than_the_ledger_is_not_yet_recorded.sh",
+        "path": "test/cases/3242_a_claim_newer_than_the_ledger_is_not_yet_recorded.sh",
+        "source_class": "case",
+        "bytes": 3687
       },
       {
         "uri": "majordomus://test/test/cases/32_refusal_lifecycle.sh",
@@ -112361,7 +112401,7 @@
       "identity": [
         "id"
       ],
-      "objects": 488
+      "objects": 490
     },
     {
       "name": "knowledge",
@@ -112447,7 +112487,7 @@
       "identity": [
         "tag"
       ],
-      "objects": 30
+      "objects": 31
     },
     {
       "name": "rule",
@@ -112513,7 +112553,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 562
+      "objects": 563
     },
     {
       "name": "use-case",
