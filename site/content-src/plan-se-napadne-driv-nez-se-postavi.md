@@ -6,7 +6,7 @@ template = "page.html"
 lang = "cs"
 translated_from = "a-plan-is-attacked-before-it-is-built/"
 source_digest = "552eeebea9eeeb366c563af37a4273f27fbc4dfe1843eb8e625a05231e10c8e7"
-related = ["vlozene-zadani-se-stava-planem/", "dokumentace-kterou-lze-odmitnout/", "kresla-ne-jmena/"]
+related = ["vlozene-zadani-se-stava-planem/", "dokumentace-kterou-lze-odmitnout/", "kresla-ne-jmena/", "napsano-jednou-odvozeno-vsude/"]
 [extra.translations]
 en = "a-plan-is-attacked-before-it-is-built/"
 +++

@@ -42709,6 +42709,55 @@
         }
       },
       {
+        "id": "majordomus://issue/I3078",
+        "kind": "issue",
+        "label": "I3078",
+        "summary": "An article explains derivation in both languages: written once, derived everywhere",
+        "route": "/cockpit/objects/issue/i3078",
+        "source": ".ai/repo/project/issues/I3078.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Both articles are built, declare each other in [extra.translations], and the Czech one records translated_from = written-once-derived-everywhere/ and the digest check 21 computes of its source",
+            "Each statement is one a record, script or hook on master states, and check 19 finds no count typed by hand",
+            "scripts/site-check --articles passes the tree, counting the new related links"
+          ],
+          "created_at": "2026-10-19",
+          "current_state": "No article explains derivation. The six article groups relate each other, and none of them names it.",
+          "depends_on": [
+            "I3077"
+          ],
+          "evidence_required": [],
+          "milestone": "public-proof",
+          "non_scope": [
+            "Changing the derivation, its scripts, its rules or ADR 0004"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I3078.yaml",
+            "site/content-src/written-once-derived-everywhere.md",
+            "site/content-src/napsano-jednou-odvozeno-vsude.md",
+            "site/content-src/proof-carrying-documentation.md",
+            "site/content-src/dokumentace-kterou-lze-odmitnout.md",
+            "site/content-src/a-plan-is-attacked-before-it-is-built.md",
+            "site/content-src/plan-se-napadne-driv-nez-se-postavi.md",
+            "site/content-src/the-bet-on-a-layer.md",
+            "site/content-src/teze.md",
+            "site/data/nav.toml",
+            "scripts/ci/english-only-allow.txt"
+          ],
+          "serves": [],
+          "slug": "written-once-derived-everywhere",
+          "updated_at": "2026-10-19",
+          "validation": [
+            "majordomus plan validate",
+            "scripts/site-check --articles site/content-src site/data/nav.toml site/config.toml",
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3389_related_articles_answer_each_other_in_every_language"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I3436",
         "kind": "issue",
         "label": "I3436",
@@ -88886,6 +88935,21 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3078",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3078",
+        "target": "majordomus://issue/I3077",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3078",
+        "target": "majordomus://milestone/public-proof",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I3436",
         "target": "kind:issue",
         "kind": "is_a"
@@ -99177,8 +99241,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3083,
-      "edges": 6753,
+      "nodes": 3084,
+      "edges": 6756,
       "acyclic": false,
       "truncated": false
     }
