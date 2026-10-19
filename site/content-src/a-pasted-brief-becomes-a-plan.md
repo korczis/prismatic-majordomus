@@ -4,6 +4,7 @@ description = "A brief pasted into a session is a wish on its date, not an instr
 template = "page.html"
 [extra]
 lang = "en"
+related = ["proof-carrying-documentation/", "the-bet-on-a-layer/", "everything-followed/"]
 [extra.translations]
 cs = "vlozene-zadani-se-stava-planem/"
 +++

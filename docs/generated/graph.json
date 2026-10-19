@@ -42560,6 +42560,60 @@
         }
       },
       {
+        "id": "majordomus://issue/I3074",
+        "kind": "issue",
+        "label": "I3074",
+        "summary": "Every article ends with the articles related to it, in its reader's language, and each answers it back",
+        "route": "/cockpit/objects/issue/i3074",
+        "source": ".ai/repo/project/issues/I3074.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Each of the eight articles is built with a Related section linking the three other groups' articles in its own language, each with the related page's own title and lang",
+            "Check 21 refuses, naming the file, each fault the objective lists, and passes the real site/content-src with one OK articles line counting the related links",
+            "A translation's source_digest does not move when its source's related list changes, because the digest covers the body alone"
+          ],
+          "created_at": "2026-10-19",
+          "current_state": "site/templates/page.html ends an article with its body. No article names a related one, and nothing in scripts/site-check or the suite reads such a list.",
+          "depends_on": [
+            "I3436",
+            "I3437"
+          ],
+          "evidence_required": [
+            "related_articles_answer_each_other"
+          ],
+          "milestone": "public-proof",
+          "non_scope": [
+            "A link to an article's own counterpart under its title, and a language switch for the whole site: that is the multilingual site's (feature/site-multilingual)",
+            "Translating the heading of the section, which is the site's English chrome like the breadcrumb"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I3074.yaml",
+            "scripts/site-check",
+            "site/templates/page.html",
+            "site/content-src/teze.md",
+            "site/content-src/the-bet-on-a-layer.md",
+            "site/content-src/proof-carrying-documentation.md",
+            "site/content-src/dokumentace-kterou-lze-odmitnout.md",
+            "site/content-src/everything-followed.md",
+            "site/content-src/vsechno-v-jednom-proudu.md",
+            "site/content-src/a-pasted-brief-becomes-a-plan.md",
+            "site/content-src/vlozene-zadani-se-stava-planem.md",
+            "test/cases/3389_related_articles_answer_each_other_in_every_language.sh"
+          ],
+          "serves": [],
+          "slug": "the-articles-are-linked-in-every-language",
+          "updated_at": "2026-10-19",
+          "validation": [
+            "majordomus plan validate",
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3389_related_articles_answer_each_other_in_every_language",
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3502_every_article_reads_in_every_language"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I3436",
         "kind": "issue",
         "label": "I3436",
@@ -60846,6 +60900,13 @@
         "label": "test/cases/3385_doctor_fits_its_budget_in_the_commit_hook.sh",
         "route": "/cockpit/objects/test/test-cases-3385-doctor-fits-its-budget-in-the-commit-hook-sh",
         "source": "test/cases/3385_doctor_fits_its_budget_in_the_commit_hook.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3389_related_articles_answer_each_other_in_every_language.sh",
+        "kind": "test",
+        "label": "test/cases/3389_related_articles_answer_each_other_in_every_language.sh",
+        "route": "/cockpit/objects/test/test-cases-3389-related-articles-answer-each-other-in-every-language-sh",
+        "source": "test/cases/3389_related_articles_answer_each_other_in_every_language.sh"
       },
       {
         "id": "majordomus://test/test/cases/33_event_registry.sh",
@@ -88680,6 +88741,26 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3074",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3074",
+        "target": "majordomus://issue/I3436",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3074",
+        "target": "majordomus://issue/I3437",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3074",
+        "target": "majordomus://milestone/public-proof",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I3436",
         "target": "kind:issue",
         "kind": "is_a"
@@ -93686,6 +93767,11 @@
       },
       {
         "source": "majordomus://test/test/cases/3385_doctor_fits_its_budget_in_the_commit_hook.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3389_related_articles_answer_each_other_in_every_language.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -98966,8 +99052,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3079,
-      "edges": 6742,
+      "nodes": 3081,
+      "edges": 6747,
       "acyclic": false,
       "truncated": false
     }

@@ -4,6 +4,7 @@ description = "Tvrzení, které nemůže spadnout, je jen dobře naformátovaná
 template = "page.html"
 [extra]
 lang = "cs"
+related = ["teze/", "vlozene-zadani-se-stava-planem/", "vsechno-v-jednom-proudu/"]
 [extra.translations]
 en = "proof-carrying-documentation/"
 +++
