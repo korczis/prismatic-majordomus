@@ -16,7 +16,11 @@
 //   navbar.clipped       an item of the bar cuts its own text off
 //   navbar.locale-drift  the bar, closed or opened, in either theme, is not the same height in a
 //                        language as in the language the site is written in, on the same page
-//                        at the same width (localeDrift, over the whole run)
+//                        at the same width, or is missing there (localeDrift, over the whole run)
+//
+// The bar is found by its place — the first <nav> of the document — never by its label, which
+// a translation rewrites (the Czech copy's is "Hlavní"): a bar the check cannot find in one
+// language would otherwise be a bar it never compares, and a green result about nothing.
 //
 // No language is named here. The audit's pages come from the build's filesystem and sitemap
 // (ui-discover.mjs), so a `/cs/` tree the build writes is visited like any other, and the
@@ -67,9 +71,25 @@ export function localeDrift(visits) {
   }
   const findings = [];
   for (const v of visits) {
-    if (!v.navbar?.measures) continue;
+    if (!v.navbar) continue;
     const { lang, base } = localeOf(v.route, v.navbar.lang, source);
     if (lang === source) continue;
+    if (!v.navbar.measures) {
+      // a bar the source page has and the translation lacks — or one this file could not find
+      // there — is never a silent pass
+      const had = [...expected.keys()].some((k) => k.startsWith(`${base}@${v.width}@`));
+      if (had) {
+        findings.push({
+          route: v.route,
+          width: v.width,
+          finding: {
+            rule: 'navbar.locale-drift',
+            detail: `the main navigation the ${source} page has on ${base} was not found in ${lang} at ${v.width}px`,
+          },
+        });
+      }
+      continue;
+    }
     for (const m of v.navbar.measures) {
       const want = expected.get(key(base, v.width, m));
       if (want === undefined || Math.abs(m.height - want) <= HEIGHT_TOLERANCE) continue;
@@ -113,7 +133,11 @@ export async function measureNavbar(page, route) {
       const style = getComputedStyle(el);
       return style.visibility !== 'hidden' && style.display !== 'none';
     };
-    const nav = document.querySelector('nav[aria-label="Main"]');
+    // the bar by its place, not its words: a translation names the landmark in its own
+    // language (aria-label="Hlavní" on the Czech copy), so the English label finds nothing
+    // there; the main navigation is the first <nav> of the document, the one the site's
+    // partial renders before the content
+    const nav = document.querySelector('nav[aria-label="Main"]') || document.querySelector('nav');
     if (!nav || !visible(nav)) return null;
     const rows = new Set();
     let horizontal = false;
@@ -176,7 +200,7 @@ export async function measureNavbar(page, route) {
       }
     }
     if (full && closed.toggle) {
-      const button = page.locator(`nav[aria-label="Main"] [data-collapse-toggle="${closed.toggle}"]`).first();
+      const button = page.locator(`nav [data-collapse-toggle="${closed.toggle}"]`).first();
       if (await button.click({ timeout: 2000 }).then(() => true, () => false)) {
         await page.waitForTimeout(SETTLE_MS);
         const opened = await read();

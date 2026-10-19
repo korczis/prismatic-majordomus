@@ -420,6 +420,14 @@ test('a Czech bar taller than the English one on the same page and width is a fi
   assert.equal(visits[0].findings.length, 0, 'the English visit is the reference, not the defect');
 });
 
+test('a translated page whose bar was not found, where the source page has one, is a finding', () => {
+  const visits = [bar('/', 1280, 'en', [['light', 'closed', 73]]),
+    { route: '/cs/', width: 1280, findings: [], navbar: { lang: 'cs', measures: null } }];
+  const found = localeDrift(visits);
+  assert.equal(found.length, 1, JSON.stringify(found));
+  assert.match(found[0].finding.detail, /was not found in cs at 1280px/);
+});
+
 test('without the front page the source language is unknown, and nothing is compared', () => {
   assert.deepEqual(localeDrift([bar('/docs/', 1280, 'en', [['light', 'closed', 73]]),
     bar('/cs/docs/', 1280, 'cs', [['light', 'closed', 121]])]), []);

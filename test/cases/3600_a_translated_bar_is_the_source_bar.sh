@@ -14,6 +14,8 @@
 #   opened    at a width that shows the menu button, the opened Czech menu taller than the
 #             opened English one is navbar.locale-drift for the opened state
 #   restored  measuring leaves the page in the theme it found it in, with the menu closed
+#   labelled  every translated bar here names its landmark in its own language, as the Czech
+#             copy does ("Hlavni" for "Main"), and is still found and measured
 #
 # Needs a browser scripts/lib/browser.mjs can launch. The suite runners have none, so the case
 # defers to the ui job (majordomus-skip-runs-in: ui), which runs it with
@@ -47,7 +49,7 @@ const page = (lang, labels, { clipped = false } = {}) => `<!doctype html><html l
     nav ul.hidden { display: none; }
   }
 </style></head><body>
-<nav aria-label="Main">
+<nav aria-label="${lang === 'en' ? 'Main' : 'Hlavni'}">
   <button type="button" data-collapse-toggle="menu" aria-controls="menu" aria-expanded="false">Menu</button>
   <ul id="menu" class="hidden">${labels.map((l, i) => `<li><a href="#" class="${clipped && i === 0 ? 'clip' : ''}">${l}</a></li>`).join('')}</ul>
 </nav>
