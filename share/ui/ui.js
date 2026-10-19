@@ -260,6 +260,10 @@ async function refresh() {
   } finally {
     reading = null;
   }
+  // whoever asked for this reading, a live channel's change frame included: a screen that came
+  // back with a value the server is still reading again is read again until it has caught up,
+  // because no other frame may follow the one that asked
+  catchUp();
 }
 async function readScreen() {
   if (document.visibilityState !== 'visible') return;

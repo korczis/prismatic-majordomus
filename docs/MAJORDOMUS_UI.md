@@ -219,7 +219,10 @@ saw.
 A reading says how it stands on its source line. A current one older than five seconds says
 its age ("read 12 s ago"). A stale one says "read 12 s ago, before the repository changed;
 reading again", and its line carries `data-catching-up`. `ui.js` reads a screen with such a
-line again after 0.4 s, then after twice that, up to 6.4 s, until none is left. A stale value
+line again after 0.4 s, then after twice that, up to 6.4 s, until none is left, after every
+reading that brought one: the page's first, the minute's, and the one a live channel's change
+frame asked for. A change frame is often the only one, and its reading comes back stale whenever
+the blackboard takes longer than the 50 ms to read again, which it does under load. A stale value
 is never drawn as current.
 
 The first reader of the UI starts one pass over every screen and panel in the background, so

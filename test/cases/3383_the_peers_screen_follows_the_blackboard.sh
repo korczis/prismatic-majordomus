@@ -89,9 +89,11 @@ if (reads !== 4) fail(`a reconnection did not read the screen once: ${reads}`);
 // ui.js: one reading at a time. Two changes in quick succession: the second waits for the
 // first and is read after it, so the later screen is the one that stays
 const ui = (await import('node:fs')).readFileSync(new URL('./ui.js', import.meta.url), 'utf8');
-const from = ui.indexOf('// One reading at a time.');
+const from = ui.indexOf('const REFRESH_MS');
 const to = ui.indexOf('// A snapshot (ADR 0141)', from);
-if (from < 0 || to < 0) fail('ui.js has no one-reading-at-a-time refresh');
+if (from < 0 || to < 0 || !ui.slice(from, to).includes('// One reading at a time.')) {
+  fail('ui.js has no one-reading-at-a-time refresh');
+}
 const requests = [];
 let shown = 'G0';
 const screenOf = (revision) => ({ revision, replaceWith(next) { main.current = next; shown = next.revision; } });
@@ -99,7 +101,9 @@ const main = { current: screenOf('G0'), querySelector: () => null, get lastEleme
 const { runInNewContext } = await import('node:vm');
 const read = runInNewContext(ui.slice(from, to) + '\nrefresh;', {
   document: {
-    visibilityState: 'visible', getElementById: () => main, querySelector: () => null,
+    visibilityState: 'visible', getElementById: () => main,
+    // a screen whose revision says so carries a source line that is still catching up
+    querySelector: (selector) => (selector.includes('data-catching-up') && shown.endsWith('~') ? {} : null),
     createElement: () => ({ set innerHTML(v) { this.firstElementChild = screenOf(v); } }),
   },
   window: { location: { pathname: '/ui/peers', search: '' } },
@@ -118,11 +122,31 @@ requests[1].resolve({ ok: true, text: async () => 'G2' });
 await first; await second;
 if (shown !== 'G2') fail(`the screen shows ${shown}, not the later reading`);
 if (!/[?&]fragment(&|$)/.test(requests[1].url)) fail(`the reading is not the fragment: ${requests[1].url}`);
+
+// A reading that comes back with a value the server is still reading again is read again by
+// itself, whoever asked for it: a change frame's reading on a loaded server can come back
+// before the blackboard was read at that change, and no other frame may follow it
+const settle = async () => { for (let i = 0; i < 20; i++) await new Promise((r) => setImmediate(r)); };
+requests.length = 0;
+const third = read();
+await Promise.resolve();
+requests[0].resolve({ ok: true, text: async () => 'G3~' });
+await third;
+if (shown !== 'G3~') fail(`the catching-up screen is not shown: ${shown}`);
+advance(400);
+await settle();
+if (requests.length !== 2) fail('a screen that came back catching up was not read again');
+requests[1].resolve({ ok: true, text: async () => 'G4' });
+await settle();
+advance(10000);
+await settle();
+if (shown !== 'G4') fail(`the screen shows ${shown}, not the reading that caught up`);
+if (requests.length !== 2) fail(`a screen that caught up was read again: ${requests.length} readings`);
 console.log('live.js: a change and a reconnection read the screen again');
 JS
 node "$M/run.mjs" > "$T/live.out" 2>&1 || { echo "    live.js:"; sed 's/^/    | /' "$T/live.out"; exit 1; }
 grep -q '^live.js: a change and a reconnection' "$T/live.out" || { echo "    live.js did not finish"; cat "$T/live.out"; exit 1; }
-echo "    live.js reads the screen again on every snapshot, and ui.js reads one screen at a time"
+echo "    live.js reads the screen again on every snapshot; ui.js reads one screen at a time and reads a catching-up screen again"
 
 # ---------------------------------------------------------------- 2. the screen
 RB="$(rust_bin)" || rust_bin_exit $?
