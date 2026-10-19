@@ -245,15 +245,16 @@ fn train_panel(
     let rows = links
         .iter()
         .map(|l| {
-            let number = l.get("number").and_then(Value::as_u64).unwrap_or(0);
+            let number = l.get("number").and_then(Value::as_u64);
+            let label = number.map_or_else(|| "unknown".to_string(), |n| format!("#{n}"));
             let url = text(l, "url");
             let pr = if url.is_empty() {
-                el("span").class("mj-ui-mono").text(format!("#{number}"))
+                el("span").class("mj-ui-mono").text(label.clone())
             } else {
-                link(url, format!("#{number}"))
+                link(url, label.clone())
             };
             let mut first = el("td").child(pr);
-            if next == Some(number) {
+            if next.is_some() && next == number {
                 first = first.child(el("span").class("mj-ui-dim").text(" next in order"));
             }
             let disposition = text(l, "disposition");
@@ -278,7 +279,7 @@ fn train_panel(
                 el("td").child(
                     el("a")
                         .attr("href", checks_url)
-                        .attr("aria-label", format!("The checks of #{number}"))
+                        .attr("aria-label", format!("The checks of {label}"))
                         .child(state(l, "required_checks")),
                 )
             };
@@ -288,7 +289,13 @@ fn train_panel(
                     el("td").child(
                         el("a")
                             .class("mj-ui-row-link")
-                            .attr("href", format!("{}?pr={number}", super::prs::ROUTE))
+                            .attr(
+                                "href",
+                                number.map_or_else(
+                                    || super::prs::ROUTE.to_string(),
+                                    |n| format!("{}?pr={n}", super::prs::ROUTE),
+                                ),
+                            )
                             .child(el("span").class("mj-ui-cell-title").text(text(l, "title")))
                             .child(
                                 el("span")
@@ -410,7 +417,8 @@ fn overview(trains: &[Value]) -> El {
                 }
                 None => "none yet".into(),
             };
-            let mut by: Vec<(String, u64)> = t
+            // the model's own order (by_disposition is a map keyed by the word); no second order here
+            let by: Vec<(String, u64)> = t
                 .get("by_disposition")
                 .and_then(Value::as_object)
                 .map(|m| {
@@ -419,7 +427,6 @@ fn overview(trains: &[Value]) -> El {
                         .collect()
                 })
                 .unwrap_or_default();
-            by.sort_by(|a, b| b.1.cmp(&a.1).then(a.0.cmp(&b.0)));
             let standing = by
                 .iter()
                 .map(|(word, n)| format!("{n} {word}"))
@@ -427,7 +434,13 @@ fn overview(trains: &[Value]) -> El {
                 .join(", ");
             el("tr")
                 .child(el("td").child(link(format!("#{}", anchor(&id)), name)))
-                .child(el("td").text(links.len().to_string()))
+                .child(
+                    el("td").text(
+                        t.get("links")
+                            .and_then(Value::as_array)
+                            .map_or_else(|| "unknown".to_string(), |l| l.len().to_string()),
+                    ),
+                )
                 .child(el("td").class("mj-ui-mono mj-ui-dim").text(base))
                 .child(el("td").text(next))
                 .child(el("td").class("mj-ui-dim").text(standing))
@@ -589,6 +602,30 @@ mod tests {
         assert!(
             html.contains("1 needs refresh") && html.contains("1 ready"),
             "where its pull requests stand"
+        );
+    }
+
+    /// A link the observation names without a number, and a train without its links, are
+    /// unknown: never "#0", never a link to `?pr=0`, never a count of none.
+    #[test]
+    fn an_absent_number_or_count_is_unknown_not_zero() {
+        let view = json!({
+            "observed": true,
+            "tallies": { "trains": 2, "links": 1, "pending_prep": 0, "by_disposition": {} },
+            "unattached_prep": [],
+            "trains": [
+                { "id": "train-x", "links": [ { "title": "Nameless", "author": "a", "head_ref": "h",
+                  "base_ref": "master", "url": "", "checks_url": "", "disposition": "blocked",
+                  "lane": "repair", "required_checks": "unknown", "reasons": [], "next_action": "" } ] },
+                { "id": "train-y" }
+            ]
+        });
+        let html = body(&answer(view)).render();
+        assert!(!html.contains("#0"), "{html}");
+        assert!(!html.contains("pr=0"), "{html}");
+        assert!(
+            html.contains(">unknown<"),
+            "an absent number or count says unknown: {html}"
         );
     }
 
