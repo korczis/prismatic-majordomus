@@ -1003,7 +1003,7 @@ jobs:
   # Browser-measured: no horizontal overflow at 320/390/1280 on every route, the mobile menu,
   # the dropdowns, the theme toggle, Mermaid rendering. The full sweep, deliberately: every
   # overflow this site has produced came from canonical data rendered into a shared template,
-  # which no sample of one route per template can see. Split in four (I2841): as one step of
+  # which no sample of one route per template can see. Split in six (I2841): as one step of
   # the site job it took 35-37 minutes and held that job at 46-50 of its 50 minutes (runs
   # 39034132446, 39039860066, cancelled at its bound in 39049547899). Each shard is a stride of
   # the sorted route list (scripts/site-probe SITE_PROBE_SHARD), runs its own Zola build with
@@ -1015,8 +1015,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4]
-    # a quarter of the 35-37 minute sweep, its Zola build and the setup: about 15 minutes
+        shard: [1, 2, 3, 4, 5, 6]
+    # a sixth of a sweep that no longer fits 45 minutes (the Czech copies doubled the routes:
+    # run 39317142394 stopped the single step at its 2700 s bound), plus the build and setup
     timeout-minutes: 30
     runs-on: ubuntu-latest
     steps:
@@ -1032,11 +1033,11 @@ jobs:
         env:
           CHROME_BIN: google-chrome
           SITE_PROBE_JOBS: 4
-          SITE_PROBE_SHARD: ${{ matrix.shard }}/4
+          SITE_PROBE_SHARD: ${{ matrix.shard }}/6
           SITE_PROBE_REPORT: site-probe-routes.txt
-        run: scripts/ci/timed --bound 1200 site-probe "site-probe-${{ matrix.shard }}" timings.tsv scripts/site-probe
+        run: scripts/ci/timed --bound 1500 site-probe "site-probe-${{ matrix.shard }}" timings.tsv scripts/site-probe
       - if: always()
-        run: scripts/ci/summary --job site-probe --timings timings.tsv --fact "shard=${{ matrix.shard }}/4" --fact "npm cache hit=${{ steps.site.outputs.npm-cache-hit }}"
+        run: scripts/ci/summary --job site-probe --timings timings.tsv --fact "shard=${{ matrix.shard }}/6" --fact "npm cache hit=${{ steps.site.outputs.npm-cache-hit }}"
       - if: always()
         uses: actions/upload-artifact@v4
         with:

@@ -582,14 +582,14 @@ gates:
     runs: scripts/rust-check --doc && scripts/site-build && scripts/site-check
     summary: the derived data current, the site built once, every static check over the output
 
-  # Split in four shards (I2841): the site-probe-shard jobs each measure a stride of the routes
+  # Split in six shards (I2841): the site-probe-shard jobs each measure a stride of the routes
   # with the assets the site job built, and the site-probe job's receipt says both that every
   # shard passed and that their reports are every route once (scripts/site-probe --verify-report).
   - id: site-probe
     job: site-probe
     requires: [site-build]
-    runs: SITE_PROBE_JOBS=4 SITE_PROBE_SHARD=K/4 scripts/site-probe, then scripts/site-probe --verify-report
-    summary: every route at three widths in a real browser, split in four shards that together are the sweep, the menu, the dropdown, the theme toggle, the diagrams
+    runs: SITE_PROBE_JOBS=4 SITE_PROBE_SHARD=K/6 scripts/site-probe, then scripts/site-probe --verify-report
+    summary: every route at three widths in a real browser, split in six shards that together are the sweep, the menu, the dropdown, the theme toggle, the diagrams
 
   # The crate's Rust API reference, judged as the published surface it is (ADR 0086): the pages
   # rustdoc wrote for the one invocation the rust-check gate proves warning-free, handed off by
