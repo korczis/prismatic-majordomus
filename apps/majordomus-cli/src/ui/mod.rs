@@ -64,6 +64,7 @@ pub(crate) mod shell;
 pub(crate) mod skills;
 pub(crate) mod source;
 pub(crate) mod timings;
+pub(crate) mod trains;
 pub(crate) mod view;
 pub(crate) mod work;
 
@@ -177,6 +178,12 @@ pub(crate) const SCREENS: &[Screen] = &[
         title: "PR Drain",
         icon: "branch",
         answers: "Every open pull request, what the lane would do with it, and why.",
+    },
+    Screen {
+        route: trains::ROUTE,
+        title: "Trains",
+        icon: "layers",
+        answers: "Which pull requests are stacked on each other, in what order they land, and what each waits for.",
     },
     Screen {
         route: capabilities::ROUTE,
@@ -460,6 +467,7 @@ impl Ui {
             work::ROUTE => work::screen(ctx, query),
             issues::ROUTE => issues::screen(ctx, query),
             prs::ROUTE => prs::screen(ctx, query),
+            trains::ROUTE => trains::screen(ctx, query),
             mesh::ROUTE => mesh::screen(ctx, query),
             delivery::ROUTE => delivery::screen(ctx),
             deployments::ROUTE => deployments::screen(ctx),

@@ -258,6 +258,7 @@ Every screen and panel of the UI's own route list, read with `GET` and `Accept: 
 | `system.http.ui.work` | `/ui/work` | pinned | — |
 | `system.http.ui.issues` | `/ui/issues` | pinned | — |
 | `system.http.ui.prs` | `/ui/prs` | pinned | — |
+| `system.http.ui.trains` | `/ui/trains` | pinned | — |
 | `system.http.ui.capabilities` | `/ui/capabilities` | pinned | — |
 | `system.http.ui.skills` | `/ui/skills` | pinned | — |
 | `system.http.ui.mesh` | `/ui/mesh` | pinned | — |
@@ -275,6 +276,7 @@ Every screen and panel of the UI's own route list, read with `GET` and `Accept: 
 | `system.http.live.ui.work` | `/ui/work` | live | — |
 | `system.http.live.ui.issues` | `/ui/issues` | live | — |
 | `system.http.live.ui.prs` | `/ui/prs` | live | — |
+| `system.http.live.ui.trains` | `/ui/trains` | live | — |
 | `system.http.live.ui.capabilities` | `/ui/capabilities` | live | — |
 | `system.http.live.ui.skills` | `/ui/skills` | live | — |
 | `system.http.live.ui.mesh` | `/ui/mesh` | live | — |
