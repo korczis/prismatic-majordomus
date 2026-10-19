@@ -10,7 +10,10 @@ current_state: "devcontext selects layer objects; capabilities are not candidate
 desired_state: "A bounded, explained tool subset."
 scope:
   - "apps/majordomus-cli/src/devcontext"
-  - "apps/majordomus-cli/src/capability"
+  - "apps/majordomus-cli/src/capability/registry.rs"
+  - "apps/majordomus-cli/src/capability/model.rs"
+  - "apps/majordomus-cli/src/capability/handler.rs"
+  - "apps/majordomus-cli/src/capability/builtin/devcontext.rs"
 acceptance_criteria:
   - "A request about a path lists the capabilities that read or write it, with reasons"
   - "The list respects the budget"

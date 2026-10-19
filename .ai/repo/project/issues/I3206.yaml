@@ -11,8 +11,12 @@ desired_state: "Benchmark policy carries a budget per delivery phase with its so
 scope:
   - "apps/majordomus-cli/src/bench"
   - "apps/majordomus-cli/src/integration/metrics.rs"
-  - ".ai/repo/ci"
   - "docs/CI.md"
+  - ".ai/repo/benchmarks/rust/policy.yaml"
+  - ".ai/repo/benchmarks/rust/README.md"
+  - "apps/majordomus-cli/src/ui/prs.rs"
+  - "apps/majordomus-cli/src/capability/builtin/brief.rs"
+  - "site/content/docs/ci.md"
 non_scope:
   - "Weakening any gate to meet a budget"
   - "Choosing the numbers (ADR proposed: delivery latency targets are budgets)"

@@ -9,11 +9,13 @@ why: "2026-09-12 accepted: requirements become outcome-shaped records after disc
 current_state: "No segment identity; the promotion of 2026-10-18 reconciled conversations by hand with conv#msg sources; I3254 (duplicates) is planned, and the derived verdict is on master in intent.rs."
 desired_state: "Classification is reproducible from the revision and the plan at a commit and matches a committed fixture."
 scope:
-  - "apps/majordomus-cli/src"
   - "apps/majordomus-cli/src/intent_realization.rs"
   - "apps/majordomus-cli/src/intent.rs"
   - "share/schemas/majordomus/intent"
-  - "test/fixtures"
+  - "apps/majordomus-cli/src/capability/builtin/intents.rs"
+  - "apps/majordomus-cli/src/commands/intent.rs"
+  - "apps/majordomus-cli/src/lib.rs"
+  - "share/allow/intent.txt"
 depends_on:
   - "I3272"
   - "I3252"

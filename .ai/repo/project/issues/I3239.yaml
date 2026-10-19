@@ -10,9 +10,14 @@ current_state: "Measured on master 707a04c, 2026-10-18: validate.yml has five `c
 desired_state: "One Linux build per run; the artifact carries its generation, and a consumer refuses a mismatched one."
 scope:
   - ".github/workflows/validate.yml"
-  - "scripts/ci"
   - "test/lib.sh"
   - "test/cases/3019_a_failed_branch_run_cancels_itself.sh"
+  - "lib/rust_bin.sh"
+  - "scripts/ci-plan"
+  - ".ai/repo/ci/plan.yaml"
+  - "scripts/ci/run-plan"
+  - "scripts/ci/evidence-collect"
+  - "scripts/ci/mesh-lab-evidence"
 non_scope:
   - "Uploading the whole target directory"
   - "Release builds (I2353, rescue)"

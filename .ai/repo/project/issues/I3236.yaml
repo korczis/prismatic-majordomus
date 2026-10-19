@@ -9,13 +9,13 @@ why: "Owner 2026-10-17: derive 'in parallel'. Board p3: shared staging and evide
 current_state: "Verified on master 707a04c, 2026-10-18: scripts/derive runs four stages sequentially and no node graph exists. .ai/repo/benchmarks holds economics, observatory, pages and rust only, so no derive bench target, baseline or reference machine exists. I2349, which the 10-13 plan named for it, is in neither tree."
 desired_state: "Nodes the plan marks independent run concurrently; the derive reports its critical path."
 scope:
-  - "apps/majordomus-cli/src"
   - "scripts/derive"
   - "apps/majordomus-cli/src/bench"
-  - ".ai/repo/benchmarks"
   - "test/cases/82_bench_check.sh"
   - "docs/PERFORMANCE.md"
   - ".ai/repo/project/intents"
+  - ".ai/repo/benchmarks/rust/policy.yaml"
+  - ".ai/repo/benchmarks/rust/baseline.macos-aarch64-debug.json"
 non_scope:
   - "A scheduler outside the crate"
   - "Cross-machine scheduling (offload, I2398)"

@@ -33,7 +33,7 @@ relations:
 
 # Majordomus is explained by the outcome it decides, never by its architecture or as a coding agent
 
-The lead is the pain every agent user recognises: the agent said it was done and it was not; Majordomus decides whether it is. Coding agents (Claude Code, Codex, Gemini, local models) are interchangeable workers; Majordomus is never presented as a model, a better coding agent or an orchestration platform. The first viewport states one outcome, one action and a link to proof, not a catalogue of subsystems. Positioning was acted on in site/data/marketing.toml (2026-10-16, I2745) and is bounded by homepage.toml [promises]. Public security statements stay within what is verifiable: Majordomus itself makes no model call and sends nothing over the network; what the agent sends is the agent's configuration.
+The lead is the pain every agent user recognises: the agent said it was done and it was not; Majordomus decides whether it is. Coding agents (every provider docs/generated/providers.md declares, and local models) are interchangeable workers; Majordomus is never presented as a model, a better coding agent or an orchestration platform. The first viewport states one outcome, one action and a link to proof, not a catalogue of subsystems. Positioning was acted on in site/data/marketing.toml (2026-10-16, I2745) and is bounded by homepage.toml [promises]. Public security statements stay within what is verifiable: Majordomus itself makes no model call and sends nothing over the network; what the agent sends is the agent's configuration.
 
 ## Sources
 

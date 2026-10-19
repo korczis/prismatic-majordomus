@@ -9,10 +9,10 @@ why: "The export is the vendor's documented path for a person's own data and nee
 current_state: "No export reader exists; workspace.v1's transports enum is official|browser|private_http, and .ai/repo/workspaces/chatgpt-majordomus.yaml declares only browser."
 desired_state: "scripts/workspace import-export <archive> maps the export through the same mapper and writes the same records a browser sync would, marking acquisition: export."
 scope:
-  - "scripts/lib"
   - "share/schemas/majordomus/workspace"
-  - "test/fixtures"
   - ".ai/repo/workspaces"
+  - "share/allow/workspace.txt"
+  - "test/cases/93_workspace_kind.sh"
 non_scope:
   - "Any network access"
   - "Storing the archive inside the repository"

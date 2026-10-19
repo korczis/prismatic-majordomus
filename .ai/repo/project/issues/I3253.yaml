@@ -10,8 +10,12 @@ current_state: "intents.propose takes a statement and optional title and id; no 
 desired_state: "Open values are returned by intents.list, which /ui draws, and a draft that carries one is refused by the write until it is resolved or deferred with a reason."
 scope:
   - "apps/majordomus-cli/src/intent.rs"
-  - "apps/majordomus-cli/src"
   - "share/schemas/majordomus/intent"
+  - "apps/majordomus-cli/src/capability/builtin/intents.rs"
+  - "apps/majordomus-cli/src/intent_plan.rs"
+  - "apps/majordomus-cli/src/ui/intent.rs"
+  - "apps/majordomus-cli/src/commands/intent.rs"
+  - "apps/majordomus-cli/tests/intent.rs"
 depends_on:
   - "I3251"
   - "I3252"

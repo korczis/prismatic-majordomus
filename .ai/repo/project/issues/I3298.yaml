@@ -9,9 +9,13 @@ why: "The only declared hypothesis is long-running-work (30-70 percent, untested
 current_state: "`majordomus economics summary` on master 707a04c (2026-10-18): suite context 9 runs, suite pilot 0 runs with 14 pairs declared; one hypothesis."
 desired_state: "Arms and hypotheses declared as data, validated, and listed by economics summary as unmeasured until run."
 scope:
-  - ".ai/repo/benchmarks/economics"
   - "apps/majordomus-cli/src/economics"
   - "docs/ECONOMICS.md"
+  - ".ai/repo/benchmarks/economics/methodology.yaml"
+  - ".ai/repo/benchmarks/economics/README.md"
+  - "apps/majordomus-cli/tests/economics.rs"
+  - "docs/generated/economics.json"
+  - "docs/generated/economics.md"
 non_scope:
   - "Running the live suite (spends provider usage; owner decision)"
 serves:

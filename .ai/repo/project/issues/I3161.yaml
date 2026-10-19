@@ -10,10 +10,16 @@ current_state: ".githooks/pre-commit runs four commands, one of them the shell d
 desired_state: ".githooks/pre-commit is one exec line; the hook's verdicts are unchanged."
 scope:
   - ".githooks/pre-commit"
-  - "apps/majordomus-cli/src/commands"
   - "apps/majordomus-cli/src/cli.rs"
   - "share/commands.yaml"
   - ".ai/repo/automation/inventory.jsonl"
+  - "apps/majordomus-cli/src/commands/guard.rs"
+  - "apps/majordomus-cli/src/commands/worktree.rs"
+  - "apps/majordomus-cli/src/commands/mod.rs"
+  - "lib/doctor.sh"
+  - ".ai/repo/benchmarks/rust/policy.yaml"
+  - "docs/generated/cli.yaml"
+  - "test/cases/26_ci_wiring.sh"
 non_scope:
   - "The pre-push hook"
 depends_on:

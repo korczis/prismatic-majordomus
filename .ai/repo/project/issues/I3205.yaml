@@ -11,8 +11,12 @@ desired_state: "integration.queue and integration.explain carry canonical, deriv
 scope:
   - "apps/majordomus-cli/src/integration/model.rs"
   - "apps/majordomus-cli/src/integration/classify.rs"
-  - "apps/majordomus-cli/src/ui"
   - "docs/INTEGRATION.md"
+  - "apps/majordomus-cli/src/ui/prs.rs"
+  - "apps/majordomus-cli/src/integration/tests.rs"
+  - "apps/majordomus-cli/src/capability/builtin/integration.rs"
+  - "site/content/docs/integration.md"
+  - "docs/generated/openapi.json"
 non_scope:
   - "Changing what is derived"
   - "Ranking by the counts (a later decision)"

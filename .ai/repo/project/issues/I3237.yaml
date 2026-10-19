@@ -10,8 +10,11 @@ current_state: "generate::write stages each file as a temporary sibling and rena
 desired_state: "One publish step per derive, with a recovery path where a multi-file atomic replace is unavailable."
 scope:
   - "apps/majordomus-cli/src/generate.rs"
-  - "apps/majordomus-cli/src"
   - "scripts/derive"
+  - "apps/majordomus-cli/src/commands/generate.rs"
+  - "scripts/derive-check"
+  - "scripts/generate-site-data"
+  - "test/cases/400_derivation_is_one_graph.sh"
 non_scope:
   - "Changing what the derive lock serialises"
 depends_on:

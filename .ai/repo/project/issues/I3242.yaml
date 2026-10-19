@@ -12,7 +12,6 @@ scope:
   - "scripts/ci/summary"
   - ".github/workflows/validate.yml"
   - ".github/workflows/docker-image.yml"
-  - "apps/majordomus-cli/src/integration"
   - "scripts/ci-baseline"
   - ".ai/repo/ci/baseline.json"
   - "apps/majordomus-cli/src/capability/builtin/integration.rs"
@@ -20,6 +19,10 @@ scope:
   - "test/cases/1077_ci_timings_are_measured.sh"
   - "test/cases/413_a_skipped_case_is_not_a_proof.sh"
   - ".ai/repo/project/intents"
+  - "apps/majordomus-cli/src/integration/timings.rs"
+  - "apps/majordomus-cli/src/integration/forge.rs"
+  - "apps/majordomus-cli/src/integration/model.rs"
+  - "apps/majordomus-cli/src/integration/tests.rs"
 non_scope:
   - "A second observability store (c255#6 forbids a parallel platform)"
   - "Changing which checks a pull request requires: the required set is I2350's gate model, and the full suite still proves a combined top and a release"

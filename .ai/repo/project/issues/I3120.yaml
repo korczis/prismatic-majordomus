@@ -11,10 +11,14 @@ desired_state: "One scheduled job, its declaration in gates.yaml (not in every p
 scope:
   - ".ai/repo/ci/gates.yaml"
   - ".github/workflows"
-  - "scripts/ci"
   - "docs/COVERAGE.md"
   - "docs/CLAIMS.yaml"
   - ".ai/repo/project/intents"
+  - "scripts/ci/evidence-collect"
+  - "scripts/ci/claim-proof-check"
+  - ".ai/repo/evidence/ledger.json"
+  - "test/fixtures/coverage"
+  - ".ai/repo/adrs/0190-mutation-testing-is-scheduled-evidence-over-declared-critical-pr.md"
 non_scope:
   - "Blocking pull requests on mutation score"
   - "Shell mutation"

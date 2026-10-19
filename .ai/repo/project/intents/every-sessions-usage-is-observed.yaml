@@ -1,6 +1,6 @@
 id: every-sessions-usage-is-observed
 title: "What every AI session consumed is observed from the provider, attributed to the work it served, and never estimated into a fact"
-statement: "Token consumption, model and cost of every Claude Code, Codex and Gemini session on this repository are recorded automatically from what the provider itself reports, and recorded as not observed, with the reason, where the provider reports nothing Majordomus can receive; they are attributed to session, task, issue and intent, shown in /ui with a click-through to the reported event, and used to judge what Majordomus costs and saves, with no estimate shown as a measurement."
+statement: "Token consumption, model and cost of every session of a declared provider (docs/generated/providers.md) on this repository are recorded automatically from what the provider itself reports, and recorded as not observed, with the reason, where the provider reports nothing Majordomus can receive; they are attributed to session, task, issue and intent, shown in /ui with a click-through to the reported event, and used to judge what Majordomus costs and saves, with no estimate shown as a measurement."
 invariants:
   - "One provider-neutral record and one normalisation (economics::usage) serve every provider; adding one is a declaration, a mapping and fixtures"
   - "A value the provider did not report is recorded as absent with a reason, never as zero"

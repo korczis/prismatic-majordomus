@@ -5,7 +5,7 @@ findings:
   - id: red-trunk-carrier-is-unbound
     class: missed_requirement
     subject: "finished-work-reaches-a-verified-release#a-red-trunk-holds-the-landing"
-    finding: "Only I3200 (rel-01) serves this criterion, and I3200 handles protection drift only. Nothing in this intent does the first half, 'only its named carrier may land'. The criterion names 'I2709's case' as its proof, but on master .ai/repo/project/issues/I2709.yaml is READY (M004, depends on I2664), has no `serves`, and names the test `red_trunk_holds_the_landing_claim_test`. No such test or case exists in test/cases. As written, I3200 could land and turn the criterion's coverage green while the carrier rule is still unbuilt. Fix: add `serves: finished-work-reaches-a-verified-release#a-red-trunk-holds-the-landing` to I2709 (and name its real evidence id in the criterion), or split the criterion in two."
+    finding: "Only I3200 serves this criterion, and I3200 handles protection drift only. Nothing in this intent does the first half, 'only its named carrier may land'. The criterion names 'I2709's case' as its proof, but on master .ai/repo/project/issues/I2709.yaml is READY (M004, depends on I2664), has no `serves`, and names the test `red_trunk_holds_the_landing_claim_test`. No such test or case exists in test/cases. As written, I3200 could land and turn the criterion's coverage green while the carrier rule is still unbuilt. Fix: add `serves: finished-work-reaches-a-verified-release#a-red-trunk-holds-the-landing` to I2709 (and name its real evidence id in the criterion), or split the criterion in two."
     blocking: true
     resolution:
       state: planned

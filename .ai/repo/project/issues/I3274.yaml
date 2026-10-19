@@ -9,8 +9,10 @@ why: "2026-10-10: preserve completed history and avoid duplicate work on a revis
 current_state: "No revisions exist."
 desired_state: "The diff is derived; nothing reopens on wording-only change."
 scope:
-  - "apps/majordomus-cli/src"
-  - "test/fixtures"
+  - "apps/majordomus-cli/src/intent.rs"
+  - "apps/majordomus-cli/src/capability/builtin/intents.rs"
+  - "apps/majordomus-cli/src/commands/intent.rs"
+  - "apps/majordomus-cli/src/lib.rs"
 depends_on:
   - "I3273"
 serves:

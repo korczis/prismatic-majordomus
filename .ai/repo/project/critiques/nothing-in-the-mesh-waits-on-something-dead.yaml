@@ -49,7 +49,7 @@ findings:
   - id: breaker-forgets-with-the-server
     class: insufficient_work
     subject: "I3183"
-    finding: "Repairs run 'inside the shared server' with 'breaker state on the board'. The board lives in server memory and ends with the process (apps/majordomus-cli/src/peers.rs:4-5), and that server exits after 900 s idle (.ai/repo/policy.yaml:396) and is brought back by serve ensure. Each restart resets the failure count, so 'the third failure of one cause opens the breaker' becomes an endless loop across restarts. That is the restart loop the 10-17 design warned against ([16]: 'restartuje vlastní problémy', it restarts its own problems). Breaker state and the escalation must be persisted per cause under .ai/local/state and survive the process. The case must also prove the breaker stays open across a server restart."
+    finding: "Repairs run 'inside the shared server' with 'breaker state on the board'. The board lives in server memory and ends with the process (apps/majordomus-cli/src/peers.rs:4-5), and that server exits after 900 s idle (.ai/repo/policy.yaml:396) and is brought back by serve ensure. Each restart resets the failure count, so 'the third failure of one cause opens the breaker' becomes an endless loop across restarts. That is the loop the 10-17 design warned against: a system that keeps restarting its own problems. Breaker state and the escalation must be persisted per cause under .ai/local/state and survive the process. The case must also prove the breaker stays open across a server restart."
     blocking: true
     resolution:
       state: planned
@@ -67,7 +67,7 @@ findings:
   - id: leaks-and-blocked-queues-unclassified
     class: missed_requirement
     subject: "nothing-in-the-mesh-waits-on-something-dead#states-are-classified"
-    finding: "The owner asked that 'nevznikaji leaks' (no leaks arise), and the 10-17 design's S1, ranked P0 ([16] line 103), is detection of 'stallů, resource leaks, zablokovaných front' (stalls, resource leaks, blocked queues). No criterion and none of I3182's categories cover a leak: orphaned servers holding ports and memory, which scripts/reap-orphans:11-16 measured at fourteen servers and ~150 MB, or file descriptors, or a queue that is not draining. The classification covers items, not resources. Add a leak or accumulation class with its evidence, or state it as a non-goal the owner accepts."
+    finding: "The owner asked that no leaks arise, and the 10-17 design's S1, ranked P0, is detection of stalls, resource leaks and blocked queues. No criterion and none of I3182's categories cover a leak: orphaned servers holding ports and memory, which scripts/reap-orphans:11-16 measured at fourteen servers and ~150 MB, or file descriptors, or a queue that is not draining. The classification covers items, not resources. Add a leak or accumulation class with its evidence, or state it as a non-goal the owner accepts."
     blocking: false
     resolution:
       state: planned

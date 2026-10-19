@@ -9,11 +9,14 @@ why: "The 2026-10-08 audit (c193#0) found that doctor's wiring proof was grep: c
 current_state: "lib/doctor.sh mj_validate_wiring checks that hooks invoke the program. test/cases/18_doctrine_wiring.sh mutates links in a copy of the tool. No fixture of a violation exists per rule. Rule blocking-checks-cheap keeps doctor cheap, so this belongs in a case, not in doctor."
 desired_state: "A table of dispatched rules is derived from the rule corpus, not from a hand list. A rule with no fixture is listed and ratcheted. Every fixture present is refused by its real entry point, with the rule id in the output."
 scope:
-  - "test/fixtures"
   - "lib/doctrine.sh"
   - ".ai/repo/rules/project/rule-is-a-doctrine.v1.md"
   - "docs/DOCTRINE.md"
   - ".ai/repo/project/intents"
+  - "lib/doctor.sh"
+  - "test/cases/18_doctrine_wiring.sh"
+  - "test/lib.sh"
+  - ".ai/repo/adrs/0188-a-rule-s-proof-of-effect-is-a-recorded-refusal-of-its-violation.md"
 non_scope:
   - "Gated rules (proved by their own cases)"
   - "Making doctor run fixtures"

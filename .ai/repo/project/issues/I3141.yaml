@@ -11,11 +11,14 @@ desired_state: "One closer, in Rust; case 220 unchanged and green; the shell fun
 scope:
   - "lib/session.sh"
   - "apps/majordomus-cli/src/session"
-  - "apps/majordomus-cli/src/commands"
   - "apps/majordomus-cli/src/cli.rs"
   - "share/commands.yaml"
   - ".ai/repo/automation/inventory.jsonl"
   - "test/cases/220_exactly_once_close.sh"
+  - "apps/majordomus-cli/src/commands/mod.rs"
+  - "apps/majordomus-cli/src/capability/builtin/session_domain.rs"
+  - "apps/majordomus-cli/tests/session_domain.rs"
+  - "docs/generated/cli.yaml"
 non_scope:
   - "session start, checkpoint and handover (I3142, I3144)"
   - "The executable-resolution contract itself (I3320)"

@@ -9,9 +9,14 @@ why: "Most sessions are started by the person, not by Majordomus, so collection 
 current_state: "Nothing configures any client's telemetry."
 desired_state: "One command under an existing domain (economics or lifecycle providers, not a new noun) shows, applies and reverts the change, and doctor says whether collection is on per provider."
 scope:
-  - "apps/majordomus-cli/src/capability/builtin"
   - "docs/ECONOMICS.md"
   - "apps/majordomus-cli/src/http"
+  - "apps/majordomus-cli/src/capability/builtin/economics.rs"
+  - "apps/majordomus-cli/src/capability/builtin/lifecycle.rs"
+  - "apps/majordomus-cli/src/economics"
+  - "apps/majordomus-cli/src/economics/mod.rs"
+  - "apps/majordomus-cli/tests/economics.rs"
+  - "docs/generated/modules/economics.md"
 non_scope:
   - "Writing .claude/settings.json in the repository"
   - "Enabling raw body export"

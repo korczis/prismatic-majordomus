@@ -10,10 +10,12 @@ current_state: "52 packs (ls -d campaigns/*/ | wc -l at 707a04c), one campaigns/
 desired_state: "majordomus://campaign/<id> for every pack."
 scope:
   - "share/kinds.yaml"
-  - "share/schemas/majordomus"
-  - "share/allow"
-  - "apps/majordomus-cli/src"
   - "campaigns/README.md"
+  - "share/allow"
+  - ".ai/repo/knowledge/sources.yaml"
+  - "apps/majordomus-cli/src/metadata/mod.rs"
+  - "docs/SCHEMAS.md"
+  - "test/cases/340_a_brief_is_kept_as_received.sh"
 non_scope:
   - "Publishing pack bodies"
 serves:

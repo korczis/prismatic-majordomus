@@ -1,11 +1,11 @@
-id: finish-reads-what-its-work-serves
+id: a-finish-reads-the-criteria-its-work-serves
 title: A finish reads what its work serves
 slug: finish-reads-what-its-work-serves
 order: 196
 priority: p1
 problem: "A task now starts bound to the issue and the intent it serves, and the intent engine says which criteria are met and which guards are violated. Finish asks neither. A worker can finish completed while the criterion the work exists for has no evidence."
 outcome: "The completion policy asks the intent engine what stands for the work a task named, refuses completed while a served criterion is unmet or a guard is violated where the policy says completed means complete, and decides nothing about any intent."
-current_state: "The completion policy and finish semantics are pull request 821; the binding, the opposition, the verdict with guards and evaluations are the intent stack. The two meet in no line of code. Revived on 2026-10-18 from the rescue of 2026-10-09, because the milestone never landed; its dependency on intent-satisfaction was dropped, because no milestone of that id exists on master. Re-read on 2026-10-18 for the IDD plan, against master of 2026-10-17: ADR 0107 and case 895 keep completion and intent satisfaction apart; the #821 completion policy exists only on rescue refs."
+current_state: "The completion policy and finish semantics are pull request 821; the binding, the opposition, the verdict with guards and evaluations are the intent stack. The two meet in no line of code. Revived on 2026-10-18 from the rescue of 2026-10-09, because the milestone never landed; its dependency on intent-satisfaction was dropped, because no milestone of that id exists on master. Re-read on 2026-10-18 for the IDD plan, against master of 2026-10-17: ADR 0107 and case 895 keep completion and intent satisfaction apart; the #821 completion policy exists only on rescue refs. It revives milestone finish-reads-what-its-work-serves of origin/rescue/d1/feature/a-finish-reads-what-its-work-serves (2026-10-09) under its own id, because that record's order, its dependency on a milestone master does not have, and the ADR number it names do not hold on master."
 desired_state: "An ADR records the decision and its measurement, under a number allocated above the high-water mark when it is written (0115 on the unlanded rescue, which master never received); a policy key says whether an owed answer refuses; two questions of the completion policy are answered from intents.binding; the documents and the claim say what finish asks."
 scope:
   - apps/majordomus-cli/src/gates

@@ -10,7 +10,7 @@ findings:
     resolution:
       state: planned
       issue: I3281
-      because: "Confirmed in the worktree: I3280.yaml `why` ends 'Sources: chatgpt-majordomus:6ad0b3c2-...#2' and no plan record has a provenance field. I3281 (prv-04) now settles the grammar against what was written: the typed form is `workspace:chatgpt-majordomus/<conv>#<msg>`, and the prose form `chatgpt-majordomus:<conv>#<n>` is what a detector recognises. I3281 also migrates the prose references into typed positional `derived_from` entries and adds a detector that fails any record citing a workspace only in prose. I3281 depends only on I3280 and I1301 (DONE), so this does not wait for the vendor pipeline. I3284 (prv-07) keeps the pinning to message ids, and its zero-positional criterion now counts typed entries plus the detector's result. Neither check can pass vacuously."
+      because: "Confirmed in the worktree: I3280.yaml `why` ends 'Sources: chatgpt-majordomus:c267#2' and no plan record has a provenance field. I3281 now settles the grammar against what was written: the typed form is `workspace:chatgpt-majordomus/<conv>#<msg>`, and the prose form `chatgpt-majordomus:<conv>#<n>` is what a detector recognises. I3281 also migrates the prose references into typed positional `derived_from` entries and adds a detector that fails any record citing a workspace only in prose. I3281 depends only on I3280 and I1301 (DONE), so this does not wait for the vendor pipeline. I3284 keeps the pinning to message ids, and its zero-positional criterion now counts typed entries plus the detector's result. Neither check can pass vacuously."
   - id: two-provenance-definitions-differ
     class: unproven_assumption
     subject: "I3280"
@@ -19,7 +19,7 @@ findings:
     resolution:
       state: planned
       issue: I3280
-      because: "Confirmed: the adr.v1 pattern is ^(decision|session|commit|issue|file|test):.+$ and the knowledge.v1 pattern adds task:. I3280 (prv-03) now decides both questions. 'Declared once' means one canonical reference grammar that `majordomus generate` inlines into each schema; it is not a runtime $ref resolver, so the jsonschema build is untouched. Each kind gets its own admitted subset. Plan records take only tracked-resolvable types (commit, issue, file, test, plus workspace via I3281). ADRs keep their current set. Knowledge keeps task:. Each kind keeps its own `origin` semantics. Ledger-local types are refused on plan records with the cross-checkout reason."
+      because: "Confirmed: the adr.v1 pattern is ^(decision|session|commit|issue|file|test):.+$ and the knowledge.v1 pattern adds task:. I3280 now decides both questions. 'Declared once' means one canonical reference grammar that `majordomus generate` inlines into each schema; it is not a runtime $ref resolver, so the jsonschema build is untouched. Each kind gets its own admitted subset. Plan records take only tracked-resolvable types (commit, issue, file, test, plus workspace via I3281). ADRs keep their current set. Knowledge keeps task:. Each kind keeps its own `origin` semantics. Ledger-local types are refused on plan records with the cross-checkout reason."
   - id: structural-work-blocked-behind-external-workspaces
     class: insufficient_work
     subject: "a-promoted-record-opens-its-message"
@@ -37,7 +37,7 @@ findings:
     resolution:
       state: planned
       issue: I3282
-      because: "I3282 (prv-05) now folds resolution into I1308's single workspaces capability instead of adding a second one. It adds a local-only read policy in capability/model.rs that `admits_remote` refuses. It carries criteria for both outcomes: a remote request gets 403 (or the reference without text), and a loopback request gets the text. I3285 (prv-08) gets a non-scope saying message text is never served to a vendor caller."
+      because: "I3282 now folds resolution into I1308's single workspaces capability instead of adding a second one. It adds a local-only read policy in capability/model.rs that `admits_remote` refuses. It carries criteria for both outcomes: a remote request gets 403 (or the reference without text), and a loopback request gets the text. I3285 gets a non-scope saying message text is never served to a vendor caller."
   - id: conversation-ids-already-published
     class: missed_requirement
     subject: "a-promoted-record-opens-its-message"
@@ -54,7 +54,7 @@ findings:
     resolution:
       state: planned
       issue: I3278
-      because: "I1305, I1306, I1308 and I1309 are not issues of this bundle, so their `serves` cannot be amended here. The serving issues depend on them instead, and the criteria name that proof. I3278 (prv-01) depends on I1305, I1306 and I1308, and its criteria require `majordomus workspaces` to report the imported store as synced, with checkpoint age, counts and I1305's support level, and I1306's resume-and-repeat case to run green against it; #the-store-holds-the-workspace now cites exactly that proof. I3283 (prv-06) depends on I1309 and owns the #nothing-synced-is-published proof with its own fixture case (see snapshot-leak-test-must-hold-a-store). Coverage can no longer show either criterion as carried before the pieces that make it true have landed."
+      because: "I1305, I1306, I1308 and I1309 are not issues of this bundle, so their `serves` cannot be amended here. The serving issues depend on them instead, and the criteria name that proof. I3278 depends on I1305, I1306 and I1308, and its criteria require `majordomus workspaces` to report the imported store as synced, with checkpoint age, counts and I1305's support level, and I1306's resume-and-repeat case to run green against it; #the-store-holds-the-workspace now cites exactly that proof. I3283 depends on I1309 and owns the #nothing-synced-is-published proof with its own fixture case (see snapshot-leak-test-must-hold-a-store). Coverage can no longer show either criterion as carried before the pieces that make it true have landed."
   - id: export-transport-premise-unverified
     class: unproven_assumption
     subject: "I3279"
@@ -63,7 +63,7 @@ findings:
     resolution:
       state: planned
       issue: I3284
-      because: "Both routes are now planned. I3284 (prv-07) gains depends_on I1304 and a criterion that, where the export lacks Project conversations, pins come from an I1304 re-read that keeps upstream ids. The intent's route to #the-import-is-pinned therefore no longer rests on the unverified premise. I3279 (prv-02) now owns the transport declaration. The export is the vendor's documented interface, so it maps to the existing `official` enum value (workspace.v1 describes `official` as 'a documented vendor interface'). I3279 adds `official` to .ai/repo/workspaces/chatgpt-majordomus.yaml. Before any mapping code is written, it records whether one real owner export holds Project conversations."
+      because: "Both routes are now planned. I3284 gains depends_on I1304 and a criterion that, where the export lacks Project conversations, pins come from an I1304 re-read that keeps upstream ids. The intent's route to #the-import-is-pinned therefore no longer rests on the unverified premise. I3279 now owns the transport declaration. The export is the vendor's documented interface, so it maps to the existing `official` enum value (workspace.v1 describes `official` as 'a documented vendor interface'). I3279 adds `official` to .ai/repo/workspaces/chatgpt-majordomus.yaml. Before any mapping code is written, it records whether one real owner export holds Project conversations."
   - id: vendor-connector-premises-are-wrong
     class: unproven_assumption
     subject: "I3285"
@@ -71,7 +71,7 @@ findings:
     blocking: true
     resolution:
       state: open
-      because: "Part (a) is planned: I3285 (prv-08) needs an ADR amending ADR 0126 on authenticating vendor readers (OAuth for a ChatGPT connector) before any vendor caller is admitted, and its objective and why no longer claim ADR 0126 authenticates readers; its why records the router's rebound() refusal. The serves part is applied in the plan on 2026-10-18 without a new intent: milestone a-workspace-reaches-the-repository gains criteria of its own in this intent, #a-vendor-reads-and-never-writes (served by I3285) and #a-proposal-names-its-source (served by I3286), and neither issue serves #a-reference-validates-everywhere any more. What remains open: (b) the tunnel that rewrites Host to localhost needs a runtime-trust issue at higher priority than this p3 work, whose id a peer allocates on the board; (c) whether anything public is hosted at all, against a connector's need for a public HTTPS endpoint, is the owner's call."
+      because: "Part (a) is planned: I3285 needs an ADR amending ADR 0126 on authenticating vendor readers (OAuth for a ChatGPT connector) before any vendor caller is admitted, and its objective and why no longer claim ADR 0126 authenticates readers; its why records the router's rebound() refusal. The serves part is applied in the plan on 2026-10-18 without a new intent: milestone a-workspace-reaches-the-repository gains criteria of its own in this intent, #a-vendor-reads-and-never-writes (served by I3285) and #a-proposal-names-its-source (served by I3286), and neither issue serves #a-reference-validates-everywhere any more. What remains open: (b) the tunnel that rewrites Host to localhost needs a runtime-trust issue at higher priority than this p3 work, whose id a peer allocates on the board; (c) whether anything public is hosted at all, against a connector's need for a public HTTPS endpoint, is the owner's call."
   - id: i3278-overlaps-stale-transport-branch
     class: unnecessary_work
     subject: "I3278"
@@ -80,7 +80,7 @@ findings:
     resolution:
       state: planned
       issue: I3278
-      because: "Confirmed: feature/workspace-browser-transport exists locally and on origin, and share/schemas/majordomus/workspace-record is not on master. I3278 (prv-01) is narrowed to a data migration on top of I1302/I1303: its scope is test/cases and docs/WORKSPACES.md, and a non-scope keeps it out of the store and transport tooling that the branch and I1302/I1304 own. A criterion records the 2026-10-18 acquisition in the store as made through an unverified local transport."
+      because: "Confirmed: feature/workspace-browser-transport exists locally and on origin, and share/schemas/majordomus/workspace-record is not on master. I3278 is narrowed to a data migration on top of I1302/I1303: its scope is test/cases and docs/WORKSPACES.md, and a non-scope keeps it out of the store and transport tooling that the branch and I1302/I1304 own. A criterion records the 2026-10-18 acquisition in the store as made through an unverified local transport."
   - id: snapshot-leak-test-must-hold-a-store
     class: delivery_verification
     subject: "what-a-workspace-decides-reaches-the-repository-with-its-source#nothing-synced-is-published"
@@ -89,7 +89,7 @@ findings:
     resolution:
       state: planned
       issue: I3283
-      because: "I3283 (prv-06) gains two criteria. A test case builds the UI snapshot and the site inside a fixture checkout whose .ai/local/workspaces store holds a canary message and title, and fails if either canary appears. A post-deploy check confirms that majordomus.dev shows a promoted record's workspace reference as text with no message content. I1309's gate is not in this bundle; I3283's case gives the criterion a proof of its own."
+      because: "I3283 gains two criteria. A test case builds the UI snapshot and the site inside a fixture checkout whose .ai/local/workspaces store holds a canary message and title, and fails if either canary appears. A post-deploy check confirms that majordomus.dev shows a promoted record's workspace reference as text with no message content. I1309's gate is not in this bundle; I3283's case gives the criterion a proof of its own."
   - id: promotion-path-and-surfaces-unplanned
     class: surface_missing
     subject: "what-a-workspace-decides-reaches-the-repository-with-its-source#a-reference-validates-everywhere"
@@ -98,4 +98,4 @@ findings:
     resolution:
       state: planned
       issue: I3281
-      because: "I3281 (prv-04) carries the enforcement: the prose detector refuses a record that cites a workspace only in prose, plus a project rule and the promotion skill guidance under .ai/repo/rules/project and .ai/repo/skills. I3284 (prv-07) makes the promotion script emit typed provenance, so the next import cannot repeat the prose form. I3283 (prv-06) adds /cockpit, a site docs page and a release that ships it. The intent's non-goal on a Claude Project now says the owner asked for Claude parity and that the order stands only until the owner confirms or reverses it, and I3281's why records the same."
+      because: "I3281 carries the enforcement: the prose detector refuses a record that cites a workspace only in prose, plus a project rule and the promotion skill guidance under .ai/repo/rules/project and .ai/repo/skills. I3284 makes the promotion script emit typed provenance, so the next import cannot repeat the prose form. I3283 adds /cockpit, a site docs page and a release that ships it. The intent's non-goal on a Claude Project now says the owner asked for Claude parity and that the order stands only until the owner confirms or reverses it, and I3281's why records the same."

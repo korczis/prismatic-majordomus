@@ -9,10 +9,16 @@ why: "The owner's demand is that every promoted record drills back to conversati
 current_state: "apps/majordomus-cli/src/ui/prose.rs links known record ids; no workspace view exists."
 desired_state: "An intent, ADR or issue inspector shows its sources; one click opens the message; the snapshot build contains no message text."
 scope:
-  - "apps/majordomus-cli/src/ui"
   - "docs/MAJORDOMUS_UI.md"
-  - "apps/majordomus-cli/src/cockpit"
-  - "site/content-src"
+  - "apps/majordomus-cli/src/ui/prose.rs"
+  - "apps/majordomus-cli/src/ui/mod.rs"
+  - "apps/majordomus-cli/src/ui/intent.rs"
+  - "apps/majordomus-cli/src/ui/issues.rs"
+  - "apps/majordomus-cli/src/ui/source.rs"
+  - "apps/majordomus-cli/src/cockpit/intents.rs"
+  - "apps/majordomus-cli/src/cockpit/plan.rs"
+  - "apps/majordomus-cli/tests/ui_links.rs"
+  - "site/templates/issue.html"
 non_scope:
   - "Showing message text on the published site"
 depends_on:

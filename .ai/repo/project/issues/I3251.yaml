@@ -9,8 +9,13 @@ why: "The owner asked on 2026-10-09 what derive's interface is and on 2026-09-15
 current_state: "intents.propose writes a declared intent from a sentence and checks only that the id is free; devcontext compiles context from an issue, milestone, text or paths."
 desired_state: "The brief is a composition of devcontext and the object search, answered by one capability."
 scope:
-  - "apps/majordomus-cli/src"
   - "apps/majordomus-cli/src/capability/builtin/intents.rs"
+  - "apps/majordomus-cli/src/devcontext/select.rs"
+  - "apps/majordomus-cli/src/devcontext/mod.rs"
+  - "apps/majordomus-cli/src/capability/builtin/objects.rs"
+  - "apps/majordomus-cli/src/commands/intent.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/tests/intent.rs"
 acceptance_criteria:
   - "An outcome naming an existing intent's subject lists that intent first with the matching terms"
   - "The brief writes nothing"

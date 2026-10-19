@@ -9,7 +9,9 @@ why: "On 2026-10-18 the coordinator imported the project through the owner's own
 current_state: "I1301 done (.ai/repo/workspaces/chatgpt-majordomus.yaml, share/schemas/majordomus/workspace/workspace.v1.schema.json, kind in share/kinds.yaml). workspace-record/v1 and scripts/workspace exist only on feature/workspace-browser-transport (0c5419192f2, 2026-09-10). The corpus is session scratch."
 desired_state: "The store holds every captured conversation as a record whose identity comes from vendor and upstream id, the conversations the capture's index lists but did not store (63 of 297 on 2026-10-18) are recorded as listed-not-fetched, and I1306's replay over the same input leaves the store byte-identical."
 scope:
-  - "docs"
+  - ".ai/repo/workspaces/chatgpt-majordomus.yaml"
+  - ".ai/repo/workspaces/README.md"
+  - "test/cases/93_workspace_kind.sh"
 non_scope:
   - "Re-reading the vendor"
   - "Committing anything under .ai/local/"

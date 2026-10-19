@@ -9,9 +9,13 @@ why: "Drill-back is only useful if the reference opens something, and only safe 
 current_state: "No workspaces capability exists (I1308 open)."
 desired_state: "Resolution is an operation of I1308's one workspaces capability: a loopback caller gets the three states on CLI, HTTP and MCP from the registry, a caller beyond loopback gets 403 or the reference without text, and doctor counts unresolved references as information."
 scope:
-  - "apps/majordomus-cli/src/capability/builtin"
   - "apps/majordomus-cli/src/capability/model.rs"
   - "apps/majordomus-cli/src/http"
+  - "apps/majordomus-cli/src/capability/builtin/mod.rs"
+  - "apps/majordomus-cli/src/capability/handler.rs"
+  - "apps/majordomus-cli/src/mcp/surface.rs"
+  - "apps/majordomus-cli/tests/remote_callers.rs"
+  - "lib/doctor.sh"
 non_scope:
   - "A second workspace capability beside I1308's"
 depends_on:

@@ -10,8 +10,10 @@ current_state: "The benchmark run record keeps total_cost_usd as reported; no bi
 desired_state: "Every surface prints the class beside each figure and refuses to sum across classes."
 scope:
   - "apps/majordomus-cli/src/economics"
-  - "share/schemas"
   - "docs/ECONOMICS.md"
+  - "share/schemas/generated/economics-summary.schema.json"
+  - "apps/majordomus-cli/tests/economics.rs"
+  - "docs/generated/economics.json"
 depends_on:
   - "I0301"
   - "I3287"

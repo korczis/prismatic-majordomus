@@ -9,7 +9,14 @@ why: "A plugin from outside the tree is untrusted code; the grant model has to e
 current_state: "I1800 sandboxes the engine; no grant model exists."
 desired_state: "Negative tests prove escalation fails through every transport."
 scope:
-  - "apps/majordomus-cli/src/capability"
+  - "apps/majordomus-cli/src/script/mod.rs"
+  - "apps/majordomus-cli/src/capability/model.rs"
+  - "apps/majordomus-cli/src/capability/registry.rs"
+  - "apps/majordomus-cli/src/capability/executor.rs"
+  - "apps/majordomus-cli/src/capability/handler.rs"
+  - "apps/majordomus-cli/src/execution/event.rs"
+  - "apps/majordomus-cli/tests/engine.rs"
+  - "apps/majordomus-cli/tests/external_extension.rs"
 non_scope:
   - "The sandboxed engine and its time bound, which I1800 delivers"
   - "The exposure-ceiling refusal, which I3157 delivers"

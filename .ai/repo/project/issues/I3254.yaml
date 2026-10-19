@@ -10,7 +10,11 @@ current_state: "ProposeError has Invalid, Exists (same id) and Write; a differen
 desired_state: "Duplicate detection reuses the object search and the brief; no similarity model is required."
 scope:
   - "apps/majordomus-cli/src/intent.rs"
-  - "apps/majordomus-cli/src"
+  - "apps/majordomus-cli/src/capability/builtin/intents.rs"
+  - "apps/majordomus-cli/src/capability/builtin/objects.rs"
+  - "apps/majordomus-cli/src/intent_plan.rs"
+  - "apps/majordomus-cli/src/commands/intent.rs"
+  - "apps/majordomus-cli/tests/intent.rs"
 depends_on:
   - "I3251"
 acceptance_criteria:

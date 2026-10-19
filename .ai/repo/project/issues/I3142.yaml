@@ -13,7 +13,12 @@ scope:
   - "lib/start.sh"
   - "apps/majordomus-cli/src/session"
   - "share/events.yaml"
-  - "share/allow"
+  - "share/allow/session.txt"
+  - "share/allow/session-record.txt"
+  - "share/schemas/majordomus/session/session.v1.schema.json"
+  - "share/schemas/majordomus/session-record/session-record.v1.schema.json"
+  - "apps/majordomus-cli/tests/session_domain.rs"
+  - "test/cases/60_session_lifecycle.sh"
 non_scope:
   - "Binding a task to an intent, which I2001 owns"
 depends_on:

@@ -9,7 +9,7 @@ findings:
     blocking: true
     resolution:
       state: open
-      because: "Confirmed: .ai/repo/adrs/0180 (campaign) and 0194 (intake) are both status proposed, both say 'The owner has not accepted it', and ADR 0124 (lines 75-77, 116-117) forbids any ingestion CLI/MCP/API code until a follow-up noun ADR is accepted. Choosing between them is an acceptance only the owner can make, and the memory rule 'acceptance is the person's act' says a plan author must not settle it. The plan author's position, recorded in ADR 0180's rejected alternatives, is 'campaign': campaigns/ already exists, and project.no-new-nouns rejects a second noun. Under that position, I3272 and I3275 fold into I3167, I3169 and I3168, and I3273 and I3274 (requirement reconciliation) become later issues under campaign. Withdrawing 0194 and its intent is a change to another intent, and that choice belongs to the owner. In the meantime, the gate is put on ctx-40, the root that every other issue depends on (ctx-41 and ctx-42 directly, ctx-43 through ctx-41). This keeps the intent refused, which is the honest state until the owner chooses. Plan reconciled on 2026-10-18 after verification: the intake side has meanwhile been amended toward 'campaign' (I3272 now says ADR 0194 cites ADR 0180 and keeps only reconciliation), so the duplicate plan converges; the owner's acceptance of ADR 0180 is still the open act, and I3167 stays the gate."
+      because: "Confirmed: .ai/repo/adrs/0180 (campaign) and 0194 (intake) are both status proposed, both say 'The owner has not accepted it', and ADR 0124 (lines 75-77, 116-117) forbids any ingestion CLI/MCP/API code until a follow-up noun ADR is accepted. Choosing between them is an acceptance only the owner can make, and the memory rule 'acceptance is the person's act' says a plan author must not settle it. The plan author's position, recorded in ADR 0180's rejected alternatives, is 'campaign': campaigns/ already exists, and project.no-new-nouns rejects a second noun. Under that position, I3272 and I3275 fold into I3167, I3169 and I3168, and I3273 and I3274 (requirement reconciliation) become later issues under campaign. Withdrawing 0194 and its intent is a change to another intent, and that choice belongs to the owner. In the meantime, the gate is put on I3167, the root that every other issue depends on (I3168 and I3169 directly, I3170 through I3168). This keeps the intent refused, which is the honest state until the owner chooses. Plan reconciled on 2026-10-18 after verification: the intake side has meanwhile been amended toward 'campaign' (I3272 now says ADR 0194 cites ADR 0180 and keeps only reconciliation), so the duplicate plan converges; the owner's acceptance of ADR 0180 is still the open act, and I3167 stays the gate."
   - id: a-second-provenance-field
     class: regression_risk
     subject: "I3168"
@@ -18,7 +18,7 @@ findings:
     resolution:
       state: planned
       issue: I3168
-      because: "Accepted. I checked the Provenance definition at share/schemas/majordomus/adr/adr.v1.schema.json:100-118 and the scopes of I3280 and I3281 (both edit share/schemas/majordomus and plan.rs). ctx-41 now carries the citation as a campaign:<id>[/<path>] reference type in the single provenance.derived_from, depends on I3280 and I3281, and puts a separate campaigns: field in non-scope. Plan reconciled on 2026-10-18 after verification: I3168's objective now names the provenance.derived_from reference, and its base non_scope keeps only the upload view."
+      because: "Accepted. I checked the Provenance definition at share/schemas/majordomus/adr/adr.v1.schema.json:100-118 and the scopes of I3280 and I3281 (both edit share/schemas/majordomus and plan.rs). I3168 now carries the citation as a campaign:<id>[/<path>] reference type in the single provenance.derived_from, depends on I3280 and I3281, and puts a separate campaigns: field in non-scope. Plan reconciled on 2026-10-18 after verification: I3168's objective now names the provenance.derived_from reference, and its base non_scope keeps only the upload view."
   - id: a-pack-is-not-a-file-kind
     class: unproven_assumption
     subject: "I3167"
@@ -27,7 +27,7 @@ findings:
     resolution:
       state: planned
       issue: I3167
-      because: "Accepted. I confirmed the kinds mechanism is file-or-members only (share/kinds.yaml header) and that campaigns/MANIFEST.sha256 is one file (835 lines on this tree) whose line 1 hashes README.md. ctx-40 now chooses a tracked YAML index whose members are read through the existing members mechanism, so no new Rust directory-object mechanism is needed. The index sits outside campaigns/, so the received bytes and the manifest do not change. The revision digest is defined byte for byte, and the issue states that the packs' own manifests are not read. Plan reconciled on 2026-10-18 after verification: I3167's objective now names the tracked YAML index and the MANIFEST-derived revision digest."
+      because: "Accepted. I confirmed the kinds mechanism is file-or-members only (share/kinds.yaml header) and that campaigns/MANIFEST.sha256 is one file (835 lines on this tree) whose line 1 hashes README.md. I3167 now chooses a tracked YAML index whose members are read through the existing members mechanism, so no new Rust directory-object mechanism is needed. The index sits outside campaigns/, so the received bytes and the manifest do not change. The revision digest is defined byte for byte, and the issue states that the packs' own manifests are not read. Plan reconciled on 2026-10-18 after verification: I3167's objective now names the tracked YAML index and the MANIFEST-derived revision digest."
   - id: plan-validate-is-the-shell-engine
     class: insufficient_work
     subject: "I3168"
@@ -36,7 +36,7 @@ findings:
     resolution:
       state: planned
       issue: I3168
-      because: "Accepted. I confirmed that bin/majordomus routes plan to the shell engine and that case 99 (lines 88-95) diffs the findings of the two engines code for code. ctx-41's scope now includes lib/plan.sh, lib/plan_json.awk and test/cases/99_plan_capabilities.sh. A new criterion requires both engines to raise the same dangling-campaign finding on a fixture that carries a citation. The shell parse of nested provenance.derived_from is shared with I3280, which ctx-41 now depends on."
+      because: "Accepted. I confirmed that bin/majordomus routes plan to the shell engine and that case 99 (lines 88-95) diffs the findings of the two engines code for code. I3168's scope now includes lib/plan.sh, lib/plan_json.awk and test/cases/99_plan_capabilities.sh. A new criterion requires both engines to raise the same dangling-campaign finding on a fixture that carries a citation. The shell parse of nested provenance.derived_from is shared with I3280, which I3168 now depends on."
   - id: execution-pinning-has-no-criterion-and-no-start
     class: missed_requirement
     subject: "I3170"
@@ -45,7 +45,7 @@ findings:
     resolution:
       state: planned
       issue: I3170
-      because: "Accepted. I confirmed StartInput {capability, input} with deny_unknown_fields at executions.rs:131-137. ctx-43 now defines the start without touching StartInput or the MCP/OpenAPI contract. When the input of an executed capability names an issue, milestone or intent whose provenance cites campaign:<id>, the execution record carries that campaign id and the revision digest resolved at start. The record is immutable, so no rebind operation is added. The campaign's reverse relation lists the execution as one of the records that cite it. This makes ctx-43's link to records-cite-campaigns true rather than nominal. The promotion author should still state the pinning promise as its own intent criterion. The why says so, but this resolution cannot amend the intent. Plan reconciled on 2026-10-18 after verification: the intent now carries the criterion an-execution-pins-its-campaign, and I3170 serves it instead of records-cite-campaigns."
+      because: "Accepted. I confirmed StartInput {capability, input} with deny_unknown_fields at executions.rs:131-137. I3170 now defines the start without touching StartInput or the MCP/OpenAPI contract. When the input of an executed capability names an issue, milestone or intent whose provenance cites campaign:<id>, the execution record carries that campaign id and the revision digest resolved at start. The record is immutable, so no rebind operation is added. The campaign's reverse relation lists the execution as one of the records that cite it. This makes I3170's link to records-cite-campaigns true rather than nominal. The promotion author should still state the pinning promise as its own intent criterion. The why says so, but this resolution cannot amend the intent. Plan reconciled on 2026-10-18 after verification: the intent now carries the criterion an-execution-pins-its-campaign, and I3170 serves it instead of records-cite-campaigns."
   - id: the-rule-text-becomes-false
     class: regression_risk
     subject: "I3167"
@@ -54,7 +54,7 @@ findings:
     resolution:
       state: planned
       issue: I3167
-      because: "Accepted. docs/CONCEPTS.md has no 'campaign', and the campaigns-check header says 'Nothing reads them at run time'. ctx-40 now carries rule v2, the campaigns-check header, the README sentence and the CONCEPTS.md entry. ctx-41 carries docs/PLANNING.md for the citation grammar."
+      because: "Accepted. docs/CONCEPTS.md has no 'campaign', and the campaigns-check header says 'Nothing reads them at run time'. I3167 now carries rule v2, the campaigns-check header, the README sentence and the CONCEPTS.md entry. I3168 carries docs/PLANNING.md for the citation grammar."
   - id: the-ui-the-owner-asked-for-is-nobodys
     class: surface_missing
     subject: "campaigns-are-provenance-the-plan-reads#records-cite-campaigns"
@@ -63,7 +63,7 @@ findings:
     resolution:
       state: planned
       issue: I3168
-      because: "Accepted. The projection criteria (MCP resource, HTTP, OpenAPI, and a metadata-only site) go to ctx-40. The reading views go to ctx-41: a /ui campaign page that lists the records citing it, and a link from /ui and /cockpit to the campaign a record cites. The why narrows the existing non-scope so that ui-surfaces keeps only the drag-and-drop upload view. I3275's view of an intent's sources is the same surface and folds in here once the noun is chosen."
+      because: "Accepted. The projection criteria (MCP resource, HTTP, OpenAPI, and a metadata-only site) go to I3167. The reading views go to I3168: a /ui campaign page that lists the records citing it, and a link from /ui and /cockpit to the campaign a record cites. The why narrows the existing non-scope so that ui-surfaces keeps only the drag-and-drop upload view. I3275's view of an intent's sources is the same surface and folds in here once the noun is chosen."
   - id: no-record-actually-cites-a-pack
     class: insufficient_work
     subject: "campaigns-are-provenance-the-plan-reads#records-cite-campaigns"
@@ -72,7 +72,7 @@ findings:
     resolution:
       state: planned
       issue: I3168
-      because: "Accepted. Both branches exist locally, and one is pushed. ctx-41 now backfills citations on real records, starting with this promotion's own records, and requires a report of the campaigns cited by nothing. ctx-40 counts packs from the tree, never from a written number. ctx-42 integrates the two in-flight pack branches before appending to the manifest or the index. Neither branch carries an I-id to depend on, so the why names them."
+      because: "Accepted. Both branches exist locally, and one is pushed. I3168 now backfills citations on real records, starting with this promotion's own records, and requires a report of the campaigns cited by nothing. I3167 counts packs from the tree, never from a written number. I3169 integrates the two in-flight pack branches before appending to the manifest or the index. Neither branch carries an I-id to depend on, so the why names them."
   - id: zip-safety-has-no-reader-and-two-checkers
     class: unproven_assumption
     subject: "I3169"
@@ -81,7 +81,7 @@ findings:
     resolution:
       state: planned
       issue: I3169
-      because: "Accepted. I confirmed that Cargo.toml has no zip, flate or deflate crate. ctx-42 now states that it adds a pure-Rust ZIP reader dependency (never a shell-out to unzip). The limits are declared once, in the command's canonical capability declaration. The size and count limits for a kept tree are enforced by that same Rust check, run in CI beside case 340. campaigns-check keeps only its tree-level checks and does not restate any limit."
+      because: "Accepted. I confirmed that Cargo.toml has no zip, flate or deflate crate. I3169 now states that it adds a pure-Rust ZIP reader dependency (never a shell-out to unzip). The limits are declared once, in the command's canonical capability declaration. The size and count limits for a kept tree are enforced by that same Rust check, run in CI beside case 340. campaigns-check keeps only its tree-level checks and does not restate any limit."
   - id: validation-does-not-run-the-planned-proofs
     class: delivery_verification
     subject: "campaigns-are-read-as-provenance"
@@ -90,4 +90,4 @@ findings:
     resolution:
       state: planned
       issue: I3167
-      because: "Accepted for all four issues. Amendments are additive, so each issue gains an acceptance criterion that its finish runs the named proof: campaign_kind.rs for ctx-40, the record-cites-its-campaign case for ctx-41, the pack-checked-before-kept case for ctx-42 with a before-and-after tree-identity assertion on every refused shape, and the pinning test for ctx-43, which now serves records-cite-campaigns through the reverse relation."
+      because: "Accepted for all four issues. Amendments are additive, so each issue gains an acceptance criterion that its finish runs the named proof: campaign_kind.rs for I3167, the record-cites-its-campaign case for I3168, the pack-checked-before-kept case for I3169 with a before-and-after tree-identity assertion on every refused shape, and the pinning test for I3170, which now serves records-cite-campaigns through the reverse relation."

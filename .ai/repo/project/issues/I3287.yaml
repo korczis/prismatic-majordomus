@@ -10,13 +10,20 @@ current_state: "share/providers.yaml declares episode and prompts per provider; 
 desired_state: "claude-code: otel and stream-json; codex: app-server; gemini: otel; agents/bb: none — each with a citation verified at implementation; product validate refuses a key without evidence."
 scope:
   - "share/providers.yaml"
-  - "share/schemas"
   - "apps/majordomus-cli/src/commands/product.rs"
   - ".ai/repo/project/milestones/execution-telemetry.yaml"
   - ".ai/repo/project/issues/I0301.yaml"
   - ".ai/repo/project/issues/I0302.yaml"
   - ".ai/repo/project/issues/I0303.yaml"
   - ".ai/repo/project/issues/I0304.yaml"
+  - "share/schemas/generated/providers.schema.json"
+  - "apps/majordomus-cli/src/share.rs"
+  - "apps/majordomus-cli/src/product.rs"
+  - "apps/majordomus-cli/src/capability/builtin/lifecycle.rs"
+  - "test/cases/170_provider_lifecycle_declared.sh"
+  - "docs/generated/providers.json"
+  - "docs/generated/providers.md"
+  - "docs/generated/providers.yaml"
 serves:
   - "every-sessions-usage-is-observed#claude-code-usage-recorded"
 acceptance_criteria:

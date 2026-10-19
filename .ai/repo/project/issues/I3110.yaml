@@ -11,7 +11,6 @@ desired_state: "RuleProof carries refusal_shown: bool for a blocking rule. The r
 scope:
   - "apps/majordomus-cli/src/rules"
   - "scripts/ci/rule-proof-check"
-  - ".ai/repo"
   - "test/cases/125_rule_proof.sh"
   - ".ai/repo/rules/project/rule-is-a-doctrine.v1.md"
   - "apps/majordomus-cli/src/evidence/subject.rs"
@@ -20,6 +19,10 @@ scope:
   - "scripts/generate-site-data"
   - "test/cases/31_command_coverage.sh"
   - ".ai/repo/project/intents"
+  - ".ai/repo/rule-proof-baseline.txt"
+  - ".ai/repo/adrs/0188-a-rule-s-proof-of-effect-is-a-recorded-refusal-of-its-violation.md"
+  - "apps/majordomus-cli/src/capability/builtin/rules.rs"
+  - "apps/majordomus-cli/tests/rules.rs"
 non_scope:
   - "Writing the missing negative cases themselves (follow-up issues per rule family)"
   - "Advisory rules"

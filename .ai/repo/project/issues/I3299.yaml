@@ -9,8 +9,16 @@ why: "The owner asked for an honest answer on whether overhead stays acceptable;
 current_state: "rule project.performance-evidence and bench --check hold UI latency budgets (I2489 done) for this repository only."
 desired_state: "An adoption overhead suite in benchmark policy with recorded measurements."
 scope:
-  - ".ai/repo/benchmarks"
-  - "apps/majordomus-cli/src"
+  - ".ai/repo/benchmarks/rust/policy.yaml"
+  - ".ai/repo/benchmarks/rust/README.md"
+  - ".ai/repo/benchmarks/README.md"
+  - "apps/majordomus-cli/src/bench/system.rs"
+  - "apps/majordomus-cli/src/bench/runner.rs"
+  - "apps/majordomus-cli/src/bench/mod.rs"
+  - "apps/majordomus-cli/src/capability/benchmark.rs"
+  - "apps/majordomus-cli/src/commands/bench.rs"
+  - "apps/majordomus-cli/tests/bench.rs"
+  - "docs/generated/benchmarks.json"
 serves:
   - "every-sessions-usage-is-observed#own-overhead-is-measured"
 acceptance_criteria:

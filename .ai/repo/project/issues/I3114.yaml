@@ -9,10 +9,14 @@ why: "The owner asked that every override be explicit and recorded: who, what, w
 current_state: "Rule an-expedited-landing-is-the-owners-word requires the authorisation to be recorded, but nothing reads the merges themselves. Case 2999 holds that the executor never expedites."
 desired_state: "majordomus prs (or integration events) lists expedited merges with authorisation, lander and judged-tree reference. A missing authorisation is red after a declared window."
 scope:
-  - "apps/majordomus-cli/src/integration"
   - "apps/majordomus-cli/src/capability/builtin/integration.rs"
   - "docs/INTEGRATION.md"
   - "docs/CLAIMS.yaml"
+  - "apps/majordomus-cli/src/integration/forge.rs"
+  - "apps/majordomus-cli/src/integration/mod.rs"
+  - "apps/majordomus-cli/src/integration/model.rs"
+  - "apps/majordomus-cli/src/integration/drain.rs"
+  - "apps/majordomus-cli/src/integration/tests.rs"
 non_scope:
   - "Forbidding expedited landings"
   - "A new override record kind (read the forge and the existing decision records)"

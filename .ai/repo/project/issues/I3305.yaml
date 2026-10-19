@@ -9,9 +9,14 @@ why: "The owner's audit (10-13) put an external plugin vertical first; the scrip
 current_state: "automation milestone: I1800 sandboxed engine, I1801 scripted capability kind; I3157 proves an adopter-declared capability in the layer reaches its surfaces; nothing loads from outside the tree."
 desired_state: "A fixture package outside the repository shows in capabilities.list with its origin."
 scope:
-  - "apps/majordomus-cli/src/capability"
   - "share/kinds.yaml"
-  - "share/schemas"
+  - "apps/majordomus-cli/src/capability/registry.rs"
+  - "apps/majordomus-cli/src/capability/model.rs"
+  - "apps/majordomus-cli/src/capability/module.rs"
+  - "apps/majordomus-cli/src/capability/builtin/capabilities.rs"
+  - "apps/majordomus-cli/src/script/mod.rs"
+  - "share/schemas/majordomus/manifest/manifest.v1.schema.json"
+  - "apps/majordomus-cli/tests/external_extension.rs"
 non_scope:
   - "Registration on CLI, MCP and OpenAPI with origin and the over-ceiling refusal, which I3157 already proves"
   - "Anything about a client carrying the contract (ADR 0214)"

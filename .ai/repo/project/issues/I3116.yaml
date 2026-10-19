@@ -11,11 +11,14 @@ desired_state: "One projection, derived from the files and their headers, read b
 scope:
   - "scripts/generate-site-data"
   - "apps/majordomus-cli/src/capability/builtin/quality.rs"
-  - ".ai/repo"
   - "docs/EVIDENCE.md"
   - ".ai/repo/ci/case-numbers-baseline.txt"
   - ".ai/repo/ci/github-drift-baseline.txt"
   - ".ai/repo/evidence/published-not-run.txt"
+  - "site/templates/evidence.html"
+  - "lib/doctor.sh"
+  - "test/cases/10_site_data.sh"
+  - ".ai/repo/ci/gates.yaml"
 non_scope:
   - "Paying down any baseline"
 serves:

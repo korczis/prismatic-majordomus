@@ -10,8 +10,12 @@ current_state: "mcp/protocol.rs prepares the listing once and includes outputSch
 desired_state: "A budget in policy, a gate, and a measured listing size in the MCP projection."
 scope:
   - "apps/majordomus-cli/src/mcp"
-  - ".ai/repo/benchmarks"
   - "docs/MCP.md"
+  - ".ai/repo/benchmarks/rust/policy.yaml"
+  - ".ai/repo/benchmarks/rust/README.md"
+  - "apps/majordomus-cli/src/capability/builtin/mcp.rs"
+  - "apps/majordomus-cli/tests/mcp_conformance.rs"
+  - "test/cases/940_mcp_says_nothing_its_capability_does_not.sh"
 serves:
   - "a-provider-carries-the-contract-natively#mcp-listing-bounded"
 acceptance_criteria:

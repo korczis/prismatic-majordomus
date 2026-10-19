@@ -11,8 +11,12 @@ desired_state: "start's verdict names the fetch age, the local and remote heads 
 scope:
   - "lib/start.sh"
   - "apps/majordomus-cli/src/environment/vcs.rs"
-  - "apps/majordomus-cli/src/worktree"
   - "docs/WORKTREES.md"
+  - "apps/majordomus-cli/src/worktree/trunk.rs"
+  - "apps/majordomus-cli/src/worktree/git.rs"
+  - "apps/majordomus-cli/src/commands/worktree.rs"
+  - "apps/majordomus-cli/tests/worktree.rs"
+  - "test/cases/04_start_check.sh"
 non_scope:
   - "Any network call at directory entry"
   - "Pushing master"

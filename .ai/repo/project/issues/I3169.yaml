@@ -9,11 +9,14 @@ why: "ADR 0124 point 6 (untrusted content, ZIP safety); the 2026-10-10 design se
 current_state: "Packs are copied in by hand and checked by campaigns-check afterwards."
 desired_state: "One safe command; the same check refuses a hand copy that breaks it."
 scope:
-  - "apps/majordomus-cli/src/commands"
   - "apps/majordomus-cli/src/cli.rs"
   - "share/commands.yaml"
   - "scripts/ci/campaigns-check"
   - "campaigns/README.md"
+  - "apps/majordomus-cli/src/commands/mod.rs"
+  - "apps/majordomus-cli/Cargo.toml"
+  - "apps/majordomus-cli/Cargo.lock"
+  - "test/cases/340_a_brief_is_kept_as_received.sh"
 non_scope:
   - "Network fetches"
   - "Running prompts"

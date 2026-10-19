@@ -10,8 +10,9 @@ current_state: "At 707a04c no entity read or page carries a last-changed commit.
 desired_state: "Every object with a file names its last commit and opens its history, bounded, with no tracked copy of either."
 scope:
   - "apps/majordomus-cli/src/capability/builtin/entity.rs"
-  - "apps/majordomus-cli/src/cockpit"
-  - "apps/majordomus-cli/src/ui"
+  - "apps/majordomus-cli/src/cockpit/pages.rs"
+  - "apps/majordomus-cli/src/git/mod.rs"
+  - "apps/majordomus-cli/tests/objects.rs"
 non_scope:
   - "Storing history in the index"
   - "Diffs of the object"

@@ -9,7 +9,12 @@ why: "2026-10-08 critique: without this, intent-driven becomes issue-driven with
 current_state: "IntentEvidenceState distinguishes current, stale, failing, not_run, not_derivable, unresolved; drafting does not exist."
 desired_state: "The draft says per criterion which class it is in and why."
 scope:
-  - "apps/majordomus-cli/src"
+  - "apps/majordomus-cli/src/intent_plan.rs"
+  - "apps/majordomus-cli/src/intent.rs"
+  - "apps/majordomus-cli/src/evidence/freshness.rs"
+  - "apps/majordomus-cli/src/intent_realization.rs"
+  - "apps/majordomus-cli/src/capability/builtin/intents.rs"
+  - "apps/majordomus-cli/tests/intent_plan.rs"
 depends_on:
   - "I3246"
 acceptance_criteria:
