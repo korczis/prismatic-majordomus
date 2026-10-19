@@ -829,7 +829,9 @@ mod tests {
     /// A reflog line that is not an entry is left out rather than guessed.
     #[test]
     fn a_reflog_line_that_is_not_an_entry_is_left_out() {
-        let log = "a origin/master@{1700003600}\nb origin/master@{1700000100}\n\nc\nd origin/master@{x}\ne origin/master@{1}";
+        // a blank line, no selector, no time, a selector with no braces, an unclosed one, a time
+        // that is no number, and the entries around them
+        let log = "a origin/master@{1700003600}\nb origin/master@{1700000100}\n\nc\nf origin/master\ng origin/master@{12\nd origin/master@{x}\ne origin/master@{1}";
         assert_eq!(
             reflog_entries(log),
             vec![("a", 1_700_003_600), ("b", 1_700_000_100), ("e", 1)]

@@ -590,6 +590,9 @@ mod tests {
             );
             assert!(answer.summary.contains("trunk"), "{}", answer.summary);
         }
+        // a benchmark fixture has published nothing and has no remote, so there is nothing to
+        // measure and no case is offered
+        assert!(CurrencyInput::benchmark_cases(&CaseContext { index: &ctx.index }).is_empty());
     }
 
     /// Two capabilities, and every surface that carries them is derived from this
