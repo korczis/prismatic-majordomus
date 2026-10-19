@@ -140,6 +140,18 @@ Beyond the accessibility engine (axe-core, the WCAG 2.0 A/AA, 2.1 A/AA and 2.2 A
 - **`page.status` / `page.unreachable` / `page.audit-failed`** — the page answered, and it
   answered in time. A page that does not is a finding about that page, never the end of the
   run.
+- **`navbar.wraps` / `navbar.clipped` / `navbar.locale-drift`** — the main navigation
+  (`nav[aria-label="Main"]`) fits its row and shows its labels whole. In a language other
+  than the one the site is written in, it is also as tall as the source language's bar on the
+  same page and at the same width: closed and, where the width shows the menu button,
+  opened, in the light and the dark theme. The bar is one partial on every page of a
+  language, so the whole set is measured on each language's front page, and the closed bar
+  everywhere else (`scripts/lib/ui-navbar-locale.mjs`, case 3600). No language is named: a
+  `/cs/` tree the build writes is discovered like any other, and the source language is the
+  one the front page declares. Identical boxes are what "pixel-perfect" means here, because
+  the words differ by design. This is the check that would have refused the Czech bar of
+  2026-10-19, which took two rows at 1280px and 768px while every link and control in it
+  still worked, so `interaction-probe` and the language probe were green.
 
 ### A subtree that is not ours to fix
 

@@ -12,6 +12,7 @@ import { alignCells, escapes, nameTaskCheckboxes, normalise, normaliseRendered, 
 import { contrast, enforce, measure, raise, MINIMUM } from './ui-contrast.mjs';
 import { sample, siblingFamilies } from './ui-routes.mjs';
 import { compare, cut, fragment, GENERATED, VERSION_SLOT } from './ui-navbar.mjs';
+import { applyLocaleDrift, isFront, localeDrift, localeOf } from './ui-navbar-locale.mjs';
 
 const tests = [];
 const test = (name, fn) => tests.push([name, fn]);
@@ -383,6 +384,52 @@ test('two bars are compared element by element: a class, a box past a pixel, a s
   assert.ok(d.some((x) => /font-size is 14px on the UI, 16px on the site/.test(x)), d.join('\n'));
   assert.ok(d.some((x) => /nav>a\[0\]: only the site has this element/.test(x)), d.join('\n'));
   assert.deepEqual(compare(null, [el()]), ['the site page has no <nav aria-label="Main">']);
+});
+
+// ------------------------------------------------------------------ the bar in every language
+test('a translated route is its language and the source route it copies', () => {
+  assert.deepEqual(localeOf('/cs/docs/', 'cs', 'en'), { lang: 'cs', base: '/docs/' });
+  assert.deepEqual(localeOf('/cs/', 'cs', 'en'), { lang: 'cs', base: '/' });
+  assert.deepEqual(localeOf('/docs/', 'en', 'en'), { lang: 'en', base: '/docs/' });
+  assert.deepEqual(localeOf('/docs/', null, 'en'), { lang: 'en', base: '/docs/' }, 'an undeclared language is the source');
+  assert.equal(isFront('/', 'en'), true);
+  assert.equal(isFront('/cs/', 'cs'), true);
+  assert.equal(isFront('/cs/docs/', 'cs'), false);
+});
+
+const bar = (route, width, lang, heights) => ({
+  route, width, findings: [],
+  navbar: { lang, measures: heights.map(([theme, state, height]) => ({ theme, state, height })) },
+});
+
+test('a Czech bar taller than the English one on the same page and width is a finding; a pixel is not', () => {
+  const visits = [
+    bar('/', 1280, 'en', [['light', 'closed', 73], ['dark', 'closed', 73]]),
+    bar('/cs/', 1280, 'cs', [['light', 'closed', 121], ['dark', 'closed', 121]]),
+    bar('/', 390, 'en', [['light', 'closed', 64], ['light', 'opened', 400]]),
+    bar('/cs/', 390, 'cs', [['light', 'closed', 65], ['light', 'opened', 452]]),
+  ];
+  const found = localeDrift(visits);
+  assert.equal(found.length, 3, JSON.stringify(found));
+  assert.ok(found.every((f) => f.finding.rule === 'navbar.locale-drift'));
+  assert.ok(found.some((f) => /\(closed, light\) is 121px tall in cs and 73px in en on \/ at 1280px/.test(f.finding.detail)));
+  assert.ok(found.some((f) => /\(opened, light\) is 452px tall in cs and 400px in en/.test(f.finding.detail)));
+  assert.ok(!found.some((f) => f.width === 390 && /closed/.test(f.finding.detail)), '65 against 64 is rounding');
+  assert.equal(applyLocaleDrift(visits), 3);
+  assert.equal(visits[1].findings.length, 2, 'the findings land on the Czech visit');
+  assert.equal(visits[0].findings.length, 0, 'the English visit is the reference, not the defect');
+});
+
+test('without the front page the source language is unknown, and nothing is compared', () => {
+  assert.deepEqual(localeDrift([bar('/docs/', 1280, 'en', [['light', 'closed', 73]]),
+    bar('/cs/docs/', 1280, 'cs', [['light', 'closed', 121]])]), []);
+});
+
+test('a page with no bar, or no source copy at that width, is not compared', () => {
+  const visits = [bar('/', 1280, 'en', [['light', 'closed', 73]]),
+    { route: '/cs/x/', width: 1280, findings: [], navbar: { lang: 'cs', measures: null } },
+    bar('/cs/only-czech/', 1280, 'cs', [['light', 'closed', 200]])];
+  assert.deepEqual(localeDrift(visits), []);
 });
 
 let failed = 0;

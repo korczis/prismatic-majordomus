@@ -13,6 +13,7 @@
 import { readFileSync } from 'node:fs';
 import { availableParallelism } from 'node:os';
 import { chromium } from 'playwright';
+import { applyLocaleDrift, measureNavbar } from './ui-navbar-locale.mjs';
 
 const AXE = new URL('../../node_modules/axe-core/axe.min.js', import.meta.url);
 
@@ -268,6 +269,11 @@ export async function auditPage(page, origin, route, width) {
     });
   }
 
+  // the main navigation, last, because measuring it switches the theme and opens the menu, and
+  // puts both back: in every language as in the source language (ui-navbar-locale.mjs)
+  const bar = await measureNavbar(page, route);
+  findings.push(...bar.findings);
+
   return {
     route,
     width,
@@ -275,6 +281,7 @@ export async function auditPage(page, origin, route, width) {
     findings,
     foreign: measured.foreign,
     components: observed.triggers.map((t) => t.component),
+    navbar: bar.navbar,
   };
 }
 
@@ -383,5 +390,8 @@ export async function audit(origin, pages, { onVisit, concurrency = jobs() } = {
   } finally {
     await browser.close();
   }
-  return visits.filter(Boolean);
+  const measured = visits.filter(Boolean);
+  // a translated bar against the source language's, once every visit is in (ui-navbar-locale.mjs)
+  applyLocaleDrift(measured);
+  return measured;
 }
