@@ -1298,7 +1298,7 @@
     "description": "The API reference, rendered from this document.",
     "url": "https://majordomus.dev/docs/api/"
   },
-  "generated_by": "majordomus-cli 0.30.1",
+  "generated_by": "majordomus-cli 1.0.0-alpha.1",
   "generator": "scripts/generate-site-data (scripts/lib/openapi-site.jq)",
   "info": {
     "contact_name": "Majordomus",
@@ -1307,7 +1307,7 @@
     "license": "MIT",
     "summary": "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.",
     "title": "Majordomus",
-    "version": "0.30.1"
+    "version": "1.0.0-alpha.1"
   },
   "infrastructure": [
     {
@@ -64579,7 +64579,7 @@
           "cache": "disabled",
           "cache_detail": "",
           "cli": "intent explain",
-          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/intents/explain?id=a-session-leaves-what-it-observed\"",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/intents/explain?id=a-brief-is-reconciled-into-the-plan\"",
           "description": "One intent explained from the derivations alone: a sentence for its stage naming each milestone's derived status, a sentence per criterion naming its evidence state, the plan's coverage of it and the command that reproduces it, a sentence for the work and providers realising it, and each drift finding; beside them the derived intent, the coverage of its criteria, its realization and the work linked to it.",
           "home": "intent-realization",
           "id": "intent_realization.explain",
@@ -64593,7 +64593,7 @@
               "examples": [
                 {
                   "case": "first-intent",
-                  "value": "\"a-session-leaves-what-it-observed\""
+                  "value": "\"a-brief-is-reconciled-into-the-plan\""
                 }
               ],
               "name": "id",
@@ -64646,7 +64646,7 @@
           "cache": "disabled",
           "cache_detail": "",
           "cli": "intent realization",
-          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/intents/realization?intent=a-session-leaves-what-it-observed\"",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/intents/realization?intent=a-brief-is-reconciled-into-the-plan\"",
           "description": "Every unit of work this checkout can see — ledger tasks with their episodes, providers and handovers, closed session records, peer claims — with every intent it realises through issue, milestone and criterion, each link's provenance (declared: the work cites the issue; observed: its episode moved the issue; derived: its branch names the issue; inferred: only an open issue's scope overlaps) or the first missing link; every intent with its unmet criteria and the issues serving each, the work and providers realising it, and its drift: closed_work_contradicted when every milestone is DONE and a criterion's evidence is stale or failing, closed_work_unproven when it never existed, criterion_closed_unmet when every serving issue is DONE and the criterion is not met; and where the stage and the verdict disagree (ADR 0107), evidence_ahead_of_plan when the verdict is satisfied while the stage is planned or executing, closed_work_not_satisfied when every milestone is DONE and the verdict is unsatisfied or unknown. Live work serving no intent is a warning.",
           "home": "intent-realization",
           "id": "intent_realization.work",
@@ -64660,7 +64660,7 @@
               "examples": [
                 {
                   "case": "first-intent",
-                  "value": "\"a-session-leaves-what-it-observed\""
+                  "value": "\"a-brief-is-reconciled-into-the-plan\""
                 }
               ],
               "name": "intent",
@@ -65074,7 +65074,7 @@
           "cache": "disabled",
           "cache_detail": "",
           "cli": "intent show",
-          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/intents/record?id=a-session-leaves-what-it-observed\"",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/intents/record?id=a-brief-is-reconciled-into-the-plan\"",
           "description": "One intent in full: its statement and invariants as authored, each milestone with the status the plan derives, each satisfaction criterion with the state of its evidence and the command that reproduces it, the stage, and the verdict the criteria alone derive with the criteria holding it back. The record's own file stays at `majordomus://intent/<id>`.",
           "home": "intents",
           "id": "intents.record",
@@ -65088,7 +65088,7 @@
               "examples": [
                 {
                   "case": "first-intent",
-                  "value": "\"a-session-leaves-what-it-observed\""
+                  "value": "\"a-brief-is-reconciled-into-the-plan\""
                 }
               ],
               "name": "id",
@@ -65259,7 +65259,7 @@
           "cache": "disabled",
           "cache_detail": "",
           "cli": "knowledge record",
-          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/knowledge/record?id=a-commit-stood-behind-a-build-lock\"",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/knowledge/record?id=a-brief-is-reconciled-not-transcribed\"",
           "description": "One knowledge record by id — candidate or curated — with every reference it names resolved: a session against the tracked session records and the ledger, a task or decision against the ledger and the task store, a commit against git, a file or test against the index and the tree, a rule, an ADR, an issue or another record against the index. Which references dangle is the question a reviewer asks before promoting, and the one the integrity validator asks of every record. A `task:none` or `decision:none` reference is refused by name.",
           "home": "knowledge-base",
           "id": "knowledge_base.record",
@@ -65273,7 +65273,7 @@
               "examples": [
                 {
                   "case": "first-record",
-                  "value": "\"a-commit-stood-behind-a-build-lock\""
+                  "value": "\"a-brief-is-reconciled-not-transcribed\""
                 }
               ],
               "name": "id",

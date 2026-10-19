@@ -1,0 +1,21 @@
+id: a-change-is-judged-in-minutes
+title: "A change is derived in under a second and judged in minutes, and nothing that could have changed is skipped"
+slug: a-change-is-judged-in-minutes
+order: 191
+priority: p1
+problem: "The owner should never wait on the toolchain for a change that touched little. An ordinary derive finishes in under a second. A pull request's required verdict arrives within five minutes. Both are measured and enforced, and the speed comes from not repeating work whose inputs did not move, never from weakening a gate. Proposed in ADR 0185 (A derivation is a typed graph of the generators the executable already plans, keyed by the content of what each node reads, and the full derive stays its oracle); ADR 0186 (A pull request's required verdict is the feedback lane, a gate whose inputs did not change is reused as inputs_unchanged, and the proof lane judges the combined top before it lands); ADR 0187 (Tests are selected by the impact of a change, derived from what each case declares it reads, and a change of unknown impact runs every case) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c208#3, chatgpt-majordomus:c208#24, chatgpt-majordomus:c228#0, chatgpt-majordomus:c292#0."
+outcome: "The owner should never wait on the toolchain for a change that touched little. An ordinary derive finishes in under a second. A pull request's required verdict arrives within five minutes. Both are measured and enforced, and the speed comes from not repeating work whose inputs did not move, never from weakening a gate."
+current_state: "Its issues extend existing milestones; see each issue's why."
+desired_state: "Every criterion of the intent is carried by an issue here and proven by its test."
+acceptance_criteria:
+  - "A warm derive of an unchanged tree finishes under 1 s p95 on the declared reference machine and runs no generator"
+  - "A derive after one changed canonical input finishes under 1 s p95, excluding a cold executable build"
+  - "For every fixture, an incremental derive under any node order and worker count leaves the same bytes as a full derive, deletions included"
+  - "Required pull-request validation reaches a binding verdict within 300 s p95 from validation start, with queue wait reported separately"
+  - "Every gate the plan does not run carries the proof that nothing it reads changed, and an omitted dependency turns a gate red"
+  - "A derive or CI path that regresses past its noise-aware budget fails a gate and names the stage that caused it"
+validation:
+  - "majordomus plan validate"
+evidence_required: []
+created_at: 2026-10-18
+updated_at: 2026-10-18

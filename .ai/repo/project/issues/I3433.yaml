@@ -1,0 +1,35 @@
+id: I3433
+milestone: a-prompt-reaches-the-work-it-serves
+title: "A UI snapshot page renders only the readings its subject declares publishable, and a page that reads any other reading, or a capability that refuses remote callers, is withheld with a link to the live page"
+slug: a-ui-snapshot-publishes-only-declared-readings
+priority: p1
+profile: implementation
+objective: "Give the UI snapshot subject a declared list of the capability readings it may publish, checked where pages take their readings (ui/source.rs, ui/view.rs through capability/readings.rs). A page that reads a capability outside the list, or one that declares I3434's checkout-private field, is withheld exactly as /cockpit/continuity is today."
+why: "The owner's 2026-10-19 Cognitive Fabric pack asks for privacy-filtered minimal schemas, published from an intentional whitelist (campaigns/prismatic-way-cognitive-fabric-prompt-pack/prompts/05_SURFACES.md, and the verification/ACCEPTANCE.md row on private .ai/local data)."
+current_state: "apps/majordomus-cli/src/web/report/snapshot.rs:95 gives the UI subject an empty withheld list. The wave-05 audit found /ui pages that read mesh.peers, mesh.events and mesh.state (ui/mesh.rs:28-33, ui/observatory.rs:85-87, ui/dashboard.rs:34). Whether a CI snapshot carries any mesh value today was not measured."
+desired_state: "The UI subject names what it may publish. A new capability whose reading is not named is withheld from snapshots by default, rather than published by default."
+scope:
+  - "apps/majordomus-cli/src/web/report/snapshot.rs"
+  - "apps/majordomus-cli/src/capability/readings.rs"
+  - "apps/majordomus-cli/src/ui/source.rs"
+  - "apps/majordomus-cli/src/ui/view.rs"
+non_scope:
+  - "The Cockpit subject (I3435)"
+  - "Changing the privacy gates (I3432)"
+  - "Changing what the live /ui serves"
+depends_on:
+  - "I3432"
+  - "I3434"
+serves:
+  - "a-change-reconciles-what-it-affects#nothing-private-is-published"
+acceptance_criteria:
+  - "A fixture page that reads a capability outside the list is withheld, and its navigation link leads to the live page"
+  - "A fixture page that reads a capability declaring the checkout-private field is withheld"
+  - "The current snapshot pages that read only listed capabilities render byte-identically to before"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib web::report::snapshot"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 181_local_is_never_published"
+evidence_required:
+  - "a_ui_snapshot_publishes_only_declared_readings"
+created_at: 2026-10-19
+updated_at: 2026-10-19

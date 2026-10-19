@@ -1,9 +1,11 @@
 +++
 title = "Everything, followed"
-description = "Nine sessions on five machines worked one repository, and none of them could see what the others were doing without writing a polling loop. What one stream of signals with the noise folded away changed, and what it measured on its first day."
+description = "About a dozen sessions on five machines worked one repository, and none of them could see what the others were doing without writing a polling loop. What one stream of signals with the noise folded away changed, and what it measured on its first day."
 template = "page.html"
 [extra]
 lang = "en"
+[extra.translations]
+cs = "vsechno-v-jednom-proudu/"
 +++
 
 On the evening of 10 October 2026, this repository had about a dozen AI sessions working on it, spread across five machines. They shared a mesh: every session, every claim on a path, every handover and every review request was a signed event, replicated to every machine within a heartbeat. In principle, any session could see everything.
@@ -56,4 +58,4 @@ The same stream is the MCP tool `majordomus_monitor`, `GET /api/v1/monitor`, and
 
 The monitor writes nothing and keeps no store. Every signal comes from a record that already existed, and acting on a signal stays with the capability that owns the act. It does not make the mesh smarter. It makes what the mesh already knew readable.
 
-The manual is [`docs/MONITOR.md`](@/docs/monitor.md). The decision is ADR 0133. The proof is in three cases, which run a server with a declared mesh and, for GitHub, a `gh` that prints fixtures, plus the unit tests of every fold rule mentioned here.
+The manual is [`docs/MONITOR.md`](@/docs/monitor.md). The decision is [ADR 0133](@/adrs/adr-0133.md), still `proposed`. The proof is cases 1050 to 1052, which run a server with a declared mesh and, for GitHub, a `gh` that prints fixtures; cases 1053 and 1054 prove the Cockpit page and what every session is told of the stream: the section in `majordomus context`, the briefing line and the mention in the bootstrap. Add to that the unit tests of every fold rule mentioned here.

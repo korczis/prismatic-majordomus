@@ -1,0 +1,46 @@
+id: I2522
+milestone: a-derive-does-only-the-work-its-inputs-changed
+title: "The derivation is a typed graph in the crate: every producer is a node with declared inputs and outputs, answered by one capability"
+slug: the-derivation-is-a-typed-graph
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Declare the derivation graph as data in the Rust crate: one node per producer, with a stable identity, input selectors, exact outputs, an operation version and edges, ordered deterministically and refused when it is unsound, and answer it through one read capability and its generated schema."
+why: "campaigns/majordomus-incremental-derive-prompt-pack/02_02_TYPED_GRAPH.md asks for a typed graph in the existing generation subsystem and not a second shell scheduler. Today the graph is a comment: scripts/derive names itself the one place the derivation graph is spelled out, the order of the 17 targets is the constant Target::ALL in apps/majordomus-cli/src/generate.rs, the inputs of each target are prose in doc comments, and scripts/gitattributes recovers the site generator's outputs by reading its source with grep. Nothing can be asked which producer owns a path or what it reads, so nothing can decide that a producer need not run."
+current_state: "apps/majordomus-cli/src/generate.rs has Target (17 variants), plan and the manifest docs/generated/artifacts.json, which lists every file majordomus generate writes with its source as one line of prose. Stages B and D are shell scripts outside that model. The record of the decision does not exist."
+desired_state: "A module apps/majordomus-cli/src/derivation declares the nodes: each target of majordomus generate, the sections of scripts/generate-site-data as the baseline of I2521 shows they can be separated (one node where they cannot), and the merge policy. Each node carries selectors of kind file, directory, glob, index membership, git, toolchain, environment or virtual, its outputs, and an operation version. The graph sorts topologically with a stable tie-break, and refuses a cycle, an output two nodes claim, an input no selector kind covers and a target of Target::ALL that no node declares. The capability derive.graph answers it; its schema is generated from the types; an ADR records the model and the place of the stages A to D as a compatibility order."
+scope:
+  - "apps/majordomus-cli/src/derivation"
+  - "apps/majordomus-cli/src/lib.rs"
+  - "apps/majordomus-cli/src/generate.rs"
+  - "apps/majordomus-cli/src/capability/builtin/derive.rs"
+  - "apps/majordomus-cli/src/capability/builtin/mod.rs"
+  - "apps/majordomus-cli/tests/derivation_graph.rs"
+  - ".ai/repo/adrs"
+  - "docs/CAPABILITIES.md"
+  - "docs/GITHUB_PAGES_ARCHITECTURE.md"
+  - ".ai/repo/project/issues/I2522.yaml"
+non_scope:
+  - "Computing keys or skipping anything: I2523 and I2525"
+  - "Changing the order scripts/derive runs today, or what any producer writes"
+  - "One node per generated file; a node is a producer whose run is the unit of cost"
+depends_on:
+  - "I2521"
+acceptance_criteria:
+  - "Every path in docs/generated/artifacts.json and every tree scripts/gitattributes marks merge=derived is the output of exactly one node, by a test that reads both"
+  - "A fixture graph with a cycle, with one output claimed twice, and with an undeclared generator is refused, each with the node named"
+  - "The order is identical for every permutation of the node declarations, and adding an unrelated node does not reorder the others"
+  - "A variant added to Target without a node fails a test of the crate"
+  - "derive.graph is projected to the command line, HTTP and MCP by majordomus generate with no hand edit of a transport table"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib derivation"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test derivation_graph"
+  - "majordomus generate --check"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 400_derivation_is_one_graph 241_merge_policy_claims_only_generator_output"
+evidence_required:
+  - "derivation_graph_capability"
+  - "graph_covers_every_generated_path"
+  - "unsound_graph_refused"
+created_at: 2026-10-13
+updated_at: 2026-10-13
