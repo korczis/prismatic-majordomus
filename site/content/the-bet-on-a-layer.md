@@ -6,7 +6,7 @@ template = "page.html"
 lang = "en"
 translated_from = "teze/"
 source_digest = "a49a543c1ad7315a0c264fbf330c543516ebc221058995d5abddd2509fd26cf6"
-related = ["proof-carrying-documentation/", "a-pasted-brief-becomes-a-plan/", "everything-followed/"]
+related = ["proof-carrying-documentation/", "a-pasted-brief-becomes-a-plan/", "everything-followed/", "seats-not-names/"]
 [extra.translations]
 cs = "teze/"
 +++
