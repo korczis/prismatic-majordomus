@@ -1,0 +1,28 @@
+id: I2917
+milestone: idd-reads-at-a-glance
+title: "Each intent has one primary action"
+slug: each-intent-has-one-primary-action
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Show one primary action per intent (\"Start I0702\", \"Verify …\"), derived from plan.next restricted to the intent's issues and the move that issue's status admits; every other move is secondary."
+why: "On 2026-10-18 the owner read the published /ui/idd three times and found it unergonomic: the only action is a small \"done\" in the far column, easy to miss."
+serves:
+  - the-owner-directs-work-from-the-ui#the-workspace-reads-at-a-glance
+current_state: "Every move looks alike."
+desired_state: "One primary action, the rest secondary."
+scope:
+  - "apps/majordomus-cli/src/ui/idd.rs"
+  - "test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh"
+  - ".ai/repo/project"
+  - "docs"
+  - "site"
+depends_on: []
+acceptance_criteria:
+  - "The primary action names the plan's next issue of the intent and the move its status admits"
+validation:
+  - "majordomus plan validate"
+  - "bash test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh"
+evidence_required: []
+created_at: 2026-10-18
+updated_at: 2026-10-18

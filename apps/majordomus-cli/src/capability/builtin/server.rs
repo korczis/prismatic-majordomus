@@ -29,6 +29,11 @@
 //! `repository`, the whole list, because that is what every caller of this capability got
 //! before the field existed.
 //!
+//! The wide answer asks sixteen checkouts at a time (`ASKED_AT_ONCE`, `each_checkout`), so its
+//! wait is a few probe timeouts however many checkouts there are, not one per checkout: on
+//! a machine of sixty servers, a few of them wedged, one at a time took more than thirty
+//! seconds (I2987).
+//!
 //! Read on every call and never cached: the lease is written by other processes.
 //!
 //! ```
@@ -306,7 +311,7 @@ pub struct ServerView {
 /// let status = ServerStatus { checkout_id: "c".into(), git: None,
 ///     desired: Desired { host: "127.0.0.1".into(), port: 8741, version: "1.0.0".into(), executable: None },
 ///     this_process: None, standing: ServerStanding::Absent, servers: Vec::new(),
-///     connections: None };
+///     connections: None, trunk: None };
 /// let text = serde_json::to_string(&status).unwrap();
 /// assert_eq!(serde_json::from_str::<ServerStatus>(&text).unwrap(), status);
 /// ```
@@ -333,6 +338,12 @@ pub struct ServerStatus {
     /// refused because every handler was busy. Absent when this process serves no HTTP.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub connections: Option<crate::http::deadline::ConnectionCounts>,
+    /// How far the tree this checkout serves is from the remote trunk, judged against the
+    /// policy's `checkout.trunk_distance`: a server of a checkout 779 commits behind answers
+    /// every session from a tree that no longer exists, and this is where that is said.
+    /// Absent only from an answer that predates the field.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub trunk: Option<crate::worktree::TrunkDistance>,
 }
 
 /// Decide where a server stands from what its lease file holds, how old the file is,
@@ -556,15 +567,55 @@ pub(crate) fn checkouts_of(
     }
 }
 
+/// How many checkouts one reading asks at once. Each is a lease read and, for a server that
+/// answers, a round trip bounded by the probe timeout.
+pub(crate) const ASKED_AT_ONCE: usize = 16;
+
+/// `ask` applied to every checkout, [`ASKED_AT_ONCE`] at a time, the answers in the order of
+/// the checkouts. A worker the system refuses to start is not needed: the calling thread
+/// asks too, so every checkout is answered with however many threads there are.
+pub(crate) fn each_checkout<C: Sync, T: Send>(
+    checkouts: &[C],
+    ask: impl Fn(&C) -> T + Sync,
+) -> Vec<T> {
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    use std::sync::{Mutex, PoisonError};
+    if checkouts.len() <= 1 {
+        return checkouts.iter().map(ask).collect();
+    }
+    let next = AtomicUsize::new(0);
+    let answers: Vec<Mutex<Option<T>>> = checkouts.iter().map(|_| Mutex::new(None)).collect();
+    std::thread::scope(|scope| {
+        let work = || loop {
+            let i = next.fetch_add(1, Ordering::Relaxed);
+            let Some(checkout) = checkouts.get(i) else {
+                break;
+            };
+            let answer = ask(checkout);
+            *answers[i].lock().unwrap_or_else(PoisonError::into_inner) = Some(answer);
+        };
+        for _ in 1..ASKED_AT_ONCE.min(checkouts.len()) {
+            let _ = std::thread::Builder::new()
+                .name("mj-checkouts".into())
+                .spawn_scoped(scope, work);
+        }
+        work();
+    });
+    answers
+        .into_iter()
+        .filter_map(|a| a.into_inner().unwrap_or_else(PoisonError::into_inner))
+        .collect()
+}
+
 fn server_status(ctx: &Context, input: ServerStatusInput) -> Result<ServerStatus, CapabilityError> {
     let root = PathBuf::from(&ctx.index.repository.root);
     let root = root.canonicalize().unwrap_or(root);
     let local_half = local_half(&root);
     let git = repository::git_identity(&root);
+    let linked = git.as_ref().is_some_and(|g| g.linked);
     let checkouts = checkouts_of(&root, git.as_ref(), input.checkouts);
-    let mut servers = Vec::with_capacity(checkouts.len());
-    for (path, branch, primary) in checkouts {
-        let worktree = path.canonicalize().unwrap_or(path);
+    let servers = each_checkout(&checkouts, |(path, branch, primary)| {
+        let worktree = path.canonicalize().unwrap_or(path.clone());
         let (standing, reason, read) = standing_at(&worktree, &local_half);
         let peers = match standing {
             // this process's own board is in memory; asking it over the wire would queue
@@ -580,18 +631,18 @@ fn server_status(ctx: &Context, input: ServerStatusInput) -> Result<ServerStatus
                 .and_then(|url| peers_of(ctx, url)),
             _ => None,
         };
-        servers.push(ServerView {
+        ServerView {
             checkout_id: repository::identity(&worktree),
-            primary,
+            primary: *primary,
             this_checkout: worktree == root,
-            branch,
+            branch: branch.clone(),
             standing,
             reason,
             lease: read.document().map(LeaseView::of),
             peers,
             worktree,
-        });
-    }
+        }
+    });
     let standing = servers
         .iter()
         .find(|s| s.this_checkout)
@@ -601,8 +652,9 @@ fn server_status(ctx: &Context, input: ServerStatusInput) -> Result<ServerStatus
         checkout_id: repository::identity(&root),
         git,
         desired: Desired {
-            host: desired_host(),
-            port: crate::cli::DEFAULT_PORT,
+            host: desired_host(linked),
+            // the port this checkout asks for on every start (I2702)
+            port: crate::cli::checkout_port(&root),
             version: crate::VERSION.into(),
             executable: lease::executable_identity(),
         },
@@ -610,14 +662,16 @@ fn server_status(ctx: &Context, input: ServerStatusInput) -> Result<ServerStatus
         standing,
         servers,
         connections: crate::http::deadline::counts(),
+        trunk: Some(crate::worktree::trunk::measure_checkout(&root)),
     })
 }
 
 /// The interface a server started from this environment would bind — the same resolution
-/// `serve` and `mcp` make, without a flag, so that `desired` and a bind cannot disagree.
-fn desired_host() -> String {
+/// `serve` and `mcp` make for this checkout, without a flag, so that `desired` and a bind
+/// cannot disagree.
+fn desired_host(linked: bool) -> String {
     let environment = std::env::var(crate::cli::HTTP_HOST_ENV).ok();
-    crate::cli::resolve_http_host(None, environment.as_deref()).0
+    crate::cli::resolve_checkout_http_host(None, environment.as_deref(), linked).0
 }
 
 /// The module: one capability, `server.status`, composed into the application by
@@ -637,7 +691,7 @@ pub fn module() -> ModuleDescriptor {
             capability! {
                 id: "server.status",
                 title: "The shared server, and every server of the repository",
-                description: "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
+                description: "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; how far the tree it serves is from the remote trunk (`trunk`: current, lagging, stale, unjudged or unmeasured against the policy's `checkout.trunk_distance`, as of the last fetch); the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
                 input: ServerStatusInput,
                 output: ServerStatus,
                 stability: Stability::BehaviorallyVerified,
@@ -661,12 +715,33 @@ pub fn module() -> ModuleDescriptor {
 mod tests {
     use super::*;
 
-    /// A server whose version cannot be ordered against this executable's — a pre-release
-    /// beside its release — is outdated, and the reason names both versions without
-    /// claiming which is older.
+    /// Every checkout is answered, in the order given, and several are asked at once but
+    /// never more than [`ASKED_AT_ONCE`]: one at a time is what made a repository of sixty
+    /// servers wait half a minute.
     #[test]
-    fn a_version_that_cannot_be_ordered_is_outdated_naming_both() {
-        let doc = LeaseDocument {
+    fn every_checkout_is_asked_at_once_and_answered_in_order() {
+        use std::sync::atomic::{AtomicUsize, Ordering};
+        let asking = AtomicUsize::new(0);
+        let most = AtomicUsize::new(0);
+        let checkouts: Vec<usize> = (0..40).collect();
+        let answers = each_checkout(&checkouts, |i| {
+            let now = asking.fetch_add(1, Ordering::SeqCst) + 1;
+            most.fetch_max(now, Ordering::SeqCst);
+            std::thread::sleep(Duration::from_millis(20));
+            asking.fetch_sub(1, Ordering::SeqCst);
+            i * 2
+        });
+        assert_eq!(answers, (0..40).map(|i| i * 2).collect::<Vec<_>>());
+        let most = most.load(Ordering::SeqCst);
+        assert!(most > 1, "the checkouts were asked one at a time");
+        assert!(most <= ASKED_AT_ONCE, "{most} asked at once");
+        assert_eq!(each_checkout(&[7usize], |i| *i), vec![7]);
+        assert!(each_checkout(&Vec::<usize>::new(), |i| *i).is_empty());
+    }
+
+    /// A lease document of a healthy server that published `version`.
+    fn serving(version: &str) -> LeaseFile {
+        LeaseFile::Document(LeaseDocument {
             schema: lease::SCHEMA.into(),
             pid: 1,
             token: "t".into(),
@@ -674,15 +749,37 @@ mod tests {
             url: Some("http://127.0.0.1:1".into()),
             started_at: "2026-09-10T00:00:00Z".into(),
             executable: None,
-            version: Some("1.0.0-rc.1".into()),
-        };
+            version: Some(version.into()),
+        })
+    }
+
+    /// A server whose version cannot be ordered against this executable's — one that is not
+    /// a semantic version, a local build's tag or a malformed pre-release — is outdated, and
+    /// the reason names both versions without claiming which is older.
+    #[test]
+    fn a_version_that_cannot_be_ordered_is_outdated_naming_both() {
+        for theirs in ["local-build", "1.0.0-rc.01"] {
+            let (standing, reason) =
+                standing_of(&serving(theirs), Duration::ZERO, |_| true, "1.0.0");
+            assert_eq!(standing, ServerStanding::Outdated, "{theirs}");
+            assert_eq!(
+                reason.expect("a reason"),
+                format!("the server is serving version {theirs}; this executable is 1.0.0")
+            );
+        }
+    }
+
+    /// A pre-release is a version, ordered by semantic-version precedence: a server at
+    /// 1.0.0-rc.1 is older than an executable at 1.0.0, and that executable replaces it.
+    #[test]
+    fn a_prerelease_server_is_older_than_its_final_and_replaced() {
         let (standing, reason) =
-            standing_of(&LeaseFile::Document(doc), Duration::ZERO, |_| true, "1.0.0");
+            standing_of(&serving("1.0.0-rc.1"), Duration::ZERO, |_| true, "1.0.0");
         assert_eq!(standing, ServerStanding::Outdated);
-        let reason = reason.expect("a reason");
         assert_eq!(
-            reason,
-            "the server is serving version 1.0.0-rc.1; this executable is 1.0.0"
+            reason.expect("a reason"),
+            "the server is serving version 1.0.0-rc.1, older than this executable (1.0.0); \
+             the next client or `serve ensure` of this executable replaces it"
         );
     }
 }

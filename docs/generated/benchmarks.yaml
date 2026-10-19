@@ -1,25 +1,25 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`
-# Generator: majordomus-cli 0.26.0
+# Generator: majordomus-cli 0.30.1
 schema: majordomus/benchmark-matrix/v1
 generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`"
-generator: majordomus-cli 0.26.0
+generator: majordomus-cli 0.30.1
 coverage:
   - scope: direct
-    required: 199
-    covered: 169
+    required: 206
+    covered: 175
     missing: 0
-    waived: 30
+    waived: 31
     inapplicable: 0
   - scope: http
-    required: 194
-    covered: 169
+    required: 201
+    covered: 175
     missing: 0
-    waived: 25
+    waived: 26
     inapplicable: 0
   - scope: mcp
-    required: 190
-    covered: 165
+    required: 196
+    covered: 171
     missing: 0
     waived: 25
     inapplicable: 0
@@ -30,10 +30,10 @@ coverage:
     waived: 0
     inapplicable: 0
   - scope: total
-    required: 597
-    covered: 517
+    required: 617
+    covered: 535
     missing: 0
-    waived: 80
+    waived: 82
     inapplicable: 0
 capabilities:
   - id: artifacts.list
@@ -650,6 +650,14 @@ capabilities:
     http: covered
     cases:
       - default
+  - id: executions.report
+    module: executions
+    kind: command
+    cache: "—"
+    direct: waived
+    mcp: none
+    http: waived
+    cases: []
   - id: executions.start
     module: executions
     kind: command
@@ -705,6 +713,16 @@ capabilities:
     http: covered
     cases:
       - default
+  - id: guard.edit
+    module: guard
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - in-repository
+      - outside
   - id: health.live
     module: health
     kind: query
@@ -1323,6 +1341,36 @@ capabilities:
     http: covered
     cases:
       - default
+  - id: plan.delivery
+    module: plan
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - every-issue
+      - one-issue-at-head
+  - id: plan.drift
+    module: plan
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - every-issue
+      - one-issue-at-head-as-trunk-gate
+  - id: plan.flight
+    module: plan
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - where-the-work-is
+      - one-milestone-inspected
   - id: plan.issues
     module: plan
     kind: query
@@ -1866,6 +1914,26 @@ capabilities:
     http: covered
     cases:
       - default
+  - id: worktree.trunk
+    module: worktree
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+      - primary-checkout
+  - id: worktree.uncommitted
+    module: worktree
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - policy-threshold
+      - one-hour
 system_targets:
   - key: system.mcp.process_cold
     transport: mcp
@@ -1918,6 +1986,10 @@ pages:
     route: /ui/command
     view: pinned
     deferred: false
+  - key: system.http.ui.idd
+    route: /ui/idd
+    view: pinned
+    deferred: false
   - key: system.http.ui.roadmap
     route: /ui/roadmap
     view: pinned
@@ -1936,6 +2008,10 @@ pages:
     deferred: false
   - key: system.http.ui.capabilities
     route: /ui/capabilities
+    view: pinned
+    deferred: false
+  - key: system.http.ui.skills
+    route: /ui/skills
     view: pinned
     deferred: false
   - key: system.http.ui.mesh
@@ -1978,6 +2054,10 @@ pages:
     route: /ui/command
     view: live
     deferred: false
+  - key: system.http.live.ui.idd
+    route: /ui/idd
+    view: live
+    deferred: false
   - key: system.http.live.ui.roadmap
     route: /ui/roadmap
     view: live
@@ -1996,6 +2076,10 @@ pages:
     deferred: false
   - key: system.http.live.ui.capabilities
     route: /ui/capabilities
+    view: live
+    deferred: false
+  - key: system.http.live.ui.skills
+    route: /ui/skills
     view: live
     deferred: false
   - key: system.http.live.ui.mesh
@@ -2040,5 +2124,9 @@ pages:
     deferred: true
   - key: system.http.ui.panels.drain
     route: /ui/panels/drain
+    view: pinned
+    deferred: true
+  - key: system.http.ui.panels.standing
+    route: /ui/panels/standing
     view: pinned
     deferred: true

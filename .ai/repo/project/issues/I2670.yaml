@@ -1,0 +1,29 @@
+id: I2670
+milestone: development-runtime
+title: "A build-cache offer is a typed model and its selection is a pure, explained function"
+slug: a-build-cache-offer-is-a-typed-model-and-selection-is-a-pure-function
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Model an offer (protocol, provider, scope, non-secret endpoint, bucket, priority, capacity, health) and select among offers deterministically with the reason."
+why: "The owner, 2026-10-13, with full clearance: set up MinIO, an sccache server and every mesh node, verified and validated. The cluster compiles the same Rust on every machine from a cold cache; two declared offload hosts were under their disk minimum that day. See ADR 0157."
+current_state: "Measured on master b29cf4e487 on 2026-10-13: no build-cache, S3 or minio concept exists in source, schema or docs; sccache appears only in the container build (deploy/render.rs) and ADRs 0055 and 0139."
+desired_state: "A typed Offer and a select() that ranks healthy, scope, priority, headroom, round-trip time and node id, and returns the choice with the passed-over candidates; no offer is a normal answer; no secret field exists in the type."
+scope:
+  - "apps/majordomus-cli/src/mesh/build_cache/"
+  - "share/schemas/majordomus/mesh-declaration/"
+non_scope:
+  - "Discovery transport: I2671"
+  - "Any command or endpoint: I2672"
+acceptance_criteria:
+  - "Selection is deterministic for any ordering of the same offers"
+  - "A stale or unhealthy offer is never chosen over a healthy one and is listed as passed over"
+  - "No offers selects none and says so"
+  - "The serialized form cannot carry a credential"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::build_cache"
+evidence_required:
+  - "build_cache_model_unit_tests"
+created_at: 2026-10-13
+updated_at: 2026-10-13

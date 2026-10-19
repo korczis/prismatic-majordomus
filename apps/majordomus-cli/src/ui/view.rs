@@ -105,6 +105,30 @@ pub fn kpi_state(label: &str, reading: &Reading) -> El {
     kpi_with(label, reading, shown(reading), badge)
 }
 
+/// A KPI tile for a figure this process did not observe, and why: never a `0` and never a
+/// `no`, because a runtime that is not here measured nothing (a published snapshot's runner
+/// is on no mesh, a checkout may run no forge). The reason is the answer's own word.
+pub fn kpi_not_observed(label: &str, reason: &str, reading: &Reading) -> El {
+    el("span")
+        .class("mj-ui-kpi")
+        .attr(
+            "title",
+            format!("not observed: {reason}; read from {}", reading.cite()),
+        )
+        .child(el("span").class("mj-ui-kpi-label").text(label))
+        .child(el("span").class("mj-ui-kpi-value").text("not observed"))
+        .child(el("span").class("mj-ui-kpi-source").text(reading.cite()))
+}
+
+/// The body of a panel whose subject this process did not observe, with the reason the
+/// source gave: an unobserved subject is said in words, never drawn as an empty one.
+pub fn not_observed(subject: &str, reason: &str) -> El {
+    el("p")
+        .class("mj-ui-empty")
+        .child(word_badge("unknown"))
+        .text(format!(" {subject} was not observed here: {reason}"))
+}
+
 fn kpi_with(label: &str, reading: &Reading, value: String, badge: Option<El>) -> El {
     el("span")
         .class("mj-ui-kpi")
@@ -426,11 +450,18 @@ pub fn text(entry: &Value, key: &str) -> String {
 
 /// The list at `pointer` in an answer, or none.
 pub fn list(answer: &Answer, pointer: &str) -> Vec<Value> {
+    items(answer, pointer).to_vec()
+}
+
+/// The list at `pointer` in an answer, borrowed, or none: what a screen that only reads the
+/// rows asks, so that a large answer (`capabilities.list` holds thousands) is not copied on
+/// every request.
+pub fn items<'a>(answer: &'a Answer, pointer: &str) -> &'a [Value] {
     answer
         .ok()
         .and_then(|v| v.pointer(pointer))
         .and_then(Value::as_array)
-        .cloned()
+        .map(Vec::as_slice)
         .unwrap_or_default()
 }
 
@@ -729,7 +760,7 @@ mod tests {
             source: Source::of("plan.status"),
             route: Some("GET /api/v1/plan/status".into()),
             exposure: Exposure::default(),
-            value,
+            value: value.map(Into::into),
             took: Duration::from_millis(5),
             standing: crate::ui::source::Standing::NOW,
         }

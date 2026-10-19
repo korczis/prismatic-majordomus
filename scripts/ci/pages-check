@@ -45,6 +45,9 @@
 #   scripts/ci/pages-check --offline       the two decidable from the clone alone
 #   scripts/ci/pages-check --url URL       ask a different origin (a preview, a fork)
 #   scripts/ci/pages-check --owed-after N  seconds master may be ahead before it is a refusal
+#   scripts/ci/pages-check --for COMMIT    first wait, bounded, for production to serve COMMIT
+#                                          or a newer one (section 0), then every check
+#   scripts/ci/pages-check --for C --wait-only   section 0 alone
 #
 # Exit: 0 ok · 2 usage · 10 the published site is not a projection of master · 12 something
 # needed could not be read (no gh-pages, no network when one was required), or a half of the
@@ -69,13 +72,29 @@ WAIT="${PAGES_CHECK_WAIT:-300}"
 # is that measurement with a little room; it is a bound on lateness, not a target, and the
 # target lives in .ai/repo/ci/pages.yaml as `budget.end_to_end`.
 OWED_AFTER="${PAGES_CHECK_OWED_AFTER:-1800}"
+# Section 0's bound (I2711): how long a job judging COMMIT waits for production to serve it.
+# validate's `pages` job reaches this gate minutes after the push that started both it and the
+# deploy of the same commit, and on 2026-10-14 (run 38600347235) it judged the site while that
+# deploy was still in flight — GitHub's errored build of the previous gh-pages head, which the
+# deploy in flight was about to replace — and went red; a rerun of the job passed. Twenty
+# minutes is a pages run's own observed span (queue, rustdoc, UI snapshot, deploy and GitHub's
+# build) with room; the job's bound in validate.yml is this plus the checks after it.
+DEPLOY_WAIT="${PAGES_CHECK_DEPLOY_WAIT:-1200}"
+# how often section 0 asks, one line per question
+POLL="${PAGES_CHECK_POLL:-30}"
+FOR=""
+WAIT_ONLY=0
 while [ $# -gt 0 ]; do
   case "$1" in
     --offline) OFFLINE=1; shift ;;
+    --for) FOR="${2:?--for needs a commit}"; shift 2 ;;
+    --wait-only) WAIT_ONLY=1; shift ;;
+    --deploy-wait) DEPLOY_WAIT="${2:?--deploy-wait needs seconds}"; shift 2 ;;
+    --poll) POLL="${2:?--poll needs seconds}"; shift 2 ;;
     --wait) WAIT="${2:?--wait needs seconds}"; shift 2 ;;
     --owed-after) OWED_AFTER="${2:?--owed-after needs seconds}"; shift 2 ;;
     --url) URL="${2:?--url needs a value}"; shift 2 ;;
-    -h|--help) sed -n '2,45p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,48p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "pages-check: unknown option $1" >&2; exit 2 ;;
   esac
 done
@@ -95,6 +114,152 @@ fail=0
 # the whole guarantee only when this is empty; otherwise the gate exits 12 and names them.
 unmeasured=""
 on_trunk=0
+
+# Where the site lives and where it states its identity: site/config.toml and the publication
+# model, never a literal here. Sections 0 and 2 both ask; resolved once.
+identity=""
+resolve_site() {
+  [ -z "$identity" ] || return 0
+  if [ -z "$URL" ]; then
+    # The site's own base, from the configuration that generated it — never a literal here,
+    # because a URL written in a gate is a second declaration of where the site lives.
+    URL="$(sed -n 's/^ *base_url *= *"\(.*\)"/\1/p' site/config.toml 2>/dev/null | head -1 || true)"
+  fi
+  if [ -z "$URL" ]; then
+    say "pages-check: site/config.toml declares no base_url, so there is no site to ask"
+    exit 12
+  fi
+  # The site publishes its own identity at deploy.identity — a document written for exactly
+  # this question, carrying the full commit. The path is declared once, in the publication
+  # model `scripts/pages` reads; naming it here would be a second declaration of it.
+  identity="$(sed -n 's/^ *identity: *\(.*\)/\1/p' .ai/repo/ci/pages.yaml 2>/dev/null | head -1 || true)"
+  if [ -z "$identity" ]; then
+    say "pages-check: .ai/repo/ci/pages.yaml declares no deploy.identity"
+    exit 12
+  fi
+}
+# The commit the live site names, or nothing. The cache is defeated on every attempt: a CDN
+# that answers from cache would make a finished deploy look unfinished.
+served_commit() {
+  curl -fsSL --max-time 30 -H 'Cache-Control: no-cache' "${URL%/}/$identity?t=$(date +%s)" 2>/dev/null \
+    | jq -r '.commit // empty' 2>/dev/null || true
+}
+
+# The paths a publication is built from, one pathspec per line: the workflow's own trigger,
+# computed by `scripts/pages paths` from the publication model. Empty when it cannot be read,
+# and then every commit counts.
+trigger_specs() {
+  local trigger=""
+  if [ -x scripts/pages ]; then trigger="$(scripts/pages paths 2>/dev/null || true)"; fi
+  # `foo/**` is this repository's way of writing a subtree; git spells the same thing `foo/`
+  printf '%s' "$trigger" | sed 's|/\*\*$|/|'
+}
+
+# ---------------------------------------------------------------- 0. the deployment of --for
+#
+# A job that judges the site for COMMIT runs beside the deploy of COMMIT, and reading the site
+# before that deploy has been served judges the previous one. So this waits — bounded by
+# DEPLOY_WAIT, asking every POLL seconds and saying so each time — until production serves
+# COMMIT or a commit that carries it: COMMIT itself, a newer commit of the trunk, or an older
+# one when nothing COMMIT added changes what the site is built from (then no deploy is owed).
+# It refuses early only when production serves an older commit and no deployment is in flight
+# (no pages run queued or running, GitHub's own build not building): that deploy is not coming.
+# A commit that is not on the trunk (a pull request's merge commit) has no deployment to wait
+# for, and is said to be so.
+pages_in_flight() { # prints what is in flight, nothing when nothing is; exit 2 when unreadable
+  local slug="${PAGES_CHECK_REPO:-${GITHUB_REPOSITORY:-}}" s out first="" st
+  if [ -z "$slug" ]; then
+    slug="$(git remote get-url "$REMOTE" 2>/dev/null | sed -n 's#^.*github\.com[:/]\([^/]*/[^/]*\)$#\1#p' | sed 's/\.git$//')"
+  fi
+  [ -n "$slug" ] && command -v gh >/dev/null 2>&1 || return 2
+  for s in queued in_progress pending waiting; do
+    out="$(gh api "repos/$slug/actions/workflows/${PAGES_CHECK_WORKFLOW:-pages.yml}/runs?status=$s&per_page=20" 2>/dev/null)" || return 2
+    first="$(printf '%s' "$out" | jq -r '.workflow_runs[0] // empty | "pages run \(.id) (\(.status), \(.head_sha[0:12]))"' 2>/dev/null)" || return 2
+    [ -z "$first" ] || { printf '%s' "$first"; return 0; }
+  done
+  if [ -x scripts/pages ]; then
+    st="$(scripts/pages built --porcelain 2>/dev/null | cut -f1 || true)"
+    case "$st" in queued|building) printf "GitHub's own Pages build (%s)" "$st"; return 0 ;; esac
+  fi
+  return 0
+}
+# 0 when production serving $1 carries everything --for publishes
+carries() {
+  local s="$1" specs
+  [ -n "$s" ] && git cat-file -e "$s^{commit}" 2>/dev/null || return 1
+  s="$(git rev-parse "$s^{commit}")"
+  [ "$s" = "$FOR_SHA" ] && return 0
+  git merge-base --is-ancestor "$FOR_SHA" "$s" 2>/dev/null && return 0
+  git merge-base --is-ancestor "$s" "$FOR_SHA" 2>/dev/null || return 1
+  specs="$(trigger_specs)"
+  set -f
+  # shellcheck disable=SC2046 # deliberate: one pathspec per line, globbing off
+  if [ -n "$specs" ]; then
+    set -- $(printf '%s' "$specs")
+    owed_since="$(git log --first-parent --format=%H "$s..$FOR_SHA" -- "$@" 2>/dev/null | head -n 1 || true)"
+  else
+    owed_since="$(git log --first-parent --format=%H "$s..$FOR_SHA" 2>/dev/null | head -n 1 || true)"
+  fi
+  set +f
+  [ -z "$owed_since" ]
+}
+FOR_SHA=""
+if [ -n "$FOR" ]; then
+  git fetch -q "$REMOTE" "$TRUNK" 2>/dev/null || true
+  if [ "$OFFLINE" = 1 ]; then
+    ok "the deployment of $FOR was not waited for (--offline)"
+  elif ! FOR_SHA="$(git rev-parse --verify -q "$FOR^{commit}")"; then
+    note "the commit $FOR is not in this clone, so its deployment was not waited for"
+    unmeasured="${unmeasured:+$unmeasured, and }the deployment of $FOR"
+  elif ! git merge-base --is-ancestor "$FOR_SHA" "$REMOTE/$TRUNK" 2>/dev/null; then
+    ok "${FOR_SHA:0:12} is not on $TRUNK, so no deployment of it is owed and none is waited for"
+  else
+    resolve_site
+    t0=$(date +%s)
+    while :; do
+      served="$(served_commit)"
+      # a commit production serves that this clone has not seen yet is newer than the fetch
+      if [ -n "$served" ] && ! git cat-file -e "$served^{commit}" 2>/dev/null; then
+        git fetch -q "$REMOTE" "$TRUNK" 2>/dev/null || true
+      fi
+      elapsed=$(( $(date +%s) - t0 ))
+      if carries "$served"; then
+        ok "production serves ${served:0:12}, which carries ${FOR_SHA:0:12} (after ${elapsed}s of at most ${DEPLOY_WAIT}s)"
+        break
+      fi
+      frc=0; flight="$(pages_in_flight)" || frc=$?
+      if [ "$frc" = 0 ] && [ -z "$flight" ] && [ -n "$served" ] \
+         && git cat-file -e "$served^{commit}" 2>/dev/null \
+         && git merge-base --is-ancestor "$served" "$FOR_SHA" 2>/dev/null; then
+        bad "production serves ${served:0:12}, older than ${FOR_SHA:0:12}, and no deployment is in flight (after ${elapsed}s)"
+        say "      no pages run is queued or running and GitHub's own build is not building, so the"
+        say "      deploy of ${FOR_SHA:0:12} is not coming: it failed, was cancelled, or never started."
+        say "      Dispatch the pages workflow on $TRUNK, and find out why it did not publish."
+        break
+      fi
+      if [ "$elapsed" -ge "$DEPLOY_WAIT" ]; then
+        bad "after ${elapsed}s production serves ${served:-nothing readable}, not ${FOR_SHA:0:12} or a newer commit; the bound is ${DEPLOY_WAIT}s"
+        case "$frc" in
+          0) say "      ${flight:-nothing} is in flight; a deploy slower than the bound is the finding" ;;
+          *) say "      whether a deployment is in flight could not be read (gh, a token, or the repository)" ;;
+        esac
+        break
+      fi
+      case "$frc" in
+        0) state="${flight:-nothing in flight yet}" ;;
+        *) state="the deployment's state could not be read" ;;
+      esac
+      shown="${served:0:12}"; [ -n "$served" ] || shown="nothing readable"
+      say "wait  production serves $shown; waiting for ${FOR_SHA:0:12} — $state (${elapsed}s of ${DEPLOY_WAIT}s, every ${POLL}s)"
+      sleep "$POLL"
+    done
+  fi
+  if [ "$WAIT_ONLY" = 1 ]; then
+    [ "$fail" = 0 ] || exit 10
+    [ -z "$unmeasured" ] || exit 12
+    exit 0
+  fi
+fi
 
 # ---------------------------------------------------------------- 1. what was published
 git fetch -q "$REMOTE" "$BRANCH" "$TRUNK" 2>/dev/null || true
@@ -147,32 +312,16 @@ fi
 if [ "$OFFLINE" = 1 ]; then
   ok "the live site was not asked (--offline)"
 else
-  if [ -z "$URL" ]; then
-    # The site's own base, from the configuration that generated it — never a literal here,
-    # because a URL written in a gate is a second declaration of where the site lives.
-    URL="$(sed -n 's/^ *base_url *= *"\(.*\)"/\1/p' site/config.toml | head -1)"
-  fi
-  if [ -z "$URL" ]; then
-    say "pages-check: site/config.toml declares no base_url, so there is no site to ask"
-    exit 12
-  fi
-  # The site publishes its own identity at deploy.identity — a document written for exactly
-  # this question, carrying the full commit. That is the authority. The footer is asked as
-  # well, because the two are produced by different steps: build.json can be published while
-  # the pages themselves were not, and them disagreeing is a finding rather than noise.
-  # The path is declared once, in the publication model `scripts/pages` reads; naming it
-  # here would be a second declaration of where the site states its own identity.
-  identity="$(sed -n 's/^ *identity: *\(.*\)/\1/p' .ai/repo/ci/pages.yaml 2>/dev/null | head -1 || true)"
-  if [ -z "$identity" ]; then
-    say "pages-check: .ai/repo/ci/pages.yaml declares no deploy.identity"
-    exit 12
-  fi
+  resolve_site
+  # The identity document is the authority. The footer is asked as well, because the two are
+  # produced by different steps: build.json can be published while the pages themselves were
+  # not, and them disagreeing is a finding rather than noise.
   # Poll until the site names the published commit, or the wait runs out. The cache is
   # defeated on every attempt: a CDN that answers from cache would make a finished deploy
   # look unfinished for as long as it holds the old copy.
   t0=$(date +%s); served=""
   while :; do
-    served="$(curl -fsSL --max-time 30 -H 'Cache-Control: no-cache' "${URL%/}/$identity?t=$(date +%s)" 2>/dev/null | jq -r '.commit // empty' 2>/dev/null || true)"
+    served="$(served_commit)"
     case "$served" in "$source_sha"*) break ;; esac
     [ $(( $(date +%s) - t0 )) -lt "$WAIT" ] || break
     sleep 5
@@ -193,9 +342,11 @@ else
   fi
 
   # The second, independent view. The footer of every page names the same commit; when the
-  # two disagree, one of the deploy's two steps ran and the other did not.
+  # two disagree, one of the deploy's two steps ran and the other did not. The commit is read
+  # from the <footer> on: the body links commits of its own (the homepage's delivery counts
+  # name the commit delivery.json observed), and the first of those is not the footer's.
   if [ -n "$body" ] && [ -n "$served" ]; then
-    footer="$(printf '%s' "$body" | sed -n 's|.*/commit/\([0-9a-f]\{7,40\}\).*|\1|p' | head -1)"
+    footer="$(printf '%s\n' "$body" | awk '/<footer[ >]/ { f = 1 } f' | sed -n 's|.*/commit/\([0-9a-f]\{7,40\}\).*|\1|p' | head -1)"
     if [ -z "$footer" ]; then
       bad "the pages name no commit in their footer, though $identity names one"
     elif [ "${served#"$footer"}" = "$served" ]; then

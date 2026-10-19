@@ -1134,6 +1134,95 @@ fn a_branch_the_remote_trunk_contains_is_merged_even_when_the_local_trunk_is_beh
     assert_eq!(b["cleanup_eligible"], true, "{b:#}");
 }
 
+/// A new branch starts from the remote's trunk as it is now, a branch the remote already has
+/// is taken up where it stands, and a remote that cannot be read is said, with how far behind
+/// the local trunk is: the local trunk of a long-lived checkout is never advanced, and every
+/// branch cut from it had to be reset by hand.
+#[test]
+fn a_new_branch_starts_from_the_remote_trunk_and_a_pushed_one_is_taken_up() {
+    let f = Fixture::new();
+    let root = f.root();
+    let parent = root.parent().unwrap().to_path_buf();
+    let remote = parent.join("origin.git");
+    let peer = parent.join("peer");
+    fn with_id<'a>(args: &[&'a str]) -> Vec<&'a str> {
+        let mut all = vec!["-c", "user.email=t@example.com", "-c", "user.name=t"];
+        all.extend_from_slice(args);
+        all
+    }
+    git(&root, &["init", "-q", "--bare", remote.to_str().unwrap()]);
+    git(
+        &root,
+        &["remote", "add", "origin", remote.to_str().unwrap()],
+    );
+    let trunk = git(&root, &["rev-parse", "--abbrev-ref", "HEAD"]);
+    git(&root, &["push", "-q", "-u", "origin", &trunk]);
+    git(
+        &parent,
+        &[
+            "clone",
+            "-q",
+            remote.to_str().unwrap(),
+            peer.to_str().unwrap(),
+        ],
+    );
+    git(
+        &peer,
+        &with_id(&["commit", "-q", "--allow-empty", "-m", "landed"]),
+    );
+    git(&peer, &["push", "-q", "origin", &trunk]);
+    git(&peer, &["checkout", "-q", "-b", "fix/theirs"]);
+    git(
+        &peer,
+        &with_id(&["commit", "-q", "--allow-empty", "-m", "theirs"]),
+    );
+    git(&peer, &["push", "-q", "origin", "fix/theirs"]);
+    let remote_trunk = git(&peer, &["rev-parse", &trunk]);
+    let theirs = git(&peer, &["rev-parse", "fix/theirs"]);
+    let local_trunk = git(&root, &["rev-parse", &trunk]);
+    assert_ne!(remote_trunk, local_trunk);
+
+    let out = ok(&root, &["worktree", "create", "feature/fresh"]);
+    assert!(
+        out.contains(&format!(
+            "feature/fresh (new, from origin/{trunk} at {remote_trunk})"
+        )),
+        "{out}"
+    );
+    let wt = f.container().join("feature/fresh");
+    assert_eq!(git(&wt, &["rev-parse", "HEAD"]), remote_trunk);
+    assert_eq!(
+        git(&root, &["rev-parse", &trunk]),
+        local_trunk,
+        "the local trunk moved"
+    );
+
+    let out = ok(&root, &["worktree", "create", "fix/theirs"]);
+    assert!(out.contains("tracking it"), "{out}");
+    let wt = f.container().join("fix/theirs");
+    assert_eq!(git(&wt, &["rev-parse", "HEAD"]), theirs);
+
+    git(
+        &root,
+        &[
+            "remote",
+            "set-url",
+            "origin",
+            parent.join("gone.git").to_str().unwrap(),
+        ],
+    );
+    let r = json(&root, &["worktree", "create", "feature/offline"]);
+    assert_eq!(r["start"]["from"], "local_trunk", "{r:#}");
+    assert_eq!(r["start"]["unreachable"], "origin", "{r:#}");
+    assert_eq!(r["start"]["behind"], 1, "{r:#}");
+    assert_eq!(r["start_commit"], local_trunk.as_str(), "{r:#}");
+    let out = ok(&root, &["worktree", "create", "feature/offline-text"]);
+    assert!(
+        out.contains(&format!("warning could not fetch {trunk} from origin")),
+        "{out}"
+    );
+}
+
 #[test]
 fn an_issue_is_inferred_only_from_an_exact_id_component_and_create_names_it_that_way() {
     let f = Fixture::new();
@@ -1178,4 +1267,109 @@ fn an_issue_is_inferred_only_from_an_exact_id_component_and_create_names_it_that
     assert_eq!(issue_of("feature/I0042-live-page"), "I0042");
     assert_eq!(issue_of("feature/I00420-not-it"), Value::Null);
     assert_eq!(issue_of("feature/live-page"), Value::Null);
+}
+
+// ------------------------------------------------- uncommitted work nobody holds (I1995)
+
+/// A linked work tree whose staged work nothing holds is named, one whose work an active task
+/// holds is listed and held, a clean one is not listed, and the reading writes nothing: the
+/// index of the staged work tree is byte-identical after the command line and the registry
+/// have both read it, and the two give one answer.
+#[test]
+fn uncommitted_work_is_named_with_what_holds_it_and_reading_it_writes_nothing() {
+    let f = Fixture::new();
+    let root = f.root();
+    for b in ["feature/left", "feature/held", "feature/clean"] {
+        ok(&root, &["worktree", "create", b]);
+    }
+    let left = f.container().join("feature/left");
+    std::fs::write(left.join("a.txt"), "a\n").unwrap();
+    git(&left, &["add", "a.txt"]);
+    let held = f.container().join("feature/held");
+    std::fs::write(held.join("b.txt"), "b\n").unwrap();
+    std::fs::create_dir_all(held.join(".ai/local/state")).unwrap();
+    std::fs::write(
+        held.join(".ai/local/state/current.yaml"),
+        "id: t-20260101000000-beef\noutcome: active\n",
+    )
+    .unwrap();
+    // years old, so any threshold calls it old
+    for p in [left.join("a.txt"), held.join("b.txt")] {
+        let out = std::process::Command::new("touch")
+            .args(["-t", "202001010000"])
+            .arg(&p)
+            .output()
+            .expect("run touch");
+        assert!(out.status.success());
+    }
+    let index = PathBuf::from(git(
+        &left,
+        &["rev-parse", "--path-format=absolute", "--git-path", "index"],
+    ));
+    let before = std::fs::read(&index).unwrap();
+
+    let cli = json(&root, &["worktree", "uncommitted", "--older-than", "1h"]);
+    let app = common::load_app(&f);
+    let registry = app
+        .context
+        .execute(
+            "worktree.uncommitted",
+            serde_json::json!({ "older_than": "1h" }),
+        )
+        .expect("the capability answers");
+    let rows = |v: &Value| -> Vec<(String, String, u64)> {
+        v["worktrees"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|w| {
+                (
+                    w["label"].as_str().unwrap().to_string(),
+                    w["standing"].as_str().unwrap().to_string(),
+                    w["paths"].as_u64().unwrap(),
+                )
+            })
+            .collect()
+    };
+    assert_eq!(rows(&cli), rows(&registry), "one answer on two surfaces");
+    assert_eq!(cli["tallies"], registry["tallies"]);
+    assert_eq!(cli["threshold"]["source"], "older_than");
+
+    let row = |label: &str| {
+        cli["worktrees"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|w| w["label"] == label)
+            .cloned()
+            .unwrap_or_else(|| panic!("{label} is listed: {cli:#}"))
+    };
+    let l = row("feature/left");
+    assert_eq!(l["standing"], "abandoned", "{l:#}");
+    assert_eq!(
+        (l["paths"].as_u64(), l["work"]["staged"].as_u64()),
+        (Some(1), Some(1))
+    );
+    assert!(l["age_seconds"].as_u64().unwrap() > 3600, "{l:#}");
+    assert!(l["remedy"]
+        .as_str()
+        .unwrap()
+        .contains("HEAD:refs/heads/rescue/feature-left-"));
+    let h = row("feature/held");
+    assert_eq!(h["standing"], "held", "{h:#}");
+    assert_eq!(h["task"], "t-20260101000000-beef");
+    assert!(
+        rows(&cli)
+            .iter()
+            .all(|(label, _, _)| label != "feature/clean"),
+        "a clean work tree is not listed"
+    );
+    assert_eq!(cli["tallies"]["abandoned"], 1);
+    assert_eq!(cli["tallies"]["held"], 1);
+
+    assert_eq!(
+        std::fs::read(&index).unwrap(),
+        before,
+        "the index was written"
+    );
 }

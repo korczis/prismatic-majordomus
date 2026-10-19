@@ -92,7 +92,7 @@ bash test/run.sh {{ c.test_case }}
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">What would make this guaranteed</h2>
     <a href="{{ get_url(path='/roadmap/', trailing_slash=true) }}" class="mt-4 flex min-w-0 flex-col gap-1.5 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
       <span class="flex flex-wrap items-baseline gap-2">
-        {%- if m.version %}<span class="font-mono text-base font-semibold text-heading">{{ m.version }}</span>{% endif %}
+        {%- if m.released_in and m.released_in != "unreleased" %}<span class="font-mono text-base font-semibold text-heading">{{ m.released_in }}</span>{% endif %}
         <span class="text-sm font-medium text-heading">{{ m.title }}</span>
         <span class="ms-auto rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading">{{ m.status }}</span>
       </span>

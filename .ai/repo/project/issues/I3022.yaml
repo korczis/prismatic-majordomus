@@ -1,0 +1,24 @@
+id: I3022
+milestone: truthful-plan-surfaces
+title: "An empty knowledge queue is one sentence that says how a record arrives, not two empty tables"
+slug: an-empty-knowledge-queue-is-one-sentence
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "When knowledge_base.candidates answers a total of zero and no candidate, /ui/knowledge draws one Awaiting review panel holding one sentence: nothing awaits review, and a record arrives when a session closes and the deriver writes it, or when majordomus knowledge observe records what was noticed."
+why: "The published /ui/knowledge (majordomus.dev, v0.29.0) drew two wide panels, By subject and Awaiting review, each an empty table with its own empty line; together they said the same thing twice and neither said how the queue fills."
+current_state: "screen() always draws By subject and Awaiting review; an empty queue renders two empty tables."
+desired_state: "An answered, empty queue renders a single panel with one sentence and its source; a queue that holds records or did not answer keeps both panels; a crate test pins it."
+scope:
+  - "apps/majordomus-cli/src/ui/knowledge.rs"
+acceptance_criteria:
+  - "An empty queue renders one panel, no table and no By subject panel"
+  - "The sentence names majordomus knowledge observe as code and still cites knowledge_base.candidates"
+  - "A queue holding a record, and an unanswered queue, keep both panels"
+validation:
+  - "cargo test --lib ui::knowledge"
+  - "scripts/ui audit --only /ui/knowledge"
+evidence_required:
+  - "empty_knowledge_queue_is_one_sentence"
+created_at: 2026-10-18
+updated_at: 2026-10-18

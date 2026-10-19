@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.26.0 -->
+     Generator: majordomus-cli 0.30.1 -->
 # Command line of the Rust executable
 
 Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer
@@ -88,7 +88,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus worktree root`](#majordomus-worktree-root) | `/docs/cli/worktree/root/` | Print the container every linked worktree belongs under, and nothing else: `cd "$(majordomus worktree root)"` |
 | [`majordomus worktree path`](#majordomus-worktree-path) | `/docs/cli/worktree/path/` | Print the canonical path of a branch, and nothing else: `cd "$(majordomus worktree path feature/x)"`. Derived from the name; the branch need not exist |
 | [`majordomus worktree inspect`](#majordomus-worktree-inspect) | `/docs/cli/worktree/inspect/` | One branch: its canonical path, whether it exists, what occupies the path, the worktree holding it, and what stands in the way |
-| [`majordomus worktree create`](#majordomus-worktree-create) | `/docs/cli/worktree/create/` | Create the canonical worktree of a branch, creating the branch from --base (default: the trunk) when it does not exist. The path is derived; none may be given |
+| [`majordomus worktree create`](#majordomus-worktree-create) | `/docs/cli/worktree/create/` | Create the canonical worktree of a branch. A branch that does not exist here is fetched from the trunk's remote and taken up when the remote has it; otherwise it is created from --base, else from the remote's trunk fetched now (the local trunk only when the remote cannot be read, and then said, with how far behind). The path is derived; none may be given |
 | [`majordomus worktree ensure`](#majordomus-worktree-ensure) | `/docs/cli/worktree/ensure/` | The canonical worktree of a branch: created when absent, answered when present, refused when the branch is checked out somewhere else |
 | [`majordomus worktree migrate`](#majordomus-worktree-migrate) | `/docs/cli/worktree/migrate/` | Bring every misplaced worktree to its canonical path, dirty state included, with a fingerprint taken before and after each move; --plan shows the steps and changes nothing |
 | [`majordomus worktree validate`](#majordomus-worktree-validate) | `/docs/cli/worktree/validate/` | Every error of the topology, and nothing else; exit 10 when there is one |
@@ -97,6 +97,8 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus worktree repair`](#majordomus-worktree-repair) | `/docs/cli/worktree/repair/` | Drop git's registrations of worktrees whose directories are gone, and repair the administrative links of the ones that exist. Deletes no directory |
 | [`majordomus worktree remove`](#majordomus-worktree-remove) | `/docs/cli/worktree/remove/` | Remove one linked worktree by branch or path. Never the primary checkout, never a branch, never uncommitted work without --force |
 | [`majordomus worktree cleanup`](#majordomus-worktree-cleanup) | `/docs/cli/worktree/cleanup/` | The branches merged into the trunk whose worktree is clean or absent: what could be removed. Removes nothing without --remove |
+| [`majordomus worktree uncommitted`](#majordomus-worktree-uncommitted) | `/docs/cli/worktree/uncommitted/` | Every linked worktree holding uncommitted work: how many paths, how old the oldest change, what holds it (an active task, an open episode, a process inside) and whether it is abandoned, with the command that would put it on a remote ref. Reads every worktree and writes none |
+| [`majordomus worktree trunk`](#majordomus-worktree-trunk) | `/docs/cli/worktree/trunk/` | How far this checkout and the local trunk are from the remote trunk, as of the last fetch, judged against the policy's checkout.trunk_distance: current, lagging, stale, unjudged or unmeasured, with the commands that bring it current. Fetches nothing; exit 10 when stale |
 | [`majordomus worktree branches`](#majordomus-worktree-branches) | `/docs/cli/worktree/branches/` | Every local branch, one per line, for a shell completion that wants the live set |
 | [`majordomus prs`](#majordomus-prs) | `/docs/cli/prs/` | Pull-request integration: every open pull request classified against the current master with its evidence, the ranked plan, and the executor that merges the next provably safe one — one at a time, re-planning after each (ADR 0101) |
 | [`majordomus prs status`](#majordomus-prs-status) | `/docs/cli/prs/status/` | Every open pull request with its disposition, risk and reason, in rank order, from the last recorded observation; exit 10 when the observation is stale or absent |
@@ -147,6 +149,8 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus devcontext compile`](#majordomus-devcontext-compile) | `/docs/cli/devcontext/compile/` | Compile the context for a piece of work: every selected object with its provenance, the reason and the confidence, everything left out with the reason, what was deduplicated, and the per-tier budget; exit 10 when what may not be dropped already exceeds the budget |
 | [`majordomus devcontext explain`](#majordomus-devcontext-explain) | `/docs/cli/devcontext/explain/` | Why one canonical identifier is or is not in the context a request compiles to |
 | [`majordomus devcontext policy`](#majordomus-devcontext-policy) | `/docs/cli/devcontext/policy/` | The compiler's own rules: the tiers, every edge of the composed graph and what is done with it, the selectors, the defaults |
+| [`majordomus guard`](#majordomus-guard) | `/docs/cli/guard/` | The edit guard: whether a provider's tool may write a file of this checkout now, judged from the active task's scope and the writing session's live mesh claims |
+| [`majordomus guard hook`](#majordomus-guard-hook) | `/docs/cli/guard/hook/` | Judge the edit a provider's pre-tool payload (on stdin) is about to make; exit 2 with the reason and the remedy when no claim covers it, 0 otherwise |
 | [`majordomus mesh`](#majordomus-mesh) | `/docs/cli/mesh/` | The mesh: the nodes this repository's running server has discovered on the network, this machine's node identity, and the self-check that proves the prerequisites on this machine alone |
 | [`majordomus mesh status`](#majordomus-mesh-status) | `/docs/cli/mesh/status/` | Whether the mesh runs in this checkout's server and why not when it does not, with every provider's state and the registry's tallies |
 | [`majordomus mesh nodes`](#majordomus-mesh-nodes) | `/docs/cli/mesh/nodes/` | Every node the running server has observed, deduplicated by node identity, with trust, presence, endpoints and provenance |
@@ -209,6 +213,9 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus delivery`](#majordomus-delivery) | `/docs/cli/delivery/` | Whether each product feature exists: on master, deployed, publicly verified, tested, its evidence published and linked — every dimension computed, unknown never a pass |
 | [`majordomus delivery report`](#majordomus-delivery-report) | `/docs/cli/delivery/report/` | Every feature against every dimension, with the development stage of what does not exist |
 | [`majordomus delivery show`](#majordomus-delivery-show) | `/docs/cli/delivery/show/` | One feature: every dimension with its reason and remediation |
+| [`majordomus plan`](#majordomus-plan) | `/docs/cli/plan/` | How far each issue's work has travelled: none, branch, pr_open, merged, released or deployed, each with the object that proved it; the plan's records are read and moved by the shell tool's `plan` |
+| [`majordomus plan delivery`](#majordomus-plan-delivery) | `/docs/cli/plan/delivery/` | Every issue's furthest delivery stage, with the object that proved it and its declared status beside it |
+| [`majordomus plan drift`](#majordomus-plan-drift) | `/docs/cli/plan/drift/` | Every contradiction between an issue's declared status and its delivery — merged_not_recorded, active_without_work, done_without_trace — each with its proof; with --gate, judged against the window .ai/repo/ci/plan.yaml declares |
 | [`majordomus economics`](#majordomus-economics) | `/docs/cli/economics/` | Token economics, measured: matched runs with and without Majordomus, every metric with its measurement class and sample size, the statement the evidence allows, and the check that refuses an unsupported savings claim |
 | [`majordomus economics summary`](#majordomus-economics-summary) | `/docs/cli/economics/summary/` | Every metric with its class, sample size and interval, the pairs, the segments, the state of the evidence, and the one statement the publication rule allows |
 | [`majordomus economics explain`](#majordomus-economics-explain) | `/docs/cli/economics/explain/` | One metric and everything it rests on: formula, class, pairs, runs, exclusions, and how to reproduce it |
@@ -251,7 +258,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 
 Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer
 
-Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus devtask`](#majordomus-devtask), [`majordomus distribution`](#majordomus-distribution), [`majordomus env`](#majordomus-env), [`majordomus commands`](#majordomus-commands), [`majordomus completion`](#majordomus-completion), [`majordomus worktree`](#majordomus-worktree), [`majordomus prs`](#majordomus-prs), [`majordomus offload`](#majordomus-offload), [`majordomus convergence`](#majordomus-convergence), [`majordomus commit`](#majordomus-commit), [`majordomus product`](#majordomus-product), [`majordomus release`](#majordomus-release), [`majordomus quality`](#majordomus-quality), [`majordomus run`](#majordomus-run), [`majordomus executions`](#majordomus-executions), [`majordomus devcontext`](#majordomus-devcontext), [`majordomus mesh`](#majordomus-mesh), [`majordomus monitor`](#majordomus-monitor), [`majordomus models`](#majordomus-models), [`majordomus reasoning`](#majordomus-reasoning), [`majordomus evidence`](#majordomus-evidence), [`majordomus served`](#majordomus-served), [`majordomus rules`](#majordomus-rules), [`majordomus intent`](#majordomus-intent), [`majordomus delivery`](#majordomus-delivery), [`majordomus economics`](#majordomus-economics), [`majordomus entity`](#majordomus-entity), [`majordomus shell`](#majordomus-shell), [`majordomus pack`](#majordomus-pack), [`majordomus dashboard`](#majordomus-dashboard), [`majordomus brief`](#majordomus-brief), [`majordomus skills`](#majordomus-skills), [`majordomus knowledge`](#majordomus-knowledge), [`majordomus continuity`](#majordomus-continuity).
+Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus devtask`](#majordomus-devtask), [`majordomus distribution`](#majordomus-distribution), [`majordomus env`](#majordomus-env), [`majordomus commands`](#majordomus-commands), [`majordomus completion`](#majordomus-completion), [`majordomus worktree`](#majordomus-worktree), [`majordomus prs`](#majordomus-prs), [`majordomus offload`](#majordomus-offload), [`majordomus convergence`](#majordomus-convergence), [`majordomus commit`](#majordomus-commit), [`majordomus product`](#majordomus-product), [`majordomus release`](#majordomus-release), [`majordomus quality`](#majordomus-quality), [`majordomus run`](#majordomus-run), [`majordomus executions`](#majordomus-executions), [`majordomus devcontext`](#majordomus-devcontext), [`majordomus guard`](#majordomus-guard), [`majordomus mesh`](#majordomus-mesh), [`majordomus monitor`](#majordomus-monitor), [`majordomus models`](#majordomus-models), [`majordomus reasoning`](#majordomus-reasoning), [`majordomus evidence`](#majordomus-evidence), [`majordomus served`](#majordomus-served), [`majordomus rules`](#majordomus-rules), [`majordomus intent`](#majordomus-intent), [`majordomus delivery`](#majordomus-delivery), [`majordomus plan`](#majordomus-plan), [`majordomus economics`](#majordomus-economics), [`majordomus entity`](#majordomus-entity), [`majordomus shell`](#majordomus-shell), [`majordomus pack`](#majordomus-pack), [`majordomus dashboard`](#majordomus-dashboard), [`majordomus brief`](#majordomus-brief), [`majordomus skills`](#majordomus-skills), [`majordomus knowledge`](#majordomus-knowledge), [`majordomus continuity`](#majordomus-continuity).
 
 ```text
 majordomus <COMMAND>
@@ -279,7 +286,7 @@ majordomus mcp [OPTIONS]
 | `--transport` | `stdio` | `stdio` | The transport to serve on — `stdio`: One JSON-RPC frame per line on stdin and stdout |
 | `--standalone` | flag | — | Serve this client alone: no shared server, no HTTP, no Swagger UI, no peers, and nothing written anywhere. The default is the shared server (below) |
 | `--http-host` | `<HOST>` | — | Interface the shared server binds when this process is the one that starts it; without it, the one `MAJORDOMUS_HTTP_HOST` names on this machine, and loopback (`127.0.0.1`) when that is unset |
-| `--http-port` | `<PORT>` | `8741` | Port the shared server binds when this process starts it; when it is taken, a free port is used instead and the URL is logged on stderr either way |
+| `--http-port` | `<PORT>` | — | Port the shared server binds when this process starts it; without it, the port this checkout derives (8741 for the primary checkout). When it is taken, a free port is used instead and the URL is logged on stderr either way |
 
 Examples:
 
@@ -325,7 +332,7 @@ majordomus serve [OPTIONS] [COMMAND]
 | `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
 | `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
 | `--host` | `<HOST>` | — | Interface to bind; without it, the one `MAJORDOMUS_HTTP_HOST` names on this machine, and loopback (`127.0.0.1`) when that is unset |
-| `--port` | `<PORT>` | `8741` | Port to bind; 0 picks a free one and the address is logged on stderr |
+| `--port` | `<PORT>` | — | Port to bind; without it, the port this checkout derives (8741 for the primary checkout); 0 picks a free one and the address is logged on stderr |
 | `--fallback` | flag | — | When the port is taken, bind a free one instead and log both; without this a taken port is an error |
 | `--idle` | `<SECONDS>` | `0` | Stop when no peer has been attached for this many seconds; 0 runs until stopped. What a server no client owns is started with |
 | `--deployment` | `<ID>` | — | Bind the address this deployment object declares (`.ai/repo/deployments/<ID>.yaml`) instead of the local default. What a hosted process is started with; the address is the object's, not this command line's |
@@ -379,8 +386,8 @@ majordomus serve ensure [OPTIONS]
 
 | argument | value | default | description |
 |---|---|---|---|
-| `--port` | `<PORT>` | `8741` | The port the started server asks for first; a taken one is replaced by a free one |
-| `--idle` | `<SECONDS>` | `900` | The started server stops when no peer has been attached for this many seconds |
+| `--port` | `<PORT>` | — | The port the started server asks for first, without it the one this checkout derives (8741 for the primary checkout); a taken one is replaced by a free one |
+| `--idle` | `<SECONDS>` | — | The started server stops when no peer has been attached for this many seconds; without it, the policy's declared `server.idle_seconds`, 900 when none is declared |
 | `--wait` | `<SECONDS>` | `20` | How long to wait for a server to become ready before reporting what stands |
 | `--format` | `text` \| `json` | `text` | Output shape — `text`: Lines for a person; `json`: One JSON document, deterministic |
 | `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
@@ -2326,7 +2333,7 @@ Examples:
 
 The branch-to-worktree topology: where every linked worktree belongs (`<repo>-wt/<branch>`), where each one is, and the lifecycle — create, migrate, repair, guard
 
-Subcommands: [`majordomus worktree status`](#majordomus-worktree-status), [`majordomus worktree list`](#majordomus-worktree-list), [`majordomus worktree topology`](#majordomus-worktree-topology), [`majordomus worktree root`](#majordomus-worktree-root), [`majordomus worktree path`](#majordomus-worktree-path), [`majordomus worktree inspect`](#majordomus-worktree-inspect), [`majordomus worktree create`](#majordomus-worktree-create), [`majordomus worktree ensure`](#majordomus-worktree-ensure), [`majordomus worktree migrate`](#majordomus-worktree-migrate), [`majordomus worktree validate`](#majordomus-worktree-validate), [`majordomus worktree doctor`](#majordomus-worktree-doctor), [`majordomus worktree guard`](#majordomus-worktree-guard), [`majordomus worktree repair`](#majordomus-worktree-repair), [`majordomus worktree remove`](#majordomus-worktree-remove), [`majordomus worktree cleanup`](#majordomus-worktree-cleanup), [`majordomus worktree branches`](#majordomus-worktree-branches).
+Subcommands: [`majordomus worktree status`](#majordomus-worktree-status), [`majordomus worktree list`](#majordomus-worktree-list), [`majordomus worktree topology`](#majordomus-worktree-topology), [`majordomus worktree root`](#majordomus-worktree-root), [`majordomus worktree path`](#majordomus-worktree-path), [`majordomus worktree inspect`](#majordomus-worktree-inspect), [`majordomus worktree create`](#majordomus-worktree-create), [`majordomus worktree ensure`](#majordomus-worktree-ensure), [`majordomus worktree migrate`](#majordomus-worktree-migrate), [`majordomus worktree validate`](#majordomus-worktree-validate), [`majordomus worktree doctor`](#majordomus-worktree-doctor), [`majordomus worktree guard`](#majordomus-worktree-guard), [`majordomus worktree repair`](#majordomus-worktree-repair), [`majordomus worktree remove`](#majordomus-worktree-remove), [`majordomus worktree cleanup`](#majordomus-worktree-cleanup), [`majordomus worktree uncommitted`](#majordomus-worktree-uncommitted), [`majordomus worktree trunk`](#majordomus-worktree-trunk), [`majordomus worktree branches`](#majordomus-worktree-branches).
 
 ```text
 majordomus worktree [OPTIONS] [COMMAND]
@@ -2518,7 +2525,7 @@ Examples:
 <a id="majordomus-worktree-create"></a>
 ## `majordomus worktree create`
 
-Create the canonical worktree of a branch, creating the branch from --base (default: the trunk) when it does not exist. The path is derived; none may be given
+Create the canonical worktree of a branch. A branch that does not exist here is fetched from the trunk's remote and taken up when the remote has it; otherwise it is created from --base, else from the remote's trunk fetched now (the local trunk only when the remote cannot be read, and then said, with how far behind). The path is derived; none may be given
 
 ```text
 majordomus worktree create [OPTIONS] [BRANCH]
@@ -2774,6 +2781,61 @@ Examples:
   ```
 
   Verified: exits 0; prints cleanup-eligible.
+
+<a id="majordomus-worktree-uncommitted"></a>
+## `majordomus worktree uncommitted`
+
+Every linked worktree holding uncommitted work: how many paths, how old the oldest change, what holds it (an active task, an open episode, a process inside) and whether it is abandoned, with the command that would put it on a remote ref. Reads every worktree and writes none
+
+```text
+majordomus worktree uncommitted [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--older-than` | `<DURATION>` | — | Judge against this age instead of the policy's session.stranded_after (90s, 30m, 12h, 1d) |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Work no commit carries, and whether anything holds it** — Every linked worktree holding staged, unstaged, untracked or conflicted paths, with the count, the age of the oldest change, the task, episode or process that holds it, and `abandoned` when nothing does and it is older than the policy's session.stranded_after. A repository with no linked worktree has nothing to list; the reading writes nothing either way.
+
+  ```console
+  $ majordomus worktree uncommitted
+  ```
+
+  Verified: exits 0; prints 0 with uncommitted work, nothing was changed.
+
+<a id="majordomus-worktree-trunk"></a>
+## `majordomus worktree trunk`
+
+How far this checkout and the local trunk are from the remote trunk, as of the last fetch, judged against the policy's checkout.trunk_distance: current, lagging, stale, unjudged or unmeasured, with the commands that bring it current. Fetches nothing; exit 10 when stale
+
+```text
+majordomus worktree trunk [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **How far this checkout is from the remote trunk** — The checkout's HEAD and the local trunk counted against the remote-tracking trunk, as of the last fetch, and judged against the policy's checkout.trunk_distance. A repository with no remote has nothing to be measured against and says so — `unmeasured`, never `current`; nothing is fetched either way.
+
+  ```console
+  $ majordomus worktree trunk
+  ```
+
+  Verified: exits 0; prints unmeasured, no remote-tracking branch.
 
 <a id="majordomus-worktree-branches"></a>
 ## `majordomus worktree branches`
@@ -3804,7 +3866,7 @@ majordomus release next [OPTIONS]
 
 | argument | value | default | description |
 |---|---|---|---|
-| `--base` | `<REF>` | `origin/master` | The trunk the landing raises from |
+| `--base` | `<REF>` | — | The trunk the landing raises from; when absent, the remote-tracking ref of the trunk this repository names |
 | `--head` | `<REF>` | `HEAD` | What lands |
 | `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
 | `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
@@ -4270,6 +4332,43 @@ Examples:
   ```
 
   Verified: exits 0; prints TIER, is_a, REFUSED.
+
+<a id="majordomus-guard"></a>
+## `majordomus guard`
+
+The edit guard: whether a provider's tool may write a file of this checkout now, judged from the active task's scope and the writing session's live mesh claims
+
+Subcommands: [`majordomus guard hook`](#majordomus-guard-hook).
+
+```text
+majordomus guard <COMMAND>
+```
+
+Arguments: none.
+
+<a id="majordomus-guard-hook"></a>
+## `majordomus guard hook`
+
+Judge the edit a provider's pre-tool payload (on stdin) is about to make; exit 2 with the reason and the remedy when no claim covers it, 0 otherwise
+
+```text
+majordomus guard hook [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--provider` | `<PROVIDER>` | `claude-code` | The provider whose payload stdin carries; its session id on the mesh is `<provider>-<session_id>` |
+| `--repo` | `<PATH>` | — | Where a relative path in the payload is resolved from (default: the current directory); the checkout judged is the one the written file belongs to |
+
+Examples:
+
+- **Judge the edit a provider's pre-tool payload names** — What a provider's pre-tool hook runs before an edit: the payload arrives on stdin, and the command exits 2 with the reason and the remedy when no claim covers the path it names, 0 otherwise. Here stdin is empty, so it names no path, and the command lets the tool run.
+
+  ```console
+  $ majordomus guard hook --provider claude-code
+  ```
+
+  Verified: exits 0.
 
 <a id="majordomus-mesh"></a>
 ## `majordomus mesh`
@@ -6028,6 +6127,100 @@ Examples:
   ```
 
   Verified: exits 0; prints fixture-feature, on_master, NOT DELIVERED.
+
+<a id="majordomus-plan"></a>
+## `majordomus plan`
+
+How far each issue's work has travelled: none, branch, pr_open, merged, released or deployed, each with the object that proved it; the plan's records are read and moved by the shell tool's `plan`
+
+Subcommands: [`majordomus plan delivery`](#majordomus-plan-delivery), [`majordomus plan drift`](#majordomus-plan-drift).
+
+```text
+majordomus plan [OPTIONS] <COMMAND>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+<a id="majordomus-plan-delivery"></a>
+## `majordomus plan delivery`
+
+Every issue's furthest delivery stage, with the object that proved it and its declared status beside it
+
+```text
+majordomus plan delivery [OPTIONS] [ISSUE]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `<ISSUE>` | `<ISSUE>` | — | One issue; default every issue of the plan |
+| `--at` | `<REV>` | — | Observe as of this commit: its history and the tree's release records, nothing live (no branch, forge, deployment or clock) |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **How far every issue's work has travelled** — The same answer `GET /api/v1/plan/delivery` and the MCP tool `majordomus_plan_delivery` return: every issue with its declared status and the furthest stage proved — none, branch, pr_open, merged, released, deployed — each stage with the branch, pull request, merge commit, tag or `latest.json` that proved it. A checkout that never observed the forge says the forge is unread, and an issue it could have moved further is not settled.
+
+  ```console
+  $ majordomus plan delivery --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /observed/commit, /tallies/none, /issues/0/stage, /sources.
+
+- **One issue, as of a commit** — `--at` reads the merges in that commit's history and the tree's release records, and nothing live — no branch, no forge, no deployment, no clock — so it proves only merged and released and the answer is a function of the commit alone. That is what `scripts/generate-site-data` writes to `site/data/generated/delivery.json` and reproduces under `--check`.
+
+  ```console
+  $ majordomus plan delivery I0001 --at HEAD
+  ```
+
+  Verified: exits 0; prints I0001, none, unread.
+
+<a id="majordomus-plan-drift"></a>
+## `majordomus plan drift`
+
+Every contradiction between an issue's declared status and its delivery — merged_not_recorded, active_without_work, done_without_trace — each with its proof; with --gate, judged against the window .ai/repo/ci/plan.yaml declares
+
+```text
+majordomus plan drift [OPTIONS] [ISSUE]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `<ISSUE>` | `<ISSUE>` | — | One issue; default every issue of the plan |
+| `--at` | `<REV>` | — | Observe as of this commit, as `plan delivery --at` does |
+| `--gate` | `head` \| `trunk` | — | Judge as a gate: on a `head` merged work is pending, on the `trunk` past the window it is refused (exit 10 under blocking enforcement); a missing window exits 12 — `head`: A head: merged work the plan has not recorded is pending; `trunk`: The trunk: merged work unrecorded past the window is refused |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Where the plan's stamps contradict the delivered work** — The same answer `GET /api/v1/plan/drift` and the MCP tool `majordomus_plan_drift` return: every merged_not_recorded, active_without_work and done_without_trace finding with the pull request, merge commit and release that prove it, its age against the window `.ai/repo/ci/plan.yaml` declares, and the command that settles it.
+
+  ```console
+  $ majordomus plan drift --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /observed/commit, /window/model, /tallies/merged_not_recorded, /verdict.
+
+- **As of a commit** — `--at` reads that commit's history and the tree's records only, as `plan delivery --at` does, so the open pull requests are unread and a finding says it is not settled. `--gate head|trunk` judges the answer as `scripts/ci/plan-drift-check` does: on a head merged work the plan has not recorded is pending; on the trunk one merged longer than the window ago is refused, naming `majordomus plan verify|done <id>`, and a missing window refuses with exit 12.
+
+  ```console
+  $ majordomus plan drift --at HEAD
+  ```
+
+  Verified: exits 0; prints plan drift, window.
 
 <a id="majordomus-economics"></a>
 ## `majordomus economics`
