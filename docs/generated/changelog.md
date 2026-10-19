@@ -7,6 +7,51 @@ Every entry below is derived: a section per release the layer records, its decis
 
 Current version: **0.30.1**
 
+## v0.30.1 — 2026-10-19
+
+### Fixed
+
+- **top**: case 3003 reads the Knowledge screen I3022 and I3023 draw (`9904000d2`)
+- **top**: #1412's real reds: the footer commit, the record cases, coverage, a pipe flake (`70d127e14`)
+- **top**: I3007's objective names the template links without writing a placeholder (`7a20e31fd`)
+- **top**: case 3363 sorts with LC_ALL=C, so its order is the machine's no more (`92f790d39`)
+- **ui**: the Knowledge screen reads in review order, in plain labels (I3023) (`076312f8a`)
+- **ui**: an empty knowledge queue is one sentence, not two empty tables (I3022) (`820602967`)
+- **site**: a commit that a record or the site's data names is in the history (I3007) (`c0b799497`)
+- **offload**: a remote derive builds only inside its own run directory (I2882) (`a4c19d60f`)
+- **ui**: the Knowledge review reads as steps, each command as code (I3021) (`6f54b4153`)
+- **site**: the site says a test proves a claim only as far as the evidence does (I2965) (`c90d10c01`)
+- **doctor**: no work whose answer cannot change a finding (`ed72c1325`)
+- **ui**: the workspace's headline numbers are the chosen intent's (I2907) (`a762f7456`)
+- **doctor**: the work no remote holds is counted in one walk (`ba44bed3f`)
+- **docs**: the MCP surface, claims and README name the eight writing capabilities (I2962) (`1b9b93d1b`)
+- **release**: a latest.json naming any pre-release is refused, not only the one published (I2829) (`9f8baafee`)
+- **docs**: the README's exit codes are the commands' declared contracts (I2963) (`ae2a2a322`)
+- **site**: the policy and roadmap pages name the .ai/repo layout in force (I2967) (`886cd9a18`)
+- **install**: the smoke server binds its own loopback address (`0707822cd`)
+
+### Performance
+
+- **server**: every checkout is asked at once, sixteen at a time (`baadbbfb0`)
+
+### Documentation
+
+- **server**: the public module doc names no crate-private item (`317ae1312`)
+
+### Housekeeping
+
+- **release**: record v0.30.0 and the metadata it publishes (`a0e7dd961`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v0.30.1-aarch64-apple-darwin.tar.gz (`0dfaa6a41224`)
+- `macos-x86_64` — majordomus-v0.30.1-x86_64-apple-darwin.tar.gz (`f8b8424efb08`)
+- `linux-x86_64-gnu` — majordomus-v0.30.1-x86_64-unknown-linux-gnu.tar.gz (`83b29af38b2a`)
+- `linux-x86_64-musl` — majordomus-v0.30.1-x86_64-unknown-linux-musl.tar.gz (`9022bbd67e6f`)
+- `linux-aarch64-gnu` — majordomus-v0.30.1-aarch64-unknown-linux-gnu.tar.gz (`e79b36d624e9`)
+- `linux-aarch64-musl` — majordomus-v0.30.1-aarch64-unknown-linux-musl.tar.gz (`a50464e71535`)
+
+
 ## v0.30.0 — 2026-10-18
 
 ### Decisions
