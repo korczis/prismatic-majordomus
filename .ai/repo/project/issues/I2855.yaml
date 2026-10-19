@@ -1,0 +1,33 @@
+id: I2855
+milestone: development-runtime
+title: "a command that asks this checkout's server finds it without probing every checkout"
+slug: a-command-finds-its-server-without-probing-every-checkout
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "`mesh` and `monitor` find the server to ask from this checkout's lease first (`server.status` with `checkouts: this`) and enumerate the repository's other checkouts only when this one has no ready server to borrow from, so a session's start event, which runs `mesh session open` and `mesh doctor`, no longer pays a lease read and a probe for every worktree of the repository; and `server.status` asks each ready server for the peers on its own board (`peers.list` with `checkouts=this`), so a reading never makes the server it asks gather every other checkout's board."
+why: "Measured 2026-10-19 ~01:30 local by 3e, installed 0.30.0, machine load ~39. In the primary checkout (572 registered worktrees), `mesh doctor` took 11675 and 12112 ms with one index build (~2 s); `serve status --checkouts this` took 1791 ms and `--checkouts repository` 7373 ms (572 servers). `server_url` in commands/mesh.rs and commands/monitor.rs executes `server.status` with `{}`, which is the repository-wide default, only to pick this checkout's own server, so every mesh command a person or a hook runs pays for every worktree. The SessionStart hook runs two of them (mesh session open, mesh doctor) plus brief --keep-awake. In an isolated clone with a single checkout the whole hook still took 6.8-7.2 s warm (14.2 s cold): mesh session open 2.1-2.5 s, mesh doctor 3.2-3.5 s, brief --keep-awake 1.4-1.6 s, each paying a full index build (2413 objects) of its own, and mesh doctor two. A test built for this found a second path: even with `checkouts: this`, server.status asked the checkout's own server for `peers.list` with no `checkouts`, so that server gathered every checkout's board and probed every other server, once per command; in a repository-wide reading every ready server did so, a cost that grows with the square of the checkouts, and the count it reported was the repository's rather than the server's. Measured against the same base (9904000d2df) without and with this change, in the primary checkout with 606 registered worktrees at load ~33, six interleaved runs each: `mesh doctor` median 3388 -> 2896 ms (worst 8247 -> 3831 ms), `mesh status` median 2954 -> 1933 ms. The rest of each command is the index it builds before it asks (the next issue). The owner's P0 target for a local bootstrap is 250 ms with network discovery off the blocking path."
+current_state: "commands/mesh.rs server_url and commands/monitor.rs server_url build the index and execute server.status over every checkout git registers, then choose this checkout's server out of the answer."
+desired_state: "Both ask server.status with `checkouts: this` first and use this checkout's ready server when it has one; only without one do they ask with `checkouts: repository` and borrow, as `choose` does today. server.status counts each server's peers from that server's own board. What the commands print and which server they ask are unchanged."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/server.rs"
+  - "apps/majordomus-cli/src/commands/mesh.rs"
+  - "apps/majordomus-cli/src/commands/monitor.rs"
+  - "apps/majordomus-cli/tests/server_status.rs"
+non_scope:
+  - "The index each CLI process builds only to reach server.status (~1.5-2.5 s per command at this load): reading the lease without the index is the next issue, measured once this one lands."
+  - "The prompt capture's ~1.7 s per prompt: the durable outbox named in the hook-latency finding of 2026-09-10."
+  - "Moving the start event's mesh calls off the blocking path."
+depends_on: []
+acceptance_criteria:
+  - "A mesh command in a checkout with a ready server of its own asks that server without reading any other checkout's lease"
+  - "A mesh command in a checkout without a ready server still borrows the primary's, and says so as today"
+  - "The monitor finds this checkout's server without enumerating the repository"
+  - "A server.status reading never makes the server it asks probe another checkout's server"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test server_status"
+evidence_required:
+  - "no_other_checkout_probed_test"
+created_at: 2026-10-19
+updated_at: 2026-10-19

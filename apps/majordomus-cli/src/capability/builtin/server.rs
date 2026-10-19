@@ -511,17 +511,16 @@ pub fn standing_at(
     (standing, reason, read)
 }
 
-/// How many peers the server at `url` reports, through the route the registry declares
-/// for `peers.list`. `None` when it does not answer or the route is not declared.
+/// How many peers the server at `url` holds on its own board, through the route the
+/// registry declares for `peers.list`. `None` when it does not answer or the route is not
+/// declared.
+///
+/// Asked with `checkouts=this`: the repository-wide default would have that server gather
+/// every other checkout's board, probing each server, once for every server this reading
+/// covers, and the count it answered would be the repository's, not the server's (I2855).
 fn peers_of(ctx: &Context, url: &str) -> Option<usize> {
-    let path = ctx
-        .registry
-        .get("peers.list")?
-        .exposure
-        .http
-        .as_ref()?
-        .path
-        .clone();
+    let route = &ctx.registry.get("peers.list")?.exposure.http.as_ref()?.path;
+    let path = format!("{route}?checkouts=this");
     // the probe timeout the policy declares, as the election reads it (I2129)
     let timeout = lease::timings().probe_timeout;
     let reply = crate::mcp::bridge::request(url, "GET", &path, &[], None, timeout).ok()?;
