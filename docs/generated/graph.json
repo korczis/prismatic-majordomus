@@ -14520,6 +14520,18 @@
         }
       },
       {
+        "id": "majordomus://critique/a-version-follows-every-session",
+        "kind": "critique",
+        "label": "a-version-follows-every-session",
+        "summary": "a-version-follows-every-session",
+        "route": "/cockpit/objects/critique/a-version-follows-every-session",
+        "source": ".ai/repo/project/critiques/a-version-follows-every-session.yaml",
+        "facts": {
+          "intent": "a-version-follows-every-session",
+          "reviewed_at": "6d9b6d4459b"
+        }
+      },
+      {
         "id": "majordomus://critique/intent-bound-work",
         "kind": "critique",
         "label": "intent-bound-work",
@@ -42689,19 +42701,13 @@
         "route": "/cockpit/objects/issue/i3072",
         "source": ".ai/repo/project/issues/I3072.yaml",
         "facts": {
-          "acceptance_criteria": [
-            "A release-seat task finishing with landed work older than the threshold past the last release is refused completed, naming the count, the age and the required version",
-            "The same task with a pushed tag whose release run is in progress, or with no landed work past the release, finishes",
-            "A task that does not hold the release seat is told the stance and is never refused by it"
-          ],
           "created_at": "2026-10-19",
-          "current_state": "finish asks publication-currency about the site and nothing about the release.",
+          "current_state": "finish asks publication-currency about the site and nothing about the release, and no task record names the seat it holds.",
           "depends_on": [
             "I3070"
           ],
-          "desired_state": "The release seat's finish says completed only when the trunk's landed work is released or still inside the threshold.",
           "evidence_required": [
-            "case_release_seat_finishes_only_current"
+            "case_the_release_seat_finishes_only_when_released"
           ],
           "milestone": "a-version-follows-the-work",
           "parallel_safe": false,
@@ -42709,8 +42715,17 @@
           "profile": "implementation",
           "scope": [
             ".ai/repo/ci/gates.yaml",
+            ".ai/repo/policy.yaml",
+            ".ai/repo/rules/project/land-and-publish.v1.md",
+            ".ai/repo/project/intents/a-version-follows-every-session.yaml",
             "apps/majordomus-cli/src/capability/builtin/release.rs",
-            "lib/finish.sh"
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "lib/finish.sh",
+            "lib/gates.sh",
+            "lib/common.sh",
+            "docs/DOCTRINE.md",
+            "docs/RELEASE.md",
+            "test/cases/3472_the_release_seat_finishes_only_when_released.sh"
           ],
           "serves": [
             "a-version-follows-every-session#the-seat-releases"
@@ -42718,9 +42733,49 @@
           "slug": "the-release-seat-finishes-only-current",
           "updated_at": "2026-10-19",
           "validation": [
-            "bin/majordomus plan validate"
+            "bin/majordomus plan validate",
+            "bash test/run.sh 3472_the_release_seat_finishes_only_when_released"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3076",
+        "kind": "issue",
+        "label": "I3076",
+        "summary": "release.currency dates a landing by the forge's record of it, read from the observation prs refresh keeps",
+        "route": "/cockpit/objects/issue/i3076",
+        "source": ".ai/repo/project/issues/I3076.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A landing that a recorded merged pull request contains is dated by its mergedAt, the answer names the source and the observation's age, and release.currency runs no gh",
+            "Case 3470 shows a version decided over a committed registry at the trunk, equal to release.version's"
           ],
-          "why": "Rule 4 of the cooperation model binds the release seat. A seat that ends its session with overdue landed work leaves the owner's order unmet, with every check green."
+          "created_at": "2026-10-19",
+          "depends_on": [
+            "I3070"
+          ],
+          "evidence_required": [
+            "case_the_release_follows_the_work"
+          ],
+          "milestone": "a-version-follows-the-work",
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I3076.yaml",
+            "apps/majordomus-cli/src/integration/forge.rs",
+            "apps/majordomus-cli/src/release/currency.rs",
+            "docs/RELEASE.md",
+            "docs/INTEGRATION.md"
+          ],
+          "serves": [
+            "a-version-follows-every-session#measured"
+          ],
+          "slug": "a-landing-is-dated-by-the-forge",
+          "updated_at": "2026-10-19",
+          "validation": [
+            "bin/majordomus plan validate"
+          ]
         }
       },
       {
@@ -79591,6 +79646,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://critique/a-version-follows-every-session",
+        "target": "kind:critique",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://critique/intent-bound-work",
         "target": "kind:critique",
         "kind": "is_a"
@@ -88817,6 +88877,21 @@
       },
       {
         "source": "majordomus://issue/I3072",
+        "target": "majordomus://milestone/a-version-follows-the-work",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3076",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3076",
+        "target": "majordomus://issue/I3070",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3076",
         "target": "majordomus://milestone/a-version-follows-the-work",
         "kind": "belongs_to"
       },
@@ -99072,8 +99147,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3081,
-      "edges": 6747,
+      "nodes": 3083,
+      "edges": 6751,
       "acyclic": false,
       "truncated": false
     }

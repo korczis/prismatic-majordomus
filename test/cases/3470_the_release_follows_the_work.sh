@@ -8,9 +8,16 @@
 #   only a release commit past the release   current: a release commit is no landed work
 #   a fix landed an hour ago                 owed, with the count and the wait, in the brief too
 #   a fix landed seven hours ago             overdue, and doctor's warning says so
+#   a top made 7 h ago that landed 1 h ago   owed for an hour: the wait runs from when this
+#                                            clone saw it land (its reflog), not from its commits
+#   the same, its reflog gone                owed, the commit time bounding the wait from above,
+#                                            and a bound alone is never overdue, in doctor either
 #   a tag pushed past the record             current: releasing is never reported as owed
 #   a fix past an unrecorded tag             the version is not decided, and the answer says why
 #   a clone with no remote                   unknown, and doctor says what it cannot measure
+#
+# A landing is dated by the reflog of the remote-tracking trunk, so each push here records its
+# time there (GIT_COMMITTER_DATE), as a fetch of a real landing would.
 #
 # Skips itself when there is neither cargo nor MAJORDOMUS_BIN, as the other Rust cases do.
 . "$ROOT/test/lib.sh"
@@ -59,15 +66,19 @@ artifacts:
 Y
 }
 
-# land SUBJECT SECONDS-AGO: a commit made on the trunk that long ago, pushed to the origin
+# land SUBJECT MADE-AGO [LANDED-AGO]: a commit made on the trunk MADE-AGO seconds ago, pushed to
+# the origin LANDED-AGO seconds ago (by default when it was made)
 land() {
   at="$(( $(date +%s) - $2 ))"
   GIT_AUTHOR_DATE="@$at +0000" GIT_COMMITTER_DATE="@$at +0000" git commit -q --allow-empty -m "$1"
-  push
+  push "$(( $(date +%s) - ${3:-$2} ))"
 }
+# push [AT]: push to the origin and fetch it back, the trunk's reflog recording AT (default now)
 push() {
-  git push -q -f origin HEAD:master --tags 2>/dev/null || { echo "    the push to the fixture's origin failed"; exit 1; }
-  git fetch -q origin
+  when="@${1:-$(date +%s)} +0000"
+  GIT_COMMITTER_DATE="$when" git push -q -f origin HEAD:master --tags 2>/dev/null \
+    || { echo "    the push to the fixture's origin failed"; exit 1; }
+  GIT_COMMITTER_DATE="$when" git fetch -q origin
 }
 
 git add -A >/dev/null && git commit -qm "publishes"
@@ -117,6 +128,31 @@ c="$(currency)"
 grep -E 'WARN.*release.*OVERDUE: 1 landed commit' "$S/doctor.out" >/dev/null \
   || { echo "    doctor does not warn that the release is overdue:"; grep -i release "$S/doctor.out" | sed 's/^/    | /'; exit 1; }
 echo "    a fix landed seven hours ago is overdue, and doctor warns"
+
+# ---------------------------------------------------------------- 3b. a top composed before it landed
+git reset -q --hard "$recorded"
+land "fix: a top composed long before it landed" 25200 3600
+c="$(currency)"
+[ "$(field "$c" .stance)" = owed ] && [ "$(field "$c" .landed_at)" = reflog ] \
+  || { echo "    a top made 7 h ago that landed 1 h ago is not owed by its reflog: $c"; exit 1; }
+w="$(field "$c" .waited_seconds)"
+[ "$w" -ge 3500 ] && [ "$w" -lt 4000 ] || { echo "    the wait does not run from the landing: $c"; exit 1; }
+echo "    a top made seven hours ago that landed an hour ago waits for an hour, as the reflog saw it land"
+
+# ---------------------------------------------------------------- 3c. no reflog: a bound, never overdue
+rm -f .git/logs/refs/remotes/origin/master
+c="$(currency)"
+[ "$(field "$c" .stance)" = owed ] && [ "$(field "$c" .landed_at)" = commit ] \
+  || { echo "    with no reflog the commit time did not bound the wait as owed: $c"; exit 1; }
+field "$c" .summary | grep -qF 'which alone makes nothing overdue' \
+  || { echo "    the answer does not say the bound is only a bound: $c"; exit 1; }
+"$MJ" doctor > "$S/doctor.out" 2>&1 || true
+if grep -E 'release.*OVERDUE' "$S/doctor.out" >/dev/null; then
+  echo "    doctor calls a commit-time bound overdue:"; grep -i release "$S/doctor.out" | sed 's/^/    | /'; exit 1
+fi
+grep -E 'WARN.*release.*at most' "$S/doctor.out" >/dev/null \
+  || { echo "    doctor does not warn with the bound:"; grep -i release "$S/doctor.out" | sed 's/^/    | /'; exit 1; }
+echo "    without a reflog the commit time bounds the wait, and the bound is owed, never overdue"
 
 # ---------------------------------------------------------------- 4. a tag pushed past the record
 git tag v0.1.1

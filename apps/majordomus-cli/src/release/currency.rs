@@ -18,7 +18,12 @@
 //!   release commits (`chore(release)`): what the next release would ship.
 //! - **How long it has waited.** A landing is a commit of the trunk's first-parent history: a
 //!   merge of a branch or a top, or a commit made on the trunk itself. The work has waited since
-//!   the oldest landing that brought anything but release commits.
+//!   the oldest landing that brought anything but release commits arrived on the trunk: when
+//!   this clone's remote-tracking trunk first held it, from that ref's reflog. A top is
+//!   composed for hours before it is pushed, so its commit time says when it was made, not when
+//!   it landed. Where the reflog does not show the landing arrive, the commit time is used as
+//!   what it is, an upper bound on the wait, and alone it never makes the work overdue
+//!   ([`LandedAt`]).
 //!
 //! The answer reads refs and the clock, so it is a runtime read and is never committed. A
 //! committed derivation that read refs would go stale with every tag.
@@ -113,6 +118,28 @@ impl Stance {
     }
 }
 
+/// How the oldest landing was dated, and so which way its wait may be wrong (the plan
+/// critique of 2026-10-19: a top lands by a fast-forward push hours after its commits).
+///
+/// ```
+/// use majordomus_cli::release::currency::LandedAt;
+/// assert_eq!(serde_json::to_value(LandedAt::Reflog).unwrap(), "reflog");
+/// assert_eq!(serde_json::to_value(LandedAt::Commit).unwrap(), "commit");
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+#[schemars(rename = "ReleaseCurrencyLandedAt")]
+pub enum LandedAt {
+    /// When this clone's remote-tracking trunk first held it, from that ref's reflog. A landing
+    /// is seen no earlier than it lands, so the wait counted from here is a lower bound, and it
+    /// is the one date that can make the stance overdue.
+    Reflog,
+    /// Its commit time, where the reflog does not show it arrive: a commit lands no earlier than
+    /// it is made, so the wait counted from here is an upper bound, and it never makes the
+    /// stance overdue by itself.
+    Commit,
+}
+
 /// The release the trunk is measured from.
 ///
 /// ```
@@ -166,9 +193,14 @@ pub struct Currency {
     pub landed: usize,
     /// The landings of the trunk's first-parent history that brought them.
     pub landings: usize,
-    /// When the oldest of those landings landed, RFC 3339.
+    /// When the oldest of those landings landed, RFC 3339, dated as [`landed_at`](Self::landed_at)
+    /// says.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub oldest_landing: Option<String>,
+    /// How [`oldest_landing`](Self::oldest_landing) was dated: when this clone saw it arrive
+    /// on the trunk, or its commit time as an upper bound on the wait.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub landed_at: Option<LandedAt>,
     /// How long the work has waited since then, in seconds.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub waited_seconds: Option<u64>,
@@ -196,6 +228,7 @@ impl Currency {
             landed: 0,
             landings: 0,
             oldest_landing: None,
+            landed_at: None,
             waited_seconds: None,
             overdue_after_seconds: OVERDUE_AFTER.as_secs(),
             next: None,
@@ -240,19 +273,40 @@ pub fn measure(root: &Path, objects: &[Object], now: SystemTime) -> Currency {
         .collect();
     let landed = changes.len();
     let landings = landings(root, &range);
-    let oldest = landings.first().copied().filter(|_| landed > 0);
+    let dated = landings
+        .first()
+        .filter(|_| landed > 0)
+        .map(|(sha, committed)| match first_seen(root, &trunk, sha) {
+            Some(seen) => (LandedAt::Reflog, seen),
+            None => (LandedAt::Commit, *committed),
+        });
     let now = now.duration_since(UNIX_EPOCH).unwrap_or_default().as_secs();
-    let waited = oldest.map(|at| Duration::from_secs(now.saturating_sub(at)));
-    let stance = Stance::of(landed, waited.unwrap_or_default());
+    let waited = dated.map(|(_, at)| Duration::from_secs(now.saturating_sub(at)));
+    let stance = match (Stance::of(landed, waited.unwrap_or_default()), dated) {
+        // a commit time bounds the wait from above: it says the work may be overdue, never that
+        // it is, so a top composed hours before it landed does not read overdue as it lands
+        (Stance::Overdue, Some((LandedAt::Commit, _))) => Stance::Owed,
+        (stance, _) => stance,
+    };
+    let how = dated.map(|(how, _)| how);
     Currency {
-        summary: summary(stance, landed, landings.len(), &release, &trunk, waited),
+        summary: summary(
+            stance,
+            landed,
+            landings.len(),
+            &release,
+            &trunk,
+            waited,
+            how,
+        ),
         stance,
         trunk: Some(trunk),
         release: Some(release),
         landed,
         landings: landings.len(),
-        oldest_landing: oldest
-            .map(|at| crate::peers::rfc3339(UNIX_EPOCH + Duration::from_secs(at))),
+        oldest_landing: dated
+            .map(|(_, at)| crate::peers::rfc3339(UNIX_EPOCH + Duration::from_secs(at))),
+        landed_at: how,
         waited_seconds: waited.map(|w| w.as_secs()),
         overdue_after_seconds: OVERDUE_AFTER.as_secs(),
         next: None,
@@ -372,7 +426,8 @@ fn is_release(change: &Change) -> bool {
 #[derive(Debug, PartialEq, Eq)]
 struct Landing<'a> {
     sha: &'a str,
-    /// Its committer time: when it landed, in seconds since the epoch.
+    /// Its committer time, in seconds since the epoch: when it was made, which is no later than
+    /// when it landed.
     at: u64,
     merge: bool,
 }
@@ -394,9 +449,9 @@ fn first_parents(log: &str) -> Vec<Landing<'_>> {
         .collect()
 }
 
-/// The landing times, oldest first, of every landing in `range` that brought anything but
-/// release commits.
-fn landings(root: &Path, range: &str) -> Vec<u64> {
+/// Every landing in `range` that brought anything but release commits, oldest first: its
+/// commit and its commit time.
+fn landings(root: &Path, range: &str) -> Vec<(String, u64)> {
     let log = git(
         root,
         &[
@@ -410,7 +465,45 @@ fn landings(root: &Path, range: &str) -> Vec<u64> {
     first_parents(&log)
         .into_iter()
         .filter(|l| brings_work(root, l))
-        .map(|l| l.at)
+        .map(|l| (l.sha.to_string(), l.at))
+        .collect()
+}
+
+/// When this clone's `trunk` first held `sha`, from the trunk's reflog: the time of the oldest
+/// entry of the run of entries, newest first, that contain it. `None` when no entry contains
+/// it, or when every entry does, because then the reflog does not show it arrive (the clone
+/// was made after it landed, or its reflog was expired).
+fn first_seen(root: &Path, trunk: &str, sha: &str) -> Option<u64> {
+    let log = git(
+        root,
+        &["reflog", "show", "--date=unix", "--format=%H %gd", trunk],
+    );
+    let mut seen = None;
+    for (held, at) in reflog_entries(&log) {
+        if succeeds(root, &["merge-base", "--is-ancestor", sha, held]) {
+            seen = Some(at);
+        } else {
+            return seen;
+        }
+    }
+    None
+}
+
+/// The entries of `git reflog show --date=unix --format='%H %gd'`, newest first, as git lists
+/// them: the commit each entry set the ref to, and when, in seconds since the epoch. A line that
+/// is not one is left out rather than guessed.
+fn reflog_entries(log: &str) -> Vec<(&str, u64)> {
+    log.lines()
+        .filter_map(|line| {
+            let (sha, selector) = line.split_once(' ')?;
+            let at = selector
+                .rsplit_once("@{")?
+                .1
+                .strip_suffix('}')?
+                .parse()
+                .ok()?;
+            Some((sha, at))
+        })
         .collect()
 }
 
@@ -434,6 +527,7 @@ fn summary(
     release: &Released,
     trunk: &str,
     waited: Option<Duration>,
+    how: Option<LandedAt>,
 ) -> String {
     let unrecorded = if release.recorded {
         ""
@@ -446,14 +540,29 @@ fn summary(
             release.reference
         ),
         _ => {
+            let waited = waited.unwrap_or_default();
             let mut s = format!(
-                "{landed} landed commit(s) in {landings} landing(s) wait past {}{unrecorded} on {trunk}, the oldest for {}",
-                release.reference,
-                age_words(waited.unwrap_or_default())
+                "{landed} landed commit(s) in {landings} landing(s) wait past {}{unrecorded} on {trunk}",
+                release.reference
             );
+            match how {
+                Some(LandedAt::Commit) => s.push_str(&format!(
+                    ", the oldest for at most {}: this clone holds no record of when it landed, so its commit time bounds the wait",
+                    age_words(waited)
+                )),
+                _ => s.push_str(&format!(
+                    ", the oldest for {} since this clone saw it land",
+                    age_words(waited)
+                )),
+            }
             if stance == Stance::Overdue {
                 s.push_str(&format!(
                     ", longer than the {} a release may wait",
+                    age_words(OVERDUE_AFTER)
+                ));
+            } else if how == Some(LandedAt::Commit) && waited >= OVERDUE_AFTER {
+                s.push_str(&format!(
+                    "; that bound is past the {} a release may wait, which alone makes nothing overdue",
                     age_words(OVERDUE_AFTER)
                 ));
             }
@@ -551,9 +660,11 @@ mod tests {
             self.git(&["rev-parse", "HEAD"], at)
         }
 
-        fn push(&self) {
-            self.git(&["push", "-q", "origin", "HEAD:master", "--tags"], 0);
-            self.git(&["fetch", "-q", "origin"], 0);
+        /// Push the checked-out branch to the trunk and fetch it back, at `at`: the time the
+        /// remote-tracking trunk's reflog records the landing at.
+        fn push(&self, at: u64) {
+            self.git(&["push", "-q", "origin", "HEAD:master", "--tags"], at);
+            self.git(&["fetch", "-q", "origin"], at);
         }
     }
 
@@ -597,7 +708,7 @@ mod tests {
         let t0 = 1_700_000_000;
         let released = c.commit("feat: the first", t0);
         c.git(&["tag", "v0.1.0"], t0);
-        c.push();
+        c.push(t0);
         let objects = vec![record("0.1.0", &released)];
         let work = c.work();
 
@@ -609,7 +720,7 @@ mod tests {
 
         c.commit("fix: the second", t0 + 2 * HOUR);
         c.commit("chore(release): record v0.1.0", t0 + 2 * HOUR);
-        c.push();
+        c.push(t0 + 2 * HOUR);
         let owed = measure(&work, &objects, at(t0 + 3 * HOUR));
         assert_eq!(owed.stance, Stance::Owed, "{}", owed.summary);
         assert_eq!(owed.landed, 1, "the release commit is no landed work");
@@ -618,6 +729,7 @@ mod tests {
             "the release commit's landing brought no work"
         );
         assert_eq!(owed.waited_seconds, Some(HOUR));
+        assert_eq!(owed.landed_at, Some(LandedAt::Reflog));
         assert_eq!(owed.changes[0].subject, "the second");
         assert!(owed.oldest_landing.is_some());
         assert!(owed
@@ -633,7 +745,7 @@ mod tests {
         );
 
         c.git(&["tag", "v0.1.1"], 0);
-        c.push();
+        c.push(t0 + 3 * HOUR);
         let tagged = measure(&work, &objects, at(t0 + 30 * HOUR));
         assert_eq!(tagged.stance, Stance::Current, "{}", tagged.summary);
         let release = tagged.release.expect("the tag");
@@ -644,6 +756,86 @@ mod tests {
         assert!(tagged.summary.contains("record not landed yet"));
     }
 
+    /// A top composed hours before it lands waits from when it reached the trunk, as this
+    /// clone's reflog saw it. Where the reflog does not show it arrive, its commit time bounds
+    /// the wait, and that bound alone never makes the work overdue (the plan critique of
+    /// 2026-10-19).
+    #[test]
+    fn a_landing_waits_from_when_it_reached_the_trunk() {
+        let c = Fixture::new();
+        let t0 = 1_700_000_000;
+        let released = c.commit("feat: the first", t0);
+        c.push(t0);
+        let objects = vec![record("0.1.0", &released)];
+        let work = c.work();
+
+        // composed at t0 + 1 h, pushed to the trunk at t0 + 7 h
+        c.commit("fix: a top composed long before it landed", t0 + HOUR);
+        c.push(t0 + 7 * HOUR);
+        let landed = measure(&work, &objects, at(t0 + 8 * HOUR));
+        assert_eq!(
+            landed.landed_at,
+            Some(LandedAt::Reflog),
+            "{}",
+            landed.summary
+        );
+        assert_eq!(
+            landed.waited_seconds,
+            Some(HOUR),
+            "from the push, not the commit"
+        );
+        assert_eq!(landed.stance, Stance::Owed, "{}", landed.summary);
+        assert!(
+            landed.summary.contains("since this clone saw it land"),
+            "{}",
+            landed.summary
+        );
+
+        // the same landing in a clone whose reflog does not show it arrive
+        std::fs::remove_file(work.join(".git/logs/refs/remotes/origin/master"))
+            .expect("the trunk's reflog");
+        let bounded = measure(&work, &objects, at(t0 + 8 * HOUR));
+        assert_eq!(
+            bounded.landed_at,
+            Some(LandedAt::Commit),
+            "{}",
+            bounded.summary
+        );
+        assert_eq!(
+            bounded.waited_seconds,
+            Some(7 * HOUR),
+            "an upper bound, from the commit"
+        );
+        assert_eq!(
+            bounded.stance,
+            Stance::Owed,
+            "a bound alone is never overdue: {}",
+            bounded.summary
+        );
+        assert!(
+            bounded.summary.contains("at most 7 h 0 min"),
+            "{}",
+            bounded.summary
+        );
+        assert!(
+            bounded
+                .summary
+                .contains("which alone makes nothing overdue"),
+            "{}",
+            bounded.summary
+        );
+    }
+
+    /// A reflog line that is not an entry is left out rather than guessed.
+    #[test]
+    fn a_reflog_line_that_is_not_an_entry_is_left_out() {
+        let log = "a origin/master@{1700003600}\nb origin/master@{1700000100}\n\nc\nd origin/master@{x}\ne origin/master@{1}";
+        assert_eq!(
+            reflog_entries(log),
+            vec![("a", 1_700_003_600), ("b", 1_700_000_100), ("e", 1)]
+        );
+    }
+
     /// A merge is one landing, whatever it brought; a merge that brought only release commits
     /// is none.
     #[test]
@@ -651,7 +843,7 @@ mod tests {
         let c = Fixture::new();
         let t0 = 1_700_000_000;
         let released = c.commit("feat: the first", t0);
-        c.push();
+        c.push(t0);
         let objects = vec![record("0.1.0", &released)];
         c.git(&["checkout", "-q", "-b", "side"], 0);
         c.commit("fix: one", t0 + HOUR);
@@ -661,6 +853,7 @@ mod tests {
             &["merge", "-q", "--no-ff", "-m", "merge: side", "side"],
             t0 + 2 * HOUR,
         );
+        c.push(t0 + 2 * HOUR);
         c.git(&["checkout", "-q", "-b", "record"], 0);
         c.commit("chore(release): record v0.1.0", t0 + 3 * HOUR);
         c.git(&["checkout", "-q", "master"], 0);
@@ -668,7 +861,7 @@ mod tests {
             &["merge", "-q", "--no-ff", "-m", "merge: record", "record"],
             t0 + 3 * HOUR,
         );
-        c.push();
+        c.push(t0 + 3 * HOUR);
         let answer = measure(&c.work(), &objects, at(t0 + 4 * HOUR));
         assert_eq!(
             (answer.landed, answer.landings),
@@ -693,7 +886,7 @@ mod tests {
 
         let c = Fixture::new();
         c.commit("feat: the first", 1_700_000_000);
-        c.push();
+        c.push(1_700_000_000);
         let unreleased = measure(&c.work(), &[], SystemTime::now());
         assert_eq!(unreleased.stance, Stance::Unknown);
         assert!(unreleased
@@ -718,7 +911,7 @@ mod tests {
         let c = Fixture::new();
         let t0 = 1_700_000_000;
         let released = c.commit("feat: the first", t0);
-        c.push();
+        c.push(t0);
         let registry = CapabilityRegistry::builder().build().unwrap();
         let objects = vec![record("0.1.0", &released)];
         let work = c.work();
@@ -731,7 +924,7 @@ mod tests {
         );
 
         c.commit("fix: the second", t0 + HOUR);
-        c.push();
+        c.push(t0 + HOUR);
         let mut here = measure(&work, &objects, at(t0 + HOUR));
         decide_next(&mut here, &work, &registry, &objects);
         // this fixture published no registry, so the contract's own refusal is carried
@@ -750,7 +943,7 @@ mod tests {
         c.git(&["checkout", "-q", "master"], 0);
         c.git(&["tag", "v0.1.1"], 0);
         c.commit("fix: after the tag", t0 + 2 * HOUR);
-        c.push();
+        c.push(t0 + 2 * HOUR);
         let mut unrecorded = measure(&work, &objects, at(t0 + 2 * HOUR));
         decide_next(&mut unrecorded, &work, &registry, &objects);
         assert!(unrecorded

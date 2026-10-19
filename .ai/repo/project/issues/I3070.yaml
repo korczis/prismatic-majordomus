@@ -29,6 +29,7 @@ acceptance_criteria:
   - "In a repository with a release record and commits landed after it, release.currency names the release, the landed commits past it without the bump and record commits, the oldest one's landing time and the required version; with nothing landed past it, it says current"
   - "The brief has a release line saying owed or overdue with the count and the age, and doctor warns accordingly"
   - "A pushed v* tag newer than the last record counts as the last release"
+  - "The oldest landing is dated by when this clone's remote-tracking trunk first held it, from that ref's reflog, so a top composed hours before it landed waits from its landing; where the reflog does not show it arrive, its commit time bounds the wait from above, the answer says so, and that bound alone never makes the stance overdue (the plan critique of 2026-10-19)"
 validation:
   - "bin/majordomus plan validate"
   - "bash test/run.sh 3470_the_release_follows_the_work"

@@ -6,23 +6,23 @@
     "version": "0.30.1"
   },
   "registry": {
-    "fingerprint": "8e7c0d40be75807ecc511f9413c9a5c1e1bbc8e845d901563ce78e8264976ec2",
+    "fingerprint": "0a05fccd9260730c52683d9a4a6c407eeeb4b8cecabe983c603f25c6e630750b",
     "summary": {
-      "total": 2648,
+      "total": 2650,
       "builtin": 207,
-      "declarative": 2441,
+      "declarative": 2443,
       "by_kind": {
         "command": 31,
         "query": 176,
-        "resource": 2441
+        "resource": 2443
       },
       "by_stability": {
         "behaviorally_verified": 142,
         "experimental": 55,
-        "implemented": 2451
+        "implemented": 2453
       },
       "mcp_tools": 197,
-      "mcp_resources": 2496,
+      "mcp_resources": 2498,
       "http_routes": 202,
       "cli_commands": 111,
       "modules": 92,
@@ -71619,7 +71619,18 @@
                   "string",
                   "null"
                 ],
-                "description": "When the oldest of those landings landed, RFC 3339."
+                "description": "When the oldest of those landings landed, RFC 3339, dated as `landed_at`\nsays."
+              },
+              "landed_at": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/ReleaseCurrencyLandedAt"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "How `oldest_landing` was dated: when this clone saw it arrive\non the trunk, or its commit time as an upper bound on the wait."
               },
               "waited_seconds": {
                 "type": [
@@ -71720,6 +71731,21 @@
                   "recorded"
                 ],
                 "description": "The release the trunk is measured from.\n\n```\nuse majordomus_cli::release::currency::Released;\nlet tagged = Released {\n    version: \"0.30.1\".into(),\n    reference: \"v0.30.1\".into(),\n    at: \"v0.30.1\".into(),\n    recorded: false,\n};\n// a tag pushed before its record landed is read at the tag itself\nassert_eq!(tagged.at, tagged.reference);\n```"
+              },
+              "ReleaseCurrencyLandedAt": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "reflog",
+                    "description": "When this clone's remote-tracking trunk first held it, from that ref's reflog. A landing\nis seen no earlier than it lands, so the wait counted from here is a lower bound, and it\nis the one date that can make the stance overdue."
+                  },
+                  {
+                    "type": "string",
+                    "const": "commit",
+                    "description": "Its commit time, where the reflog does not show it arrive: a commit lands no earlier than\nit is made, so the wait counted from here is an upper bound, and it never makes the\nstance overdue by itself."
+                  }
+                ],
+                "description": "How the oldest landing was dated, and so which way its wait may be wrong (the plan\ncritique of 2026-10-19: a top lands by a fast-forward push hours after its commits).\n\n```\nuse majordomus_cli::release::currency::LandedAt;\nassert_eq!(serde_json::to_value(LandedAt::Reflog).unwrap(), \"reflog\");\nassert_eq!(serde_json::to_value(LandedAt::Commit).unwrap(), \"commit\");\n```"
               },
               "ReleaseChange": {
                 "type": "object",
@@ -85386,7 +85412,7 @@
         "title": "critique",
         "description": "Declarative objects of kind 'critique' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 4,
+        "capabilities": 5,
         "capability_ids": []
       },
       {
@@ -85835,7 +85861,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 490,
+        "capabilities": 491,
         "capability_ids": []
       },
       {
@@ -86502,7 +86528,7 @@
     ]
   },
   "index": {
-    "fingerprint": "6510135494d4099d55b9435bf8fc40da55b37c2816b115f0b012b51f6b1b953e",
+    "fingerprint": "d17123e1c5f001d3e5248617c8444c4b6093a86a0dd5d44dd78dc6f48c385e59",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -86532,7 +86558,7 @@
       "claim": 250,
       "command": 31,
       "context": 39,
-      "critique": 4,
+      "critique": 5,
       "deployment": 1,
       "derive-offload": 1,
       "distribution-model": 1,
@@ -86542,7 +86568,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 6,
-      "issue": 490,
+      "issue": 491,
       "knowledge": 4,
       "mesh-declaration": 1,
       "milestone": 43,
@@ -92082,6 +92108,17 @@
         "bytes": 10506
       },
       {
+        "uri": "majordomus://critique/a-version-follows-every-session",
+        "kind": "critique",
+        "identity": "a-version-follows-every-session",
+        "title": "a-version-follows-every-session",
+        "description": "6d9b6d4459b",
+        "path": ".ai/repo/project/critiques/a-version-follows-every-session.yaml",
+        "section": "project",
+        "source_class": "critique",
+        "bytes": 8638
+      },
+      {
         "uri": "majordomus://critique/intent-bound-work",
         "kind": "critique",
         "identity": "intent-bound-work",
@@ -92879,7 +92916,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 200600
+        "bytes": 200814
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -92933,7 +92970,7 @@
         "title": "The release — a changelog nobody writes, and one writer for the version",
         "path": "docs/RELEASE.md",
         "source_class": "document",
-        "bytes": 45847
+        "bytes": 46894
       },
       {
         "uri": "majordomus://document/docs/ROADMAP.md",
@@ -101755,7 +101792,7 @@
         "path": ".ai/repo/project/issues/I3070.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3105
+        "bytes": 3478
       },
       {
         "uri": "majordomus://issue/I3071",
@@ -101773,11 +101810,22 @@
         "kind": "issue",
         "identity": "I3072",
         "title": "A task holding the release seat does not finish completed while landed work has waited past the threshold",
-        "description": "Add an at-finish gate that reads release.currency, in the same way publication-currency reads the live site. It refuses the outcome completed only to a task whose session holds the release seat: the exclusive mesh claim the cooperation model names. It refuses only once the oldest landed commit past the last release has waited longer than release.currency's threshold. A pushed v* tag whose release run is still in progress counts as released, so the seat never refuses itself while it is releasing. Every other task is told the stance and is not refused.",
+        "description": "Add a doctrine of its own, enforced by finish with its own validator, policy key and wording, that reads release.currency. It refuses the outcome completed only to a task shown to hold the release seat. Before the gate is built, the join between a finishing task and the seat is defined: either the task claims release/seat exclusively under its own task-<id> session, or the seat's claim carries the task id in its task field, and the gate reads that join from mesh.state. The task holding the seat is refused completed when release.currency says overdue, and when the measurement is unknown. A pushed v* tag counts as released only while scripts/ci/release-check reads its run as queued or running, or once that run has succeeded; a failed run, or none past release-check's grace, refuses the seat, and a forge that cannot be read is reported, never counted. Every other finish is told the stance and whether release/seat is held, and is never refused by it; a measurement or seat that cannot be read refuses no other task. Case 3472 proves each of these, and the intent's criterion the-seat-releases names it.",
         "path": ".ai/repo/project/issues/I3072.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2011
+        "bytes": 3677
+      },
+      {
+        "uri": "majordomus://issue/I3076",
+        "kind": "issue",
+        "identity": "I3076",
+        "title": "release.currency dates a landing by the forge's record of it, read from the observation prs refresh keeps",
+        "description": "prs refresh also records, in the ForgeObservation it writes under .ai/local/state/integration/, the pull requests merged recently: number, mergedAt, head and merge commit. release.currency dates the oldest landing by the mergedAt of the earliest recorded merged pull request whose head or merge commit contains it, and names the observation's age. It reads only that record and never reaches the network, as SECURITY.md declares. Only where no recorded merge contains the landing does it fall back to the reflog and then the commit time of I3070. Case 3470 gains a forge step with a recorded observation, and a step over a recorded release whose commit carries a committed registry, as case 743's fixture does, asserting that next equals what release.version answers there.",
+        "path": ".ai/repo/project/issues/I3076.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2850
       },
       {
         "uri": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
@@ -109952,7 +110000,7 @@
         "identity": "test/cases/3470_the_release_follows_the_work.sh",
         "path": "test/cases/3470_the_release_follows_the_work.sh",
         "source_class": "case",
-        "bytes": 7482
+        "bytes": 9967
       },
       {
         "uri": "majordomus://test/test/cases/349_a_step_reports_its_own_time.sh",
@@ -112752,7 +112800,7 @@
       "identity": [
         "intent"
       ],
-      "objects": 4
+      "objects": 5
     },
     {
       "name": "deployment",
@@ -112845,7 +112893,7 @@
       "identity": [
         "id"
       ],
-      "objects": 490
+      "objects": 491
     },
     {
       "name": "knowledge",

@@ -604,12 +604,24 @@ answer is made of three readings:
   commits (`chore(release)`): what the next release would ship.
 - **How long it has waited** is the age of the oldest landing that brought anything but release
   commits. A landing is a first-parent commit of the trunk: a merge of a top or a branch, or a
-  commit made on the trunk.
+  commit made on the trunk. The wait runs from when the landing reached the trunk, not from
+  when it was made. A top is composed for hours and lands by a fast-forward push, so its
+  commits are older than its landing. `landed_at` says how the date was read:
+  - `reflog`: when this clone's remote-tracking trunk first held the landing, from that ref's
+    reflog. A landing is seen no earlier than it lands, so this wait is a lower bound.
+  - `commit`: the landing's commit time, where the reflog does not show it arrive (a clone
+    made after it landed, or a reflog that was expired). A commit lands no earlier than it is
+    made, so this wait is an upper bound, and the answer says "at most".
+
+  Reading the forge's own record of the landing, from the observation `prs refresh` keeps,
+  is planned (I3076). `release.currency` itself never reaches the network (SECURITY.md).
 
 The stance:
 - **Current:** nothing has landed past the release.
 - **Owed:** something has.
-- **Overdue:** it has waited more than six hours.
+- **Overdue:** it has waited more than six hours, by its reflog. A commit-time bound past six
+  hours is owed and says so: a bound alone makes nothing overdue, so a top that has just
+  landed never reads overdue for the hours it took to compose.
 - **Unknown:** the answer says why: no remote trunk, or no release this clone can read.
 
 The version the contract requires is decided by the same selection `release version` makes

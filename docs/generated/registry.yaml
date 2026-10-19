@@ -51217,7 +51217,12 @@ capabilities:
             type:
               - string
               - "null"
-            description: "When the oldest of those landings landed, RFC 3339."
+            description: "When the oldest of those landings landed, RFC 3339, dated as `landed_at`\nsays."
+          landed_at:
+            anyOf:
+              - "$ref": "#/$defs/ReleaseCurrencyLandedAt"
+              - type: "null"
+            description: "How `oldest_landing` was dated: when this clone saw it arrive\non the trunk, or its commit time as an upper bound on the wait."
           waited_seconds:
             type:
               - integer
@@ -51290,6 +51295,15 @@ capabilities:
               - at
               - recorded
             description: "The release the trunk is measured from.\n\n```\nuse majordomus_cli::release::currency::Released;\nlet tagged = Released {\n    version: \"0.30.1\".into(),\n    reference: \"v0.30.1\".into(),\n    at: \"v0.30.1\".into(),\n    recorded: false,\n};\n// a tag pushed before its record landed is read at the tag itself\nassert_eq!(tagged.at, tagged.reference);\n```"
+          ReleaseCurrencyLandedAt:
+            oneOf:
+              - type: string
+                const: reflog
+                description: "When this clone's remote-tracking trunk first held it, from that ref's reflog. A landing\nis seen no earlier than it lands, so the wait counted from here is a lower bound, and it\nis the one date that can make the stance overdue."
+              - type: string
+                const: commit
+                description: "Its commit time, where the reflog does not show it arrive: a commit lands no earlier than\nit is made, so the wait counted from here is an upper bound, and it never makes the\nstance overdue by itself."
+            description: "How the oldest landing was dated, and so which way its wait may be wrong (the plan\ncritique of 2026-10-19: a top lands by a fast-forward push hours after its commits).\n\n```\nuse majordomus_cli::release::currency::LandedAt;\nassert_eq!(serde_json::to_value(LandedAt::Reflog).unwrap(), \"reflog\");\nassert_eq!(serde_json::to_value(LandedAt::Commit).unwrap(), \"commit\");\n```"
           ReleaseChange:
             type: object
             properties:
