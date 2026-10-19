@@ -1,0 +1,28 @@
+id: I2695
+milestone: development-runtime
+title: "The Observatory draws the proof, claim, surface, wave and release scenes from the capabilities that already answer them"
+slug: ui-observatory-proof-scenes
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "The kiosk shows thirteen scenes, five more of which read what the repository proves, and says why for any that has nothing to draw."
+why: "Five scenes of ADR 0160 are in the Observatory inventory, each a function of one capability answer, counted and never estimated."
+current_state: "ADR 0160 proposes the scenes; the Observatory of ADR 0158 has eight."
+desired_state: "The kiosk shows thirteen scenes, five more of which read what the repository proves, and says why for any that has nothing to draw."
+scope:
+  - "apps/majordomus-cli/src/ui/observatory.rs"
+  - "share/ui/observatory.js"
+  - "share/ui/observatory-kiosk.js"
+non_scope:
+  - "Stating a frame rate or a figure that was not measured"
+depends_on: []
+acceptance_criteria:
+  - "The five scenes are in SCENES with the capability each requires"
+  - "A scene whose source holds nothing is unavailable with the source reason"
+  - "Unit tests hold the models on constructed answers, including empty ones"
+validation:
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "observatory_proof_scenes"
+created_at: 2026-10-14
+updated_at: 2026-10-14

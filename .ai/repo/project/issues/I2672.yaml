@@ -1,0 +1,29 @@
+id: I2672
+milestone: development-runtime
+title: "The offers and the selection are one read, projected to CLI, MCP, HTTP and OpenAPI"
+slug: the-offers-and-the-selection-are-one-read-with-three-projections
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Declare the read once with capability! so that every surface answers the same offers, the same choice and the same reason."
+why: "The owner, 2026-10-13, with full clearance: set up MinIO, an sccache server and every mesh node, verified and validated. The cluster compiles the same Rust on every machine from a cold cache; two declared offload hosts were under their disk minimum that day. See ADR 0157."
+current_state: "Measured on master b29cf4e487 on 2026-10-13: mesh.status, mesh.nodes and mesh.peers exist; none of them answers what a node offers."
+desired_state: "mesh.build_cache answers offers, selection, rationale and the fallback taken; generated projections are current; no surface keeps a list of its own."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+  - "docs/generated/"
+non_scope:
+  - "The screen: I2675"
+depends_on:
+  - I2670
+acceptance_criteria:
+  - "The CLI, MCP tool and HTTP route answer identical content"
+  - "The OpenAPI document names the type and no secret field"
+  - "majordomus generate --check is clean"
+validation:
+  - "bin/majordomus plan validate"
+  - "majordomus generate --check"
+evidence_required:
+  - "build_cache_read_projections"
+created_at: 2026-10-13
+updated_at: 2026-10-13

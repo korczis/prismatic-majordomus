@@ -1,0 +1,33 @@
+id: I2852
+milestone: truthful-plan-surfaces
+title: "every class a UI screen gives an element is one the UI's stylesheet defines"
+slug: every-ui-class-is-defined
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "A unit test reads every literal `.class(...)` of the UI's screen sources and the UI's stylesheet source, and refuses a class that the stylesheet neither defines nor defines parts of. The classes it found undefined move to the kit's own: the search labels to mj-sr-only, the lists to mj-ui-prose-list, the mesh's counts to mj-ui-mono."
+why: "Found on 2026-10-18 at master 707a04c7ce8. The landing seat's review of /ui/prs found mj-ui-list styled by nothing. A sweep of the UI's sources then found five classes the stylesheet does not define: mj-ui-sr-only on the Issues and PR Drain search labels, which were therefore visible though they were meant for screen readers only; mj-ui-list in the claim, intent and IDD screens; mj-ui-num in the mesh's tables. The rest are block roots whose parts are styled. Nothing compared the two, so each was a promise the page did not keep. 2b had claimed the gate as I2905 and released it to 3e."
+current_state: "Screens emit classes no stylesheet rule matches, and nothing reports it."
+desired_state: "ui::tests::every_class_a_screen_emits_is_one_the_stylesheet_defines holds every screen, including one added later, and the screens use only classes the kit defines."
+scope:
+  - "apps/majordomus-cli/src/ui/mod.rs"
+  - "apps/majordomus-cli/src/ui/issues.rs"
+  - "apps/majordomus-cli/src/ui/prs.rs"
+  - "apps/majordomus-cli/src/ui/claim.rs"
+  - "apps/majordomus-cli/src/ui/intent.rs"
+  - "apps/majordomus-cli/src/ui/idd.rs"
+  - "apps/majordomus-cli/src/ui/mesh.rs"
+non_scope:
+  - "Classes built with format! (a tone, a state): their stems are the kit's, and the test reads literals."
+  - "The Cockpit's stylesheet and pages: a separate kit with its own assets."
+depends_on: []
+acceptance_criteria:
+  - "A screen class the stylesheet does not define fails the UI's unit tests, naming the file, the line and the class"
+  - "The Issues and PR Drain search labels are hidden by mj-sr-only"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --lib -- ui::"
+evidence_required:
+  - "every_class_is_defined_test"
+created_at: 2026-10-18
+updated_at: 2026-10-18

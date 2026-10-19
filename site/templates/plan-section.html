@@ -9,6 +9,12 @@
 {% block content %}
 {%- set crumb_title = section.title -%}{%- set crumb_parent = false -%}
 {%- set plan = load_data(path="data/generated/plan.json") -%}
+{#- the release that carried each milestone, inferred from the release records (ADR 0166
+    decision 3), and the commit this page was built from: build.json is scripts/site-build's
+    and ignored by git, so a plain `zola serve` has none and the line says so -#}
+{%- set roadmap = load_data(path="data/generated/roadmap.json") -%}
+{%- set build = load_data(path="data/build.json", required=false) -%}
+{%- set project_meta = load_data(path="data/generated/project.json") -%}
 {%- set repo = <source_blob path="" /> -%}
 {%- set issues = plan.issues -%}
 {#- The vocabulary comes from the engine, not from this file: plan.json carries the statuses
@@ -22,7 +28,7 @@
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">{{ st | lower }}</dt><dd class="mt-1 text-2xl font-semibold text-heading">{{ [i for i in issues if i.status == st] | length }}</dd></div>
     {%- endfor %}
   </dl>
-  <p class="mt-4 max-w-3xl text-sm text-body">Derived when this page was built, from <a href="{{ <source_tree path=".ai/repo/project" /> }}" class="text-fg-brand underline">the canonical model</a>. No status is stored: each one is computed from what an issue recorded about itself and from the state of its dependencies. <a href="{{ get_url(path="/docs/planning/", trailing_slash=true) }}" class="text-fg-brand underline">How that works</a>.</p>
+  <p class="mt-4 max-w-3xl text-sm text-body">Derived from <a href="{{ <source_tree path=".ai/repo/project" /> }}" class="text-fg-brand underline">the canonical model</a>{% if build and build.commit and build.commit != "unknown" %} at <a href="{{ project_meta.repository_url }}/commit/{{ build.commit }}" class="font-mono text-fg-brand underline" data-observed-commit="{{ build.commit }}">{{ build.commit | truncate(length=11, end="") }}</a>{% if build.commit_time %}, committed <time datetime="{{ build.commit_time }}" class="font-mono">{{ build.commit_time }}</time>{% endif %}{% else %}, in a build that recorded no commit{% endif %}. Every milestone in the graph's order, with the release that carried it, is <a href="{{ get_url(path="/roadmap/", trailing_slash=true) }}" class="text-fg-brand underline">the roadmap</a>. No status is stored: each one is computed from what an issue recorded about itself and from the state of its dependencies. <a href="{{ get_url(path="/docs/planning/", trailing_slash=true) }}" class="text-fg-brand underline">How that works</a>.</p>
 
   {%- if plan.next_ready %}
   {%- set nx = [i for i in issues if i.id == plan.next_ready] -%}
@@ -40,7 +46,8 @@
     {%- for ms in plan.milestones | sort(attribute="order") %}
     <li>
       <a href="{{ get_url(path="/plan/" ~ (ms.id | lower) ~ "/", trailing_slash=true) }}" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
-        <span class="mb-2 flex flex-wrap items-center gap-2"><span class="font-mono text-xs text-body-subtle">{{ ms.id }}</span>{{ <plan_status status={ms.status} /> }}{% if ms.id == plan.active_milestone %}<span class="rounded bg-brand-softer px-1.5 py-0.5 font-mono text-xs text-fg-brand-strong">active</span>{% endif %}</span>
+        {%- set rm = [r for r in roadmap.milestones if r.id == ms.id] %}
+        <span class="mb-2 flex flex-wrap items-center gap-2"><span class="font-mono text-xs text-body-subtle">{{ ms.id }}</span>{% if rm | length > 0 %}<span class="font-mono text-xs font-semibold text-heading" data-released-in="{{ rm[0].released_in }}">{{ rm[0].released_in }}</span>{% endif %}{{ <plan_status status={ms.status} /> }}{% if ms.id == plan.active_milestone %}<span class="rounded bg-brand-softer px-1.5 py-0.5 font-mono text-xs text-fg-brand-strong">active</span>{% endif %}</span>
         <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">{{ ms.title }}</h3>
         <p class="text-sm leading-relaxed text-body">{{ ms.outcome }}</p>
         {#- required, not total: it is the denominator the engine derives DONE from, so a
@@ -50,6 +57,24 @@
     </li>
     {%- endfor %}
   </ul>
+
+  {#- The same counts as a picture: every milestone's issues by derived state. The table is the
+      data, straight from plan.json; site/charts.js draws it (ADR 0152). A series is a state and
+      takes the colour the design files that state under, through the header's own badge; a row is
+      a milestone, addressable as #chart-milestones:<id>, and its bar opens the milestone. -#}
+  <figure id="chart-milestones" class="not-format mt-8 min-w-0" data-chart="bar" data-chart-stack data-chart-horizontal data-chart-unit="issues" data-chart-label="Issues of each milestone by derived state">
+    <figcaption class="mb-3 max-w-3xl text-sm text-body">Every milestone's issues by derived state. The chart is drawn from the table beneath it, and a bar opens its milestone.</figcaption>
+    <div class="overflow-x-auto rounded-base border border-default" tabindex="0" role="region" aria-label="Issues of each milestone by derived state">
+      <table class="w-full min-w-[32rem] text-left text-sm">
+        <thead class="bg-neutral-secondary-soft text-xs uppercase tracking-wide text-body-subtle"><tr><th scope="col" class="px-4 py-2">milestone</th>{% for st in statuses %}<th scope="col" class="px-4 py-2" data-series="{{ st | lower }}">{{ <plan_status status={st} /> }}</th>{% endfor %}</tr></thead>
+        <tbody>
+        {%- for ms in plan.milestones | sort(attribute="order") %}
+          <tr id="chart-milestones:{{ ms.id | lower }}" class="border-t border-default"><td class="px-4 py-2" data-category="{{ ms.id }}"><a href="{{ get_url(path="/plan/" ~ (ms.id | lower) ~ "/", trailing_slash=true) }}" class="inline-block break-words py-1 font-mono text-xs text-fg-brand underline">{{ ms.id }}</a></td>{% for st in statuses %}<td class="px-4 py-2 font-mono text-xs text-body">{{ ms.counts.by_status[st] }}</td>{% endfor %}</tr>
+        {%- endfor %}
+        </tbody>
+      </table>
+    </div>
+  </figure>
 
   <h2 class="mt-12 text-2xl font-bold tracking-tight text-heading">Execution waves</h2>
   <p class="mt-2 max-w-3xl text-sm text-body">A wave is a layer of the dependency graph: an issue sits one layer past its deepest dependency. Sharing a wave is necessary for two issues to run at the same time and is not sufficient — overlapping declared scope serialises them, and that is reported below the graph on each milestone.</p>
@@ -68,7 +93,7 @@
 
   <h2 class="mt-12 text-2xl font-bold tracking-tight text-heading">The graph</h2>
   <p class="mt-2 max-w-3xl text-sm text-body">Generated from the same edges the command reads, by <code class="font-mono text-heading">majordomus plan graph</code>. No diagram on this site is drawn by hand.</p>
-  {{ <plan_graph mermaid={plan.mermaid} caption="Every issue, every dependency" /> }}
+  {{ <plan_graph mermaid={plan.mermaid} caption="Every issue, every dependency" name="plan" /> }}
   <p class="mt-2 text-sm text-body"><a href="{{ get_url(path="/plan/dag/", trailing_slash=true) }}" class="text-fg-brand underline">The graph on its own page</a>, with the edge list.</p>
 
   {%- if plan.findings | length > 0 %}
@@ -92,7 +117,7 @@
 {% endif %}{% endfor %}
 {% </code> %}
   </div>
-  <p class="mt-4 max-w-3xl text-sm text-body">Read <a href="{{ get_url(path="/docs/planning/", trailing_slash=true) }}" class="text-fg-brand underline">the planning model</a> for what the terms mean, and <a href="{{ get_url(path="/docs/dogfooding/", trailing_slash=true) }}" class="text-fg-brand underline">dogfooding</a> for why this repository holds itself to it. The release roadmap — what each version adds — is <a href="{{ get_url(path="/roadmap/", trailing_slash=true) }}" class="text-fg-brand underline">a separate page</a>.</p>
+  <p class="mt-4 max-w-3xl text-sm text-body">Read <a href="{{ get_url(path="/docs/planning/", trailing_slash=true) }}" class="text-fg-brand underline">the planning model</a> for what the terms mean, and <a href="{{ get_url(path="/docs/dogfooding/", trailing_slash=true) }}" class="text-fg-brand underline">dogfooding</a> for why this repository holds itself to it. The roadmap — every milestone in the graph's order, with the release that carried it — is <a href="{{ get_url(path="/roadmap/", trailing_slash=true) }}" class="text-fg-brand underline">a separate page</a>.</p>
 </div>
 {% endblock content %}
-{% block scripts %}{% include "partials/mermaid.html" %}{% endblock scripts %}
+{% block scripts %}{% include "partials/mermaid.html" %}{% include "partials/charts.html" %}{% endblock scripts %}

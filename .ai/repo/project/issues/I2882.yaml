@@ -1,0 +1,25 @@
+id: I2882
+milestone: development-runtime
+title: "A remote derive builds only inside its own run directory"
+slug: an-offload-build-stays-in-its-run-dir
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "The derive offload's remote script pins cargo's build directory, not only its target directory, to the run directory `<shared>-<tag>` that its traps remove, so nothing a remote derive compiles outlives the derive on the host, whether it succeeds or fails."
+why: "2026-10-18 lundra reached 0 bytes free twice. The checkout declares build-dir = {cargo-cache-home}/build-shared/majordomus, so the offload's CARGO_TARGET_DIR alone kept every intermediate in the host's shared build directory (87 GB, 48 GB of it llvm-cov-target), outside what the run's traps remove; the owner ordered disk space solved systemically on every machine."
+current_state: "offload/run.rs DERIVE exports CARGO_TARGET_DIR=$private and removes $private on EXIT/HUP/INT/TERM; CARGO_BUILD_BUILD_DIR is inherited, so the declared shared build-dir receives the intermediates."
+desired_state: "DERIVE exports CARGO_BUILD_BUILD_DIR=$private beside CARGO_TARGET_DIR; a unit test runs the real script locally with a decoy build directory in the environment and holds that the derive saw only the run directory, that nothing landed in the decoy, and that the run directory is gone after a successful and after a failed derive."
+scope:
+  - "apps/majordomus-cli/src/offload"
+  - "docs/OFFLOAD.md"
+acceptance_criteria:
+  - "The remote derive's build and target directories are both the run directory, whatever build directory the caller's environment names"
+  - "The run directory is removed after a derive that succeeds and after one that fails (exit 10)"
+  - "Nothing is written to the build directory the caller's environment named"
+validation:
+  - "cargo test --lib -- offload::run::tests::a_remote_derive_builds_only_inside_its_run_directory_and_removes_it"
+  - "majordomus plan validate"
+evidence_required:
+  - "offload_run_dir_test"
+created_at: 2026-10-18
+updated_at: 2026-10-18

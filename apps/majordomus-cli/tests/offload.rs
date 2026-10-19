@@ -60,10 +60,10 @@ fi
 # or lets it run and then removes this stand-in: the next command cannot be started at all
 if [ -n "$OFFLOAD_SSH_VANISH" ]; then
   case "$*" in *"$OFFLOAD_SSH_VANISH"*)
-    env HOME="$h/home" PATH="$h/bin:$PATH" sh -c "$*"; s=$?; rm -f "$0"; exit $s ;;
+    env -u CARGO_BUILD_BUILD_DIR -u CARGO_TARGET_DIR HOME="$h/home" PATH="$h/bin:$PATH" sh -c "$*"; s=$?; rm -f "$0"; exit $s ;;
   esac
 fi
-exec env HOME="$h/home" PATH="$h/bin:$PATH" sh -c "$*"
+exec env -u CARGO_BUILD_BUILD_DIR -u CARGO_TARGET_DIR HOME="$h/home" PATH="$h/bin:$PATH" sh -c "$*"
 "#;
 
 /// A stand-in for git on the session's side: it fails the one invocation whose arguments
@@ -89,6 +89,10 @@ set -e
 if [ -f NOOP ]; then echo "==> derive: done"; exit 0; fi
 mkdir -p "$CARGO_TARGET_DIR/debug"
 printf 'built from %s\n' "$(git rev-parse HEAD)" > "$CARGO_TARGET_DIR/debug/majordomus"
+# what cargo does with its intermediates: the build directory the environment names, or
+# else the one the checkout declares, {cargo-cache-home}/build-shared/majordomus
+bd="${CARGO_BUILD_BUILD_DIR:-$HOME/.cargo/build-shared/majordomus}"
+mkdir -p "$bd/debug/deps" && : > "$bd/debug/deps/intermediate"
 if [ -n "$OFFLOAD_SIGNAL" ]; then
   : > "$OFFLOAD_SIGNAL/started"
   i=0
@@ -319,7 +323,9 @@ fn the_probe_skips_a_host_that_is_down_or_short_of_space() {
 }
 
 /// The round trip: the uncommitted change travels, the host derives it, and the derived
-/// files come back staged — nothing committed, nothing left on the host.
+/// files come back staged — nothing committed, nothing left on the host, not even in the
+/// shared build directory the checkout declares (lundra, 2026-10-18: 87 GB there, 0 bytes
+/// free).
 #[test]
 fn a_derive_comes_back_staged_and_uncommitted() {
     let c = Cluster::new(&[("u@lundra", 50)]);
@@ -389,6 +395,10 @@ fn a_derive_comes_back_staged_and_uncommitted() {
         cache,
         ["majordomus-offload-target"],
         "the derive's private build directory was left on the host"
+    );
+    assert!(
+        !home.join(".cargo/build-shared").exists(),
+        "the derive compiled into the host's shared build directory, which nothing removes"
     );
     assert!(
         !c.root.join("lock").exists(),

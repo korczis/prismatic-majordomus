@@ -1,0 +1,5 @@
+{#- The chart component (site/charts.js, ADR 0152). Apache ECharts is pinned via npm and vendored to
+    static/js at build; no page loads it with a script tag: the component is deferred and fetches
+    the build named here the first time a <figure data-chart> nears the viewport. Progressive:
+    without JS the figure is the table it always was. Included only by pages that carry a chart. -#}
+<script defer src="{{ get_url(path="js/charts.js") }}" data-echarts-src="{{ get_url(path="js/echarts.min.js") }}"></script>

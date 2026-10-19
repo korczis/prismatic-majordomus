@@ -21,6 +21,10 @@
 //! values already in memory. That is what lets it be built on demand, inside the handler of
 //! a plan capability, rather than eagerly when a [`crate::capability::Context`] is composed:
 //! `App::load` has a stated budget and 200 project records have no business inside it.
+//!
+//! One question is not the records' to answer: which release carried a milestone. That is
+//! [`released_in`], the only function here that asks git anything, and only a reader that
+//! wants the answer (the roadmap) pays for it.
 
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -29,6 +33,10 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::index::Index;
+
+pub(crate) mod delivery;
+pub(crate) mod drift;
+pub(crate) mod flight;
 
 /// The kind of a milestone record.
 pub const MILESTONE: &str = "milestone";
@@ -107,6 +115,20 @@ fn evidence_covers(meta: &Value) -> Vec<String> {
             .map(|v| scalar(Some(v)))
             .collect(),
         _ => Vec::new(),
+    }
+}
+
+/// The latest non-empty `recorded_at` among a record's `evidence` entries, compared as text
+/// (ISO 8601 stamps sort by time), or `None` when no entry carries one.
+fn last_evidence_stamp(meta: &Value) -> Option<String> {
+    match meta.get("evidence") {
+        Some(Value::Array(items)) => items
+            .iter()
+            .filter_map(|e| e.get("recorded_at"))
+            .map(|v| scalar(Some(v)))
+            .filter(|s| !s.is_empty())
+            .max(),
+        _ => None,
     }
 }
 
@@ -195,7 +217,6 @@ struct PlanMilestoneRaw {
     slug: String,
     order: String,
     priority: String,
-    version: String,
     cancelled: bool,
     superseded_by: String,
     outcome: String,
@@ -286,7 +307,6 @@ impl PlanMilestoneRaw {
             slug: field(meta, "slug"),
             order: field(meta, "order"),
             priority: field(meta, "priority"),
-            version: field(meta, "version"),
             cancelled: field(meta, "cancelled") == "true",
             superseded_by: field(meta, "superseded_by"),
             outcome: field(meta, "outcome"),
@@ -410,8 +430,19 @@ pub struct PlanMilestone {
     pub title: String,
     /// The slug, when the record carries one.
     pub slug: String,
-    /// The release the milestone belongs to, when it declares one.
-    pub version: String,
+    /// The last accepted issue of a DONE milestone: its DONE issue with the latest
+    /// `completed_at`, the greater id on a tie. Empty for a milestone that is not DONE, or
+    /// that is DONE with no issue (its evidence finished it). Which release carried it is
+    /// [`released_in`]'s to answer.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub last_accepted: String,
+    /// The release that carried the milestone — the first release record whose commit
+    /// contains the merge of its last accepted issue (or, with no issue, the commit that
+    /// recorded its latest evidence), else `unreleased` — when the reader
+    /// asked for it
+    /// ([`released_in`]); the roadmap always does. Never a typed field (ADR 0166).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub released_in: Option<String>,
     /// Its layer in the milestone graph: what orders the roadmap.
     pub rank: u32,
     /// The milestones it requires.
@@ -1224,6 +1255,23 @@ fn derive(mut header: PlanProject, mraw: Vec<PlanMilestoneRaw>, iraw: Vec<PlanIs
         })
         .collect();
 
+    // the last accepted issue of every DONE milestone (the emit block of lib/project.awk)
+    let mut last: BTreeMap<&str, (&str, &str)> = BTreeMap::new();
+    for (n, i) in iraw.iter().enumerate() {
+        let done = mraw
+            .iter()
+            .position(|m| m.id == i.milestone)
+            .is_some_and(|k| mstatus[k] == "DONE");
+        if status[n] != "DONE" || !done {
+            continue;
+        }
+        let cand = (i.completed_at.as_str(), i.id.as_str());
+        let slot = last.entry(i.milestone.as_str()).or_insert(cand);
+        if cand > *slot {
+            *slot = cand;
+        }
+    }
+
     let milestones: Vec<PlanMilestone> = mraw
         .iter()
         .enumerate()
@@ -1234,7 +1282,11 @@ fn derive(mut header: PlanProject, mraw: Vec<PlanMilestoneRaw>, iraw: Vec<PlanIs
             priority: r.priority.clone(),
             title: r.title.clone(),
             slug: r.slug.clone(),
-            version: r.version.clone(),
+            last_accepted: last
+                .get(r.id.as_str())
+                .map(|(_, id)| (*id).to_string())
+                .unwrap_or_default(),
+            released_in: None,
             rank: rank[n],
             depends_on: r
                 .depends_on
@@ -1271,6 +1323,150 @@ fn derive(mut header: PlanProject, mraw: Vec<PlanMilestoneRaw>, iraw: Vec<PlanIs
         milestone_edges: medges,
         findings: v.0,
     }
+}
+
+/// What [`released_in`] answers for a milestone no release carried, or not yet.
+pub const UNRELEASED: &str = "unreleased";
+
+/// The release that carried a milestone: the first release record
+/// (`.ai/repo/releases/v*.yaml`, the tracked statement of a tag), in version order, whose
+/// `commit:` contains the merge of its last accepted issue, and [`UNRELEASED`] for a
+/// milestone that is not DONE or that no record's commit contains yet. A milestone DONE with
+/// no issue was finished by its own evidence: the commit that wrote the latest `recorded_at`
+/// of that evidence stands in for the merge.
+///
+/// Records and not tags, because derived data must not depend on refs outside the tree: the
+/// answer is a function of the commit, and it changes only when a record lands. Releases
+/// before the first record have none, so work finished before it reads as the earliest
+/// release this layer records.
+///
+/// The merge is found through the commit that wrote the issue's `completed_at` stamp — the
+/// oldest commit whose diff of the record adds or removes that text — and failing that
+/// through the latest merge whose message names the issue. A release commit containing
+/// either contains the merge that brought it to the trunk. This is `mj_pj_m_released_in` in
+/// `lib/project.sh`, command for command, so the two engines agree
+/// (`test/cases/99_plan_capabilities.sh`).
+///
+/// ```no_run
+/// # use majordomus_cli::index::Index;
+/// use majordomus_cli::plan::{released_in, Plan, UNRELEASED};
+/// # fn demo(index: &Index) {
+/// let plan = Plan::build(index);
+/// for m in &plan.milestones {
+///     let release = released_in(index, &plan, &m.id);
+///     assert!(release == UNRELEASED || release.starts_with('v'));
+/// }
+/// # }
+/// ```
+pub fn released_in(index: &Index, plan: &Plan, milestone: &str) -> String {
+    let root = std::path::Path::new(&index.repository.root);
+    let Some(m) = plan.milestone(milestone).filter(|m| m.status == "DONE") else {
+        return UNRELEASED.to_string();
+    };
+    let last = m.last_accepted.as_str();
+    let git = |args: &[&str]| -> Option<std::process::Output> {
+        crate::git::read_only(root)
+            .args(args)
+            .output()
+            .ok()
+            .filter(|o| o.status.success())
+    };
+    let last_line = |args: &[&str]| -> Option<String> {
+        git(args).and_then(|o| {
+            String::from_utf8_lossy(&o.stdout)
+                .lines()
+                .last()
+                .map(str::to_string)
+        })
+    };
+    let record = |kind: &str, id: &str| {
+        index
+            .objects
+            .iter()
+            .find(|o| o.kind == kind && o.identity == id)
+    };
+    let sha = if last.is_empty() {
+        // DONE with no issue: its own evidence finished it, so the commit that wrote the
+        // latest `recorded_at` of that evidence is the one a release has to contain
+        record(MILESTONE, &m.id).and_then(|o| {
+            let stamp = last_evidence_stamp(&o.metadata)?;
+            last_line(&[
+                "log",
+                "--format=%H",
+                &format!("-S{stamp}"),
+                "--",
+                &o.provenance.path,
+            ])
+        })
+    } else {
+        let stamp = plan
+            .issue(last)
+            .map(|i| i.completed_at.as_str())
+            .unwrap_or_default();
+        let grep = format!("--grep=(^|[^A-Za-z0-9]){last}([^A-Za-z0-9]|$)");
+        record(ISSUE, last)
+            .and_then(|o| {
+                last_line(&[
+                    "log",
+                    "--format=%H",
+                    &format!("-S{stamp}"),
+                    "--",
+                    &o.provenance.path,
+                ])
+            })
+            .or_else(|| last_line(&["log", "--merges", "-1", "--format=%H", "-E", &grep]))
+    };
+    let Some(sha) = sha else {
+        return UNRELEASED.to_string();
+    };
+    release_records(root)
+        .into_iter()
+        .find(|(_, commit)| git(&["merge-base", "--is-ancestor", &sha, commit]).is_some())
+        .map_or_else(|| UNRELEASED.to_string(), |(tag, _)| tag)
+}
+
+/// The release records under `<root>/.ai/repo/releases/`, `(tag, commit)` in ascending
+/// version order: every record whose top-level `tag:` is a release tag and that names a
+/// `commit:`. Read line by line, the way `mj_pj_release_records` reads them. Collected into
+/// a set keyed by the version first, so the set is the order and the directory walk is not.
+fn release_records(root: &std::path::Path) -> Vec<(String, String)> {
+    let dir = root.join(crate::distribution::release::DIR);
+    let records: BTreeSet<((u64, u64, u64), String, String)> = std::fs::read_dir(dir)
+        .into_iter()
+        .flatten()
+        .flatten()
+        .map(|e| e.path())
+        .filter(|p| p.extension().is_some_and(|x| x == "yaml"))
+        .filter_map(|p| {
+            let text = std::fs::read_to_string(p).ok()?;
+            let top = |key: &str| {
+                text.lines()
+                    .find_map(|l| l.strip_prefix(key))
+                    .map(|v| v.trim().replace('"', ""))
+            };
+            let tag = top("tag:")?;
+            let commit = top("commit:").filter(|c| !c.is_empty())?;
+            Some((release_key(&tag)?, tag, commit))
+        })
+        .collect();
+    records
+        .into_iter()
+        .map(|(_, tag, commit)| (tag, commit))
+        .collect()
+}
+
+/// `vMAJOR.MINOR.PATCH` as numbers, and nothing else: a pre-release or a named tag is not a
+/// release.
+fn release_key(tag: &str) -> Option<(u64, u64, u64)> {
+    let mut parts = tag.strip_prefix('v')?.split('.');
+    let mut num = || -> Option<u64> {
+        let p = parts
+            .next()
+            .filter(|p| !p.is_empty() && p.bytes().all(|b| b.is_ascii_digit()))?;
+        p.parse().ok()
+    };
+    let key = (num()?, num()?, num()?);
+    parts.next().is_none().then_some(key)
 }
 
 /// `order` as a number: the awk compares it with `+ 0`, which makes anything unparseable
@@ -2294,5 +2490,264 @@ mod seal_tests {
         );
         let (entries, _) = crate::ledger::read(root);
         assert_eq!(entries.len(), 1);
+    }
+
+    // ------------------------------------------------------------ the release that carried it
+
+    fn git_in(root: &std::path::Path, args: &[&str]) {
+        let out = std::process::Command::new("git")
+            .args(["-c", "user.name=t", "-c", "user.email=t@example.com", "-C"])
+            .arg(root)
+            .args(args)
+            .output()
+            .unwrap();
+        assert!(
+            out.status.success(),
+            "git {args:?}: {}",
+            String::from_utf8_lossy(&out.stderr)
+        );
+    }
+
+    fn sealed(id: &str, milestone: &str, at: &str) -> Value {
+        json!({
+            "id": id, "milestone": milestone, "title": "t", "priority": "p1",
+            "acceptance_criteria": ["it works"], "validation": ["true"],
+            "evidence_required": ["proof"], "evidence": [{"covers": "proof"}],
+            "started_at": at, "started_event": seal(Transition::Start, id, at),
+            "verified_at": at, "verified_event": seal(Transition::Verify, id, at),
+            "completed_at": at, "completed_event": seal(Transition::Done, id, at),
+        })
+    }
+
+    /// A release record (`tag`, `commit`) as the tool writes one, enough for the reader.
+    fn record(root: &std::path::Path, tag: &str, commit: &str) {
+        let dir = root.join(crate::distribution::release::DIR);
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(
+            dir.join(format!("{tag}.yaml")),
+            format!("schema: release/v1\nversion: \"{}\"\ntag: {tag}\nchannel: stable\ncommit: {commit}\n", &tag[1..]),
+        )
+        .unwrap();
+    }
+
+    fn head(root: &std::path::Path) -> String {
+        let out = std::process::Command::new("git")
+            .arg("-C")
+            .arg(root)
+            .args(["rev-parse", "HEAD"])
+            .output()
+            .unwrap();
+        String::from_utf8_lossy(&out.stdout).trim().to_string()
+    }
+
+    /// A milestone's release is the first release record whose commit contains its last
+    /// accepted issue's stamp commit, or failing that the merge naming the issue; a
+    /// pre-release record and a record without a commit are not releases; an open milestone
+    /// and one no record contains are `unreleased`. The same history
+    /// `test/cases/3102_a_milestone_version_is_inferred.sh` builds for both engines.
+    #[test]
+    fn a_milestone_is_released_in_the_first_record_carrying_its_last_issue() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        git_in(root, &["init", "-q", "-b", "master"]);
+        let done = |m: &str| {
+            json!({"id": m, "title": m, "order": 0,
+            "evidence_required": ["proof"], "evidence": [{"covers": "proof"}]})
+        };
+        let objects = vec![
+            object(
+                MILESTONE,
+                "shipped",
+                ".ai/repo/project/milestones/shipped.yaml",
+                done("shipped"),
+            ),
+            object(
+                MILESTONE,
+                "merged",
+                ".ai/repo/project/milestones/merged.yaml",
+                done("merged"),
+            ),
+            object(
+                MILESTONE,
+                "local",
+                ".ai/repo/project/milestones/local.yaml",
+                done("local"),
+            ),
+            object(
+                MILESTONE,
+                "open",
+                ".ai/repo/project/milestones/open.yaml",
+                done("open"),
+            ),
+            object(
+                MILESTONE,
+                "evidenced",
+                ".ai/repo/project/milestones/evidenced.yaml",
+                json!({"id": "evidenced", "title": "evidenced", "order": 0,
+                "evidence_required": ["proof"], "evidence": [
+                    {"covers": "proof", "recorded_at": "2026-09-01T00:00:00Z"},
+                    {"covers": "proof", "recorded_at": "2026-09-04T00:00:00Z"}]}),
+            ),
+            object(
+                MILESTONE,
+                "unstamped",
+                ".ai/repo/project/milestones/unstamped.yaml",
+                done("unstamped"),
+            ),
+            object(
+                ISSUE,
+                "I0001",
+                ".ai/repo/project/issues/I0001.yaml",
+                sealed("I0001", "shipped", "2026-10-01T00:00:00Z"),
+            ),
+            object(
+                ISSUE,
+                "I0002",
+                ".ai/repo/project/issues/I0002.yaml",
+                sealed("I0002", "shipped", "2026-10-02T00:00:00Z"),
+            ),
+            object(
+                ISSUE,
+                "I0003",
+                ".ai/repo/project/issues/I0003.yaml",
+                sealed("I0003", "merged", "2026-10-03T00:00:00Z"),
+            ),
+            object(
+                ISSUE,
+                "I0004",
+                ".ai/repo/project/issues/I0004.yaml",
+                sealed("I0004", "local", "2026-10-04T00:00:00Z"),
+            ),
+            object(
+                ISSUE,
+                "I0005",
+                ".ai/repo/project/issues/I0005.yaml",
+                issue_meta("I0005", json!({"milestone": "open"})),
+            ),
+        ];
+        let ix = index(root, objects);
+        let plan = Plan::build(&ix);
+        assert_eq!(plan.milestone("shipped").unwrap().last_accepted, "I0002");
+        assert_eq!(plan.milestone("open").unwrap().last_accepted, "");
+
+        // I0001 is committed and recorded as v0.1.0; I0002, the last accepted, only later
+        let issues = root.join(".ai/repo/project/issues");
+        std::fs::create_dir_all(&issues).unwrap();
+        let write = |id: &str, at: &str| {
+            std::fs::write(
+                issues.join(format!("{id}.yaml")),
+                format!("id: {id}\ncompleted_at: {at}\n"),
+            )
+            .unwrap();
+        };
+        write("I0001", "2026-10-01T00:00:00Z");
+        // a milestone with no issue is finished by its evidence: the commit that wrote its
+        // latest recorded_at is the one a release must contain
+        let milestones = root.join(".ai/repo/project/milestones");
+        std::fs::create_dir_all(&milestones).unwrap();
+        std::fs::write(
+            milestones.join("evidenced.yaml"),
+            "id: evidenced\nevidence:\n  - covers: proof\n    recorded_at: 2026-09-04T00:00:00Z\n",
+        )
+        .unwrap();
+        git_in(root, &["add", "-A"]);
+        git_in(root, &["commit", "-qm", "I0001"]);
+        record(root, "v0.1.0", &head(root));
+        write("I0002", "2026-10-02T00:00:00Z");
+        git_in(root, &["add", "-A"]);
+        git_in(root, &["commit", "-qm", "I0002"]);
+        assert_eq!(released_in(&ix, &plan, "shipped"), UNRELEASED);
+        record(root, "v0.2.0-rc.1", &head(root));
+        assert_eq!(
+            released_in(&ix, &plan, "shipped"),
+            UNRELEASED,
+            "a pre-release is not a release"
+        );
+        // I0003's stamp is never committed, but a merge names it
+        git_in(root, &["checkout", "-q", "-b", "work"]);
+        git_in(root, &["commit", "-q", "--allow-empty", "-m", "work"]);
+        git_in(root, &["checkout", "-q", "master"]);
+        git_in(
+            root,
+            &["merge", "-q", "--no-ff", "-m", "Merge work (I0003)", "work"],
+        );
+        let merged = head(root);
+        // the records are read in version order, not in file-name order
+        record(root, "v0.10.0", &merged);
+        record(root, "v0.2.0", &merged);
+        std::fs::write(root.join(".ai/repo/releases/v0.3.0.yaml"), "tag: v0.3.0\n").unwrap();
+        assert_eq!(released_in(&ix, &plan, "shipped"), "v0.2.0");
+        assert_eq!(released_in(&ix, &plan, "merged"), "v0.2.0");
+        // neither a stamp commit nor a merge names I0004; I0005 is open; nothing is unknown
+        assert_eq!(released_in(&ix, &plan, "local"), UNRELEASED);
+        assert_eq!(released_in(&ix, &plan, "open"), UNRELEASED);
+        assert_eq!(released_in(&ix, &plan, "nosuch"), UNRELEASED);
+        // DONE with no issue: the evidence's commit is in v0.1.0; evidence with no stamp
+        // names no commit
+        assert_eq!(plan.milestone("evidenced").unwrap().status, "DONE");
+        assert_eq!(plan.milestone("evidenced").unwrap().last_accepted, "");
+        assert_eq!(released_in(&ix, &plan, "evidenced"), "v0.1.0");
+        assert_eq!(plan.milestone("unstamped").unwrap().status, "DONE");
+        assert_eq!(released_in(&ix, &plan, "unstamped"), UNRELEASED);
+    }
+
+    /// The stamp a milestone's evidence carries is its latest non-empty `recorded_at`.
+    #[test]
+    fn the_last_evidence_stamp_is_the_latest_recorded_at() {
+        assert_eq!(last_evidence_stamp(&json!({})), None);
+        assert_eq!(last_evidence_stamp(&json!({"evidence": "none"})), None);
+        assert_eq!(
+            last_evidence_stamp(&json!({"evidence": [{"covers": "a"}]})),
+            None
+        );
+        assert_eq!(
+            last_evidence_stamp(&json!({"evidence": [
+                {"covers": "a", "recorded_at": "2026-09-04"},
+                {"covers": "b", "recorded_at": ""},
+                {"covers": "c", "recorded_at": "2026-10-01T00:00:00Z"}]})),
+            Some("2026-10-01T00:00:00Z".to_string())
+        );
+    }
+
+    #[test]
+    fn only_a_plain_version_tag_is_a_release() {
+        assert_eq!(release_key("v0.27.0"), Some((0, 27, 0)));
+        assert_eq!(release_key("v10.0.1"), Some((10, 0, 1)));
+        assert_eq!(release_key("0.27.0"), None);
+        assert_eq!(release_key("v0.27"), None);
+        assert_eq!(release_key("v0.27.0.1"), None);
+        assert_eq!(release_key("v0.27.0-rc.1"), None);
+        assert_eq!(release_key("v0.2.0-ai-documents"), None);
+        assert_eq!(release_key("v0..1"), None);
+        assert_eq!(release_key("v"), None);
+        assert_eq!(release_key("vx.1.2"), None);
+    }
+
+    /// Only a readable YAML file whose top-level `tag:` is a release tag and that names a
+    /// commit is a release record, and the records come back in version order whatever the
+    /// directory walk yields.
+    #[test]
+    fn release_records_are_the_readable_tagged_committed_ones_in_version_order() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        assert!(
+            release_records(root).is_empty(),
+            "no directory is no record"
+        );
+        record(root, "v0.10.0", "c10");
+        record(root, "v0.2.0", "c2");
+        record(root, "v0.2.0-rc.1", "rc");
+        let releases = root.join(crate::distribution::release::DIR);
+        std::fs::create_dir_all(releases.join("unreadable.yaml")).unwrap();
+        std::fs::write(releases.join("untagged.yaml"), "schema: release/v1\n").unwrap();
+        std::fs::write(releases.join("uncommitted.yaml"), "tag: v0.3.0\ncommit:\n").unwrap();
+        std::fs::write(releases.join("v0.4.0.txt"), "tag: v0.4.0\ncommit: c4\n").unwrap();
+        assert_eq!(
+            release_records(root),
+            [
+                ("v0.2.0".to_string(), "c2".to_string()),
+                ("v0.10.0".to_string(), "c10".to_string()),
+            ]
+        );
     }
 }

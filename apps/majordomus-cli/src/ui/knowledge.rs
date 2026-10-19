@@ -11,10 +11,12 @@ use crate::capability::Context;
 use crate::cockpit::html::{el, El};
 
 use super::shell::View;
-use super::source::{ask_all, Answer, Source};
+use super::source::{ask_all, Answer, Availability, Reading, Source};
 use super::view::{
-    hero, kpi, kpi_state, list, more, nothing, object, panel, state, table, text, unanswered, wide,
+    hero, kpi, kpi_state, link, list, more, nothing, object, panel, state, table, text, unanswered,
+    wide,
 };
+use crate::web::discover::DOCS_MOUNT;
 
 /// The route of the screen.
 pub const ROUTE: &str = "/ui/knowledge";
@@ -67,47 +69,96 @@ pub fn screen(ctx: &Context) -> View {
         "orange",
         "Knowledge",
         "What the work left behind, awaiting a reviewer.",
-        "Every record the deriver wrote from a closed episode and nobody has promoted or rejected yet, what it is about, and whether the deriver is still writing.",
+        "The records the deriver wrote down from closed sessions that no person has promoted or rejected yet, what each is about, how to review them, and whether learning keeps up with the sessions that close.",
         vec![
             kpi("Awaiting review", &queue.read("/total")),
             kpi("On this branch", &queue.read("/on_this_branch")),
-            kpi("Unattributed", &queue.read("/unattributed")),
-            kpi("Closed, underived", &status.read("/closed_without_derivation")),
-            kpi_state("Newest episode", &status.read("/freshness")),
+            kpi("From an unknown branch", &queue.read("/unattributed")),
+            ledger_kpi(
+                "Sessions not yet learned from",
+                status,
+                kpi(
+                    "Sessions not yet learned from",
+                    &status.read("/closed_without_derivation"),
+                ),
+            ),
+            ledger_kpi(
+                "Newest session",
+                status,
+                kpi_state("Newest session", &status.read("/freshness")),
+            ),
         ],
     );
 
+    // In the order a reviewer reads: what awaits them, what it is about, how to review it,
+    // and last whether the queue is still being filled.
     let grid = el("div")
         .class("mj-ui-grid")
+        .children(queue_panels(queue))
         .child(panel(
-            "The deriver",
-            "Whether a derivation still follows every closed episode, as the status judges it.",
-            unanswered(status).unwrap_or_else(|| deriver(status)),
-            &[status],
-        ))
-        .child(panel(
-            "Review",
-            "What a reviewer runs. This screen reads the queue; it promotes and rejects nothing.",
-            review(),
+            "How to review",
+            "The commands a reviewer runs, in order. This screen only reads the queue; promoting and rejecting are a person's act.",
+            el("div").class("mj-ui-stack").child(review()).child(manual()),
             &[],
         ))
-        .child(wide(panel(
-            "By subject",
-            "The records derived from observations, grouped by what they are about.",
-            unanswered(queue).unwrap_or_else(|| subjects(queue)),
-            &[queue],
-        )))
-        .child(wide(panel(
-            "Awaiting review",
-            "The newest candidates, each leading to its record.",
-            unanswered(queue).unwrap_or_else(|| candidates(queue)),
-            &[queue],
-        )));
+        .child(panel(
+            "Is learning up to date?",
+            "Whether the deriver has written down what the newest closed session left behind, as knowledge status judges it.",
+            unanswered(status).unwrap_or_else(|| deriver(status)),
+            &[status],
+        ));
 
     View::new(
         "Knowledge",
         el("div").class("mj-ui-stack").child(top).child(grid),
     )
+}
+
+/// The queue's panels: what awaits review and what it is about, or, when the queue answered
+/// that nothing does, one sentence in their place. Two empty tables say the same thing twice
+/// and say neither why nor how a record would arrive.
+fn queue_panels(queue: &Answer) -> Vec<El> {
+    if queue_empty(queue) {
+        return vec![wide(panel(
+            "Awaiting review",
+            "The candidates no reviewer has promoted or rejected yet.",
+            empty_queue(),
+            &[queue],
+        ))];
+    }
+    vec![
+        wide(panel(
+            "Awaiting review",
+            "The newest candidates, each leading to its record.",
+            unanswered(queue).unwrap_or_else(|| candidates(queue)),
+            &[queue],
+        )),
+        wide(panel(
+            "By subject",
+            "The records derived from observations, grouped by what they are about.",
+            unanswered(queue).unwrap_or_else(|| subjects(queue)),
+            &[queue],
+        )),
+    ]
+}
+
+/// Whether the queue answered and holds nothing: a total of zero and no candidate. A queue
+/// that did not answer is not empty; it is unanswered, and its panels say so.
+fn queue_empty(queue: &Answer) -> bool {
+    queue
+        .ok()
+        .is_some_and(|answer| answer.get("total").and_then(Value::as_u64) == Some(0))
+        && list(queue, "/candidates").is_empty()
+}
+
+/// The sentence an empty queue is told in: that nothing awaits review, and how a record
+/// would come to.
+fn empty_queue() -> El {
+    el("p")
+        .class("mj-ui-prose")
+        .text("Nothing awaits review: no candidate record is tracked here. A record arrives when a session closes and the deriver writes down what it left behind, or when ")
+        .child(el("code").class("mj-ui-code").text("majordomus knowledge observe"))
+        .text(" records what was noticed.")
 }
 
 /// The judgement of the deriver: when it last wrote, when an episode last closed, why the
@@ -116,6 +167,9 @@ fn deriver(status: &Answer) -> El {
     let Some(answer) = status.ok() else {
         return nothing("The status did not answer.");
     };
+    if !ledger_recorded(answer) {
+        return no_ledger();
+    }
     let mark = |key: &str| -> String {
         answer
             .get(key)
@@ -125,7 +179,7 @@ fn deriver(status: &Answer) -> El {
                 if episode.is_empty() {
                     at
                 } else {
-                    format!("{at}, episode {episode}")
+                    format!("{at}, session {episode}")
                 }
             })
             .filter(|line| !line.is_empty())
@@ -134,8 +188,8 @@ fn deriver(status: &Answer) -> El {
     let judged = answer.get("judged").and_then(Value::as_bool);
     let stopped = answer.get("stopped_writer").and_then(Value::as_bool);
     let verdict = match (judged, stopped) {
-        (Some(true), Some(true)) => "episodes close and no derivation followed the newest one",
-        (Some(true), _) => "a derivation follows the newest closed episode",
+        (Some(true), Some(true)) => "no: sessions close and nothing was learned from the newest",
+        (Some(true), _) => "yes: the newest closed session was learned from",
         (Some(false), _) => "not judged; the findings say why",
         (None, _) => "the status carries no judgement",
     };
@@ -147,9 +201,9 @@ fn deriver(status: &Answer) -> El {
     };
     let facts = el("dl")
         .class("mj-ui-facts")
-        .child(fact("Last derived", mark("last_derived")))
-        .child(fact("Last closed", mark("last_closed")))
-        .child(fact("Judgement", verdict.to_string()))
+        .child(fact("Up to date", verdict.to_string()))
+        .child(fact("Last learned from", mark("last_derived")))
+        .child(fact("Last session closed", mark("last_closed")))
         .child(fact("Why", text(answer, "freshness_reason")));
     let findings = list(status, "/findings");
     let body = el("div").class("mj-ui-stack").child(facts);
@@ -166,16 +220,75 @@ fn deriver(status: &Answer) -> El {
     )
 }
 
-/// The review, as the commands it is made of.
+/// What a checkout without a session ledger is told instead of a judgement: the published
+/// snapshot and a fresh clone carry none, and a value read from a ledger that is not there
+/// would read as "never" or "0" about the repository when it is only about this checkout.
+const NO_LEDGER: &str = "not recorded here";
+
+/// Whether the status read any line of the session ledger: a close, a derivation, or a
+/// close no derivation names. The status's own `present` also counts candidates, which are
+/// tracked records and are read in any checkout; the ledger is local, so it is asked apart.
+fn ledger_recorded(answer: &Value) -> bool {
+    answer.get("last_closed").is_some_and(|m| !m.is_null())
+        || answer.get("last_derived").is_some_and(|m| !m.is_null())
+        || answer
+            .get("closed_without_derivation")
+            .and_then(Value::as_u64)
+            .is_some_and(|n| n > 0)
+}
+
+/// A tile whose value is read from the session ledger: as drawn when the status read a
+/// ledger, and as [`NO_LEDGER`] when it read none, so a snapshot never states a count or a
+/// freshness it could not observe.
+fn ledger_kpi(label: &str, status: &Answer, drawn: El) -> El {
+    match status.ok() {
+        Some(answer) if !ledger_recorded(answer) => kpi(
+            label,
+            &Reading {
+                source: STATUS,
+                pointer: "/last_closed",
+                state: Availability::Available(Value::String(NO_LEDGER.to_string())),
+            },
+        ),
+        _ => drawn,
+    }
+}
+
+/// The deriver's panel where no session ledger is here: what that means, and where the
+/// judgement is made instead. Prose, not facts: there is nothing to tabulate.
+fn no_ledger() -> El {
+    el("p")
+        .class("mj-ui-prose")
+        .text("No session ledger is recorded in this checkout, so whether learning keeps up is not judged here. The published snapshot and a fresh clone carry none; in a working checkout, ")
+        .child(el("code").class("mj-ui-code").text("majordomus knowledge status"))
+        .text(" judges it, and this panel shows when the deriver last wrote.")
+}
+
+/// The review, as the commands it is made of: each step is the command as code, which breaks
+/// anywhere at phone width, and what it does as a sentence at reading size. The command is
+/// what a reviewer copies and the sentence what they read; neither is a headline value.
 fn review() -> El {
-    el("dl")
-        .class("mj-ui-facts")
+    el("ol")
+        .class("mj-ui-prose-list")
         .children(REVIEW.iter().map(|(command, does)| {
-            el("div")
-                .class("mj-ui-fact")
-                .child(el("dt").child(el("code").class("mj-ui-mono").text(*command)))
-                .child(el("dd").text(*does))
+            el("li")
+                .child(el("code").class("mj-ui-code").text(*command))
+                .text(format!(": {does}."))
         }))
+}
+
+/// The knowledge manual, where each step of the review and every record class is explained.
+/// The documentation is served under [`DOCS_MOUNT`] by the server and by the published site
+/// alike, so the link holds in both.
+fn manual() -> El {
+    el("p")
+        .class("mj-ui-prose")
+        .text("Each step, and every kind of record, is explained in ")
+        .child(link(
+            format!("{DOCS_MOUNT}/knowledge/"),
+            "the knowledge manual",
+        ))
+        .text(".")
 }
 
 /// The subjects, the first [`SHOWN`] of them, each with how many records await review, how
@@ -282,7 +395,7 @@ mod tests {
             source,
             route: None,
             exposure: Default::default(),
-            value: Ok(value),
+            value: Ok(value.into()),
             took: std::time::Duration::ZERO,
             standing: Standing::NOW,
         }
@@ -311,9 +424,8 @@ mod tests {
         assert_eq!(view.title, "Knowledge");
         let html = view.main.render();
         for want in [
-            "The deriver",
-            "Review",
-            "By subject",
+            "Is learning up to date?",
+            "How to review",
             "Awaiting review",
             "knowledge_base.status",
             "knowledge_base.candidates",
@@ -327,6 +439,63 @@ mod tests {
                 "the screen carries {control}: {html}"
             );
         }
+    }
+
+    /// The review is an ordered list of steps: each command is code and what it does is a
+    /// sentence beside it, never a fact value drawn as a headline.
+    #[test]
+    fn the_review_is_steps_of_command_and_sentence() {
+        let html = review().render();
+        assert!(
+            html.starts_with("<ol class=\"mj-ui-prose-list\">"),
+            "{html}"
+        );
+        assert_eq!(html.matches("<li>").count(), REVIEW.len(), "{html}");
+        assert!(
+            html.contains(
+                "<li><code class=\"mj-ui-code\">majordomus knowledge check</code>: every \
+                 record is valid, evidenced and resolves what it names.</li>"
+            ),
+            "{html}"
+        );
+        assert!(!html.contains("mj-ui-fact"), "{html}");
+    }
+
+    /// The screen reads in the order a reviewer works: the queue, how to review it, then
+    /// whether it is still being filled; its labels are plain words, and the review leads to
+    /// the knowledge manual.
+    #[test]
+    fn the_screen_reads_in_review_order_with_plain_labels_and_the_manual() {
+        let repo = SyntheticRepository::small().expect("a synthetic repository");
+        let ctx = repo.context().expect("a context");
+        let html = screen(&ctx).main.render();
+        let at = |what: &str| {
+            html.find(what)
+                .unwrap_or_else(|| panic!("no {what}: {html}"))
+        };
+        assert!(at("Awaiting review</h2>") < at("How to review</h2>"));
+        assert!(at("How to review</h2>") < at("Is learning up to date?</h2>"));
+        for label in [
+            "From an unknown branch",
+            "Sessions not yet learned from",
+            "Newest session",
+        ] {
+            at(label);
+        }
+        for gone in [
+            "Unattributed",
+            "Closed, underived",
+            "Newest episode",
+            "The deriver<",
+        ] {
+            assert!(!html.contains(gone), "{gone}: {html}");
+        }
+        assert!(
+            html.contains(&format!(
+                "href=\"{DOCS_MOUNT}/knowledge/\">the knowledge manual</a>"
+            )),
+            "{html}"
+        );
     }
 
     /// A queue longer than the bound is drawn newest first, to the bound, and says how many
@@ -380,6 +549,38 @@ mod tests {
         );
     }
 
+    /// An empty queue is one panel and one sentence, saying how a record arrives; a queue that
+    /// holds records, or did not answer, keeps both panels.
+    #[test]
+    fn an_empty_queue_is_one_sentence_not_two_empty_tables() {
+        let render = |panels: Vec<El>| panels.iter().map(El::render).collect::<String>();
+        let empty = answer(CANDIDATES, json!({ "total": 0, "candidates": [] }));
+        let panels = queue_panels(&empty);
+        assert_eq!(panels.len(), 1);
+        let html = render(panels);
+        assert!(html.contains("Nothing awaits review"), "{html}");
+        assert!(
+            html.contains("<code class=\"mj-ui-code\">majordomus knowledge observe</code>"),
+            "{html}"
+        );
+        assert!(html.contains("knowledge_base.candidates"), "{html}");
+        for gone in ["By subject", "<table", "No candidate awaits review."] {
+            assert!(!html.contains(gone), "{gone}: {html}");
+        }
+
+        let held = answer(
+            CANDIDATES,
+            json!({ "total": 1, "candidates": [candidate(1)] }),
+        );
+        assert_eq!(queue_panels(&held).len(), 2);
+        let failed = Answer {
+            value: Err("no queue".to_string()),
+            ..answer(CANDIDATES, json!({}))
+        };
+        assert!(!queue_empty(&failed));
+        assert_eq!(queue_panels(&failed).len(), 2);
+    }
+
     /// The deriver's panel says the judgement in words and every finding the status carries;
     /// a checkout where it never ran says never, not an empty cell.
     #[test]
@@ -396,15 +597,114 @@ mod tests {
         );
         let html = deriver(&stopped).render();
         assert!(
-            html.contains("episodes close and no derivation followed the newest one"),
+            html.contains("no: sessions close and nothing was learned from the newest"),
             "{html}"
         );
         assert!(html.contains("never, in this checkout"), "{html}");
-        assert!(html.contains("2026-10-13T10:00:00Z, episode s-1"), "{html}");
+        assert!(html.contains("2026-10-13T10:00:00Z, session s-1"), "{html}");
         assert!(html.contains("no derivation names s-1"), "{html}");
-        let unjudged = answer(STATUS, json!({ "judged": false, "stopped_writer": false }));
+        let unjudged = answer(
+            STATUS,
+            json!({
+                "judged": false,
+                "stopped_writer": false,
+                "last_closed": { "ts": "2026-10-13T10:00:00Z", "episode": "s-1" },
+            }),
+        );
         assert!(deriver(&unjudged)
             .render()
             .contains("not judged; the findings say why"));
+    }
+
+    /// A checkout with no session ledger, as the published snapshot is, states no count and
+    /// no "never" about the repository: the ledger tiles and the deriver say it is not
+    /// recorded here, and where it is judged. A close no derivation names is a ledger line.
+    #[test]
+    fn a_checkout_without_a_ledger_states_nothing_it_could_not_observe() {
+        let fresh = answer(
+            STATUS,
+            json!({
+                "present": false, "judged": false, "stopped_writer": false,
+                "closed_without_derivation": 0, "freshness": "unknown",
+                "freshness_reason": "no episode has closed here",
+                "findings": ["no episode has closed here; nothing to judge"],
+            }),
+        );
+        let html = deriver(&fresh).render();
+        assert!(
+            html.contains("No session ledger is recorded in this checkout"),
+            "{html}"
+        );
+        assert!(
+            html.contains("majordomus knowledge status</code>"),
+            "{html}"
+        );
+        assert!(!html.contains("never"), "{html}");
+        let tile = ledger_kpi("Closed, underived", &fresh, el("span").text("drawn")).render();
+        assert!(tile.contains(NO_LEDGER), "{tile}");
+        assert!(!tile.contains("drawn"), "{tile}");
+        assert!(
+            tile.contains("knowledge_base.status"),
+            "the tile still cites its source: {tile}"
+        );
+
+        let closed = answer(STATUS, json!({ "closed_without_derivation": 2 }));
+        assert!(ledger_recorded(closed.ok().expect("an answer")));
+        let kept = ledger_kpi("Closed, underived", &closed, el("span").text("drawn")).render();
+        assert!(kept.contains("drawn"), "{kept}");
+        let failed = Answer {
+            value: Err("no status".to_string()),
+            ..answer(STATUS, json!({}))
+        };
+        let shown = ledger_kpi("Closed, underived", &failed, el("span").text("drawn")).render();
+        assert!(
+            shown.contains("drawn"),
+            "an unanswered status keeps its own tile: {shown}"
+        );
+    }
+
+    /// Each line of the session ledger counts on its own, and a null or a zero is no line:
+    /// a close, a derivation and an underived close are each enough to read the ledger.
+    #[test]
+    fn each_ledger_line_is_read_on_its_own_and_a_null_is_none() {
+        let read = |value: Value| ledger_recorded(&value);
+        assert!(read(json!({ "last_closed": { "episode": "s-1" } })));
+        assert!(read(json!({ "last_derived": { "episode": "s-1" } })));
+        assert!(read(json!({ "closed_without_derivation": 1 })));
+        assert!(!read(json!({
+            "last_closed": null, "last_derived": null, "closed_without_derivation": 0,
+        })));
+        assert!(!read(json!({})));
+    }
+
+    /// Every judgement the status can carry is said in its own words: learned from, stopped,
+    /// not judged, and a status that carries no judgement at all.
+    #[test]
+    fn each_judgement_of_the_deriver_is_said_in_words() {
+        // a ledger line, so the panel judges rather than saying no ledger is recorded here
+        let said = |mut value: Value| {
+            value["closed_without_derivation"] = json!(1);
+            deriver(&answer(STATUS, value)).render()
+        };
+        let learned = said(json!({ "judged": true, "stopped_writer": false }));
+        assert!(
+            learned.contains("yes: the newest closed session was learned from"),
+            "{learned}"
+        );
+        let stopped = said(json!({ "judged": true, "stopped_writer": true }));
+        assert!(
+            stopped.contains("no: sessions close and nothing was learned from the newest"),
+            "{stopped}"
+        );
+        let unjudged = said(json!({ "judged": false }));
+        assert!(
+            unjudged.contains("not judged; the findings say why"),
+            "{unjudged}"
+        );
+        let silent = said(json!({}));
+        assert!(
+            silent.contains("the status carries no judgement"),
+            "{silent}"
+        );
     }
 }
