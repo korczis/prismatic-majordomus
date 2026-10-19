@@ -42560,6 +42560,39 @@
         }
       },
       {
+        "id": "majordomus://issue/I3024",
+        "kind": "issue",
+        "label": "I3024",
+        "summary": "The Knowledge screen's manual link names a page the site has, on the server and on Pages",
+        "route": "/cockpit/objects/issue/i3024",
+        "source": ".ai/repo/project/issues/I3024.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The manual link is {DOCS_MOUNT}/docs/knowledge/ and is rebased to /docs/knowledge/ in the published snapshot",
+            "A crate test resolves the link's path below the documentation mount to an existing file under site/content"
+          ],
+          "created_at": "2026-10-19",
+          "current_state": "manual() links to {DOCS_MOUNT}/knowledge/, which resolves to /knowledge/ on Pages and to a missing page under the server's /docs mount.",
+          "desired_state": "manual() links to {DOCS_MOUNT}/docs/knowledge/; a crate test proves that the path below the mount is a page of site/content.",
+          "evidence_required": [
+            "knowledge_manual_link_resolves"
+          ],
+          "milestone": "truthful-plan-surfaces",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/knowledge.rs"
+          ],
+          "slug": "the-knowledge-manual-link-resolves",
+          "updated_at": "2026-10-19",
+          "validation": [
+            "cargo test --lib ui::knowledge",
+            "scripts/ui audit --only /ui/knowledge"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "label": "a-commit-stood-behind-a-build-lock",
@@ -88551,6 +88584,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3024",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3024",
+        "target": "majordomus://milestone/truthful-plan-surfaces",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -98787,8 +98830,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3074,
-      "edges": 6732,
+      "nodes": 3075,
+      "edges": 6734,
       "acyclic": false,
       "truncated": false
     }

@@ -277,15 +277,21 @@ fn review() -> El {
         }))
 }
 
+/// The site page of the knowledge manual: `site/content/docs/knowledge.md`, at `/docs/knowledge/`
+/// of the published site.
+const MANUAL: &str = "/docs/knowledge/";
+
 /// The knowledge manual, where each step of the review and every record class is explained.
-/// The documentation is served under [`DOCS_MOUNT`] by the server and by the published site
-/// alike, so the link holds in both.
+/// A server mounts the whole site build under [`DOCS_MOUNT`], so the manual is
+/// `{DOCS_MOUNT}{MANUAL}` there; the published snapshot rebases that mount onto the site's
+/// root, which makes the same link [`MANUAL`] on Pages. A link of `{DOCS_MOUNT}/knowledge/`
+/// would name a site page that does not exist, and did, in 0.30.1.
 fn manual() -> El {
     el("p")
         .class("mj-ui-prose")
         .text("Each step, and every kind of record, is explained in ")
         .child(link(
-            format!("{DOCS_MOUNT}/knowledge/"),
+            format!("{DOCS_MOUNT}{MANUAL}"),
             "the knowledge manual",
         ))
         .text(".")
@@ -492,10 +498,32 @@ mod tests {
         }
         assert!(
             html.contains(&format!(
-                "href=\"{DOCS_MOUNT}/knowledge/\">the knowledge manual</a>"
+                "href=\"{DOCS_MOUNT}{MANUAL}\">the knowledge manual</a>"
             )),
             "{html}"
         );
+    }
+
+    /// The manual link names a page the site has, wherever it is served: under the server's
+    /// documentation mount it is the site path below that mount, and the published snapshot
+    /// rebases the mount onto the site's root (web::report::snapshot), so on Pages the link is
+    /// the site path itself, and that path is a page of `site/content`.
+    #[test]
+    fn the_manual_link_names_a_page_of_the_site_on_either_surface() {
+        let html = manual().render();
+        let href = html
+            .split("href=\"")
+            .nth(1)
+            .and_then(|rest| rest.split('"').next())
+            .expect("the manual is a link");
+        let published = href
+            .strip_prefix(DOCS_MOUNT)
+            .expect("the link is under the documentation mount");
+        assert_eq!(published, "/docs/knowledge/", "{html}");
+        let page = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../site/content")
+            .join(format!("{}.md", published.trim_matches('/')));
+        assert!(page.is_file(), "no site page {}", page.display());
     }
 
     /// A queue longer than the bound is drawn newest first, to the bound, and says how many
