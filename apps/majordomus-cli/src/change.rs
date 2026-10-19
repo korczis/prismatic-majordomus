@@ -11,7 +11,7 @@
 //! of it. A change is counted, never queued, so a burst of a thousand ingested events wakes
 //! a waiter once.
 
-use std::sync::{Condvar, Mutex};
+use std::sync::{Condvar, Mutex, PoisonError};
 use std::time::Duration;
 
 /// A generation that only moves forward, and that a thread can wait on.
@@ -31,14 +31,14 @@ impl Generation {
 
     /// Something changed: move on and wake every waiter.
     pub fn advance(&self) {
-        let mut n = self.n.lock().unwrap_or_else(|e| e.into_inner());
+        let mut n = self.n.lock().unwrap_or_else(PoisonError::into_inner);
         *n += 1;
         self.moved.notify_all();
     }
 
     /// Where it stands now.
     pub fn current(&self) -> u64 {
-        *self.n.lock().unwrap_or_else(|e| e.into_inner())
+        *self.n.lock().unwrap_or_else(PoisonError::into_inner)
     }
 
     /// Wait until it is past `seen`, or `timeout` passes, and say where it stands. A
@@ -55,11 +55,11 @@ impl Generation {
     /// assert_eq!(g.wait_past(0, Duration::from_secs(5)), 2, "two changes, one wake");
     /// ```
     pub fn wait_past(&self, seen: u64, timeout: Duration) -> u64 {
-        let n = self.n.lock().unwrap_or_else(|e| e.into_inner());
+        let n = self.n.lock().unwrap_or_else(PoisonError::into_inner);
         let (n, _) = self
             .moved
             .wait_timeout_while(n, timeout, |n| *n <= seen)
-            .unwrap_or_else(|e| e.into_inner());
+            .unwrap_or_else(PoisonError::into_inner);
         *n
     }
 }
@@ -108,5 +108,16 @@ mod tests {
             waited < Duration::from_secs(5),
             "woken by the change: {waited:?}"
         );
+    }
+
+    /// A default generation is a new one, and only the blackboard's capability follows it.
+    #[test]
+    fn a_default_generation_starts_at_zero_and_one_capability_follows_the_blackboard() {
+        let g = Generation::default();
+        assert_eq!(g.current(), 0);
+        g.advance();
+        assert_eq!(g.current(), 1);
+        assert!(generation_of("blackboard.snapshot").is_some());
+        assert_eq!(generation_of("peers.list"), None);
     }
 }

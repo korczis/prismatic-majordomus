@@ -58,14 +58,14 @@
 //! (`stream.lagged`), and is written the newest one, so its memory is bounded by one frame.
 //! Whether the client hung up, and the heartbeat, are asked on every round, a change or not.
 
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, PoisonError};
 use std::time::{Duration, Instant};
 
 use serde::Serialize;
 use serde_json::{json, Value};
 
 use crate::capability::Context;
-use crate::change::BLACKBOARD;
+use crate::change::{Generation, BLACKBOARD};
 
 use super::events::{Scope, StreamMessage, HEARTBEAT, LOOK};
 use super::ws;
@@ -98,6 +98,18 @@ pub enum Trigger {
     Change,
     /// Nothing said so, and [`REFRESH`] passed.
     Refresh,
+}
+
+impl Trigger {
+    /// What a round of a connection answers: a change the board or the journal said, or
+    /// else the refresh when it is due, or nothing.
+    fn of(changed: bool, refresh_due: bool) -> Option<Trigger> {
+        match (changed, refresh_due) {
+            (true, _) => Some(Trigger::Change),
+            (false, true) => Some(Trigger::Refresh),
+            (false, false) => None,
+        }
+    }
 }
 
 /// A frame about the blackboard.
@@ -262,7 +274,7 @@ fn shared(
     generation: u64,
     read: impl FnOnce() -> Result<Value, String>,
 ) -> Result<Arc<Value>, String> {
-    let mut held = slot.lock().unwrap_or_else(|e| e.into_inner());
+    let mut held = slot.lock().unwrap_or_else(PoisonError::into_inner);
     if let Some(s) = held.as_ref() {
         if s.key == key && s.generation >= generation && s.at.elapsed() < REFRESH {
             return Ok(Arc::clone(&s.value));
@@ -305,6 +317,15 @@ pub struct Follower {
     follow: Follow,
     /// The route of `blackboard.snapshot`, which a withheld snapshot names.
     route: String,
+    /// How long a quiet connection waits for its heartbeat ([`HEARTBEAT`]).
+    heartbeat: Duration,
+    /// How long it waits for a change before it reads anyway ([`REFRESH`]).
+    refresh: Duration,
+    /// How many signals a page asks for, and how many pages a connection is written before
+    /// it is told to resync ([`PAGE_LIMIT`], [`MAX_PAGES`]).
+    pages: (u64, usize),
+    /// The generation a change advances: the blackboard's ([`BLACKBOARD`]).
+    changes: &'static Generation,
 }
 
 impl Follower {
@@ -316,7 +337,15 @@ impl Follower {
             .and_then(|c| c.exposure.http.as_ref())
             .map(|h| h.path.clone())
             .unwrap_or_default();
-        Self { ctx, follow, route }
+        Self {
+            ctx,
+            follow,
+            route,
+            heartbeat: HEARTBEAT,
+            refresh: REFRESH,
+            pages: (PAGE_LIMIT, MAX_PAGES),
+            changes: &BLACKBOARD,
+        }
     }
 
     fn snapshot(&self, generation: u64) -> Result<Arc<Value>, String> {
@@ -393,6 +422,7 @@ impl Follower {
             |cursor, limit| self.page(cursor, limit, generation),
             |text| frame_ok(socket, text),
             trigger,
+            self.pages,
         )
     }
 
@@ -429,16 +459,14 @@ impl Follower {
             blackboard: snapshot,
             cursor,
         };
-        let Ok(text) = serde_json::to_string(&frame) else {
-            return true;
-        };
-        if text.len() <= ws::MAX_FRAME_BYTES {
-            return frame_ok(socket, &text);
+        let text = serde_json::to_string(&frame).ok();
+        if let Some(text) = text.as_deref().filter(|t| t.len() <= ws::MAX_FRAME_BYTES) {
+            return frame_ok(socket, text);
         }
         let checkouts = self.follow.checkouts.as_deref().unwrap_or("repository");
         let withheld = json!({
             "withheld": "too_large",
-            "bytes": text.len(),
+            "bytes": text.map_or(0, |t| t.len()),
             "limit": ws::MAX_FRAME_BYTES,
             "self": format!("{}?checkouts={checkouts}", self.route),
         });
@@ -453,9 +481,9 @@ impl Follower {
     }
 
     /// Serve the connection until the client hangs up or a write fails.
-    pub fn run(self, mut socket: Box<dyn std::io::Write + Send>, hung_up: impl Fn() -> bool) {
+    pub fn run(self, mut socket: Box<dyn std::io::Write + Send>, hung_up: &dyn Fn() -> bool) {
         let epoch = epoch(&self.ctx);
-        let mut generation = BLACKBOARD.current();
+        let mut generation = self.changes.current();
         let ready = StreamMessage::Ready {
             protocol_version: crate::execution::PROTOCOL_VERSION.to_string(),
             scope: Scope::Blackboard,
@@ -532,21 +560,18 @@ impl Follower {
         // is still being written to is not sent as its own snapshot, and the client is told
         let mut busy = Duration::ZERO;
         loop {
-            let wait = HEARTBEAT
+            let wait = self
+                .heartbeat
                 .saturating_sub(quiet.elapsed())
-                .min(REFRESH.saturating_sub(read_at.elapsed()))
+                .min(self.refresh.saturating_sub(read_at.elapsed()))
                 .min(LOOK);
-            let now = BLACKBOARD.wait_past(generation, wait);
-            let trigger = if now > generation {
+            let changed = self.changes.wait_past(generation, wait) > generation;
+            let trigger = Trigger::of(changed, read_at.elapsed() >= self.refresh);
+            if changed {
                 std::thread::sleep(SETTLE);
-                Some(Trigger::Change)
-            } else if read_at.elapsed() >= REFRESH {
-                Some(Trigger::Refresh)
-            } else {
-                None
-            };
+            }
             if let Some(trigger) = trigger {
-                let latest = BLACKBOARD.current();
+                let latest = self.changes.current();
                 let skipped = latest.saturating_sub(generation).saturating_sub(1);
                 if trigger == Trigger::Change && skipped > 0 && busy > SETTLE {
                     if !write(&mut socket, &StreamMessage::Lagged { dropped: skipped }) {
@@ -557,17 +582,24 @@ impl Follower {
                 generation = latest;
                 read_at = Instant::now();
                 let writing = Instant::now();
-                if frames.snapshot {
-                    if let Ok(snapshot) = self.snapshot(generation) {
-                        let substance = substance(&snapshot);
-                        if said.as_ref() != Some(&substance) {
-                            if !self.write_snapshot(&mut socket, trigger, &snapshot, &cursor) {
-                                break;
-                            }
-                            said = Some(substance);
-                            quiet = Instant::now();
-                        }
+                // a snapshot that cannot be read now is read again on the next round
+                let fresh = if frames.snapshot {
+                    self.snapshot(generation).ok()
+                } else {
+                    None
+                };
+                if let Some((snapshot, substance)) = fresh
+                    .map(|s| {
+                        let substance = substance(&s);
+                        (s, substance)
+                    })
+                    .filter(|(_, substance)| said.as_ref() != Some(substance))
+                {
+                    if !self.write_snapshot(&mut socket, trigger, &snapshot, &cursor) {
+                        break;
                     }
+                    said = Some(substance);
+                    quiet = Instant::now();
                 }
                 if frames.signals {
                     match self.send_signals(&mut socket, trigger, &cursor, generation) {
@@ -584,14 +616,18 @@ impl Follower {
                         Sent::Unreadable(reason) => {
                             // the client starts again from now, and is told where that is: in
                             // the snapshot when it follows one, in its own frame when not
-                            if let Ok(now) = self.now(generation) {
-                                cursor = now;
-                            }
+                            cursor = self.now(generation).unwrap_or(cursor);
                             if !write(&mut socket, &StreamMessage::Resync { reason }) {
                                 break;
                             }
-                            if frames.snapshot {
-                                if let Ok(snapshot) = self.snapshot(generation) {
+                            // a snapshot that cannot be read leaves the cursor its own frame
+                            let resent = if frames.snapshot {
+                                self.snapshot(generation).ok()
+                            } else {
+                                None
+                            };
+                            match resent {
+                                Some(snapshot) => {
                                     if !self.write_snapshot(
                                         &mut socket,
                                         trigger,
@@ -602,8 +638,11 @@ impl Follower {
                                     }
                                     said = Some(substance(&snapshot));
                                 }
-                            } else if !self.write_cursor(&mut socket, trigger, &cursor) {
-                                break;
+                                None => {
+                                    if !self.write_cursor(&mut socket, trigger, &cursor) {
+                                        break;
+                                    }
+                                }
                             }
                             quiet = Instant::now();
                         }
@@ -617,7 +656,7 @@ impl Follower {
                 tracing::debug!("the client of a blackboard follower hung up");
                 break;
             }
-            if quiet.elapsed() >= HEARTBEAT {
+            if quiet.elapsed() >= self.heartbeat {
                 let alive = ws::write_ping(&mut socket).is_ok()
                     && write(
                         &mut socket,
@@ -649,15 +688,17 @@ enum Sent {
 /// The pages of signals after `after`, read through `fetch` and written through `emit`, one
 /// frame each. A page whose frame would pass [`ws::MAX_FRAME_BYTES`] is read again with half
 /// as many signals, so the cursor only ever advances through signals that were written; a
-/// single signal larger than a frame, or more than [`MAX_PAGES`] pages, is a resync.
+/// single signal larger than a frame, or more than `max_pages` pages of `page_limit` signals,
+/// is a resync.
 fn send_pages(
     after: &str,
     mut fetch: impl FnMut(&str, u64) -> Result<Value, String>,
     mut emit: impl FnMut(&str) -> bool,
     trigger: Trigger,
+    (page_limit, max_pages): (u64, usize),
 ) -> Sent {
     let mut cursor = after.to_string();
-    let mut limit = PAGE_LIMIT;
+    let mut limit = page_limit;
     let mut wrote = false;
     let mut pages = 0;
     loop {
@@ -677,9 +718,7 @@ fn send_pages(
                 signals: &signals,
                 cursor: &next,
             };
-            let Ok(text) = serde_json::to_string(&frame) else {
-                return Sent::Unreadable("a page of signals could not be encoded".into());
-            };
+            let text = serde_json::to_string(&frame).unwrap_or_default();
             if text.len() > ws::MAX_FRAME_BYTES {
                 if limit > 1 {
                     limit = (limit / 2).max(1);
@@ -697,24 +736,22 @@ fn send_pages(
             wrote = true;
         }
         cursor = next;
-        limit = PAGE_LIMIT;
+        limit = page_limit;
         pages += 1;
         if !more {
             return Sent::Through { cursor, wrote };
         }
-        if pages >= MAX_PAGES {
+        if pages >= max_pages {
             return Sent::Unreadable(format!(
-                "more than {MAX_PAGES} pages of signals happened after the cursor; read the blackboard again"
+                "more than {max_pages} pages of signals happened after the cursor; read the blackboard again"
             ));
         }
     }
 }
 
 fn write<T: Serialize>(socket: &mut Box<dyn std::io::Write + Send>, value: &T) -> bool {
-    match serde_json::to_string(value) {
-        Ok(text) => frame_ok(socket, &text),
-        Err(_) => true,
-    }
+    // what is written here is this module's own frames, which always encode
+    serde_json::to_string(value).map_or(true, |text| frame_ok(socket, &text))
 }
 
 fn frame_ok(socket: &mut Box<dyn std::io::Write + Send>, text: &str) -> bool {
@@ -860,6 +897,7 @@ mod tests {
                 true
             },
             Trigger::Change,
+            (PAGE_LIMIT, MAX_PAGES),
         );
         assert_eq!(
             sent,
@@ -886,17 +924,36 @@ mod tests {
     /// the same; a write that fails is a gone client; nothing to send writes nothing.
     #[test]
     fn what_cannot_be_sent_is_a_resync_and_a_failed_write_is_gone() {
-        let huge = send_pages("0", log(1, ws::MAX_FRAME_BYTES), |_| true, Trigger::Change);
+        let huge = send_pages(
+            "0",
+            log(1, ws::MAX_FRAME_BYTES),
+            |_| true,
+            Trigger::Change,
+            (PAGE_LIMIT, MAX_PAGES),
+        );
         assert!(matches!(huge, Sent::Unreadable(r) if r.contains("larger than one frame")));
-        let long = send_pages("0", log(10_000, 10), |_| true, Trigger::Change);
+        let long = send_pages(
+            "0",
+            log(10_000, 10),
+            |_| true,
+            Trigger::Change,
+            (PAGE_LIMIT, MAX_PAGES),
+        );
         assert!(matches!(long, Sent::Unreadable(r) if r.contains("pages")));
-        let gone = send_pages("0", log(3, 10), |_| false, Trigger::Change);
+        let gone = send_pages(
+            "0",
+            log(3, 10),
+            |_| false,
+            Trigger::Change,
+            (PAGE_LIMIT, MAX_PAGES),
+        );
         assert_eq!(gone, Sent::Gone);
         let quiet = send_pages(
             "5",
             log(5, 10),
             |_| panic!("nothing to write"),
             Trigger::Refresh,
+            (PAGE_LIMIT, MAX_PAGES),
         );
         assert_eq!(
             quiet,
@@ -919,5 +976,583 @@ mod tests {
         let v = serde_json::to_value(&frame).unwrap();
         assert_eq!(v["type"], "blackboard.snapshot");
         assert_eq!(v["data"]["cursor"], "m1.7");
+    }
+
+    // ---------------------------------------------------------------- a follower on a socket
+
+    use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+
+    use crate::monitor::testing::{context, cooperation, session};
+
+    /// A socket that keeps what it is written, refuses every write after `fails_after` of
+    /// them, and takes `slow` over each.
+    #[derive(Clone)]
+    struct Sink {
+        written: Arc<Mutex<Vec<u8>>>,
+        writes: Arc<AtomicUsize>,
+        fails_after: usize,
+        slow: Duration,
+        /// A write of a frame that holds this text fails, and so does every write after it
+        /// when `after` is set, the frame itself then written.
+        refuse: Option<(&'static str, bool)>,
+        refused: Arc<AtomicBool>,
+    }
+
+    impl Sink {
+        fn new() -> Self {
+            Self::failing_after(usize::MAX)
+        }
+
+        fn failing_after(fails_after: usize) -> Self {
+            Self {
+                written: Arc::default(),
+                writes: Arc::default(),
+                fails_after,
+                slow: Duration::ZERO,
+                refuse: None,
+                refused: Arc::default(),
+            }
+        }
+
+        /// A sink that refuses the frame holding `text`, or, when `after`, every frame after it.
+        fn refusing(text: &'static str, after: bool) -> Self {
+            Self {
+                refuse: Some((text, after)),
+                ..Self::new()
+            }
+        }
+
+        /// Every frame written so far: a text frame as its JSON, a ping and a close by name.
+        fn frames(&self) -> Vec<Value> {
+            let bytes = self.written.lock().unwrap().clone();
+            let mut out = Vec::new();
+            let mut i = 0;
+            while i + 2 <= bytes.len() {
+                let opcode = bytes[i] & 0x0f;
+                let (len, head) = match bytes[i + 1] & 0x7f {
+                    126 => (u16::from_be_bytes([bytes[i + 2], bytes[i + 3]]) as usize, 4),
+                    127 => {
+                        let mut n = [0u8; 8];
+                        n.copy_from_slice(&bytes[i + 2..i + 10]);
+                        (u64::from_be_bytes(n) as usize, 10)
+                    }
+                    n => (n as usize, 2),
+                };
+                let payload = &bytes[i + head..i + head + len];
+                out.push(match opcode {
+                    0x1 => serde_json::from_slice(payload).unwrap(),
+                    0x9 => json!({ "type": "ping" }),
+                    _ => json!({ "type": "close" }),
+                });
+                i += head + len;
+            }
+            out
+        }
+
+        /// The frames once `done` holds of them, within twenty seconds.
+        fn until(&self, done: impl Fn(&[Value]) -> bool) -> Vec<Value> {
+            let deadline = Instant::now() + Duration::from_secs(20);
+            loop {
+                let frames = self.frames();
+                if done(&frames) {
+                    return frames;
+                }
+                assert!(Instant::now() < deadline, "never came: {frames:#?}");
+                std::thread::sleep(Duration::from_millis(20));
+            }
+        }
+    }
+
+    impl std::io::Write for Sink {
+        fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+            if self.writes.fetch_add(1, Ordering::SeqCst) >= self.fails_after
+                || self.refused.load(Ordering::SeqCst)
+            {
+                return Err(std::io::ErrorKind::BrokenPipe.into());
+            }
+            if let Some((text, after)) = self.refuse {
+                if String::from_utf8_lossy(buf).contains(text) {
+                    self.refused.store(true, Ordering::SeqCst);
+                    if !after {
+                        return Err(std::io::ErrorKind::BrokenPipe.into());
+                    }
+                }
+            }
+            std::thread::sleep(self.slow);
+            self.written.lock().unwrap().extend_from_slice(buf);
+            Ok(buf.len())
+        }
+
+        fn flush(&mut self) -> std::io::Result<()> {
+            Ok(())
+        }
+    }
+
+    fn kinds(frames: &[Value]) -> Vec<String> {
+        frames
+            .iter()
+            .map(|f| f["type"].as_str().unwrap_or_default().to_string())
+            .collect()
+    }
+
+    fn has(frames: &[Value], kind: &str, trigger: &str) -> bool {
+        frames
+            .iter()
+            .any(|f| f["type"] == kind && (trigger.is_empty() || f["data"]["trigger"] == trigger))
+    }
+
+    /// A follower of `query`, tuned by `tune`, served on `sink` on a thread of its own until
+    /// the returned flag says the client hung up.
+    fn serve(
+        ctx: &Arc<Context>,
+        query: &[(&str, &str)],
+        tune: impl FnOnce(&mut Follower),
+        sink: &Sink,
+    ) -> (std::thread::JoinHandle<()>, Arc<AtomicBool>) {
+        let mut pairs = vec![("follow", "blackboard")];
+        pairs.extend_from_slice(query);
+        let follow = Follow::parse(&q(&pairs)).unwrap().unwrap();
+        let mut follower = Follower::new(Arc::clone(ctx), follow);
+        tune(&mut follower);
+        let gone = Arc::new(AtomicBool::new(false));
+        let socket = sink.clone();
+        let flag = Arc::clone(&gone);
+        let thread = std::thread::spawn(move || {
+            follower.run(Box::new(socket), &move || flag.load(Ordering::SeqCst))
+        });
+        (thread, gone)
+    }
+
+    fn hang_up((thread, gone): (std::thread::JoinHandle<()>, Arc<AtomicBool>)) {
+        gone.store(true, Ordering::SeqCst);
+        BLACKBOARD.advance();
+        thread.join().unwrap();
+    }
+
+    /// A context over a synthetic repository with a mesh running in it.
+    fn meshed() -> (
+        crate::synthetic::SyntheticRepository,
+        Arc<Context>,
+        Arc<crate::mesh::cooperation::Cooperation>,
+    ) {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let ctx = Arc::new(context(&repo));
+        let c = cooperation();
+        crate::mesh::testing::attach(&ctx, Arc::clone(&c));
+        (repo, ctx, c)
+    }
+
+    /// A follower is written the ready frame with its epoch, then the snapshot with the
+    /// connection's cursor; a change that says something new is a snapshot and signals of
+    /// its own; a quiet connection is pinged and told it is alive, and is read again when the
+    /// refresh passes; a client that hung up ends the connection.
+    #[test]
+    fn a_follower_is_written_its_snapshot_each_change_and_a_heartbeat() {
+        let (_repo, ctx, c) = meshed();
+        let sink = Sink::new();
+        let served = serve(
+            &ctx,
+            &[],
+            |f| {
+                f.heartbeat = Duration::from_millis(200);
+                f.refresh = Duration::from_millis(300);
+            },
+            &sink,
+        );
+        let frames = sink.until(|f| has(f, "blackboard.snapshot", "connect"));
+        assert_eq!(frames[0]["type"], "stream.ready");
+        assert_eq!(frames[0]["data"]["epoch"], json!(epoch(&ctx)));
+        assert!(frames[1]["data"]["cursor"].is_string(), "{frames:#?}");
+
+        session(&c, "s1", "3d", "the runtime train");
+        BLACKBOARD.advance();
+        sink.until(|f| {
+            f.iter().any(|f| {
+                f["type"] == "blackboard.snapshot"
+                    && f["data"]["trigger"] == "change"
+                    && f["data"]["blackboard"]
+                        .to_string()
+                        .contains("the runtime train")
+            })
+        });
+        // a change that says nothing new is answered too: it is read, and its frame is
+        // written only when what it says moved
+        BLACKBOARD.advance();
+        let frames = sink.until(|f| has(f, "stream.heartbeat", "") && has(f, "ping", ""));
+        assert!(
+            has(&frames, "blackboard.signals", ""),
+            "{:?}",
+            kinds(&frames)
+        );
+        hang_up(served);
+    }
+
+    /// A connection that resumes on this process is written what happened after its cursor;
+    /// one whose cursor another process issued, or that cannot be read from, is told to resync
+    /// and where it starts again: in the snapshot, or in a frame of its own when it follows the
+    /// signals alone.
+    #[test]
+    fn a_resumed_follower_is_written_what_it_missed_or_told_where_to_start() {
+        let (_repo, ctx, c) = meshed();
+        session(&c, "s1", "3d", "the runtime train");
+        let epoch = epoch(&ctx);
+
+        let sink = Sink::new();
+        let served = serve(
+            &ctx,
+            &[
+                ("frames", "signals"),
+                ("after", ""),
+                ("epoch", &epoch),
+                ("for", "3d"),
+            ],
+            |_| {},
+            &sink,
+        );
+        sink.until(|f| has(f, "blackboard.signals", "connect"));
+        hang_up(served);
+
+        let sink = Sink::new();
+        let served = serve(
+            &ctx,
+            &[("frames", "signals"), ("after", "x"), ("epoch", "another")],
+            |_| {},
+            &sink,
+        );
+        let frames = sink.until(|f| has(f, "blackboard.signals", "connect"));
+        assert_eq!(
+            kinds(&frames)[..3],
+            ["stream.ready", "stream.resync", "blackboard.signals"]
+        );
+        assert_eq!(frames[2]["data"]["signals"], json!([]));
+        assert!(frames[2]["data"]["cursor"].is_string());
+        hang_up(served);
+
+        let sink = Sink::new();
+        let served = serve(
+            &ctx,
+            &[("after", "not a cursor"), ("epoch", &epoch)],
+            |_| {},
+            &sink,
+        );
+        let frames = sink.until(|f| has(f, "blackboard.snapshot", "connect"));
+        assert_eq!(
+            kinds(&frames)[..3],
+            ["stream.ready", "stream.resync", "blackboard.snapshot"]
+        );
+        hang_up(served);
+    }
+
+    /// More signals than a connection is written in a round is a resync, and the connection
+    /// starts again from now: told in the snapshot, or in a frame of its own when it follows
+    /// the signals alone.
+    #[test]
+    fn a_backlog_beyond_the_bound_in_the_stream_starts_the_client_again() {
+        let (_repo, ctx, c) = meshed();
+        for (tag, frames) in [("both", "snapshot,signals"), ("alone", "signals")] {
+            let sink = Sink::new();
+            let served = serve(&ctx, &[("frames", frames)], |f| f.pages = (1, 1), &sink);
+            sink.until(|f| !f.is_empty());
+            std::thread::sleep(Duration::from_millis(50));
+            for n in 0..3 {
+                session(&c, &format!("{tag}-{n}"), "3d", "one more");
+            }
+            BLACKBOARD.advance();
+            let after = |f: &[Value]| kinds(f).iter().position(|k| k == "stream.resync");
+            let frames = sink.until(|f| after(f).is_some_and(|at| f.len() > at + 1));
+            let at = after(&frames).unwrap();
+            assert!(frames[at + 1]["data"]["cursor"].is_string());
+            hang_up(served);
+        }
+    }
+
+    /// A client whose writes take longer than a change takes to settle is told it lagged, and
+    /// is written the newest snapshot rather than every one it missed.
+    #[test]
+    fn a_slow_client_is_told_it_lagged() {
+        let (_repo, ctx, c) = meshed();
+        let mut sink = Sink::new();
+        sink.slow = SETTLE * 2;
+        let served = serve(&ctx, &[("frames", "snapshot")], |_| {}, &sink);
+        sink.until(|f| has(f, "blackboard.snapshot", "connect"));
+        let deadline = Instant::now() + Duration::from_secs(20);
+        let mut n = 0;
+        while !has(&sink.frames(), "stream.lagged", "") {
+            assert!(
+                Instant::now() < deadline,
+                "never told: {:?}",
+                kinds(&sink.frames())
+            );
+            session(&c, &format!("s{n}"), "3d", &format!("change {n}"));
+            BLACKBOARD.advance();
+            n += 1;
+            std::thread::sleep(SETTLE / 2);
+        }
+        hang_up(served);
+    }
+
+    /// What cannot be read closes the connection with the reason, and a client that cannot be
+    /// written to ends it, at every write a connection makes.
+    #[test]
+    fn a_follower_that_cannot_read_or_write_ends() {
+        let (_repo, ctx, c) = meshed();
+        let run = |follow: Follow, sink: &Sink, tune: &dyn Fn(&mut Follower)| {
+            let mut f = Follower::new(Arc::clone(&ctx), follow);
+            tune(&mut f);
+            f.run(Box::new(sink.clone()), &|| false);
+        };
+        let parsed = |pairs: &[(&str, &str)]| {
+            let mut all = vec![("follow", "blackboard")];
+            all.extend_from_slice(pairs);
+            Follow::parse(&q(&all)).unwrap().unwrap()
+        };
+        let none = |_: &mut Follower| {};
+
+        // a board that cannot be read, and signals that cannot be read
+        let mut unreadable = parsed(&[]);
+        unreadable.checkouts = Some("nowhere".into());
+        let sink = Sink::new();
+        run(unreadable, &sink, &none);
+        assert_eq!(
+            kinds(&sink.frames()),
+            ["stream.ready", "stream.closing", "close"]
+        );
+        let mut unreadable = parsed(&[("frames", "signals")]);
+        unreadable.sources = Some("nowhere".into());
+        let sink = Sink::new();
+        run(unreadable, &sink, &none);
+        assert_eq!(
+            kinds(&sink.frames()),
+            ["stream.ready", "stream.closing", "close"]
+        );
+
+        // every write of the connection's start
+        let epoch = epoch(&ctx);
+        session(&c, "s1", "3d", "the runtime train");
+        for (pairs, writes) in [
+            (vec![], 2),
+            (
+                vec![("frames", "signals"), ("after", "x"), ("epoch", "another")],
+                3,
+            ),
+            (vec![("after", "x"), ("epoch", "another")], 3),
+            (
+                vec![
+                    ("frames", "signals"),
+                    ("after", ""),
+                    ("epoch", epoch.as_str()),
+                ],
+                2,
+            ),
+        ] {
+            for fails_after in 0..writes {
+                let sink = Sink::failing_after(fails_after);
+                run(parsed(&pairs), &sink, &none);
+                assert!(
+                    sink.writes.load(Ordering::SeqCst) > fails_after,
+                    "{pairs:?}"
+                );
+            }
+        }
+
+        // a write in the stream, counted from the ready frame: a snapshot, the signals, a
+        // resync and what follows it; changes come two sessions at a time, so that a page of
+        // one signal always has more after it
+        let pages = |f: &mut Follower| f.pages = (1, 1);
+        type Tune<'a> = &'a dyn Fn(&mut Follower);
+        let streams: [(&str, Tune, usize); 6] = [
+            ("snapshot", &none, 2),
+            ("signals", &none, 1),
+            ("signals", &pages, 1),
+            ("signals", &pages, 2),
+            ("snapshot,signals", &pages, 3),
+            ("snapshot,signals", &pages, 4),
+        ];
+        for (n, (frames, tune, fails_after)) in streams.into_iter().enumerate() {
+            let done = Arc::new(AtomicBool::new(false));
+            let writer = {
+                let (c, done) = (Arc::clone(&c), Arc::clone(&done));
+                std::thread::spawn(move || {
+                    let mut k = 0;
+                    while !done.load(Ordering::SeqCst) {
+                        std::thread::sleep(Duration::from_millis(100));
+                        for _ in 0..2 {
+                            session(&c, &format!("w{n}-{k}"), "3d", &format!("change {n} {k}"));
+                            k += 1;
+                        }
+                        BLACKBOARD.advance();
+                    }
+                })
+            };
+            let sink = Sink::failing_after(fails_after);
+            run(parsed(&[("frames", frames)]), &sink, tune);
+            done.store(true, Ordering::SeqCst);
+            writer.join().unwrap();
+        }
+        let sink = Sink::failing_after(2);
+        run(parsed(&[("frames", "snapshot")]), &sink, &|f| {
+            f.heartbeat = Duration::from_millis(50)
+        });
+        let sink = Sink::failing_after(3);
+        run(parsed(&[("frames", "snapshot")]), &sink, &|f| {
+            f.heartbeat = Duration::from_millis(50)
+        });
+    }
+
+    /// A snapshot too large for one frame is written as a reference to where it is read, with
+    /// the connection's cursor.
+    #[test]
+    fn a_snapshot_too_large_for_a_frame_is_withheld() {
+        let (_repo, ctx, _c) = meshed();
+        let follower = Follower::new(
+            Arc::clone(&ctx),
+            Follow::parse(&q(&[("follow", "blackboard")]))
+                .unwrap()
+                .unwrap(),
+        );
+        let sink = Sink::new();
+        let mut socket: Box<dyn std::io::Write + Send> = Box::new(sink.clone());
+        let big = json!({ "workers": "x".repeat(ws::MAX_FRAME_BYTES) });
+        assert!(follower.write_snapshot(&mut socket, Trigger::Change, &big, "m1.2"));
+        let frames = sink.frames();
+        assert_eq!(frames[0]["data"]["blackboard"]["withheld"], "too_large");
+        assert!(
+            frames[0]["data"]["blackboard"]["bytes"].as_u64().unwrap() > ws::MAX_FRAME_BYTES as u64
+        );
+        assert!(frames[0]["data"]["blackboard"]["self"]
+            .as_str()
+            .unwrap()
+            .ends_with("?checkouts=repository"));
+        assert_eq!(frames[0]["data"]["cursor"], "m1.2");
+    }
+
+    /// A shared read that fails is the failure, and is not kept; a frame list that names
+    /// something else is no list; the substance of a snapshot drops what each worker's clock
+    /// says.
+    #[test]
+    fn a_failed_read_is_not_kept_and_a_workers_clock_is_no_substance() {
+        static SLOT: Mutex<Option<Shared>> = Mutex::new(None);
+        assert_eq!(
+            shared(&SLOT, "k", 1, || Err("no".into())).unwrap_err(),
+            "no"
+        );
+        assert_eq!(*shared(&SLOT, "k", 1, || Ok(json!(1))).unwrap(), json!(1));
+        assert_eq!(frames("snapshot,elsewhere"), None);
+        let a =
+            json!({ "workers": [{ "key": "w", "last_seen_seconds_ago": 1, "last_beat_ms": 5 }] });
+        let b =
+            json!({ "workers": [{ "key": "w", "last_seen_seconds_ago": 9, "last_beat_ms": 7 }] });
+        assert_eq!(substance(&a), substance(&b));
+    }
+
+    /// A connection on which nothing changes is read again when the refresh passes.
+    #[test]
+    fn a_quiet_follower_is_read_again_when_the_refresh_passes() {
+        let (_repo, ctx, _c) = meshed();
+        let sink = Sink::new();
+        let served = serve(&ctx, &[], |f| f.refresh = Duration::ZERO, &sink);
+        sink.until(|f| has(f, "blackboard.snapshot", "connect"));
+        std::thread::sleep(Duration::from_millis(100));
+        hang_up(served);
+    }
+
+    /// A client that cannot be written the frame it is owed ends the connection there: the
+    /// lagged notice, and what follows a resync, in the snapshot or in a frame of its own.
+    #[test]
+    fn a_refused_notice_ends_the_connection() {
+        let (_repo, ctx, c) = meshed();
+        let changes = |tag: &'static str, done: Arc<AtomicBool>| {
+            let c = Arc::clone(&c);
+            std::thread::spawn(move || {
+                let mut k = 0;
+                while !done.load(Ordering::SeqCst) {
+                    for _ in 0..2 {
+                        session(&c, &format!("{tag}-{k}"), "3d", &format!("{tag} {k}"));
+                        k += 1;
+                    }
+                    BLACKBOARD.advance();
+                    std::thread::sleep(SETTLE / 3);
+                }
+            })
+        };
+        let pages = |f: &mut Follower| f.pages = (1, 1);
+        type Tune<'a> = &'a dyn Fn(&mut Follower);
+        let cases: [(&str, &str, Sink, Tune); 3] = [
+            (
+                "lag",
+                "snapshot",
+                Sink::refusing("stream.lagged", false),
+                &|_| {},
+            ),
+            (
+                "both",
+                "snapshot,signals",
+                Sink::refusing("stream.resync", true),
+                &pages,
+            ),
+            (
+                "alone",
+                "signals",
+                Sink::refusing("stream.resync", true),
+                &pages,
+            ),
+        ];
+        for (tag, frames, mut sink, tune) in cases {
+            if tag == "lag" {
+                sink.slow = SETTLE * 2;
+            }
+            let done = Arc::new(AtomicBool::new(false));
+            let writer = changes(tag, Arc::clone(&done));
+            let follow = Follow::parse(&q(&[("follow", "blackboard"), ("frames", frames)]))
+                .unwrap()
+                .unwrap();
+            let mut f = Follower::new(Arc::clone(&ctx), follow);
+            tune(&mut f);
+            f.run(Box::new(sink.clone()), &|| false);
+            done.store(true, Ordering::SeqCst);
+            writer.join().unwrap();
+            assert!(sink.refused.load(Ordering::SeqCst), "{tag}");
+        }
+    }
+
+    /// What is not an object, and a worker that is not one, is its own substance.
+    #[test]
+    fn what_is_not_an_object_is_its_own_substance() {
+        assert_eq!(substance(&json!(1)), json!(1));
+        assert_eq!(substance(&json!({ "at": "t", "x": 1 })), json!({ "x": 1 }));
+        assert_eq!(
+            substance(&json!({ "workers": [1, { "last_beat_ms": 2 }] })),
+            json!({ "workers": [1, {}] })
+        );
+    }
+
+    /// A change wins over a due refresh, a due refresh is a round, and nothing is none.
+    #[test]
+    fn a_round_answers_a_change_before_a_refresh() {
+        assert_eq!(Trigger::of(true, true), Some(Trigger::Change));
+        assert_eq!(Trigger::of(true, false), Some(Trigger::Change));
+        assert_eq!(Trigger::of(false, true), Some(Trigger::Refresh));
+        assert_eq!(Trigger::of(false, false), None);
+    }
+
+    /// A round in which nothing changed and no refresh is due writes nothing and waits again.
+    #[test]
+    fn a_round_with_nothing_to_answer_writes_nothing() {
+        static QUIET: Generation = Generation::new();
+        let (_repo, ctx, _c) = meshed();
+        let sink = Sink::new();
+        let served = serve(
+            &ctx,
+            &[("frames", "snapshot")],
+            |f| f.changes = &QUIET,
+            &sink,
+        );
+        sink.until(|f| has(f, "blackboard.snapshot", "connect"));
+        std::thread::sleep(LOOK + LOOK / 2);
+        assert_eq!(
+            kinds(&sink.frames()),
+            ["stream.ready", "blackboard.snapshot"]
+        );
+        hang_up(served);
     }
 }

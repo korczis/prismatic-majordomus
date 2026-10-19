@@ -213,7 +213,7 @@ impl Followed {
             Followed::Blackboard(follower) => {
                 let open = OPEN.fetch_add(1, Ordering::Relaxed) + 1;
                 tracing::debug!(connections = open, "a blackboard follower opened");
-                follower.run(socket, hung_up);
+                follower.run(socket, &hung_up);
                 let open = OPEN.fetch_sub(1, Ordering::Relaxed) - 1;
                 tracing::debug!(connections = open, "a blackboard follower closed");
             }

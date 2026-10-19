@@ -456,4 +456,77 @@ mod tests {
             );
         }
     }
+
+    /// A sibling checkout whose board cannot be read is listed with the reason, and the answer
+    /// says it is not complete: a server still starting, and one that answers for the sibling
+    /// with a board this executable cannot read.
+    #[test]
+    fn a_sibling_board_that_cannot_be_read_is_named_and_the_answer_is_incomplete() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let ctx = crate::monitor::testing::context(&repo);
+        let root = repo.root().canonicalize().unwrap();
+        let git = |args: &[&str]| {
+            let ok = std::process::Command::new("git")
+                .args(["-c", "user.email=t@t", "-c", "user.name=t"])
+                .args(args)
+                .current_dir(&root)
+                .status()
+                .unwrap()
+                .success();
+            assert!(ok, "git {args:?}");
+        };
+        git(&["commit", "-q", "--allow-empty", "-m", "root"]);
+        let sibling = root.join("side");
+        git(&[
+            "worktree",
+            "add",
+            "-q",
+            "-b",
+            "side",
+            sibling.to_str().unwrap(),
+        ]);
+        let sibling = sibling.canonicalize().unwrap();
+        let lease = lease::lease_file(&sibling, &server::local_half(&root));
+        std::fs::create_dir_all(lease.parent().unwrap()).unwrap();
+        let read = || {
+            let list = peers_list(
+                &ctx,
+                PeerListInput {
+                    checkouts: Checkouts::Repository,
+                },
+            )
+            .unwrap();
+            let reason = list
+                .boards
+                .iter()
+                .find(|b| b.checkout.worktree == sibling)
+                .map(|b| b.reason.clone())
+                .expect("the sibling's board is listed");
+            (list.complete, reason.unwrap_or_default())
+        };
+
+        // a lease its owner has not written yet: the server is still starting
+        std::fs::write(&lease, "").unwrap();
+        let (complete, reason) = read();
+        assert!(!complete);
+        assert!(reason.contains("no board to read yet"), "{reason}");
+
+        // a server that answers for the sibling with a board that is not a list of peers
+        let url =
+            crate::monitor::testing::http_stub(repository::identity(&sibling), r#"{"peers": 7}"#);
+        let doc = lease::LeaseDocument {
+            schema: lease::SCHEMA.into(),
+            pid: std::process::id(),
+            token: "t".into(),
+            root: sibling.clone(),
+            url: Some(url),
+            started_at: "2026-10-18T00:00:00Z".into(),
+            executable: None,
+            version: Some(crate::VERSION.into()),
+        };
+        std::fs::write(&lease, serde_json::to_string(&doc).unwrap()).unwrap();
+        let (complete, reason) = read();
+        assert!(!complete);
+        assert!(reason.contains("cannot read"), "{reason}");
+    }
 }

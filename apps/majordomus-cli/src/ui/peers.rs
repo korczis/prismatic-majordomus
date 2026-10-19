@@ -347,4 +347,65 @@ mod tests {
         );
         assert!(html.contains("data-follow-state"), "{html}");
     }
+
+    /// Every part of an answer is drawn: an exclusive claim that the mesh marked conflicted,
+    /// a pair of claims that meet with the paths where, a review for a named reviewer and one
+    /// for anyone, a handover for whoever takes it, and a relation with its evidence.
+    #[test]
+    fn what_meets_what_waits_and_what_relates_are_drawn() {
+        let board = serde_json::json!({
+            "workers": [{
+                "key": "mesh:s/one",
+                "claims": [{ "scope": ["src"], "mode": "exclusive", "conflicted": true }],
+            }],
+            "conflicts": [{
+                "certainty": "confirmed",
+                "first": { "worker": "mesh:s/one", "claim": "c-1" },
+                "second": { "worker": "board:x/p1", "claim": "announcement" },
+                "paths": [{ "yours": "src", "theirs": "src/main.rs" }],
+            }],
+            "reviews": [
+                { "from": "mesh:s/one", "reviewer": "1b", "issue": "I1", "subject": "read #1" },
+                { "from": "mesh:s/one", "subject": "anyone, please" },
+            ],
+            "handovers": [{ "runtime": "r-1", "issue": "I2", "name": "the rest", "branch": "b" }],
+            "relations": [{
+                "kind": "same_worker",
+                "evidence": "verified",
+                "from": "board:x/p1",
+                "to": "mesh:s/one",
+            }],
+        });
+        let answer = Answer {
+            source: BLACKBOARD,
+            route: None,
+            exposure: crate::ui::source::Exposure::default(),
+            value: Ok(std::sync::Arc::new(board)),
+            took: std::time::Duration::from_millis(1),
+            standing: crate::ui::source::Standing::NOW,
+        };
+        let html = [
+            workers(&answer),
+            conflicts(&answer),
+            waiting(&answer),
+            relations(&answer),
+        ]
+        .map(|e| e.render())
+        .concat();
+        for said in [
+            " exclusive",
+            " conflicted",
+            "mesh:s/one · c-1",
+            "board:x/p1 · announcement",
+            "src · src/main.rs",
+            ">1b<",
+            ">anyone<",
+            "I1 · read #1",
+            "whoever takes it",
+            "I2 · the rest · b",
+            "same worker",
+        ] {
+            assert!(html.contains(said), "{said:?} is not in {html}");
+        }
+    }
 }

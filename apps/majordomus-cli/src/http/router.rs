@@ -1330,6 +1330,81 @@ mod tests {
         );
     }
 
+    /// The blackboard rides the same upgrade: a page of this server is handed its follower,
+    /// which is served until the client hangs up; a server whose registry does not declare
+    /// the blackboard refuses it to a caller beyond loopback, as it would refuse the read.
+    #[test]
+    fn the_blackboard_is_followed_on_the_live_channel_as_it_is_read() {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a synthetic repository");
+        let upgrade = |query: &str, host: &str, remote: &str, key: bool| {
+            let mut headers = vec![
+                ("Upgrade".into(), "websocket".into()),
+                ("Connection".into(), "Upgrade".into()),
+                ("Sec-WebSocket-Version".into(), "13".into()),
+                ("Host".into(), host.into()),
+            ];
+            if key {
+                headers.push((
+                    "Sec-WebSocket-Key".into(),
+                    "dGhlIHNhbXBsZSBub25jZQ==".into(),
+                ));
+            }
+            Request::parse_target("GET", &format!("{}?{query}", events::PATH), Vec::new())
+                .with_headers(headers)
+                .with_remote(Some(remote.parse().unwrap()))
+        };
+        let router = Router::new(repo.context().expect("a context"), "test").with_ui(None);
+        let here = |query: &str, key: bool| upgrade(query, "127.0.0.1:8741", "127.0.0.1", key);
+        match router.websocket(&here("follow=blackboard", true)) {
+            Some(Ok(accepted)) => {
+                let socket: Box<dyn std::io::Write + Send> = Box::new(Vec::new());
+                accepted.serve_until(socket, || true);
+            }
+            Some(Err(r)) => panic!("refused: {}", r.body.text()),
+            None => panic!("an upgrade that follows the blackboard was not recognised"),
+        }
+        // a query the channel does not take, and an upgrade that is not a WebSocket one
+        for (query, key) in [
+            ("follow=blackboard&execution=e1", true),
+            ("follow=blackboard", false),
+        ] {
+            match router.websocket(&here(query, key)) {
+                Some(Err(r)) => assert!(r.status >= 400, "{query}: {}", r.body.text()),
+                _ => panic!("{query} (key: {key}) was followed"),
+            }
+        }
+        // a caller beyond loopback may follow what it may read
+        assert!(router
+            .websocket(&upgrade(
+                "follow=blackboard",
+                "192.168.1.20:8741",
+                "192.168.1.5",
+                true
+            ))
+            .is_some());
+
+        let modules = crate::capability::builtin::modules()
+            .into_iter()
+            .filter(|m| m.id.as_str() != "blackboard")
+            .collect();
+        let registry = crate::capability::CapabilityRegistry::builder()
+            .with_modules(modules)
+            .build()
+            .unwrap();
+        let ctx = Context::new(Arc::new(repo.index().unwrap()), Arc::new(registry));
+        let router = Router::new(Arc::new(ctx), "test").with_ui(None);
+        match router.websocket(&upgrade(
+            "follow=blackboard",
+            "192.168.1.20:8741",
+            "192.168.1.5",
+            true,
+        )) {
+            Some(Err(r)) => assert_eq!(r.status, 403, "{}", r.body.text()),
+            Some(Ok(_)) => panic!("a caller beyond loopback followed what it may not read"),
+            None => panic!("an upgrade that follows the blackboard was not recognised"),
+        }
+    }
+
     #[test]
     fn only_an_address_or_localhost_is_a_host_no_rebinding_domain_can_name() {
         for host in [

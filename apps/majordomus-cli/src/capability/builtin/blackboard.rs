@@ -863,13 +863,50 @@ fn claim_ref(worker: &BlackboardWorker, claim: &BlackboardClaim) -> BlackboardCl
 
 // ---------------------------------------------------------------- the handler
 
+/// Node id → display name: every node the mesh has observed, and this one.
+fn machines(
+    nodes: Vec<crate::mesh::registry::NodeRecord>,
+    me: Option<crate::mesh::identity::PublicIdentity>,
+) -> HashMap<String, String> {
+    let mut machines = HashMap::new();
+    for n in nodes {
+        machines.insert(n.node_id.as_str().to_string(), n.display_name);
+    }
+    if let Some(me) = me {
+        machines.insert(me.node_id.as_str().to_string(), me.display_name);
+    }
+    machines
+}
+
+/// How a mesh that is not read stands, from what the repository declares: one it does not
+/// declare, or declares disabled, is not missing; one it declares and that could not be read
+/// is, for `reason`.
+fn absence(
+    declaration: Option<Result<crate::mesh::MeshConfig, crate::mesh::MeshError>>,
+    reason: String,
+) -> MeshAbsence {
+    match declaration {
+        None => MeshAbsence::Undeclared("the repository declares no mesh".into()),
+        Some(Ok(config)) if !config.enabled => {
+            MeshAbsence::Undeclared("the repository's mesh declaration is disabled".into())
+        }
+        _ => MeshAbsence::Unreachable(reason),
+    }
+}
+
 fn snapshot(ctx: &Context, input: BlackboardInput) -> Result<Blackboard, CapabilityError> {
-    let board = super::peers::peers_list(
-        ctx,
-        PeerListInput {
-            checkouts: input.checkouts,
-        },
-    )?;
+    let asked = PeerListInput {
+        checkouts: input.checkouts,
+    };
+    super::peers::peers_list(ctx, asked).and_then(|board| read(ctx, input, &board))
+}
+
+/// The blackboard over `board`: the signals and the mesh read, and every source joined.
+fn read(
+    ctx: &Context,
+    input: BlackboardInput,
+    board: &PeerList,
+) -> Result<Blackboard, CapabilityError> {
     let wanted = input.signals.unwrap_or(DEFAULT_SIGNALS).min(MAX_SIGNALS);
     // no signals asked for is no monitor read: the journal is read once less, which is most
     // of what the answer costs
@@ -898,33 +935,19 @@ fn snapshot(ctx: &Context, input: BlackboardInput) -> Result<Blackboard, Capabil
                 .collect()
         })
         .unwrap_or_default();
-    let mut machines: HashMap<String, String> = ctx
-        .mesh
-        .nodes()
-        .into_iter()
-        .map(|n| (n.node_id.as_str().to_string(), n.display_name))
-        .collect();
-    if let Some(me) = ctx.mesh.status().identity {
-        machines.insert(me.node_id.as_str().to_string(), me.display_name);
-    }
+    let machines = machines(ctx.mesh.nodes(), ctx.mesh.status().identity);
     let reason = ctx
         .mesh
         .cooperation_status()
         .reason
         .unwrap_or_else(|| "the mesh is not running in this server".to_string());
-    let absence = match super::mesh::resolved_declaration(ctx).declaration {
-        None => MeshAbsence::Undeclared("the repository declares no mesh".into()),
-        Some(Ok(config)) if !config.enabled => {
-            MeshAbsence::Undeclared("the repository's mesh declaration is disabled".into())
-        }
-        _ => MeshAbsence::Unreachable(reason),
-    };
+    let absence = absence(super::mesh::resolved_declaration(ctx).declaration, reason);
     let root = PathBuf::from(&ctx.index.repository.root);
     let root = root.canonicalize().unwrap_or(root);
     let head = crate::worktree::git::head_of(&root).ok().flatten();
     Ok(project(
         &Reads {
-            board: &board,
+            board,
             mesh: state.as_ref().ok_or(absence),
             machines: &machines,
             beats: &beats,
@@ -1324,6 +1347,194 @@ mod tests {
         let b = answer(&board, Ok(&CooperationState::default()));
         assert!(!b.complete);
         assert_eq!(b.sources[0].state, BlackboardSourceState::Partial);
+    }
+
+    /// What a reading could not read is said with its reason, a peer that left is departed
+    /// with the title its client gave, a peer of no checkout is no worker, a handover nobody
+    /// took waits, and a monitor source that was read is `ok`.
+    #[test]
+    fn what_was_not_read_who_left_and_what_waits_are_said() {
+        let mut gone = peer("p2", "codex", "c1", &[]);
+        gone.attached = false;
+        gone.client.title = Some("Codex".into());
+        let mut nowhere = peer("p3", "x", "c1", &[]);
+        nowhere.checkout = None;
+        let mut board = list(vec![peer("p1", "a", "c1", &[]), gone, nowhere], "c1", None);
+        board.complete = false;
+        board.boards[0].reason = Some("its server is starting".into());
+        let here = stream("1", "1", "a");
+        let body = crate::mesh::journal::HandoverBody {
+            id: "h".into(),
+            task: None,
+            issue: Some("I1".into()),
+            milestone: None,
+            branch: Some("side".into()),
+            head: None,
+            created_at: None,
+            name: Some("the rest".into()),
+            body: "# Objective\n".into(),
+        };
+        let handover = |id: &str, consumed: &[&str]| crate::mesh::state::HandoverView {
+            id: id.into(),
+            stream: here.clone(),
+            runtime: here.runtime_key(),
+            published_lamport: 1,
+            handover: body.clone(),
+            consumed_by: consumed.iter().map(|c| (*c).into()).collect(),
+        };
+        let state = CooperationState {
+            handovers: vec![handover("h-open", &[]), handover("h-taken", &["s/x"])],
+            ..CooperationState::default()
+        };
+        let monitor: MonitorPage = serde_json::from_value(serde_json::json!({
+            "signals": [], "for_you": 0, "suppressed": 0, "cursor": "x0", "more": false,
+            "sources": [{"source": "mesh", "state": "ok", "signals": 0, "suppressed": 0}]
+        }))
+        .unwrap();
+        let (machines, beats) = (HashMap::new(), HashMap::new());
+        let b = project(
+            &Reads {
+                board: &board,
+                mesh: Ok(&state),
+                machines: &machines,
+                beats: &beats,
+                monitor: &monitor,
+            },
+            "2026-10-18T00:00:00Z".into(),
+            "c1".into(),
+            None,
+        );
+        assert!(!b.complete);
+        assert_eq!(
+            b.sources[0].reason.as_deref(),
+            Some("its server is starting")
+        );
+        let read = b
+            .sources
+            .iter()
+            .find(|s| s.source == "monitor.mesh")
+            .unwrap();
+        assert_eq!(read.state, BlackboardSourceState::Ok);
+        assert_eq!(b.workers.len(), 2, "a peer of no checkout is no worker");
+        let left = b.workers.iter().find(|w| w.client == "codex").unwrap();
+        assert_eq!(left.presence, BlackboardPresence::Departed);
+        assert_eq!(left.title.as_deref(), Some("Codex"));
+        assert_eq!(b.handovers.len(), 1, "{:?}", b.handovers);
+        assert_eq!(b.handovers[0].id, "h-open");
+        assert_eq!(b.handovers[0].name.as_deref(), Some("the rest"));
+    }
+
+    /// Every observed node is named, and this one by its own name.
+    #[test]
+    fn every_observed_node_and_this_one_are_named() {
+        let me = crate::mesh::identity::NodeIdentity::ephemeral()
+            .unwrap()
+            .public;
+        let other = crate::mesh::identity::NodeIdentity::ephemeral()
+            .unwrap()
+            .public;
+        let node: crate::mesh::registry::NodeRecord = serde_json::from_value(serde_json::json!({
+            "node_id": other.node_id, "public_key": other.public_key, "display_name": "lundra",
+            "instance_id": other.instance_id, "trust": { "state": "observed" },
+            "presence": "present", "endpoints": [], "capabilities": [], "repositories": [],
+            "protocol_version": 1, "version": "t", "sources": [], "first_seen": "",
+            "last_seen": "", "restarts": 0,
+        }))
+        .unwrap();
+        let named = machines(vec![node], Some(me.clone()));
+        assert_eq!(named[other.node_id.as_str()], "lundra");
+        assert_eq!(named[me.node_id.as_str()], me.display_name);
+        assert!(machines(Vec::new(), None).is_empty());
+    }
+
+    /// A review for anyone relates nobody, and the reviews listed stop at the bound while
+    /// every one is still read.
+    #[test]
+    fn a_review_for_anyone_relates_nobody_and_the_list_is_bounded() {
+        let board = list(vec![peer("p1", "codex", "c1", &[])], "c1", None);
+        let review = |n: usize, reviewer: Option<&str>| ReviewView {
+            key: format!("s/r-{n}"),
+            session: "elsewhere/s9".into(),
+            subject: "read this".into(),
+            scope: Vec::new(),
+            issue: None,
+            reviewer: reviewer.map(str::to_string),
+            body: None,
+            state: ReviewState::Open,
+            answers: Vec::new(),
+            result: None,
+        };
+        let mut reviews = vec![review(0, None)];
+        reviews.extend((1..=MAX_RECORDS).map(|n| review(n, Some("1b"))));
+        let state = CooperationState {
+            reviews,
+            ..CooperationState::default()
+        };
+        let b = answer(&board, Ok(&state));
+        assert_eq!(b.reviews.len(), MAX_RECORDS);
+        assert_eq!(b.reviews[0].reviewer, None);
+        assert_eq!(
+            b.relations
+                .iter()
+                .filter(|r| r.kind == BlackboardRelationKind::Review)
+                .count(),
+            MAX_RECORDS,
+            "the review for anyone relates nobody"
+        );
+    }
+
+    /// A mesh the repository does not declare, or declares disabled, is not missing; one it
+    /// declares that could not be read is, with the reason.
+    #[test]
+    fn a_mesh_is_missing_only_when_it_is_declared() {
+        let declared = |enabled: bool| {
+            crate::mesh::MeshConfig::from_metadata(
+                &serde_json::json!({
+                    "schema": "mesh/v1", "kind": "mesh-declaration", "id": "x", "enabled": enabled,
+                }),
+                "x",
+            )
+        };
+        let undeclared = |a: MeshAbsence| matches!(a, MeshAbsence::Undeclared(_));
+        assert!(undeclared(absence(None, "off".into())));
+        assert!(undeclared(absence(Some(declared(false)), "off".into())));
+        assert!(matches!(
+            absence(Some(declared(true)), "not active".into()),
+            MeshAbsence::Unreachable(r) if r == "not active"
+        ));
+    }
+
+    /// Asked through the capability, a running mesh is read, and signals asked of a source the
+    /// monitor does not know are refused.
+    #[test]
+    fn the_handler_reads_a_running_mesh_and_refuses_an_unknown_source() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let mesh_of = |ctx: &Context| {
+            let v = ctx
+                .execute(
+                    "blackboard.snapshot",
+                    serde_json::json!({ "checkouts": "this", "signals": 0 }),
+                )
+                .unwrap();
+            let mesh = v["sources"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .find(|s| s["source"] == "mesh")
+                .cloned()
+                .unwrap();
+            (mesh["state"].as_str().unwrap().to_string(), v)
+        };
+        let ctx = repo.context().unwrap();
+        crate::mesh::testing::attach(&ctx, crate::monitor::testing::cooperation());
+        let (state, v) = mesh_of(&ctx);
+        assert_eq!(state, "ok", "{v}");
+        assert!(ctx
+            .execute(
+                "blackboard.snapshot",
+                serde_json::json!({ "checkouts": "this", "signals": 5, "sources": "nowhere" }),
+            )
+            .is_err());
     }
 
     #[test]
