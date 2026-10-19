@@ -1,0 +1,45 @@
+id: I2511
+milestone: an-intent-is-followed-to-the-deployment-that-carries-it
+title: "The sentence-to-verdict case continues to a deployment: satisfied only after a successful observation, never after a failed one, and across a restart"
+slug: one-intent-travels-to-its-deployment
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Write one test case that, in a fresh disposable repository, carries an intent with a deployment criterion through its plan and its evidence, restarts the server in the middle, feeds a fixture forge observation, and asserts at each step what every surface reads, ending satisfied only after the successful deployment is observed."
+why: "campaigns/majordomus-autonomous-idd-maximal/08_E2E_ROLLOUT.md asks for one small golden intent proved first against fixtures with a deterministic fake forge, with a forced restart, and campaigns/majordomus-autonomous-idd-maximal/14_TESTING_CHAOS_PERFORMANCE.md names the scenarios S01, S13 (a release was created and the deploy failed, so the intent stays unsatisfied) and S30; campaigns/majordomus-autonomous-idd-maximal/19_ACCEPTANCE_TRACEABILITY_MATRIX.md (AC-029) asks that a disposable repository proves the path end to end. I2545 plans the case from a sentence to a derived verdict and stops where the evidence is a test. The segment after it, from merged work to an observed deployment and through a restart, has no case, so a change that breaks the seam passes every existing one."
+current_state: "test/cases holds 2978 (an intent is proposed), 386 (a plan is held to its intent), 367 and 890 (satisfied only by current evidence), 895 (a finished task does not satisfy an intent), 388 (realisation across providers) and 19 (end to end of the task lifecycle). None involves a deployment or a server restart, and I2545, which joins proposal to verdict, is planned and not written."
+desired_state: "One case builds a repository from nothing, plans an intent with one test criterion and one deployment criterion through the capabilities I2545 exercises, and compares the stage and each criterion's state over the command line, HTTP and MCP after every step. The server is stopped and started once in the middle. A second pass with a failed deployment in the fixture never reads satisfied. The case prints which effects were fixtures. A use case under .ai/repo/use-cases names the case as its proof."
+scope:
+  - "test/cases"
+  - "test/fixtures"
+  - "apps/majordomus-cli/tests/common"
+  - ".ai/repo/use-cases"
+  - "docs/DOGFOODING.md"
+  - "docs/USE_CASES.md"
+  - ".ai/repo/project/issues/I2511.yaml"
+non_scope:
+  - "A live run against GitHub or a real deployment: the case proves the join with a fixture observation and says so"
+  - "Launching an agent to do the work: the case makes the code change itself"
+  - "Chaos beyond one restart: partitions and stale claims are tested under mesh-journal-converges"
+  - "Changing any capability: a defect the case finds is its own issue"
+depends_on:
+  - "I2503"
+  - "I2506"
+  - "I2507"
+  - "I2545"
+acceptance_criteria:
+  - "The case passes in a repository created inside the case, with no path of this repository's project model read"
+  - "After the test evidence is recorded and before any observation, the deployment criterion reads not derivable and the intent does not read satisfied"
+  - "The server is stopped and started between the start of the issue and its evidence, and the execution accepted before is listed afterwards as interrupted or final, never absent"
+  - "With the successful fixture observation the intent reads satisfied and intent explain names the merge, the release and the deployment; with the failed one it reads unsatisfied and names the deployment criterion"
+  - "At every step the stage and criterion states are equal over the command line, HTTP and MCP"
+  - "The output of the case states that the forge observation was a fixture"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 19_end_to_end 2978_an_intent_is_proposed_by_a_capability"
+  - "majordomus intent validate"
+evidence_required:
+  - "intent_to_deployment_case"
+  - "failed_deployment_never_satisfies"
+created_at: 2026-10-13
+updated_at: 2026-10-13

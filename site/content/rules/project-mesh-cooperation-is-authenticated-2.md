@@ -4,10 +4,10 @@ description = "Mesh cooperation is admitted per link, replicated through one jou
 weight = 123
 [extra]
 kind = "rule"
-slug = "project-mesh-cooperation-is-authenticated-1"
-identity = "project.mesh-cooperation-is-authenticated@1"
+slug = "project-mesh-cooperation-is-authenticated-2"
+identity = "project.mesh-cooperation-is-authenticated@2"
 status = "active"
-source = ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md"
+source = ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md"
 +++
 {% raw %}
 
@@ -29,12 +29,34 @@ promise depend on where the other worker happens to run.
 
 ## Required behaviour
 
-1. A link is established only by `Cooperation::dial` and `Cooperation::accept_hello`,
-   which verify, in order: message size and shape, the Ed25519 signature under the hello
-   (or welcome) domain, the timestamp against the skew window, the nonce against replay,
-   the negotiated protocol range, that the peer is not this runtime, that the peer's mesh
-   repository id equals this runtime's, and that the peer's key is trusted by the declared
-   policy. Each failure is a `RefusalCode`, counted and listed with its detail.
+1. A link is established only by `Cooperation::dial` and `Cooperation::accept_hello`.
+   The hello checks, in the order `accept_hello` runs them — the first that fails decides
+   the refusal, whatever else is wrong with the hello:
+   1. cooperation is running (`not_active`);
+   2. the message is within the link message bound (`oversized`);
+   3. it has the shape of a hello and a well-formed card (`malformed`);
+   4. the Ed25519 signature verifies under the hello domain (`signature`);
+   5. the timestamp is within the skew window (`stale`);
+   6. the nonce is 32 hex characters (`malformed`);
+   7. the protocol ranges meet (`protocol_unsupported`);
+   8. the peer is not this runtime (`self_link`);
+   9. a hello that names its recipient names this runtime (`misaddressed`);
+   10. the peer's mesh repository id equals this runtime's (`repository_mismatch`);
+   11. the peer's key is trusted by the declared policy (`untrusted`);
+   12. the hello is no older than the one that made the peer's live link (`replay`);
+   13. its nonce has not been answered before (`replay`);
+   14. a new peer fits the peer table (`capacity`).
+
+   Nothing a stranger says is believed before its signature, and the cheap checks run
+   before the expensive ones. The recipient check precedes the replay checks so that a
+   copy captured on its way to another runtime is refused without spending a nonce. The
+   nonce cache is last of the checks a hello can fail on its own, because it holds only
+   nonces of trusted keys of this repository: a stranger's hellos can neither fill it nor
+   evict a real peer's nonce. The age check stands before it because a restart empties
+   the cache, and a hello captured before the restart must not displace a link made
+   since. The welcome a dialer receives is checked for its shape, its signature, the
+   echoed nonce, its timestamp, the protocol, self, the repository and trust. Each
+   failure is a `RefusalCode`, counted and listed with its detail.
 2. The mesh repository id is derived from the repository's root commits or declared as
    `cooperation.repository`; it is never derived from a filesystem path, an address or a
    host name. Runtimes of different repository ids never link.
@@ -64,6 +86,11 @@ check cannot see is held by `apps/majordomus-cli/tests/mesh_cooperation.rs` (sep
 processes over TCP: links, isolation, trust refusal, crash expiry and restart, three-node
 convergence, hostile messages, two worktrees) and `test/mesh-lab/run` (separate Linux
 nodes on a real bridge: multicast discovery, partition and crash recovery), both run in CI.
+The order of the hello checks is held by the unit test
+`mesh::cooperation::tests::the_hello_checks_run_in_the_order_the_rule_lists`, which sends
+hellos failing each check and each adjacent pair of checks, asserts the refusal of the
+earlier one, and reads this rule and `docs/MESH.md` to assert that both list the checks
+in that order.
 
 ## Verification
 

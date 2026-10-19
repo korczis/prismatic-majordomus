@@ -1,0 +1,39 @@
+id: I2565
+milestone: a-screen-is-fast-bounded-and-says-why
+title: "A graph draws a bounded neighbourhood: no page hands the browser more nodes than a stated bound, and the rest is reached through the URL"
+slug: a-graph-draws-a-bounded-neighbourhood
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Bound what every relationship graph of the UI hands the browser, say how much it left out, and let a reader move the neighbourhood with the URL instead of receiving the whole graph."
+why: "campaigns/majordomus-ui-speed-pack/05-MESH-LIVE.md asks for a bounded viewport, neighbourhoods expanded on demand and a ten-thousand-node fixture; 00-MASTER.md says a 10k-node fixture does not initialize 10k browser nodes by default. view::graph serialises every node that takes part in an edge into the data-graph attribute, and Cytoscape lays all of them out in the browser."
+current_state: "apps/majordomus-cli/src/ui/view.rs graph() filters nodes to those with an edge and writes all of them and all their edges as JSON. Its callers (the mesh topology, the roadmap, a train of pull requests) pass whatever their source answered. The fallback table has the same rows. No bound exists and no test gives it a large input."
+desired_state: "graph() takes a centre and draws at most GRAPH_NODES nodes: the centre, then its neighbours by distance, ties broken by id so the cut is deterministic. It says N of M nodes are drawn and links to the same screen with the centre moved (the around parameter), and the fallback table is cut by the same rule. Selecting a node at the edge of the drawn set moves the centre. The bound is one constant beside graph(), read by the test and the documentation."
+scope:
+  - "apps/majordomus-cli/src/ui/view.rs"
+  - "apps/majordomus-cli/src/ui/mesh.rs"
+  - "apps/majordomus-cli/src/ui/roadmap.rs"
+  - "apps/majordomus-cli/src/ui/milestone.rs"
+  - "apps/majordomus-cli/src/ui/prs.rs"
+  - "share/ui/ui.js"
+  - "docs/MAJORDOMUS_UI.md"
+  - ".ai/repo/project/issues/I2565.yaml"
+non_scope:
+  - "A graph endpoint the script queries: the neighbourhood is chosen by the server from the URL"
+  - "Changing what a source answers: the cut is the screen's"
+  - "The Cockpit's graph pages"
+depends_on: []
+acceptance_criteria:
+  - "graph() given ten thousand nodes in one component emits at most GRAPH_NODES nodes and only edges between emitted nodes"
+  - "The same input in a different order emits the same nodes"
+  - "A cut graph says how many nodes it draws of how many, and offers a link that moves the centre; an uncut graph says neither"
+  - "The around parameter survives a reload and the browser's Back, and an unknown centre is answered as the screen without one"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::view"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 1089_the_work_and_mesh_screens_answer"
+evidence_required:
+  - "bounded_graph_unit_tests"
+  - "ten_thousand_node_fixture_test"
+created_at: 2026-10-13
+updated_at: 2026-10-13

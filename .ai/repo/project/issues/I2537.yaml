@@ -1,0 +1,58 @@
+id: I2537
+milestone: the-ui-starts-work-through-the-executor
+title: "A capability's inspector on the UI starts it as an execution, from the one form both surfaces share"
+slug: a-capability-is-started-from-the-ui
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Let a person start a capability from the primary surface: the capability inspector on /ui draws the form generated from the capability's input schema, the form posts to the route the registry declares for executions.start, and the person lands on the execution's inspector. The form builder is the Cockpit's, moved to a module both surfaces import."
+why: "campaigns/majordomus-intent-ui-pack/02-ACTION-PLANE.md asks that the UI execute every authorised capability through the same handler, validation and effect policy as the command line and MCP, that a safe form be derived from the input schema, and that a disabled action explain why. campaigns/majordomus-intent-ui-pack/04-UI-PROJECTIONS.md asks for schema-generated forms on the Capabilities view. The mechanism exists once, in the Cockpit: runner_form and field in apps/majordomus-cli/src/cockpit/pages.rs, with share/cockpit/runner.js asking for confirmation when the descriptor's effect says something changes. ADR 0135 says shared mechanics move to a module both surfaces import and are not duplicated, and ADR 0142 and project.no-screen-waits-for-a-source forbid a UI page from calling a handler, so the UI's control must post to the API route and the UI's own routes must stay reads."
+current_state: "apps/majordomus-cli/src/ui/capabilities.rs draws one capability from capabilities.describe with its interfaces and no form. apps/majordomus-cli/src/ui/mod.rs answers 405 to every method but GET, and apps/majordomus-cli/tests/ui_surface.rs (the_ui_is_a_public_surface_and_answers_only_reads) holds that. share/ui/ui.js sends no POST. The form builder is private to cockpit/pages.rs and reads the registry type Capability directly."
+desired_state: "One module builds the runner form from a capability's description for both surfaces. /ui/capabilities?id=<id> draws it under an anchor other screens can link to. Submitting it posts the capability id and the input to the route capabilities.describe gives for executions.start, with confirmation when the effect says something changes, and follows the answer's link to /ui/command?execution=<id>. A capability that is not executable, has no HTTP exposure or is refused for this caller shows the reason in place of the control. With scripts off the inspector shows the command line and the route, and no button. The snapshot draws no form."
+scope:
+  - "apps/majordomus-cli/src/cockpit/pages.rs"
+  - "apps/majordomus-cli/src/cockpit/runner.rs"
+  - "apps/majordomus-cli/src/cockpit/mod.rs"
+  - "apps/majordomus-cli/src/ui/capabilities.rs"
+  - "apps/majordomus-cli/src/ui/view.rs"
+  - "share/ui/ui.js"
+  - "share/ui/src/ui.css"
+  - "share/ui/ui.css"
+  - "share/cockpit/runner.js"
+  - "apps/majordomus-cli/tests/ui_surface.rs"
+  - "apps/majordomus-cli/tests/cockpit.rs"
+  - "test/cases/1088_the_command_and_capability_screens_answer.sh"
+  - "test/cases/1092_the_ui_snapshot_holds_every_screen.sh"
+  - "docs/MAJORDOMUS_UI.md"
+  - "docs/EXECUTIONS.md"
+  - ".ai/repo/features/ui.md"
+  - ".ai/repo/project/issues/I2537.yaml"
+non_scope:
+  - "A route under /ui that accepts a POST: the control posts to the API route of executions.start"
+  - "A list on the UI of which capabilities may be started: the registry and each descriptor's execution policy answer it"
+  - "Cancelling from the UI when the capability does not declare itself cancellable"
+  - "Idempotency of the start: I2538"
+depends_on:
+  - I2536
+acceptance_criteria:
+  - "The Cockpit's capability page and the UI's capability inspector call one function to build the form, and the Cockpit's existing form tests pass unchanged"
+  - "Through a served fixture, submitting the UI's form for executions.demonstrate starts an execution whose id the answer names and whose inspector on the UI answers 200"
+  - "The form of a capability whose effect changes the repository carries the confirmation the Cockpit's carries, and the form of a query does not"
+  - "A capability whose stability is not executable, or that has no HTTP exposure, shows that reason and no control"
+  - "POST to /ui and to /ui/capabilities answers 405"
+  - "A page of the snapshot written by majordomus web report ui-snapshot holds no form that posts"
+  - "With no script the inspector shows the command line and the API route of the capability and no button"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib cockpit::"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test ui_surface"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test cockpit"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 1088_the_command_and_capability_screens_answer 1092_the_ui_snapshot_holds_every_screen 1086_a_remote_caller_cannot_write 547_the_ui_says_only_what_is_derived"
+evidence_required:
+  - "one_form_builder_two_surfaces"
+  - "capability_started_from_the_ui"
+  - "refused_control_states_its_reason"
+  - "ui_routes_answer_reads_only"
+created_at: 2026-10-13
+updated_at: 2026-10-13

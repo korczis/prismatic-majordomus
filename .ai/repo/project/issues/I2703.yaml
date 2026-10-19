@@ -30,4 +30,15 @@ validation:
 evidence_required:
   - "hello_check_order_test"
 created_at: 2026-10-14
-updated_at: 2026-10-14
+updated_at: 2026-10-15T09:49:54Z
+started_at: 2026-10-15T08:05:22Z
+started_event: sha256:fb240e74c28d131e5525e03d404a9831a1a12526efe7cd7436380c45936f559b
+completed_at: 2026-10-15T09:49:54Z
+completed_event: sha256:81e5061412cf39d14b2c0e1fb371b4faf81bf281f2a6c66c88b7415173db52c8
+evidence:
+  - covers: hello_check_order_test
+    type: test
+    command: "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::cooperation::tests::the_hello_checks_run_in_the_order_the_rule_lists"
+    result: "test result: ok; 14 checks alone and 13 adjacent pairs each refused by the earlier check, and the rule v2 and docs/MESH.md list the same 14 refusals in the same order (run 2026-10-15 on lundra, x86_64-linux, on the tree of 1336d6fdabc; lib mesh 315 passed, 0 failed). Mutant with the repository check moved above the recipient check fails it: Misaddressed before Repository refused RepositoryMismatch"
+    commit: 1336d6fdabcb12058086a433713b4b7cba8b2b28
+    recorded_at: 2026-10-15T09:49:35Z

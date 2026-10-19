@@ -1,0 +1,45 @@
+id: I2582
+milestone: a-profile-is-resolved-once-and-enforced
+title: "A task's profile is changed by one declared command that names the fingerprint it expects"
+slug: a-tasks-profile-is-changed-by-one-declared-command
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Declare the one operation that changes the profile of the active task: it takes the new profile and the fingerprint the caller last saw, refuses when the task has moved on, rewrites the task record and appends a ledger event, and is the same operation that accepts a re-resolution in I2577."
+why: "campaigns/majordomus-profile-system-v2-prompt-pack/MAJORDOMUS_PROFILE_SYSTEM_V2_PROMPT_PACK.md, PROMPT 04 and PROMPT 05: selection goes through an existing audited mutation path, carries an expected revision for optimistic concurrency, shows a rejection on stale state, and is never a globally mutable profile use. There is no such path: a profile is chosen once, by start --profile, and a task that turns out to need review or deep-work is finished and started again, which loses its scope, checkpoints and obligations."
+current_state: "lib/start.sh is the only writer of profile in .ai/local/state/current.yaml. No command changes it afterwards. The capability model has commands with a declared effect and an executions trail (ADR 0033), and plan.transition is the precedent for a declared command that writes a record with a precondition."
+desired_state: "A declared command (task.profile) takes profile and expected_fingerprint. It resolves the task's current effective profile, refuses with a typed stale error when its fingerprint is not the expected one, refuses a profile that does not exist or that the task's issue or the policy excludes, and otherwise rewrites profile, profile_fingerprint and profile_definition in the task record and appends task.profile_changed with both fingerprints and the caller. Its effect is declared, so the refusals of I2579 and of the remote-caller guard apply to it like any other command; a task under a profile that grants reading only cannot widen itself. majordomus profile select is its command-line form, and the Cockpit's execute control reaches it as it reaches every declared command."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin"
+  - "apps/majordomus-cli/src/profile"
+  - "apps/majordomus-cli/tests"
+  - "lib/common.sh"
+  - "share/commands.yaml"
+  - "share/events.yaml"
+  - "docs/CLI.md"
+  - "docs/PROFILES.md"
+  - "test/cases"
+  - ".ai/repo/project/issues/I2582.yaml"
+non_scope:
+  - "A default that follows the user across tasks or checkouts: the profile is the task's"
+  - "A control on a screen of majordomus ui: the UI reads, and links to the technical view of the command"
+  - "Choosing a profile for the worker from what the task looks like"
+depends_on:
+  - I2577
+  - I2579
+acceptance_criteria:
+  - "With the fingerprint the task has, the command changes the three fields and appends one task.profile_changed event; the scope, checkpoints and obligations of the task are unchanged"
+  - "With any other fingerprint it refuses with a typed stale error and writes nothing"
+  - "Two callers that both hold the old fingerprint: one succeeds and the other is refused"
+  - "A task under review cannot select implementation through this command: the executor refuses it as I2579 states, and the test names who can (a caller outside the task, by finishing it)"
+  - "The command answers the same over the command line, HTTP and MCP, declared once"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib profile::"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test executor"
+  - "bin/majordomus generate --check"
+evidence_required:
+  - "profile_change_command_tests"
+  - "stale_fingerprint_refused_test"
+created_at: 2026-10-13
+updated_at: 2026-10-13

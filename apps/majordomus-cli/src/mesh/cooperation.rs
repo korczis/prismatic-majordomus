@@ -281,6 +281,8 @@ struct Outbound {
 struct Inbound {
     link: String,
     counter: u64,
+    /// The timestamp of the hello that made this link: an older hello cannot replace it.
+    hello_ts: u64,
 }
 
 struct PeerLink {
@@ -1829,8 +1831,11 @@ impl Cooperation {
 
     // ------------------------------------------------------------------ answering
 
-    /// Answer a hello: the whole admission, in order — shape, signature, freshness,
-    /// replay, protocol, self, repository, trust, capacity — and a signed welcome.
+    /// Answer a hello: the whole admission, in order — size, shape, signature, freshness,
+    /// nonce shape, protocol, self, recipient, repository, trust, the age of the live link,
+    /// the nonce cache, capacity — and a signed welcome. Rule
+    /// `project.mesh-cooperation-is-authenticated` and `docs/MESH.md` list the same order,
+    /// and the test `the_hello_checks_run_in_the_order_the_rule_lists` holds all three to it.
     ///
     /// The order is the point. Everything cheap and unauthenticated is decided before
     /// anything expensive, and nothing a stranger says is believed before its signature is
@@ -1976,6 +1981,23 @@ impl Cooperation {
             table
                 .nonces
                 .retain(|_, ts| now.saturating_sub(*ts) <= 2 * MAX_LINK_SKEW_SECONDS);
+            // The cache is memory, so a restart forgets it; the link a peer made since is what
+            // a hello captured before the restart would displace. A hello older than the one
+            // that made the peer's live link cannot replace it (one runtime key is one
+            // checkout on one machine, so its hellos carry one clock).
+            let established = table
+                .peers
+                .get(&runtime_key)
+                .and_then(|peer| peer.inbound.as_ref())
+                .map(|inbound| inbound.hello_ts);
+            if established.is_some_and(|ts| hello.ts < ts) {
+                drop(table);
+                return self.refuse_in(
+                    RefusalCode::Replay,
+                    "this hello is older than the one that made the peer's live link".into(),
+                    runtime,
+                );
+            }
             let key = (hello.card.pk.clone(), hello.nonce.clone());
             if table.nonces.contains_key(&key) {
                 drop(table);
@@ -2049,6 +2071,7 @@ impl Cooperation {
             peer.inbound = Some(Inbound {
                 link: link.clone(),
                 counter: 0,
+                hello_ts: hello.ts,
             });
             peer.last_exchange = Some(Instant::now());
             peer.handshakes += 1;
@@ -4332,6 +4355,328 @@ mod tests {
         assert!(
             matches!(wrong, Err(RoundError::Refused(ref r)) if r.code == RefusalCode::Misaddressed),
             "{wrong:?}"
+        );
+    }
+
+    #[test]
+    fn a_hello_replayed_after_a_restart_cannot_displace_the_link_a_newer_one_made() {
+        let net = Arc::new(InProcess::default());
+        let a = runtime(&net, "a:1", "root", TrustPolicy::Tofu);
+        let b = runtime(&net, "b:1", "root", TrustPolicy::Tofu);
+        // a hello B addressed to A thirty seconds ago, captured on its way: inside the skew
+        // window, and A answers it once
+        let captured = sign(
+            &b.identity,
+            Domain::Hello,
+            serde_json::to_value(&Hello {
+                proto_min: LINK_PROTOCOL_MIN,
+                proto_max: LINK_PROTOCOL_MAX,
+                card: b.card.clone(),
+                nonce: fresh_token(),
+                ts: crate::mesh::protocol::now() - 30,
+                to: Some(a.runtime_key().to_string()),
+            })
+            .unwrap(),
+        );
+        assert!(a.accept_hello(&captured).refusal.is_none());
+        // A restarts: the same key and runtime, and a replay cache that remembers nothing
+        let identity = Arc::clone(&a.identity);
+        drop(a);
+        let a = Cooperation::new(CooperationSetup {
+            identity,
+            runtime: crate::mesh::repository::runtime_id("a:1"),
+            repository: of_root_commits(&["root".into()]),
+            endpoints: vec!["a:1".into()],
+            version: "test".into(),
+            config: CooperationConfig::default(),
+            trust: TrustConfig {
+                policy: TrustPolicy::Tofu,
+                allow: vec![],
+            },
+            journal_path: None,
+            registry: Arc::new(MeshRegistry::new()),
+            transport: Arc::clone(&net) as Arc<dyn LinkTransport>,
+            board: None,
+            checkout: CheckoutFacts::default(),
+        })
+        .unwrap();
+        net.runtimes
+            .lock()
+            .unwrap()
+            .insert("a:1".into(), Arc::downgrade(&a));
+        // B links to the restarted A with a fresh hello, and the link carries a sync
+        b.dial_to(Some(a.runtime_key()), &["a:1".into()])
+            .expect("linked again");
+        assert!(b.sync_with(a.runtime_key()).is_ok());
+        let reconnects = a.counters.reconnects.load(Ordering::Relaxed);
+        // the captured hello, replayed: A's cache has never seen its nonce, and it is refused
+        // all the same, because it is older than the hello that made the link it would replace
+        let refusal = a.accept_hello(&captured).refusal.expect("refused");
+        assert_eq!(refusal.code, RefusalCode::Replay, "{refusal:?}");
+        // and the link B holds is the one A still serves
+        assert!(
+            b.sync_with(a.runtime_key()).is_ok(),
+            "the established link was not displaced"
+        );
+        assert_eq!(a.counters.reconnects.load(Ordering::Relaxed), reconnects);
+        assert_eq!(a.peers().len(), 1);
+    }
+
+    /// The checks `accept_hello` runs, in its order, each with the refusal it answers and a
+    /// word of that refusal's detail: two checks share `malformed` and two share `replay`,
+    /// and the detail tells them apart.
+    const HELLO_CHECKS: [(HelloFault, RefusalCode, &str); 14] = [
+        (HelloFault::Stopped, RefusalCode::NotActive, "stopped"),
+        (
+            HelloFault::Oversized,
+            RefusalCode::Oversized,
+            "message bound",
+        ),
+        (HelloFault::Shape, RefusalCode::Malformed, "not a hello"),
+        (HelloFault::Signature, RefusalCode::Signature, "signature"),
+        (HelloFault::Stale, RefusalCode::Stale, "skew window"),
+        (HelloFault::NonceShape, RefusalCode::Malformed, "32 hex"),
+        (
+            HelloFault::Protocol,
+            RefusalCode::ProtocolUnsupported,
+            "link protocol",
+        ),
+        (HelloFault::SelfLink, RefusalCode::SelfLink, "this runtime"),
+        (
+            HelloFault::Misaddressed,
+            RefusalCode::Misaddressed,
+            "another runtime",
+        ),
+        (
+            HelloFault::Repository,
+            RefusalCode::RepositoryMismatch,
+            "serves repository",
+        ),
+        (HelloFault::Untrusted, RefusalCode::Untrusted, "not trusted"),
+        (HelloFault::OlderThanLink, RefusalCode::Replay, "older than"),
+        (
+            HelloFault::NonceAnswered,
+            RefusalCode::Replay,
+            "already answered",
+        ),
+        (HelloFault::Capacity, RefusalCode::Capacity, "full"),
+    ];
+
+    /// One way a hello can fail, made so that it breaks no check before its own.
+    #[derive(Clone, Copy, Debug, PartialEq)]
+    enum HelloFault {
+        Stopped,
+        Oversized,
+        Shape,
+        Signature,
+        Stale,
+        NonceShape,
+        Protocol,
+        SelfLink,
+        Misaddressed,
+        Repository,
+        Untrusted,
+        OlderThanLink,
+        NonceAnswered,
+        Capacity,
+    }
+
+    /// What a fresh answerer says to one hello carrying every fault in `faults`, and to
+    /// nothing else: each fault is laid on the same well-formed, addressed, trusted hello.
+    fn refusal_of(faults: &[HelloFault]) -> LinkRefusal {
+        use HelloFault::*;
+        let has = |f: HelloFault| faults.contains(&f);
+        let net = Arc::new(InProcess::default());
+        let a = runtime(&net, "a:1", "root", TrustPolicy::Tofu);
+        let b = runtime(&net, "b:1", "root", TrustPolicy::Tofu);
+        let now = crate::mesh::protocol::now();
+        let hello_of = |identity: &NodeIdentity, card: &RuntimeCard, nonce: &str, ts: u64| {
+            let hello = Hello {
+                proto_min: LINK_PROTOCOL_MIN,
+                proto_max: LINK_PROTOCOL_MAX,
+                card: card.clone(),
+                nonce: nonce.into(),
+                ts,
+                to: Some(b.runtime_key().to_string()),
+            };
+            sign(
+                identity,
+                Domain::Hello,
+                serde_json::to_value(&hello).unwrap(),
+            )
+        };
+        let admitted = |message: &Signed| {
+            let reply = b.accept_hello(message);
+            assert!(reply.refusal.is_none(), "setup: {:?}", reply.refusal);
+        };
+        // the history the replay and capacity faults need, made of hellos B admits
+        let answered = fresh_token();
+        if has(NonceAnswered) {
+            admitted(&hello_of(&a.identity, &a.card, &answered, now - 30));
+        }
+        if has(OlderThanLink) {
+            admitted(&hello_of(&a.identity, &a.card, &fresh_token(), now));
+        }
+        let mut card = a.card.clone();
+        if has(Capacity) {
+            // runtime slots of A's key B has never linked, until B's table is full; the
+            // faulty hello comes from one more slot of the same key, so a nonce A's own slot
+            // spent is spent for it too
+            assert!(
+                !has(OlderThanLink),
+                "a peer B knows is never refused for capacity"
+            );
+            let mut slot = 1u64;
+            while b.peers().len() < MAX_PEERS {
+                let other = RuntimeCard {
+                    runtime: format!("{slot:016x}"),
+                    ..a.card.clone()
+                };
+                admitted(&hello_of(&a.identity, &other, &fresh_token(), now));
+                slot += 1;
+            }
+            card.runtime = format!("{slot:016x}");
+        }
+        // the hello itself
+        let mut identity = Arc::clone(&a.identity);
+        if has(SelfLink) {
+            identity = Arc::clone(&b.identity);
+            card = RuntimeCard {
+                repo: card.repo.clone(),
+                ..b.card.clone()
+            };
+        }
+        if has(Untrusted) {
+            // B stops trusting A's key without ending A's link, so the link the age check
+            // reads is still there
+            *b.trust.write().unwrap() = TrustConfig {
+                policy: TrustPolicy::DenyUnknown,
+                allow: vec![],
+            };
+        }
+        if has(Repository) {
+            card.repo = of_root_commits(&["another-root".into()]).id;
+        }
+        let mut hello = Hello {
+            proto_min: LINK_PROTOCOL_MIN,
+            proto_max: LINK_PROTOCOL_MAX,
+            card,
+            nonce: if has(NonceAnswered) {
+                answered
+            } else {
+                fresh_token()
+            },
+            ts: if has(OlderThanLink) { now - 30 } else { now },
+            to: Some(b.runtime_key().to_string()),
+        };
+        if has(Misaddressed) {
+            hello.to = Some(a.runtime_key().to_string());
+        }
+        if has(Protocol) {
+            (hello.proto_min, hello.proto_max) = (LINK_PROTOCOL_MAX + 1, LINK_PROTOCOL_MAX + 5);
+        }
+        if has(NonceShape) {
+            hello.nonce = "0123".into();
+        }
+        if has(Stale) {
+            hello.ts = now - MAX_LINK_SKEW_SECONDS - 60;
+        }
+        if has(Signature) {
+            identity = Arc::new(NodeIdentity::ephemeral().unwrap());
+        }
+        let mut message = sign(
+            &identity,
+            Domain::Hello,
+            serde_json::to_value(&hello).unwrap(),
+        );
+        if has(Shape) {
+            message.body.as_object_mut().unwrap().remove("card");
+        }
+        if has(Oversized) {
+            message.sig = "0".repeat(MAX_LINK_MESSAGE);
+        }
+        if has(Stopped) {
+            b.stop();
+        }
+        b.accept_hello(&message)
+            .refusal
+            .unwrap_or_else(|| panic!("{faults:?}: admitted"))
+    }
+
+    /// The refusal codes of the checks in order, as a document spells them: the numbered
+    /// list that follows `start` in `text`, each item ending in its refusal in backticks.
+    fn listed_order(text: &str, start: &str) -> Vec<String> {
+        let from = text.find(start).unwrap_or_else(|| panic!("no {start:?}"));
+        let mut items: Vec<String> = Vec::new();
+        for line in text[from..]
+            .lines()
+            .skip(1)
+            .map(str::trim_start)
+            .skip_while(|l| !l.starts_with("1. "))
+            .take_while(|l| !l.is_empty())
+        {
+            if line
+                .split_once(". ")
+                .is_some_and(|(n, _)| n.parse::<u32>().is_ok())
+            {
+                items.push(line.to_string());
+            } else if let Some(item) = items.last_mut() {
+                item.push(' ');
+                item.push_str(line);
+            }
+        }
+        items
+            .iter()
+            .map(|item| {
+                let (_, code) = item.rsplit_once("(`").expect("an item names its refusal");
+                code.trim_end_matches(['`', ')', ';', '.']).to_string()
+            })
+            .collect()
+    }
+
+    /// The order the rule lists is the order the code runs: a hello failing one check is
+    /// refused by it, and a hello failing two adjacent checks is refused by the earlier, so
+    /// moving a check in `accept_hello` fails here; the rule and docs/MESH.md are read and
+    /// must list the same refusals in the same order, so editing either alone fails too.
+    #[test]
+    fn the_hello_checks_run_in_the_order_the_rule_lists() {
+        for (fault, code, word) in HELLO_CHECKS {
+            let refusal = refusal_of(&[fault]);
+            assert_eq!(refusal.code, code, "{fault:?} alone: {refusal:?}");
+            assert!(
+                refusal.detail.contains(word),
+                "{fault:?} alone: {refusal:?}"
+            );
+        }
+        for pair in HELLO_CHECKS.windows(2) {
+            let ((earlier, code, word), (later, _, _)) = (pair[0], pair[1]);
+            let refusal = refusal_of(&[earlier, later]);
+            assert_eq!(
+                refusal.code, code,
+                "{earlier:?} before {later:?}: {refusal:?}"
+            );
+            assert!(
+                refusal.detail.contains(word),
+                "{earlier:?} before {later:?}: {refusal:?}"
+            );
+        }
+        let codes: Vec<String> = HELLO_CHECKS
+            .iter()
+            .map(|(_, code, _)| serde_json::to_value(code).unwrap().as_str().unwrap().into())
+            .collect();
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let read = |path: &str| std::fs::read_to_string(root.join(path)).expect(path);
+        let rule = read(".ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md");
+        assert_eq!(
+            listed_order(&rule, "The hello checks, in the order"),
+            codes,
+            "the rule"
+        );
+        let mesh = read("docs/MESH.md");
+        assert_eq!(
+            listed_order(&mesh, "admits it only if, in the order the code checks"),
+            codes,
+            "docs/MESH.md"
         );
     }
 

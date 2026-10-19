@@ -21,8 +21,10 @@
 //! There is no metadata to invent, no annotation to remember, and no configuration file
 //! that can disagree with the justfile.
 
+use std::ffi::OsStr;
 use std::path::Path;
 use std::process::Command;
+use std::sync::OnceLock;
 use std::time::Duration;
 
 use serde_json::Value;
@@ -38,26 +40,177 @@ pub const SOURCE: &str = "just --dump --dump-format json";
 /// order, so declaration order — the only order a person recognises — comes from here.
 pub const GROUP_SOURCE: &str = "just --groups --unsorted";
 
-/// How long the runner may take. It reads one file and prints a document; a second is
-/// already pathological, and a snapshot is better without it than late.
+/// How long the runner may take when the answer is for a shell prompt. It reads one file
+/// and prints a document; a second is already pathological there, and a snapshot is better
+/// without it than late. A derivation does not use it: see [`DESCRIBE_TIMEOUT`].
 pub const TIMEOUT: Duration = Duration::from_secs(2);
 
-/// Read the catalogue by asking `just` about the repository at `root`.
+/// How long a derivation waits for the runner when the policy declares nothing:
+/// `workflows.describe_timeout_seconds:` in `.ai/repo/policy.yaml`.
+///
+/// A committed projection (`generate editors`) is read from this answer, so the bound is not
+/// a matter of taste: below it the derivation is a function of the tree, above it a function
+/// of how loaded the machine was. Two seconds was measured too short on a build host under
+/// load (I2730); thirty leaves an unloaded `just --dump` — a few tens of milliseconds — three
+/// orders of magnitude, and still stops a runner that hangs.
+pub const DESCRIBE_TIMEOUT: Duration = Duration::from_secs(30);
+
+static DESCRIBE_DECLARED: OnceLock<Duration> = OnceLock::new();
+
+/// What a declaration means: the declared bound, or [`DESCRIBE_TIMEOUT`] when the policy
+/// says nothing. Zero is not a bound a runner can meet, so it is read as nothing declared.
+///
+/// ```
+/// use majordomus_cli::environment::workflows::{describe_timeout_from, DESCRIBE_TIMEOUT};
+/// use majordomus_cli::policy::WorkflowsPolicy;
+/// use std::time::Duration;
+///
+/// assert_eq!(describe_timeout_from(&WorkflowsPolicy::default()), DESCRIBE_TIMEOUT);
+/// let declared = WorkflowsPolicy { describe_timeout_seconds: Some(90) };
+/// assert_eq!(describe_timeout_from(&declared), Duration::from_secs(90));
+/// let zero = WorkflowsPolicy { describe_timeout_seconds: Some(0) };
+/// assert_eq!(describe_timeout_from(&zero), DESCRIBE_TIMEOUT);
+/// ```
+pub fn describe_timeout_from(policy: &crate::policy::WorkflowsPolicy) -> Duration {
+    policy
+        .describe_timeout_seconds
+        .filter(|s| *s > 0)
+        .map(Duration::from_secs)
+        .unwrap_or(DESCRIBE_TIMEOUT)
+}
+
+/// Declare this process's derivation bound from a repository's policy. The first call
+/// decides, as [`crate::lease::declare_timings`] does for the lease timings, and it is made
+/// where the policy is read ([`crate::policy::LoadedPolicy::load`]).
+pub fn declare_describe_timeout(policy: &crate::policy::WorkflowsPolicy) {
+    let _ = DESCRIBE_DECLARED.set(describe_timeout_from(policy));
+}
+
+/// The bound a derivation in this process gives the runner: the declared one, or
+/// [`DESCRIBE_TIMEOUT`] when no policy was read.
+///
+/// ```
+/// use majordomus_cli::environment::workflows::{describe_timeout, DESCRIBE_TIMEOUT};
+/// // this example's process read no policy
+/// assert_eq!(describe_timeout(), DESCRIBE_TIMEOUT);
+/// ```
+pub fn describe_timeout() -> Duration {
+    *DESCRIBE_DECLARED.get_or_init(|| DESCRIBE_TIMEOUT)
+}
+
+/// Why the runner gave no description of the justfile.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Undescribed {
+    /// The runner could not be started, exited non-zero, or printed something that is not
+    /// the document asked for. A property of the tree and the toolchain: asking again
+    /// answers the same.
+    Refused {
+        /// The command that was asked, as a person would type it.
+        command: String,
+    },
+    /// The runner was still running when `bound` ran out, and was stopped. A property of
+    /// the machine at that moment, not of the tree, so nothing may be derived from it.
+    TimedOut {
+        /// The command that was asked, as a person would type it.
+        command: String,
+        /// How long it was given.
+        bound: Duration,
+    },
+}
+
+impl std::fmt::Display for Undescribed {
+    /// ```
+    /// use majordomus_cli::environment::workflows::Undescribed;
+    /// use std::time::Duration;
+    ///
+    /// let late = Undescribed::TimedOut {
+    ///     command: "just --dump --dump-format json".into(),
+    ///     bound: Duration::from_secs(30),
+    /// };
+    /// assert_eq!(
+    ///     late.to_string(),
+    ///     "`just --dump --dump-format json` did not answer within 30 s and was stopped"
+    /// );
+    /// let refused = Undescribed::Refused { command: "just --dump --dump-format json".into() };
+    /// assert_eq!(refused.to_string(), "`just --dump --dump-format json` could not describe it");
+    /// ```
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Undescribed::Refused { command } => write!(f, "`{command}` could not describe it"),
+            Undescribed::TimedOut { command, bound } => write!(
+                f,
+                "`{command}` did not answer within {} and was stopped",
+                bound_text(*bound)
+            ),
+        }
+    }
+}
+
+impl std::error::Error for Undescribed {}
+
+/// A bound as a person reads it: whole seconds when it is whole seconds.
+fn bound_text(bound: Duration) -> String {
+    if bound.subsec_nanos() == 0 {
+        format!("{} s", bound.as_secs())
+    } else {
+        format!("{} ms", bound.as_millis())
+    }
+}
+
+/// What the runner says about a justfile: its public workflows, sorted by name, and its
+/// groups in declaration order.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Description {
+    /// Every public workflow, as [`workflows_of`] reads them.
+    pub workflows: Vec<WorkflowDescriptor>,
+    /// The groups as [`group_order`] reads them; empty when the runner refuses to list
+    /// them, which it does the same way every time.
+    pub groups: Vec<String>,
+}
+
+/// Ask `just` about the justfile at `root`, giving each question `budget`.
+///
+/// Unlike [`resolve`], the reason there is no answer is kept: a caller that commits what it
+/// derives must refuse on [`Undescribed::TimedOut`], since a different answer on a slower
+/// machine is not a different tree. A group listing that ran out of time is such a refusal
+/// too — the order it would have given is part of the answer.
+pub fn describe(root: &Path, budget: Duration) -> Result<Description, Undescribed> {
+    describe_with(&[OsStr::new("just")], root, budget)
+}
+
+/// [`describe`] with the runner named: `runner[0]` is the program and the rest are the
+/// arguments that come before the runner's own, so a test can stand a script in for `just`
+/// without making a file executable.
+pub(crate) fn describe_with(
+    runner: &[&OsStr],
+    root: &Path,
+    budget: Duration,
+) -> Result<Description, Undescribed> {
+    let dump = ask(runner, root, &["--dump", "--dump-format", "json"], budget)?;
+    let document: Value = serde_json::from_str(&dump).map_err(|_| Undescribed::Refused {
+        command: SOURCE.into(),
+    })?;
+    let groups = match ask(runner, root, &["--groups", "--unsorted"], budget) {
+        Ok(text) => group_order(&text),
+        Err(late @ Undescribed::TimedOut { .. }) => return Err(late),
+        Err(Undescribed::Refused { .. }) => Vec::new(),
+    };
+    Ok(Description {
+        workflows: workflows_of(&document),
+        groups,
+    })
+}
+
+/// Read the catalogue by asking `just` about the repository at `root`, within [`TIMEOUT`].
 ///
 /// Returns [`WorkflowCatalogue::unavailable`] when `just` is not installed, when the
-/// repository has no justfile, or when the runner refuses it — none of which is an error
-/// here: a repository is not obliged to have a workflow runner.
+/// repository has no justfile, when the runner refuses it, or when it did not answer in
+/// time — none of which is an error here: a repository is not obliged to have a workflow
+/// runner, and a shell prompt is not obliged to wait for one.
 pub fn resolve(root: &Path) -> WorkflowCatalogue {
-    let Some(dump) = run(root, &["--dump", "--dump-format", "json"]) else {
+    let Ok(Description { workflows, groups }) = describe(root, TIMEOUT) else {
         return WorkflowCatalogue::unavailable();
     };
-    let Ok(document): Result<Value, _> = serde_json::from_str(&dump) else {
-        return WorkflowCatalogue::unavailable();
-    };
-    let workflows = workflows_of(&document);
-    let groups = run(root, &["--groups", "--unsorted"])
-        .map(|text| group_order(&text))
-        .unwrap_or_default();
     let entrypoints = entrypoints(&workflows, &groups);
     WorkflowCatalogue {
         state: TierState::Resolved,
@@ -248,23 +401,37 @@ pub fn entrypoints(workflows: &[WorkflowDescriptor], order: &[String]) -> Vec<Wo
         .collect()
 }
 
-/// The groups of the justfile at `root`, in the order it declares them, or `None` when the
-/// runner could not be asked.
-pub(crate) fn groups(root: &Path) -> Option<Vec<String>> {
-    run(root, &["--groups", "--unsorted"]).map(|text| group_order(&text))
-}
-
-fn run(root: &Path, args: &[&str]) -> Option<String> {
-    let out = super::probe::bounded_output(
-        Command::new("just")
+fn ask(
+    runner: &[&OsStr],
+    root: &Path,
+    args: &[&str],
+    budget: Duration,
+) -> Result<String, Undescribed> {
+    let command = format!("just {}", args.join(" "));
+    let (program, leading) = runner.split_first().ok_or_else(|| Undescribed::Refused {
+        command: command.clone(),
+    })?;
+    let out = super::probe::bounded(
+        Command::new(program)
+            .args(leading)
             .arg("--justfile")
             .arg(root.join("justfile"))
             .args(args),
-        TIMEOUT,
-    )?;
-    out.status
-        .success()
-        .then(|| String::from_utf8_lossy(&out.stdout).into_owned())
+        budget,
+    )
+    .map_err(|why| match why {
+        super::probe::Unbounded::Expired => Undescribed::TimedOut {
+            command: command.clone(),
+            bound: budget,
+        },
+        super::probe::Unbounded::NotRun => Undescribed::Refused {
+            command: command.clone(),
+        },
+    })?;
+    if !out.status.success() {
+        return Err(Undescribed::Refused { command });
+    }
+    Ok(String::from_utf8_lossy(&out.stdout).into_owned())
 }
 
 #[cfg(test)]
@@ -369,6 +536,107 @@ mod tests {
         assert_eq!(catalogue.state, TierState::Unavailable);
         assert!(catalogue.workflows.is_empty());
         assert!(catalogue.entrypoints.is_empty());
+    }
+
+    /// A stand-in for `just`, run as `sh <script>` so no file has to be made executable:
+    /// it sleeps `dump_delay` before answering `--dump` and `groups_delay` before answering
+    /// `--groups`.
+    #[cfg(unix)]
+    fn fake_runner(dir: &Path, dump_delay: &str, groups_delay: &str) -> std::path::PathBuf {
+        let dump = dir.join("dump.json");
+        let document = serde_json::json!({ "modules": {}, "recipes": {
+            "test": { "name": "test", "doc": null, "private": false,
+                      "attributes": [{"group": "test"}], "parameters": [], "dependencies": [] }
+        }});
+        std::fs::write(&dump, document.to_string()).expect("the dump is written");
+        let script = dir.join("fake-just.sh");
+        let body = format!(
+            "case \"$*\" in\n\
+             *--dump*) sleep {dump_delay}; cat '{}' ;;\n\
+             *--groups*) sleep {groups_delay}; printf 'Recipe groups:\\n    test\\n' ;;\n\
+             esac\n",
+            dump.display()
+        );
+        std::fs::write(&script, body).expect("the stand-in is written");
+        script
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_runner_slower_than_its_bound_is_a_refusal_naming_the_command_and_the_bound() {
+        let dir = tempfile::tempdir().expect("a temporary directory");
+        let script = fake_runner(dir.path(), "5", "0");
+        let bound = Duration::from_millis(300);
+        let started = std::time::Instant::now();
+        let refused = describe_with(&[OsStr::new("sh"), script.as_os_str()], dir.path(), bound)
+            .expect_err("a runner over its bound gives no description");
+        assert!(
+            started.elapsed() < Duration::from_secs(4),
+            "the bound bounded it"
+        );
+        assert_eq!(
+            refused,
+            Undescribed::TimedOut {
+                command: SOURCE.into(),
+                bound
+            }
+        );
+        let said = refused.to_string();
+        assert!(said.contains("just --dump --dump-format json"), "{said}");
+        assert!(
+            said.contains("300 ms"),
+            "the refusal names the bound: {said}"
+        );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_group_listing_slower_than_its_bound_is_a_refusal_not_an_empty_order() {
+        let dir = tempfile::tempdir().expect("a temporary directory");
+        let script = fake_runner(dir.path(), "0", "5");
+        let bound = Duration::from_millis(300);
+        let refused = describe_with(&[OsStr::new("sh"), script.as_os_str()], dir.path(), bound)
+            .expect_err("a late group order is not an empty one");
+        assert_eq!(
+            refused,
+            Undescribed::TimedOut {
+                command: GROUP_SOURCE.into(),
+                bound
+            }
+        );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_runner_within_its_bound_describes_the_justfile() {
+        let dir = tempfile::tempdir().expect("a temporary directory");
+        let script = fake_runner(dir.path(), "0.2", "0.2");
+        let found = describe_with(
+            &[OsStr::new("sh"), script.as_os_str()],
+            dir.path(),
+            Duration::from_secs(30),
+        )
+        .expect("a runner within its bound answers");
+        let names: Vec<&str> = found.workflows.iter().map(|w| w.name.as_str()).collect();
+        assert_eq!(names, ["test"]);
+        assert_eq!(found.groups, ["test"]);
+    }
+
+    #[test]
+    fn a_runner_that_cannot_be_started_is_a_refusal_not_a_timeout() {
+        let dir = tempfile::tempdir().expect("a temporary directory");
+        let refused = describe_with(
+            &[OsStr::new("majordomus-no-such-runner")],
+            dir.path(),
+            Duration::from_secs(5),
+        )
+        .expect_err("nothing answered");
+        assert_eq!(
+            refused,
+            Undescribed::Refused {
+                command: SOURCE.into()
+            }
+        );
     }
 
     #[test]

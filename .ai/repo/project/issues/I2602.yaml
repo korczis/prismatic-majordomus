@@ -1,0 +1,33 @@
+id: I2602
+milestone: a-second-adopter-is-served
+title: "A document with a front matter of its own is indexed, and a block scalar is read"
+slug: a-foreign-front-matter-is-indexed
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Let a repository index its own Markdown as documents when that Markdown carries front matter the tool does not define, without an error per file per command."
+why: "Observed on 2026-10-13 adopting 0.21.0 and 0.22.0 in a pnpm/TypeScript repository (docs/ADOPTION_SECOND_RUN.md, G18); read again on master e506c041a4. Declaring document classes over the adopter's docs made every command log one ERROR per file: 99 of 102 specs, for keys such as date and ticket and for folded scalars."
+current_state: "share/schemas/majordomus/document/document.v1.schema.json closes the key set; apps/majordomus-cli/src/metadata/yaml.rs:113-117 refuses values opening with | or >."
+desired_state: "A source class can declare its front matter foreign, in which case unknown keys are carried and reported once per class; block scalars are read as strings by both programs. Design change with a proposed ADR, because the YAML subset is a stated contract."
+scope:
+  - "apps/majordomus-cli/src/metadata"
+  - "apps/majordomus-cli/src/index.rs"
+  - "lib/common.sh"
+  - "share/kinds.yaml"
+  - "share/schemas/majordomus/document"
+  - "docs/SCHEMAS.md"
+  - "test/cases"
+depends_on: []
+acceptance_criteria:
+  - "A document with keys the schema does not define is an object, and the diagnostic is one line per class"
+  - "A front matter value written as a folded or literal scalar is read identically by both programs"
+  - "A layer record with an unknown key is still refused"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "foreign_front_matter_case"
+  - "block_scalar_parity_case"
+  - "adr_proposed"
+created_at: 2026-10-13
+updated_at: 2026-10-13

@@ -1,0 +1,32 @@
+id: I2589
+milestone: a-second-adopter-is-served
+title: "init projects into a region where a hand-written target already exists, and update says append"
+slug: init-projects-into-a-region-over-a-hand-written-target
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Have `init` choose region mode for every projection target that already exists without a stamp, say so, and have `update` name what it will do to such a file."
+why: "Observed on 2026-10-13 adopting 0.21.0 and 0.22.0 in a pnpm/TypeScript repository (docs/ADOPTION_SECOND_RUN.md, G05); read again on master e506c041a4. The adopter had a 96-line CLAUDE.md and a 142-line AGENTS.md; init wrote whole-file projections and `update --dry-run` printed `create CLAUDE.md`. Region mode had to be found in a guide."
+current_state: "lib/init.sh:82 copies share/skeleton/policy.yaml verbatim; lib/update.sh:101 prints `create` whenever no region is present; the REFUSE text of file mode never mentions region mode."
+desired_state: "init writes `mode: region` for an existing unstamped target and lists those targets; update plans `append-region <target>`; the refusal of a whole-file overwrite names region mode."
+scope:
+  - "lib/init.sh"
+  - "lib/update.sh"
+  - "share/skeleton/policy.yaml"
+  - "docs/ADOPTION.md"
+  - "docs/CLI.md"
+  - "test/cases"
+depends_on: []
+acceptance_criteria:
+  - "init in a repository with an existing CLAUDE.md writes a policy whose projection for it is `mode: region` and says so"
+  - "`update --dry-run` prints `append-region` for a file that exists and has no region"
+  - "After update the bytes outside the markers are unchanged"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "init_region_for_existing_target_case"
+created_at: 2026-10-13
+updated_at: 2026-10-13T11:29:48Z
+started_at: 2026-10-13T11:29:48Z
+started_event: sha256:f9f76d8a4c268843b5d65037eb7cfe99558180b19e93ad3ff2a1e5b7764e79bc

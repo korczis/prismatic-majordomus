@@ -23,7 +23,7 @@ evidence_required:
   - "prepush_refs_case"
   - "decision_recorded"
 created_at: 2026-10-04
-updated_at: 2026-10-14T23:19:09Z
+updated_at: 2026-10-15T11:59:22Z
 evidence:
   - covers: decision_recorded
     type: artifact
@@ -31,3 +31,9 @@ evidence:
     artifact: ".ai/repo/adrs/0105-a-handover-moves-between-machines-as-a-signed-record-in-a-ref-of-its-own.md"
     commit: c0e3585dc836201089d6b5dd49f5a79fe8bff798
     recorded_at: 2026-10-14T23:19:09Z
+  - covers: prepush_refs_case
+    type: test
+    command: "bash test/run.sh 3064_a_pushed_branch_is_judged_by_its_holder"
+    result: "1 passed, 0 failed: slice 1 of the ADR 0105 amendment; two branches pushed from one checkout are each judged by the task of the checkout holding them, a branch held nowhere is admitted with a line naming it"
+    commit: 6247f32ddfd99fd3913d5f760429351d78886454
+    recorded_at: 2026-10-15T11:59:22Z

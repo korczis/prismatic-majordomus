@@ -1,0 +1,52 @@
+id: I2552
+milestone: automation-is-scripted-capabilities
+title: "A scripted capability is a kind: discovered, registered, run and projected like any capability, and held to the effect it declares"
+slug: a-scripted-capability-is-held-to-its-declared-effect
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Make a capability declared in a file of the layer, with a Rhai script as its handler, a capability of the one registry: a kind in share/kinds.yaml with a versioned schema, discovered by the index, validated with errors that name file, line and column, runnable through majordomus run, projected onto the command line, HTTP, OpenAPI, MCP and the generated reference by the projections that exist, and refused at run time when it calls a capability whose effect exceeds its own."
+why: "campaigns/majordomus-shellfall/02-rhai-runtime.md asks that script modules be registered from the canonical capability registry, that constructing a workflow execute nothing, that unknown capabilities and calls outside the allowance be rejected with spans and causes, and that a Rhai definition reach the one existing executor and its events. 01-canonical-workflow-contract.md asks that the command line, REST, MCP and Rhai all invoke the same execution API. ADR 0069 answers both with one host function that calls Context::execute. A draft of it (capability/scripted.rs, 882 lines, share/capabilities/repository-brief.rhai, a schema, case 383 and docs/AUTOMATION.md) exists only in refs/rescue/consolidation-20261010T0845Z/dirty/feature/automation-is-rhai-over-typed-capabilities, uncommitted work that was never reviewed or pushed as a branch. On master the registry has compiled capabilities only."
+current_state: "share/kinds.yaml declares no scripted kind and share/schemas/majordomus has no schema for one. apps/majordomus-cli/src/capability has no scripted module. The exposure ceiling lives in the command graph (apps/majordomus-cli/src/command_graph/policy.rs) and not in the registry's build, so it does not hold a capability that the graph did not produce."
+desired_state: "A definition file and the script beside it are one object of the layer. The registry builds it into a capability with its declared input and output schemas and effect; a script reaches the repository only through a host function that calls the executor, so validation, redaction, caching and the execution plane apply to each call it makes; a call above the declared effect is a typed refusal. The distribution ships one scripted capability under share/capabilities as the proof, with benchmark cases and a generated reference page. docs/AUTOMATION.md is the manual."
+scope:
+  - "share/kinds.yaml"
+  - "share/schemas/majordomus"
+  - "share/capabilities"
+  - "apps/majordomus-cli/src/capability/scripted.rs"
+  - "apps/majordomus-cli/src/capability/registry.rs"
+  - "apps/majordomus-cli/src/capability/model.rs"
+  - "apps/majordomus-cli/src/capability/mod.rs"
+  - "apps/majordomus-cli/src/script/mod.rs"
+  - "apps/majordomus-cli/tests/registry.rs"
+  - "apps/majordomus-cli/tests/projections.rs"
+  - "docs/AUTOMATION.md"
+  - "docs/CAPABILITIES.md"
+  - "test/cases"
+  - ".ai/repo/project/issues/I2552.yaml"
+non_scope:
+  - "A command group majordomus script with its own check, run, plan and explain: a scripted capability is run and described by the commands every capability has"
+  - "Running a script the mesh, the UI or an HTTP caller sent as text"
+  - "Running a program from a script, which needs the capability of I2553"
+  - "Migrating any existing shell unit, which starts with I2554"
+depends_on:
+  - "I2551"
+acceptance_criteria:
+  - "Adding one definition and one script under share/capabilities makes the capability appear in capabilities list, docs/generated/openapi.yaml, the MCP tool list and the generated reference after generate, with no other file edited"
+  - "A definition with an unknown key, a missing script or a schema that does not parse fails capabilities validate with the file and the field named"
+  - "A script error is reported with file, line and column on the command line and in the HTTP and MCP error bodies"
+  - "A scripted capability that declares effect read and calls a capability that mutates the repository is refused at run time with a typed error, and the mutation does not happen"
+  - "Loading and validating a definition executes no capability, which a test asserts by counting executor calls"
+  - "The same scripted capability called from the command line and over MCP leaves the same event shape in the execution store"
+validation:
+  - "bin/majordomus plan validate"
+  - "bin/majordomus-cli capabilities validate"
+  - "bin/majordomus-cli generate --check"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test registry"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test projections"
+evidence_required:
+  - "scripted_capability_projected_everywhere"
+  - "effect_ceiling_enforced"
+  - "definition_load_executes_nothing"
+created_at: 2026-10-13
+updated_at: 2026-10-13

@@ -3,7 +3,7 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the claims, rules, features, use cases, commands, documented command-line examples and builtin capabilities this repository declares, and the first coverage and negative headers of its test cases; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.30.1"
+    "version": "0.30.2"
   },
   "route": "/evidence/",
   "kinds": [
@@ -9314,7 +9314,7 @@
           "path": "apps/majordomus-cli/tests/mesh_cooperation.rs",
           "category": "integration",
           "inputs": [
-            ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md",
+            ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md",
             "apps/majordomus-cli/src/mesh/state.rs",
             "apps/majordomus-cli/tests/mesh_cooperation.rs"
           ]
@@ -9360,7 +9360,7 @@
           "path": "apps/majordomus-cli/tests/mesh_cooperation.rs",
           "category": "integration",
           "inputs": [
-            ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md",
+            ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md",
             "apps/majordomus-cli/src/mesh/cooperation.rs",
             "apps/majordomus-cli/tests/mesh_cooperation.rs"
           ]
@@ -9544,7 +9544,7 @@
           "path": "apps/majordomus-cli/tests/mesh_cooperation.rs",
           "category": "integration",
           "inputs": [
-            ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md",
+            ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md",
             "apps/majordomus-cli/src/mesh/repository.rs",
             "apps/majordomus-cli/tests/mesh_cooperation.rs"
           ]
@@ -12002,6 +12002,12 @@
       "routes": [
         {
           "via": "behaviour",
+          "test": "suite:3058_bench_compares_two_runs",
+          "path": "test/cases/3058_bench_compares_two_runs.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:79_bench_command",
           "path": "test/cases/79_bench_command.sh",
           "category": "e2e"
@@ -12022,6 +12028,12 @@
           "via": "behaviour",
           "test": "suite:82_bench_check",
           "path": "test/cases/82_bench_check.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:3058_bench_compares_two_runs",
+          "path": "test/cases/3058_bench_compares_two_runs.sh",
           "category": "e2e"
         },
         {
@@ -12469,6 +12481,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:108c_scope_after_a_dirty_start",
+          "path": "test/cases/108c_scope_after_a_dirty_start.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:131_completion_gates",
           "path": "test/cases/131_completion_gates.sh",
           "category": "e2e"
@@ -12567,6 +12585,12 @@
           "via": "negative",
           "test": "suite:108b_scope_after_trunk_fast_forward",
           "path": "test/cases/108b_scope_after_trunk_fast_forward.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:108c_scope_after_a_dirty_start",
+          "path": "test/cases/108c_scope_after_a_dirty_start.sh",
           "category": "e2e"
         },
         {
@@ -14614,6 +14638,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:3064_a_pushed_branch_is_judged_by_its_holder",
+          "path": "test/cases/3064_a_pushed_branch_is_judged_by_its_holder.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:3067_a_task_is_claimed_on_the_mesh",
           "path": "test/cases/3067_a_task_is_claimed_on_the_mesh.sh",
           "category": "e2e"
@@ -14987,6 +15017,12 @@
           "via": "behaviour",
           "test": "suite:2979_a_personal_layer_changes_nothing_shared",
           "path": "test/cases/2979_a_personal_layer_changes_nothing_shared.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:2997_init_projects_into_a_region_over_a_hand_written_target",
+          "path": "test/cases/2997_init_projects_into_a_region_over_a_hand_written_target.sh",
           "category": "e2e"
         },
         {
@@ -17832,6 +17868,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:2997_init_projects_into_a_region_over_a_hand_written_target",
+          "path": "test/cases/2997_init_projects_into_a_region_over_a_hand_written_target.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:3113_the_adoption_footprint_is_inventoried",
           "path": "test/cases/3113_the_adoption_footprint_is_inventoried.sh",
           "category": "e2e"
@@ -17858,6 +17900,12 @@
           "via": "negative",
           "test": "suite:13_region_projection",
           "path": "test/cases/13_region_projection.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:2997_init_projects_into_a_region_over_a_hand_written_target",
+          "path": "test/cases/2997_init_projects_into_a_region_over_a_hand_written_target.sh",
           "category": "e2e"
         }
       ],
@@ -25138,7 +25186,7 @@
           "category": "integration",
           "inputs": [
             "apps/majordomus-cli/tests/mesh_cooperation.rs",
-            ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md"
+            ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md"
           ]
         }
       ],
@@ -28471,6 +28519,7 @@
     "suite:3022_the_rule_package_is_stamped_and_adopter_neutral",
     "suite:3024_a_run_is_seen_by_the_server",
     "suite:3025_abandoned_work_in_a_worktree_is_named",
+    "suite:3026_the_observatory_answers_a_click",
     "suite:3027_the_release_path_goes_first",
     "suite:3028_the_pages_job_waits_for_its_deployment",
     "suite:3029_a_tag_in_flight_is_pending",
@@ -28479,6 +28528,7 @@
     "suite:3033_a_release_record_case_is_listed_by_a_structure_gate",
     "suite:3035_a_release_names_its_archive_from_the_matrix",
     "suite:303_one_source_serves_two_mounts",
+    "suite:3041_a_server_reports_the_share_it_serves",
     "suite:3042_the_observatory_asks_again_when_it_is_seen",
     "suite:3043_site_json_cannot_close_its_script",
     "suite:3045_the_site_shows_what_changed_since_it_was_deployed",
@@ -28511,6 +28561,7 @@
     "suite:3225_the_installer_takes_an_alpha_only_by_name",
     "suite:3226_a_pages_503_is_retried_before_a_page_is_called_missing",
     "suite:3240_the_published_screens_carry_their_slow_panels",
+    "suite:3242_a_claim_newer_than_the_ledger_is_not_yet_recorded",
     "suite:330_a_contract_is_the_kind_it_declares",
     "suite:331_knowledge_nodes_is_gated",
     "suite:3342_a_dry_run_initialises_nothing",

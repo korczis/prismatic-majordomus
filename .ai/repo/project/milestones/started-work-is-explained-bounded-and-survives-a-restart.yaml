@@ -1,0 +1,60 @@
+id: started-work-is-explained-bounded-and-survives-a-restart
+title: "What may start is explained, what was started survives a restart, and the policy bounds what a transport may cause"
+slug: started-work-is-explained-bounded-and-survives-a-restart
+order: 500
+priority: p1
+problem: "campaigns/majordomus-autonomous-idd-maximal/00_MASTER.md asks for one vertical from a written intent to a verified deployment that resumes after a restart without lost or doubled work, and campaigns/majordomus-autonomous-idd-maximal/02_ORCHESTRATOR_MESH.md, 09_STATE_MACHINE_AND_DATA_CONTRACTS.md, 10_SCHEDULER_WORKER_RUNTIME.md and 13_SECURITY_AUTH_POLICY.md spell out its dispatch, durability and authorization halves. Measured on 2026-10-13, most of what the pack asks for exists (typed intents with gap and critique records, the mesh with exclusive claims, the pull-request executor, the release chain, the capability registry and its projections), and three joints do not. plan.next answers from the dependency graph alone and reads neither the claims nor the pull-request queue, so nothing says why a ready issue should not start now. docs/EXECUTIONS.md states that no execution survives a restart. The policy names no effect a caller may or may not cause: a grep for autonomy and approval in .ai/repo/policy.yaml finds no key, and ADR 0126 limits only a caller beyond loopback."
+outcome: "One read capability says which ready issue may start now and why each other one may not; an execution accepted before a restart is answered after it as a record; and the policy names the highest effect each transport may cause, refused the same way on the command line, HTTP and MCP."
+current_state: "Readiness is the graph (apps/majordomus-cli/src/plan.rs, next_ready) and overlap with a peer is reported by check --overlap, not by the plan. The execution store is in memory, bounded by execution::store::Limits. The effect classes are Read, ProcessState and RepositoryMutation (apps/majordomus-cli/src/capability/model.rs), published by capabilities.list and held against no project policy."
+desired_state: "plan.dispatch, a journal behind the execution store and an effect ceiling in the policy exist as one new capability, one change behind the executions capabilities and one policy key, each projected to every transport by generation, each with a test that fails without it."
+scope:
+  - ".ai/repo/adrs"
+  - ".ai/repo/rules/project"
+  - ".ai/repo/policy.yaml"
+  - ".ai/repo/project"
+  - "apps/majordomus-cli/src/plan.rs"
+  - "apps/majordomus-cli/src/policy.rs"
+  - "apps/majordomus-cli/src/execution"
+  - "apps/majordomus-cli/src/capability"
+  - "apps/majordomus-cli/src/http"
+  - "apps/majordomus-cli/src/mcp"
+  - "apps/majordomus-cli/tests"
+  - "test/cases"
+  - "docs/PLANNING.md"
+  - "docs/EXECUTIONS.md"
+  - "docs/CAPABILITIES.md"
+
+non_scope:
+  - "Writing plan records by capability, which is I2542 and I2543 (an-intent-is-carried-from-a-sentence-to-a-verdict)"
+  - "A start repeated under one key, which is I2538 (the-ui-starts-work-through-the-executor)"
+  - "Launching a provider's agent unattended: no adapter in the tree starts a worker, and this milestone answers what may start, not who is started"
+  - "Resuming an interrupted handler, retries, schedules or a durable queue: an interrupted execution is reported, and a person or a worker starts it again"
+  - "Stale claims after a partition, which is the mesh-journal-converges milestone"
+  - "A stored intent status, or pausing and resuming an intent: ADR 0070 keeps the stage derived and nothing transitions an intent"
+
+acceptance_criteria:
+  - "plan.dispatch answers byte-identical output for one unchanged snapshot, admits no issue whose scope meets a live exclusive claim, and reports an incomplete board as unknown rather than as free"
+  - "With a declared cap on open pull requests exceeded, no ready issue is admitted and each rejection names the count and the cap"
+  - "After the server is stopped and started, executions.list still answers every execution accepted before, and one that was queued or running reads interrupted"
+  - "A capability above the policy's effect ceiling for a transport is refused with one typed error on the command line, HTTP and MCP, and its handler does not run"
+  - "A policy without the ceiling key behaves as before on every transport"
+
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib plan"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib execution"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test executions"
+  - "majordomus generate --check"
+
+evidence_required:
+  - "dispatch_is_deterministic_and_explained"
+  - "execution_survives_restart"
+  - "effect_ceiling_refused_on_every_transport"
+
+risks:
+  - "A dispatch answer that is read as a lock: it explains at one instant, and the claim and the task scope remain what refuses."
+  - "A journal of executions is a second place a secret can rest; it must pass the same redactor the events already pass."
+  - "An effect ceiling that defaults to a refusal would stop every adopter's existing use; an absent key must mean today's behaviour."
+
+created_at: 2026-10-13
+updated_at: 2026-10-13

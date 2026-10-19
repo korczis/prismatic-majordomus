@@ -25,6 +25,7 @@
 use serde::Serialize;
 use serde_json::Value;
 
+use crate::capability::readings::Freshness;
 use crate::capability::Context;
 use crate::cockpit::html::el;
 
@@ -320,6 +321,13 @@ pub struct SourceStanding {
     pub reason: Option<String>,
     /// How long the executor took, in milliseconds.
     pub took_ms: u64,
+    /// How old the reading was when the page was made, in milliseconds; absent for a first
+    /// reading that has not arrived. What a mark's detail says of its freshness is this.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub age_ms: Option<u64>,
+    /// `current`, `stale` (read before the repository last moved) or `pending` (never read in
+    /// this process yet): the reading's own standing, never inferred from its age.
+    pub freshness: &'static str,
 }
 
 /// One scene as projected: the descriptor, whether it can be drawn, and the model it draws.
@@ -396,6 +404,12 @@ pub fn project_from(answers: &Answers, observed_at: String) -> Projection {
             },
             reason: a.value.as_ref().err().cloned(),
             took_ms: a.took.as_millis() as u64,
+            age_ms: a.standing.age.map(|d| d.as_millis() as u64),
+            freshness: match a.standing.freshness {
+                Freshness::Current => "current",
+                Freshness::Stale => "stale",
+                Freshness::Pending => "pending",
+            },
         })
         .collect::<Vec<_>>();
     let scenes = SCENES
@@ -1121,6 +1135,35 @@ mod tests {
         );
     }
 
+    /// Each source carries its reading's own standing: a reading taken before the repository
+    /// last moved is stale with its age, and one that has not arrived is pending with none.
+    #[test]
+    fn each_source_says_whether_its_reading_is_current_stale_or_pending() {
+        let mut answers = all(&[]);
+        answers.get_mut(&PEERS).unwrap().standing = Standing {
+            age: Some(Duration::from_secs(5)),
+            freshness: Freshness::Stale,
+            refreshing: true,
+        };
+        answers.get_mut(&EVENTS).unwrap().standing = Standing {
+            age: None,
+            freshness: Freshness::Pending,
+            refreshing: true,
+        };
+        let p = project_from(&answers, "2026-10-14T00:00:00Z".into());
+        let standing = |capability: &str| {
+            let s = p
+                .sources
+                .iter()
+                .find(|s| s.capability == capability)
+                .expect("the source");
+            (s.freshness, s.age_ms)
+        };
+        assert_eq!(standing(PEERS.capability), ("stale", Some(5000)));
+        assert_eq!(standing(EVENTS.capability), ("pending", None));
+        assert_eq!(standing(STATE.capability), ("current", Some(0)));
+    }
+
     /// Where no mesh runs, a scene of the mesh draws the repository's recording and says it
     /// is a replay; where the source failed, or a mesh runs, the recording is not used.
     #[test]
@@ -1301,6 +1344,11 @@ mod tests {
             ),
         ]);
         let p = project_from(&answers, at());
+        // every source says how its reading stands, as the reading said it, and how old it was
+        assert!(p
+            .sources
+            .iter()
+            .all(|s| s.freshness == "current" && s.age_ms == Some(0)));
         let proof = scene(&p, "proof");
         assert!(proof.available);
         assert_eq!(proof.model["total"], 3);

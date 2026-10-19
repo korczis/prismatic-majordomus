@@ -1576,7 +1576,7 @@ cmd_release_live() {
 # evidence.report, in the same checkout, and refuses when more claims read `not run` than the
 # baseline declares. A report that cannot be read is not a pass: it exits 12.
 cmd_published_evidence() {
-  local bin="" baseline="$ROOT/.ai/repo/evidence/published-not-run.txt" allowed totals notrun
+  local bin="" baseline="$ROOT/.ai/repo/evidence/published-not-run.txt" allowed totals notrun report
   while [ $# -gt 0 ]; do case "$1" in
     --bin) bin="$2"; shift 2 ;;
     --baseline) baseline="$2"; shift 2 ;;
@@ -1586,15 +1586,39 @@ cmd_published_evidence() {
   [ -f "$baseline" ] || { echo "pages published-evidence: no baseline at $baseline" >&2; exit 12; }
   allowed="$(grep -vE '^[[:space:]]*(#|$)' "$baseline" | head -1 | tr -d '[:space:]')"
   case "$allowed" in ''|*[!0-9]*) echo "pages published-evidence: the baseline holds no count: $baseline" >&2; exit 12 ;; esac
-  totals="$(cd "$ROOT" && "$bin" run evidence.report --format json 2>/dev/null | jq -ce '.output.totals | objects')" \
+  report="$(cd "$ROOT" && "$bin" run evidence.report --format json 2>/dev/null | jq -ce '.output | objects')" \
     || { echo "pages published-evidence: evidence.report could not be read, so nothing says what the UI would publish" >&2; exit 12; }
+  totals="$(printf '%s' "$report" | jq -ce '.totals | objects')" \
+    || { echo "pages published-evidence: evidence.report carries no totals" >&2; exit 12; }
   notrun="$(printf '%s' "$totals" | jq '.["not run"] // 0')"
-  if [ "$notrun" -gt "$allowed" ]; then
-    echo "pages published-evidence: $notrun claim(s) would be published as not run, over the baseline of $allowed ($totals)." >&2
+  # A claim whose test exists at none of the commits the ledger was recorded against cannot
+  # have a run in it: it is newer than the ledger, and on a master whose own validation has
+  # not recorded yet it reads `not run` however true it is (I2853). It is published as what it
+  # is, not yet recorded, and is not held against the baseline. A claim whose test existed
+  # when the ledger was recorded still counts, and so does every claim when no commit of the
+  # ledger is in this history, because then nothing says what the ledger could have seen.
+  local known="" c newer="" n_newer=0 id path
+  for c in $(printf '%s' "$report" | jq -r '.ledger.commits[]?'); do
+    git -C "$ROOT" cat-file -e "${c}^{commit}" 2>/dev/null && known="$known $c"
+  done
+  if [ -n "$known" ]; then
+    while IFS="$(printf '\t')" read -r id path; do
+      [ -n "$id" ] && [ -n "$path" ] || continue
+      path="${path%%::*}"
+      for c in $known; do git -C "$ROOT" cat-file -e "${c}:${path}" 2>/dev/null && continue 2; done
+      newer="$newer $id"; n_newer=$((n_newer + 1))
+    done <<EOF
+$(printf '%s' "$report" | jq -r '.claims[]? | select(.state == "not_run") | "\(.id)\t\(.test_path // "")"')
+EOF
+  fi
+  local held=$((notrun - n_newer))
+  [ "$n_newer" -eq 0 ] || echo "pages published-evidence: $n_newer claim(s) newer than the ledger, published as not yet recorded:$newer"
+  if [ "$held" -gt "$allowed" ]; then
+    echo "pages published-evidence: $held claim(s) would be published as not run, over the baseline of $allowed ($totals)." >&2
     echo "  the UI would show tests as never run that CI ran: fetch the run's ledger first (scripts/pages evidence --ledger-out .ai/repo/evidence/ledger.json)" >&2
     exit 10
   fi
-  echo "pages published-evidence: $notrun claim(s) not run, within the baseline of $allowed ($totals)"
+  echo "pages published-evidence: $held claim(s) not run, within the baseline of $allowed ($totals)"
 }
 
 # ---------------------------------------------------------------- the publication, stated

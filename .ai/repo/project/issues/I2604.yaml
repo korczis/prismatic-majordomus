@@ -1,0 +1,31 @@
+id: I2604
+milestone: a-second-adopter-is-served
+title: "The pull-request lane integrates on the branch the repository declares"
+slug: the-lane-integrates-on-the-declared-branch
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Let a repository whose pull requests target an integration branch other than the default one use the lane, and stop reporting an unread setting as a negative."
+why: "Observed on 2026-10-13 adopting 0.21.0 and 0.22.0 in a pnpm/TypeScript repository (docs/ADOPTION_SECOND_RUN.md, G19); read again on master e506c041a4. All 31 open pull requests of the adopter read `other_base … base_is:develop`, and the lane said the repository 'allows no merge commit (it allows: nothing)' while its ruleset requires merge commits."
+current_state: "apps/majordomus-cli/src/integration/forge.rs:1452-1479 takes the forge's default branch as the base and reads an omitted merge setting as false."
+desired_state: "A policy key names the integration base, defaulting to the forge's default branch; an unread merge setting or ruleset is reported as unread with the call that failed."
+scope:
+  - "apps/majordomus-cli/src/integration"
+  - "apps/majordomus-cli/src/policy.rs"
+  - "share/skeleton/policy.yaml"
+  - "share/schemas/majordomus/policy"
+  - "docs/INTEGRATION.md"
+  - "test/cases"
+depends_on: []
+acceptance_criteria:
+  - "With a declared base `develop`, a pull request into develop is classified on its merits"
+  - "An omitted merge-method field reads as could not be read, never as not allowed"
+  - "The executor still never squashes or rebases"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "declared_integration_base_case"
+  - "unread_setting_is_not_a_negative_case"
+created_at: 2026-10-13
+updated_at: 2026-10-13

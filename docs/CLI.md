@@ -70,6 +70,17 @@ byte for byte the package the tool ships) and an empty `rules/project/`,
 `.ai/local/` line in `.gitignore`, added once. Everything under `.ai/repo/` belongs to
 the repository from that moment; a newer tool does not rewrite it.
 
+**Existing instruction files.** The policy `init` creates is the skeleton's, with one
+reading of the repository applied to it: a projection target that already exists and does
+not begin with the stamp `update` writes (a `CLAUDE.md` or an `AGENTS.md` somebody wrote)
+gets `mode: region` in its projection, and `init` prints one `region: <target> …` line for
+each. `update` then appends a marked region to such a file and leaves the rest byte for
+byte alone. A target that is absent, or that `update` generated, keeps the whole-file
+projection, so a repository with none of them gets the skeleton's policy unchanged. Under
+`--extend` the same reading is applied only when `--extend` is what creates the policy; a
+policy that exists is never rewritten. Held by
+`test/cases/2997_init_projects_into_a_region_over_a_hand_written_target.sh`.
+
 **Refuses** (`15`) when `.ai/` already exists, unless `--extend`, which adds every file
 the skeleton ships and the repository lacks and overwrites nothing; (`15`) when `.ai/`
 exists without a manifest, naming the choice between moving it aside and `--extend`; and
@@ -395,12 +406,15 @@ else: each target carries its own provenance.
 - Refuses (`15`) to overwrite content whose current hash matches neither the stamp it
   carries nor the new output, unless `--force`. A target with no stamp at all was not
   written by `update` and is refused the same way. A hand edit is never silently lost; the refusal
-  names the file and the `--diff` command that shows it.
+  names the file and the `--diff` command that shows it. For a whole-file projection over
+  a file with no stamp it names `mode: region` first, as the way to keep the file, and
+  `--force` second, as the way to replace it.
 - `mode: region` (see `SCHEMAS.md`) generates only the text between the
   `majordomus:begin` and `majordomus:end` markers. The rest of the target is copied
   through byte for byte, an absent region is appended once, and malformed markers are
   refused (`15`). This is how a repository that already has a hand-written `CLAUDE.md`
-  adopts Majordomus without losing it.
+  adopts Majordomus without losing it. `init` declares it for every target it finds
+  already written (see `majordomus init`).
 - Appends `projections.updated` to the ledger.
 - Every file-mode target begins with a stamp naming this command, the policy hash it
   came from and the hash of the content below it; a region-mode target carries the same

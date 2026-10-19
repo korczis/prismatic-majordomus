@@ -232,6 +232,11 @@ mj_validate_scope() {
     fi
   done < "$touched"
   rm -f "$touched" "$derived"
+  # said, not only applied: a reader who sees a dirty tree and a passing scope is owed why
+  local predating; predating="$(mj_start_dirty_unchanged | grep -c . || true)"
+  if [ "${predating:-0}" -gt 0 ]; then
+    mj_info scope "$id" "$predating path(s) were already changed when the task started and hold what they held then: not counted as this task's" "cat $(mj_rel "$(mj_start_dirty_file)"); git status --porcelain"
+  fi
   if [ "$n_out" = 0 ] && [ "$n_derived" -gt 0 ]; then
     mj_doctrine_ok scope "$id" "$n_in touched file(s) within scope, and $n_derived derived from them (merge=derived)" "git check-attr merge -- <path>"
   elif [ "$n_out" = 0 ]; then mj_doctrine_ok scope "$id" "$n_in touched file(s), all within scope"

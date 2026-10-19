@@ -3,26 +3,26 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and the index of this repository's layer; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.30.1"
+    "version": "0.30.2"
   },
   "registry": {
-    "fingerprint": "316cc4bd614765c6100d8721ab1cacceae165155132d7ddfd859eab1ee9c6a80",
+    "fingerprint": "e27c69d41472702783ceaa2311a8853a49fb51c3b281ff6b6bece0e6ccceec83",
     "summary": {
-      "total": 2642,
+      "total": 2751,
       "builtin": 206,
-      "declarative": 2436,
+      "declarative": 2545,
       "by_kind": {
         "command": 31,
         "query": 175,
-        "resource": 2436
+        "resource": 2545
       },
       "by_stability": {
         "behaviorally_verified": 142,
         "experimental": 55,
-        "implemented": 2445
+        "implemented": 2554
       },
       "mcp_tools": 196,
-      "mcp_resources": 2491,
+      "mcp_resources": 2600,
       "http_routes": 201,
       "cli_commands": 111,
       "modules": 92,
@@ -57117,11 +57117,16 @@
                   },
                   {
                     "type": "string",
+                    "const": "skewed",
+                    "description": "The server answers for this checkout at this executable's version, but serves a\nshare directory that is not its own: one that states another version or none, or\nlacks a surface's directory (`ui/`, `cockpit/`), so the pages it serves have no\nassets and what it reads from `share/` is another release's (ADR 0163)."
+                  },
+                  {
+                    "type": "string",
                     "const": "stale",
                     "description": "The lease names a server that does not answer, or is not a lease at all."
                   }
                 ],
-                "description": "Where a checkout's server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable's code.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Stale];\nlet words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\"absent\", \"starting\", \"ready\", \"outdated\", \"stale\"]);\nassert_eq!(serde_json::from_str::<ServerStanding>(\"\\\"stale\\\"\").unwrap(), ServerStanding::Stale);\n```"
+                "description": "Where a checkout's server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable's code.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Skewed, ServerStanding::Stale];\nlet words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\"absent\", \"starting\", \"ready\", \"outdated\", \"skewed\", \"stale\"]);\nassert_eq!(serde_json::from_str::<ServerStanding>(\"\\\"stale\\\"\").unwrap(), ServerStanding::Stale);\n```"
               }
             }
           }
@@ -75813,7 +75818,7 @@
         "module": "server",
         "kind": "query",
         "title": "The shared server, and every server of the repository",
-        "description": "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; how far the tree it serves is from the remote trunk (`trunk`: current, lagging, stale, unjudged or unmeasured against the policy's `checkout.trunk_distance`, as of the last fetch); the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
+        "description": "Where this checkout's server stands — absent, starting, ready, outdated, skewed or stale — measured against what this executable would serve; how far the tree it serves is from the remote trunk (`trunk`: current, lagging, stale, unjudged or unmeasured against the policy's `checkout.trunk_distance`, as of the last fetch); the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. Each lease carries the share directory its server serves, measured on every call: the version its `version.txt` states, whether it holds `ui/`, and `skewed` with the reason when it states another version than the executable of that server or lacks `ui/` or `cockpit/`, the state in which every asset of those pages answers 404; a server that answers at this executable's version over such a share stands `skewed` rather than `ready`. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
         "input": {
           "name": "ServerStatusInput",
           "schema": {
@@ -76049,13 +76054,88 @@
                       "null"
                     ],
                     "description": "The executable's version; absent for a server too old to have written one."
+                  },
+                  "share": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/ServedShare"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "The share directory the server serves, measured now against `version`: the version\nit states, whether it holds `ui/`, and `skewed` with the reason when either differs\nfrom what the server's executable needs. Absent when the lease names no share — a\nserver older than this field, or one that has not located its share yet."
                   }
                 },
                 "required": [
                   "pid",
                   "started_at"
                 ],
-                "description": "A lease as a reader sees it: what the server wrote about itself, without the token that\nmakes the file the server's own.\n\n```\nuse majordomus_cli::capability::builtin::server::LeaseView;\nlet view = LeaseView { pid: 7, url: Some(\"http://127.0.0.1:8741\".into()),\n    started_at: \"2026-09-10T00:00:00Z\".into(), executable: None, version: Some(\"1.0.0\".into()) };\nlet v = serde_json::to_value(&view).unwrap();\nassert_eq!(v[\"pid\"], 7);\nassert!(v.get(\"token\").is_none() && v.get(\"root\").is_none());\n```"
+                "description": "A lease as a reader sees it: what the server wrote about itself, without the token that\nmakes the file the server's own.\n\n```\nuse majordomus_cli::capability::builtin::server::LeaseView;\nlet view = LeaseView { pid: 7, url: Some(\"http://127.0.0.1:8741\".into()),\n    started_at: \"2026-09-10T00:00:00Z\".into(), executable: None, version: Some(\"1.0.0\".into()),\n    share: None };\nlet v = serde_json::to_value(&view).unwrap();\nassert_eq!(v[\"pid\"], 7);\nassert!(v.get(\"token\").is_none() && v.get(\"root\").is_none());\nassert!(v.get(\"share\").is_none(), \"a lease that names no share is read without one\");\n```"
+              },
+              "ServedShare": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "The share directory."
+                  },
+                  "origin": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "How it was found, when the server said."
+                  },
+                  "version": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The version its `version.txt` states; absent when it states none."
+                  },
+                  "ui_present": {
+                    "type": "boolean",
+                    "description": "Whether it holds `ui/`, the UI's stylesheet and scripts."
+                  },
+                  "cockpit_present": {
+                    "type": "boolean",
+                    "description": "Whether it holds `cockpit/`, the Cockpit's stylesheet and scripts."
+                  },
+                  "standing": {
+                    "$ref": "#/$defs/ShareStanding",
+                    "description": "Whether it is the executable's own."
+                  },
+                  "reason": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Why it is skewed, when it is."
+                  }
+                },
+                "required": [
+                  "path",
+                  "ui_present",
+                  "cockpit_present",
+                  "standing"
+                ],
+                "description": "A share directory measured against the version of the executable that serves it: where\nit is, how it was found, the version it states, whether it holds the directory of each\nsurface the server serves pages from — `ui/` for `/ui`, `cockpit/` for `/cockpit` — and\nwhether that makes it the executable's own (ADR 0163).\n\nMeasured when it is asked for, never recorded: a checkout moves under a running server,\nand the directory a lease names may state another version an hour later.\n\n```\nuse majordomus_cli::share::{ServedShare, ShareStanding};\nlet dir = tempfile::tempdir().unwrap();\nstd::fs::write(dir.path().join(\"version.txt\"), \"version=0.26.0\\n\").unwrap();\nstd::fs::create_dir(dir.path().join(\"ui\")).unwrap();\nstd::fs::create_dir(dir.path().join(\"cockpit\")).unwrap();\nlet own = ServedShare::inspect(dir.path(), Some(\"installation\"), \"0.26.0\");\nassert_eq!(own.standing, ShareStanding::Current);\nassert!(own.reason.is_none() && own.ui_present);\n\nlet older = ServedShare::inspect(dir.path(), None, \"0.27.0\");\nassert_eq!(older.standing, ShareStanding::Skewed);\nassert!(older.reason.unwrap().contains(\"states version 0.26.0\"));\n\nstd::fs::remove_dir(dir.path().join(\"ui\")).unwrap();\nlet blank = ServedShare::inspect(dir.path(), None, \"0.26.0\");\nassert_eq!(blank.standing, ShareStanding::Skewed);\nassert!(!blank.ui_present && blank.reason.unwrap().contains(\"no ui/\"));\n```"
+              },
+              "ShareStanding": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "current",
+                    "description": "It states the executable's version and holds the directory of every surface the\nserver serves pages from."
+                  },
+                  {
+                    "type": "string",
+                    "const": "skewed",
+                    "description": "It states another version, states none, or lacks `ui/` or `cockpit/`: a server\nserving it answers with one release's code over another release's data, and those\npages are unstyled or blank."
+                  }
+                ],
+                "description": "Whether a share directory is the one an executable should serve.\n\n```\nuse majordomus_cli::share::ShareStanding;\nassert_eq!(serde_json::to_value(ShareStanding::Current).unwrap(), \"current\");\nassert_eq!(serde_json::to_value(ShareStanding::Skewed).unwrap(), \"skewed\");\n```"
               },
               "ServerStanding": {
                 "oneOf": [
@@ -76081,11 +76161,16 @@
                   },
                   {
                     "type": "string",
+                    "const": "skewed",
+                    "description": "The server answers for this checkout at this executable's version, but serves a\nshare directory that is not its own: one that states another version or none, or\nlacks a surface's directory (`ui/`, `cockpit/`), so the pages it serves have no\nassets and what it reads from `share/` is another release's (ADR 0163)."
+                  },
+                  {
+                    "type": "string",
                     "const": "stale",
                     "description": "The lease names a server that does not answer, or is not a lease at all."
                   }
                 ],
-                "description": "Where a checkout's server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable's code.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Stale];\nlet words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\"absent\", \"starting\", \"ready\", \"outdated\", \"stale\"]);\nassert_eq!(serde_json::from_str::<ServerStanding>(\"\\\"stale\\\"\").unwrap(), ServerStanding::Stale);\n```"
+                "description": "Where a checkout's server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable's code.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Skewed, ServerStanding::Stale];\nlet words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\"absent\", \"starting\", \"ready\", \"outdated\", \"skewed\", \"stale\"]);\nassert_eq!(serde_json::from_str::<ServerStanding>(\"\\\"stale\\\"\").unwrap(), ServerStanding::Stale);\n```"
               },
               "ServerView": {
                 "type": "object",
@@ -85107,7 +85192,7 @@
         "title": "document",
         "description": "Declarative objects of kind 'document' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 350,
+        "capabilities": 352,
         "capability_ids": []
       },
       {
@@ -85404,7 +85489,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 487,
+        "capabilities": 576,
         "capability_ids": []
       },
       {
@@ -85520,7 +85605,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 42,
+        "capabilities": 52,
         "capability_ids": []
       },
       {
@@ -85807,7 +85892,7 @@
         "title": "release-record",
         "description": "Declarative objects of kind 'release-record' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 30,
+        "capabilities": 31,
         "capability_ids": []
       },
       {
@@ -85978,7 +86063,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 563,
+        "capabilities": 570,
         "capability_ids": []
       },
       {
@@ -86070,7 +86155,7 @@
     ]
   },
   "index": {
-    "fingerprint": "17f3b01a0cc72df0def1769bb43fb2abe0ce88498825eef0ceb2f27efd2eef04",
+    "fingerprint": "315eebf48e821a9786af62e1babbde27507c9ed1610ab9e460f10b6e3f02ac97",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -86104,27 +86189,27 @@
       "deployment": 1,
       "derive-offload": 1,
       "distribution-model": 1,
-      "document": 350,
+      "document": 352,
       "domain": 6,
       "feature": 29,
       "gap": 4,
       "implementation": 52,
       "intent": 5,
-      "issue": 487,
+      "issue": 576,
       "knowledge": 4,
       "mesh-declaration": 1,
-      "milestone": 42,
+      "milestone": 52,
       "moment": 38,
       "policy": 1,
       "profile": 4,
       "prompt": 5,
-      "release-record": 30,
+      "release-record": 31,
       "rule": 188,
       "scope": 1,
       "session": 90,
       "skill": 8,
       "taxonomy": 10,
-      "test": 563,
+      "test": 570,
       "use-case": 49,
       "workspace": 1
     },
@@ -90922,7 +91007,7 @@
         "description": "The repository's architecture decisions as objects: list, show, ask for the next free identity, propose one with provenance, and validate the whole set against this tree and every other ref.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35798
       },
       {
         "uri": "majordomus://command/archive",
@@ -90932,7 +91017,7 @@
         "description": "Take a snapshot of the tracked tree that can be read, or checked, somewhere else.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35798
       },
       {
         "uri": "majordomus://command/bench",
@@ -90942,7 +91027,7 @@
         "description": "Time every public command of the registry, cold and warm, and compare with the baseline.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35798
       },
       {
         "uri": "majordomus://command/capture",
@@ -90952,7 +91037,7 @@
         "description": "Record the person's raw prompts from a provider hook as a record with its renderings, draw the episode boundary from the provider's own lifecycle hooks, install those hooks, reconcile and prune the archive, and report what each provider actually does here.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35798
       },
       {
         "uri": "majordomus://command/check",
@@ -90962,7 +91047,7 @@
         "description": "Is the current task still consistent with its policy, its scope and this checkout?",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35798
       },
       {
         "uri": "majordomus://command/checkpoint",
@@ -90972,7 +91057,7 @@
         "description": "Record compact progress inside the active task, so the next worker does not start over.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35798
       },
       {
         "uri": "majordomus://command/context",
@@ -90982,7 +91067,7 @@
         "description": "What the next worker needs to know now, in authority order and within a budget.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35798
       },
       {
         "uri": "majordomus://command/decision",
@@ -90992,7 +91077,7 @@
         "description": "Record a decision that was made between real alternatives, with its reason, and read them back.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35798
       },
       {
         "uri": "majordomus://command/doctor",
@@ -91002,7 +91087,7 @@
         "description": "It checks governance only: is Majordomus itself healthy, and is every enforcement it declares actually wired here?",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35798
       },
       {
         "uri": "majordomus://command/doctrine",
@@ -91012,7 +91097,7 @@
         "description": "What rules are enforced, by what, and whether each one is actually wired.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35798
       },
       {
         "uri": "majordomus://command/evidence",
@@ -91022,7 +91107,7 @@
         "description": "Record evidence against the active task: one obligation it declared, discharged, or one validation gate of the CI model that has reported — each as a ledger line carrying the hash of the files it was taken over.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35798
       },
       {
         "uri": "majordomus://command/finish",
@@ -91032,7 +91117,7 @@
         "description": "Evaluate the finish contract and refuse the outcome if any line of it is unmet.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35798
       },
       {
         "uri": "majordomus://command/handover",
@@ -91042,7 +91127,7 @@
         "description": "Write an append-only continuation record, and resolve the most relevant prior one.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35798
       },
       {
         "uri": "majordomus://command/help",
@@ -91052,7 +91137,7 @@
         "description": "Print the usage text, which is the list of every public command.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35798
       },
       {
         "uri": "majordomus://command/history",
@@ -91062,7 +91147,7 @@
         "description": "Read the append-only ledger back, filtered by task, event or time.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35798
       },
       {
         "uri": "majordomus://command/init",
@@ -91072,7 +91157,7 @@
         "description": "Create the .ai/ layer in this repository, and refuse to overwrite an existing one.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35798
       },
       {
         "uri": "majordomus://command/knowledge",
@@ -91082,7 +91167,7 @@
         "description": "The compiled index over what this repository states, and the candidate records it derives from what an episode did.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35798
       },
       {
         "uri": "majordomus://command/migrate",
@@ -91092,7 +91177,7 @@
         "description": "Move pre-.ai project data from .majordomus/ into .ai/, explicitly and backed up.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35798
       },
       {
         "uri": "majordomus://command/plan",
@@ -91102,7 +91187,7 @@
         "description": "The milestone and issue model — validate it, read it, and move one issue through it.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35798
       },
       {
         "uri": "majordomus://command/prompt",
@@ -91112,7 +91197,7 @@
         "description": "List, show and render the repository's own prompt assets, substituting known tokens only.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35798
       },
       {
         "uri": "majordomus://command/question",
@@ -91122,7 +91207,7 @@
         "description": "Open a question that blocks acceptance, resolve it, and list what is still open.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35798
       },
       {
         "uri": "majordomus://command/recover",
@@ -91132,7 +91217,7 @@
         "description": "Close episodes nobody ended, fold duplicate records, classify the stores' stray files.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35798
       },
       {
         "uri": "majordomus://command/rules",
@@ -91142,7 +91227,7 @@
         "description": "The effective rule set, vendored baseline plus project rules.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35798
       },
       {
         "uri": "majordomus://command/search",
@@ -91152,7 +91237,7 @@
         "description": "Find a durable record without reading all of them, in authority order.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35798
       },
       {
         "uri": "majordomus://command/session",
@@ -91162,7 +91247,7 @@
         "description": "Open, inspect and close one execution episode.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35798
       },
       {
         "uri": "majordomus://command/skills",
@@ -91172,7 +91257,7 @@
         "description": "The repository's skills — provider-neutral procedures under the skills section — listed, shown and checked from the one catalogue every surface reads.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35798
       },
       {
         "uri": "majordomus://command/start",
@@ -91182,7 +91267,7 @@
         "description": "Begin one scoped task under a profile, and refuse while another is active.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35798
       },
       {
         "uri": "majordomus://command/update",
@@ -91192,7 +91277,7 @@
         "description": "Regenerate every provider instruction file from the one policy, deterministically.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35798
       },
       {
         "uri": "majordomus://command/usecase",
@@ -91202,7 +91287,7 @@
         "description": "The executable use cases: list, show, validate, run against the real tool, coverage, impact, scaffold.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35798
       },
       {
         "uri": "majordomus://command/version",
@@ -91212,7 +91297,7 @@
         "description": "Print the version, without needing a repository or an installation.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35798
       },
       {
         "uri": "majordomus://command/watch",
@@ -91222,7 +91307,7 @@
         "description": "What has drifted since the last update — policy, projections, state, retention.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 35509
+        "bytes": 35798
       },
       {
         "uri": "majordomus://context/ai.layer",
@@ -91973,6 +92058,15 @@
         "bytes": 13369
       },
       {
+        "uri": "majordomus://document/docs/ADOPTION_SECOND_RUN.md",
+        "kind": "document",
+        "identity": "docs/ADOPTION_SECOND_RUN.md",
+        "title": "Second adoption in a foreign repository — findings",
+        "path": "docs/ADOPTION_SECOND_RUN.md",
+        "source_class": "document",
+        "bytes": 14659
+      },
+      {
         "uri": "majordomus://document/docs/ARCHIVE.md",
         "kind": "document",
         "identity": "docs/ARCHIVE.md",
@@ -92033,7 +92127,7 @@
         "title": "CLI specification — `majordomus`",
         "path": "docs/CLI.md",
         "source_class": "document",
-        "bytes": 141415
+        "bytes": 142507
       },
       {
         "uri": "majordomus://document/docs/COCKPIT.md",
@@ -92312,7 +92406,7 @@
         "title": "Installing Majordomus",
         "path": "docs/INSTALL.md",
         "source_class": "document",
-        "bytes": 15228
+        "bytes": 15333
       },
       {
         "uri": "majordomus://document/docs/INTEGRATION.md",
@@ -92357,7 +92451,7 @@
         "title": "`majordomus ui` — the product",
         "path": "docs/MAJORDOMUS_UI.md",
         "source_class": "document",
-        "bytes": 40653
+        "bytes": 41965
       },
       {
         "uri": "majordomus://document/docs/MCP.md",
@@ -92366,7 +92460,7 @@
         "title": "MCP surface — `majordomus mcp`",
         "path": "docs/MCP.md",
         "source_class": "document",
-        "bytes": 77022
+        "bytes": 78164
       },
       {
         "uri": "majordomus://document/docs/MESH.md",
@@ -92375,7 +92469,7 @@
         "title": "Majordomus Mesh",
         "path": "docs/MESH.md",
         "source_class": "document",
-        "bytes": 66994
+        "bytes": 70042
       },
       {
         "uri": "majordomus://document/docs/MODELS.md",
@@ -92403,6 +92497,15 @@
         "path": "docs/OFFLOAD.md",
         "source_class": "document",
         "bytes": 11917
+      },
+      {
+        "uri": "majordomus://document/docs/OWNER_PACKS.md",
+        "kind": "document",
+        "identity": "docs/OWNER_PACKS.md",
+        "title": "Working from the owner's packs",
+        "path": "docs/OWNER_PACKS.md",
+        "source_class": "document",
+        "bytes": 7762
       },
       {
         "uri": "majordomus://document/docs/PAGES_STATUS.md",
@@ -92447,7 +92550,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 196305
+        "bytes": 427812
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -92483,7 +92586,7 @@
         "title": "Documentation index",
         "path": "docs/README.md",
         "source_class": "document",
-        "bytes": 25645
+        "bytes": 26266
       },
       {
         "uri": "majordomus://document/docs/REASONING.md",
@@ -94049,7 +94152,7 @@
         "title": "The Observatory draws nothing it did not read",
         "path": "docs/claims/observatory-draws-nothing-it-did-not-read.md",
         "source_class": "claim_page",
-        "bytes": 3494
+        "bytes": 4390
       },
       {
         "uri": "majordomus://document/docs/claims/open-question-gate.md",
@@ -94211,7 +94314,7 @@
         "title": "Provider instruction files are generated from the one policy, deterministically",
         "path": "docs/claims/projection-generation.md",
         "source_class": "claim_page",
-        "bytes": 1972
+        "bytes": 2378
       },
       {
         "uri": "majordomus://document/docs/claims/prompt-asset.md",
@@ -94562,7 +94665,7 @@
         "title": "A touched file outside the claimed scope is a failure, not a warning",
         "path": "docs/claims/scope-enforcement.md",
         "source_class": "claim_page",
-        "bytes": 1357
+        "bytes": 1942
       },
       {
         "uri": "majordomus://document/docs/claims/scoped-task.md",
@@ -95529,7 +95632,7 @@
         "identity": "lib/bench.sh",
         "path": "lib/bench.sh",
         "source_class": "library",
-        "bytes": 24072
+        "bytes": 28028
       },
       {
         "uri": "majordomus://implementation/lib/capture.sh",
@@ -95553,7 +95656,7 @@
         "identity": "lib/check.sh",
         "path": "lib/check.sh",
         "source_class": "library",
-        "bytes": 20647
+        "bytes": 21071
       },
       {
         "uri": "majordomus://implementation/lib/checkpoint.sh",
@@ -95577,7 +95680,7 @@
         "identity": "lib/common.sh",
         "path": "lib/common.sh",
         "source_class": "library",
-        "bytes": 110089
+        "bytes": 113271
       },
       {
         "uri": "majordomus://implementation/lib/context.sh",
@@ -95649,7 +95752,7 @@
         "identity": "lib/finish.sh",
         "path": "lib/finish.sh",
         "source_class": "library",
-        "bytes": 16230
+        "bytes": 19559
       },
       {
         "uri": "majordomus://implementation/lib/gates.sh",
@@ -95681,7 +95784,7 @@
         "identity": "lib/init.sh",
         "path": "lib/init.sh",
         "source_class": "library",
-        "bytes": 23078
+        "bytes": 25660
       },
       {
         "uri": "majordomus://implementation/lib/intent_binding.sh",
@@ -95865,7 +95968,7 @@
         "identity": "lib/start.sh",
         "path": "lib/start.sh",
         "source_class": "library",
-        "bytes": 13370
+        "bytes": 13657
       },
       {
         "uri": "majordomus://implementation/lib/update.sh",
@@ -95873,7 +95976,7 @@
         "identity": "lib/update.sh",
         "path": "lib/update.sh",
         "source_class": "library",
-        "bytes": 13116
+        "bytes": 13809
       },
       {
         "uri": "majordomus://implementation/lib/usecase.sh",
@@ -96879,7 +96982,7 @@
         "path": ".ai/repo/project/issues/I0838.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 996
+        "bytes": 1900
       },
       {
         "uri": "majordomus://issue/I0839",
@@ -98815,7 +98918,7 @@
         "path": ".ai/repo/project/issues/I1990.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1851
+        "bytes": 2285
       },
       {
         "uri": "majordomus://issue/I1991",
@@ -99112,7 +99215,7 @@
         "path": ".ai/repo/project/issues/I2132.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3630
+        "bytes": 4254
       },
       {
         "uri": "majordomus://issue/I2133",
@@ -99178,7 +99281,7 @@
         "path": ".ai/repo/project/issues/I2140.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2575
+        "bytes": 3608
       },
       {
         "uri": "majordomus://issue/I2145",
@@ -99852,6 +99955,875 @@
         "bytes": 6346
       },
       {
+        "uri": "majordomus://issue/I2502",
+        "kind": "issue",
+        "identity": "I2502",
+        "title": "plan dispatch says which ready issue may start now, and why each other one may not",
+        "description": "Add one read capability, plan.dispatch, that judges every ready issue against the live exclusive claims, the issues already started and a declared cap on open pull requests, and answers a deterministic decision per issue with the cause of each rejection.",
+        "path": ".ai/repo/project/issues/I2502.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3865
+      },
+      {
+        "uri": "majordomus://issue/I2503",
+        "kind": "issue",
+        "identity": "I2503",
+        "title": "An execution accepted before a restart is answered after it as interrupted, never as absent",
+        "description": "Put a bounded journal behind the execution store so that the executions a server accepted, with their events, are still answered after the server stops and starts, and one that had not finished reads a final state named interrupted.",
+        "path": ".ai/repo/project/issues/I2503.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4218
+      },
+      {
+        "uri": "majordomus://issue/I2505",
+        "kind": "issue",
+        "identity": "I2505",
+        "title": "The policy names the highest effect each transport may cause, and a capability above it is refused the same way everywhere",
+        "description": "Add one policy key that states, per transport, the highest declared effect a call may cause, and enforce it in the one dispatcher every transport already goes through, so that a capability above the ceiling is refused with one typed error before its handler runs.",
+        "path": ".ai/repo/project/issues/I2505.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4227
+      },
+      {
+        "uri": "majordomus://issue/I2506",
+        "kind": "issue",
+        "identity": "I2506",
+        "title": "A criterion can be settled by an observed deployment, and a failed or unobserved one leaves it unmet",
+        "description": "Add deployment as an evidence kind of an intent criterion: its reference names an environment, and its state is derived from the recorded forge observation, so that an intent can require that its work is deployed and read satisfied only when the observation says so.",
+        "path": ".ai/repo/project/issues/I2506.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4050
+      },
+      {
+        "uri": "majordomus://issue/I2507",
+        "kind": "issue",
+        "identity": "I2507",
+        "title": "intent explain continues past the merge to the release and the observed deployment that carry each served issue",
+        "description": "Extend the answer of intent_realization.explain so that each completed issue serving the intent is followed to its merge commit, the first release record whose commit contains it, and the first observed deployment per environment whose commit contains it, with each absent link stated.",
+        "path": ".ai/repo/project/issues/I2507.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3901
+      },
+      {
+        "uri": "majordomus://issue/I2508",
+        "kind": "issue",
+        "identity": "I2508",
+        "title": "How long merged work waits to be deployed is measured from the trail and the recorded observation",
+        "description": "Fold one more fact into the integrator's metrics: per merge in the window, the time from the merge to the first observed successful deployment that contains it, answered as a median with its sample size, and the merges still waiting counted apart.",
+        "path": ".ai/repo/project/issues/I2508.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3318
+      },
+      {
+        "uri": "majordomus://issue/I2511",
+        "kind": "issue",
+        "identity": "I2511",
+        "title": "The sentence-to-verdict case continues to a deployment: satisfied only after a successful observation, never after a failed one, and across a restart",
+        "description": "Write one test case that, in a fresh disposable repository, carries an intent with a deployment criterion through its plan and its evidence, restarts the server in the middle, feeds a fixture forge observation, and asserts at each step what every surface reads, ending satisfied only after the successful deployment is observed.",
+        "path": ".ai/repo/project/issues/I2511.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4203
+      },
+      {
+        "uri": "majordomus://issue/I2521",
+        "kind": "issue",
+        "identity": "I2521",
+        "title": "What a derive costs is measured per stage and per kind of change, and every file a stage reads is listed",
+        "description": "Measure the present derive on a named commit, stage by stage, for the kinds of change the incremental design is meant to make cheap, and establish which files each stage reads, so that every later issue of this milestone is judged against a recorded baseline and a known input set.",
+        "path": ".ai/repo/project/issues/I2521.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3439
+      },
+      {
+        "uri": "majordomus://issue/I2522",
+        "kind": "issue",
+        "identity": "I2522",
+        "title": "The derivation is a typed graph in the crate: every producer is a node with declared inputs and outputs, answered by one capability",
+        "description": "Declare the derivation graph as data in the Rust crate: one node per producer, with a stable identity, input selectors, exact outputs, an operation version and edges, ordered deterministically and refused when it is unsound, and answer it through one read capability and its generated schema.",
+        "path": ".ai/repo/project/issues/I2522.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4220
+      },
+      {
+        "uri": "majordomus://issue/I2523",
+        "kind": "issue",
+        "identity": "I2523",
+        "title": "A node's key is computed from the bytes its producer reads, the index membership it enumerates and the generation of the executable",
+        "description": "Give every node of the derivation graph a deterministic SHA-256 key over its identity, its operation version, its declared inputs as the producer actually reads them, the keys of the nodes it depends on and the generation of the executable, with a schema version of its own.",
+        "path": ".ai/repo/project/issues/I2523.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3868
+      },
+      {
+        "uri": "majordomus://issue/I2524",
+        "kind": "issue",
+        "identity": "I2524",
+        "title": "majordomus derive plan and derive explain say, without writing, which nodes would run and which input moved each one",
+        "description": "Add the read-only half of incremental derivation: a planner that marks every node reuse, regenerate, invalid or blocked with its reason, and the commands derive plan, derive status and derive explain over it, declared once as capabilities and projected everywhere.",
+        "path": ".ai/repo/project/issues/I2524.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4051
+      },
+      {
+        "uri": "majordomus://issue/I2525",
+        "kind": "issue",
+        "identity": "I2525",
+        "title": "An incremental derive runs only the nodes its plan marks, a no-op derive runs no generator, and the full derive stays as it is",
+        "description": "Execute the plan of I2524: run the producers of the nodes marked regenerate in graph order, leave the others untouched, record the keys of what succeeded, and keep the present full derive reachable and unchanged as the oracle. Opt-in; the default does not change here.",
+        "path": ".ai/repo/project/issues/I2525.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4447
+      },
+      {
+        "uri": "majordomus://issue/I2526",
+        "kind": "issue",
+        "identity": "I2526",
+        "title": "The site generator's sections are nodes with inputs of their own, and the use-case scenarios run only when what they exercise changed",
+        "description": "Split stage B into the nodes its real dependencies allow, starting with the execution of the use-case scenarios, so that an edit to one canonical file does not rerun every section of the site generator, and keep a coarser node wherever a finer one cannot be shown to be both correct and faster.",
+        "path": ".ai/repo/project/issues/I2526.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4128
+      },
+      {
+        "uri": "majordomus://issue/I2527",
+        "kind": "issue",
+        "identity": "I2527",
+        "title": "An incremental derive equals a full derive byte for byte, and an omitted dependency turns a gate red",
+        "description": "Hold the invariant that an incremental derive and a clean full derive of the same inputs leave the same tracked bytes, by a differential case over disposable repositories, by mutation tests that break the graph on purpose, and by a project rule with a check that runs.",
+        "path": ".ai/repo/project/issues/I2527.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4009
+      },
+      {
+        "uri": "majordomus://issue/I2528",
+        "kind": "issue",
+        "identity": "I2528",
+        "title": "The UI shows the derivation graph and its last plan, and one documentation page explains the model",
+        "description": "Show the derivation graph, the state of each node and the reason for it on one screen of majordomus ui, reading the capabilities of I2522 and I2524 and nothing else, and complete the documentation of the model in docs/DERIVE.md so that the published site carries it.",
+        "path": ".ai/repo/project/issues/I2528.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3257
+      },
+      {
+        "uri": "majordomus://issue/I2529",
+        "kind": "issue",
+        "identity": "I2529",
+        "title": "A node's outputs are kept under its key and restored only after every digest is verified",
+        "description": "Add a local content-addressed store of node outputs: a typed manifest and the output bytes per key, published atomically, verified on read, restored into the work tree only for paths the node owns, and never able to turn a damaged entry into a success.",
+        "path": ".ai/repo/project/issues/I2529.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4197
+      },
+      {
+        "uri": "majordomus://issue/I2530",
+        "kind": "issue",
+        "identity": "I2530",
+        "title": "The derivation store is bounded and measured: its size and hit rate are read by a capability, and only an explicit command removes entries",
+        "description": "Make the store a quantity the repository measures and reclaims like its other accumulating directories: report its size, entries, hits, misses and time saved or spent, and remove entries by age and quota only through one explicit mutating command that spares entries in use.",
+        "path": ".ai/repo/project/issues/I2530.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3618
+      },
+      {
+        "uri": "majordomus://issue/I2531",
+        "kind": "issue",
+        "identity": "I2531",
+        "title": "Two worktrees deriving the same key compute it once, and the machine lock covers the write into a tree, not the computation",
+        "description": "Let the worktrees of one machine share the store safely: one computation per key at a time, each worktree's files written only by its own run, and the machine-wide derive lock narrowed to what must not interleave, with the rule that states it amended in the same change.",
+        "path": ".ai/repo/project/issues/I2531.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4112
+      },
+      {
+        "uri": "majordomus://issue/I2532",
+        "kind": "issue",
+        "identity": "I2532",
+        "title": "CI reuses derivation entries keyed by the graph, and still fails on a stale committed file whether or not the cache was restored",
+        "description": "Restore and save the derivation store in the CI job that proves the derived data current, keyed from the graph and never from a second mapping of paths, while the job's verdict remains the byte comparison against the committed files.",
+        "path": ".ai/repo/project/issues/I2532.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3947
+      },
+      {
+        "uri": "majordomus://issue/I2533",
+        "kind": "issue",
+        "identity": "I2533",
+        "title": "The incremental derive becomes the default after a shadow period proves it equal, and one flag returns to the full derive",
+        "description": "Move scripts/derive to the incremental path by default in guarded steps: a shadow mode that runs both and compares, a recorded comparison on the real repository, the switch of the default, and a tested way back.",
+        "path": ".ai/repo/project/issues/I2533.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3830
+      },
+      {
+        "uri": "majordomus://issue/I2536",
+        "kind": "issue",
+        "identity": "I2536",
+        "title": "An execution opens on the UI: its state, steps, log and outcome at an address of its own",
+        "description": "Give one execution a page on the primary surface: the Command screen's execution rows lead to an inspector that shows what the execution engine holds about that execution, read from executions.get and executions.events, so that a person follows work on /ui without leaving for the Cockpit.",
+        "path": ".ai/repo/project/issues/I2536.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4207
+      },
+      {
+        "uri": "majordomus://issue/I2537",
+        "kind": "issue",
+        "identity": "I2537",
+        "title": "A capability's inspector on the UI starts it as an execution, from the one form both surfaces share",
+        "description": "Let a person start a capability from the primary surface: the capability inspector on /ui draws the form generated from the capability's input schema, the form posts to the route the registry declares for executions.start, and the person lands on the execution's inspector. The form builder is the Cockpit's, moved to a module both surfaces import.",
+        "path": ".ai/repo/project/issues/I2537.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5336
+      },
+      {
+        "uri": "majordomus://issue/I2538",
+        "kind": "issue",
+        "identity": "I2538",
+        "title": "A start repeated under one key is one execution",
+        "description": "Let a caller of executions.start name a key, and make a second start under the same key answer the execution the first one created instead of creating another, so that a double click, a retried request or a resent MCP call cannot run a writing capability twice.",
+        "path": ".ai/repo/project/issues/I2538.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3661
+      },
+      {
+        "uri": "majordomus://issue/I2539",
+        "kind": "issue",
+        "identity": "I2539",
+        "title": "An issue's moves are offered where the issue is read: start, verify and done from the UI's inspector",
+        "description": "Offer on the UI's issue inspector the moves an issue can make, each started as an execution of plan.transition, so that a person who reads that an issue is ready can start it from the page that told them.",
+        "path": ".ai/repo/project/issues/I2539.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3835
+      },
+      {
+        "uri": "majordomus://issue/I2540",
+        "kind": "issue",
+        "identity": "I2540",
+        "title": "A mesh node's inspector offers the cooperation the mesh declares, each as an execution",
+        "description": "Offer on the inspector of one machine of the mesh the command capabilities the mesh module declares that can be addressed to a runtime, such as asking it for a review or publishing a handover, each started through the shared runner with the node's runtime filled in.",
+        "path": ".ai/repo/project/issues/I2540.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4160
+      },
+      {
+        "uri": "majordomus://issue/I2541",
+        "kind": "issue",
+        "identity": "I2541",
+        "title": "An intent opens its gap, its critique and how it is being realised",
+        "description": "Complete the UI's intent inspector with the three things the intent model holds and the page does not show: the recorded gap with its observations, the recorded critique with its findings, and the realisation of the intent with the reasons for its stage, each read from a capability's answer.",
+        "path": ".ai/repo/project/issues/I2541.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4680
+      },
+      {
+        "uri": "majordomus://issue/I2542",
+        "kind": "issue",
+        "identity": "I2542",
+        "title": "A proposal is planned by a capability: an intent is given its criteria, invariants and milestones, or nothing is written",
+        "description": "Add the second intent writer ADR 0144 leaves open: one command capability that sets the invariants, the satisfaction criteria and the milestones of an existing intent record, validates the result with the intent validator before it is written, refuses a record that changed since the caller read it, and answers the same verdict as a preview without writing.",
+        "path": ".ai/repo/project/issues/I2542.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4851
+      },
+      {
+        "uri": "majordomus://issue/I2543",
+        "kind": "issue",
+        "identity": "I2543",
+        "title": "A milestone or an issue is proposed by a capability, validated against the graph before it exists",
+        "description": "Add one command capability that writes one new milestone or issue record of the project model, validated against the whole plan before the file appears, with a preview that answers the same verdict and writes nothing, so that a plan can be extended through the registry instead of by typing YAML.",
+        "path": ".ai/repo/project/issues/I2543.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4601
+      },
+      {
+        "uri": "majordomus://issue/I2544",
+        "kind": "issue",
+        "identity": "I2544",
+        "title": "An issue opens what realised it: its branches and their commits, from the trace",
+        "description": "Show on the UI's issue inspector the branches that name the issue and the commits each holds, read from trace.issue, so that the chain a reader follows from an intent to a criterion to an issue continues to the work in git.",
+        "path": ".ai/repo/project/issues/I2544.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4039
+      },
+      {
+        "uri": "majordomus://issue/I2545",
+        "kind": "issue",
+        "identity": "I2545",
+        "title": "One intent is carried from a sentence to a derived verdict in a disposable repository, through capabilities only",
+        "description": "Prove the whole path once, outside this repository's own plan: a case creates a repository, proposes an intent from a sentence, plans it, proposes a milestone and an issue that serve its criterion, moves the issue through an execution, and reads the intent's stage and verdict, calling capabilities and editing no record by hand.",
+        "path": ".ai/repo/project/issues/I2545.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4220
+      },
+      {
+        "uri": "majordomus://issue/I2549",
+        "kind": "issue",
+        "identity": "I2549",
+        "title": "ADR 0069 is a record on master, and an ADR number cited with no record behind it fails a gate",
+        "description": "Land the decision that a capability may be scripted as .ai/repo/adrs/0069-a-capability-may-be-scripted.md on the current tree, with its context rewritten to what the tree measures today, and make a citation of an ADR number that has no record a finding.",
+        "path": ".ai/repo/project/issues/I2549.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3236
+      },
+      {
+        "uri": "majordomus://issue/I2550",
+        "kind": "issue",
+        "identity": "I2550",
+        "title": "shell check states the baseline: units and lines by directory and disposition, the units nothing in shell calls any more, and a head with more exempt shell than its base is refused",
+        "description": "Extend the shell.check capability so that its answer carries the measured totals the migration is judged by and an order to migrate in, both derived from the tree and the inventory on every call, and add a comparison with a base revision that refuses growth.",
+        "path": ".ai/repo/project/issues/I2550.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4209
+      },
+      {
+        "uri": "majordomus://issue/I2551",
+        "kind": "issue",
+        "identity": "I2551",
+        "title": "The sandboxed engine a scripted capability runs in is part of the executable",
+        "description": "Embed Rhai in the Rust executable as one engine constructor under apps/majordomus-cli/src/script: eval disabled, no clock, no module resolved from the filesystem, limits on operations, call depth, expression depth and the sizes of strings, arrays and maps, a cancel predicate asked on every operation, and print and debug routed nowhere until a caller routes them.",
+        "path": ".ai/repo/project/issues/I2551.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3931
+      },
+      {
+        "uri": "majordomus://issue/I2552",
+        "kind": "issue",
+        "identity": "I2552",
+        "title": "A scripted capability is a kind: discovered, registered, run and projected like any capability, and held to the effect it declares",
+        "description": "Make a capability declared in a file of the layer, with a Rhai script as its handler, a capability of the one registry: a kind in share/kinds.yaml with a versioned schema, discovered by the index, validated with errors that name file, line and column, runnable through majordomus run, projected onto the command line, HTTP, OpenAPI, MCP and the generated reference by the projections that exist, and refused at run time when it calls a capability whose effect exceeds its own.",
+        "path": ".ai/repo/project/issues/I2552.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5034
+      },
+      {
+        "uri": "majordomus://issue/I2553",
+        "kind": "issue",
+        "identity": "I2553",
+        "title": "A program is run by one typed capability: an executable and an argument list, a bound and a process group, and never a command string",
+        "description": "Add one capability that runs an external program from a typed specification (the executable by name, an argument list, a working directory inside the repository, an environment delta, what standard input is, and a deadline), kills the whole process group when the deadline passes or the execution is cancelled, and reports exit status and bounded, redacted output as execution events.",
+        "path": ".ai/repo/project/issues/I2553.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4632
+      },
+      {
+        "uri": "majordomus://issue/I2554",
+        "kind": "issue",
+        "identity": "I2554",
+        "title": "The ratchet is one typed capability, and the first scripts/ci gates that are only a ratchet become scripted capabilities",
+        "description": "Move the count-against-a-recorded-baseline logic that scripts/ci gates each carry into one typed Rust capability, and replace at least three gates whose remaining logic is a call to an existing capability with scripted capabilities over it, deleting each file and its inventory record in the same change.",
+        "path": ".ai/repo/project/issues/I2554.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4035
+      },
+      {
+        "uri": "majordomus://issue/I2555",
+        "kind": "issue",
+        "identity": "I2555",
+        "title": "A hand-written recipe is one call: the eight recipe bodies the inventory describes as shell leave .just, and a recipe that grows a second line fails a gate",
+        "description": "Reduce every recipe written by hand in justfile and .just/*.just to a single invocation of a program with its arguments forwarded positionally, move the logic of the eight recipes that carry more into the command or script they belong to, and hold the property with a check over just's own JSON dump.",
+        "path": ".ai/repo/project/issues/I2555.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4406
+      },
+      {
+        "uri": "majordomus://issue/I2556",
+        "kind": "issue",
+        "identity": "I2556",
+        "title": "A behavioural case may be a Rust test: it counts in the suite report, a removed shell case names what replaced it, and the number of shell cases does not rise",
+        "description": "Give the suite a second kind of case, a Rust integration test declared as a behavioural case, that appears in the report test/run.sh writes; add a tracked mapping from each removed shell case to the tests that carry its assertions; and refuse a head whose count of shell cases is above its base.",
+        "path": ".ai/repo/project/issues/I2556.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4278
+      },
+      {
+        "uri": "majordomus://issue/I2557",
+        "kind": "issue",
+        "identity": "I2557",
+        "title": "The first ten cases whose subject is the Rust executable alone are Rust tests, each removed with its mapping row",
+        "description": "Port ten named shell cases that drive only the Rust executable to Rust integration tests declared as cases, run old and new side by side once, and delete each shell file with a mapping row that lists the assertions that moved.",
+        "path": ".ai/repo/project/issues/I2557.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4081
+      },
+      {
+        "uri": "majordomus://issue/I2558",
+        "kind": "issue",
+        "identity": "I2558",
+        "title": "The lifecycle units leave lib: start, checkpoint, handover, evidence, finish and session are routed to their capabilities and their shell is deleted",
+        "description": "Once the lifecycle transitions are capabilities, route bin/majordomus start, checkpoint, handover, evidence, finish and session to the executable with the same names, arguments, output and exit codes, and delete lib/start.sh, lib/checkpoint.sh, lib/handover.sh, lib/evidence.sh, lib/finish.sh and lib/session.sh together with their inventory records.",
+        "path": ".ai/repo/project/issues/I2558.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4305
+      },
+      {
+        "uri": "majordomus://issue/I2559",
+        "kind": "issue",
+        "identity": "I2559",
+        "title": "Embedded shell is judged, not described: a sh -c spawn in Rust, a multi-line workflow step and a record whose anchor is gone are findings of shell check",
+        "description": "Extend shell check from shell files to shell embedded in other files: find every spawn of sh, bash or zsh with -c in the crate's Rust sources and every run step of a GitHub workflow that is more than one command, require an inventory record with an anchor for each, and refuse a record whose anchor the file no longer contains.",
+        "path": ".ai/repo/project/issues/I2559.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4490
+      },
+      {
+        "uri": "majordomus://issue/I2560",
+        "kind": "issue",
+        "identity": "I2560",
+        "title": "An exemption for shell that is to be migrated names the issue that removes it, and the number that name none does not rise",
+        "description": "Add an optional issue field to an exemption, have shell check verify that it names an issue of the plan, report how many exemptions of disposition A, B and D carry none, and refuse a head with more of them than its base.",
+        "path": ".ai/repo/project/issues/I2560.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3794
+      },
+      {
+        "uri": "majordomus://issue/I2561",
+        "kind": "issue",
+        "identity": "I2561",
+        "title": "A provider hook reaches the executable: recording a prompt and a session event are capabilities, and the generated hook starts the shell tool only when no executable is there",
+        "description": "Implement capture prompt and capture session (start, end, compact) as capabilities of the executable that write the same records lib/capture.sh writes, and change the generated provider hooks to exec the executable when one is present and fall back to bin/majordomus otherwise, with the hook's fail-open exit unchanged.",
+        "path": ".ai/repo/project/issues/I2561.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4449
+      },
+      {
+        "uri": "majordomus://issue/I2563",
+        "kind": "issue",
+        "identity": "I2563",
+        "title": "A screen answers a conditional request: its validator is derived from its readings, and an unchanged screen is a 304 that renders nothing",
+        "description": "Give every screen and panel of majordomus ui an ETag derived from the readings it was drawn from, and answer a request whose If-None-Match names it with 304 Not Modified before the screen is rendered.",
+        "path": ".ai/repo/project/issues/I2563.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3692
+      },
+      {
+        "uri": "majordomus://issue/I2564",
+        "kind": "issue",
+        "identity": "I2564",
+        "title": "A link a reader points at has its readings taken before it is opened",
+        "description": "Take the readings of a UI link when a reader points at it, focuses it or it has been visible while the page is idle, so that opening an inspector does not wait for a first reading.",
+        "path": ".ai/repo/project/issues/I2564.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3022
+      },
+      {
+        "uri": "majordomus://issue/I2565",
+        "kind": "issue",
+        "identity": "I2565",
+        "title": "A graph draws a bounded neighbourhood: no page hands the browser more nodes than a stated bound, and the rest is reached through the URL",
+        "description": "Bound what every relationship graph of the UI hands the browser, say how much it left out, and let a reader move the neighbourhood with the URL instead of receiving the whole graph.",
+        "path": ".ai/repo/project/issues/I2565.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3029
+      },
+      {
+        "uri": "majordomus://issue/I2566",
+        "kind": "issue",
+        "identity": "I2566",
+        "title": "The issue list is read a page at a time, and the page is in the URL",
+        "description": "Draw the issues screen a bounded page at a time, with the page in the query string beside the filters, so the size of the response does not grow with the plan.",
+        "path": ".ai/repo/project/issues/I2566.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2356
+      },
+      {
+        "uri": "majordomus://issue/I2567",
+        "kind": "issue",
+        "identity": "I2567",
+        "title": "A reading explains itself: perf.readings lists every remembered reading, and a screen's response says what it cost in Server-Timing",
+        "description": "Make the readings store answerable: one read capability lists every remembered reading with its age, standing, cost and why it was last read again, and every screen's response carries a Server-Timing header with the render time and each source's standing.",
+        "path": ".ai/repo/project/issues/I2567.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3578
+      },
+      {
+        "uri": "majordomus://issue/I2568",
+        "kind": "issue",
+        "identity": "I2568",
+        "title": "A move of the repository reads again only the sources that read what moved",
+        "description": "Measure how many handler runs a move of the repository causes in the readings store and how many of them answer what they answered before, then let a source that reads nothing that moved keep its reading as current.",
+        "path": ".ai/repo/project/issues/I2568.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3875
+      },
+      {
+        "uri": "majordomus://issue/I2569",
+        "kind": "issue",
+        "identity": "I2569",
+        "title": "The bench reads a screen from 1, 20 and 100 readers at once, and a hundred readers of an unread source run its handler once",
+        "description": "Give the bench a concurrency dimension for the UI's targets and record the result as a tracked baseline, and prove that a hundred simultaneous readers of a source never read before cause one handler run.",
+        "path": ".ai/repo/project/issues/I2569.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3321
+      },
+      {
+        "uri": "majordomus://issue/I2570",
+        "kind": "issue",
+        "identity": "I2570",
+        "title": "The Cockpit's pages ask for readings: no page of the technical layer computes on the request",
+        "description": "Move the Cockpit's pages from ctx.execute to the readings the UI already uses, so that a Cockpit page shows the latest reading with its standing and no handler runs on the path of a page request.",
+        "path": ".ai/repo/project/issues/I2570.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3186
+      },
+      {
+        "uri": "majordomus://issue/I2573",
+        "kind": "issue",
+        "identity": "I2573",
+        "title": "A profile is traced from its file to finish: every link marked proven, advisory, duplicated or missing, and the resolver's owner decided in a record",
+        "description": "Write the audit the rest of the milestone is built on: one table that follows a profile from its YAML file through validation, the task record, the context, check, finish and every Rust reader, marking each link; a baseline of what reading and resolving a profile costs today; and a decision record that names the owner of the resolver, what an effective profile is, how its schema changes and where a profile's word ends and enforcement begins.",
+        "path": ".ai/repo/project/issues/I2573.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3992
+      },
+      {
+        "uri": "majordomus://issue/I2574",
+        "kind": "issue",
+        "identity": "I2574",
+        "title": "A profile is a typed object: one Rust definition parses, validates and lists the profiles, and profile.list, profile.show and profile.validate answer everywhere",
+        "description": "Add the typed definition of a profile to the Rust executable and declare the three capabilities that read definitions, so that the command line, HTTP, OpenAPI and MCP list, show and validate profiles from one type.",
+        "path": ".ai/repo/project/issues/I2574.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3890
+      },
+      {
+        "uri": "majordomus://issue/I2575",
+        "kind": "issue",
+        "identity": "I2575",
+        "title": "An effective profile is resolved by one function: every field with its source and reason, one fingerprint, the same answer in any order",
+        "description": "Add the resolver: one pure function from the policy, the definitions and what is asked about (a named profile, the active task, an issue) to an effective profile whose every field carries where it came from and why, with a fingerprint over its inputs, and declare profile.resolve and profile.explain over it.",
+        "path": ".ai/repo/project/issues/I2575.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4876
+      },
+      {
+        "uri": "majordomus://issue/I2576",
+        "kind": "issue",
+        "identity": "I2576",
+        "title": "The lifecycle reads the resolver: start, check --explain, context, finish and doctor take a profile from one answer, and no shell function reads a profile's keys",
+        "description": "Make the shell lifecycle a consumer of the resolver: each command that reads a profile today asks profile.resolve and acts on its answer, mj_load_profile is removed, and the regression-test predicate exists once.",
+        "path": ".ai/repo/project/issues/I2576.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3904
+      },
+      {
+        "uri": "majordomus://issue/I2577",
+        "kind": "issue",
+        "identity": "I2577",
+        "title": "A task carries the fingerprint it was started with, and check says when the profile under it has moved",
+        "description": "Record the effective profile's fingerprint and definition digest on the task when it starts, carry them into the ledger, the handover and the closed session, and have check report a task whose resolution today differs from the one it started with.",
+        "path": ".ai/repo/project/issues/I2577.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3770
+      },
+      {
+        "uri": "majordomus://issue/I2578",
+        "kind": "issue",
+        "identity": "I2578",
+        "title": "A profile says which effects it grants, and one preset, review, grants reading only",
+        "description": "Add one optional axis to the profile, the capability effects a task under it may cause, with absence meaning everything that is granted today, and ship one new profile, review, that grants reading only.",
+        "path": ".ai/repo/project/issues/I2578.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3954
+      },
+      {
+        "uri": "majordomus://issue/I2579",
+        "kind": "issue",
+        "identity": "I2579",
+        "title": "The executor refuses what the task's profile does not grant: a typed refusal on every transport, and an event in the ledger",
+        "description": "Enforce the granted effects at the one place every transport passes: before a capability's handler runs, the executor compares its declared effect with the effects the active task's effective profile grants, and refuses with a typed error and a ledger event when it is not among them.",
+        "path": ".ai/repo/project/issues/I2579.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4448
+      },
+      {
+        "uri": "majordomus://issue/I2580",
+        "kind": "issue",
+        "identity": "I2580",
+        "title": "Every axis says how far it is enforced: enforced, observed, requested or unobservable, declared once and shown wherever a profile is",
+        "description": "Declare, beside each axis of the typed profile, how far the tool enforces it, show that standing in every answer of the resolver, and hold each stronger standing to a test that proves it.",
+        "path": ".ai/repo/project/issues/I2580.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3665
+      },
+      {
+        "uri": "majordomus://issue/I2581",
+        "kind": "issue",
+        "identity": "I2581",
+        "title": "Governance shows the profiles: each one's axes and standing, the effective profile of the active task with where every field came from, and what another profile would change",
+        "description": "Give majordomus ui a view of the profile system drawn from the resolver: the list of profiles, an inspector for one, the effective profile of the active task with its provenance and standing, and the structured difference a candidate profile would make.",
+        "path": ".ai/repo/project/issues/I2581.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4315
+      },
+      {
+        "uri": "majordomus://issue/I2582",
+        "kind": "issue",
+        "identity": "I2582",
+        "title": "A task's profile is changed by one declared command that names the fingerprint it expects",
+        "description": "Declare the one operation that changes the profile of the active task: it takes the new profile and the fingerprint the caller last saw, refuses when the task has moved on, rewrites the task record and appends a ledger event, and is the same operation that accepts a re-resolution in I2577.",
+        "path": ".ai/repo/project/issues/I2582.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3874
+      },
+      {
+        "uri": "majordomus://issue/I2583",
+        "kind": "issue",
+        "identity": "I2583",
+        "title": "One profile, one answer everywhere: a gate adds a profile to a fixture and reads the same fingerprint from the command line, HTTP, MCP and the UI",
+        "description": "Hold the milestone's central property with a gate rather than with each issue's own tests: a case that adds a profile to a fixture and changes no other file, then reads its definition and its resolution from every surface and compares them, and a rule that names the case as its proof.",
+        "path": ".ai/repo/project/issues/I2583.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3763
+      },
+      {
+        "uri": "majordomus://issue/I2584",
+        "kind": "issue",
+        "identity": "I2584",
+        "title": "The profile system is documented where a reader looks, its claims say what is now enforced, and one real task is delivered under it",
+        "description": "Close the milestone in the open: the guide, the concepts page, the profiles directory's own README and the claims state the system as built, the bootstrap's profile table shows the granted effects, and one bounded task of this repository is run under review and under implementation with the recorded difference as evidence.",
+        "path": ".ai/repo/project/issues/I2584.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3984
+      },
+      {
+        "uri": "majordomus://issue/I2585",
+        "kind": "issue",
+        "identity": "I2585",
+        "title": "An untracked layer is read the same by both programs, and says that it is untracked",
+        "description": "Make the shell tool read an untracked layer the way the executable does since ADR 0145, and make both say once that the layer is on disk and not in the index.",
+        "path": ".ai/repo/project/issues/I2585.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2083
+      },
+      {
+        "uri": "majordomus://issue/I2586",
+        "kind": "issue",
+        "identity": "I2586",
+        "title": "doctor counts every failure it prints",
+        "description": "Make the number `doctor` reports, and the exit code it returns, account for every FAIL line it prints.",
+        "path": ".ai/repo/project/issues/I2586.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1517
+      },
+      {
+        "uri": "majordomus://issue/I2587",
+        "kind": "issue",
+        "identity": "I2587",
+        "title": "The reasoning check judges a gate, not every workflow that names a credential",
+        "description": "Stop `reasoning check` from failing a repository on a model credential named in a comment or in a workflow that gates nothing, and let a repository say which workflows are gates.",
+        "path": ".ai/repo/project/issues/I2587.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2042
+      },
+      {
+        "uri": "majordomus://issue/I2588",
+        "kind": "issue",
+        "identity": "I2588",
+        "title": "A region projection's host document is not judged as a bootstrap",
+        "description": "Make the bootstrap check read only the generated region of a target projected in region mode.",
+        "path": ".ai/repo/project/issues/I2588.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1558
+      },
+      {
+        "uri": "majordomus://issue/I2589",
+        "kind": "issue",
+        "identity": "I2589",
+        "title": "init projects into a region where a hand-written target already exists, and update says append",
+        "description": "Have `init` choose region mode for every projection target that already exists without a stamp, say so, and have `update` name what it will do to such a file.",
+        "path": ".ai/repo/project/issues/I2589.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1981
+      },
+      {
+        "uri": "majordomus://issue/I2590",
+        "kind": "issue",
+        "identity": "I2590",
+        "title": "The bootstrap states a worktree layout only where the policy enforces it",
+        "description": "Move the worktree-topology paragraph of the provider templates behind the policy, so an adopter with its own worktree rule is not told a layout it does not use.",
+        "path": ".ai/repo/project/issues/I2590.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1722
+      },
+      {
+        "uri": "majordomus://issue/I2591",
+        "kind": "issue",
+        "identity": "I2591",
+        "title": "A projection target the policy declares is in scope without being listed twice",
+        "description": "Make a freshly initialised repository free of out-of-scope warnings about files the tool itself generates.",
+        "path": ".ai/repo/project/issues/I2591.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1740
+      },
+      {
+        "uri": "majordomus://issue/I2592",
+        "kind": "issue",
+        "identity": "I2592",
+        "title": "Every directory a command writes under the layer carries its contract",
+        "description": "Stop doctor from failing a repository for a missing context document in a directory the tool created or told it to create.",
+        "path": ".ai/repo/project/issues/I2592.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1818
+      },
+      {
+        "uri": "majordomus://issue/I2593",
+        "kind": "issue",
+        "identity": "I2593",
+        "title": "A deployment declares what runs where without inventing a cargo package",
+        "description": "Let a repository whose product is not one cargo binary on one machine pool declare its deployments truthfully.",
+        "path": ".ai/repo/project/issues/I2593.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1787
+      },
+      {
+        "uri": "majordomus://issue/I2594",
+        "kind": "issue",
+        "identity": "I2594",
+        "title": "The declared version is read from where the repository declares it",
+        "description": "Let a repository say where its version is authored, and stop guessing a next version where nothing is declared.",
+        "path": ".ai/repo/project/issues/I2594.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1732
+      },
+      {
+        "uri": "majordomus://issue/I2595",
+        "kind": "issue",
+        "identity": "I2595",
+        "title": "A repository declares its test runners, and a declared runner's tests are runnable",
+        "description": "Make evidence recordable for tests that are neither a shell case of this repository nor a crate test, through a declaration and a generic report.",
+        "path": ".ai/repo/project/issues/I2595.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1970
+      },
+      {
+        "uri": "majordomus://issue/I2596",
+        "kind": "issue",
+        "identity": "I2596",
+        "title": "An intent criterion's test reference resolves through the declared runners",
+        "description": "Let an intent criterion with `evidence: test` name any test a declared runner drives.",
+        "path": ".ai/repo/project/issues/I2596.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1415
+      },
+      {
+        "uri": "majordomus://issue/I2597",
+        "kind": "issue",
+        "identity": "I2597",
+        "title": "A plan derived from history is sealed at the times it happened",
+        "description": "Give a repository a verb that seals lifecycle stamps over their original times, so that a plan imported from history is not stamped with the day of the import.",
+        "path": ".ai/repo/project/issues/I2597.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2035
+      },
+      {
+        "uri": "majordomus://issue/I2598",
+        "kind": "issue",
+        "identity": "I2598",
+        "title": "plan answers in time linear in its issues and names a scope conflict once",
+        "description": "Make the plan commands usable at several hundred issues: bounded time, bounded output, and one call for several transitions.",
+        "path": ".ai/repo/project/issues/I2598.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1912
+      },
+      {
+        "uri": "majordomus://issue/I2599",
+        "kind": "issue",
+        "identity": "I2599",
+        "title": "plan status reports the project header",
+        "description": "Make the executable's plan report carry the name, repository and default branch that project.yaml declares.",
+        "path": ".ai/repo/project/issues/I2599.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1686
+      },
+      {
+        "uri": "majordomus://issue/I2600",
+        "kind": "issue",
+        "identity": "I2600",
+        "title": "A commit reference has one grammar for every writer and every checker",
+        "description": "Make an abbreviated commit reference either written as the full name or refused at writing, and accepted alike by both checkers.",
+        "path": ".ai/repo/project/issues/I2600.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1725
+      },
+      {
         "uri": "majordomus://issue/I2601",
         "kind": "issue",
         "identity": "I2601",
@@ -99861,6 +100833,83 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 2612
+      },
+      {
+        "uri": "majordomus://issue/I2602",
+        "kind": "issue",
+        "identity": "I2602",
+        "title": "A document with a front matter of its own is indexed, and a block scalar is read",
+        "description": "Let a repository index its own Markdown as documents when that Markdown carries front matter the tool does not define, without an error per file per command.",
+        "path": ".ai/repo/project/issues/I2602.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1954
+      },
+      {
+        "uri": "majordomus://issue/I2603",
+        "kind": "issue",
+        "identity": "I2603",
+        "title": "A document the index refused is named as refused, not as unknown",
+        "description": "Make a feature's `docs:` reference to a tracked file say why it does not resolve.",
+        "path": ".ai/repo/project/issues/I2603.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1285
+      },
+      {
+        "uri": "majordomus://issue/I2604",
+        "kind": "issue",
+        "identity": "I2604",
+        "title": "The pull-request lane integrates on the branch the repository declares",
+        "description": "Let a repository whose pull requests target an integration branch other than the default one use the lane, and stop reporting an unread setting as a negative.",
+        "path": ".ai/repo/project/issues/I2604.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1838
+      },
+      {
+        "uri": "majordomus://issue/I2605",
+        "kind": "issue",
+        "identity": "I2605",
+        "title": "Every record with a Markdown body has a rendered page in the UI, with its diagrams",
+        "description": "Give every indexed kind that carries a Markdown body a list and a page in the UI, rendered by the one renderer, with diagrams drawn, and hold it with a case.",
+        "path": ".ai/repo/project/issues/I2605.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2268
+      },
+      {
+        "uri": "majordomus://issue/I2606",
+        "kind": "issue",
+        "identity": "I2606",
+        "title": "A gate model without classes is a model",
+        "description": "Read a gates.yaml that declares gates and no classes instead of reporting that it does not parse.",
+        "path": ".ai/repo/project/issues/I2606.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1317
+      },
+      {
+        "uri": "majordomus://issue/I2607",
+        "kind": "issue",
+        "identity": "I2607",
+        "title": "product validate measures an adopter against what the adopter owns",
+        "description": "Stop `product validate` from warning an adopter about the tool's own modules, commands and kinds.",
+        "path": ".ai/repo/project/issues/I2607.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1561
+      },
+      {
+        "uri": "majordomus://issue/I2608",
+        "kind": "issue",
+        "identity": "I2608",
+        "title": "A plan is derived from what a repository already has, with provenance",
+        "description": "Decide, in a proposed ADR and a first slice, how milestones and issues are derived from a forge and a changelog so that an adopted repository's plan pages are not empty on its first day.",
+        "path": ".ai/repo/project/issues/I2608.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1979
       },
       {
         "uri": "majordomus://issue/I2652",
@@ -100190,7 +101239,7 @@
         "path": ".ai/repo/project/issues/I2703.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2760
+        "bytes": 3743
       },
       {
         "uri": "majordomus://issue/I2704",
@@ -100411,6 +101460,17 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 1684
+      },
+      {
+        "uri": "majordomus://issue/I2730",
+        "kind": "issue",
+        "identity": "I2730",
+        "title": "A derive does not depend on how loaded the machine is",
+        "description": "Give the workflow runner a bound a derivation can rely on, declared in policy.yaml beside the other timings, and make a runner that misses it a refusal naming the command and the bound rather than a different projection.",
+        "path": ".ai/repo/project/issues/I2730.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2861
       },
       {
         "uri": "majordomus://issue/I2731",
@@ -100820,6 +101880,17 @@
         "bytes": 2328
       },
       {
+        "uri": "majordomus://issue/I2853",
+        "kind": "issue",
+        "identity": "I2853",
+        "title": "a Pages deploy on a fresh master is not refused for claims newer than the ledger it reads",
+        "description": "`scripts/pages published-evidence` reads a `not run` claim whose test exists at none of the commits the ledger was recorded against as not yet recorded: it is named in the output and is not held against the published-not-run baseline. A claim whose test existed when the ledger was recorded still counts, and every claim counts when no commit of the ledger is in the history.",
+        "path": ".ai/repo/project/issues/I2853.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2837
+      },
+      {
         "uri": "majordomus://issue/I2882",
         "kind": "issue",
         "identity": "I2882",
@@ -101015,7 +102086,7 @@
         "path": ".ai/repo/project/issues/I2917.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1204
+        "bytes": 1337
       },
       {
         "uri": "majordomus://issue/I2918",
@@ -101191,7 +102262,7 @@
         "path": ".ai/repo/project/issues/I3001.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1060
+        "bytes": 1192
       },
       {
         "uri": "majordomus://issue/I3002",
@@ -101258,6 +102329,17 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 1844
+      },
+      {
+        "uri": "majordomus://issue/I3010",
+        "kind": "issue",
+        "identity": "I3010",
+        "title": "The mesh manual says the edit guard is not wired, and how to wire it by hand",
+        "description": "docs/MESH.md stops saying the edit guard is wired in the provider's configuration. It says that `capture install` writes no PreToolUse entry, so `session.edits_require_claim` refuses nothing in Claude Code yet; that the hook script and guard.edit exist; how a person wires it by hand (the entry, which settings file, a new session); and that wiring it and refusing an unclaimed edit are the generated-plugin work after the alpha.",
+        "path": ".ai/repo/project/issues/I3010.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1784
       },
       {
         "uri": "majordomus://issue/I3020",
@@ -101432,6 +102514,50 @@
         "bytes": 4617
       },
       {
+        "uri": "majordomus://milestone/a-derivation-computed-once-is-reused",
+        "kind": "milestone",
+        "identity": "a-derivation-computed-once-is-reused",
+        "title": "A derivation computed once is reused by every worktree and by CI, and the incremental path becomes the default on evidence",
+        "description": "A node's outputs are kept under its key outside every work tree, restored only after their digests are verified, bounded in size and age, and shared by the worktrees of one machine and by CI runs. The machine lock covers the moment a worktree's files are written and no longer the computation. The incremental path is the default only after the differential case, the measurements and a rollback case exist, and scripts/derive --full remains.",
+        "path": ".ai/repo/project/milestones/a-derivation-computed-once-is-reused.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 6093
+      },
+      {
+        "uri": "majordomus://milestone/a-derive-does-only-the-work-its-inputs-changed",
+        "kind": "milestone",
+        "identity": "a-derive-does-only-the-work-its-inputs-changed",
+        "title": "A derive does only the work its inputs changed, and can say why",
+        "description": "The derivation is a typed graph the executable owns: every producer is a node with declared inputs and outputs, every node has a key computed from the bytes it reads, a read-only plan says for each node whether it would be reused or regenerated and why, and an incremental run regenerates only the nodes whose keys moved. The full derivation stays as the oracle, and a test holds the incremental result byte-identical to it.",
+        "path": ".ai/repo/project/milestones/a-derive-does-only-the-work-its-inputs-changed.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 6749
+      },
+      {
+        "uri": "majordomus://milestone/a-profile-is-resolved-once-and-enforced",
+        "kind": "milestone",
+        "identity": "a-profile-is-resolved-once-and-enforced",
+        "title": "A profile is resolved once, explains every field, and refuses at the executor what it does not grant",
+        "description": "One typed resolver in the Rust executable turns the policy, a profile definition and the task, issue and intent it is asked about into an effective profile with a source and a reason for every field and a fingerprint. The command line, HTTP, MCP and a screen of majordomus ui read that one answer; the shell lifecycle reads it too; a task record carries its fingerprint; every axis says how far it is enforced; and a capability that changes the repository is refused at the executor under a profile that does not grant it.",
+        "path": ".ai/repo/project/milestones/a-profile-is-resolved-once-and-enforced.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 8248
+      },
+      {
+        "uri": "majordomus://milestone/a-screen-is-fast-bounded-and-says-why",
+        "kind": "milestone",
+        "identity": "a-screen-is-fast-bounded-and-says-why",
+        "title": "A screen is fast, bounded and able to say why: what the UI speed brief still asks for after the readings",
+        "description": "Every screen of majordomus ui answers a conditional request without rendering, has the readings of a link taken before it is opened, draws no more rows or nodes than a stated bound, and explains each of its readings over a capability and a response header. A move of the repository reads again only the sources that read what moved, the bench measures 1, 20 and 100 readers at once, and the Cockpit's pages are drawn from readings as the UI's are.",
+        "path": ".ai/repo/project/milestones/a-screen-is-fast-bounded-and-says-why.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 6798
+      },
+      {
         "uri": "majordomus://milestone/a-second-adopter-is-served",
         "kind": "milestone",
         "identity": "a-second-adopter-is-served",
@@ -101465,6 +102591,28 @@
         "bytes": 3523
       },
       {
+        "uri": "majordomus://milestone/an-intent-is-carried-from-a-sentence-to-a-verdict",
+        "kind": "milestone",
+        "identity": "an-intent-is-carried-from-a-sentence-to-a-verdict",
+        "title": "An intent is carried from a sentence to a derived verdict through capabilities, and the UI shows every step",
+        "description": "A sentence becomes a proposal, the proposal is given criteria and milestones, the milestones are given issues, an issue is moved, and the intent's verdict is derived from evidence, every write being one capability with a declared effect that refuses what the validators refuse. The UI's intent inspector shows the gap, the critique and the realisation beside the criteria, an issue's inspector shows what realised it, and one case proves the whole path in a disposable repository.",
+        "path": ".ai/repo/project/milestones/an-intent-is-carried-from-a-sentence-to-a-verdict.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 6609
+      },
+      {
+        "uri": "majordomus://milestone/an-intent-is-followed-to-the-deployment-that-carries-it",
+        "kind": "milestone",
+        "identity": "an-intent-is-followed-to-the-deployment-that-carries-it",
+        "title": "An intent is followed from its criteria to the deployment that carries its work, and one scenario proves it across a restart",
+        "description": "A criterion can require an observed deployment; intent explain continues from each served issue to the release and the deployment that carry it; the wait from merge to deployment is a measured number with its sample size; and the disposable-repository case of I2545 is continued to a deployment, a failed deployment and a restart.",
+        "path": ".ai/repo/project/milestones/an-intent-is-followed-to-the-deployment-that-carries-it.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 5492
+      },
+      {
         "uri": "majordomus://milestone/architecture-is-enforced",
         "kind": "milestone",
         "identity": "architecture-is-enforced",
@@ -101485,6 +102633,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 3262
+      },
+      {
+        "uri": "majordomus://milestone/automation-is-scripted-capabilities",
+        "kind": "milestone",
+        "identity": "automation-is-scripted-capabilities",
+        "title": "A capability may be scripted on master: the decision, the sandbox, a typed way to run a program, and the first shell that leaves through them",
+        "description": "ADR 0069 is a record on master and says what the tree measures today; the sandboxed engine and the scripted-capability kind are part of the executable and reach the command line, HTTP, OpenAPI, MCP and the generated reference through the one registry; a program is run by one typed capability that takes an argument list and never a command string; majordomus shell check prints the counts the migration is judged by and refuses a head that has more exempt shell than its base; the first scripts/ci gates and the hand-written recipe bodies have left shell through that path, each with its inventory record deleted in the same change.",
+        "path": ".ai/repo/project/milestones/automation-is-scripted-capabilities.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 7970
       },
       {
         "uri": "majordomus://milestone/capability-graph",
@@ -101762,6 +102921,28 @@
         "bytes": 1426
       },
       {
+        "uri": "majordomus://milestone/shell-shrinks-to-its-bootstrap",
+        "kind": "milestone",
+        "identity": "shell-shrinks-to-its-bootstrap",
+        "title": "The shell half shrinks to its bootstrap: cases, lifecycle units and embedded shell leave in a declared order, under counts that only lower",
+        "description": "A behavioural case may be a Rust integration test that counts in the suite; every shell case that is removed has a tracked row naming the tests that replaced it; the number of shell cases, of exempt units and of exemptions with no issue behind them is refused when a head raises it above its base; the lifecycle units leave lib in the same change that routes their commands to capabilities; the provider hooks reach the executable without the shell tool when it is present; and embedded shell in Rust sources, workflow steps and recipes is judged by shell check rather than described beside it.",
+        "path": ".ai/repo/project/milestones/shell-shrinks-to-its-bootstrap.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 7457
+      },
+      {
+        "uri": "majordomus://milestone/started-work-is-explained-bounded-and-survives-a-restart",
+        "kind": "milestone",
+        "identity": "started-work-is-explained-bounded-and-survives-a-restart",
+        "title": "What may start is explained, what was started survives a restart, and the policy bounds what a transport may cause",
+        "description": "One read capability says which ready issue may start now and why each other one may not; an execution accepted before a restart is answered after it as a record; and the policy names the highest effect each transport may cause, refused the same way on the command line, HTTP and MCP.",
+        "path": ".ai/repo/project/milestones/started-work-is-explained-bounded-and-survives-a-restart.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 5233
+      },
+      {
         "uri": "majordomus://milestone/surfaces-never-disagree",
         "kind": "milestone",
         "identity": "surfaces-never-disagree",
@@ -101793,6 +102974,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 3667
+      },
+      {
+        "uri": "majordomus://milestone/the-ui-starts-work-through-the-executor",
+        "kind": "milestone",
+        "identity": "the-ui-starts-work-through-the-executor",
+        "title": "The UI starts work through the executor, and shows the execution it started",
+        "description": "A person on /ui opens a capability, an issue or a mesh node, starts the work that page names as an execution of the capability that owns it, and lands on that execution's page on the UI, where its state, steps, log and outcome are read from the execution engine. Every control is a projection of a capability's own declaration, a control that cannot be used says why, and a request repeated under one key starts one execution.",
+        "path": ".ai/repo/project/milestones/the-ui-starts-work-through-the-executor.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 6546
       },
       {
         "uri": "majordomus://milestone/truthful-plan-surfaces",
@@ -102490,7 +103682,7 @@
         "path": ".ai/repo/policy.yaml",
         "section": "policy",
         "source_class": "policy",
-        "bytes": 25165
+        "bytes": 25655
       },
       {
         "uri": "majordomus://profile/debugging",
@@ -102837,6 +104029,16 @@
         "identity": "v0.30.0",
         "title": "v0.30.0",
         "path": ".ai/repo/releases/v0.30.0.yaml",
+        "section": "releases",
+        "source_class": "release",
+        "bytes": 2442
+      },
+      {
+        "uri": "majordomus://release-record/v0.30.1",
+        "kind": "release-record",
+        "identity": "v0.30.1",
+        "title": "v0.30.1",
+        "path": ".ai/repo/releases/v0.30.1.yaml",
         "section": "releases",
         "source_class": "release",
         "bytes": 2442
@@ -104034,11 +105236,11 @@
         "kind": "rule",
         "identity": "project.a-push-runs-what-ci-would-find-first@1",
         "title": "A push runs what CI would find first",
-        "description": "Before a push, the pre-push hook runs the plan's structure gates that CI recorded as cheap and that reach no network, and the suite's fast cases, within a stated bound, so a failure a local run finds in seconds never costs a CI round trip.",
+        "description": "Before a push, the pre-push hook runs the plan's structure gates that CI recorded as cheap, that reach no network and that build nothing, and the suite's fast cases, within a stated bound, so a failure a local run finds in seconds never costs a CI round trip.",
         "path": ".ai/repo/rules/project/a-push-runs-what-ci-would-find-first.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 5020,
+        "bytes": 7649,
         "tags": [
           "ci",
           "process"
@@ -104811,15 +106013,15 @@
         ]
       },
       {
-        "uri": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
+        "uri": "majordomus://rule/project.mesh-cooperation-is-authenticated@2",
         "kind": "rule",
-        "identity": "project.mesh-cooperation-is-authenticated@1",
+        "identity": "project.mesh-cooperation-is-authenticated@2",
         "title": "Mesh cooperation is admitted per link, replicated through one journal, and projected by every surface alike",
         "description": "A runtime cooperates only over a link whose handshake proved the peer's key live, its repository identical, its protocol compatible and its key trusted; everything cooperative travels as signed events of the one journal, folds into one state, and reaches the CLI, HTTP, OpenAPI, MCP and the Cockpit through the mesh capability module alone.",
-        "path": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md",
+        "path": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 5479,
+        "bytes": 7386,
         "tags": [
           "mesh",
           "security",
@@ -107273,7 +108475,7 @@
         "identity": "test/cases/1021_a_push_runs_what_ci_would_find_first.sh",
         "path": "test/cases/1021_a_push_runs_what_ci_would_find_first.sh",
         "source_class": "case",
-        "bytes": 7294
+        "bytes": 14167
       },
       {
         "uri": "majordomus://test/test/cases/1022_worktrees_share_build_intermediates.sh",
@@ -107642,6 +108844,14 @@
         "path": "test/cases/108b_scope_after_trunk_fast_forward.sh",
         "source_class": "case",
         "bytes": 3619
+      },
+      {
+        "uri": "majordomus://test/test/cases/108c_scope_after_a_dirty_start.sh",
+        "kind": "test",
+        "identity": "test/cases/108c_scope_after_a_dirty_start.sh",
+        "path": "test/cases/108c_scope_after_a_dirty_start.sh",
+        "source_class": "case",
+        "bytes": 4843
       },
       {
         "uri": "majordomus://test/test/cases/1090_the_deployments_and_docs_screens_answer.sh",
@@ -108532,6 +109742,14 @@
         "bytes": 3270
       },
       {
+        "uri": "majordomus://test/test/cases/2997_init_projects_into_a_region_over_a_hand_written_target.sh",
+        "kind": "test",
+        "identity": "test/cases/2997_init_projects_into_a_region_over_a_hand_written_target.sh",
+        "path": "test/cases/2997_init_projects_into_a_region_over_a_hand_written_target.sh",
+        "source_class": "case",
+        "bytes": 7348
+      },
+      {
         "uri": "majordomus://test/test/cases/2998_evidence_reaches_the_subcommands_the_executable_owns.sh",
         "kind": "test",
         "identity": "test/cases/2998_evidence_reaches_the_subcommands_the_executable_owns.sh",
@@ -108708,6 +109926,14 @@
         "bytes": 12568
       },
       {
+        "uri": "majordomus://test/test/cases/3026_the_observatory_answers_a_click.sh",
+        "kind": "test",
+        "identity": "test/cases/3026_the_observatory_answers_a_click.sh",
+        "path": "test/cases/3026_the_observatory_answers_a_click.sh",
+        "source_class": "case",
+        "bytes": 6053
+      },
+      {
         "uri": "majordomus://test/test/cases/3027_the_release_path_goes_first.sh",
         "kind": "test",
         "identity": "test/cases/3027_the_release_path_goes_first.sh",
@@ -108786,6 +110012,14 @@
         "path": "test/cases/303_one_source_serves_two_mounts.sh",
         "source_class": "case",
         "bytes": 10098
+      },
+      {
+        "uri": "majordomus://test/test/cases/3041_a_server_reports_the_share_it_serves.sh",
+        "kind": "test",
+        "identity": "test/cases/3041_a_server_reports_the_share_it_serves.sh",
+        "path": "test/cases/3041_a_server_reports_the_share_it_serves.sh",
+        "source_class": "case",
+        "bytes": 7300
       },
       {
         "uri": "majordomus://test/test/cases/3042_the_observatory_asks_again_when_it_is_seen.sh",
@@ -108884,6 +110118,14 @@
         "bytes": 9317
       },
       {
+        "uri": "majordomus://test/test/cases/3058_bench_compares_two_runs.sh",
+        "kind": "test",
+        "identity": "test/cases/3058_bench_compares_two_runs.sh",
+        "path": "test/cases/3058_bench_compares_two_runs.sh",
+        "source_class": "case",
+        "bytes": 4548
+      },
+      {
         "uri": "majordomus://test/test/cases/305_a_command_is_claimed_or_classified.sh",
         "kind": "test",
         "identity": "test/cases/305_a_command_is_claimed_or_classified.sh",
@@ -108906,6 +110148,14 @@
         "path": "test/cases/3063_a_branch_episode_drains_the_outbox.sh",
         "source_class": "case",
         "bytes": 7384
+      },
+      {
+        "uri": "majordomus://test/test/cases/3064_a_pushed_branch_is_judged_by_its_holder.sh",
+        "kind": "test",
+        "identity": "test/cases/3064_a_pushed_branch_is_judged_by_its_holder.sh",
+        "path": "test/cases/3064_a_pushed_branch_is_judged_by_its_holder.sh",
+        "source_class": "case",
+        "bytes": 5344
       },
       {
         "uri": "majordomus://test/test/cases/3066_a_session_joins_the_mesh_at_start.sh",
@@ -109201,7 +110451,7 @@
         "identity": "test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh",
         "path": "test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh",
         "source_class": "case",
-        "bytes": 18717
+        "bytes": 20416
       },
       {
         "uri": "majordomus://test/test/cases/3221_a_bare_session_start_joins_the_cluster.sh",
@@ -109258,6 +110508,14 @@
         "path": "test/cases/3240_the_published_screens_carry_their_slow_panels.sh",
         "source_class": "case",
         "bytes": 3179
+      },
+      {
+        "uri": "majordomus://test/test/cases/3242_a_claim_newer_than_the_ledger_is_not_yet_recorded.sh",
+        "kind": "test",
+        "identity": "test/cases/3242_a_claim_newer_than_the_ledger_is_not_yet_recorded.sh",
+        "path": "test/cases/3242_a_claim_newer_than_the_ledger_is_not_yet_recorded.sh",
+        "source_class": "case",
+        "bytes": 3687
       },
       {
         "uri": "majordomus://test/test/cases/32_refusal_lifecycle.sh",
@@ -109449,7 +110707,7 @@
         "identity": "test/cases/340_a_brief_is_kept_as_received.sh",
         "path": "test/cases/340_a_brief_is_kept_as_received.sh",
         "source_class": "case",
-        "bytes": 19622
+        "bytes": 23377
       },
       {
         "uri": "majordomus://test/test/cases/341_a_claim_shows_the_test_that_settles_it.sh",
@@ -112301,7 +113559,7 @@
       "front_matter": "optional",
       "schema": "majordomus.document/v1",
       "identity": [],
-      "objects": 350
+      "objects": 352
     },
     {
       "name": "domain",
@@ -112358,7 +113616,7 @@
       "identity": [
         "id"
       ],
-      "objects": 487
+      "objects": 576
     },
     {
       "name": "knowledge",
@@ -112388,7 +113646,7 @@
       "identity": [
         "id"
       ],
-      "objects": 42
+      "objects": 52
     },
     {
       "name": "moment",
@@ -112444,7 +113702,7 @@
       "identity": [
         "tag"
       ],
-      "objects": 30
+      "objects": 31
     },
     {
       "name": "rule",
@@ -112510,7 +113768,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 563
+      "objects": 570
     },
     {
       "name": "use-case",
@@ -148038,7 +149296,7 @@
         "name": "majordomus_server",
         "id": "server.status",
         "title": "The shared server, and every server of the repository",
-        "description": "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; how far the tree it serves is from the remote trunk (`trunk`: current, lagging, stale, unjudged or unmeasured against the policy's `checkout.trunk_distance`, as of the last fetch); the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
+        "description": "Where this checkout's server stands — absent, starting, ready, outdated, skewed or stale — measured against what this executable would serve; how far the tree it serves is from the remote trunk (`trunk`: current, lagging, stale, unjudged or unmeasured against the policy's `checkout.trunk_distance`, as of the last fetch); the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. Each lease carries the share directory its server serves, measured on every call: the version its `version.txt` states, whether it holds `ui/`, and `skewed` with the reason when it states another version than the executable of that server or lacks `ui/` or `cockpit/`, the state in which every asset of those pages answers 404; a server that answers at this executable's version over such a share stands `skewed` rather than `ready`. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
         "kind": "query",
         "read_only": true,
         "effect": "read",

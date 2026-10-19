@@ -1,0 +1,48 @@
+id: I2542
+milestone: an-intent-is-carried-from-a-sentence-to-a-verdict
+title: "A proposal is planned by a capability: an intent is given its criteria, invariants and milestones, or nothing is written"
+slug: a-proposal-is-planned-by-a-capability
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Add the second intent writer ADR 0144 leaves open: one command capability that sets the invariants, the satisfaction criteria and the milestones of an existing intent record, validates the result with the intent validator before it is written, refuses a record that changed since the caller read it, and answers the same verdict as a preview without writing."
+why: "campaigns/majordomus-intent-ui-pack/03-INTENT-VERTICAL.md asks that an intent be captured with measurable criteria, invariants and constraints, that drafts be edited with validation diagnostics, that deterministic typed validation and not a model decide acceptance, and campaigns/majordomus-intent-ui-pack/02-ACTION-PLANE.md asks for compare-and-set where a source record can be edited concurrently. ADR 0144 made the first step a capability (intents.propose) and says planning a proposal stays a separate act that a person, or a later capability, performs. No such capability exists, so after the first sentence every intent is finished by hand in a text editor, and no surface can offer the step."
+current_state: "apps/majordomus-cli/src/capability/builtin/intents.rs declares seven capabilities, and its test only_the_proposal_writes_the_repository holds that intents.propose is the only writer. intents.propose writes statement, title and id and leaves invariants, milestones and satisfaction empty. intents.record answers no digest of the record a writer could be held to. Case 2978 covers the proposal only."
+desired_state: "A decision record that amends ADR 0144 names the second writer. intents.plan is a command that declares it writes the repository. Its input is the intent id, the digest of the record as the caller read it, and the invariants, criteria and milestones to set. It refuses an unknown intent, a digest that no longer matches, a milestone id the plan does not hold, a criterion that lacks a field the intent schema requires, and any result intent validate would fail, among them a half-planned intent. With its preview flag it answers the record it would write and the validator's findings and writes nothing. The write is whole or absent, as the proposal's is. intents.record answers the digest. The stage stays derived, and no status is stored."
+scope:
+  - ".ai/repo/adrs"
+  - "apps/majordomus-cli/src/intent.rs"
+  - "apps/majordomus-cli/src/capability/builtin/intents.rs"
+  - "apps/majordomus-cli/tests/intent.rs"
+  - "test/cases"
+  - "docs/PLANNING.md"
+  - "docs/generated"
+  - ".ai/repo/project/intents/intent-lifecycle.yaml"
+  - ".ai/repo/project/issues/I2542.yaml"
+non_scope:
+  - "Composing criteria from a sentence: the capability accepts what its caller supplies"
+  - "Retiring, superseding or deleting an intent"
+  - "Writing a gap or a critique record"
+  - "A ledger event for the write: recording every writer's call is I1505"
+depends_on: []
+acceptance_criteria:
+  - "In a fixture repository, intents.plan on a proposal with one milestone the plan holds and one valid criterion writes the record, and intents.list then answers the stage the derivation gives a planned intent"
+  - "A call that names a milestone and no criterion, or a criterion and no milestone, is refused and the file is byte-identical"
+  - "A call whose digest differs from the record on disk is refused with a typed error that names both digests, and two concurrent calls with one digest cannot both succeed"
+  - "A call with the preview flag answers the proposed record and the validator's findings and leaves git status unchanged"
+  - "The capability is projected from one declaration to the command line, MCP, HTTP and OpenAPI, its exposure ceiling is the one every repository write has, and case 1086 still refuses a remote caller"
+  - "The test that holds which intent capabilities write names exactly intents.propose and intents.plan, and a third writer fails it"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib capability::builtin::intents"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib intent::"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test intent"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 2978_an_intent_is_proposed_by_a_capability 367_an_intent_is_satisfied_only_by_evidence 1086_a_remote_caller_cannot_write"
+  - "majordomus generate --check"
+evidence_required:
+  - "intent_planned_by_a_capability"
+  - "half_planned_result_is_refused"
+  - "stale_digest_is_refused"
+  - "every_writer_is_named"
+created_at: 2026-10-13
+updated_at: 2026-10-13

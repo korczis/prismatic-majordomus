@@ -523,6 +523,18 @@
         }
       }
     },
+    "workflows": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "How a derivation asks the workflow runner (just) about the justfile. A committed projection is read from the answer, so the bound decides whether it is a function of the tree or of the machine's load.",
+      "properties": {
+        "describe_timeout_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "How long a derivation waits for `just --dump` and `just --groups` before it refuses, naming the command and this bound. Absent is 30."
+        }
+      }
+    },
     "checkout": {
       "type": "object",
       "additionalProperties": false,

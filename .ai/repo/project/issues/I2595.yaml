@@ -1,0 +1,31 @@
+id: I2595
+milestone: a-second-adopter-is-served
+title: "A repository declares its test runners, and a declared runner's tests are runnable"
+slug: a-repository-declares-its-test-runners
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make evidence recordable for tests that are neither a shell case of this repository nor a crate test, through a declaration and a generic report."
+why: "Observed on 2026-10-13 adopting 0.21.0 and 0.22.0 in a pnpm/TypeScript repository (docs/ADOPTION_SECOND_RUN.md, G12); read again on master e506c041a4. 19 claims naming vitest files read `unrunnable` for ever; the adopter had to write a runner and 19 shell wrappers in the suite's TSV format to record one run."
+current_state: "apps/majordomus-cli/src/evidence/mod.rs:207-212 has two runners and TestId::of hard-codes two path prefixes; the same constants are repeated in rules/mod.rs, evidence/subject.rs and environment/resolve.rs; evidence/record.rs ingests a suite TSV and cargo output only."
+desired_state: "Runners are declared once (id, path glob, how a path becomes a test id, report format) with the two existing runners as shipped defaults, and `evidence record` ingests the generic TSV for any declared runner. Design change with a proposed ADR."
+scope:
+  - "apps/majordomus-cli/src/evidence"
+  - "apps/majordomus-cli/src/rules"
+  - "apps/majordomus-cli/src/environment"
+  - "share/schemas/majordomus"
+  - "docs/EVIDENCE.md"
+  - "test/cases"
+depends_on: []
+acceptance_criteria:
+  - "A claim naming a path of a declared runner is `not_run`, not `unrunnable`"
+  - "A TSV report for that runner recorded with a stamp moves the claim to a verdict"
+  - "With no declaration the two shipped runners behave exactly as today"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "declared_runner_is_runnable_case"
+  - "adr_proposed"
+created_at: 2026-10-13
+updated_at: 2026-10-13

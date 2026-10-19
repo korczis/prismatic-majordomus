@@ -1,0 +1,47 @@
+id: I2536
+milestone: the-ui-starts-work-through-the-executor
+title: "An execution opens on the UI: its state, steps, log and outcome at an address of its own"
+slug: an-execution-opens-on-the-ui
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Give one execution a page on the primary surface: the Command screen's execution rows lead to an inspector that shows what the execution engine holds about that execution, read from executions.get and executions.events, so that a person follows work on /ui without leaving for the Cockpit."
+why: "campaigns/majordomus-intent-ui-pack/04-UI-PROJECTIONS.md asks for an Executions view with active and completed runs, timelines, logs, outputs and diagnostics, and campaigns/majordomus-intent-ui-pack/00-ORCHESTRATOR.md asks that a run be observed by its id and reconciled after a refresh. The Cockpit has that page (/cockpit/executions/<id>, cockpit/pages.rs); the UI, which ADR 0135 makes the primary surface, does not. Every later control of this milestone needs a place on the UI to send a person after a start."
+current_state: "apps/majordomus-cli/src/ui/command.rs reads executions.list and draws each execution as a row of text (id, capability, state) in the function running; the id is not a link. No module under apps/majordomus-cli/src/ui reads executions.get or executions.events. docs/MAJORDOMUS_UI.md lists following a run as not done yet."
+desired_state: "/ui/command?execution=<id> draws the inspector of one execution: capability (a link to its inspector), state in the engine's own words, who asked, steps, progress, diagnostics, the retained log and whether it was truncated, the stored input and the outcome or the typed error. Every row of the Executions panel leads to it. An id the process does not remember reads as not answered with the engine's reason. A page of an execution that is not final carries the catching-up mark the UI already uses, so the existing refresh reads it again until it is final."
+scope:
+  - "apps/majordomus-cli/src/ui/command.rs"
+  - "apps/majordomus-cli/src/ui/execution.rs"
+  - "apps/majordomus-cli/src/ui/mod.rs"
+  - "apps/majordomus-cli/src/ui/view.rs"
+  - "share/ui/src/ui.css"
+  - "share/ui/ui.css"
+  - "apps/majordomus-cli/tests/ui_surface.rs"
+  - "apps/majordomus-cli/tests/ui_links.rs"
+  - "test/cases/1088_the_command_and_capability_screens_answer.sh"
+  - "docs/MAJORDOMUS_UI.md"
+  - ".ai/repo/project/issues/I2536.yaml"
+non_scope:
+  - "Starting or cancelling an execution from the page: I2537"
+  - "A socket on the UI: the stream of changed readings is I2487, and until then the page is read again by the refresh"
+  - "A history across restarts: an execution lives in the process that accepted it (docs/EXECUTIONS.md)"
+depends_on: []
+acceptance_criteria:
+  - "GET /ui/command?execution=<id> of an execution the process remembers answers 200 with its state, capability, steps, log lines and outcome, each at a pointer into executions.get or executions.events that the panel's source line names"
+  - "An execution id that is not remembered answers a page that says not answered with the engine's message, and an execution parameter that is not an execution id by shape is dropped and not echoed"
+  - "Every row of the Executions panel on /ui/command is a link to that execution's inspector, and case 1091 follows it"
+  - "A log line that holds markup is drawn as text"
+  - "The inspector of a running execution carries data-catching-up and the inspector of a final one does not"
+  - "No file under apps/majordomus-cli/src/ui other than source.rs calls execute outside a test module"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test ui_surface"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test ui_links"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 1088_the_command_and_capability_screens_answer 1091_no_link_on_the_ui_is_dead 1096_no_screen_waits_for_a_source"
+evidence_required:
+  - "execution_inspector_served"
+  - "forgotten_execution_reads_not_answered"
+  - "execution_rows_are_links"
+created_at: 2026-10-13
+updated_at: 2026-10-13

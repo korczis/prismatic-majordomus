@@ -27,6 +27,16 @@ majordomus check; echo $?
 # 10
 ```
 
+## What was already changed
+
+A task answers for what changes after it starts. `start` records the paths that were
+already dirty and what each held (`.ai/local/state/start-dirty.tsv`, this checkout's own),
+and a path is not counted while it still holds exactly that: a tracked file the
+repository's own hooks regenerate, somebody's work in progress, an untracked draft. `check`
+says how many it left out. A path the task edits after that, creates, or commits is the
+task's as before, and a record belongs to the one task that wrote it
+(`test/cases/108c_scope_after_a_dirty_start.sh`).
+
 ## What it does not cover
 
 Scope is about files, not about semantics: a change inside `lib/auth` that breaks something in `lib/other` is caught by your verification command, not by scope.

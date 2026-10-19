@@ -1,0 +1,62 @@
+id: an-intent-is-carried-from-a-sentence-to-a-verdict
+title: "An intent is carried from a sentence to a derived verdict through capabilities, and the UI shows every step"
+slug: an-intent-is-carried-from-a-sentence-to-a-verdict
+order: 521
+priority: p1
+problem: "campaigns/majordomus-intent-ui-pack/03-INTENT-VERTICAL.md asks for one workflow from a desired outcome in natural language to proof: capture, gap and critique, plan, execution, verification, with every step a typed record and every status derived. campaigns/majordomus-intent-ui-pack/06-GITHUB-DELIVERY.md asks that the links from a criterion to issues, branches, commits and pull requests can be followed. The derivation half exists: an intent is a typed record whose stage and verdict are derived (ADR 0070), intents.coverage, intents.preflight and intents.binding hold a plan to its intent, intent_realization.work and intent_realization.explain join the work, and trace.issue answers the branches and commits that realised an issue. The writing half stops after the first step: intents.propose writes a proposal (ADR 0144) and no capability can give it criteria, invariants or milestones, and no capability writes a milestone or an issue, so every plan record is still typed by hand. The UI shows an intent's statement, criteria and serving work (apps/majordomus-cli/src/ui/intent.rs) and nothing of its gap, its critique, how it is being realised, or what realised an issue."
+outcome: "A sentence becomes a proposal, the proposal is given criteria and milestones, the milestones are given issues, an issue is moved, and the intent's verdict is derived from evidence, every write being one capability with a declared effect that refuses what the validators refuse. The UI's intent inspector shows the gap, the critique and the realisation beside the criteria, an issue's inspector shows what realised it, and one case proves the whole path in a disposable repository."
+current_state: "Measured at 3491f35cab. The intents module declares intents.list, intents.record, intents.validate, intents.coverage, intents.preflight, intents.binding and intents.propose (apps/majordomus-cli/src/capability/builtin/intents.rs), and its test only_the_proposal_writes_the_repository holds that one of them writes. The plan module declares plan.transition as its only writer (capability/builtin/plan.rs). Gap and critique records exist under .ai/repo/project/gaps and .ai/repo/project/critiques and are read inside coverage, preflight and binding; neither apps/majordomus-cli/src/ui/intent.rs nor apps/majordomus-cli/src/cockpit/intents.rs names a gap or a critique. No screen of the UI reads intent_realization.explain or trace.issue."
+desired_state: "Two further writers exist beside intents.propose and plan.transition: one that plans an existing intent and one that proposes a milestone or an issue. Each writes one record whole or not at all, answers a preview without writing, and refuses a record the plan or intent validator would fail. The stage of an intent, the status of an issue and the verdict of a criterion stay derivations. The UI's inspectors read the gap, the critique, the realisation and the trace from capabilities."
+scope:
+  - ".ai/repo/adrs"
+  - ".ai/repo/project"
+  - ".ai/repo/features"
+  - "apps/majordomus-cli/src/intent.rs"
+  - "apps/majordomus-cli/src/intent_review.rs"
+  - "apps/majordomus-cli/src/plan.rs"
+  - "apps/majordomus-cli/src/capability/builtin/intents.rs"
+  - "apps/majordomus-cli/src/capability/builtin/plan.rs"
+  - "apps/majordomus-cli/src/ui"
+  - "apps/majordomus-cli/tests"
+  - "docs"
+  - "test/cases"
+
+non_scope:
+  - "A model that writes criteria, a gap or a plan: a capability accepts what a caller supplies and validates it; who or what composed the input is the caller's business (ADR 0144)"
+  - "A stored status on an intent, an issue or a milestone: ADR 0070 and the project model derive them"
+  - "Writing to GitHub: the projection of the plan is scripts/github-sync and its gate (milestone work-graph-github)"
+  - "Launching workers for ready issues, budgets and supervision: planned with the autonomous delivery pack"
+  - "Release, deployment and post-deploy verification: the release and delivery milestones own them"
+
+acceptance_criteria:
+  - "An existing intent is given criteria, invariants and milestones by one capability that refuses a half-planned result, an unknown milestone and a record that changed since the caller read it"
+  - "A milestone or an issue is written by one capability that refuses an existing id, an edge that does not resolve and a cycle, and answers the same verdict as a preview without writing"
+  - "The test that holds which capabilities write the repository names every writer, and a writer added without it fails"
+  - "The UI's intent inspector shows the recorded gap, the recorded critique and the realisation of the intent, each from a capability's answer, and says none where no record exists"
+  - "The UI's issue inspector shows the branches and commits that realised the issue from trace.issue"
+  - "One case creates a repository, proposes an intent, plans it, proposes an issue under it, moves the issue, and reads a derived verdict, using capabilities only"
+
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib capability::builtin::intents"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib capability::builtin::plan"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test intent"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 2978_an_intent_is_proposed_by_a_capability 1081_an_intent_opens_what_serves_it 1080_the_issues_are_browsed 367_an_intent_is_satisfied_only_by_evidence"
+  - "majordomus generate --check"
+
+evidence_required:
+  - "intent_planned_by_a_capability"
+  - "plan_record_proposed_by_a_capability"
+  - "every_writer_is_named"
+  - "gap_and_critique_on_the_inspector"
+  - "issue_trace_on_the_inspector"
+  - "sentence_to_verdict_case"
+
+risks:
+  - "A writer makes it cheap to put invented work into the plan. Each writer validates against the same validators a hand-written record meets, and none fills a field the caller left empty."
+  - "ADR 0144 is proposed, not accepted. If the owner rejects it, intents.propose is removed and the writers planned here lose their first step."
+  - "An issue id is claimed on the board before it is used. A capability that writes an issue takes the id from its caller and cannot make that claim for them."
+
+created_at: 2026-10-13
+updated_at: 2026-10-13

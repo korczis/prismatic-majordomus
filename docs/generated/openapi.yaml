@@ -1,11 +1,11 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the canonical Majordomus capability registry; regenerate with `majordomus generate`
-# Generator: majordomus-cli 0.30.1
+# Generator: majordomus-cli 0.30.2
 openapi: "3.1.0"
 jsonSchemaDialect: https://spec.openapis.org/oas/3.1/dialect/base
 info:
   title: Majordomus
-  version: "0.30.1"
+  version: "0.30.2"
   summary: "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry."
   description: "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.\n\n**One registry, every interface a projection.** Every operation here is a capability of the registry and nothing is declared for HTTP alone. `operationId` is the capability's canonical id; the same capability answers as the MCP tool `x-majordomus-mcp` names and as the command `x-majordomus-cli` names, where its exposure says so, through one executor with one cache. A change to a capability's description or input type reaches this document, the MCP schema, the command line and the generated reference on the next start; nothing is edited by hand.\n\n**Loopback, unauthenticated, and explicit about what writes.** The first `majordomus mcp` in a repository binds this server beside its stdio session and logs the URL; `majordomus serve` binds it alone. It listens on 127.0.0.1 and asks for no credentials: whoever can reach the socket can read the layer and can run every command it exposes. An operation that changes a tracked file declares the effect `repository_mutation` in `x-majordomus-effect`; it is always a `POST` and never a read-only MCP tool, and every other operation reads. `GET /` is the home page and lists every surface; `/swagger` is Swagger UI over this document; `/docs/` is this repository's own documentation; `/mcp` is MCP over HTTP for a second client.\n\n**Binding.** `GET` binds every top-level property of the capability's input as a query parameter, coerced by the schema's type (integers, numbers and booleans are parsed, everything else is text); `POST` binds the input as the JSON body. An unknown parameter is an invalid input, not ignored. Every failure is one JSON body, `{ \"error\": { \"code\", \"message\" } }`: 400 `invalid_input`, 403 `forbidden` (a caller beyond loopback asking for anything but a read or a signed mesh message), 404 `not_found`, 422 `refused` (a command's alone), 500 `internal`; 405 `method_not_allowed` names a path that exists under another method.\n\n**Examples are benchmark cases.** Every example in this document is one of the capability's own benchmark cases, the inputs the benchmarks time and the tests replay against a real socket: an operation without an example is an operation without a case, and the executable does not compile in that state. `x-majordomus-benchmark` and `x-majordomus-cache` carry the policies; `x-majordomus-stability` and `x-majordomus-provenance` say how far a capability is proved and where it was declared.\n\n**Generated, committed, checked.** This document is rendered from the registry at every request and committed as `docs/generated/openapi.json`; `majordomus generate --check` derives it again and refuses a stale copy, and CI runs that check on every push, so the committed document, the served one and the reference on the site are the same document."
   license:
@@ -11857,7 +11857,7 @@ paths:
     get:
       operationId: server.status
       summary: "The shared server, and every server of the repository"
-      description: "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; how far the tree it serves is from the remote trunk (`trunk`: current, lagging, stale, unjudged or unmeasured against the policy's `checkout.trunk_distance`, as of the last fetch); the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes."
+      description: "Where this checkout's server stands — absent, starting, ready, outdated, skewed or stale — measured against what this executable would serve; how far the tree it serves is from the remote trunk (`trunk`: current, lagging, stale, unjudged or unmeasured against the policy's `checkout.trunk_distance`, as of the last fetch); the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. Each lease carries the share directory its server serves, measured on every call: the version its `version.txt` states, whether it holds `ui/`, and `skewed` with the reason when it states another version than the executable of that server or lacks `ui/` or `cockpit/`, the state in which every asset of those pages answers 404; a server that answers at this executable's version over such a share stands `skewed` rather than `ready`. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes."
       tags:
         - server
       parameters:
@@ -28761,10 +28761,15 @@ components:
             - string
             - "null"
           description: "The executable's version; absent for a server too old to have written one."
+        share:
+          anyOf:
+            - "$ref": "#/components/schemas/ServedShare"
+            - type: "null"
+          description: "The share directory the server serves, measured now against `version`: the version\nit states, whether it holds `ui/`, and `skewed` with the reason when either differs\nfrom what the server's executable needs. Absent when the lease names no share — a\nserver older than this field, or one that has not located its share yet."
       required:
         - pid
         - started_at
-      description: "A lease as a reader sees it: what the server wrote about itself, without the token that\nmakes the file the server's own.\n\n```\nuse majordomus_cli::capability::builtin::server::LeaseView;\nlet view = LeaseView { pid: 7, url: Some(\"http://127.0.0.1:8741\".into()),\n    started_at: \"2026-09-10T00:00:00Z\".into(), executable: None, version: Some(\"1.0.0\".into()) };\nlet v = serde_json::to_value(&view).unwrap();\nassert_eq!(v[\"pid\"], 7);\nassert!(v.get(\"token\").is_none() && v.get(\"root\").is_none());\n```"
+      description: "A lease as a reader sees it: what the server wrote about itself, without the token that\nmakes the file the server's own.\n\n```\nuse majordomus_cli::capability::builtin::server::LeaseView;\nlet view = LeaseView { pid: 7, url: Some(\"http://127.0.0.1:8741\".into()),\n    started_at: \"2026-09-10T00:00:00Z\".into(), executable: None, version: Some(\"1.0.0\".into()),\n    share: None };\nlet v = serde_json::to_value(&view).unwrap();\nassert_eq!(v[\"pid\"], 7);\nassert!(v.get(\"token\").is_none() && v.get(\"root\").is_none());\nassert!(v.get(\"share\").is_none(), \"a lease that names no share is read without one\");\n```"
     LedgerMark:
       type: object
       properties:
@@ -39964,6 +39969,42 @@ components:
         - selector
         - declared
       description: "One selector, and whether what it produces was declared or inferred.\n\nTwo fields, and the second is the whole reason the projection exists: a caller consuming\na compiled context needs to know which selectors it can trust as repository fact, and\nderiving that from the answer would mean inferring it from confidence values. Published\nhere, it is a rule rather than a pattern a reader noticed.\n\n```\nuse majordomus_cli::devcontext::{policy, Selector, SelectorRule};\nuse majordomus_cli::synthetic::SyntheticRepository;\n\nlet repo = SyntheticRepository::small().unwrap();\nlet ctx = repo.context().unwrap();\nlet rules = policy(&ctx).unwrap();\n\n// every selector is published, and each row agrees with the selector it names\nlet selectors: &[SelectorRule] = &rules.selectors;\nassert_eq!(selectors.len(), Selector::ALL.len());\nfor r in selectors {\n    assert_eq!(r.declared, r.selector.declared());\n}\n\n// and the inferring one is named, so the guessed half of an answer can be found\nlet inferred: Vec<Selector> =\n    selectors.iter().filter(|r| !r.declared).map(|r| r.selector).collect();\nassert_eq!(inferred, [Selector::IntentMatch]);\n```"
+    ServedShare:
+      type: object
+      properties:
+        path:
+          type: string
+          description: The share directory.
+        origin:
+          type:
+            - string
+            - "null"
+          description: "How it was found, when the server said."
+        version:
+          type:
+            - string
+            - "null"
+          description: "The version its `version.txt` states; absent when it states none."
+        ui_present:
+          type: boolean
+          description: "Whether it holds `ui/`, the UI's stylesheet and scripts."
+        cockpit_present:
+          type: boolean
+          description: "Whether it holds `cockpit/`, the Cockpit's stylesheet and scripts."
+        standing:
+          "$ref": "#/components/schemas/ShareStanding"
+          description: "Whether it is the executable's own."
+        reason:
+          type:
+            - string
+            - "null"
+          description: "Why it is skewed, when it is."
+      required:
+        - path
+        - ui_present
+        - cockpit_present
+        - standing
+      description: "A share directory measured against the version of the executable that serves it: where\nit is, how it was found, the version it states, whether it holds the directory of each\nsurface the server serves pages from — `ui/` for `/ui`, `cockpit/` for `/cockpit` — and\nwhether that makes it the executable's own (ADR 0163).\n\nMeasured when it is asked for, never recorded: a checkout moves under a running server,\nand the directory a lease names may state another version an hour later.\n\n```\nuse majordomus_cli::share::{ServedShare, ShareStanding};\nlet dir = tempfile::tempdir().unwrap();\nstd::fs::write(dir.path().join(\"version.txt\"), \"version=0.26.0\\n\").unwrap();\nstd::fs::create_dir(dir.path().join(\"ui\")).unwrap();\nstd::fs::create_dir(dir.path().join(\"cockpit\")).unwrap();\nlet own = ServedShare::inspect(dir.path(), Some(\"installation\"), \"0.26.0\");\nassert_eq!(own.standing, ShareStanding::Current);\nassert!(own.reason.is_none() && own.ui_present);\n\nlet older = ServedShare::inspect(dir.path(), None, \"0.27.0\");\nassert_eq!(older.standing, ShareStanding::Skewed);\nassert!(older.reason.unwrap().contains(\"states version 0.26.0\"));\n\nstd::fs::remove_dir(dir.path().join(\"ui\")).unwrap();\nlet blank = ServedShare::inspect(dir.path(), None, \"0.26.0\");\nassert_eq!(blank.standing, ShareStanding::Skewed);\nassert!(!blank.ui_present && blank.reason.unwrap().contains(\"no ui/\"));\n```"
     ServedStanding:
       type: object
       properties:
@@ -40025,9 +40066,12 @@ components:
           const: outdated
           description: "The server answers, but from older code than this executable, or from a file that\nhas been replaced since it started: everything it says is yesterday's."
         - type: string
+          const: skewed
+          description: "The server answers for this checkout at this executable's version, but serves a\nshare directory that is not its own: one that states another version or none, or\nlacks a surface's directory (`ui/`, `cockpit/`), so the pages it serves have no\nassets and what it reads from `share/` is another release's (ADR 0163)."
+        - type: string
           const: stale
           description: "The lease names a server that does not answer, or is not a lease at all."
-      description: "Where a checkout's server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable's code.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Stale];\nlet words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\"absent\", \"starting\", \"ready\", \"outdated\", \"stale\"]);\nassert_eq!(serde_json::from_str::<ServerStanding>(\"\\\"stale\\\"\").unwrap(), ServerStanding::Stale);\n```"
+      description: "Where a checkout's server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable's code.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Skewed, ServerStanding::Stale];\nlet words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\"absent\", \"starting\", \"ready\", \"outdated\", \"skewed\", \"stale\"]);\nassert_eq!(serde_json::from_str::<ServerStanding>(\"\\\"stale\\\"\").unwrap(), ServerStanding::Stale);\n```"
     ServerStatus:
       type: object
       properties:
@@ -40488,6 +40532,15 @@ components:
         - bytes
         - tokens
       description: "One planned shard: a Markdown file of the pack, the paths it carries from first to last,\nand what it weighs in bytes and in tokens.\n\nThe examples below plan a repository holding `main.rs` and a `logo.png` whose content is\nbinary, with a distribution whose `chat` profile has limits and whose `bare` one has none.\n\n```\nuse majordomus_cli::pack::{plan, ShardPlan};\n# use std::process::Command;\n# let dir = tempfile::tempdir().unwrap();\n# let (root, share) = (dir.path().join(\"repo\"), dir.path().join(\"share\"));\n# std::fs::create_dir_all(&root).unwrap();\n# std::fs::create_dir_all(&share).unwrap();\n# std::fs::write(share.join(\"archive.yaml\"), \"default: chat\\nprofiles:\\n  - id: chat\\n    binary: drop\\n    artifacts: drop\\n    shards:\\n      max_count: 5\\n      max_tokens: 4000\\n  - id: bare\\n    binary: drop\\n\").unwrap();\n# let git = |a: &[&str]| assert!(Command::new(\"git\").arg(\"-C\").arg(&root)\n#     .args([\"-c\", \"user.email=t@example.com\", \"-c\", \"user.name=t\"]).args(a)\n#     .status().unwrap().success());\n# git(&[\"init\", \"-q\"]);\n# std::fs::write(root.join(\"main.rs\"), \"fn main() {}\\n\").unwrap();\n# std::fs::write(root.join(\"logo.png\"), b\"\\x89PNG\\0\\x01\").unwrap();\n# git(&[\"add\", \"-A\"]);\n# git(&[\"commit\", \"-q\", \"-m\", \"one\"]);\nlet planned = plan(&root, &share, None);\nlet first: &ShardPlan = &planned.plan.shards[0];\nassert_eq!((first.files, first.first.as_str(), first.last.as_str()), (1, \"main.rs\", \"main.rs\"));\nassert!(first.file.ends_with(\".md\") && first.tokens > 0);\n```"
+    ShareStanding:
+      oneOf:
+        - type: string
+          const: current
+          description: "It states the executable's version and holds the directory of every surface the\nserver serves pages from."
+        - type: string
+          const: skewed
+          description: "It states another version, states none, or lacks `ui/` or `cockpit/`: a server\nserving it answers with one release's code over another release's data, and those\npages are unstyled or blank."
+      description: "Whether a share directory is the one an executable should serve.\n\n```\nuse majordomus_cli::share::ShareStanding;\nassert_eq!(serde_json::to_value(ShareStanding::Current).unwrap(), \"current\");\nassert_eq!(serde_json::to_value(ShareStanding::Skewed).unwrap(), \"skewed\");\n```"
     ShellFinding:
       type: object
       properties:
@@ -44318,7 +44371,7 @@ components:
         - lamport
       description: "What an operation wrote, as its answer to the caller. Every mesh operation is an event\nappended to this runtime's journal, and the caller is handed the three facts it cannot\nwork out for itself: the mesh-wide key of the thing it created, the event that says so,\nand the Lamport stamp that places it against everyone else's events.\n\nThe key is what a later operation is addressed by — a claim is released by the key its\nacquisition returned, never by the local name it was given — and the stamp is what a\ncaller waiting for a peer to catch up compares against.\n\n```\n# use std::sync::Arc;\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::HttpTransport;\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::of_root_commits;\n# let cooperation = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \"0000000000000001\".into(),\n#     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![\"127.0.0.1:9\".into()],\n#     version: \"doc\".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n#     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n# }).unwrap();\nuse majordomus_cli::mesh::cooperation::Written;\nuse majordomus_cli::mesh::journal::{ClaimMode, Durability, SessionInfo};\n\nlet session = SessionInfo::named(\"s1\", \"cli\");\nlet written: Written = cooperation\n    .claim(&session, vec![\"docs\".into()], None, ClaimMode::Advisory, None)\n    .unwrap();\nassert!(written.lamport > 0, \"placed against every other runtime's events\");\nassert_eq!(written.durability, Durability::Memory, \"this journal has no file\");\n\n// and the key it returned is how the claim is addressed from here on\ncooperation.release(&written.key).unwrap();\n```"
 x-majordomus:
-  generator: majordomus-cli 0.30.1
+  generator: majordomus-cli 0.30.2
   infrastructure:
     - id: home
       path: /
@@ -44367,4 +44420,4 @@ x-majordomus:
       code: internal
       reason: The capability failed for a reason of its own; the message names it.
 x-majordomus-generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the canonical Majordomus capability registry; regenerate with `majordomus generate`"
-x-majordomus-generator: majordomus-cli 0.30.1
+x-majordomus-generator: majordomus-cli 0.30.2

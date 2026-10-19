@@ -40,3 +40,10 @@ evidence:
     result: "lib mesh:: 319 passed incl. paging_by_stamp_returns_every_event_exactly_once; --test mesh 8 passed (code on master since f820f5ab02f; re-run at master 01227a0)"
     commit: 01227a0f74ab9de734edd3672dcc9d8d3a2d666c
     recorded_at: 2026-10-17T12:05:42Z
+  - covers: events_paging_test
+    type: test
+    command: "cargo test --lib mesh::journal"
+    result: "ok on 98ef9ac6e3 (master c0e3585dc8 + #1179) with this branch's test, 2026-10-15T04:36Z on aarch64-darwin: 38 passed, 0 failed; paging_by_stamp_returns_every_event_exactly_once (three concurrent writers sharing stamps, paged by one, resumed after each answer's lamport) and paging_while_events_arrive_returns_every_event_exactly_once (own and peer events appended between pages, the cursor asked twice answers the same page) both ok; clippy --lib --tests -D warnings clean. The fix itself landed on master in f820f5ab02 (2026-10-10): a page never ends inside a run of equal stamps, and EventList.lamport is the stamp of the last event returned. Not covered by this cursor: an event stamped at or below a position already passed (a writer partitioned away), stated in docs/MESH.md"
+    artifact: "apps/majordomus-cli/src/mesh/journal.rs"
+    commit: 98ef9ac6e3baa93e851ba0294b6aa0bc0460294d
+    recorded_at: 2026-10-15T04:37:47Z

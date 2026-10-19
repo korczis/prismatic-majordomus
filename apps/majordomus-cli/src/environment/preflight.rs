@@ -1563,6 +1563,17 @@ fn server_check(o: &Observations) -> Check {
             vec![lease, Evidence::new("GET /", "answers, from other code")],
         )
         .next("majordomus serve stop && majordomus serve ensure"),
+        Some(ServerStanding::Skewed) => Check::new(
+            "integration.server",
+            "server",
+            Verdict::Degraded,
+            reason,
+            vec![
+                lease,
+                Evidence::new("GET /", "answers, over a share that is not its own"),
+            ],
+        )
+        .next("majordomus serve status"),
         Some(ServerStanding::Stale) => Check::new(
             "integration.server",
             "server",
@@ -1633,26 +1644,40 @@ fn surface_check(o: &Observations, surface: &str, id: &str, title: &str) -> Chec
             ),
             vec![Evidence::new("GET /", format!("surface {surface} ready"))],
         ),
-        (Some(ServerStanding::Ready | ServerStanding::Outdated), Some((_, _, false))) => {
+        (Some(ServerStanding::Skewed), Some((_, path, true))) => Check::new(
+            id,
+            title,
+            Verdict::Degraded,
+            format!(
+                "served at {} by a server over a share that is not its own: {}",
+                at(path),
+                s.reason.as_deref().unwrap_or("a skewed share")
+            ),
+            vec![Evidence::new("GET /", format!("surface {surface} ready"))],
+        ),
+        (
+            Some(ServerStanding::Ready | ServerStanding::Outdated | ServerStanding::Skewed),
+            Some((_, _, false)),
+        ) => Check::new(
+            id,
+            title,
+            Verdict::Failed,
+            format!("the server answers and lists {surface} as not ready"),
+            vec![Evidence::new(
+                "GET /",
+                format!("surface {surface} not ready"),
+            )],
+        )
+        .next("majordomus serve status"),
+        (Some(ServerStanding::Ready | ServerStanding::Outdated | ServerStanding::Skewed), None) => {
             Check::new(
                 id,
                 title,
                 Verdict::Failed,
-                format!("the server answers and lists {surface} as not ready"),
-                vec![Evidence::new(
-                    "GET /",
-                    format!("surface {surface} not ready"),
-                )],
+                format!("the server answers and does not list {surface}"),
+                vec![Evidence::new("GET /", format!("no surface {surface}"))],
             )
-            .next("majordomus serve status")
         }
-        (Some(ServerStanding::Ready | ServerStanding::Outdated), None) => Check::new(
-            id,
-            title,
-            Verdict::Failed,
-            format!("the server answers and does not list {surface}"),
-            vec![Evidence::new("GET /", format!("no surface {surface}"))],
-        ),
         (Some(ServerStanding::Absent), _) => Check::new(
             id,
             title,
@@ -2374,7 +2399,10 @@ pub fn observe(
         Err("not asked on entry: the board gathers every checkout's and costs a round trip".into())
     } else {
         match (&server.standing, &server.url) {
-            (Some(ServerStanding::Ready | ServerStanding::Outdated), Some(url)) => ask_peers(url),
+            (
+                Some(ServerStanding::Ready | ServerStanding::Outdated | ServerStanding::Skewed),
+                Some(url),
+            ) => ask_peers(url),
             (Some(ServerStanding::Absent), _) => {
                 Err("no server, so no board: the board lives in the shared server".into())
             }

@@ -1,0 +1,16 @@
+# PAGE 03 — Merkle fingerprints, tracked working trees and validity
+
+**Claude Code Opus/Fable execution prompt.**
+
+Implement deterministic content-addressed keys over exact declared node inputs and dependency fingerprints. A key must include domain separator, node ID, operation version, canonical config, input path/type/content (length-framed), dependency keys, relevant toolchain/platform and generator binary identity. Define a stable hash algorithm already supported by the repo (SHA-256 likely); do not add new crypto dependencies for novelty. Sort input identities canonically, preserve path rename sensitivity, include file deletions and membership, and distinguish missing from empty.
+
+Git object IDs may accelerate clean tracked files, but do not use HEAD tree hash as the only key. Honor Git index membership and the working-tree bytes that the generator actually reads. Handle staged additions, modifications, unstaged edits, deletes, ignored data and symlinks according to the existing discovery contract. If a producer uses index enumeration but worktree byte reads, model both. Reject unknown external mutable input or conservatively invalidate. Never rely solely on mtime/size; optional metadata memoization must be verified or conservative.
+
+Ensure the binary-source-generation guard still refuses outdated borrowed binaries before any generated write. Introduce key/schema versioning and explain input fingerprints. Property tests: permutations identical, edit/rename/delete/new staged path invalidates, missing file differs from empty, tool/version change invalidates, unrelated path does not, symlink traversal safe, nested directory membership recognized. Exit gate: observed dependency fingerprints match full generator behavior on adversarial fixtures.
+
+
+## Mandatory Majordomus discipline
+Read `AGENTS.md`, `CLAUDE.md`, applicable `.ai/**` rules, current source, tests and relevant ADRs before editing. Use the current default branch and compare with unfinished PRs/worktrees first. Do not presume paths or APIs remain unchanged. Reuse the existing Rust CLI/capability registry, generator framework, `scripts/derive`, `scripts/derive-check`, CI planner, evidence types, and projection architecture. Never create a parallel source of truth, manual duplicate inventory, or cosmetic documentation-only enforcement. Stay inside this phase's scope. No privileged branch-protection bypass, force push, unsafe cleanup, release tag, or production deploy without existing explicit authorization. Always distinguish implemented, tested, integrated, published, and live-verified. If access is unavailable, produce an exact blocker and verify everything else. Do not claim time savings without measurements.
+
+## Standard completion handoff
+At the end write a machine-readable and human-readable checkpoint in the repository's existing approved context/evidence mechanism: source HEAD and worktree state; files changed; exact test commands/results; relevant measured durations; pending blockers; invariants proven; next phase's prerequisite status. Commit and propose/integrate according to repository policy and checks; do not create a new PR if an existing one should be updated. After each change rerun the narrow relevant tests and generated-artifact drift checks. A green test for an old SHA is not proof for a new one.

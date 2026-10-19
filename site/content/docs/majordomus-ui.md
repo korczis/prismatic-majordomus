@@ -1,7 +1,7 @@
 +++
 title = "`majordomus ui`"
 description = "`majordomus ui`, the primary surface: how it differs from the Cockpit, where every value on it comes from and how a missing one reads, how the first screen stays fast with slow panels on routes of their own, the page without JavaScript, the assets and gates that hold it, and how a screen is added"
-weight = 51
+weight = 52
 [extra]
 source = "docs/MAJORDOMUS_UI.md"
 +++
@@ -74,7 +74,7 @@ lists it), declared beside the Cockpit in `apps/majordomus-cli/src/web/discover.
 | Knowledge | `/ui/knowledge` | `knowledge_base.status`, `knowledge_base.candidates`: the candidates awaiting review, newest first and bounded with what is left out counted, the subjects they are about, and whether the deriver is still writing. The review's commands are named as text; the screen promotes and rejects nothing |
 | Documentation | `/ui/docs` | `objects.list` (features, documents), `web.surfaces` |
 | Governance | `/ui/governance` | `rules.report`, each rule named and leading to its inspector; one rule (`?rule=`) from `rules.show`: what it states, how it is enforced, the tests that prove it, what is missing, and the rules around it |
-| Observatory | `/ui/observatory`, and `/ui/kiosk` as its preset | `mesh.peers`, `mesh.events`, `mesh.state`, `plan.roadmap`, `distribution.releases`, `release.version`, `health.report`, `economics.runs`, `repository.info`, `rules.report`, `evidence.report`, `quality.report`, `plan.waves`, `distribution.status`, `capabilities.list`: fifteen scenes, each drawn from what its sources answered or named as unavailable with the source's reason ([The Observatory](#the-observatory)) |
+| Observatory | `/ui/observatory`, and `/ui/kiosk` as its preset | `mesh.peers`, `mesh.events`, `mesh.state`, `plan.roadmap`, `distribution.releases`, `release.version`, `health.report`, `economics.runs`, `repository.info`, `rules.report`, `evidence.report`, `quality.report`, `plan.waves`, `distribution.status`, `capabilities.list`: fifteen scenes, every mark of which answers a click with the record it was drawn from, each drawn from what its sources answered or named as unavailable with the source's reason ([The Observatory](#the-observatory)) |
 
 </div>
 
@@ -399,7 +399,9 @@ table below it.
 The page carries its whole projection as one document, `observatory/v1`, in the
 `data-observatory` attribute of its section: when it was observed, the revision, every source
 asked with the state it answered in (`answered` or `failed`, with the reason and the time
-taken), and every scene with its model. The rule of the screen is in that document:
+taken), how its reading stands (`current`, `stale` when it was read before the repository last
+moved, `pending` when its first reading has not arrived, and its age), and every scene with its
+model. The rule of the screen is in that document:
 
 <div class="overflow-x-auto" tabindex="0">
 
@@ -423,7 +425,8 @@ The status word says how the page was read:
   and both readers back off to 120 seconds when the server does not answer;
 - `RESYNCED`: for ten seconds after the cursor named a clock the journal never reached (another
   runtime's journal, or one that restarted); the page was read again at once;
-- `STALE`: not read again within the bound;
+- `STALE`: not read again within the bound. The scene is then drawn dimmed and still: what it
+  shows was true when it was read, and nothing on it moves as if it were happening now;
 - `REPLAY`: a scene of the mesh drawn from the repository's recording, with the time it was
   recorded;
 - `SNAPSHOT`: the public site, which reads nothing again and names its revision.
@@ -444,6 +447,17 @@ The display's own state is readable for an inspector or an evidence run: the sec
 `observatory` property answers `data()` (the projection it is drawing now), `quarantined()`
 and `trace()` (the last 24 choices of the rotation with their reasons). The evidence of the
 gates is taken through it by `scripts/lib/ui-observatory.mjs`.
+
+The display is passive until someone points at it. Every painter registers each mark it draws
+with the record it stands for, so any mark answers a click or a tap; the keyboard walks the
+marks of the scene with ↑ and ↓ (or `j` and `k`) while the stage has the focus, Enter opens the
+one it is on and Esc closes it. The detail is read-only words: the mark's kind and identity, its
+state, its truth class (`OBSERVED`, a value the source answered; `DERIVED`, a count of what it
+answered; `REPLAY`, the recording's), each source with its standing and age, when the page was
+read, what the scene read of the record, and a link to the same facts as rows. A mark that
+leaves the projection while its detail is open stays shown, dashed, with the time it left. The
+open detail holds the rotation, and closes itself after five minutes without a reader so an
+unattended display goes back to rotating. The dots under the stage are one button per scene.
 
 On the public site the process that takes the snapshot runs no mesh. There `mesh`, `activity`
 and `coop` draw the recording the repository carries (`.ai/repo/observatory/recording.json`,

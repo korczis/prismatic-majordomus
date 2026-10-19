@@ -1,0 +1,32 @@
+id: I2608
+milestone: a-second-adopter-is-served
+title: "A plan is derived from what a repository already has, with provenance"
+slug: a-plan-is-derived-from-what-a-repository-has
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Decide, in a proposed ADR and a first slice, how milestones and issues are derived from a forge and a changelog so that an adopted repository's plan pages are not empty on its first day."
+why: "Observed on 2026-10-13 adopting 0.21.0 and 0.22.0 in a pnpm/TypeScript repository (docs/ADOPTION_SECOND_RUN.md, G24); read again on master e506c041a4. The adopter's roadmap, issues, gates and claims were all derivable from its changelog, merged pull requests, workflow jobs and guard tests, and all of it was scripted by hand in about 600 lines."
+current_state: "No capability derives plan records; apps/majordomus-cli/src/integration/forge.rs already reads pull requests; scripts/github-sync goes the other way and is not shipped."
+desired_state: "A capability writes milestone and issue records from a forge and a changelog, each naming what it was derived from, sealed through I2597, idempotent on a second run. Gates and claims are later slices."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin"
+  - "apps/majordomus-cli/src/integration"
+  - "share/schemas/majordomus"
+  - "docs/ADOPTION.md"
+  - "docs/PLANNING.md"
+  - "test/cases"
+  - "apps/majordomus-cli/tests"
+depends_on: [I2597]
+acceptance_criteria:
+  - "A proposed ADR states whether a derived record is owned once written or regenerated"
+  - "On a fixture with a changelog and a recorded forge answer, the dry run lists the records and the write is idempotent"
+  - "Every written record names the pull request, commit or heading it came from"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "adr_proposed"
+  - "derive_plan_fixture_case"
+created_at: 2026-10-13
+updated_at: 2026-10-13
