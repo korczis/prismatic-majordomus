@@ -63,10 +63,16 @@
 {% block kit %}{% endblock kit %}
 {#- Theme before paint: the one statement the design declaration generates for every surface (the Cockpit ships the same bytes). -#}
 <script>{{ design.theme.bootstrap | safe }}</script>
+{% include "partials/language-detect.html" %}
 </head>
 <body class="min-h-screen bg-neutral-primary text-body antialiased">
 <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white">Skip to content</a>
 {% include "partials/navbar.html" %}
+{#- Said on every page that is not the English original, and on no English page: the i18n pass
+    reveals it in each translated copy and points its link at the original (ADR 0218). -#}
+<div data-i18n-notice hidden class="border-b border-default bg-neutral-secondary-soft">
+  <p class="mx-auto max-w-screen-xl px-4 py-2 text-xs text-body">This page was translated automatically from English, the only language this site is written in. <a href="{{ page_url }}" hreflang="en" lang="en" data-i18n-keep data-i18n-lang="en" class="font-medium underline">Read the original</a>.</p>
+</div>
 <main id="main">
 {% block content %}{% endblock content %}
 </main>

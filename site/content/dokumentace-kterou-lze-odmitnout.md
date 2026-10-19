@@ -147,7 +147,7 @@ Tenhle článek jsem napsal v září 2026 na commitu `d8c97273f0`, kterým tahl
 - Testy: `ls test/cases/*.sh | wc -l` spočítá shellové cases, `grep -r '#\[test\]' apps/majordomus-cli | wc -l` testovací funkce v Rustu
 - Gates: deklarované v `.ai/repo/ci/gates.yaml`; ty, které běží při každé změně, mají `always: true`
 - Nasazení: `build.json` na publikovaném webu jmenuje verzi zdroje, commit a generátor
-- Pravidlo, které tenhle článek musel změnit: `.ai/repo/rules/project/english-only.v3.md`
+- Pravidlo, které tenhle článek musel změnit: `.ai/repo/rules/project/english-only.v4.md`
 
 Tvrzení samotná jsou publikovaná po jednom, každé se svým testem. Pokud je některá věta na tom webu špatně, existuje konkrétní soubor, který se dá otevřít, a konkrétní příkaz, který měl spadnout.
 {% endraw %}

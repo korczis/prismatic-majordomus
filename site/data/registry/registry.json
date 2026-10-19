@@ -6,23 +6,23 @@
     "version": "0.30.1"
   },
   "registry": {
-    "fingerprint": "ce3c9bccfa0d906af23d8d4f78a43c20a3038762a6237e4a58d0095cd00d3638",
+    "fingerprint": "6381e15351a90588da1e9d760f7d174ac5007f7cf28694ff7491666da5bba6a3",
     "summary": {
-      "total": 2641,
+      "total": 2646,
       "builtin": 206,
-      "declarative": 2435,
+      "declarative": 2440,
       "by_kind": {
         "command": 31,
         "query": 175,
-        "resource": 2435
+        "resource": 2440
       },
       "by_stability": {
         "behaviorally_verified": 142,
         "experimental": 55,
-        "implemented": 2444
+        "implemented": 2449
       },
       "mcp_tools": 196,
-      "mcp_resources": 2490,
+      "mcp_resources": 2495,
       "http_routes": 201,
       "cli_commands": 111,
       "modules": 92,
@@ -84781,7 +84781,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 119,
+        "capabilities": 120,
         "capability_ids": []
       },
       {
@@ -85355,7 +85355,7 @@
         "title": "intent",
         "description": "Declarative objects of kind 'intent' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 5,
+        "capabilities": 8,
         "capability_ids": []
       },
       {
@@ -85978,7 +85978,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 562,
+        "capabilities": 563,
         "capability_ids": []
       },
       {
@@ -86070,7 +86070,7 @@
     ]
   },
   "index": {
-    "fingerprint": "c6fa35fd101e053a9eafe79a0d029f3bc299f8e7c9696c6b70ed77cfe0ac1c10",
+    "fingerprint": "51971f2b2e9f3fb21e958612c1c030eb878dc9f5f3efaee61c80c19aa33a9012",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -86093,7 +86093,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 119,
+      "adr": 120,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -86109,7 +86109,7 @@
       "feature": 29,
       "gap": 4,
       "implementation": 52,
-      "intent": 5,
+      "intent": 8,
       "issue": 487,
       "knowledge": 4,
       "mesh-declaration": 1,
@@ -86124,7 +86124,7 @@
       "session": 90,
       "skill": 8,
       "taxonomy": 10,
-      "test": 562,
+      "test": 563,
       "use-case": 49,
       "workspace": 1
     },
@@ -88104,6 +88104,22 @@
           "alpha",
           "claims",
           "distribution"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0218",
+        "kind": "adr",
+        "identity": "adr-0218",
+        "title": "Every language of the site is derived from the English build and a translation memory",
+        "description": "Every language of the site is derived from the English build and a translation memory",
+        "path": ".ai/repo/adrs/0218-every-language-of-the-site-is-derived-from-the-english-build-and-a-translation-memory.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 5711,
+        "tags": [
+          "site",
+          "language",
+          "derivation"
         ]
       },
       {
@@ -92267,7 +92283,7 @@
         "title": "GitHub Pages architecture",
         "path": "docs/GITHUB_PAGES_ARCHITECTURE.md",
         "source_class": "document",
-        "bytes": 57976
+        "bytes": 62421
       },
       {
         "uri": "majordomus://document/docs/GITHUB_PAGES_PERFORMANCE.md",
@@ -92411,7 +92427,7 @@
         "title": "GitHub Pages performance status",
         "path": "docs/PAGES_STATUS.md",
         "source_class": "document",
-        "bytes": 3367
+        "bytes": 3425
       },
       {
         "uri": "majordomus://document/docs/PERFORMANCE.md",
@@ -95903,6 +95919,17 @@
         "bytes": 4446
       },
       {
+        "uri": "majordomus://intent/every-card-unfolds-into-what-it-summarises",
+        "kind": "intent",
+        "identity": "every-card-unfolds-into-what-it-summarises",
+        "title": "Every card of the site unfolds into what it summarises, recursively",
+        "description": "Every card on majordomus.dev — on the homepage and on every page a card links to — opens in place into the thing it summarises: its facts, its evidence, its own cards and a live reading of the record behind it, derived from the canonical records and never hand-written, and each card it reveals unfolds the same way, so a reader can go from a headline to the proof without leaving the page, in every language the site declares.",
+        "path": ".ai/repo/project/intents/every-card-unfolds-into-what-it-summarises.yaml",
+        "section": "project",
+        "source_class": "intent",
+        "bytes": 662
+      },
+      {
         "uri": "majordomus://intent/intent-bound-work",
         "kind": "intent",
         "identity": "intent-bound-work",
@@ -95936,6 +95963,17 @@
         "bytes": 2325
       },
       {
+        "uri": "majordomus://intent/one-bar-and-one-language-on-every-surface",
+        "kind": "intent",
+        "identity": "one-bar-and-one-language-on-every-surface",
+        "title": "One bar, and the reader's language, on every surface of the product",
+        "description": "Every surface a reader meets — majordomus.dev, its /ui and /cockpit snapshots, the UI and the Cockpit a running majordomus serves, and every application page — wears one top bar, declared once in site/data/nav.toml and rendered once by the site, with the same language switch, and opens in the reader's language: each surface's own text is derived from its English and the shared translation memory, the switch on every surface leads to that surface's own copy in each language, and a gate refuses a surface whose bar or whose languages differ from the site's. How it is derived, what each surface may differ in, and why, is documented where the bar is declared.",
+        "path": ".ai/repo/project/intents/one-bar-and-one-language-on-every-surface.yaml",
+        "section": "project",
+        "source_class": "intent",
+        "bytes": 896
+      },
+      {
         "uri": "majordomus://intent/the-owner-directs-work-from-the-ui",
         "kind": "intent",
         "identity": "the-owner-directs-work-from-the-ui",
@@ -95945,6 +95983,17 @@
         "section": "project",
         "source_class": "intent",
         "bytes": 4105
+      },
+      {
+        "uri": "majordomus://intent/the-site-is-always-fully-multilingual",
+        "kind": "intent",
+        "identity": "the-site-is-always-fully-multilingual",
+        "title": "The published site is always fully multilingual, every language derived from the English build",
+        "description": "majordomus.dev is offered, page for page, in every language site/i18n/languages.json declares — Czech and English at the least — with a language switch on every page and the reader's language chosen for them on arrival. Nobody writes or maintains a second language: each copy is derived from the English build and a translation memory filled by a model, a stale translation is never served, and a page whose translation is incomplete says so by measurement, not by promise.",
+        "path": ".ai/repo/project/intents/the-site-is-always-fully-multilingual.yaml",
+        "section": "project",
+        "source_class": "intent",
+        "bytes": 1659
       },
       {
         "uri": "majordomus://issue/I0001",
@@ -104465,15 +104514,15 @@
         ]
       },
       {
-        "uri": "majordomus://rule/project.english-only@3",
+        "uri": "majordomus://rule/project.english-only@4",
         "kind": "rule",
-        "identity": "project.english-only@3",
+        "identity": "project.english-only@4",
         "title": "English only",
-        "description": "The repository's own artifacts are written in English; content addressed to a reader may be written in that reader's language, declared and confined to the published site or to a declared edition of the handbook.",
-        "path": ".ai/repo/rules/project/english-only.v3.md",
+        "description": "The repository's own artifacts are written in English; content addressed to a reader may be written in that reader's language, declared and confined to the published site, to a declared edition of the handbook, or to the site's declared translation memory of one language.",
+        "path": ".ai/repo/rules/project/english-only.v4.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 5100,
+        "bytes": 6716,
         "tags": [
           "language"
         ]
@@ -109524,6 +109573,14 @@
         "bytes": 7569
       },
       {
+        "uri": "majordomus://test/test/cases/3590_the_site_is_derived_in_every_language.sh",
+        "kind": "test",
+        "identity": "test/cases/3590_the_site_is_derived_in_every_language.sh",
+        "path": "test/cases/3590_the_site_is_derived_in_every_language.sh",
+        "source_class": "case",
+        "bytes": 5582
+      },
+      {
         "uri": "majordomus://test/test/cases/359_live_scenarios.sh",
         "kind": "test",
         "identity": "test/cases/359_live_scenarios.sh",
@@ -112187,7 +112244,7 @@
       "identity": [
         "id"
       ],
-      "objects": 119
+      "objects": 120
     },
     {
       "name": "application",
@@ -112340,7 +112397,7 @@
       "identity": [
         "id"
       ],
-      "objects": 5
+      "objects": 8
     },
     {
       "name": "issue",
@@ -112502,7 +112559,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 562
+      "objects": 563
     },
     {
       "name": "use-case",

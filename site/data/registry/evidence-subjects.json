@@ -10418,7 +10418,7 @@
           "path": "test/cases/403_published_translation.sh",
           "category": "e2e",
           "inputs": [
-            ".ai/repo/rules/project/english-only.v3.md",
+            ".ai/repo/rules/project/english-only.v4.md",
             "scripts/ci/english-only-check",
             "test/cases/403_published_translation.sh"
           ]
@@ -17045,6 +17045,12 @@
           "via": "negative",
           "test": "suite:3015_an_unsupervised_repository_exits_12_from_both_tools",
           "path": "test/cases/3015_an_unsupervised_repository_exits_12_from_both_tools.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:3590_the_site_is_derived_in_every_language",
+          "path": "test/cases/3590_the_site_is_derived_in_every_language.sh",
           "category": "e2e"
         },
         {
@@ -24257,7 +24263,17 @@
           "category": "e2e",
           "inputs": [
             "test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh",
-            ".ai/repo/rules/project/english-only.v3.md"
+            ".ai/repo/rules/project/english-only.v4.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:3590_the_site_is_derived_in_every_language",
+          "path": "test/cases/3590_the_site_is_derived_in_every_language.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3590_the_site_is_derived_in_every_language.sh",
+            ".ai/repo/rules/project/english-only.v4.md"
           ]
         }
       ],

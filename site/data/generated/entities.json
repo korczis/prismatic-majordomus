@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 119,
+      "count": 120,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 119
+      "count": 120
     },
     {
       "kind": "application",
@@ -165,7 +165,7 @@
       "route": null,
       "title": null,
       "reason": "An intent's stage and criteria are derived on every read from the plan and the evidence ledger (ADR 0070); a static page would freeze a derivation at the commit the site was built from. The milestones that realise an intent are published on /plan/, and `majordomus intent show` and the Cockpit's /cockpit/intents answer for the intent itself.",
-      "count": 5
+      "count": 8
     },
     {
       "kind": "issue",
@@ -285,7 +285,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 562
+      "count": 563
     },
     {
       "kind": "use-case",
@@ -3187,9 +3187,9 @@
         },
         {
           "edge": "put_in_force",
-          "label": "project.english-only@3",
+          "label": "project.english-only@4",
           "kind": "rule",
-          "route": "/rules/project-english-only-3/",
+          "route": "/rules/project-english-only-4/",
           "external": false
         },
         {
@@ -4788,9 +4788,9 @@
         },
         {
           "edge": "put_in_force",
-          "label": "project.english-only@3",
+          "label": "project.english-only@4",
           "kind": "rule",
-          "route": "/rules/project-english-only-3/",
+          "route": "/rules/project-english-only-4/",
           "external": false
         },
         {
@@ -4807,6 +4807,13 @@
           "label": "adr-0149",
           "kind": "adr",
           "route": "/adrs/adr-0149/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0218",
+          "kind": "adr",
+          "route": "/adrs/adr-0218/",
           "external": false
         }
       ]
@@ -8274,9 +8281,9 @@
         },
         {
           "edge": "put_in_force",
-          "label": "project.english-only@3",
+          "label": "project.english-only@4",
           "kind": "rule",
-          "route": "/rules/project-english-only-3/",
+          "route": "/rules/project-english-only-4/",
           "external": false
         },
         {
@@ -8294,7 +8301,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0218",
+          "kind": "adr",
+          "route": "/adrs/adr-0218/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -9555,6 +9570,94 @@
           "label": "I2826",
           "kind": "issue",
           "route": "/plan/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0218",
+      "identity": "adr-0218",
+      "slug": "adr-0218",
+      "cockpit": "/cockpit/objects/adr/adr-0218",
+      "title": "Every language of the site is derived from the English build and a translation memory",
+      "status": "accepted",
+      "tags": [
+        "site",
+        "language",
+        "derivation"
+      ],
+      "source": ".ai/repo/adrs/0218-every-language-of-the-site-is-derived-from-the-english-build-and-a-translation-memory.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "scripts/lib/site-i18n.mjs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "scripts/site-build",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "scripts/site-translate",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "site/i18n/cs/edition.toml",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "site/i18n/languages.json",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "site/templates/partials/language-switch.html",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0077",
+          "kind": "adr",
+          "route": "/adrs/adr-0077/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0149",
+          "kind": "adr",
+          "route": "/adrs/adr-0149/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.english-only@4",
+          "kind": "rule",
+          "route": "/rules/project-english-only-4/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/3590_the_site_is_derived_in_every_language.sh",
+          "kind": "test",
+          "route": null,
           "external": false
         }
       ],
@@ -14298,16 +14401,16 @@
     },
     {
       "kind": "rule",
-      "id": "majordomus://rule/project.english-only@3",
-      "identity": "project.english-only@3",
-      "slug": "project-english-only-3",
-      "cockpit": "/cockpit/objects/rule/project-english-only-3",
+      "id": "majordomus://rule/project.english-only@4",
+      "identity": "project.english-only@4",
+      "slug": "project-english-only-4",
+      "cockpit": "/cockpit/objects/rule/project-english-only-4",
       "title": "English only",
       "status": "active",
       "tags": [
         "language"
       ],
-      "source": ".ai/repo/rules/project/english-only.v3.md",
+      "source": ".ai/repo/rules/project/english-only.v4.md",
       "references": [],
       "referenced_by": [
         {
@@ -14329,6 +14432,13 @@
           "label": "adr-0149",
           "kind": "adr",
           "route": "/adrs/adr-0149/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0218",
+          "kind": "adr",
+          "route": "/adrs/adr-0218/",
           "external": false
         },
         {
@@ -17933,9 +18043,9 @@
       "references": [
         {
           "edge": "depends_on",
-          "label": "project.english-only@3",
+          "label": "project.english-only@4",
           "kind": "rule",
-          "route": "/rules/project-english-only-3/",
+          "route": "/rules/project-english-only-4/",
           "external": false
         }
       ],
