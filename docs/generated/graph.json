@@ -38526,7 +38526,7 @@
             "adr_0069_on_master",
             "cited_adr_resolves_gate"
           ],
-          "milestone": "automation-is-scripted-capabilities",
+          "milestone": "scripted-capabilities-are-the-automation",
           "non_scope": [
             "Adding the rhai dependency or any code that builds an engine, which is I2551",
             "Re-creating the records I1800 to I1804 or the milestone automation from the old branch: this milestone replaces them",
@@ -38574,7 +38574,7 @@
             "shell_counts_match_independent_count",
             "growth_against_base_refused"
           ],
-          "milestone": "automation-is-scripted-capabilities",
+          "milestone": "scripted-capabilities-are-the-automation",
           "non_scope": [
             "Recording a line count or a ceiling in the inventory or beside it: a recorded number goes stale, which is why the README forbids it",
             "Judging shell embedded in Rust sources, workflows and recipes, which is I2559",
@@ -38629,7 +38629,7 @@
             "one_engine_constructor",
             "binary_size_measured"
           ],
-          "milestone": "automation-is-scripted-capabilities",
+          "milestone": "scripted-capabilities-are-the-automation",
           "non_scope": [
             "Any way to reach the engine from a surface: the kind, the registry entry and majordomus run are I2552",
             "A wall-clock bound inside the engine: the operation limit is not one, and a program a script starts is bounded by the process capability of I2553",
@@ -38675,7 +38675,7 @@
             "effect_ceiling_enforced",
             "definition_load_executes_nothing"
           ],
-          "milestone": "automation-is-scripted-capabilities",
+          "milestone": "scripted-capabilities-are-the-automation",
           "non_scope": [
             "A command group majordomus script with its own check, run, plan and explain: a scripted capability is run and described by the commands every capability has",
             "Running a script the mesh, the UI or an HTTP caller sent as text",
@@ -38729,7 +38729,7 @@
             "deadline_kills_process_group",
             "dry_run_starts_nothing"
           ],
-          "milestone": "automation-is-scripted-capabilities",
+          "milestone": "scripted-capabilities-are-the-automation",
           "non_scope": [
             "A capability that accepts a command line as one string, under any name",
             "Rewriting the three existing sh -c call sites: I2559 makes them declared and judged, and each is replaced with the feature it belongs to",
@@ -38784,7 +38784,7 @@
             "first_gates_scripted",
             "gate_runs_without_bash"
           ],
-          "milestone": "automation-is-scripted-capabilities",
+          "milestone": "scripted-capabilities-are-the-automation",
           "non_scope": [
             "Migrating all thirteen in one change",
             "A gate whose measurement is itself shell text processing: that measurement becomes a typed capability first, in its own issue",
@@ -38836,7 +38836,7 @@
             "recipes_carry_no_shell_body",
             "recipe_names_unchanged"
           ],
-          "milestone": "automation-is-scripted-capabilities",
+          "milestone": "scripted-capabilities-are-the-automation",
           "non_scope": [
             "Generating the hand-written recipes: a recipe that composes two commands is declared once in .just and the bridge carries the rest, which is the current design",
             "Replacing bash as the recipe shell or moving to just modules, either of which changes recipe names or evaluation for every caller",
@@ -39628,7 +39628,7 @@
           "acceptance_criteria": [
             "Every file that a search for profile under lib, share and apps/majordomus-cli/src finds reading a profile is a row of the trace, and a test or gate fails when a new reader appears that is not a row",
             "Each row's standing names the test that proves it or says none does",
-            "The decision record is numbered through the board, links the brief by path, and is cited by docs/PROFILES.md and .ai/repo/profiles/README.md",
+            "The decision record is numbered through the board, links the brief by path, and is cited by a PROFILES.md under docs/ and .ai/repo/profiles/README.md",
             "The baseline states the commit, the build profile, the host load and the commands, and holds a median and a spread, not one sample"
           ],
           "created_at": "2026-10-13",
@@ -48050,71 +48050,6 @@
         }
       },
       {
-        "id": "majordomus://milestone/automation-is-scripted-capabilities",
-        "kind": "milestone",
-        "label": "automation-is-scripted-capabilities",
-        "summary": "A capability may be scripted on master: the decision, the sandbox, a typed way to run a program, and the first shell that leaves through them",
-        "route": "/cockpit/objects/milestone/automation-is-scripted-capabilities",
-        "source": ".ai/repo/project/milestones/automation-is-scripted-capabilities.yaml",
-        "facts": {
-          "created_at": "2026-10-13",
-          "evidence_required": [
-            "adr_0069_on_master",
-            "sandbox_engine_proved",
-            "scripted_capability_projected_everywhere",
-            "effect_ceiling_enforced",
-            "argv_reaches_program_literally",
-            "shell_counts_and_base_comparison",
-            "first_gates_scripted",
-            "recipes_carry_no_shell_body"
-          ],
-          "non_scope": [
-            "A workflow registry, a workflow manifest or a second executor beside the capability registry and the execution plane: ADR 0069 adds a scripted capability and nothing else",
-            "Transliterating shell into Rhai: domain logic becomes a typed Rust capability, and a script only orchestrates capabilities",
-            "A capability or a script function that takes a shell command string",
-            "Compiling a script from text a caller, the mesh or the UI supplied: a script is a tracked file",
-            "A persistent cache of compiled scripts across processes",
-            "Porting the behavioural cases and removing the lifecycle units, which is milestone shell-shrinks-to-its-bootstrap"
-          ],
-          "order": 530,
-          "priority": "p1",
-          "scope": [
-            ".ai/repo/adrs",
-            ".ai/repo/automation",
-            ".ai/repo/ci/gates.yaml",
-            ".ai/repo/project",
-            ".ai/repo/rules/project",
-            "apps/majordomus-cli/Cargo.toml",
-            "apps/majordomus-cli/src/script",
-            "apps/majordomus-cli/src/automation",
-            "apps/majordomus-cli/src/capability",
-            "apps/majordomus-cli/src/commands",
-            "apps/majordomus-cli/src/command_graph",
-            "apps/majordomus-cli/tests",
-            "share/kinds.yaml",
-            "share/schemas/majordomus",
-            "share/capabilities",
-            "scripts/ci",
-            "justfile",
-            ".just",
-            "docs",
-            "test/cases",
-            "SECURITY.md"
-          ],
-          "slug": "automation-is-scripted-capabilities",
-          "updated_at": "2026-10-13",
-          "validation": [
-            "bin/majordomus plan validate",
-            "bin/majordomus-cli shell check",
-            "bin/majordomus-cli capabilities validate",
-            "bin/majordomus-cli generate --check",
-            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib script",
-            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib automation",
-            "MJ_TEST_JOBS=2 bash test/run.sh 365_new_shell_is_refused 366_automation_inventory_agrees_with_the_tree 101_command_graph"
-          ]
-        }
-      },
-      {
         "id": "majordomus://milestone/capability-graph",
         "kind": "milestone",
         "label": "capability-graph",
@@ -49379,6 +49314,71 @@
             "bin/majordomus plan validate",
             "cargo test --test serve_lifecycle",
             "MJ_TEST_JOBS=4 bash test/run.sh 85_installer 743_release_version_answers_with_the_contract"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/scripted-capabilities-are-the-automation",
+        "kind": "milestone",
+        "label": "scripted-capabilities-are-the-automation",
+        "summary": "A capability may be scripted on master: the decision, the sandbox, a typed way to run a program, and the first shell that leaves through them",
+        "route": "/cockpit/objects/milestone/scripted-capabilities-are-the-automation",
+        "source": ".ai/repo/project/milestones/scripted-capabilities-are-the-automation.yaml",
+        "facts": {
+          "created_at": "2026-10-13",
+          "evidence_required": [
+            "adr_0069_on_master",
+            "sandbox_engine_proved",
+            "scripted_capability_projected_everywhere",
+            "effect_ceiling_enforced",
+            "argv_reaches_program_literally",
+            "shell_counts_and_base_comparison",
+            "first_gates_scripted",
+            "recipes_carry_no_shell_body"
+          ],
+          "non_scope": [
+            "A workflow registry, a workflow manifest or a second executor beside the capability registry and the execution plane: ADR 0069 adds a scripted capability and nothing else",
+            "Transliterating shell into Rhai: domain logic becomes a typed Rust capability, and a script only orchestrates capabilities",
+            "A capability or a script function that takes a shell command string",
+            "Compiling a script from text a caller, the mesh or the UI supplied: a script is a tracked file",
+            "A persistent cache of compiled scripts across processes",
+            "Porting the behavioural cases and removing the lifecycle units, which is milestone shell-shrinks-to-its-bootstrap"
+          ],
+          "order": 530,
+          "priority": "p1",
+          "scope": [
+            ".ai/repo/adrs",
+            ".ai/repo/automation",
+            ".ai/repo/ci/gates.yaml",
+            ".ai/repo/project",
+            ".ai/repo/rules/project",
+            "apps/majordomus-cli/Cargo.toml",
+            "apps/majordomus-cli/src/script",
+            "apps/majordomus-cli/src/automation",
+            "apps/majordomus-cli/src/capability",
+            "apps/majordomus-cli/src/commands",
+            "apps/majordomus-cli/src/command_graph",
+            "apps/majordomus-cli/tests",
+            "share/kinds.yaml",
+            "share/schemas/majordomus",
+            "share/capabilities",
+            "scripts/ci",
+            "justfile",
+            ".just",
+            "docs",
+            "test/cases",
+            "SECURITY.md"
+          ],
+          "slug": "automation-is-scripted-capabilities",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "bin/majordomus-cli shell check",
+            "bin/majordomus-cli capabilities validate",
+            "bin/majordomus-cli generate --check",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib script",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib automation",
+            "MJ_TEST_JOBS=2 bash test/run.sh 365_new_shell_is_refused 366_automation_inventory_agrees_with_the_tree 101_command_graph"
           ]
         }
       },
@@ -92625,7 +92625,7 @@
       },
       {
         "source": "majordomus://issue/I2549",
-        "target": "majordomus://milestone/automation-is-scripted-capabilities",
+        "target": "majordomus://milestone/scripted-capabilities-are-the-automation",
         "kind": "belongs_to"
       },
       {
@@ -92635,7 +92635,7 @@
       },
       {
         "source": "majordomus://issue/I2550",
-        "target": "majordomus://milestone/automation-is-scripted-capabilities",
+        "target": "majordomus://milestone/scripted-capabilities-are-the-automation",
         "kind": "belongs_to"
       },
       {
@@ -92650,7 +92650,7 @@
       },
       {
         "source": "majordomus://issue/I2551",
-        "target": "majordomus://milestone/automation-is-scripted-capabilities",
+        "target": "majordomus://milestone/scripted-capabilities-are-the-automation",
         "kind": "belongs_to"
       },
       {
@@ -92665,7 +92665,7 @@
       },
       {
         "source": "majordomus://issue/I2552",
-        "target": "majordomus://milestone/automation-is-scripted-capabilities",
+        "target": "majordomus://milestone/scripted-capabilities-are-the-automation",
         "kind": "belongs_to"
       },
       {
@@ -92680,7 +92680,7 @@
       },
       {
         "source": "majordomus://issue/I2553",
-        "target": "majordomus://milestone/automation-is-scripted-capabilities",
+        "target": "majordomus://milestone/scripted-capabilities-are-the-automation",
         "kind": "belongs_to"
       },
       {
@@ -92700,7 +92700,7 @@
       },
       {
         "source": "majordomus://issue/I2554",
-        "target": "majordomus://milestone/automation-is-scripted-capabilities",
+        "target": "majordomus://milestone/scripted-capabilities-are-the-automation",
         "kind": "belongs_to"
       },
       {
@@ -92710,7 +92710,7 @@
       },
       {
         "source": "majordomus://issue/I2555",
-        "target": "majordomus://milestone/automation-is-scripted-capabilities",
+        "target": "majordomus://milestone/scripted-capabilities-are-the-automation",
         "kind": "belongs_to"
       },
       {
@@ -95049,11 +95049,6 @@
         "kind": "is_a"
       },
       {
-        "source": "majordomus://milestone/automation-is-scripted-capabilities",
-        "target": "kind:milestone",
-        "kind": "is_a"
-      },
-      {
         "source": "majordomus://milestone/capability-graph",
         "target": "kind:milestone",
         "kind": "is_a"
@@ -95225,6 +95220,11 @@
       },
       {
         "source": "majordomus://milestone/safe-self-update",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/scripted-capabilities-are-the-automation",
         "target": "kind:milestone",
         "kind": "is_a"
       },

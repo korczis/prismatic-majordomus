@@ -94,8 +94,8 @@ bootstrap×3, wiring×2, projection×3, reasoning×2; summary `doctor: 8 failure
 with `doctor: 2 failure(s)`. The `reasoning` FAIL lines look uncounted.
 
 ## G03 The reasoning CI check fails on a credential named in a comment and in non-gates
-`FAIL reasoning .github/workflows/issue-mining.yml — ci: CI names the model credential
-ANTHROPIC_API_KEY; no gate may depend on a live model`. The only occurrence in that file is a YAML
+`FAIL reasoning <workflow> — ci: CI names the model credential
+ANTHROPIC_API_KEY; no gate may depend on a live model`, where the workflow is `issue-mining.yml` in the adopter's `.github/workflows/`. The only occurrence in that file is a YAML
 comment (line 100). `e2e.yml` sets it as env for an opt-in, non-required, manually skippable job.
 A scheduled automation that runs a model on purpose is not a gate. No policy key exempts a file or
 declares which workflows are gates, so an adopter can never get `doctor` green.
@@ -194,7 +194,7 @@ knowledge records are invisible there. PR #1050 `feature/markdown-is-rendered-on
 renderer.
 
 ## G21 Feature `docs:` references reject documents the same repository tracks
-`unknown document reference: "docs/product/06-guides/runbooks/vps-google-cloud.md"` — because G18
+`unknown document reference: "<runbook>"`, where the runbook is `vps-google-cloud.md` in the adopter's `docs/product/06-guides/runbooks/` — because G18
 refused the file as a document. Follows from G18; listed because the message blames the reference.
 
 ## G22 `gates.yaml` without `classes` is "does not parse"
