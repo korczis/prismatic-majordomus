@@ -42560,6 +42560,40 @@
         }
       },
       {
+        "id": "majordomus://issue/I3060",
+        "kind": "issue",
+        "label": "I3060",
+        "summary": "A provider hook declares its timeout, and the session end closes its episode inside the budget",
+        "route": "/cockpit/objects/issue/i3060",
+        "source": ".ai/repo/project/issues/I3060.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "After `capture install`, each of UserPromptSubmit, SessionStart, SessionEnd and PreCompact in .claude/settings.json carries the timeout the provider table declares, and SessionEnd's is at most 60",
+            "A configuration identical to the pre-timeout generated shape is rewritten with the timeouts; a configuration with any other content is left byte-identical and install names the missing timeouts",
+            "The SessionEnd shim, given a provider session that was started, closes the episode in less than its declared timeout",
+            "With the end budget forced below the optional steps' cost, the episode still closes, and the skipped checkpoint and continuation are recorded as typed failures"
+          ],
+          "created_at": "2026-10-19",
+          "evidence_required": [
+            "verified"
+          ],
+          "milestone": "M003",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/capture.sh",
+            "test/cases/3460_a_session_end_hook_fits_its_budget.sh",
+            ".ai/repo/project/issues/I3060.yaml"
+          ],
+          "slug": "a-session-end-hook-fits-its-budget",
+          "updated_at": "2026-10-19",
+          "validation": [
+            "CI=true bash test/run.sh --no-skips 3460"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "label": "a-commit-stood-behind-a-build-lock",
@@ -60780,6 +60814,13 @@
         "label": "test/cases/343_the_cockpit_shows_who_else_is_here.sh",
         "route": "/cockpit/objects/test/test-cases-343-the-cockpit-shows-who-else-is-here-sh",
         "source": "test/cases/343_the_cockpit_shows_who_else_is_here.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3460_a_session_end_hook_fits_its_budget.sh",
+        "kind": "test",
+        "label": "test/cases/3460_a_session_end_hook_fits_its_budget.sh",
+        "route": "/cockpit/objects/test/test-cases-3460-a-session-end-hook-fits-its-budget-sh",
+        "source": "test/cases/3460_a_session_end_hook_fits_its_budget.sh"
       },
       {
         "id": "majordomus://test/test/cases/349_a_step_reports_its_own_time.sh",
@@ -88551,6 +88592,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3060",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3060",
+        "target": "majordomus://milestone/M003",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -93552,6 +93603,11 @@
       },
       {
         "source": "majordomus://test/test/cases/343_the_cockpit_shows_who_else_is_here.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3460_a_session_end_hook_fits_its_budget.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -98787,8 +98843,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3074,
-      "edges": 6732,
+      "nodes": 3076,
+      "edges": 6735,
       "acyclic": false,
       "truncated": false
     }

@@ -6,23 +6,23 @@
     "version": "0.30.1"
   },
   "registry": {
-    "fingerprint": "ce3c9bccfa0d906af23d8d4f78a43c20a3038762a6237e4a58d0095cd00d3638",
+    "fingerprint": "d2871dc946bdbd389779260294beec05c093d459d902ce36062d0e3d019c195b",
     "summary": {
-      "total": 2641,
+      "total": 2643,
       "builtin": 206,
-      "declarative": 2435,
+      "declarative": 2437,
       "by_kind": {
         "command": 31,
         "query": 175,
-        "resource": 2435
+        "resource": 2437
       },
       "by_stability": {
         "behaviorally_verified": 142,
         "experimental": 55,
-        "implemented": 2444
+        "implemented": 2446
       },
       "mcp_tools": 196,
-      "mcp_resources": 2490,
+      "mcp_resources": 2492,
       "http_routes": 201,
       "cli_commands": 111,
       "modules": 92,
@@ -85404,7 +85404,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 487,
+        "capabilities": 488,
         "capability_ids": []
       },
       {
@@ -85978,7 +85978,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 562,
+        "capabilities": 563,
         "capability_ids": []
       },
       {
@@ -86070,7 +86070,7 @@
     ]
   },
   "index": {
-    "fingerprint": "c6fa35fd101e053a9eafe79a0d029f3bc299f8e7c9696c6b70ed77cfe0ac1c10",
+    "fingerprint": "050cb2984f051ad4eb25f25cf17d3f2e8ef5521113c948486c0a9b8905ee6f62",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -86110,7 +86110,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 5,
-      "issue": 487,
+      "issue": 488,
       "knowledge": 4,
       "mesh-declaration": 1,
       "milestone": 42,
@@ -86124,7 +86124,7 @@
       "session": 90,
       "skill": 8,
       "taxonomy": 10,
-      "test": 562,
+      "test": 563,
       "use-case": 49,
       "workspace": 1
     },
@@ -92447,7 +92447,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 196305
+        "bytes": 198814
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -95537,7 +95537,7 @@
         "identity": "lib/capture.sh",
         "path": "lib/capture.sh",
         "source_class": "library",
-        "bytes": 163185
+        "bytes": 169324
       },
       {
         "uri": "majordomus://implementation/lib/changed.sh",
@@ -101302,6 +101302,17 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 1840
+      },
+      {
+        "uri": "majordomus://issue/I3060",
+        "kind": "issue",
+        "identity": "I3060",
+        "title": "A provider hook declares its timeout, and the session end closes its episode inside the budget",
+        "description": "`capture install` writes a per-hook `timeout` for every hook it generates. The values come from one declared table per provider and event, read by both the configuration writer and the end handler. The SessionEnd handler keeps the episode close inside that budget: it skips the optional closing checkpoint and continuation, as typed failures, when running them would leave the close too little of the budget. A configuration that byte-for-byte matches the shape this tool wrote before timeouts existed is rewritten to the new shape. Any other configuration is left as it is, and install names the timeouts it lacks.",
+        "path": ".ai/repo/project/issues/I3060.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3229
       },
       {
         "uri": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
@@ -109460,6 +109471,14 @@
         "bytes": 5880
       },
       {
+        "uri": "majordomus://test/test/cases/3460_a_session_end_hook_fits_its_budget.sh",
+        "kind": "test",
+        "identity": "test/cases/3460_a_session_end_hook_fits_its_budget.sh",
+        "path": "test/cases/3460_a_session_end_hook_fits_its_budget.sh",
+        "source_class": "case",
+        "bytes": 6163
+      },
+      {
         "uri": "majordomus://test/test/cases/349_a_step_reports_its_own_time.sh",
         "kind": "test",
         "identity": "test/cases/349_a_step_reports_its_own_time.sh",
@@ -112350,7 +112369,7 @@
       "identity": [
         "id"
       ],
-      "objects": 487
+      "objects": 488
     },
     {
       "name": "knowledge",
@@ -112502,7 +112521,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 562
+      "objects": 563
     },
     {
       "name": "use-case",
