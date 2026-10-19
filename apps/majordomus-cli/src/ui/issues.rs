@@ -254,7 +254,7 @@ pub fn browser(issues: &Answer, roadmap: &Answer, pick: &Pick) -> El {
             .attr("action", ROUTE)
             .child(
                 el("label")
-                    .class("mj-ui-sr-only")
+                    .class("mj-sr-only")
                     .attr("for", "mj-ui-issues-q")
                     .text("Search issues"),
             )
@@ -381,7 +381,7 @@ mod tests {
             source: Source::of(capability),
             route: None,
             exposure: Exposure::default(),
-            value: Ok(value),
+            value: Ok(value.into()),
             took: Duration::from_millis(1),
             standing: crate::ui::source::Standing::NOW,
         }

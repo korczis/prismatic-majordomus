@@ -1,7 +1,7 @@
 +++
 title = "The homepage tells the story its declaration names, in that order, and the site is indexed by one declared policy"
 description = "The homepage tells the story its declaration names, in that order, and the site is indexed by one declared policy"
-weight = 111
+weight = 117
 [extra]
 kind = "rule"
 slug = "project-homepage-tells-a-declared-story-1"
@@ -52,6 +52,12 @@ publication carries; one that only a running process answers states its mount an
 copy, so the page can neither send a visitor to an address nothing serves nor keep calling a
 published surface local.
 
+The hero opens the product, and which product is the data's answer: the first of those
+interfaces. The hero carries exactly one call to open it, naming its feature; the call leads to
+its mount when a publication holds it there and to no such address when only a running process
+answers it; the view the hero draws beside the call is of that product, and the issues it
+counts are the plan's, by the plan's statuses, in the plan's order.
+
 What the homepage makes every visitor download is declared too, as `[budget]` in
 `site/data/homepage.toml`: the bytes of its own HTML, the bytes of scripts and stylesheets it
 loads from the site, and the bytes of graph data it carries inline. A page over any of the
@@ -78,7 +84,7 @@ declaration.
 a clean tree passes, and a page loading Mermaid with no diagram, HTML, scripts or inline JSON over
 the declared budget, no budget declared, a budget without the HTML, a linked asset missing, an
 interface the page does not list or the data does not give, a published copy linked that the
-topology does not carry, a published surface still described as local, an undeclared section, a declared section not rendered, sections out of
+topology does not carry, a published surface still described as local, a hero that opens no product, one typed into the template, one sent to an address only a process answers, a published one the hero does not lead to, a view of something else, a figure the plan does not give, an undeclared section, a declared section not rendered, sections out of
 order, an empty section, a draft feature linked, a missing install command, a provider of the
 model the page does not name, a name the model does not carry, a trust card that disagrees with
 its dataset, a trust card missing altogether, a receipt page without noindex, a receipt page in

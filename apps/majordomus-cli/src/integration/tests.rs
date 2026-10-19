@@ -154,6 +154,9 @@ struct World {
     refresh_fails: bool,
     /// The merge methods the repository's settings allow, in the forge's words.
     merge_methods: Vec<&'static str>,
+    /// The forge's answer carries none of the merge settings (a token that may not read
+    /// them): `merge_methods` is then not observed at all.
+    merge_settings_unread: bool,
     /// Pull requests no longer open, and how they went: what the forge reports of those a
     /// supersession names.
     gone: Vec<(Sim, Gone)>,
@@ -211,6 +214,7 @@ impl Default for World {
             close_calls: 0,
             refresh_fails: false,
             merge_methods: vec!["merge"],
+            merge_settings_unread: false,
             gone: Vec::new(),
             merged_onto: BTreeMap::new(),
             foreign_merge_before: BTreeSet::new(),
@@ -248,7 +252,8 @@ impl World {
                 ..Default::default()
             }),
             up_to_date_required: Some(true),
-            merge_methods: self.merge_methods.iter().map(|m| m.to_string()).collect(),
+            merge_methods: (!self.merge_settings_unread)
+                .then(|| self.merge_methods.iter().map(|m| m.to_string()).collect()),
             pull_requests: self.open.iter().map(observe_pr).collect(),
             resolved: self.resolved(),
             delete_branch_on_merge: None,
@@ -2541,7 +2546,7 @@ fn observed(dir: &std::path::Path, master: &str, prs: Vec<PullRequestObservation
         required_checks: Some(vec!["ci".into()]),
         review_policy: Some(Default::default()),
         up_to_date_required: Some(true),
-        merge_methods: vec!["merge".into()],
+        merge_methods: Some(vec!["merge".into()]),
         pull_requests: prs,
         resolved: Default::default(),
         delete_branch_on_merge: None,
@@ -4619,6 +4624,7 @@ fn every_reason() -> Vec<crate::integration::ReasonCode> {
         | R::Label { .. }
         | R::AutoMergeArmed
         | R::MergeCommitNotAllowed
+        | R::MergeSettingsUnread
         | R::SupersededBy { .. }
         | R::SuccessorOpen { .. }
         | R::SuccessorNotLanded { .. }
@@ -4667,6 +4673,7 @@ fn every_reason() -> Vec<crate::integration::ReasonCode> {
         },
         R::AutoMergeArmed,
         R::MergeCommitNotAllowed,
+        R::MergeSettingsUnread,
         R::SupersededBy { number: 12 },
         R::SuccessorOpen { number: 13 },
         R::SuccessorNotLanded { number: 14 },
@@ -4997,7 +5004,7 @@ proptest! {
                         "successor_not_landed",
                         "successor_unread",
                     ],
-                    G::MergeMethod => &["merge_commit_not_allowed"],
+                    G::MergeMethod => &["merge_commit_not_allowed", "merge_settings_unread"],
                     G::RelationToMaster => &[
                         "head_reachable_from_master",
                         "merge_changes_nothing",
@@ -5216,6 +5223,59 @@ fn a_repository_without_merge_commits_holds_every_candidate_and_merges_nothing()
         assert!(matches!(out, DrainStepOutcome::Idle { .. }), "{out:?}");
         assert_eq!((w.merge_calls, w.refresh_calls), (0, 0), "{allowed:?}");
     }
+}
+
+/// A forge answer that carries none of the merge settings (the Pages workflow's token reads
+/// the repository without them) is unknown, never "allows nothing": the published Cockpit said
+/// "allows no merge commit (it allows: nothing)" while all three were allowed (I2966). Every
+/// candidate is held as unknown with `merge_settings_unread`, nothing merges, and the
+/// diagnostic says the settings could not be read.
+#[test]
+fn unread_merge_settings_are_unknown_and_never_allow_nothing() {
+    use crate::integration::ReasonCode as R;
+    let mut ready = sim(1);
+    ready.contains = 1;
+    let mut w = World {
+        open: vec![ready],
+        master: 1,
+        merge_settings_unread: true,
+        ..Default::default()
+    };
+    let q = w.queue();
+    assert_eq!(q.policy.merge_method, None);
+    assert!(q.policy.merge_settings_unread);
+    let a = q.get(1).unwrap();
+    assert_eq!(
+        a.disposition,
+        PullRequestDisposition::Unknown,
+        "{:?}",
+        a.reasons
+    );
+    assert_eq!(a.reasons[0], R::MergeSettingsUnread, "{:?}", a.reasons);
+    let settings = a
+        .evidence
+        .iter()
+        .find(|e| e.kind == crate::integration::EvidenceKind::RepositorySettings)
+        .expect("settings evidence");
+    assert_eq!(settings.status, "merge_settings_unread");
+    assert!(
+        q.diagnostics
+            .iter()
+            .any(|d| d.contains("merge settings could not be read")),
+        "{:?}",
+        q.diagnostics
+    );
+    assert!(
+        !q.diagnostics
+            .iter()
+            .any(|d| d.contains("allows no merge commit")),
+        "an unread setting was said to allow nothing: {:?}",
+        q.diagnostics
+    );
+    let root = scratch();
+    let out = drain::step(&root, &mut w, false, true).unwrap();
+    assert!(matches!(out, DrainStepOutcome::Idle { .. }), "{out:?}");
+    assert_eq!((w.merge_calls, w.refresh_calls), (0, 0));
 }
 
 #[test]
@@ -8475,7 +8535,7 @@ fn assessed(f: &Allocating) -> PullRequestAssessment {
         required_checks: Some(vec!["ci".into()]),
         review_policy: Some(Default::default()),
         up_to_date_required: Some(true),
-        merge_methods: vec!["merge".into()],
+        merge_methods: Some(vec!["merge".into()]),
         pull_requests: vec![observed_pr(1, &f.head)],
         resolved: Default::default(),
         delete_branch_on_merge: None,

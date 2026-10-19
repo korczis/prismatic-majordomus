@@ -138,6 +138,106 @@ mj_session_store_ready() {
   [ -f "$MJ_SKELETON_DIR/ai/repo/sessions/README.md" ] || return 0
   cp "$MJ_SKELETON_DIR/ai/repo/sessions/README.md" "$dir/README.md"
 }
+# Where a close writes its record, which is not always where records are read from: on the
+# trunk a tracked section would leave the trunk dirty with a file only a pull request may
+# bring, so the record waits in the outbox instead (ADR 0091, amendment of 2026-10-15). A
+# layer without a sessions section writes to the checkout-local store as before.
+mj_session_outbox_dir() { printf '%s/sessions' "$(mj_outbox_dir)"; }
+mj_session_write_store() {
+  if [ -n "${MJ_SESSIONS_DIR:-}" ] && mj_on_trunk; then mj_session_outbox_dir; else mj_session_store; fi
+}
+# The write store exists the moment a record needs it; the tracked section also gets its
+# contract (mj_session_store_ready), the outbox needs none.
+mj_session_write_store_ready() {
+  if [ "$1" = "$(mj_session_store)" ]; then mj_session_store_ready; else mkdir -p "$1"; fi
+}
+# The record of one episode, wherever a close wrote it: the store or the outbox. The
+# exclusion is mj_publish_record's staging name, see the close below.
+mj_session_find_record() {
+  local sid="$1" d
+  for d in "$(mj_session_store)" "$(mj_session_outbox_dir)"; do
+    [ -d "$d" ] || continue
+    grep -rl --exclude='.tmp.*' "^session_id: $sid\$" "$d" 2>/dev/null | head -n 1
+  done | head -n 1
+}
+# The other half of the outbox (ADR 0091, amendment of 2026-10-15, slice 2): an episode
+# boundary off the trunk moves what a trunk episode staged into the tracked sections, where
+# this branch's pull request carries it to the trunk. Each file moves unchanged under its
+# own name, so a record still names the session that wrote it and the branch it closed on,
+# never the episode that carried it.
+#
+# Exactly once, by identity: a session record the section already holds (by session_id) and
+# a candidate whose id is already decided there (promoted or superseded) are retired from the
+# outbox, not written again; a candidate still a candidate goes through derive's own atomic
+# write, which says `unchanged` for the same bytes. A file that is not a record is named on
+# stderr and left where it is: moving it would put an invalid file into a tracked section,
+# and removing it would drop whatever it was. Every line goes to stderr, because a close's
+# stdout is the path of its record. Nothing to carry says nothing.
+mj_session_outbox_drain() {
+  mj_on_trunk && return 0
+  local sbox cbox f sid store dest kept=0
+  sbox="$(mj_session_outbox_dir)"; cbox="$(mj_outbox_dir)/candidates"
+  [ -d "$sbox" ] || [ -d "$cbox" ] || return 0
+  mj_lock_take "$MJ_STATE_DIR/locks/outbox-drain" || true
+  store="$(mj_session_store)"
+  for f in "$sbox"/*.md; do
+    [ -f "$f" ] || continue
+    sid="$(awk 'NR == 1 && !/^---[ \t]*$/ { exit } NR > 1 && /^---[ \t]*$/ { exit }
+                /^session_id: / { sub(/^session_id: /, ""); print; exit }' "$f" 2>/dev/null)"
+    if [ -z "$sid" ] || ! grep -q '^schema: session/v1$' "$f"; then
+      mj_err "outbox: $(mj_rel "$f") is not a session record (no session/v1 front matter with a session_id); left in the outbox"
+      kept=$((kept + 1)); continue
+    fi
+    if grep -rlq --exclude='.tmp.*' "^session_id: $sid\$" "$store" 2>/dev/null; then
+      rm -f "$f"; mj_err "outbox: $sid is already tracked; the staged copy is retired"; continue
+    fi
+    mj_session_store_ready
+    dest="$store/$(basename "$f")"
+    if [ -e "$dest" ]; then
+      mj_err "outbox: $(mj_rel "$dest") exists and is another episode's; $(mj_rel "$f") is left in the outbox"
+      kept=$((kept + 1)); continue
+    fi
+    if cp "$f" "$dest" 2>/dev/null; then
+      rm -f "$f"; mj_err "outbox: carried $(mj_rel "$dest")"
+    else
+      rm -f "$dest"; mj_err "outbox: could not write $(mj_rel "$dest"); $(mj_rel "$f") is left in the outbox"
+      kept=$((kept + 1))
+    fi
+  done
+  if [ -d "$cbox" ]; then
+    # shellcheck source=knowledge.sh
+    . "$MJ_LIB_DIR/knowledge.sh"
+    local cdir id st verb
+    cdir="$(mj_knowledge_candidates_dir)"
+    for f in "$cbox"/*.md; do
+      [ -f "$f" ] || continue
+      id="$(basename "$f" .md)"
+      if ! sed -n '1p' "$f" | grep -q '^---[ \t]*$' || ! grep -q '^schema: knowledge/v1$' "$f" \
+          || ! grep -qx "id: $id" "$f"; then
+        mj_err "outbox: $(mj_rel "$f") is not a knowledge record (no knowledge/v1 front matter whose id is its file name); left in the outbox"
+        kept=$((kept + 1)); continue
+      fi
+      st=""; [ -f "$cdir/$id.md" ] && st="$(mj_knowledge_record_status "$cdir/$id.md")"
+      if [ -n "$st" ] && [ "$st" != candidate ]; then
+        rm -f "$f"; mj_err "outbox: $id is already decided ($st); the staged copy is retired"; continue
+      fi
+      mj_knowledge_candidates_ready || { mj_err "outbox: cannot create $(mj_rel "$cdir")/"; kept=$((kept + 1)); continue; }
+      if verb="$(mj_knowledge_write_record "$cdir" "$id" "$f")"; then
+        rm -f "$f"
+        case "$verb" in
+          unchanged) mj_err "outbox: $id is already tracked; the staged copy is retired" ;;
+          *) mj_err "outbox: carried $(mj_rel "$cdir")/$id.md" ;;
+        esac
+      else
+        mj_err "outbox: could not write $(mj_rel "$cdir")/$id.md; $(mj_rel "$f") is left in the outbox"
+        kept=$((kept + 1))
+      fi
+    done
+  fi
+  mj_lock_release
+  [ "$kept" = 0 ] || mj_err "outbox: $kept file(s) stay in $(mj_rel "$(mj_outbox_dir)")/ (run: majordomus doctor)"
+  return 0
+}
 # One line naming the work, for a listing: the task's title when the episode had a task.
 mj_session_title() {
   local task="$1" sid="$2"
@@ -498,7 +598,9 @@ mj_session_close() {
   if [ -s "$body" ]; then printf '\n' >> "$rec"; cat "$body" >> "$rec"; fi
   rm -f "$body"
 
-  mj_session_store_ready
+  # On the trunk the record goes to the outbox, not the tracked section (ADR 0091 amendment).
+  local wstore; wstore="$(mj_session_write_store)"
+  mj_session_write_store_ready "$wstore"
   # One episode, one record. `mj_publish_record` gives each file a unique name, which makes
   # a second close of the same episode a second *file* rather than a collision — so nothing
   # here ever refused it, and the identity contract this section declares was enforced only
@@ -527,7 +629,9 @@ mj_session_close() {
   # (which is what `majordomus recover orphans` is for). Without this, a close would name a
   # temp file as the episode's record — the ledger event, the context close and this
   # command's own output would all point at a path that is about to be removed.
-  existing="$(grep -rl --exclude='.tmp.*' "^session_id: $sid\$" "$(mj_session_store)" 2>/dev/null | head -n 1 || true)"
+  # Both places a close may have written it: a record staged in the outbox is this
+  # episode's record as much as a tracked one.
+  existing="$(mj_session_find_record "$sid" || true)"
   if [ -n "$existing" ]; then
     # The episode's record is the one that already exists, and every reader downstream —
     # the ledger event, the context close, this command's own output — must name it, not
@@ -537,13 +641,17 @@ mj_session_close() {
     printf 'session: %s already has a record at %s; this close adds none\n' \
       "$sid" "$(mj_rel "$existing")" >&2
   else
-    final="$(mj_publish_record "$(mj_session_store)" "$sid" "$rec")" \
+    final="$(mj_publish_record "$wstore" "$sid" "$rec")" \
       || { rm -f "$rec" "$win"; mj_lock_release; mj_die "$MJ_EX_INTERNAL" "could not create a unique session file"; }
     rm -f "$rec" "$win"
   fi
   # The record exists; everything after this is teardown, and holding the lock across it
   # would serialise two closes that are no longer racing for the same thing.
   mj_lock_release
+
+  # Off the trunk, this boundary also carries what a trunk episode staged (ADR 0091,
+  # amendment of 2026-10-15): after this episode's own record, so the two never share a lock.
+  mj_session_outbox_drain
 
   # What the episode learned, derived on the single path every close takes (ADR 0091):
   # after its record, so that the episode's own record exists before anything names it,

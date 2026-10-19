@@ -1,0 +1,33 @@
+id: I2289
+milestone: every-session-joins-the-mesh
+title: "A task built off the mesh is refused"
+slug: built-off-the-mesh-is-refused
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Rule majordomus.task-on-the-mesh, dispatched by check and finish: on a repository whose tracked mesh declaration is enabled, a completed finish of a task whose scope was never claimed on the mesh is refused and recorded; finish claims the scope again before it judges; partial and the other outcomes are not refused."
+why: "The owner asked on 2026-10-10, and again on 2026-10-15, why taking part in the mesh is not enforced. After I2734 and I2288 a session and a task reach the mesh when a server answers; nothing made a missing claim a finding, so a task started with no server stayed invisible to every other machine and was completed as if it had not been."
+current_state: "No validator reads mesh_claim; finish completes a task whose scope was never on the mesh."
+desired_state: "check reports an unclaimed scope on an enabled mesh under mesh; finish --outcome completed refuses it with task.refused naming majordomus.task-on-the-mesh; finish re-claims first; a repository with no enabled mesh is not judged."
+scope:
+  - "lib/common.sh"
+  - "lib/finish.sh"
+  - "share/standard/majordomus/rules/task-on-the-mesh.v1.md"
+  - "share/standard/majordomus/manifest.yaml"
+  - ".ai/repo/rules/vendor/majordomus"
+  - "test/cases/3068_a_task_off_the_mesh_is_refused.sh"
+  - "docs/MESH.md"
+depends_on:
+  - "I2288"
+acceptance_criteria:
+  - "finish refuses a task whose scope was never claimed while the mesh was enabled"
+  - "A disabled mesh refuses nothing"
+  - "partial is not refused for the mesh"
+  - "finish claims the scope once a server answers, and the rule passes"
+validation:
+  - "bin/majordomus plan validate"
+  - "bash test/run.sh 3068_a_task_off_the_mesh_is_refused 3067_a_task_is_claimed_on_the_mesh 18_doctrine_wiring 3022_the_rule_package_is_stamped_and_adopter_neutral"
+evidence_required:
+  - "case_3068"
+created_at: 2026-10-10
+updated_at: 2026-10-15

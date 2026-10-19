@@ -26,4 +26,17 @@ validation:
 evidence_required:
   - "hello_replay_to_another_runtime_refused_test"
 created_at: 2026-10-09
-updated_at: 2026-10-14
+updated_at: 2026-10-17T12:01:38Z
+started_at: 2026-10-17T12:01:16Z
+started_event: sha256:5f35c2ae5a6733c22d35a88068cbf88f32a126391ec7f3898c293469fd1bbd6c
+verified_at: 2026-10-17T12:01:30Z
+verified_event: sha256:edf7dc7eb244a178bd00c266ede26b34cac98395c560c38bc83e8acc42ad64bb
+completed_at: 2026-10-17T12:01:38Z
+completed_event: sha256:70274f38e185411af1da04f9c7a3647501af35df9972f3d2cf8939118cc8c156
+evidence:
+  - covers: hello_replay_to_another_runtime_refused_test
+    type: test
+    command: "cargo test --lib -- mesh::; cargo test --test mesh_cooperation"
+    result: "319 passed incl. a_hello_addressed_to_one_runtime_is_refused_by_another; mesh_cooperation 7 passed (code on master since aa28332ca86; re-run at master 01227a0)"
+    commit: 01227a0f74ab9de734edd3672dcc9d8d3a2d666c
+    recorded_at: 2026-10-17T12:01:26Z

@@ -169,6 +169,44 @@ impl El {
         }
     }
 
+    /// This element with every element that carries the attribute `name` replaced by what
+    /// `with` makes of its value, when it makes anything; an element it leaves is searched
+    /// on, one it replaces is not.
+    ///
+    /// ```
+    /// use majordomus_cli::cockpit::html::el;
+    /// let page = el("div").child(el("p").attr("data-src", "/a").text("later"));
+    /// let filled = page.replacing("data-src", &mut |src| Some(el("p").text(src)));
+    /// assert_eq!(filled.render(), "<div><p>/a</p></div>");
+    /// ```
+    pub fn replacing(self, name: &str, with: &mut dyn FnMut(&str) -> Option<El>) -> El {
+        let value = self
+            .attributes
+            .iter()
+            .find(|(n, _)| n == name)
+            .map(|(_, v)| v.clone());
+        if let Some(replacement) = value.and_then(|v| with(&v)) {
+            return replacement;
+        }
+        let El {
+            tag,
+            attributes,
+            children,
+        } = self;
+        let children = children
+            .into_iter()
+            .map(|c| match c {
+                Node::Element(e) => Node::Element(e.replacing(name, with)),
+                other => other,
+            })
+            .collect();
+        El {
+            tag,
+            attributes,
+            children,
+        }
+    }
+
     /// The element as markup.
     pub fn render(&self) -> String {
         let mut out = String::new();
@@ -207,7 +245,24 @@ impl El {
 /// on every page by construction, so a new page cannot forget the parts that make the
 /// Cockpit behave.
 pub fn document(title: &str, head: Vec<El>, body: El) -> String {
-    let mut out = String::from("<!doctype html>\n<html lang=\"en\">\n<head>\n");
+    document_on(title, &[], head, body)
+}
+
+/// A whole page whose root element carries `root`'s attributes besides its language: the
+/// theme contract, where a script written for the site reads it from `<html>` as the site's
+/// pages carry it.
+///
+/// ```
+/// use majordomus_cli::cockpit::html::{document_on, el};
+/// let page = document_on("t", &[("data-theme-key", "a\"b".into())], vec![], el("body"));
+/// assert!(page.contains("<html lang=\"en\" data-theme-key=\"a&quot;b\">"), "{page}");
+/// ```
+pub fn document_on(title: &str, root: &[(&str, String)], head: Vec<El>, body: El) -> String {
+    let mut out = String::from("<!doctype html>\n<html lang=\"en\"");
+    for (name, value) in root {
+        out.push_str(&format!(" {name}=\"{}\"", escape(value)));
+    }
+    out.push_str(">\n<head>\n");
     out.push_str(&el("meta").attr("charset", "utf-8").render());
     out.push_str(
         &el("meta")
@@ -228,6 +283,16 @@ pub fn document(title: &str, head: Vec<El>, body: El) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn the_root_carries_its_attributes_escaped_and_a_plain_page_none() {
+        let page = document_on("t", &[("data-x", "<y>".into())], vec![], el("body"));
+        assert!(
+            page.contains("<html lang=\"en\" data-x=\"&lt;y&gt;\">"),
+            "{page}"
+        );
+        assert!(document("t", vec![], el("body")).contains("<html lang=\"en\">\n<head>"));
+    }
 
     #[test]
     fn repository_content_cannot_escape_an_element_body() {
