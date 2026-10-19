@@ -408,30 +408,29 @@ fn overview(trains: &[Value]) -> El {
                         .iter()
                         .find(|l| l.get("number").and_then(Value::as_u64) == Some(n))
                         .map(|l| text(l, "disposition").replace('_', " "))
-                        .unwrap_or_default();
-                    if word.is_empty() {
-                        format!("#{n}")
-                    } else {
-                        format!("#{n}, {word}")
+                        .filter(|w| !w.is_empty());
+                    match word {
+                        Some(word) => format!("#{n}, {word}"),
+                        None => format!("#{n}, its disposition unknown"),
                     }
                 }
                 None => "none yet".into(),
             };
             // the model's own order (by_disposition is a map keyed by the word); no second order here
-            let by: Vec<(String, u64)> = t
+            let standing = t
                 .get("by_disposition")
                 .and_then(Value::as_object)
-                .map(|m| {
-                    m.iter()
-                        .filter_map(|(k, v)| v.as_u64().map(|n| (k.replace('_', " "), n)))
-                        .collect()
-                })
-                .unwrap_or_default();
-            let standing = by
-                .iter()
-                .map(|(word, n)| format!("{n} {word}"))
-                .collect::<Vec<_>>()
-                .join(", ");
+                .map_or_else(
+                    || "unknown".to_string(),
+                    |m| {
+                        m.iter()
+                            .filter_map(|(k, v)| {
+                                v.as_u64().map(|n| format!("{n} {}", k.replace('_', " ")))
+                            })
+                            .collect::<Vec<_>>()
+                            .join(", ")
+                    },
+                );
             el("tr")
                 .child(el("td").child(link(format!("#{}", anchor(&id)), name)))
                 .child(
