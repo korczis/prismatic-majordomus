@@ -6,23 +6,23 @@
     "version": "0.30.2"
   },
   "registry": {
-    "fingerprint": "2153bbc7a387146c0c2e10bd80093611333c4646dbeef396b615ba701c3aba4f",
+    "fingerprint": "d3a74f4f8ed710ea0131495e4dc1bac5f102697df87d5ddbe95a6e34bb88b07c",
     "summary": {
-      "total": 2657,
+      "total": 2667,
       "builtin": 208,
-      "declarative": 2449,
+      "declarative": 2459,
       "by_kind": {
         "command": 32,
         "query": 176,
-        "resource": 2449
+        "resource": 2459
       },
       "by_stability": {
         "behaviorally_verified": 144,
         "experimental": 55,
-        "implemented": 2458
+        "implemented": 2468
       },
       "mcp_tools": 198,
-      "mcp_resources": 2504,
+      "mcp_resources": 2514,
       "http_routes": 203,
       "cli_commands": 112,
       "modules": 93,
@@ -57347,7 +57347,7 @@
         "module": "plan",
         "kind": "command",
         "title": "Reserve the next issue, case or ADR number",
-        "description": "One number of the kind asked (`issue`, `case`, `adr`), reserved for one mesh session by one exclusive claim on the identifier's own key, `id:<kind>/<number>`. The candidate is one past the highest number this tree, the sibling worktrees, every ref and every reservation the mesh journal remembers hold, or the caller's `at_least` when that is higher; a number another session's claim already holds is skipped and its holder named. On one runtime the claim is admitted under the admission lock, so two allocations at once answer two numbers; across linked runtimes two claims made before they sync are both admitted and the fold names one winner, whose loser allocates again (fencing is mesh-journal-converges' work). Writes this runtime's mesh journal only, never the repository; the reservation ends with its session or `mesh release`.",
+        "description": "One number of the kind asked (`issue`, `case`, `adr`), reserved for one mesh session by one exclusive claim on the identifier's own key, `id:<kind>/<number>`. The candidate is one past the highest number this tree, the sibling worktrees, every ref and every reservation the mesh journal remembers hold, or the caller's `at_least` when that is higher; a number another session's claim already holds is skipped and its holder named, and a source that could not be read refuses the allocation (`source_unread`). On one runtime the claim is admitted under the admission lock, so two allocations at once answer two numbers; across linked runtimes two claims made before they sync are both admitted and the fold names one winner, whose loser allocates again (fencing is mesh-journal-converges' work). Writes this runtime's mesh journal only, never the repository; the reservation ends with its session or `mesh release`.",
         "input": {
           "name": "AllocateInput",
           "schema": {
@@ -85709,7 +85709,7 @@
         "title": "document",
         "description": "Declarative objects of kind 'document' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 350,
+        "capabilities": 351,
         "capability_ids": []
       },
       {
@@ -86006,7 +86006,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 492,
+        "capabilities": 498,
         "capability_ids": []
       },
       {
@@ -86558,7 +86558,7 @@
         "title": "skill",
         "description": "Declarative objects of kind 'skill' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 8,
+        "capabilities": 9,
         "capability_ids": []
       },
       {
@@ -86593,7 +86593,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 566,
+        "capabilities": 568,
         "capability_ids": []
       },
       {
@@ -86685,7 +86685,7 @@
     ]
   },
   "index": {
-    "fingerprint": "45f8641540fbc4f679a03555d2ce9e9935c7d0fcb3a4503b1fa955ac6924007a",
+    "fingerprint": "a72d72731b5be90aa76ac75f4e11bea7cdeeb8c08b4d3251a807c726b9d2e5fe",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -86719,13 +86719,13 @@
       "deployment": 1,
       "derive-offload": 1,
       "distribution-model": 1,
-      "document": 350,
+      "document": 351,
       "domain": 6,
       "feature": 29,
       "gap": 4,
       "implementation": 52,
       "intent": 6,
-      "issue": 492,
+      "issue": 498,
       "knowledge": 4,
       "mesh-declaration": 1,
       "milestone": 43,
@@ -86737,9 +86737,9 @@
       "rule": 188,
       "scope": 1,
       "session": 90,
-      "skill": 8,
+      "skill": 9,
       "taxonomy": 10,
-      "test": 566,
+      "test": 568,
       "use-case": 49,
       "workspace": 1
     },
@@ -88730,7 +88730,7 @@
         "path": ".ai/repo/adrs/0177-a-session-proceeds-through-one-entrypoint-that-composes-the-capabilities.md",
         "section": "adrs",
         "source_class": "adr",
-        "bytes": 6807,
+        "bytes": 7401,
         "tags": [
           "proceed",
           "orchestration",
@@ -92287,11 +92287,11 @@
         "kind": "critique",
         "identity": "a-session-proceeds",
         "title": "a-session-proceeds",
-        "description": "707a04c7ce8",
+        "description": "7308a418be0",
         "path": ".ai/repo/project/critiques/a-session-proceeds.yaml",
         "section": "project",
         "source_class": "critique",
-        "bytes": 8540
+        "bytes": 13108
       },
       {
         "uri": "majordomus://critique/intent-bound-work",
@@ -92445,6 +92445,16 @@
         "bytes": 408
       },
       {
+        "uri": "majordomus://document/.ai/repo/skills/proceed/examples/a-fresh-session.md",
+        "kind": "document",
+        "identity": ".ai/repo/skills/proceed/examples/a-fresh-session.md",
+        "title": "A fresh session is told only to proceed",
+        "path": ".ai/repo/skills/proceed/examples/a-fresh-session.md",
+        "section": "skills",
+        "source_class": "skill_example",
+        "bytes": 828
+      },
+      {
         "uri": "majordomus://document/.ai/repo/skills/repo-review/examples/review-a-subsystem.md",
         "kind": "document",
         "identity": ".ai/repo/skills/repo-review/examples/review-a-subsystem.md",
@@ -92532,7 +92542,7 @@
         "path": ".ai/repo/workflows/task-lifecycle.md",
         "section": "workflows",
         "source_class": "workflow",
-        "bytes": 7747
+        "bytes": 7987
       },
       {
         "uri": "majordomus://document/.ai/repo/workflows/use-cases.md",
@@ -93091,7 +93101,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 208219
+        "bytes": 209165
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -96421,7 +96431,7 @@
         "identity": "lib/project.sh",
         "path": "lib/project.sh",
         "source_class": "library",
-        "bytes": 20866
+        "bytes": 21127
       },
       {
         "uri": "majordomus://implementation/lib/prompt.sh",
@@ -96555,7 +96565,7 @@
         "path": ".ai/repo/project/intents/a-session-proceeds.yaml",
         "section": "project",
         "source_class": "intent",
-        "bytes": 2783
+        "bytes": 3209
       },
       {
         "uri": "majordomus://intent/intent-bound-work",
@@ -101827,6 +101837,72 @@
         "bytes": 2299
       },
       {
+        "uri": "majordomus://issue/I2974",
+        "kind": "issue",
+        "identity": "I2974",
+        "title": "Proceeding claims and starts the chosen work once",
+        "description": "Add majordomus proceed take: through the existing capabilities only, take proceed.plan's selection with one exclusive mesh claim on the primary checkout's runtime, ensure the issue's canonical worktree, record the take in that worktree and start the task bound to the issue there; a session whose take is recorded gets that work back and nothing is created, a finished one is reported and its claim released.",
+        "path": ".ai/repo/project/issues/I2974.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2259
+      },
+      {
+        "uri": "majordomus://issue/I2975",
+        "kind": "issue",
+        "identity": "I2975",
+        "title": "/proceed is a generated skill that names only the command",
+        "description": "Declare .ai/repo/skills/proceed/ so that `majordomus generate` projects /proceed for every provider; it runs `majordomus proceed`, shows the decision, follows the implement skill and ends with finish and the hand-off, and holds no rule list, workflow copy or issue list.",
+        "path": ".ai/repo/project/issues/I2975.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1249
+      },
+      {
+        "uri": "majordomus://issue/I2976",
+        "kind": "issue",
+        "identity": "I2976",
+        "title": "Two sessions proceeding at once never hold the same work",
+        "description": "Hold that two sessions running proceed at the same moment, on one machine or two, never both hold the same issue or overlapping scope: on one runtime the exclusive claim admits one, and across runtimes the loser of the fold's winner-naming stops and proceeds with the next eligible issue.",
+        "path": ".ai/repo/project/issues/I2976.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1423
+      },
+      {
+        "uri": "majordomus://issue/I2977",
+        "kind": "issue",
+        "identity": "I2977",
+        "title": "A session whose work stopped is resumed, never duplicated",
+        "description": "When proceed finds work whose session is gone — a task with no live episode, a claim whose runtime expired, a handover nobody took — offer it first, resume it through handover --resolve and the existing claim, and never open a second claim, worktree or task for it.",
+        "path": ".ai/repo/project/issues/I2977.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1297
+      },
+      {
+        "uri": "majordomus://issue/I2978",
+        "kind": "issue",
+        "identity": "I2978",
+        "title": "The UI shows what proceeding chose, what it refused and why",
+        "description": "Render proceed.plan's decision on /ui/proceed and in the Cockpit: the selection, the rejected candidates with their constraints, the ranking terms, what it unblocks, and the history of decisions this repository's sessions took, followed live through the existing event stream.",
+        "path": ".ai/repo/project/issues/I2978.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1169
+      },
+      {
+        "uri": "majordomus://issue/I2979",
+        "kind": "issue",
+        "identity": "I2979",
+        "title": "A finished task hands its head and receipt to the landing seat",
+        "description": "End a proceeded task, after finish --outcome completed, by publishing its branch head and a receipt derived from the finish record (sha, the cases and gates that ran with their results, ci on that head when it exists) to the landing seat on the board and the mesh; never merge, tag or release.",
+        "path": ".ai/repo/project/issues/I2979.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1360
+      },
+      {
         "uri": "majordomus://issue/I2987",
         "kind": "issue",
         "identity": "I2987",
@@ -102172,7 +102248,7 @@
         "path": ".ai/repo/project/milestones/a-session-proceeds.yaml",
         "section": "project",
         "source_class": "milestone",
-        "bytes": 3064
+        "bytes": 3169
       },
       {
         "uri": "majordomus://milestone/adopter-upgrades",
@@ -107720,6 +107796,23 @@
         ]
       },
       {
+        "uri": "majordomus://skill/proceed",
+        "kind": "skill",
+        "identity": "proceed",
+        "title": "Proceed with the next admissible work",
+        "description": "Ask the repository what this session proceeds with, take that one piece of work exactly once, carry it to a verified finish and hand it on, without choosing it by hand or duplicating anyone's.",
+        "path": ".ai/repo/skills/proceed/SKILL.md",
+        "section": "skills",
+        "source_class": "skill",
+        "bytes": 3357,
+        "tags": [
+          "planning",
+          "mesh",
+          "coordination",
+          "delivery"
+        ]
+      },
+      {
         "uri": "majordomus://skill/repo-review",
         "kind": "skill",
         "identity": "repo-review",
@@ -110119,6 +110212,14 @@
         "bytes": 10197
       },
       {
+        "uri": "majordomus://test/test/cases/3369_the_proceed_skill_names_only_the_command.sh",
+        "kind": "test",
+        "identity": "test/cases/3369_the_proceed_skill_names_only_the_command.sh",
+        "path": "test/cases/3369_the_proceed_skill_names_only_the_command.sh",
+        "source_class": "case",
+        "bytes": 5104
+      },
+      {
         "uri": "majordomus://test/test/cases/336_every_control_is_claimed.sh",
         "kind": "test",
         "identity": "test/cases/336_every_control_is_claimed.sh",
@@ -110220,7 +110321,15 @@
         "identity": "test/cases/3441_the_choice_ranks_by_what_it_unblocks.sh",
         "path": "test/cases/3441_the_choice_ranks_by_what_it_unblocks.sh",
         "source_class": "case",
-        "bytes": 3094
+        "bytes": 5304
+      },
+      {
+        "uri": "majordomus://test/test/cases/3443_proceeding_twice_creates_nothing.sh",
+        "kind": "test",
+        "identity": "test/cases/3443_proceeding_twice_creates_nothing.sh",
+        "path": "test/cases/3443_proceeding_twice_creates_nothing.sh",
+        "source_class": "case",
+        "bytes": 9489
       },
       {
         "uri": "majordomus://test/test/cases/349_a_step_reports_its_own_time.sh",
@@ -110444,7 +110553,7 @@
         "identity": "test/cases/391_skills_are_proven_capabilities.sh",
         "path": "test/cases/391_skills_are_proven_capabilities.sh",
         "source_class": "case",
-        "bytes": 9513
+        "bytes": 9521
       },
       {
         "uri": "majordomus://test/test/cases/400_derivation_is_one_graph.sh",
@@ -113056,7 +113165,7 @@
       "front_matter": "optional",
       "schema": "majordomus.document/v1",
       "identity": [],
-      "objects": 350
+      "objects": 351
     },
     {
       "name": "domain",
@@ -113113,7 +113222,7 @@
       "identity": [
         "id"
       ],
-      "objects": 492
+      "objects": 498
     },
     {
       "name": "knowledge",
@@ -113248,7 +113357,7 @@
       "identity": [
         "id"
       ],
-      "objects": 8
+      "objects": 9
     },
     {
       "name": "taxonomy",
@@ -113265,7 +113374,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 566
+      "objects": 568
     },
     {
       "name": "use-case",
@@ -144346,6 +144455,144 @@
               }
             ],
             "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "proceed",
+              "take"
+            ],
+            "route": "/docs/cli/proceed/take/",
+            "executable": true,
+            "usage": "majordomus proceed take [OPTIONS]",
+            "about": "Take the decision once: claim the selection exclusively on the primary checkout's server, ensure the issue's canonical worktree, record the take there and start the task bound to the issue in it. The same session taking again, from either checkout, after a restart or after finish, gets that work back (re-claiming an expired claim, releasing a finished one) and creates nothing. Exit 10 when nothing can be selected, 11 when the decision is provisional or no server answers for the primary checkout, 15 when the take is refused; start's own exit is passed through",
+            "args": [
+              {
+                "name": "session",
+                "long": "session",
+                "positional": false,
+                "help": "The mesh session the work is taken for and held under, on the primary checkout's server",
+                "value_name": "ID",
+                "takes_value": true,
+                "required": true,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "milestone",
+                "long": "milestone",
+                "positional": false,
+                "help": "The milestone whose READY issues come first; the active one when absent",
+                "value_name": "ID",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "proceed-take-no-server",
+                "title": "Take nothing while no server holds the primary checkout",
+                "description": "A take is held on the primary checkout's server, whichever checkout asks, so that the same session taking again from a worktree or after a restart is told of the work it already took. This fixture runs no server: nothing is claimed, no worktree is created, no task is started, and the command exits 11 and names the command that starts one.",
+                "argv": [
+                  "proceed",
+                  "take",
+                  "--session",
+                  "s1"
+                ],
+                "command": "majordomus proceed take --session s1",
+                "setup": [],
+                "expectation": "exits 11"
+              }
+            ],
+            "subcommands": []
           }
         ]
       },
@@ -148547,7 +148794,7 @@
         "name": "majordomus_plan_allocate",
         "id": "plan.allocate",
         "title": "Reserve the next issue, case or ADR number",
-        "description": "One number of the kind asked (`issue`, `case`, `adr`), reserved for one mesh session by one exclusive claim on the identifier's own key, `id:<kind>/<number>`. The candidate is one past the highest number this tree, the sibling worktrees, every ref and every reservation the mesh journal remembers hold, or the caller's `at_least` when that is higher; a number another session's claim already holds is skipped and its holder named. On one runtime the claim is admitted under the admission lock, so two allocations at once answer two numbers; across linked runtimes two claims made before they sync are both admitted and the fold names one winner, whose loser allocates again (fencing is mesh-journal-converges' work). Writes this runtime's mesh journal only, never the repository; the reservation ends with its session or `mesh release`.",
+        "description": "One number of the kind asked (`issue`, `case`, `adr`), reserved for one mesh session by one exclusive claim on the identifier's own key, `id:<kind>/<number>`. The candidate is one past the highest number this tree, the sibling worktrees, every ref and every reservation the mesh journal remembers hold, or the caller's `at_least` when that is higher; a number another session's claim already holds is skipped and its holder named, and a source that could not be read refuses the allocation (`source_unread`). On one runtime the claim is admitted under the admission lock, so two allocations at once answer two numbers; across linked runtimes two claims made before they sync are both admitted and the fold names one winner, whose loser allocates again (fencing is mesh-journal-converges' work). Writes this runtime's mesh journal only, never the repository; the reservation ends with its session or `mesh release`.",
         "kind": "command",
         "read_only": false,
         "effect": "process_state",

@@ -244,6 +244,45 @@
       "route": "/skills/pack-for-review/"
     },
     {
+      "id": "proceed",
+      "uri": "majordomus://skill/proceed",
+      "title": "Proceed with the next admissible work",
+      "description": "Ask the repository what this session proceeds with, take that one piece of work exactly once, carry it to a verified finish and hand it on, without choosing it by hand or duplicating anyone's.",
+      "status": "active",
+      "version": 1,
+      "tags": [
+        "planning",
+        "mesh",
+        "coordination",
+        "delivery"
+      ],
+      "related": [
+        "implement",
+        "report-verification-state",
+        "evolve"
+      ],
+      "inputs": [
+        "a checkout of a repository whose plan the tool reads, anywhere in its tree",
+        "the shared server of the primary checkout, which holds the board and the mesh every take is made on"
+      ],
+      "outputs": [
+        "the decision as the tool explained it, or the reason nothing was taken",
+        "one claim, one worktree and one task bound to the selected issue, created once and found again on every later call",
+        "a finished task whose head is handed to the landing seat, reported by verification state"
+      ],
+      "path": ".ai/repo/skills/proceed/SKILL.md",
+      "sha256": "7eb09ff90938e31daa1948d54e585eea285a630e353e5d629f7fbb64252b9e08",
+      "examples": [
+        {
+          "path": ".ai/repo/skills/proceed/examples/a-fresh-session.md",
+          "title": "A fresh session is told only to proceed",
+          "body": "\nA session starts in the primary checkout with no task and no instruction but \"proceed\".\nAsk for the decision. It selects the ready issue that nobody holds and that unblocks the\nmost, names the issue it passed over because another machine's exclusive claim meets its\nscope, and reads the board and the mesh in full. Take it. The claim, the worktree and the\ntask are created and printed. Announce them, and implement the issue in that worktree. Once\n`finish` accepts the task, push and hand the head to the landing seat. Then take once more,\nso the claim is given back.\n\nThe same session is then restarted and told \"proceed\" again before it finished. The take\nfinds its record in the worktree, answers `found` for every step and creates nothing, and\nthe work continues where it stopped.\n"
+        }
+      ],
+      "valid": true,
+      "route": "/skills/proceed/"
+    },
+    {
       "id": "repo-review",
       "uri": "majordomus://skill/repo-review",
       "title": "Repository review",
@@ -335,7 +374,7 @@
       "route": "/skills/report-verification-state/"
     }
   ],
-  "count": 8,
+  "count": 9,
   "by_tag": {
     "cleanup": [
       "assess-before-deleting"
@@ -369,10 +408,12 @@
       "repo-review"
     ],
     "delivery": [
-      "evolve"
+      "evolve",
+      "proceed"
     ],
     "coordination": [
-      "evolve"
+      "evolve",
+      "proceed"
     ],
     "implementation": [
       "implement"
@@ -395,6 +436,12 @@
     ],
     "chatgpt": [
       "pack-for-chatgpt"
+    ],
+    "planning": [
+      "proceed"
+    ],
+    "mesh": [
+      "proceed"
     ],
     "reporting": [
       "report-verification-state"
@@ -867,6 +914,13 @@
       "description": "Prepare a bounded, reproducible snapshot of the tracked tree for a reviewer who cannot read the repository directly, with the local half and anything secret left out and the questions the review must answer written down."
     },
     {
+      "name": "proceed",
+      "path": ".claude/skills/proceed/SKILL.md",
+      "kind": "skill",
+      "source": ".ai/repo/skills/proceed/SKILL.md",
+      "description": "Ask the repository what this session proceeds with, take that one piece of work exactly once, carry it to a verified finish and hand it on, without choosing it by hand or duplicating anyone's."
+    },
+    {
       "name": "repo-review",
       "path": ".claude/skills/repo-review/SKILL.md",
       "kind": "skill",
@@ -884,6 +938,6 @@
   "claude_by_kind": {
     "command": 1,
     "domain": 59,
-    "skill": 8
+    "skill": 9
   }
 }

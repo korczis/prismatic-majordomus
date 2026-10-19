@@ -9,8 +9,13 @@
 #      proceed.plan's reason says it unblocks 3;
 #   2. adding a dependency on I0001 to four issues changes the answer to I0001 in both
 #      engines, with no list edited;
-#   3. of two issues equal in everything but their ids, I9999 and I10000, both engines take
-#      I9999: an id is compared by its number, not as text (Codex's review of I2972).
+#   3. of two issues equal in everything but their ids, both engines take the same one: an id
+#      is compared by its number, not as text (I9999 before I10000), equal numbers by their
+#      spelling (I00000 before I0000), and a number too long for a float exactly
+#      (Codex's reviews of I2972 and of 7308a418be0);
+#   4. a decision over a source that did not load is provisional (exit 11, no commands): a
+#      mesh declaration the index refuses is not an undeclared mesh, and a plan with a
+#      record that did not load is partial; the same plan with neither exits 0.
 . "$ROOT/test/lib.sh"
 command -v jq >/dev/null 2>&1 || skip "jq not installed"
 RB="$(rust_bin)" || rust_bin_exit $?
@@ -45,9 +50,34 @@ git add -A >/dev/null && git commit -qm "four issues wait on I0001" >/dev/null
 
 # ---------------------------------------------------------------- 3. an id by its number
 rm .ai/repo/project/issues/I00*.yaml
-pj_issue I10000 M000
-pj_issue I9999 M000
-git add -A >/dev/null && git commit -qm "two ids of different widths" >/dev/null
-[ "$(shell_next)" = I9999 ] || { echo "    the shell engine compares ids as text: $(shell_next)"; exit 1; }
-[ "$(rust_next)" = I9999 ] || { echo "    proceed.plan compares ids as text: $(rust_next)"; exit 1; }
+pair() { # <id> <id> <expected>: two issues equal in everything else, both engines take <expected>
+  rm -f .ai/repo/project/issues/I*.yaml
+  pj_issue "$1" M000
+  pj_issue "$2" M000
+  git add -A >/dev/null && git commit -qm "$1 and $2" >/dev/null
+  [ "$(shell_next)" = "$3" ] || { echo "    of $1 and $2 the shell engine takes $(shell_next), not $3"; exit 1; }
+  [ "$(rust_next)" = "$3" ] || { echo "    of $1 and $2 proceed.plan takes $(rust_next), not $3"; exit 1; }
+}
+pair I10000 I9999 I9999
+pair I0000 I00000 I00000
+pair I10000000000000000 I9999999999999999 I9999999999999999
+
+# ---------------------------------------------------------------- 4. a source that did not load
+plan_rc() { rc=0; "$RB" proceed plan --format json > "$T/d.json" 2>/dev/null || rc=$?; }
+plan_rc
+[ "$rc" = 0 ] && jq -e '.provisional == false and (.sources[] | select(.source == "mesh") | .state == "undeclared")
+  and (.sources[] | select(.source == "plan") | .state == "read")' "$T/d.json" >/dev/null   || { echo "    with no declaration and a whole plan the decision is not final ($rc):"; cat "$T/d.json"; exit 1; }
+mkdir -p .ai/repo/mesh
+printf 'schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: bananas\n' > .ai/repo/mesh/majordomus.yaml
+git add -A >/dev/null && git commit -qm "a declaration the schema refuses" >/dev/null
+plan_rc
+[ "$rc" = 11 ] && jq -e '.provisional and .next == [] and (.sources[] | select(.source == "mesh") | .state == "unread")' "$T/d.json" >/dev/null \
+  || { echo "    a refused declaration is read as no mesh ($rc):"; cat "$T/d.json"; exit 1; }
+git rm -q .ai/repo/mesh/majordomus.yaml && git commit -qm "no declaration" >/dev/null
+printf 'id: I0042\nmilestone: M000\ntitle: 7\npriority: urgent\n' > .ai/repo/project/issues/I0042.yaml
+git add -A >/dev/null && git commit -qm "a record that does not load" >/dev/null
+plan_rc
+[ "$rc" = 11 ] && jq -e '.provisional and .next == [] and (.sources[] | select(.source == "plan") | .state == "partial"
+  and (.summary | contains("I0042")))' "$T/d.json" >/dev/null \
+  || { echo "    a plan with a record that did not load is read as whole ($rc):"; cat "$T/d.json"; exit 1; }
 exit 0

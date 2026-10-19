@@ -239,6 +239,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus brief`](#majordomus-brief) | `/docs/cli/brief/` | What surrounds this session, in one line and in a few: its episode and task, the peers of every board, the mesh, the integration queue and the derive queue, asked of the server holding this checkout's lease |
 | [`majordomus proceed`](#majordomus-proceed) | `/docs/cli/proceed/` | What this session proceeds with, and why: the READY issue nothing refuses, every one passed over with the claim or exclusive scope that refused it, and the terms of the order, from the plan, every checkout's board and every linked machine's live claims (ADR 0177) |
 | [`majordomus proceed plan`](#majordomus-proceed-plan) | `/docs/cli/proceed/plan/` | The decision, read only: the selected issue and why, the READY issues passed over with what refused each, what the selection unblocks and the commands that take it; asked of the server holding this checkout's lease. Exit 10 when nothing can be selected, 11 when the selection is provisional because the board or a declared mesh could not be read |
+| [`majordomus proceed take`](#majordomus-proceed-take) | `/docs/cli/proceed/take/` | Take the decision once: claim the selection exclusively on the primary checkout's server, ensure the issue's canonical worktree, record the take there and start the task bound to the issue in it. The same session taking again, from either checkout, after a restart or after finish, gets that work back (re-claiming an expired claim, releasing a finished one) and creates nothing. Exit 10 when nothing can be selected, 11 when the decision is provisional or no server answers for the primary checkout, 15 when the take is refused; start's own exit is passed through |
 | [`majordomus skills`](#majordomus-skills) | `/docs/cli/skills/` | Every skill as a proven capability: the tests that name it and the evidence behind them, its page, the doctrine and gates that hold it, what invokes it, and the orphans |
 | [`majordomus skills status`](#majordomus-skills-status) | `/docs/cli/skills/status/` | Every skill with its derived standing: tested, documented, enforced, used |
 | [`majordomus skills explain`](#majordomus-skills-explain) | `/docs/cli/skills/explain/` | One skill in full: each naming test and its evidence, its page, its gates, every invocation |
@@ -6798,7 +6799,7 @@ Examples:
 
 What this session proceeds with, and why: the READY issue nothing refuses, every one passed over with the claim or exclusive scope that refused it, and the terms of the order, from the plan, every checkout's board and every linked machine's live claims (ADR 0177)
 
-Subcommands: [`majordomus proceed plan`](#majordomus-proceed-plan).
+Subcommands: [`majordomus proceed plan`](#majordomus-proceed-plan), [`majordomus proceed take`](#majordomus-proceed-take).
 
 ```text
 majordomus proceed [OPTIONS] <COMMAND>
@@ -6840,6 +6841,35 @@ Examples:
   ```
 
   Verified: exits 10.
+
+<a id="majordomus-proceed-take"></a>
+## `majordomus proceed take`
+
+Take the decision once: claim the selection exclusively on the primary checkout's server, ensure the issue's canonical worktree, record the take there and start the task bound to the issue in it. The same session taking again, from either checkout, after a restart or after finish, gets that work back (re-claiming an expired claim, releasing a finished one) and creates nothing. Exit 10 when nothing can be selected, 11 when the decision is provisional or no server answers for the primary checkout, 15 when the take is refused; start's own exit is passed through
+
+```text
+majordomus proceed take [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--session` | `<ID>` | required | The mesh session the work is taken for and held under, on the primary checkout's server |
+| `--milestone` | `<ID>` | — | The milestone whose READY issues come first; the active one when absent |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Take nothing while no server holds the primary checkout** — A take is held on the primary checkout's server, whichever checkout asks, so that the same session taking again from a worktree or after a restart is told of the work it already took. This fixture runs no server: nothing is claimed, no worktree is created, no task is started, and the command exits 11 and names the command that starts one.
+
+  ```console
+  $ majordomus proceed take --session s1
+  ```
+
+  Verified: exits 11.
 
 <a id="majordomus-skills"></a>
 ## `majordomus skills`

@@ -1,7 +1,7 @@
 +++
 title = "majordomus continuity records"
 description = "Every published handover the local store admits, by line, and every file it refused"
-weight = 236
+weight = 237
 [extra]
 route = "/docs/cli/continuity/records/"
 command = "majordomus continuity records"

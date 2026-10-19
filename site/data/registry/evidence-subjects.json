@@ -3044,6 +3044,11 @@
     },
     {
       "kind": "command",
+      "subject": "command:proceed take",
+      "path": "/evidence/commands/proceed-take/"
+    },
+    {
+      "kind": "command",
       "subject": "command:product domains",
       "path": "/evidence/commands/product-domains/"
     },
@@ -16302,6 +16307,25 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:proceed take": {
+      "kind": "command",
+      "id": "proceed take",
+      "page": "/evidence/commands/proceed-take/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:product": {
       "kind": "command",
       "id": "product",
@@ -17671,6 +17695,12 @@
       ],
       "members": [],
       "routes": [
+        {
+          "via": "behaviour",
+          "test": "suite:3369_the_proceed_skill_names_only_the_command",
+          "path": "test/cases/3369_the_proceed_skill_names_only_the_command.sh",
+          "category": "e2e"
+        },
         {
           "via": "behaviour",
           "test": "suite:391_skills_are_proven_capabilities",
@@ -28637,6 +28667,7 @@
     "suite:3401_a_hero_link_with_a_fragment_resolves_to_its_id",
     "suite:343_the_cockpit_shows_who_else_is_here",
     "suite:3440_an_id_is_taken_by_one_atomic_claim",
+    "suite:3443_proceeding_twice_creates_nothing",
     "suite:349_a_step_reports_its_own_time",
     "suite:34_command_fixtures",
     "suite:350_the_queue_measures_itself",

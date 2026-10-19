@@ -23077,6 +23077,109 @@ cli:
               setup: []
               expectation: exits 10
           subcommands: []
+        - path:
+            - majordomus
+            - proceed
+            - take
+          route: /docs/cli/proceed/take/
+          executable: true
+          usage: "majordomus proceed take [OPTIONS]"
+          about: "Take the decision once: claim the selection exclusively on the primary checkout's server, ensure the issue's canonical worktree, record the take there and start the task bound to the issue in it. The same session taking again, from either checkout, after a restart or after finish, gets that work back (re-claiming an expired claim, releasing a finished one) and creates nothing. Exit 10 when nothing can be selected, 11 when the decision is provisional or no server answers for the primary checkout, 15 when the take is refused; start's own exit is passed through"
+          args:
+            - name: session
+              long: session
+              positional: false
+              help: "The mesh session the work is taken for and held under, on the primary checkout's server"
+              value_name: ID
+              takes_value: true
+              required: true
+              global: false
+              possible_values: []
+              defaults: []
+            - name: milestone
+              long: milestone
+              positional: false
+              help: The milestone whose READY issues come first; the active one when absent
+              value_name: ID
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: proceed-take-no-server
+              title: Take nothing while no server holds the primary checkout
+              description: "A take is held on the primary checkout's server, whichever checkout asks, so that the same session taking again from a worktree or after a restart is told of the work it already took. This fixture runs no server: nothing is claimed, no worktree is created, no task is started, and the command exits 11 and names the command that starts one."
+              argv:
+                - proceed
+                - take
+                - "--session"
+                - s1
+              command: majordomus proceed take --session s1
+              setup: []
+              expectation: exits 11
+          subcommands: []
     - path:
         - majordomus
         - skills

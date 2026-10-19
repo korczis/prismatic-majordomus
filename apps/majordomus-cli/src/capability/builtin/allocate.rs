@@ -20,7 +20,11 @@
 //! released or expired, so that a number reserved and given up is never handed out again
 //! while the journal remembers it. The candidate is one past the highest of them, or the
 //! caller's `at_least` when that is higher (a survey the caller ran itself, the board's
-//! announced blocks), and allocation never fills a hole.
+//! announced blocks), and allocation never fills a hole. A source that could not be read
+//! refuses the allocation (`source_unread`): a number past what was not read may be one it
+//! holds. Allocations of one process run one at a time, because an exclusive claim does not
+//! meet another claim of its own session and only the order of the surveys keeps two
+//! allocations of one session apart.
 //!
 //! # What it does not promise
 //!
@@ -227,15 +231,21 @@ pub(crate) struct IdSkip {
 
 // ---------------------------------------------------------------- the survey
 
-/// The numbers of `kind` among the file names under `root/<dir>`.
-fn listed(root: &Path, kind: IdKind) -> Vec<u32> {
-    std::fs::read_dir(root.join(kind.dir()))
-        .map(|rd| {
-            rd.filter_map(|e| e.ok())
-                .filter_map(|e| kind.number_of(&e.file_name().to_string_lossy()))
-                .collect()
-        })
-        .unwrap_or_default()
+/// The numbers of `kind` among the file names under `root/<dir>`: none when the directory is
+/// not there, an error when it is there and cannot be read.
+fn listed(root: &Path, kind: IdKind) -> Result<Vec<u32>, String> {
+    let dir = root.join(kind.dir());
+    match std::fs::read_dir(&dir) {
+        Ok(rd) => rd
+            .map(|e| {
+                e.map(|e| kind.number_of(&e.file_name().to_string_lossy()))
+                    .map_err(|e| format!("{}: {e}", dir.display()))
+            })
+            .filter_map(Result::transpose)
+            .collect(),
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(Vec::new()),
+        Err(e) => Err(format!("{}: {e}", dir.display())),
+    }
 }
 
 fn source(name: &str, numbers: &[u32], read: bool, detail: String) -> IdSource {
@@ -249,13 +259,15 @@ fn source(name: &str, numbers: &[u32], read: bool, detail: String) -> IdSource {
 
 /// What this tree, the sibling worktrees, every ref and the mesh hold of `kind`.
 pub(crate) fn survey(root: &Path, kind: IdKind, cooperation: &Cooperation) -> Vec<IdSource> {
-    let tree = listed(root, kind);
-    let mut out = vec![source(
-        "tree",
-        &tree,
-        true,
-        format!("{} file(s) under {}", tree.len(), kind.dir()),
-    )];
+    let mut out = vec![match listed(root, kind) {
+        Ok(tree) => source(
+            "tree",
+            &tree,
+            true,
+            format!("{} file(s) under {}", tree.len(), kind.dir()),
+        ),
+        Err(e) => source("tree", &[], false, format!("could not be listed: {e}")),
+    }];
 
     out.push(match crate::worktree::topology::read(root) {
         Ok(records) => {
@@ -263,13 +275,31 @@ pub(crate) fn survey(root: &Path, kind: IdKind, cooperation: &Cooperation) -> Ve
                 .iter()
                 .filter(|r| !r.bare && r.path.canonicalize().ok() != root.canonicalize().ok())
                 .collect();
-            let numbers: Vec<u32> = others.iter().flat_map(|r| listed(&r.path, kind)).collect();
-            source(
-                "worktrees",
-                &numbers,
-                true,
-                format!("{} sibling worktree(s)", others.len()),
-            )
+            // a sibling that is registered and gone (pruned later) holds nothing; one that is
+            // there and cannot be listed is a source not read
+            let mut numbers = Vec::new();
+            let mut unread = Vec::new();
+            for r in others.iter().filter(|r| r.path.exists()) {
+                match listed(&r.path, kind) {
+                    Ok(n) => numbers.extend(n),
+                    Err(e) => unread.push(e),
+                }
+            }
+            if unread.is_empty() {
+                source(
+                    "worktrees",
+                    &numbers,
+                    true,
+                    format!("{} sibling worktree(s)", others.len()),
+                )
+            } else {
+                source(
+                    "worktrees",
+                    &numbers,
+                    false,
+                    format!("could not be listed: {}", unread.join("; ")),
+                )
+            }
         }
         Err(e) => source(
             "worktrees",
@@ -279,12 +309,17 @@ pub(crate) fn survey(root: &Path, kind: IdKind, cooperation: &Cooperation) -> Ve
         ),
     });
 
+    // every path added on any ref: a rename's new name (--no-renames reports it as added), a
+    // path a merge brings in against either parent (-m), and a name git would quote (-z)
     let log = crate::git::read_only(root)
         .args([
             "log",
             "--all",
+            "-m",
+            "--no-renames",
             "--diff-filter=A",
             "--name-only",
+            "-z",
             "--format=",
             "--",
         ])
@@ -293,7 +328,7 @@ pub(crate) fn survey(root: &Path, kind: IdKind, cooperation: &Cooperation) -> Ve
     out.push(match log {
         Ok(o) if o.status.success() => {
             let numbers: Vec<u32> = String::from_utf8_lossy(&o.stdout)
-                .lines()
+                .split(['\0', '\n'])
                 .filter_map(|l| l.rsplit('/').next())
                 .filter_map(|f| kind.number_of(f))
                 .collect();
@@ -377,6 +412,10 @@ pub(crate) fn reserve(
     )))
 }
 
+/// One allocation at a time in this process: an exclusive claim does not meet another claim
+/// of its own session, so two allocations by one session must not survey the same journal.
+static ALLOCATING: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
 pub(crate) fn allocate(ctx: &Context, input: AllocateInput) -> Result<Allocation, CapabilityError> {
     let cooperation = ctx.mesh.cooperation().ok_or_else(|| {
         CapabilityError::Refused(
@@ -386,7 +425,21 @@ pub(crate) fn allocate(ctx: &Context, input: AllocateInput) -> Result<Allocation
     })?;
     let session = super::mesh::session_of(ctx, input.session)?;
     let root = Path::new(&ctx.index.repository.root);
+    let _one = ALLOCATING.lock().unwrap_or_else(|e| e.into_inner());
     let mut sources = survey(root, input.kind, &cooperation);
+    // a number past a source that could not be read may be one that source holds
+    let unread: Vec<String> = sources
+        .iter()
+        .filter(|s| !s.read)
+        .map(|s| format!("{} ({})", s.source, s.detail))
+        .collect();
+    if !unread.is_empty() {
+        return Err(CapabilityError::Refused(format!(
+            "source_unread: no {} is reserved past a survey that could not read {}",
+            input.kind.word(),
+            unread.join(", ")
+        )));
+    }
     if let Some(floor) = input.at_least {
         // the caller's floor is the lowest it takes, so the source holds the number before it
         sources.push(source(
@@ -505,6 +558,19 @@ mod tests {
         let e = allocate(&ctx, input(None)).unwrap_err();
         assert!(e.to_string().contains("not_active"), "{e}");
         crate::mesh::testing::attach(&ctx, crate::mesh::testing::cooperation());
+        // a directory git cannot read as a repository is a survey that read no ref: refused
+        let e = allocate(&ctx, input(Some(9000))).unwrap_err();
+        assert!(
+            e.to_string().contains("source_unread") && e.to_string().contains("refs"),
+            "{e}"
+        );
+        assert!(std::process::Command::new("git")
+            .arg("-C")
+            .arg(repo.root())
+            .args(["init", "-q"])
+            .status()
+            .unwrap()
+            .success());
         let a = allocate(&ctx, input(Some(9000))).unwrap();
         assert_eq!(
             (a.number, a.value.as_str(), a.reservation.as_str()),
@@ -513,5 +579,75 @@ mod tests {
         let b = allocate(&ctx, input(None)).unwrap();
         assert_eq!(b.number, 9001, "a reservation the journal holds is spent");
         assert!(b.skipped.is_empty());
+
+        // one session allocating at once from several threads: its own claims do not meet,
+        // so only the one-at-a-time survey keeps the numbers apart
+        let numbers: BTreeSet<u32> = std::thread::scope(|s| {
+            let handles: Vec<_> = (0..6)
+                .map(|_| s.spawn(|| allocate(&ctx, input(None)).unwrap().number))
+                .collect();
+            handles.into_iter().map(|h| h.join().unwrap()).collect()
+        });
+        assert_eq!(numbers, (9002..9008).collect::<BTreeSet<u32>>());
+    }
+
+    #[test]
+    fn the_ref_survey_sees_a_rename_a_merge_and_a_quoted_name() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let root = repo.root();
+        let git = |args: &[&str]| {
+            let o = std::process::Command::new("git")
+                .arg("-C")
+                .arg(root)
+                .args([
+                    "-c",
+                    "user.name=t",
+                    "-c",
+                    "user.email=t@t",
+                    "-c",
+                    "commit.gpgsign=false",
+                ])
+                .args(args)
+                .output()
+                .unwrap();
+            assert!(
+                o.status.success(),
+                "git {args:?}: {}",
+                String::from_utf8_lossy(&o.stderr)
+            );
+        };
+        let cases = root.join("test/cases");
+        std::fs::create_dir_all(&cases).unwrap();
+        git(&["init", "-q", "-b", "trunk"]);
+        std::fs::write(cases.join("5_a.sh"), "").unwrap();
+        git(&["add", "-A"]);
+        git(&["commit", "-qm", "base"]);
+        // a rename on a branch: the new name's number is spent
+        git(&["checkout", "-qb", "side"]);
+        git(&["mv", "test/cases/5_a.sh", "test/cases/70_renamed.sh"]);
+        git(&["commit", "-qm", "rename"]);
+        // a name git quotes in its default output
+        std::fs::write(cases.join("80_\u{e9}t\u{e9}.sh"), "").unwrap();
+        git(&["add", "-A"]);
+        git(&["commit", "-qm", "quoted"]);
+        // a file only a merge brings in: added in the merge commit itself
+        git(&["checkout", "-q", "trunk"]);
+        git(&["merge", "-q", "--no-ff", "--no-commit", "side"]);
+        std::fs::write(cases.join("90_merge.sh"), "").unwrap();
+        git(&["add", "-A"]);
+        git(&["commit", "-qm", "merge"]);
+        std::fs::remove_dir_all(&cases).unwrap();
+        let c = crate::mesh::testing::cooperation();
+        let refs = survey(root, IdKind::Case, &c)
+            .into_iter()
+            .find(|s| s.source == "refs")
+            .unwrap();
+        assert!(refs.read, "{}", refs.detail);
+        assert_eq!(refs.highest, Some(90), "{}", refs.detail);
+        assert!(
+            refs.detail.starts_with("4 identit"),
+            "5, 70, 80 and 90: {}",
+            refs.detail
+        );
     }
 }

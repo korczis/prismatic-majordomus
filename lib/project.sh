@@ -270,8 +270,10 @@ mj_pj_next_ready() {
 # on the candidate directly or through other unfinished ones, each counted once: column 13 of
 # an issue row is its direct dependents. plan.rs Plan::ready_in_order and Plan::unblocks are
 # the same order and the same count, and case 99 holds the two engines to one answer. The id
-# is compared as order.rs natural_cmp compares it, a digit run by its value (I9999 before
-# I10000): its letters folded, then its number, then the id itself.
+# is compared as order.rs natural_cmp compares it: its letters folded, then its digits as a
+# number written out (the count of significant digits, then those digits, never a float, so
+# I9999 comes before I10000 at any length), then the spelling with more leading zeros first,
+# then the id itself.
 mj_pj_ready_ranked() {
   awk -F'\t' -v m="$1" '
     $1 == "I" {
@@ -295,11 +297,14 @@ mj_pj_ready_ranked() {
     }
     END {
       for (i = 1; i <= n; i++) {
-        pre = cid[i]; sub(/[0-9]+$/, "", pre); num = substr(cid[i], length(pre) + 1)
-        printf "%d\t%d\t%06d\t%s\t%d\t%s\n", cw[i], cr[i], 999999 - unblocked(cid[i]), tolower(pre), num + 0, cid[i]
+        pre = cid[i]; sub(/[0-9]+$/, "", pre); run = substr(cid[i], length(pre) + 1)
+        sig = run; sub(/^0+/, "", sig)
+        printf "%d\t%d\t%06d\t%s\t%d\t=%s\t%d\t%s\n", cw[i], cr[i], 999999 - unblocked(cid[i]),
+          tolower(pre), length(sig), sig, length(run), cid[i]
       }
     }
-  ' "$MJ_PJ/model.tsv" | LC_ALL=C sort -k1,1n -k2,2n -k3,3n -k4,4 -k5,5n -k6,6 | head -n 1 | cut -f6
+  ' "$MJ_PJ/model.tsv" | LC_ALL=C sort -t "$(printf '\t')" -k1,1n -k2,2n -k3,3n -k4,4 -k5,5n -k6,6 -k7,7nr -k8,8 \
+    | head -n 1 | cut -f8
 }
 
 # ---------------------------------------------------------------- unknown keys

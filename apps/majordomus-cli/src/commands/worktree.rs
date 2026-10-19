@@ -862,8 +862,13 @@ fn branch_line(report: &crate::worktree::CreateReport) -> String {
 /// this repository keeps. The id is the provable link the topology reads back.
 fn issue_branch(repo: &crate::cli::RepoArgs, id: &str) -> Result<String> {
     let app = crate::app::App::load(repo)?;
-    let object = app
-        .index()
+    branch_of_issue(app.index(), id)
+}
+
+/// The same branch, read from an index already loaded: `proceed take` creates the issue's
+/// worktree on the branch `worktree create --issue` would.
+pub(crate) fn branch_of_issue(index: &crate::index::Index, id: &str) -> Result<String> {
+    let object = index
         .objects
         .iter()
         .find(|o| o.kind == "issue" && o.identity == id)

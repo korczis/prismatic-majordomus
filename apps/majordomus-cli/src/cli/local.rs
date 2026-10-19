@@ -142,6 +142,11 @@ pub const LOCAL: &[LocalCommand] = &[
         note: "becomes the stdio MCP server for the client that spawned it; the capabilities it then serves are the projection.",
     },
     LocalCommand {
+        command: "proceed take",
+        reason: LocalReason::WritesRepository,
+        note: "creates the issue's worktree and starts its task in this checkout's repository, composing proceed.plan and mesh.claim on the primary checkout's server with worktree create and start; every projection of the registry is read-only.",
+    },
+    LocalCommand {
         command: "serve",
         reason: LocalReason::ProcessLifecycle,
         note: "becomes the HTTP server that serves every capability over the API this command exists to start.",

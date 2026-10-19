@@ -492,8 +492,51 @@ fn proceed_plan(
         input.milestone.as_deref(),
         session.as_deref(),
         &holds,
-        vec![board, mesh],
+        vec![plan_source(ctx), board, mesh],
     ))
+}
+
+/// Where the repository declares its mesh: the source class `mesh-declaration`'s pathspec,
+/// the directory `guard::mesh_declared_enabled` and the shell's `mj_mesh_declared_enabled` read.
+const MESH_DECLARATIONS: &str = ".ai/repo/mesh/";
+
+/// The error diagnostics of the index on the files under `dir`, one line each: the records
+/// that are there and did not load.
+fn refused_records(ctx: &Context, dir: &str) -> Vec<String> {
+    ctx.index
+        .diagnostics
+        .iter()
+        .filter(|d| d.severity == crate::Severity::Error)
+        .filter_map(|d| {
+            let path = d.path.as_deref()?;
+            path.starts_with(dir)
+                .then(|| format!("{path}: {} ({})", d.message, d.code))
+        })
+        .collect()
+}
+
+/// The plan the decision orders: read whole, or partial when a record of it did not load,
+/// because an issue dropped from the index is an issue the order silently skips.
+fn plan_source(ctx: &Context) -> ProceedSource {
+    let refused = refused_records(ctx, ".ai/repo/project/");
+    ProceedSource {
+        source: "plan".into(),
+        state: if refused.is_empty() {
+            ProceedSourceState::Read
+        } else {
+            ProceedSourceState::Partial
+        },
+        holds: 0,
+        summary: if refused.is_empty() {
+            "every record of the plan loaded".into()
+        } else {
+            format!(
+                "{} record(s) of the plan did not load: {}",
+                refused.len(),
+                refused.join("; ")
+            )
+        },
+    }
 }
 
 /// A board read while this checkout's server answered and could not be asked: what the
@@ -592,7 +635,19 @@ fn mesh_holds(ctx: &Context, session: Option<&str>, holds: &mut Vec<Hold>) -> Pr
                 summary: format!("the mesh declaration could not be read ({e})"),
             }
         }
-        None => false,
+        // a declaration the index refused (a schema violation) never reaches the resolver,
+        // so its absence there is not the repository's word that it declares no mesh
+        None => match refused_records(ctx, MESH_DECLARATIONS).first() {
+            Some(why) => {
+                return ProceedSource {
+                    source: "mesh".into(),
+                    state: ProceedSourceState::Unread,
+                    holds: 0,
+                    summary: format!("the mesh declaration could not be read ({why})"),
+                }
+            }
+            None => false,
+        },
     };
     if !declared {
         return ProceedSource {
@@ -1079,8 +1134,12 @@ mod tests {
         assert_eq!(mesh.state, ProceedSourceState::Unread, "{}", mesh.summary);
         assert!(d.provisional && d.next.is_empty(), "{}", d.reason);
 
-        // and a declaration that does not parse is not the absence of one
-        std::fs::write(dir.join("majordomus.yaml"), "enabled: bananas\n").unwrap();
+        // and a declaration the index refuses is not the absence of one
+        std::fs::write(
+            dir.join("majordomus.yaml"),
+            "schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: bananas\n",
+        )
+        .unwrap();
         let d = proceed_plan(&repo.context().unwrap(), local()).unwrap();
         let mesh = d.sources.iter().find(|s| s.source == "mesh").unwrap();
         assert_eq!(mesh.state, ProceedSourceState::Unread, "{}", mesh.summary);
@@ -1135,6 +1194,8 @@ mod tests {
         };
         claim(&there, "src/b", "I0002");
         claim(&here, "src/c", "I0003");
+        // a runtime is alive to another only while its beat keeps arriving
+        there.journal().beat_own();
         here.dial(&["there:1".into()]).expect("linked");
         here.sync_with(there.runtime_key()).expect("synced");
         crate::mesh::testing::attach(&ctx, here.clone());

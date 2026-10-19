@@ -14578,7 +14578,7 @@
         "source": ".ai/repo/project/critiques/a-session-proceeds.yaml",
         "facts": {
           "intent": "a-session-proceeds",
-          "reviewed_at": "707a04c7ce8"
+          "reviewed_at": "7308a418be0"
         }
       },
       {
@@ -14722,6 +14722,14 @@
         "summary": "A second opinion from a model without the checkout",
         "route": "/cockpit/objects/document/ai-repo-skills-pack-for-review-examples-second-opinion-from-another-model-md",
         "source": ".ai/repo/skills/pack-for-review/examples/second-opinion-from-another-model.md"
+      },
+      {
+        "id": "majordomus://document/.ai/repo/skills/proceed/examples/a-fresh-session.md",
+        "kind": "document",
+        "label": ".ai/repo/skills/proceed/examples/a-fresh-session.md",
+        "summary": "A fresh session is told only to proceed",
+        "route": "/cockpit/objects/document/ai-repo-skills-proceed-examples-a-fresh-session-md",
+        "source": ".ai/repo/skills/proceed/examples/a-fresh-session.md"
       },
       {
         "id": "majordomus://document/.ai/repo/skills/repo-review/examples/review-a-subsystem.md",
@@ -42214,6 +42222,231 @@
         }
       },
       {
+        "id": "majordomus://issue/I2974",
+        "kind": "issue",
+        "label": "I2974",
+        "summary": "Proceeding claims and starts the chosen work once",
+        "route": "/cockpit/objects/issue/i2974",
+        "source": ".ai/repo/project/issues/I2974.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "One proceed take claims the selection exclusively on the primary checkout's runtime, ensures its canonical worktree and starts the task bound to it there",
+            "A second take by the same session, from the primary checkout or the worktree, after a server restart or after finish, creates no claim, worktree or task",
+            "A take whose start is refused keeps its claim and record, and a rerun continues at the start; a take whose worktree cannot be ensured releases the claim it made"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "proceed.plan says what to take and prints the three commands; nothing takes it.",
+          "depends_on": [
+            "I2973"
+          ],
+          "evidence_required": [
+            "case_proceeding_twice_creates_nothing"
+          ],
+          "milestone": "a-session-proceeds",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/commands/proceed.rs",
+            "apps/majordomus-cli/src/capability/builtin/proceed.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/cli/local.rs",
+            "apps/majordomus-cli/src/commands/worktree.rs",
+            "test/cases/3443_proceeding_twice_creates_nothing.sh"
+          ],
+          "serves": [
+            "a-session-proceeds#proceeding-twice-creates-nothing"
+          ],
+          "slug": "proceeding-claims-and-starts-once",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate",
+            "bash test/run.sh 3443_proceeding_twice_creates_nothing"
+          ],
+          "why": "ADR 0177 decision 3. Claim, worktree and start are three commands typed by hand, and nothing stops a second proceed in the same session from opening a second claim, worktree and task."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2975",
+        "kind": "issue",
+        "label": "I2975",
+        "summary": "/proceed is a generated skill that names only the command",
+        "route": "/cockpit/objects/issue/i2975",
+        "source": ".ai/repo/project/issues/I2975.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "/proceed is generated for every provider from one declaration",
+            "The skill restates no rule, workflow step or issue, and a case refuses one that does"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "No proceed skill exists.",
+          "depends_on": [
+            "I2974"
+          ],
+          "desired_state": "The skill is generated, named in the skill catalogue, and a case refuses a proceed skill that restates a rule or a workflow step.",
+          "evidence_required": [
+            "case_the_proceed_skill_names_only_the_command"
+          ],
+          "milestone": "a-session-proceeds",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/skills/proceed",
+            "test/cases/3369_the_proceed_skill_names_only_the_command.sh"
+          ],
+          "slug": "proceed-is-a-generated-skill",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate"
+          ],
+          "why": "ADR 0177: if a change to the capabilities requires editing /proceed, the implementation is not done."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2976",
+        "kind": "issue",
+        "label": "I2976",
+        "summary": "Two sessions proceeding at once never hold the same work",
+        "route": "/cockpit/objects/issue/i2976",
+        "source": ".ai/repo/project/issues/I2976.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Two simultaneous proceeds on one runtime hold different work",
+            "Across two linked runtimes the loser of a conflicting claim stops and takes the next eligible issue"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "Nothing stops two sessions choosing the same issue but the person reading the board.",
+          "depends_on": [
+            "I2974"
+          ],
+          "desired_state": "A case races two proceeds on one runtime and through two linked runtimes and finds one holder and one loser who moved on.",
+          "evidence_required": [
+            "case_two_sessions_proceeding_never_share_work"
+          ],
+          "milestone": "a-session-proceeds",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "test/cases/3370_two_sessions_proceeding_never_share_work.sh"
+          ],
+          "slug": "concurrent-sessions-never-share-work",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2977",
+        "kind": "issue",
+        "label": "I2977",
+        "summary": "A session whose work stopped is resumed, never duplicated",
+        "route": "/cockpit/objects/issue/i2977",
+        "source": ".ai/repo/project/issues/I2977.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Work whose session is gone is offered before new work and resumed in its own worktree and task",
+            "No second claim, worktree or task is created for it"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "Orphaned work is found and resumed by a person reading the board and the handovers.",
+          "depends_on": [
+            "I2974"
+          ],
+          "desired_state": "A case stops a session mid-task and finds the next proceed resuming that task in place.",
+          "evidence_required": [
+            "case_stopped_work_is_resumed_not_duplicated"
+          ],
+          "milestone": "a-session-proceeds",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "test/cases/3371_stopped_work_is_resumed_not_duplicated.sh"
+          ],
+          "slug": "stopped-work-is-resumed-not-duplicated",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate"
+          ],
+          "why": "ADR 0177 acceptance scenario 3. On 2026-10-16 orphaned active tasks were closed by hand (owner: work autonomously); proceed is where that decision belongs."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2978",
+        "kind": "issue",
+        "label": "I2978",
+        "summary": "The UI shows what proceeding chose, what it refused and why",
+        "route": "/cockpit/objects/issue/i2978",
+        "source": ".ai/repo/project/issues/I2978.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "/ui/proceed shows the selection, the rejected candidates and the ranking terms from proceed.plan",
+            "The decision history updates live from the event stream"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "No surface shows why a session took its work.",
+          "depends_on": [
+            "I2972"
+          ],
+          "desired_state": "/ui/proceed and the Cockpit draw the decision from the same capability, held by a UI test and the ui audit.",
+          "evidence_required": [
+            "test_the_ui_shows_the_proceed_decision"
+          ],
+          "milestone": "a-session-proceeds",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui"
+          ],
+          "slug": "the-ui-shows-the-proceed-decision",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate"
+          ],
+          "why": "ADR 0177: a choice nobody can read is a second opinion nobody can check."
+        }
+      },
+      {
+        "id": "majordomus://issue/I2979",
+        "kind": "issue",
+        "label": "I2979",
+        "summary": "A finished task hands its head and receipt to the landing seat",
+        "route": "/cockpit/objects/issue/i2979",
+        "source": ".ai/repo/project/issues/I2979.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The hand-off carries the finished head and the cases and gates that ran, read from the finish record",
+            "Proceeding never merges, tags or releases"
+          ],
+          "created_at": "2026-10-18",
+          "current_state": "Workers announce READY by hand with a free-text receipt.",
+          "depends_on": [
+            "I2974"
+          ],
+          "desired_state": "The hand-off is derived from the finish record, and a case refuses a hand-off whose receipt names no executed case or a head other than the one finished.",
+          "evidence_required": [
+            "case_a_finished_task_is_handed_to_the_lander"
+          ],
+          "milestone": "a-session-proceeds",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "test/cases/3372_a_finished_task_is_handed_to_the_lander.sh"
+          ],
+          "slug": "a-finished-task-is-handed-to-the-lander",
+          "updated_at": "2026-10-18",
+          "validation": [
+            "majordomus plan validate"
+          ],
+          "why": "ADR 0177 and 0167: one landing seat lands; on 2026-10-16 eleven PRs relayed as READY went red because the receipt was a sentence, not the finish record."
+        }
+      },
+      {
         "id": "majordomus://issue/I2987",
         "kind": "issue",
         "label": "I2987",
@@ -43360,7 +43593,8 @@
           "evidence_required": [
             "case_a_session_is_told_what_to_proceed_with_and_why",
             "case_an_id_is_taken_by_one_atomic_claim",
-            "case_the_choice_ranks_by_what_it_unblocks"
+            "case_the_choice_ranks_by_what_it_unblocks",
+            "case_proceeding_twice_creates_nothing"
           ],
           "non_scope": [
             "Mesh fencing and claim convergence (milestone mesh-journal-converges)",
@@ -43385,7 +43619,8 @@
             "bin/majordomus intent validate a-session-proceeds",
             "bash test/run.sh 3367_a_session_is_told_what_to_proceed_with_and_why",
             "bash test/run.sh 3440_an_id_is_taken_by_one_atomic_claim",
-            "bash test/run.sh 3441_the_choice_ranks_by_what_it_unblocks"
+            "bash test/run.sh 3441_the_choice_ranks_by_what_it_unblocks",
+            "bash test/run.sh 3443_proceeding_twice_creates_nothing"
           ]
         }
       },
@@ -58954,6 +59189,37 @@
         }
       },
       {
+        "id": "majordomus://skill/proceed",
+        "kind": "skill",
+        "label": "proceed",
+        "summary": "Proceed with the next admissible work",
+        "route": "/cockpit/objects/skill/proceed",
+        "source": ".ai/repo/skills/proceed/SKILL.md",
+        "status": "active",
+        "facts": {
+          "inputs": [
+            "a checkout of a repository whose plan the tool reads, anywhere in its tree",
+            "the shared server of the primary checkout, which holds the board and the mesh every take is made on"
+          ],
+          "outputs": [
+            "the decision as the tool explained it, or the reason nothing was taken",
+            "one claim, one worktree and one task bound to the selected issue, created once and found again on every later call",
+            "a finished task whose head is handed to the landing seat, reported by verification state"
+          ],
+          "related": [
+            "implement",
+            "report-verification-state",
+            "evolve"
+          ],
+          "tags": [
+            "planning",
+            "mesh",
+            "coordination",
+            "delivery"
+          ]
+        }
+      },
+      {
         "id": "majordomus://skill/repo-review",
         "kind": "skill",
         "label": "repo-review",
@@ -61102,6 +61368,13 @@
         "source": "test/cases/3367_a_session_is_told_what_to_proceed_with_and_why.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3369_the_proceed_skill_names_only_the_command.sh",
+        "kind": "test",
+        "label": "test/cases/3369_the_proceed_skill_names_only_the_command.sh",
+        "route": "/cockpit/objects/test/test-cases-3369-the-proceed-skill-names-only-the-command-sh",
+        "source": "test/cases/3369_the_proceed_skill_names_only_the_command.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/336_every_control_is_claimed.sh",
         "kind": "test",
         "label": "test/cases/336_every_control_is_claimed.sh",
@@ -61191,6 +61464,13 @@
         "label": "test/cases/3441_the_choice_ranks_by_what_it_unblocks.sh",
         "route": "/cockpit/objects/test/test-cases-3441-the-choice-ranks-by-what-it-unblocks-sh",
         "source": "test/cases/3441_the_choice_ranks_by_what_it_unblocks.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3443_proceeding_twice_creates_nothing.sh",
+        "kind": "test",
+        "label": "test/cases/3443_proceeding_twice_creates_nothing.sh",
+        "route": "/cockpit/objects/test/test-cases-3443-proceeding-twice-creates-nothing-sh",
+        "source": "test/cases/3443_proceeding_twice_creates_nothing.sh"
       },
       {
         "id": "majordomus://test/test/cases/349_a_step_reports_its_own_time.sh",
@@ -79962,6 +80242,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/.ai/repo/skills/proceed/examples/a-fresh-session.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/.ai/repo/skills/repo-review/examples/review-a-subsystem.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -88962,6 +89247,96 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2974",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2974",
+        "target": "majordomus://issue/I2973",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2974",
+        "target": "majordomus://milestone/a-session-proceeds",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2975",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2975",
+        "target": "majordomus://issue/I2974",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2975",
+        "target": "majordomus://milestone/a-session-proceeds",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2976",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2976",
+        "target": "majordomus://issue/I2974",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2976",
+        "target": "majordomus://milestone/a-session-proceeds",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2977",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2977",
+        "target": "majordomus://issue/I2974",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2977",
+        "target": "majordomus://milestone/a-session-proceeds",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2978",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2978",
+        "target": "majordomus://issue/I2972",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2978",
+        "target": "majordomus://milestone/a-session-proceeds",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2979",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2979",
+        "target": "majordomus://issue/I2974",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2979",
+        "target": "majordomus://milestone/a-session-proceeds",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I2987",
         "target": "kind:issue",
         "kind": "is_a"
@@ -92622,6 +92997,26 @@
         "kind": "related_to"
       },
       {
+        "source": "majordomus://skill/proceed",
+        "target": "kind:skill",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://skill/proceed",
+        "target": "majordomus://skill/evolve",
+        "kind": "related_to"
+      },
+      {
+        "source": "majordomus://skill/proceed",
+        "target": "majordomus://skill/implement",
+        "kind": "related_to"
+      },
+      {
+        "source": "majordomus://skill/proceed",
+        "target": "majordomus://skill/report-verification-state",
+        "kind": "related_to"
+      },
+      {
         "source": "majordomus://skill/repo-review",
         "target": "kind:skill",
         "kind": "is_a"
@@ -94102,6 +94497,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3369_the_proceed_skill_names_only_the_command.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/336_every_control_is_claimed.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -94163,6 +94563,11 @@
       },
       {
         "source": "majordomus://test/test/cases/3441_the_choice_ranks_by_what_it_unblocks.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3443_proceeding_twice_creates_nothing.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -99408,8 +99813,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3092,
-      "edges": 6773,
+      "nodes": 3102,
+      "edges": 6798,
       "acyclic": false,
       "truncated": false
     }

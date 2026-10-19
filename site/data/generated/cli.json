@@ -35895,6 +35895,12 @@
           "command": "majordomus proceed plan",
           "name": "plan",
           "route": "/docs/cli/proceed/plan/"
+        },
+        {
+          "about": "Take the decision once: claim the selection exclusively on the primary checkout's server, ensure the issue's canonical worktree, record the take there and start the task bound to the issue in it. The same session taking again, from either checkout, after a restart or after finish, gets that work back (re-claiming an expired claim, releasing a finished one) and creates nothing. Exit 10 when nothing can be selected, 11 when the decision is provisional or no server answers for the primary checkout, 15 when the take is refused; start's own exit is passed through",
+          "command": "majordomus proceed take",
+          "name": "take",
+          "route": "/docs/cli/proceed/take/"
         }
       ],
       "command": "majordomus proceed",
@@ -36065,6 +36071,161 @@
       ],
       "route": "/docs/cli/proceed/plan/",
       "usage": "majordomus proceed plan [OPTIONS]"
+    },
+    {
+      "about": "Take the decision once: claim the selection exclusively on the primary checkout's server, ensure the issue's canonical worktree, record the take there and start the task bound to the issue in it. The same session taking again, from either checkout, after a restart or after finish, gets that work back (re-claiming an expired claim, releasing a finished one) and creates nothing. Exit 10 when nothing can be selected, 11 when the decision is provisional or no server answers for the primary checkout, 15 when the take is refused; start's own exit is passed through",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus proceed",
+          "name": "proceed",
+          "route": "/docs/cli/proceed/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The mesh session the work is taken for and held under, on the primary checkout's server",
+          "long": "session",
+          "name": "session",
+          "positional": false,
+          "possible_values": [],
+          "required": true,
+          "takes_value": true,
+          "value_name": "ID"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The milestone whose READY issues come first; the active one when absent",
+          "long": "milestone",
+          "name": "milestone",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "ID"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus proceed take",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "proceed",
+            "take",
+            "--session",
+            "s1"
+          ],
+          "command": "majordomus proceed take --session s1",
+          "description": "A take is held on the primary checkout's server, whichever checkout asks, so that the same session taking again from a worktree or after a restart is told of the work it already took. This fixture runs no server: nothing is claimed, no worktree is created, no task is started, and the command exits 11 and names the command that starts one.",
+          "expectation": "exits 11",
+          "id": "proceed-take-no-server",
+          "setup": [],
+          "title": "Take nothing while no server holds the primary checkout"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "take",
+      "parent_route": "/docs/cli/proceed/",
+      "path": [
+        "majordomus",
+        "proceed",
+        "take"
+      ],
+      "route": "/docs/cli/proceed/take/",
+      "usage": "majordomus proceed take [OPTIONS]"
     },
     {
       "about": "Every skill as a proven capability: the tests that name it and the evidence behind them, its page, the doctrine and gates that hold it, what invokes it, and the orphans",
@@ -38292,10 +38453,10 @@
     }
   ],
   "counts": {
-    "arguments": 1658,
-    "commands": 241,
-    "examples": 244,
-    "runnable": 211
+    "arguments": 1665,
+    "commands": 242,
+    "examples": 245,
+    "runnable": 212
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "0.30.2",

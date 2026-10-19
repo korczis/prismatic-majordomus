@@ -1,6 +1,6 @@
 intent: a-session-proceeds
-reviewed_at: 707a04c7ce8
-reviewed_by: "claude-code Plan subagent (read-only, fresh context) dispatched by session f6 with the plan records, the I2972 implementation and a summary of the owner's /proceed proposal, and none of the author's reasoning; independent of the authoring context, not of the model's blind spots. Read only: nothing was run. Disposition: accept the I2972 slice's shape with required changes; 5 of 10 findings blocking. In answer the slice tells a claim from a mention (named), runs a real mesh in its case, recognises the caller's own session on this runtime and on the command line, and calls a decision over an unread source provisional."
+reviewed_at: 7308a418be0
+reviewed_by: "claude-code Plan subagent (read-only, fresh context) dispatched by session f6 with the plan records, the I2972 implementation and a summary of the owner's /proceed proposal, and none of the author's reasoning; independent of the authoring context, not of the model's blind spots. Read only: nothing was run. Disposition: accept the I2972 slice's shape with required changes; 5 of 10 findings blocking. In answer the slice tells a claim from a mention (named), runs a real mesh in its case, recognises the caller's own session on this runtime and on the command line, and calls a decision over an unread source provisional. Second review (10-18, a fresh read-only Plan subagent, of the I2974 draft against the I2973 tree at 7308a418be0): revise before implementing, 2 of 11 findings blocking, each answered below by I2974."
 findings:
   - id: one-criterion-carries-a-whole-intent
     class: missed_requirement
@@ -87,3 +87,75 @@ findings:
     resolution:
       state: open
       because: "`next` is now three command lines (mesh claim under the session, worktree create, start --issue --scope); only the branch is left to the worker, as the worktree topology leaves it. Whether the acting command is bare `proceed` or `proceed start` is the acting command's decision, recorded in ADR 0177 when it is taken."
+  - id: holding-dies-with-the-server-run
+    class: unproven_assumption
+    subject: I2974
+    finding: "The draft read 'this session holds work' from a live exclusive claim, but a mesh session key is <stream>/<name> and the stream ends with the server run: a rerun from the worktree (its own server, another runtime), a restart, or a departed MCP peer would see the work as another's and take a second issue."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2974
+      because: "Every mesh call of a take goes to the primary checkout's server, and what a session holds is read first from the take record the command writes into the worktree; an expired claim is taken again, a conflicted one is refused with its winner."
+  - id: what-exists-was-misread
+    class: unproven_assumption
+    subject: I2974
+    finding: "The draft's account of the existing capabilities was partly wrong: live claims include conflicted ones, worktree ensure falls back to the local trunk and refuses a branch checked out elsewhere, start refuses an uncritiqued intent with exit 15 and claims advisory under task-<id>, and the claim line carries no record path."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2974
+      because: "The command takes the scope from the decision, requires a held claim, passes start's refusal through unchanged and adds the record path to the claim itself."
+  - id: the-take-claim-leaks
+    class: regression_risk
+    subject: I2974
+    finding: "finish releases only the task-<id> claim, so after finish a rerun would find the take's claim live and start a second task; a worktree that cannot be ensured after a claim left an exclusive claim with no work."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2974
+      because: "A completed task bound to the issue ends the take: it is reported, and the claim is released on the primary checkout's runtime; a claim the run made is released when the worktree step fails."
+  - id: exit-codes-collide
+    class: regression_risk
+    subject: I2974
+    finding: "Exit codes 12, 13 and 14 are MISSING, INTERNAL and Protocol elsewhere, and start's own refusal is 15."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2974
+      because: "10 is nothing selected and 11 provisional, as proceed plan; every refusal of the take is 15 (REFUSED); start's exit is passed through."
+  - id: wrong-local-reason-and-shape
+    class: surface_missing
+    subject: I2974
+    finding: "SessionLocal is for commands that answer about the working copy; the take writes. A bare `proceed` would change the meaning of a group whose subcommand is required."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2974
+      because: "`majordomus proceed take`, classified LocalReason::WritesRepository as worktree create is."
+  - id: start-runs-from-the-wrong-tool-root
+    class: delivery_verification
+    subject: I2974
+    finding: "Running <worktree>/bin/majordomus with MAJORDOMUS_SHARE unset uses the repository's launcher and share, which a fixture repository does not have, so the step could not be tested."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2974
+      because: "The take runs the tool's own front end (MJ_HOME/bin/majordomus) with --repo <worktree> and the resolved share kept."
+  - id: the-branch-is-the-workers
+    class: unproven_assumption
+    subject: I2974
+    finding: "feature/<slug> invented a branch derivation, the slug is optional, and a rerun without the first --branch would find nothing."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2974
+      because: "The take uses the branch `worktree create --issue` derives, feature/<id>-<slug> (branch_of_issue, the provable link the topology reads back), and records it in the take record; no branch is invented and none is asked for."
+  - id: the-board-announcement-is-dropped
+    class: missed_requirement
+    subject: I2974
+    finding: "ADR 0177 decision 3 names a board announcement; peers.announce needs an MCP caller, which a command line is not."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2974
+      because: "ADR 0177 decision 3 is amended: over the command line the exclusive claim is the announcement; the generated skill (I2975) announces on the board over MCP."
