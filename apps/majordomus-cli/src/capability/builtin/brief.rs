@@ -344,6 +344,36 @@ fn forward(ctx: &Context, url: &str, input: &BriefInput) -> Result<SessionBrief,
         .and_then(|c| c.exposure.http.as_ref())
         .map(|h| h.path.clone())
         .ok_or_else(|| "brief.session declares no HTTP route to ask over".to_string())?;
+    forward_at(&path, url, input)
+}
+
+/// The brief of the server holding the lease of the checkout at `root`, asked before the
+/// caller builds an index of its own: `None` when no server answers there, when this
+/// process is that server, or when its answer cannot be read, and the caller then composes
+/// as [`brief`] does and says why (I2857). The server is asked when [`brief`] would forward
+/// to it, and over the route this module declares for `brief.session`, read from the
+/// declaration rather than restated.
+pub(crate) fn from_leaseholder(root: &Path, input: &BriefInput) -> Option<SessionBrief> {
+    let root = root.canonicalize().unwrap_or_else(|_| root.to_path_buf());
+    let (standing, _, read) = server::standing_at(&root, &server::local_half(&root));
+    if !matches!(standing, ServerStanding::Ready | ServerStanding::Outdated) {
+        return None;
+    }
+    let doc = read.document().filter(|d| !lease::is_own(d))?;
+    let url = doc.url.clone()?;
+    let path = module()
+        .capabilities
+        .into_iter()
+        .find(|e| e.capability.id.as_str() == "brief.session")?
+        .capability
+        .exposure
+        .http?
+        .path;
+    forward_at(&path, &url, input).ok()
+}
+
+/// Ask the leaseholder at `url` over `path`, saying `local` so that it never forwards again.
+fn forward_at(path: &str, url: &str, input: &BriefInput) -> Result<SessionBrief, String> {
     let mut query = format!(
         "{path}?local=true&checkouts={}",
         checkouts_word(input.checkouts)
@@ -998,6 +1028,14 @@ pub fn module() -> ModuleDescriptor {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_checkout_no_server_answers_for_has_no_leaseholder_to_ask() {
+        let dir = tempfile::tempdir().unwrap();
+        assert_eq!(from_leaseholder(dir.path(), &BriefInput::default()), None);
+        let missing = dir.path().join("missing");
+        assert_eq!(from_leaseholder(&missing, &BriefInput::default()), None);
+    }
 
     fn session(task: Option<&str>) -> BriefSessionSection {
         BriefSessionSection {

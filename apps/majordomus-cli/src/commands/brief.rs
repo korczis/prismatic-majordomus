@@ -6,18 +6,50 @@
 
 use std::io::Write;
 
-use serde_json::json;
-
 use crate::app::App;
+use crate::capability::builtin::brief::{from_leaseholder, BriefInput};
+use crate::capability::builtin::server::Checkouts;
 use crate::capability::Context;
 use crate::cli::{BriefArgs, OutputFormat};
 use crate::error::{Error, Result};
+use crate::repository::Repository;
 
 /// Run `majordomus brief`.
+///
+/// The leaseholder is asked first, before this process builds an index: the brief is its
+/// answer whenever it gives one, and the index and registry are built only to compose here
+/// when it does not (I2857). The session start event runs this, so a session's first
+/// answer no longer waits for an index nobody reads.
 pub fn run(args: BriefArgs) -> Result<u8> {
-    let app = App::load(&args.repo)?;
+    let start = match &args.repo.repo {
+        Some(p) => p.clone(),
+        None => std::env::current_dir().map_err(|e| Error::io(".", e))?,
+    };
+    let repository = Repository::discover(&start)?;
     let stdout = std::io::stdout();
+    if let Some(brief) = from_leaseholder(repository.root(), &input_of(&args)) {
+        let v = serde_json::to_value(brief).map_err(|e| Error::Protocol {
+            reason: e.to_string(),
+        })?;
+        return render(&mut stdout.lock(), &v, &args)
+            .map(|()| 0)
+            .map_err(Error::Transport);
+    }
+    let app = App::load(&args.repo)?;
     answer(&app.context, &args, &mut stdout.lock()).map(|()| 0)
+}
+
+/// What the command line asks of `brief.session`.
+fn input_of(args: &BriefArgs) -> BriefInput {
+    BriefInput {
+        session: args.session.clone(),
+        checkouts: if args.this_checkout {
+            Checkouts::This
+        } else {
+            Checkouts::Repository
+        },
+        local: false,
+    }
 }
 
 /// Ask the capability exposed as `majordomus brief` and write its answer to `out`.
@@ -29,12 +61,9 @@ fn answer(ctx: &Context, args: &BriefArgs, out: &mut impl Write) -> Result<()> {
         .ok_or_else(|| Error::Protocol {
             reason: "no capability is exposed as `majordomus brief`".into(),
         })?;
-    let mut input = json!({
-        "checkouts": if args.this_checkout { "this" } else { "repository" },
-    });
-    if let Some(s) = &args.session {
-        input["session"] = json!(s);
-    }
+    let input = serde_json::to_value(input_of(args)).map_err(|e| Error::Protocol {
+        reason: e.to_string(),
+    })?;
     let v = ctx.execute(&id, input).map_err(|e| Error::Protocol {
         reason: e.to_string(),
     })?;
@@ -68,6 +97,7 @@ mod tests {
     use super::*;
     use crate::capability::CapabilityError;
     use clap::Parser;
+    use serde_json::json;
 
     fn args(argv: &[&str]) -> BriefArgs {
         let mut full = vec!["majordomus", "brief"];

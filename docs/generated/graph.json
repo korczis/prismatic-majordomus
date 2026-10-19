@@ -40947,6 +40947,47 @@
         }
       },
       {
+        "id": "majordomus://issue/I2857",
+        "kind": "issue",
+        "label": "I2857",
+        "summary": "the command-line brief asks the leaseholder before it builds an index",
+        "route": "/cockpit/objects/issue/i2857",
+        "source": ".ai/repo/project/issues/I2857.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Beside a server, `brief --keep-awake` answers the leaseholder's brief without building an index",
+            "Without a server, the brief is composed by this process and says so, as before"
+          ],
+          "created_at": "2026-10-19",
+          "current_state": "commands/brief.rs calls App::load, executes brief.session, and its handler forwards to the leaseholder when one answers.",
+          "depends_on": [
+            "I2856"
+          ],
+          "evidence_required": [
+            "brief_without_an_index_test"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "The context briefing the start event prints: it needs the index for what it says.",
+            "Moving the start event's calls off the blocking path (a hook with `async: true`)."
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/brief.rs",
+            "apps/majordomus-cli/src/commands/brief.rs",
+            "apps/majordomus-cli/tests/brief.rs"
+          ],
+          "slug": "a-brief-asks-its-server-without-building-the-index",
+          "updated_at": "2026-10-19",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test brief"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I2882",
         "kind": "issue",
         "label": "I2882",
@@ -88330,6 +88371,21 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2857",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2857",
+        "target": "majordomus://issue/I2856",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2857",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I2882",
         "target": "kind:issue",
         "kind": "is_a"
@@ -99041,8 +99097,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3080,
-      "edges": 6743,
+      "nodes": 3081,
+      "edges": 6746,
       "acyclic": false,
       "truncated": false
     }

@@ -1,0 +1,30 @@
+id: I2857
+milestone: development-runtime
+title: "the command-line brief asks the leaseholder before it builds an index"
+slug: a-brief-asks-its-server-without-building-the-index
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "`majordomus brief` asks the server holding this checkout's lease for the brief before it builds an index, over the route brief.session declares, read from that declaration; it builds the index and composes the brief itself only when no server answers, as it does today, and says why."
+why: "The session start event runs `brief --keep-awake`, measured at 1423-1587 ms warm in an isolated clone on 2026-10-18. Almost all of it was the index and registry this process built before executing brief.session, whose handler then forwarded the question to the leaseholder anyway. After I2855 and I2856 removed the same cost from the mesh commands the start event runs, this was the remaining index build on that path besides the context briefing (the owner's P0 asks for a local bootstrap under 250 ms with network discovery off the blocking path). Measured in the primary checkout against master 0.30.2 (dd4c0a87cba), `brief --keep-awake --this-checkout`, the runs the leaseholder answered from its cache: master 1327 and 1006 ms, this change 206 and 173 ms. The other runs took 28-63 s with either binary: the leaseholder's own composition of the brief when its cache is cold (the server's brief route alone took 31.9 s, then 0.16 s), which is not this issue's to fix."
+current_state: "commands/brief.rs calls App::load, executes brief.session, and its handler forwards to the leaseholder when one answers."
+desired_state: "commands/brief.rs asks capability::builtin::brief::from_leaseholder first, which forwards exactly when the handler would (a ready or outdated server that is not this process) over the declared route; App::load and the in-process brief remain the fallback."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/brief.rs"
+  - "apps/majordomus-cli/src/commands/brief.rs"
+  - "apps/majordomus-cli/tests/brief.rs"
+non_scope:
+  - "The context briefing the start event prints: it needs the index for what it says."
+  - "Moving the start event's calls off the blocking path (a hook with `async: true`)."
+depends_on:
+  - "I2856"
+acceptance_criteria:
+  - "Beside a server, `brief --keep-awake` answers the leaseholder's brief without building an index"
+  - "Without a server, the brief is composed by this process and says so, as before"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test brief"
+evidence_required:
+  - "brief_without_an_index_test"
+created_at: 2026-10-19
+updated_at: 2026-10-19

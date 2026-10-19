@@ -138,7 +138,15 @@ fn beside_a_server_every_surface_carries_the_leaseholders_board() {
     assert_eq!(status, 200, "{over_http}");
     assert_eq!(over_http["peers"]["attached"], 1, "{over_http}");
 
-    // the command line: asked of the server, not composed from this process's empty board
+    // the command line: asked of the server, not composed from this process's empty board,
+    // and asked before this process builds an index of its own (I2857)
+    let (code, out, err) = run_in(&f.root(), &["brief", "--keep-awake", "--this-checkout"], "");
+    assert_eq!(code, 0, "{err}");
+    assert!(out.starts_with("Keep yourself awake"), "{out}");
+    assert!(
+        !err.contains("index built"),
+        "the brief built an index although the leaseholder answered: {err}"
+    );
     let b = brief_json(&f, &["--session", "no-such-provider-session"]);
     assert_eq!(b["answered_by"]["process"], "leaseholder", "{b}");
     assert_eq!(b["peers"]["attached"], 1, "{b}");
