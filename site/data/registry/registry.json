@@ -6,23 +6,23 @@
     "version": "0.30.2"
   },
   "registry": {
-    "fingerprint": "9286bef476091cf2d2062c1142819f23e54d106b56a3460ff1428d0c83bd4c49",
+    "fingerprint": "ffdf62572f8ee68f56d8eb07b0e596425d6ebcd00bc5ef93a143c89132b89678",
     "summary": {
-      "total": 2646,
+      "total": 2648,
       "builtin": 206,
-      "declarative": 2440,
+      "declarative": 2442,
       "by_kind": {
         "command": 31,
         "query": 175,
-        "resource": 2440
+        "resource": 2442
       },
       "by_stability": {
         "behaviorally_verified": 142,
         "experimental": 55,
-        "implemented": 2449
+        "implemented": 2451
       },
       "mcp_tools": 196,
-      "mcp_resources": 2495,
+      "mcp_resources": 2497,
       "http_routes": 201,
       "cli_commands": 111,
       "modules": 92,
@@ -85404,7 +85404,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 489,
+        "capabilities": 490,
         "capability_ids": []
       },
       {
@@ -85978,7 +85978,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 564,
+        "capabilities": 565,
         "capability_ids": []
       },
       {
@@ -86070,7 +86070,7 @@
     ]
   },
   "index": {
-    "fingerprint": "f7222b83b696cadc7d8db27c2be24585d0916a1a05a8c16e37550602a5b97ee6",
+    "fingerprint": "5e13e2a21b085033b75848d39bd5648886e2e4c1c29126fdf8df30cc00557888",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -86110,7 +86110,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 5,
-      "issue": 489,
+      "issue": 490,
       "knowledge": 4,
       "mesh-declaration": 1,
       "milestone": 42,
@@ -86124,7 +86124,7 @@
       "session": 90,
       "skill": 8,
       "taxonomy": 10,
-      "test": 564,
+      "test": 565,
       "use-case": 49,
       "workspace": 1
     },
@@ -92024,7 +92024,7 @@
         "title": "Continuous integration",
         "path": "docs/CI.md",
         "source_class": "document",
-        "bytes": 40062
+        "bytes": 41622
       },
       {
         "uri": "majordomus://document/docs/CLI.md",
@@ -92447,7 +92447,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 200360
+        "bytes": 200556
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -101326,6 +101326,17 @@
         "bytes": 1840
       },
       {
+        "uri": "majordomus://issue/I3602",
+        "kind": "issue",
+        "identity": "I3602",
+        "title": "The interaction probe is split, so every control of every page is driven inside its bound",
+        "description": "Split the interactions job (scripts/interaction-probe over every page that carries a control) the way I2841 split the site probe: shards of the sorted pages cut by the one stride scripts/site-probe --partition defines, each driving the site job's own build, and a fan-in that proves with scripts/site-probe --verify-report that the shards drove every page once before the gate's receipt. No page and no control is dropped.",
+        "path": ".ai/repo/project/issues/I3602.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2885
+      },
+      {
         "uri": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "identity": "a-commit-stood-behind-a-build-lock",
@@ -109588,6 +109599,14 @@
         "bytes": 5927
       },
       {
+        "uri": "majordomus://test/test/cases/3603_every_page_is_exercised_by_exactly_one_shard.sh",
+        "kind": "test",
+        "identity": "test/cases/3603_every_page_is_exercised_by_exactly_one_shard.sh",
+        "path": "test/cases/3603_every_page_is_exercised_by_exactly_one_shard.sh",
+        "source_class": "case",
+        "bytes": 6400
+      },
+      {
         "uri": "majordomus://test/test/cases/360_the_crate_boundary_is_measured.sh",
         "kind": "test",
         "identity": "test/cases/360_the_crate_boundary_is_measured.sh",
@@ -112398,7 +112417,7 @@
       "identity": [
         "id"
       ],
-      "objects": 489
+      "objects": 490
     },
     {
       "name": "knowledge",
@@ -112550,7 +112569,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 564
+      "objects": 565
     },
     {
       "name": "use-case",

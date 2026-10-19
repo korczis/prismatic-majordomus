@@ -19,11 +19,14 @@ flowchart LR
   plan --> rust["rust"]
   plan --> coverage["coverage"]
   plan --> bench["bench (macOS)"]
-  plan --> site["site"]
-  plan --> interactions["interactions"]
+  plan --> site["site<br>the build, once"]
+  site --> probeshards["site-probe-shard ×6<br>a stride of the routes each"]
+  probeshards --> probe["site-probe<br>every route exactly once"]
+  site --> ishards["interaction-probe-shard ×6<br>a stride of the pages each"]
+  ishards --> interactions["interactions<br>every page exactly once"]
   plan --> ui["ui"]
   plan --> macos["macos"]
-  structure & suite & rust & coverage & bench & site & interactions & ui & macos --> ci["ci<br>the verdict; the one<br>required status"]
+  structure & suite & rust & coverage & bench & site & probe & interactions & ui & macos --> ci["ci<br>the verdict; the one<br>required status"]
 ```
 
 and beside it, on the same commit, never after it:
@@ -279,6 +282,27 @@ each once. Only then, and only if every shard passed, does it write the gate's r
 Case 3602 holds the partition, the fan-in and the wiring, whatever the number of shards.
 Reproduce one shard locally with `SITE_PROBE_SHARD=2/6 SITE_PROBE_JOBS=4 scripts/site-probe`, or
 see which routes it holds with `scripts/site-probe --partition 2/6 < routes.txt`.
+
+## The interaction probe
+
+`scripts/interaction-probe` drives every control on every page with the behaviour spec that
+claims it (`project.every-link-and-control-is-tested`). As one job it rebuilt the site and drove
+every page in one step. That step reached page 1850 of 1865 at its 2400 s bound on 2026-10-12.
+After the Czech copies doubled the pages, run 39317142394 stopped it at 3300 s.
+
+Since I3602 it is split in six like the site probe, and cut by the same rule:
+
+- the site job packs its build without the composed surfaces (artifact `interaction-probe-site`,
+  about 26 MB; the mounts come from the topology);
+- each `interaction-probe-shard` job drives `MJ_PROBE_SHARD=K/6`, the stride
+  `scripts/site-probe --partition K/6` gives for the sorted pages, and writes them to
+  `MJ_PROBE_REPORT`;
+- the `interactions` job keeps the gate. It runs `scripts/site-probe --verify-report` over the
+  six reports and writes the receipt only if they are every page once and every shard passed.
+
+No page is sampled, the Czech copies included. A finding still fails the shard that drove the
+page and names the page and the spec. Case 3603 drives three shards of a fixture site in a
+browser. Reproduce one CI shard with `MJ_PROBE_SHARD=2/6 MJ_PROBE_JOBS=4 scripts/interaction-probe`.
 
 ## Caches and artifacts
 

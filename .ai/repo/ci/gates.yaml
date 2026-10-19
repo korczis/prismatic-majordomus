@@ -608,9 +608,12 @@ gates:
   # Every interactive control on every page of the built site, exercised in a browser by the behaviour spec
   # that claims it (project.every-link-and-control-is-tested). A job of its own: the site job's browser
   # steps already use its whole bound, and a gate that shares a job which never finishes enforces nothing.
+  # Split in six shards (I3602): the interaction-probe-shard jobs each drive a stride of the pages of the
+  # site job's build, and the interactions job's receipt says both that every shard passed and that their
+  # reports are every page once (scripts/site-probe --verify-report, the one fan-in for both probes).
   - id: interaction-probe
     job: interactions
-    runs: scripts/rust-check --doc && scripts/site-build --no-data && scripts/interaction-probe
+    runs: scripts/site-build --no-data, then MJ_PROBE_SHARD=K/6 scripts/interaction-probe per shard, then scripts/site-probe --verify-report
     summary: every interactive control on every page is claimed by one behaviour spec and does what it says in a browser — menus, dropdowns, theme, copy buttons, tabs, filters, the diagnosis, the contract, the changelog, the graphs and every keyboard scroll region
 
   # A job of its own for the same reason as interaction-probe: after the site job's build, check and

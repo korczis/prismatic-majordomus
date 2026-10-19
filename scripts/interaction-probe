@@ -12,6 +12,11 @@
 #   scripts/interaction-probe --only '/ /why/'    those routes only (a local loop; CI never sets it)
 #   scripts/interaction-probe --spec tabs         one spec only
 #   MJ_PROBE_JOBS=N                               pages at a time (default: 4)
+#   MJ_PROBE_SHARD=K/N                            only shard K of N of the sorted pages, by the one stride
+#                                                 scripts/site-probe --partition defines; CI runs the N side by
+#                                                 side and its fan-in proves they were every page once (I3602)
+#   MJ_PROBE_REPORT=FILE                          write the pages this run drives, after "# shard K/N of M routes",
+#                                                 for scripts/site-probe --verify-report
 #   MJ_PROBE_LIVE=1                               drive the published site itself rather than site/public: the page
 #                                                 list is still this build's, so run it against the commit
 #                                                 scripts/pages verify says is served
@@ -32,6 +37,13 @@ command -v node >/dev/null 2>&1 || { echo "interaction-probe: node is required" 
 [ -d "$ROOT/site/public" ] || { echo "interaction-probe: site/public missing; run scripts/site-build" >&2; exit 12; }
 # playwright belongs to the tool, not to the site under test: MJ_ROOT may name a site with no node_modules at all
 TOOL="$(cd "$LIB/../.." && pwd)"
+# One stride for both browser probes: site-probe owns the partition and this probe asks it, so a shard of pages
+# and a shard of routes are cut by the same rule and verified by the same fan-in. A malformed shard is refused
+# before anything is opened, because a shard that quietly drives nothing is the failure the split must not have.
+SHARD="${MJ_PROBE_SHARD:-1/1}"
+"$TOOL/scripts/site-probe" --partition "$SHARD" < /dev/null > /dev/null 2>&1 \
+  || { echo "interaction-probe: MJ_PROBE_SHARD must be K/N with 1 <= K <= N, got '$SHARD'" >&2; exit 2; }
+export MJ_PROBE_SHARD_SPEC="$SHARD" MJ_PROBE_PARTITION="$TOOL/scripts/site-probe"
 [ -d "$TOOL/node_modules/playwright" ] || { echo "interaction-probe: playwright is not installed in $TOOL (npm ci)" >&2; [ "${CI:-}" = true ] && exit 12; echo "SKIP interaction-probe: no playwright"; exit 0; }
 # The pages driven are the site's own: a surface scripts/site-build composes into the build at its mount (ADR
 # 0086) is another producer's, with controls its own check answers for. The mounts are the tree's topology, read
@@ -149,7 +161,23 @@ async function visit(route) {
   }
 }
 
-const routes = [...plan.keys()];
+// the pages in a fixed order, then this shard's stride of them, cut by scripts/site-probe --partition
+const all = [...plan.keys()].sort();
+const sharded = env.MJ_PROBE_SHARD_SPEC !== '1/1';
+let routes = all;
+if (sharded) {
+  const { execFileSync } = await import('node:child_process');
+  routes = execFileSync(env.MJ_PROBE_PARTITION, ['--partition', env.MJ_PROBE_SHARD_SPEC], { input: `${all.join('\n')}\n` })
+    .toString().split('\n').filter(Boolean);
+  if (!routes.length) {
+    console.error(`interaction-probe: shard ${env.MJ_PROBE_SHARD_SPEC} of ${all.length} page(s) holds none; fewer shards than pages are needed`);
+    process.exit(12);
+  }
+}
+if (env.MJ_PROBE_REPORT) {
+  const { writeFileSync } = await import('node:fs');
+  writeFileSync(env.MJ_PROBE_REPORT, `# shard ${env.MJ_PROBE_SHARD_SPEC} of ${all.length} routes\n${routes.map((r) => `${r}\n`).join('')}`);
+}
 const jobs = Math.max(1, Number(env.MJ_PROBE_JOBS || 4));
 let next = 0, done = 0;
 await Promise.all(Array.from({ length: jobs }, async () => {
@@ -167,5 +195,5 @@ const total = [...exercised.values()].reduce((a, b) => a + b, 0);
 const perSpec = specs.map((s) => `${exercised.get(s.id)} ${s.id}`).join(', ');
 const secs = Math.round((Date.now() - t0) / 1000);
 if (findings.length) { console.log(`interaction-probe: ${findings.length} finding(s) over ${routes.length} page(s) in ${secs}s`); process.exit(10); }
-console.log(`OK   behaviour    ${total} control(s) on ${routes.length} page(s) ${env.MJ_PROBE_LIVE === '1' ? `of ${origin} (live) ` : ''}do what their spec says, in ${secs}s: ${perSpec}`);
+console.log(`OK   behaviour    ${total} control(s) on ${routes.length} page(s) ${sharded ? `(shard ${env.MJ_PROBE_SHARD_SPEC} of ${all.length}) ` : ''}${env.MJ_PROBE_LIVE === '1' ? `of ${origin} (live) ` : ''}do what their spec says, in ${secs}s: ${perSpec}`);
 JS

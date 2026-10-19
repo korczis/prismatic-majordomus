@@ -24,9 +24,11 @@
 #                                 line, by the same selection the sweep uses. Needs no site.
 #   SITE_PROBE_REPORT=FILE        write the routes this run measures to FILE, after a first line
 #                                 "# shard K/N of M routes"
-#   scripts/site-probe --verify-report DIR   the reports under DIR are shards 1..N of one sweep,
-#                                 each once, and together hold all M routes, each once (exit 10
-#                                 if not). What the CI fan-in asks before it trusts the shards.
+#   scripts/site-probe --verify-report DIR   the reports under DIR (*-routes*.txt) are shards 1..N
+#                                 of one sweep, each once, and together hold all M routes, each
+#                                 once (exit 10 if not). What the CI fan-in asks before it trusts
+#                                 the shards; scripts/interaction-probe shards by the same rule and
+#                                 is verified by the same question (I3602).
 #
 # A finding names what caused it. An absolutely positioned element is clipped by its
 # offsetParent chain, not by its parent chain — a .sr-only span inside a scrolling table is
@@ -83,7 +85,7 @@ case "${1:-}" in
     [ -d "${2:-}" ] || { echo "site-probe: --verify-report needs a directory of shard reports, got '${2:-}'" >&2; exit 2; }
     # Every report under DIR: its header names its shard and the size of the whole list. The
     # verdict is about the set, so it is read whole before anything is said about it.
-    reports="$(find "$2" -type f -name 'site-probe-routes*.txt' | LC_ALL=C sort)"
+    reports="$(find "$2" -type f -name '*-routes*.txt' | LC_ALL=C sort)"
     [ -n "$reports" ] || { echo "FAIL shards     no shard report under $2: no shard said what it measured"; exit 10; }
     vfail=0; vbad() { printf 'FAIL %-10s %s\n' shards "$1"; vfail=1; }
     heads="$(for f in $reports; do head -1 "$f"; done)"
