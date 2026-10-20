@@ -21,7 +21,10 @@
 #                                         10 when the controlled path is over budget.
 #                                         --advisory reports a breach as a ::warning and
 #                                         exits 0: for the caller that measures a deployment
-#                                         which has already happened.
+#                                         which has already happened. A row that spent more
+#                                         than budget.bound.near_percent of its step's bound
+#                                         in the workflow is named NEAR, and never changes
+#                                         the exit status.
 #   scripts/pages built [--branch B] [--commit SHA] [--wait N] [--porcelain]
 #                                         GitHub's own "pages build and deployment" of that commit:
 #                                         0 built, 10 errored, 12 not determinable (no gh, no token,
@@ -416,6 +419,29 @@ mj_pages_platform() {
   printf -- '-%s' "$(uname -m)"
 }
 
+# ---------------------------------------------------------------- a row's step bound
+# The `timeout-minutes` of what runs a row in the workflow, in minutes: the step named after
+# the row, or else the job named after it (the rustdoc row is a job of its own). Nothing when
+# neither exists, so a row without a bound of its own is never called near one. The workflow
+# is read rather than the bound being written here a second time; scripts/ci/step-bound-check
+# holds that bound to the row's budget, and this says when a run is closing in on it.
+PAGES_WORKFLOW="${MJ_PAGES_WORKFLOW:-$ROOT/.github/workflows/pages.yml}"
+step_bound_of() {   # <row>
+  [ -f "$PAGES_WORKFLOW" ] || return 0
+  awk -v r="$1" '
+    function close_step() { if (instep && nm == r && sto != "") stepmin = sto; instep = 0; nm = ""; sto = "" }
+    /^jobs:[ \t]*$/ { injobs = 1; next }
+    /^[^ \t#]/ { close_step(); injobs = 0 }
+    !injobs { next }
+    /^  [a-zA-Z0-9_-]+:[ \t]*$/ { close_step(); job = $1; sub(/:$/, "", job); next }
+    job == r && /^    timeout-minutes: [0-9]+[ \t]*$/ { jobmin = $2 }
+    /^      - / { close_step(); instep = 1 }
+    instep && /^(      - |        )name: / { nm = $0; sub(/^ *(- )?name: /, "", nm); sub(/[ \t]+$/, "", nm); gsub(/^["\047]|["\047]$/, "", nm) }
+    instep && /^        timeout-minutes: [0-9]+[ \t]*$/ { sto = $2 }
+    END { close_step(); if (stepmin != "") print stepmin; else if (jobmin != "") print jobmin }
+  ' "$PAGES_WORKFLOW"
+}
+
 # ---------------------------------------------------------------- the run's verdict
 # The timing rows of one deployment against the budgets, as the fragment the workflow appends
 # to its job summary. Controlled latency is what can fail; external latency is reported beside
@@ -465,6 +491,24 @@ cmd_report() {
     :
   done)"
   blame="${blame%; }"
+  # which rows are closing in on the bound that would kill them. A budget breach is a warning
+  # and the run stays green; a step that reaches its `timeout-minutes` is killed and the publish
+  # behind it is skipped. On 2026-10-20 `check` took 169 s against a bound of 180 for days
+  # before the Czech copy pushed it over (run 39392245576), and nothing said so. NEAR is that
+  # warning, a run early: never an exit status.
+  local near="" near_pct mins
+  near_pct="$(m budget.bound.near_percent || true)"
+  case "$near_pct" in ''|*[!0-9]*) near_pct="" ;; esac
+  if [ -n "$near_pct" ]; then
+    near="$(awk -F'\t' '{ print $2 "\t" $3 }' "$timings" | while IFS="$(printf '\t')" read -r step secs; do
+      case "$secs" in ''|*[!0-9]*) continue ;; esac
+      mins="$(step_bound_of "$step")"
+      case "$mins" in ''|*[!0-9]*) continue ;; esac
+      [ $(( secs * 100 )) -gt $(( mins * 60 * near_pct )) ] && printf '%s %ss/%ss; ' "$step" "$secs" "$(( mins * 60 ))"
+      :
+    done)"
+    near="${near%; }"
+  fi
   out="${GITHUB_STEP_SUMMARY:-/dev/stdout}"
   {
     printf '### Pages fast path\n\n'
@@ -480,6 +524,7 @@ cmd_report() {
     [ -n "$e2e" ] && printf ', push to public %s s / %s s' "$e2e" "$(m budget.end_to_end)"
     printf '\n'
     [ -n "$blame" ] && printf '\nOver its own budget: %s\n' "$blame"
+    [ -n "$near" ] && printf '\nNEAR its step bound (more than %s%% of the timeout-minutes that would kill it): %s\n' "$near_pct" "$near"
     if [ "$rc" != 0 ] && [ "$advisory" = 1 ]; then
       printf '\nThis is the latency of the publication path, not whether the site published:\nthe run states that separately, and a breach here is a warning rather than this\nrun'"'"'s verdict. `scripts/pages report` without `--advisory` still exits 10.\n'
     fi
@@ -490,14 +535,18 @@ cmd_report() {
   # One line for a reader that is not a person, always, and on the log rather than in the job
   # summary: the Markdown above is invisible to `gh run view --log`, which is where the four
   # red runs of 2026-09-12 were read from.
-  printf 'pages-slo verdict=%s controlled=%s budget=%s over=%s\n' \
-    "$verdict" "$controlled" "$budget" "${blame:-none}"
+  printf 'pages-slo verdict=%s controlled=%s budget=%s over=%s near=%s\n' \
+    "$verdict" "$controlled" "$budget" "${blame:-none}" "${near:-none}"
   if [ -n "${GITHUB_OUTPUT:-}" ]; then
     { printf 'verdict=%s\n' "$verdict"
       printf 'controlled=%s\n' "$controlled"
       printf 'budget=%s\n' "$budget"
       printf 'over=%s\n' "$blame"
+      printf 'near=%s\n' "$near"
     } >> "$GITHUB_OUTPUT"
+  fi
+  if [ -n "$near" ]; then
+    printf '::warning title=Pages step near its bound::%s. A step that reaches its timeout-minutes is killed and the publish behind it is skipped: re-derive the row in .ai/repo/ci/pages.yaml from this run and raise the bound with it.\n' "$near"
   fi
   if [ "$rc" != 0 ] && [ "$advisory" = 1 ]; then
     printf '::warning title=Pages controlled path over budget::controlled path %s s against a budget of %s s (%s). This is the latency of the publication path, not whether the site published — see the publication state annotation for that.\n' \
