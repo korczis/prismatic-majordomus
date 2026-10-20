@@ -15,7 +15,7 @@ scope:
   - "scripts/site-build"
   - "scripts/site-check"
   - "apps/majordomus-cli/src/ui/view.rs"
-  - "test/cases"
+  - "test/cases/3722_every_surface_names_its_versions_from_one_model.sh"
 non_scope:
   - "Which release is offered as stable, which stays the newest stable release (I2829)"
   - "The version bump policy, which stays release analyze's (scripts/ci/version-matches-surface)"
@@ -26,7 +26,7 @@ acceptance_criteria:
   - "Negative: a build with no pre-release newer than the offered release shows one release version and passes"
 validation:
   - "scripts/site-build && scripts/site-check"
-  - "bash test/run.sh <every_surface_names_its_versions case>"
+  - "bash test/run.sh 3722_every_surface_names_its_versions_from_one_model"
   - "majordomus plan validate"
 evidence_required:
   - "test_every_surface_names_its_versions_from_one_model"

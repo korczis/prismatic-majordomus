@@ -59502,12 +59502,12 @@
             "apps/majordomus-cli/src/ui/work.rs",
             "apps/majordomus-cli/src/web/report/snapshot.rs",
             "scripts/site-check",
-            "test/cases"
+            "test/cases/3720_no_two_published_paths_differ_only_in_case.sh"
           ],
           "slug": "no-two-published-paths-differ-only-in-case",
           "validation": [
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::",
-            "bash test/run.sh 09_site",
+            "bash test/run.sh 3720_no_two_published_paths_differ_only_in_case 09_site_mobile_first",
             "majordomus plan validate"
           ]
         }
@@ -59539,12 +59539,12 @@
           "profile": "implementation",
           "scope": [
             "scripts/site-deploy",
-            "test/cases",
+            "test/cases/3721_a_deploy_keeps_every_pre_release_it_serves.sh",
             "docs/RELEASE.md"
           ],
           "slug": "a-deploy-keeps-every-pre-release-it-serves",
           "validation": [
-            "bash test/run.sh <a_deploy_keeps_every_pre_release case>",
+            "bash test/run.sh 3721_a_deploy_keeps_every_pre_release_it_serves",
             "majordomus plan validate"
           ]
         }
@@ -59575,12 +59575,12 @@
             "scripts/site-build",
             "scripts/site-check",
             "apps/majordomus-cli/src/ui/view.rs",
-            "test/cases"
+            "test/cases/3722_every_surface_names_its_versions_from_one_model.sh"
           ],
           "slug": "every-surface-names-its-versions-from-one-model",
           "validation": [
             "scripts/site-build && scripts/site-check",
-            "bash test/run.sh <every_surface_names_its_versions case>",
+            "bash test/run.sh 3722_every_surface_names_its_versions_from_one_model",
             "majordomus plan validate"
           ]
         }

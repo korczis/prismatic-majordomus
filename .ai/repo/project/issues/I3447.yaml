@@ -14,7 +14,7 @@ scope:
   - "apps/majordomus-cli/src/ui/work.rs"
   - "apps/majordomus-cli/src/web/report/snapshot.rs"
   - "scripts/site-check"
-  - "test/cases"
+  - "test/cases/3720_no_two_published_paths_differ_only_in_case.sh"
 non_scope:
   - "Renaming plan statuses, which stay upper case as the plan declares them"
   - "Changing how GitHub Pages serves paths"
@@ -25,7 +25,7 @@ acceptance_criteria:
   - "The snapshot archive of the change extracts on a case-insensitive filesystem with no 'file exists' error"
 validation:
   - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::"
-  - "bash test/run.sh 09_site"
+  - "bash test/run.sh 3720_no_two_published_paths_differ_only_in_case 09_site_mobile_first"
   - "majordomus plan validate"
 evidence_required:
   - "test_no_two_published_paths_differ_only_in_case"
