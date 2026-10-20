@@ -59196,6 +59196,396 @@
         }
       },
       {
+        "id": "majordomus://issue/I3439",
+        "kind": "issue",
+        "label": "I3439",
+        "summary": "Now and next are derived once, and every plan surface names the same two",
+        "route": "/cockpit/objects/issue/i3439",
+        "source": ".ai/repo/project/issues/I3439.yaml",
+        "facts": {
+          "created_at": "2026-10-19",
+          "depends_on": [
+            "I3442"
+          ],
+          "evidence_required": [
+            "now_and_next_derived_once"
+          ],
+          "milestone": "truthful-plan-surfaces",
+          "non_scope": [
+            "Changing what puts an issue in flight (an open pull request, a live mesh claim, an ACTIVE status).",
+            "The milestone order itself (rank, then order): that is I3441's question of what the reader is shown.",
+            "Caching plan.flight: I3442."
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/plan/flight.rs",
+            "apps/majordomus-cli/src/capability/builtin/plan.rs",
+            "apps/majordomus-cli/src/ui/roadmap.rs",
+            "apps/majordomus-cli/src/ui/dashboard.rs",
+            "apps/majordomus-cli/src/ui/observatory.rs",
+            "apps/majordomus-cli/tests/ui_roadmap.rs",
+            "apps/majordomus-cli/tests/dashboard.rs",
+            "lib/plan.sh",
+            "test/cases/3104_the_ui_roadmap_reads_delivery.sh",
+            "test/cases/99_plan_capabilities.sh",
+            "docs/PLANNING.md",
+            ".claude/skills/mj-plan/SKILL.md",
+            "docs/generated/capabilities.md",
+            "docs/generated/modules/plan.md",
+            "docs/generated/openapi.json",
+            "docs/generated/openapi.yaml",
+            "docs/generated/registry.json",
+            "docs/generated/registry.yaml",
+            "site/data/generated/openapi.json",
+            "site/data/registry/registry.json",
+            "site/content/registry/capabilities/plan-roadmap.md"
+          ],
+          "slug": "now-and-next-are-derived-once",
+          "updated_at": "2026-10-19",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib plan::flight",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test ui_roadmap",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test dashboard",
+            "bash test/run.sh 3104_the_ui_roadmap_reads_delivery 99_plan_capabilities",
+            "bin/majordomus generate --check",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3440",
+        "kind": "issue",
+        "label": "I3440",
+        "summary": "A milestone's meter counts the issues it requires, and a milestone with none says so",
+        "route": "/cockpit/objects/issue/i3440",
+        "source": ".ai/repo/project/issues/I3440.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A milestone of 32 issues, 9 of them cancelled and 4 done, reads '4 of 23' on the Overview, /ui/roadmap and its inspector, and never '4 of 32'",
+            "A milestone with no issue reads 'no issues' with no meter bar and never '0 of 0'",
+            "A milestone whose every issue is cancelled reads that no issue is required, and its bar is not drawn as empty work",
+            "A milestone with no cancelled issue reads DONE out of its total, as before"
+          ],
+          "created_at": "2026-10-19",
+          "depends_on": [],
+          "evidence_required": [
+            "milestone_meter_counts_required"
+          ],
+          "milestone": "truthful-plan-surfaces",
+          "non_scope": [
+            "The published /roadmap/ page, which already reads required.",
+            "How PlanCounts is computed, or whether a CANCELLED issue belongs to its milestone.",
+            "The evidence meter of an issue."
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/dashboard.rs",
+            "apps/majordomus-cli/src/ui/milestone.rs",
+            "apps/majordomus-cli/src/ui/observatory.rs",
+            "apps/majordomus-cli/src/ui/view.rs",
+            "apps/majordomus-cli/tests/dashboard.rs"
+          ],
+          "slug": "a-milestone-meter-counts-what-it-requires",
+          "updated_at": "2026-10-19",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::view",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::dashboard",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::milestone",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test dashboard",
+            "scripts/ui audit --only /ui/roadmap"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3441",
+        "kind": "issue",
+        "label": "I3441",
+        "summary": "The roadmap's tables show the order they are in, say none for nothing, and link every milestone",
+        "route": "/cockpit/objects/issue/i3441",
+        "source": ".ai/repo/project/issues/I3441.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Each Milestones row shows its step, and two rows of different steps appear in step order whatever their declared order; the caption names the ordering rule",
+            "A Dependencies row whose prerequisites are all done reads 'none' under Blocked by; a row with an unfinished prerequisite names it and does not read 'none'",
+            "Every milestone id in the Dependencies table is an anchor to that milestone's inspector; no id there is bare text"
+          ],
+          "created_at": "2026-10-19",
+          "depends_on": [],
+          "evidence_required": [
+            "roadmap_tables_show_order_and_link"
+          ],
+          "milestone": "truthful-plan-surfaces",
+          "non_scope": [
+            "Changing the order plan.roadmap derives.",
+            "The milestone meter: I3440.",
+            "The dependency graph's own drawing (the graph with the table as its fallback)."
+          ],
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/roadmap.rs",
+            "apps/majordomus-cli/tests/ui_roadmap.rs"
+          ],
+          "slug": "the-roadmap-tables-show-their-order-and-link",
+          "updated_at": "2026-10-19",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::roadmap",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test ui_roadmap",
+            "bash test/run.sh 1076_the_roadmap_opens_a_milestone 3104_the_ui_roadmap_reads_delivery",
+            "scripts/ui audit --only /ui/roadmap"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3442",
+        "kind": "issue",
+        "label": "I3442",
+        "summary": "Where the work is is cached by what it reads, and a warm roadmap does not walk the trunk",
+        "route": "/cockpit/objects/issue/i3442",
+        "source": ".ai/repo/project/issues/I3442.yaml",
+        "facts": {
+          "created_at": "2026-10-19",
+          "depends_on": [],
+          "evidence_required": [
+            "plan_flight_cached_by_inputs"
+          ],
+          "milestone": "truthful-plan-surfaces",
+          "non_scope": [
+            "Making delivery::infer itself faster (an incremental history read); this record removes repeated work, not the first.",
+            "Caching the mesh claims, which stay live.",
+            "Changing REVALIDATE for other sources."
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/plan.rs",
+            "apps/majordomus-cli/src/plan/flight.rs",
+            "apps/majordomus-cli/src/plan/delivery.rs",
+            "apps/majordomus-cli/src/capability/model.rs",
+            "apps/majordomus-cli/src/capability/executor.rs",
+            "apps/majordomus-cli/tests/ui_roadmap.rs",
+            "apps/majordomus-cli/tests/plan_delivery.rs",
+            "docs/PERFORMANCE.md",
+            "docs/generated/capabilities.md",
+            "docs/generated/modules/plan.md",
+            "docs/generated/registry.json",
+            "docs/generated/registry.yaml",
+            "docs/generated/benchmarks.json",
+            "site/data/registry/registry.json"
+          ],
+          "slug": "plan-flight-is-cached-by-its-inputs",
+          "updated_at": "2026-10-19",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test ui_roadmap",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test plan_delivery",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib plan::flight",
+            "bash test/run.sh 3100_an_issue_delivery_is_inferred 3104_the_ui_roadmap_reads_delivery",
+            "bin/majordomus generate --check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3443",
+        "kind": "issue",
+        "label": "I3443",
+        "summary": "Each roadmap milestone names the product features its issues deliver, derived from the feature declarations",
+        "route": "/cockpit/objects/issue/i3443",
+        "source": ".ai/repo/project/issues/I3443.yaml",
+        "facts": {
+          "created_at": "2026-10-19",
+          "depends_on": [],
+          "evidence_required": [
+            "roadmap_names_delivered_features"
+          ],
+          "milestone": "truthful-plan-surfaces",
+          "non_scope": [
+            "A features or milestones field in a feature file or an issue record: the relation is derived, never declared twice.",
+            "Drawing features on the published /roadmap/ page.",
+            "Changing what any feature names."
+          ],
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/product.rs",
+            "apps/majordomus-cli/src/capability/builtin/product.rs",
+            "apps/majordomus-cli/src/ui/roadmap.rs",
+            "apps/majordomus-cli/tests/ui_roadmap.rs",
+            ".ai/repo/features/README.md",
+            "docs/generated/capabilities.md",
+            "docs/generated/modules/product.md",
+            "docs/generated/openapi.json",
+            "docs/generated/openapi.yaml",
+            "site/data/generated/openapi.json",
+            "site/data/registry/product.json"
+          ],
+          "slug": "the-roadmap-names-the-features-it-delivers",
+          "updated_at": "2026-10-19",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib product",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test ui_roadmap",
+            "bin/majordomus product validate",
+            "bin/majordomus generate --check",
+            "scripts/ui audit --only /ui/roadmap"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3444",
+        "kind": "issue",
+        "label": "I3444",
+        "summary": "A claim released on a runtime that is not replicating reaches every linked runtime, or the release is refused",
+        "route": "/cockpit/objects/issue/i3444",
+        "source": ".ai/repo/project/issues/I3444.yaml",
+        "facts": {
+          "depends_on": [],
+          "evidence_required": [
+            "test_a_release_reaches_every_linked_runtime"
+          ],
+          "milestone": "mesh-journal-converges",
+          "non_scope": [
+            "Releasing another runtime's claim, which stays refused as not_own",
+            "Stopping or restarting a server that holds a seat's claims"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "apps/majordomus-cli/src/mesh/cooperation.rs",
+            "apps/majordomus-cli/src/mesh/link.rs",
+            "apps/majordomus-cli/src/mesh/doctor.rs",
+            "docs/MESH.md"
+          ],
+          "slug": "a-release-reaches-every-linked-runtime",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::",
+            "bash test/run.sh 130_mesh",
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3447",
+        "kind": "issue",
+        "label": "I3447",
+        "summary": "No two published paths differ only in case, and a publication that holds two is refused before it is built",
+        "route": "/cockpit/objects/issue/i3447",
+        "source": ".ai/repo/project/issues/I3447.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The UI snapshot of the change holds exactly one page per declared status under issues/_status/, and /ui/work/'s whole-list link resolves to one of them",
+            "A fixture publication holding a/X/index.html and a/x/index.html is refused by the check, which names both paths",
+            "Negative: a publication whose paths differ in more than case passes the check",
+            "The snapshot archive of the change extracts on a case-insensitive filesystem with no 'file exists' error"
+          ],
+          "depends_on": [],
+          "evidence_required": [
+            "test_no_two_published_paths_differ_only_in_case"
+          ],
+          "milestone": "the-ui-runs-and-explains",
+          "non_scope": [
+            "Renaming plan statuses, which stay upper case as the plan declares them",
+            "Changing how GitHub Pages serves paths"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/view.rs",
+            "apps/majordomus-cli/src/ui/work.rs",
+            "apps/majordomus-cli/src/web/report/snapshot.rs",
+            "scripts/site-check",
+            "test/cases"
+          ],
+          "slug": "no-two-published-paths-differ-only-in-case",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::",
+            "bash test/run.sh 09_site",
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3448",
+        "kind": "issue",
+        "label": "I3448",
+        "summary": "A deploy of master keeps every pre-release's metadata the site already serves",
+        "route": "/cockpit/objects/issue/i3448",
+        "source": ".ai/repo/project/issues/I3448.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A fixture gh-pages carrying releases/v9.9.9-alpha.1.json and a build without it: after an ordinary deploy the file is still there, byte-identical, and the deploy names it as kept",
+            "Negative: a releases/<tag>.json the build itself holds is replaced by the build's copy, not kept from gh-pages",
+            "latest.json behaves as before: kept when it names a newer stable release than the build, replaced otherwise"
+          ],
+          "depends_on": [],
+          "evidence_required": [
+            "test_a_deploy_keeps_every_pre_release_it_serves"
+          ],
+          "milestone": "M004",
+          "non_scope": [
+            "Which release latest.json names, which stays the newest stable release",
+            "Publishing a pre-release's metadata from master before its record lands"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "scripts/site-deploy",
+            "test/cases",
+            "docs/RELEASE.md"
+          ],
+          "slug": "a-deploy-keeps-every-pre-release-it-serves",
+          "validation": [
+            "bash test/run.sh <a_deploy_keeps_every_pre_release case>",
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3449",
+        "kind": "issue",
+        "label": "I3449",
+        "summary": "Every surface names its versions from one derived release model, says which version each one is, and a gate refuses a version that disagrees or is written by hand",
+        "route": "/cockpit/objects/issue/i3449",
+        "source": ".ai/repo/project/issues/I3449.yaml",
+        "facts": {
+          "depends_on": [],
+          "evidence_required": [
+            "test_every_surface_names_its_versions_from_one_model"
+          ],
+          "milestone": "truthful-plan-surfaces",
+          "non_scope": [
+            "Which release is offered as stable, which stays the newest stable release (I2829)",
+            "The version bump policy, which stays release analyze's (scripts/ci/version-matches-surface)"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "site/templates/partials/navbar.html",
+            "site/templates/partials/footer.html",
+            "scripts/site-build",
+            "scripts/site-check",
+            "apps/majordomus-cli/src/ui/view.rs",
+            "test/cases"
+          ],
+          "slug": "every-surface-names-its-versions-from-one-model",
+          "validation": [
+            "scripts/site-build && scripts/site-check",
+            "bash test/run.sh <every_surface_names_its_versions case>",
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -116305,6 +116695,101 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3439",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3439",
+        "target": "majordomus://issue/I3442",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3439",
+        "target": "majordomus://milestone/truthful-plan-surfaces",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3440",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3440",
+        "target": "majordomus://milestone/truthful-plan-surfaces",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3441",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3441",
+        "target": "majordomus://milestone/truthful-plan-surfaces",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3442",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3442",
+        "target": "majordomus://milestone/truthful-plan-surfaces",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3443",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3443",
+        "target": "majordomus://milestone/truthful-plan-surfaces",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3444",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3444",
+        "target": "majordomus://milestone/mesh-journal-converges",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3447",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3447",
+        "target": "majordomus://milestone/the-ui-runs-and-explains",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3448",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3448",
+        "target": "majordomus://milestone/M004",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3449",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3449",
+        "target": "majordomus://milestone/truthful-plan-surfaces",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -127276,8 +127761,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3605,
-      "edges": 8387,
+      "nodes": 3614,
+      "edges": 8406,
       "acyclic": false,
       "truncated": false
     }

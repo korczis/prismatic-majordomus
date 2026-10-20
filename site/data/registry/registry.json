@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.1"
   },
   "registry": {
-    "fingerprint": "e9ec56f7ab16bbef8bfa492164289f99f59a1674c8eac92f270119ee244308fa",
+    "fingerprint": "59fdc3453281b16a89dd7d69b660f3e7c2e3c1f860e908b4190aab37a21c6327",
     "summary": {
-      "total": 3158,
+      "total": 3167,
       "builtin": 206,
-      "declarative": 2952,
+      "declarative": 2961,
       "by_kind": {
         "command": 31,
         "query": 175,
-        "resource": 2952
+        "resource": 2961
       },
       "by_stability": {
         "behaviorally_verified": 142,
         "experimental": 55,
-        "implemented": 2961
+        "implemented": 2970
       },
       "mcp_tools": 196,
-      "mcp_resources": 3007,
+      "mcp_resources": 3016,
       "http_routes": 201,
       "cli_commands": 111,
       "modules": 92,
@@ -85404,7 +85404,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 799,
+        "capabilities": 808,
         "capability_ids": []
       },
       {
@@ -86070,7 +86070,7 @@
     ]
   },
   "index": {
-    "fingerprint": "767e0af9b2b96a74cbcc69f3c58d43394251506410c1bb4725f726c60fe5b3ab",
+    "fingerprint": "4900dc5f931b50720aafa33a9ceb66e28befa46e28ffb9e5d53858d8fdf66728",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -86110,7 +86110,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 33,
-      "issue": 799,
+      "issue": 808,
       "knowledge": 50,
       "mesh-declaration": 1,
       "milestone": 100,
@@ -93308,7 +93308,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 420783
+        "bytes": 449021
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -105905,6 +105905,105 @@
         "bytes": 2704
       },
       {
+        "uri": "majordomus://issue/I3439",
+        "kind": "issue",
+        "identity": "I3439",
+        "title": "Now and next are derived once, and every plan surface names the same two",
+        "description": "One function derives the milestones in flight (now) and the milestone the graph allows next, plan.flight answers from it, plan.roadmap stops answering a now and a next of its own, and every surface that names now or next (/ui/roadmap, the Overview, the observatory, the shell's plan roadmap) reads that one answer under a caption that says exactly what next is.",
+        "path": ".ai/repo/project/issues/I3439.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5765
+      },
+      {
+        "uri": "majordomus://issue/I3440",
+        "kind": "issue",
+        "identity": "I3440",
+        "title": "A milestone's meter counts the issues it requires, and a milestone with none says so",
+        "description": "Every UI meter of a milestone's issues draws DONE out of counts.required (total less cancelled), the denominator the milestone's own status derivation and the published /roadmap/ already use, and a milestone that holds no issue reads 'no issues' instead of '0 of 0'.",
+        "path": ".ai/repo/project/issues/I3440.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3988
+      },
+      {
+        "uri": "majordomus://issue/I3441",
+        "kind": "issue",
+        "identity": "I3441",
+        "title": "The roadmap's tables show the order they are in, say none for nothing, and link every milestone",
+        "description": "/ui/roadmap's Milestones table shows the dependency step each row is ordered by and says how the order is made; its Dependencies table writes 'none' in an empty Blocked by cell and draws every milestone it names, in all three columns, as a link to that milestone.",
+        "path": ".ai/repo/project/issues/I3441.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3576
+      },
+      {
+        "uri": "majordomus://issue/I3442",
+        "kind": "issue",
+        "identity": "I3442",
+        "title": "Where the work is is cached by what it reads, and a warm roadmap does not walk the trunk",
+        "description": "plan.flight keeps its delivery inference under a key made of what it reads (the trunk's commit, the refs, the plan's records, the release records and the forge and deployment observations) and recomputes it only when that key changes, with the live mesh claims laid over the cached part on every call; a warm /ui/roadmap then answers without walking the trunk's history.",
+        "path": ".ai/repo/project/issues/I3442.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5067
+      },
+      {
+        "uri": "majordomus://issue/I3443",
+        "kind": "issue",
+        "identity": "I3443",
+        "title": "Each roadmap milestone names the product features its issues deliver, derived from the feature declarations",
+        "description": "A derived relation joins an issue to the product features whose paths its scope touches, product.features exposes each feature's derived paths, and every milestone row of /ui/roadmap names, as links to /ui/features, the features its issues deliver; no list of features is written anywhere but .ai/repo/features.",
+        "path": ".ai/repo/project/issues/I3443.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4193
+      },
+      {
+        "uri": "majordomus://issue/I3444",
+        "kind": "issue",
+        "identity": "I3444",
+        "title": "A claim released on a runtime that is not replicating reaches every linked runtime, or the release is refused",
+        "description": "Make a claim release either reach every linked runtime or be refused: (a) mesh.release (MCP majordomus_mesh_release, POST /api/v1/mesh/claims/release) refuses with not_active, naming the reason, when the runtime that holds the claim's stream is not replicating, instead of answering with a written event that no linked runtime will ever see; and (b) a journal written while the runtime was not replicating is caught up by every linked runtime once replication resumes, so a release already written is folded everywhere.",
+        "path": ".ai/repo/project/issues/I3444.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3900
+      },
+      {
+        "uri": "majordomus://issue/I3447",
+        "kind": "issue",
+        "identity": "I3447",
+        "title": "No two published paths differ only in case, and a publication that holds two is refused before it is built",
+        "description": "Make every path the site and the UI snapshot publish unique without regard to case: (a) the Work page's 'Open the whole list' link reaches the issue status page by the status's one spelling, so the snapshot no longer carries issues/_status/ready beside issues/_status/READY; and (b) a check over every publication (the site's site/public, the UI and Cockpit snapshots) refuses two paths that are equal when case is folded, naming both, before anything is deployed.",
+        "path": ".ai/repo/project/issues/I3447.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3298
+      },
+      {
+        "uri": "majordomus://issue/I3448",
+        "kind": "issue",
+        "identity": "I3448",
+        "title": "A deploy of master keeps every pre-release's metadata the site already serves",
+        "description": "Make an ordinary deploy of master keep each releases/<tag>.json that gh-pages carries and the build lacks, so that a pre-release's metadata, published by the release's own job before its record reaches master, is never removed by the next deploy.",
+        "path": ".ai/repo/project/issues/I3448.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2492
+      },
+      {
+        "uri": "majordomus://issue/I3449",
+        "kind": "issue",
+        "identity": "I3449",
+        "title": "Every surface names its versions from one derived release model, says which version each one is, and a gate refuses a version that disagrees or is written by hand",
+        "description": "Make the version a reader sees on any surface (the site's navbar and footer, /roadmap/, /ui, the Cockpit, the README badges, the install section) come from one derived release model with named roles: the offered stable release, the newest pre-release, and the source the page was built from. Each surface labels which role it shows, so one page never shows two versions without saying why. A gate over every built surface refuses a version that disagrees with that model, or a version written by hand in a template, content file or data file.",
+        "path": ".ai/repo/project/issues/I3449.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3660
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -118368,7 +118467,7 @@
       "identity": [
         "id"
       ],
-      "objects": 799
+      "objects": 808
     },
     {
       "name": "knowledge",
