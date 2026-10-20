@@ -1,0 +1,55 @@
+id: every-model-call-is-paid-from-a-declared-source
+title: "Every model call Majordomus makes or starts is paid from a funding source the vendor declared and the owner holds, routed by policy and never guessed"
+statement: "A vendor's funding sources (a subscription seat, a recurring credit grant such as the monthly API credits a Claude Max plan includes, metered pay-as-you-go, a free local runtime) are declared once per vendor in the distribution with dated vendor evidence, which of them the owner holds is the owner's local declaration, and which one a call would draw on is inferred from the credential a route would use and shown with that basis; models.route, the advisor catalogue, the economics runner and executions choose among held sources by a declared repository policy (local before credit before metered, a subscription seat only for the client that owns it), doctor and the brief tell the owner a declared source they hold no credential for together with the vendor's own claim link, and the spend against a source is observed where an official vendor seam reports it and recorded absent with the reason where none does."
+invariants:
+  - "Funding is one generic dimension of the vendor declaration in share/models.yaml (ADR 0049); no vendor, plan or amount is named in code, and adding a source is editing data, a mapping and a fixture"
+  - "The distribution declares what a vendor offers, with the date and source it was read from; which sources the owner holds, and any amount or monthly cap, live in .ai/local or the environment and are never projected (ADR 0140, ADR 0145)"
+  - "Only a credential variable's presence is read, never its value (share/models.yaml); a source with no credential present is held-but-unusable, never usable"
+  - "The source a call draws on is inferred from its credential and labelled inferred with its basis; it is never recorded as observed, and an API key cannot be told apart as credit-funded or metered without a vendor seam that says so (critique of I3292)"
+  - "Credit consumed or remaining is observed only from an official vendor seam; without one it is absent with a reason, never derived from a price list Majordomus does not hold, and never zero"
+  - "Majordomus never claims credits, signs in to a console or holds an account session; claiming is the owner's act in their own browser, and the claim link is shown as vendor-declared evidence"
+  - "A subscription session's price-list figure stays estimated and is never shown as spend against a credit grant (docs/ECONOMICS.md, I3292, ADR 0213)"
+  - "Absence of every paid source is a status, never a failure: routing falls back to local runtimes or to no advisor, as reasoning already does (ADR 0098)"
+non_goals:
+  - "Reading, storing or rotating a credential value, or a key vault of Majordomus's own"
+  - "Automating the vendor's claim flow, console login or plan changes"
+  - "A price list or cost model; prices stay absent from share/models.yaml until a live, verifiable seam exists"
+  - "Splitting subscription quota across machines of the mesh; a seat belongs to the client signed in with it"
+  - "Billing or invoicing anyone else; this is the owner's own spend"
+milestones:
+  - "every-model-call-is-paid-from-a-declared-source"
+satisfaction:
+  - id: vendor-declares-its-sources
+    criterion: "share/models.yaml declares for each vendor its funding sources (kind subscription, credit_grant, metered or local; the credential variable that reaches it; the period a grant renews over; the claim link; the date and source of the evidence), the schema refuses a source without evidence, and models.list projects them to every surface"
+    evidence: command
+    ref: "majordomus intent explain every-model-call-is-paid-from-a-declared-source"
+  - id: holdings-are-local
+    criterion: "The sources the owner holds, and an optional monthly cap per source, are read from .ai/local or the environment, appear in no generated or projected file, and a case proves a holding written under .ai/repo is refused"
+    evidence: command
+    ref: "majordomus intent explain every-model-call-is-paid-from-a-declared-source"
+  - id: route-names-its-source
+    criterion: "models.route answers a need with a model and the funding source it would draw on, labelled inferred with the credential presence that implied it, and follows the repository's declared source order; a held source with no credential present is excluded with that reason"
+    evidence: command
+    ref: "majordomus intent explain every-model-call-is-paid-from-a-declared-source"
+  - id: anthropic-api-reaches-the-advisors
+    criterion: "share/advisors.yaml declares an Anthropic API advisor reached through the vendor's credential, so a held Anthropic credit grant funds independent review the way the OpenAI credential funds ChatGPT today, and an absent credential leaves it reported absent"
+    evidence: command
+    ref: "majordomus intent explain every-model-call-is-paid-from-a-declared-source"
+  - id: unclaimed-source-is-told
+    criterion: "doctor and the brief name a source the vendor declares that the owner holds but no credential reaches, with the vendor's claim link and its evidence date, once per period, and say nothing when the owner declares they do not hold it"
+    evidence: command
+    ref: "majordomus intent explain every-model-call-is-paid-from-a-declared-source"
+  - id: headless-runs-draw-on-the-declared-source
+    criterion: "The economics runner and capability executions that start a model client record the funding source each run drew on (inferred, with its basis) beside its usage record, so benchmark arms and agents funded by a credit grant are attributed to it and never to the subscription"
+    evidence: command
+    ref: "majordomus intent explain every-model-call-is-paid-from-a-declared-source"
+  - id: spend-is-observed-or-absent
+    criterion: "Spend against a source is recorded observed only from a vendor seam named with dated evidence; where none reaches an individual account it is recorded absent with that reason, and a case proves no remaining-credit figure is derived from tokens and a price"
+    evidence: command
+    ref: "majordomus intent explain every-model-call-is-paid-from-a-declared-source"
+  - id: cap-is-told-before-it-is-crossed
+    criterion: "A run whose route would draw on a metered source while a held credit grant is declared, or exceed a declared monthly cap by its observed spend, is told so naming the source, the cap and the figure's class, and is refused only where policy declares refuse (shares the mechanism of over-budget-is-told)"
+    evidence: command
+    ref: "majordomus intent explain every-model-call-is-paid-from-a-declared-source"
+created_at: 2026-10-20
+updated_at: 2026-10-20

@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.1"
   },
   "registry": {
-    "fingerprint": "e9ec56f7ab16bbef8bfa492164289f99f59a1674c8eac92f270119ee244308fa",
+    "fingerprint": "00f1bb3c38e3514fdcff572c0d4df49c01374598b84bc1273d720748ed5ed474",
     "summary": {
-      "total": 3158,
+      "total": 3160,
       "builtin": 206,
-      "declarative": 2952,
+      "declarative": 2954,
       "by_kind": {
         "command": 31,
         "query": 175,
-        "resource": 2952
+        "resource": 2954
       },
       "by_stability": {
         "behaviorally_verified": 142,
         "experimental": 55,
-        "implemented": 2961
+        "implemented": 2963
       },
       "mcp_tools": 196,
-      "mcp_resources": 3007,
+      "mcp_resources": 3009,
       "http_routes": 201,
       "cli_commands": 111,
       "modules": 92,
@@ -85355,7 +85355,7 @@
         "title": "intent",
         "description": "Declarative objects of kind 'intent' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 33,
+        "capabilities": 34,
         "capability_ids": []
       },
       {
@@ -85520,7 +85520,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 100,
+        "capabilities": 101,
         "capability_ids": []
       },
       {
@@ -86070,7 +86070,7 @@
     ]
   },
   "index": {
-    "fingerprint": "767e0af9b2b96a74cbcc69f3c58d43394251506410c1bb4725f726c60fe5b3ab",
+    "fingerprint": "5571da611df41e2a5c75c8ca2b419240220b1a0f31fdbda313a27398dd605155",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -86109,11 +86109,11 @@
       "feature": 29,
       "gap": 4,
       "implementation": 52,
-      "intent": 33,
+      "intent": 34,
       "issue": 799,
       "knowledge": 50,
       "mesh-declaration": 1,
-      "milestone": 100,
+      "milestone": 101,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -93308,7 +93308,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 420783
+        "bytes": 421463
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -96905,6 +96905,17 @@
         "section": "project",
         "source_class": "intent",
         "bytes": 662
+      },
+      {
+        "uri": "majordomus://intent/every-model-call-is-paid-from-a-declared-source",
+        "kind": "intent",
+        "identity": "every-model-call-is-paid-from-a-declared-source",
+        "title": "Every model call Majordomus makes or starts is paid from a funding source the vendor declared and the owner holds, routed by policy and never guessed",
+        "description": "A vendor's funding sources (a subscription seat, a recurring credit grant such as the monthly API credits a Claude Max plan includes, metered pay-as-you-go, a free local runtime) are declared once per vendor in the distribution with dated vendor evidence, which of them the owner holds is the owner's local declaration, and which one a call would draw on is inferred from the credential a route would use and shown with that basis; models.route, the advisor catalogue, the economics runner and executions choose among held sources by a declared repository policy (local before credit before metered, a subscription seat only for the client that owns it), doctor and the brief tell the owner a declared source they hold no credential for together with the vendor's own claim link, and the spend against a source is observed where an official vendor seam reports it and recorded absent with the reason where none does.",
+        "path": ".ai/repo/project/intents/every-model-call-is-paid-from-a-declared-source.yaml",
+        "section": "project",
+        "source_class": "intent",
+        "bytes": 6734
       },
       {
         "uri": "majordomus://intent/every-sessions-usage-is-observed",
@@ -107140,6 +107151,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 2989
+      },
+      {
+        "uri": "majordomus://milestone/every-model-call-is-paid-from-a-declared-source",
+        "kind": "milestone",
+        "identity": "every-model-call-is-paid-from-a-declared-source",
+        "title": "Every model call Majordomus makes or starts is paid from a funding source the vendor declared and the owner holds, routed by policy and never guessed",
+        "description": "A vendor's funding sources are declared once with dated evidence, the owner's holdings stay local, routing names the source each call would draw on as an inference with its basis, the owner is told a held source no credential reaches with the vendor's claim link, and spend against a source is observed from a vendor seam or recorded absent with its reason.",
+        "path": ".ai/repo/project/milestones/every-model-call-is-paid-from-a-declared-source.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 3106
       },
       {
         "uri": "majordomus://milestone/every-session-joins-the-mesh",
@@ -118358,7 +118380,7 @@
       "identity": [
         "id"
       ],
-      "objects": 33
+      "objects": 34
     },
     {
       "name": "issue",
@@ -118398,7 +118420,7 @@
       "identity": [
         "id"
       ],
-      "objects": 100
+      "objects": 101
     },
     {
       "name": "moment",

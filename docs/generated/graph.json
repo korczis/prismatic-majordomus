@@ -21701,6 +21701,28 @@
         }
       },
       {
+        "id": "majordomus://intent/every-model-call-is-paid-from-a-declared-source",
+        "kind": "intent",
+        "label": "every-model-call-is-paid-from-a-declared-source",
+        "summary": "Every model call Majordomus makes or starts is paid from a funding source the vendor declared and the owner holds, routed by policy and never guessed",
+        "route": "/cockpit/objects/intent/every-model-call-is-paid-from-a-declared-source",
+        "source": ".ai/repo/project/intents/every-model-call-is-paid-from-a-declared-source.yaml",
+        "facts": {
+          "created_at": "2026-10-20",
+          "milestones": [
+            "every-model-call-is-paid-from-a-declared-source"
+          ],
+          "non_goals": [
+            "Reading, storing or rotating a credential value, or a key vault of Majordomus's own",
+            "Automating the vendor's claim flow, console login or plan changes",
+            "A price list or cost model; prices stay absent from share/models.yaml until a live, verifiable seam exists",
+            "Splitting subscription quota across machines of the mesh; a seat belongs to the client signed in with it",
+            "Billing or invoicing anyone else; this is the owner's own spend"
+          ],
+          "updated_at": "2026-10-20"
+        }
+      },
+      {
         "id": "majordomus://intent/every-sessions-usage-is-observed",
         "kind": "intent",
         "label": "every-sessions-usage-is-observed",
@@ -62236,6 +62258,37 @@
           "updated_at": "2026-10-18",
           "validation": [
             "majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/every-model-call-is-paid-from-a-declared-source",
+        "kind": "milestone",
+        "label": "every-model-call-is-paid-from-a-declared-source",
+        "summary": "Every model call Majordomus makes or starts is paid from a funding source the vendor declared and the owner holds, routed by policy and never guessed",
+        "route": "/cockpit/objects/milestone/every-model-call-is-paid-from-a-declared-source",
+        "source": ".ai/repo/project/milestones/every-model-call-is-paid-from-a-declared-source.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "share/models.yaml declares each vendor's funding sources with kind, credential variable, renewal period, claim link and dated evidence, and the schema refuses a source without evidence",
+            "The owner's holdings and caps are read from .ai/local or the environment and appear in no generated or projected file",
+            "models.route names the funding source a route would draw on, labelled inferred with its basis, in the repository's declared source order",
+            "share/advisors.yaml declares an Anthropic API advisor reached through the vendor's credential",
+            "doctor and the brief name a held source no credential reaches, with the vendor's claim link and its evidence date",
+            "The economics runner and executions record the funding source each run drew on beside its usage record",
+            "Spend against a source is observed from a named vendor seam or recorded absent with its reason; no remaining-credit figure is derived from tokens and a price",
+            "A run that would draw on a metered source while a credit grant is held, or cross a declared cap, is told so and refused only where policy declares refuse"
+          ],
+          "created_at": "2026-10-20",
+          "desired_state": "Every criterion of the intent is carried by an issue here and proven by its test.",
+          "evidence_required": [],
+          "order": 512,
+          "priority": "p2",
+          "slug": "every-model-call-is-paid-from-a-declared-source",
+          "updated_at": "2026-10-20",
+          "validation": [
+            "majordomus plan validate",
+            "majordomus intent validate"
           ]
         }
       },
@@ -104340,6 +104393,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://intent/every-model-call-is-paid-from-a-declared-source",
+        "target": "kind:intent",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://intent/every-sessions-usage-is-observed",
         "target": "kind:intent",
         "kind": "is_a"
@@ -116855,6 +116913,11 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://milestone/every-model-call-is-paid-from-a-declared-source",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://milestone/every-session-joins-the-mesh",
         "target": "kind:milestone",
         "kind": "is_a"
@@ -127276,8 +127339,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3605,
-      "edges": 8387,
+      "nodes": 3607,
+      "edges": 8389,
       "acyclic": false,
       "truncated": false
     }

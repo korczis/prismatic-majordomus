@@ -3268,6 +3268,51 @@
       }
     },
     {
+      "id": "every-model-call-is-paid-from-a-declared-source",
+      "slug": "every-model-call-is-paid-from-a-declared-source",
+      "status": "PLANNED",
+      "order": 512,
+      "priority": "p2",
+      "title": "Every model call Majordomus makes or starts is paid from a funding source the vendor declared and the owner holds, routed by policy and never guessed",
+      "problem": "The model catalogue (share/models.yaml, ADR 0049) knows a vendor's credential variable and nothing about how a call through it is paid. A Claude Max plan now includes a recurring monthly API credit grant the owner claims in the vendor's console, so the same owner holds a subscription seat (Claude Code), a credit grant and possibly metered billing on one vendor, and nothing says which of them an advisor, a benchmark arm or an execution draws on. share/advisors.yaml reaches OpenAI through its API credential but has no Anthropic API advisor at all, so a held Anthropic credit grant funds nothing Majordomus does. I3292 gives the usage record a billing_mode declared by the person; this milestone generalises that one field into declared, per-vendor funding sources that routing reads.",
+      "outcome": "A vendor's funding sources are declared once with dated evidence, the owner's holdings stay local, routing names the source each call would draw on as an inference with its basis, the owner is told a held source no credential reaches with the vendor's claim link, and spend against a source is observed from a vendor seam or recorded absent with its reason.",
+      "current_state": "share/models.yaml declares credential_env per vendor and no funding source; share/advisors.yaml has no Anthropic API advisor; I3292 plans billing_mode on the usage record, declared by the person; ADR 0213 keeps reported, estimated and billed amounts apart.",
+      "desired_state": "Every criterion of the intent is carried by an issue here and proven by its test.",
+      "scope": [],
+      "non_scope": [],
+      "acceptance_criteria": [
+        "share/models.yaml declares each vendor's funding sources with kind, credential variable, renewal period, claim link and dated evidence, and the schema refuses a source without evidence",
+        "The owner's holdings and caps are read from .ai/local or the environment and appear in no generated or projected file",
+        "models.route names the funding source a route would draw on, labelled inferred with its basis, in the repository's declared source order",
+        "share/advisors.yaml declares an Anthropic API advisor reached through the vendor's credential",
+        "doctor and the brief name a held source no credential reaches, with the vendor's claim link and its evidence date",
+        "The economics runner and executions record the funding source each run drew on beside its usage record",
+        "Spend against a source is observed from a named vendor seam or recorded absent with its reason; no remaining-credit figure is derived from tokens and a price",
+        "A run that would draw on a metered source while a credit grant is held, or cross a declared cap, is told so and refused only where policy declares refuse"
+      ],
+      "validation": [
+        "majordomus plan validate",
+        "majordomus intent validate"
+      ],
+      "evidence_required": [],
+      "risks": [],
+      "evidence": [],
+      "issues": [],
+      "mermaid": "flowchart LR\n    classDef done stroke:#16a34a,fill:#dcfce7,color:#14532d,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,color:#1e3a8a,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,color:#4c1d95,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,color:#164e63,stroke-width:2px\n    classDef planned stroke:#0891b2,fill:#ecfeff,color:#164e63,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,color:#78350f,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,color:#374151,stroke-width:2px\n    classDef superseded stroke:#6b7280,fill:#f9fafb,color:#374151,stroke-width:2px",
+      "counts": {
+        "total": 0,
+        "required": 0,
+        "by_status": {
+          "READY": 0,
+          "BLOCKED": 0,
+          "ACTIVE": 0,
+          "VERIFY": 0,
+          "DONE": 0,
+          "CANCELLED": 0
+        }
+      }
+    },
+    {
       "id": "every-session-joins-the-mesh",
       "slug": "every-session-joins-the-mesh",
       "status": "ACTIVE",
@@ -56766,6 +56811,12 @@
       "code": "no_evidence_required",
       "subject": "I3090",
       "message": "requires no evidence; nothing gates its completion"
+    },
+    {
+      "level": "WARN",
+      "code": "empty_milestone",
+      "subject": "every-model-call-is-paid-from-a-declared-source",
+      "message": "is reachable and has no issues; it is an outcome nobody is executing"
     },
     {
       "level": "WARN",
