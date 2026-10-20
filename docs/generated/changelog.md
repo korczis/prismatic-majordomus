@@ -7,6 +7,106 @@ Every entry below is derived: a section per release the layer records, its decis
 
 Current version: **1.0.0-alpha.1**
 
+## v1.0.0-alpha.1 — 2026-10-20
+
+### Decisions
+
+- **ADR-0218** Every language of the site is derived from the English build and a translation memory _(accepted)_
+- **ADR-0217** A change is reconciled by the modules that own its state: hooks only sense, reconciliation is derived on read and says how each join is known, a private read stays on its machine, and verified is answered only by proof _(proposed)_
+- **ADR-0216** Every live surface follows one channel with named follow streams, and nothing polls where a stream exists _(proposed)_
+- **ADR-0215** A phone is the baseline width of every first-party surface, and the primary flow is accepted there before a surface grows _(proposed)_
+- **ADR-0214** A provider's native extension points carry the contract as generated projections; Majordomus neither embeds nor patches the worker's runtime _(proposed)_
+- **ADR-0213** Usage is observed through each provider's official telemetry into one provider-neutral record, and reported, estimated and billed amounts are never merged _(proposed)_
+- **ADR-0212** A workspace is read in the operator's own signed-in browser or from the vendor's export, never through a launched automation profile or another tool's credential _(proposed)_
+- **ADR-0211** A record promoted from a workspace cites the message it came from by a typed reference that validates in every checkout and resolves only where the store is held _(proposed)_
+- **ADR-0210** The sentence that says what Majordomus is has one declaration, and every surface reads it _(proposed)_
+- **ADR-0209** Prismatic Lumen names the owner's mesh-wide view, and it owns no scheduler, event bus, store or API _(proposed)_
+- **ADR-0208** The product's value is stated as the false dones its finish caught, beside the friction it cost _(proposed)_
+- **ADR-0207** A new mechanism is admitted only with the measured problem it removes _(proposed)_
+- **ADR-0206** Public outreach begins only after a stranger has finished a first task unaided _(proposed)_
+- **ADR-0205** What a runtime can do is a set of separately evidenced facts, and detection never authorises _(proposed)_
+- **ADR-0204** The hub is reached privately over the tailnet first; a public ingress is a deployment target, never an application change _(proposed)_
+- **ADR-0203** GitHub Pages is a signed bootstrap anchor for the mesh, never its signalling channel _(proposed)_
+- **ADR-0202** The mesh routes work to an identity, never an address, and selects among proven transports instead of implementing NAT traversal _(proposed)_
+- **ADR-0201** The persistent runtime is the authority; every operator surface, Lumen included, is a client of it _(proposed)_
+- **ADR-0200** Supervision repairs only what is idempotent, owned and verified, and never restarts blindly _(proposed)_
+- **ADR-0199** A hub is a declared host service; a working checkout's server stays a client's child _(proposed)_
+- **ADR-0198** Delivery is judged by verified outcomes landed per day, with lead time p95 as its control, never by commits, pull requests or sessions _(proposed)_
+- **ADR-0197** The backlog is bounded by a declared bound that every session reads at start, and the bound reports rather than refuses _(proposed)_
+- **ADR-0196** Delivery latency targets are budgets of benchmark policy, measured per phase, and never a correctness gate on runners the repository does not own _(proposed)_
+- **ADR-0195** What accepting an issue unblocks is answered by one counterfactual evaluator over the plan graph _(proposed)_
+- **ADR-0194** An ingested brief is an intake revision, and its requirements are reconciled into the existing plan _(proposed)_
+- **ADR-0193** Conflicting evidence keeps the verdict vocabulary: the criterion reads unknown and cites both sides _(proposed)_
+- **ADR-0192** Replanning is bounded, idempotent and never weakens its intent _(proposed)_
+- **ADR-0191** A plan drafted from an intent is a proposal, checked by the plan's own validators before any record is written _(proposed)_
+- **ADR-0190** Mutation testing is scheduled evidence over declared critical predicates, never a gate on every change _(proposed)_
+- **ADR-0189** JUnit and Cobertura are formats evidence is imported from and exported to; the tracked ledger stays the only store _(proposed)_
+- **ADR-0188** A rule's proof of effect is a recorded refusal of its violation, not the presence of its wiring _(proposed)_
+- **ADR-0187** Tests are selected by the impact of a change, derived from what each case declares it reads, and a change of unknown impact runs every case _(proposed)_
+- **ADR-0186** A pull request's required verdict is the feedback lane, a gate whose inputs did not change is reused as inputs_unchanged, and the proof lane judges the combined top before it lands _(proposed)_
+- **ADR-0185** A derivation is a typed graph of the generators the executable already plans, keyed by the content of what each node reads, and the full derive stays its oracle _(proposed)_
+- **ADR-0184** Every command name is implemented by exactly one executable, and the other only delegates _(proposed)_
+- **ADR-0183** Evolution is scheduled at the episode boundary and carried out by a session; nothing promotes itself _(proposed)_
+- **ADR-0182** A closed session record is judged by what it can attribute, not only by its schema _(proposed)_
+- **ADR-0181** An episode records the governance and the briefing it was handed, each by one digest _(proposed)_
+- **ADR-0180** A prompt pack is a campaign: kept as received, indexed as a kind, and cited by the records it drove _(proposed)_
+
+### Added
+
+- **site**: the Czech copy translates the segments the merge with master brought (`370fdf4cc`)
+- **site**: the Czech copy is complete and its rule is enforced (`ce0b7e58c`)
+- **site**: every page in Czech, derived from the English build and a translation memory (`0ce1424df`)
+- **site**: every article reads in every language, and a translation keeps up with its source (`4624a38df`)
+
+### Fixed
+
+- **top**: suite budgets re-derived from the release head's run (`9a5a9b775`)
+- **top**: a milestone title GitHub can hold, and Pages bounds for two languages (`88ce9857e`)
+- **top**: the site-languages step leaves the receipt the ci verdict asks for (`bd676bbe3`)
+- **top**: the UI audit warms each surface and retries a timed-out load once (I3090) (`82ac259d0`)
+- **top**: the bar's own "How it works" is Princip in Czech too (`35f5241ad`)
+- **top**: the UI audit samples the served docs' Czech copy, and its breadcrumb fits at 320 (`9bf2b7258`)
+- **top**: the Czech bar fits at 768 px, and a graph's reset restores the page's own words (`ca83931eb`)
+- **top**: the UI audit samples a language copy under a mount as well as at the root (`5b5358d91`)
+- **top**: two more cases the Czech copy reached, cases 97 and 1071 (`aa936b537`)
+- **top**: what the Czech copy of the site asked of the checks that read every page (`4fc1ffe7f`)
+- **top**: the reds the re-cut's own checks found before its push (`f2420807a`)
+- **site**: every language's copy is in the sitemap, and an alias leads to its target's copy (`b3bf6ed7e`)
+- **capture**: a provider hook declares its timeout, and the session end closes inside it (I3060) (`c6556694a`)
+- **ui**: the UI and the Cockpit wear the site's bar with the language switch (`b12a5fcb5`)
+- **test**: case 3590 compares the second pass by diff, not shasum (`c24cdc1a2`)
+- **ui**: every Knowledge tile reads whole at a phone's width (I3025) (`b9b6dbfa5`)
+- **ui**: the Knowledge manual link names a page the site has (I3024) (`19d5dda61`)
+- **plan**: the promoted records pass the pre-push gates and name only what they touch (`596cd5ebb`)
+- **plan**: the promoted records wait on what 0.30.0 landed and on what their owners answered (`51916f41d`)
+- **plan**: the promoted records name only paths that exist and break two order ties (`d3229ef16`)
+
+### Documentation
+
+- **plan**: the owner's two 10-19 briefs become a proof program and a gap-only cognitive fabric (`bd8ca33c1`)
+- **plan**: promote what the owner's ChatGPT project decided, each record naming its source message (`5ef3c3251`)
+
+### Pipeline
+
+- **validate**: three browser probes outgrew their bounds; each bound grows with its measurement (`6e2aadba1`)
+
+### Housekeeping
+
+- **derive**: the I3060 plan page (`07f15d4c0`)
+- **release**: record v0.30.2 and the metadata it publishes (`94372c0fa`)
+- **derive**: the projections follow the merge with master (`b0e833128`)
+- **plan**: revive the derive, CI critical-path and IDD drafting records that never landed (`321f5dde6`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v1.0.0-alpha.1-aarch64-apple-darwin.tar.gz (`afa2fe2f0e19`)
+- `macos-x86_64` — majordomus-v1.0.0-alpha.1-x86_64-apple-darwin.tar.gz (`84d7c08db6f1`)
+- `linux-x86_64-gnu` — majordomus-v1.0.0-alpha.1-x86_64-unknown-linux-gnu.tar.gz (`45b14249c8fa`)
+- `linux-x86_64-musl` — majordomus-v1.0.0-alpha.1-x86_64-unknown-linux-musl.tar.gz (`298c3832116c`)
+- `linux-aarch64-gnu` — majordomus-v1.0.0-alpha.1-aarch64-unknown-linux-gnu.tar.gz (`46302b271585`)
+- `linux-aarch64-musl` — majordomus-v1.0.0-alpha.1-aarch64-unknown-linux-musl.tar.gz (`38ff14c89ad3`)
+
+
 ## v0.30.2 — 2026-10-19
 
 ### Fixed
