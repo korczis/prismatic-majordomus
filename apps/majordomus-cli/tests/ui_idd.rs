@@ -49,7 +49,7 @@ fn the_workspace_draws_the_intent_and_what_serves_it_from_the_plan() {
         page.contains("href=\"/ui/idd?intent=fixture-intent\" aria-current=\"page\""),
         "{page}"
     );
-    assert!(page.contains("A link that names no intent opens the first one"));
+    assert!(page.contains("A link that names no intent opens the first intent whose stage is"));
     // its milestone leads to the milestone's inspector, its issue to the issue's
     assert!(page.contains("/ui/roadmap?milestone=fixture-milestone#milestone"));
     assert!(page.contains("/ui/prs?issue=I0001#issue"));

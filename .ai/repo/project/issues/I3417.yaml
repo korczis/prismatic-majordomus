@@ -1,0 +1,35 @@
+id: I3417
+milestone: knowledge-is-reconciled-before-it-is-reviewed
+title: "An observation can cite the mesh review that found what it records, and the reference stays in the candidate's body, never in its provenance"
+slug: an-observation-cites-its-review
+priority: p3
+profile: implementation
+objective: "Accept a review: reference carrying a mesh review request key among the evidence references of knowledge observe. The compose step keeps it in the candidate's Evidence body and never in provenance.derived_from, because a mesh review key does not resolve in every checkout. Document it in step 1 of the evolve skill."
+why: "The owner's 2026-10-19 Cognitive Fabric pack asks the episode lifecycle to carry bounded signals from code review (campaigns/prismatic-way-cognitive-fabric-prompt-pack/prompts/03_KNOWLEDGE.md). Reusing observation.recorded adds no event and no store."
+current_state: "lib/knowledge.sh:187 accepts only file:, test:, commit:, issue: and claim: evidence. Reviews live in the mesh journal (apps/majordomus-cli/src/mesh/cooperation.rs:3829 answer_review), and share/events.yaml has no review event."
+desired_state: "A reviewer's finding can be recorded as an observation that names its review."
+scope:
+  - "lib/knowledge.sh"
+  - "test/cases/980_a_session_records_what_it_observed.sh"
+  - "docs/KNOWLEDGE.md"
+  - "site/content/docs/knowledge.md"
+  - ".ai/repo/skills/evolve/SKILL.md"
+non_scope:
+  - "Reading the mesh journal from the deriver"
+  - "Turning review answers into observations automatically"
+  - "A review ledger event"
+depends_on:
+  - "I3415"
+serves:
+  - "a-change-reconciles-what-it-affects#an-observation-cites-its-review"
+acceptance_criteria:
+  - "knowledge observe accepts a well-formed review reference and refuses a malformed one without writing"
+  - "The derived candidate lists the review reference under Evidence and not in provenance.derived_from, and knowledge check passes in a clone without the mesh"
+  - "Step 1 of the evolve skill shows a review reference"
+validation:
+  - "bash test/run.sh 980_a_session_records_what_it_observed 981_an_observation_becomes_a_grouped_candidate 3004_evolve_is_a_procedure_of_existing_commands"
+  - "majordomus plan validate"
+evidence_required:
+  - "case_an_observation_cites_its_review"
+created_at: 2026-10-19
+updated_at: 2026-10-19

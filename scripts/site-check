@@ -22,6 +22,12 @@
 #                                   check 19 alone, over every *.md and *.toml under <dir>, with
 #                                   no built site: the scan a case runs on a fixture. Exit 0 when
 #                                   no count is typed by hand, 10 naming each one, 12 no <dir>.
+#   scripts/site-check --articles CONTENT_DIR NAV_TOML CONFIG_TOML
+#                                   check 21 alone, over the front matter of every *.md under
+#                                   CONTENT_DIR, with no built site: every article reads in every
+#                                   language the site declares, its counterparts name it back, and
+#                                   every translation matches its source's digest. The scan a case
+#                                   runs on a fixture. Exit 0 clean, 10 findings, 12 missing.
 set -eu
 SYNC=1
 if [ "${1:-}" = --no-sync ]; then SYNC=0; shift; fi
@@ -121,6 +127,186 @@ nav_resolves() { # public-dir config-toml
   done
   ok nav "every navigation link on the homepage resolves ($nav_snap of them the root of a snapshot the publication holds and this build does not compose)"
 }
+# The rows of check 21, "every article reads in every language the site declares", over the
+# front matter of every *.md under a content directory, read as the site reads it: an article
+# is a page whose [extra] declares a lang, and a page that declares none is skipped. A page
+# names its counterparts in [extra.translations] (lang = "route/", any number of languages,
+# also written inline or as dotted keys), or in the two-language form [extra] alternate and
+# alternate_lang, which is read as a table of one entry. Prints, separated by \037:
+#   F <finding>                                        a counterpart that is not one
+#   D <shown> <source file> <shown source> <digest>    a translation whose digest the caller recomputes
+#   N <articles> <listed> <languages> <language count> the summary
+# The languages the site declares are config.toml's default_language and every lang a page
+# declares, so a language is declared once, by the page written in it.
+article_rows() { # content-dir nav-toml config-toml shown file...
+  local dir="$1" nav="$2" config="$3" shown="$4"; shift 4
+  LC_ALL=C awk -v dir="$dir" -v nav="$nav" -v cfg="$config" -v shown="$shown" '
+    BEGIN { US = "\037" }
+    function trim(s) { sub(/^[ \t]+/, "", s); sub(/[ \t\r]+$/, "", s); return s }
+    function unq(s) { s = trim(s); if (s ~ /^".*"$/) s = substr(s, 2, length(s) - 2); return s }
+    function val(s) {
+      s = trim(s)
+      if (s ~ /^"/) { s = substr(s, 2); return substr(s, 1, index(s, "\"") - 1) }
+      sub(/[ \t]*#.*$/, "", s); return s
+    }
+    function route(p) { sub(/^\/+/, "", p); sub(/\/+$/, "", p); return p }
+    function at_route(p,   r) { r = route(p); return (r in at) ? at[r] : "" }
+    function show(f) { return shown "/" substr(f, length(dir) + 2) }
+    function F(msg) { printf "F%s%s\n", US, msg }
+    function sortw(s,   a, n, i, j, t, out) {
+      n = split(s, a, " ")
+      for (i = 2; i <= n; i++) { t = a[i]; for (j = i - 1; j >= 1 && a[j] > t; j--) a[j + 1] = a[j]; a[j + 1] = t }
+      out = ""; for (i = 1; i <= n; i++) if (i == 1 || a[i] != a[i - 1]) out = out (out == "" ? "" : " ") a[i]
+      return out
+    }
+    function setkv(f, t, k, v) {
+      if (t == "extra") {
+        if (k == "lang") lang[f] = v; else if (k == "alternate") alt[f] = v
+        else if (k == "alternate_lang") altl[f] = v
+        else if (k == "translated_from") from[f] = v; else if (k == "source_digest") dig[f] = v
+      } else if (t == "extra.translations") {
+        hastr[f] = 1
+        if ((f SUBSEP k) in tr) dup[f] = dup[f] " " k; else { tr[f, k] = v; trk[f] = trk[f] " " k }
+      }
+    }
+    function addent(f, l, p) { ne[f]++; ek[f, ne[f]] = l; ep[f, ne[f]] = p; keyed[f, l] = 1 }
+    FILENAME == cfg { if ($0 ~ /^default_language[ \t]*=/) { v = $0; sub(/^[^=]*=/, "", v); deflang = val(v) }; next }
+    FILENAME == nav {
+      if ($0 ~ /^[ \t]*#/) next
+      s = $0
+      while (match(s, /href[ \t]*=[ \t]*"[^"]*"/)) {
+        h = substr(s, RSTART, RLENGTH); sub(/^[^"]*"/, "", h); sub(/"$/, "", h); listed[route(h)] = 1
+        s = substr(s, RSTART + RLENGTH)
+      }
+      next
+    }
+    FNR == 1 {
+      f = FILENAME; files[++nf] = f; r = substr(f, length(dir) + 2); sub(/\.md$/, "", r)
+      if (r ~ /(^|\/)_?index$/) sub(/\/?_?index$/, "", r)
+      at[r] = f; rt[f] = r; tbl = ""
+      fm = ($0 ~ /^\+\+\+[ \t\r]*$/) ? 0 : 2
+    }
+    fm < 2 && /^\+\+\+[ \t\r]*$/ { fm++; next }
+    fm != 1 || /^[ \t]*(#|$)/ { next }
+    /^[ \t]*\[[^]]*\][ \t\r]*$/ { t = trim($0); tbl = trim(substr(t, 2, length(t) - 2)); next }
+    {
+      eq = index($0, "="); if (!eq) next
+      k = unq(substr($0, 1, eq - 1)); v = trim(substr($0, eq + 1))
+      if (tbl == "extra" && k == "translations" && v ~ /^[{]/) {
+        sub(/^[{]/, "", v); sub(/[}].*$/, "", v); n = split(v, parts, ",")
+        for (i = 1; i <= n; i++) {
+          e = index(parts[i], "=")
+          if (e) setkv(f, "extra.translations", unq(substr(parts[i], 1, e - 1)), val(substr(parts[i], e + 1)))
+        }
+        next
+      }
+      if (tbl == "extra" && k ~ /^translations\./) { setkv(f, "extra.translations", unq(substr(k, 14)), val(v)); next }
+      setkv(f, tbl, k, val(v))
+    }
+    END {
+      langs = deflang
+      for (i = 1; i <= nf; i++) if (lang[files[i]] != "") { langs = langs " " lang[files[i]]; narts++ }
+      langs = sortw(langs); nl = split(langs, L, " ")
+      # the entries each article names, in one shape whichever form wrote them
+      for (i = 1; i <= nf; i++) {
+        f = files[i]; if (lang[f] == "") continue
+        if (hastr[f]) {
+          n = split(trk[f], ks, " ")
+          for (j = 1; j <= n; j++) addent(f, ks[j], tr[f, ks[j]])
+          if (alt[f] != "" && (!((f SUBSEP altl[f]) in tr) || route(tr[f, altl[f]]) != route(alt[f])))
+            F(show(f) " names " alt[f] " as its alternate, and its [extra.translations] does not list it under " (altl[f] == "" ? "any language" : altl[f]))
+        } else if (alt[f] != "") addent(f, altl[f], alt[f])
+        n = split(dup[f], ks, " ")
+        for (j = 1; j <= n; j++) F(show(f) " lists " ks[j] " twice in [extra.translations]; a group holds one page per language")
+      }
+      # each entry is a page, in the language it is listed under, and not the article own language
+      for (i = 1; i <= nf; i++) {
+        f = files[i]; if (lang[f] == "") continue
+        for (j = 1; j <= ne[f]; j++) {
+          l = ek[f, j]; p = ep[f, j]; t = at_route(p)
+          if (l == "") { F(show(f) " names " p " as its alternate and declares no alternate_lang"); continue }
+          if (l == lang[f]) { F(show(f) " lists its own language, " l ", as a counterpart (" p "); a group holds one page per language"); continue }
+          if (t == "") { F(show(f) " names " p " as its " l " counterpart, and no page under " shown " is at that route"); continue }
+          if (lang[t] == "") { F(show(f) " names " show(t) " as its " l " counterpart, and " show(t) " declares no lang"); continue }
+          if (lang[t] == lang[f]) { F(show(f) " names " show(t) " as its " l " counterpart, and both are written in " lang[f]); continue }
+          if (lang[t] != l) { F(show(f) " names " show(t) " as its " l " counterpart, and " show(t) " is written in " lang[t]); continue }
+          vt[f, l] = t; vl[f] = vl[f] " " l; g[f] = g[f] " " lang[t] ":" rt[t]
+        }
+        g[f] = sortw(lang[f] ":" rt[f] g[f])
+      }
+      # reciprocity over the whole group: every member names every other, and the same set
+      for (i = 1; i <= nf; i++) {
+        f = files[i]; if (lang[f] == "") continue
+        n = split(vl[f], ks, " ")
+        for (j = 1; j <= n; j++) {
+          l = ks[j]; t = vt[f, l]; back = 0
+          for (k = 1; k <= ne[t]; k++) if (at_route(ep[t, k]) == f) back = 1
+          if (!back) F(show(f) " names " show(t) " as its " l " counterpart, and " show(t) " does not name it back")
+          else if (g[f] != g[t] && f < t) F(show(f) " and " show(t) " name each other but not the same group: " show(f) " reads it as [" g[f] "], " show(t) " as [" g[t] "]")
+        }
+      }
+      # an article the navigation lists reads in every language the site declares
+      for (i = 1; i <= nf; i++) {
+        f = files[i]; if (lang[f] == "" || !(rt[f] in listed)) continue
+        nlisted++
+        for (k = 1; k <= nl; k++)
+          if (nl > 1 && L[k] != lang[f] && !((f SUBSEP L[k]) in keyed))
+            F(show(f) " is an article the navigation lists, and it has no counterpart in " L[k])
+      }
+      # a translation names its source, a counterpart that is an original, and the digest it was made from
+      for (i = 1; i <= nf; i++) {
+        f = files[i]
+        if (dig[f] != "" && from[f] == "") { F(show(f) " records a source_digest and names no translated_from; the original carries no digest"); continue }
+        if (from[f] == "") continue
+        s = at_route(from[f])
+        if (s == "") { F(show(f) " is translated from " from[f] ", and no page under " shown " is at that route"); continue }
+        if (s == f) { F(show(f) " names itself as the page it was translated from"); continue }
+        if (index(" " g[f] " ", " " lang[s] ":" rt[s] " ") == 0) { F(show(f) " is translated from " show(s) ", which is not one of its counterparts"); continue }
+        if (from[s] != "" || dig[s] != "") { F(show(f) " is translated from " show(s) ", which is itself a translation; the original carries no digest"); continue }
+        printf "D%s%s%s%s%s%s%s%s\n", US, show(f), US, s, US, show(s), US, dig[f]
+      }
+      printf "N%s%d%s%d%s%s%s%d\n", US, narts, US, nlisted, US, langs, US, nl
+    }' "$config" "$nav" "$@"
+}
+# The digest a translation records of its source: SHA-256 of the source's bytes after the
+# newline that ends its closing +++ fence, so an edit to the front matter alone (a new
+# description, a translations table) does not make every translation stale.
+source_body_digest() { # file -> hex digest
+  local off
+  off="$(LC_ALL=C awk 'NR == 1 && !/^\+\+\+[ \t\r]*$/ { nofm = 1 }
+    { off += length($0) + 1 }
+    /^\+\+\+[ \t\r]*$/ && !done && ++n == 2 { body = off; done = 1 }
+    END { print (nofm || !done) ? 0 : body }' "$1")"
+  tail -c +"$((off + 1))" "$1" | mj_sha256_hex
+}
+# Check 21 as a function, so a case can hold it on a fixture (--articles) and the full run calls
+# the same rule (I3436, I3437, I3438). Refused, naming the file: a counterpart that is not a page,
+# is in the article's own language or in another language than the one it is listed under; a
+# member of a group that does not name the article back, or names another group; a language
+# listed twice; an article the navigation lists with no counterpart in a language the site
+# declares; and a translation whose source is not a counterpart, is itself a translation, or has
+# changed since the digest it records. A stale digest is never rewritten here: the re-sync is the
+# translator's act, so the finding prints the digest to record once it is done. Reports through
+# the caller's ok and bad.
+article_counterparts() { # content-dir nav-toml config-toml shown
+  local dir="${1%/}" nav="$2" config="$3" shown="${4%/}" kind a b c d sum before="$fails"
+  local fresh=0 narts=0 nlisted=0 langs="" nl=0 mds=()
+  while IFS= read -r f; do mds+=("$f"); done < <(find "$dir" -type f -name '*.md' | LC_ALL=C sort)
+  while IFS=$'\037' read -r kind a b c d; do
+    case "$kind" in
+      F) bad articles "$a" ;;
+      N) narts="$a"; nlisted="$b"; langs="$c"; nl="$d" ;;
+      D)
+        sum="$(source_body_digest "$b")" && [ -n "$sum" ] || { bad articles "$a: no digest of $c could be computed ($MJ_SHA256_MISSING)"; continue; }
+        if [ "$sum" = "$d" ]; then fresh=$((fresh + 1))
+        elif [ -z "$d" ]; then bad articles "$a is translated from $c and records no source_digest; once it reads as its source does, record source_digest = \"$sum\""
+        else bad articles "$a is translated from $c, which has changed since the digest it records ($d); re-sync the translation, then record source_digest = \"$sum\""; fi ;;
+    esac
+  done < <(article_rows "$dir" "$nav" "$config" "$shown" ${mds[@]+"${mds[@]}"})
+  [ "$fails" = "$before" ] || return 0
+  if [ "$nl" -lt 2 ]; then ok articles "the site declares one language ($langs); none of its $narts article(s) owes a counterpart"
+  else ok articles "every article the navigation lists ($nlisted of $narts) reads in every language the site declares ($langs), every counterpart names it back, and $fresh translation(s) match their source's digest"; fi
+}
 if [ "${1:-}" = --roadmap ]; then
   [ $# -ge 3 ] || { echo "site-check: --roadmap PAGE DATA_DIR [BUILD_JSON]" >&2; exit 2; }
   [ -f "$2" ] && [ -f "$3/plan.json" ] && [ -f "$3/roadmap.json" ] \
@@ -132,6 +318,16 @@ if [ "${1:-}" = --nav ]; then
   [ -f "${2:-}/index.html" ] && [ -f "${3:-}" ] || { echo "site-check: --nav needs a built public directory with index.html and a config.toml" >&2; exit 12; }
   fails=0; ok() { printf 'OK   %-12s %s\n' "$1" "$2"; }; bad() { printf 'FAIL %-12s %s\n' "$1" "$2"; fails=$((fails + 1)); }
   nav_resolves "$2" "$3"
+  [ "$fails" = 0 ] && exit 0
+  exit 10
+fi
+if [ "${1:-}" = --articles ]; then
+  [ -d "${2:-}" ] && [ -f "${3:-}" ] && [ -f "${4:-}" ] \
+    || { echo "site-check: --articles needs a content directory, a nav.toml and a config.toml" >&2; exit 12; }
+  # shellcheck source=../lib/sha256.sh
+  . "$(cd "$(dirname "$0")/.." && pwd)/lib/sha256.sh"
+  fails=0; ok() { printf 'OK   %-12s %s\n' "$1" "$2"; }; bad() { printf 'FAIL %-12s %s\n' "$1" "$2"; fails=$((fails + 1)); }
+  article_counterparts "$2" "$3" "$4" "$2"
   [ "$fails" = 0 ] && exit 0
   exit 10
 fi
@@ -1090,6 +1286,12 @@ nav_exempt=" images js render-test releases "
 for redirect in $(sed -n 's/^from = "\/\([^/"]*\).*/\1/p' "$SITE/data/nav.toml" | LC_ALL=C sort -u); do
   nav_exempt="$nav_exempt$redirect "
 done
+# A language's copy of the whole site (ADR 0218) is not a section: every page reaches it through
+# the language switch in the bar, so each language site/i18n/languages.json declares beside the
+# source is named here, from the declaration rather than a pattern.
+for lang in $(jq -r '.source as $s | .languages[] | select(. != $s)' "$SITE/i18n/languages.json"); do
+  nav_exempt="$nav_exempt$lang "
+done
 for dir in "$PUB"/*/; do
   section="$(basename "$dir")"
   [ -f "$dir/index.html" ] || continue
@@ -1593,5 +1795,14 @@ fi
 # template that renders a document to reaching all three through what it extends and includes,
 # so a layout family added without the navbar is refused at its source.
 relay_check search "$ROOT/scripts/lib/search-check.mjs" "OK   search       " "FAIL search       "
+
+# 21. every article reads in every language the site declares, and its counterparts are
+# reciprocal (I3436, I3437, I3438). templates/base.html emits a rel=alternate link per
+# counterpart a page names and scripts/ci/link-check holds each to a built page; what neither
+# can see is the other direction (A names B and B does not name A), a counterpart in the wrong
+# language, an article with no counterpart at all, or a translation its source has moved past.
+# The rule is article_counterparts, above, read from site/content-src so it needs no build, and
+# `--articles <dir> <nav.toml> <config.toml>` runs it alone.
+article_counterparts "$SITE/content-src" "$SITE/data/nav.toml" "$SITE/config.toml" site/content-src
 
 printf 'site-check: %s failure(s)\n' "$fails"; [ "$fails" = 0 ] && exit 0 || exit 10

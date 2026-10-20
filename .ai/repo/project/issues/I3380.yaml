@@ -1,0 +1,35 @@
+id: I3380
+milestone: every-task-states-its-delivery-economics
+title: "A task's spend is the usage attributed to it, as reported tokens with their class, and money stays not observed until it is a separate field"
+slug: task-spend-is-observed-usage
+priority: p1
+profile: implementation
+objective: "Fill spend from the usage-by-task reading I3293 provides: reported input, output, cache-read and cache-write tokens, the models reported and the measurement class, with the usage event ids. Never re-join or estimate; a task with no received usage reads not_observed with the receiver's reason; any money amount stays not_observed until I3292's fields exist."
+why: "T3 of the owner's report of 2026-10-19 asks for spend per task. every-sessions-usage-is-observed owns receiving and attributing usage and forbids an estimate shown as spend, so depending on I3293 keeps one account of usage."
+current_state: "apps/majordomus-cli/src/economics/usage.rs:106-134 normalises benchmark harness usage only; I3288 and I3293 are BLOCKED and not on master; docs/ECONOMICS.md:139-140 says cost is the harness's projection, not a bill."
+desired_state: "Every record shows reported tokens with class and event ids, or not_observed with a reason."
+scope:
+  - "apps/majordomus-cli/src/economics"
+  - "apps/majordomus-cli/tests/economics.rs"
+  - "docs/ECONOMICS.md"
+non_scope:
+  - "Receiving or attributing usage (I3288, I3293)"
+  - "Pricing (I3292)"
+  - "Any saving figure"
+depends_on:
+  - "I3376"
+  - "I3293"
+serves:
+  - "the-product-proves-it-pays#spend-is-the-observed-usage-of-the-task"
+acceptance_criteria:
+  - "A fixture task shows each token category with class and event ids"
+  - "A task with no received usage reads not_observed with I3293's reason"
+  - "No money amount appears"
+  - "spend equals I3293's reading for the same task on the same fixture"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test economics"
+  - "bash test/run.sh 431_economics_claims_gated"
+evidence_required:
+  - "test_task_spend_is_attributed_usage"
+created_at: 2026-10-19
+updated_at: 2026-10-19
