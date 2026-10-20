@@ -779,14 +779,19 @@ jobs:
   # The reports and the result live under the runner's temporary directory, never in the
   # checkout the report is derived in. It is not a gate and the verdict does not need it: it
   # reads jobs that have already decided, and a red suite is exactly the evidence worth
-  # keeping. It runs whenever the suite or the crate produced anything, whatever they concluded.
+  # keeping. It runs whenever the plan ran the suite or the crate's tests (shell_suite,
+  # rust_check), whatever they concluded. A plan of records alone runs neither: its rust lanes
+  # build the executable and run the registry checks (rust_integration), which write no test
+  # output, so the job is skipped there rather than failing at evidence-collect's "no report to
+  # record" (#1745, #1746 and #1749 were red for that alone; I3013, case 3402). A planned lane
+  # that left no report is still refused.
   #
   # On master, when this commit is still the tip, it then dispatches the pages workflow, so the
   # site that was published at once with the nearest older evidence (labelled stale) republishes
   # with the evidence of the commit it shows. pages.yml stays triggered by the push alone.
   evidence:
     needs: [plan, suite, rust, coverage]
-    if: always() && (needs.suite.result == 'success' || needs.suite.result == 'failure' || needs.rust.result == 'success' || needs.rust.result == 'failure')
+    if: always() && ((needs.plan.outputs.shell_suite == 'true' && (needs.suite.result == 'success' || needs.suite.result == 'failure')) || (needs.plan.outputs.rust_check == 'true' && (needs.rust.result == 'success' || needs.rust.result == 'failure')))
     timeout-minutes: 30
     runs-on: ubuntu-latest
     permissions:
