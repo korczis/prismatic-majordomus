@@ -3169,6 +3169,11 @@
     },
     {
       "kind": "command",
+      "subject": "command:self update",
+      "path": "/evidence/commands/self-update/"
+    },
+    {
+      "kind": "command",
       "subject": "command:serve ensure",
       "path": "/evidence/commands/serve-ensure/"
     },
@@ -16720,6 +16725,25 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:self update": {
+      "kind": "command",
+      "id": "self update",
+      "page": "/evidence/commands/self-update/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:serve": {
       "kind": "command",
       "id": "serve",
@@ -27522,6 +27546,7 @@
     "suite:3021_a_tag_does_not_freeze_the_queue",
     "suite:3022_the_rule_package_is_stamped_and_adopter_neutral",
     "suite:302_the_topology_rule_has_one_source",
+    "suite:3034_a_node_updates_itself_through_the_one_installer",
     "suite:303_one_source_serves_two_mounts",
     "suite:305_a_command_is_claimed_or_classified",
     "suite:310_rustdoc_projection",

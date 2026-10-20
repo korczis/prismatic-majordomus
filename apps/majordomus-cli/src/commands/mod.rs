@@ -63,6 +63,7 @@ pub(crate) mod reasoning;
 pub(crate) mod release;
 pub(crate) mod rules;
 pub(crate) mod scope;
+pub(crate) mod self_update;
 pub(crate) mod serve;
 pub(crate) mod served;
 pub(crate) mod shell;
@@ -87,6 +88,7 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Why(args) => why::run(args),
         Command::Devtask(args) => devtask::run(args),
         Command::Distribution(args) => distribution::run(args),
+        Command::SelfCmd(args) => self_update::run(args),
         Command::Env(args) => env::run(args),
         Command::Commands(args) => command_graph::run(args),
         Command::Completion(args) => completion::run(args),

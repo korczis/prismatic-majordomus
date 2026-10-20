@@ -342,8 +342,10 @@ impl Releases {
 }
 
 /// A comparable key for a semantic version: the three numbers, then whether it is a final
-/// release (a pre-release sorts below its own final), then the pre-release text.
-fn version_key(version: &str) -> (u64, u64, u64, u8, String) {
+/// release (a pre-release sorts below its own final), then the pre-release text. Shared with
+/// `self update`, which must order an installed version against the stable pointer the same
+/// way the pointer itself was chosen.
+pub(crate) fn version_key(version: &str) -> (u64, u64, u64, u8, String) {
     let (core, pre) = match version.split_once('-') {
         Some((c, p)) => (c, p.to_string()),
         None => (version, String::new()),
