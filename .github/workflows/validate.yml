@@ -971,10 +971,11 @@ jobs:
         run: scripts/ci/timed --bound 2700 site-build site-check timings.tsv scripts/site-check --no-sync
       # Every link of every page in every language the site declares lands, stays in its copy's
       # language, and the switch and the alternates lead to every copy (ADR 0218). It reads the
-      # build as site-build left it, before any case or probe touches site/public.
+      # build as site-build left it, before any case or probe touches site/public. Timed, so it
+      # leaves the receipt the ci verdict asks gate site-languages for (run 39379416881).
       - name: every language of the site
         if: needs.plan.outputs.site_languages == 'true'
-        run: node scripts/lib/site-i18n-probe.mjs site/public "$(sed -n 's/^base_url = "\(.*\)"/\1/p' site/config.toml)" --jobs 4
+        run: CHROME_BIN=google-chrome scripts/ci/timed --bound 1800 site-languages site-languages timings.tsv node scripts/lib/site-i18n-probe.mjs site/public "$(sed -n 's/^base_url = "\(.*\)"/\1/p' site/config.toml)" --jobs 4
       # The cases whose subject is the built site, which the suite runners do not have when they
       # run: each declares "# majordomus-skip-runs-in: site" and is excused there only because it
       # is held here, after the build, with no skip excused.
