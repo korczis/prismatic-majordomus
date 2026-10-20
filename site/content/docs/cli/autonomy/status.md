@@ -1,7 +1,7 @@
 +++
 title = "majordomus autonomy status"
 description = "The settings layers, the isolation evidence and the profile they support, with the recommended permission mode and what refused every stronger profile"
-weight = 213
+weight = 217
 [extra]
 route = "/docs/cli/autonomy/status/"
 command = "majordomus autonomy status"

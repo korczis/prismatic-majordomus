@@ -1,28 +1,28 @@
 {
   "schema": "majordomus/benchmark-matrix/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.27.0",
+  "generator": "majordomus-cli 1.0.0-alpha.1",
   "coverage": [
     {
       "scope": "direct",
-      "required": 205,
-      "covered": 174,
+      "required": 209,
+      "covered": 178,
       "missing": 0,
       "waived": 31,
       "inapplicable": 0
     },
     {
       "scope": "http",
-      "required": 200,
-      "covered": 174,
+      "required": 204,
+      "covered": 178,
       "missing": 0,
       "waived": 26,
       "inapplicable": 0
     },
     {
       "scope": "mcp",
-      "required": 195,
-      "covered": 170,
+      "required": 199,
+      "covered": 174,
       "missing": 0,
       "waived": 25,
       "inapplicable": 0
@@ -37,8 +37,8 @@
     },
     {
       "scope": "total",
-      "required": 614,
-      "covered": 532,
+      "required": 626,
+      "covered": 544,
       "missing": 0,
       "waived": 82,
       "inapplicable": 0
@@ -1791,6 +1791,45 @@
       ]
     },
     {
+      "id": "plan.delivery",
+      "module": "plan",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "every-issue",
+        "one-issue-at-head"
+      ]
+    },
+    {
+      "id": "plan.drift",
+      "module": "plan",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "every-issue",
+        "one-issue-at-head-as-trunk-gate"
+      ]
+    },
+    {
+      "id": "plan.flight",
+      "module": "plan",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "where-the-work-is",
+        "one-milestone-inspected"
+      ]
+    },
+    {
       "id": "plan.issues",
       "module": "plan",
       "kind": "query",
@@ -2503,6 +2542,19 @@
       ]
     },
     {
+      "id": "worktree.trunk",
+      "module": "worktree",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default",
+        "primary-checkout"
+      ]
+    },
+    {
       "id": "worktree.uncommitted",
       "module": "worktree",
       "kind": "query",
@@ -2602,6 +2654,12 @@
       "deferred": false
     },
     {
+      "key": "system.http.ui.idd",
+      "route": "/ui/idd",
+      "view": "pinned",
+      "deferred": false
+    },
+    {
       "key": "system.http.ui.roadmap",
       "route": "/ui/roadmap",
       "view": "pinned",
@@ -2628,6 +2686,12 @@
     {
       "key": "system.http.ui.capabilities",
       "route": "/ui/capabilities",
+      "view": "pinned",
+      "deferred": false
+    },
+    {
+      "key": "system.http.ui.skills",
+      "route": "/ui/skills",
       "view": "pinned",
       "deferred": false
     },
@@ -2692,6 +2756,12 @@
       "deferred": false
     },
     {
+      "key": "system.http.live.ui.idd",
+      "route": "/ui/idd",
+      "view": "live",
+      "deferred": false
+    },
+    {
       "key": "system.http.live.ui.roadmap",
       "route": "/ui/roadmap",
       "view": "live",
@@ -2718,6 +2788,12 @@
     {
       "key": "system.http.live.ui.capabilities",
       "route": "/ui/capabilities",
+      "view": "live",
+      "deferred": false
+    },
+    {
+      "key": "system.http.live.ui.skills",
+      "route": "/ui/skills",
       "view": "live",
       "deferred": false
     },
@@ -2784,6 +2860,12 @@
     {
       "key": "system.http.ui.panels.drain",
       "route": "/ui/panels/drain",
+      "view": "pinned",
+      "deferred": true
+    },
+    {
+      "key": "system.http.ui.panels.standing",
+      "route": "/ui/panels/standing",
       "view": "pinned",
       "deferred": true
     }

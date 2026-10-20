@@ -4,7 +4,7 @@ description = "How much a coding-agent session in this checkout may do unasked, 
 sort_by = "weight"
 template = "docs-cli-group.html"
 page_template = "docs-cli-command.html"
-weight = 212
+weight = 216
 [extra]
 route = "/docs/cli/autonomy/"
 command = "majordomus autonomy"

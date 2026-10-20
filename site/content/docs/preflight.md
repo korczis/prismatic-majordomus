@@ -22,21 +22,20 @@ the decision is ADR 0066.
 
 ## Architecture
 
-```text
-repository state (git, .ai/local/state, lease, evidence ledger, gh-pages ref, index)
-        │  observe()  — the only reading; bounded, loopback only, never a build
-        ▼
-Observations           — plain data
-        │  derive()   — pure; every verdict is a test over a value
-        ▼
-Preflight              — sections of checks, each a verdict and its evidence
-        │
-        ├── env enter      the compact line drawn on entering (direnv, via .envrc)
-        ├── env preflight  full, --compact, --format json, --full
-        ├── GET  /api/v1/environment/preflight
-        ├── MCP  tool majordomus_preflight, resource majordomus://environment/preflight
-        └── Cockpit overview, the Preflight card (each verdict as data-check / data-verdict)
-```
+<pre class="mermaid">
+flowchart TD
+  state["repository state&lt;br/&gt;&lt;small&gt;git, .ai/local/state, lease, evidence ledger, gh-pages ref, index&lt;/small&gt;"]
+  observations["Observations&lt;br/&gt;&lt;small&gt;plain data&lt;/small&gt;"]
+  preflight["Preflight&lt;br/&gt;environment.preflight&lt;br/&gt;&lt;small&gt;sections of checks, each a verdict and its evidence&lt;/small&gt;"]
+  state --&gt;|"observe(): the only reading; bounded, loopback only, never a build"| observations
+  observations --&gt;|"derive(): pure; every verdict is a test over a value"| preflight
+  preflight --&gt; enter["env enter&lt;br/&gt;&lt;small&gt;the compact line drawn on entering (direnv, via .envrc)&lt;/small&gt;"]
+  preflight --&gt; full["majordomus env preflight&lt;br/&gt;&lt;small&gt;full, --compact, --format json, --full&lt;/small&gt;"]
+  preflight --&gt; http["GET /api/v1/environment/preflight"]
+  preflight --&gt; mcp["MCP&lt;br/&gt;&lt;small&gt;tool majordomus_preflight, resource majordomus://environment/preflight&lt;/small&gt;"]
+  preflight --&gt; cockpit["Cockpit overview&lt;br/&gt;&lt;small&gt;the Preflight card, each verdict as data-check / data-verdict&lt;/small&gt;"]
+</pre>
+
 
 `RepositoryEnvironment` ([`ENVIRONMENT.md`](@/docs/environment.md)) says what a checkout *is*. The
 preflight says what is *proven* about it. The two are separate values on purpose. Folding
