@@ -31,13 +31,16 @@
 #                                         only when its build errored and nothing is building:
 #                                         0 requested or none needed, 12 the state unreadable,
 #                                         a build in flight, or the request refused
-#   scripts/pages evidence [--commit SHA] [--from DIR] [--out FILE] [--ledger-out FILE]
+#   scripts/pages evidence [--commit SHA] [--from DIR]... [--out FILE] [--ledger-out FILE]
 #   scripts/pages published-evidence --bin EXE [--baseline FILE]
 #                                         refuse to publish a UI whose evidence report holds more
 #                                         `not run` claims than the declared baseline (I2786):
 #                                         0 within it, 10 over it, 12 when it cannot be read
 #                                         site/data/evidence.json: the CI evidence of that commit
 #                                         or its nearest ancestor (the `evidence` artifact, or DIR),
+#                                         the nearest run that reported from every runner; a run
+#                                         with an absent report (one cancelled midway) stands in
+#                                         only when no complete one is among the nearest (I2845),
 #                                         current, stale with the distance, or unavailable with
 #                                         the reason; 0 in all three, 12 when it cannot write
 #   scripts/pages checkout [--verify]     the fetch-depth deploy.checkout implies; --verify
@@ -779,11 +782,12 @@ cmd_built() {
 # report; and no evidence at all is published as unavailable, with the reason. ADR 68, as
 # ADR 0087 amends it; the reasons withhold `current` and never change the report.
 cmd_evidence() {
-  local commit="" from="" out="$ROOT/site/data/evidence.json" ledger_out="" slug="" tmp="" aid="" sha="" best=""
-  local m ecommit behind changed repo_url cov_json cov_txt report_txt state reasons
+  local commit="" from="" out="$ROOT/site/data/evidence.json" ledger_out="" slug="" tmp="" aid="" sha="" n=0
+  local m ecommit behind changed repo_url cov_json cov_txt report_txt state reasons d skipped=""
+  local -a froms=()
   while [ $# -gt 0 ]; do case "$1" in
     --commit) commit="$2"; shift 2 ;;
-    --from) from="$2"; shift 2 ;;
+    --from) froms+=("$2"); shift 2 ;;
     --out) out="$2"; shift 2 ;;
     --ledger-out) ledger_out="$2"; shift 2 ;;
     *) echo "pages evidence: unknown option $1" >&2; exit 2 ;;
@@ -796,7 +800,14 @@ cmd_evidence() {
       || { echo "pages evidence: could not write $out" >&2; exit 12; }
     echo "pages evidence: unavailable: $1"
   }
-  if [ -z "$from" ]; then
+  # A run cancelled midway uploads its evidence all the same, without the report of a runner it
+  # never reached (`absent`): its ledger holds no execution of that runner's tests, and every
+  # claim they prove would publish as `not run`. On 2026-10-20 the cancelled master validate of
+  # 82ac259d0ae left such a run nearest, and two deploys refused 215 claims (39438897759,
+  # 39451372815). The nearest complete run is the evidence; an incomplete one stands in only
+  # when none of the nearest is complete, and is then reported for what it lacks (I2845).
+  complete_run() { jq -e '.schema == 1 and (.commit | type == "string") and ((.absent // []) | length == 0)' "$1/manifest.json" >/dev/null 2>&1; }
+  if [ "${#froms[@]}" -eq 0 ]; then
     command -v gh >/dev/null 2>&1 || { evidence_unavailable "gh is not installed, so no CI evidence was fetched"; return 0; }
     slug="${GITHUB_REPOSITORY:-}"
     [ -n "$slug" ] || slug="$(git -C "$ROOT" remote get-url origin 2>/dev/null | sed -n 's|.*[:/]\([^/][^/]*/[^/][^/]*\)$|\1|p' | sed 's|\.git$||')"
@@ -812,12 +823,29 @@ cmd_evidence() {
       git -C "$ROOT" merge-base --is-ancestor "$sha" "$commit" 2>/dev/null || continue
       printf '%s\t%s\n' "$(git -C "$ROOT" rev-list --count "$sha")" "$aid"
     done < "$tmp/list" | LC_ALL=C sort -t "$(printf '\t')" -k1,1nr > "$tmp/candidates"
-    best="$(head -1 "$tmp/candidates" | cut -f2)"
-    [ -n "$best" ] || { evidence_unavailable "no evidence artifact of master's validation is recorded against this commit or a retained ancestor"; return 0; }
-    gh api "repos/$slug/actions/artifacts/$best/zip" > "$tmp/evidence.zip" 2>/dev/null \
-      && mkdir -p "$tmp/evidence" && unzip -qo "$tmp/evidence.zip" -d "$tmp/evidence" >/dev/null 2>&1 \
-      || { evidence_unavailable "the evidence artifact $best could not be downloaded"; return 0; }
-    from="$tmp/evidence"
+    [ -s "$tmp/candidates" ] || { evidence_unavailable "no evidence artifact of master's validation is recorded against this commit or a retained ancestor"; return 0; }
+    # The five nearest at most, nearest first, stopping at the first complete run.
+    while IFS=$'\t' read -r _ aid; do
+      n=$((n + 1)); d="$tmp/evidence-$n"
+      if gh api "repos/$slug/actions/artifacts/$aid/zip" > "$d.zip" 2>/dev/null \
+        && mkdir -p "$d" && unzip -qo "$d.zip" -d "$d" >/dev/null 2>&1; then
+        froms+=("$d")
+        complete_run "$d" && break
+      elif [ "$n" -eq 1 ]; then
+        evidence_unavailable "the evidence artifact $aid could not be downloaded"; return 0
+      fi
+    done < <(head -5 "$tmp/candidates")
+  fi
+  from=""
+  for d in "${froms[@]}"; do
+    if complete_run "$d"; then from="$d"; break; fi
+    [ -f "$d/manifest.json" ] && skipped="${skipped:+$skipped; }$(jq -r '"the run of \(.commit[0:12]) has no report from \((.absent // []) | join(", "))"' "$d/manifest.json" 2>/dev/null)"
+  done
+  if [ -z "$from" ]; then
+    from="${froms[0]}"
+    [ -z "$skipped" ] || echo "pages evidence: no complete run among the ${#froms[@]} nearest; the nearest stands in: $skipped"
+  elif [ -n "$skipped" ]; then
+    echo "pages evidence: passed over nearer incomplete evidence ($skipped), reading the nearest complete run"
   fi
   m="$from/manifest.json"
   jq -e '.schema == 1 and (.commit | type == "string")' "$m" >/dev/null 2>&1 \

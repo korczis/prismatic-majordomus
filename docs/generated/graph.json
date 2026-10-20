@@ -43784,6 +43784,45 @@
         }
       },
       {
+        "id": "majordomus://issue/I2845",
+        "kind": "issue",
+        "label": "I2845",
+        "summary": "a run cancelled midway is not the publication's evidence while a complete one is near",
+        "route": "/cockpit/objects/issue/i2845",
+        "source": ".ai/repo/project/issues/I2845.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "With a nearer incomplete artifact and a complete one listed, the complete one is downloaded and read, and the incomplete one is named",
+            "A lone incomplete run stands in and says what it lacks",
+            "A lone complete run is read as before, with no word about a choice"
+          ],
+          "created_at": "2026-10-20",
+          "current_state": "pages evidence takes the single nearest ancestor's evidence artifact whatever its manifest says is absent, and copies its ledger for the UI snapshot.",
+          "depends_on": [],
+          "evidence_required": [
+            "an_incomplete_run_is_not_the_publications_evidence_case"
+          ],
+          "milestone": "test-evidence",
+          "non_scope": [
+            "Not cancelling a master validate: a coordination rule for the release seat, recorded in its memory, not in the publisher.",
+            "Treating a run with failed executions as incomplete: a failed run has every report, and evidence already reads it as stale."
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "scripts/pages",
+            "test/cases/3245_an_incomplete_run_is_not_the_publications_evidence.sh"
+          ],
+          "slug": "an-incomplete-run-is-not-the-publications-evidence",
+          "updated_at": "2026-10-20",
+          "validation": [
+            "bin/majordomus plan validate",
+            "bash test/run.sh 3245_an_incomplete_run_is_not_the_publications_evidence 3242_a_claim_newer_than_the_ledger_is_not_yet_recorded 3178_the_published_ui_reads_the_evidence_ci_recorded"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I2849",
         "kind": "issue",
         "label": "I2849",
@@ -80763,6 +80802,13 @@
         "source": "test/cases/3242_a_claim_newer_than_the_ledger_is_not_yet_recorded.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3245_an_incomplete_run_is_not_the_publications_evidence.sh",
+        "kind": "test",
+        "label": "test/cases/3245_an_incomplete_run_is_not_the_publications_evidence.sh",
+        "route": "/cockpit/objects/test/test-cases-3245-an-incomplete-run-is-not-the-publications-evidence-sh",
+        "source": "test/cases/3245_an_incomplete_run_is_not_the_publications_evidence.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/32_refusal_lifecycle.sh",
         "kind": "test",
         "label": "test/cases/32_refusal_lifecycle.sh",
@@ -111087,6 +111133,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2845",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2845",
+        "target": "majordomus://milestone/test-evidence",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I2849",
         "target": "kind:issue",
         "kind": "is_a"
@@ -121867,6 +121923,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3245_an_incomplete_run_is_not_the_publications_evidence.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/32_refusal_lifecycle.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -127248,8 +127309,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3604,
-      "edges": 8386,
+      "nodes": 3606,
+      "edges": 8389,
       "acyclic": false,
       "truncated": false
     }
