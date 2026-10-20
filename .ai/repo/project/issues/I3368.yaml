@@ -1,0 +1,35 @@
+id: I3368
+milestone: the-corpus-is-registered-before-it-runs
+title: "Six large tasks join the economics corpus, each failing on its start, passing on its reference and reviewed by someone other than its author"
+slug: the-corpus-gains-a-large-stratum
+priority: p1
+profile: implementation
+objective: "Add six large tasks on the ledgerlite fixture, within the registered large cut-offs: credit-note-lifecycle, multi-currency-report, storage-v3-migration, partial-payments (two sessions), vat-reverse-charge and csv-batch-import, each with task.yaml, prompt, hidden acceptance test and reference patch in the existing layout. Ask a review of the prompts and tests through majordomus_mesh_review_request from a reviewer who did not write them, and record the answered review ids in the task declarations."
+why: "T2 of the owner's report of 2026-10-19 asks for 20 comparable tasks split by difficulty. The corpus has no large task. The critique asked for review by a party that is not the treatment's author; a peer review answered on the mesh is the available independent check, and its id is recorded."
+current_state: "grep complexity .ai/repo/benchmarks/economics/tasks/*/task.yaml gives 4 small, 3 medium, 0 large; the fixture holds 9 modules under test/fixtures/economics/ledgerlite/ledgerlite."
+desired_state: "Six new large tasks proven by economics references and reviewed."
+scope:
+  - ".ai/repo/benchmarks/economics/tasks"
+  - "test/fixtures/economics/acceptance"
+  - "test/fixtures/economics/reference"
+non_scope:
+  - "Editing the fixture or an existing task"
+  - "Adding the tasks to the pilot suite"
+depends_on:
+  - "I3374"
+serves:
+  - "the-product-proves-it-pays#every-registered-task-can-be-failed-and-passed"
+acceptance_criteria:
+  - "Each task declares complexity large and its proxy falls inside the registered large cut-offs"
+  - "economics references reports each failing on its start and passing on its reference"
+  - "No prompt names the hidden tests or the reference"
+  - "Each acceptance test uses only the Python standard library"
+  - "Each task names an answered review id from a reviewer who did not write it"
+validation:
+  - "majordomus economics references --work-dir \"$(mktemp -d)\""
+  - "bash test/run.sh 430_economics"
+  - "majordomus plan validate"
+evidence_required:
+  - "references_large_stratum"
+created_at: 2026-10-19
+updated_at: 2026-10-19
