@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 158,
+      "count": 159,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 158
+      "count": 159
     },
     {
       "kind": "application",
@@ -285,7 +285,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 567
+      "count": 568
     },
     {
       "kind": "use-case",
@@ -7978,6 +7978,13 @@
         },
         {
           "edge": "put_in_force",
+          "label": "adr-0173",
+          "kind": "adr",
+          "route": "/adrs/adr-0173/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
           "label": "adr-0201",
           "kind": "adr",
           "route": "/adrs/adr-0201/",
@@ -8411,6 +8418,13 @@
           "label": "adr-0160",
           "kind": "adr",
           "route": "/adrs/adr-0160/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0173",
+          "kind": "adr",
+          "route": "/adrs/adr-0173/",
           "external": false
         },
         {
@@ -9261,6 +9275,13 @@
           "label": "adr-0163",
           "kind": "adr",
           "route": "/adrs/adr-0163/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0173",
+          "kind": "adr",
+          "route": "/adrs/adr-0173/",
           "external": false
         },
         {
@@ -10156,6 +10177,87 @@
         {
           "edge": "put_in_force",
           "label": "test/cases/3221_a_bare_session_start_joins_the_cluster.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0173",
+      "identity": "adr-0173",
+      "slug": "adr-0173",
+      "cockpit": "/cockpit/objects/adr/adr-0173",
+      "title": "A screen behind the repository says why it is behind, and a page follows the repository by a pulse instead of by the minute",
+      "status": "proposed",
+      "tags": [
+        "ui",
+        "observatory",
+        "freshness"
+      ],
+      "source": ".ai/repo/adrs/0173-a-screen-behind-the-repository-says-why.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/live.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/ui/mod.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "share/ui/observatory.js",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "share/ui/ui.js",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0135",
+          "kind": "adr",
+          "route": "/adrs/adr-0135/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0142",
+          "kind": "adr",
+          "route": "/adrs/adr-0142/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0158",
+          "kind": "adr",
+          "route": "/adrs/adr-0158/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.ui-derived-state@1",
+          "kind": "rule",
+          "route": "/rules/project-ui-derived-state-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/3095_a_display_behind_the_repository_says_why.sh",
           "kind": "test",
           "route": null,
           "external": false
@@ -23303,6 +23405,13 @@
           "label": "adr-0160",
           "kind": "adr",
           "route": "/adrs/adr-0160/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0173",
+          "kind": "adr",
+          "route": "/adrs/adr-0173/",
           "external": false
         },
         {
