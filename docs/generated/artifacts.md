@@ -304,7 +304,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/economics.json` | `economics` | json | 30847 | `482d3f5c821ad7c3` |
 | `docs/generated/economics.md` | `economics` | markdown | 15306 | `6666ce35ff2c48a6` |
 | `docs/generated/economics.yaml` | `economics` | yaml | 25727 | `434c78e26154a54a` |
-| `docs/generated/graph.json` | `graph` | json | 4970083 | `1558eb867f357da4` |
+| `docs/generated/graph.json` | `graph` | json | 4970083 | `649280527458266d` |
 | `docs/generated/graph.schema.json` | `graph-schema` | json | 7632 | `ec01a56a9c8c8cbc` |
 | `docs/generated/modules/artifacts.md` | `modules/artifacts` | markdown | 1749 | `3d81f98d612dee40` |
 | `docs/generated/modules/autonomy.md` | `modules/autonomy` | markdown | 4018 | `0fac305471e505f5` |
@@ -429,10 +429,10 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `share/version.txt` | `version` | text | 245 | `e7559a638ce619fc` |
 | `site/data/registry/design.json` | `site-design` | json | 11594 | `787ad95ea4ce8a73` |
 | `site/data/registry/distribution.json` | `site-distribution` | json | 3005 | `1dc59aaebd16174a` |
-| `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 822065 | `345a4bdbd727f904` |
+| `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 822065 | `103ad11d843440d5` |
 | `site/data/registry/product-graph.json` | `site-product-graph` | json | 111720 | `3b3895fd20181ce5` |
 | `site/data/registry/product.json` | `site-product` | json | 763400 | `b3e6f242e09f278a` |
-| `site/data/registry/registry.json` | `site-registry` | json | 7608077 | `e5f2d46925092056` |
+| `site/data/registry/registry.json` | `site-registry` | json | 7608077 | `19fb402725b81ac8` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180170 | `449f398d697f1b83` |
 | `site/data/registry/why.json` | `site-why` | json | 349931 | `2485d2dc9c008bd8` |
 | `site/static/favicon.svg` | `design-mark` | text | 911 | `c76f9216b0e8764e` |

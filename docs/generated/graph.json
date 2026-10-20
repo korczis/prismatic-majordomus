@@ -43420,7 +43420,7 @@
           "depends_on": [],
           "evidence_required": [
             "autonomy_unit_tests",
-            "case_3177"
+            "case_3900"
           ],
           "milestone": "runtime-adapters",
           "non_scope": [
@@ -43439,7 +43439,7 @@
             "apps/majordomus-cli/src/cli.rs",
             "apps/majordomus-cli/src/lib.rs",
             "apps/majordomus-cli/tests/autonomy_mcp.rs",
-            "test/cases/3177_the_autonomy_a_session_has_is_read.sh",
+            "test/cases/3900_the_autonomy_a_session_has_is_read.sh",
             "docs/AUTONOMY.md"
           ],
           "slug": "the-autonomy-a-session-has-is-measured",
@@ -43447,7 +43447,7 @@
           "validation": [
             "cargo test --lib autonomy",
             "cargo test --test autonomy_mcp",
-            "bash test/run.sh 3177_the_autonomy_a_session_has_is_read"
+            "bash test/run.sh 3900_the_autonomy_a_session_has_is_read"
           ]
         }
       },
@@ -80747,13 +80747,6 @@
         "source": "test/cases/3177_a_client_always_gets_a_server.sh"
       },
       {
-        "id": "majordomus://test/test/cases/3177_the_autonomy_a_session_has_is_read.sh",
-        "kind": "test",
-        "label": "test/cases/3177_the_autonomy_a_session_has_is_read.sh",
-        "route": "/cockpit/objects/test/test-cases-3177-the-autonomy-a-session-has-is-read-sh",
-        "source": "test/cases/3177_the_autonomy_a_session_has_is_read.sh"
-      },
-      {
         "id": "majordomus://test/test/cases/3178_the_published_ui_reads_the_evidence_ci_recorded.sh",
         "kind": "test",
         "label": "test/cases/3178_the_published_ui_reads_the_evidence_ci_recorded.sh",
@@ -81270,6 +81263,13 @@
         "label": "test/cases/389_cockpit_projection.sh",
         "route": "/cockpit/objects/test/test-cases-389-cockpit-projection-sh",
         "source": "test/cases/389_cockpit_projection.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3900_the_autonomy_a_session_has_is_read.sh",
+        "kind": "test",
+        "label": "test/cases/3900_the_autonomy_a_session_has_is_read.sh",
+        "route": "/cockpit/objects/test/test-cases-3900-the-autonomy-a-session-has-is-read-sh",
+        "source": "test/cases/3900_the_autonomy_a_session_has_is_read.sh"
       },
       {
         "id": "majordomus://test/test/cases/390_unresolved_relation_refuses_generation.sh",
@@ -121979,11 +121979,6 @@
         "kind": "is_a"
       },
       {
-        "source": "majordomus://test/test/cases/3177_the_autonomy_a_session_has_is_read.sh",
-        "target": "kind:test",
-        "kind": "is_a"
-      },
-      {
         "source": "majordomus://test/test/cases/3178_the_published_ui_reads_the_evidence_ci_recorded.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -122350,6 +122345,11 @@
       },
       {
         "source": "majordomus://test/test/cases/389_cockpit_projection.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3900_the_autonomy_a_session_has_is_read.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
