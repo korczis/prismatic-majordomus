@@ -7,7 +7,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import assert from 'node:assert/strict';
 
-import { breakpointsFromCss, commonPrefix, criticalWidths, discoverPages, languageSample, tierPages, viewports, REFLOW_FLOOR } from './ui-discover.mjs';
+import { breakpointsFromCss, commonPrefix, criticalWidths, discoverPages, tierPages, viewports, REFLOW_FLOOR } from './ui-discover.mjs';
 import { alignCells, escapes, nameTaskCheckboxes, normalise, normaliseRendered, plainClasses, scan, scrollingTags, textOf } from './ui-static.mjs';
 import { contrast, enforce, measure, raise, MINIMUM } from './ui-contrast.mjs';
 import { sample, siblingFamilies } from './ui-routes.mjs';
@@ -18,40 +18,21 @@ const tests = [];
 const test = (name, fn) => tests.push([name, fn]);
 
 // ------------------------------------------------------------------ language copies
-test('a language copy is sampled per section at the root and under a mount alike', () => {
+test('every page of every language copy is discovered, none sampled away (I3604)', () => {
   const site = mkdtempSync(join(tmpdir(), 'mj-lang-'));
   try {
     mkdirSync(join(site, 'i18n'));
-    mkdirSync(join(site, 'public'));
     writeFileSync(join(site, 'i18n', 'languages.json'), JSON.stringify({ source: 'en', languages: ['en', 'cs'] }));
-    const keep = languageSample(join(site, 'public'));
-    const routes = [
-      '/docs/guarantees/a/', '/docs/guarantees/b/',
-      '/docs/cs/guarantees/a/', '/docs/cs/guarantees/b/', '/docs/cs/guarantees/c/', '/docs/cs/adrs/x/',
-      '/cs/', '/cs/roadmap/', '/cs/roadmap/now/',
-    ];
-    assert.deepEqual(routes.filter(keep), [
-      '/docs/guarantees/a/', '/docs/guarantees/b/',
-      '/docs/cs/guarantees/a/', '/docs/cs/adrs/x/',
-      '/cs/', '/cs/roadmap/', '/cs/roadmap/now/',
-    ], 'the source keeps every page; a copy keeps the first of each section at each depth, mounted or not');
+    const pub = join(site, 'public');
+    const routes = ['/', '/roadmap/', '/roadmap/now/', '/cs/', '/cs/roadmap/', '/cs/roadmap/now/', '/cs/roadmap/next/'];
+    for (const r of routes) {
+      mkdirSync(join(pub, r), { recursive: true });
+      writeFileSync(join(pub, r, 'index.html'), '<html></html>');
+    }
+    assert.deepEqual(discoverPages(pub).map((p) => p.route), [...routes].sort(),
+      'a copy is pages like any other: every one of them is audited, the shards keep the bound');
   } finally {
     rmSync(site, { recursive: true, force: true });
-  }
-});
-
-test('a directory with no i18n beside it is sampled by the repository\'s declaration', () => {
-  // the served documentation is built into target/web/docs: nothing beside it declares the
-  // languages, and a sampler that knew none kept every page of every copy
-  const web = mkdtempSync(join(tmpdir(), 'mj-web-'));
-  try {
-    mkdirSync(join(web, 'docs'));
-    const keep = languageSample(join(web, 'docs'));
-    const routes = ['/docs/cs/guarantees/', '/docs/cs/guarantees/a/', '/docs/cs/guarantees/b/', '/docs/guarantees/b/'];
-    assert.deepEqual(routes.filter(keep), ['/docs/cs/guarantees/', '/docs/cs/guarantees/a/', '/docs/guarantees/b/'],
-      'the copy is still sampled: its index and its first record page, every source page');
-  } finally {
-    rmSync(web, { recursive: true, force: true });
   }
 });
 
