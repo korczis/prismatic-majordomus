@@ -41066,6 +41066,8 @@
             "A scene whose source holds nothing is unavailable with the source reason",
             "Unit tests hold the models on constructed answers, including empty ones"
           ],
+          "completed_at": "2026-10-20T15:45:41Z",
+          "completed_event": "sha256:a2b15ae4ab14e1a7bca4b686861c16d99ca6d1b4817bd0098d41dfd0c695a4ea",
           "created_at": "2026-10-14",
           "current_state": "ADR 0160 proposes the scenes; the Observatory of ADR 0158 has eight.",
           "depends_on": [],
@@ -41087,7 +41089,9 @@
             "share/ui/observatory-kiosk.js"
           ],
           "slug": "ui-observatory-proof-scenes",
-          "updated_at": "2026-10-14",
+          "started_at": "2026-10-20T15:45:17Z",
+          "started_event": "sha256:80c2ec0d345fa83d1280c41c04838fff9a37ebf8b9bafb13aa6a13bf5e96c139",
+          "updated_at": "2026-10-20T15:45:41Z",
           "validation": [
             "bin/majordomus plan validate"
           ],
@@ -41107,6 +41111,8 @@
             "The page carries data-p5-lib",
             "Without the library the stage says p5 is not built here and the rows hold the facts"
           ],
+          "completed_at": "2026-10-20T15:46:24Z",
+          "completed_event": "sha256:b10f2871bf29c1d23b0d662876f7d53997f8e77571a5a9108e3f03f15c571f5f",
           "created_at": "2026-10-14",
           "current_state": "ADR 0160 proposes the scenes; the Observatory of ADR 0158 has eight.",
           "depends_on": [],
@@ -41127,7 +41133,9 @@
             "share/ui/observatory-kiosk.js"
           ],
           "slug": "ui-p5-is-a-built-optional-asset",
-          "updated_at": "2026-10-14",
+          "started_at": "2026-10-20T15:45:54Z",
+          "started_event": "sha256:6e243061700657b7e5a516f0059ef4555bfef2a70dde5a4f9d3e9820213a2697",
+          "updated_at": "2026-10-20T15:46:24Z",
           "validation": [
             "bin/majordomus plan validate"
           ],
@@ -44003,6 +44011,8 @@
             "The run directory is removed after a derive that succeeds and after one that fails (exit 10)",
             "Nothing is written to the build directory the caller's environment named"
           ],
+          "completed_at": "2026-10-20T15:30:47Z",
+          "completed_event": "sha256:03a052b6cee41e030f8b922aa6eaa719b9cdf598275ed3c7801c230432551eba",
           "created_at": "2026-10-18",
           "current_state": "offload/run.rs DERIVE exports CARGO_TARGET_DIR=$private and removes $private on EXIT/HUP/INT/TERM; CARGO_BUILD_BUILD_DIR is inherited, so the declared shared build-dir receives the intermediates.",
           "evidence_required": [
@@ -44017,7 +44027,9 @@
             "docs/OFFLOAD.md"
           ],
           "slug": "an-offload-build-stays-in-its-run-dir",
-          "updated_at": "2026-10-18",
+          "started_at": "2026-10-20T15:29:44Z",
+          "started_event": "sha256:f485dc83f21463867bccc203742a6dea0d4c8211d1409a2ec340e0b0d0f8c674",
+          "updated_at": "2026-10-20T15:30:47Z",
           "validation": [
             "cargo test --lib -- offload::run::tests::a_remote_derive_builds_only_inside_its_run_directory_and_removes_it",
             "majordomus plan validate"
@@ -45018,6 +45030,8 @@
             "Every pages.yml step that runs web report carries GH_TOKEN",
             "Case 3362 fails on a workflow where a snapshot read step lacks it, naming the step"
           ],
+          "completed_at": "2026-10-20T15:43:50Z",
+          "completed_event": "sha256:6d9bab8220606d56406787e3eb7b65507a41eee26775378326e68e827b6416fd",
           "created_at": "2026-10-18",
           "current_state": "The two snapshot read steps run without GH_TOKEN; every page that asks gh while it is read publishes an empty or failed source.",
           "depends_on": [],
@@ -45034,7 +45048,9 @@
             "test/cases/3362_every_snapshot_read_can_ask_the_forge.sh"
           ],
           "slug": "the-snapshot-reads-the-forge-with-a-token",
-          "updated_at": "2026-10-18",
+          "started_at": "2026-10-20T15:42:48Z",
+          "started_event": "sha256:1c0e1f3e46a5645ff8eb0e570d7607c675bffba21b28ac14f6578f73c6e50fc1",
+          "updated_at": "2026-10-20T15:43:50Z",
           "validation": [
             "majordomus plan validate"
           ]
@@ -45090,6 +45106,8 @@
             "A pull request held for unread settings reads merge_settings_unread with disposition unknown, and nothing merges",
             "The queue's diagnostic says the merge settings could not be read and never that the repository allows nothing"
           ],
+          "completed_at": "2026-10-20T15:44:54Z",
+          "completed_event": "sha256:453b54a3ac707b09605f6e771c048606c557de4c934ae644b3d9cf4739489add",
           "created_at": "2026-10-18",
           "depends_on": [],
           "desired_state": "An unread merge setting is unknown on every surface that shows the queue; a read `false` still holds as merge_commit_not_allowed; recorded observations that carry the array read as before.",
@@ -45115,7 +45133,9 @@
             "docs/INTEGRATION.md"
           ],
           "slug": "an-unread-forge-setting-is-unknown",
-          "updated_at": "2026-10-18",
+          "started_at": "2026-10-20T15:44:19Z",
+          "started_event": "sha256:8756a95ab08213aa35daf09312099e6c4503b49101bab1b7bd0791828c96beec",
+          "updated_at": "2026-10-20T15:44:54Z",
           "validation": [
             "majordomus plan validate"
           ]

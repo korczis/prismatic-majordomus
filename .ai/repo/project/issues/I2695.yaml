@@ -25,4 +25,16 @@ validation:
 evidence_required:
   - "observatory_proof_scenes"
 created_at: 2026-10-14
-updated_at: 2026-10-14
+updated_at: 2026-10-20T15:45:41Z
+started_at: 2026-10-20T15:45:17Z
+started_event: sha256:80c2ec0d345fa83d1280c41c04838fff9a37ebf8b9bafb13aa6a13bf5e96c139
+completed_at: 2026-10-20T15:45:41Z
+completed_event: sha256:a2b15ae4ab14e1a7bca4b686861c16d99ca6d1b4817bd0098d41dfd0c695a4ea
+evidence:
+  - covers: observatory_proof_scenes
+    type: ci
+    command: "cargo test --lib -- ui::observatory; bash test/run.sh 3014_the_kiosk_draws_what_the_repository_proves"
+    result: "ui::observatory tests (the_proof_scenes_are_counted_from_what_the_sources_answered, absent_is_unavailable_with_the_sources_reason_and_never_zero, the_scenes_are_declared_once_and_require_what_is_asked) ok in job rust (2) 117890228077 and case 3014 ok in job suite-shard (1) 117890213706 of validate run 39192952944, every job green at master dd4c0a87cba, which contains 1ed8a4c87c2"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39192952944"
+    commit: 9a5a9b77520bbe9504b04ff89235a6f232377788
+    recorded_at: 2026-10-20T15:45:35Z
