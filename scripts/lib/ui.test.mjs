@@ -32,10 +32,25 @@ test('a language copy is sampled per section at the root and under a mount alike
     assert.deepEqual(routes.filter(keep), [
       '/docs/guarantees/a/', '/docs/guarantees/b/',
       '/docs/cs/guarantees/a/', '/docs/cs/adrs/x/',
-      '/cs/', '/cs/roadmap/',
-    ], 'the source keeps every page; a copy keeps the first of each section, mounted or not');
+      '/cs/', '/cs/roadmap/', '/cs/roadmap/now/',
+    ], 'the source keeps every page; a copy keeps the first of each section at each depth, mounted or not');
   } finally {
     rmSync(site, { recursive: true, force: true });
+  }
+});
+
+test('a directory with no i18n beside it is sampled by the repository\'s declaration', () => {
+  // the served documentation is built into target/web/docs: nothing beside it declares the
+  // languages, and a sampler that knew none kept every page of every copy
+  const web = mkdtempSync(join(tmpdir(), 'mj-web-'));
+  try {
+    mkdirSync(join(web, 'docs'));
+    const keep = languageSample(join(web, 'docs'));
+    const routes = ['/docs/cs/guarantees/', '/docs/cs/guarantees/a/', '/docs/cs/guarantees/b/', '/docs/guarantees/b/'];
+    assert.deepEqual(routes.filter(keep), ['/docs/cs/guarantees/', '/docs/cs/guarantees/a/', '/docs/guarantees/b/'],
+      'the copy is still sampled: its index and its first record page, every source page');
+  } finally {
+    rmSync(web, { recursive: true, force: true });
   }
 });
 

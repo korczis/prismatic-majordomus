@@ -114,12 +114,22 @@ export function commonPrefix(paths) {
  * bound on 254 Czech guarantee pages before it reached /ui (validate 39317142394).
  */
 export function languageSample(publicDir) {
+  // the declaration is the repository's, not the audited directory's: the served
+  // documentation is built into target/web/docs, which has no site/i18n beside it, and a
+  // sampler that looked beside the directory kept every page of every copy there
+  const declared = [
+    join(publicDir, '..', 'i18n', 'languages.json'),
+    join(dirname(new URL(import.meta.url).pathname), '..', '..', 'site', 'i18n', 'languages.json'),
+  ];
   let langs = [];
-  try {
-    const l = JSON.parse(readFileSync(join(publicDir, '..', 'i18n', 'languages.json'), 'utf8'));
-    langs = l.languages.filter((x) => x !== l.source);
-  } catch {
-    langs = [];
+  for (const path of declared) {
+    try {
+      const l = JSON.parse(readFileSync(path, 'utf8'));
+      langs = l.languages.filter((x) => x !== l.source);
+      break;
+    } catch {
+      langs = [];
+    }
   }
   const seen = new Set();
   return (route) => {
@@ -127,7 +137,10 @@ export function languageSample(publicDir) {
     // the copy's segment: first at the root (/cs/...), second under a mount (/docs/cs/...)
     const at = langs.includes(parts[0]) ? 0 : langs.includes(parts[1]) ? 1 : -1;
     if (at < 0) return true;
-    const key = parts.slice(0, at + 2).join('/');
+    // one page per section at each depth: a section's index and its first record page are
+    // different templates, and a defect of the record template (a translated breadcrumb that
+    // wraps) shows only on the record
+    const key = `${parts.slice(0, at + 2).join('/')}#${parts.length}`;
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
