@@ -183,24 +183,23 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 <p>Tvrzení označené <strong>zaručeno</strong> musí dosáhnout testu. Není to konvence — generátor odmítne tuto stránku sestavit, pokud ne, a kontrola po sestavení odmítne, pokud se hrana cestou ztratila.</p>
 </article><section class="mt-10" aria-labelledby="ci-evidence-heading">
   <h2 id="ci-evidence-heading" class="text-2xl font-semibold text-heading">Zaznamenáno v CI</h2>
-  <p class="mt-3 text-body"><span class="mj-badge mj-badge--stale relative" data-status="stale"><span aria-hidden="true">!</span>stale</span>
+  <p class="mt-3 text-body"><span class="mj-badge mj-badge--unknown relative" data-status="unknown"><span aria-hidden="true">○</span>unknown</span>
 
-    CI's run of commit
-    <a class="font-mono underline" href="https://github.com/korczis/prismatic-majordomus/commit/82ac259d0ae7c3901ee09bed461e2f62318a6642">82ac259d0ae7</a>,
-    the commit this site was built from, recorded failures, so it does not confirm the report below.
+    CI ran commit
+    <a class="font-mono underline" href="https://github.com/korczis/prismatic-majordomus/commit/9a5a9b77520bbe9504b04ff89235a6f232377788">9a5a9b77520b</a>,
+    the commit this site was built from, but its run cannot confirm the report below.
   </p>
   <ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body">
-    <li>The run has no report from suite, coverage.</li>
-    <li>The run recorded 2 failed, timed-out or errored execution(s).</li>
+    <li>The run has no report from coverage.</li>
   </ul>
   <dl class="mt-4 grid gap-x-8 font-mono text-sm sm:grid-cols-2">
-    <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">executions recorded</dt><dd class="text-heading">6</dd></div>
-    <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">chyba</dt><dd class="text-heading">2</dd></div>
-    <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">pass</dt><dd class="text-heading">4</dd></div>
+    <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">executions recorded</dt><dd class="text-heading">680</dd></div>
+    <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">pass</dt><dd class="text-heading">678</dd></div>
+    <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">přeskočit</dt><dd class="text-heading">2</dd></div>
     <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">coverage</dt><dd class="text-heading">not measured by this run</dd></div>
-    <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">zaznamenáno</dt><dd class="text-heading">2026-10-20T08:37:48Z</dd></div>
+    <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">zaznamenáno</dt><dd class="text-heading">2026-10-20T16:11:45Z</dd></div>
   </dl>
-  <p class="mt-3 text-sm text-body-subtle">Absent from this run: suite, coverage. Nothing absent is counted as passing.</p>
+  <p class="mt-3 text-sm text-body-subtle">Absent from this run: coverage. Nothing absent is counted as passing.</p>
   <div class="mt-6">
     <div class="min-w-0" x-data="{ t: 0 }">
   <div role="tablist" aria-label="The tracked ledger&#39;s verdict, as CI derived it at this commit" class="flex flex-wrap gap-1.5"><button type="button" role="tab" id="ci-evidence-tab-0" aria-controls="ci-evidence-panel-0"
@@ -211,8 +210,8 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   <p class="m-0 min-w-0 flex-1 break-all font-mono text-xs leading-relaxed text-heading"><span class="select-none text-body-subtle" aria-hidden="true">$</span> <code x-ref="src">majordomus evidence show</code></p>
   <span class="flex shrink-0 items-center gap-2"><span class="mj-badge mj-badge--ok relative" data-status="ok"><span aria-hidden="true">✓</span>exit 0</span> <button type="button" x-cloak x-on:click="Promise.resolve(said = '').then(() => navigator.clipboard.writeText($refs.src.innerText)).then(() => { said = 'Copied'; setTimeout(() => { if (said === 'Copied') said = '' }, 1600) }, () => { said = 'Copy failed — select the text' })" class="inline-flex items-center gap-1 rounded-base px-1.5 py-0.5 text-xs font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary" :aria-label="said || 'Copy the command'"><span x-text="said || 'Copy'">Kopírovat</span></button> <span class="sr-only" role="status" aria-live="polite" x-text="said"></span>
   </span>
-</div><pre class="m-0 whitespace-pre-wrap break-words bg-neutral-primary p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">head         82ac259d (clean)
-judged at the working tree (HEAD 82ac259d0ae7, clean)
+</div><pre class="m-0 whitespace-pre-wrap break-words bg-neutral-primary p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">head         9a5a9b77 (clean)
+judged at the working tree (HEAD 9a5a9b77520b, clean)
 ledger       .ai/repo/evidence/ledger.json — 14 execution(s), newest 2026-09-17T01:14:59Z
 
 subject      250 claim(s), whole
@@ -1025,8 +1024,8 @@ not_run            guaranteed   worktree-topology-derived
 </details>
 <div class="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-default px-4 py-2 text-xs">
       <span class="text-body-subtle">every claim against the tracked ledger as committed at this commit, derived before this run&#39;s executions were recorded; the run&#39;s executions are counted beside it and decide no verdict</span>
-      <a href="https://github.com/korczis/prismatic-majordomus/actions/runs/39392245562/attempts/1" class="text-fg-brand hover:underline">the run that recorded it &rarr;</a>
-      <a href="https://github.com/korczis/prismatic-majordomus/commit/82ac259d0ae7c3901ee09bed461e2f62318a6642" class="text-fg-brand hover:underline">commit 82ac259d0ae7 &rarr;</a>
+      <a href="https://github.com/korczis/prismatic-majordomus/actions/runs/39438896504/attempts/1" class="text-fg-brand hover:underline">the run that recorded it &rarr;</a>
+      <a href="https://github.com/korczis/prismatic-majordomus/commit/9a5a9b77520bbe9504b04ff89235a6f232377788" class="text-fg-brand hover:underline">commit 9a5a9b77520b &rarr;</a>
     </div>
   </figure></div>
 
@@ -4377,7 +4376,7 @@ not_run            guaranteed   worktree-topology-derived
   </a>
 </div>
 <p class="mt-6 text-sm text-body-subtle">
-  Kanonickým zdrojem je <a class="underline" href="https://github.com/korczis/prismatic-majordomus/blob/82ac259d0ae7c3901ee09bed461e2f62318a6642/docs/CLAIMS.yaml">docs/CLAIMS.yaml</a>; úplná tabulka se zdroji, implementacemi a testy je na stránce <a class="underline" href="https://majordomus.dev/cs/guarantees/">záruky</a>.
+  Kanonickým zdrojem je <a class="underline" href="https://github.com/korczis/prismatic-majordomus/blob/9a5a9b77520bbe9504b04ff89235a6f232377788/docs/CLAIMS.yaml">docs/CLAIMS.yaml</a>; úplná tabulka se zdroji, implementacemi a testy je na stránce <a class="underline" href="https://majordomus.dev/cs/guarantees/">záruky</a>.
 </p>
 
 </div>
@@ -4427,9 +4426,9 @@ not_run            guaranteed   worktree-topology-derived
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/82ac259d0ae7c3901ee09bed461e2f62318a6642/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/82ac259d0ae7c3901ee09bed461e2f62318a6642/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/82ac259d0ae7c3901ee09bed461e2f62318a6642/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/9a5a9b77520bbe9504b04ff89235a6f232377788/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/9a5a9b77520bbe9504b04ff89235a6f232377788/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/9a5a9b77520bbe9504b04ff89235a6f232377788/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -4437,7 +4436,7 @@ not_run            guaranteed   worktree-topology-derived
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v1.0.0-alpha.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/82ac259d0ae7c3901ee09bed461e2f62318a6642" class="font-mono underline">82ac259</a> · inputs <span class="font-mono">ac7a158bc7ec</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v1.0.0-alpha.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/9a5a9b77520bbe9504b04ff89235a6f232377788" class="font-mono underline">9a5a9b7</a> · inputs <span class="font-mono">9639d07ac098</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>
