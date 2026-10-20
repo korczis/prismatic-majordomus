@@ -32,6 +32,12 @@ HTML
 }
 page / > "$SITE/public/index.html"
 page /guide/ > "$SITE/public/guide/index.html"
+# a Zola alias, which carries no words and only a target
+mkdir -p "$SITE/public/old"
+printf '<!doctype html>\n<meta charset="utf-8">\n<title>Redirect</title>\n<meta http-equiv="refresh" content="0; url=https://example.test/guide/">\n' \
+  > "$SITE/public/old/index.html"
+printf '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>https://example.test/</loc></url>\n  <url><loc>https://example.test/guide/</loc></url>\n</urlset>\n' \
+  > "$SITE/public/sitemap.xml"
 
 # The memory, keyed as the pass keys it: a good translation, and one that drops a placeholder.
 node --input-type=module - "$PASS" "$SITE/i18n/cs/memory" <<'JS' || { echo "    the memory could not be written"; exit 1; }
@@ -77,6 +83,14 @@ jq -e '.cs | map(.en) | index("An untranslated sentence.") != null' "$PWD/missin
   || { echo "    the refused segment is not listed as missing"; exit 1; }
 jq -e '.languages.cs.translated > 0 and .languages.cs.coverage < 100' "$SITE/public/cs/i18n.json" >/dev/null \
   || { echo "    the coverage is not published"; exit 1; }
+
+grep -q '<title>Redirect</title>' "$SITE/public/cs/old/index.html" \
+  && grep -q 'url=https://example.test/cs/guide/' "$SITE/public/cs/old/index.html" \
+  || { echo "    an alias is not carried as a redirect to its target's copy"; exit 1; }
+grep -q '<loc>https://example.test/cs/guide/</loc>' "$SITE/public/sitemap.xml" \
+  || { echo "    the sitemap does not list the Czech copy"; exit 1; }
+grep -q 'hreflang="cs" href="https://example.test/cs/guide/"' "$SITE/public/sitemap.xml" \
+  || { echo "    the sitemap does not name the copies as alternates"; exit 1; }
 
 # A second build over the same input writes the same bytes.
 cp -R "$SITE/public" "$PWD/before"

@@ -42774,6 +42774,40 @@
         }
       },
       {
+        "id": "majordomus://issue/I3091",
+        "kind": "issue",
+        "label": "I3091",
+        "summary": "A translated bar keeps the headroom of its English bar, whatever fonts the machine has",
+        "route": "/cockpit/objects/issue/i3091",
+        "source": ".ai/repo/project/issues/I3091.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The layout finding names headroom_em for the copy and its English page when the copy has less than min(English, 0.06)",
+            "On a build whose Czech bar carries 'Jak funguje' the check reports /cs/ and /cs/docs/ at 768 px on macOS",
+            "On a build whose Czech bar carries 'Princip' the check is clean"
+          ],
+          "created_at": "2026-10-20",
+          "current_state": "The check compares the bar's height and rows as drawn on the machine that runs it.",
+          "depends_on": [],
+          "desired_state": "The check compares headroom, so a copy with less room than its English fails on macOS as on Linux.",
+          "evidence_required": [],
+          "milestone": "architecture-is-enforced",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "scripts/lib/site-i18n-probe.mjs",
+            ".ai/repo/project/issues/I3091.yaml"
+          ],
+          "slug": "a-translated-bar-keeps-its-headroom",
+          "updated_at": "2026-10-20",
+          "validation": [
+            "majordomus plan validate",
+            "node scripts/lib/site-i18n-probe.mjs site/public https://majordomus.dev --only / --only /docs/ --only /cs/ --only /cs/docs/"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "label": "a-commit-stood-behind-a-build-lock",
@@ -42829,6 +42863,86 @@
             "integration",
             "deployment",
             "ci"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261019205653-344d-308c41e4af9a",
+        "kind": "knowledge",
+        "label": "s-20261019205653-344d-308c41e4af9a",
+        "summary": "the glossary maps task to úloha and names no issue, while 1887 of 80743 memory entries say úkol, mostly for issue; and a stem test cannot decide adherence, because Czech declension (pravidla, pravidel) and verb senses (check, zkontrolovat) miss 10-30% of correct translations",
+        "route": "/cockpit/objects/knowledge/s-20261019205653-344d-308c41e4af9a",
+        "source": ".ai/repo/knowledge/candidates/s-20261019205653-344d-308c41e4af9a.md",
+        "status": "superseded",
+        "facts": {
+          "about": "site/i18n/cs/guide.json",
+          "class": "lesson",
+          "date": "2026-10-19",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261019205653-344d-4964a30cf00c",
+        "kind": "knowledge",
+        "label": "s-20261019205653-344d-4964a30cf00c",
+        "summary": "rewording a refusal message of scripts/ci/english-only-check broke case 2984, which greps the old sentence, and nothing local ran it; a changed message owes a grep of test/cases for the old text before the push",
+        "route": "/cockpit/objects/knowledge/s-20261019205653-344d-4964a30cf00c",
+        "source": ".ai/repo/knowledge/curated/s-20261019205653-344d-4964a30cf00c.md",
+        "status": "verified",
+        "facts": {
+          "about": "test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh",
+          "class": "lesson",
+          "date": "2026-10-19",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261019205653-344d-8a56a0a79628",
+        "kind": "knowledge",
+        "label": "s-20261019205653-344d-8a56a0a79628",
+        "summary": "a translated copy doubled the pages a browser sweep drives (2545 to 5090), and interaction-probe hit its 3300 s bound at page 2250 on run 39285861377; a copy shares its English page's template and controls, so it is driven only when its set of (spec, control signature) differs from every copy of its language driven before it (57 of 2136 copies)",
+        "route": "/cockpit/objects/knowledge/s-20261019205653-344d-8a56a0a79628",
+        "source": ".ai/repo/knowledge/candidates/s-20261019205653-344d-8a56a0a79628.md",
+        "status": "candidate",
+        "facts": {
+          "about": "gate:interaction-probe",
+          "class": "lesson",
+          "date": "2026-10-19",
+          "epistemics": "observed",
+          "route": "enforcement",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261019205653-344d-cce510139fd8",
+        "kind": "knowledge",
+        "label": "s-20261019205653-344d-cce510139fd8",
+        "summary": "the site-languages gate was declared in .ai/repo/ci/gates.yaml with no step of validate.yml running it, so its browser probe never ran in CI until case 26_ci_wiring refused the alpha.1 top",
+        "route": "/cockpit/objects/knowledge/s-20261019205653-344d-cce510139fd8",
+        "source": ".ai/repo/knowledge/candidates/s-20261019205653-344d-cce510139fd8.md",
+        "status": "superseded",
+        "facts": {
+          "about": "gate:site-languages",
+          "class": "lesson",
+          "date": "2026-10-19",
+          "epistemics": "observed",
+          "route": "enforcement",
+          "tags": [
+            "derived",
+            "observation"
           ]
         }
       },
@@ -88916,6 +89030,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3091",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3091",
+        "target": "majordomus://milestone/architecture-is-enforced",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -88927,6 +89051,26 @@
       },
       {
         "source": "majordomus://knowledge/an-expedited-landing",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261019205653-344d-308c41e4af9a",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261019205653-344d-4964a30cf00c",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261019205653-344d-8a56a0a79628",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261019205653-344d-cce510139fd8",
         "target": "kind:knowledge",
         "kind": "is_a"
       },
@@ -99187,8 +99331,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3089,
-      "edges": 6757,
+      "nodes": 3094,
+      "edges": 6763,
       "acyclic": false,
       "truncated": false
     }

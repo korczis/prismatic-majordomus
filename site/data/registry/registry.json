@@ -6,23 +6,23 @@
     "version": "0.30.2"
   },
   "registry": {
-    "fingerprint": "8daba47aa3074e06c3fc90ef4a406775aa7226abd5f539161f79843abf793642",
+    "fingerprint": "4454313163574d46f5744448f7710de0dc1a916eee2fcc0a1a5f56fdb712c3bd",
     "summary": {
-      "total": 2651,
+      "total": 2656,
       "builtin": 206,
-      "declarative": 2445,
+      "declarative": 2450,
       "by_kind": {
         "command": 31,
         "query": 175,
-        "resource": 2445
+        "resource": 2450
       },
       "by_stability": {
         "behaviorally_verified": 142,
         "experimental": 55,
-        "implemented": 2454
+        "implemented": 2459
       },
       "mcp_tools": 196,
-      "mcp_resources": 2500,
+      "mcp_resources": 2505,
       "http_routes": 201,
       "cli_commands": 111,
       "modules": 92,
@@ -85404,7 +85404,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 489,
+        "capabilities": 490,
         "capability_ids": []
       },
       {
@@ -85412,7 +85412,7 @@
         "title": "knowledge",
         "description": "Declarative objects of kind 'knowledge' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 4,
+        "capabilities": 8,
         "capability_ids": []
       },
       {
@@ -86070,7 +86070,7 @@
     ]
   },
   "index": {
-    "fingerprint": "1a7e97975a72100be94962be40c0de098e4781716e4736ed1ffd2ae14d47bf40",
+    "fingerprint": "aed87181607d541a59b86c41c6ea0d99b35e360cbfbc8e56c32ce6a22c247ae4",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -86110,8 +86110,8 @@
       "gap": 4,
       "implementation": 52,
       "intent": 8,
-      "issue": 489,
-      "knowledge": 4,
+      "issue": 490,
+      "knowledge": 8,
       "mesh-declaration": 1,
       "milestone": 42,
       "moment": 38,
@@ -92463,7 +92463,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 200488
+        "bytes": 201228
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -101375,6 +101375,17 @@
         "bytes": 1840
       },
       {
+        "uri": "majordomus://issue/I3091",
+        "kind": "issue",
+        "identity": "I3091",
+        "title": "A translated bar keeps the headroom of its English bar, whatever fonts the machine has",
+        "description": "The layout check of scripts/lib/site-i18n-probe.mjs measures each sampled bar's headroom_em: the widest letter-spacing, in 0.02 em steps up to 0.12 em, at which the bar keeps its drawn height and rows. A copy owes min(its English page's headroom, 0.06 em) at every width the design declares.",
+        "path": ".ai/repo/project/issues/I3091.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1871
+      },
+      {
         "uri": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "identity": "a-commit-stood-behind-a-build-lock",
@@ -101422,6 +101433,66 @@
           "integration",
           "deployment",
           "ci"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261019205653-344d-308c41e4af9a",
+        "kind": "knowledge",
+        "identity": "s-20261019205653-344d-308c41e4af9a",
+        "title": "the glossary maps task to úloha and names no issue, while 1887 of 80743 memory entries say úkol, mostly for issue; and a stem test cannot decide adherence, because Czech declension (pravidla, pravidel) and verb senses (check, zkontrolovat) miss 10-30% of correct translations",
+        "description": "Observed as drift about site/i18n/cs/guide.json in episode s-20261019205653-344d.",
+        "path": ".ai/repo/knowledge/candidates/s-20261019205653-344d-308c41e4af9a.md",
+        "section": "knowledge",
+        "source_class": "candidates",
+        "bytes": 1600,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261019205653-344d-4964a30cf00c",
+        "kind": "knowledge",
+        "identity": "s-20261019205653-344d-4964a30cf00c",
+        "title": "rewording a refusal message of scripts/ci/english-only-check broke case 2984, which greps the old sentence, and nothing local ran it; a changed message owes a grep of test/cases for the old text before the push",
+        "description": "Observed as friction about test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh in episode s-20261019205653-344d.",
+        "path": ".ai/repo/knowledge/curated/s-20261019205653-344d-4964a30cf00c.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2188,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261019205653-344d-8a56a0a79628",
+        "kind": "knowledge",
+        "identity": "s-20261019205653-344d-8a56a0a79628",
+        "title": "a translated copy doubled the pages a browser sweep drives (2545 to 5090), and interaction-probe hit its 3300 s bound at page 2250 on run 39285861377; a copy shares its English page's template and controls, so it is driven only when its set of (spec, control signature) differs from every copy of its language driven before it (57 of 2136 copies)",
+        "description": "Observed as defect about gate:interaction-probe in episode s-20261019205653-344d.",
+        "path": ".ai/repo/knowledge/candidates/s-20261019205653-344d-8a56a0a79628.md",
+        "section": "knowledge",
+        "source_class": "candidates",
+        "bytes": 1379,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261019205653-344d-cce510139fd8",
+        "kind": "knowledge",
+        "identity": "s-20261019205653-344d-cce510139fd8",
+        "title": "the site-languages gate was declared in .ai/repo/ci/gates.yaml with no step of validate.yml running it, so its browser probe never ran in CI until case 26_ci_wiring refused the alpha.1 top",
+        "description": "Observed as defect about gate:site-languages in episode s-20261019205653-344d.",
+        "path": ".ai/repo/knowledge/candidates/s-20261019205653-344d-cce510139fd8.md",
+        "section": "knowledge",
+        "source_class": "candidates",
+        "bytes": 1324,
+        "tags": [
+          "derived",
+          "observation"
         ]
       },
       {
@@ -107046,7 +107117,7 @@
         "path": ".ai/repo/skills/implement/SKILL.md",
         "section": "skills",
         "source_class": "skill",
-        "bytes": 12173,
+        "bytes": 12524,
         "tags": [
           "implementation",
           "evidence",
@@ -109636,7 +109707,7 @@
         "identity": "test/cases/3590_the_site_is_derived_in_every_language.sh",
         "path": "test/cases/3590_the_site_is_derived_in_every_language.sh",
         "source_class": "case",
-        "bytes": 5511
+        "bytes": 6601
       },
       {
         "uri": "majordomus://test/test/cases/359_live_scenarios.sh",
@@ -112465,7 +112536,7 @@
       "identity": [
         "id"
       ],
-      "objects": 489
+      "objects": 490
     },
     {
       "name": "knowledge",
@@ -112475,7 +112546,7 @@
       "identity": [
         "id"
       ],
-      "objects": 4
+      "objects": 8
     },
     {
       "name": "mesh-declaration",
