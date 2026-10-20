@@ -1217,8 +1217,16 @@ jobs:
   # 5,902 visits of 1,740 pages at 4 jobs, 55 s inside its 2,400 s bound, and on master's run of
   # the same tree (37087514909) it was stopped at 2,400 s mid-audit. It grew again: on batch
   # 71b2 the audit took 3,581 s (run 39087400247, f17855bf9de) and was stopped at its 3,600 s
-  # bound at visit 7,850 with no finding (run 39097403850, bc782b40f28). The bound is 5,400 s
-  # and the job's 105 minutes, so half again as much site still finishes and reports.
+  # bound at visit 7,850 with no finding (run 39097403850, bc782b40f28). The bound was then
+  # 5,400 s, and the Czech copies were sampled to fit it (alpha.1, 2026-10-19).
+  #
+  # Split in six (I3604), as the site probe (I2841) and the interaction probe (I3602) are, and by
+  # the same rule. This job builds once: the site, the executable, the UI budget and the cases
+  # that drive the UI, and it packs what the audit's server needs. Each ui-audit-shard job then
+  # audits a stride of the sorted routes (UI_AUDIT_SHARD, scripts/site-probe --partition), and the
+  # ui-audit job proves the shards were every page once, merges their documents into the one
+  # run-ui.json a single runner writes, renders the report and carries the gate. Every page is
+  # audited, the language copies included: none is sampled to fit a bound.
   ui:
     needs: plan
     if: needs.plan.outputs.ui_audit == 'true'
@@ -1251,22 +1259,36 @@ jobs:
       # baseline exists for this platform, so only the policy's budgets are judged here.
       - name: every warm screen of the UI is within its budget
         run: scripts/ci/timed --bound 600 ui-audit ui-budget timings.tsv "$MAJORDOMUS_BIN" bench system.http. --transport system --profile ci --no-write --check
-      - name: audit the UI in a browser
-        run: scripts/ci/timed --bound 5400 ui-audit ui-audit timings.tsv scripts/ui audit --report
+      # What the audit's server serves, built once here so that no shard rebuilds it: the
+      # documentation at its mount and the Cockpit's lazily loaded assets (scripts/ui audit's own
+      # build half, which the shards then skip with --no-build). The cases below read them too.
+      - name: build what the audit serves
+        run: |
+          scripts/ci/timed --bound 1200 ui-audit ui-serve-docs timings.tsv scripts/site-build --serve --no-data
+          scripts/ci/timed --bound 300 ui-audit ui-cockpit-assets timings.tsv scripts/cockpit-assets
+      # What every ui-audit-shard needs and a checkout does not hold: the executable, the built
+      # site, the served documentation with the crate's reference, and every file the builds
+      # generated under site/static and share/ that git ignores (listed by git, never by hand).
+      # Packed before the cases, so the shards start while the cases run.
+      - name: pack the audit's inputs
+        id: audit-inputs
+        run: |
+          { echo apps/majordomus-cli/target/debug/majordomus; echo site/public; echo target/web/docs; echo target/web/rustdoc
+            git ls-files --others --ignored --exclude-standard -- site/static share; } > audit-inputs.list
+          tar -czf ui-audit-inputs.tar.gz -T audit-inputs.list
+          echo "$(wc -l < audit-inputs.list | tr -d ' ') path(s), $(du -h ui-audit-inputs.tar.gz | cut -f1)"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ui-audit-inputs
+          path: ui-audit-inputs.tar.gz
+          if-no-files-found: error
+          retention-days: 1
       # The cases whose subject is the live UI driven in a browser, which the suite runners do
       # not have: each declares "# majordomus-skip-runs-in: ui" and is excused there only
       # because it is held here, against the executable this job built, with no skip excused
       # (3220, the IDD loop walked end to end).
       - name: the cases that drive the UI in a browser
         run: scripts/ci/timed --bound 900 ui-audit ui-cases timings.tsv bash test/run.sh --no-skips --runs-in ui
-      - if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: ui-audit
-          path: |
-            target/web/run-ui.json
-            target/web/tests/ui
-          retention-days: 14
       - if: always()
         run: scripts/ci/summary --job ui --timings timings.tsv --fact "npm cache hit=${{ steps.site.outputs.npm-cache-hit }}" --fact "rust cache hit=${{ steps.rust.outputs.cache-hit }}"
       - if: always()
@@ -1289,6 +1311,104 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: case "$GITHUB_HEAD_REF" in integration/*) echo "::notice::an integration/* top runs to the end, so every red of it is shown";; *) gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled";; esac
+
+  ui-audit-shard:
+    needs: [plan, ui]
+    if: always() && needs.plan.outputs.ui_audit == 'true' && needs.ui.result != 'skipped'
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6]
+    # a sixth of an audit that every page of every language now runs, plus the docs build the
+    # audit makes before it measures them
+    timeout-minutes: 45
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: site
+        uses: ./.github/actions/setup-site
+      - uses: actions/download-artifact@v4
+        with:
+          name: ui-audit-inputs
+      - name: the ui job's build
+        run: |
+          tar -xzf ui-audit-inputs.tar.gz && rm ui-audit-inputs.tar.gz
+          echo "MAJORDOMUS_BIN=$PWD/apps/majordomus-cli/target/debug/majordomus" >> "$GITHUB_ENV"
+      - name: audit this shard of the UI in a browser
+        env:
+          UI_AUDIT_SHARD: ${{ matrix.shard }}/6
+          UI_AUDIT_REPORT: shard/ui-audit-routes.txt
+        run: scripts/ci/timed --bound 2400 ui-audit "ui-audit-${{ matrix.shard }}" timings.tsv scripts/ui audit --no-build --out shard/run-ui.json
+      - if: always()
+        run: scripts/ci/summary --job ui --timings timings.tsv --fact "shard=${{ matrix.shard }}/6"
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-audit-shard-${{ matrix.shard }}
+          path: shard
+          if-no-files-found: ignore
+          retention-days: 3
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-metrics-ui-${{ matrix.shard }}
+          path: timings.tsv
+          retention-days: 14
+      - name: a failed branch run ends here
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: case "$GITHUB_HEAD_REF" in integration/*) echo "::notice::an integration/* top runs to the end, so every red of it is shown";; *) gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled";; esac
+
+  ui-audit:
+    needs: [plan, ui, ui-audit-shard]
+    if: always() && needs.plan.outputs.ui_audit == 'true'
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    env:
+      MJ_CI_RECEIPTS: ${{ github.workspace }}/receipts.tsv
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: ui-audit-inputs
+      - name: the executable that renders the report
+        run: |
+          tar -xzf ui-audit-inputs.tar.gz apps/majordomus-cli/target/debug/majordomus && rm ui-audit-inputs.tar.gz
+          echo "MAJORDOMUS_BIN=$PWD/apps/majordomus-cli/target/debug/majordomus" >> "$GITHUB_ENV"
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: ui-audit-shard-*
+          path: shards
+      # every page once, then one document out of the shards' and its report; a missing or
+      # repeated shard is refused before anything is merged (scripts/ui merge)
+      - name: every page, exactly once, as one run
+        id: union
+        run: scripts/ui merge --reports shards --report
+      - name: the build, the budget, the cases and every shard passed
+        id: shards
+        if: always()
+        run: |
+          echo "the ui job concluded ${{ needs.ui.result }}, the shards ${{ needs.ui-audit-shard.result }}"
+          [ "${{ needs.ui.result }}" = success ] && [ "${{ needs.ui-audit-shard.result }}" = success ]
+      - name: the audit's receipt
+        if: always()
+        run: printf '%s\t%s\tui-audit/union\n%s\t%s\tui-audit/shards\n' "ui-audit" "${{ steps.union.outcome }}" "ui-audit" "${{ steps.shards.outcome }}" >> "$MJ_CI_RECEIPTS"
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-audit
+          path: |
+            target/web/run-ui.json
+            target/web/tests/ui
+          retention-days: 14
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-receipts-ui-audit
+          path: receipts.tsv
+          if-no-files-found: ignore
+          retention-days: 14
 
   # ----------------------------------------------------------------- cockpit
   # The Cockpit measured against a server this job starts: every route the server serves
@@ -1587,7 +1707,7 @@ jobs:
   # setting and is not made here; until it is required, this is a verdict a person can read
   # and not one the merge obeys.
   ci:
-    needs: [plan, structure, suite, rust, coverage, bench, site, site-probe, interactions, ui, cockpit, mesh-lab, macos, install, pages]
+    needs: [plan, structure, suite, rust, coverage, bench, site, site-probe, interactions, ui, ui-audit, cockpit, mesh-lab, macos, install, pages]
     if: always()
     timeout-minutes: 15
     runs-on: ubuntu-latest

@@ -1,0 +1,39 @@
+id: I3604
+milestone: architecture-is-enforced
+title: "The UI audit is split, so every page of every language is audited inside its bound"
+slug: the-ui-audit-is-split
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Split the UI audit (scripts/ui audit over every discovered page of every surface the executable serves, at every width the theme implies) the way I2841 and I3602 split the browser probes: the ui job builds once and packs what the audit's server needs, shards audit a stride of the sorted routes cut by scripts/site-probe --partition, and a fan-in proves with scripts/site-probe --verify-report that the shards audited every page once before scripts/ui merge writes the one run-ui.json a single runner writes. The language copies are audited in full."
+why: "The audit grew with the site past every bound it was given: stopped at 2,400 s mid-audit on 37087514909, at 3,600 s on 39097403850, and at 5,400 s on the alpha.1 top (39317142394) once the Czech copies doubled the pages; alpha.1 shipped by sampling the copies (languageSample). a3 ruled on 2026-10-20 that the ui job audits every page, sharded, as the site and interaction probes do, which supersedes sampling /docs to fit the bound (I3006, withdrawn) and the copy detection the sampler needed (I3012, withdrawn)."
+current_state: "One ui job builds, checks the budget, audits every page in one step under a 5,400 s bound, runs the ui cases and renders the report; the Czech copies are sampled to fit."
+desired_state: "The ui job builds the site, the executable and what the audit serves, checks the budget and runs the ui cases; six ui-audit-shard jobs audit a stride each with --no-build; the ui-audit job verifies the route reports, merges the documents with scripts/ui merge, renders the report and carries the gate. No page is sampled, and languageSample is removed when the branch takes master after the alpha.1 tag."
+scope:
+  - "scripts/ui"
+  - "scripts/lib/ui-run.mjs"
+  - "scripts/lib/ui.test.mjs"
+  - "scripts/lib/ui-discover.mjs"
+  - ".github/workflows/validate.yml"
+  - ".ai/repo/ci/gates.yaml"
+  - "test/cases/3604_every_page_is_audited_by_exactly_one_shard.sh"
+  - "test/cases/3605_a_split_audit_reports_what_one_runner_reports.sh"
+  - "docs/CI.md"
+non_scope:
+  - "Sampling pages or widths to fit a bound: the shards are the answer to the bound"
+  - "The audit's rules, which are ui-audit.mjs's and unchanged"
+depends_on: [I3602]
+acceptance_criteria:
+  - "Every discovered route lands in exactly one shard: the union of the shards' routes is the discovered set, with no overlap"
+  - "scripts/ui merge refuses a missing shard, a route two shards audited and shards planned at other widths, and writes nothing"
+  - "The merge of two shards of a real audit reports the same pages, visits, rules and findings as one runner over the same pages"
+  - "languageSample, its call in discoverPages, its comment and its ui.test case are gone after the master merge"
+validation:
+  - "bin/majordomus plan validate"
+  - "node scripts/lib/ui.test.mjs"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 3604_every_page_is_audited_by_exactly_one_shard"
+  - "bash test/run.sh --no-skips --runs-in ui 3605_a_split_audit_reports_what_one_runner_reports"
+evidence_required:
+  - "split_audit_equals_single_case"
+created_at: 2026-10-20
+updated_at: 2026-10-20

@@ -7,6 +7,11 @@
 #   scripts/ui check               the static invariants: markup a keyboard cannot use
 #   scripts/ui audit [OPTIONS]     visit every page in a browser and write the results document
 #   scripts/ui navbar [--write]    whether the bar of the UI is the site's (see below)
+#   scripts/ui merge --reports DIR [--out FILE] [--report]
+#                                  one results document out of every shard's (I3604): the route
+#                                  reports under DIR must be shards 1..N of one sweep, each route
+#                                  once (scripts/site-probe --verify-report), and the documents
+#                                  beside them (run-ui*.json) are merged; anything less is refused
 #   scripts/ui test                the UI tooling's own tests
 #
 # Options of `audit`, and of `pages` and `viewports` where they apply:
@@ -19,6 +24,9 @@
 #   --report           render the results into the tests surface afterwards (/tests/ui)
 #
 #   MJ_UI_JOBS=N       how many pages are driven at once (default: the machine, 2-4)
+#   UI_AUDIT_SHARD=K/N only shard K of N of the sorted routes, by the stride scripts/site-probe
+#                      --partition defines for every browser gate; CI runs N side by side
+#   UI_AUDIT_REPORT=F  write the routes this run audits to F, after "# shard K/N of M routes"
 #
 # `navbar` holds project.the-ui-wears-the-sites-navbar, and `audit` runs it first. The bar of
 # every UI screen is the site's bar as the built site renders it (scripts/lib/ui-navbar.mjs):
@@ -58,13 +66,14 @@ CSS="$ROOT/site/static/app.css"
 # cargo does not necessarily build into apps/majordomus-cli/target; ask it where
 MJ="${MAJORDOMUS_BIN:-$(mj_cargo_target_dir "$ROOT/apps/majordomus-cli" ask-cargo)/debug/majordomus}"
 
-usage() { sed -n '2,38p' "$0" | sed 's/^# \{0,1\}//'; }
+usage() { sed -n '2,46p' "$0" | sed 's/^# \{0,1\}//'; }
 
 sub="${1:-pages}"; [ $# -gt 0 ] && shift || true
-json=0; only=""; limit=""; out="$ROOT/target/web/run-ui.json"; origin=""; render=0; port=8790; build=""; write=0
+json=0; only=""; limit=""; out="$ROOT/target/web/run-ui.json"; origin=""; render=0; port=8790; build=""; write=0; reports=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --json) json=1 ;;
+    --reports) reports="${2:?--reports needs a directory}"; shift ;;
     --only) only="${2:?--only needs a substring}"; shift ;;
     --limit) limit="${2:?--limit needs a count}"; shift ;;
     --out) out="${2:?--out needs a path}"; shift ;;
@@ -83,9 +92,39 @@ case "$sub" in
   -h|--help|help) usage; exit 0 ;;
   test) exec node "$ROOT/scripts/lib/ui.test.mjs" ;;
   check) ;;
-  pages|viewports|audit|navbar) ;;
+  pages|viewports|audit|navbar|merge) ;;
   *) echo "ui: unknown subcommand '$sub'" >&2; usage >&2; exit 2 ;;
 esac
+
+# ------------------------------------------------------------------- the shards, as one run
+# The fan-in of a split audit (I3604). It needs no server and no browser: it asks whether the
+# route reports are every shard of one sweep, each route once, and only then merges the shards'
+# documents into the one a single runner would have written. A missing or repeated shard is
+# refused rather than merged into a short document that would read as a clean sweep.
+if [ "$sub" = merge ]; then
+  [ -d "$reports" ] || { echo "ui merge: --reports needs the directory of the shards' route reports and documents" >&2; exit 2; }
+  "$ROOT/scripts/site-probe" --verify-report "$reports" || { echo "ui merge: the shards are not one whole sweep; nothing merged" >&2; exit 10; }
+  node --input-type=module -e '
+import { readFileSync } from "node:fs";
+import { merge, write } from "'"$ROOT"'/scripts/lib/ui-run.mjs";
+const files = process.argv.slice(1);
+if (!files.length) { console.error("ui merge: no run-ui*.json beside the route reports"); process.exit(10); }
+let results;
+try { results = merge(files.map((f) => JSON.parse(readFileSync(f, "utf8"))), { complete: true }); }
+catch (e) { console.error(`ui merge: ${e.message}; nothing merged`); process.exit(10); }
+write("'"$out"'", results);
+for (const [rule, n] of Object.entries(results.rules)) console.log(`${String(n).padStart(5)}  ${rule}`);
+console.log(`ui merge: ${files.length} shard(s), ${results.pages} page(s), ${results.visits} visit(s), ${results.findings.length} finding(s) over every page -> ${"'"$out"'".replace("'"$ROOT"'/", "")}`);
+process.exitCode = results.findings.length ? 10 : 0;
+' $(find "$reports" -type f -name 'run-ui*.json' | LC_ALL=C sort) || status=$?
+  status="${status:-0}"
+  if [ "$render" = 1 ] && [ -f "$out" ]; then "$MJ" web report ui --from "$out" --repo "$ROOT"; fi
+  exit "$status"
+fi
+if [ -n "${UI_AUDIT_SHARD:-}" ]; then
+  "$ROOT/scripts/site-probe" --partition "$UI_AUDIT_SHARD" < /dev/null > /dev/null 2>&1 \
+    || { echo "ui: UI_AUDIT_SHARD must be K/N with 1 <= K <= N, got '$UI_AUDIT_SHARD'" >&2; exit 2; }
+fi
 
 # `audit` builds the documentation it is about to measure; asking what the page set is does
 # not rebuild the site behind the caller's back.
@@ -303,7 +342,7 @@ const surfaces = JSON.parse(readFileSync(process.argv[1], "utf8"));
 const only = "'"$only"'" || undefined;
 const limit = "'"$limit"'" ? Number("'"$limit"'") : undefined;
 const results = await run("'"$origin"'", surfaces, "'"$CSS"'", {
-  select: only, limit,
+  select: only, limit, shard: process.env.UI_AUDIT_SHARD || undefined, report: process.env.UI_AUDIT_REPORT || undefined,
   onVisit: (visit, done) => {
     if (visit.findings.length || done % 50 === 0)
       process.stderr.write(`  ${String(done).padStart(4)}  ${visit.route} @${visit.width}  ${visit.findings.length} finding(s)\n`);
@@ -314,7 +353,7 @@ const total = results.findings.length;
 if ('"$json"') { console.log(JSON.stringify(results, null, 2)); }
 else {
   for (const [rule, n] of Object.entries(results.rules)) console.log(`${String(n).padStart(5)}  ${rule}`);
-  const scope = results.complete ? "every page" : "a selected part of the site";
+  const scope = results.complete ? "every page" : results.shard ? `shard ${results.shard} of the sweep (scripts/ui merge makes it one)` : "a selected part of the site";
   console.log(`ui audit: ${results.pages} page(s), ${results.visits} visit(s), ${total} finding(s) over ${scope} in ${results.seconds}s at ${results.concurrency} job(s) -> ${"'"$out"'".replace("'"$ROOT"'/", "")}`);
 }
 process.exitCode = total ? 10 : 0;

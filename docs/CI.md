@@ -24,9 +24,11 @@ flowchart LR
   probeshards --> probe["site-probe<br>every route exactly once"]
   site --> ishards["interaction-probe-shard ×6<br>a stride of the pages each"]
   ishards --> interactions["interactions<br>every page exactly once"]
-  plan --> ui["ui"]
+  plan --> ui["ui<br>build, budget, cases"]
+  ui --> ushards["ui-audit-shard ×6<br>a stride of the pages each"]
+  ushards --> uiaudit["ui-audit<br>every page exactly once,<br>one run-ui.json"]
   plan --> macos["macos"]
-  structure & suite & rust & coverage & bench & site & probe & interactions & ui & macos --> ci["ci<br>the verdict; the one<br>required status"]
+  structure & suite & rust & coverage & bench & site & probe & interactions & ui & uiaudit & macos --> ci["ci<br>the verdict; the one<br>required status"]
 ```
 
 and beside it, on the same commit, never after it:
@@ -303,6 +305,29 @@ Since I3602 it is split in six like the site probe, and cut by the same rule:
 No page is sampled, the Czech copies included. A finding still fails the shard that drove the
 page and names the page and the spec. Case 3603 drives three shards of a fixture site in a
 browser. Reproduce one CI shard with `MJ_PROBE_SHARD=2/6 MJ_PROBE_JOBS=4 scripts/interaction-probe`.
+
+## The UI audit
+
+`scripts/ui audit` visits every discovered page of every surface the executable serves, at every
+width the theme implies. As one step it outgrew each bound it was given: 2,400 s, then 3,600 s,
+then 5,400 s, once the Czech copies doubled the pages. alpha.1 shipped by sampling the copies.
+
+Since I3604 it is split in six, by the same rule as the two probes:
+
+- the `ui` job builds the site, the executable and what the audit serves (the documentation at
+  its mount and the Cockpit's lazy assets). It checks the UI budget, runs the ui cases, and
+  packs the audit's inputs (artifact `ui-audit-inputs`, listed by git, not by hand);
+- each `ui-audit-shard` job audits `UI_AUDIT_SHARD=K/6`, the stride
+  `scripts/site-probe --partition K/6` gives for the sorted routes, with `--no-build`. It writes
+  its document and its routes (`UI_AUDIT_REPORT`);
+- the `ui-audit` job keeps the gate. `scripts/ui merge --reports shards --report` verifies that
+  the reports are every page once, then merges the documents into the one `target/web/run-ui.json`
+  a single runner writes, and renders `/tests/ui` from it. A missing shard, a route two shards
+  audited, or shards planned at other widths are refused, and nothing is written.
+
+No page is sampled. Case 3604 holds the merge and the wiring on fixtures; case 3605 audits a
+few real pages once and as two merged shards in the ui job and requires the same report.
+Reproduce one CI shard with `UI_AUDIT_SHARD=2/6 scripts/ui audit --no-build`.
 
 ## Caches and artifacts
 

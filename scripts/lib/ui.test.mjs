@@ -12,6 +12,7 @@ import { alignCells, escapes, nameTaskCheckboxes, normalise, normaliseRendered, 
 import { contrast, enforce, measure, raise, MINIMUM } from './ui-contrast.mjs';
 import { sample, siblingFamilies } from './ui-routes.mjs';
 import { compare, cut, fragment, GENERATED, VERSION_SLOT } from './ui-navbar.mjs';
+import { merge, shardPages, RESULTS_SCHEMA } from './ui-run.mjs';
 
 const tests = [];
 const test = (name, fn) => tests.push([name, fn]);
@@ -383,6 +384,61 @@ test('two bars are compared element by element: a class, a box past a pixel, a s
   assert.ok(d.some((x) => /font-size is 14px on the UI, 16px on the site/.test(x)), d.join('\n'));
   assert.ok(d.some((x) => /nav>a\[0\]: only the site has this element/.test(x)), d.join('\n'));
   assert.deepEqual(compare(null, [el()]), ['the site page has no <nav aria-label="Main">']);
+});
+
+// ------------------------------------------------------------------ the split audit (I3604)
+// A sweep of 7 routes, some of them visited at two tiers, the way a plan holds them.
+const PAGES = ['/a/', '/b/', '/c/', '/d/', '/e/', '/f/', '/g/'].flatMap((route, i) =>
+  i % 3 === 0 ? [{ route, tier: 'full' }, { route, tier: 'critical' }] : [{ route, tier: 'full' }]);
+// What a single runner writes for that sweep, and what each shard writes for its stride of it.
+const plan = { source: { pages: 'fixture' }, breakpoints: [640, 1024], viewports: [320, 1280], surfaces: [{ id: 'app', pages: 7 }] };
+const findingsOf = (pages) => pages.filter((p) => p.route === '/b/' || p.route === '/f/')
+  .flatMap((p) => [{ route: p.route, width: 320, tier: p.tier, rule: 'overflow.document', detail: `${p.route} overflows` }]);
+const docOf = (pages, extra = {}) => {
+  const findings = findingsOf(pages);
+  return { schema: RESULTS_SCHEMA, origin: 'http://127.0.0.1:8790', complete: false, ...plan, pages: pages.length,
+    visits: pages.length * 2, seconds: 10, concurrency: 4, rules: {}, foreign: [], findings, ...extra };
+};
+const shardDocs = (n) => Array.from({ length: n }, (_, i) => {
+  const mine = shardPages(PAGES, `${i + 1}/${n}`);
+  return docOf(mine, { shard: `${i + 1}/${n}`, routes: [...new Set(mine.map((p) => p.route))].sort() });
+});
+// What a report reader compares: everything but when, how fast and from which server.
+const meaning = (doc) => {
+  const { seconds, concurrency, origin, complete, shard, routes, ...rest } = doc;
+  const order = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
+  return { ...rest, findings: [...rest.findings].sort((a, b) => order(a.route, b.route) || a.width - b.width || order(a.rule, b.rule)) };
+};
+
+test('every route of a sweep lands in exactly one shard, with all of its tiers', () => {
+  for (const n of [1, 2, 3, 4, 7]) {
+    const shards = Array.from({ length: n }, (_, i) => shardPages(PAGES, `${i + 1}/${n}`));
+    const routes = shards.flatMap((s) => [...new Set(s.map((p) => p.route))]);
+    assert.equal(new Set(routes).size, routes.length, `${n} shards: a route is in two shards`);
+    assert.deepEqual([...routes].sort(), [...new Set(PAGES.map((p) => p.route))].sort(), `${n} shards: the union is not the sweep`);
+    assert.equal(shards.flat().length, PAGES.length, `${n} shards: a tier of a route was lost or repeated`);
+  }
+});
+
+test('the merge of every shard is what a single runner reports, and says it is complete', () => {
+  const single = docOf(PAGES);
+  single.rules = { 'overflow.document': single.findings.length };
+  for (const n of [2, 3]) {
+    const merged = merge(shardDocs(n), { complete: true });
+    assert.deepEqual(meaning(merged), meaning(single), `${n} shards merged differ from the single run`);
+    assert.equal(merged.complete, true);
+    assert.equal(merged.shard, undefined, 'the merged document carries no shard of its own');
+  }
+});
+
+test('the merge refuses a route audited by two shards, and parts planned differently', () => {
+  const parts = shardDocs(3);
+  const twice = [...parts, { ...parts[0], shard: '1/3 again' }];
+  assert.throws(() => merge(twice), /was audited by shard 1\/3 and by shard 1\/3 again/);
+  const other = shardDocs(3);
+  other[2] = { ...other[2], viewports: [320] };
+  assert.throws(() => merge(other), /disagree on viewports/);
+  assert.throws(() => merge([]), /no shard documents/);
 });
 
 let failed = 0;
