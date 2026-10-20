@@ -26,6 +26,7 @@ page() {
 <main><h1>Getting started</h1>
 <p>Read <a href="https://example.test/guide/">the guide</a> before you run <code>majordomus init</code>.</p>
 <p>An untranslated sentence.</p>
+<p>3 of 5 milestones done, I3091 stays.</p>
 <pre><code>Code is never translated.</code></pre>
 <p><a href="https://example.test/releases/latest.json">Release metadata</a></p></main></body></html>
 HTML
@@ -48,6 +49,8 @@ const entries = [
   ['Read <t1>the guide</t1> before you run <t2/>.', 'Než spustíte <t2/>, přečtěte si <t1>návod</t1>.'],
   ['Release metadata', 'Metadata vydání'],
   ['Translated automatically.', 'Přeloženo automaticky.'],
+  // a count is a slot: the memory holds the template, and the page's own numbers fill it
+  ['<n1/> of <n2/> milestones done, I3091 stays.', '<n1/> z <n2/> milníků hotovo, I3091 zůstává.'],
   // a translation that lost its code placeholder: refused, the English stays
   ['An untranslated sentence.', 'Nepřeložená věta <t9/>.'],
 ];
@@ -65,6 +68,8 @@ grep -q 'Než spustíte <code>majordomus init</code>, přečtěte si <a href="ht
 grep -q '<p>An untranslated sentence.</p>' "$CS" \
   || { echo "    a translation that dropped a placeholder was admitted"; exit 1; }
 grep -q 'Code is never translated.' "$CS" || { echo "    code was touched"; exit 1; }
+grep -q '<p>3 z 5 milníků hotovo, I3091 zůstává.</p>' "$CS" \
+  || { echo "    a sentence with counts was not translated from its template, or its numbers were lost"; exit 1; }
 grep -q 'href="https://example.test/releases/latest.json">Metadata vydání' "$CS" \
   || { echo "    a link to a file that is not a page was rewritten"; exit 1; }
 grep -q '<link rel="canonical" href="https://example.test/cs/">' "$CS" \

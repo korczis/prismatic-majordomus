@@ -131,7 +131,7 @@ function readMissingSafe(lang) {
 export function prompt(lang, items, g = guide(lang)) {
   return [
     `Translate the user-interface and documentation strings of a software product's website from English into ${g.language ?? lang}.`,
-    'Each item is one segment of a page. Placeholders like <t1>...</t1> wrap inline markup and <t2/> stands for code or an image: keep every placeholder exactly once, keep their nesting, move them only where the grammar needs it, and never translate what they stand for.',
+    'Each item is one segment of a page. Placeholders like <t1>...</t1> wrap inline markup, <t2/> stands for code or an image, and <n1/> stands for a number the build fills in: keep every placeholder exactly once, keep their nesting, move them only where the grammar needs it, and never translate what they stand for. Inflect the word after <nK/> as most counts read (in Czech, the genitive plural).',
     'Keep command names, flags, file paths, identifiers, product names and code exactly as written. Keep HTML entities such as &amp; as they are. Translate naturally, as a native technical writer would, not word for word.',
     g.instructions ? `Style: ${g.instructions}` : '',
     g.glossary ? `Glossary (English -> translation), use consistently: ${JSON.stringify(g.glossary)}` : '',

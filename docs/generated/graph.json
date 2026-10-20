@@ -45985,6 +45985,47 @@
         }
       },
       {
+        "id": "majordomus://issue/I3095",
+        "kind": "issue",
+        "label": "I3095",
+        "summary": "A count inside a translated sentence is a slot, so a changed number never drops the translation",
+        "route": "/cockpit/objects/issue/i3095",
+        "source": ".ai/repo/project/issues/I3095.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A page whose sentence carries different counts than the memory's example is translated from the template, with its own numbers",
+            "A translation missing or repeating an <nK/> slot is refused",
+            "Identifiers and versions are never slots",
+            "The existing memory is re-keyed without re-translation: 6942 entries re-keyed, 1183 merged into a shared template, 52 kept under their old key because their numbers do not match one to one"
+          ],
+          "created_at": "2026-10-20",
+          "current_state": "keyOf hashes the segment with its numbers; a changed count is a missing segment.",
+          "depends_on": [],
+          "evidence_required": [
+            "count_slot_translates"
+          ],
+          "milestone": "public-proof",
+          "non_scope": [
+            "Plural forms by count (one form per template; Czech 1 uzel / 2 uzly / 5 uzlů is a follow-up)"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "scripts/lib/site-i18n.mjs",
+            "scripts/site-translate",
+            "site/i18n/cs/memory",
+            "test/cases/3590_the_site_is_derived_in_every_language.sh",
+            ".ai/repo/project/issues/I3095.yaml"
+          ],
+          "slug": "a-count-is-a-slot-in-the-translation-memory",
+          "updated_at": "2026-10-20",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE bash test/run.sh 3590_the_site_is_derived_in_every_language"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I3100",
         "kind": "issue",
         "label": "I3100",
@@ -68814,6 +68855,29 @@
             "linux-aarch64-musl"
           ],
           "tag": "v0.9.0"
+        }
+      },
+      {
+        "id": "majordomus://release-record/v1.0.0-alpha.1",
+        "kind": "release-record",
+        "label": "v1.0.0-alpha.1",
+        "summary": "v1.0.0-alpha.1",
+        "route": "/cockpit/objects/release-record/v1-0-0-alpha-1",
+        "source": ".ai/repo/releases/v1.0.0-alpha.1.yaml",
+        "facts": {
+          "channel": "prerelease",
+          "commit": "9a5a9b77520bbe9504b04ff89235a6f232377788",
+          "notes_url": "https://github.com/korczis/prismatic-majordomus/releases/tag/v1.0.0-alpha.1",
+          "published_at": "2026-10-20T18:38:58Z",
+          "required_targets": [
+            "macos-aarch64",
+            "macos-x86_64",
+            "linux-x86_64-gnu",
+            "linux-x86_64-musl",
+            "linux-aarch64-gnu",
+            "linux-aarch64-musl"
+          ],
+          "tag": "v1.0.0-alpha.1"
         }
       },
       {
@@ -111822,6 +111886,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3095",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3095",
+        "target": "majordomus://milestone/public-proof",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I3100",
         "target": "kind:issue",
         "kind": "is_a"
@@ -117848,6 +117922,11 @@
       },
       {
         "source": "majordomus://release-record/v0.9.0",
+        "target": "kind:release-record",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://release-record/v1.0.0-alpha.1",
         "target": "kind:release-record",
         "kind": "is_a"
       },
@@ -127443,8 +127522,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3610,
-      "edges": 8394,
+      "nodes": 3612,
+      "edges": 8397,
       "acyclic": false,
       "truncated": false
     }

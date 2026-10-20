@@ -185,6 +185,28 @@ export function translatable(plain) {
 export const keyOf = (source) =>
   createHash('sha256').update(source.replace(/\s+/g, ' ').trim()).digest('hex').slice(0, 20);
 
+// A count inside a sentence is data, not words: "153 nodes, 549 edges" and "4 of 26" are the
+// sentences "<n1/> nodes, <n2/> edges" and "<n1/> of <n2/>", translated once and filled with
+// whatever this build counts. Keyed with the numbers inside, every changed count was a new
+// segment the memory had never seen, and 58 of 100 Czech roadmap titles fell back to English
+// (2026-10-20). Only a standalone number is a slot: a number joined to letters, a hyphen, a dot
+// or a hash (I3091, v0.30.2, 2026-10-20, 82ac259, #1434) is an identifier and stays as written.
+const NUMBER = /(?<![\p{L}\p{N}_.\-#])\d+(?:[.,]\d+)?(?![\p{L}\p{N}_\-]|[.,]\d)/gu;
+const SLOT = /<n(\d+)\/>/g;
+
+/** A source with its standalone numbers replaced by `<nK/>` slots, and the values they hold. */
+export function numberSlots(source) {
+  const values = [];
+  // the numbers inside a placeholder (<t12>) are the placeholder's, never the reader's
+  const template = source.split(/(<\/?t\d+\/?>)/).map((part, i) => (i % 2 ? part
+    : part.replace(NUMBER, (n) => { values.push(n); return `<n${values.length}/>`; }))).join('');
+  return { template, values };
+}
+
+/** A translation template with its `<nK/>` slots filled from the source's values. */
+export const fillSlots = (template, values) =>
+  template.replace(SLOT, (m, k) => values[Number(k) - 1] ?? m);
+
 // One run of inline content: its range, the source a translator sees, and the raw tags each
 // placeholder stands for.
 function runSegment(html, nodes) {
@@ -239,9 +261,9 @@ function runSegment(html, nodes) {
     parts.push(`</t${id}>`);
   };
   for (let k = first; k <= last; k += 1) walk(nodes[k], start, end);
-  const source = parts.join('').replace(/\s+/g, ' ').trim();
   if (!translatable(plain)) return null;
-  return { kind: 'html', start, end, source, tags, key: keyOf(source) };
+  const { template: source, values } = numberSlots(parts.join('').replace(/\s+/g, ' ').trim());
+  return { kind: 'html', start, end, source, values, tags, key: keyOf(source) };
 }
 
 /** Every segment of a page, in document order, with the ranges they replace. */
@@ -256,8 +278,9 @@ export function segments(html, root = parse(html)) {
         if ((ATTRIBUTES.includes(a.name) || META.has(metaName)) && a.vstart >= 0) {
           const plain = decode(a.value);
           if (translatable(plain)) {
-            const source = plain.replace(/\s+/g, ' ').trim();
-            out.push({ kind: 'attr', start: a.vstart, end: a.vend, source, key: keyOf(source) });
+            const { template: source, values } = numberSlots(plain.replace(/\s+/g, ' ').trim());
+            out.push({ kind: 'attr', start: a.vstart, end: a.vend, source, values,
+              key: keyOf(source) });
           }
         }
       }
@@ -267,8 +290,9 @@ export function segments(html, root = parse(html)) {
       if (t) {
         const plain = decode(html.slice(t.start, t.end));
         if (translatable(plain)) {
-          const source = plain.replace(/\s+/g, ' ').trim();
-          out.push({ kind: 'text', start: t.start, end: t.end, source, key: keyOf(source) });
+          const { template: source, values } = numberSlots(plain.replace(/\s+/g, ' ').trim());
+          out.push({ kind: 'text', start: t.start, end: t.end, source, values,
+            key: keyOf(source) });
         }
       }
       return;
@@ -297,9 +321,9 @@ export function segments(html, root = parse(html)) {
         if (ATTRIBUTES.includes(a.name) && a.vstart >= 0) {
           const plain = decode(a.value);
           if (translatable(plain)) {
-            const source = plain.replace(/\s+/g, ' ').trim();
-            out.push({ kind: 'attr', start: a.vstart, end: a.vend, source, key: keyOf(source),
-              inner: true });
+            const { template: source, values } = numberSlots(plain.replace(/\s+/g, ' ').trim());
+            out.push({ kind: 'attr', start: a.vstart, end: a.vend, source, values,
+              key: keyOf(source), inner: true });
           }
         }
       }
@@ -330,7 +354,7 @@ const PLACEHOLDER = /<(\/?)t(\d+)(\/?)>/g;
 export function admissible(source, translation) {
   if (typeof translation !== 'string' || translation.trim() === '') return false;
   const shape = (s) => {
-    const seen = [];
+    const seen = [...s.matchAll(SLOT)].map((m) => `n${m[1]}`);
     const stack = [];
     for (const m of s.matchAll(PLACEHOLDER)) {
       const [, close, id, selfClose] = m;
@@ -354,7 +378,8 @@ const escapeText = (s) => s.replace(/&(?!#?[0-9a-z]+;)/gi, '&amp;').replace(/</g
   .replace(/>/g, '&gt;');
 const escapeAttr = (s) => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 
-function restore(html, seg, translation, rewriteTag) {
+function restore(html, seg, template, rewriteTag) {
+  const translation = fillSlots(template, seg.values ?? []);
   if (seg.kind === 'attr') return escapeAttr(translation);
   if (seg.kind === 'text') return escapeText(translation);
   const byId = new Map(seg.tags.map((t) => [String(t.id), t]));
