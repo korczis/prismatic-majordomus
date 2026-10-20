@@ -64,7 +64,9 @@
           "01_init",
           "15_command_surface",
           "284_a_record_reads_the_whole_declaration",
-          "2979_a_personal_layer_changes_nothing_shared"
+          "2979_a_personal_layer_changes_nothing_shared",
+          "3113_the_adoption_footprint_is_inventoried",
+          "3340_a_fresh_init_leaves_doctor_clean"
         ],
         "negative": [
           "01_init",
@@ -184,6 +186,8 @@
           "15_command_surface",
           "19_end_to_end",
           "284_a_record_reads_the_whole_declaration",
+          "3113_the_adoption_footprint_is_inventoried",
+          "3340_a_fresh_init_leaves_doctor_clean",
           "33_event_registry"
         ],
         "negative": [
@@ -287,6 +291,7 @@
           "223_an_unsupported_schema_is_a_finding",
           "284_a_record_reads_the_whole_declaration",
           "3036_a_worktree_runs_its_own_hooks",
+          "3340_a_fresh_init_leaves_doctor_clean",
           "36_command_doctrines",
           "44_model_doctrine",
           "707_knowledge_check_refuses_malformed_records",
@@ -521,6 +526,9 @@
           "19_end_to_end",
           "25_continuity_lifecycle",
           "3067_a_task_is_claimed_on_the_mesh",
+          "3151_a_task_is_claimed_when_it_starts",
+          "3160_a_scope_entry_is_one_path",
+          "3190_a_scope_of_dot_is_the_repository",
           "32_refusal_lifecycle",
           "33_event_registry",
           "821_a_session_moves_between_machines",
@@ -530,6 +538,7 @@
           "04_start_check",
           "05_handover",
           "16_profiles",
+          "3160_a_scope_entry_is_one_path",
           "32_refusal_lifecycle"
         ]
       },
@@ -633,6 +642,7 @@
           "23_context",
           "25_continuity_lifecycle",
           "3073_context_knowledge_slice",
+          "3160_a_scope_entry_is_one_path",
           "710_briefing_names_the_candidates",
           "886_the_timing_report_is_json"
         ],
@@ -941,6 +951,8 @@
           "25_continuity_lifecycle",
           "2988_a_scope_admits_what_its_derive_wrote",
           "3023_a_knowledge_record_outlives_the_file_it_cites",
+          "3151_a_task_is_claimed_when_it_starts",
+          "3190_a_scope_of_dot_is_the_repository",
           "32_refusal_lifecycle",
           "578_an_unknown_gate_refuses_completed",
           "707_knowledge_check_refuses_malformed_records"
@@ -955,6 +967,7 @@
           "19_end_to_end",
           "21_decision_question",
           "25_continuity_lifecycle",
+          "3190_a_scope_of_dot_is_the_repository",
           "32_refusal_lifecycle",
           "707_knowledge_check_refuses_malformed_records"
         ]
@@ -1060,6 +1073,7 @@
           "2988_a_scope_admits_what_its_derive_wrote",
           "3067_a_task_is_claimed_on_the_mesh",
           "3068_a_task_off_the_mesh_is_refused",
+          "3151_a_task_is_claimed_when_it_starts",
           "32_refusal_lifecycle",
           "33_event_registry",
           "572_verification_records_the_tree_it_proved",
@@ -1380,6 +1394,7 @@
           "21_decision_question",
           "221_the_lifecycle_under_concurrency",
           "25_continuity_lifecycle",
+          "3210_a_candidate_cites_its_own_commit",
           "33_event_registry",
           "821_a_session_moves_between_machines"
         ],
@@ -1942,6 +1957,8 @@
           "224_continuity_crosses_machines",
           "282_the_ledger_envelope_is_reserved",
           "29_prompt_capture",
+          "3113_the_adoption_footprint_is_inventoried",
+          "3460_a_session_end_hook_fits_its_budget",
           "408_a_receipt_is_provider_neutral",
           "494_the_mesh_is_declared_and_held",
           "54_session_lifecycle_hooks",
@@ -2275,6 +2292,9 @@
       ],
       "tests": {
         "behaviour": [
+          "3100_an_issue_delivery_is_inferred",
+          "3101_merged_work_unrecorded_is_drift",
+          "3102_a_milestone_version_is_inferred",
           "40_project_model",
           "41_project_status",
           "42_dag_waves",
@@ -2467,7 +2487,7 @@
             "expect": {
               "exit": 0,
               "stdout_contains": [
-                "^majordomus [0-9]+\\.[0-9]+\\.[0-9]+$"
+                "^majordomus [0-9]+\\.[0-9]+\\.[0-9]+(-(alpha|beta|rc)\\.[0-9]+)?$"
               ]
             },
             "explain": "The one string every other surface derives its version from — this site, the ledger's `by` field, and the generated provider instructions.",
@@ -2760,6 +2780,7 @@
           "3037_a_knowledge_lookup_explains_its_order",
           "3060_trunk_stays_clean",
           "3063_a_branch_episode_drains_the_outbox",
+          "3210_a_candidate_cites_its_own_commit",
           "405_the_knowledge_reader_honours_the_schema",
           "563_knowledge_is_derived_at_the_boundary",
           "564_knowledge_derivation_is_idempotent",
@@ -3215,6 +3236,7 @@
           "138_governance_gates",
           "2984_a_handbook_edition_is_built_from_the_tree",
           "3015_an_unsupervised_repository_exits_12_from_both_tools",
+          "3590_the_site_is_derived_in_every_language",
           "403_published_translation",
           "67_rule_dag"
         ]
@@ -3561,9 +3583,9 @@
       "requires_repository": true,
       "requires_installed": true,
       "json_output": true,
-      "syntax": "majordomus bench [<command>...] [--samples <n>] [--warmup <n>] [--mode cold|warm|both] [--format text|json] [--no-save] [--list] [--check] [--write-baseline [--force]]",
+      "syntax": "majordomus bench [<command>...] [--samples <n>] [--warmup <n>] [--cold-samples <n>] [--mode cold|warm|both] [--format text|json] [--no-save] [--list] [--check] [--write-baseline [--force]]",
       "demo": "benchmark-run",
-      "note": "The targets are the registry's public commands; the scenarios are the command fixtures when the suite is present. A run is local evidence; only --write-baseline writes the tracked baseline, and --check refuses a regression over the policy's thresholds.",
+      "note": "The targets are the registry's public commands; the scenarios are the command fixtures when the suite is present. A run is local evidence; only --write-baseline writes the tracked baseline, and --check refuses a regression over the policy's thresholds when two samples agree; one sample over is a warning to re-measure, and every finding names its sample count, the runner and its load average.",
       "reads": [
         "share/commands.yaml",
         "test/fixtures/commands/",

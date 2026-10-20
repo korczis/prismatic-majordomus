@@ -412,6 +412,14 @@ resolve_release() {
   [ "$MJ_TAG" = "v$MJ_VERSION" ] || fail "the release metadata is not usable" \
     "the tag \"$MJ_TAG\" and the version \"$MJ_VERSION\" do not agree" \
     "Metadata: $MJ_METADATA_URL"
+  # A pre-release is installed only by name. The latest release is never one, so metadata that
+  # resolves to one without being asked is a mistake upstream, not an offer (I2829).
+  case "$MJ_PINNED:$MJ_VERSION" in
+    0:*-*) fail "the release metadata is not usable" \
+             "it resolves to the pre-release $MJ_TAG, and the latest release is never a pre-release" \
+             "Install a pre-release by name: --version $MJ_TAG" \
+             "Metadata: $MJ_METADATA_URL" ;;
+  esac
 
   MJ_ARTIFACT=$(artifact_field "$MJ_TMP/release.json" "$MJ_TARGET" name)
   MJ_URL=$(artifact_field "$MJ_TMP/release.json" "$MJ_TARGET" url)
@@ -716,7 +724,12 @@ PLATFORM
   if [ -n "$current" ] && [ "$MJ_FORCE" = 0 ]; then
     if [ "$current" = "$MJ_VERSION" ]; then
       say "$MJ_BINARY v$MJ_VERSION is already installed at $MJ_INSTALL_DIR/$MJ_BINARY."
-      [ "$MJ_INIT" = 1 ] && run_init
+      # A dry run changes nothing, and initialising a repository is a change (I2942).
+      if [ "$MJ_INIT" = 1 ] && [ "$MJ_DRY_RUN" = 1 ]; then
+        say "dry run: would run $MJ_BINARY init$( [ "$MJ_PERSONAL" = 1 ] && echo ' --personal') in $(pwd); nothing was changed."
+      elif [ "$MJ_INIT" = 1 ]; then
+        run_init
+      fi
       exit 0
     fi
     if [ "$MJ_PINNED" = 0 ] && version_ge "$current" "$MJ_VERSION"; then

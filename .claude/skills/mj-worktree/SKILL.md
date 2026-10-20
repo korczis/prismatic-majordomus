@@ -1,11 +1,11 @@
 ---
 name: mj-worktree
-description: "Majordomus worktree: One branch: where its worktree belongs and what is there; What it would take to bring every worktree home; Where this is, and whether that is where it belongs; The whole topology; Uncommitted work in the linked worktrees, and what holds it."
+description: "Majordomus worktree: One branch: where its worktree belongs and what is there; What it would take to bring every worktree home; Where this is, and whether that is where it belongs; The whole topology; How far a checkout is from the remote trunk; Uncommitted work in the linked worktrees, and what…"
 argument-hint: "[request]"
 ---
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: module:worktree; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.28.0 -->
+     Generator: majordomus-cli 1.0.0-alpha.1 -->
 
 # Majordomus `worktree`
 
@@ -19,6 +19,7 @@ $ARGUMENTS
 | `worktree.migration_plan` | What it would take to bring every worktree home | `majordomus_worktree_migration_plan` | `majordomus worktree migrate` | reads |
 | `worktree.status` | Where this is, and whether that is where it belongs | `majordomus_worktree_status` | `majordomus worktree status` | reads |
 | `worktree.topology` | The whole topology | `majordomus_worktrees` | `majordomus worktree topology` | reads |
+| `worktree.trunk` | How far a checkout is from the remote trunk | `majordomus_worktree_trunk` | `majordomus worktree trunk` | reads |
 | `worktree.uncommitted` | Uncommitted work in the linked worktrees, and what holds it | `majordomus_worktree_uncommitted` | `majordomus worktree uncommitted` | reads |
 
 A capability that *changes* something runs only when the person asked for that change: call it once, and if it is refused or its outcome is not known, report that as it is and do not try again by another way. One that *reads* may be called whenever the request needs it.

@@ -743,7 +743,26 @@ mj_path_contains() {
   local a b
   mj_norm_path_into a "$1" || a="$1"
   mj_norm_path_into b "$2" || b="$2"
+  # `.` is the repository itself: `start` accepts it as a scope, and read as a literal it
+  # contained no path at all, so a task scoped to the whole repository judged every file
+  # it changed to be outside its scope (case 3190). A path that escapes the repository
+  # is refused by the normalisation and is still not contained.
+  if [ "$a" = . ]; then mj_norm_path_into b "$2" && return 0; return 1; fi
   case "$b" in "$a"|"$a"/*) return 0 ;; esac; return 1
+}
+
+# Is commit $1 in the history of $2 (default HEAD)? 0 it is, 1 it is not, 2 this clone cannot
+# know: it is shallow, or it lacks the object, and an absent commit is then no evidence that the
+# commit does not exist. The one predicate for whoever records or checks a commit (I3007, and the
+# producer side I3050); scripts/ci/link-check decides a page's commit links by the same rule.
+mj_commit_in_history() {
+  local sha="$1" head="${2:-HEAD}"
+  case "$sha" in ''|*[!0-9a-f]*) return 1 ;; esac
+  [ "${#sha}" -ge 7 ] && [ "${#sha}" -le 40 ] || return 1
+  [ "$(mj_git rev-parse --is-shallow-repository 2>/dev/null)" = true ] && return 2
+  mj_git cat-file -e "$sha^{commit}" 2>/dev/null || return 2
+  mj_git merge-base --is-ancestor "$sha" "$head" 2>/dev/null && return 0
+  return 1
 }
 
 # "15m" / "2h" / "90s" -> seconds
@@ -1846,19 +1865,77 @@ mj_mesh_task_bin() {
   return 0
 }
 
+# Always returns 0 (its callers run under set -e); MJ_MESH_CLAIMED says whether the scope is
+# now claimed, and MJ_MESH_WHY why not when it is not.
 mj_mesh_task_claim() { # <task id> <scope, one path per word> <intent> <issue>
   local id="$1" scope="$2" intent="$3" issue="$4" out key
-  mj_mesh_task_bin || return 0
+  MJ_MESH_CLAIMED=0; MJ_MESH_WHY=""
+  mj_mesh_task_bin || { MJ_MESH_WHY="there is no executable to ask a server with (jq or the majordomus executable is missing)"; return 0; }
   set -- --session "task-$id" --advisory --task "$id" --repo "$MJ_ROOT" --format json
   [ -n "$intent" ] && set -- "$@" --intent "$intent"
   [ -n "$issue" ] && set -- "$@" --issue "$issue"
   # shellcheck disable=SC2086 # the scope is one path per word
   out="$("$MJ_MESH_BIN" mesh claim $scope "$@" 2>/dev/null)" || true
   key="$(printf '%s' "$out" | jq -r '.key // empty' 2>/dev/null || true)"
-  [ -n "$key" ] || return 0
+  [ -n "$key" ] || { MJ_MESH_WHY="no shared server of this checkout answered with a running mesh"; return 0; }
   printf 'mesh_claim: %s
 ' "$key" >> "$MJ_CUR"
+  MJ_MESH_CLAIMED=1
   mj_info mesh "task-$id" "the scope is claimed on every linked runtime (advisory) as $key" "majordomus mesh state --full"
+  return 0
+}
+
+# A task is claimed when it starts (I2288). In a fresh linked worktree no server runs yet —
+# no provider start event fired there, so nothing brought one up — and a claim asked of
+# nobody left the task off the mesh until the pre-push `finish --check` refused it, curable
+# only by finishing the task partial and starting it again. So on a repository that declares
+# its mesh enabled, `start` brings this checkout's shared server up itself before it claims:
+# the same `serve ensure` the provider's start event and the shell entry run, under the same
+# switches (`session.ensure_server_on_start`; `MAJORDOMUS_RUNTIME=off` for one person's
+# shell). `serve ensure` is runtime-lifecycle's bounded election: one server per checkout, a
+# ready one left alone, nothing stopped, the wait its own `--wait`. What it starts is said on
+# stderr. Returns 0 when a ready server serves the checkout, 1 with MJ_MESH_WHY otherwise.
+mj_mesh_task_ensure_server() {
+  MJ_MESH_WHY=""
+  if [ "${MAJORDOMUS_RUNTIME:-}" = off ]; then
+    MJ_MESH_WHY="MAJORDOMUS_RUNTIME=off, so start brought no server up"; return 1
+  fi
+  if [ "$(mj_pol session.ensure_server_on_start)" = false ]; then
+    MJ_MESH_WHY="session.ensure_server_on_start is false, so start brought no server up"; return 1
+  fi
+  mj_mesh_task_bin || { MJ_MESH_WHY="there is no executable to bring a server up with (jq or the majordomus executable is missing)"; return 1; }
+  if mj_rust_stale "$MJ_HOME" "$MJ_MESH_BIN"; then
+    MJ_MESH_WHY="the executable is older than its sources, and no server is started from stale code (run: just build)"; return 1
+  fi
+  local line
+  # whether a server already serves the checkout is serve ensure's to answer: it starts
+  # one only when none does, and says so below ("started by this call")
+  mkdir -p "$MJ_STATE_DIR/mcp" 2>/dev/null || true
+  line="$("$MJ_MESH_BIN" serve ensure --repo "$MJ_ROOT" 2>>"$MJ_STATE_DIR/mcp/ensure.log")" || true
+  case "$line" in
+    ready\ *"(started by this call)"*) mj_err "start: $line" ;;
+    ready\ *) ;;
+    *) MJ_MESH_WHY="serve ensure did not converge: ${line:-it said nothing} (log: $(mj_rel "$MJ_STATE_DIR/mcp/ensure.log"))"; return 1 ;;
+  esac
+  return 0
+}
+
+# start's half. On an enabled mesh: ensure the server, claim, and when the claim still did
+# not happen say so as a WARN finding naming why and the repair — never silence, and never a
+# refused start (a worker with no server still works; finish judges it). On a repository that
+# declares no enabled mesh: claim only if a server already answers, as before.
+mj_mesh_task_start_claim() { # <task id> <scope, one path per word> <intent> <issue>
+  if ! mj_mesh_declared_enabled; then
+    mj_mesh_task_claim "$@"
+    return 0
+  fi
+  local why=""
+  mj_mesh_task_ensure_server || why="$MJ_MESH_WHY"
+  mj_mesh_task_claim "$@"
+  [ "$MJ_MESH_CLAIMED" = 1 ] && return 0
+  mj_warn mesh "task-$1" \
+    "the repository declares its mesh enabled and this task's scope is not claimed on it: ${why:-$MJ_MESH_WHY}; a completed finish, and the pre-push finish --check, refuse it until it is" \
+    "majordomus serve ensure, then majordomus check (check claims the running task's scope once a server answers)"
   return 0
 }
 
@@ -1884,7 +1961,8 @@ mj_mesh_declared_enabled() {
 
 # A task works on the mesh (I2289, project.a-task-works-on-the-mesh). On a repository that
 # declares its mesh enabled, an active task's scope must have been claimed on it — `start`
-# does that when a server runs (I2288) and `finish` tries again before it judges — so that no
+# brings the checkout's server up and claims (I2288), `check` claims again when a server
+# answers, and `finish` tries again before it judges — so that no
 # machine builds what another machine never saw being built. Only a completed finish is
 # refused: a worker whose server never came up still leaves by partial, blocked or failed.
 mj_validate_task_on_the_mesh() {
@@ -1907,7 +1985,7 @@ mj_validate_task_on_the_mesh() {
     MJ_DOCTRINE_SKIPPED=1; return 0
   fi
   mj_doctrine_fail mesh "$id" \
-    "the repository declares its mesh enabled and this task's scope was never claimed on it: no shared server answered when it started, so no other machine saw what it works on" \
-    "majordomus serve ensure, then majordomus finish (finish claims the scope again when a server answers)"
+    "the repository declares its mesh enabled and this task's scope was never claimed on it: no shared server answered when it started or since, so no other machine saw what it works on" \
+    "majordomus serve ensure, then majordomus check (check, and finish, claim the running task's scope once a server answers)"
   return 0
 }

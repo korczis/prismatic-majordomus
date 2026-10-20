@@ -1,0 +1,31 @@
+id: I3154
+milestone: repository-automation-is-typed
+title: "Every just recipe is generated from the command graph or names the exemption that keeps it hand-written"
+slug: just-is-derived
+priority: p2
+profile: implementation
+objective: "Count the untracked bridge that majordomus commands bridge generates (ADR 0027) as the generated recipes, refuse a hand-written recipe whose body is one call of a bridged command, and resolve every remaining hand-written recipe to its inventory record."
+why: "Owner, 2026-10-12: connect it to a derived just; shell and just only as thin wrappers derived over derived MCP/CLI/API. It extends milestone automation. Sources: chatgpt-majordomus:c105#1, chatgpt-majordomus:c230#3, chatgpt-majordomus:c230#5."
+current_state: "justfile imports .just/{test,build,serve,ci,site}.just, all hand-written; majordomus commands bridge (command_graph/bridge.rs) writes an optional untracked bridge."
+desired_state: "The bridge stays generated and untracked, regeneration is byte-identical, a duplicate of a bridged recipe is refused; just --list does not start the executable."
+scope:
+  - "justfile"
+  - ".just"
+  - "apps/majordomus-cli/src/command_graph/bridge.rs"
+  - ".ai/repo/automation/inventory.jsonl"
+non_scope:
+  - "Making just the source of truth"
+serves:
+  - "repository-automation-is-typed#just-is-derived"
+acceptance_criteria:
+  - "Regeneration is byte-identical"
+  - "A duplicated hand-written recipe is refused"
+  - "just --list starts no process of the executable"
+  - "Each new case named here takes its number from `scripts/case-numbers next` and is announced on the board before the file is written (ADR 0053); a case number written in this record before that is provisional"
+validation:
+  - "bin/majordomus-cli generate --check"
+  - "bash test/run.sh 101_command_graph"
+evidence_required:
+  - "case_just_is_derived"
+created_at: 2026-10-18
+updated_at: 2026-10-18

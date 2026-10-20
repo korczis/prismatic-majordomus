@@ -1,0 +1,28 @@
+id: I3218
+milestone: every-surface-follows-what-changed
+title: "The execution ledger is a source of the monitor, so a run started anywhere is followed everywhere"
+slug: executions-are-a-monitor-source
+priority: p1
+profile: implementation
+objective: "Add executions to the monitor's sources with a cursor part of their own: a store-wide publish counter in the execution store paired with the server's epoch, so majordomus monitor and monitor.read carry execution starts, ends and refusals and an expired cursor is answered as the other sources answer one; the event vocabulary is the execution model's, not a new one."
+why: "docs/MONITOR.md: 'Executions (executions.events) are not a source yet.' On 2026-10-18 ChatGPT read master as '/ui polls, monitor --follow polls, executions are not in monitor'; the last part is verified. Proposed in ADR 0216 (Every live surface follows one channel with named follow streams, and nothing polls where a stream exists) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c227#2, chatgpt-majordomus:c294#7."
+current_state: "Verified on master 707a04c7ce8: apps/majordomus-cli/src/monitor has executor.rs (the landing executor's trail), github.rs and mesh.rs; the execution store keeps per-execution dense sequences in server memory and feeds only /events; docs/MONITOR.md says executions are not a source yet."
+desired_state: "monitor::executions is a source whose health is MonitorSourceHealth's (ok, absent, error, skipped), and the fold suppresses heartbeat noise as for the other sources."
+scope:
+  - "apps/majordomus-cli/src/monitor"
+  - "docs/MONITOR.md"
+non_scope:
+  - "Persisting executions beyond the store's retention"
+  - "A new event type vocabulary"
+serves:
+  - "every-surface-follows-what-changed#executions-are-in-the-stream"
+acceptance_criteria:
+  - "An execution started through the CLI appears as a monitor signal after the cursor the caller held"
+  - "A page after that cursor repeats nothing"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib monitor::"
+  - "majordomus monitor --sources mesh,executor --since 30m"
+evidence_required:
+  - "case_an_execution_reaches_the_monitor"
+created_at: 2026-10-18
+updated_at: 2026-10-18

@@ -1,0 +1,50 @@
+id: I2781
+milestone: idd-workspace
+title: "An issue is started, verified and finished from the intent workspace"
+slug: an-issue-moves-from-the-workspace
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Render, for the issue picked in /ui/idd, the same plan.transition form the Cockpit's issue page offers — start, verify, done — started through executions.start and followed through executions.get, with the effect the capability declares confirmed before the move, the buttons disabled while it runs, and the refusal's own reason shown when the plan does not allow the move."
+why: "The first slice links a ready issue to the Cockpit's move; the criterion asks for the move where the work is read, and the form, its script and the capability already exist."
+serves:
+  - the-owner-directs-work-from-the-ui#next-move-is-reachable
+current_state: "Moves are offered on /cockpit/plan/issues/<id> only."
+desired_state: "/ui/idd?issue=<id> offers the moves with the result in place; the screen reads again after a move succeeds."
+scope:
+  - "apps/majordomus-cli/src/ui"
+  - "apps/majordomus-cli/src/cockpit/plan.rs"
+  - "apps/majordomus-cli/tests/ui_idd_moves.rs"
+  - "share/ui/ui.js"
+  - "share/cockpit/api.js"
+  - "share/cockpit/moves.js"
+  - "share/cockpit/plan.js"
+  - "share/cockpit/cockpit.js"
+  - "docs/MAJORDOMUS_UI.md"
+depends_on:
+  - "I2780"
+acceptance_criteria:
+  - "A ready issue is started from /ui/idd and its status reads ACTIVE on the next paint"
+  - "A move the plan refuses shows the refusal's reason and changes nothing"
+  - "A double click starts one execution"
+  - "A request from another origin is refused by the server, not by the page"
+validation:
+  - "majordomus plan validate"
+  - "cargo test --lib ui::idd"
+  - "cargo test --test ui_idd_moves"
+evidence_required:
+  - "ui_idd_moves_tests"
+created_at: 2026-10-16
+updated_at: 2026-10-19T13:54:24Z
+started_at: 2026-10-19T13:54:02Z
+started_event: sha256:46a2508c559395b2107b3b9ab77fa85a1a36002a4d1c89789824b78bd94a1edf
+completed_at: 2026-10-19T13:54:24Z
+completed_event: sha256:c03720d3d13021950fa9b8f36a6a0752e0467d84a7d07ddfd69938e7942ae143
+evidence:
+  - covers: ui_idd_moves_tests
+    type: ci
+    command: "validate run 39192952944 at master dd4c0a87cba: rust (1-3) runs cargo test --test ui_idd_moves and --lib ui::idd"
+    result: "success"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39192952944"
+    commit: dd4c0a87cba408222033c89f002ab2d63f48574c
+    recorded_at: 2026-10-19T13:54:18Z

@@ -330,6 +330,16 @@ fn render_status(out: &mut impl Write, s: &Value, checkouts: Checkouts) -> Resul
             "repository not a git repository: this checkout alone".into(),
         )?,
     }
+    if let Some(t) = s.get("trunk") {
+        w(
+            out,
+            format!(
+                "trunk      {}: {}",
+                t["standing"].as_str().unwrap_or("?"),
+                t["message"].as_str().unwrap_or("-")
+            ),
+        )?;
+    }
     w(
         out,
         match checkouts {
@@ -1181,6 +1191,69 @@ mod tests {
                 .to_string();
             assert_eq!(discovery_word(mode), word);
         }
+    }
+
+    /// `serve status` names the served tree's distance from the remote trunk when the
+    /// answer carries one, under the repository line, and adds no line when it does not.
+    #[test]
+    fn serve_status_names_the_trunk_distance_the_answer_carries() {
+        let answer = json!({
+            "standing": "ready",
+            "desired": { "host": "127.0.0.1", "port": 8741, "version": "0" },
+            "git": { "id": "r1" },
+            "trunk": { "standing": "stale", "message": "this checkout is 779 commit(s) behind" },
+            "servers": [],
+        });
+        let render = |s: &Value| {
+            let mut out = Vec::new();
+            render_status(&mut out, s, Checkouts::This).expect("rendered");
+            String::from_utf8(out).expect("text")
+        };
+        let text = render(&answer);
+        assert!(
+            text.contains(
+                "repository r1\ntrunk      stale: this checkout is 779 commit(s) behind\nservers:"
+            ),
+            "{text}"
+        );
+        let mut without = answer.clone();
+        without.as_object_mut().unwrap().remove("trunk");
+        assert!(!render(&without).contains("trunk "), "{}", render(&without));
+
+        /// Takes `lines` whole lines, then refuses every write: a reader that went away.
+        struct Closing {
+            lines: usize,
+            seen: usize,
+        }
+        impl Write for Closing {
+            fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+                if self.seen >= self.lines {
+                    return Err(std::io::ErrorKind::BrokenPipe.into());
+                }
+                self.seen += buf.iter().filter(|b| **b == b'\n').count();
+                Ok(buf.len())
+            }
+            fn flush(&mut self) -> std::io::Result<()> {
+                Ok(())
+            }
+        }
+        // a write refused at any line, the trunk's among them, is a transport error
+        let total = text.lines().count();
+        for lines in 0..total {
+            let mut out = Closing { lines, seen: 0 };
+            assert!(
+                matches!(
+                    render_status(&mut out, &answer, Checkouts::This),
+                    Err(Error::Transport(_))
+                ),
+                "a write refused after {lines} line(s) was not a transport error"
+            );
+        }
+        let mut out = Closing {
+            lines: total,
+            seen: 0,
+        };
+        assert!(render_status(&mut out, &answer, Checkouts::This).is_ok());
     }
 
     /// A small layer in a temporary directory: what `Repository::discover` needs.

@@ -523,6 +523,30 @@
         }
       }
     },
+    "checkout": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "What a checkout is held to against the remote trunk (project.a-checkout-serves-the-current-trunk). A checkout far behind the trunk serves a tree that no longer exists \u2014 its shared server answers every session from it, and a branch made from its local trunk starts there. Doctor, worktree status, server.status and the MCP initialize instructions report the distance and judge it against these numbers.",
+      "properties": {
+        "trunk_distance": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Commits behind the remote-tracking trunk, counted for the checkout's HEAD and for the local trunk branch, the larger judged. Absent declares nothing, and a distance is then reported as unjudged.",
+          "properties": {
+            "warn_behind": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "At or past this many commits behind, the checkout is lagging: doctor warns."
+            },
+            "fail_behind": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "At or past this many commits behind, the checkout is stale: doctor fails, and with it the commit hook that runs doctor."
+            }
+          }
+        }
+      }
+    },
     "server": {
       "type": "object",
       "additionalProperties": false,

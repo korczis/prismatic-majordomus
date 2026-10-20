@@ -1,0 +1,26 @@
+id: I3175
+milestone: runtime-trust
+title: "Two hosts presenting one node key are named as a duplicate, never folded into one flapping node"
+slug: a-shared-node-key-is-named
+priority: p2
+profile: implementation
+objective: "Detect two live instances advertising the same node id from different addresses within one expiry window, report them as a duplicate identity in mesh peers and as a failed check in mesh doctor, and keep the registry from counting their alternation as restarts."
+why: "A copied node.json (cloned disk image, restored backup) makes two machines one identity; the 09-11 federation design asked for a gate on duplicate node ids. Today the registry replaces the record on every new instance id (mesh/registry.rs:252-260), so two hosts sharing a key read as one node restarting endlessly. Sources: chatgpt-majordomus:c113#2, chatgpt-majordomus:c113#18."
+current_state: "Verified: TOFU rejects one node id under a different key (mesh/trust.rs:32); nothing detects one key under two live instances; mesh doctor checks identity, trust, journal, firewall, runtime."
+desired_state: "registry tracks concurrent instances per node within the expiry; doctor fails 'identity' naming both addresses."
+scope:
+  - "apps/majordomus-cli/src/mesh/registry.rs"
+  - "apps/majordomus-cli/src/mesh/doctor.rs"
+  - "docs/MESH.md"
+non_scope:
+  - "Revoking either host automatically"
+acceptance_criteria:
+  - "Two instances of one node id alternating inside one expiry are reported duplicate, with both addresses"
+  - "A real restart is still one restart"
+validation:
+  - "majordomus plan validate"
+  - "cargo test --lib mesh::registry"
+evidence_required:
+  - "test_duplicate_instances_are_named"
+created_at: 2026-10-18
+updated_at: 2026-10-18

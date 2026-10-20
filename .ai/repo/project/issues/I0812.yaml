@@ -36,4 +36,23 @@ evidence_required:
   - doctrines_wired
 risk: "A validator that runs a full extraction inside doctor makes doctor slow enough to be skipped, and a check nobody runs is the failure this project measures. It has to compare hashes rather than rebuild."
 created_at: 2026-09-04
-updated_at: 2026-10-16
+updated_at: 2026-10-17T12:03:55Z
+started_at: 2026-10-17T12:03:09Z
+started_event: sha256:8b84e26336f679d7167567d692e760b07d58c9f1c190204555d7d31c78736303
+verified_at: 2026-10-17T12:03:31Z
+verified_event: sha256:e650cfbc9bf4dc58d9d889f5e2bb50a17bd21cbcff878315367252bef3382536
+completed_at: 2026-10-17T12:03:55Z
+completed_event: sha256:ea8c835d8545ab751f2a56c8d79db9ddc862e14c6fecd534930b52debeddb964
+evidence:
+  - covers: validation_detects
+    type: test
+    command: "bash test/run.sh --no-skips 3075_knowledge_validate_judges_the_graph; bin/majordomus knowledge validate"
+    result: "case 3075 ok, 0 skipped; knowledge validate: 2263 nodes, 2803 edges, 0 failures (code on master since c5aec68c9a6; re-run at master 01227a0)"
+    commit: 01227a0f74ab9de734edd3672dcc9d8d3a2d666c
+    recorded_at: 2026-10-17T12:03:20Z
+  - covers: doctrines_wired
+    type: test
+    command: "bash test/run.sh --no-skips 3075_knowledge_validate_judges_the_graph"
+    result: "case 3075 ok: doctor and watch dispatch rule majordomus.knowledge-graph (knowledge-graph.v1) to the same validator (code on master since c5aec68c9a6; re-run at master 01227a0)"
+    commit: 01227a0f74ab9de734edd3672dcc9d8d3a2d666c
+    recorded_at: 2026-10-17T12:03:25Z

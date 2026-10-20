@@ -368,6 +368,7 @@ pub fn policy_of(obs: &ForgeObservation) -> IntegrationPolicy {
     let merge_method = obs
         .merge_methods
         .iter()
+        .flatten()
         .any(|m| m == "merge")
         .then(|| "merge".to_string());
     IntegrationPolicy {
@@ -377,6 +378,7 @@ pub fn policy_of(obs: &ForgeObservation) -> IntegrationPolicy {
         skipped_permitted: Vec::new(),
         labels: LABEL_POLICY.to_vec(),
         merge_method,
+        merge_settings_unread: obs.merge_methods.is_none(),
         up_to_date_required: obs.up_to_date_required,
     }
 }
@@ -515,17 +517,26 @@ pub fn build_queue_shaped(
             diagnostics.extend(classify::unread_writers(&obs.pull_requests, required))
         }
     }
-    if policy.merge_method.is_none() {
-        diagnostics.push(format!(
+    match &obs.merge_methods {
+        // unread is unknown, never "allows nothing" (I2966)
+        None => diagnostics.push(format!(
+            "{}'s merge settings could not be read (the forge's answer carried none of \
+             allow_merge_commit, allow_squash_merge and allow_rebase_merge, as for a token that \
+             may not read them): whether a merge commit is allowed is unknown, so no pull \
+             request can be ready",
+            obs.repository
+        )),
+        Some(methods) if policy.merge_method.is_none() => diagnostics.push(format!(
             "{} allows no merge commit (it allows: {}): the executor never squashes or rebases, \
              so no pull request can be ready",
             obs.repository,
-            if obs.merge_methods.is_empty() {
+            if methods.is_empty() {
                 "nothing".to_string()
             } else {
-                obs.merge_methods.join(", ")
+                methods.join(", ")
             }
-        ));
+        )),
+        Some(_) => {}
     }
     // in number order, whatever order the forge listed them in
     let armed: BTreeSet<u64> = obs
@@ -1431,7 +1442,7 @@ mod queue_branches {
             required_checks: None,
             review_policy: None,
             up_to_date_required: None,
-            merge_methods: vec!["merge".into()],
+            merge_methods: Some(vec!["merge".into()]),
             pull_requests: vec![pr],
             resolved,
             delete_branch_on_merge: None,
@@ -1555,7 +1566,7 @@ mod declared_successors {
             required_checks: None,
             review_policy: None,
             up_to_date_required: None,
-            merge_methods: vec!["merge".into()],
+            merge_methods: Some(vec!["merge".into()]),
             pull_requests: prs,
             resolved: resolved.into_iter().collect(),
             delete_branch_on_merge: None,
@@ -2106,7 +2117,7 @@ mod issue_tests {
             required_checks: None,
             review_policy: None,
             up_to_date_required: None,
-            merge_methods: vec!["merge".into()],
+            merge_methods: Some(vec!["merge".into()]),
             pull_requests,
             resolved: Default::default(),
             delete_branch_on_merge: None,
@@ -2198,7 +2209,7 @@ mod dependency_queue {
             required_checks: None,
             review_policy: None,
             up_to_date_required: None,
-            merge_methods: vec!["merge".into()],
+            merge_methods: Some(vec!["merge".into()]),
             pull_requests: prs,
             resolved: Default::default(),
             delete_branch_on_merge: None,

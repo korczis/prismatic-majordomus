@@ -1,0 +1,39 @@
+id: I3114
+milestone: a-claim-stands-only-on-its-evidence
+title: "A merge past the required check is observed from the forge and matched to the owner's recorded authorisation"
+slug: an-expedited-merge-is-accounted-for
+priority: p2
+profile: implementation
+objective: "From the forge's merged pull requests, list each merge whose head had no successful run of the verdict check that .ai/repo/ci/gates.yaml declared at the merge commit's parent tree. Match each to the decision record that carries the owner's order (rule an-expedited-landing-is-the-owners-word, point 1) and to the lander's landing claim. An unmatched merge is a finding of integration and of the evidence view."
+why: "The owner asked that every override be explicit and recorded: who, what, why and against which rule (c148#1). Admin merges happen under ADR 0155, but they are run by hand with gh pr merge --admin. integration/drain.rs never passes --admin, so no typed record of an expedited merge exists. It extends milestone architecture-is-enforced. Sources: chatgpt-majordomus:c148#1."
+current_state: "Rule an-expedited-landing-is-the-owners-word requires the authorisation to be recorded, but nothing reads the merges themselves. Case 2999 holds that the executor never expedites."
+desired_state: "majordomus prs (or integration events) lists expedited merges with authorisation, lander and judged-tree reference. A missing authorisation is red after a declared window."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/integration.rs"
+  - "docs/INTEGRATION.md"
+  - "docs/CLAIMS.yaml"
+  - "apps/majordomus-cli/src/integration/forge.rs"
+  - "apps/majordomus-cli/src/integration/mod.rs"
+  - "apps/majordomus-cli/src/integration/model.rs"
+  - "apps/majordomus-cli/src/integration/drain.rs"
+  - "apps/majordomus-cli/src/integration/tests.rs"
+non_scope:
+  - "Forbidding expedited landings"
+  - "A new override record kind (read the forge and the existing decision records)"
+depends_on:
+  - "I3113"
+serves:
+  - "a-claim-stands-only-on-its-evidence#bypass-observed"
+acceptance_criteria:
+  - "A fixture forge with one admin merge and no authorisation yields one finding"
+  - "One with a matching decision yields none"
+  - "The list is the same on CLI, MCP and HTTP"
+  - "A merge is judged against the verdict check that .ai/repo/ci/gates.yaml declared at the merge commit's parent tree, not against the forge's protection at merge time, which the API cannot return after the fact"
+  - "A new case carrying evidence case_expedited_merge_accounted (its number from scripts/case-numbers next, announced on the board when the issue starts) is added to the docs/CLAIMS.yaml claim a-bypass-is-observed that I3113 creates"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib integration"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 2999_delivery_is_expedited_only_where_the_rule_says"
+evidence_required:
+  - "case_expedited_merge_accounted"
+created_at: 2026-10-18
+updated_at: 2026-10-18
