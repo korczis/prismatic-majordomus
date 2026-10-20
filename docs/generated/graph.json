@@ -45944,6 +45944,47 @@
         }
       },
       {
+        "id": "majordomus://issue/I3094",
+        "kind": "issue",
+        "label": "I3094",
+        "summary": "The Pages build and check hold a site built in every language",
+        "route": "/cockpit/objects/issue/i3094",
+        "source": ".ai/repo/project/issues/I3094.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The build and check steps of .github/workflows/pages.yml carry timeout-minutes: 10",
+            "The first Pages run of master after this lands publishes the site, both languages, without a hand deploy"
+          ],
+          "completed_at": "2026-10-20T14:26:20Z",
+          "completed_event": "sha256:ca78009b932fe8589c55dbfa6830f0ee62e416e32e5b0bc2df9a7f71b0eda7a1",
+          "created_at": "2026-10-20",
+          "current_state": "pages.yml bounds `build` and `check` at 3 minutes each.",
+          "depends_on": [],
+          "desired_state": "Both are bounded at 10 minutes, with the reason and the run that showed it beside them.",
+          "evidence_required": [
+            "landed_change"
+          ],
+          "milestone": "architecture-is-enforced",
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            ".github/workflows/pages.yml",
+            ".ai/repo/project/issues/I3094.yaml"
+          ],
+          "slug": "the-pages-check-holds-every-language",
+          "started_at": "2026-10-20T14:25:53Z",
+          "started_event": "sha256:8c45ed367e5b9a6937c62cac451f3b1a85c02e1ecd742bfc3f55d6a8fcb9b029",
+          "updated_at": "2026-10-20T14:26:56Z",
+          "validation": [
+            "majordomus plan validate",
+            "actionlint .github/workflows/pages.yml"
+          ],
+          "verified_at": "2026-10-20T14:26:04Z",
+          "verified_event": "sha256:9ab747b29ea693cfedb2272e5f14a04c04aeb51017d030aba99d2e27c9fd3ee8"
+        }
+      },
+      {
         "id": "majordomus://issue/I3100",
         "kind": "issue",
         "label": "I3100",
@@ -61003,7 +61044,7 @@
         "id": "majordomus://milestone/a-prompt-reaches-the-work-it-serves",
         "kind": "milestone",
         "label": "a-prompt-reaches-the-work-it-serves",
-        "summary": "A captured prompt is matched to the existing intent and recorded on the task that follows it, joined to that task's outcome and evidence, shown with the intent's knowledge on /ui and the Cockpit, read only on its own machine and never published",
+        "summary": "A captured prompt is matched to its existing intent and recorded on the task that follows, joined to its outcome and evidence, shown on /ui and the Cockpit, read only on its own machine and never published",
         "route": "/cockpit/objects/milestone/a-prompt-reaches-the-work-it-serves",
         "source": ".ai/repo/project/milestones/a-prompt-reaches-the-work-it-serves.yaml",
         "facts": {
@@ -111771,6 +111812,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3094",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3094",
+        "target": "majordomus://milestone/architecture-is-enforced",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I3100",
         "target": "kind:issue",
         "kind": "is_a"
@@ -127392,8 +127443,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3609,
-      "edges": 8392,
+      "nodes": 3610,
+      "edges": 8394,
       "acyclic": false,
       "truncated": false
     }
