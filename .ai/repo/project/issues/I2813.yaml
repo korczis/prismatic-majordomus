@@ -29,18 +29,15 @@ validation:
 evidence_required:
   - "pages_503_case"
 created_at: 2026-10-17
-updated_at: 2026-10-19T10:06:00Z
-started_at: 2026-10-19T10:05:22Z
-started_event: sha256:943ab6b31977c4eddc6989b74f279262e7adaa3248b4e90ec03d13fc668c03e9
-verified_at: 2026-10-19T10:05:52Z
-verified_event: sha256:449241fb74482f939222c284c09cd8ca6a69c6d984838d56b4279c7680ffb31c
-completed_at: 2026-10-19T10:06:00Z
-completed_event: sha256:d7f388d2ddbffca7c5b3398b99c01a9a8c2f05013aee0748179a6a5fc27f3bdc
+updated_at: 2026-10-19T13:56:06Z
+started_at: 2026-10-19T13:55:47Z
+started_event: sha256:1d4ccff5302b0c37e478638992808d4f1f28e4f596eb4377e2b0f830de2a90ef
+completed_at: 2026-10-19T13:56:06Z
+completed_event: sha256:9468e3f567ae2774ff97d3619ced485553d39358c82384fc8f7a2c76d423464a
 evidence:
   - covers: pages_503_case
-    type: ci
-    command: "gh run view --job 117706042670 --log"
-    result: "ok 3226_a_pages_503_is_retried_before_a_page_is_called_missing in validate run 39137437606 on 2dfff96988a, the v0.30.0 top carrying I2813's merge 3f36b5bd28b"
-    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39137437606"
+    type: test
+    command: "bash test/run.sh 3226_a_pages_503_is_retried_before_a_page_is_called_missing"
+    result: "14 passed, 0 failed, 0 skipped on master dd4c0a87cba"
     commit: dd4c0a87cba408222033c89f002ab2d63f48574c
-    recorded_at: 2026-10-19T10:05:45Z
+    recorded_at: 2026-10-19T13:56:01Z

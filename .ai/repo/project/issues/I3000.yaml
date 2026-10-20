@@ -26,12 +26,21 @@ validation:
   - "majordomus plan validate"
   - "cargo test --lib ui::"
   - "bash test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh"
-evidence_required: []
+evidence_required:
+  - prose_screen_test
 created_at: 2026-10-18
-updated_at: 2026-10-19T10:02:21Z
+updated_at: 2026-10-20T15:36:22Z
 started_at: 2026-10-19T10:02:00Z
 started_event: sha256:2687377608759e925216b00659a2567de8a73021551dd84f408942ac5b70ba87
 verified_at: 2026-10-19T10:02:13Z
 verified_event: sha256:32e48a9d4c5fa3463855cbe89d99e5860408fdb8d60f773dcaed0471a4863de2
 completed_at: 2026-10-19T10:02:21Z
 completed_event: sha256:2a6e9808be476e3a67038251cf572d981cfe7acb93048a7bfec3d7ea705706b7
+evidence:
+  - covers: prose_screen_test
+    type: ci
+    command: "gh run view --job 117890226384 --log"
+    result: "tests/ui_idd_evidence.rs: 2 passed, 0 failed (the standing route's texts drawn as prose), in rust (3) of validate run 39192952944 on dd4c0a87cba, carrying d092324165f"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39192952944"
+    commit: eb72106294c22a8ac4714cf37d0d135eb917160c
+    recorded_at: 2026-10-20T15:36:22Z
