@@ -45873,6 +45873,41 @@
         }
       },
       {
+        "id": "majordomus://issue/I3079",
+        "kind": "issue",
+        "label": "I3079",
+        "summary": "The links of the Deployments table on /ui/delivery meet the target size at every audited width",
+        "route": "/cockpit/objects/issue/i3079",
+        "source": ".ai/repo/project/issues/I3079.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "scripts/ui audit --only /ui/delivery reports no accessibility.target-size finding at any audited width",
+            "No audit rule is exempted and no width is skipped to get there"
+          ],
+          "created_at": "2026-10-19",
+          "depends_on": [],
+          "desired_state": "The audit of /ui/delivery reports no finding at any width, and each link of the Deployments table is a target a finger can hit.",
+          "evidence_required": [],
+          "milestone": "truthful-plan-surfaces",
+          "parallel_safe": true,
+          "priority": "p3",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I3079.yaml",
+            "apps/majordomus-cli/src/ui/deployments.rs",
+            "apps/majordomus-cli/src/ui/view.rs",
+            "share/ui/src/ui.css",
+            "share/ui/ui.css"
+          ],
+          "slug": "the-deployment-link-meets-the-target-size",
+          "updated_at": "2026-10-19",
+          "validation": [
+            "majordomus plan validate",
+            "scripts/ui audit --only /ui/delivery"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I3090",
         "kind": "issue",
         "label": "I3090",
@@ -111637,6 +111672,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3079",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3079",
+        "target": "majordomus://milestone/truthful-plan-surfaces",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I3090",
         "target": "kind:issue",
         "kind": "is_a"
@@ -127248,8 +127293,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3604,
-      "edges": 8386,
+      "nodes": 3605,
+      "edges": 8388,
       "acyclic": false,
       "truncated": false
     }
