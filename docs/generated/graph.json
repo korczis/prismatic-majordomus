@@ -15898,6 +15898,18 @@
         }
       },
       {
+        "id": "majordomus://critique/every-model-call-is-paid-from-a-declared-source",
+        "kind": "critique",
+        "label": "every-model-call-is-paid-from-a-declared-source",
+        "summary": "every-model-call-is-paid-from-a-declared-source",
+        "route": "/cockpit/objects/critique/every-model-call-is-paid-from-a-declared-source",
+        "source": ".ai/repo/project/critiques/every-model-call-is-paid-from-a-declared-source.yaml",
+        "facts": {
+          "intent": "every-model-call-is-paid-from-a-declared-source",
+          "reviewed_at": "e0b08828103"
+        }
+      },
+      {
         "id": "majordomus://critique/every-sessions-usage-is-observed",
         "kind": "critique",
         "label": "every-sessions-usage-is-observed",
@@ -21704,22 +21716,24 @@
         "id": "majordomus://intent/every-model-call-is-paid-from-a-declared-source",
         "kind": "intent",
         "label": "every-model-call-is-paid-from-a-declared-source",
-        "summary": "Every model call Majordomus makes or starts is paid from a funding source the vendor declared and the owner holds, routed by policy and never guessed",
+        "summary": "How a model call Majordomus starts can be paid is declared by the vendor with evidence, and each call names the source it was declared to draw on",
         "route": "/cockpit/objects/intent/every-model-call-is-paid-from-a-declared-source",
         "source": ".ai/repo/project/intents/every-model-call-is-paid-from-a-declared-source.yaml",
         "facts": {
           "created_at": "2026-10-20",
+          "invariants": [
+            "Funding is a field of the vendor declaration, not a new kind of record: no vendor, plan or amount is named in code, and adding a source is editing data",
+            "The catalogue states what a vendor offers, never what the owner holds and never an amount, price or balance",
+            "Only a credential variable's presence is ever read, never its value; a source the vendor reaches through a client login rather than a variable says so",
+            "Two sources reached through one credential are both named, and which one a call draws on is the vendor's billing order, stated only where vendor evidence says it",
+            "A funding source that cannot be read is a diagnostic naming its vendor and id; the rest of the catalogue still loads, so no advisor or route fails over one bad entry",
+            "models::route stays pure over the catalogue and its inputs (ADR 0049 point 4)",
+            "The funding kind of a run or consultation has one reporter and one vocabulary: I3292's billing_mode, declared through I3289, whose values are the catalogue's funding kinds"
+          ],
           "milestones": [
             "every-model-call-is-paid-from-a-declared-source"
           ],
-          "non_goals": [
-            "Reading, storing or rotating a credential value, or a key vault of Majordomus's own",
-            "Automating the vendor's claim flow, console login or plan changes",
-            "A price list or cost model; prices stay absent from share/models.yaml until a live, verifiable seam exists",
-            "Splitting subscription quota across machines of the mesh; a seat belongs to the client signed in with it",
-            "Billing or invoicing anyone else; this is the owner's own spend"
-          ],
-          "updated_at": "2026-10-20"
+          "updated_at": "2026-10-21"
         }
       },
       {
@@ -53362,7 +53376,8 @@
           "current_state": "The benchmark run record keeps total_cost_usd as reported; no billing mode exists anywhere.",
           "depends_on": [
             "I0301",
-            "I3287"
+            "I3287",
+            "I3660"
           ],
           "desired_state": "Every surface prints the class beside each figure and refuses to sum across classes.",
           "evidence_required": [
@@ -53382,7 +53397,7 @@
             "every-sessions-usage-is-observed#usage-drills-to-its-event"
           ],
           "slug": "usage-quantities-are-never-merged",
-          "updated_at": "2026-10-18",
+          "updated_at": "2026-10-21",
           "validation": [
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test economics",
             "majordomus economics check"
@@ -59218,6 +59233,347 @@
         }
       },
       {
+        "id": "majordomus://issue/I3660",
+        "kind": "issue",
+        "label": "I3660",
+        "summary": "A vendor declares its funding sources in the model catalogue, each with dated, quoted vendor evidence",
+        "route": "/cockpit/objects/issue/i3660",
+        "source": ".ai/repo/project/issues/I3660.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Anthropic declares subscription, credit_grant and metered sources and OpenAI its own, each with an evidence page, day and quote; Ollama and LM Studio declare local",
+            "The credit grant's claim page is the vendor-domain page clau.de redirects to, not the shortlink",
+            "A source without evidence, or of an unknown kind, is a diagnostic naming the vendor and the source, and the catalogue's other entries still load (test)",
+            "No property of the catalogue schema is named for an amount, price, balance, cost or currency (test)",
+            "reasoning check forbids a source's own credential variable in CI as it forbids the vendor's (test)",
+            "models.list carries the sources, and majordomus generate --check is clean"
+          ],
+          "created_at": "2026-10-20",
+          "current_state": "share/models.yaml declares id, title, inference and credential_env per vendor; no funding source exists; reasoning check collects CI-forbidden variables from vendor.credential_env only.",
+          "depends_on": [],
+          "desired_state": "Every vendor lists its funding sources with vendor evidence, an unreadable source is a diagnostic, models.list shows them, and no field can carry an amount.",
+          "evidence_required": [
+            "test_a_funding_source_without_evidence_is_refused"
+          ],
+          "milestone": "every-model-call-is-paid-from-a-declared-source",
+          "non_scope": [
+            "Which sources the owner holds, any amount, cap, price or balance",
+            "Routing by funding source"
+          ],
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "share/models.yaml",
+            "apps/majordomus-cli/src/models/mod.rs",
+            "apps/majordomus-cli/src/reasoning/check.rs",
+            "docs/generated",
+            "share/schemas/generated"
+          ],
+          "serves": [
+            "every-model-call-is-paid-from-a-declared-source#vendor-declares-its-sources"
+          ],
+          "slug": "a-vendor-declares-its-funding-sources",
+          "updated_at": "2026-10-21",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib models::",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib reasoning::check",
+            "majordomus generate --check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3661",
+        "kind": "issue",
+        "label": "I3661",
+        "summary": "Which funding sources the owner holds, and their caps, are the owner's local declaration and never projected",
+        "route": "/cockpit/objects/issue/i3661",
+        "source": ".ai/repo/project/issues/I3661.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A holding naming a source the catalogue does not declare is reported with the vendor and source it names",
+            "A holdings record placed under .ai/repo is refused (test)",
+            "No file majordomus generate writes contains a holding (test over the generated tree)",
+            "A holding whose credential variable is unset reads held-but-unusable"
+          ],
+          "cancelled": true,
+          "created_at": "2026-10-20",
+          "current_state": "No record of held sources exists; I3292 plans billing_mode as a declaration through the consented I3289 step.",
+          "depends_on": [
+            "I3660"
+          ],
+          "desired_state": "A holding is local, resolved against the catalogue, and absent from every projection; I3292's billing_mode reads it.",
+          "evidence_required": [
+            "test_a_holding_under_the_repository_layer_is_refused"
+          ],
+          "milestone": "every-model-call-is-paid-from-a-declared-source",
+          "non_scope": [
+            "Reading any credential's value"
+          ],
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/models",
+            "share/schemas/majordomus",
+            "docs/MODELS.md"
+          ],
+          "slug": "the-owner-holds-funding-sources-locally",
+          "updated_at": "2026-10-21",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml models::"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3662",
+        "kind": "issue",
+        "label": "I3662",
+        "summary": "models.route names the funding source a route would draw on, as an inference with its basis, in the declared source order",
+        "route": "/cockpit/objects/issue/i3662",
+        "source": ".ai/repo/project/issues/I3662.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "With a held credit grant and a held metered source on one credential, the route names the credit grant, labelled inferred, with its basis",
+            "Reordering the declared policy changes the answer without a code change (test)",
+            "A subscription source is never chosen for a headless caller",
+            "No held source usable: the route answers local or none, as a status, never an error"
+          ],
+          "cancelled": true,
+          "created_at": "2026-10-20",
+          "current_state": "RoutingDecision names a model and the models it excluded; nothing names how the call would be paid.",
+          "depends_on": [
+            "I3660",
+            "I3661"
+          ],
+          "desired_state": "Every route names its predicted source and the basis of the prediction, and the order is declared policy.",
+          "evidence_required": [
+            "test_a_route_names_its_funding_source_as_an_inference"
+          ],
+          "milestone": "every-model-call-is-paid-from-a-declared-source",
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/models/mod.rs",
+            "apps/majordomus-cli/src/capability/builtin/models.rs",
+            ".ai/repo/policy.yaml",
+            "docs/generated"
+          ],
+          "slug": "a-route-names-its-funding-source",
+          "updated_at": "2026-10-21",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml models::",
+            "majordomus generate --check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3663",
+        "kind": "issue",
+        "label": "I3663",
+        "summary": "An Anthropic API advisor is declared, so a held Anthropic credit grant can pay for review",
+        "route": "/cockpit/objects/issue/i3663",
+        "source": ".ai/repo/project/issues/I3663.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The adapter passes the advisor contract suite against a recorded fixture answer, with no network",
+            "With ANTHROPIC_API_KEY unset, reasoning advisors reports the advisor not_configured",
+            "The adapter never logs, stores or echoes the credential or the prompt body",
+            "The advisor's note states that it shares a Claude author's model family"
+          ],
+          "created_at": "2026-10-20",
+          "current_state": "Advisors: chatgpt (openai API), gemini and codex (CLI), ollama and lmstudio (local), mesh peers; no Anthropic API advisor.",
+          "depends_on": [],
+          "desired_state": "An Anthropic API advisor exists, reasoning check resolves it, and it reads not_configured without its credential.",
+          "evidence_required": [
+            "anthropic api adapter: request normalisation, credential, usage"
+          ],
+          "milestone": "every-model-call-is-paid-from-a-declared-source",
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "share/advisors.yaml",
+            "scripts/lib/advisors",
+            "docs/generated"
+          ],
+          "serves": [
+            "every-model-call-is-paid-from-a-declared-source#anthropic-api-reaches-the-advisors"
+          ],
+          "slug": "an-anthropic-api-advisor-is-declared",
+          "updated_at": "2026-10-21",
+          "validation": [
+            "node --test scripts/lib/advisors/contract.test.mjs",
+            "env -u MAJORDOMUS_SHARE majordomus reasoning check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3664",
+        "kind": "issue",
+        "label": "I3664",
+        "summary": "doctor and the brief tell the owner a held funding source no credential reaches, with the vendor's claim link",
+        "route": "/cockpit/objects/issue/i3664",
+        "source": ".ai/repo/project/issues/I3664.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A held credit grant with its credential unset appears in doctor and the brief with the claim link and evidence date",
+            "The same finding is not repeated within one renewal period (test with a fixed clock)",
+            "A source declared not held produces nothing"
+          ],
+          "cancelled": true,
+          "created_at": "2026-10-20",
+          "current_state": "doctor reports credential presence for nothing funding-related; the brief says nothing about funding.",
+          "depends_on": [
+            "I3661"
+          ],
+          "desired_state": "An unreached held source is told once per period, with its claim link, and silence means nothing is owed.",
+          "evidence_required": [
+            "test_an_unreached_funding_source_is_told_once_per_period"
+          ],
+          "milestone": "every-model-call-is-paid-from-a-declared-source",
+          "priority": "p3",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/models",
+            "apps/majordomus-cli/src/capability/builtin/brief.rs",
+            "lib/doctrine.sh"
+          ],
+          "slug": "an-unreached-funding-source-is-told",
+          "updated_at": "2026-10-21",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test brief"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3665",
+        "kind": "issue",
+        "label": "I3665",
+        "summary": "A benchmark run and an advisor consultation carry the funding kind the owner declared for them, or unknown",
+        "route": "/cockpit/objects/issue/i3665",
+        "source": ".ai/repo/project/issues/I3665.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A run under a declaration of credit_grant records credit_grant; a run with no declaration records unknown",
+            "Every recorded run file under .ai/repo/benchmarks/economics/runs still parses and reads unknown, byte for byte unchanged (test)",
+            "A consultation record carries the declared kind or unknown",
+            "No code path writes a kind inferred from credential presence (test)"
+          ],
+          "created_at": "2026-10-20",
+          "current_state": "Runs keep total_cost_usd as reported; consultations report usage when the transport does; neither names how it was paid.",
+          "depends_on": [
+            "I3660",
+            "I3292"
+          ],
+          "desired_state": "Every run and consultation names its declared funding kind or unknown, and the recorded runs are untouched.",
+          "evidence_required": [
+            "test_a_run_records_its_declared_funding_kind_or_unknown"
+          ],
+          "milestone": "every-model-call-is-paid-from-a-declared-source",
+          "non_scope": [
+            "EconomicsRequest, the recorded run files and the pairing in economics/stats.rs and report.rs (I3288)"
+          ],
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/economics/model.rs",
+            "apps/majordomus-cli/src/economics/runner.rs",
+            "apps/majordomus-cli/src/reasoning",
+            "scripts/lib/advisors/driver.mjs",
+            "apps/majordomus-cli/tests/economics.rs",
+            "share/schemas/generated",
+            "docs/generated"
+          ],
+          "serves": [
+            "every-model-call-is-paid-from-a-declared-source#each-call-names-its-declared-source"
+          ],
+          "slug": "each-call-names-its-declared-funding-kind",
+          "updated_at": "2026-10-21",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test economics",
+            "node --test scripts/lib/advisors/contract.test.mjs"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3666",
+        "kind": "issue",
+        "label": "I3666",
+        "summary": "Spend against a funding source is observed from a named vendor seam or recorded absent, and no balance is derived from a price",
+        "route": "/cockpit/objects/issue/i3666",
+        "source": ".ai/repo/project/issues/I3666.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "With no seam declared, every held source's spend reads absent with the reason, never zero",
+            "A surface showing a remaining-credit figure derived from tokens is refused by economics check (test)",
+            "A seam, once declared with evidence, yields observed spend from a recorded fixture"
+          ],
+          "cancelled": true,
+          "created_at": "2026-10-20",
+          "current_state": "No spend per source exists; economics check refuses typed quantities in prose.",
+          "depends_on": [
+            "I3660",
+            "I3292"
+          ],
+          "desired_state": "Spend per source reads observed with its seam, or absent with its reason; a derived balance is refused.",
+          "evidence_required": [
+            "test_funding_spend_without_a_seam_is_absent"
+          ],
+          "milestone": "every-model-call-is-paid-from-a-declared-source",
+          "priority": "p3",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/economics",
+            "share/models.yaml",
+            "docs/ECONOMICS.md"
+          ],
+          "slug": "funding-spend-is-observed-or-absent",
+          "updated_at": "2026-10-21",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test economics",
+            "majordomus economics check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3667",
+        "kind": "issue",
+        "label": "I3667",
+        "summary": "A run that would fall through to metered billing while a grant is held, or cross a declared cap, is told before it starts",
+        "route": "/cockpit/objects/issue/i3667",
+        "source": ".ai/repo/project/issues/I3667.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A held grant with its credential unset and a metered credential set: the run is told it would draw on metered",
+            "A cap with spend absent is reported as not judgeable, never as within the cap (test)",
+            "With policy refuse, the run does not start and the refusal names the source and the cap"
+          ],
+          "cancelled": true,
+          "created_at": "2026-10-20",
+          "current_state": "Nothing checks funding before a run; I3295 plans over-budget telling for token budgets.",
+          "depends_on": [
+            "I3662",
+            "I3666",
+            "I3295"
+          ],
+          "desired_state": "Falling through to metered, or meeting a cap, is told before the run and refused only by declared policy.",
+          "evidence_required": [
+            "test_falling_through_to_metered_is_told"
+          ],
+          "milestone": "every-model-call-is-paid-from-a-declared-source",
+          "priority": "p3",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/economics",
+            "apps/majordomus-cli/src/execution",
+            ".ai/repo/policy.yaml"
+          ],
+          "slug": "a-funding-cap-is-told-before-it-is-crossed",
+          "updated_at": "2026-10-21",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test economics"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -62265,27 +62621,17 @@
         "id": "majordomus://milestone/every-model-call-is-paid-from-a-declared-source",
         "kind": "milestone",
         "label": "every-model-call-is-paid-from-a-declared-source",
-        "summary": "Every model call Majordomus makes or starts is paid from a funding source the vendor declared and the owner holds, routed by policy and never guessed",
+        "summary": "How a model call Majordomus starts can be paid is declared by the vendor with evidence, and each call names the source it was declared to draw on",
         "route": "/cockpit/objects/milestone/every-model-call-is-paid-from-a-declared-source",
         "source": ".ai/repo/project/milestones/every-model-call-is-paid-from-a-declared-source.yaml",
         "facts": {
-          "acceptance_criteria": [
-            "share/models.yaml declares each vendor's funding sources with kind, credential variable, renewal period, claim link and dated evidence, and the schema refuses a source without evidence",
-            "The owner's holdings and caps are read from .ai/local or the environment and appear in no generated or projected file",
-            "models.route names the funding source a route would draw on, labelled inferred with its basis, in the repository's declared source order",
-            "share/advisors.yaml declares an Anthropic API advisor reached through the vendor's credential",
-            "doctor and the brief name a held source no credential reaches, with the vendor's claim link and its evidence date",
-            "The economics runner and executions record the funding source each run drew on beside its usage record",
-            "Spend against a source is observed from a named vendor seam or recorded absent with its reason; no remaining-credit figure is derived from tokens and a price",
-            "A run that would draw on a metered source while a credit grant is held, or cross a declared cap, is told so and refused only where policy declares refuse"
-          ],
           "created_at": "2026-10-20",
           "desired_state": "Every criterion of the intent is carried by an issue here and proven by its test.",
           "evidence_required": [],
           "order": 512,
           "priority": "p2",
           "slug": "every-model-call-is-paid-from-a-declared-source",
-          "updated_at": "2026-10-20",
+          "updated_at": "2026-10-21",
           "validation": [
             "majordomus plan validate",
             "majordomus intent validate"
@@ -102023,6 +102369,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://critique/every-model-call-is-paid-from-a-declared-source",
+        "target": "kind:critique",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://critique/every-sessions-usage-is-observed",
         "target": "kind:critique",
         "kind": "is_a"
@@ -114364,6 +114715,11 @@
       },
       {
         "source": "majordomus://issue/I3292",
+        "target": "majordomus://issue/I3660",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3292",
         "target": "majordomus://milestone/every-sessions-usage-is-observed",
         "kind": "belongs_to"
       },
@@ -116360,6 +116716,141 @@
       {
         "source": "majordomus://issue/I3438",
         "target": "majordomus://milestone/public-proof",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3660",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3660",
+        "target": "majordomus://milestone/every-model-call-is-paid-from-a-declared-source",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3661",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3661",
+        "target": "majordomus://issue/I3660",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3661",
+        "target": "majordomus://milestone/every-model-call-is-paid-from-a-declared-source",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3662",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3662",
+        "target": "majordomus://issue/I3660",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3662",
+        "target": "majordomus://issue/I3661",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3662",
+        "target": "majordomus://milestone/every-model-call-is-paid-from-a-declared-source",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3663",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3663",
+        "target": "majordomus://milestone/every-model-call-is-paid-from-a-declared-source",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3664",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3664",
+        "target": "majordomus://issue/I3661",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3664",
+        "target": "majordomus://milestone/every-model-call-is-paid-from-a-declared-source",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3665",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3665",
+        "target": "majordomus://issue/I3292",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3665",
+        "target": "majordomus://issue/I3660",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3665",
+        "target": "majordomus://milestone/every-model-call-is-paid-from-a-declared-source",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3666",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3666",
+        "target": "majordomus://issue/I3292",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3666",
+        "target": "majordomus://issue/I3660",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3666",
+        "target": "majordomus://milestone/every-model-call-is-paid-from-a-declared-source",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3667",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3667",
+        "target": "majordomus://issue/I3295",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3667",
+        "target": "majordomus://issue/I3662",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3667",
+        "target": "majordomus://issue/I3666",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3667",
+        "target": "majordomus://milestone/every-model-call-is-paid-from-a-declared-source",
         "kind": "belongs_to"
       },
       {
@@ -127339,8 +127830,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3607,
-      "edges": 8389,
+      "nodes": 3616,
+      "edges": 8418,
       "acyclic": false,
       "truncated": false
     }

@@ -1,6 +1,6 @@
 +++
-title = "every-model-call-is-paid-from-a-declared-source — Every model call Majordomus makes or starts is paid from a funding source the vendor declared and the owner holds, routed by policy and never guessed"
-description = "A vendor's funding sources are declared once with dated evidence, the owner's holdings stay local, routing names the source each call would draw on as an inference with its basis, the owner is told a held source no credential reaches with the vendor's claim link, and spend against a source is observed from a vendor seam or recorded absent with its reason."
+title = "every-model-call-is-paid-from-a-declared-source — How a model call Majordomus starts can be paid is declared by the vendor with evidence, and each call names the source it was declared to draw on"
+description = "Each vendor declares its funding sources with vendor evidence, an Anthropic API advisor lets a held grant pay for review, and each run and consultation carries the funding kind the owner declared for it, in I3292's one vocabulary."
 weight = 102
 template = "milestone.html"
 [extra]

@@ -1,24 +1,19 @@
 id: every-model-call-is-paid-from-a-declared-source
-title: "Every model call Majordomus makes or starts is paid from a funding source the vendor declared and the owner holds, routed by policy and never guessed"
+title: "How a model call Majordomus starts can be paid is declared by the vendor with evidence, and each call names the source it was declared to draw on"
 slug: every-model-call-is-paid-from-a-declared-source
 order: 512
 priority: p2
-problem: "The model catalogue (share/models.yaml, ADR 0049) knows a vendor's credential variable and nothing about how a call through it is paid. A Claude Max plan now includes a recurring monthly API credit grant the owner claims in the vendor's console, so the same owner holds a subscription seat (Claude Code), a credit grant and possibly metered billing on one vendor, and nothing says which of them an advisor, a benchmark arm or an execution draws on. share/advisors.yaml reaches OpenAI through its API credential but has no Anthropic API advisor at all, so a held Anthropic credit grant funds nothing Majordomus does. I3292 gives the usage record a billing_mode declared by the person; this milestone generalises that one field into declared, per-vendor funding sources that routing reads."
-outcome: "A vendor's funding sources are declared once with dated evidence, the owner's holdings stay local, routing names the source each call would draw on as an inference with its basis, the owner is told a held source no credential reaches with the vendor's claim link, and spend against a source is observed from a vendor seam or recorded absent with its reason."
-current_state: "share/models.yaml declares credential_env per vendor and no funding source; share/advisors.yaml has no Anthropic API advisor; I3292 plans billing_mode on the usage record, declared by the person; ADR 0213 keeps reported, estimated and billed amounts apart."
+problem: "The owner's Claude Max plan includes a recurring monthly API credit grant (the vendor's notice of 2026-10-20, claimed by linking an API organization at claude.ai/settings/billing), and nothing Majordomus starts can be paid by it: share/models.yaml declares a credential variable per vendor and nothing about how a call through it is paid, and share/advisors.yaml reaches OpenAI through its API key but declares no Anthropic API advisor at all. The vendor's own documentation (code.claude.com/docs/en/authentication, read 2026-10-21) shows that one vendor offers several sources at once: a subscription seat reached through Claude Code's login or CLAUDE_CODE_OAUTH_TOKEN, and API use reached through ANTHROPIC_API_KEY, which outranks the token and in non-interactive mode is always used when present; the credit grant and metered billing are both reached through that one key, and nothing local tells them apart. I3292 plans billing_mode with a vocabulary of its own. The critique of this milestone (.ai/repo/project/critiques/every-model-call-is-paid-from-a-declared-source.yaml) cut the first plan to the three issues that can be built on that evidence."
+outcome: "Each vendor declares its funding sources with vendor evidence, an Anthropic API advisor lets a held grant pay for review, and each run and consultation carries the funding kind the owner declared for it, in I3292's one vocabulary."
+current_state: "share/models.yaml declares credential_env per vendor and no funding source; share/advisors.yaml has no Anthropic API advisor; I3292 plans billing_mode (subscription, api_key, api_credits, unknown) declared through I3289."
 desired_state: "Every criterion of the intent is carried by an issue here and proven by its test."
 acceptance_criteria:
-  - "share/models.yaml declares each vendor's funding sources with kind, credential variable, renewal period, claim link and dated evidence, and the schema refuses a source without evidence"
-  - "The owner's holdings and caps are read from .ai/local or the environment and appear in no generated or projected file"
-  - "models.route names the funding source a route would draw on, labelled inferred with its basis, in the repository's declared source order"
-  - "share/advisors.yaml declares an Anthropic API advisor reached through the vendor's credential"
-  - "doctor and the brief name a held source no credential reaches, with the vendor's claim link and its evidence date"
-  - "The economics runner and executions record the funding source each run drew on beside its usage record"
-  - "Spend against a source is observed from a named vendor seam or recorded absent with its reason; no remaining-credit figure is derived from tokens and a price"
-  - "A run that would draw on a metered source while a credit grant is held, or cross a declared cap, is told so and refused only where policy declares refuse"
+  - "share/models.yaml declares each vendor's funding sources with kind, reaching credential or login, renewal where stated, vendor-domain claim page and dated, quoted vendor evidence; an unreadable source is a diagnostic"
+  - "share/advisors.yaml declares an Anthropic API advisor whose adapter meets the advisor contract"
+  - "Benchmark runs and advisor consultations carry the declared funding kind or unknown, in I3292's vocabulary"
 validation:
   - "majordomus plan validate"
   - "majordomus intent validate"
 evidence_required: []
 created_at: 2026-10-20
-updated_at: 2026-10-20
+updated_at: 2026-10-21

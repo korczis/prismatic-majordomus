@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.1"
   },
   "registry": {
-    "fingerprint": "00f1bb3c38e3514fdcff572c0d4df49c01374598b84bc1273d720748ed5ed474",
+    "fingerprint": "511b9b082c957f1821d3a411b898b77b52c52263b23b9f21efb30239c52dbf0e",
     "summary": {
-      "total": 3160,
+      "total": 3169,
       "builtin": 206,
-      "declarative": 2954,
+      "declarative": 2963,
       "by_kind": {
         "command": 31,
         "query": 175,
-        "resource": 2954
+        "resource": 2963
       },
       "by_stability": {
         "behaviorally_verified": 142,
         "experimental": 55,
-        "implemented": 2963
+        "implemented": 2972
       },
       "mcp_tools": 196,
-      "mcp_resources": 3009,
+      "mcp_resources": 3018,
       "http_routes": 201,
       "cli_commands": 111,
       "modules": 92,
@@ -84955,7 +84955,7 @@
         "title": "critique",
         "description": "Declarative objects of kind 'critique' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 29,
+        "capabilities": 30,
         "capability_ids": []
       },
       {
@@ -85404,7 +85404,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 799,
+        "capabilities": 807,
         "capability_ids": []
       },
       {
@@ -86070,7 +86070,7 @@
     ]
   },
   "index": {
-    "fingerprint": "5571da611df41e2a5c75c8ca2b419240220b1a0f31fdbda313a27398dd605155",
+    "fingerprint": "7b0a7605a3b5041c3ccff18e7cb0841ea13c324784920a75c707f9eb5e20907f",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -86100,7 +86100,7 @@
       "claim": 250,
       "command": 31,
       "context": 39,
-      "critique": 29,
+      "critique": 30,
       "deployment": 1,
       "derive-offload": 1,
       "distribution-model": 1,
@@ -86110,7 +86110,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 34,
-      "issue": 799,
+      "issue": 807,
       "knowledge": 50,
       "mesh-declaration": 1,
       "milestone": 101,
@@ -92368,6 +92368,17 @@
         "bytes": 17265
       },
       {
+        "uri": "majordomus://critique/every-model-call-is-paid-from-a-declared-source",
+        "kind": "critique",
+        "identity": "every-model-call-is-paid-from-a-declared-source",
+        "title": "every-model-call-is-paid-from-a-declared-source",
+        "description": "e0b08828103",
+        "path": ".ai/repo/project/critiques/every-model-call-is-paid-from-a-declared-source.yaml",
+        "section": "project",
+        "source_class": "critique",
+        "bytes": 10894
+      },
+      {
         "uri": "majordomus://critique/every-sessions-usage-is-observed",
         "kind": "critique",
         "identity": "every-sessions-usage-is-observed",
@@ -93308,7 +93319,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 421463
+        "bytes": 426334
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -96910,12 +96921,12 @@
         "uri": "majordomus://intent/every-model-call-is-paid-from-a-declared-source",
         "kind": "intent",
         "identity": "every-model-call-is-paid-from-a-declared-source",
-        "title": "Every model call Majordomus makes or starts is paid from a funding source the vendor declared and the owner holds, routed by policy and never guessed",
-        "description": "A vendor's funding sources (a subscription seat, a recurring credit grant such as the monthly API credits a Claude Max plan includes, metered pay-as-you-go, a free local runtime) are declared once per vendor in the distribution with dated vendor evidence, which of them the owner holds is the owner's local declaration, and which one a call would draw on is inferred from the credential a route would use and shown with that basis; models.route, the advisor catalogue, the economics runner and executions choose among held sources by a declared repository policy (local before credit before metered, a subscription seat only for the client that owns it), doctor and the brief tell the owner a declared source they hold no credential for together with the vendor's own claim link, and the spend against a source is observed where an official vendor seam reports it and recorded absent with the reason where none does.",
+        "title": "How a model call Majordomus starts can be paid is declared by the vendor with evidence, and each call names the source it was declared to draw on",
+        "description": "Each vendor of the model catalogue (share/models.yaml, ADR 0049) declares the sources a call to it can be paid from (a subscription seat, a recurring credit grant such as the monthly API credits a Claude Max plan includes, metered use, a local runtime) with the vendor page it was read from, the day and the vendor's own words; an Anthropic API advisor lets a held Anthropic credit grant pay for independent review the way the OpenAI credential pays for ChatGPT today; and every benchmark run and advisor consultation records the funding kind the owner declared for it through I3289's consented step, or unknown, never a value inferred from which credential was present.",
         "path": ".ai/repo/project/intents/every-model-call-is-paid-from-a-declared-source.yaml",
         "section": "project",
         "source_class": "intent",
-        "bytes": 6734
+        "bytes": 4136
       },
       {
         "uri": "majordomus://intent/every-sessions-usage-is-observed",
@@ -104578,11 +104589,11 @@
         "kind": "issue",
         "identity": "I3292",
         "title": "Reported tokens, a price-list estimate and a billed amount are three fields, and the billing mode says which account paid",
-        "description": "Give the usage record of I3288 reported_tokens, estimated_cost (class estimated) and billed_cost (absent unless reconciled), plus billing_mode (subscription, api_key, api_credits, unknown) declared by the person, so that on a subscription an API-equivalent price is never shown as spend.",
+        "description": "Give the usage record of I3288 reported_tokens, estimated_cost (class estimated) and billed_cost (absent unless reconciled), plus billing_mode declared by the person, whose values are the model catalogue's funding kinds (local, credit_grant, subscription, metered; I3660) or unknown, so that on a subscription an API-equivalent price is never shown as spend.",
         "path": ".ai/repo/project/issues/I3292.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2740
+        "bytes": 2823
       },
       {
         "uri": "majordomus://issue/I3293",
@@ -105916,6 +105927,94 @@
         "bytes": 2704
       },
       {
+        "uri": "majordomus://issue/I3660",
+        "kind": "issue",
+        "identity": "I3660",
+        "title": "A vendor declares its funding sources in the model catalogue, each with dated, quoted vendor evidence",
+        "description": "Add a `funding` list to each vendor of share/models.yaml (ADR 0049): each source with an id, a kind (local, credit_grant, subscription or metered), the credential variable that reaches it or a note that a client login does, the period it renews over where the vendor states one, the vendor-domain page where the owner claims it, and evidence (page, day read, the vendor's own words); extend models::Vendor; report a source that cannot be read (no evidence, an unknown kind) as a diagnostic naming the vendor and the source while the rest of the catalogue loads; make reasoning check forbid every declared credential variable in CI, not only the vendor's.",
+        "path": ".ai/repo/project/issues/I3660.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3552
+      },
+      {
+        "uri": "majordomus://issue/I3661",
+        "kind": "issue",
+        "identity": "I3661",
+        "title": "Which funding sources the owner holds, and their caps, are the owner's local declaration and never projected",
+        "description": "Read the owner's holdings (which declared sources they hold, and an optional monthly cap per source) from a record under .ai/local and from the environment, resolve each against the vendor sources of I3660, and refuse a holdings record written under .ai/repo; no generated, projected or published file carries a holding.",
+        "path": ".ai/repo/project/issues/I3661.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2399
+      },
+      {
+        "uri": "majordomus://issue/I3662",
+        "kind": "issue",
+        "identity": "I3662",
+        "title": "models.route names the funding source a route would draw on, as an inference with its basis, in the declared source order",
+        "description": "Extend models::route so that its RoutingDecision carries the funding source the chosen model would draw on, labelled inferred with the credential presence and holding that implied it, chosen by a repository policy that orders source kinds (local, then credit_grant, then metered; a subscription only for the client that owns the seat); a held source whose credential is unset is excluded with that reason.",
+        "path": ".ai/repo/project/issues/I3662.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2737
+      },
+      {
+        "uri": "majordomus://issue/I3663",
+        "kind": "issue",
+        "identity": "I3663",
+        "title": "An Anthropic API advisor is declared, so a held Anthropic credit grant can pay for review",
+        "description": "Declare an advisor in share/advisors.yaml reached over the Anthropic Messages API through the vendor's credential variable, with a model from share/models.yaml and an adapter scripts/lib/advisors/anthropic-messages.mjs that speaks the same contract as openai-chat.mjs; reasoning check resolves it, and an absent credential reads not_configured (rule project.advisors-are-optional). No Rust change: the advisor is data and an adapter.",
+        "path": ".ai/repo/project/issues/I3663.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2387
+      },
+      {
+        "uri": "majordomus://issue/I3664",
+        "kind": "issue",
+        "identity": "I3664",
+        "title": "doctor and the brief tell the owner a held funding source no credential reaches, with the vendor's claim link",
+        "description": "Add a typed check (ADR 0069) that doctor and the brief read: for each source the owner holds (I3661) whose credential variable is unset, name the vendor, the source, the vendor's claim link and the date of its evidence; say it once per renewal period, and say nothing for a source the owner declares they do not hold.",
+        "path": ".ai/repo/project/issues/I3664.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2441
+      },
+      {
+        "uri": "majordomus://issue/I3665",
+        "kind": "issue",
+        "identity": "I3665",
+        "title": "A benchmark run and an advisor consultation carry the funding kind the owner declared for them, or unknown",
+        "description": "Add an optional funding kind to the economics run record (EconomicsRun, not EconomicsRequest) and to the reasoning consultation record, in the catalogue's vocabulary (I3660), filled from the owner's I3289 declaration through I3292's billing_mode and otherwise unknown; an existing run file without the field reads unknown and is not rewritten; nothing infers the kind from which credential was present.",
+        "path": ".ai/repo/project/issues/I3665.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2910
+      },
+      {
+        "uri": "majordomus://issue/I3666",
+        "kind": "issue",
+        "identity": "I3666",
+        "title": "Spend against a funding source is observed from a named vendor seam or recorded absent, and no balance is derived from a price",
+        "description": "Give each held source a spend figure that is observed only when a vendor seam named in share/models.yaml with dated evidence reports it; otherwise record it absent with the reason (for an individual account: the vendor's cost report is not available to it), and refuse in economics check any remaining-credit or spent-credit figure computed from tokens and a price.",
+        "path": ".ai/repo/project/issues/I3666.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2420
+      },
+      {
+        "uri": "majordomus://issue/I3667",
+        "kind": "issue",
+        "identity": "I3667",
+        "title": "A run that would fall through to metered billing while a grant is held, or cross a declared cap, is told before it starts",
+        "description": "Before the economics runner or an execution starts a model client, compare the route's source (I3662) with the owner's holdings and caps (I3661): tell the caller when the route would draw on a metered source while a credit grant is held, or when observed spend (I3666) already meets a declared cap, naming the source, the cap and the figure's class; refuse only where the repository policy declares refuse, through the same mechanism as I3295's over-budget telling.",
+        "path": ".ai/repo/project/issues/I3667.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2454
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -107156,12 +107255,12 @@
         "uri": "majordomus://milestone/every-model-call-is-paid-from-a-declared-source",
         "kind": "milestone",
         "identity": "every-model-call-is-paid-from-a-declared-source",
-        "title": "Every model call Majordomus makes or starts is paid from a funding source the vendor declared and the owner holds, routed by policy and never guessed",
-        "description": "A vendor's funding sources are declared once with dated evidence, the owner's holdings stay local, routing names the source each call would draw on as an inference with its basis, the owner is told a held source no credential reaches with the vendor's claim link, and spend against a source is observed from a vendor seam or recorded absent with its reason.",
+        "title": "How a model call Majordomus starts can be paid is declared by the vendor with evidence, and each call names the source it was declared to draw on",
+        "description": "Each vendor declares its funding sources with vendor evidence, an Anthropic API advisor lets a held grant pay for review, and each run and consultation carries the funding kind the owner declared for it, in I3292's one vocabulary.",
         "path": ".ai/repo/project/milestones/every-model-call-is-paid-from-a-declared-source.yaml",
         "section": "project",
         "source_class": "milestone",
-        "bytes": 3106
+        "bytes": 2632
       },
       {
         "uri": "majordomus://milestone/every-session-joins-the-mesh",
@@ -118297,7 +118396,7 @@
       "identity": [
         "intent"
       ],
-      "objects": 29
+      "objects": 30
     },
     {
       "name": "deployment",
@@ -118390,7 +118489,7 @@
       "identity": [
         "id"
       ],
-      "objects": 799
+      "objects": 807
     },
     {
       "name": "knowledge",
