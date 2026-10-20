@@ -50,7 +50,9 @@
 #                          directory directly under handbook/, named for its language; the
 #                          reason is required; and the directory declares the same language
 #                          in its own edition.toml. What builds an edition — handbook/*.py —
-#                          is not inside one, and stays English.
+#                          is not inside one, and stays English. Since v4 (ADR 0218) the
+#                          site's translation memory of one language, site/i18n/<language>/,
+#                          is the same population in a third place, held to the same three.
 #
 # `name` and `fixture` do not exempt a sentence; `translation` exempts exactly one, and only
 # on a published page that says what it is; `edition` exempts one directory that says it. A comment written in another language inside an
@@ -193,9 +195,9 @@ EOF
     [ -n "$ep" ] || continue
     ep="${ep%/}"
     # 1. the permission belongs to an edition of the handbook, named for its language
-    if [ "$ep" != "handbook/$elang" ]; then
-      echo "english-only-check: an edition is one directory of the handbook named for its language; $ep ($elang) is not" >&2
-      echo "  Only handbook/<language>/ may carry one." >&2
+    if [ "$ep" != "handbook/$elang" ] && [ "$ep" != "site/i18n/$elang" ]; then
+      echo "english-only-check: an edition is one directory of the handbook or of the site's languages named for its language; $ep ($elang) is not" >&2
+      echo "  Only handbook/<language>/ and site/i18n/<language>/ may carry one." >&2
       exit 12
     fi
     # 2. the directory declares the language the list claims for it

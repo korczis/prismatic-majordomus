@@ -1,0 +1,56 @@
+id: command-and-deployment-criteria-are-judged
+title: "A command or deployment criterion is met by a recorded run of exactly that command, or an observation of exactly that deployment, current at the presented revision"
+slug: command-and-deployment-criteria-are-judged
+order: 305
+priority: p1
+problem: "An intent criterion may name four kinds of evidence and only two are judged. A deployment criterion reads not_derivable as soon as the deployment object exists (apps/majordomus-cli/src/intent.rs:1125-1133) and a command criterion reads not_derivable for any reference (apps/majordomus-cli/src/intent.rs:1135-1139), so neither is ever met and an intent that names one can never reach satisfied. This repository's own intent intent-lifecycle names the command criterion model-is-gated (.ai/repo/project/intents/intent-lifecycle.yaml), so its stage cannot become satisfied whatever happens (apps/majordomus-cli/src/intent.rs:1424-1433 counts it among all_met). The claim intent-command-deployment-evidence has stood planned with no responsibility (docs/CLAIMS.yaml:961-968), and the intent-satisfaction milestone declares command and deployment evidence non-scope (branch feature/satisfaction-is-explained). The parts exist: `majordomus served observe` fetches a deployment's build identity, judges it against a commit by containment and records the observation (apps/majordomus-cli/src/served.rs:15-35, 646-675, test/cases/384_a_deployment_is_evidence.sh), and every ledger execution already carries the command that produced it (apps/majordomus-cli/src/evidence/mod.rs:612). Nothing joins either to a criterion. And a ledger line is admitted on its shape alone (apps/majordomus-cli/src/evidence/ledger.rs:200-218): nothing says whether a run produced it."
+outcome: "A deployment criterion is met when a recorded observation of that deployment served a build containing the newest commit that changed the criterion's serving scope, and reads stale, failing or not_run otherwise, never met on an unreachable, malformed, dirty or undecided answer. A command criterion is met when a recorded execution of exactly the argument vector the criterion names exited 0 at a revision the evidence module's one freshness function judges current, with the scope it serves as its inputs; a different command exiting 0 meets nothing. Both carry the same evaluation a test criterion carries. The negative cases are executable, the claim is guaranteed with its test, and intent-lifecycle can be satisfied."
+current_state: "Implemented: deployment observation and containment judgement (apps/majordomus-cli/src/served.rs:367, 646), observation records under .ai/local/state/served/observations.jsonl (apps/majordomus-cli/src/served.rs:52), one freshness function for test and claim evidence (apps/majordomus-cli/src/evidence/freshness.rs:667-700), the verdict word unknown when only underivable criteria are unmet (apps/majordomus-cli/src/intent.rs:327-354). Absent: a judgement of either kind for an intent criterion, a recording path for a declared command, a check that a ledger execution came from a recorded run."
+desired_state: "criterion_of judges deployment and command criteria through the evidence module, not beside it; `majordomus evidence record --command '<argv>'` runs one declared command with a fixed argument vector and a bounded time, redacts its output through the one redaction rule set (apps/majordomus-cli/src/redaction.rs), and records an execution whose test identity is derived from the argument vector; the negative matrix is a case; the claim intent-command-deployment-evidence is guaranteed and docs/PLANNING.md says what meets each kind."
+scope:
+  - apps/majordomus-cli/src/intent.rs
+  - apps/majordomus-cli/src/evidence
+  - apps/majordomus-cli/src/served.rs
+  - apps/majordomus-cli/src/commands/evidence.rs
+  - apps/majordomus-cli/src/capability/builtin
+  - apps/majordomus-cli/tests
+  - share/schemas/majordomus/intent
+  - .ai/repo/project/intents
+  - .ai/repo/adrs
+  - docs/PLANNING.md
+  - docs/CLAIMS.yaml
+  - site/content/guarantees
+  - test/cases
+non_scope:
+  - Deploying anything; a criterion reads what was observed and records nothing on its own
+  - Running a command from an intent read; a read never executes a criterion's command
+  - Probing a deployment from inside intent show; observation stays `majordomus served observe`
+  - Authenticating ledger lines cryptographically; the decision on forged lines is recorded and its limitation stated if not implemented
+  - The finish contract, which is finish-reads-what-its-work-serves
+acceptance_criteria:
+  - "A deployment criterion is current only when a recorded observation of that deployment served a build containing the newest commit of its serving scope, and reads not met for an unreachable, malformed, dirty or undecided observation and for none at all"
+  - "A command criterion is current only for a recorded passing execution of the identical argument vector at a revision the freshness function judges current; an execution of a different command, a failing one, and one older than a change to its serving scope do not meet it"
+  - "The verdict of an intent whose only unmet criteria are command or deployment criteria with no observation or run reads unsatisfied, not unknown, once the kind is judged"
+  - "intent-lifecycle's criterion model-is-gated is met in this repository by a recorded run of `majordomus intent validate`"
+  - "Command output recorded as evidence passes through the one redaction rule set and the recorded environment carries variable names, never values"
+  - "The claim intent-command-deployment-evidence is guaranteed and names its test"
+validation:
+  - majordomus intent validate
+  - cargo test --test intent
+  - cargo test --test intent_command_evidence
+  - bash test/run.sh 384_a_deployment_is_evidence
+  - bash test/run.sh <the negative-matrix case this milestone adds>
+  - bash test/run.sh 892_what_is_said_of_intents_is_what_the_claims_matrix_says
+evidence_required:
+  - deployment_criterion_judged_test
+  - command_criterion_judged_test
+  - evidence_negative_matrix_case
+  - claim_guaranteed
+depends_on: []
+risks:
+  - "Served observations are checkout-local (apps/majordomus-cli/src/served.rs:18-21), so a clone or a CI runner that never observed reads not_run; that is the honest answer and the documents must say so rather than commit observations into the tree they describe."
+  - "Moving a verdict from unknown to unsatisfied changes what every consumer of IntentVerdictState sees for intents with command or deployment criteria; the binding, the realization and the Cockpit read it, so the change lands with their tests."
+  - "Running a declared command is execution; the argument vector is fixed, no shell is spawned, the time is bounded, and the command is the criterion's own text, never a value from a request."
+  - "intent-satisfaction (PR 813) changes IntentCriterion; this milestone adds beside its fields and merges after it."
+created_at: 2026-10-09
+updated_at: 2026-10-09

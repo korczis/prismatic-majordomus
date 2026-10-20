@@ -1,0 +1,26 @@
+id: I3222
+milestone: every-surface-follows-what-changed
+title: "A follower whose frames are lost, delayed or reordered, or whose peer is partitioned, ends equal to a fresh snapshot"
+slug: a-follower-converges-after-loss
+priority: p2
+profile: verification
+objective: "Add a fault-injection case over the live channel: a test-only frame-level WebSocket proxy drops, delays and reorders frames and partitions a mesh peer, then each follower's state is compared with a snapshot read afresh; no feature is added and the protocol is unchanged."
+why: "The 2026-10-18 live-fabric design asked for chaos tests for replay, resync and partition before more surfaces depend on the channel. Proposed in ADR 0216 (Every live surface follows one channel with named follow streams, and nothing polls where a stream exists) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c294#7."
+current_state: "Verified on master 707a04c7ce8: apps/majordomus-cli/src/http/events.rs has replay and heartbeat tests for executions; nothing in test/, scripts/ or apps/majordomus-cli/tests injects faults. In flight, not on master: PR #1178's case 3046 and 5a's blackboard branch with stream.resync and cases 3381 and 3382, which cover stopping and restarting the server."
+desired_state: "One case holds convergence for every follow stream the server serves."
+scope:
+  - "apps/majordomus-cli/src/http/events.rs"
+  - "apps/majordomus-cli/src/http/ws.rs"
+non_scope:
+  - "Changing the protocol"
+serves:
+  - "every-surface-follows-what-changed#replay-converges"
+acceptance_criteria:
+  - "After every fault, the follower's state equals a fresh snapshot read. Receiving a resync frame is not enough"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib http::events"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test cov_runtime_b_http_channel"
+evidence_required:
+  - "case_a_follower_converges_after_loss"
+created_at: 2026-10-18
+updated_at: 2026-10-18
