@@ -1,0 +1,93 @@
+intent: the-layer-evolves-when-it-is-due
+reviewed_at: 707a04c7ce8
+reviewed_by: "claude-code subagent (read-only, fresh context, Plan type, same model family as the author) dispatched by session 82f2734c over the staged records of branch docs/the-chatgpt-project-is-promoted and the ChatGPT-conversation sources they were promoted from; resolved by a second fresh subagent acting as the plan author. Read only: nothing was run. Disposition: Accept with required changes: 6 of 7 blocking findings are planned; session-carrying-it-out-is-unproven stays open because it needs the owner's acceptance of the scheduler design and the f6 peer's decision on proceed.plan; all 3 non-blocking findings are planned."
+findings:
+  - id: friction-data-is-spread-over-443-ledgers
+    class: unproven_assumption
+    subject: "I3162"
+    finding: "I3162 says it will 'measure over this repository's ledger'. The ledger is per checkout: mj_ledger_append writes to $MJ_STATE_DIR/ledger.jsonl under .ai/local (lib/common.sh:222, 1101). The primary checkout's ledger holds 2 task.refused lines, both from one episode, and 0 task.gate lines. Across the 443 worktree ledgers there are 127 task.refused lines and 1 task.gate line, so the task.gate half of the criterion has no data at all. The deriver reads one episode in one checkout (mj_knowledge_evidence filters by session, lib/knowledge.sh:1058-1085), so 'a subject refused in N episodes' cannot be counted by the deriver as it stands. A candidate that cites episodes from several checkouts would hit the defect already on the board: adopter report #20, I2951, where a committed candidate citing a checkout-local id fails doctor in every other checkout. Three things are also undefined: the subject of a refusal (task.refused carries refused doctrine ids such as majordomus.note-integrity, which mj_knowledge_route would send to platform); task.gate keying on 'task' rather than 'task_id' (lib/gates.sh:127); and which ledger supplies the denominator. The issue must name the corpus (cross-checkout or one checkout), the subject mapping and how the cross-episode read fits the parent invariant 'writes only its own episode's files'. It should also either drop task.gate or say why it is so rarely written."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3162
+      because: "I3162 now names both corpora: a one-time measurement over every checkout's ledger, recorded through majordomus reasoning, and a deriver that reads only the closing checkout's ledger across its episodes. That read writes nothing, so the parent's 'own episode's files' invariant holds. A candidate cites only portable references (task, issue and rule ids, commits) and never a checkout-local id, which avoids the I2951 failure. The refusal subject is the refused rule id, routed the way mj_knowledge_route routes it. task.gate is dropped as a source, and the measurement reports why it is so rare: only `majordomus gate record` writes it."
+  - id: the-next-brief-is-not-brief-rs
+    class: unproven_assumption
+    subject: "I3163"
+    finding: "I3163's scope puts the verdict in apps/majordomus-cli/src/capability/builtin/brief.rs and validates with case 710. brief.rs is brief.session (peers, mesh, integration and derive queues) and carries no knowledge content. The briefing that names candidates, and the one case 710 exercises, is the shell SessionStart briefing: lib/context.sh:289 and lib/derive.sh:601 call mj_knowledge_briefing_section. lib/context.sh is not in scope. That briefing reaches only Claude Code sessions, because Codex and Gemini hooks are a non_goal of the parent intent, so 'the next session is told' holds for one provider. Also, if the verdict is computed in knowledge derive, it is written on every derive: compaction (lib/capture.sh:1797), a manual derive, and the evolve skill's own step 1. That is several verdicts per episode, not one per close at lib/session.sh:667. Fix the target file, the provider reach and the single write point before starting."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3163
+      because: "lib/context.sh and lib/session.sh are now in scope. The verdict is written once, at episode close in lib/session.sh, and never by knowledge derive, whether that derive runs from compaction, by hand or from the evolve skill. The SessionStart briefing (mj_knowledge_briefing_section) names the verdict. brief.rs stays in scope only to read the latest verdict from the ledger, so the CLI and MCP brief reach Codex and Gemini sessions without their hooks."
+  - id: run-fires-in-every-checkout-at-once
+    class: regression_risk
+    subject: "I3163"
+    finding: "The verdict, its cooldown and its budget are all read from one checkout's local ledger. The board shows a dozen peers in about 40 worktrees closing episodes concurrently. Each will see the same tracked candidates and get 'run' independently, so several sessions start evolve over the same candidates and race to promote or reject them and to edit the same rules and skills. The owner's source (c274#2) lists hard conditions the plan drops: no other evolution on the same scope, no conflicting merge or deploy in progress, new evidence since the last successful evolution, and rollback available. I3163 has only a cooldown and a budget. Without a mesh claim on the evolve scope (or a verdict read from the shared server rather than the checkout), 'run' multiplies work instead of scheduling it."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3163
+      because: "I3163 now carries the owner's hard conditions as verdict factors. A live mesh claim on the evolve scope, or a landing or release claim in progress, gives defer. No evidence newer than the last evolve.run gives skip. Rollback is a reverted pull request. The evolve skill also takes an exclusive mesh claim on its scope before acting on 'run', and a refused claim is reported rather than retried, so concurrent 'run' verdicts in several checkouts lead to one evolve run."
+  - id: cooldown-needs-the-marker-i3164-makes
+    class: insufficient_work
+    subject: "I3164"
+    finding: "I3163's cooldown and its 'new evidence since the last evolution' condition need to know when an evolve run last happened. Nothing records that today: the skill (.ai/repo/skills/evolve/SKILL.md) leaves no typed event of its own. The marker is I3164's work ('mark the commits and ledger events an evolve run produces'), yet I3164 depends_on I3163, so the dependency is inverted. If I3163 starts first it will invent its own marker and I3164 will add a second one. One issue should own a single evolve-run event, and I3163 should depend on it. I3165's depends_on I3163 also has no stated reason: recurrence after promotion needs no verdict."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3163
+      because: "I3163 now owns the single evolve.run event, declared in share/events.yaml and written by the evolve skill. The cooldown and the new-evidence condition read it. I3164 consumes that event and adds no second marker, so its existing depends_on I3163 is the right direction. I3165's depends_on I3163 now states its reason: it needs evolve.run to attribute a landed lesson to the run that produced it, and to anchor the 'after' window."
+  - id: evolve-output-is-not-commits
+    class: unproven_assumption
+    subject: "I3164"
+    finding: "I3164 would have the deriver skip an evolve run's commits as sources, but commits are not deriver sources. mj_knowledge_evidence reads only decision.recorded, question.resolved, task.finished and observation.recorded (lib/knowledge.sh:1085-1120). Commits touching rules or ADRs only become commit:/file: references on records (mj_knowledge_episode_commits, :1156). An evolve episode yields candidates about itself through its task.finished completed-with-verify line and through any 'majordomus decision' the skill's step 3 records. Skipping 'the ledger events an evolve run produces' wholesale would also drop the observations the skill's step 1 tells the session to record, which are legitimate input. The loop the owner warned about ('/evolve must not trigger another /evolve because it changed repository state') runs through I3163's verdict at the close of the evolve episode itself. I3164 does not cover that path; only the cooldown would."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3164
+      because: "I3164 now skips exactly the task.finished and decision.recorded lines of an episode that holds an evolve.run, keeps that episode's observation.recorded lines, and does not cite the episode's commits as references. Its 'commit' criterion is restated in terms of the references a record cites. The self-scheduling loop is closed in I3163: an episode that contains an evolve.run closes with skip and the factor 'this episode evolved'."
+  - id: session-carrying-it-out-is-unproven
+    class: missed_requirement
+    subject: "the-layer-evolves-when-it-is-due#evolve-readiness-is-derived"
+    finding: "The owner's only stated want (c274#0) is that /evolve is wired in at the right time 'so I don't have to call it by hand'. owner_acceptance cites that message, which is a question, and in #3 the owner asks what it is good for. Nothing records acceptance of the scheduler design. The intent title says 'a session carries it out', but no criterion or test shows that a session acts on 'run': the criterion stops at 'the next brief names it'. What a session works on next is being made one decision by the in-flight proceed.plan (board f6, I2972/I2974 on branch docs/a-session-proceeds), and none of those records mention evolve or candidates. Unless 'run' becomes an input to proceed.plan, or the briefing gives a directive that a case asserts and a session follows, the owner still calls evolve by hand. Decide this with f6 before I3163 picks its surface; the milestone risk only says 'coordinate'."
+    blocking: true
+    resolution:
+      state: open
+      because: "Two things remain that the plan author cannot settle. First, owner_acceptance cites a question (c274#0), and acceptance of the scheduler design is the owner's act, which cannot be inferred or recorded for them. Second, whether 'run' becomes an input to proceed.plan (I2972, on unlanded branch docs/a-session-proceeds) is the f6 peer's design decision, and I2972 is not on master, so it cannot be a depends_on yet. As a partial step, I3163 now requires the briefing to give a case-asserted directive ('run the evolve skill now', with the reasons). That still does not prove a session follows it. The milestone's risks now record both open points."
+  - id: stale-note-flag-is-noise-and-never-clears
+    class: regression_risk
+    subject: "I3166"
+    finding: "Comparing derived_from files with the note's date flags most of the corpus on day one. Running git log --since <date> on master: start-here.md (2026-09-05) cites docs/CLI.md, changed 74 times since, docs/SCHEMAS.md 48 times and docs/DOCTRINE.md 11 times. an-expedited-landing.md cites docs/INTEGRATION.md (4 changes) and ADR 0155. a-merge-reached-production cites .github/workflows/pages.yml (2 changes). Three of the four master notes flag immediately, mostly from edits unrelated to the claim. The plan has no act that clears needs-review (re-review, a date bump by a person, or a content anchor), so a flag never goes away. It does not say whether 'knowledge validate' (case 3075) reports this or fails, which would turn the knowledge gate red whenever a cited doc moves. It also ignores shallow CI clones, where git log is empty. 'devcontext lowers its confidence' misreads the model: confidence is the trust of the discovery path, the maximum over selectors, and a declared selector is 1.0 (devcontext/select.rs:373, 429; model.rs:225). A stale note reached by a declared path cannot be lowered without changing that meaning; it needs its own field."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3166
+      because: "I3166 now anchors each note by the blob hash of each cited file, recorded at its last review, instead of using git log against the note's date. That gives the same verdict in a shallow clone, and a note without recorded hashes reads unanchored rather than needs-review. A person clears the flag with one ledger-recorded re-review act that re-stamps the hashes. knowledge validate reports it as a WARN without changing its exit status, so case 3075 stays green. devcontext carries needs-review in a separate field with its reason and leaves selector confidence unchanged; lowering confidence is now non_scope."
+  - id: rejected-subject-is-already-quiet
+    class: unnecessary_work
+    subject: "I3164"
+    finding: "The deriver only reads the episode being closed, and a superseded record is skipped ('skipped (superseded)', lib/knowledge.sh:1314). So master never re-proposes a rejected record without new evidence: any later observation is by definition newer than the rejection, and the parent criterion recurrence-is-grouped (case 981) requires it to be listed beside the rejected one. As written, the half 'a rejected subject is not proposed again without new evidence' is either already true, so a test of existing behaviour is the most it can produce, or, if 'new evidence' means something stricter than a later observation, it changes a parent criterion that this intent's non_goals forbid changing. Its only real use is I3162's cross-episode friction candidates, so it should depend on I3162 and say so."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3164
+      because: "I3164 now limits the rejected-subject half to a test of existing behaviour: superseded records are skipped, and case 981 lists a later observation beside the rejected record. The test is applied to I3162's cross-episode friction candidates, no parent criterion changes, and I3164 gains depends_on I3162."
+  - id: ui-pointer-and-policy-surfaces-unscoped
+    class: surface_missing
+    subject: "knowledge-acts-on-what-it-learns"
+    finding: "Curated notes and candidates are also served by apps/majordomus-cli/src/ui/knowledge.rs (/ui) and by the briefing's knowledge pointers (lib/context.sh:433, mj_context_pointers). Neither is in I3166's scope, so needs-review would show in devcontext but not where a person reads the note. The verdict (I3163) and the outcome reading (I3165) say CLI and MCP only, while the owner's design (c274#2, step 4) asks for the decision, its reasons and the results on CLI, API, MCP and UI. No issue covers /ui, the /cockpit overview or a site guarantee page next to site/content/guarantees/knowledge-*.md. The new policy keys (cooldown, budget, friction threshold) need share/schemas/majordomus/policy/policy.v1.schema.json, share/skeleton/policy.yaml and the generated share/allow/policy.txt, and none of these is in I3162 or I3163 scope. They must be optional with defaults, or adopters' doctor fails as it did for retention_max_files (adopter report #1, lib/doctor.sh:493)."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3163
+      because: "I3163's scope now includes /ui/knowledge (apps/majordomus-cli/src/ui/knowledge.rs), the cockpit, a guarantee page and the policy schema, skeleton and allow list. I3162 adds the schema, skeleton and allow list for the friction threshold. I3165 adds /ui/knowledge. I3166 adds /ui/knowledge and the briefing pointers in lib/context.sh. Every new policy key is optional with a default, and doctor must pass on a policy that omits it."
+  - id: criteria-can-never-be-satisfied
+    class: delivery_verification
+    subject: "the-layer-evolves-when-it-is-due"
+    finding: "All five criteria have evidence: command, and the ref is the intent's own 'majordomus intent explain the-layer-evolves-when-it-is-due'. The ledger cannot settle command evidence (intent.rs:301-303 ledger_settles is test|claim; the doc example at :319 gives NotDerivable, which makes the verdict Unknown), so this intent can never read satisfied, and the ref is circular. No issue's acceptance includes rewriting its criterion to evidence: test with the case path once 'scripts/case-numbers next' assigns it. Each validation runs only a pre-existing case (981; 710 and 3004; 711; 3075), never the evidence the issue names, so 'validation passed' proves nothing new. ADR 0183 and the 'ADR 0118 amended' desired_state belong to no issue. The current_state text is also inaccurate: task.refused is 'never read', yet lib/history.sh:158 reads it; and the milestone says 'five curated notes', but master has four (a-commit-stood-behind-a-build-lock, a-merge-reached-production-an-hour-later, an-expedited-landing, start-here), and the fifth is this branch's own the-chatgpt-project-was-promoted."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3163
+      because: "Each of I3162 to I3166 now requires two things: its criterion in .ai/repo/project/intents/the-layer-evolves-when-it-is-due.yaml is rewritten to evidence: test with the allocated case or test path, and that new evidence runs in its validation. I3163 now owns accepting ADR 0183 and amending ADR 0118, and both ADR files are in its scope. I3162's why records the current_state corrections: lib/history.sh:158 reads task.refused for display but no deriver reads it, and master has four curated notes, not five."

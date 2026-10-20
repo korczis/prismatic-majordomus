@@ -452,7 +452,7 @@ and records the key; `finish` claims again first as well. `finish --check`, the 
 is a question and claims nothing. `partial`, `blocked`, `no_match` and `failed` are not
 refused, and a repository with no enabled mesh is not judged.
 
-An edit is asked for its claim before it happens (I2735). With `session.edits_require_claim:
+An edit can be asked for its claim before it happens (I2735). With `session.edits_require_claim:
 true` in the policy, the provider's pre-tool hook (`.claude/hooks/majordomus-edit-guard`, for
 Edit, Write, MultiEdit and NotebookEdit) runs `majordomus guard hook`, which exits 2 — the
 provider's refusal — when neither the active task's scope nor a live mesh claim of the writing
@@ -462,12 +462,25 @@ path and the remedy: `majordomus start "<task>" --scope <path>`, or `majordomus 
 session started in one checkout editing another's file is judged by the other's task and
 claims. Local state, a path outside the checkout, a repository with no enabled mesh and a
 server that does not answer are let through. The same judgement is `guard.edit` over MCP and
-HTTP. The hook is wired in the provider's configuration:
+HTTP.
+
+The hook is not wired yet, and until it is, the policy's `edits_require_claim` refuses nothing in
+Claude Code (I3010). `majordomus capture install` writes the UserPromptSubmit, SessionStart,
+SessionEnd and PreCompact entries of `.claude/settings.json`, and no PreToolUse entry; the hook
+script and `guard.edit` exist, but no edit reaches them. Wiring it (advisory first), and then
+refusing an unclaimed edit, are the generated-plugin work that follows the alpha. Until then a
+person who wants the guard wires it by hand: add this entry under `"hooks"` in
+`.claude/settings.json` (shared with everyone who works in the checkout) or in
+`.claude/settings.local.json` (this machine only), and start a new Claude Code session, which
+reads its hooks when it starts:
 
 ```json
 "PreToolUse": [ { "matcher": "Edit|Write|MultiEdit|NotebookEdit",
   "hooks": [ { "type": "command", "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/majordomus-edit-guard" } ] } ]
 ```
+
+The hook asks `bin/majordomus-cli` and never builds it: where that executable is absent, every
+edit is let through.
 
 What a session shares is metadata — intent, issue, task, milestone, branch, head, dirtiness,
 a context revision identifier. Context bodies are not replicated; a handover is the

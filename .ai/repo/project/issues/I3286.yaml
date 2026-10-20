@@ -1,0 +1,34 @@
+id: I3286
+milestone: a-workspace-reaches-the-repository
+title: "A proposal from a workspace arrives as intent.propose carrying the workspace reference it came from"
+slug: a-workspace-proposes-an-intent
+priority: p3
+profile: implementation
+objective: "Once the owner decides remote mutation (open question), accept intent.propose from an authenticated vendor caller with a minimal structured delta (statement, criteria, workspace reference), never a transcript, under an autonomy-per-work-class policy declared as data."
+why: "The owner wants to only ruminate in chat while the repository plans; the pull path already gets decisions in after the fact, and this is the only path that would make it immediate. Proposed in ADR 0211 (A record promoted from a workspace cites the message it came from by a typed reference that validates in every checkout and resolves only where the store is held) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c239#4, chatgpt-majordomus:c066#4."
+current_state: "intent.propose exists (ADR 0144, majordomus_intent_propose, effect repository_mutation) and is refused beyond loopback by ADR 0126."
+desired_state: "A signed or token-authenticated proposal path decided by an ADR amending ADR 0126, with the proposal's provenance a workspace: reference."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/intents.rs"
+  - ".ai/repo/adrs/0211-a-record-promoted-from-a-workspace-cites-the-message-it-came-fro.md"
+  - ".ai/repo/adrs/0144-an-intent-is-proposed-by-a-capability-and-its-stage-stays-derived.md"
+  - ".ai/repo/adrs/0126-a-caller-beyond-loopback-reads-and-changes-nothing-it-cannot-authenticate.md"
+  - ".ai/repo/policy.yaml"
+non_scope:
+  - "Any record written without a person accepting the proposal"
+depends_on:
+  - "I3285"
+  - "I3281"
+serves:
+  - "what-a-workspace-decides-reaches-the-repository-with-its-source#a-proposal-names-its-source"
+acceptance_criteria:
+  - "A proposal from the vendor caller lands as a proposed intent whose provenance is the workspace reference"
+  - "A proposal carrying conversation text beyond the declared fields is refused"
+  - "Without the ADR amendment the call is refused as today"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test intent"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test remote_callers"
+evidence_required:
+  - "case_a_workspace_proposes_an_intent"
+created_at: 2026-10-18
+updated_at: 2026-10-18

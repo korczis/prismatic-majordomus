@@ -1,11 +1,81 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the layer's release records, the decisions dated in each release's window, and the commits in its range; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.30.1 -->
+     Generator: majordomus-cli 1.0.0-alpha.1 -->
 # Changelog
 
 Every entry below is derived: a section per release the layer records, its decisions the ADRs dated inside that release's window, its changes the conventional commits in its range, its artifacts the record's own evidence. Nothing here is written by hand, and `majordomus generate changelog --check` fails when it stops matching the tree.
 
-Current version: **0.30.1**
+Current version: **1.0.0-alpha.1**
+
+## v0.30.2 — 2026-10-19
+
+### Fixed
+
+- **top**: I2917's nothing-to-move arm of the intent's primary action has a test (`dd4c0a87c`)
+- **ui**: each intent has one primary action (I2917) (`d93b93ad1`)
+- **ui**: the intent workspace's panels stand in the order a person asks (I2916) (`069970820`)
+- **ui**: the intent is the workspace's title and every panel asks a plain question (I3001) (`d65aee8a7`)
+- **pages**: a claim newer than the ledger is not yet recorded, not a refusal (I2853) (`29acb77dd`)
+- **ui**: every record text on the workspace is drawn as prose (I3000) (`d09232416`)
+
+### Housekeeping
+
+- **release**: record v0.30.1 and the metadata it publishes (`e6268966b`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v0.30.2-aarch64-apple-darwin.tar.gz (`b44b8da00054`)
+- `macos-x86_64` — majordomus-v0.30.2-x86_64-apple-darwin.tar.gz (`60735a8fdad4`)
+- `linux-x86_64-gnu` — majordomus-v0.30.2-x86_64-unknown-linux-gnu.tar.gz (`eed5fce0af6b`)
+- `linux-x86_64-musl` — majordomus-v0.30.2-x86_64-unknown-linux-musl.tar.gz (`2b404e30a78f`)
+- `linux-aarch64-gnu` — majordomus-v0.30.2-aarch64-unknown-linux-gnu.tar.gz (`6292503a7ab1`)
+- `linux-aarch64-musl` — majordomus-v0.30.2-aarch64-unknown-linux-musl.tar.gz (`05777434fd01`)
+
+
+## v0.30.1 — 2026-10-19
+
+### Fixed
+
+- **top**: case 3003 reads the Knowledge screen I3022 and I3023 draw (`9904000d2`)
+- **top**: #1412's real reds: the footer commit, the record cases, coverage, a pipe flake (`70d127e14`)
+- **top**: I3007's objective names the template links without writing a placeholder (`7a20e31fd`)
+- **top**: case 3363 sorts with LC_ALL=C, so its order is the machine's no more (`92f790d39`)
+- **ui**: the Knowledge screen reads in review order, in plain labels (I3023) (`076312f8a`)
+- **ui**: an empty knowledge queue is one sentence, not two empty tables (I3022) (`820602967`)
+- **site**: a commit that a record or the site's data names is in the history (I3007) (`c0b799497`)
+- **offload**: a remote derive builds only inside its own run directory (I2882) (`a4c19d60f`)
+- **ui**: the Knowledge review reads as steps, each command as code (I3021) (`6f54b4153`)
+- **site**: the site says a test proves a claim only as far as the evidence does (I2965) (`c90d10c01`)
+- **doctor**: no work whose answer cannot change a finding (`ed72c1325`)
+- **ui**: the workspace's headline numbers are the chosen intent's (I2907) (`a762f7456`)
+- **doctor**: the work no remote holds is counted in one walk (`ba44bed3f`)
+- **docs**: the MCP surface, claims and README name the eight writing capabilities (I2962) (`1b9b93d1b`)
+- **release**: a latest.json naming any pre-release is refused, not only the one published (I2829) (`9f8baafee`)
+- **docs**: the README's exit codes are the commands' declared contracts (I2963) (`ae2a2a322`)
+- **site**: the policy and roadmap pages name the .ai/repo layout in force (I2967) (`886cd9a18`)
+- **install**: the smoke server binds its own loopback address (`0707822cd`)
+
+### Performance
+
+- **server**: every checkout is asked at once, sixteen at a time (`baadbbfb0`)
+
+### Documentation
+
+- **server**: the public module doc names no crate-private item (`317ae1312`)
+
+### Housekeeping
+
+- **release**: record v0.30.0 and the metadata it publishes (`a0e7dd961`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v0.30.1-aarch64-apple-darwin.tar.gz (`0dfaa6a41224`)
+- `macos-x86_64` — majordomus-v0.30.1-x86_64-apple-darwin.tar.gz (`f8b8424efb08`)
+- `linux-x86_64-gnu` — majordomus-v0.30.1-x86_64-unknown-linux-gnu.tar.gz (`83b29af38b2a`)
+- `linux-x86_64-musl` — majordomus-v0.30.1-x86_64-unknown-linux-musl.tar.gz (`9022bbd67e6f`)
+- `linux-aarch64-gnu` — majordomus-v0.30.1-aarch64-unknown-linux-gnu.tar.gz (`e79b36d624e9`)
+- `linux-aarch64-musl` — majordomus-v0.30.1-aarch64-unknown-linux-musl.tar.gz (`a50464e71535`)
+
 
 ## v0.30.0 — 2026-10-18
 

@@ -1,0 +1,25 @@
+id: every-sessions-usage-is-observed
+title: "What every AI session consumed is observed from the provider, attributed to the work it served, and never estimated into a fact"
+slug: every-sessions-usage-is-observed
+order: 194
+priority: p1
+problem: "Token consumption, model and cost of every session of a declared provider (docs/generated/providers.md) on this repository are recorded automatically from what the provider itself reports, and recorded as not observed, with the reason, where the provider reports nothing Majordomus can receive; they are attributed to session, task, issue and intent, shown in /ui with a click-through to the reported event, and used to judge what Majordomus costs and saves, with no estimate shown as a measurement. Proposed in ADR 0213 (Usage is observed through each provider's official telemetry into one provider-neutral record, and reported, estimated and billed amounts are never merged) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c234#0, chatgpt-majordomus:c236#0, chatgpt-majordomus:c236#5, chatgpt-majordomus:c253#0, chatgpt-majordomus:c253#5, chatgpt-majordomus:c278#6."
+outcome: "Token consumption, model and cost of every session of a declared provider (docs/generated/providers.md) on this repository are recorded automatically from what the provider itself reports, and recorded as not observed, with the reason, where the provider reports nothing Majordomus can receive; they are attributed to session, task, issue and intent, shown in /ui with a click-through to the reported event, and used to judge what Majordomus costs and saves, with no estimate shown as a measurement."
+current_state: "Its issues extend existing milestones; see each issue's why."
+desired_state: "Every criterion of the intent is carried by an issue here and proven by its test."
+acceptance_criteria:
+  - "A Claude Code session with collection enabled leaves usage records with model and input, output, cache-read and cache-write tokens as reported"
+  - "A provider that reports nothing, and an event missing a token category, yield an explicit absence with a reason, never a zero"
+  - "Codex cumulative totals replayed from fixtures produce the same session total as the increments, and Codex usage no evidenced seam hands Majordomus reads not observed with its reason, never zero"
+  - "Gemini CLI usage events captured from a named, dated client version map onto the same usage record, thought tokens included"
+  - "/ui shows usage by provider, model, session, task and issue, and every figure links to its reported events and names its measurement class"
+  - "Each compaction's context before and after is recorded from a captured provider event of a dated client version, or recorded absent where the provider reports no counts; no transcript is parsed"
+  - "A task over its declared token budget is told so, naming the budget, the figure and its class, and is refused only where policy declares refuse"
+  - "majordomus economics check refuses a waste finding's counterfactual effect, or a subscription session's price-list estimate, presented as a saving or as spend, on generated and UI surfaces as well as in hand-written prose"
+  - "majordomus economics summary lists every declared treatment arm (per mechanism and per agent topology) and every hypothesis, each untested until its pairs meet ADR 0082's publication rule"
+  - "Majordomus's own per-operation overhead in an adopting fixture repository (CLI start, warm discovery, idle server CPU and memory, incremental derive, bootstrap tokens) is measured against declared budgets, and bench --check fails when one is exceeded"
+validation:
+  - "majordomus plan validate"
+evidence_required: []
+created_at: 2026-10-18
+updated_at: 2026-10-18

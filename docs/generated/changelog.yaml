@@ -1,11 +1,406 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the layer's release records, the decisions dated in each release's window, and the commits in its range; regenerate with `majordomus generate`
-# Generator: majordomus-cli 0.30.1
+# Generator: majordomus-cli 1.0.0-alpha.1
 schema: majordomus/changelog/v1
 generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the layer's release records, the decisions dated in each release's window, and the commits in its range; regenerate with `majordomus generate`"
-generator: majordomus-cli 0.30.1
-current: "0.30.1"
+generator: majordomus-cli 1.0.0-alpha.1
+current: 1.0.0-alpha.1
 sections:
+  - version: "0.30.2"
+    tag: v0.30.2
+    date: "2026-10-19T07:24:08Z"
+    commit: dd4c0a87cba408222033c89f002ab2d63f48574c
+    unreleased: false
+    notes_url: https://github.com/korczis/prismatic-majordomus/releases/tag/v0.30.2
+    compare_url: https://github.com/korczis/prismatic-majordomus/compare/v0.30.1...v0.30.2
+    tree_url: https://github.com/korczis/prismatic-majordomus/tree/v0.30.2
+    decisions: []
+    groups:
+      - kind: fix
+        heading: Fixed
+        rank: 1
+        changes:
+          - kind: fix
+            scope: top
+            subject: "I2917's nothing-to-move arm of the intent's primary action has a test"
+            breaking: false
+            commit: dd4c0a87c
+            url: https://github.com/korczis/prismatic-majordomus/commit/dd4c0a87c
+            references:
+              - kind: issue
+                id: I2917
+                title: Each intent has one primary action
+                route: /plan/i2917/
+          - kind: fix
+            scope: ui
+            subject: each intent has one primary action (I2917)
+            breaking: false
+            commit: d93b93ad1
+            url: https://github.com/korczis/prismatic-majordomus/commit/d93b93ad1
+            references:
+              - kind: issue
+                id: I2917
+                title: Each intent has one primary action
+                route: /plan/i2917/
+          - kind: fix
+            scope: ui
+            subject: "the intent workspace's panels stand in the order a person asks (I2916)"
+            breaking: false
+            commit: "069970820"
+            url: https://github.com/korczis/prismatic-majordomus/commit/069970820
+            references:
+              - kind: issue
+                id: I2916
+                title: The workspace reads in the order a person asks
+                route: /plan/i2916/
+          - kind: fix
+            scope: ui
+            subject: "the intent is the workspace's title and every panel asks a plain question (I3001)"
+            breaking: false
+            commit: d65aee8a7
+            url: https://github.com/korczis/prismatic-majordomus/commit/d65aee8a7
+            references:
+              - kind: issue
+                id: I3001
+                title: "The intent is the page's title, and panels ask questions"
+                route: /plan/i3001/
+              - kind: issue
+                id: I2915
+                title: The workspace speaks in plain words
+                route: /plan/i2915/
+          - kind: fix
+            scope: pages
+            subject: "a claim newer than the ledger is not yet recorded, not a refusal (I2853)"
+            breaking: false
+            commit: 29acb77dd
+            url: https://github.com/korczis/prismatic-majordomus/commit/29acb77dd
+            references:
+              - kind: issue
+                id: I2853
+                title: a Pages deploy on a fresh master is not refused for claims newer than the ledger it reads
+                route: /plan/i2853/
+          - kind: fix
+            scope: ui
+            subject: every record text on the workspace is drawn as prose (I3000)
+            breaking: false
+            commit: d09232416
+            url: https://github.com/korczis/prismatic-majordomus/commit/d09232416
+            references:
+              - kind: issue
+                id: I3000
+                title: "The workspace's record texts are drawn as prose"
+                route: /plan/i3000/
+      - kind: chore
+        heading: Housekeeping
+        rank: 7
+        changes:
+          - kind: chore
+            scope: release
+            subject: record v0.30.1 and the metadata it publishes
+            breaking: false
+            commit: e6268966b
+            url: https://github.com/korczis/prismatic-majordomus/commit/e6268966b
+    artifacts:
+      - target: macos-aarch64
+        name: majordomus-v0.30.2-aarch64-apple-darwin.tar.gz
+        sha256: b44b8da000546c85af6ad3d0a28d693bcf2560bf8e9c6120dfe24946811efa57
+      - target: macos-x86_64
+        name: majordomus-v0.30.2-x86_64-apple-darwin.tar.gz
+        sha256: 60735a8fdad48839bf424c3949565f3c0c4524101f7266c459a0ef953483c9dc
+      - target: linux-x86_64-gnu
+        name: majordomus-v0.30.2-x86_64-unknown-linux-gnu.tar.gz
+        sha256: eed5fce0af6b5c01bf8409043c6ec0b4bb830652a215864eabed4ad4c6c8768b
+      - target: linux-x86_64-musl
+        name: majordomus-v0.30.2-x86_64-unknown-linux-musl.tar.gz
+        sha256: 2b404e30a78fc2335044b268cfc8c8386ef40c2d12fcd619045971c0c58f18f5
+      - target: linux-aarch64-gnu
+        name: majordomus-v0.30.2-aarch64-unknown-linux-gnu.tar.gz
+        sha256: 6292503a7ab1862eb9124e60b053c0dafbfb67fe0a3a196fe7dabadaa9a8d2ba
+      - target: linux-aarch64-musl
+        name: majordomus-v0.30.2-aarch64-unknown-linux-musl.tar.gz
+        sha256: 05777434fd01413eefc422475a7f225c3c4841faf0583f85fe0e652b0b7bfb2a
+  - version: "0.30.1"
+    tag: v0.30.1
+    date: "2026-10-19T00:13:46Z"
+    commit: 9904000d2df5e88b24ea69defd453e5760dd7602
+    unreleased: false
+    notes_url: https://github.com/korczis/prismatic-majordomus/releases/tag/v0.30.1
+    compare_url: https://github.com/korczis/prismatic-majordomus/compare/v0.30.0...v0.30.1
+    tree_url: https://github.com/korczis/prismatic-majordomus/tree/v0.30.1
+    decisions: []
+    groups:
+      - kind: fix
+        heading: Fixed
+        rank: 1
+        changes:
+          - kind: fix
+            scope: top
+            subject: case 3003 reads the Knowledge screen I3022 and I3023 draw
+            breaking: false
+            commit: 9904000d2
+            url: https://github.com/korczis/prismatic-majordomus/commit/9904000d2
+            references:
+              - kind: issue
+                id: I3022
+                title: "An empty knowledge queue is one sentence that says how a record arrives, not two empty tables"
+                route: /plan/i3022/
+              - kind: issue
+                id: I3023
+                title: "The Knowledge screen reads in review order, in plain labels, and leads to the knowledge manual"
+                route: /plan/i3023/
+          - kind: fix
+            scope: top
+            subject: "#1412's real reds: the footer commit, the record cases, coverage, a pipe flake"
+            breaking: false
+            commit: 70d127e14
+            url: https://github.com/korczis/prismatic-majordomus/commit/70d127e14
+            references:
+              - kind: issue
+                id: I2851
+                title: "the homepage's product view counts the delivery the history proves beside the statuses the records declare, each count a link"
+                route: /plan/i2851/
+              - kind: issue
+                id: I2987
+                title: "server.status and peers.list ask every checkout at once, a bounded number at a time"
+                route: /plan/i2987/
+          - kind: fix
+            scope: top
+            subject: "I3007's objective names the template links without writing a placeholder"
+            breaking: false
+            commit: 7a20e31fd
+            url: https://github.com/korczis/prismatic-majordomus/commit/7a20e31fd
+            references:
+              - kind: issue
+                id: I3007
+                title: "A commit that a record or the site's data names is a commit the history holds"
+                route: /plan/i3007/
+          - kind: fix
+            scope: top
+            subject: "case 3363 sorts with LC_ALL=C, so its order is the machine's no more"
+            breaking: false
+            commit: 92f790d39
+            url: https://github.com/korczis/prismatic-majordomus/commit/92f790d39
+            references:
+              - kind: issue
+                id: I2962
+                title: What the served surfaces change is said as the registry says it
+                route: /plan/i2962/
+          - kind: fix
+            scope: ui
+            subject: "the Knowledge screen reads in review order, in plain labels (I3023)"
+            breaking: false
+            commit: 076312f8a
+            url: https://github.com/korczis/prismatic-majordomus/commit/076312f8a
+            references:
+              - kind: issue
+                id: I3023
+                title: "The Knowledge screen reads in review order, in plain labels, and leads to the knowledge manual"
+                route: /plan/i3023/
+          - kind: fix
+            scope: ui
+            subject: "an empty knowledge queue is one sentence, not two empty tables (I3022)"
+            breaking: false
+            commit: "820602967"
+            url: https://github.com/korczis/prismatic-majordomus/commit/820602967
+            references:
+              - kind: issue
+                id: I3022
+                title: "An empty knowledge queue is one sentence that says how a record arrives, not two empty tables"
+                route: /plan/i3022/
+          - kind: fix
+            scope: site
+            subject: "a commit that a record or the site's data names is in the history (I3007)"
+            breaking: false
+            commit: c0b799497
+            url: https://github.com/korczis/prismatic-majordomus/commit/c0b799497
+            references:
+              - kind: issue
+                id: I3007
+                title: "A commit that a record or the site's data names is a commit the history holds"
+                route: /plan/i3007/
+              - kind: issue
+                id: I0817
+                title: Phase timing and work counters behind MJ_TIMING
+                route: /plan/i0817/
+              - kind: issue
+                id: I0818
+                title: The command registry is read in one pass
+                route: /plan/i0818/
+          - kind: fix
+            scope: offload
+            subject: a remote derive builds only inside its own run directory (I2882)
+            breaking: false
+            commit: a4c19d60f
+            url: https://github.com/korczis/prismatic-majordomus/commit/a4c19d60f
+            references:
+              - kind: issue
+                id: I2882
+                title: A remote derive builds only inside its own run directory
+                route: /plan/i2882/
+          - kind: fix
+            scope: ui
+            subject: "the Knowledge review reads as steps, each command as code (I3021)"
+            breaking: false
+            commit: 6f54b4153
+            url: https://github.com/korczis/prismatic-majordomus/commit/6f54b4153
+            references:
+              - kind: issue
+                id: I3021
+                title: The Knowledge screen shows each review command as code with what it does as a sentence
+                route: /plan/i3021/
+          - kind: fix
+            scope: site
+            subject: the site says a test proves a claim only as far as the evidence does (I2965)
+            breaking: false
+            commit: c90d10c01
+            url: https://github.com/korczis/prismatic-majordomus/commit/c90d10c01
+            references:
+              - kind: issue
+                id: I2965
+                title: The site says a test proves a guarantee only as far as recorded evidence supports it
+                route: /plan/i2965/
+          - kind: fix
+            scope: doctor
+            subject: no work whose answer cannot change a finding
+            breaking: false
+            commit: ed72c1325
+            url: https://github.com/korczis/prismatic-majordomus/commit/ed72c1325
+            references:
+              - kind: issue
+                id: I2995
+                title: "doctor does no work whose answer cannot change a finding: the roadmap lookups and the board's wide status"
+                route: /plan/i2995/
+          - kind: fix
+            scope: ui
+            subject: "the workspace's headline numbers are the chosen intent's (I2907)"
+            breaking: false
+            commit: a762f7456
+            url: https://github.com/korczis/prismatic-majordomus/commit/a762f7456
+            references:
+              - kind: issue
+                id: I2907
+                title: "The workspace's headline numbers are the chosen intent's"
+                route: /plan/i2907/
+          - kind: fix
+            scope: doctor
+            subject: the work no remote holds is counted in one walk
+            breaking: false
+            commit: ba44bed3f
+            url: https://github.com/korczis/prismatic-majordomus/commit/ba44bed3f
+            references:
+              - kind: issue
+                id: I2993
+                title: "doctor counts the work no remote holds in one walk, whatever the number of branches"
+                route: /plan/i2993/
+          - kind: fix
+            scope: docs
+            subject: "the MCP surface, claims and README name the eight writing capabilities (I2962)"
+            breaking: false
+            commit: 1b9b93d1b
+            url: https://github.com/korczis/prismatic-majordomus/commit/1b9b93d1b
+            references:
+              - kind: issue
+                id: I2962
+                title: What the served surfaces change is said as the registry says it
+                route: /plan/i2962/
+          - kind: fix
+            scope: release
+            subject: "a latest.json naming any pre-release is refused, not only the one published (I2829)"
+            breaking: false
+            commit: 9f8baafee
+            url: https://github.com/korczis/prismatic-majordomus/commit/9f8baafee
+            references:
+              - kind: issue
+                id: I2829
+                title: "An alpha is published as a pre-release end to end, and never becomes the latest release anywhere"
+                route: /plan/i2829/
+          - kind: fix
+            scope: docs
+            subject: "the README's exit codes are the commands' declared contracts (I2963)"
+            breaking: false
+            commit: ae2a2a322
+            url: https://github.com/korczis/prismatic-majordomus/commit/ae2a2a322
+            references:
+              - kind: issue
+                id: I2963
+                title: "The README's exit codes are the commands' contract"
+                route: /plan/i2963/
+          - kind: fix
+            scope: site
+            subject: the policy and roadmap pages name the .ai/repo layout in force (I2967)
+            breaking: false
+            commit: 886cd9a18
+            url: https://github.com/korczis/prismatic-majordomus/commit/886cd9a18
+            references:
+              - kind: issue
+                id: I2967
+                title: "The site's own pages name the layout in force"
+                route: /plan/i2967/
+          - kind: fix
+            scope: install
+            subject: the smoke server binds its own loopback address
+            breaking: false
+            commit: 0707822cd
+            url: https://github.com/korczis/prismatic-majordomus/commit/0707822cd
+      - kind: perf
+        heading: Performance
+        rank: 2
+        changes:
+          - kind: perf
+            scope: server
+            subject: "every checkout is asked at once, sixteen at a time"
+            breaking: false
+            commit: baadbbfb0
+            url: https://github.com/korczis/prismatic-majordomus/commit/baadbbfb0
+            references:
+              - kind: issue
+                id: I2987
+                title: "server.status and peers.list ask every checkout at once, a bounded number at a time"
+                route: /plan/i2987/
+      - kind: docs
+        heading: Documentation
+        rank: 4
+        changes:
+          - kind: docs
+            scope: server
+            subject: the public module doc names no crate-private item
+            breaking: false
+            commit: 317ae1312
+            url: https://github.com/korczis/prismatic-majordomus/commit/317ae1312
+            references:
+              - kind: issue
+                id: I2987
+                title: "server.status and peers.list ask every checkout at once, a bounded number at a time"
+                route: /plan/i2987/
+      - kind: chore
+        heading: Housekeeping
+        rank: 7
+        changes:
+          - kind: chore
+            scope: release
+            subject: record v0.30.0 and the metadata it publishes
+            breaking: false
+            commit: a0e7dd961
+            url: https://github.com/korczis/prismatic-majordomus/commit/a0e7dd961
+    artifacts:
+      - target: macos-aarch64
+        name: majordomus-v0.30.1-aarch64-apple-darwin.tar.gz
+        sha256: 0dfaa6a41224e7b830b1e9baf2d1ff66e06cad04b0483e16accab9ce4e4e31df
+      - target: macos-x86_64
+        name: majordomus-v0.30.1-x86_64-apple-darwin.tar.gz
+        sha256: f8b8424efb08e182ddb09c29eb15b5274e02df6b4ba96cbba73f7387acbce5ab
+      - target: linux-x86_64-gnu
+        name: majordomus-v0.30.1-x86_64-unknown-linux-gnu.tar.gz
+        sha256: 83b29af38b2ab7048aac653e90a42b0d5793f18dde5e83231a2b8c744fa11f11
+      - target: linux-x86_64-musl
+        name: majordomus-v0.30.1-x86_64-unknown-linux-musl.tar.gz
+        sha256: 9022bbd67e6ff0a12994dae7a5764040d8ceec4c6c2417567bd11255e9ceb400
+      - target: linux-aarch64-gnu
+        name: majordomus-v0.30.1-aarch64-unknown-linux-gnu.tar.gz
+        sha256: e79b36d624e9c3364bd8c85865fc9a9f5c674ccd44656d4b77e34da89d69851c
+      - target: linux-aarch64-musl
+        name: majordomus-v0.30.1-aarch64-unknown-linux-musl.tar.gz
+        sha256: a50464e71535137bd012b903a8de16df17b05ff9b481c70801acc65c0397efae
   - version: "0.30.0"
     tag: v0.30.0
     date: "2026-10-18T17:27:36Z"

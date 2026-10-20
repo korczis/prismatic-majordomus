@@ -1,0 +1,38 @@
+id: I3364
+milestone: a-foreign-repository-is-adopted-and-measured
+title: "The adoption-overhead bench takes a target repository, and Majordomus's overhead and footprint are measured in the adopted foreign repository"
+slug: overhead-is-measured-in-the-foreign-repository
+priority: p1
+profile: implementation
+objective: "Give majordomus bench a --repository <path> input so I3299's adoption-overhead suite runs in a named repository instead of this repository's fixtures, compared with its declared budgets rather than .ai/repo/benchmarks/baseline.json. Run it in the adopted foreign repository at its adopted commit, list the adoption's footprint outside .ai/ and .majordomus/ as path classes, compare it class by class with case 3113's inventory, and commit the result beside the T1 record."
+why: "T1 of the owner's report of 2026-10-19 asks for overhead, and its point that complexity is no moat makes overhead the cost side of the verdict. The critique found I3299 runs only on this repository's fixtures against its own baseline (lib/bench.sh:17,39), so this issue owns the target-repository input and depends on I3299 for the budgets."
+current_state: "I3299 (READY, p3) scopes apps/majordomus-cli/src/bench/* and .ai/repo/benchmarks/rust/policy.yaml. Case 3113 inventories the footprint on a fresh repository only."
+desired_state: "An overhead record per adopted repository with every exceeded budget shown as exceeded."
+scope:
+  - "apps/majordomus-cli/src/bench/runner.rs"
+  - "apps/majordomus-cli/src/commands/bench.rs"
+  - "apps/majordomus-cli/tests/bench.rs"
+  - ".ai/repo/benchmarks"
+  - "apps/majordomus-cli/tests/economics.rs"
+non_scope:
+  - "Changing I3299's budgets"
+  - "Reducing overhead; each exceeded budget becomes its own issue"
+depends_on:
+  - "I3299"
+  - "I3363"
+serves:
+  - "the-product-proves-it-pays#overhead-is-measured-in-the-foreign-repository"
+acceptance_criteria:
+  - "bench --repository runs the adoption suite in a fixture clone and never writes outside its scratch tree"
+  - "Every operation I3299 declares has a measurement in the foreign repository, or the record names why not"
+  - "An exceeded budget is published as exceeded"
+  - "A test refuses a T1 record that reached an accepted finish but has no overhead record"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test bench"
+  - "majordomus bench --check"
+  - "bash test/run.sh 3113_the_adoption_footprint_is_inventoried"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test economics"
+evidence_required:
+  - "overhead_record_in_foreign_repository"
+created_at: 2026-10-19
+updated_at: 2026-10-19

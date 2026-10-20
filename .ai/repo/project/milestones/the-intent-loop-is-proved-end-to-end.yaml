@@ -1,0 +1,46 @@
+id: the-intent-loop-is-proved-end-to-end
+title: "The intent loop is proved end to end, and the plan and the documents say what it does"
+slug: the-intent-loop-is-proved-end-to-end
+order: 303
+priority: p1
+problem: "Each piece of the intent loop is proved on its own: the record and verdict (case 367, 890), coverage (386), realization (388), the binding (960, 961, 962), the finish that satisfies nothing (895); the opposition, guards, remains, finish reading and the GitHub body each bring a case on their branches. No case carries one outcome through the whole loop, no fixture asserts that every surface tells the same story about one intent, and no test tries each way around the loop. The plan reads I1900-I1903 and I2000-I2004 as not done while their code is on master; PR #820 (chore/the-plan-records-what-landed) closes them and is not repeated here. docs/HOW_IT_WORKS.md:1286-1287 says no completion policy consumes the intent records, which goes stale the day finish-reads lands, and docs/CLAIMS.yaml:952-959 still plans a GitHub closure branch ADR 0116 rejected."
+outcome: "One fixture asserts the same intent id, verdict, criterion states, binding standing, disposition and remains on the command line, HTTP, MCP and the Cockpit page. A test tries every bypass the owner packs name and each is refused or exempted by policy, never passed. One case carries a desired outcome through draft, check, opposition, bound start, recorded evidence, a refused and then accepted finish, the GitHub body, a moved revision that stales the evidence and fresh evidence that restores it. The documents and the claims say what the loop does and nothing more."
+current_state: "Shipped per piece, proved per piece; no whole-loop case; the closest is the unpushed case 983 of an-adopter-runs-the-intent-loop."
+desired_state: "one parity test; one bypass test; one end-to-end case extending case 983; HOW_IT_WORKS, PLANNING and the claims matrix rewritten to the shipped state."
+scope:
+  - .ai/repo/project
+  - apps/majordomus-cli/tests
+  - test/cases
+  - docs/HOW_IT_WORKS.md
+  - docs/PLANNING.md
+  - docs/CLAIMS.yaml
+  - docs/claims
+  - site
+non_scope:
+  - "New behaviour; every behaviour proved here is built by another milestone"
+  - "Releasing or deploying; that is the release lander's"
+acceptance_criteria:
+  - "Every scenario A01 to A26 of the intent-outcome acceptance matrix is named by a claim in docs/CLAIMS.yaml, guaranteed with a test that exists or planned with a note saying what is missing"
+  - "The claims-matrix case fails when a claim's note or its guarantee page calls another claim planned while that claim is guaranteed"
+  - "One test fails if the command line, HTTP, MCP or the Cockpit page disagree about one intent's verdict, criteria, binding, disposition or remains"
+  - "One test tries each named bypass and fails if any passes"
+  - "One case runs from a desired outcome to a reopened and re-satisfied intent with documented commands only"
+  - "No sentence of docs/HOW_IT_WORKS.md, docs/PLANNING.md or docs/CLAIMS.yaml describes the intent loop as it was before these milestones"
+validation:
+  - majordomus plan validate
+  - majordomus intent validate
+  - cargo test --test intent_loop_surfaces --test intent_loop_bypass
+  - "bash test/run.sh <the case I2213 adds>"
+evidence_required:
+  - acceptance_matrix_claimed
+  - one_intent_reads_alike_everywhere
+  - every_bypass_refused
+  - loop_runs_end_to_end
+  - documents_match_the_loop
+depends_on: []
+risks:
+  - "Most issues here wait for six branch milestones to land; I2215 and the acceptance-matrix claims are executable now."
+  - "A parity test that compares rendered HTML to JSON compares formats, not facts; compare the capability answers the page asks and the words the page prints from them."
+  - "An end-to-end case that builds every subsystem in one fixture is slow and fragile; keep it offline, fixture-only and within the case time budget, and let unit tests carry the edge cases."
+created_at: 2026-10-09
+updated_at: 2026-10-09

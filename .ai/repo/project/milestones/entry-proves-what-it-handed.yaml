@@ -1,0 +1,40 @@
+id: entry-proves-what-it-handed
+title: "An episode records the governance and briefing it was handed, and a change is told"
+slug: entry-proves-what-it-handed
+order: 166
+priority: p1
+problem: "The entry preflight reports governance per claim (ADR 0066, docs/PREFLIGHT.md) but there is no digest of the effective governance, docs/PREFLIGHT.md states 'No compiled context revision exists in a checkout yet, so none is shown', session.started records neither, and a rule edited mid-session is noticed by nobody. intent_binding pins the plan revision of a task's intents (plan_revision) but not governance. Proposed in ADR 0181 (An episode records the governance and the briefing it was handed, each by one digest) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c097#2."
+outcome: "One governance digest computed by one function, recorded per episode with the briefing digest, compared at the next interaction, carried by handovers, identical across every entry surface; every route around the preflight is a case or a stated limit; task start states how far its base is behind the remote's master."
+current_state: "Verified on master 707a04c: environment/cache.rs fingerprints tiers for caching only; environment/preflight.rs derives the verdicts; cases 118, 190-192 prove entry converges on one server; SECURITY.md lists three bypass limits; lib/start.sh does not report base divergence; environment/vcs.rs reads ahead/behind against the branch's own upstream without fetching; worktree create already starts a new branch from the remote's trunk (case 3131_a_new_worktree_starts_from_the_remote_trunk)."
+desired_state: "governance digest on the preflight, the brief, session.started and handovers; a parity case across clients; a bypass inventory held to SECURITY.md."
+scope:
+  - "apps/majordomus-cli/src/environment"
+  - "apps/majordomus-cli/src/capability/builtin/environment.rs"
+  - "apps/majordomus-cli/src/capability/builtin/brief.rs"
+  - "apps/majordomus-cli/src/session"
+  - "lib/handover.sh"
+  - "lib/start.sh"
+  - "share/events.yaml"
+  - "docs/PREFLIGHT.md"
+  - "docs/ENTRY.md"
+  - "SECURITY.md"
+non_scope:
+  - "Any network call at entry"
+  - "Filesystem watchers"
+  - "Regenerating context from the preflight"
+acceptance_criteria:
+  - "The same tree gives the same governance digest on every surface"
+  - "An episode record names the digests it started under"
+  - "A governance edit during a session is told at the next brief or check"
+  - "A handover says when governance moved since it was written"
+  - "Every route around the preflight names its case or its SECURITY.md limit"
+validation:
+  - "majordomus plan validate"
+evidence_required: []
+depends_on:
+  - "the-session-domain-is-written-once"
+risks:
+  - "The digest's input set must be declared once (policy) or it drifts per surface"
+  - "Overlaps I2988 (the AGENTS.md/CLAUDE.md policy stamp, in flight on the board and not on master)"
+created_at: 2026-10-18
+updated_at: 2026-10-18
