@@ -1123,12 +1123,20 @@ fn render_written(v: &Value) -> String {
     if let Some(text) = inactive(v) {
         return text;
     }
-    format!(
+    let mut out = format!(
         "written    {}\nevent      {} (lamport {})",
         s(v, "key"),
         s(v, "event"),
         v["lamport"]
-    )
+    );
+    // Said only when it is not so: an event the disk did not take is not acknowledged.
+    if v["durability"] == json!("not_durable") {
+        out.push_str(
+            "\ndisk       NOT DURABLE — held in memory and replicated to peers, not on this \
+             machine's disk; `majordomus mesh doctor` says why",
+        );
+    }
+    out
 }
 
 fn render_consumed(v: &Value) -> String {
@@ -1926,6 +1934,19 @@ mod tests {
             "key": "s/c1", "event": "s/4", "lamport": 17,
         }));
         assert_eq!(text, "written    s/c1\nevent      s/4 (lamport 17)");
+        let synced = render_written(&json!({
+            "key": "s/c1", "event": "s/4", "lamport": 17, "durability": "synced",
+        }));
+        assert_eq!(synced, text, "a durable write says nothing more");
+    }
+
+    #[test]
+    fn a_write_the_disk_did_not_take_is_said_not_to_be_durable() {
+        let text = render_written(&json!({
+            "key": "s/c1", "event": "s/4", "lamport": 17, "durability": "not_durable",
+        }));
+        assert!(text.contains("NOT DURABLE"), "{text}");
+        assert!(text.contains("mesh doctor"), "{text}");
     }
 
     #[test]

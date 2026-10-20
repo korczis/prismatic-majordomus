@@ -64,7 +64,9 @@
           "01_init",
           "15_command_surface",
           "284_a_record_reads_the_whole_declaration",
-          "2979_a_personal_layer_changes_nothing_shared"
+          "2979_a_personal_layer_changes_nothing_shared",
+          "3113_the_adoption_footprint_is_inventoried",
+          "3340_a_fresh_init_leaves_doctor_clean"
         ],
         "negative": [
           "01_init",
@@ -184,6 +186,8 @@
           "15_command_surface",
           "19_end_to_end",
           "284_a_record_reads_the_whole_declaration",
+          "3113_the_adoption_footprint_is_inventoried",
+          "3340_a_fresh_init_leaves_doctor_clean",
           "33_event_registry"
         ],
         "negative": [
@@ -244,7 +248,7 @@
     },
     {
       "name": "doctor",
-      "summary": "Is Majordomus itself healthy, and is every enforcement it declares actually wired here?",
+      "summary": "It checks governance only: is Majordomus itself healthy, and is every enforcement it declares actually wired here?",
       "category": "system",
       "stage": "inspect",
       "class": "read-only",
@@ -255,7 +259,7 @@
       "json_output": true,
       "syntax": "majordomus doctor [--json]",
       "demo": "doctor-findings",
-      "note": "The primary guarantee is wiring reconciliation — a declared enforcement that no hook invokes, or whose exit code a hook swallows, is a failure rather than a passing line.",
+      "note": "The primary guarantee is wiring reconciliation — a declared enforcement that no hook invokes, or whose exit code a hook swallows, is a failure rather than a passing line. It reads nothing of the checkout's server, its lease or the mesh: a stale server is reported by `majordomus serve status`, the mesh by `majordomus mesh doctor`, and the server's own health by GET /api/v1/health and GET /api/v1/ready.",
       "reads": [
         ".ai/repo/policy.yaml",
         ".ai/repo/profiles/",
@@ -274,6 +278,7 @@
         "behaviour": [
           "02_doctor_basic",
           "1015_one_malformed_rule_is_one_finding",
+          "1030_a_derive_machine_has_the_pinned_toolchain",
           "130_mesh",
           "131_models",
           "132_health_sees_a_stopped_writer",
@@ -286,6 +291,7 @@
           "223_an_unsupported_schema_is_a_finding",
           "284_a_record_reads_the_whole_declaration",
           "3036_a_worktree_runs_its_own_hooks",
+          "3340_a_fresh_init_leaves_doctor_clean",
           "36_command_doctrines",
           "44_model_doctrine",
           "707_knowledge_check_refuses_malformed_records",
@@ -302,6 +308,7 @@
         "negative": [
           "02_doctor_basic",
           "03_update",
+          "1030_a_derive_machine_has_the_pinned_toolchain",
           "132_health_sees_a_stopped_writer",
           "132b_a_new_branch_owes_no_records_yet",
           "13_region_projection",
@@ -380,7 +387,7 @@
           }
         ]
       },
-      "doc_md": "\nIs the supervisory layer real here? Read-only. Blocking by design: intended to run\nfrom a pre-commit hook and from CI.\n\n**Checks, in order:**\n\n1. `policy.yaml` parses; `version` supported; no unknown keys at any level.\n2. Every `profiles/*.yaml` parses; every profile referenced by policy exists; no unknown\n   keys.\n3. **Enforcement wiring.** For every entry in `policy.enforcement`: `path` resolves (on\n   `PATH`, repository-relative, absolute, or as an executable path on the hook line\n   itself) and the artifact named by `wired_by` exists, is executable, invokes\n   `majordomus <first arg>`, and does not swallow its exit code with `|| true` or\n   `|| exit 0`. When the hook is a dispatcher, the invocation is looked for in the hook\n   file *and* in every file in its `<hook>.d/` directory; the finding names whichever\n   file actually carries it. A subhook that carries the invocation but is not executable\n   is reported as not wired, because the dispatcher skips it. `wired_by: manual` is\n   reported as unverified, never as wired. Declared-but-not-wired is `10`.\n4. Every `projections[].target` exists, its provider has a template, and its entry in\n   the content matches the stamp it carries. Missing or unstamped → `12`; mismatch → `10` (hand-edited).\n   For `mode: region` the hash is taken over the region alone; absent or malformed\n   markers are reported as such.\n5. The projection marked `always_loaded: true` is within\n   `context.always_loaded_budget_lines`.\n6. Every repository-relative path referenced from the always-loaded projection resolves.\n7. No hardcoded counts in the always-loaded projection (a digit sequence adjacent to\n   words like `agents`, `files`, `apps`, `commands`, `skills`, `rules`).\n\n   Checks 5 to 7 judge generated content only. For a region projection that is the\n   region and never the host document, so that every failure `doctor` reports can be\n   fixed by editing the policy.\n8. Retention caps not exceeded on `state/ledger.jsonl` and `state/handovers/`.\n9. Environment probes: bash version, `git`, `jq` and `shellcheck` if present. Reported\n   as `INFO`. Nothing in `doctor` needs a tool beyond bash, git, and a checksum command.\n\n```\n$ majordomus doctor\nOK   policy      .ai/repo/policy.yaml — parsed, version 1\nOK   profiles    4 files — parsed\nFAIL wiring      finish-contract — bin/majordomus is not invoked by .git/hooks/pre-push  [reproduce: grep -n 'majordomus finish' .git/hooks/pre-push]\nOK   projection  CLAUDE.md — content matches its stamp\nFAIL budget      CLAUDE.md — 212 lines, budget 150  [reproduce: wc -l CLAUDE.md]\nOK   links       3 projections — all references resolve\nOK   retention   ledger 412 lines, cap 5000\nINFO env         bash 3.2.57, git 2.45, yq 4.44, jq 1.7\ndoctor: 2 failures\n$ echo $?\n10\n```"
+      "doc_md": "\nIs the supervisory layer real here? Read-only. Blocking by design: intended to run\nfrom a pre-commit hook and from CI.\n\n**It checks governance only** — the policy, the profiles, the wiring of every declared\nenforcement, the projections, the records and their retention. It reads nothing of the\ncheckout's server, its lease or the mesh, so a clean report says nothing about whether the\nserver answering for this checkout is current (I2707). The runtime is read by:\n\n| Question | Where it is read |\n| --- | --- |\n| Is the server answering for this checkout current, or stale? | `majordomus serve status` |\n| Is the mesh healthy here: identity, trust, link, runtime, journal? | `majordomus mesh doctor` |\n| What does the server report about itself, the mesh included? | `GET /api/v1/health` (`health.report`) |\n| Can this process answer: lease held, executable current? | `GET /api/v1/ready` (`health.ready`) |\n\n`majordomus doctor --help` prints the same before its usage.\n\n**Checks, in order:**\n\n1. `policy.yaml` parses; `version` supported; no unknown keys at any level.\n2. Every `profiles/*.yaml` parses; every profile referenced by policy exists; no unknown\n   keys.\n3. **Enforcement wiring.** For every entry in `policy.enforcement`: `path` resolves (on\n   `PATH`, repository-relative, absolute, or as an executable path on the hook line\n   itself) and the artifact named by `wired_by` exists, is executable, invokes\n   `majordomus <first arg>`, and does not swallow its exit code with `|| true` or\n   `|| exit 0`. When the hook is a dispatcher, the invocation is looked for in the hook\n   file *and* in every file in its `<hook>.d/` directory; the finding names whichever\n   file actually carries it. A subhook that carries the invocation but is not executable\n   is reported as not wired, because the dispatcher skips it. `wired_by: manual` is\n   reported as unverified, never as wired. Declared-but-not-wired is `10`.\n4. Every `projections[].target` exists, its provider has a template, and its entry in\n   the content matches the stamp it carries. Missing or unstamped → `12`; mismatch → `10` (hand-edited).\n   For `mode: region` the hash is taken over the region alone; absent or malformed\n   markers are reported as such.\n5. The projection marked `always_loaded: true` is within\n   `context.always_loaded_budget_lines`.\n6. Every repository-relative path referenced from the always-loaded projection resolves.\n7. No hardcoded counts in the always-loaded projection (a digit sequence adjacent to\n   words like `agents`, `files`, `apps`, `commands`, `skills`, `rules`).\n\n   Checks 5 to 7 judge generated content only. For a region projection that is the\n   region and never the host document, so that every failure `doctor` reports can be\n   fixed by editing the policy.\n8. Retention caps not exceeded on `state/ledger.jsonl` and `state/handovers/`.\n9. Environment probes: bash version, `git`, `jq` and `shellcheck` if present. Reported\n   as `INFO`. Nothing in `doctor` needs a tool beyond bash, git, and a checksum command.\n\n```\n$ majordomus doctor\nOK   policy      .ai/repo/policy.yaml — parsed, version 1\nOK   profiles    4 files — parsed\nFAIL wiring      finish-contract — bin/majordomus is not invoked by .git/hooks/pre-push  [reproduce: grep -n 'majordomus finish' .git/hooks/pre-push]\nOK   projection  CLAUDE.md — content matches its stamp\nFAIL budget      CLAUDE.md — 212 lines, budget 150  [reproduce: wc -l CLAUDE.md]\nOK   links       3 projections — all references resolve\nOK   retention   ledger 412 lines, cap 5000\nINFO env         bash 3.2.57, git 2.45, yq 4.44, jq 1.7\ndoctor: 2 failures\n$ echo $?\n10\n```"
     },
     {
       "name": "watch",
@@ -519,6 +526,9 @@
           "19_end_to_end",
           "25_continuity_lifecycle",
           "3067_a_task_is_claimed_on_the_mesh",
+          "3151_a_task_is_claimed_when_it_starts",
+          "3160_a_scope_entry_is_one_path",
+          "3190_a_scope_of_dot_is_the_repository",
           "32_refusal_lifecycle",
           "33_event_registry",
           "821_a_session_moves_between_machines",
@@ -528,6 +538,7 @@
           "04_start_check",
           "05_handover",
           "16_profiles",
+          "3160_a_scope_entry_is_one_path",
           "32_refusal_lifecycle"
         ]
       },
@@ -630,6 +641,8 @@
           "224_continuity_crosses_machines",
           "23_context",
           "25_continuity_lifecycle",
+          "3073_context_knowledge_slice",
+          "3160_a_scope_entry_is_one_path",
           "710_briefing_names_the_candidates",
           "886_the_timing_report_is_json"
         ],
@@ -688,7 +701,7 @@
           }
         ]
       },
-      "doc_md": "\nWhat does whoever works next need to know? Read-only. Assembles durable state into one\nbriefing and prints it. Nothing is persisted, no model is called, and the output is a\nprojection: every line is recomputed from the records and git each time it runs.\n\n**Section order is authority order.** Git first, because it is the only thing that cannot\nbe stale; then the task and the profile that constrains it; then blockers, which change\nwhat may be accepted; then authored records; then event history last, because it is the\nweakest evidence about the present.\n\n| Section | Source | Included when |\n|---|---|---|\n| `GIT` | git | always |\n| `TASK` | `state/current.yaml` | a task is active and the profile's `context.task` is not `false` |\n| `PROFILE` | `profiles/<name>.yaml` | the task names a profile that exists |\n| `CONTEXT DOCUMENTS` | `.ai/**/README.md` (the context contract) | a task is active; the effective chain is listed for each of its scope paths |\n| `OPEN QUESTIONS` | `state/open-questions.md` | any unresolved entry names this task |\n| `DECISIONS` | `state/decisions.md` | `context.decisions: true` (this task) or `context.architecture_notes: true` (the repository) |\n| `REASONING` | `state/reasoning/<task>/`, rendered by `majordomus-cli reasoning status --report` | the task has reasoning records and `context.decisions: true` |\n| `LATEST CHECKPOINT` | `state/checkpoints/` | a checkpoint resolves for this task |\n| `LATEST COMPATIBLE HANDOVER` | `state/handovers/` | a handover resolves for this worktree and branch |\n| knowledge candidates | `.ai/repo/knowledge/candidates/` | in the derived briefing, after the open questions and before the handover: the candidates awaiting review whose episode was on this branch, count and ids, bounded; unattributed ones on their own line; absence printed rather than omitted |\n| `FILES TOUCHED IN SCOPE` | git | `context.relevant_files: true` |\n| `RECENT HISTORY` | `state/ledger.jsonl` | `context.recent_history_depth` is above zero |\n| `PROMPT` | `prompts/<name>.md` | `--prompt <name>` was given |\n\nThis is the only code that reads a profile's `context` block, which is what makes those\nfields state rather than documentation.\n\n**Budget.** `context.builder_budget_lines` in the policy, or `--budget-lines`. When the\nassembled text exceeds it, sections are dropped in a fixed order — history, files,\ndecisions, then the bodies of the checkpoint and the handover, which degrade to a pointer\nrather than disappearing. Git, task, profile and blockers are never dropped. Every drop is\nnamed under `EXCLUDED` with its reason, so an under-filled context is debugged from the\nexclusion list instead of guessed at. Exit `10` if what cannot be dropped is already over\nbudget.\n\n**`--for <provider>`** wraps the same body with a header naming the provider and its\nalways-loaded file. The body does not change: the canonical context is provider-neutral,\nand a provider that needed different facts would be a different policy, not a different\nrendering.\n\n**`--json`** emits one object: `git`, `task`, `sections[]` (each with `id`, `lines` and\n`text`), `excluded[]` (each with `item` and `reason`), and `budget`. The same selection as\nthe text form, because both are assembled once and rendered twice.\n\n```\n$ majordomus context\n# Majordomus context — 2026-09-03T19:41:02Z\n# a projection of durable state, not a source of truth: validate every line against git"
+      "doc_md": "\nWhat does whoever works next need to know? Read-only. Assembles durable state into one\nbriefing and prints it. Nothing is persisted, no model is called, and the output is a\nprojection: every line is recomputed from the records and git each time it runs.\n\n**Section order is authority order.** Git first, because it is the only thing that cannot\nbe stale; then the task and the profile that constrains it; then blockers, which change\nwhat may be accepted; then authored records; then event history last, because it is the\nweakest evidence about the present.\n\n| Section | Source | Included when |\n|---|---|---|\n| `GIT` | git | always |\n| `TASK` | `state/current.yaml` | a task is active and the profile's `context.task` is not `false` |\n| `PROFILE` | `profiles/<name>.yaml` | the task names a profile that exists |\n| `CONTEXT DOCUMENTS` | `.ai/**/README.md` (the context contract) | a task is active; the effective chain is listed for each of its scope paths |\n| `OPEN QUESTIONS` | `state/open-questions.md` | any unresolved entry names this task |\n| `DECISIONS` | `state/decisions.md` | `context.decisions: true` (this task) or `context.architecture_notes: true` (the repository) |\n| `REASONING` | `state/reasoning/<task>/`, rendered by `majordomus-cli reasoning status --report` | the task has reasoning records and `context.decisions: true` |\n| `LATEST CHECKPOINT` | `state/checkpoints/` | a checkpoint resolves for this task |\n| `LATEST COMPATIBLE HANDOVER` | `state/handovers/` | a handover resolves for this worktree and branch |\n| knowledge candidates | `.ai/repo/knowledge/candidates/` | in the derived briefing, after the open questions and before the handover: the candidates awaiting review whose episode was on this branch, count and ids, bounded; unattributed ones on their own line; absence printed rather than omitted |\n| `KNOWLEDGE POINTERS` | the knowledge graph (`majordomus knowledge`), compiled on this read | `context.knowledge: true` and the task names an issue: see below |\n| `FILES TOUCHED IN SCOPE` | git | `context.relevant_files: true` |\n| `RECENT HISTORY` | `state/ledger.jsonl` | `context.recent_history_depth` is above zero |\n| `PROMPT` | `prompts/<name>.md` | `--prompt <name>` was given |\n\nThis is the only code that reads a profile's `context` block, which is what makes those\nfields state rather than documentation.\n\n**Budget.** `context.builder_budget_lines` in the policy, or `--budget-lines`. When the\nassembled text exceeds it, sections are dropped in a fixed order — history, files,\ndecisions, then the bodies of the checkpoint and the handover, which degrade to a pointer\nrather than disappearing. Git, task, profile and blockers are never dropped. Every drop is\nnamed under `EXCLUDED` with its reason, so an under-filled context is debugged from the\nexclusion list instead of guessed at. Exit `10` if what cannot be dropped is already over\nbudget.\n\n**Knowledge pointers.** A bounded slice of the knowledge graph, not the graph: one line per\npointer — the relation that selected it, the kind, the id, the source path and the title.\nSelection follows only edges a file states, in this order, each tier in byte order of the\nid: the issue the task was started for, the issues it `depends_on`, its milestone, the\nclaims that milestone declares, and every node whose source is a path the task or the issue\nnames in its `scope`. Nothing is searched and nothing is scored — a document whose words\nmatch the issue's but that nothing references is not selected. The list stops at the\nprofile's `context.knowledge_max_items` (the policy's `context.max_list_items` when unset,\nand never above it), and a last line counts the rest with `majordomus knowledge related\nissue:<id>`, which prints them. The section is absent, and named under `EXCLUDED` with the\nreason, when the profile does not set `context.knowledge: true`, and when the task names no\nissue under a policy whose `intent.binding` is not `off`; with no task, or with binding off\nand no issue, it is simply absent. Only the kinds and paths the selection can reach are compiled,\nso it costs about two seconds on a plan of four hundred issues rather than the eight a whole\ncompile takes; it is a few lines of a 300-line budget. When the issue the task names is not\na node — its record left the version-control index, or is gone — the section prints a\n`stale` line saying which and why, and still lists what the graph does hold. Under a tight\nbudget it is dropped with the derived listings, after files and before the context\ndocuments, and so long before git, the task, the profile and the open questions, which are\nnever dropped; the drop names the command that prints the pointers.\n\n**`--for <provider>`** wraps the same body with a header naming the provider and its\nalways-loaded file. The body does not change: the canonical context is provider-neutral,\nand a provider that needed different facts would be a different policy, not a different\nrendering.\n\n**`--json`** emits one object: `git`, `task`, `sections[]` (each with `id`, `lines` and\n`text`), `excluded[]` (each with `item` and `reason`), and `budget`. The same selection as\nthe text form, because both are assembled once and rendered twice.\n\n```\n$ majordomus context\n# Majordomus context — 2026-09-03T19:41:02Z\n# a projection of durable state, not a source of truth: validate every line against git"
     },
     {
       "name": "checkpoint",
@@ -936,7 +949,10 @@
           "17_doctrine_enforcement",
           "19_end_to_end",
           "25_continuity_lifecycle",
+          "2988_a_scope_admits_what_its_derive_wrote",
           "3023_a_knowledge_record_outlives_the_file_it_cites",
+          "3151_a_task_is_claimed_when_it_starts",
+          "3190_a_scope_of_dot_is_the_repository",
           "32_refusal_lifecycle",
           "578_an_unknown_gate_refuses_completed",
           "707_knowledge_check_refuses_malformed_records"
@@ -951,6 +967,7 @@
           "19_end_to_end",
           "21_decision_question",
           "25_continuity_lifecycle",
+          "3190_a_scope_of_dot_is_the_repository",
           "32_refusal_lifecycle",
           "707_knowledge_check_refuses_malformed_records"
         ]
@@ -1053,8 +1070,10 @@
           "19_end_to_end",
           "25_continuity_lifecycle",
           "275_publication_is_current",
+          "2988_a_scope_admits_what_its_derive_wrote",
           "3067_a_task_is_claimed_on_the_mesh",
           "3068_a_task_off_the_mesh_is_refused",
+          "3151_a_task_is_claimed_when_it_starts",
           "32_refusal_lifecycle",
           "33_event_registry",
           "572_verification_records_the_tree_it_proved",
@@ -1375,6 +1394,7 @@
           "21_decision_question",
           "221_the_lifecycle_under_concurrency",
           "25_continuity_lifecycle",
+          "3210_a_candidate_cites_its_own_commit",
           "33_event_registry",
           "821_a_session_moves_between_machines"
         ],
@@ -1937,6 +1957,8 @@
           "224_continuity_crosses_machines",
           "282_the_ledger_envelope_is_reserved",
           "29_prompt_capture",
+          "3113_the_adoption_footprint_is_inventoried",
+          "3460_a_session_end_hook_fits_its_budget",
           "408_a_receipt_is_provider_neutral",
           "494_the_mesh_is_declared_and_held",
           "54_session_lifecycle_hooks",
@@ -2157,10 +2179,12 @@
       ],
       "tests": {
         "behaviour": [
+          "1030_a_derive_machine_has_the_pinned_toolchain",
           "18_doctrine_wiring",
           "19_end_to_end"
         ],
         "negative": [
+          "1030_a_derive_machine_has_the_pinned_toolchain",
           "18_doctrine_wiring"
         ]
       },
@@ -2268,6 +2292,9 @@
       ],
       "tests": {
         "behaviour": [
+          "3100_an_issue_delivery_is_inferred",
+          "3101_merged_work_unrecorded_is_drift",
+          "3102_a_milestone_version_is_inferred",
           "40_project_model",
           "41_project_status",
           "42_dag_waves",
@@ -2460,7 +2487,7 @@
             "expect": {
               "exit": 0,
               "stdout_contains": [
-                "^majordomus [0-9]+\\.[0-9]+\\.[0-9]+$"
+                "^majordomus [0-9]+\\.[0-9]+\\.[0-9]+(-(alpha|beta|rc)\\.[0-9]+)?$"
               ]
             },
             "explain": "The one string every other surface derives its version from — this site, the ledger's `by` field, and the generated provider instructions.",
@@ -2543,6 +2570,8 @@
           "284_a_record_reads_the_whole_declaration",
           "2985_session_records_are_capped_and_archived",
           "3015_an_unsupervised_repository_exits_12_from_both_tools",
+          "3060_trunk_stays_clean",
+          "3063_a_branch_episode_drains_the_outbox",
           "494_the_mesh_is_declared_and_held",
           "54_session_lifecycle_hooks",
           "55_session_context",
@@ -2559,6 +2588,8 @@
           "223_an_unsupported_schema_is_a_finding",
           "281_published_order_is_tracked",
           "3015_an_unsupervised_repository_exits_12_from_both_tools",
+          "3060_trunk_stays_clean",
+          "3063_a_branch_episode_drains_the_outbox",
           "54_session_lifecycle_hooks",
           "55_session_context",
           "565_knowledge_switch_and_failure_leave_evidence",
@@ -2716,9 +2747,9 @@
       "requires_repository": true,
       "requires_installed": true,
       "json_output": true,
-      "syntax": "majordomus knowledge <sources|nodes|edges|search|show|related|derive|candidates|promote|reject|check|observe> [<query>|<id>] [--scope shared|operational|all] [--kind <kind>] [--type <type>] [--episode <id>] [--dry-run] [--class <class>] [--reason <why>] [--by <id>] [--subject <ref>] [--evidence <ref>] [--json]",
+      "syntax": "majordomus knowledge <sources|nodes|edges|search|show|related|derive|candidates|promote|reject|check|validate|observe> [<query>|<id>] [--scope shared|operational|all] [--kind <kind>] [--type <type>] [--episode <id>] [--dry-run] [--class <class>] [--reason <why>] [--by <id>] [--subject <ref>] [--evidence <ref>] [--json]",
       "demo": "knowledge-index",
-      "note": "Discovery reads the version-control index with the declared pathspecs and never walks the tree. Nodes keep their identity across a rebuild, kinds are never guessed, and an edge exists only where a file states it. sources, nodes, edges, candidates and check write nothing. search, show and related look up the same nodes and edges and write nothing either: there is no stored index to go stale, so a lookup compiles what the checkout holds; search places each node on the first rung of a fixed ladder it reaches (id, title, title-prefix, path, body) and names the rung (I0811). derive turns the ledger lines one episode stamped into candidate records under the tracked knowledge section, deterministically and without a model; a second run over the same evidence writes nothing and says so. promote and reject are a person's acts on a candidate and each leaves a ledger line; nothing here stages a file (ADR 0091). observe records what a session met as one observation.recorded ledger line, refusing a kind, subject or evidence reference of the wrong shape and a statement that spans lines or opens like a conversation (ADR 0118).",
+      "note": "Discovery reads the version-control index with the declared pathspecs and never walks the tree. Nodes keep their identity across a rebuild, kinds are never guessed, and an edge exists only where a file states it. sources, nodes, edges, candidates and check write nothing. search, show and related look up the same nodes and edges and write nothing either: there is no stored index to go stale, so a lookup compiles what the checkout holds; search places each node on the first rung of a fixed ladder it reaches (id, title, title-prefix, path, body) and names the rung (I0811). validate judges the graph itself — duplicate ids, edges with a missing end or no provenance, declared paths and tracked sources that no longer exist — failing on a broken relationship Majordomus defines and only reporting a broken link an author wrote; doctor and watch ask the same validator through majordomus.knowledge-graph (I0812). derive turns the ledger lines one episode stamped into candidate records under the tracked knowledge section, deterministically and without a model; a second run over the same evidence writes nothing and says so. promote and reject are a person's acts on a candidate and each leaves a ledger line; nothing here stages a file (ADR 0091). observe records what a session met as one observation.recorded ledger line, refusing a kind, subject or evidence reference of the wrong shape and a statement that spans lines or opens like a conversation (ADR 0118).",
       "reads": [
         ".ai/repo/knowledge/sources.yaml",
         "share/knowledge-sources.yaml",
@@ -2747,6 +2778,9 @@
           "3015_an_unsupervised_repository_exits_12_from_both_tools",
           "3023_a_knowledge_record_outlives_the_file_it_cites",
           "3037_a_knowledge_lookup_explains_its_order",
+          "3060_trunk_stays_clean",
+          "3063_a_branch_episode_drains_the_outbox",
+          "3210_a_candidate_cites_its_own_commit",
           "405_the_knowledge_reader_honours_the_schema",
           "563_knowledge_is_derived_at_the_boundary",
           "564_knowledge_derivation_is_idempotent",
@@ -3202,6 +3236,7 @@
           "138_governance_gates",
           "2984_a_handbook_edition_is_built_from_the_tree",
           "3015_an_unsupervised_repository_exits_12_from_both_tools",
+          "3590_the_site_is_derived_in_every_language",
           "403_published_translation",
           "67_rule_dag"
         ]
@@ -3548,9 +3583,9 @@
       "requires_repository": true,
       "requires_installed": true,
       "json_output": true,
-      "syntax": "majordomus bench [<command>...] [--samples <n>] [--warmup <n>] [--mode cold|warm|both] [--format text|json] [--no-save] [--list] [--check] [--write-baseline [--force]]",
+      "syntax": "majordomus bench [<command>...] [--samples <n>] [--warmup <n>] [--cold-samples <n>] [--mode cold|warm|both] [--format text|json] [--no-save] [--list] [--check] [--write-baseline [--force]]",
       "demo": "benchmark-run",
-      "note": "The targets are the registry's public commands; the scenarios are the command fixtures when the suite is present. A run is local evidence; only --write-baseline writes the tracked baseline, and --check refuses a regression over the policy's thresholds.",
+      "note": "The targets are the registry's public commands; the scenarios are the command fixtures when the suite is present. A run is local evidence; only --write-baseline writes the tracked baseline, and --check refuses a regression over the policy's thresholds when two samples agree; one sample over is a warning to re-measure, and every finding names its sample count, the runner and its load average.",
       "reads": [
         "share/commands.yaml",
         "test/fixtures/commands/",

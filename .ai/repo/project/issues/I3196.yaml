@@ -1,0 +1,43 @@
+id: I3196
+milestone: the-hub-is-reached-from-any-device
+title: "A deployment's external URL, trusted hosts and forwarded headers are one typed fact read by every surface"
+slug: the-external-url-is-one-fact
+priority: p2
+profile: implementation
+objective: "Extend deployment/v1 with the target's external URL, visibility and auth mode, make the server derive its canonical and trusted hosts from it, honour forwarded scheme and host only from a declared proxy, and project the ingress state through deploy, health, the UI and the docs."
+why: "The 09-11 hosting design: a deploy script must not know the reality the Cockpit does not; no ts.net or majordomus.dev constant in source; origin checks stay enabled behind a proxy. Critique 10-18: tailscale serve and cloudflared both connect from 127.0.0.1, so without this an ingress would turn every tailnet or tunnel caller into loopback and reopen the signing-oracle hole ADR 0126 closed. I0903 and I0904 are done (1f074963918, 58a2c377a1f). This issue extends the listen block they produced. Proposed in ADR 0204 (The hub is reached privately over the tailnet first; a public ingress is a deployment target, never an application change) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c118#9, chatgpt-majordomus:c096#4."
+current_state: "Verified: no external_url, trusted-host or forwarded-header handling in apps/majordomus-cli/src/http; ExecutionPolicy::admits_remote judges the peer address alone (capability/model.rs); I0903 and I0904 are done (1f074963918, 58a2c377a1f) and .ai/repo/deployments/majordomus.yaml already has listen.interface: all."
+desired_state: "One ingress block per deployment target; a host header outside it is refused."
+scope:
+  - "share/schemas/majordomus/deployment"
+  - ".ai/repo/deployments"
+  - "apps/majordomus-cli/src/deploy"
+  - "apps/majordomus-cli/src/http"
+  - "apps/majordomus-cli/src/capability/model.rs"
+  - "apps/majordomus-cli/tests/remote_callers.rs"
+  - "test/cases/1086_a_remote_caller_cannot_write.sh"
+  - ".ai/repo/adrs/0126-a-caller-beyond-loopback-reads-and-changes-nothing-it-cannot-authenticate.md"
+  - ".ai/repo/adrs/0204-the-hub-is-reached-privately-over-the-tailnet-first-a-public-ing.md"
+  - "apps/majordomus-cli/src/ui/deployments.rs"
+non_scope:
+  - "Choosing a provider"
+serves:
+  - "the-mesh-is-operated-from-any-device#reachable-privately"
+acceptance_criteria:
+  - "No hub hostname in source"
+  - "A forwarded header from an undeclared proxy is ignored"
+  - "CLI, API, MCP and /ui show the same ingress state"
+  - "With an ingress declared for the deployment, a request that reaches the origin through that ingress is judged remote by ExecutionPolicy::admits_remote although its peer address is loopback; it is judged authenticated only through the identity the ADR amending ADR 0126 admits"
+  - "A request from the declared proxy that carries no forwarded headers is still judged remote (fail closed)"
+  - "A proposed ADR amending ADR 0126 states that an ingress-proxied request is a remote caller, and it is accepted before any ingress target (I3195) lands"
+  - "A variant of case 1086 and a test in apps/majordomus-cli/tests/remote_callers.rs send a write through a loopback proxy and see it refused"
+  - "The ingress block extends the existing listen block of .ai/repo/deployments/majordomus.yaml rather than adding a second address fact"
+validation:
+  - "majordomus plan validate"
+  - "cargo test --lib deploy"
+  - "cargo test --test remote_callers"
+  - "bash test/run.sh 1086_a_remote_caller_cannot_write"
+evidence_required:
+  - "test_the_external_url_is_one_fact"
+created_at: 2026-10-18
+updated_at: 2026-10-18

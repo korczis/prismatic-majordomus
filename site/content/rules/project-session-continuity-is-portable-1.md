@@ -1,7 +1,7 @@
 +++
 title = "Session continuity is portable, and what is portable is checked"
 description = "Session continuity is portable, and what is portable is checked"
-weight = 155
+weight = 161
 [extra]
 kind = "rule"
 slug = "project-session-continuity-is-portable-1"

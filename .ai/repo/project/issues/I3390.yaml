@@ -1,0 +1,37 @@
+id: I3390
+milestone: recovery-from-injected-faults-is-proven
+title: "One conservation reading counts completions per issue, unreachable task commits, stranded claims and multiply-consumed handovers, each violation with its records"
+slug: work-is-conserved
+priority: p1
+profile: implementation
+objective: "Add apps/majordomus-cli/src/economics/conservation.rs and a conservation section in economics tasks: over a window, per issue the count of task.finished with outcome completed (a second is a duplicate completion); every commit on a task's branch inside its span reachable from a branch or refs/rescue/ ref (else lost); every exclusive claim in mesh state released, expired or held by a live session (else stranded); every handover whose consumed_by holds more than one session. Each violation names its ledger lines, shas, claim or handover ids."
+why: "T5 of the owner's report of 2026-10-19 asks to prove recovery without loss or duplicate completion. Nothing counts either today; the mesh already keeps consumed_by and handover digests, so the reading only folds existing records."
+current_state: "apps/majordomus-cli/src/mesh/state.rs:274 and :313 carry consumed_by; mesh/handover.rs:15 says materializing twice writes one file; share/events.yaml:152-158 declares session.recovered. No reading counts completions per issue."
+desired_state: "economics tasks --format json carries conservation with zero violations on a clean fixture and each violation named on a broken one."
+scope:
+  - "apps/majordomus-cli/src/economics"
+  - "apps/majordomus-cli/src/economics/mod.rs"
+  - "apps/majordomus-cli/tests/economics.rs"
+  - "docs/ECONOMICS.md"
+  - "docs/generated/openapi.json"
+  - "docs/generated/openapi.yaml"
+  - "site/data/generated/openapi.json"
+non_scope:
+  - "Repairing a violation"
+  - "Lease-based assignment (I3198)"
+depends_on:
+  - "I3376"
+serves:
+  - "the-product-proves-it-pays#work-is-conserved-under-faults"
+acceptance_criteria:
+  - "Fixtures produce each violation kind, each naming its records"
+  - "A clean fixture reads zero violations"
+  - "Two ledgers each finishing the same issue completed read one duplicate completion"
+  - "A commit reachable only from refs/rescue/ is not lost"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test economics"
+  - "majordomus generate --check"
+evidence_required:
+  - "test_conservation_violations"
+created_at: 2026-10-19
+updated_at: 2026-10-19

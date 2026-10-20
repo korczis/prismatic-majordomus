@@ -121,6 +121,12 @@
       securityLevel: 'strict',
       // a diagram that does not parse is reported on its own frame, not drawn into the page
       suppressErrorRendering: true,
+      // The plan's own diagram is every issue and every dependency, and it grows with the
+      // plan: past Mermaid's defaults (50,000 characters, 500 edges) it is refused whole and
+      // the page shows no drawing and no node links. The bound here leaves room to grow, and
+      // the interaction probe catches a diagram that outgrows it.
+      maxTextSize: 1000000,
+      maxEdges: 5000,
       theme: isDark() ? 'dark' : 'neutral',
       fontFamily: tok('--font-sans'),
       // the viewer scales the drawing itself; Mermaid's own fit-to-width would fight it

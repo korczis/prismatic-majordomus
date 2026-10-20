@@ -1,7 +1,7 @@
 +++
 title = "An expedited landing is the owner's word, judged on the merged tree, and never reaches a tag"
 description = "An expedited landing is the owner's word, judged on the merged tree, and never reaches a tag"
-weight = 78
+weight = 82
 [extra]
 kind = "rule"
 slug = "project-an-expedited-landing-is-the-owners-word-1"

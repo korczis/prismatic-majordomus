@@ -153,7 +153,7 @@ H
   [ -f "$MJ_STATE_DIR/open-questions.md" ] || cp "$skel/templates/open-questions.md" "$MJ_STATE_DIR/open-questions.md"
   if [ "$personal" = 1 ]; then
     MJ_INIT_CREATED="$MJ_INIT_CREATED $(mj_personal_exclude_file):/$ai_rel/"
-  else mj_init_gitignore; fi
+  else mj_init_gitignore; mj_init_readme; fi
 
   local rel; rel="${MJ_SELF:-$(cd "$MJ_BIN_DIR" && pwd)/majordomus}"
   if [ -n "$MJ_INIT_CREATED" ]; then
@@ -353,4 +353,19 @@ mj_init_gitignore() {
     { [ -f "$gi" ] && [ -n "$(tail -c1 "$gi")" ] && printf '\n'; printf '%s\n' "$line"; } >> "$gi"
     MJ_INIT_CREATED="$MJ_INIT_CREATED .gitignore:$line"
   done
+}
+
+# the reader's way in: a README that does not name AGENTS.md is a FAIL of doctor's bootstrap
+# check (majordomus.bootstrap-integrity: a person reaches the layer through README.md and
+# AGENTS.md), so a shared init adds one paragraph that names it, once, to a README whose other
+# content is left alone. A README is not created where there is none, which that check does
+# not ask for, and a personal layer never reaches here: the README is the project's (I2941).
+mj_init_readme() {
+  local readme="$MJ_ROOT/README.md"
+  [ -f "$readme" ] || return 0
+  grep -q 'AGENTS\.md' "$readme" && return 0
+  { [ -n "$(tail -c1 "$readme")" ] && printf '\n'
+    printf '\n## AI agents\n\nThis repository is supervised by Majordomus. An agent starts at [AGENTS.md](AGENTS.md).\n'
+  } >> "$readme"
+  MJ_INIT_CREATED="$MJ_INIT_CREATED README.md:AGENTS.md"
 }

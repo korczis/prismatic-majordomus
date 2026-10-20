@@ -1,0 +1,27 @@
+id: I2995
+milestone: a-second-adopter-is-served
+title: "doctor does no work whose answer cannot change a finding: the roadmap lookups and the board's wide status"
+slug: doctor-fits-its-budget-in-the-commit-hook
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Remove the two readings that dominated doctor in the commit hook without changing a finding. (1) The roadmap doctrine reads the README's release list first, and when the section lists none it decides OK before looking up any milestone's release; a list is still compared with the release records both ways (ADR 0166, I2742: records, not tags). (2) The context builder's board asks `serve status --checkouts this` for the address it uses, and asks every checkout only when this one has no server, so its answer is the one the wide question gave."
+why: "A profile of doctor in the commit-hook context (MJ_TIMING=1, 2026-10-18, after I2993) measured 244 s against the 100 s budget (policy benchmark.budget.doctor_ms). validate:roadmap took 64 s: mj_pj_m_released_in runs a `git log -S` pickaxe over the history for every DONE milestone, and in this repository the README's roadmap lists no releases, so every lookup was discarded. validate:budget took 63 s: it runs `majordomus context`, whose board lookup spent 11 s asking every checkout's server (`serve status` over the repository) to pick this checkout's address. Commit hooks took 14 to 37 minutes in every seat that day; the release seat named the hook the throughput floor."
+current_state: "The roadmap doctrine computes every DONE milestone's release before it reads the README; the board lookup asks the wide server status on every context."
+desired_state: "A README that lists no releases costs no release lookup; a worktree with a server costs one lease read and one probe for the board's address; the findings are unchanged."
+scope:
+  - "lib/doctor.sh"
+  - "lib/context.sh"
+  - "test/cases/3385_doctor_fits_its_budget_in_the_commit_hook.sh"
+depends_on: []
+acceptance_criteria:
+  - "A README whose roadmap lists no releases is judged OK with no pickaxe; with the change undone the case counts the lookups and fails"
+  - "A README that lists releases is accepted when it matches the records and refused when it omits one"
+  - "context asks only `serve status --checkouts this` when this checkout has a server; with the change undone the case sees the wide question and fails"
+  - "doctor's findings on this repository are the same before and after, and validate:roadmap and validate:budget take less time"
+validation:
+  - "bash test/run.sh 3385_doctor_fits_its_budget_in_the_commit_hook 49_roadmap_doctrine 106_context_peers"
+evidence_required:
+  - "case_doctor_no_needless_work"
+created_at: 2026-10-18
+updated_at: 2026-10-18

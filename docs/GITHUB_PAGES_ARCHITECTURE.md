@@ -35,7 +35,7 @@ being maintained separately from the repository that backs it.
 | derived content | canonical Markdown with generated front matter; one page per profile, claim, status, responsibility, command, doctrine, use case, application, milestone, issue, case study, skill, module and capability | `site/content/{docs,profiles,guarantees,supervises,commands,doctrines,use-cases,applications,plan,why,registry,skills}/`, `render-test.md`, `architecture.md` | never |
 | derived routes and links for the executable | one route per module and per capability, the executable's pages, the API anchor, the source on GitHub, the claims attached to each surface | `site/data/generated/executable.json` | never |
 | the native command line, as the site renders it | the command tree flattened, each command with its route, usage, arguments, children and executed examples | `site/data/generated/cli.json` (from `docs/generated/cli.json`, via `scripts/lib/cli-site.jq`) | never |
-| build provenance | the commit and its cleanliness, the site's input hash, the registry and index fingerprints, and each composed surface with the commit its producer declared | `site/data/build.json`, served as `/build.json` | never — `scripts/site-build`, not committed |
+| build provenance | the commit, its time and its cleanliness, the site's input hash, the registry and index fingerprints, and each composed surface with the commit its producer declared | `site/data/build.json`, served as `/build.json` | never — `scripts/site-build`, not committed |
 | the crate's reference | the rustdoc pages of `apps/majordomus-cli`, composed at `/rustdoc` ([`RUSTDOC.md`](RUSTDOC.md)) | `target/web/rustdoc/`, with the `surface.json` that declares what it was built from | never — `scripts/rust-check --doc`, not committed |
 | presentation | Zola templates and Tera 2 components | `site/templates/**` | yes |
 | styling entry | Tailwind v4 + Flowbite v4 directives | `site/tailwind.css` | yes |
@@ -395,6 +395,73 @@ which is an index. The pages read and followed, on 2026-09-04: getting-started/q
 components/card, components/badge, components/footer, components/typography. The repository's
 installed `flowbite` is 4.0.2, matching the documented token vocabulary.
 
+## Languages
+
+The site is written once, in English, and offered in every language
+`site/i18n/languages.json` declares (ADR 0218). Nobody writes a second language: each copy is
+derived from the English build.
+
+| piece | what it is |
+|---|---|
+| `site/i18n/languages.json` | the source language, the languages offered, each named in itself |
+| `site/i18n/<lang>/memory/*.jsonl` | the translation memory: one line per English segment, keyed by its hash |
+| `site/i18n/<lang>/guide.json` | the style and glossary every translator of that language is given |
+| `site/i18n/<lang>/edition.toml` | the language the directory declares, which `english-only-check` holds to its declaration |
+| `scripts/lib/site-i18n.mjs` | the `== languages` pass of `scripts/site-build`: segments every page, writes `/<lang>/` |
+| `scripts/site-translate` | carries the missing segments to a translator and its answers into the memory |
+| `scripts/lib/site-i18n-probe.mjs` | follows every link of every page, in every language, in Chromium |
+| `partials/language-switch.html`, `partials/language-detect.html` | the switch in the bar, and the choice of language on arrival |
+
+**The pass.** After Zola, the accessibility pass and the diagrams, every built page is cut into
+segments — each run of inline content between block boundaries, and each attribute a reader
+meets (title, alt, aria-label, the description) — with inline markup replaced by numbered
+placeholders (`<t1>…</t1>`, and `<t2/>` for code and images). Code, `pre`, SVG and anything
+marked `translate="no"` is never a segment. The copy under `/<lang>/` is the English page with
+every segment the memory knows replaced, every internal link pointed at that language's copy,
+`lang`, the canonical URL and the `hreflang` alternates set, the switch pointed at each copy and
+the machine-translation notice revealed. What the memory does not know stays English, is
+counted in `/<lang>/i18n.json`, and is listed with the pages it is on in
+`target/site-i18n/missing.json`. A build calls no model: it is a pure function of the English
+pages and the memory.
+
+**Translating.** A changed English segment has a new key, so its old translation is never served.
+
+<!-- majordomus:unrun it builds the whole site and carries segments to a model or a translator outside the process; case 3590 runs the pass, the memory and the refusal of a translation that breaks its placeholders against a fixture -->
+```bash
+scripts/site-build                                   # lists what the memory lacks
+scripts/site-translate status                        # how much is open
+scripts/site-translate run --advisor <id>            # translate through an advisor of the catalogue
+scripts/site-translate export --out DIR --min-pages 2 --batch-chars 16000   # batches for subagents
+scripts/site-translate import DIR/*.json             # admit filled batches into the memory
+```
+
+A translation is admitted only when it carries every placeholder of its English exactly once,
+nested the same way; anything else is refused and the English is served.
+
+**The reader's language.** The switch is Flowbite's navbar language dropdown: every language
+named in itself, `lang` and `hreflang` on each link, `aria-current` on the one being read. A
+reader who arrives from outside the site on an English page, has chosen nothing and whose browser
+prefers a declared language is sent to that page's copy in it; a choice made with the switch is
+stored and kept. A link followed inside the site, a reload and a crawler stating no such
+preference are never redirected, so every URL means the page it names.
+
+**Authored pages.** A page written in another language (`[extra] lang`, declared in
+`english-only-allow.txt`) is carried into each copy unchanged. Its copies name it canonical, and
+a pair of authored counterparts (`[extra] alternate`) keeps its own alternates.
+
+**Every link, every language.** `scripts/lib/site-i18n-probe.mjs` loads every page of every
+copy in Chromium, answered from the build itself, and holds each to its language: every link
+lands on a built file, a link inside a copy stays in that copy's language, the switch leads to
+each copy and marks the current one, and the alternates name each other both ways.
+
+**Adding a language.** One entry in `languages.json`, a `guide.json`, an `edition.toml`, its
+declaration in `scripts/ci/english-only-allow.txt`, and a translation run. No template, generator
+or page changes.
+
+**The bar of the other surfaces.** `/ui` wears the site's bar (`scripts/ui navbar`), and its
+language switch leads to the site's front page in each language until the UI itself is offered
+in them (intent `one-bar-and-one-language-on-every-surface`).
+
 ## Routes
 
 Every tile on the homepage is a link to a page with its own title, description, canonical URL
@@ -706,9 +773,9 @@ proves a missing path or an untested guaranteed claim fails the generator;
 their sources and that none embeds the commit it lands in.
 
 The commit a page was built from is not a derived file's business: `scripts/site-build`
-writes `site/data/build.json` (for the footer and the architecture page) and
-`site/static/build.json`, served at `/build.json`, with the commit, whether the tree was
-dirty, the site's input hash, the registry and index fingerprints, and under `surfaces` each
+writes `site/data/build.json` (for the footer, the architecture page and the roadmap's "observed
+at") and `site/static/build.json`, served at `/build.json`, with the commit, that commit's time
+(`commit_time`, never the build's clock), whether the tree was dirty, the site's input hash, the registry and index fingerprints, and under `surfaces` each
 composed surface with the commit its producer declared; `scripts/site-check` proves the served
 file names HEAD and the data the site was built from, and that every composed surface was built
 from that same commit, so a deployment can be verified from outside against the commit that was
