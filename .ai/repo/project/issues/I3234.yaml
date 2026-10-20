@@ -1,0 +1,51 @@
+id: I3234
+milestone: a-change-is-judged-in-minutes
+title: "A derive whose executable is current and whose inputs did not move answers before it waits for the machine's lock"
+slug: a-warm-no-op-derive-takes-no-lock
+priority: p1
+profile: implementation
+objective: "Before scripts/derive takes the derive lock, choose the executable through I2525's generation guard and compare the node keys I2525 records for this tree, the site-data node included, without spawning a generator: no `majordomus generate`, no `generate --check`, no scripts/generate-site-data. If no key moved and no derive of this same worktree holds the lock, exit 0 and say so; otherwise take the lock and derive as today. The pre-lock answer runs a pinned copy of the executable, or one verified by content hash immediately before exec. scripts/site-deploy uses the same answer and stops running `cargo run ... generate --check`."
+why: "2026-10-17 (I2880 record, 111 logs): lock wait totalled 15.3 h against 9.5 h of work. A no-op still queues behind every other derive for minutes. c262#10 (2026-10-14): a documentation-only change must not trigger an expensive compile. Board p3 says I2490 still needs this 'pre-lock warm path'. On 2026-10-18 the derive reviewers (Codex) recommended on the mesh that the stage-B skip converge on I2490's typed receipt and content keys and that I2880's valid mutations and scenarios be ported before the duplicate is closed. Neither head was approved: changing an ignored source subdirectory changed the generated output while I2490's key stayed the same. This issue's answer before the lock depends on that hole being closed. It extends milestone a-derive-does-only-the-work-its-inputs-changed. Proposed in ADR 0185 (A derivation is a typed graph of the generators the executable already plans, keyed by the content of what each node reads, and the full derive stays its oracle) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c130#3, chatgpt-majordomus:c262#10, chatgpt-majordomus:c292#2."
+current_state: "Verified on master 707a04c, 2026-10-18: scripts/derive runs derive_preflight, then mj_lock_acquire, then cargo build under the lock unless MAJORDOMUS_BIN is set. scripts/site-deploy runs `mj_cargo_bounded ... run ... generate --check` (line 155). generate --check is plan() over every target, a full in-memory render, so it cannot carry a sub-second no-op. The lock owner line is '<who>:<branch> <pid>' (lib/machine_lock.sh): it names a branch, not a worktree, and scripts/reap-orphans reads it, pinned by case 1018. Node keys exist only in the revived I2523-I2525 records. Rule project.one-derive-at-a-time says the script 'takes the lock before it builds anything'."
+desired_state: "A warm no-op derive answers under 1 s p95 in I3236's no-op bench scenario, without the lock and without a generator, and prints which executable and which node keys it matched. A derive that must build or write still builds and writes under the lock. A stale executable is refused as today (exit 15). The lock owner line carries the worktree root, and scripts/reap-orphans reads the new shape."
+scope:
+  - "scripts/derive"
+  - "scripts/site-deploy"
+  - "lib/rust_bin.sh"
+  - "lib/machine_lock.sh"
+  - ".ai/repo/rules/project/one-derive-at-a-time.v1.md"
+  - "test/cases/1018_one_derive_at_a_time_and_no_orphans.sh"
+  - "scripts/reap-orphans"
+non_scope:
+  - "Building outside the lock"
+  - "Narrowing the lock for writing derives (I2531)"
+  - "Choosing an existing executable through the generation guard: I2525 carries it, this issue reuses it"
+  - "A stage-B key of its own (generate-site-data --derive-key of I2880 or the skip of I2490): the node key of I2523/I2525 is the canonical key under ADR 0185"
+depends_on:
+  - "I2521"
+  - "I2525"
+serves:
+  - "a-change-is-judged-in-minutes#unchanged-tree-derive-is-sub-second"
+acceptance_criteria:
+  - "A no-op derive while another worktree holds the lock exits 0 without waiting and writes nothing"
+  - "The same no-op while a derive of the same worktree holds the lock waits"
+  - "A changed input, a changed generator or a stale executable takes the lock and derives"
+  - "site-deploy runs no cargo when a current executable exists"
+  - "Cargo's fresh-build overhead is measured separately from derivation"
+  - "The no-op answer compares the node keys I2525 records (the site-data node included) and spawns no generator: neither majordomus generate, generate --check nor scripts/generate-site-data runs, counted by MJ_TIMING work counters"
+  - "A warm no-op derive finishes under 1 s p95 in I3236's no-op bench scenario on the declared reference machine; 'returns in seconds' is not the bar"
+  - "The executable answering before the lock is a pinned copy, or is verified by content hash immediately before exec, so a concurrent rebuild in a shared CARGO_TARGET_DIR cannot replace it between the generation check and the exec (case)"
+  - "The derive lock's owner line carries the worktree root, and 'a derive of the same worktree holds the lock' is decided from it, detached-HEAD worktrees included (case)"
+  - "The amendment to rule project.one-derive-at-a-time states the pinned executable and the worktree identity"
+  - "scripts/reap-orphans reads the new owner line and still spares the worktree in use (case 1018)"
+  - "An input whose contents the key does not hash, such as a directory git ignores, makes the derive uncacheable, so it takes the lock and derives rather than answering current"
+validation:
+  - "bash test/run.sh 1018_one_derive_at_a_time_and_no_orphans"
+  - "scripts/derive-check"
+evidence_required:
+  - "warm_no_op_skips_the_lock_case"
+  - "no_op_wall_time_before_after"
+  - "pinned_executable_survives_a_concurrent_rebuild_case"
+  - "lock_owner_names_the_worktree_case"
+created_at: 2026-10-18
+updated_at: 2026-10-18

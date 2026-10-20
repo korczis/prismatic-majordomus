@@ -5,7 +5,7 @@ baselines under `.ai/repo/benchmarks/pages/`. Do not edit; measure with
 `scripts/pages benchmark --write-baseline` and regenerate. The architecture behind these
 numbers is [`GITHUB_PAGES_PERFORMANCE.md`](GITHUB_PAGES_PERFORMANCE.md).
 
-Generated from canonical inputs `34daf4a02463`.
+Generated from canonical inputs `44655132d3af`.
 
 ## Controlled budget
 
@@ -81,6 +81,7 @@ held to it.
 - `scripts/lib/interaction-specs/**`
 - `scripts/lib/interactions.mjs`
 - `scripts/lib/project-links.awk`
+- `scripts/lib/site-i18n*.mjs`
 - `scripts/lib/ui-*.mjs`
 - `scripts/lib/ui-routes.mjs`
 - `scripts/pages`
@@ -92,6 +93,7 @@ held to it.
 - `scripts/site-deploy`
 - `scripts/site-probe`
 - `scripts/site-serve`
+- `scripts/site-translate`
 - `scripts/ui`
 - `share/**`
 - `share/allow/**`

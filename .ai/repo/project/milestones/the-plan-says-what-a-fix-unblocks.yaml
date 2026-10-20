@@ -1,0 +1,28 @@
+id: the-plan-says-what-a-fix-unblocks
+title: "The plan says what finishing an issue unblocks, and why each blocked issue is blocked"
+slug: the-plan-says-what-a-fix-unblocks
+order: 186
+priority: p1
+problem: "Workers and the owner choose the next issue by hand; plan.next ignores what an issue unblocks; blocked issues are a single class. Proposed in ADR 0195 (What accepting an issue unblocks is answered by one counterfactual evaluator over the plan graph) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c284#5, chatgpt-majordomus:c259#6, chatgpt-majordomus:c284#3."
+outcome: "One counterfactual evaluator (plan.impact), a published impact page, set preview and blocked classes, all from plan.rs's readiness rules."
+current_state: "plan.rs derives readiness, waves and now/next; nothing counts what an issue unblocks; I2973 (local branch, in flight) proposes a count inside proceed. No intent names this milestone on master: its intent the-plan-flows exists only on the unpushed local branch docs/the-plan-flows-is-an-intent, so until that branch lands and lists the milestone its issues are maintenance work that serves no criterion."
+desired_state: "plan.impact is the only unlock computation; proceed and the site read it."
+scope:
+  - "apps/majordomus-cli/src/plan.rs"
+  - "apps/majordomus-cli/src/capability/builtin/plan.rs"
+  - "site/content/plan"
+  - "site/graph.js"
+non_scope:
+  - "A second graph engine or library"
+  - "A composite score"
+acceptance_criteria:
+  - "CLI, MCP and the published page agree on every issue's immediate unlocks"
+validation:
+  - "majordomus plan validate"
+evidence_required: []
+risks:
+  - "Collides with I2973's scope (plan.rs); agree with f6 that I2973 consumes plan.impact"
+  - "Bound to no intent until the-plan-flows lands; intent validate warns milestone_serves_no_intent until then"
+  - "It serves no intent yet: it is meant for intent the-plan-flows, which another session owns, and stays maintenance until that owner adds it (asked on the mesh on 2026-10-18)."
+created_at: 2026-10-18
+updated_at: 2026-10-18

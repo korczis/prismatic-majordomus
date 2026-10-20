@@ -1,0 +1,28 @@
+id: I3090
+milestone: architecture-is-enforced
+title: "The UI audit warms every surface and gives an unreachable page a second load"
+slug: the-ui-audit-warms-every-surface
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Before the first visit, the UI audit loads the first planned page of every top-level surface, not only the root. It records page.unreachable only after a second load fails, and never retries a refused connection, which still stops the run."
+why: "On 2026-10-19 and 20 the ui job on master (runs 39205883728 and 39233374923) and on the alpha.1 top (39357242274) failed on one finding: page.unreachable on /docs/ @320. The documentation surface is served from a tree of its own, and its first load, the first visit of the plan, exceeded the 20 s goto while every later visit of /docs/ loaded. A red that says something about a cold machine and nothing about the site."
+current_state: "The audit warms only the root, and a single timed-out goto is a finding."
+desired_state: "Every surface is warm before the first visit, and a page is unreachable only when it fails twice."
+scope:
+  - "scripts/lib/ui-audit.mjs"
+  - "scripts/lib/ui.test.mjs"
+  - ".ai/repo/project/issues/I3090.yaml"
+depends_on: []
+acceptance_criteria:
+  - "The audit warms the first planned route of every top-level path segment before the workers start, deriving the segments from the plan and naming no mount"
+  - "A visit whose goto times out is loaded once more before page.unreachable is recorded, and the finding names the number of attempts"
+  - "A refused connection is never retried: the run still stops and says the server stopped answering"
+  - "A full ui audit run on CI reports no page.unreachable on /docs/"
+validation:
+  - "majordomus plan validate"
+  - "node scripts/lib/ui.test.mjs"
+  - "scripts/ui audit --report"
+evidence_required: []
+created_at: 2026-10-20
+updated_at: 2026-10-20

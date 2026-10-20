@@ -1,0 +1,26 @@
+id: I3060
+milestone: M003
+title: "A provider hook declares its timeout, and the session end closes its episode inside the budget"
+slug: a-session-end-hook-fits-its-budget
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "`capture install` writes a per-hook `timeout` for every hook it generates. The values come from one declared table per provider and event, read by both the configuration writer and the end handler. The SessionEnd handler keeps the episode close inside that budget: it skips the optional closing checkpoint and continuation, as typed failures, when running them would leave the close too little of the budget. A configuration that byte-for-byte matches the shape this tool wrote before timeouts existed is rewritten to the new shape. Any other configuration is left as it is, and install names the timeouts it lacks."
+why: "Claude Code gives SessionEnd hooks a shared 1.5-second budget unless a per-hook timeout is set, and then at most 60 seconds (code.claude.com/docs/en/hooks, Hook timeouts). It cancels a command hook that reaches its timeout and discards its output. The generated configurations set no timeout. Measured on 2026-10-19 on a scratch adopter (OSCILLA) under 0.30.0, the SessionEnd capture took 2.9 to 4.0 s at load 28-56 and 8.5 s at load 66: the closing checkpoint about 2 s, the continuation about 2.5 s, then the close. The end event was therefore cut short before the episode closed, which matches the adopter's doctor findings 'the writer has stopped' and 'open episodes nothing closed'. The same configurations leave SessionStart and PreCompact on the 600-second default, so a hung start can stall a fresh client for ten minutes."
+current_state: "mj_capture_config writes type and command only. mj_capture_session_end runs checkpoint, continuation, mesh leave and close in order, with no deadline. An installed configuration that names the hooks is left without timeouts."
+desired_state: "Every generated hook carries the declared timeout. The end handler measures its own elapsed time against the declared budget and always reaches the close. Upgrading an untouched generated configuration adds the timeouts; a hand-edited one is reported, not rewritten. Case 3460 proves all three."
+scope:
+  - "lib/capture.sh"
+  - "test/cases/3460_a_session_end_hook_fits_its_budget.sh"
+  - ".ai/repo/project/issues/I3060.yaml"
+acceptance_criteria:
+  - "After `capture install`, each of UserPromptSubmit, SessionStart, SessionEnd and PreCompact in .claude/settings.json carries the timeout the provider table declares, and SessionEnd's is at most 60"
+  - "A configuration identical to the pre-timeout generated shape is rewritten with the timeouts; a configuration with any other content is left byte-identical and install names the missing timeouts"
+  - "The SessionEnd shim, given a provider session that was started, closes the episode in less than its declared timeout"
+  - "With the end budget forced below the optional steps' cost, the episode still closes, and the skipped checkpoint and continuation are recorded as typed failures"
+validation:
+  - "CI=true bash test/run.sh --no-skips 3460"
+evidence_required:
+  - "verified"
+created_at: 2026-10-19
+updated_at: 2026-10-19
