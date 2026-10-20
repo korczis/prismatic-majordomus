@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.1"
   },
   "registry": {
-    "fingerprint": "e9ec56f7ab16bbef8bfa492164289f99f59a1674c8eac92f270119ee244308fa",
+    "fingerprint": "e551c64d12b7ecd92d3c9a1862c712c0c220fc63365013f843fda40fd13c6a89",
     "summary": {
-      "total": 3158,
+      "total": 3159,
       "builtin": 206,
-      "declarative": 2952,
+      "declarative": 2953,
       "by_kind": {
         "command": 31,
         "query": 175,
-        "resource": 2952
+        "resource": 2953
       },
       "by_stability": {
         "behaviorally_verified": 142,
         "experimental": 55,
-        "implemented": 2961
+        "implemented": 2962
       },
       "mcp_tools": 196,
-      "mcp_resources": 3007,
+      "mcp_resources": 3008,
       "http_routes": 201,
       "cli_commands": 111,
       "modules": 92,
@@ -85404,7 +85404,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 799,
+        "capabilities": 800,
         "capability_ids": []
       },
       {
@@ -86070,7 +86070,7 @@
     ]
   },
   "index": {
-    "fingerprint": "767e0af9b2b96a74cbcc69f3c58d43394251506410c1bb4725f726c60fe5b3ab",
+    "fingerprint": "8e94204adc83a95d63a574cc313c53d25d15f0e3ffa39a84a97b95e1f6dea89f",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -86110,7 +86110,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 33,
-      "issue": 799,
+      "issue": 800,
       "knowledge": 50,
       "mesh-declaration": 1,
       "milestone": 100,
@@ -93308,7 +93308,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 420783
+        "bytes": 425166
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -102625,6 +102625,17 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 1784
+      },
+      {
+        "uri": "majordomus://issue/I3013",
+        "kind": "issue",
+        "identity": "I3013",
+        "title": "The evidence job runs only when a planned lane ran tests, so a records-only pull request is not red",
+        "description": "validate.yml's evidence job runs when the plan selected a lane that runs tests and leaves a report (the shell suite, or the crate's tests under rust_check) and that lane ran, instead of whenever the rust job succeeded. A records-only plan, whose rust lanes only build the executable and run the registry checks (rust_integration), then skips the evidence job rather than failing it at evidence-collect's exit 12.",
+        "path": ".ai/repo/project/issues/I3013.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2982
       },
       {
         "uri": "majordomus://issue/I3020",
@@ -118368,7 +118379,7 @@
       "identity": [
         "id"
       ],
-      "objects": 799
+      "objects": 800
     },
     {
       "name": "knowledge",

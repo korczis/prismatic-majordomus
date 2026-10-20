@@ -45637,6 +45637,43 @@
         }
       },
       {
+        "id": "majordomus://issue/I3013",
+        "kind": "issue",
+        "label": "I3013",
+        "summary": "The evidence job runs only when a planned lane ran tests, so a records-only pull request is not red",
+        "route": "/cockpit/objects/issue/i3013",
+        "source": ".ai/repo/project/issues/I3013.yaml",
+        "facts": {
+          "created_at": "2026-10-20",
+          "depends_on": [],
+          "evidence_required": [
+            "records_only_plan_case"
+          ],
+          "milestone": "test-evidence",
+          "non_scope": [
+            "Making evidence-collect pass with nothing to record: a planned lane that left no report stays a failure",
+            "The rust lanes' modes and what rust-check --integration runs"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".github/workflows/validate.yml",
+            "test/cases/3402_a_records_only_plan_skips_the_evidence_job.sh",
+            ".ai/repo/project/issues/I3013.yaml",
+            "site"
+          ],
+          "slug": "the-evidence-job-runs-only-when-a-lane-left-a-report",
+          "updated_at": "2026-10-20",
+          "validation": [
+            "bash test/run.sh 3402_a_records_only_plan_skips_the_evidence_job",
+            "bash test/run.sh 26_ci_wiring",
+            "majordomus plan validate",
+            "scripts/derive-check"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I3020",
         "kind": "issue",
         "label": "I3020",
@@ -111590,6 +111627,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3013",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3013",
+        "target": "majordomus://milestone/test-evidence",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I3020",
         "target": "kind:issue",
         "kind": "is_a"
@@ -127276,8 +127323,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3605,
-      "edges": 8387,
+      "nodes": 3606,
+      "edges": 8389,
       "acyclic": false,
       "truncated": false
     }
