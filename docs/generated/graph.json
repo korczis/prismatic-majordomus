@@ -42644,6 +42644,43 @@
         }
       },
       {
+        "id": "majordomus://issue/I3090",
+        "kind": "issue",
+        "label": "I3090",
+        "summary": "The UI audit warms every surface and gives an unreachable page a second load",
+        "route": "/cockpit/objects/issue/i3090",
+        "source": ".ai/repo/project/issues/I3090.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The audit warms the first planned route of every top-level path segment before the workers start, deriving the segments from the plan and naming no mount",
+            "A visit whose goto times out is loaded once more before page.unreachable is recorded, and the finding names the number of attempts",
+            "A refused connection is never retried: the run still stops and says the server stopped answering",
+            "A full ui audit run on CI reports no page.unreachable on /docs/"
+          ],
+          "created_at": "2026-10-20",
+          "current_state": "The audit warms only the root, and a single timed-out goto is a finding.",
+          "depends_on": [],
+          "desired_state": "Every surface is warm before the first visit, and a page is unreachable only when it fails twice.",
+          "evidence_required": [],
+          "milestone": "architecture-is-enforced",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "scripts/lib/ui-audit.mjs",
+            "scripts/lib/ui.test.mjs",
+            ".ai/repo/project/issues/I3090.yaml"
+          ],
+          "slug": "the-ui-audit-warms-every-surface",
+          "updated_at": "2026-10-20",
+          "validation": [
+            "majordomus plan validate",
+            "node scripts/lib/ui.test.mjs",
+            "scripts/ui audit --report"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I3602",
         "kind": "issue",
         "label": "I3602",
@@ -88745,6 +88782,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3090",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3090",
+        "target": "majordomus://milestone/architecture-is-enforced",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I3602",
         "target": "kind:issue",
         "kind": "is_a"
@@ -99016,8 +99063,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3081,
-      "edges": 6743,
+      "nodes": 3082,
+      "edges": 6745,
       "acyclic": false,
       "truncated": false
     }
