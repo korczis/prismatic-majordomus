@@ -35561,9 +35561,7 @@
           "acceptance_criteria": [
             "Every assertion of case 95 holds after the change, and a mutation of each relation it proves still fails it",
             "The case's cost on three GitHub runs, named, is under half of the slowest-case budget",
-            "The slowest-case budget is lowered or unchanged, never raised",
-            "No case on the feedback lane exceeds its declared p95 budget, and a case that would is decomposed or moved to the proof lane",
-            "Every case budget is derived from .ai/repo/ci/suite-durations.tsv and none is a pinned number"
+            "The slowest-case budget is lowered or unchanged, never raised"
           ],
           "created_at": "2026-10-09",
           "depends_on": [],
@@ -35571,6 +35569,9 @@
             "the_slowest_case_is_cut"
           ],
           "milestone": "ci-critical-path",
+          "non_scope": [
+            "Per-case p95 budgets on the feedback lane and budgets derived from suite-durations.tsv: moved to I2350 on 2026-10-20 with their two criteria, verbatim"
+          ],
           "parallel_safe": false,
           "priority": "p1",
           "profile": "implementation",
@@ -35584,7 +35585,7 @@
             ".ai/repo/ci/gates.yaml"
           ],
           "slug": "the-slowest-case-is-cut-not-budgeted",
-          "updated_at": "2026-10-18",
+          "updated_at": "2026-10-20",
           "validation": [
             "bash test/run.sh 95_executable_reference",
             "scripts/ci/suite-budget"
@@ -37091,7 +37092,9 @@
             "A change whose impact cannot be proved runs the full plan, and the plan says which path caused it",
             "A failing gate's output names the selection reason, the reproducing command and its owner",
             "Every gate in gates.yaml declares one lane of feedback, proof and release, the pull-request verdict waits on the feedback lane alone, and a combined top lands only with its proof lane green",
-            "The structure job is split into an instant tier on the feedback lane and a proof tier"
+            "The structure job is split into an instant tier on the feedback lane and a proof tier",
+            "No case on the feedback lane exceeds its declared p95 budget, and a case that would is decomposed or moved to the proof lane",
+            "Every case budget is derived from .ai/repo/ci/suite-durations.tsv and none is a pinned number"
           ],
           "created_at": "2026-10-10",
           "depends_on": [],
@@ -37117,10 +37120,14 @@
             "apps/majordomus-cli/src/gates/model.rs",
             "apps/majordomus-cli/src/gates/judge.rs",
             "docs/CI.md",
-            "scripts/ci/verdict"
+            "scripts/ci/verdict",
+            ".ai/repo/ci/suite.yaml",
+            ".ai/repo/ci/suite-durations.tsv",
+            "scripts/ci/suite-budget",
+            "test/cases"
           ],
           "slug": "one-gate-model-names-every-tier",
-          "updated_at": "2026-10-18",
+          "updated_at": "2026-10-20",
           "validation": [
             "bin/majordomus plan validate",
             "scripts/ci-plan --check",

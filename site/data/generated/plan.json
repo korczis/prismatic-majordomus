@@ -23603,17 +23603,17 @@
         "test/cases",
         ".ai/repo/ci/gates.yaml"
       ],
-      "non_scope": [],
+      "non_scope": [
+        "Per-case p95 budgets on the feedback lane and budgets derived from suite-durations.tsv: moved to I2350 on 2026-10-20 with their two criteria, verbatim"
+      ],
       "objective": "Cut case 95_executable_reference to a fraction of its cost instead of raising the slowest-case budget again. Measure first where its time goes: it runs scripts/generate-site-data eight times over a full fixture copied by fixture_repo. Then reduce what each run regenerates or how many runs the case needs, keeping every assertion it makes, so the case proves the same things in a fraction of the time.",
       "why": "The case has cost 2069, 2895, 3115, 3168, 3305, 3352 and, on 2026-10-09, 3468 s, moving with runner load; the slowest-case budget was re-derived from it twice, and when it went 18 s over 3450 s it failed the verdict of #831, a pull request that does not touch what it tests. A budget that sits within runner jitter of its case fails unrelated work.",
       "current_state": "test/cases/95_executable_reference.sh calls scripts/generate-site-data on eight lines over a fixture_repo copy of the tree; .ai/repo/ci/suite-durations.tsv records 2068 s for it; .ai/repo/ci/suite.yaml budgets the slowest case at 3450 s.",
-      "desired_state": "The case proves every relation it proves today, costs well under half its budget on a loaded runner, and the slowest-case budget is lowered toward the new worst rather than raised. Amended on 2026-10-18 by the derive-performance plan: the change generalises from case 95 to every case: no case on the feedback lane exceeds its declared p95 (proposed 30 s unit, 120 s integration, 5 min acceptance), a longer one is decomposed or moves to the proof lane, and the budgets are derived from .ai/repo/ci/suite-durations.tsv (I2716), never pinned.",
+      "desired_state": "The case proves every relation it proves today, costs well under half its budget on a loaded runner, and the slowest-case budget is lowered toward the new worst rather than raised. Amended on 2026-10-18 by the derive-performance plan: the change generalises from case 95 to every case: no case on the feedback lane exceeds its declared p95 (proposed 30 s unit, 120 s integration, 5 min acceptance), a longer one is decomposed or moves to the proof lane, and the budgets are derived from .ai/repo/ci/suite-durations.tsv (I2716), never pinned. Moved on 2026-10-20, by the landing seat's ruling: that generalisation (per-case p95 budgets on the feedback lane, derived from suite-durations.tsv) is I2350's, which introduces the lanes it is stated in; its two criteria are carried there verbatim, and this issue keeps case 95 and the slowest-case budget.",
       "acceptance_criteria": [
         "Every assertion of case 95 holds after the change, and a mutation of each relation it proves still fails it",
         "The case's cost on three GitHub runs, named, is under half of the slowest-case budget",
-        "The slowest-case budget is lowered or unchanged, never raised",
-        "No case on the feedback lane exceeds its declared p95 budget, and a case that would is decomposed or moved to the proof lane",
-        "Every case budget is derived from .ai/repo/ci/suite-durations.tsv and none is a pinned number"
+        "The slowest-case budget is lowered or unchanged, never raised"
       ],
       "validation": [
         "bash test/run.sh 95_executable_reference",
@@ -25760,7 +25760,11 @@
         "apps/majordomus-cli/src/gates/model.rs",
         "apps/majordomus-cli/src/gates/judge.rs",
         "docs/CI.md",
-        "scripts/ci/verdict"
+        "scripts/ci/verdict",
+        ".ai/repo/ci/suite.yaml",
+        ".ai/repo/ci/suite-durations.tsv",
+        "scripts/ci/suite-budget",
+        "test/cases"
       ],
       "non_scope": [
         "Reusing recorded results, which is I2348.",
@@ -25770,14 +25774,16 @@
       "objective": "Model the fast local, the pull-request impacted, the complete integration and the release-level checks as selections of the existing gate dispatch and claim and evidence system, with a conservative, reproducible affected-test selection that falls back to the full plan when impact cannot be proved, and diagnostics that name the cause, the reproducing command and the owner.",
       "why": "The gate model is one file, and what each tier runs is still decided in four places: that file, the core-check script, the workflows and the release model. A gate added to one and not the others is the duplicated inventory the pack names. Source: convergence prompts/04-policy-gates-and-completion.md Issue 04.1 'Single authoritative quality policy'; autopilot prompts/04-pr-drain.md Issue 4 'Review and checks' (the non-impacting check). Revived on 2026-10-18 from the delivery-packs rescue sweep into ci-critical-path, because its milestone delivery-is-held-by-evidence never landed.",
       "current_state": "gates.yaml declares gates, jobs and path classes and scripts/ci-plan reads nothing else to plan a change (test/cases/94_ci_plan.sh). scripts/ci/core-check carries its own ordered list of checks; the release has its own model (.ai/repo/ci/release.yaml); a task's gates are recorded and enforced at finish (lib/gates.sh, apps/majordomus-cli/src/gates/judge.rs). The tiers are not named.",
-      "desired_state": "Each gate declares the tiers it belongs to, and the local check, the pull-request plan, the integration plan and the release plan are each a selection of the one model. core-check and the release model read their lists from it. A gate's failure prints why it was selected, the command that reproduces it and the rule or owner it answers to. Amended on 2026-10-18 by the derive-performance plan: each gate in gates.yaml declares its lane (feedback, proof, release); the pull-request verdict waits on the feedback lane, and the proof lane must be green on the combined top before it lands (ADR 0167); structure is split into an instant and a proof tier, master already running no cargo run per gate except scripts/rust-check; and case-level affected selection moves out of this issue into the derive-performance plan's drv-06.",
+      "desired_state": "Each gate declares the tiers it belongs to, and the local check, the pull-request plan, the integration plan and the release plan are each a selection of the one model. core-check and the release model read their lists from it. A gate's failure prints why it was selected, the command that reproduces it and the rule or owner it answers to. Amended on 2026-10-18 by the derive-performance plan: each gate in gates.yaml declares its lane (feedback, proof, release); the pull-request verdict waits on the feedback lane, and the proof lane must be green on the combined top before it lands (ADR 0167); structure is split into an instant and a proof tier, master already running no cargo run per gate except scripts/rust-check; and case-level affected selection moves out of this issue into the derive-performance plan's drv-06. Amended on 2026-10-20, by the landing seat's ruling: I2115's generalisation lands here with its two criteria, verbatim, because it is stated in this issue's lanes: no case on the feedback lane exceeds its declared p95 (proposed 30 s unit, 120 s integration, 5 min acceptance), a longer one is decomposed or moves to the proof lane, and every case budget is derived from .ai/repo/ci/suite-durations.tsv (I2716), never pinned.",
       "acceptance_criteria": [
         "A gate added to the model with its tiers appears in the local check, the plan and the release selection with no other file edited",
         "No script outside the model carries a list of gates, proved by a check that finds one when it is put back",
         "A change whose impact cannot be proved runs the full plan, and the plan says which path caused it",
         "A failing gate's output names the selection reason, the reproducing command and its owner",
         "Every gate in gates.yaml declares one lane of feedback, proof and release, the pull-request verdict waits on the feedback lane alone, and a combined top lands only with its proof lane green",
-        "The structure job is split into an instant tier on the feedback lane and a proof tier"
+        "The structure job is split into an instant tier on the feedback lane and a proof tier",
+        "No case on the feedback lane exceeds its declared p95 budget, and a case that would is decomposed or moved to the proof lane",
+        "Every case budget is derived from .ai/repo/ci/suite-durations.tsv and none is a pinned number"
       ],
       "validation": [
         "bin/majordomus plan validate",
@@ -57527,6 +57533,12 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I1504",
+      "message": "shares test/cases with I2350; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1504",
       "message": "shares test/cases with I2410; they may not run concurrently"
     },
     {
@@ -58643,6 +58655,12 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I1980",
+      "message": "shares test/cases with I2350; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1980",
       "message": "shares share/schemas with I2410; they may not run concurrently"
     },
     {
@@ -59075,6 +59093,12 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I1990",
+      "message": "shares test/cases with I2350; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1990",
       "message": "shares test/cases with I2410; they may not run concurrently"
     },
     {
@@ -59346,6 +59370,12 @@
       "code": "scope_conflict",
       "subject": "I1997",
       "message": "shares test/cases with I2282; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1997",
+      "message": "shares test/cases with I2350; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -60269,6 +60299,12 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2059",
+      "message": "shares test/cases with I2350; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2059",
       "message": "shares test/cases with I2410; they may not run concurrently"
     },
     {
@@ -60533,6 +60569,12 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2114",
+      "message": "shares test/cases with I2350; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2114",
       "message": "shares test/cases with I2410; they may not run concurrently"
     },
     {
@@ -60779,7 +60821,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2115",
-      "message": "shares .ai/repo/ci/gates.yaml with I2350; they may not run concurrently"
+      "message": "shares test/cases/95_executable_reference.sh with I2350; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -61061,7 +61103,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2282",
-      "message": "shares .ai/repo/ci/release.yaml with I2350; they may not run concurrently"
+      "message": "shares test/cases/996_the_record_pull_request_gets_its_verdict.sh with I2350; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -61211,7 +61253,37 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2350",
+      "message": "shares test/cases with I2410; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2350",
+      "message": "shares test/cases with I2411; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2350",
+      "message": "shares test/cases with I2412; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2350",
+      "message": "shares test/cases with I2413; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2350",
       "message": "shares .ai/repo/ci/gates.yaml with I2662; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2350",
+      "message": "shares test/cases with I2714; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -61229,13 +61301,97 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2350",
+      "message": "shares test/cases with I2720; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2350",
+      "message": "shares test/cases with I2723; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2350",
+      "message": "shares test/cases with I2731; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2350",
+      "message": "shares test/cases with I2747; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2350",
       "message": "shares docs/CI.md with I2813; they may not run concurrently"
     },
     {
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2350",
+      "message": "shares test/cases with I2826; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2350",
       "message": "shares .ai/repo/ci/gates.yaml with I2841; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2350",
+      "message": "shares test/cases with I2850; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2350",
+      "message": "shares test/cases with I2853; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2350",
+      "message": "shares test/cases with I2962; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2350",
+      "message": "shares test/cases with I2963; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2350",
+      "message": "shares test/cases with I2964; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2350",
+      "message": "shares test/cases with I2965; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2350",
+      "message": "shares test/cases with I2967; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2350",
+      "message": "shares test/cases with I2993; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2350",
+      "message": "shares test/cases with I2995; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -61253,6 +61409,18 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2350",
+      "message": "shares test/cases with I3060; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2350",
+      "message": "shares test/cases with I3110; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2350",
       "message": "shares .ai/repo/ci/gates.yaml with I3116; they may not run concurrently"
     },
     {
@@ -61265,7 +61433,49 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2350",
+      "message": "shares test/cases with I3123; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2350",
+      "message": "shares test/cases with I3155; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2350",
       "message": "shares .ai/repo/ci/gates.yaml with I3160; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2350",
+      "message": "shares test/cases with I3163; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2350",
+      "message": "shares test/cases with I3167; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2350",
+      "message": "shares test/cases with I3287; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2350",
+      "message": "shares test/cases with I3304; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2350",
+      "message": "shares test/cases with I3307; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -61278,6 +61488,24 @@
       "code": "scope_conflict",
       "subject": "I2350",
       "message": "shares .ai/repo/ci/gates.yaml with I3319; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2350",
+      "message": "shares test/cases with I3395; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2350",
+      "message": "shares test/cases with I3400; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2350",
+      "message": "shares test/cases with I3436; they may not run concurrently"
     },
     {
       "level": "WARN",
