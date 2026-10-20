@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.1"
   },
   "registry": {
-    "fingerprint": "e9ec56f7ab16bbef8bfa492164289f99f59a1674c8eac92f270119ee244308fa",
+    "fingerprint": "8bb5d42d0f175855347d873d8b3b71ef540a6281d3a32ee648d23135f55fb567",
     "summary": {
-      "total": 3158,
+      "total": 3171,
       "builtin": 206,
-      "declarative": 2952,
+      "declarative": 2965,
       "by_kind": {
         "command": 31,
         "query": 175,
-        "resource": 2952
+        "resource": 2965
       },
       "by_stability": {
         "behaviorally_verified": 142,
         "experimental": 55,
-        "implemented": 2961
+        "implemented": 2974
       },
       "mcp_tools": 196,
-      "mcp_resources": 3007,
+      "mcp_resources": 3020,
       "http_routes": 201,
       "cli_commands": 111,
       "modules": 92,
@@ -85404,7 +85404,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 799,
+        "capabilities": 811,
         "capability_ids": []
       },
       {
@@ -85520,7 +85520,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 100,
+        "capabilities": 101,
         "capability_ids": []
       },
       {
@@ -86070,7 +86070,7 @@
     ]
   },
   "index": {
-    "fingerprint": "767e0af9b2b96a74cbcc69f3c58d43394251506410c1bb4725f726c60fe5b3ab",
+    "fingerprint": "8e39856faf149b3e2583d8bd88e30dca0d2235fa31abf5127f5e38ff5ee83a81",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -86110,10 +86110,10 @@
       "gap": 4,
       "implementation": 52,
       "intent": 33,
-      "issue": 799,
+      "issue": 811,
       "knowledge": 50,
       "mesh-declaration": 1,
-      "milestone": 100,
+      "milestone": 101,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -93308,7 +93308,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 420783
+        "bytes": 440190
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -105905,6 +105905,138 @@
         "bytes": 2704
       },
       {
+        "uri": "majordomus://issue/I3606",
+        "kind": "issue",
+        "identity": "I3606",
+        "title": "Two live instances of one runtime slot keep their links, and the mesh names them instead of flapping",
+        "description": "Stop two live server processes that share one runtime slot from evicting each other's link at every peer. A peer holds one inbound link per runtime key, so a hello from the other instance replaces the first instance's link, whose next sync is refused unknown_link and says hello again, every heartbeat, for as long as both run. Keep one inbound link per live instance of a runtime, count an alternation between two live instances as neither a restart nor a reconnect, and report the second instance on mesh peers and mesh doctor, naming both processes' endpoints.",
+        "path": ".ai/repo/project/issues/I3606.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3429
+      },
+      {
+        "uri": "majordomus://issue/I3607",
+        "kind": "issue",
+        "identity": "I3607",
+        "title": "mesh state answers in JSON on the command line, and its view is chosen the same way on every surface",
+        "description": "Give `majordomus mesh state` a --json answer that is the MCP tool's and the HTTP route's document, and make the one choice between the summary and the full view a single parameter whose name is the same on the command line, MCP and HTTP.",
+        "path": ".ai/repo/project/issues/I3607.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2290
+      },
+      {
+        "uri": "majordomus://issue/I3608",
+        "kind": "issue",
+        "identity": "I3608",
+        "title": "An open review says how old it is, and lapses when nobody can answer it any more",
+        "description": "Give every mesh review its age on every surface that lists it, and lapse an open review whose requesting session has closed or expired, or that has stood unanswered past a declared bound, with the reason recorded, so the open list holds only questions someone can still act on.",
+        "path": ".ai/repo/project/issues/I3608.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2368
+      },
+      {
+        "uri": "majordomus://issue/I3609",
+        "kind": "issue",
+        "identity": "I3609",
+        "title": "A claim replayed after a re-attach keeps the time it was made, and an announce answers with the claim it made",
+        "description": "When the MCP bridge replays a client's claims onto the board after a re-attach, carry each claim's original time rather than stamping it now, and make an announce answer with the announcement it just made, not with whichever claim of the peer sorts last.",
+        "path": ".ai/repo/project/issues/I3609.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2839
+      },
+      {
+        "uri": "majordomus://issue/I3790",
+        "kind": "issue",
+        "identity": "I3790",
+        "title": "The design book declares one mechanism, its tokens and its gate for code, charts, controls, embeds and shell blocks",
+        "description": "Add one section to docs/DESIGN_SYSTEM.md per rendered element kind (code and syntax, charts, interactive controls, embeds, shell blocks) that names the one mechanism every surface uses, the design tokens it reads, the marker class a gate looks for, and the gate that refuses a second way, so a contributor learns the rule where the rest of the design system is written.",
+        "path": ".ai/repo/project/issues/I3790.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1911
+      },
+      {
+        "uri": "majordomus://issue/I3791",
+        "kind": "issue",
+        "identity": "I3791",
+        "title": "A code block on /ui and the Cockpit carries the one highlighter's classes, and the audit refuses one that does not",
+        "description": "Extend the ui audit with a rule over the site, /ui and the Cockpit that fails a pre or code block which carries neither the one highlighter's classes (I2747) nor the declared plain marker, naming the page, the width and the element, so a surface that renders code without the shared highlighter is refused wherever it appears.",
+        "path": ".ai/repo/project/issues/I3791.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1928
+      },
+      {
+        "uri": "majordomus://issue/I3792",
+        "kind": "issue",
+        "identity": "I3792",
+        "title": "Every chart on every surface is drawn from a table on its page",
+        "description": "Bring the kit chart (site/templates/kit/dashboard.html) and the /ui server-SVG donut and meter (ui/view.rs) to the contract site/charts.js already follows: the numbers are a table on the page and the chart is drawn from it, so a chart never states a number its reader cannot read.",
+        "path": ".ai/repo/project/issues/I3792.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1657
+      },
+      {
+        "uri": "majordomus://issue/I3793",
+        "kind": "issue",
+        "identity": "I3793",
+        "title": "One copy control and one tab control ship to every surface",
+        "description": "Make kit.js's dependency-free copy and tab controls the only ones: replace the Alpine copy button and Alpine tabs on the site with them, and ship them to /ui and the Cockpit as byte copies held by scripts/cockpit-assets --check, the way nav.js and theme.js already travel, so a code block, a command or a set of tabs behaves the same on every surface.",
+        "path": ".ai/repo/project/issues/I3793.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1997
+      },
+      {
+        "uri": "majordomus://issue/I3794",
+        "kind": "issue",
+        "identity": "I3794",
+        "title": "The interaction probe drives the controls of /ui and the Cockpit as it drives the site's",
+        "description": "Point scripts/interaction-probe at the pages the executable serves (/ui and /cockpit) as well as the built site, so every control claimed by an interaction spec is driven on every surface it appears on, not only on the site.",
+        "path": ".ai/repo/project/issues/I3794.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1673
+      },
+      {
+        "uri": "majordomus://issue/I3795",
+        "kind": "issue",
+        "identity": "I3795",
+        "title": "A surface links to another surface and never embeds it",
+        "description": "State in the design book that one surface reaches another by a link (the site to the published /ui and /cockpit snapshots, for example) and never by an iframe, embed or object, and add an audit rule that refuses those elements on every surface.",
+        "path": ".ai/repo/project/issues/I3795.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1433
+      },
+      {
+        "uri": "majordomus://issue/I3796",
+        "kind": "issue",
+        "identity": "I3796",
+        "title": "Every command and its output is one shell block, on every surface",
+        "description": "Make terminal-run.html's contract the one shell block: the prompt is drawn and never copied, the copy control copies the command alone, an exit status is a word, and long output folds into a disclosure. Render the kit's terminal components and the /ui and Cockpit reproduce commands through it, so a command looks and copies the same wherever it is shown.",
+        "path": ".ai/repo/project/issues/I3796.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1839
+      },
+      {
+        "uri": "majordomus://issue/I3797",
+        "kind": "issue",
+        "identity": "I3797",
+        "title": "A command shown outside the shell block is refused by the audit",
+        "description": "Add a ui-audit rule over every surface that fails a command rendered outside I3796's shell block (a sh, bash or console fence, a bare monospace reproduce line), naming the page and the element, so the one shell block stays the only one.",
+        "path": ".ai/repo/project/issues/I3797.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1238
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -107393,6 +107525,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 2133
+      },
+      {
+        "uri": "majordomus://milestone/one-kit-on-every-surface",
+        "kind": "milestone",
+        "identity": "one-kit-on-every-surface",
+        "title": "Code, charts, controls, embeds and shell blocks are one kit on every surface, declared in the design book and held there by a gate",
+        "description": "A reader meets one code block, one chart, one copy control, one tab control and one shell block, whichever surface they are on: the site, /ui, the Cockpit or the docs. Each is declared once in the design book with its tokens, and a gate fails the change that renders one another way, so the kit stays one as the surfaces grow.",
+        "path": ".ai/repo/project/milestones/one-kit-on-every-surface.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 3605
       },
       {
         "uri": "majordomus://milestone/operation-convergence",
@@ -118368,7 +118511,7 @@
       "identity": [
         "id"
       ],
-      "objects": 799
+      "objects": 811
     },
     {
       "name": "knowledge",
@@ -118398,7 +118541,7 @@
       "identity": [
         "id"
       ],
-      "objects": 100
+      "objects": 101
     },
     {
       "name": "moment",

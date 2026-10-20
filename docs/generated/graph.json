@@ -59196,6 +59196,482 @@
         }
       },
       {
+        "id": "majordomus://issue/I3606",
+        "kind": "issue",
+        "label": "I3606",
+        "summary": "Two live instances of one runtime slot keep their links, and the mesh names them instead of flapping",
+        "route": "/cockpit/objects/issue/i3606",
+        "source": ".ai/repo/project/issues/I3606.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Two instances of one runtime that both dial one peer each keep their link for ten heartbeats: zero unknown_link refusals, zero reconnects and zero restarts on either side",
+            "A real restart (an instance that stops and a new one that starts) is still counted as one restart",
+            "mesh peers names a runtime with two live instances once, listing both instances and their endpoints",
+            "mesh doctor fails a check naming the runtime and both instances while both beat, and passes once one stops"
+          ],
+          "created_at": "2026-10-20",
+          "depends_on": [],
+          "evidence_required": [
+            "two_instances_keep_their_links_test"
+          ],
+          "milestone": "runtime-lifecycle",
+          "non_scope": [
+            "Stopping either process: which server survives is the lifecycle's and the owner's decision",
+            "Two hosts presenting one node key, which is I3175"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh/cooperation.rs",
+            "apps/majordomus-cli/src/mesh/doctor.rs",
+            "apps/majordomus-cli/tests/mesh_cooperation.rs",
+            "docs/MESH.md"
+          ],
+          "slug": "two-instances-of-one-runtime-do-not-flap",
+          "updated_at": "2026-10-20",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --lib mesh::cooperation",
+            "cargo test --test mesh_cooperation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3607",
+        "kind": "issue",
+        "label": "I3607",
+        "summary": "mesh state answers in JSON on the command line, and its view is chosen the same way on every surface",
+        "route": "/cockpit/objects/issue/i3607",
+        "source": ".ai/repo/project/issues/I3607.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "`majordomus mesh state --json` prints one JSON document and exits 0",
+            "For the same arguments, the command line's JSON and the MCP tool's answer are equal apart from the observation time",
+            "The view is selected by a parameter with one name on the command line, MCP and HTTP, and the brief's reproduce hint uses it"
+          ],
+          "created_at": "2026-10-20",
+          "depends_on": [],
+          "evidence_required": [
+            "mesh_state_json_equals_mcp_case"
+          ],
+          "milestone": "surfaces-never-disagree",
+          "non_scope": [
+            "Changing what the full view contains"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin",
+            "apps/majordomus-cli/src/commands/mesh.rs",
+            "test/cases",
+            "docs/MESH.md"
+          ],
+          "slug": "mesh-state-is-one-shape-everywhere",
+          "updated_at": "2026-10-20",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3608",
+        "kind": "issue",
+        "label": "I3608",
+        "summary": "An open review says how old it is, and lapses when nobody can answer it any more",
+        "route": "/cockpit/objects/issue/i3608",
+        "source": ".ai/repo/project/issues/I3608.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every listed review carries requested_at, and the open list is ordered by it",
+            "An open review whose requesting session closed lapses with reason session_closed, on every runtime that holds it",
+            "An open review unanswered past the declared bound lapses with reason unanswered, and the bound is read from the mesh configuration, not pinned",
+            "A lapsed review is readable by its key and is not counted as open"
+          ],
+          "created_at": "2026-10-20",
+          "current_state": "A review is open until it is answered or withdrawn. The listing carries no request time, nothing lapses it, and a requester whose session closed leaves its reviews open forever.",
+          "depends_on": [],
+          "evidence_required": [
+            "an_open_review_lapses_test"
+          ],
+          "milestone": "mesh-journal-converges",
+          "non_scope": [
+            "Answering or withdrawing a review on someone's behalf"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh/journal.rs",
+            "apps/majordomus-cli/src/mesh/cooperation.rs",
+            "apps/majordomus-cli/src/mesh/config.rs",
+            "docs/MESH.md"
+          ],
+          "slug": "an-open-review-lapses",
+          "updated_at": "2026-10-20",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --lib mesh::journal"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3609",
+        "kind": "issue",
+        "label": "I3609",
+        "summary": "A claim replayed after a re-attach keeps the time it was made, and an announce answers with the claim it made",
+        "route": "/cockpit/objects/issue/i3609",
+        "source": ".ai/repo/project/issues/I3609.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A claim replayed after a re-attach keeps the `at` it was announced with",
+            "announce answers with the announcement it made, whatever the peer's other claims are called",
+            "Among claims with equal times, Peer::announcement is the one announced last",
+            "A made_at in the future or one that does not parse is replaced by now, and a replay that a server refuses for made_at is sent again without it"
+          ],
+          "created_at": "2026-10-20",
+          "depends_on": [],
+          "evidence_required": [
+            "a_replayed_claim_keeps_its_time_test"
+          ],
+          "milestone": "surfaces-never-disagree",
+          "non_scope": [
+            "The mesh journal's own claim times, which are lamport-ordered events"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/peers.rs",
+            "apps/majordomus-cli/src/mcp/bridge.rs",
+            "apps/majordomus-cli/src/capability/builtin/peers.rs",
+            "apps/majordomus-cli/src/commands/mcp.rs"
+          ],
+          "slug": "a-replayed-claim-keeps-its-time",
+          "updated_at": "2026-10-20",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --lib peers",
+            "cargo test --lib mcp::bridge"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3790",
+        "kind": "issue",
+        "label": "I3790",
+        "summary": "The design book declares one mechanism, its tokens and its gate for code, charts, controls, embeds and shell blocks",
+        "route": "/cockpit/objects/issue/i3790",
+        "source": ".ai/repo/project/issues/I3790.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "DESIGN_SYSTEM.md has a section for each of the five kinds naming mechanism, tokens, marker class and gate",
+            "Every gate a section names exists and is registered in gates.yaml"
+          ],
+          "created_at": "2026-10-20",
+          "current_state": "DESIGN_SYSTEM.md names the monospace stack (line 33), the contrast threshold (line 264) and the kit components (150-205); tokens.yaml has font.mono, sunken and series-1..8 and no syntax roles.",
+          "depends_on": [
+            "I2747"
+          ],
+          "evidence_required": [
+            "design_book_names_existing_gates_case"
+          ],
+          "milestone": "one-kit-on-every-surface",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "docs/DESIGN_SYSTEM.md",
+            "share/design/tokens.yaml"
+          ],
+          "slug": "the-design-book-declares-the-kit",
+          "updated_at": "2026-10-20",
+          "validation": [
+            "bin/majordomus plan validate",
+            "scripts/ci/design-check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3791",
+        "kind": "issue",
+        "label": "I3791",
+        "summary": "A code block on /ui and the Cockpit carries the one highlighter's classes, and the audit refuses one that does not",
+        "route": "/cockpit/objects/issue/i3791",
+        "source": ".ai/repo/project/issues/I3791.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "ui-audit fails a page with a pre that carries neither the highlighter's classes nor the plain marker, naming page, width and element",
+            "The site, /ui and the Cockpit pass the rule on master"
+          ],
+          "created_at": "2026-10-20",
+          "current_state": "scripts/lib/ui-audit.mjs has no code rule; scripts/site-check checks that the highlight sheets exist and that every pre scrolls or wraps.",
+          "depends_on": [
+            "I2747"
+          ],
+          "desired_state": "ui-audit rule code.unhighlighted covers every surface; a block that is deliberately plain carries the declared plain marker; the marker for a highlighted block is shared with I3002's copy control.",
+          "evidence_required": [
+            "code_unhighlighted_rule_case"
+          ],
+          "milestone": "one-kit-on-every-surface",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "scripts/lib/ui-audit.mjs",
+            "scripts/lib/ui.test.mjs",
+            "apps/majordomus-cli/src/cockpit/view.rs",
+            "apps/majordomus-cli/src/ui/prose.rs",
+            "test/cases/3791_every_code_block_is_highlighted.sh"
+          ],
+          "slug": "every-code-block-is-highlighted",
+          "updated_at": "2026-10-20",
+          "validation": [
+            "bin/majordomus plan validate",
+            "node scripts/lib/ui.test.mjs",
+            "MJ_TEST_JOBS=4 bash test/run.sh 3791_every_code_block_is_highlighted"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3792",
+        "kind": "issue",
+        "label": "I3792",
+        "summary": "Every chart on every surface is drawn from a table on its page",
+        "route": "/cockpit/objects/issue/i3792",
+        "source": ".ai/repo/project/issues/I3792.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The kit chart and the /ui donut and meter each render a table with the numbers they draw",
+            "A chart planted without its table fails the gate I2654 adds, on the site, /ui and the Cockpit"
+          ],
+          "created_at": "2026-10-20",
+          "current_state": "charts.js: table first. Kit chart: no table. /ui donut and meter: legend counts, no table. Cytoscape graphs: a table beside each.",
+          "depends_on": [
+            "I2654"
+          ],
+          "desired_state": "Every chart on the site, /ui and the Cockpit has its table on the page and is drawn from it; the design book's chart section states the contract; I2654's gate covers every surface.",
+          "evidence_required": [
+            "every_chart_has_its_table_case"
+          ],
+          "milestone": "one-kit-on-every-surface",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "site/templates/kit/dashboard.html",
+            "apps/majordomus-cli/src/ui/view.rs",
+            "site/charts.js",
+            "scripts/lib/ui-audit.mjs"
+          ],
+          "slug": "every-chart-is-drawn-from-its-table",
+          "updated_at": "2026-10-20",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --lib ui::view"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3793",
+        "kind": "issue",
+        "label": "I3793",
+        "summary": "One copy control and one tab control ship to every surface",
+        "route": "/cockpit/objects/issue/i3793",
+        "source": ".ai/repo/project/issues/I3793.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The site, /ui and the Cockpit load the same copy and tab code, byte-identical, checked by cockpit-assets --check",
+            "No Alpine copy or tab component remains on the site, and one interaction spec covers each control",
+            "A second copy or tab implementation planted on any surface fails a gate that names it"
+          ],
+          "created_at": "2026-10-20",
+          "current_state": "copy-button.mjs and kit-copy.mjs specs; tabs.mjs and kit-tabs.mjs specs; no copy or tabs on /ui and the Cockpit.",
+          "depends_on": [],
+          "desired_state": "One copy and one tab implementation, one spec each, present on the site, /ui and the Cockpit; a second implementation planted fails the design check that names it.",
+          "evidence_required": [
+            "one_copy_and_tab_control_case"
+          ],
+          "milestone": "one-kit-on-every-surface",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "site/kit.js",
+            "site/templates/components.html",
+            "site/templates/partials/terminal-run.html",
+            "share/ui",
+            "share/cockpit",
+            "scripts/cockpit-assets",
+            "scripts/lib/interaction-specs",
+            "scripts/ci/design-check"
+          ],
+          "slug": "one-copy-and-one-tab-control",
+          "updated_at": "2026-10-20",
+          "validation": [
+            "bin/majordomus plan validate",
+            "scripts/cockpit-assets --check",
+            "scripts/interaction-probe"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3794",
+        "kind": "issue",
+        "label": "I3794",
+        "summary": "The interaction probe drives the controls of /ui and the Cockpit as it drives the site's",
+        "route": "/cockpit/objects/issue/i3794",
+        "source": ".ai/repo/project/issues/I3794.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "interaction-probe reports controls driven on /ui and /cockpit pages, by spec",
+            "A broken control on /ui fails the probe, naming page and control"
+          ],
+          "created_at": "2026-10-20",
+          "current_state": "interaction-probe: site only, sharded by I3602. ui-audit: structure and accessibility on all three surfaces.",
+          "depends_on": [
+            "I3793"
+          ],
+          "desired_state": "interaction-probe serves the executable and drives every spec's controls on /ui and the Cockpit too, in the same shards; a control on those surfaces with no spec is a finding, as on the site.",
+          "evidence_required": [
+            "probe_drives_every_surface_case"
+          ],
+          "milestone": "one-kit-on-every-surface",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "scripts/interaction-probe",
+            "scripts/lib/interaction-specs",
+            "scripts/ci/interaction-check",
+            "test/cases/3794_the_probe_drives_every_surface.sh"
+          ],
+          "slug": "the-probe-drives-every-surface",
+          "updated_at": "2026-10-20",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh 3794_the_probe_drives_every_surface"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3795",
+        "kind": "issue",
+        "label": "I3795",
+        "summary": "A surface links to another surface and never embeds it",
+        "route": "/cockpit/objects/issue/i3795",
+        "source": ".ai/repo/project/issues/I3795.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "ui-audit fails a page carrying an iframe, embed or object, naming the page and the element",
+            "Every surface passes the rule on master"
+          ],
+          "created_at": "2026-10-20",
+          "current_state": "No embeds; the snapshots are linked (pages.yaml); Mermaid diagrams render inline on the site through diagrams.js.",
+          "depends_on": [],
+          "desired_state": "The design book's embed section says link, not embed; ui-audit rule embed.forbidden fails any iframe, embed or object on the site, /ui and the Cockpit.",
+          "evidence_required": [
+            "embed_forbidden_rule_test"
+          ],
+          "milestone": "one-kit-on-every-surface",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "docs/DESIGN_SYSTEM.md",
+            "scripts/lib/ui-audit.mjs",
+            "scripts/lib/ui.test.mjs"
+          ],
+          "slug": "a-surface-links-and-never-embeds",
+          "updated_at": "2026-10-20",
+          "validation": [
+            "bin/majordomus plan validate",
+            "node scripts/lib/ui.test.mjs"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3796",
+        "kind": "issue",
+        "label": "I3796",
+        "summary": "Every command and its output is one shell block, on every surface",
+        "route": "/cockpit/objects/issue/i3796",
+        "source": ".ai/repo/project/issues/I3796.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The site, /ui and the Cockpit render a command with the same markup and classes, the prompt outside the copied text",
+            "Copying a /ui reproduce command yields the command alone"
+          ],
+          "created_at": "2026-10-20",
+          "current_state": "terminal-run.html: prompt not copied, status word, folded output. Kit term_*: a different look. /ui: bare monospace reproduce lines.",
+          "depends_on": [
+            "I3793"
+          ],
+          "desired_state": "One shell block component, server-rendered on /ui and the Cockpit with the same markup and classes as the site's, using I3793's copy control; the kit's term_* components are that block.",
+          "evidence_required": [
+            "one_shell_block_case"
+          ],
+          "milestone": "one-kit-on-every-surface",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "site/templates/partials/terminal-run.html",
+            "site/templates/kit/code.html",
+            "share/design/kit.css",
+            "apps/majordomus-cli/src/ui/claim.rs",
+            "apps/majordomus-cli/src/ui/idd.rs",
+            "apps/majordomus-cli/src/ui/view.rs"
+          ],
+          "slug": "one-shell-block",
+          "updated_at": "2026-10-20",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --lib ui::"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3797",
+        "kind": "issue",
+        "label": "I3797",
+        "summary": "A command shown outside the shell block is refused by the audit",
+        "route": "/cockpit/objects/issue/i3797",
+        "source": ".ai/repo/project/issues/I3797.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "ui-audit fails a page showing a command outside the shell block, naming the page and the element",
+            "Every surface passes on master"
+          ],
+          "created_at": "2026-10-20",
+          "current_state": "No rule distinguishes a command from other monospace text.",
+          "depends_on": [
+            "I3796"
+          ],
+          "desired_state": "ui-audit rule shell.bare-command; the shell block's marker class is the one the rule and the copy control read.",
+          "evidence_required": [
+            "shell_bare_command_rule_test"
+          ],
+          "milestone": "one-kit-on-every-surface",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "scripts/lib/ui-audit.mjs",
+            "scripts/lib/ui.test.mjs"
+          ],
+          "slug": "a-bare-command-is-refused",
+          "updated_at": "2026-10-20",
+          "validation": [
+            "bin/majordomus plan validate",
+            "node scripts/lib/ui.test.mjs"
+          ],
+          "why": "Without a rule the next page shows a command its own way, as /ui did on 2026-10-20; the owner asked that the kit stay one automatically."
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -63357,6 +63833,58 @@
           "updated_at": "2026-10-18",
           "validation": [
             "majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/one-kit-on-every-surface",
+        "kind": "milestone",
+        "label": "one-kit-on-every-surface",
+        "summary": "Code, charts, controls, embeds and shell blocks are one kit on every surface, declared in the design book and held there by a gate",
+        "route": "/cockpit/objects/milestone/one-kit-on-every-surface",
+        "source": ".ai/repo/project/milestones/one-kit-on-every-surface.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The design book has a section for code, charts, controls, embeds and shell blocks, each naming its mechanism, tokens and gate",
+            "For each element kind a planted second implementation on any surface fails a gate that names it",
+            "The site, /ui and the Cockpit pass every one of those gates on master, and the published site is deployed from that master"
+          ],
+          "created_at": "2026-10-20",
+          "depends_on": [],
+          "evidence_required": [
+            "one_kit_gates_case"
+          ],
+          "non_scope": [
+            "Rustdoc's own highlighting and themes, which rustdoc owns; it stays excluded from the audit as it is today",
+            "New chart types or new controls: this milestone makes the existing ones one kit"
+          ],
+          "order": 512,
+          "priority": "p1",
+          "risks": [
+            "giallo builds Oniguruma from C on every release target (I2747): the release matrix must prove it before #1294 lands"
+          ],
+          "scope": [
+            "docs/DESIGN_SYSTEM.md",
+            "share/design",
+            "share/ui",
+            "share/cockpit",
+            "site/templates",
+            "site/kit.js",
+            "site/charts.js",
+            "apps/majordomus-cli/src/ui",
+            "apps/majordomus-cli/src/cockpit",
+            "scripts/lib/ui-audit.mjs",
+            "scripts/interaction-probe",
+            "scripts/lib/interaction-specs",
+            "scripts/ci/design-check",
+            "test/cases"
+          ],
+          "slug": "one-kit-on-every-surface",
+          "updated_at": "2026-10-20",
+          "validation": [
+            "bin/majordomus plan validate",
+            "scripts/ci/design-check",
+            "node scripts/ui audit"
           ]
         }
       },
@@ -116305,6 +116833,156 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3606",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3606",
+        "target": "majordomus://milestone/runtime-lifecycle",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3607",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3607",
+        "target": "majordomus://milestone/surfaces-never-disagree",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3608",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3608",
+        "target": "majordomus://milestone/mesh-journal-converges",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3609",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3609",
+        "target": "majordomus://milestone/surfaces-never-disagree",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3790",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3790",
+        "target": "majordomus://issue/I2747",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3790",
+        "target": "majordomus://milestone/one-kit-on-every-surface",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3791",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3791",
+        "target": "majordomus://issue/I2747",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3791",
+        "target": "majordomus://milestone/one-kit-on-every-surface",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3792",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3792",
+        "target": "majordomus://issue/I2654",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3792",
+        "target": "majordomus://milestone/one-kit-on-every-surface",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3793",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3793",
+        "target": "majordomus://milestone/one-kit-on-every-surface",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3794",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3794",
+        "target": "majordomus://issue/I3793",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3794",
+        "target": "majordomus://milestone/one-kit-on-every-surface",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3795",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3795",
+        "target": "majordomus://milestone/one-kit-on-every-surface",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3796",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3796",
+        "target": "majordomus://issue/I3793",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3796",
+        "target": "majordomus://milestone/one-kit-on-every-surface",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3797",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3797",
+        "target": "majordomus://issue/I3796",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3797",
+        "target": "majordomus://milestone/one-kit-on-every-surface",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -117033,6 +117711,11 @@
         "source": "majordomus://milestone/mesh-peers-execute-assigned-work",
         "target": "majordomus://milestone/runtime-trust",
         "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://milestone/one-kit-on-every-surface",
+        "target": "kind:milestone",
+        "kind": "is_a"
       },
       {
         "source": "majordomus://milestone/operation-convergence",
@@ -127276,8 +127959,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3605,
-      "edges": 8387,
+      "nodes": 3618,
+      "edges": 8418,
       "acyclic": false,
       "truncated": false
     }
