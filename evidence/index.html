@@ -191,38 +191,39 @@ refuses to build this page if one does not, and the check that follows the build
 the edge was lost on the way in.</p>
 </article><section class="mt-10" aria-labelledby="ci-evidence-heading">
   <h2 id="ci-evidence-heading" class="text-2xl font-semibold text-heading">Recorded by CI</h2>
-  <p class="mt-3 text-body"><span class="mj-badge mj-badge--stale relative" data-status="stale"><span aria-hidden="true">!</span>stale</span>
+  <p class="mt-3 text-body"><span class="mj-badge mj-badge--current relative" data-status="current"><span aria-hidden="true">✓</span>current</span>
 
-    The newest executions CI recorded are of commit
-    <a class="font-mono underline" href="https://github.com/korczis/prismatic-majordomus/commit/9a5a9b77520bbe9504b04ff89235a6f232377788">9a5a9b77520b</a>,
-    1 commit(s) and 23 changed file(s) before the one this site was built from.
-    They say what held there, not what holds here; the site is published again once CI has recorded this commit.
+    The report below is the tracked ledger's verdict at commit
+    <a class="font-mono underline" href="https://github.com/korczis/prismatic-majordomus/commit/91c0b5d5658c0bcddcd724582068bfa1f51074d1">91c0b5d5658c</a>,
+    the commit this site was built from, and CI's run of that commit confirms it: every job that
+    ran tests measured a clean tree, nothing was absent or refused, and nothing failed.
   </p>
-  <ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body">
-    <li>The run has no report from coverage.</li>
-  </ul>
   <dl class="mt-4 grid gap-x-8 font-mono text-sm sm:grid-cols-2">
     <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">executions recorded</dt><dd class="text-heading">680</dd></div>
     <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">pass</dt><dd class="text-heading">678</dd></div>
     <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">skip</dt><dd class="text-heading">2</dd></div>
-    <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">coverage</dt><dd class="text-heading">not measured by this run</dd></div>
-    <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">recorded</dt><dd class="text-heading">2026-10-20T16:11:45Z</dd></div>
+    <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">crate lines covered</dt><dd class="text-heading">91.66% <span class="text-body-subtle">(108571/118444)</span></dd></div>
+    <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">crate functions covered</dt><dd class="text-heading">90.77% <span class="text-body-subtle">(12719/14012)</span></dd></div>
+    <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">crate regions covered</dt><dd class="text-heading">90.69% <span class="text-body-subtle">(180732/199296)</span></dd></div>
+    <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">recorded</dt><dd class="text-heading">2026-10-20T21:39:44Z</dd></div>
   </dl>
-  <p class="mt-3 text-sm text-body-subtle">Absent from this run: coverage. Nothing absent is counted as passing.</p>
   <div class="mt-6">
     <div class="min-w-0" x-data="{ t: 0 }">
   <div role="tablist" aria-label="The tracked ledger&#39;s verdict, as CI derived it at this commit" class="flex flex-wrap gap-1.5"><button type="button" role="tab" id="ci-evidence-tab-0" aria-controls="ci-evidence-panel-0"
       x-on:click="t = 0" :aria-selected="t === 0 ? 'true' : 'false'"
       class="rounded-base border px-2.5 py-1 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-neutral-tertiary"
-      :class="t === 0 ? 'border-brand-subtle bg-brand-softer text-fg-brand-strong font-medium' : 'border-default bg-neutral-primary-soft text-body hover:bg-neutral-secondary-medium hover:text-heading'">evidence</button></div><figure x-show="t === 0" id="ci-evidence-panel-0" role="tabpanel" aria-labelledby="ci-evidence-tab-0"
+      :class="t === 0 ? 'border-brand-subtle bg-brand-softer text-fg-brand-strong font-medium' : 'border-default bg-neutral-primary-soft text-body hover:bg-neutral-secondary-medium hover:text-heading'">evidence</button><button type="button" role="tab" id="ci-evidence-tab-1" aria-controls="ci-evidence-panel-1"
+      x-on:click="t = 1" :aria-selected="t === 1 ? 'true' : 'false'"
+      class="rounded-base border px-2.5 py-1 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-neutral-tertiary"
+      :class="t === 1 ? 'border-brand-subtle bg-brand-softer text-fg-brand-strong font-medium' : 'border-default bg-neutral-primary-soft text-body hover:bg-neutral-secondary-medium hover:text-heading'">coverage</button></div><figure x-show="t === 0" id="ci-evidence-panel-0" role="tabpanel" aria-labelledby="ci-evidence-tab-0"
     class="mt-3 overflow-hidden rounded-base border border-default bg-neutral-primary-soft shadow-xs"><div class="flex flex-wrap items-start justify-between gap-x-3 gap-y-2 border-b border-default bg-neutral-primary-soft px-4 py-2.5" x-data="{ said: '' }">
   <p class="m-0 min-w-0 flex-1 break-all font-mono text-xs leading-relaxed text-heading"><span class="select-none text-body-subtle" aria-hidden="true">$</span> <code x-ref="src">majordomus evidence show</code></p>
   <span class="flex shrink-0 items-center gap-2"><span class="mj-badge mj-badge--ok relative" data-status="ok"><span aria-hidden="true">✓</span>exit 0</span>
 <button type="button" x-cloak x-on:click="Promise.resolve(said = '').then(() => navigator.clipboard.writeText($refs.src.innerText)).then(() => { said = 'Copied'; setTimeout(() => { if (said === 'Copied') said = '' }, 1600) }, () => { said = 'Copy failed — select the text' })" class="inline-flex items-center gap-1 rounded-base px-1.5 py-0.5 text-xs font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary" :aria-label="said || 'Copy the command'"><span x-text="said || 'Copy'">Copy</span></button>
     <span class="sr-only" role="status" aria-live="polite" x-text="said"></span>
   </span>
-</div><pre class="m-0 whitespace-pre-wrap break-words bg-neutral-primary p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">head         9a5a9b77 (clean)
-judged at the working tree (HEAD 9a5a9b77520b, clean)
+</div><pre class="m-0 whitespace-pre-wrap break-words bg-neutral-primary p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">head         91c0b5d5 (clean)
+judged at the working tree (HEAD 91c0b5d5658c, clean)
 ledger       .ai/repo/evidence/ledger.json — 14 execution(s), newest 2026-09-17T01:14:59Z
 
 subject      250 claim(s), whole
@@ -1035,8 +1036,27 @@ not_run            guaranteed   worktree-topology-derived
 </details>
 <div class="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-default px-4 py-2 text-xs">
       <span class="text-body-subtle">every claim against the tracked ledger as committed at this commit, derived before this run&#39;s executions were recorded; the run&#39;s executions are counted beside it and decide no verdict</span>
-      <a href="https://github.com/korczis/prismatic-majordomus/actions/runs/39438896504/attempts/1" class="text-fg-brand hover:underline">the run that recorded it &rarr;</a>
-      <a href="https://github.com/korczis/prismatic-majordomus/commit/9a5a9b77520bbe9504b04ff89235a6f232377788" class="text-fg-brand hover:underline">commit 9a5a9b77520b &rarr;</a>
+      <a href="https://github.com/korczis/prismatic-majordomus/actions/runs/39485870890/attempts/1" class="text-fg-brand hover:underline">the run that recorded it &rarr;</a>
+      <a href="https://github.com/korczis/prismatic-majordomus/commit/91c0b5d5658c0bcddcd724582068bfa1f51074d1" class="text-fg-brand hover:underline">commit 91c0b5d5658c &rarr;</a>
+    </div>
+  </figure><figure x-show="t === 1" id="ci-evidence-panel-1" role="tabpanel" aria-labelledby="ci-evidence-tab-1"
+    class="mt-3 overflow-hidden rounded-base border border-default bg-neutral-primary-soft shadow-xs"><div class="flex flex-wrap items-start justify-between gap-x-3 gap-y-2 border-b border-default bg-neutral-primary-soft px-4 py-2.5" x-data="{ said: '' }">
+  <p class="m-0 min-w-0 flex-1 break-all font-mono text-xs leading-relaxed text-heading"><span class="select-none text-body-subtle" aria-hidden="true">$</span> <code x-ref="src">scripts/rust-coverage --report</code></p>
+  <span class="flex shrink-0 items-center gap-2"><span class="mj-badge mj-badge--ok relative" data-status="ok"><span aria-hidden="true">✓</span>exit 0</span>
+<button type="button" x-cloak x-on:click="Promise.resolve(said = '').then(() => navigator.clipboard.writeText($refs.src.innerText)).then(() => { said = 'Copied'; setTimeout(() => { if (said === 'Copied') said = '' }, 1600) }, () => { said = 'Copy failed — select the text' })" class="inline-flex items-center gap-1 rounded-base px-1.5 py-0.5 text-xs font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary" :aria-label="said || 'Copy the command'"><span x-text="said || 'Copy'">Copy</span></button>
+    <span class="sr-only" role="status" aria-live="polite" x-text="said"></span>
+  </span>
+</div><pre class="m-0 whitespace-pre-wrap break-words bg-neutral-primary p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">                                                            lines  functions   regions
+the crate, test code excluded                              91.66%     90.77%    90.69%   108571/118444 lines
+the crate, test code included (the old gate&#39;s subject)     94.36%     93.18%    94.71%   173935/184339 lines
+  the same, as cargo-llvm-cov itself reports it            93.78%     93.00%    93.70%   cargo-llvm-cov&#39;s own summary
+the canonical session/continuity domain                    96.90%    100.00%    97.32%      500/516    lines
+  apps/majordomus-cli/src/capability/builtin/continuity.rs   96.90%    100.00%    97.32%      500/516    lines
+</pre>
+<div class="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-default px-4 py-2 text-xs">
+      <span class="text-body-subtle">line, function and region coverage of the crate, test code excluded</span>
+      <a href="https://github.com/korczis/prismatic-majordomus/actions/runs/39485870890/attempts/1" class="text-fg-brand hover:underline">the run that recorded it &rarr;</a>
+      <a href="https://github.com/korczis/prismatic-majordomus/commit/91c0b5d5658c0bcddcd724582068bfa1f51074d1" class="text-fg-brand hover:underline">commit 91c0b5d5658c &rarr;</a>
     </div>
   </figure></div>
 
