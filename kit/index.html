@@ -17,9 +17,18 @@
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
 
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
-<link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><link rel="stylesheet" href="https://majordomus.dev/kit.css?h=69648edffc6a4bf0a580">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><link rel="stylesheet" href="https://majordomus.dev/kit.css?h=e71ec0c7bddf08ed0f22">
 <script defer src="https://majordomus.dev/js/kit.js"></script>
 <script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
+<script>(function(){try{var K="mj-lang",L=["en","cs"],S="en",B="https://majordomus.dev",d=document.documentElement,k;try{k=localStorage.getItem(K)}catch(e){}
+document.addEventListener("click",function(e){var a=e.target.closest&&e.target.closest("[data-i18n-lang]");if(a)try{localStorage.setItem(K,a.getAttribute("data-i18n-lang"))}catch(x){}},true);
+if(d.lang!==S)return;var r=document.referrer;if(r&&r.indexOf(location.origin)===0)return;
+var p=(k?[k]:navigator.languages||[navigator.language||""]).map(function(l){return String(l).slice(0,2).toLowerCase()});
+for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=location.href;if(u.indexOf(B)!==0)return;location.replace(B+"/"+p[i]+u.slice(B.length).replace(/^(?!\/)/,"/"));return}}}catch(e){}})();</script>
+
+<link rel="alternate" hreflang="en" href="https://majordomus.dev/kit/">
+<link rel="alternate" hreflang="cs" href="https://majordomus.dev/cs/kit/">
+<link rel="alternate" hreflang="x-default" href="https://majordomus.dev/kit/">
 </head>
 <body class="min-h-screen bg-neutral-primary text-body antialiased">
 <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white">Skip to content</a>
@@ -31,7 +40,7 @@
     <a href="https://majordomus.dev/" class="flex min-w-0 items-center gap-1.5 sm:gap-2.5 rtl:space-x-reverse">
       <span class="inline-flex h-6 w-6 shrink-0 text-heading sm:h-7 sm:w-7 [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.30.2 -->
+     Generator: majordomus-cli 1.0.0-alpha.1 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
   <title>Prismatic Majordomus</title>
   <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
@@ -62,6 +71,20 @@
         <span class="sr-only lg:not-sr-only">Search</span>
         <kbd class="hidden rounded border border-default-medium px-1.5 font-mono text-xs text-body-subtle lg:inline" aria-hidden="true">/</kbd>
       </button>
+      <div class="relative" data-i18n-switch>
+  <button type="button" aria-label="Language" data-dropdown-toggle="language-menu" data-dropdown-placement="bottom-end" aria-haspopup="true" aria-controls="language-menu" aria-expanded="false" class="inline-flex h-10 items-center justify-center gap-1.5 rounded-base border border-default px-2.5 text-sm font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">
+    <svg class="h-5 w-5 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0 0c2.2-2.4 3.3-5.4 3.3-9S14.2 5.4 12 3m0 18c-2.2-2.4-3.3-5.4-3.3-9S9.8 5.4 12 3M3.5 9h17M3.5 15h17"/></svg>
+    <span class="font-mono text-xs uppercase" translate="no" data-i18n-current-label>en</span>
+    <svg class="h-2.5 w-2.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg>
+  </button>
+  <div id="language-menu" class="absolute right-0 top-full z-50 mt-2 hidden w-44 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+    <ul class="p-2 text-sm font-medium text-body" translate="no">
+      <li><a href="https://majordomus.dev/kit/" hreflang="en" lang="en" data-i18n-keep data-i18n-current data-i18n-lang="en" class="group flex w-full items-center justify-between gap-3 rounded-sm px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading aria-[current=true]:text-heading" aria-current="true"><span class="flex items-center gap-2"><span class="w-6 font-mono text-xs uppercase text-body-subtle">en</span>English</span><svg class="invisible h-4 w-4 text-fg-brand group-aria-[current=true]:visible" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 11.917 9.724 16.5 19 7.5"/></svg></a></li>
+      <li><a href="https://majordomus.dev/cs/kit/" hreflang="cs" lang="cs" data-i18n-keep data-i18n-current data-i18n-lang="cs" class="group flex w-full items-center justify-between gap-3 rounded-sm px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading aria-[current=true]:text-heading"><span class="flex items-center gap-2"><span class="w-6 font-mono text-xs uppercase text-body-subtle">cs</span>Čeština</span><svg class="invisible h-4 w-4 text-fg-brand group-aria-[current=true]:visible" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 11.917 9.724 16.5 19 7.5"/></svg></a></li>
+    </ul>
+  </div>
+</div>
+
       <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
   <svg id="theme-toggle-dark-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
   <svg id="theme-toggle-light-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
@@ -100,7 +123,7 @@
           <div id="nav-menu-2" class="hidden md:absolute md:left-0 md:top-full md:z-10 md:mt-2 md:w-64 md:rounded-base md:border md:border-default-medium md:bg-neutral-primary-medium md:shadow-lg">
             <ul class="pb-2 ps-3 text-sm font-medium text-body md:p-2" aria-labelledby="nav-2">
               <li><a href="https://majordomus.dev/method/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/argument/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Vocabulary</a></li><li><a href="https://majordomus.dev/sessions/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Sessions</a></li>
-              <li class="mt-1 border-t border-default pt-1"><a href="#site-map-2" class="block rounded px-3 py-2 text-body-subtle hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">All 17 pages in the site map &darr;</a></li>
+              <li class="mt-1 border-t border-default pt-1"><a href="#site-map-2" class="block rounded px-3 py-2 text-body-subtle hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">All 21 pages in the site map &darr;</a></li>
             </ul>
           </div>
         </li>
@@ -142,7 +165,9 @@
     </div>
   </div>
 </nav>
-
+<div data-i18n-notice hidden class="border-b border-default bg-neutral-secondary-soft">
+  <p class="mx-auto max-w-screen-xl px-4 py-2 text-xs text-body">This page was translated automatically from English, the only language this site is written in. <a href="https://majordomus.dev/kit/" hreflang="en" lang="en" data-i18n-keep data-i18n-lang="en" class="font-medium underline">Read the original</a>.</p>
+</div>
 <main id="main">
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   
@@ -152,7 +177,7 @@
     <h1 class="mj-hero-title"><span class="mj-hero-line">One vocabulary.</span><span class="mj-hero-line mj-hero-accent">Every screen.</span></h1><p class="mj-hero-lead">The components every page of this site is composed of: tones, atoms, panels, lists, terminals, tabs, a dashboard and diagrams. Each is shown here rendered from the repository&#39;s own data, written once in share/design/kit.css and site/templates/kit/.</p>
     <div class="mj-hero-actions">
 <a href="https://majordomus.dev/docs/design/" class="mj-btn mj-btn--primary"><span>The design system</span><svg class="mj-icon mj-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
-<a href="https://github.com/korczis/prismatic-majordomus/tree/dd4c0a87cba408222033c89f002ab2d63f48574c/site/templates/kit" class="mj-btn"><svg class="mj-icon mj-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg><span>Source</span></a>
+<a href="https://github.com/korczis/prismatic-majordomus/tree/82ac259d0ae7c3901ee09bed461e2f62318a6642/site/templates/kit" class="mj-btn"><svg class="mj-icon mj-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg><span>Source</span></a>
     </div>
   </div><div class="min-w-0">
     
@@ -341,7 +366,7 @@
     <li class="mj-tree-item">
       <span class="mj-tree-icon"><svg class="mj-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></span>
       <span class="mj-tree-text"><span class="mj-tree-name">test/</span><span class="mj-tree-note">the cases</span>
-      <ul class="mj-tree mj-tree-sub"><li class="mj-tree-item"><span class="mj-tree-icon"><svg class="mj-icon mj-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></span><span class="mj-tree-text"><span class="mj-tree-name">cases/</span><span class="mj-tree-note">563 test objects</span></span></li>
+      <ul class="mj-tree mj-tree-sub"><li class="mj-tree-item"><span class="mj-tree-icon"><svg class="mj-icon mj-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></span><span class="mj-tree-text"><span class="mj-tree-name">cases/</span><span class="mj-tree-note">567 test objects</span></span></li>
       </ul></span>
     </li>
     <li class="mj-tree-item">
@@ -497,7 +522,7 @@
 <div class="flex min-w-0 items-start gap-3">
 <span class="mj-glyph mj-glyph--round mj-tone--blue" aria-hidden="true"><svg class="mj-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg></span>
   <div class="min-w-0 flex-1">
-    <span class="mj-figure-value">188</span>
+    <span class="mj-figure-value">189</span>
     <span class="mj-figure-label">rules in the layer</span><span class="mj-figure-source">registry.json · index.by_kind</span>
   </div>
 </div>
@@ -505,7 +530,7 @@
 <div class="flex min-w-0 items-start gap-3">
 <span class="mj-glyph mj-glyph--round mj-tone--violet" aria-hidden="true"><svg class="mj-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span>
   <div class="min-w-0 flex-1">
-    <span class="mj-figure-value">119</span>
+    <span class="mj-figure-value">158</span>
     <span class="mj-figure-label">decisions in the layer</span><span class="mj-figure-source">registry.json · index.by_kind</span>
   </div>
 </div>
@@ -513,7 +538,7 @@
 <div class="flex min-w-0 items-start gap-3">
 <span class="mj-glyph mj-glyph--round mj-tone--green" aria-hidden="true"><svg class="mj-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg></span>
   <div class="min-w-0 flex-1">
-    <span class="mj-figure-value">563</span>
+    <span class="mj-figure-value">567</span>
     <span class="mj-figure-label">test objects in the layer</span><span class="mj-figure-source">registry.json · index.by_kind</span>
   </div>
 </div>
@@ -596,7 +621,7 @@ next: majordomus context; checkpoint every 15m; majordomus check before claiming
   <div class="mj-term-section"><div class="mj-term-heading"><span>Prismatic Majordomus</span><span>v0.30.2</span></div>
   </div>
   <div class="mj-term-section">
-    <dl class="mj-kv m-0"><dt class="mj-kv-key">rules</dt><dd class="mj-kv-value m-0">188</dd><dt class="mj-kv-key">decisions</dt><dd class="mj-kv-value m-0">119</dd><dt class="mj-kv-key">skills</dt><dd class="mj-kv-value m-0">8</dd><dt class="mj-kv-key">commands</dt><dd class="mj-kv-value m-0">31</dd>
+    <dl class="mj-kv m-0"><dt class="mj-kv-key">rules</dt><dd class="mj-kv-value m-0">189</dd><dt class="mj-kv-key">decisions</dt><dd class="mj-kv-value m-0">158</dd><dt class="mj-kv-key">skills</dt><dd class="mj-kv-value m-0">8</dd><dt class="mj-kv-key">commands</dt><dd class="mj-kv-value m-0">31</dd>
     </dl>
   </div>
   <div class="mj-term-section">
@@ -812,15 +837,15 @@ next: majordomus context; checkpoint every 15m; majordomus check before claiming
 <ul class="mj-kpis m-0 list-none p-0">
   <li class="mj-kpi">
 <span class="mj-glyph mj-tone--blue" aria-hidden="true"><svg class="mj-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg></span>
-    <span class="min-w-0"><span class="mj-kpi-label">Rules</span><span class="mj-kpi-value">188</span></span>
+    <span class="min-w-0"><span class="mj-kpi-label">Rules</span><span class="mj-kpi-value">189</span></span>
   </li>
   <li class="mj-kpi">
 <span class="mj-glyph mj-tone--violet" aria-hidden="true"><svg class="mj-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span>
-    <span class="min-w-0"><span class="mj-kpi-label">Decisions</span><span class="mj-kpi-value">119</span></span>
+    <span class="min-w-0"><span class="mj-kpi-label">Decisions</span><span class="mj-kpi-value">158</span></span>
   </li>
   <li class="mj-kpi">
 <span class="mj-glyph mj-tone--green" aria-hidden="true"><svg class="mj-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg></span>
-    <span class="min-w-0"><span class="mj-kpi-label">Tests</span><span class="mj-kpi-value">563</span></span>
+    <span class="min-w-0"><span class="mj-kpi-label">Tests</span><span class="mj-kpi-value">567</span></span>
   </li>
   <li class="mj-kpi">
 <span class="mj-glyph mj-tone--orange" aria-hidden="true"><svg class="mj-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></svg></span>
@@ -836,8 +861,8 @@ next: majordomus context; checkpoint every 15m; majordomus check before claiming
     </div>
   </div>
   
-              <svg class="mj-chart mj-tone--violet" viewBox="0 0 100 40" preserveAspectRatio="none" role="img" aria-label="Decisions recorded per release, oldest first: 19, 15, 9, 0, 0, 1, 9, 10, 6, 2, 0, 0, 0, 1, 0, 2, 1, 1, 0, 0, 10, 6, 1, 3, 0, 0, 4, 6, 2, 2, 0"><polygon class="mj-chart-area" points="0,40 0.0,2.0 3.33,9.58 6.67,20.95 10.0,38.0 13.33,38.0 16.67,36.11 20.0,20.95 23.33,19.05 26.67,26.63 30.0,34.21 33.33,38.0 36.67,38.0 40.0,38.0 43.33,36.11 46.67,38.0 50.0,34.21 53.33,36.11 56.67,36.11 60.0,38.0 63.33,38.0 66.67,19.05 70.0,26.63 73.33,36.11 76.67,32.32 80.0,38.0 83.33,38.0 86.67,30.42 90.0,26.63 93.33,34.21 96.67,34.21 100.0,38.0 100,40"/>
-  <polyline class="mj-chart-line" points="0.0,2.0 3.33,9.58 6.67,20.95 10.0,38.0 13.33,38.0 16.67,36.11 20.0,20.95 23.33,19.05 26.67,26.63 30.0,34.21 33.33,38.0 36.67,38.0 40.0,38.0 43.33,36.11 46.67,38.0 50.0,34.21 53.33,36.11 56.67,36.11 60.0,38.0 63.33,38.0 66.67,19.05 70.0,26.63 73.33,36.11 76.67,32.32 80.0,38.0 83.33,38.0 86.67,30.42 90.0,26.63 93.33,34.21 96.67,34.21 100.0,38.0"/>
+              <svg class="mj-chart mj-tone--violet" viewBox="0 0 100 40" preserveAspectRatio="none" role="img" aria-label="Decisions recorded per release, oldest first: 19, 15, 9, 0, 0, 1, 9, 10, 6, 2, 0, 0, 0, 1, 0, 2, 1, 1, 0, 0, 10, 6, 1, 3, 0, 0, 4, 6, 2, 2, 0, 0"><polygon class="mj-chart-area" points="0,40 0.0,2.0 3.23,9.58 6.45,20.95 9.68,38.0 12.9,38.0 16.13,36.11 19.35,20.95 22.58,19.05 25.81,26.63 29.03,34.21 32.26,38.0 35.48,38.0 38.71,38.0 41.94,36.11 45.16,38.0 48.39,34.21 51.61,36.11 54.84,36.11 58.06,38.0 61.29,38.0 64.52,19.05 67.74,26.63 70.97,36.11 74.19,32.32 77.42,38.0 80.65,38.0 83.87,30.42 87.1,26.63 90.32,34.21 93.55,34.21 96.77,38.0 100.0,38.0 100,40"/>
+  <polyline class="mj-chart-line" points="0.0,2.0 3.23,9.58 6.45,20.95 9.68,38.0 12.9,38.0 16.13,36.11 19.35,20.95 22.58,19.05 25.81,26.63 29.03,34.21 32.26,38.0 35.48,38.0 38.71,38.0 41.94,36.11 45.16,38.0 48.39,34.21 51.61,36.11 54.84,36.11 58.06,38.0 61.29,38.0 64.52,19.05 67.74,26.63 70.97,36.11 74.19,32.32 77.42,38.0 80.65,38.0 83.87,30.42 87.1,26.63 90.32,34.21 93.55,34.21 96.77,38.0 100.0,38.0"/>
 </svg>
             
 </section>
@@ -864,7 +889,7 @@ next: majordomus context; checkpoint every 15m; majordomus check before claiming
 <section class="mj-panel mj-panel--quiet">
   <div class="mj-panel-head">
     <div class="mj-panel-heading">
-      <h2 class="mj-panel-title">Changes in 0.30.1</h2>
+      <h2 class="mj-panel-title">Changes in 0.30.2</h2>
     </div>
   </div>
   
@@ -872,15 +897,15 @@ next: majordomus context; checkpoint every 15m; majordomus check before claiming
 <ul class="mj-feed">
   <li class="mj-feed-item">
     
-<span class="mj-glyph mj-glyph--sm mj-tone--green" aria-hidden="true"><svg class="mj-icon mj-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="3"/><line x1="3" x2="9" y1="12" y2="12"/><line x1="15" x2="21" y1="12" y2="12"/></svg></span><a href="https://github.com/korczis/prismatic-majordomus/commit/9904000d2" class="mj-feed-text hover:underline">case 3003 reads the Knowledge screen I3022 and I3023 draw</a><code class="mj-feed-ref">9904000d2</code>
+<span class="mj-glyph mj-glyph--sm mj-tone--green" aria-hidden="true"><svg class="mj-icon mj-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="3"/><line x1="3" x2="9" y1="12" y2="12"/><line x1="15" x2="21" y1="12" y2="12"/></svg></span><a href="https://github.com/korczis/prismatic-majordomus/commit/dd4c0a87c" class="mj-feed-text hover:underline">I2917&#39;s nothing-to-move arm of the intent&#39;s primary action has a test</a><code class="mj-feed-ref">dd4c0a87c</code>
   </li>
   <li class="mj-feed-item">
     
-<span class="mj-glyph mj-glyph--sm mj-tone--blue" aria-hidden="true"><svg class="mj-icon mj-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="3"/><line x1="3" x2="9" y1="12" y2="12"/><line x1="15" x2="21" y1="12" y2="12"/></svg></span><a href="https://github.com/korczis/prismatic-majordomus/commit/70d127e14" class="mj-feed-text hover:underline">#1412&#39;s real reds: the footer commit, the record cases, coverage, a pipe flake</a><code class="mj-feed-ref">70d127e14</code>
+<span class="mj-glyph mj-glyph--sm mj-tone--blue" aria-hidden="true"><svg class="mj-icon mj-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="3"/><line x1="3" x2="9" y1="12" y2="12"/><line x1="15" x2="21" y1="12" y2="12"/></svg></span><a href="https://github.com/korczis/prismatic-majordomus/commit/d93b93ad1" class="mj-feed-text hover:underline">each intent has one primary action (I2917)</a><code class="mj-feed-ref">d93b93ad1</code>
   </li>
   <li class="mj-feed-item">
     
-<span class="mj-glyph mj-glyph--sm mj-tone--violet" aria-hidden="true"><svg class="mj-icon mj-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="3"/><line x1="3" x2="9" y1="12" y2="12"/><line x1="15" x2="21" y1="12" y2="12"/></svg></span><a href="https://github.com/korczis/prismatic-majordomus/commit/7a20e31fd" class="mj-feed-text hover:underline">I3007&#39;s objective names the template links without writing a placeholder</a><code class="mj-feed-ref">7a20e31fd</code>
+<span class="mj-glyph mj-glyph--sm mj-tone--violet" aria-hidden="true"><svg class="mj-icon mj-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="3"/><line x1="3" x2="9" y1="12" y2="12"/><line x1="15" x2="21" y1="12" y2="12"/></svg></span><a href="https://github.com/korczis/prismatic-majordomus/commit/069970820" class="mj-feed-text hover:underline">the intent workspace&#39;s panels stand in the order a person asks (I2916)</a><code class="mj-feed-ref">069970820</code>
   </li>
 </ul>
             
@@ -894,7 +919,7 @@ next: majordomus context; checkpoint every 15m; majordomus check before claiming
   </div>
   
               
-<ul class="mj-legend"><li class="mj-legend-item mj-tone--blue"><span class="mj-legend-name">rules</span><span class="mj-legend-value">188</span></li><li class="mj-legend-item mj-tone--violet"><span class="mj-legend-name">decisions</span><span class="mj-legend-value">119</span></li><li class="mj-legend-item mj-tone--green"><span class="mj-legend-name">tests</span><span class="mj-legend-value">563</span></li><li class="mj-legend-item mj-tone--orange"><span class="mj-legend-name">use cases</span><span class="mj-legend-value">49</span></li>
+<ul class="mj-legend"><li class="mj-legend-item mj-tone--blue"><span class="mj-legend-name">rules</span><span class="mj-legend-value">189</span></li><li class="mj-legend-item mj-tone--violet"><span class="mj-legend-name">decisions</span><span class="mj-legend-value">158</span></li><li class="mj-legend-item mj-tone--green"><span class="mj-legend-name">tests</span><span class="mj-legend-value">567</span></li><li class="mj-legend-item mj-tone--orange"><span class="mj-legend-name">use cases</span><span class="mj-legend-value">49</span></li>
 </ul>
               <div class="mt-4">
 <ul class="mj-health">
@@ -1269,7 +1294,7 @@ next: majordomus context; checkpoint every 15m; majordomus check before claiming
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/method/" class="hover:text-heading hover:underline">How it works</a></h2>
         
         <ul class="space-y-2 text-sm font-medium text-body">
-          <li><a href="https://majordomus.dev/method/" class="hover:text-heading hover:underline">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="hover:text-heading hover:underline">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="hover:text-heading hover:underline">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="hover:text-heading hover:underline">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="hover:text-heading hover:underline">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="hover:text-heading hover:underline">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="hover:text-heading hover:underline">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="hover:text-heading hover:underline">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="hover:text-heading hover:underline">Design</a></li><li><a href="https://majordomus.dev/kit/" class="hover:text-heading hover:underline">Component kit</a></li><li><a href="https://majordomus.dev/docs/surfaces/" class="hover:text-heading hover:underline">How the surfaces are derived</a></li><li><a href="https://majordomus.dev/architecture/" class="hover:text-heading hover:underline">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="hover:text-heading hover:underline">How the product page is derived</a></li><li><a href="https://majordomus.dev/proof-carrying-documentation/" class="hover:text-heading hover:underline">Article: proof-carrying documentation</a></li><li><a href="https://majordomus.dev/everything-followed/" class="hover:text-heading hover:underline">Article: everything, followed</a></li><li><a href="https://majordomus.dev/dokumentace-kterou-lze-odmitnout/" class="hover:text-heading hover:underline">The same argument, written in Czech</a></li><li><a href="https://majordomus.dev/teze/" class="hover:text-heading hover:underline">Essay in Czech: the bet on a layer, not a model</a></li>
+          <li><a href="https://majordomus.dev/method/" class="hover:text-heading hover:underline">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="hover:text-heading hover:underline">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="hover:text-heading hover:underline">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="hover:text-heading hover:underline">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="hover:text-heading hover:underline">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="hover:text-heading hover:underline">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="hover:text-heading hover:underline">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="hover:text-heading hover:underline">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="hover:text-heading hover:underline">Design</a></li><li><a href="https://majordomus.dev/kit/" class="hover:text-heading hover:underline">Component kit</a></li><li><a href="https://majordomus.dev/docs/surfaces/" class="hover:text-heading hover:underline">How the surfaces are derived</a></li><li><a href="https://majordomus.dev/architecture/" class="hover:text-heading hover:underline">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="hover:text-heading hover:underline">How the product page is derived</a></li><li><a href="https://majordomus.dev/proof-carrying-documentation/" class="hover:text-heading hover:underline">Article: proof-carrying documentation</a></li><li><a href="https://majordomus.dev/everything-followed/" class="hover:text-heading hover:underline">Article: everything, followed</a></li><li><a href="https://majordomus.dev/dokumentace-kterou-lze-odmitnout/" class="hover:text-heading hover:underline">The same argument, written in Czech</a></li><li><a href="https://majordomus.dev/vsechno-v-jednom-proudu/" class="hover:text-heading hover:underline">Everything, followed, written in Czech</a></li><li><a href="https://majordomus.dev/the-bet-on-a-layer/" class="hover:text-heading hover:underline">Essay: the bet on a layer, not a model</a></li><li><a href="https://majordomus.dev/teze/" class="hover:text-heading hover:underline">Essay in Czech: the bet on a layer, not a model</a></li><li><a href="https://majordomus.dev/a-pasted-brief-becomes-a-plan/" class="hover:text-heading hover:underline">Article: a pasted brief becomes a plan</a></li><li><a href="https://majordomus.dev/vlozene-zadani-se-stava-planem/" class="hover:text-heading hover:underline">The pasted brief, written in Czech</a></li>
         </ul>
         
       </div>
@@ -1295,9 +1320,9 @@ next: majordomus context; checkpoint every 15m; majordomus check before claiming
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/dd4c0a87cba408222033c89f002ab2d63f48574c/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/dd4c0a87cba408222033c89f002ab2d63f48574c/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/dd4c0a87cba408222033c89f002ab2d63f48574c/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/82ac259d0ae7c3901ee09bed461e2f62318a6642/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/82ac259d0ae7c3901ee09bed461e2f62318a6642/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/82ac259d0ae7c3901ee09bed461e2f62318a6642/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -1305,7 +1330,7 @@ next: majordomus context; checkpoint every 15m; majordomus check before claiming
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.30.2 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/dd4c0a87cba408222033c89f002ab2d63f48574c" class="font-mono underline">dd4c0a8</a> · inputs <span class="font-mono">24bee11b192e</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v1.0.0-alpha.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/82ac259d0ae7c3901ee09bed461e2f62318a6642" class="font-mono underline">82ac259</a> · inputs <span class="font-mono">ac7a158bc7ec</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

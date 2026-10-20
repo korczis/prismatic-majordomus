@@ -1,0 +1,925 @@
+<!doctype html>
+<html lang="cs" class="scroll-smooth" data-theme-key="color-theme" data-theme-class="dark" data-design="944a896b2646">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Milníky a úkoly jako data; stav odvozený, nikdy neukládaný — Prismatic Majordomus</title>
+<meta name="description" content="Milníky jsou specifikace výsledků a úkoly prováděcí smlouvy, každé v jednom souboru YAML; graf závislostí rozhoduje o vlnách provádění a dalším připraveném úkolu; milník, jehož závislosti nejsou přijaty, je blokován bez ohledu na to, co říkají jeho vlastní úkoly; a projekce GitHubu se vykresluje offline ze stejného modelu.">
+<link rel="canonical" href="https://majordomus.dev/cs/features/planning/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Prismatic Majordomus">
+<meta property="og:title" content="Milníky a úkoly jako data; stav odvozený, nikdy neukládaný — Prismatic Majordomus">
+<meta property="og:description" content="Milníky jsou specifikace výsledků a úkoly prováděcí smlouvy, každé v jednom souboru YAML; graf závislostí rozhoduje o vlnách provádění a dalším připraveném úkolu; milník, jehož závislosti nejsou přijaty, je blokován bez ohledu na to, co říkají jeho vlastní úkoly; a projekce GitHubu se vykresluje offline ze stejného modelu.">
+<meta property="og:url" content="https://majordomus.dev/cs/features/planning/">
+<meta property="og:image" content="https://majordomus.dev/images/social-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
+<link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=3f5215cbacbe9c61f05a">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
+<script>(function(){try{var K="mj-lang",L=["en","cs"],S="en",B="https://majordomus.dev",d=document.documentElement,k;try{k=localStorage.getItem(K)}catch(e){}
+document.addEventListener("click",function(e){var a=e.target.closest&&e.target.closest("[data-i18n-lang]");if(a)try{localStorage.setItem(K,a.getAttribute("data-i18n-lang"))}catch(x){}},true);
+if(d.lang!==S)return;var r=document.referrer;if(r&&r.indexOf(location.origin)===0)return;
+var p=(k?[k]:navigator.languages||[navigator.language||""]).map(function(l){return String(l).slice(0,2).toLowerCase()});
+for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=location.href;if(u.indexOf(B)!==0)return;location.replace(B+"/"+p[i]+u.slice(B.length).replace(/^(?!\/)/,"/"));return}}}catch(e){}})();</script>
+
+<link rel="alternate" hreflang="en" href="https://majordomus.dev/features/planning/">
+<link rel="alternate" hreflang="cs" href="https://majordomus.dev/cs/features/planning/">
+<link rel="alternate" hreflang="x-default" href="https://majordomus.dev/features/planning/">
+</head>
+<body class="min-h-screen bg-neutral-primary text-body antialiased">
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white">Přeskočit na obsah</a>
+
+
+
+<nav class="sticky top-0 z-20 w-full border-b border-default bg-neutral-primary text-base" aria-label="Hlavní">
+  <div class="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between gap-x-2 gap-y-2 px-3 py-3 sm:p-4">
+    <a href="https://majordomus.dev/cs/" class="flex min-w-0 items-center gap-1.5 sm:gap-2.5 rtl:space-x-reverse">
+      <span class="inline-flex h-6 w-6 shrink-0 text-heading sm:h-7 sm:w-7 [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 1.0.0-alpha.1 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span>
+      <span class="self-center whitespace-nowrap text-base font-semibold text-heading sm:text-xl">Majordomus</span>
+      
+      
+      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading" data-release="0.30.2">v0.30.2</span>
+      
+    </a>
+    <div class="flex items-center gap-1 sm:gap-2 md:order-2"><button type="button" data-site-search-open hidden aria-haspopup="dialog" aria-controls="site-search" aria-expanded="false" aria-keyshortcuts="/ Control+K Meta+K" class="inline-flex h-10 min-w-10 items-center justify-center gap-2 rounded-base border border-default px-2.5 text-sm font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">
+        <svg class="h-5 w-5 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z"/></svg> <span class="sr-only lg:not-sr-only">Hledat</span> <kbd class="hidden rounded border border-default-medium px-1.5 font-mono text-xs text-body-subtle lg:inline" aria-hidden="true">/</kbd>
+      </button>
+      <div class="relative" data-i18n-switch>
+  <button type="button" aria-label="Jazyk" data-dropdown-toggle="language-menu" data-dropdown-placement="bottom-end" aria-haspopup="true" aria-controls="language-menu" aria-expanded="false" class="inline-flex h-10 items-center justify-center gap-1.5 rounded-base border border-default px-2.5 text-sm font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">
+    <svg class="h-5 w-5 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0 0c2.2-2.4 3.3-5.4 3.3-9S14.2 5.4 12 3m0 18c-2.2-2.4-3.3-5.4-3.3-9S9.8 5.4 12 3M3.5 9h17M3.5 15h17"/></svg>
+    <span class="font-mono text-xs uppercase" translate="no" data-i18n-current-label>cs</span>
+    <svg class="h-2.5 w-2.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg>
+  </button>
+  <div id="language-menu" class="absolute right-0 top-full z-50 mt-2 hidden w-44 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+    <ul class="p-2 text-sm font-medium text-body" translate="no">
+      <li><a href="https://majordomus.dev/features/planning/" hreflang="en" lang="en" data-i18n-keep data-i18n-current data-i18n-lang="en" class="group flex w-full items-center justify-between gap-3 rounded-sm px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading aria-[current=true]:text-heading"><span class="flex items-center gap-2"><span class="w-6 font-mono text-xs uppercase text-body-subtle">en</span>English</span><svg class="invisible h-4 w-4 text-fg-brand group-aria-[current=true]:visible" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 11.917 9.724 16.5 19 7.5"/></svg></a></li>
+      <li><a href="https://majordomus.dev/cs/features/planning/" hreflang="cs" lang="cs" data-i18n-keep data-i18n-current data-i18n-lang="cs" class="group flex w-full items-center justify-between gap-3 rounded-sm px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading aria-[current=true]:text-heading" aria-current="true"><span class="flex items-center gap-2"><span class="w-6 font-mono text-xs uppercase text-body-subtle">cs</span>Čeština</span><svg class="invisible h-4 w-4 text-fg-brand group-aria-[current=true]:visible" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 11.917 9.724 16.5 19 7.5"/></svg></a></li>
+    </ul>
+  </div>
+</div>
+
+      <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Přepnout tmavý režim">
+  <svg id="theme-toggle-dark-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+  <svg id="theme-toggle-light-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+</button>
+<a href="https://majordomus.dev/ui/" data-nav-primary="ui" class="hidden rounded-base border border-brand-subtle px-3 py-2 text-sm font-semibold text-fg-brand hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary xl:inline-flex">UI produktu</a>
+      <a href="https://github.com/korczis/prismatic-majordomus" class="hidden rounded-base border border-default px-3 py-2 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary sm:inline-flex">GitHub</a>
+      <a href="https://majordomus.dev/cs/getting-started/" class="hidden rounded-base bg-brand px-3 py-2 text-sm font-semibold text-white hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium md:inline-flex">Začít</a>
+      <button data-collapse-toggle="navbar-main" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-base p-2 text-sm text-body hover:bg-neutral-secondary-soft hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:hidden" aria-controls="navbar-main" aria-expanded="false">
+        <span class="sr-only">Otevřít hlavní nabídku</span> <svg class="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h14"/></svg>
+      </button>
+    </div><div class="hidden w-full min-w-0 md:order-1 md:block md:w-auto" id="navbar-main">
+      <ul class="mt-4 flex flex-col rounded-base border border-default bg-neutral-secondary-soft p-4 font-medium md:mt-0 md:flex-row md:flex-wrap md:items-center md:gap-x-2 md:gap-y-1 md:border-0 md:bg-neutral-primary md:p-0">
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          <button id="nav-1" data-dropdown-toggle="nav-menu-1" type="button" aria-controls="nav-menu-1" class="flex w-full items-center justify-between rounded px-3 py-2 text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Produkt<svg class="ms-1.5 h-3 w-3 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-1" class="hidden md:absolute md:left-0 md:top-full md:z-10 md:mt-2 md:w-64 md:rounded-base md:border md:border-default-medium md:bg-neutral-primary-medium md:shadow-lg">
+            <ul class="pb-2 ps-3 text-sm font-medium text-body md:p-2" aria-labelledby="nav-1">
+              <li><a href="https://majordomus.dev/cs/domains/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Produkt podle oblastí</a></li><li><a href="https://majordomus.dev/cs/why/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Proč existuje: způsoby selhání</a></li><li><a href="https://majordomus.dev/cs/features/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Funkce</a></li><li><a href="https://majordomus.dev/cs/use-cases/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Případy užití</a></li><li><a href="https://majordomus.dev/ui/" data-nav-snapshot="ui" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">UI produktu <span data-nav-snapshot-note class="text-xs text-body-subtle">&middot; snímek</span></a></li><li><a href="https://majordomus.dev/cs/docs/cockpit/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Cockpit</a></li>
+              <li class="mt-1 border-t border-default pt-1"><a href="#site-map-1" class="block rounded px-3 py-2 text-body-subtle hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Všech 10 stránek v mapě webu &darr;</a></li>
+            </ul>
+          </div>
+        </li>
+        
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          <button id="nav-2" data-dropdown-toggle="nav-menu-2" type="button" aria-controls="nav-menu-2" class="flex w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Princip<svg class="ms-1.5 h-3 w-3 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-2" class="hidden md:absolute md:left-0 md:top-full md:z-10 md:mt-2 md:w-64 md:rounded-base md:border md:border-default-medium md:bg-neutral-primary-medium md:shadow-lg">
+            <ul class="pb-2 ps-3 text-sm font-medium text-body md:p-2" aria-labelledby="nav-2">
+              <li><a href="https://majordomus.dev/cs/method/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Doktrína, politika, pravidlo, vynucování</a></li><li><a href="https://majordomus.dev/cs/method/argument/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Celá argumentace</a></li><li><a href="https://majordomus.dev/cs/docs/concepts/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Slovník</a></li><li><a href="https://majordomus.dev/cs/sessions/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Relace</a></li>
+              <li class="mt-1 border-t border-default pt-1"><a href="#site-map-2" class="block rounded px-3 py-2 text-body-subtle hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">All 21 pages in the site map &darr;</a></li>
+            </ul>
+          </div>
+        </li>
+        
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          <button id="nav-3" data-dropdown-toggle="nav-menu-3" type="button" aria-controls="nav-menu-3" class="flex w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Důkazy<svg class="ms-1.5 h-3 w-3 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-3" class="hidden md:absolute md:left-0 md:top-full md:z-10 md:mt-2 md:w-64 md:rounded-base md:border md:border-default-medium md:bg-neutral-primary-medium md:shadow-lg">
+            <ul class="pb-2 ps-3 text-sm font-medium text-body md:p-2" aria-labelledby="nav-3">
+              <li><a href="https://majordomus.dev/cs/challenge/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Výzva: sledujte, jak odmítne agenta</a></li><li><a href="https://majordomus.dev/cs/guarantees/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Záruky</a></li><li><a href="https://majordomus.dev/cs/evidence/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Graf důkazů</a></li><li><a href="https://majordomus.dev/cs/limitations/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Omezení</a></li><li><a href="https://majordomus.dev/cs/roadmap/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Plán rozvoje</a></li>
+              <li class="mt-1 border-t border-default pt-1"><a href="#site-map-3" class="block rounded px-3 py-2 text-body-subtle hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Všech 15 stránek v mapě webu &darr;</a></li>
+            </ul>
+          </div>
+        </li>
+        
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          <button id="nav-4" data-dropdown-toggle="nav-menu-4" type="button" aria-controls="nav-menu-4" class="flex w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Dokumenty<svg class="ms-1.5 h-3 w-3 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-4" class="hidden md:absolute md:left-0 md:top-full md:z-10 md:mt-2 md:w-64 md:rounded-base md:border md:border-default-medium md:bg-neutral-primary-medium md:shadow-lg">
+            <ul class="pb-2 ps-3 text-sm font-medium text-body md:p-2" aria-labelledby="nav-4">
+              <li><a href="https://majordomus.dev/cs/docs/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Všechny dokumenty</a></li><li><a href="https://majordomus.dev/cs/docs/install/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Instalace</a></li><li><a href="https://majordomus.dev/cs/commands/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Příkazy</a></li><li><a href="https://majordomus.dev/cs/docs/api/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">HTTP API</a></li><li><a href="https://majordomus.dev/cs/registry/mcp/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Rozhraní MCP</a></li>
+              <li class="mt-1 border-t border-default pt-1"><a href="#site-map-4" class="block rounded px-3 py-2 text-body-subtle hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Všech 11 stránek v mapě webu &darr;</a></li>
+            </ul>
+          </div>
+        </li>
+        
+        
+        <li class="mt-3 md:hidden"><a href="https://majordomus.dev/ui/" data-nav-primary="ui" class="block rounded-base border border-brand-subtle px-3 py-2 text-center font-semibold text-fg-brand hover:bg-neutral-tertiary">UI produktu</a></li>
+        <li class="mt-3 md:hidden"><a href="https://majordomus.dev/cs/getting-started/" class="block rounded-base bg-brand px-3 py-2 text-center font-semibold text-white hover:bg-brand-strong">Začít</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+<div data-i18n-notice class="border-b border-default bg-neutral-secondary-soft">
+  <p class="mx-auto max-w-screen-xl px-4 py-2 text-xs text-body">Tato stránka byla automaticky přeložena z angličtiny, jediného jazyka, ve kterém se tento web píše. <a href="https://majordomus.dev/features/planning/" hreflang="en" lang="en" data-i18n-keep data-i18n-lang="en" class="font-medium underline">Číst originál</a>.</p>
+</div>
+<main id="main">
+<div class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+    <nav class="flex" aria-label="Drobečková navigace">
+  <ol class="inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2 rtl:space-x-reverse">
+    <li class="inline-flex items-center"><a href="https://majordomus.dev/cs/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Domů</a></li><li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="https://majordomus.dev/cs/domains/" class="font-medium text-body hover:text-fg-brand">Produkt</a></li><li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="https://majordomus.dev/cs/domains/coordination/" class="font-medium text-body hover:text-fg-brand">Koordinace</a></li>
+    <li aria-hidden="true">/</li>
+    <li aria-current="page" class="font-medium text-heading">Plánování</li>
+  </ol>
+</nav>
+
+    <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">Milníky a úkoly jako data; stav se odvozuje, nikdy neukládá</h1><p class="mt-3 max-w-3xl break-words text-lg leading-relaxed text-body" data-feature-promise>Úkol zaznamenává, co se s ním stalo, a engine z grafu závislostí odvodí, zda je blokovaný, připravený, aktivní, ověřovaný nebo hotový, takže plán rozvoje nemůže být v rozporu s plánem.</p>
+    <dl class="mt-5 flex flex-wrap items-baseline gap-x-6 gap-y-2 text-xs">
+      <div class="flex items-baseline gap-2"><dt class="font-mono uppercase tracking-wide text-body-subtle">status</dt><dd><span class="mj-badge mj-badge--stable relative" data-status="stable" data-status-kind="feature"><span aria-hidden="true">✓</span><span class="sr-only">stav funkce: </span>stabilní</span>
+</dd></div>
+      <div class="flex items-baseline gap-2"><dt class="font-mono uppercase tracking-wide text-body-subtle">doména</dt><dd><a href="https://majordomus.dev/cs/domains/coordination/" class="text-sm font-medium text-fg-brand hover:underline">Koordinace</a></dd></div>
+    </dl>
+  </div>
+</div>
+
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+<div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_16rem]">
+  <div class="min-w-0"><article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_.zola-anchor]:text-inherit [&_.zola-anchor]:no-underline [&_.zola-anchor:hover]:underline"><h2 id="what-it-does"><a class="zola-anchor" href="#what-it-does" aria-label="Odkaz na kotvu: what-it-does">Co dělá</a></h2>
+<p><code>majordomus plan validate</code> odmítne cyklus, hranu, která nevede nikam, a záznam porušující schéma; <code>plan next</code> odpoví, které úkoly lze nyní provést; <code>plan roadmap</code> nakreslí graf milníků, který web vykresluje. Větev vytvořená pro úkol je po něm pojmenována, takže topologie worktree umí úkol z větve přečíst zpět, a úkol je hotov jen s důkazy, které vyžaduje jeho kontrakt. Nad větví se táž hrana čte v obou směrech a nikde se neukládá: modul schopností <code>trace</code> odvozuje větve a commity úkolu z gitu, <code>scripts/traceability</code> připojí pull requesty, které drží GitHub, a commit, který nezohledňuje žádný kontrakt provádění, se hlásí jako nepřiřazený, a ne potichu vynechává.</p>
+<p>Nad milníky záměr říká, co se musí stát pravdou, a jaké důkazy to rozhodnou. <code>majordomus intent</code> odvozuje jeho stav z plánu a každé kritérium z knihy důkazů, odpovídá, kterému záměru slouží práce na úkolu, když se pracovník zeptá, odmítá kritérium, kterému neslouží žádný úkol, a práci, která začala dřív, než byl plán podroben kritice, a spojuje práci, která jej realizuje, napříč relacemi a poskytovateli; Cockpit ukazuje stejné odpovědi na <code>/cockpit/intents</code>.</p>
+<h2 id="what-it-does-not-do"><a class="zola-anchor" href="#what-it-does-not-do" aria-label="Odkaz na kotvu: what-it-does-not-do">Co nedělá</a></h2>
+<p>Samo s GitHubem nemluví: projekce úkolů a milníků se vykresluje offline a použije se, až když člověk spustí synchronizaci s tokenem. Nic tu neodhaduje pracnost ani neplánuje data. Záměr se při zahájení práce vynucuje jen tam, kde politika vyžaduje vazbu (<code>intent.binding: required</code>); jinde se posuzuje zpětně. Projekce na GitHub uzavře milník, aniž by četla záměry, které naplňuje.</p>
+</article>
+    <section id="why" class="mt-12 scroll-mt-24" aria-labelledby="why-h">
+      <h2 id="why-h" class="text-xl font-semibold tracking-tight text-heading">Proč existuje</h2>
+      <p class="mt-2 text-body">Provozní okamžiky z katalogu Why, které pojmenovávají některý z mechanismů této funkce. Nic zde nebylo přiděleno: okamžik se objeví, protože pojmenovává pravidlo, příkaz, schopnost nebo tvrzení, které pojmenovává i tato funkce.</p>
+      <ul class="mt-4 grid gap-3 sm:grid-cols-2">
+        <li><a href="https://majordomus.dev/cs/why/three-roadmaps-none-of-them-true/" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 text-sm text-heading hover:bg-neutral-secondary-medium"><span aria-hidden="true" class="font-mono text-fg-brand">→</span><span>četl tři plány rozvoje jednoho projektu a nevěřil žádnému z nich</span></a></li>
+        <li><a href="https://majordomus.dev/cs/why/worker-output-never-integrated/" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 text-sm text-heading hover:bg-neutral-secondary-medium"><span aria-hidden="true" class="font-mono text-fg-brand">→</span><span>našli jste hotovou práci na větvi, kterou nikdo nikdy nemergnul</span></a></li>
+        <li><a href="https://majordomus.dev/cs/why/code-without-an-issue/" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 text-sm text-heading hover:bg-neutral-secondary-medium"><span aria-hidden="true" class="font-mono text-fg-brand">→</span><span>našel podstatnou změnu, o kterou nikdy nežádal žádný úkol, tiket ani plán</span></a></li>
+        <li><a href="https://majordomus.dev/cs/why/issue-says-done-tests-disagree/" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 text-sm text-heading hover:bg-neutral-secondary-medium"><span aria-hidden="true" class="font-mono text-fg-brand">→</span><span>uzavřel úkol, jehož kritéria přijetí nikdo skutečně nezkontroloval</span></a></li>
+        <li><a href="https://majordomus.dev/cs/why/milestone-status-unreconstructable/" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 text-sm text-heading hover:bg-neutral-secondary-medium"><span aria-hidden="true" class="font-mono text-fg-brand">→</span><span>dostal otázku, jak daleko milník je, a musel se jít zeptat čtyř lidí</span></a></li>
+        <li><a href="https://majordomus.dev/cs/why/result-cannot-be-reproduced/" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 text-sm text-heading hover:bg-neutral-secondary-medium"><span aria-hidden="true" class="font-mono text-fg-brand">→</span><span>nedokázal reprodukovat výsledek, protože nic nezaznamenalo stav, z něhož vzešel</span></a></li>
+      </ul>
+    </section>
+    <section id="how" class="mt-12 scroll-mt-24" aria-labelledby="how-h">
+      <h2 id="how-h" class="text-xl font-semibold tracking-tight text-heading">Princip</h2>
+      <p class="mt-2 text-body">Moduly schopností spustitelného souboru, které tato funkce pojmenovává, každý se schopnostmi, které skládá. Rozhraní, jichž každý dosahuje, jsou uvedena níže v části Rozhraní: jde o projekce jedné deklarace, ne o samostatné registrace.</p>
+      <div class="mt-4 space-y-3">
+        <section class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4" aria-label="Dohledatelnost">
+          <p class="flex flex-wrap items-baseline gap-2">
+            <a href="https://majordomus.dev/cs/registry/modules/trace/" class="text-base font-semibold text-heading hover:text-fg-brand hover:underline">Dohledatelnost</a>
+            <code class="font-mono text-xs text-body-subtle">trace</code>
+            <span class="ms-auto font-mono text-xs text-body-subtle">ověřeno chováním</span>
+          </p>
+          <p class="mt-2 text-sm text-body">Které větve a commity realizovaly úkol a kterému úkolu a milníku commit sloužil — odvozeno z gitu a z kanonického projektového modelu při každém volání, nikde se neukládá. Větev pojmenovává úkol, když je některá z jejích složek cesty identifikátorem úkolu; commit patří úkolu, jehož větve ho drží; commit, který žádná taková větev nedrží, se hlásí jako nepřiřazený, a ne vynechává, protože práce bez prováděcího kontraktu je přesně to, co má zpráva o dohledatelnosti zviditelnit. Pull requesty jsou fakt GitHubu a tento spustitelný soubor nevolá síť: čte je a k této odpovědi je připojuje podle názvu větve `scripts/traceability`.</p>
+          <ul class="mt-3 divide-y divide-default border-t border-default">
+            <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-2">
+              <a href="https://majordomus.dev/cs/registry/capabilities/trace-commit/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">Jakému kontraktu tento commit sloužil</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </li>
+            <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-2">
+              <a href="https://majordomus.dev/cs/registry/capabilities/trace-issue/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">Co tento úkol realizovalo</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </li>
+            <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-2">
+              <a href="https://majordomus.dev/cs/registry/capabilities/trace-report/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">Celý graf práce nad větví</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </li>
+          </ul>
+        </section>
+        <section class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4" aria-label="Plán a jeho odvozeniny">
+          <p class="flex flex-wrap items-baseline gap-2">
+            <a href="https://majordomus.dev/cs/registry/modules/plan/" class="text-base font-semibold text-heading hover:text-fg-brand hover:underline">Plán a jeho odvozeniny</a>
+            <code class="font-mono text-xs text-body-subtle">plan</code>
+            <span class="ms-auto font-mono text-xs text-body-subtle">ověřeno chováním</span>
+          </p>
+          <p class="mt-2 text-sm text-body">Model milníků a úkolů tohoto repozitáře a vše, co se z něj odvozuje a co nikdo nenapsal: stav každého záznamu, grafy závislostí nad hranicí milníku i pod ní, topologické vlny provádění, pořadí podle plánu rozvoje, právě prováděný milník a jeden úkol, který vzít jako další. Stav se nikdy neukládá — záznam říká, co se s ním stalo, a stav z toho a ze stavu jeho závislostí vyplývá — takže žádný soubor nemůže odporovat grafu. Tato schopnost čte; zápis značky životního cyklu do záznamu je `plan.transition`, která deklaruje, že zapisuje do repozitáře.</p>
+          <ul class="mt-3 divide-y divide-default border-t border-default">
+            <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-2">
+              <a href="https://majordomus.dev/cs/registry/capabilities/plan-delivery/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">Jak daleko pokročila práce na každém úkolu</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </li>
+            <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-2">
+              <a href="https://majordomus.dev/cs/registry/capabilities/plan-drift/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">Kde razítka plánu odporují dodané práci</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </li>
+            <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-2">
+              <a href="https://majordomus.dev/cs/registry/capabilities/plan-flight/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">Kde je práce nyní</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </li>
+            <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-2">
+              <a href="https://majordomus.dev/cs/registry/capabilities/plan-issues/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">Úkoly, filtrované podle toho, co graf odvodil</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </li>
+            <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-2">
+              <a href="https://majordomus.dev/cs/registry/capabilities/plan-model/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">Celý odvozený plán</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </li>
+            <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-2">
+              <a href="https://majordomus.dev/cs/registry/capabilities/plan-next/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">Jediný úkol, který vzít hned</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </li>
+            <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-2">
+              <a href="https://majordomus.dev/cs/registry/capabilities/plan-record/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">Jeden milník nebo úkol se vším, co o něm bylo odvozeno</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </li>
+            <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-2">
+              <a href="https://majordomus.dev/cs/registry/capabilities/plan-roadmap/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">Milníky v odvozeném pořadí</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </li>
+            <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-2">
+              <a href="https://majordomus.dev/cs/registry/capabilities/plan-status/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">Kde plán stojí</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </li>
+            <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-2">
+              <a href="https://majordomus.dev/cs/registry/capabilities/plan-transition/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">Provést jeden úkol životním cyklem</a>
+              <span class="font-mono text-xs text-body-subtle">command</span>
+            </li>
+            <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-2">
+              <a href="https://majordomus.dev/cs/registry/capabilities/plan-validate/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">Co model odmítá</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </li>
+            <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-2">
+              <a href="https://majordomus.dev/cs/registry/capabilities/plan-waves/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">Co smí běžet současně</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </li>
+          </ul>
+        </section>
+        <section class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4" aria-label="Spustitelné vývojové rozsahy">
+          <p class="flex flex-wrap items-baseline gap-2">
+            <a href="https://majordomus.dev/cs/registry/modules/devtask/" class="text-base font-semibold text-heading hover:text-fg-brand hover:underline">Spustitelné vývojové rozsahy</a>
+            <code class="font-mono text-xs text-body-subtle">devtask</code>
+            <span class="ms-auto font-mono text-xs text-body-subtle">ověřeno chováním</span>
+          </p>
+          <p class="mt-2 text-sm text-body">Úkol a milník se čtou jako práce, kterou je třeba udělat, ne jako metadata: co napsal člověk, kam ho řadí graf plánu, co se s ním stalo lokálně, v jakém stavu je jeho externí projekce a zda ho worker smí začít — s původem každé hodnoty přímo na hodnotě. Nic zde není druhý projektový model: záznamy jsou kanonické, stav a graf jsou z `plan`, větve a commity z `trace`, slovník připravenosti upřesňuje tři kanonické stavy, aniž by kterýkoli nahradil, a projekce na GitHub zůstává věcí `scripts/github-sync`. Nic zde nic nezapisuje, a proto je hodnota od uživatele z GitHubu před tím v bezpečí.</p>
+          <ul class="mt-3 divide-y divide-default border-t border-default">
+            <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-2">
+              <a href="https://majordomus.dev/cs/registry/capabilities/devtask-issue/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">Jeden úkol jako spustitelná vývojová úloha</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </li>
+            <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-2">
+              <a href="https://majordomus.dev/cs/registry/capabilities/devtask-milestone/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">Jeden milník jako spustitelný graf závislostí</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </li>
+          </ul>
+        </section>
+        <section class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4" aria-label="Záměr">
+          <p class="flex flex-wrap items-baseline gap-2">
+            <a href="https://majordomus.dev/cs/registry/modules/intents/" class="text-base font-semibold text-heading hover:text-fg-brand hover:underline">Záměr</a>
+            <code class="font-mono text-xs text-body-subtle">intents</code>
+            <span class="ms-auto font-mono text-xs text-body-subtle">ověřeno chováním</span>
+          </p>
+          <p class="mt-2 text-sm text-body">Co se musí stát pravdou nad milníky, které to realizují: výrok každého záměru, invarianty a kritéria splnění, jeho fáze odvozená ze stavu milníků plánu, stav každého kritéria odvozený z ledgeru důkazů a jeho verdikt odvozený z těchto kritérií samotných. Nic se neukládá a nic nepřechází; záměr přidaný pod model projektu je zodpovězen vším tímto bez registrace kdekoli.</p>
+          <ul class="mt-3 divide-y divide-default border-t border-default">
+            <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-2">
+              <a href="https://majordomus.dev/cs/registry/capabilities/intents-binding/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">Ke čemu je práce vázána, než začne</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </li>
+            <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-2">
+              <a href="https://majordomus.dev/cs/registry/capabilities/intents-coverage/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">Která práce nese které kritérium a proč každý úkol existuje</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </li>
+            <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-2">
+              <a href="https://majordomus.dev/cs/registry/capabilities/intents-list/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">Každý intent s odvozenou fází a verdiktem</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </li>
+            <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-2">
+              <a href="https://majordomus.dev/cs/registry/capabilities/intents-preflight/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">Kterému záměru práce slouží, nebo proč nesmí pokračovat</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </li>
+            <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-2">
+              <a href="https://majordomus.dev/cs/registry/capabilities/intents-propose/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">Navrhnout záměr: co se musí stát pravdou</a>
+              <span class="font-mono text-xs text-body-subtle">command</span>
+            </li>
+            <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-2">
+              <a href="https://majordomus.dev/cs/registry/capabilities/intents-record/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">Jeden záměr se vším, co o něm bylo odvozeno</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </li>
+            <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-2">
+              <a href="https://majordomus.dev/cs/registry/capabilities/intents-validate/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">Co model intentů odmítá</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </li>
+          </ul>
+        </section>
+        <section class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4" aria-label="Realizace záměru">
+          <p class="flex flex-wrap items-baseline gap-2">
+            <a href="https://majordomus.dev/cs/registry/modules/intent-realization/" class="text-base font-semibold text-heading hover:text-fg-brand hover:underline">Realizace záměru</a>
+            <code class="font-mono text-xs text-body-subtle">intent_realization</code>
+            <span class="ms-auto font-mono text-xs text-body-subtle">ověřeno chováním</span>
+          </p>
+          <p class="mt-2 text-sm text-body">Která práce realizuje který záměr: každá úloha ledgeru tohoto checkoutu s epizodami, providery a předávkami, které ji nesly, každý uzavřený záznam relace a každý claim na nástěnce peerů, spojené přes plán se záměry, kterým slouží, každý odkaz označený jako deklarovaný, pozorovaný, odvozený nebo odhadnutý; nesplněná kritéria každého záměru s úkoly, které jim slouží; a rozpor mezi uzavřenou prací a aktuálními důkazy. Odvozeno při každém čtení a nikde neuloženo, takže záměr přežije každou relaci a providera, kteří na něm pracovali.</p>
+          <ul class="mt-3 divide-y divide-default border-t border-default">
+            <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-2">
+              <a href="https://majordomus.dev/cs/registry/capabilities/intent-realization-explain/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">Proč záměr stojí tam, kde stojí</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </li>
+            <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-2">
+              <a href="https://majordomus.dev/cs/registry/capabilities/intent-realization-work/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">Která práce realizuje který záměr a co každému ještě chybí</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </li>
+          </ul>
+        </section>
+      </div>
+      <h3 class="mt-6 text-base font-semibold text-heading">Objekty, z nichž se skládá</h3>
+      <p class="mt-1 text-sm text-body">Druhy objektů vrstvy. Každý je schéma, třída zdroje a soubor na disku; číslo vedle něj říká, kolik jich tento repozitář dnes obsahuje, spočítáno při sestavení.</p>
+      <ul class="mt-3 flex flex-wrap gap-2">
+        <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5"><code class="font-mono text-sm text-heading">milestone</code><span class="font-mono text-xs text-body-subtle">100</span></li>
+        <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5"><code class="font-mono text-sm text-heading">issue</code><span class="font-mono text-xs text-body-subtle">799</span></li>
+        <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5"><code class="font-mono text-sm text-heading">intent</code><span class="font-mono text-xs text-body-subtle">33</span></li>
+        <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5"><code class="font-mono text-sm text-heading">gap</code><span class="font-mono text-xs text-body-subtle">4</span></li>
+        <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5"><code class="font-mono text-sm text-heading">critique</code><span class="font-mono text-xs text-body-subtle">29</span></li>
+      </ul>
+    </section><section id="relationships" class="mt-12 scroll-mt-24" aria-labelledby="relationships-h">
+      <h2 id="relationships-h" class="text-xl font-semibold tracking-tight text-heading">Kde se nachází</h2>
+      <dl class="mt-4 divide-y divide-default rounded-base border border-default bg-neutral-primary-soft text-sm">
+        <div class="grid gap-1 p-3 sm:grid-cols-[10rem_minmax(0,1fr)]">
+          <dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">doména</dt>
+          <dd class="min-w-0"><a href="https://majordomus.dev/cs/domains/coordination/" class="font-medium text-fg-brand hover:underline">Koordinace</a><span class="text-body"> — Každý worker deklaruje cesty, kterých se dotkne, vidí, kdo jiný pracuje a kde, a o kolizi se dozví ještě před commitem.</span></dd>
+        </div>
+        <div class="grid gap-1 p-3 sm:grid-cols-[10rem_minmax(0,1fr)]">
+          <dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">oblasti práce</dt>
+          <dd class="flex min-w-0 flex-wrap gap-x-3 gap-y-1"><a href="https://majordomus.dev/cs/why/areas/work-tracking/" class="text-fg-brand underline">work-tracking</a></dd>
+        </div>
+        <div class="grid gap-1 p-3 sm:grid-cols-[10rem_minmax(0,1fr)]">
+          <dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">názvy</dt>
+          <dd class="flex min-w-0 flex-wrap gap-x-3 gap-y-1"><a href="https://majordomus.dev/cs/features/worktrees/" class="text-fg-brand underline">Worktrees</a><a href="https://majordomus.dev/cs/features/finish-contract/" class="text-fg-brand underline">Kontrakt dokončení</a></dd>
+        </div>
+      </dl>
+    </section>
+    <section id="interfaces" class="mt-12 scroll-mt-24" aria-labelledby="interfaces-h">
+      <h2 id="interfaces-h" class="text-xl font-semibold tracking-tight text-heading">Rozhraní</h2>
+      <div class="mt-3"><ul class="flex flex-wrap gap-1.5" aria-label="Rozhraní, jimiž je zpřístupněno">
+  <li><a href="https://majordomus.dev/cs/docs/cli/" class="inline-flex items-center gap-1.5 rounded border border-success-subtle bg-success-soft px-1.5 py-0.5 font-mono text-xs font-medium text-fg-success-strong hover:bg-neutral-secondary-medium" title="Příkazová řádka"><span aria-hidden="true">✓</span>cli</a></li>
+  <li><a href="https://majordomus.dev/cs/docs/api/" class="inline-flex items-center gap-1.5 rounded border border-success-subtle bg-success-soft px-1.5 py-0.5 font-mono text-xs font-medium text-fg-success-strong hover:bg-neutral-secondary-medium" title="HTTP API"><span aria-hidden="true">✓</span>api</a></li>
+  <li><a href="https://majordomus.dev/cs/registry/mcp/" class="inline-flex items-center gap-1.5 rounded border border-success-subtle bg-success-soft px-1.5 py-0.5 font-mono text-xs font-medium text-fg-success-strong hover:bg-neutral-secondary-medium" title="MCP"><span aria-hidden="true">✓</span>mcp</a></li>
+  <li><a href="https://majordomus.dev/cs/docs/cockpit/" class="inline-flex items-center gap-1.5 rounded border border-success-subtle bg-success-soft px-1.5 py-0.5 font-mono text-xs font-medium text-fg-success-strong hover:bg-neutral-secondary-medium" title="Cockpit"><span aria-hidden="true">✓</span>cockpit</a></li>
+  <li><a href="https://majordomus.dev/cs/docs/" class="inline-flex items-center gap-1.5 rounded border border-success-subtle bg-success-soft px-1.5 py-0.5 font-mono text-xs font-medium text-fg-success-strong hover:bg-neutral-secondary-medium" title="Dokumentace"><span aria-hidden="true">✓</span>docs</a></li>
+</ul>
+</div>
+      <p class="mt-4 text-sm text-body">Každá schopnost za ní, na každém rozhraní, na které je promítnuta. Odkaz vede na referenci tohoto webu pro dané rozhraní; HTTP route a nástroj MCP odpovídá běžící <code class="font-mono text-xs">majordomus serve</code>, ne tento web.</p>
+      <div class="relative mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+        <table class="w-full min-w-[36rem] text-left text-sm" tabindex="0">
+          <caption class="sr-only">Schopnosti za touto funkcí podle rozhraní</caption>
+          <thead class="border-b border-default bg-neutral-secondary-soft font-mono text-xs uppercase tracking-wide text-body-subtle">
+            <tr><th scope="col" class="px-3 py-2 font-medium">schopnost</th><th scope="col" class="px-3 py-2 font-medium">příkazová řádka</th><th scope="col" class="px-3 py-2 font-medium">HTTP</th><th scope="col" class="px-3 py-2 font-medium">nástroj MCP</th></tr>
+          </thead>
+          <tbody class="divide-y divide-default">
+            <tr class="align-baseline">
+              <th scope="row" class="px-3 py-2 font-normal"><a href="https://majordomus.dev/cs/registry/capabilities/trace-commit/" class="font-mono text-xs text-heading hover:text-fg-brand hover:underline">trace.commit</a></th>
+              <td class="px-3 py-2 font-mono text-xs"><span class="text-body-subtle">—<span class="sr-only">žádné</span></span></td>
+              <td class="px-3 py-2 font-mono text-xs"><a href="https://majordomus.dev/cs/docs/api/trace/#op-trace-commit" class="text-fg-brand hover:underline">GET /api/v1/trace/commit</a></td>
+              <td class="px-3 py-2 font-mono text-xs"><span class="text-body">majordomus_trace_commit</span></td>
+            </tr>
+            <tr class="align-baseline">
+              <th scope="row" class="px-3 py-2 font-normal"><a href="https://majordomus.dev/cs/registry/capabilities/trace-issue/" class="font-mono text-xs text-heading hover:text-fg-brand hover:underline">trace.issue</a></th>
+              <td class="px-3 py-2 font-mono text-xs"><span class="text-body-subtle">—<span class="sr-only">žádné</span></span></td>
+              <td class="px-3 py-2 font-mono text-xs"><a href="https://majordomus.dev/cs/docs/api/trace/#op-trace-issue" class="text-fg-brand hover:underline">GET /api/v1/trace/issue</a></td>
+              <td class="px-3 py-2 font-mono text-xs"><span class="text-body">majordomus_trace_issue</span></td>
+            </tr>
+            <tr class="align-baseline">
+              <th scope="row" class="px-3 py-2 font-normal"><a href="https://majordomus.dev/cs/registry/capabilities/trace-report/" class="font-mono text-xs text-heading hover:text-fg-brand hover:underline">trace.report</a></th>
+              <td class="px-3 py-2 font-mono text-xs"><span class="text-body-subtle">—<span class="sr-only">žádné</span></span></td>
+              <td class="px-3 py-2 font-mono text-xs"><a href="https://majordomus.dev/cs/docs/api/trace/#op-trace-report" class="text-fg-brand hover:underline">GET /api/v1/trace</a></td>
+              <td class="px-3 py-2 font-mono text-xs"><span class="text-body">majordomus_traceability</span></td>
+            </tr>
+            <tr class="align-baseline">
+              <th scope="row" class="px-3 py-2 font-normal"><a href="https://majordomus.dev/cs/registry/capabilities/plan-delivery/" class="font-mono text-xs text-heading hover:text-fg-brand hover:underline">plan.delivery</a></th>
+              <td class="px-3 py-2 font-mono text-xs"><a href="https://majordomus.dev/cs/docs/cli/plan/delivery/" class="text-fg-brand hover:underline">majordomus plan delivery</a></td>
+              <td class="px-3 py-2 font-mono text-xs"><a href="https://majordomus.dev/cs/docs/api/plan/#op-plan-delivery" class="text-fg-brand hover:underline">GET /api/v1/plan/delivery</a></td>
+              <td class="px-3 py-2 font-mono text-xs"><span class="text-body">majordomus_plan_delivery</span></td>
+            </tr>
+            <tr class="align-baseline">
+              <th scope="row" class="px-3 py-2 font-normal"><a href="https://majordomus.dev/cs/registry/capabilities/plan-drift/" class="font-mono text-xs text-heading hover:text-fg-brand hover:underline">plan.drift</a></th>
+              <td class="px-3 py-2 font-mono text-xs"><a href="https://majordomus.dev/cs/docs/cli/plan/drift/" class="text-fg-brand hover:underline">majordomus plan drift</a></td>
+              <td class="px-3 py-2 font-mono text-xs"><a href="https://majordomus.dev/cs/docs/api/plan/#op-plan-drift" class="text-fg-brand hover:underline">GET /api/v1/plan/drift</a></td>
+              <td class="px-3 py-2 font-mono text-xs"><span class="text-body">majordomus_plan_drift</span></td>
+            </tr>
+            <tr class="align-baseline">
+              <th scope="row" class="px-3 py-2 font-normal"><a href="https://majordomus.dev/cs/registry/capabilities/plan-flight/" class="font-mono text-xs text-heading hover:text-fg-brand hover:underline">plan.flight</a></th>
+              <td class="px-3 py-2 font-mono text-xs"><span class="text-body-subtle">—<span class="sr-only">žádné</span></span></td>
+              <td class="px-3 py-2 font-mono text-xs"><a href="https://majordomus.dev/cs/docs/api/plan/#op-plan-flight" class="text-fg-brand hover:underline">GET /api/v1/plan/flight</a></td>
+              <td class="px-3 py-2 font-mono text-xs"><span class="text-body">majordomus_plan_flight</span></td>
+            </tr>
+            <tr class="align-baseline">
+              <th scope="row" class="px-3 py-2 font-normal"><a href="https://majordomus.dev/cs/registry/capabilities/plan-issues/" class="font-mono text-xs text-heading hover:text-fg-brand hover:underline">plan.issues</a></th>
+              <td class="px-3 py-2 font-mono text-xs"><span class="text-body-subtle">—<span class="sr-only">žádné</span></span></td>
+              <td class="px-3 py-2 font-mono text-xs"><a href="https://majordomus.dev/cs/docs/api/plan/#op-plan-issues" class="text-fg-brand hover:underline">GET /api/v1/plan/issues</a></td>
+              <td class="px-3 py-2 font-mono text-xs"><span class="text-body">majordomus_plan_issues</span></td>
+            </tr>
+            <tr class="align-baseline">
+              <th scope="row" class="px-3 py-2 font-normal"><a href="https://majordomus.dev/cs/registry/capabilities/plan-model/" class="font-mono text-xs text-heading hover:text-fg-brand hover:underline">plan.model</a></th>
+              <td class="px-3 py-2 font-mono text-xs"><span class="text-body-subtle">—<span class="sr-only">žádné</span></span></td>
+              <td class="px-3 py-2 font-mono text-xs"><a href="https://majordomus.dev/cs/docs/api/plan/#op-plan-model" class="text-fg-brand hover:underline">GET /api/v1/plan</a></td>
+              <td class="px-3 py-2 font-mono text-xs"><span class="text-body">majordomus_plan</span></td>
+            </tr>
+            <tr class="align-baseline">
+              <th scope="row" class="px-3 py-2 font-normal"><a href="https://majordomus.dev/cs/registry/capabilities/plan-next/" class="font-mono text-xs text-heading hover:text-fg-brand hover:underline">plan.next</a></th>
+              <td class="px-3 py-2 font-mono text-xs"><span class="text-body-subtle">—<span class="sr-only">žádné</span></span></td>
+              <td class="px-3 py-2 font-mono text-xs"><a href="https://majordomus.dev/cs/docs/api/plan/#op-plan-next" class="text-fg-brand hover:underline">GET /api/v1/plan/next</a></td>
+              <td class="px-3 py-2 font-mono text-xs"><span class="text-body">majordomus_plan_next</span></td>
+            </tr>
+            <tr class="align-baseline">
+              <th scope="row" class="px-3 py-2 font-normal"><a href="https://majordomus.dev/cs/registry/capabilities/plan-record/" class="font-mono text-xs text-heading hover:text-fg-brand hover:underline">plan.record</a></th>
+              <td class="px-3 py-2 font-mono text-xs"><span class="text-body-subtle">—<span class="sr-only">žádné</span></span></td>
+              <td class="px-3 py-2 font-mono text-xs"><a href="https://majordomus.dev/cs/docs/api/plan/#op-plan-record" class="text-fg-brand hover:underline">GET /api/v1/plan/record</a></td>
+              <td class="px-3 py-2 font-mono text-xs"><span class="text-body">majordomus_plan_record</span></td>
+            </tr>
+            <tr class="align-baseline">
+              <th scope="row" class="px-3 py-2 font-normal"><a href="https://majordomus.dev/cs/registry/capabilities/plan-roadmap/" class="font-mono text-xs text-heading hover:text-fg-brand hover:underline">plan.roadmap</a></th>
+              <td class="px-3 py-2 font-mono text-xs"><span class="text-body-subtle">—<span class="sr-only">žádné</span></span></td>
+              <td class="px-3 py-2 font-mono text-xs"><a href="https://majordomus.dev/cs/docs/api/plan/#op-plan-roadmap" class="text-fg-brand hover:underline">GET /api/v1/plan/roadmap</a></td>
+              <td class="px-3 py-2 font-mono text-xs"><span class="text-body">majordomus_plan_roadmap</span></td>
+            </tr>
+            <tr class="align-baseline">
+              <th scope="row" class="px-3 py-2 font-normal"><a href="https://majordomus.dev/cs/registry/capabilities/plan-status/" class="font-mono text-xs text-heading hover:text-fg-brand hover:underline">plan.status</a></th>
+              <td class="px-3 py-2 font-mono text-xs"><span class="text-body-subtle">—<span class="sr-only">žádné</span></span></td>
+              <td class="px-3 py-2 font-mono text-xs"><a href="https://majordomus.dev/cs/docs/api/plan/#op-plan-status" class="text-fg-brand hover:underline">GET /api/v1/plan/status</a></td>
+              <td class="px-3 py-2 font-mono text-xs"><span class="text-body">majordomus_plan_status</span></td>
+            </tr>
+            <tr class="align-baseline">
+              <th scope="row" class="px-3 py-2 font-normal"><a href="https://majordomus.dev/cs/registry/capabilities/plan-transition/" class="font-mono text-xs text-heading hover:text-fg-brand hover:underline">plan.transition</a></th>
+              <td class="px-3 py-2 font-mono text-xs"><span class="text-body-subtle">—<span class="sr-only">žádné</span></span></td>
+              <td class="px-3 py-2 font-mono text-xs"><a href="https://majordomus.dev/cs/docs/api/plan/#op-plan-transition" class="text-fg-brand hover:underline">POST /api/v1/plan/transition</a></td>
+              <td class="px-3 py-2 font-mono text-xs"><span class="text-body">majordomus_plan_transition</span></td>
+            </tr>
+            <tr class="align-baseline">
+              <th scope="row" class="px-3 py-2 font-normal"><a href="https://majordomus.dev/cs/registry/capabilities/plan-validate/" class="font-mono text-xs text-heading hover:text-fg-brand hover:underline">plan.validate</a></th>
+              <td class="px-3 py-2 font-mono text-xs"><span class="text-body-subtle">—<span class="sr-only">žádné</span></span></td>
+              <td class="px-3 py-2 font-mono text-xs"><a href="https://majordomus.dev/cs/docs/api/plan/#op-plan-validate" class="text-fg-brand hover:underline">GET /api/v1/plan/validate</a></td>
+              <td class="px-3 py-2 font-mono text-xs"><span class="text-body">majordomus_plan_validate</span></td>
+            </tr>
+            <tr class="align-baseline">
+              <th scope="row" class="px-3 py-2 font-normal"><a href="https://majordomus.dev/cs/registry/capabilities/plan-waves/" class="font-mono text-xs text-heading hover:text-fg-brand hover:underline">plan.waves</a></th>
+              <td class="px-3 py-2 font-mono text-xs"><span class="text-body-subtle">—<span class="sr-only">žádné</span></span></td>
+              <td class="px-3 py-2 font-mono text-xs"><a href="https://majordomus.dev/cs/docs/api/plan/#op-plan-waves" class="text-fg-brand hover:underline">GET /api/v1/plan/waves</a></td>
+              <td class="px-3 py-2 font-mono text-xs"><span class="text-body">majordomus_plan_waves</span></td>
+            </tr>
+            <tr class="align-baseline">
+              <th scope="row" class="px-3 py-2 font-normal"><a href="https://majordomus.dev/cs/registry/capabilities/devtask-issue/" class="font-mono text-xs text-heading hover:text-fg-brand hover:underline">devtask.issue</a></th>
+              <td class="px-3 py-2 font-mono text-xs"><a href="https://majordomus.dev/cs/docs/cli/devtask/issue/" class="text-fg-brand hover:underline">majordomus devtask issue</a></td>
+              <td class="px-3 py-2 font-mono text-xs"><a href="https://majordomus.dev/cs/docs/api/devtask/#op-devtask-issue" class="text-fg-brand hover:underline">GET /api/v1/devtask/issue</a></td>
+              <td class="px-3 py-2 font-mono text-xs"><span class="text-body">majordomus_devtask</span></td>
+            </tr>
+            <tr class="align-baseline">
+              <th scope="row" class="px-3 py-2 font-normal"><a href="https://majordomus.dev/cs/registry/capabilities/devtask-milestone/" class="font-mono text-xs text-heading hover:text-fg-brand hover:underline">devtask.milestone</a></th>
+              <td class="px-3 py-2 font-mono text-xs"><a href="https://majordomus.dev/cs/docs/cli/devtask/milestone/" class="text-fg-brand hover:underline">majordomus devtask milestone</a></td>
+              <td class="px-3 py-2 font-mono text-xs"><a href="https://majordomus.dev/cs/docs/api/devtask/#op-devtask-milestone" class="text-fg-brand hover:underline">GET /api/v1/devtask/milestone</a></td>
+              <td class="px-3 py-2 font-mono text-xs"><span class="text-body">majordomus_devtask_milestone</span></td>
+            </tr>
+            <tr class="align-baseline">
+              <th scope="row" class="px-3 py-2 font-normal"><a href="https://majordomus.dev/cs/registry/capabilities/intents-binding/" class="font-mono text-xs text-heading hover:text-fg-brand hover:underline">intents.binding</a></th>
+              <td class="px-3 py-2 font-mono text-xs"><a href="https://majordomus.dev/cs/docs/cli/intent/binding/" class="text-fg-brand hover:underline">majordomus intent binding</a></td>
+              <td class="px-3 py-2 font-mono text-xs"><a href="https://majordomus.dev/cs/docs/api/intents/#op-intents-binding" class="text-fg-brand hover:underline">GET /api/v1/intents/binding</a></td>
+              <td class="px-3 py-2 font-mono text-xs"><span class="text-body">majordomus_intent_binding</span></td>
+            </tr>
+            <tr class="align-baseline">
+              <th scope="row" class="px-3 py-2 font-normal"><a href="https://majordomus.dev/cs/registry/capabilities/intents-coverage/" class="font-mono text-xs text-heading hover:text-fg-brand hover:underline">intents.coverage</a></th>
+              <td class="px-3 py-2 font-mono text-xs"><a href="https://majordomus.dev/cs/docs/cli/intent/coverage/" class="text-fg-brand hover:underline">majordomus intent coverage</a></td>
+              <td class="px-3 py-2 font-mono text-xs"><a href="https://majordomus.dev/cs/docs/api/intents/#op-intents-coverage" class="text-fg-brand hover:underline">GET /api/v1/intents/coverage</a></td>
+              <td class="px-3 py-2 font-mono text-xs"><span class="text-body">majordomus_intent_coverage</span></td>
+            </tr>
+            <tr class="align-baseline">
+              <th scope="row" class="px-3 py-2 font-normal"><a href="https://majordomus.dev/cs/registry/capabilities/intents-list/" class="font-mono text-xs text-heading hover:text-fg-brand hover:underline">intents.list</a></th>
+              <td class="px-3 py-2 font-mono text-xs"><a href="https://majordomus.dev/cs/docs/cli/intent/list/" class="text-fg-brand hover:underline">majordomus intent list</a></td>
+              <td class="px-3 py-2 font-mono text-xs"><a href="https://majordomus.dev/cs/docs/api/intents/#op-intents-list" class="text-fg-brand hover:underline">GET /api/v1/intents</a></td>
+              <td class="px-3 py-2 font-mono text-xs"><span class="text-body">majordomus_intents</span></td>
+            </tr>
+            <tr class="align-baseline">
+              <th scope="row" class="px-3 py-2 font-normal"><a href="https://majordomus.dev/cs/registry/capabilities/intents-preflight/" class="font-mono text-xs text-heading hover:text-fg-brand hover:underline">intents.preflight</a></th>
+              <td class="px-3 py-2 font-mono text-xs"><a href="https://majordomus.dev/cs/docs/cli/intent/preflight/" class="text-fg-brand hover:underline">majordomus intent preflight</a></td>
+              <td class="px-3 py-2 font-mono text-xs"><a href="https://majordomus.dev/cs/docs/api/intents/#op-intents-preflight" class="text-fg-brand hover:underline">GET /api/v1/intents/preflight</a></td>
+              <td class="px-3 py-2 font-mono text-xs"><span class="text-body">majordomus_intent_preflight</span></td>
+            </tr>
+            <tr class="align-baseline">
+              <th scope="row" class="px-3 py-2 font-normal"><a href="https://majordomus.dev/cs/registry/capabilities/intents-propose/" class="font-mono text-xs text-heading hover:text-fg-brand hover:underline">intents.propose</a></th>
+              <td class="px-3 py-2 font-mono text-xs"><a href="https://majordomus.dev/cs/docs/cli/intent/propose/" class="text-fg-brand hover:underline">majordomus intent propose</a></td>
+              <td class="px-3 py-2 font-mono text-xs"><a href="https://majordomus.dev/cs/docs/api/intents/#op-intents-propose" class="text-fg-brand hover:underline">POST /api/v1/intents/propose</a></td>
+              <td class="px-3 py-2 font-mono text-xs"><span class="text-body">majordomus_intent_propose</span></td>
+            </tr>
+            <tr class="align-baseline">
+              <th scope="row" class="px-3 py-2 font-normal"><a href="https://majordomus.dev/cs/registry/capabilities/intents-record/" class="font-mono text-xs text-heading hover:text-fg-brand hover:underline">intents.record</a></th>
+              <td class="px-3 py-2 font-mono text-xs"><a href="https://majordomus.dev/cs/docs/cli/intent/show/" class="text-fg-brand hover:underline">majordomus intent show</a></td>
+              <td class="px-3 py-2 font-mono text-xs"><a href="https://majordomus.dev/cs/docs/api/intents/#op-intents-record" class="text-fg-brand hover:underline">GET /api/v1/intents/record</a></td>
+              <td class="px-3 py-2 font-mono text-xs"><span class="text-body">majordomus_intent_record</span></td>
+            </tr>
+            <tr class="align-baseline">
+              <th scope="row" class="px-3 py-2 font-normal"><a href="https://majordomus.dev/cs/registry/capabilities/intents-validate/" class="font-mono text-xs text-heading hover:text-fg-brand hover:underline">intents.validate</a></th>
+              <td class="px-3 py-2 font-mono text-xs"><a href="https://majordomus.dev/cs/docs/cli/intent/validate/" class="text-fg-brand hover:underline">majordomus intent validate</a></td>
+              <td class="px-3 py-2 font-mono text-xs"><a href="https://majordomus.dev/cs/docs/api/intents/#op-intents-validate" class="text-fg-brand hover:underline">GET /api/v1/intents/validate</a></td>
+              <td class="px-3 py-2 font-mono text-xs"><span class="text-body">majordomus_intent_validate</span></td>
+            </tr>
+            <tr class="align-baseline">
+              <th scope="row" class="px-3 py-2 font-normal"><a href="https://majordomus.dev/cs/registry/capabilities/intent-realization-explain/" class="font-mono text-xs text-heading hover:text-fg-brand hover:underline">intent_realization.explain</a></th>
+              <td class="px-3 py-2 font-mono text-xs"><a href="https://majordomus.dev/cs/docs/cli/intent/explain/" class="text-fg-brand hover:underline">majordomus intent explain</a></td>
+              <td class="px-3 py-2 font-mono text-xs"><a href="https://majordomus.dev/cs/docs/api/intent-realization/#op-intent_realization-explain" class="text-fg-brand hover:underline">GET /api/v1/intents/explain</a></td>
+              <td class="px-3 py-2 font-mono text-xs"><span class="text-body">majordomus_intent_explain</span></td>
+            </tr>
+            <tr class="align-baseline">
+              <th scope="row" class="px-3 py-2 font-normal"><a href="https://majordomus.dev/cs/registry/capabilities/intent-realization-work/" class="font-mono text-xs text-heading hover:text-fg-brand hover:underline">intent_realization.work</a></th>
+              <td class="px-3 py-2 font-mono text-xs"><a href="https://majordomus.dev/cs/docs/cli/intent/realization/" class="text-fg-brand hover:underline">majordomus intent realization</a></td>
+              <td class="px-3 py-2 font-mono text-xs"><a href="https://majordomus.dev/cs/docs/api/intent-realization/#op-intent_realization-work" class="text-fg-brand hover:underline">GET /api/v1/intents/realization</a></td>
+              <td class="px-3 py-2 font-mono text-xs"><span class="text-body">majordomus_intent_realization</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <dl class="mt-4 grid gap-4 text-sm sm:grid-cols-2">
+        <div class="min-w-0"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">v Cockpitu, běžícího serveru</dt><dd class="mt-1"><code class="font-mono text-xs text-body">/cockpit/intents</code> <span class="text-heading">Záměry</span></dd></div>
+      </dl>
+    </section><section id="evidence" class="mt-12 scroll-mt-24" aria-labelledby="evidence-h">
+      <h2 id="evidence-h" class="text-xl font-semibold tracking-tight text-heading">Důkazy</h2>
+      <h3 class="mt-4 text-base font-semibold text-heading">Co je zaručeno</h3>
+      <p class="mt-1 text-sm text-body">Každé tvrzení, které tato funkce pojmenovává, se stavem, který deklaruje jeho řádek, verdiktem, který podporují zaznamenané běhy, a testem, který o něm rozhoduje.</p>
+      <ul class="mt-3 divide-y divide-default rounded-base border border-default bg-neutral-primary-soft">
+        <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-3">
+          <span class="inline-flex gap-1"><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed" data-status-kind="claim"><span aria-hidden="true">○</span><span class="sr-only">deklarovaný stav: </span>zaručeno</span> <span class="mj-badge mj-badge--not-run relative" data-status="not-run" data-status-kind="proof" data-claim="project-schema"><span aria-hidden="true">○</span><span class="sr-only">zaznamenané důkazy: </span>nespuštěno</span>
+</span>
+          <a href="https://majordomus.dev/cs/guarantees/project-schema/" class="min-w-0 text-sm text-heading hover:text-fg-brand hover:underline">Milníky a úkoly jsou kanonické soubory repozitáře a klíč, který nikdo nečte, je chyba</a>
+          <span class="ml-auto min-w-0 break-all font-mono text-xs text-body-subtle" title="test, který toto tvrzení rozhoduje">test/cases/40_project_model.sh</span>
+        </li>
+        <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-3">
+          <span class="inline-flex gap-1"><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed" data-status-kind="claim"><span aria-hidden="true">○</span><span class="sr-only">deklarovaný stav: </span>zaručeno</span> <span class="mj-badge mj-badge--not-run relative" data-status="not-run" data-status-kind="proof" data-claim="project-status-derived"><span aria-hidden="true">○</span><span class="sr-only">zaznamenané důkazy: </span>nespuštěno</span>
+</span>
+          <a href="https://majordomus.dev/cs/guarantees/project-status-derived/" class="min-w-0 text-sm text-heading hover:text-fg-brand hover:underline">Stav úkolů a milníků se odvozuje ze zaznamenaných faktů a nikde se neukládá</a>
+          <span class="ml-auto min-w-0 break-all font-mono text-xs text-body-subtle" title="test, který toto tvrzení rozhoduje">test/cases/41_project_status.sh</span>
+        </li>
+        <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-3">
+          <span class="inline-flex gap-1"><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed" data-status-kind="claim"><span aria-hidden="true">○</span><span class="sr-only">deklarovaný stav: </span>zaručeno</span> <span class="mj-badge mj-badge--not-run relative" data-status="not-run" data-status-kind="proof" data-claim="dag-validation"><span aria-hidden="true">○</span><span class="sr-only">zaznamenané důkazy: </span>nespuštěno</span>
+</span>
+          <a href="https://majordomus.dev/cs/guarantees/dag-validation/" class="min-w-0 text-sm text-heading hover:text-fg-brand hover:underline">Cyklus, závislost sama na sebe a závislost na neexistujícím úkolu jsou každé odmítnuty jmenovitě</a>
+          <span class="ml-auto min-w-0 break-all font-mono text-xs text-body-subtle" title="test, který toto tvrzení rozhoduje">test/cases/42_dag_waves.sh</span>
+        </li>
+        <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-3">
+          <span class="inline-flex gap-1"><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed" data-status-kind="claim"><span aria-hidden="true">○</span><span class="sr-only">deklarovaný stav: </span>zaručeno</span> <span class="mj-badge mj-badge--not-run relative" data-status="not-run" data-status-kind="proof" data-claim="execution-waves"><span aria-hidden="true">○</span><span class="sr-only">zaznamenané důkazy: </span>nespuštěno</span>
+</span>
+          <a href="https://majordomus.dev/cs/guarantees/execution-waves/" class="min-w-0 text-sm text-heading hover:text-fg-brand hover:underline">Vlny provádění se počítají z grafu a úkoly v jedné vlně, které sahají na stejné cesty, se hlásí jako serializované</a>
+          <span class="ml-auto min-w-0 break-all font-mono text-xs text-body-subtle" title="test, který toto tvrzení rozhoduje">test/cases/42_dag_waves.sh</span>
+        </li>
+        <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-3">
+          <span class="inline-flex gap-1"><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed" data-status-kind="claim"><span aria-hidden="true">○</span><span class="sr-only">deklarovaný stav: </span>zaručeno</span> <span class="mj-badge mj-badge--not-run relative" data-status="not-run" data-status-kind="proof" data-claim="evidence-gates-done"><span aria-hidden="true">○</span><span class="sr-only">zaznamenané důkazy: </span>nespuštěno</span>
+</span>
+          <a href="https://majordomus.dev/cs/guarantees/evidence-gates-done/" class="min-w-0 text-sm text-heading hover:text-fg-brand hover:underline">Úkol nelze dokončit, dokud chybí požadovaný důkaz</a>
+          <span class="ml-auto min-w-0 break-all font-mono text-xs text-body-subtle" title="test, který toto tvrzení rozhoduje">test/cases/41_project_status.sh</span>
+        </li>
+        <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-3">
+          <span class="inline-flex gap-1"><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed" data-status-kind="claim"><span aria-hidden="true">○</span><span class="sr-only">deklarovaný stav: </span>zaručeno</span> <span class="mj-badge mj-badge--not-run relative" data-status="not-run" data-status-kind="proof" data-claim="roadmap-derived"><span aria-hidden="true">○</span><span class="sr-only">zaznamenané důkazy: </span>nespuštěno</span>
+</span>
+          <a href="https://majordomus.dev/cs/guarantees/roadmap-derived/" class="min-w-0 text-sm text-heading hover:text-fg-brand hover:underline">Plán rozvoje se odvozuje ze stavu milníků a žádný dokument nesmí být jeho druhou autoritou</a>
+          <span class="ml-auto min-w-0 break-all font-mono text-xs text-body-subtle" title="test, který toto tvrzení rozhoduje">test/cases/49_roadmap_doctrine.sh</span>
+        </li>
+        <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-3">
+          <span class="inline-flex gap-1"><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed" data-status-kind="claim"><span aria-hidden="true">○</span><span class="sr-only">deklarovaný stav: </span>zaručeno</span> <span class="mj-badge mj-badge--not-run relative" data-status="not-run" data-status-kind="proof" data-claim="github-projection"><span aria-hidden="true">○</span><span class="sr-only">zaznamenané důkazy: </span>nespuštěno</span>
+</span>
+          <a href="https://majordomus.dev/cs/guarantees/github-projection/" class="min-w-0 text-sm text-heading hover:text-fg-brand hover:underline">Milníky a úkoly na GitHubu se generují z kanonického modelu a ručně upravená generovaná oblast se hlásí, ne přepisuje</a>
+          <span class="ml-auto min-w-0 break-all font-mono text-xs text-body-subtle" title="test, který toto tvrzení rozhoduje">test/cases/45_github_projection.sh</span>
+        </li>
+        <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-3">
+          <span class="inline-flex gap-1"><span class="mj-badge mj-badge--rejected relative" data-status="rejected" data-status-kind="claim"><span aria-hidden="true">✕</span><span class="sr-only">deklarovaný stav: </span>odmítnuto</span> <span class="mj-badge mj-badge--no-test relative" data-status="no-test" data-status-kind="proof" data-claim="task-dependencies"><span aria-hidden="true">○</span><span class="sr-only">zaznamenané důkazy: </span>žádný test</span>
+</span>
+          <a href="https://majordomus.dev/cs/guarantees/task-dependencies/" class="min-w-0 text-sm text-heading hover:text-fg-brand hover:underline">Záznam úlohy nemá závislosti; posloupnost mezi relacemi se nereprezentuje</a>
+        </li>
+        <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-3">
+          <span class="inline-flex gap-1"><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed" data-status-kind="claim"><span aria-hidden="true">○</span><span class="sr-only">deklarovaný stav: </span>zaručeno</span> <span class="mj-badge mj-badge--stale relative" data-status="stale" data-status-kind="proof" data-claim="intent-stage-derived"><span aria-hidden="true">!</span><span class="sr-only">zaznamenané důkazy: </span>zastaralé</span>
+</span>
+          <a href="https://majordomus.dev/cs/guarantees/intent-stage-derived/" class="min-w-0 text-sm text-heading hover:text-fg-brand hover:underline">Fáze záměru se odvozuje z milníků, které jej realizují, a každé kritérium z knihy důkazů; záměr je naplněn, jen dokud má každé kritérium aktuální úspěšný běh</a>
+          <span class="ml-auto min-w-0 break-all font-mono text-xs text-body-subtle" title="test, který toto tvrzení rozhoduje">test/cases/367_an_intent_is_satisfied_only_by_evidence.sh</span>
+        </li>
+        <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-3">
+          <span class="inline-flex gap-1"><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed" data-status-kind="claim"><span aria-hidden="true">○</span><span class="sr-only">deklarovaný stav: </span>zaručeno</span> <span class="mj-badge mj-badge--stale relative" data-status="stale" data-status-kind="proof" data-claim="intent-links-resolve"><span aria-hidden="true">!</span><span class="sr-only">zaznamenané důkazy: </span>zastaralé</span>
+</span>
+          <a href="https://majordomus.dev/cs/guarantees/intent-links-resolve/" class="min-w-0 text-sm text-heading hover:text-fg-brand hover:underline">Záměr, jehož kritérium jmenuje důkaz, který se nikam nevyřeší, se odmítne s uvedením jména</a>
+          <span class="ml-auto min-w-0 break-all font-mono text-xs text-body-subtle" title="test, který toto tvrzení rozhoduje">test/cases/367_an_intent_is_satisfied_only_by_evidence.sh</span>
+        </li>
+        <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-3">
+          <span class="inline-flex gap-1"><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed" data-status-kind="claim"><span aria-hidden="true">○</span><span class="sr-only">deklarovaný stav: </span>zaručeno</span> <span class="mj-badge mj-badge--stale relative" data-status="stale" data-status-kind="proof" data-claim="intent-criteria-covered"><span aria-hidden="true">!</span><span class="sr-only">zaznamenané důkazy: </span>zastaralé</span>
+</span>
+          <a href="https://majordomus.dev/cs/guarantees/intent-criteria-covered/" class="min-w-0 text-sm text-heading hover:text-fg-brand hover:underline">Jakmile pod záměrem existuje práce, odmítne se s uvedením jména kritérium, kterému neslouží žádný úkol, úkol pod jeho milníky, který neslouží ničemu, i odkaz na neexistující kritérium</a>
+          <span class="ml-auto min-w-0 break-all font-mono text-xs text-body-subtle" title="test, který toto tvrzení rozhoduje">test/cases/386_a_plan_is_held_to_its_intent.sh</span>
+        </li>
+        <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-3">
+          <span class="inline-flex gap-1"><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed" data-status-kind="claim"><span aria-hidden="true">○</span><span class="sr-only">deklarovaný stav: </span>zaručeno</span> <span class="mj-badge mj-badge--stale relative" data-status="stale" data-status-kind="proof" data-claim="intent-plan-reviewed"><span aria-hidden="true">!</span><span class="sr-only">zaznamenané důkazy: </span>zastaralé</span>
+</span>
+          <a href="https://majordomus.dev/cs/guarantees/intent-plan-reviewed/" class="min-w-0 text-sm text-heading hover:text-fg-brand hover:underline">Mezera, která nechává kritérium bez odpovědi, se odmítne a úkol sloužící záměru, který začal bez kritiky nebo při otevřeném blokujícím nálezu, neprojde validací záměru</a>
+          <span class="ml-auto min-w-0 break-all font-mono text-xs text-body-subtle" title="test, který toto tvrzení rozhoduje">test/cases/386_a_plan_is_held_to_its_intent.sh</span>
+        </li>
+        <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-3">
+          <span class="inline-flex gap-1"><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed" data-status-kind="claim"><span aria-hidden="true">○</span><span class="sr-only">deklarovaný stav: </span>zaručeno</span> <span class="mj-badge mj-badge--stale relative" data-status="stale" data-status-kind="proof" data-claim="intent-realization-held-to-evidence"><span aria-hidden="true">!</span><span class="sr-only">zaznamenané důkazy: </span>zastaralé</span>
+</span>
+          <a href="https://majordomus.dev/cs/guarantees/intent-realization-held-to-evidence/" class="min-w-0 text-sm text-heading hover:text-fg-brand hover:underline">Práce realizující záměr se spojuje napříč relacemi, poskytovateli a předávkami a záměr, jehož milníky jsou všechny uzavřené, zatímco důkaz kritéria selhává, se odmítne s uvedením tohoto kritéria</a>
+          <span class="ml-auto min-w-0 break-all font-mono text-xs text-body-subtle" title="test, který toto tvrzení rozhoduje">test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh</span>
+        </li>
+        <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-3">
+          <span class="inline-flex gap-1"><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed" data-status-kind="claim"><span aria-hidden="true">○</span><span class="sr-only">deklarovaný stav: </span>zaručeno</span> <span class="mj-badge mj-badge--stale relative" data-status="stale" data-status-kind="proof" data-claim="intent-preflight-names-the-intent"><span aria-hidden="true">!</span><span class="sr-only">zaznamenané důkazy: </span>zastaralé</span>
+</span>
+          <a href="https://majordomus.dev/cs/guarantees/intent-preflight-names-the-intent/" class="min-w-0 text-sm text-heading hover:text-fg-brand hover:underline">Zeptáte-li se před prací na úkolu, `intent preflight` jmenuje záměry, kterým úkol slouží, s platnou správou, nebo odmítne s uvedením příčiny</a>
+          <span class="ml-auto min-w-0 break-all font-mono text-xs text-body-subtle" title="test, který toto tvrzení rozhoduje">apps/majordomus-cli/tests/intent.rs</span>
+        </li>
+        <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-3">
+          <span class="inline-flex gap-1"><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed" data-status-kind="claim"><span aria-hidden="true">○</span><span class="sr-only">deklarovaný stav: </span>zaručeno</span> <span class="mj-badge mj-badge--stale relative" data-status="stale" data-status-kind="proof" data-claim="intent-cockpit-pages"><span aria-hidden="true">!</span><span class="sr-only">zaznamenané důkazy: </span>zastaralé</span>
+</span>
+          <a href="https://majordomus.dev/cs/guarantees/intent-cockpit-pages/" class="min-w-0 text-sm text-heading hover:text-fg-brand hover:underline">Cockpit zobrazuje každý záměr s odvozenou fází na /cockpit/intents a kritéria, důkazy, sloužící úkoly a realizující práci jednoho záměru na /cockpit/intents/&lt;id&gt;</a>
+          <span class="ml-auto min-w-0 break-all font-mono text-xs text-body-subtle" title="test, který toto tvrzení rozhoduje">apps/majordomus-cli/tests/intent_realization.rs</span>
+        </li>
+      </ul>
+      <h3 class="mt-6 text-base font-semibold text-heading">Spustitelné případy užití</h3>
+      <ul class="mt-3 grid gap-3 sm:grid-cols-2">
+        <li><a href="https://majordomus.dev/cs/use-cases/plan-the-work-as-data/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs uppercase tracking-wide text-body-subtle">knowledge</span><span class="mt-1 text-sm font-medium text-heading">Držet plán jako milníky a úkoly, které nástroj umí validovat</span></a></li>
+        <li><a href="https://majordomus.dev/cs/use-cases/deliver-issues-in-waves/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs uppercase tracking-wide text-body-subtle">workers</span><span class="mt-1 text-sm font-medium text-heading">Dodávat úkoly ve vlnách, které graf spočítá, a vzít si další</span></a></li>
+        <li><a href="https://majordomus.dev/cs/use-cases/complete-an-issue-only-with-its-evidence/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs uppercase tracking-wide text-body-subtle">completion</span><span class="mt-1 text-sm font-medium text-heading">Dokončit úkol, jen když existují jeho důkazy</span></a></li>
+      </ul>
+      <h3 class="mt-6 text-base font-semibold text-heading">Pravidla, která jej drží</h3>
+      <ul class="mt-3 divide-y divide-default rounded-base border border-default bg-neutral-primary-soft"><li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-3">
+          <span class="mj-badge mj-badge--blocking relative" data-status="blocking"><span aria-hidden="true">✕</span>blokující</span>
+<a href="https://majordomus.dev/cs/doctrines/project-integrity/" class="min-w-0 text-sm text-heading hover:text-fg-brand hover:underline">Integrita modelu projektu</a><code class="ms-auto font-mono text-xs text-body-subtle">majordomus.project-integrity</code>
+        </li><li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-3">
+          <span class="mj-badge mj-badge--blocking relative" data-status="blocking"><span aria-hidden="true">✕</span>blokující</span>
+<a href="https://majordomus.dev/cs/doctrines/dag-integrity/" class="min-w-0 text-sm text-heading hover:text-fg-brand hover:underline">Integrita grafu závislostí</a><code class="ms-auto font-mono text-xs text-body-subtle">majordomus.dag-integrity</code>
+        </li><li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-3">
+          <span class="mj-badge mj-badge--blocking relative" data-status="blocking"><span aria-hidden="true">✕</span>blokující</span>
+<a href="https://majordomus.dev/cs/doctrines/roadmap-integrity/" class="min-w-0 text-sm text-heading hover:text-fg-brand hover:underline">Plán rozvoje je projekce, nikdy dokument</a><code class="ms-auto font-mono text-xs text-body-subtle">majordomus.roadmap-integrity</code>
+        </li>
+      </ul>
+    </section>
+    <section id="usage" class="mt-12 scroll-mt-24" aria-labelledby="usage-h">
+      <h2 id="usage-h" class="text-xl font-semibold tracking-tight text-heading">Použití</h2>
+      <h3 class="mt-4 text-base font-semibold text-heading">Příkazy, které to spouštějí</h3>
+      <ul class="mt-3 divide-y divide-default rounded-base border border-default bg-neutral-primary-soft">
+        <li class="p-3">
+          <p class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            <a href="https://majordomus.dev/cs/commands/plan/" class="font-mono text-sm font-semibold text-heading hover:text-fg-brand hover:underline">majordomus plan</a>
+            <span class="font-mono text-xs text-body-subtle">begin</span>
+          </p>
+          <p class="mt-1 text-sm text-body">Model milníků a úkolů — ověřte ho, přečtěte ho a proveďte jím jeden úkol.</p>
+        </li>
+      </ul>
+      <h3 class="mt-6 text-base font-semibold text-heading">Z příkazové řádky spustitelného souboru</h3>
+      <p class="mt-1 text-sm text-body">Synopse každého, jak ji vypisuje nápověda samotného spustitelného souboru.</p>
+      <ul class="mt-3 divide-y divide-default rounded-base border border-default bg-neutral-primary-soft">
+        <li class="p-3">
+          <a href="https://majordomus.dev/cs/docs/cli/devtask/issue/" class="break-words font-mono text-sm text-heading hover:text-fg-brand hover:underline">majordomus devtask issue [OPTIONS] &lt;ID&gt;</a><p class="mt-1 text-sm text-body">Jeden úkol jako spustitelná vývojová úloha, každé pole nese, odkud pochází</p>
+        </li>
+        <li class="p-3">
+          <a href="https://majordomus.dev/cs/docs/cli/devtask/milestone/" class="break-words font-mono text-sm text-heading hover:text-fg-brand hover:underline">majordomus devtask milestone [OPTIONS] &lt;ID&gt;</a><p class="mt-1 text-sm text-body">Jeden milník jako proveditelný graf závislostí: připravené, blokované, paralelizovatelné, kritické blokátory, cykly</p>
+        </li>
+        <li class="p-3">
+          <a href="https://majordomus.dev/cs/docs/cli/intent/list/" class="break-words font-mono text-sm text-heading hover:text-fg-brand hover:underline">majordomus intent list [OPTIONS]</a><p class="mt-1 text-sm text-body">Každý záměr, s fází odvozenou z jeho milníků a důkazů</p>
+        </li>
+        <li class="p-3">
+          <a href="https://majordomus.dev/cs/docs/cli/intent/show/" class="break-words font-mono text-sm text-heading hover:text-fg-brand hover:underline">majordomus intent show [OPTIONS] &lt;ID&gt;</a><p class="mt-1 text-sm text-body">Jeden záměr celý: odvozený stav každého milníku a stav důkazů každého kritéria</p>
+        </li>
+        <li class="p-3">
+          <a href="https://majordomus.dev/cs/docs/cli/intent/validate/" class="break-words font-mono text-sm text-heading hover:text-fg-brand hover:underline">majordomus intent validate [OPTIONS]</a><p class="mt-1 text-sm text-body">Každý nález nad záměry; ukončení 10, když je některý selháním</p>
+        </li>
+        <li class="p-3">
+          <a href="https://majordomus.dev/cs/docs/cli/intent/coverage/" class="break-words font-mono text-sm text-heading hover:text-fg-brand hover:underline">majordomus intent coverage [OPTIONS]</a><p class="mt-1 text-sm text-body">Která práce nese které kritérium a důvod, proč každý úkol existuje</p>
+        </li>
+        <li class="p-3">
+          <a href="https://majordomus.dev/cs/docs/cli/intent/preflight/" class="break-words font-mono text-sm text-heading hover:text-fg-brand hover:underline">majordomus intent preflight [OPTIONS]</a><p class="mt-1 text-sm text-body">Kterému záměru slouží práce na úkolu nebo na některých cestách, zda je to údržba, nebo proč nesmí pokračovat; ukončení 10, když je odmítnuta</p>
+        </li>
+        <li class="p-3">
+          <a href="https://majordomus.dev/cs/docs/cli/intent/binding/" class="break-words font-mono text-sm text-heading hover:text-fg-brand hover:underline">majordomus intent binding [OPTIONS]</a><p class="mt-1 text-sm text-body">K čemu je práce vázána, než začne: úkol, záměr nebo cesty, které pojmenovává, přeložené na kritéria, kterým slouží, nebo výjimka, kterou politika deklaruje, se dvěma pinky, které porovnává obnovený worker; exit 10 při odmítnutí</p>
+        </li>
+        <li class="p-3">
+          <a href="https://majordomus.dev/cs/docs/cli/intent/realization/" class="break-words font-mono text-sm text-heading hover:text-fg-brand hover:underline">majordomus intent realization [OPTIONS]</a><p class="mt-1 text-sm text-body">Která práce realizuje který záměr — úlohy, epizody, provideři, předávky, nároky peerů — každá vazba s původem a nesplněná kritéria a drift každého záměru; exit 10, když je záměr, jehož milníky jsou všechny DONE, v rozporu se svými důkazy</p>
+        </li>
+        <li class="p-3">
+          <a href="https://majordomus.dev/cs/docs/cli/intent/explain/" class="break-words font-mono text-sm text-heading hover:text-fg-brand hover:underline">majordomus intent explain [OPTIONS] &lt;ID&gt;</a><p class="mt-1 text-sm text-body">Proč záměr stojí tam, kde stojí: jeho fáze, každé kritérium, práce, která ho realizuje</p>
+        </li>
+        <li class="p-3">
+          <a href="https://majordomus.dev/cs/docs/cli/intent/propose/" class="break-words font-mono text-sm text-heading hover:text-fg-brand hover:underline">majordomus intent propose [OPTIONS]</a><p class="mt-1 text-sm text-body">Napsat nový, neplánovaný záměr: co se musí stát pravdou (ADR 0144)</p>
+        </li>
+        <li class="p-3">
+          <a href="https://majordomus.dev/cs/docs/cli/plan/delivery/" class="break-words font-mono text-sm text-heading hover:text-fg-brand hover:underline">majordomus plan delivery [OPTIONS] [ISSUE]</a><p class="mt-1 text-sm text-body">Nejzazší fáze doručení každého úkolu, s objektem, který ji dokázal, a jeho deklarovaným stavem vedle</p>
+        </li>
+        <li class="p-3">
+          <a href="https://majordomus.dev/cs/docs/cli/plan/drift/" class="break-words font-mono text-sm text-heading hover:text-fg-brand hover:underline">majordomus plan drift [OPTIONS] [ISSUE]</a><p class="mt-1 text-sm text-body">Každý rozpor mezi deklarovaným stavem úkolu a jeho dodáním — merged_not_recorded, active_without_work, done_without_trace — každý s důkazem; s --gate posuzováno proti oknu, které deklaruje .ai/repo/ci/plan.yaml</p>
+        </li>
+      </ul>
+    </section><section id="provenance" class="mt-12 scroll-mt-24" aria-labelledby="provenance-h">
+      <h2 id="provenance-h" class="text-xl font-semibold tracking-tight text-heading">Odkud tato stránka pochází</h2>
+      <dl class="mt-4 divide-y divide-default rounded-base border border-default bg-neutral-primary-soft text-sm">
+        <div class="grid gap-1 p-3 sm:grid-cols-[10rem_minmax(0,1fr)]"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">soubor</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">.ai/repo/features/planning.md</dd></div>
+        <div class="grid gap-1 p-3 sm:grid-cols-[10rem_minmax(0,1fr)]"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">stejná odpověď</dt><dd class="min-w-0 font-mono text-xs text-heading">majordomus product show planning</dd></div>
+        <div class="grid gap-1 p-3 sm:grid-cols-[10rem_minmax(0,1fr)]"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">číst dál</dt>
+          <dd class="min-w-0 space-y-1"><p><a href="https://majordomus.dev/cs/docs/planning/" class="text-fg-brand hover:underline">Plánování — milníky, úkoly a graf mezi nimi</a></p><p><a href="https://majordomus.dev/cs/docs/roadmap/" class="text-fg-brand hover:underline">Plán rozvoje — milníky jako graf</a></p>
+          </dd></div>
+      </dl>
+    </section>
+    <section id="related" class="mt-12 scroll-mt-24" aria-labelledby="related-h">
+      <h2 id="related-h" class="text-xl font-semibold tracking-tight text-heading">Související funkce</h2>
+      <ul class="mt-4 grid gap-3 sm:grid-cols-2"><li class="flex min-w-0 flex-col gap-1">
+          <p class="font-mono text-xs text-body-subtle" data-related-why>stejná doména</p>
+          <article class="flex h-full min-w-0 flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 focus-within:border-brand-subtle" data-feature-card="coordination">
+  <div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+    <h3 class="min-w-0 text-base font-semibold tracking-tight text-heading"><a href="https://majordomus.dev/cs/features/coordination/" class="rounded-sm hover:text-fg-brand hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-medium">Koordinace</a></h3><span class="mj-badge mj-badge--stable relative" data-status="stable" data-status-kind="feature"><span aria-hidden="true">✓</span><span class="sr-only">stav funkce: </span>stabilní</span>
+
+  </div>
+  <p class="text-sm leading-relaxed text-body">Každý worker deklaruje cesty, kterých se smí dotknout, každá relace vidí, kdo další je připojen a co oznámil, a kolize se hlásí dřív, než se commitne.</p>
+  <a href="https://majordomus.dev/cs/features/coordination/" class="mt-auto pt-1 text-sm font-medium text-fg-brand hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-medium">Prozkoumat<span class="sr-only"> koordinaci</span> &rarr;</a>
+</article>
+
+        </li><li class="flex min-w-0 flex-col gap-1">
+          <p class="font-mono text-xs text-body-subtle" data-related-why>pojmenováno touto funkcí · stejná doména</p>
+          <article class="flex h-full min-w-0 flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 focus-within:border-brand-subtle" data-feature-card="worktrees">
+  <div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+    <h3 class="min-w-0 text-base font-semibold tracking-tight text-heading"><a href="https://majordomus.dev/cs/features/worktrees/" class="rounded-sm hover:text-fg-brand hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-medium">Worktrees</a></h3><span class="mj-badge mj-badge--stable relative" data-status="stable" data-status-kind="feature"><span aria-hidden="true">✓</span><span class="sr-only">stav funkce: </span>stabilní</span>
+
+  </div>
+  <p class="text-sm leading-relaxed text-body">Worktree větve je tam, kde říká git, nikdy tam, kam ho někdo umístil, a špatně umístěný je diagnóza s nápravou, ne záhada.</p>
+  <a href="https://majordomus.dev/cs/features/worktrees/" class="mt-auto pt-1 text-sm font-medium text-fg-brand hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-medium">Prozkoumat<span class="sr-only"> worktrees</span> &rarr;</a>
+</article>
+
+        </li><li class="flex min-w-0 flex-col gap-1">
+          <p class="font-mono text-xs text-body-subtle" data-related-why>stejná doména</p>
+          <article class="flex h-full min-w-0 flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 focus-within:border-brand-subtle" data-feature-card="mesh">
+  <div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+    <h3 class="min-w-0 text-base font-semibold tracking-tight text-heading"><a href="https://majordomus.dev/cs/features/mesh/" class="rounded-sm hover:text-fg-brand hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-medium">Mesh</a></h3><span class="mj-badge mj-badge--stable relative" data-status="stable" data-status-kind="feature"><span aria-hidden="true">✓</span><span class="sr-only">stav funkce: </span>stabilní</span>
+
+  </div>
+  <p class="text-sm leading-relaxed text-body">Runtimy Majordoma jednoho repozitáře — na jednom stroji či více — se navzájem objevují, propojují se podepsaným handshakem a sdílejí relace, claimy, předávky a revize jedním replikovaným žurnálem, který přežije odpojení, pády i rozdělení sítě.</p>
+  <a href="https://majordomus.dev/cs/features/mesh/" class="mt-auto pt-1 text-sm font-medium text-fg-brand hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-medium">Prozkoumat<span class="sr-only"> mesh</span> &rarr;</a>
+</article>
+
+        </li><li class="flex min-w-0 flex-col gap-1">
+          <p class="font-mono text-xs text-body-subtle" data-related-why>stejná doména</p>
+          <article class="flex h-full min-w-0 flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 focus-within:border-brand-subtle" data-feature-card="models">
+  <div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+    <h3 class="min-w-0 text-base font-semibold tracking-tight text-heading"><a href="https://majordomus.dev/cs/features/models/" class="rounded-sm hover:text-fg-brand hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-medium">Modely</a></h3><span class="mj-badge mj-badge--stable relative" data-status="stable" data-status-kind="feature"><span aria-hidden="true">✓</span><span class="sr-only">stav funkce: </span>stabilní</span>
+
+  </div>
+  <p class="text-sm leading-relaxed text-body">Jeden deklarovaný katalog dodavatelů a modelů — schopnosti, kontext, životní cyklus, žádná vymyšlená fakta — a odpověď směrování, která říká, proč byl každý kandidát vybrán nebo vyloučen.</p>
+  <a href="https://majordomus.dev/cs/features/models/" class="mt-auto pt-1 text-sm font-medium text-fg-brand hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-medium">Prozkoumat<span class="sr-only"> modely</span> &rarr;</a>
+</article>
+
+        </li><li class="flex min-w-0 flex-col gap-1">
+          <p class="font-mono text-xs text-body-subtle" data-related-why>stejná doména</p>
+          <article class="flex h-full min-w-0 flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 focus-within:border-brand-subtle" data-feature-card="reasoning">
+  <div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+    <h3 class="min-w-0 text-base font-semibold tracking-tight text-heading"><a href="https://majordomus.dev/cs/features/reasoning/" class="rounded-sm hover:text-fg-brand hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-medium">Uvažování</a></h3><span class="mj-badge mj-badge--stable relative" data-status="stable" data-status-kind="feature"><span aria-hidden="true">✓</span><span class="sr-only">stav funkce: </span>stabilní</span>
+
+  </div>
+  <p class="text-sm leading-relaxed text-body">Podstatná nejistota se stává rozhodnutím podloženým důkazy — posoudí ho kteříkoli dostupní volitelní poradci, a není-li žádný, rozhodne se lokálně — a další relaci se předá jako záznam.</p>
+  <a href="https://majordomus.dev/cs/features/reasoning/" class="mt-auto pt-1 text-sm font-medium text-fg-brand hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-medium">Prozkoumat<span class="sr-only"> uvažování</span> &rarr;</a>
+</article>
+
+        </li><li class="flex min-w-0 flex-col gap-1">
+          <p class="font-mono text-xs text-body-subtle" data-related-why>pojmenováno touto funkcí</p>
+          <article class="flex h-full min-w-0 flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 focus-within:border-brand-subtle" data-feature-card="finish-contract">
+  <div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+    <h3 class="min-w-0 text-base font-semibold tracking-tight text-heading"><a href="https://majordomus.dev/cs/features/finish-contract/" class="rounded-sm hover:text-fg-brand hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-medium">Kontrakt dokončení</a></h3><span class="mj-badge mj-badge--stable relative" data-status="stable" data-status-kind="feature"><span aria-hidden="true">✓</span><span class="sr-only">stav funkce: </span>stabilní</span>
+
+  </div>
+  <p class="text-sm leading-relaxed text-body">Worker si nedefinuje vlastní úspěšné dokončení: každý řádek smlouvy o dokončení se vytiskne jako splněný či nesplněný, úloha se nepřijme, dokud neprojdou všechny, a každá chvíle, kdy byla označena za hotovou a nebyla, je v záznamu.</p>
+  <a href="https://majordomus.dev/cs/features/finish-contract/" class="mt-auto pt-1 text-sm font-medium text-fg-brand hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-medium">Prozkoumat<span class="sr-only"> smlouvu o dokončení</span> &rarr;</a>
+</article>
+
+        </li>
+      </ul>
+    </section>
+  </div><aside class="min-w-0 lg:sticky lg:top-24 lg:self-start">
+    <nav aria-label="Na této stránce" class="hidden lg:block">
+      <h2 class="text-sm font-semibold uppercase tracking-wide text-body-subtle">Na této stránce</h2>
+      <ul class="mt-3 space-y-1 border-s border-default text-sm"><li><a href="#what-it-does" class="-ms-px block border-s border-transparent ps-3 text-body hover:border-brand hover:text-heading">Co dělá</a></li><li><a href="#what-it-does-not-do" class="-ms-px block border-s border-transparent ps-3 text-body hover:border-brand hover:text-heading">Co nedělá</a></li><li><a href="#why" class="-ms-px block border-s border-transparent ps-3 text-body hover:border-brand hover:text-heading">Proč existuje</a></li><li><a href="#how" class="-ms-px block border-s border-transparent ps-3 text-body hover:border-brand hover:text-heading">Princip</a></li>
+        <li><a href="#relationships" class="-ms-px block border-s border-transparent ps-3 text-body hover:border-brand hover:text-heading">Kde se nachází</a></li><li><a href="#interfaces" class="-ms-px block border-s border-transparent ps-3 text-body hover:border-brand hover:text-heading">Rozhraní</a></li>
+        <li><a href="#evidence" class="-ms-px block border-s border-transparent ps-3 text-body hover:border-brand hover:text-heading">Důkazy</a></li><li><a href="#usage" class="-ms-px block border-s border-transparent ps-3 text-body hover:border-brand hover:text-heading">Použití</a></li>
+        <li><a href="#provenance" class="-ms-px block border-s border-transparent ps-3 text-body hover:border-brand hover:text-heading">Odkud tato stránka pochází</a></li><li><a href="#related" class="-ms-px block border-s border-transparent ps-3 text-body hover:border-brand hover:text-heading">Související funkce</a></li>
+      </ul>
+    </nav>
+    <h2 class="text-sm font-semibold uppercase tracking-wide text-body-subtle lg:mt-8">Spočítáno při sestavení</h2>
+    <dl class="mt-3 divide-y divide-default rounded-base border border-default bg-neutral-primary-soft">
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">capabilities</dt><dd class="font-mono text-sm text-heading">26</dd></div>
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">nástroje MCP</dt><dd class="font-mono text-sm text-heading">26</dd></div>
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">HTTP routy</dt><dd class="font-mono text-sm text-heading">26</dd></div>
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">cesty v příkazové řádce</dt><dd class="font-mono text-sm text-heading">13</dd></div>
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">objekty svých druhů</dt><dd class="font-mono text-sm text-heading">965</dd></div>
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">rules</dt><dd class="font-mono text-sm text-heading">3</dd></div>
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">tvrzení</dt><dd class="font-mono text-sm text-heading">15</dd></div>
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">případy užití</dt><dd class="font-mono text-sm text-heading">3</dd></div>
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">zodpovězené okamžiky</dt><dd class="font-mono text-sm text-heading">6</dd></div>
+    </dl>
+  </aside>
+</div>
+</div>
+
+</main>
+
+<footer id="site-map" class="border-t border-default bg-neutral-primary-soft" aria-label="Mapa webu">
+  <div class="mx-auto w-full max-w-screen-xl p-4 md:py-8">
+    <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
+      
+      <div class="min-w-0 scroll-mt-20" id="site-map-1">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/cs/domains/" class="hover:text-heading hover:underline">Produkt</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/cs/domains/" class="hover:text-heading hover:underline">Produkt podle oblastí</a></li><li><a href="https://majordomus.dev/cs/why/" class="hover:text-heading hover:underline">Proč existuje: způsoby selhání</a></li><li><a href="https://majordomus.dev/cs/features/" class="hover:text-heading hover:underline">Funkce</a></li><li><a href="https://majordomus.dev/cs/features/matrix/" class="hover:text-heading hover:underline">Funkce a rozhraní</a></li><li><a href="https://majordomus.dev/cs/use-cases/" class="hover:text-heading hover:underline">Případy užití</a></li><li><a href="https://majordomus.dev/cs/applications/" class="hover:text-heading hover:underline">Aplikace</a></li><li><a href="https://majordomus.dev/cs/skills/" class="hover:text-heading hover:underline">Dovednosti</a></li><li><a href="https://majordomus.dev/cs/supervises/" class="hover:text-heading hover:underline">Na co dohlíží</a></li><li><a href="https://majordomus.dev/cs/docs/majordomus-ui/" class="hover:text-heading hover:underline">UI produktu</a></li><li><a href="https://majordomus.dev/cs/docs/cockpit/" class="hover:text-heading hover:underline">Cockpit</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0 scroll-mt-20" id="site-map-2">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/cs/method/" class="hover:text-heading hover:underline">Princip</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/cs/method/" class="hover:text-heading hover:underline">Doktrína, politika, pravidlo, vynucování</a></li><li><a href="https://majordomus.dev/cs/method/axes/" class="hover:text-heading hover:underline">Čtyři osy</a></li><li><a href="https://majordomus.dev/cs/method/argument/" class="hover:text-heading hover:underline">Celá argumentace</a></li><li><a href="https://majordomus.dev/cs/docs/concepts/" class="hover:text-heading hover:underline">Slovník</a></li><li><a href="https://majordomus.dev/cs/policy/" class="hover:text-heading hover:underline">Kanonická politika</a></li><li><a href="https://majordomus.dev/cs/context/" class="hover:text-heading hover:underline">Kontrakty adresářů</a></li><li><a href="https://majordomus.dev/cs/sessions/" class="hover:text-heading hover:underline">Relace</a></li><li><a href="https://majordomus.dev/cs/docs/planning/" class="hover:text-heading hover:underline">Jak funguje plánování</a></li><li><a href="https://majordomus.dev/cs/docs/design/" class="hover:text-heading hover:underline">Design</a></li><li><a href="https://majordomus.dev/cs/kit/" class="hover:text-heading hover:underline">Sada komponent</a></li><li><a href="https://majordomus.dev/cs/docs/surfaces/" class="hover:text-heading hover:underline">Jak se odvozují rozhraní</a></li><li><a href="https://majordomus.dev/cs/architecture/" class="hover:text-heading hover:underline">Jak je tento web postaven</a></li><li><a href="https://majordomus.dev/cs/docs/product/" class="hover:text-heading hover:underline">Jak se odvozuje stránka produktu</a></li><li><a href="https://majordomus.dev/cs/proof-carrying-documentation/" class="hover:text-heading hover:underline">Článek: dokumentace nesoucí důkaz</a></li><li><a href="https://majordomus.dev/cs/everything-followed/" class="hover:text-heading hover:underline">Článek: všechno, dohledatelně</a></li><li><a href="https://majordomus.dev/cs/dokumentace-kterou-lze-odmitnout/" class="hover:text-heading hover:underline">Stejná argumentace, napsaná česky</a></li><li><a href="https://majordomus.dev/cs/vsechno-v-jednom-proudu/" class="hover:text-heading hover:underline">Everything, followed, written in Czech</a></li><li><a href="https://majordomus.dev/cs/the-bet-on-a-layer/" class="hover:text-heading hover:underline">Essay: the bet on a layer, not a model</a></li><li><a href="https://majordomus.dev/cs/teze/" class="hover:text-heading hover:underline">Esej v češtině: sázka na vrstvu, ne na model</a></li><li><a href="https://majordomus.dev/cs/a-pasted-brief-becomes-a-plan/" class="hover:text-heading hover:underline">Article: a pasted brief becomes a plan</a></li><li><a href="https://majordomus.dev/cs/vlozene-zadani-se-stava-planem/" class="hover:text-heading hover:underline">The pasted brief, written in Czech</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0 scroll-mt-20" id="site-map-3">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/cs/challenge/" class="hover:text-heading hover:underline">Důkazy</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/cs/challenge/" class="hover:text-heading hover:underline">Výzva: sledujte, jak odmítne agenta</a></li><li><a href="https://majordomus.dev/cs/guarantees/" class="hover:text-heading hover:underline">Záruky</a></li><li><a href="https://majordomus.dev/cs/evidence/" class="hover:text-heading hover:underline">Graf důkazů</a></li><li><a href="https://majordomus.dev/cs/contract/" class="hover:text-heading hover:underline">Kontrakt dokončení</a></li><li><a href="https://majordomus.dev/cs/doctrines/" class="hover:text-heading hover:underline">Doktrína</a></li><li><a href="https://majordomus.dev/cs/adrs/" class="hover:text-heading hover:underline">Rozhodnutí</a></li><li><a href="https://majordomus.dev/cs/rules/" class="hover:text-heading hover:underline">Platná pravidla</a></li><li><a href="https://majordomus.dev/cs/registry/benchmarks/" class="hover:text-heading hover:underline">Měření výkonu</a></li><li><a href="https://majordomus.dev/cs/economics/" class="hover:text-heading hover:underline">Ekonomika tokenů</a></li><li><a href="https://majordomus.dev/cs/limitations/" class="hover:text-heading hover:underline">Omezení</a></li><li><a href="https://majordomus.dev/cs/roadmap/" class="hover:text-heading hover:underline">Plán rozvoje</a></li><li><a href="https://majordomus.dev/cs/plan/" class="hover:text-heading hover:underline">Milníky a úkoly</a></li><li><a href="https://majordomus.dev/cs/plan/dag/" class="hover:text-heading hover:underline">Graf závislostí</a></li><li><a href="https://majordomus.dev/cs/changelog/" class="hover:text-heading hover:underline">Changelog</a></li><li><a href="https://majordomus.dev/cs/docs/dogfooding/" class="hover:text-heading hover:underline">Dogfooding</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0 scroll-mt-20" id="site-map-4">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/cs/docs/" class="hover:text-heading hover:underline">Dokumenty</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/cs/docs/" class="hover:text-heading hover:underline">Všechny dokumenty</a></li><li><a href="https://majordomus.dev/cs/docs/install/" class="hover:text-heading hover:underline">Instalace</a></li><li><a href="https://majordomus.dev/cs/commands/" class="hover:text-heading hover:underline">Příkazy</a></li><li><a href="https://majordomus.dev/cs/profiles/" class="hover:text-heading hover:underline">Profily provádění</a></li><li><a href="https://majordomus.dev/cs/docs/cli/" class="hover:text-heading hover:underline">Přehled příkazů</a></li><li><a href="https://majordomus.dev/cs/docs/api/" class="hover:text-heading hover:underline">HTTP API</a></li><li><a href="https://majordomus.dev/rustdoc/" class="hover:text-heading hover:underline">Rust API</a></li><li><a href="https://majordomus.dev/cs/registry/mcp/" class="hover:text-heading hover:underline">Rozhraní MCP</a></li><li><a href="https://majordomus.dev/cs/docs/schemas/" class="hover:text-heading hover:underline">Schémata souborů</a></li><li><a href="https://majordomus.dev/cs/registry/" class="hover:text-heading hover:underline">Registr</a></li><li><a href="https://majordomus.dev/cs/map/" class="hover:text-heading hover:underline">Mapa programu</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/82ac259d0ae7c3901ee09bed461e2f62318a6642/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/82ac259d0ae7c3901ee09bed461e2f62318a6642/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/82ac259d0ae7c3901ee09bed461e2f62318a6642/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+        </ul>
+      </div>
+    </div>
+    <hr class="my-6 border-default sm:mx-auto lg:my-8"><div class="space-y-4">
+    <div class="sm:flex sm:items-center sm:justify-between">
+      <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
+    </div>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v1.0.0-alpha.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/82ac259d0ae7c3901ee09bed461e2f62318a6642" class="font-mono underline">82ac259</a> · inputs <span class="font-mono">ac7a158bc7ec</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    </div>
+  </div>
+</footer>
+<dialog id="site-search" data-site-search data-index="https://majordomus.dev/docs/index.json" aria-labelledby="site-search-label" class="m-0 h-dvh max-h-none w-full max-w-none border-0 bg-neutral-primary p-0 text-body backdrop:bg-neutral-primary-strong/80 sm:mx-auto sm:mt-20 sm:h-auto sm:max-h-[75vh] sm:max-w-2xl sm:rounded-base sm:border sm:border-default sm:shadow-lg">
+  <div class="flex h-full max-h-[inherit] flex-col">
+    <div class="flex items-center gap-2 border-b border-default p-3">
+      <label id="site-search-label" for="site-search-input" class="sr-only">Hledat na tomto webu</label>
+      <svg class="h-5 w-5 shrink-0 text-body-subtle" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z"/></svg>
+      <input id="site-search-input" type="search" role="combobox" aria-expanded="false" aria-controls="site-search-results" aria-autocomplete="list" aria-describedby="site-search-status" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go" placeholder="Pravidlo, rozhodnutí, příkaz, stránka…" class="block min-w-0 flex-1 rounded-base border border-default-medium bg-neutral-secondary-medium px-3 py-2.5 text-base text-heading focus:border-brand focus:ring-brand sm:text-sm">
+      <button type="button" data-site-search-close class="inline-flex h-10 shrink-0 items-center rounded-base border border-default px-3 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">Zavřít<span class="sr-only"> vyhledávání</span></button>
+    </div>
+    <p id="site-search-status" class="px-4 pt-3 text-xs text-body-subtle" aria-live="polite" data-site-search-status>Prohledává názvy a popisy všech stránek, které tento web publikuje.</p>
+    <div id="site-search-results" role="listbox" aria-label="Odpovídající stránky" class="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain px-2 py-2" data-site-search-results></div>
+    <template data-site-search-item><a tabindex="-1" class="block rounded-base px-3 py-2 hover:bg-neutral-secondary-medium aria-selected:bg-neutral-secondary-medium aria-selected:ring-2 aria-selected:ring-brand"><span class="block break-words font-medium text-heading" data-slot="title"></span><span class="block break-all font-mono text-xs text-body-subtle" data-slot="meta"></span><span class="mt-0.5 line-clamp-2 text-sm text-body" data-slot="description"></span></a></template>
+  </div>
+</dialog>
+
+<script defer src="https://majordomus.dev/js/nav.js"></script>
+<script defer src="https://majordomus.dev/js/search.js"></script>
+<script src="https://majordomus.dev/js/theme.js"></script>
+<script defer src="https://majordomus.dev/js/alpine.min.js"></script>
+
+</body>
+</html>

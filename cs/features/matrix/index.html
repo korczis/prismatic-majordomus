@@ -1,0 +1,1306 @@
+<!doctype html>
+<html lang="cs" class="scroll-smooth" data-theme-key="color-theme" data-theme-class="dark" data-design="944a896b2646">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Každá funkce proti každému rozhraní — Prismatic Majordomus</title>
+<meta name="description" content="Matice oběma směry: každá funkce proti příkazové řádce, HTTP API, MCP, Cockpitu a dokumentaci a každý modul schopnosti, veřejný příkaz a druh objektu proti funkcím, které ho jmenují. Každá značka je odvozená; mezera se ukáže.">
+<link rel="canonical" href="https://majordomus.dev/cs/features/matrix/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Prismatic Majordomus">
+<meta property="og:title" content="Každá funkce proti každému rozhraní — Prismatic Majordomus">
+<meta property="og:description" content="Matice oběma směry: každá funkce proti příkazové řádce, HTTP API, MCP, Cockpitu a dokumentaci a každý modul schopnosti, veřejný příkaz a druh objektu proti funkcím, které ho jmenují. Každá značka je odvozená; mezera se ukáže.">
+<meta property="og:url" content="https://majordomus.dev/cs/features/matrix/">
+<meta property="og:image" content="https://majordomus.dev/images/social-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
+<link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=3f5215cbacbe9c61f05a">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
+<script>(function(){try{var K="mj-lang",L=["en","cs"],S="en",B="https://majordomus.dev",d=document.documentElement,k;try{k=localStorage.getItem(K)}catch(e){}
+document.addEventListener("click",function(e){var a=e.target.closest&&e.target.closest("[data-i18n-lang]");if(a)try{localStorage.setItem(K,a.getAttribute("data-i18n-lang"))}catch(x){}},true);
+if(d.lang!==S)return;var r=document.referrer;if(r&&r.indexOf(location.origin)===0)return;
+var p=(k?[k]:navigator.languages||[navigator.language||""]).map(function(l){return String(l).slice(0,2).toLowerCase()});
+for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=location.href;if(u.indexOf(B)!==0)return;location.replace(B+"/"+p[i]+u.slice(B.length).replace(/^(?!\/)/,"/"));return}}}catch(e){}})();</script>
+
+<link rel="alternate" hreflang="en" href="https://majordomus.dev/features/matrix/">
+<link rel="alternate" hreflang="cs" href="https://majordomus.dev/cs/features/matrix/">
+<link rel="alternate" hreflang="x-default" href="https://majordomus.dev/features/matrix/">
+</head>
+<body class="min-h-screen bg-neutral-primary text-body antialiased">
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white">Přeskočit na obsah</a>
+
+
+
+<nav class="sticky top-0 z-20 w-full border-b border-default bg-neutral-primary text-base" aria-label="Hlavní">
+  <div class="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between gap-x-2 gap-y-2 px-3 py-3 sm:p-4">
+    <a href="https://majordomus.dev/cs/" class="flex min-w-0 items-center gap-1.5 sm:gap-2.5 rtl:space-x-reverse">
+      <span class="inline-flex h-6 w-6 shrink-0 text-heading sm:h-7 sm:w-7 [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 1.0.0-alpha.1 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span>
+      <span class="self-center whitespace-nowrap text-base font-semibold text-heading sm:text-xl">Majordomus</span>
+      
+      
+      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading" data-release="0.30.2">v0.30.2</span>
+      
+    </a>
+    <div class="flex items-center gap-1 sm:gap-2 md:order-2"><button type="button" data-site-search-open hidden aria-haspopup="dialog" aria-controls="site-search" aria-expanded="false" aria-keyshortcuts="/ Control+K Meta+K" class="inline-flex h-10 min-w-10 items-center justify-center gap-2 rounded-base border border-default px-2.5 text-sm font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">
+        <svg class="h-5 w-5 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z"/></svg> <span class="sr-only lg:not-sr-only">Hledat</span> <kbd class="hidden rounded border border-default-medium px-1.5 font-mono text-xs text-body-subtle lg:inline" aria-hidden="true">/</kbd>
+      </button>
+      <div class="relative" data-i18n-switch>
+  <button type="button" aria-label="Jazyk" data-dropdown-toggle="language-menu" data-dropdown-placement="bottom-end" aria-haspopup="true" aria-controls="language-menu" aria-expanded="false" class="inline-flex h-10 items-center justify-center gap-1.5 rounded-base border border-default px-2.5 text-sm font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">
+    <svg class="h-5 w-5 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0 0c2.2-2.4 3.3-5.4 3.3-9S14.2 5.4 12 3m0 18c-2.2-2.4-3.3-5.4-3.3-9S9.8 5.4 12 3M3.5 9h17M3.5 15h17"/></svg>
+    <span class="font-mono text-xs uppercase" translate="no" data-i18n-current-label>cs</span>
+    <svg class="h-2.5 w-2.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg>
+  </button>
+  <div id="language-menu" class="absolute right-0 top-full z-50 mt-2 hidden w-44 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+    <ul class="p-2 text-sm font-medium text-body" translate="no">
+      <li><a href="https://majordomus.dev/features/matrix/" hreflang="en" lang="en" data-i18n-keep data-i18n-current data-i18n-lang="en" class="group flex w-full items-center justify-between gap-3 rounded-sm px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading aria-[current=true]:text-heading"><span class="flex items-center gap-2"><span class="w-6 font-mono text-xs uppercase text-body-subtle">en</span>English</span><svg class="invisible h-4 w-4 text-fg-brand group-aria-[current=true]:visible" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 11.917 9.724 16.5 19 7.5"/></svg></a></li>
+      <li><a href="https://majordomus.dev/cs/features/matrix/" hreflang="cs" lang="cs" data-i18n-keep data-i18n-current data-i18n-lang="cs" class="group flex w-full items-center justify-between gap-3 rounded-sm px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading aria-[current=true]:text-heading" aria-current="true"><span class="flex items-center gap-2"><span class="w-6 font-mono text-xs uppercase text-body-subtle">cs</span>Čeština</span><svg class="invisible h-4 w-4 text-fg-brand group-aria-[current=true]:visible" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 11.917 9.724 16.5 19 7.5"/></svg></a></li>
+    </ul>
+  </div>
+</div>
+
+      <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Přepnout tmavý režim">
+  <svg id="theme-toggle-dark-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+  <svg id="theme-toggle-light-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+</button>
+<a href="https://majordomus.dev/ui/" data-nav-primary="ui" class="hidden rounded-base border border-brand-subtle px-3 py-2 text-sm font-semibold text-fg-brand hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary xl:inline-flex">UI produktu</a>
+      <a href="https://github.com/korczis/prismatic-majordomus" class="hidden rounded-base border border-default px-3 py-2 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary sm:inline-flex">GitHub</a>
+      <a href="https://majordomus.dev/cs/getting-started/" class="hidden rounded-base bg-brand px-3 py-2 text-sm font-semibold text-white hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium md:inline-flex">Začít</a>
+      <button data-collapse-toggle="navbar-main" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-base p-2 text-sm text-body hover:bg-neutral-secondary-soft hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:hidden" aria-controls="navbar-main" aria-expanded="false">
+        <span class="sr-only">Otevřít hlavní nabídku</span> <svg class="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h14"/></svg>
+      </button>
+    </div><div class="hidden w-full min-w-0 md:order-1 md:block md:w-auto" id="navbar-main">
+      <ul class="mt-4 flex flex-col rounded-base border border-default bg-neutral-secondary-soft p-4 font-medium md:mt-0 md:flex-row md:flex-wrap md:items-center md:gap-x-2 md:gap-y-1 md:border-0 md:bg-neutral-primary md:p-0">
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          <button id="nav-1" data-dropdown-toggle="nav-menu-1" type="button" aria-controls="nav-menu-1" class="flex w-full items-center justify-between rounded px-3 py-2 text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Produkt<svg class="ms-1.5 h-3 w-3 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-1" class="hidden md:absolute md:left-0 md:top-full md:z-10 md:mt-2 md:w-64 md:rounded-base md:border md:border-default-medium md:bg-neutral-primary-medium md:shadow-lg">
+            <ul class="pb-2 ps-3 text-sm font-medium text-body md:p-2" aria-labelledby="nav-1">
+              <li><a href="https://majordomus.dev/cs/domains/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Produkt podle oblastí</a></li><li><a href="https://majordomus.dev/cs/why/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Proč existuje: způsoby selhání</a></li><li><a href="https://majordomus.dev/cs/features/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Funkce</a></li><li><a href="https://majordomus.dev/cs/use-cases/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Případy užití</a></li><li><a href="https://majordomus.dev/ui/" data-nav-snapshot="ui" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">UI produktu <span data-nav-snapshot-note class="text-xs text-body-subtle">&middot; snímek</span></a></li><li><a href="https://majordomus.dev/cs/docs/cockpit/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Cockpit</a></li>
+              <li class="mt-1 border-t border-default pt-1"><a href="#site-map-1" class="block rounded px-3 py-2 text-body-subtle hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Všech 10 stránek v mapě webu &darr;</a></li>
+            </ul>
+          </div>
+        </li>
+        
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          <button id="nav-2" data-dropdown-toggle="nav-menu-2" type="button" aria-controls="nav-menu-2" class="flex w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Princip<svg class="ms-1.5 h-3 w-3 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-2" class="hidden md:absolute md:left-0 md:top-full md:z-10 md:mt-2 md:w-64 md:rounded-base md:border md:border-default-medium md:bg-neutral-primary-medium md:shadow-lg">
+            <ul class="pb-2 ps-3 text-sm font-medium text-body md:p-2" aria-labelledby="nav-2">
+              <li><a href="https://majordomus.dev/cs/method/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Doktrína, politika, pravidlo, vynucování</a></li><li><a href="https://majordomus.dev/cs/method/argument/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Celá argumentace</a></li><li><a href="https://majordomus.dev/cs/docs/concepts/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Slovník</a></li><li><a href="https://majordomus.dev/cs/sessions/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Relace</a></li>
+              <li class="mt-1 border-t border-default pt-1"><a href="#site-map-2" class="block rounded px-3 py-2 text-body-subtle hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">All 21 pages in the site map &darr;</a></li>
+            </ul>
+          </div>
+        </li>
+        
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          <button id="nav-3" data-dropdown-toggle="nav-menu-3" type="button" aria-controls="nav-menu-3" class="flex w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Důkazy<svg class="ms-1.5 h-3 w-3 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-3" class="hidden md:absolute md:left-0 md:top-full md:z-10 md:mt-2 md:w-64 md:rounded-base md:border md:border-default-medium md:bg-neutral-primary-medium md:shadow-lg">
+            <ul class="pb-2 ps-3 text-sm font-medium text-body md:p-2" aria-labelledby="nav-3">
+              <li><a href="https://majordomus.dev/cs/challenge/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Výzva: sledujte, jak odmítne agenta</a></li><li><a href="https://majordomus.dev/cs/guarantees/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Záruky</a></li><li><a href="https://majordomus.dev/cs/evidence/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Graf důkazů</a></li><li><a href="https://majordomus.dev/cs/limitations/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Omezení</a></li><li><a href="https://majordomus.dev/cs/roadmap/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Plán rozvoje</a></li>
+              <li class="mt-1 border-t border-default pt-1"><a href="#site-map-3" class="block rounded px-3 py-2 text-body-subtle hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Všech 15 stránek v mapě webu &darr;</a></li>
+            </ul>
+          </div>
+        </li>
+        
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          <button id="nav-4" data-dropdown-toggle="nav-menu-4" type="button" aria-controls="nav-menu-4" class="flex w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Dokumenty<svg class="ms-1.5 h-3 w-3 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-4" class="hidden md:absolute md:left-0 md:top-full md:z-10 md:mt-2 md:w-64 md:rounded-base md:border md:border-default-medium md:bg-neutral-primary-medium md:shadow-lg">
+            <ul class="pb-2 ps-3 text-sm font-medium text-body md:p-2" aria-labelledby="nav-4">
+              <li><a href="https://majordomus.dev/cs/docs/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Všechny dokumenty</a></li><li><a href="https://majordomus.dev/cs/docs/install/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Instalace</a></li><li><a href="https://majordomus.dev/cs/commands/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Příkazy</a></li><li><a href="https://majordomus.dev/cs/docs/api/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">HTTP API</a></li><li><a href="https://majordomus.dev/cs/registry/mcp/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Rozhraní MCP</a></li>
+              <li class="mt-1 border-t border-default pt-1"><a href="#site-map-4" class="block rounded px-3 py-2 text-body-subtle hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Všech 11 stránek v mapě webu &darr;</a></li>
+            </ul>
+          </div>
+        </li>
+        
+        
+        <li class="mt-3 md:hidden"><a href="https://majordomus.dev/ui/" data-nav-primary="ui" class="block rounded-base border border-brand-subtle px-3 py-2 text-center font-semibold text-fg-brand hover:bg-neutral-tertiary">UI produktu</a></li>
+        <li class="mt-3 md:hidden"><a href="https://majordomus.dev/cs/getting-started/" class="block rounded-base bg-brand px-3 py-2 text-center font-semibold text-white hover:bg-brand-strong">Začít</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+<div data-i18n-notice class="border-b border-default bg-neutral-secondary-soft">
+  <p class="mx-auto max-w-screen-xl px-4 py-2 text-xs text-body">Tato stránka byla automaticky přeložena z angličtiny, jediného jazyka, ve kterém se tento web píše. <a href="https://majordomus.dev/features/matrix/" hreflang="en" lang="en" data-i18n-keep data-i18n-lang="en" class="font-medium underline">Číst originál</a>.</p>
+</div>
+<main id="main">
+<div class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+    <nav class="flex" aria-label="Drobečková navigace">
+  <ol class="inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2 rtl:space-x-reverse">
+    <li class="inline-flex items-center"><a href="https://majordomus.dev/cs/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Domů</a></li><li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="https://majordomus.dev/cs/features/" class="font-medium text-body hover:text-fg-brand">Funkce</a></li>
+    <li aria-hidden="true">/</li>
+    <li aria-current="page" class="font-medium text-heading">Každá funkce proti každému rozhraní</li>
+  </ol>
+</nav>
+
+    <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">Každá funkce proti každému rozhraní</h1>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">Matice oběma směry: každá funkce proti příkazové řádce, HTTP API, MCP, Cockpitu a dokumentaci a každý modul schopnosti, veřejný příkaz a druh objektu proti funkcím, které ho jmenují. Každá značka je odvozená; mezera se ukáže.</p>
+  </div>
+</div>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+  <p class="max-w-3xl text-body">Každá značka je odvozená. Funkce je na rozhraní, protože tam je promítnut schopnostní modul, shellový příkaz nebo druh objektu, který pojmenovává — cesta příkazové řádky, HTTP route, nástroj nebo zdroj MCP, oblast Cockpitu, dokument. Neříká to žádná stránka ani soubor.</p><div class="relative mt-8 min-w-0 overflow-x-auto rounded-base border border-default" tabindex="0">
+  <table class="w-full min-w-[36rem] border-collapse text-sm" tabindex="0">
+    <caption class="sr-only">Funkce proti rozhraním, jimiž jsou zpřístupněny, kolik z tvrzení, která každá jmenuje, je deklarováno jako zaručených s testem a kolik jich podporuje zaznamenaný běh</caption>
+    <thead class="bg-neutral-primary-soft">
+      <tr>
+        <th scope="col" class="border-b border-default px-4 py-3 text-start font-semibold text-heading">Funkce</th>
+        <th scope="col" class="border-b border-default px-3 py-3 text-center font-mono text-xs font-medium uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/cs/docs/cli/" class="hover:text-fg-brand hover:underline">cli</a></th>
+        <th scope="col" class="border-b border-default px-3 py-3 text-center font-mono text-xs font-medium uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/cs/docs/api/" class="hover:text-fg-brand hover:underline">api</a></th>
+        <th scope="col" class="border-b border-default px-3 py-3 text-center font-mono text-xs font-medium uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/cs/registry/mcp/" class="hover:text-fg-brand hover:underline">mcp</a></th>
+        <th scope="col" class="border-b border-default px-3 py-3 text-center font-mono text-xs font-medium uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/cs/docs/cockpit/" class="hover:text-fg-brand hover:underline">cockpit</a></th>
+        <th scope="col" class="border-b border-default px-3 py-3 text-center font-mono text-xs font-medium uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/cs/docs/" class="hover:text-fg-brand hover:underline">dokumentace</a></th><th scope="col" class="border-b border-default px-3 py-3 text-center font-mono text-xs font-medium uppercase tracking-wide text-body-subtle"><a href="#declared-with-test" class="hover:text-fg-brand hover:underline">deklarováno + test</a></th>
+        <th scope="col" class="border-b border-default px-3 py-3 text-center font-mono text-xs font-medium uppercase tracking-wide text-body-subtle"><a href="#supported-by-a-run" class="hover:text-fg-brand hover:underline">podloženo během</a></th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-default">
+      <tr class="hover:bg-neutral-primary-soft">
+        <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/cs/features/declare-once/" class="text-heading hover:text-fg-brand hover:underline">Deklarovat jednou</a></th>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Deklarujte jednou je zveřejněno v příkazové řádce">✓</span><span class="sr-only">v příkazové řádce</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Deklarovat jednou je zpřístupněno na API HTTP">✓</span><span class="sr-only">v HTTP API</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Deklarovat jednou je zpřístupněno v MCP">✓</span><span class="sr-only">v MCP</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Deklarujte jednou je zpřístupněno v Cockpitu">✓</span><span class="sr-only">v Cockpitu</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Deklarovat jednou je zpřístupněno v Dokumentaci">✓</span><span class="sr-only">v dokumentaci</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">9/9<span class="sr-only"> tvrzení deklarovaných jako zaručená s testem</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="declare-once">0/9<span class="sr-only"> tvrzení podpořených zaznamenaným během</span></td>
+      </tr>
+      <tr class="hover:bg-neutral-primary-soft">
+        <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/cs/features/interfaces/" class="text-heading hover:text-fg-brand hover:underline">Rozhraní</a></th>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Rozhraní jsou vystavena přes příkazovou řádku">✓</span><span class="sr-only">v příkazové řádce</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Rozhraní jsou zpřístupněna přes HTTP API">✓</span><span class="sr-only">v HTTP API</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Interfaces je vystaveno přes MCP">✓</span><span class="sr-only">v MCP</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Rozhraní jsou vystavena v Cockpit">✓</span><span class="sr-only">v Cockpitu</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Rozhraní je zveřejněno v Dokumentaci">✓</span><span class="sr-only">v dokumentaci</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">11/11<span class="sr-only"> tvrzení deklarovaných jako zaručená, s testem</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="interfaces">0/11<span class="sr-only"> tvrzení podpořených zaznamenaným během</span></td>
+      </tr>
+      <tr class="hover:bg-neutral-primary-soft">
+        <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/cs/features/coordination/" class="text-heading hover:text-fg-brand hover:underline">Koordinace</a></th>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Koordinace je zpřístupněna v příkazové řádce">✓</span><span class="sr-only">v příkazové řádce</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Koordinace je zveřejněna v HTTP API">✓</span><span class="sr-only">v HTTP API</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Koordinace je vystavena přes MCP">✓</span><span class="sr-only">v MCP</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Koordinace je zpřístupněna v Cockpitu">✓</span><span class="sr-only">v Cockpitu</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Koordinace je zpřístupněna v dokumentaci">✓</span><span class="sr-only">v dokumentaci</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">5/5<span class="sr-only"> tvrzení deklarováno jako zaručené s testem</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="coordination">0/5<span class="sr-only"> tvrzení podpořeno zaznamenaným během</span></td>
+      </tr>
+      <tr class="hover:bg-neutral-primary-soft">
+        <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/cs/features/worktrees/" class="text-heading hover:text-fg-brand hover:underline">Worktrees</a></th>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Worktree jsou vystaveny přes příkazovou řádku">✓</span><span class="sr-only">v příkazové řádce</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Worktrees jsou zpřístupněny přes HTTP API">✓</span><span class="sr-only">v HTTP API</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Worktrees jsou vystaveny přes MCP">✓</span><span class="sr-only">v MCP</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Worktree jsou zpřístupněny v Cockpit">✓</span><span class="sr-only">v Cockpitu</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Worktrees je vystaveno v Dokumentaci">✓</span><span class="sr-only">v dokumentaci</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">3/3<span class="sr-only"> tvrzení deklarovaných jako zaručená s testem</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="worktrees">0/3<span class="sr-only"> tvrzení podložených zaznamenaným během</span></td>
+      </tr>
+      <tr class="hover:bg-neutral-primary-soft">
+        <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/cs/features/mesh/" class="text-heading hover:text-fg-brand hover:underline">Mesh</a></th>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Mesh je zpřístupněn v příkazové řádce">✓</span><span class="sr-only">v příkazové řádce</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Mesh je vystaven přes HTTP API">✓</span><span class="sr-only">v HTTP API</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Mesh je vystaven přes MCP">✓</span><span class="sr-only">v MCP</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Mesh je vystaven v Cockpitu">✓</span><span class="sr-only">v Cockpitu</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Mesh je vystaven v Dokumentaci">✓</span><span class="sr-only">v dokumentaci</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">9/9<span class="sr-only"> tvrzení deklarovaných jako zaručená s testem</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="mesh">0/9<span class="sr-only"> tvrzení podpořených zaznamenaným během</span></td>
+      </tr>
+      <tr class="hover:bg-neutral-primary-soft">
+        <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/cs/features/models/" class="text-heading hover:text-fg-brand hover:underline">Modely</a></th>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Modely jsou vystaveny v příkazovém řádku">✓</span><span class="sr-only">v příkazové řádce</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Modely jsou zpřístupněny v HTTP API">✓</span><span class="sr-only">v HTTP API</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Modely jsou zveřejněny v MCP">✓</span><span class="sr-only">v MCP</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Models je zpřístupněno v Cockpitu">✓</span><span class="sr-only">v Cockpitu</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Modely jsou zpřístupněny v Dokumentaci">✓</span><span class="sr-only">v dokumentaci</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">3/3<span class="sr-only"> tvrzení deklarovaných jako zaručená s testem</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="models">0/3<span class="sr-only"> tvrzení podložených zaznamenaným během</span></td>
+      </tr>
+      <tr class="hover:bg-neutral-primary-soft">
+        <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/cs/features/economics/" class="text-heading hover:text-fg-brand hover:underline">Ekonomika</a></th>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Ekonomika je zpřístupněna v příkazové řádce">✓</span><span class="sr-only">v příkazové řádce</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Economics je zpřístupněno přes HTTP API">✓</span><span class="sr-only">v HTTP API</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Ekonomika je zpřístupněna v MCP">✓</span><span class="sr-only">v MCP</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Ekonomika je zpřístupněna v Cockpit">✓</span><span class="sr-only">v Cockpitu</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Ekonomika je zveřejněna v Dokumentaci">✓</span><span class="sr-only">v dokumentaci</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">2/3<span class="sr-only"> tvrzení deklarovaných jako zaručená s testem</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="economics">0/3<span class="sr-only"> tvrzení podložených zaznamenaným během</span></td>
+      </tr>
+      <tr class="hover:bg-neutral-primary-soft">
+        <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/cs/features/reasoning/" class="text-heading hover:text-fg-brand hover:underline">Uvažování</a></th>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Reasoning je zpřístupněno v příkazové řádce">✓</span><span class="sr-only">v příkazové řádce</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Uvažování je zveřejněno v HTTP API">✓</span><span class="sr-only">v HTTP API</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Uvažování je zpřístupněno v MCP">✓</span><span class="sr-only">v MCP</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Uvažování je vystaveno přes Cockpit">✓</span><span class="sr-only">v Cockpitu</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Uvažování je zveřejněno v Dokumentaci">✓</span><span class="sr-only">v dokumentaci</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">7/7<span class="sr-only"> tvrzení deklarováno jako zaručené s testem</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="reasoning">0/7<span class="sr-only"> tvrzení podpořeno zaznamenaným během</span></td>
+      </tr>
+      <tr class="hover:bg-neutral-primary-soft">
+        <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/cs/features/continuity/" class="text-heading hover:text-fg-brand hover:underline">Kontinuita</a></th>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Kontinuita je zpřístupněna na příkazovém řádku">✓</span><span class="sr-only">v příkazové řádce</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Kontinuita je zpřístupněna přes HTTP API">✓</span><span class="sr-only">v HTTP API</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Kontinuita je zpřístupněna přes MCP">✓</span><span class="sr-only">v MCP</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Kontinuita je zpřístupněna v Cockpitu">✓</span><span class="sr-only">v Cockpitu</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Kontinuita je zpřístupněna v dokumentaci">✓</span><span class="sr-only">v dokumentaci</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">11/11<span class="sr-only"> tvrzení deklarovaných jako zaručená, s testem</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="continuity">0/11<span class="sr-only"> tvrzení podpořených zaznamenaným během</span></td>
+      </tr>
+      <tr class="hover:bg-neutral-primary-soft">
+        <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/cs/features/knowledge/" class="text-heading hover:text-fg-brand hover:underline">Znalosti</a></th>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Znalosti jsou zpřístupněny na příkazovém řádku">✓</span><span class="sr-only">v příkazové řádce</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Znalosti jsou vystaveny přes HTTP API">✓</span><span class="sr-only">v HTTP API</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Znalosti jsou zpřístupněny přes MCP">✓</span><span class="sr-only">v MCP</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Znalosti jsou zpřístupněny v Cockpitu">✓</span><span class="sr-only">v Cockpitu</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Znalosti jsou zveřejněny v Dokumentaci">✓</span><span class="sr-only">v dokumentaci</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">7/9<span class="sr-only"> tvrzení deklarováno jako zaručené s testem</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="knowledge">0/9<span class="sr-only"> tvrzení podpořených zaznamenaným během</span></td>
+      </tr>
+      <tr class="hover:bg-neutral-primary-soft">
+        <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/cs/features/doctrine/" class="text-heading hover:text-fg-brand hover:underline">Doktrína</a></th>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Doktrína je zpřístupněna v příkazové řádce">✓</span><span class="sr-only">v příkazové řádce</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Doktrína je zpřístupněna v HTTP API">✓</span><span class="sr-only">v HTTP API</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Doktrína je vystavena přes MCP">✓</span><span class="sr-only">v MCP</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Doktrína je zpřístupněna v Cockpit">✓</span><span class="sr-only">v Cockpitu</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Doktrína je zveřejněna v Dokumentaci">✓</span><span class="sr-only">v dokumentaci</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">12/12<span class="sr-only"> tvrzení deklarovaných jako zaručená s testem</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="doctrine">0/12<span class="sr-only"> tvrzení podpořeno zaznamenaným během</span></td>
+      </tr>
+      <tr class="hover:bg-neutral-primary-soft">
+        <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/cs/features/coverage/" class="text-heading hover:text-fg-brand hover:underline">Pokrytí</a></th>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-body-subtle" aria-hidden="true">·</span><span class="sr-only">ne v příkazové řádce</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Pokrytí je vystaveno přes HTTP API">✓</span><span class="sr-only">v HTTP API</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Pokrytí je zpřístupněno v MCP">✓</span><span class="sr-only">v MCP</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Pokrytí je zveřejněno v Cockpit">✓</span><span class="sr-only">v Cockpitu</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Pokrytí je zveřejněno v Dokumentaci">✓</span><span class="sr-only">v dokumentaci</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">1/1<span class="sr-only"> tvrzení deklarovaných jako zaručená s testem</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="coverage">0/1<span class="sr-only"> tvrzení podložených zaznamenaným během</span></td>
+      </tr>
+      <tr class="hover:bg-neutral-primary-soft">
+        <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/cs/features/finish-contract/" class="text-heading hover:text-fg-brand hover:underline">Kontrakt dokončení</a></th>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Kontrakt dokončení je zpřístupněn na příkazovém řádku">✓</span><span class="sr-only">v příkazové řádce</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Kontrakt finish je zpřístupněn v HTTP API">✓</span><span class="sr-only">v HTTP API</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Finish contract je vystaven přes MCP">✓</span><span class="sr-only">v MCP</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Kontrakt finish je zpřístupněn v Cockpitu">✓</span><span class="sr-only">v Cockpitu</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Kontrakt dokončení je zpřístupněn v Dokumentaci">✓</span><span class="sr-only">v dokumentaci</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">9/9<span class="sr-only"> tvrzení deklarovaných jako zaručená s testem</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="finish-contract">0/9<span class="sr-only"> tvrzení podpořených zaznamenaným během</span></td>
+      </tr>
+      <tr class="hover:bg-neutral-primary-soft">
+        <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/cs/features/policy/" class="text-heading hover:text-fg-brand hover:underline">Politika</a></th>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Policy je zpřístupněno na příkazové řádce">✓</span><span class="sr-only">v příkazové řádce</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-body-subtle" aria-hidden="true">·</span><span class="sr-only">není v HTTP API</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Politika je zpřístupněna přes MCP">✓</span><span class="sr-only">v MCP</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-body-subtle" aria-hidden="true">·</span><span class="sr-only">není v Cockpitu</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Politika je zpřístupněna v dokumentaci">✓</span><span class="sr-only">v dokumentaci</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">10/14<span class="sr-only"> tvrzení deklarovaných jako zaručená s testem</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="policy">0/14<span class="sr-only"> tvrzení podpořeno zaznamenaným během</span></td>
+      </tr>
+      <tr class="hover:bg-neutral-primary-soft">
+        <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/cs/features/observatory/" class="text-heading hover:text-fg-brand hover:underline">Observatory</a></th>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Observatory je zpřístupněna v příkazové řádce">✓</span><span class="sr-only">v příkazové řádce</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Observatoř je vystavena přes HTTP API">✓</span><span class="sr-only">v HTTP API</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Observatory je zpřístupněna přes MCP">✓</span><span class="sr-only">v MCP</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Observatory je vystaveno přes Cockpit">✓</span><span class="sr-only">v Cockpitu</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Observatory je zpřístupněna v Dokumentaci">✓</span><span class="sr-only">v dokumentaci</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">1/1<span class="sr-only"> tvrzení deklarovaných jako zaručená s testem</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="observatory">0/1<span class="sr-only"> tvrzení podložených zaznamenaným během</span></td>
+      </tr>
+      <tr class="hover:bg-neutral-primary-soft">
+        <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/cs/features/ui/" class="text-heading hover:text-fg-brand hover:underline">UI</a></th>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="UI je zveřejněno v příkazové řádce">✓</span><span class="sr-only">v příkazové řádce</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="UI je vystaveno přes HTTP API">✓</span><span class="sr-only">v HTTP API</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="UI je zpřístupněno přes MCP">✓</span><span class="sr-only">v MCP</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="UI je zpřístupněno v Cockpit">✓</span><span class="sr-only">v Cockpitu</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="UI je zpřístupněno v Dokumentaci">✓</span><span class="sr-only">v dokumentaci</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">1/1<span class="sr-only"> tvrzení deklarovaných jako zaručená s testem</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="ui">0/1<span class="sr-only"> tvrzení podložených zaznamenaným během</span></td>
+      </tr>
+      <tr class="hover:bg-neutral-primary-soft">
+        <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/cs/features/cockpit/" class="text-heading hover:text-fg-brand hover:underline">Cockpit</a></th>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Cockpit je zpřístupněn v příkazové řádce">✓</span><span class="sr-only">v příkazové řádce</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Cockpit je zpřístupněn v HTTP API">✓</span><span class="sr-only">v HTTP API</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Cockpit je vystaven přes MCP">✓</span><span class="sr-only">v MCP</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Cockpit je zveřejněn v Cockpitu">✓</span><span class="sr-only">v Cockpitu</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Cockpit je zpřístupněn v Dokumentaci">✓</span><span class="sr-only">v dokumentaci</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">1/1<span class="sr-only"> tvrzení deklarovaných jako zaručená s testem</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="cockpit">0/1<span class="sr-only"> tvrzení podložených zaznamenaným během</span></td>
+      </tr>
+      <tr class="hover:bg-neutral-primary-soft">
+        <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/cs/features/provenance/" class="text-heading hover:text-fg-brand hover:underline">Původ</a></th>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Provenience je zpřístupněna v Příkazovém řádku">✓</span><span class="sr-only">v příkazové řádce</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-body-subtle" aria-hidden="true">·</span><span class="sr-only">není v HTTP API</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Provenience je vystavena přes MCP">✓</span><span class="sr-only">v MCP</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Původ je zpřístupněn v Cockpit">✓</span><span class="sr-only">v Cockpitu</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Původ je zpřístupněn v dokumentaci">✓</span><span class="sr-only">v dokumentaci</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">6/9<span class="sr-only"> tvrzení deklarovaných jako zaručená s testem</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="provenance">0/9<span class="sr-only"> tvrzení podpořených zaznamenaným během</span></td>
+      </tr>
+      <tr class="hover:bg-neutral-primary-soft">
+        <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/cs/features/install/" class="text-heading hover:text-fg-brand hover:underline">Instalace</a></th>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Install je zpřístupněn v příkazové řádce">✓</span><span class="sr-only">v příkazové řádce</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Instalace je zpřístupněna v HTTP API">✓</span><span class="sr-only">v HTTP API</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Instalace je zpřístupněna přes MCP">✓</span><span class="sr-only">v MCP</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Instalace je zpřístupněna v Cockpitu">✓</span><span class="sr-only">v Cockpitu</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Instalace je zpřístupněna v Dokumentaci">✓</span><span class="sr-only">v dokumentaci</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">9/9<span class="sr-only"> tvrzení deklarovaných jako zaručená s testem</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="install">0/9<span class="sr-only"> tvrzení podpořených zaznamenaným během</span></td>
+      </tr>
+      <tr class="hover:bg-neutral-primary-soft">
+        <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/cs/features/planning/" class="text-heading hover:text-fg-brand hover:underline">Plánování</a></th>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Plánování je zpřístupněno v příkazové řádce">✓</span><span class="sr-only">v příkazové řádce</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Plánování je zpřístupněno přes HTTP API">✓</span><span class="sr-only">v HTTP API</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Plánování je zpřístupněno v MCP">✓</span><span class="sr-only">v MCP</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Plánování je vystaveno přes Cockpit">✓</span><span class="sr-only">v Cockpitu</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Plánování je vystaveno přes dokumentaci">✓</span><span class="sr-only">v dokumentaci</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">14/15<span class="sr-only"> tvrzení deklarovaných jako zaručená s testem</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="planning">0/15<span class="sr-only"> tvrzení podpořeno zaznamenaným během</span></td>
+      </tr>
+      <tr class="hover:bg-neutral-primary-soft">
+        <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/cs/features/context/" class="text-heading hover:text-fg-brand hover:underline">Kontext</a></th>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Kontext je zpřístupněn v příkazové řádce">✓</span><span class="sr-only">v příkazové řádce</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Context je vystaven přes HTTP API">✓</span><span class="sr-only">v HTTP API</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Kontext je vystaven přes MCP">✓</span><span class="sr-only">v MCP</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Kontext je vystaven přes Cockpit">✓</span><span class="sr-only">v Cockpitu</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Kontext je zpřístupněn v Dokumentaci">✓</span><span class="sr-only">v dokumentaci</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">8/9<span class="sr-only"> tvrzení deklarováno jako zaručené s testem</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="context">0/9<span class="sr-only"> tvrzení podpořených zaznamenaným během</span></td>
+      </tr>
+      <tr class="hover:bg-neutral-primary-soft">
+        <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/cs/features/use-cases/" class="text-heading hover:text-fg-brand hover:underline">Případy užití</a></th>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Případy užití jsou zpřístupněny v příkazové řádce">✓</span><span class="sr-only">v příkazové řádce</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-body-subtle" aria-hidden="true">·</span><span class="sr-only">není v HTTP API</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Případy užití jsou zpřístupněny v MCP">✓</span><span class="sr-only">v MCP</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-body-subtle" aria-hidden="true">·</span><span class="sr-only">není v Cockpitu</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Případy užití jsou vystaveny v Dokumentaci">✓</span><span class="sr-only">v dokumentaci</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">4/4<span class="sr-only"> tvrzení deklarovaných jako zaručená s testem</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="use-cases">0/4<span class="sr-only"> tvrzení podpořených zaznamenaným během</span></td>
+      </tr>
+      <tr class="hover:bg-neutral-primary-soft">
+        <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/cs/features/skills/" class="text-heading hover:text-fg-brand hover:underline">Dovednosti</a></th>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Dovednosti jsou zpřístupněny v příkazové řádce">✓</span><span class="sr-only">v příkazové řádce</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Dovednosti jsou zveřejněny v HTTP API">✓</span><span class="sr-only">v HTTP API</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Skills je zpřístupněno přes MCP">✓</span><span class="sr-only">v MCP</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Dovednosti jsou zveřejněny v Cockpitu">✓</span><span class="sr-only">v Cockpitu</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Dovednosti jsou zpřístupněny v Dokumentaci">✓</span><span class="sr-only">v dokumentaci</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">3/3<span class="sr-only"> tvrzení deklarovaných jako zaručená s testem</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="skills">0/3<span class="sr-only"> tvrzení podložených zaznamenaným během</span></td>
+      </tr>
+      <tr class="hover:bg-neutral-primary-soft">
+        <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/cs/features/why/" class="text-heading hover:text-fg-brand hover:underline">Proč</a></th>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Why je zpřístupněno v příkazovém řádku">✓</span><span class="sr-only">v příkazové řádce</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Why je zpřístupněno přes HTTP API">✓</span><span class="sr-only">v HTTP API</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Why je zpřístupněno v MCP">✓</span><span class="sr-only">v MCP</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Proč je zpřístupněno v Cockpitu">✓</span><span class="sr-only">v Cockpitu</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Proč je zveřejněno v Dokumentaci">✓</span><span class="sr-only">v dokumentaci</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">3/3<span class="sr-only"> tvrzení deklarovaných jako zaručená s testem</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="why">0/3<span class="sr-only"> tvrzení podložených zaznamenaným během</span></td>
+      </tr>
+      <tr class="hover:bg-neutral-primary-soft">
+        <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/cs/features/evidence/" class="text-heading hover:text-fg-brand hover:underline">Důkazy</a></th>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Důkazy jsou zpřístupněny v příkazové řádce">✓</span><span class="sr-only">v příkazové řádce</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Důkazy jsou zpřístupněny přes HTTP API">✓</span><span class="sr-only">v HTTP API</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Důkazy jsou zpřístupněny přes MCP">✓</span><span class="sr-only">v MCP</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Důkazy jsou zpřístupněny v Cockpitu">✓</span><span class="sr-only">v Cockpitu</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Důkazy jsou zpřístupněny v dokumentaci">✓</span><span class="sr-only">v dokumentaci</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">12/12<span class="sr-only"> tvrzení deklarovaných jako zaručená s testem</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="evidence">0/12<span class="sr-only"> tvrzení podpořeno zaznamenaným během</span></td>
+      </tr>
+      <tr class="hover:bg-neutral-primary-soft">
+        <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/cs/features/benchmarks/" class="text-heading hover:text-fg-brand hover:underline">Měření výkonu</a></th>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Měření výkonu je zveřejněno v Příkazové řádce">✓</span><span class="sr-only">v příkazové řádce</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Měření výkonu je zpřístupněno přes HTTP API">✓</span><span class="sr-only">v HTTP API</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Měření výkonu je zveřejněno v MCP">✓</span><span class="sr-only">v MCP</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Měření výkonu je zveřejněno v Cockpitu">✓</span><span class="sr-only">v Cockpitu</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Měření výkonu jsou zpřístupněna v dokumentaci">✓</span><span class="sr-only">v dokumentaci</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">6/6<span class="sr-only"> tvrzení deklarovaných jako zaručená s testem</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="benchmarks">0/6<span class="sr-only"> tvrzení podpořeno zaznamenaným během</span></td>
+      </tr>
+      <tr class="hover:bg-neutral-primary-soft">
+        <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/cs/features/ci/" class="text-heading hover:text-fg-brand hover:underline">CI</a></th>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="CI je zpřístupněno v příkazové řádce">✓</span><span class="sr-only">v příkazové řádce</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-body-subtle" aria-hidden="true">·</span><span class="sr-only">není v HTTP API</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="CI je vystaveno přes MCP">✓</span><span class="sr-only">v MCP</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-body-subtle" aria-hidden="true">·</span><span class="sr-only">není v Cockpitu</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="CI je zpřístupněno v Dokumentaci">✓</span><span class="sr-only">v dokumentaci</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">6/6<span class="sr-only"> tvrzení deklarovaných jako zaručená s testem</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="ci">0/6<span class="sr-only"> tvrzení podpořeno zaznamenaným během</span></td>
+      </tr>
+      <tr class="hover:bg-neutral-primary-soft">
+        <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/cs/features/commit/" class="text-heading hover:text-fg-brand hover:underline">Commity</a></th>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Commity jsou zpřístupněny na příkazovém řádku">✓</span><span class="sr-only">v příkazové řádce</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Commity jsou zpřístupněny přes HTTP API">✓</span><span class="sr-only">v HTTP API</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Commity jsou vystaveny přes MCP">✓</span><span class="sr-only">v MCP</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Commity jsou zpřístupněny v Cockpitu">✓</span><span class="sr-only">v Cockpitu</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Commity jsou zpřístupněny v dokumentaci">✓</span><span class="sr-only">v dokumentaci</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">3/3<span class="sr-only"> tvrzení deklarovaných jako zaručená s testem</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="commit">0/3<span class="sr-only"> tvrzení podložených zaznamenaným během</span></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<dl class="mt-6 grid max-w-3xl gap-x-6 gap-y-3 text-sm sm:grid-cols-[auto_1fr]">
+  <dt id="declared-with-test" class="font-mono text-xs uppercase tracking-wide text-heading">deklarováno + test</dt>
+  <dd class="text-body">Z tvrzení, která funkce jmenuje, kolik jich <code>docs/CLAIMS.yaml</code> deklaruje <code>guaranteed</code>, každé s testem, který je má dokázat. Deklarace, ne verdikt: nic zde neříká, že test běžel.</dd>
+  <dt id="supported-by-a-run" class="font-mono text-xs uppercase tracking-wide text-heading">podloženo během</dt>
+  <dd class="text-body">Z týchž tvrzení, kolik jich podporuje zaznamenaný běh, jak jej <code>majordomus evidence show</code> odvozuje z ledgeru; <code>unknown</code>, když do tohoto sestavení nedorazily žádné důkazy. <a href="https://majordomus.dev/cs/evidence/" class="text-fg-brand underline">Jak se zaznamenávají důkazy</a>.</dd>
+</dl><h2 class="mt-14 text-2xl font-bold tracking-tight text-heading">Kam patří každá část produktu</h2>
+<p class="mt-2 max-w-3xl text-body">Opačný směr: každý modul schopností spustitelného souboru, každý veřejný příkaz shellového nástroje a každý druh objektu vrstvy, s funkcemi, které jej jmenují. Řádek bez funkce je mezera, kterou tato stránka ukazuje, ne skrývá, a její zacelení je jeden odkaz v jednom souboru.</p>
+<section class="mt-8">
+  <h3 class="text-lg font-semibold tracking-tight text-heading">Moduly schopností</h3>
+  <p class="mt-1 max-w-3xl text-sm text-body">Moduly programu v Rustu. Každá schopnost, trasa, nástroj a referenční stránka za funkcí pochází z jednoho z nich.</p>
+  <ul class="mt-4 divide-y divide-default rounded-base border border-default bg-neutral-primary-soft">
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Generované artefakty</span>
+      <code class="font-mono text-xs text-body-subtle">artifacts</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/declare-once/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Deklarovat jednou</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Brief relace</span>
+      <code class="font-mono text-xs text-body-subtle">brief</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/continuity/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Kontinuita</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Schopnosti</span>
+      <code class="font-mono text-xs text-body-subtle">capabilities</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/declare-once/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Deklarovat jednou</a><a href="https://majordomus.dev/cs/features/ui/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">UI</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Graf příkazů</span>
+      <code class="font-mono text-xs text-body-subtle">commands</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/interfaces/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Interfaces</a><a href="https://majordomus.dev/cs/features/ui/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">UI</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Commit</span>
+      <code class="font-mono text-xs text-body-subtle">commit</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/commit/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Commity</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Kontinuita</span>
+      <code class="font-mono text-xs text-body-subtle">continuity</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/continuity/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Kontinuita</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Konvergence</span>
+      <code class="font-mono text-xs text-body-subtle">convergence</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/worktrees/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Worktrees</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Dashboardy</span>
+      <code class="font-mono text-xs text-body-subtle">dashboard</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/cockpit/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Cockpit</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Dodávka</span>
+      <code class="font-mono text-xs text-body-subtle">delivery</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/ui/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">UI</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Nasazení</span>
+      <code class="font-mono text-xs text-body-subtle">deploy</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/ui/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">UI</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Design systém</span>
+      <code class="font-mono text-xs text-body-subtle">design</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/cockpit/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Cockpit</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Vývojový kontext</span>
+      <code class="font-mono text-xs text-body-subtle">devcontext</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/context/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Kontext</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Spustitelné vývojové rozsahy</span>
+      <code class="font-mono text-xs text-body-subtle">devtask</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/planning/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Plánování</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Kontrakty adresářů</span>
+      <code class="font-mono text-xs text-body-subtle">directories</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/context/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Kontext</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Distribuce</span>
+      <code class="font-mono text-xs text-body-subtle">distribution</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/observatory/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Observatory</a><a href="https://majordomus.dev/cs/features/ui/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">UI</a><a href="https://majordomus.dev/cs/features/install/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Install</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Ekonomika tokenů</span>
+      <code class="font-mono text-xs text-body-subtle">economics</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/economics/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Economics</a><a href="https://majordomus.dev/cs/features/observatory/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Observatory</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Projekce pro editory a agenty</span>
+      <code class="font-mono text-xs text-body-subtle">editors</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/interfaces/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Rozhraní</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Entity</span>
+      <code class="font-mono text-xs text-body-subtle">entity</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/interfaces/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Rozhraní</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Prostředí repozitáře</span>
+      <code class="font-mono text-xs text-body-subtle">environment</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/interfaces/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Rozhraní</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Epizody</span>
+      <code class="font-mono text-xs text-body-subtle">episodes</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/continuity/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Kontinuita</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Důkazy</span>
+      <code class="font-mono text-xs text-body-subtle">evidence</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/ui/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">UI</a><a href="https://majordomus.dev/cs/features/evidence/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Důkazy</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Provedení</span>
+      <code class="font-mono text-xs text-body-subtle">executions</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/interfaces/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Interfaces</a><a href="https://majordomus.dev/cs/features/ui/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">UI</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Kontroly dokončení</span>
+      <code class="font-mono text-xs text-body-subtle">gates</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/coverage/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Pokrytí</a><a href="https://majordomus.dev/cs/features/finish-contract/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Kontrakt dokončení</a><a href="https://majordomus.dev/cs/features/ui/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">UI</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Grafy</span>
+      <code class="font-mono text-xs text-body-subtle">graph</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/knowledge/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Znalosti</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Ochrana úprav</span>
+      <code class="font-mono text-xs text-body-subtle">guard</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/coordination/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Koordinace</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Zdraví</span>
+      <code class="font-mono text-xs text-body-subtle">health</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/doctrine/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Doctrine</a><a href="https://majordomus.dev/cs/features/observatory/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Observatory</a><a href="https://majordomus.dev/cs/features/ui/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">UI</a><a href="https://majordomus.dev/cs/features/cockpit/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Cockpit</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Integrace pull requestů</span>
+      <code class="font-mono text-xs text-body-subtle">integration</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/coordination/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Coordination</a><a href="https://majordomus.dev/cs/features/ui/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">UI</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Realizace záměru</span>
+      <code class="font-mono text-xs text-body-subtle">intent_realization</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/planning/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Plánování</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Záměr</span>
+      <code class="font-mono text-xs text-body-subtle">intents</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/ui/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">UI</a><a href="https://majordomus.dev/cs/features/planning/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Plánování</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Znalostní báze</span>
+      <code class="font-mono text-xs text-body-subtle">knowledge_base</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/knowledge/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Znalosti</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Životní cyklus relace</span>
+      <code class="font-mono text-xs text-body-subtle">lifecycle</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/continuity/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Kontinuita</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Projekce MCP</span>
+      <code class="font-mono text-xs text-body-subtle">mcp</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/interfaces/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Rozhraní</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Mesh</span>
+      <code class="font-mono text-xs text-body-subtle">mesh</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/mesh/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Mesh</a><a href="https://majordomus.dev/cs/features/observatory/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Observatory</a><a href="https://majordomus.dev/cs/features/ui/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">UI</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Modely</span>
+      <code class="font-mono text-xs text-body-subtle">models</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/models/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Modely</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Monitor</span>
+      <code class="font-mono text-xs text-body-subtle">monitor</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/coordination/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Koordinace</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Objekty</span>
+      <code class="font-mono text-xs text-body-subtle">objects</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/interfaces/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Interfaces</a><a href="https://majordomus.dev/cs/features/ui/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">UI</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Závazky</span>
+      <code class="font-mono text-xs text-body-subtle">obligations</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/finish-contract/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Kontrakt dokončení</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Observatory</span>
+      <code class="font-mono text-xs text-body-subtle">observatory</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/observatory/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Observatory</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Zdrojový balík</span>
+      <code class="font-mono text-xs text-body-subtle">pack</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/context/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Kontext</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Peery</span>
+      <code class="font-mono text-xs text-body-subtle">peers</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/coordination/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Koordinace</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Výkon</span>
+      <code class="font-mono text-xs text-body-subtle">perf</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/benchmarks/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Měření výkonu</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Plán a jeho odvozeniny</span>
+      <code class="font-mono text-xs text-body-subtle">plan</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/observatory/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Observatory</a><a href="https://majordomus.dev/cs/features/ui/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">UI</a><a href="https://majordomus.dev/cs/features/planning/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Planning</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Produkt</span>
+      <code class="font-mono text-xs text-body-subtle">product</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/declare-once/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Deklarovat jednou</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Kvalita veřejného API</span>
+      <code class="font-mono text-xs text-body-subtle">quality</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/declare-once/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Deklarovat jednou</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Uvažování</span>
+      <code class="font-mono text-xs text-body-subtle">reasoning</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/reasoning/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Uvažování</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Obnova úložišť záznamů</span>
+      <code class="font-mono text-xs text-body-subtle">recover</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/continuity/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Kontinuita</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Release</span>
+      <code class="font-mono text-xs text-body-subtle">release</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/observatory/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Observatory</a><a href="https://majordomus.dev/cs/features/ui/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">UI</a><a href="https://majordomus.dev/cs/features/install/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Install</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Repozitář</span>
+      <code class="font-mono text-xs text-body-subtle">repository</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/interfaces/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Interfaces</a><a href="https://majordomus.dev/cs/features/observatory/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Observatory</a><a href="https://majordomus.dev/cs/features/ui/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">UI</a><a href="https://majordomus.dev/cs/features/context/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Context</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Pravidla</span>
+      <code class="font-mono text-xs text-body-subtle">rules</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/doctrine/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Doctrine</a><a href="https://majordomus.dev/cs/features/ui/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">UI</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Obsluhovaná nasazení</span>
+      <code class="font-mono text-xs text-body-subtle">served</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/observatory/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Observatory</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Server</span>
+      <code class="font-mono text-xs text-body-subtle">server</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/coordination/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Koordinace</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Doména relací</span>
+      <code class="font-mono text-xs text-body-subtle">session_domain</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/continuity/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Kontinuita</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Shellová automatizace</span>
+      <code class="font-mono text-xs text-body-subtle">shell</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/doctrine/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Doktrína</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Dovednosti</span>
+      <code class="font-mono text-xs text-body-subtle">skills</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/skills/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Dovednosti</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Dohledatelnost</span>
+      <code class="font-mono text-xs text-body-subtle">trace</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/planning/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Plánování</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Webové plochy</span>
+      <code class="font-mono text-xs text-body-subtle">web</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/interfaces/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Interfaces</a><a href="https://majordomus.dev/cs/features/ui/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">UI</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Proč</span>
+      <code class="font-mono text-xs text-body-subtle">why</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/why/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Proč</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Topologie worktree</span>
+      <code class="font-mono text-xs text-body-subtle">worktree</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/coordination/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Coordination</a><a href="https://majordomus.dev/cs/features/worktrees/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Worktrees</a>
+      </span>
+    </li>
+  </ul>
+</section>
+<section class="mt-8">
+  <h3 class="text-lg font-semibold tracking-tight text-heading">Veřejné příkazy</h3>
+  <p class="mt-1 max-w-3xl text-sm text-body">Podpříkazy shellového nástroje. Funkce pojmenovává ty, které člověk spouští, aby ji používal.</p>
+  <ul class="mt-4 divide-y divide-default rounded-base border border-default bg-neutral-primary-soft">
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">adr</span>
+      <code class="font-mono text-xs text-body-subtle">adr</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/knowledge/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Znalosti</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">archiv</span>
+      <code class="font-mono text-xs text-body-subtle">archive</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/install/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Instalace</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">bench</span>
+      <code class="font-mono text-xs text-body-subtle">bench</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/benchmarks/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Měření výkonu</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">záznam</span>
+      <code class="font-mono text-xs text-body-subtle">capture</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/continuity/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Continuity</a><a href="https://majordomus.dev/cs/features/provenance/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Provenance</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">check</span>
+      <code class="font-mono text-xs text-body-subtle">check</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/coordination/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Koordinace</a><a href="https://majordomus.dev/cs/features/doctrine/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Doktrína</a><a href="https://majordomus.dev/cs/features/finish-contract/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Smlouva o dokončení</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">kontrolní bod</span>
+      <code class="font-mono text-xs text-body-subtle">checkpoint</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/continuity/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Kontinuita</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">kontext</span>
+      <code class="font-mono text-xs text-body-subtle">context</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/continuity/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Continuity</a><a href="https://majordomus.dev/cs/features/context/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Context</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">rozhodnutí</span>
+      <code class="font-mono text-xs text-body-subtle">decision</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/knowledge/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Znalosti</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">doctor</span>
+      <code class="font-mono text-xs text-body-subtle">doctor</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/declare-once/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Deklarovat jednou</a><a href="https://majordomus.dev/cs/features/doctrine/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Doktrína</a><a href="https://majordomus.dev/cs/features/policy/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Politika</a><a href="https://majordomus.dev/cs/features/ci/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">CI</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">doktrína</span>
+      <code class="font-mono text-xs text-body-subtle">doctrine</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/doctrine/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Doktrína</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">evidence</span>
+      <code class="font-mono text-xs text-body-subtle">evidence</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/evidence/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Důkazy</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">finish</span>
+      <code class="font-mono text-xs text-body-subtle">finish</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/coordination/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Koordinace</a><a href="https://majordomus.dev/cs/features/finish-contract/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Kontrakt dokončení</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">handover</span>
+      <code class="font-mono text-xs text-body-subtle">handover</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/continuity/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Kontinuita</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">history</span>
+      <code class="font-mono text-xs text-body-subtle">history</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/knowledge/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Knowledge</a><a href="https://majordomus.dev/cs/features/provenance/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Provenance</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">init</span>
+      <code class="font-mono text-xs text-body-subtle">init</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/policy/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Policy</a><a href="https://majordomus.dev/cs/features/install/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Install</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">knowledge</span>
+      <code class="font-mono text-xs text-body-subtle">knowledge</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/knowledge/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Znalosti</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">migrate</span>
+      <code class="font-mono text-xs text-body-subtle">migrate</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/install/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Instalace</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">plan</span>
+      <code class="font-mono text-xs text-body-subtle">plan</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/planning/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Plánování</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">prompt</span>
+      <code class="font-mono text-xs text-body-subtle">prompt</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/continuity/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Kontinuita</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">otázka</span>
+      <code class="font-mono text-xs text-body-subtle">question</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/knowledge/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Znalosti</a><a href="https://majordomus.dev/cs/features/finish-contract/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Kontrakt dokončení</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">recover</span>
+      <code class="font-mono text-xs text-body-subtle">recover</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/continuity/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Kontinuita</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">rules</span>
+      <code class="font-mono text-xs text-body-subtle">rules</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/doctrine/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Doktrína</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">hledání</span>
+      <code class="font-mono text-xs text-body-subtle">search</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/knowledge/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Znalosti</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">session</span>
+      <code class="font-mono text-xs text-body-subtle">session</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/continuity/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Continuity</a><a href="https://majordomus.dev/cs/features/provenance/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Provenance</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">skills</span>
+      <code class="font-mono text-xs text-body-subtle">skills</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/skills/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Dovednosti</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">start</span>
+      <code class="font-mono text-xs text-body-subtle">start</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/coordination/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Koordinace</a><a href="https://majordomus.dev/cs/features/finish-contract/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Kontrakt dokončení</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">update</span>
+      <code class="font-mono text-xs text-body-subtle">update</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/declare-once/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Deklarovat jednou</a><a href="https://majordomus.dev/cs/features/policy/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Politika</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">usecase</span>
+      <code class="font-mono text-xs text-body-subtle">usecase</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/use-cases/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Případy užití</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">verze</span>
+      <code class="font-mono text-xs text-body-subtle">version</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/install/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Instalace</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">watch</span>
+      <code class="font-mono text-xs text-body-subtle">watch</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/doctrine/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Doctrine</a><a href="https://majordomus.dev/cs/features/provenance/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Provenance</a><a href="https://majordomus.dev/cs/features/ci/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">CI</a>
+      </span>
+    </li>
+  </ul>
+</section>
+<section class="mt-8">
+  <h3 class="text-lg font-semibold tracking-tight text-heading">Druhy objektů</h3>
+  <p class="mt-1 max-w-3xl text-sm text-body">Druhy vrstvy, s objekty každého druhu, které toto repozitář drží.</p>
+  <ul class="mt-4 divide-y divide-default rounded-base border border-default bg-neutral-primary-soft">
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">adr (158)</span>
+      <code class="font-mono text-xs text-body-subtle">adr</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/knowledge/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Znalosti</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">aplikace (5)</span>
+      <code class="font-mono text-xs text-body-subtle">application</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/use-cases/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Případy užití</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">oblast (9)</span>
+      <code class="font-mono text-xs text-body-subtle">area</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/why/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Proč</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">publikum (8)</span>
+      <code class="font-mono text-xs text-body-subtle">audience</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/why/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Proč</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">tvrzení (250)</span>
+      <code class="font-mono text-xs text-body-subtle">claim</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/declare-once/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Deklarovat jednou</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">příkaz (31)</span>
+      <code class="font-mono text-xs text-body-subtle">command</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/declare-once/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Deklarovat jednou</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">kontext (39)</span>
+      <code class="font-mono text-xs text-body-subtle">context</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/context/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Kontext</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">critique (29)</span>
+      <code class="font-mono text-xs text-body-subtle">critique</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/planning/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Plánování</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">nasazení (1)</span>
+      <code class="font-mono text-xs text-body-subtle">deployment</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/observatory/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Observatory</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">derive-offload (1)</span>
+      <code class="font-mono text-xs text-body-subtle">derive-offload</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/ci/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">CI</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">distribution-model (1)</span>
+      <code class="font-mono text-xs text-body-subtle">distribution-model</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/install/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Instalace</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">doména (6)</span>
+      <code class="font-mono text-xs text-body-subtle">domain</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/declare-once/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Deklarovat jednou</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">funkce (29)</span>
+      <code class="font-mono text-xs text-body-subtle">feature</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/declare-once/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Deklarovat jednou</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">mezera (4)</span>
+      <code class="font-mono text-xs text-body-subtle">gap</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/planning/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Plánování</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">intent (33)</span>
+      <code class="font-mono text-xs text-body-subtle">intent</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/planning/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Plánování</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">issue (799)</span>
+      <code class="font-mono text-xs text-body-subtle">issue</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/planning/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Plánování</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">knowledge (50)</span>
+      <code class="font-mono text-xs text-body-subtle">knowledge</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/knowledge/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Znalosti</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">mesh-declaration (1)</span>
+      <code class="font-mono text-xs text-body-subtle">mesh-declaration</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/mesh/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Mesh</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">milestone (100)</span>
+      <code class="font-mono text-xs text-body-subtle">milestone</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/planning/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Plánování</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">okamžik (38)</span>
+      <code class="font-mono text-xs text-body-subtle">moment</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/why/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Proč</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">politika (1)</span>
+      <code class="font-mono text-xs text-body-subtle">policy</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/policy/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Politika</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">profil (4)</span>
+      <code class="font-mono text-xs text-body-subtle">profile</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/policy/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Politika</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">prompt (5)</span>
+      <code class="font-mono text-xs text-body-subtle">prompt</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/continuity/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Kontinuita</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">release-record (32)</span>
+      <code class="font-mono text-xs text-body-subtle">release-record</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/install/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Instalace</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">pravidlo (189)</span>
+      <code class="font-mono text-xs text-body-subtle">rule</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/doctrine/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Doktrína</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">rozsah (1)</span>
+      <code class="font-mono text-xs text-body-subtle">scope</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/context/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Kontext</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">relace (90)</span>
+      <code class="font-mono text-xs text-body-subtle">session</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/continuity/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Continuity</a><a href="https://majordomus.dev/cs/features/provenance/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Provenance</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">dovednost (8)</span>
+      <code class="font-mono text-xs text-body-subtle">skill</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/skills/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Dovednosti</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">taxonomie (10)</span>
+      <code class="font-mono text-xs text-body-subtle">taxonomy</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/use-cases/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Případy užití</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">případ užití (49)</span>
+      <code class="font-mono text-xs text-body-subtle">use-case</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/use-cases/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Případy užití</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">workspace (1)</span>
+      <code class="font-mono text-xs text-body-subtle">workspace</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/context/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Kontext</a>
+      </span>
+    </li>
+  </ul>
+</section>
+
+<p class="mt-14 border-t border-default pt-6 text-sm text-body-subtle">
+  Tytéž dvě tabulky v příkazové řádce: <code class="font-mono text-heading">majordomus product matrix</code>. Přes HTTP: <code class="font-mono text-heading">GET /api/v1/product/matrix</code>. Přes MCP: <code class="font-mono text-heading">majordomus_product_matrix</code>.
+</p>
+
+</div>
+
+</main>
+
+<footer id="site-map" class="border-t border-default bg-neutral-primary-soft" aria-label="Mapa webu">
+  <div class="mx-auto w-full max-w-screen-xl p-4 md:py-8">
+    <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
+      
+      <div class="min-w-0 scroll-mt-20" id="site-map-1">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/cs/domains/" class="hover:text-heading hover:underline">Produkt</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/cs/domains/" class="hover:text-heading hover:underline">Produkt podle oblastí</a></li><li><a href="https://majordomus.dev/cs/why/" class="hover:text-heading hover:underline">Proč existuje: způsoby selhání</a></li><li><a href="https://majordomus.dev/cs/features/" class="hover:text-heading hover:underline">Funkce</a></li><li><a href="https://majordomus.dev/cs/features/matrix/" class="hover:text-heading hover:underline">Funkce a rozhraní</a></li><li><a href="https://majordomus.dev/cs/use-cases/" class="hover:text-heading hover:underline">Případy užití</a></li><li><a href="https://majordomus.dev/cs/applications/" class="hover:text-heading hover:underline">Aplikace</a></li><li><a href="https://majordomus.dev/cs/skills/" class="hover:text-heading hover:underline">Dovednosti</a></li><li><a href="https://majordomus.dev/cs/supervises/" class="hover:text-heading hover:underline">Na co dohlíží</a></li><li><a href="https://majordomus.dev/cs/docs/majordomus-ui/" class="hover:text-heading hover:underline">UI produktu</a></li><li><a href="https://majordomus.dev/cs/docs/cockpit/" class="hover:text-heading hover:underline">Cockpit</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0 scroll-mt-20" id="site-map-2">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/cs/method/" class="hover:text-heading hover:underline">Princip</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/cs/method/" class="hover:text-heading hover:underline">Doktrína, politika, pravidlo, vynucování</a></li><li><a href="https://majordomus.dev/cs/method/axes/" class="hover:text-heading hover:underline">Čtyři osy</a></li><li><a href="https://majordomus.dev/cs/method/argument/" class="hover:text-heading hover:underline">Celá argumentace</a></li><li><a href="https://majordomus.dev/cs/docs/concepts/" class="hover:text-heading hover:underline">Slovník</a></li><li><a href="https://majordomus.dev/cs/policy/" class="hover:text-heading hover:underline">Kanonická politika</a></li><li><a href="https://majordomus.dev/cs/context/" class="hover:text-heading hover:underline">Kontrakty adresářů</a></li><li><a href="https://majordomus.dev/cs/sessions/" class="hover:text-heading hover:underline">Relace</a></li><li><a href="https://majordomus.dev/cs/docs/planning/" class="hover:text-heading hover:underline">Jak funguje plánování</a></li><li><a href="https://majordomus.dev/cs/docs/design/" class="hover:text-heading hover:underline">Design</a></li><li><a href="https://majordomus.dev/cs/kit/" class="hover:text-heading hover:underline">Sada komponent</a></li><li><a href="https://majordomus.dev/cs/docs/surfaces/" class="hover:text-heading hover:underline">Jak se odvozují rozhraní</a></li><li><a href="https://majordomus.dev/cs/architecture/" class="hover:text-heading hover:underline">Jak je tento web postaven</a></li><li><a href="https://majordomus.dev/cs/docs/product/" class="hover:text-heading hover:underline">Jak se odvozuje stránka produktu</a></li><li><a href="https://majordomus.dev/cs/proof-carrying-documentation/" class="hover:text-heading hover:underline">Článek: dokumentace nesoucí důkaz</a></li><li><a href="https://majordomus.dev/cs/everything-followed/" class="hover:text-heading hover:underline">Článek: všechno, dohledatelně</a></li><li><a href="https://majordomus.dev/cs/dokumentace-kterou-lze-odmitnout/" class="hover:text-heading hover:underline">Stejná argumentace, napsaná česky</a></li><li><a href="https://majordomus.dev/cs/vsechno-v-jednom-proudu/" class="hover:text-heading hover:underline">Everything, followed, written in Czech</a></li><li><a href="https://majordomus.dev/cs/the-bet-on-a-layer/" class="hover:text-heading hover:underline">Essay: the bet on a layer, not a model</a></li><li><a href="https://majordomus.dev/cs/teze/" class="hover:text-heading hover:underline">Esej v češtině: sázka na vrstvu, ne na model</a></li><li><a href="https://majordomus.dev/cs/a-pasted-brief-becomes-a-plan/" class="hover:text-heading hover:underline">Article: a pasted brief becomes a plan</a></li><li><a href="https://majordomus.dev/cs/vlozene-zadani-se-stava-planem/" class="hover:text-heading hover:underline">The pasted brief, written in Czech</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0 scroll-mt-20" id="site-map-3">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/cs/challenge/" class="hover:text-heading hover:underline">Důkazy</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/cs/challenge/" class="hover:text-heading hover:underline">Výzva: sledujte, jak odmítne agenta</a></li><li><a href="https://majordomus.dev/cs/guarantees/" class="hover:text-heading hover:underline">Záruky</a></li><li><a href="https://majordomus.dev/cs/evidence/" class="hover:text-heading hover:underline">Graf důkazů</a></li><li><a href="https://majordomus.dev/cs/contract/" class="hover:text-heading hover:underline">Kontrakt dokončení</a></li><li><a href="https://majordomus.dev/cs/doctrines/" class="hover:text-heading hover:underline">Doktrína</a></li><li><a href="https://majordomus.dev/cs/adrs/" class="hover:text-heading hover:underline">Rozhodnutí</a></li><li><a href="https://majordomus.dev/cs/rules/" class="hover:text-heading hover:underline">Platná pravidla</a></li><li><a href="https://majordomus.dev/cs/registry/benchmarks/" class="hover:text-heading hover:underline">Měření výkonu</a></li><li><a href="https://majordomus.dev/cs/economics/" class="hover:text-heading hover:underline">Ekonomika tokenů</a></li><li><a href="https://majordomus.dev/cs/limitations/" class="hover:text-heading hover:underline">Omezení</a></li><li><a href="https://majordomus.dev/cs/roadmap/" class="hover:text-heading hover:underline">Plán rozvoje</a></li><li><a href="https://majordomus.dev/cs/plan/" class="hover:text-heading hover:underline">Milníky a úkoly</a></li><li><a href="https://majordomus.dev/cs/plan/dag/" class="hover:text-heading hover:underline">Graf závislostí</a></li><li><a href="https://majordomus.dev/cs/changelog/" class="hover:text-heading hover:underline">Changelog</a></li><li><a href="https://majordomus.dev/cs/docs/dogfooding/" class="hover:text-heading hover:underline">Dogfooding</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0 scroll-mt-20" id="site-map-4">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/cs/docs/" class="hover:text-heading hover:underline">Dokumenty</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/cs/docs/" class="hover:text-heading hover:underline">Všechny dokumenty</a></li><li><a href="https://majordomus.dev/cs/docs/install/" class="hover:text-heading hover:underline">Instalace</a></li><li><a href="https://majordomus.dev/cs/commands/" class="hover:text-heading hover:underline">Příkazy</a></li><li><a href="https://majordomus.dev/cs/profiles/" class="hover:text-heading hover:underline">Profily provádění</a></li><li><a href="https://majordomus.dev/cs/docs/cli/" class="hover:text-heading hover:underline">Přehled příkazů</a></li><li><a href="https://majordomus.dev/cs/docs/api/" class="hover:text-heading hover:underline">HTTP API</a></li><li><a href="https://majordomus.dev/rustdoc/" class="hover:text-heading hover:underline">Rust API</a></li><li><a href="https://majordomus.dev/cs/registry/mcp/" class="hover:text-heading hover:underline">Rozhraní MCP</a></li><li><a href="https://majordomus.dev/cs/docs/schemas/" class="hover:text-heading hover:underline">Schémata souborů</a></li><li><a href="https://majordomus.dev/cs/registry/" class="hover:text-heading hover:underline">Registr</a></li><li><a href="https://majordomus.dev/cs/map/" class="hover:text-heading hover:underline">Mapa programu</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/82ac259d0ae7c3901ee09bed461e2f62318a6642/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/82ac259d0ae7c3901ee09bed461e2f62318a6642/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/82ac259d0ae7c3901ee09bed461e2f62318a6642/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+        </ul>
+      </div>
+    </div>
+    <hr class="my-6 border-default sm:mx-auto lg:my-8"><div class="space-y-4">
+    <div class="sm:flex sm:items-center sm:justify-between">
+      <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
+    </div>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v1.0.0-alpha.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/82ac259d0ae7c3901ee09bed461e2f62318a6642" class="font-mono underline">82ac259</a> · inputs <span class="font-mono">ac7a158bc7ec</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    </div>
+  </div>
+</footer>
+<dialog id="site-search" data-site-search data-index="https://majordomus.dev/docs/index.json" aria-labelledby="site-search-label" class="m-0 h-dvh max-h-none w-full max-w-none border-0 bg-neutral-primary p-0 text-body backdrop:bg-neutral-primary-strong/80 sm:mx-auto sm:mt-20 sm:h-auto sm:max-h-[75vh] sm:max-w-2xl sm:rounded-base sm:border sm:border-default sm:shadow-lg">
+  <div class="flex h-full max-h-[inherit] flex-col">
+    <div class="flex items-center gap-2 border-b border-default p-3">
+      <label id="site-search-label" for="site-search-input" class="sr-only">Hledat na tomto webu</label>
+      <svg class="h-5 w-5 shrink-0 text-body-subtle" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z"/></svg>
+      <input id="site-search-input" type="search" role="combobox" aria-expanded="false" aria-controls="site-search-results" aria-autocomplete="list" aria-describedby="site-search-status" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go" placeholder="Pravidlo, rozhodnutí, příkaz, stránka…" class="block min-w-0 flex-1 rounded-base border border-default-medium bg-neutral-secondary-medium px-3 py-2.5 text-base text-heading focus:border-brand focus:ring-brand sm:text-sm">
+      <button type="button" data-site-search-close class="inline-flex h-10 shrink-0 items-center rounded-base border border-default px-3 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">Zavřít<span class="sr-only"> vyhledávání</span></button>
+    </div>
+    <p id="site-search-status" class="px-4 pt-3 text-xs text-body-subtle" aria-live="polite" data-site-search-status>Prohledává názvy a popisy všech stránek, které tento web publikuje.</p>
+    <div id="site-search-results" role="listbox" aria-label="Odpovídající stránky" class="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain px-2 py-2" data-site-search-results></div>
+    <template data-site-search-item><a tabindex="-1" class="block rounded-base px-3 py-2 hover:bg-neutral-secondary-medium aria-selected:bg-neutral-secondary-medium aria-selected:ring-2 aria-selected:ring-brand"><span class="block break-words font-medium text-heading" data-slot="title"></span><span class="block break-all font-mono text-xs text-body-subtle" data-slot="meta"></span><span class="mt-0.5 line-clamp-2 text-sm text-body" data-slot="description"></span></a></template>
+  </div>
+</dialog>
+
+<script defer src="https://majordomus.dev/js/nav.js"></script>
+<script defer src="https://majordomus.dev/js/search.js"></script>
+<script src="https://majordomus.dev/js/theme.js"></script>
+<script defer src="https://majordomus.dev/js/alpine.min.js"></script>
+
+</body>
+</html>

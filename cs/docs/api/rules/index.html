@@ -1,0 +1,1178 @@
+<!doctype html>
+<html lang="cs" class="scroll-smooth" data-theme-key="color-theme" data-theme-class="dark" data-design="944a896b2646">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HTTP API: pravidla — Prismatic Majordomus</title>
+<meta name="description" content="Co tento repozitář odmítá a co dokáže pro každé odmítnutí skutečně ukázat. Pravidlo deklaruje třídu — blocking, kde kontrola práci odmítne, nebo advisory, kde se očekává, že si ho čtenář přečetl — a blok vynucování, který pojmenovává buď validátor, jejž volá dispatcher, nebo případy chování, které ho dokazují. Tento modul tuto deklaraci spojuje se stromem a s knihou zaznamenaných běhů a hlásí pro každé pravidlo, zda to, co pojmenovává, existuje, zda ho vlastní nějaký runner, zda byl někdy spuštěn, zda běh prošel a zda je běh starší než to, čeho se týká. Blokující pravidlo, jehož důkaz chybí, visí v prázdnu nebo selhává, je nález, protože pravidlo, které nikdo nedokáže prokázat, je pravidlo, které nikdo nevynucuje.">
+<link rel="canonical" href="https://majordomus.dev/cs/docs/api/rules/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Prismatic Majordomus">
+<meta property="og:title" content="HTTP API: pravidla — Prismatic Majordomus">
+<meta property="og:description" content="Co tento repozitář odmítá a co dokáže pro každé odmítnutí skutečně ukázat. Pravidlo deklaruje třídu — blocking, kde kontrola práci odmítne, nebo advisory, kde se očekává, že si ho čtenář přečetl — a blok vynucování, který pojmenovává buď validátor, jejž volá dispatcher, nebo případy chování, které ho dokazují. Tento modul tuto deklaraci spojuje se stromem a s knihou zaznamenaných běhů a hlásí pro každé pravidlo, zda to, co pojmenovává, existuje, zda ho vlastní nějaký runner, zda byl někdy spuštěn, zda běh prošel a zda je běh starší než to, čeho se týká. Blokující pravidlo, jehož důkaz chybí, visí v prázdnu nebo selhává, je nález, protože pravidlo, které nikdo nedokáže prokázat, je pravidlo, které nikdo nevynucuje.">
+<meta property="og:url" content="https://majordomus.dev/cs/docs/api/rules/">
+<meta property="og:image" content="https://majordomus.dev/images/social-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
+<link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=3f5215cbacbe9c61f05a">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
+<script>(function(){try{var K="mj-lang",L=["en","cs"],S="en",B="https://majordomus.dev",d=document.documentElement,k;try{k=localStorage.getItem(K)}catch(e){}
+document.addEventListener("click",function(e){var a=e.target.closest&&e.target.closest("[data-i18n-lang]");if(a)try{localStorage.setItem(K,a.getAttribute("data-i18n-lang"))}catch(x){}},true);
+if(d.lang!==S)return;var r=document.referrer;if(r&&r.indexOf(location.origin)===0)return;
+var p=(k?[k]:navigator.languages||[navigator.language||""]).map(function(l){return String(l).slice(0,2).toLowerCase()});
+for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=location.href;if(u.indexOf(B)!==0)return;location.replace(B+"/"+p[i]+u.slice(B.length).replace(/^(?!\/)/,"/"));return}}}catch(e){}})();</script>
+
+<link rel="alternate" hreflang="en" href="https://majordomus.dev/docs/api/rules/">
+<link rel="alternate" hreflang="cs" href="https://majordomus.dev/cs/docs/api/rules/">
+<link rel="alternate" hreflang="x-default" href="https://majordomus.dev/docs/api/rules/">
+</head>
+<body class="min-h-screen bg-neutral-primary text-body antialiased">
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white">Přeskočit na obsah</a>
+
+
+
+<nav class="sticky top-0 z-20 w-full border-b border-default bg-neutral-primary text-base" aria-label="Hlavní">
+  <div class="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between gap-x-2 gap-y-2 px-3 py-3 sm:p-4">
+    <a href="https://majordomus.dev/cs/" class="flex min-w-0 items-center gap-1.5 sm:gap-2.5 rtl:space-x-reverse">
+      <span class="inline-flex h-6 w-6 shrink-0 text-heading sm:h-7 sm:w-7 [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 1.0.0-alpha.1 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span>
+      <span class="self-center whitespace-nowrap text-base font-semibold text-heading sm:text-xl">Majordomus</span>
+      
+      
+      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading" data-release="0.30.2">v0.30.2</span>
+      
+    </a>
+    <div class="flex items-center gap-1 sm:gap-2 md:order-2"><button type="button" data-site-search-open hidden aria-haspopup="dialog" aria-controls="site-search" aria-expanded="false" aria-keyshortcuts="/ Control+K Meta+K" class="inline-flex h-10 min-w-10 items-center justify-center gap-2 rounded-base border border-default px-2.5 text-sm font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">
+        <svg class="h-5 w-5 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z"/></svg> <span class="sr-only lg:not-sr-only">Hledat</span> <kbd class="hidden rounded border border-default-medium px-1.5 font-mono text-xs text-body-subtle lg:inline" aria-hidden="true">/</kbd>
+      </button>
+      <div class="relative" data-i18n-switch>
+  <button type="button" aria-label="Jazyk" data-dropdown-toggle="language-menu" data-dropdown-placement="bottom-end" aria-haspopup="true" aria-controls="language-menu" aria-expanded="false" class="inline-flex h-10 items-center justify-center gap-1.5 rounded-base border border-default px-2.5 text-sm font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">
+    <svg class="h-5 w-5 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0 0c2.2-2.4 3.3-5.4 3.3-9S14.2 5.4 12 3m0 18c-2.2-2.4-3.3-5.4-3.3-9S9.8 5.4 12 3M3.5 9h17M3.5 15h17"/></svg>
+    <span class="font-mono text-xs uppercase" translate="no" data-i18n-current-label>cs</span>
+    <svg class="h-2.5 w-2.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg>
+  </button>
+  <div id="language-menu" class="absolute right-0 top-full z-50 mt-2 hidden w-44 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+    <ul class="p-2 text-sm font-medium text-body" translate="no">
+      <li><a href="https://majordomus.dev/docs/api/rules/" hreflang="en" lang="en" data-i18n-keep data-i18n-current data-i18n-lang="en" class="group flex w-full items-center justify-between gap-3 rounded-sm px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading aria-[current=true]:text-heading"><span class="flex items-center gap-2"><span class="w-6 font-mono text-xs uppercase text-body-subtle">en</span>English</span><svg class="invisible h-4 w-4 text-fg-brand group-aria-[current=true]:visible" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 11.917 9.724 16.5 19 7.5"/></svg></a></li>
+      <li><a href="https://majordomus.dev/cs/docs/api/rules/" hreflang="cs" lang="cs" data-i18n-keep data-i18n-current data-i18n-lang="cs" class="group flex w-full items-center justify-between gap-3 rounded-sm px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading aria-[current=true]:text-heading" aria-current="true"><span class="flex items-center gap-2"><span class="w-6 font-mono text-xs uppercase text-body-subtle">cs</span>Čeština</span><svg class="invisible h-4 w-4 text-fg-brand group-aria-[current=true]:visible" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 11.917 9.724 16.5 19 7.5"/></svg></a></li>
+    </ul>
+  </div>
+</div>
+
+      <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Přepnout tmavý režim">
+  <svg id="theme-toggle-dark-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+  <svg id="theme-toggle-light-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+</button>
+<a href="https://majordomus.dev/ui/" data-nav-primary="ui" class="hidden rounded-base border border-brand-subtle px-3 py-2 text-sm font-semibold text-fg-brand hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary xl:inline-flex">UI produktu</a>
+      <a href="https://github.com/korczis/prismatic-majordomus" class="hidden rounded-base border border-default px-3 py-2 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary sm:inline-flex">GitHub</a>
+      <a href="https://majordomus.dev/cs/getting-started/" class="hidden rounded-base bg-brand px-3 py-2 text-sm font-semibold text-white hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium md:inline-flex">Začít</a>
+      <button data-collapse-toggle="navbar-main" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-base p-2 text-sm text-body hover:bg-neutral-secondary-soft hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:hidden" aria-controls="navbar-main" aria-expanded="false">
+        <span class="sr-only">Otevřít hlavní nabídku</span> <svg class="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h14"/></svg>
+      </button>
+    </div><div class="hidden w-full min-w-0 md:order-1 md:block md:w-auto" id="navbar-main">
+      <ul class="mt-4 flex flex-col rounded-base border border-default bg-neutral-secondary-soft p-4 font-medium md:mt-0 md:flex-row md:flex-wrap md:items-center md:gap-x-2 md:gap-y-1 md:border-0 md:bg-neutral-primary md:p-0">
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          <button id="nav-1" data-dropdown-toggle="nav-menu-1" type="button" aria-controls="nav-menu-1" class="flex w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Produkt<svg class="ms-1.5 h-3 w-3 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-1" class="hidden md:absolute md:left-0 md:top-full md:z-10 md:mt-2 md:w-64 md:rounded-base md:border md:border-default-medium md:bg-neutral-primary-medium md:shadow-lg">
+            <ul class="pb-2 ps-3 text-sm font-medium text-body md:p-2" aria-labelledby="nav-1">
+              <li><a href="https://majordomus.dev/cs/domains/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Produkt podle oblastí</a></li><li><a href="https://majordomus.dev/cs/why/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Proč existuje: způsoby selhání</a></li><li><a href="https://majordomus.dev/cs/features/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Funkce</a></li><li><a href="https://majordomus.dev/cs/use-cases/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Případy užití</a></li><li><a href="https://majordomus.dev/ui/" data-nav-snapshot="ui" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">UI produktu <span data-nav-snapshot-note class="text-xs text-body-subtle">&middot; snímek</span></a></li><li><a href="https://majordomus.dev/cs/docs/cockpit/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Cockpit</a></li>
+              <li class="mt-1 border-t border-default pt-1"><a href="#site-map-1" class="block rounded px-3 py-2 text-body-subtle hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Všech 10 stránek v mapě webu &darr;</a></li>
+            </ul>
+          </div>
+        </li>
+        
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          <button id="nav-2" data-dropdown-toggle="nav-menu-2" type="button" aria-controls="nav-menu-2" class="flex w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Princip<svg class="ms-1.5 h-3 w-3 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-2" class="hidden md:absolute md:left-0 md:top-full md:z-10 md:mt-2 md:w-64 md:rounded-base md:border md:border-default-medium md:bg-neutral-primary-medium md:shadow-lg">
+            <ul class="pb-2 ps-3 text-sm font-medium text-body md:p-2" aria-labelledby="nav-2">
+              <li><a href="https://majordomus.dev/cs/method/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Doktrína, politika, pravidlo, vynucování</a></li><li><a href="https://majordomus.dev/cs/method/argument/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Celá argumentace</a></li><li><a href="https://majordomus.dev/cs/docs/concepts/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Slovník</a></li><li><a href="https://majordomus.dev/cs/sessions/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Relace</a></li>
+              <li class="mt-1 border-t border-default pt-1"><a href="#site-map-2" class="block rounded px-3 py-2 text-body-subtle hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">All 21 pages in the site map &darr;</a></li>
+            </ul>
+          </div>
+        </li>
+        
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          <button id="nav-3" data-dropdown-toggle="nav-menu-3" type="button" aria-controls="nav-menu-3" class="flex w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Důkazy<svg class="ms-1.5 h-3 w-3 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-3" class="hidden md:absolute md:left-0 md:top-full md:z-10 md:mt-2 md:w-64 md:rounded-base md:border md:border-default-medium md:bg-neutral-primary-medium md:shadow-lg">
+            <ul class="pb-2 ps-3 text-sm font-medium text-body md:p-2" aria-labelledby="nav-3">
+              <li><a href="https://majordomus.dev/cs/challenge/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Výzva: sledujte, jak odmítne agenta</a></li><li><a href="https://majordomus.dev/cs/guarantees/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Záruky</a></li><li><a href="https://majordomus.dev/cs/evidence/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Graf důkazů</a></li><li><a href="https://majordomus.dev/cs/limitations/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Omezení</a></li><li><a href="https://majordomus.dev/cs/roadmap/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Plán rozvoje</a></li>
+              <li class="mt-1 border-t border-default pt-1"><a href="#site-map-3" class="block rounded px-3 py-2 text-body-subtle hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Všech 15 stránek v mapě webu &darr;</a></li>
+            </ul>
+          </div>
+        </li>
+        
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          <button id="nav-4" data-dropdown-toggle="nav-menu-4" type="button" aria-controls="nav-menu-4" class="flex w-full items-center justify-between rounded px-3 py-2 text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Dokumenty<svg class="ms-1.5 h-3 w-3 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-4" class="hidden md:absolute md:left-0 md:top-full md:z-10 md:mt-2 md:w-64 md:rounded-base md:border md:border-default-medium md:bg-neutral-primary-medium md:shadow-lg">
+            <ul class="pb-2 ps-3 text-sm font-medium text-body md:p-2" aria-labelledby="nav-4">
+              <li><a href="https://majordomus.dev/cs/docs/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Všechny dokumenty</a></li><li><a href="https://majordomus.dev/cs/docs/install/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Instalace</a></li><li><a href="https://majordomus.dev/cs/commands/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Příkazy</a></li><li><a href="https://majordomus.dev/cs/docs/api/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">HTTP API</a></li><li><a href="https://majordomus.dev/cs/registry/mcp/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Rozhraní MCP</a></li>
+              <li class="mt-1 border-t border-default pt-1"><a href="#site-map-4" class="block rounded px-3 py-2 text-body-subtle hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Všech 11 stránek v mapě webu &darr;</a></li>
+            </ul>
+          </div>
+        </li>
+        
+        
+        <li class="mt-3 md:hidden"><a href="https://majordomus.dev/ui/" data-nav-primary="ui" class="block rounded-base border border-brand-subtle px-3 py-2 text-center font-semibold text-fg-brand hover:bg-neutral-tertiary">UI produktu</a></li>
+        <li class="mt-3 md:hidden"><a href="https://majordomus.dev/cs/getting-started/" class="block rounded-base bg-brand px-3 py-2 text-center font-semibold text-white hover:bg-brand-strong">Začít</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+<div data-i18n-notice class="border-b border-default bg-neutral-secondary-soft">
+  <p class="mx-auto max-w-screen-xl px-4 py-2 text-xs text-body">Tato stránka byla automaticky přeložena z angličtiny, jediného jazyka, ve kterém se tento web píše. <a href="https://majordomus.dev/docs/api/rules/" hreflang="en" lang="en" data-i18n-keep data-i18n-lang="en" class="font-medium underline">Číst originál</a>.</p>
+</div>
+<main id="main">
+<div class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+    <nav class="flex" aria-label="Drobečková navigace">
+  <ol class="inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2 rtl:space-x-reverse">
+    <li class="inline-flex items-center"><a href="https://majordomus.dev/cs/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Domů</a></li><li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="https://majordomus.dev/cs/docs/" class="font-medium text-body hover:text-fg-brand">Dokumentace</a></li>
+    <li aria-hidden="true">/</li>
+    <li aria-current="page" class="font-medium text-heading">HTTP API: rules</li>
+  </ol>
+</nav>
+
+    <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">HTTP API: rules</h1>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">Co tento repozitář odmítá a co dokáže pro každé odmítnutí skutečně ukázat. Pravidlo deklaruje třídu — blocking, kde kontrola práci odmítne, nebo advisory, kde se očekává, že si ho čtenář přečetl — a blok vynucování, který pojmenovává buď validátor, jejž volá dispatcher, nebo případy chování, které ho dokazují. Tento modul tuto deklaraci spojuje se stromem a s knihou zaznamenaných běhů a hlásí pro každé pravidlo, zda to, co pojmenovává, existuje, zda ho vlastní nějaký runner, zda byl někdy spuštěn, zda běh prošel a zda je běh starší než to, čeho se týká. Blokující pravidlo, jehož důkaz chybí, visí v prázdnu nebo selhává, je nález, protože pravidlo, které nikdo nedokáže prokázat, je pravidlo, které nikdo nevynucuje.</p>
+  </div>
+</div>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+  <div class="grid gap-10 lg:grid-cols-[16rem_minmax(0,1fr)]">
+  <nav class="lg:sticky lg:top-24 lg:self-start" aria-label="Sekce API">
+    <p class="mb-2"><a href="https://majordomus.dev/cs/docs/api/" class="font-mono text-xs uppercase tracking-wide text-fg-brand hover:underline">Rejstřík HTTP API</a></p>
+    <p class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">na této stránce</p>
+    <ul class="flex flex-wrap gap-2 text-sm lg:flex-col lg:gap-1"><li><a href="#op-rules-report" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">rules.report</a></li><li><a href="#op-rules-proves" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">rules.proves</a></li><li><a href="#op-rules-show" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">rules.show</a></li><li><a href="#schemas" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Schémata</a></li>
+    </ul>
+  </nav>
+  <div class="min-w-0">
+    <p class="mb-6 text-sm text-body-subtle">Vykresleno z <a href="https://github.com/korczis/prismatic-majordomus/blob/82ac259d0ae7c3901ee09bed461e2f62318a6642/docs/generated/openapi.json" class="font-mono underline">docs/generated/openapi.json</a>, který spustitelný soubor generuje ze svého registru schopností a CI jej odmítne, je-li zastaralý. Surový dokument je na <a href="https://majordomus.dev/openapi.json" class="font-mono text-fg-brand underline">/openapi.json</a>; běžící server servíruje stejný dokument na vlastní <code class="font-mono">/openapi.json</code> a Swagger UI na <code class="font-mono">/swagger</code>.</p><section id="tag-rules" class="scroll-mt-24">
+      <h2 class="font-mono text-xl font-semibold tracking-tight text-heading">rules</h2>
+      <p class="mt-2 max-w-3xl text-sm text-body">Co tento repozitář odmítá a co dokáže pro každé odmítnutí skutečně ukázat. Pravidlo deklaruje třídu — blocking, kde kontrola práci odmítne, nebo advisory, kde se očekává, že si ho čtenář přečetl — a blok vynucování, který pojmenovává buď validátor, jejž volá dispatcher, nebo případy chování, které ho dokazují. Tento modul tuto deklaraci spojuje se stromem a s knihou zaznamenaných běhů a hlásí pro každé pravidlo, zda to, co pojmenovává, existuje, zda ho vlastní nějaký runner, zda byl někdy spuštěn, zda běh prošel a zda je běh starší než to, čeho se týká. Blokující pravidlo, jehož důkaz chybí, visí v prázdnu nebo selhává, je nález, protože pravidlo, které nikdo nedokáže prokázat, je pravidlo, které nikdo nevynucuje.</p><article id="op-rules-report" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-center gap-2">
+    <span class="rounded px-2 py-0.5 font-mono text-xs font-bold bg-success-soft text-fg-success-strong border border-success-subtle">GET</span>
+    <code class="break-all font-mono text-base font-semibold text-heading">/api/v1/rules</code>
+    <a href="#op-rules-report" class="font-mono text-xs text-body-subtle hover:underline">rules.report</a>
+  </div>
+  <h3 class="mt-3 text-lg font-semibold tracking-tight text-heading">Každé pravidlo proti důkazu, který pro ně existuje</h3>
+  <p class="mt-1 break-words text-sm text-body">Celý korpus pravidel spojený se stromem a ledgerem: za každé pravidlo jeho třída, režim vynucování, validátor a případy, které jmenuje, zda je každý ve stromě, provedení za každým, kontroly CI, které je spouštějí, a věta vysvětlující, jak byl stav odvozen. Součty počítají celý korpus i při filtrované odpovědi a nálezy jmenují každé pravidlo, jehož deklarovanou třídu důkaz nepodporuje. Drží se po stavu checkoutu, nikdy déle: ledger je soubor, který se mění mimo tento proces, a jeho úprava, úprava validátoru nebo jakéhokoli sledovaného souboru, nový nesledovaný soubor, commit nebo nový ref je nová odpověď.</p>
+  <ul class="mt-3 flex flex-wrap gap-2 text-xs">
+    <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">query</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">behaviorally_verified</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="politika benchmarku">vyžaduje se měření výkonu</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="politika cache">cache checkout (max_entries=8)</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body break-all">Nástroj MCP majordomus_rules</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body break-all">zdroj MCP {&quot;name&quot;: &quot;rules&quot;, &quot;uri&quot;: &quot;majordomus://rules&quot;}</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body break-all">$ rules report</span></li></ul><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Parametry dotazu</h4>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[36rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">název</th><th class="px-3 py-2">typ</th><th class="px-3 py-2">povinné</th><th class="px-3 py-2">popis</th><th class="px-3 py-2">příklady</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">state</td>
+          <td class="px-3 py-2 font-mono text-body">RuleState | null</td>
+          <td class="px-3 py-2 font-mono text-body">ne</td>
+          <td class="px-3 py-2 text-body">Jen pravidla v tomto stavu důkazu (`proven`, `inputs_unchanged`, `stale`, `failing`, `not_run`, `unrunnable`, `dangling`, `unproven`). Bez zadání: každé pravidlo.</td>
+          <td class="px-3 py-2 font-mono text-xs text-body"></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">třída</td>
+          <td class="px-3 py-2 font-mono text-body">RuleClass | null</td>
+          <td class="px-3 py-2 font-mono text-body">ne</td>
+          <td class="px-3 py-2 text-body">Pouze pravidla této třídy (`blocking`, `advisory`). Chybí: každé pravidlo.</td>
+          <td class="px-3 py-2 font-mono text-xs text-body"><span class="block break-all"><span class="text-body-subtle">blokující:</span> &quot;blocking&quot;</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">jmenný prostor</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">ne</td>
+          <td class="px-3 py-2 text-body">Jen pravidla tohoto jmenného prostoru — `project` pro vlastní pravidla tohoto repozitáře, `majordomus` pro vendorovaný balíček. Chybí: obojí.</td>
+          <td class="px-3 py-2 font-mono text-xs text-body"></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">findings_only</td>
+          <td class="px-3 py-2 font-mono text-body">boolean</td>
+          <td class="px-3 py-2 font-mono text-body">ne</td>
+          <td class="px-3 py-2 text-body">Pouze pravidla, jejichž deklarovanou třídu důkaz nepodporuje, s nálezy. Součty stále počítají celý korpus, takže filtrovaná odpověď nikdy neuvede nepravdivě, kolik z něj bylo zkoumáno.</td>
+          <td class="px-3 py-2 font-mono text-xs text-body"><span class="block break-all"><span class="text-body-subtle">findings:</span> true</span></td>
+        </tr></tbody>
+    </table>
+  </div><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Vyzkoušejte</h4>
+  <p class="mt-1 text-xs text-body-subtle">Port je ten, který server zalogoval; 8741 je ten, o který žádá jako první. Hodnoty jsou první příklad operace.</p>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/rules?class=blocking&amp;findings_only=true&quot;</pre></div><p class="mt-1 text-xs text-body-subtle">Testováno v <a href="https://github.com/korczis/prismatic-majordomus/blob/82ac259d0ae7c3901ee09bed461e2f62318a6642/apps/majordomus-cli/tests/http_serve.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/tests/http_serve.rs</a>, který přehrává routu s těmito hodnotami proti serveru na skutečném socketu.</p>
+
+  <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Odpovědi</h4>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">status</th><th class="px-3 py-2">tělo</th><th class="px-3 py-2">význam</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-fg-success-strong">200</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/cs/docs/api/rules/#schema-RulesReport" class="text-fg-brand hover:underline">RulesReport</a></td>
+          <td class="px-3 py-2 text-body">Každé pravidlo proti důkazu, který pro ně existuje: výsledek.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">400</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/cs/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>invalid_input</code>: Vstup neodpovídá schématu: parametr špatného typu, neznámý parametr nebo hodnota, kterou schopnost odmítne.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">404</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/cs/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>not_found</code>: Vstup pojmenovává něco, co repozitář nemá.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">500</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/cs/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>internal</code>: Schopnost selhala z vlastního důvodu; zpráva ho pojmenovává.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">výchozí</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/cs/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body">Jakékoli jiné selhání, které transport hlásí: 405 <code>method_not_allowed</code> pro jinou metodu na této cestě, 400 <code>invalid_input</code> pro tělo, které není objektem JSON.</td>
+        </tr></tbody>
+    </table>
+  </div>
+</article>
+<article id="op-rules-proves" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-center gap-2">
+    <span class="rounded px-2 py-0.5 font-mono text-xs font-bold bg-success-soft text-fg-success-strong border border-success-subtle">GET</span>
+    <code class="break-all font-mono text-base font-semibold text-heading">/api/v1/rules/proves</code>
+    <a href="#op-rules-proves" class="font-mono text-xs text-body-subtle hover:underline">rules.proves</a>
+  </div>
+  <h3 class="mt-3 text-lg font-semibold tracking-tight text-heading">Co tento test dokazuje</h3>
+  <p class="mt-1 break-words text-sm text-body">Jeden test — podle identity nebo podle cesty, kterou jej pravidlo jmenuje — s každým pravidlem, které jej jmenuje, a pravidly, která by zůstala bez jakéhokoli důkazu, kdyby byl smazán. Toto je opak rules.show a čte stejné odvození, takže se oba směry nemohou rozcházet. Je to otázka, kterou nešlo položit, dokud relace šla jen jedním směrem: před smazáním nebo přejmenováním případu, co přestane být vynucováno.</p>
+  <ul class="mt-3 flex flex-wrap gap-2 text-xs">
+    <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">query</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">behaviorally_verified</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="politika benchmarku">vyžaduje se měření výkonu</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="politika cache">cache vypnuta</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body break-all">nástroj MCP majordomus_rule_proves</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body break-all">$ rules proves</span></li></ul><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Parametry dotazu</h4>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[36rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">název</th><th class="px-3 py-2">typ</th><th class="px-3 py-2">povinné</th><th class="px-3 py-2">popis</th><th class="px-3 py-2">příklady</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">test</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body">`test/cases/07_scope.sh`, nebo `suite:07_scope`, nebo `crate:product`.</td>
+          <td class="px-3 py-2 font-mono text-xs text-body"><span class="block break-all"><span class="text-body-subtle">suite:</span> &quot;test/cases/125_rule_proof.sh&quot;</span></td>
+        </tr></tbody>
+    </table>
+  </div><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Vyzkoušejte</h4>
+  <p class="mt-1 text-xs text-body-subtle">Port je ten, který server zalogoval; 8741 je ten, o který žádá jako první. Hodnoty jsou první příklad operace.</p>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/rules/proves?test=test%2Fcases%2F125_rule_proof.sh&quot;</pre></div><p class="mt-1 text-xs text-body-subtle">Testováno v <a href="https://github.com/korczis/prismatic-majordomus/blob/82ac259d0ae7c3901ee09bed461e2f62318a6642/apps/majordomus-cli/tests/http_serve.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/tests/http_serve.rs</a>, který přehrává routu s těmito hodnotami proti serveru na skutečném socketu.</p>
+
+  <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Odpovědi</h4>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">status</th><th class="px-3 py-2">tělo</th><th class="px-3 py-2">význam</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-fg-success-strong">200</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/cs/docs/api/rules/#schema-TestSubjects" class="text-fg-brand hover:underline">TestSubjects</a></td>
+          <td class="px-3 py-2 text-body">Co tento test dokazuje: výsledek.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">400</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/cs/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>invalid_input</code>: Vstup neodpovídá schématu: parametr špatného typu, neznámý parametr nebo hodnota, kterou schopnost odmítne.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">404</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/cs/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>not_found</code>: Vstup pojmenovává něco, co repozitář nemá.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">500</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/cs/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>internal</code>: Schopnost selhala z vlastního důvodu; zpráva ho pojmenovává.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">výchozí</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/cs/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body">Jakékoli jiné selhání, které transport hlásí: 405 <code>method_not_allowed</code> pro jinou metodu na této cestě, 400 <code>invalid_input</code> pro tělo, které není objektem JSON.</td>
+        </tr></tbody>
+    </table>
+  </div>
+</article>
+<article id="op-rules-show" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-center gap-2">
+    <span class="rounded px-2 py-0.5 font-mono text-xs font-bold bg-success-soft text-fg-success-strong border border-success-subtle">GET</span>
+    <code class="break-all font-mono text-base font-semibold text-heading">/api/v1/rules/rule</code>
+    <a href="#op-rules-show" class="font-mono text-xs text-body-subtle hover:underline">rules.show</a>
+  </div>
+  <h3 class="mt-3 text-lg font-semibold tracking-tight text-heading">Co toto pravidlo dokazuje</h3>
+  <p class="mt-1 break-words text-sm text-body">Jedno pravidlo s úplným důkazem: validátor a případy, které pojmenovává, provedení za každým, kontroly, které je spouštějí, pravidla, na kterých závisí, a pravidla, která závisejí na něm — každé se stavem, ve kterém je, protože pravidlo je dokázáno jen tak daleko, jak jsou jeho závislosti — a, když není dokázáno, jedna věta říkající, co by muselo platit, aby bylo. Pravidlo, které tento repozitář nedeklaruje, je not-found, ne prázdná odpověď, protože překlep, který by se četl jako &#39;toto pravidlo nemá důkaz&#39;, je jediná odpověď, kterou tato schopnost nesmí dát.</p>
+  <ul class="mt-3 flex flex-wrap gap-2 text-xs">
+    <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">query</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">behaviorally_verified</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="politika benchmarku">vyžaduje se měření výkonu</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="politika cache">cache checkoutu (max_entries=32)</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body break-all">Nástroj MCP majordomus_rule</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body break-all">$ rules show</span></li></ul><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Parametry dotazu</h4>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[36rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">název</th><th class="px-3 py-2">typ</th><th class="px-3 py-2">povinné</th><th class="px-3 py-2">popis</th><th class="px-3 py-2">příklady</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">pravidlo</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body">Id pravidla, s verzí nebo bez ní: `project.scope-is-declared`, nebo identita, kterou drží index.</td>
+          <td class="px-3 py-2 font-mono text-xs text-body"><span class="block break-all"><span class="text-body-subtle">first:</span> &quot;majordomus.adr-integrity@1&quot;</span></td>
+        </tr></tbody>
+    </table>
+  </div><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Vyzkoušejte</h4>
+  <p class="mt-1 text-xs text-body-subtle">Port je ten, který server zalogoval; 8741 je ten, o který žádá jako první. Hodnoty jsou první příklad operace.</p>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/rules/rule?rule=majordomus.adr-integrity%401&quot;</pre></div><p class="mt-1 text-xs text-body-subtle">Testováno v <a href="https://github.com/korczis/prismatic-majordomus/blob/82ac259d0ae7c3901ee09bed461e2f62318a6642/apps/majordomus-cli/tests/http_serve.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/tests/http_serve.rs</a>, který přehrává routu s těmito hodnotami proti serveru na skutečném socketu.</p>
+
+  <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Odpovědi</h4>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">status</th><th class="px-3 py-2">tělo</th><th class="px-3 py-2">význam</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-fg-success-strong">200</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/cs/docs/api/rules/#schema-RuleDetail" class="text-fg-brand hover:underline">RuleDetail</a></td>
+          <td class="px-3 py-2 text-body">Co toto pravidlo dokládá: výsledek.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">400</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/cs/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>invalid_input</code>: Vstup neodpovídá schématu: parametr špatného typu, neznámý parametr nebo hodnota, kterou schopnost odmítne.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">404</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/cs/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>not_found</code>: Vstup pojmenovává něco, co repozitář nemá.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">500</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/cs/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>internal</code>: Schopnost selhala z vlastního důvodu; zpráva ho pojmenovává.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">výchozí</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/cs/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body">Jakékoli jiné selhání, které transport hlásí: 405 <code>method_not_allowed</code> pro jinou metodu na této cestě, 400 <code>invalid_input</code> pro tělo, které není objektem JSON.</td>
+        </tr></tbody>
+    </table>
+  </div>
+</article>
+</section><section id="schemas" class="mt-12 scroll-mt-24">
+      <h2 class="text-xl font-semibold tracking-tight text-heading">Schémata</h2>
+      <p class="mt-2 text-sm text-body">Komponenty, které používají jen operace tohoto tagu. Každý řádek je pole daného typu, jeho doc komentář je popis; typ vlastněný jinou stránkou na ni odkazuje.</p><article id="schema-RuleArtifactKind" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">RuleArtifactKind</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">&quot;case&quot; | &quot;gate&quot; | &quot;unknown&quot;</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Čím cesta jmenovaná pravidlem skutečně je, rozhodnuto tím, co ji pohání, ne tím, kde leží.</p>
+<p>Korpus jmenuje dva druhy a toto rozlišení je rozdílem mezi verdiktem a mechanismem. <strong>Případ</strong> řídí runner, takže jeho provedení lze zaznamenat a repozitář může ukázat, že prošel. <strong>Kontrola</strong> je spustitelná kontrola, kterou CI kontrola spouští jako vlastní příkaz, nebo modul unit testů (<code>src/&lt;module&gt;/tests.rs</code>), který kompiluje kontrola spouštějící <code>cargo test</code> crate: odmítá porušení při každém běhu a tento repozitář pro ni neeviduje žádný verdikt, takže lze ukázat mechanismus, ne výsledek. Cokoli jiného, co pravidlo jmenuje, je důkazem jen v próze.</p>
+<h4 id="schema-RuleArtifactKind-example">Příklad</h4>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::rules::ArtifactKind;</span></span>
+<span class="giallo-l"><span>assert_eq!(ArtifactKind::Case.label(), &quot;case&quot;);</span></span>
+<span class="giallo-l"><span>assert_eq!(ArtifactKind::Gate.label(), &quot;gate&quot;);</span></span></code></pre></div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">case</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Behaviorální případ, který řídí runner; jeho provedení se zaznamenávají.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">gate</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Spustitelná kontrola, kterou kontrola CI spouští jako samostatný příkaz, nebo modul s unit testy, který zkompiluje kontrola spouštějící <code>cargo test</code> daného crate.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">unknown</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Ani jedno. Nic to nemůže spustit, takže nic to nemůže nikdy zaznamenat.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Používá <a href="https://majordomus.dev/cs/docs/api/rules/#schema-RuleTestProof" class="font-mono text-fg-brand underline">RuleTestProof</a></p></article>
+<article id="schema-RuleClass" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">RuleClass</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">&quot;blocking&quot; | &quot;advisory&quot; | &quot;unknown&quot;</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Co pravidlo deklaruje o tom, jak silně zavazuje.</p>
+<p>Repozitář má právě dva a nejsou to závažnosti na škále: <code>blocking</code> znamená, že kontrola práci odmítne, <code>advisory</code> znamená, že se čeká, že to čtenář přečetl. Pravidlo, jehož front matter neříká ani jedno, se hlásí jako <code>Class::Unknown</code>, místo aby dostalo výchozí hodnotu, protože hádání je přesně to, jak se blokující pravidlo nenápadně stane radou.</p>
+<h4 id="schema-RuleClass-example">Příklad</h4>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::rules::Class;</span></span>
+<span class="giallo-l"><span>assert_eq!(Class::Blocking.label(), &quot;blocking&quot;);</span></span>
+<span class="giallo-l"><span>assert_eq!(Class::parse(&quot;advisory&quot;), Class::Advisory);</span></span></code></pre></div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">blocking</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Kontrola odmítne práci, která ji porušuje.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">advisory</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Normativní pro každého, kdo to čte; porušení nic neodmítne.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">unknown</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Front matter nedeklaroval žádnou třídu, nebo takovou, kterou tento repozitář nezná.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Používá <a href="https://majordomus.dev/cs/docs/api/rules/#op-rules-report" class="font-mono text-fg-brand hover:underline">rules.report</a> <a href="https://majordomus.dev/cs/docs/api/rules/#schema-RuleDefinition" class="font-mono text-fg-brand underline">RuleDefinition</a> <a href="https://majordomus.dev/cs/docs/api/rules/#schema-RuleFinding" class="font-mono text-fg-brand underline">RuleFinding</a> <a href="https://majordomus.dev/cs/docs/api/rules/#schema-RuleSummary" class="font-mono text-fg-brand underline">RuleSummary</a></p></article>
+<article id="schema-RuleCoverage" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">RuleCoverage</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Kolik korpusu pravidel nese každou část důkazu.</p>
+<p>Každé zdejší číslo se počítá ze stromu. Nic v této struktuře nesmí být zapsáno nikde jinde: napevno zapsaný počet pravidel je vada, kterou tento repozitář opakovaně znovu objevuje.</p>
+<h4 id="schema-RuleCoverage-example">Příklad</h4>
+<p>Každé číslo se počítá ze stromu; prázdný korpus se počítá jako nula, nečte se jako úplný, k čemuž slouží <code>Coverage::default</code>.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::rules::Coverage;</span></span>
+<span class="giallo-l"><span>let c = Coverage::default();</span></span>
+<span class="giallo-l"><span>assert_eq!(c.rules, 0);</span></span>
+<span class="giallo-l"><span>assert_eq!(c.review_only, 0);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">vlastnost</th><th class="px-3 py-2">typ</th><th class="px-3 py-2">povinné</th><th class="px-3 py-2">popis</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">rules</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body">Nalezená pravidla.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">blokující</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body">Z toho blokujících.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">advisory</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body">Z nich doporučující.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">named_proof</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body">Pravidla jmenující validátor nebo alespoň jeden test.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">artifacts_present</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body">Pravidla, jejichž každá jmenovaná cesta je ve stromu.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">spustitelné</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body">Pravidla, jejichž alespoň jeden test vlastní runner.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">zaznamenáno</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body">Pravidla, jejichž každý test má zaznamenaný běh.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">prochází</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body">Pravidla, jejichž všechny zaznamenané běhy prošly.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">řízeno kontrolou</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body">Pravidla, která spouští nějaká CI kontrola.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">mechanism_only</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body">Pravidla, jejichž jediným spustitelným důkazem je kontrola: mechanismus, který odmítá porušení, bez zaznamenaného verdiktu. Počítají se odděleně od <code>passing</code>, aby se tato dvě čísla nikdy nečetla jako jedno.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">review_only</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body">Pravidla, která s důvodem deklarují, že je vynucuje čtenář. Počítají se zvlášť od každého spustitelného režimu: růst tohoto čísla je slábnutí správy a souhrn, který by ho zahrnul do součtu, by skryl právě to.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">splněno</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body">Pravidla, jejichž stav jejich třída unese.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Používá <a href="https://majordomus.dev/cs/docs/api/rules/#schema-RulesReport" class="font-mono text-fg-brand underline">RulesReport</a></p></article>
+<article id="schema-RuleDefinition" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">RuleDefinition</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Jedno pravidlo, jak ho repozitář kanonicky deklaruje.</p>
+<h4 id="schema-RuleDefinition-example">Příklad</h4>
+<p>Sestaveno pomocí <code>definitions</code> z indexu, ne ručně. Jeho řazení je to, které crate má, takže zpráva nad týmž stromem se čte dvakrát stejně.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::rules::{Class, RuleDefinition};</span></span>
+<span class="giallo-l"><span>#### use majordomus_cli::rules::{Enforcement, Mode};</span></span>
+<span class="giallo-l"><span>let d = RuleDefinition {</span></span>
+<span class="giallo-l"><span>    id: &quot;project.scope-is-declared&quot;.into(),</span></span>
+<span class="giallo-l"><span>    identity: &quot;project.scope-is-declared@1&quot;.into(),</span></span>
+<span class="giallo-l"><span>    uri: &quot;majordomus://rule/project.scope-is-declared@1&quot;.into(),</span></span>
+<span class="giallo-l"><span>    version: 1,</span></span>
+<span class="giallo-l"><span>    title: &quot;Scope is declared&quot;.into(),</span></span>
+<span class="giallo-l"><span>    description: None,</span></span>
+<span class="giallo-l"><span>    statement: None,</span></span>
+<span class="giallo-l"><span>    status: &quot;active&quot;.into(),</span></span>
+<span class="giallo-l"><span>    class: Class::Blocking,</span></span>
+<span class="giallo-l"><span>    namespace: &quot;project&quot;.into(),</span></span>
+<span class="giallo-l"><span>    depends_on: vec![],</span></span>
+<span class="giallo-l"><span>    tags: vec![],</span></span>
+<span class="giallo-l"><span>    path: &quot;.ai/repo/rules/project/scope-is-declared.v1.md&quot;.into(),</span></span>
+<span class="giallo-l"><span>    enforcement: Enforcement {</span></span>
+<span class="giallo-l"><span>        mode: Mode::Declarative, validator: None, category: None, exit_code: None,</span></span>
+<span class="giallo-l"><span>        enforced_by: None, tests: vec![], reviewed_because: None,</span></span>
+<span class="giallo-l"><span>    },</span></span>
+<span class="giallo-l"><span>};</span></span>
+<span class="giallo-l"><span>assert_eq!(d.class, Class::Blocking);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">vlastnost</th><th class="px-3 py-2">typ</th><th class="px-3 py-2">povinné</th><th class="px-3 py-2">popis</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">id</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body">Id pravidla, <code>&lt;namespace&gt;.&lt;stem&gt;</code>, bez verze.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">identity</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body">Identita, kterou index drží, s verzí.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">uri</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body"><code>majordomus://rule/&lt;identity&gt;</code>.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">verze</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint64)</td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body">Deklarovaná verze.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">název</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body">Název.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">popis</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">ne</td>
+          <td class="px-3 py-2 text-body">Jednořádkový popis.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">výrok</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">ne</td>
+          <td class="px-3 py-2 text-body">Normativní věta.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">status</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body"><code>active</code>, nebo cokoli jiného, co front matter deklaruje.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">třída</td>
+          <td class="px-3 py-2 font-mono text-body">RuleClass <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/cs/docs/api/rules/#schema-RuleClass" class="text-fg-brand underline">RuleClass</a></td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body">Jak silně zavazuje.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">jmenný prostor</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body">Zda přišlo s vendorovaným balíčkem, nebo patří tomuto projektu.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">depends_on</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">ne</td>
+          <td class="px-3 py-2 text-body">Pravidla, na kterých závisí, podle id.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">štítky</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">ne</td>
+          <td class="px-3 py-2 text-body">Deklarované štítky.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">path</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body">Cesta objektu pravidla relativní k repozitáři.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">vynucování</td>
+          <td class="px-3 py-2 font-mono text-body">RuleEnforcement <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/cs/docs/api/rules/#schema-RuleEnforcement" class="text-fg-brand underline">RuleEnforcement</a></td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body">Jak se vynucuje, tak jak je deklarováno.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Používá <a href="https://majordomus.dev/cs/docs/api/rules/#schema-RuleProof" class="font-mono text-fg-brand underline">RuleProof</a></p></article>
+<article id="schema-RuleDetail" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">RuleDetail</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Jedno pravidlo, se vším, co ho dokazuje, a vším, co na něm závisí.</p>
+<h4 id="schema-RuleDetail-example">Příklad</h4>
+<p>Co odpovídá <code>rules show</code>: důkaz, pravidla po obou stranách v grafu závislostí a jedna věta říkající, co by to prokázalo.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::capability::builtin::rules::RuleSummary;</span></span>
+<span class="giallo-l"><span>use majordomus_cli::rules::{Class, RuleState};</span></span>
+<span class="giallo-l"><span>// a RuleDetail carries these summaries for depends_on and required_by</span></span>
+<span class="giallo-l"><span>let dep = RuleSummary {</span></span>
+<span class="giallo-l"><span>    id: &quot;project.dep&quot;.into(), title: &quot;Dep&quot;.into(),</span></span>
+<span class="giallo-l"><span>    class: Class::Blocking, state: RuleState::NotRun,</span></span>
+<span class="giallo-l"><span>};</span></span>
+<span class="giallo-l"><span>assert_eq!(dep.class, Class::Blocking);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">vlastnost</th><th class="px-3 py-2">typ</th><th class="px-3 py-2">povinné</th><th class="px-3 py-2">popis</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">důkaz</td>
+          <td class="px-3 py-2 font-mono text-body">RuleProof <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/cs/docs/api/rules/#schema-RuleProof" class="text-fg-brand underline">RuleProof</a></td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body">Pravidlo spojené se stromem a knihou.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">depends_on</td>
+          <td class="px-3 py-2 font-mono text-body">pole RuleSummary <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/cs/docs/api/rules/#schema-RuleSummary" class="text-fg-brand underline">RuleSummary</a></td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body">Pravidla, na kterých toto pravidlo závisí, se stavem každého z nich — pravidlo, jehož závislost není prokázána, je prokázáno jen do té míry, do jaké je prokázána ona.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">required_by</td>
+          <td class="px-3 py-2 font-mono text-body">pole RuleSummary <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/cs/docs/api/rules/#schema-RuleSummary" class="text-fg-brand underline">RuleSummary</a></td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body">Pravidla, která na tomto závisejí.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">chybí</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">ne</td>
+          <td class="px-3 py-2 text-body">Co by muselo platit, aby toto pravidlo dosáhlo <code>proven</code>, slovy, nebo nic, když tam už je.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Používá <a href="https://majordomus.dev/cs/docs/api/rules/#op-rules-show" class="font-mono text-fg-brand hover:underline">rules.show</a></p></article>
+<article id="schema-RuleEnforcement" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">RuleEnforcement</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Blok vynucování pravidla, čtený z <code>x-majordomus</code>.</p>
+<h4 id="schema-RuleEnforcement-example">Příklad</h4>
+<p>Čteno z front matter místo ručního sestavení; to je tvar, který vytváří kontrolované pravidlo, a režim se určuje tím, co blok skutečně pojmenovává.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::rules::{Enforcement, Mode};</span></span>
+<span class="giallo-l"><span>let e = Enforcement {</span></span>
+<span class="giallo-l"><span>    mode: Mode::Gated,</span></span>
+<span class="giallo-l"><span>    validator: None,</span></span>
+<span class="giallo-l"><span>    category: None,</span></span>
+<span class="giallo-l"><span>    exit_code: None,</span></span>
+<span class="giallo-l"><span>    enforced_by: None,</span></span>
+<span class="giallo-l"><span>    tests: vec![&quot;test/cases/07_scope.sh&quot;.into()],</span></span>
+<span class="giallo-l"><span>    reviewed_because: None,</span></span>
+<span class="giallo-l"><span>};</span></span>
+<span class="giallo-l"><span>assert_eq!(e.mode, Mode::Gated);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">vlastnost</th><th class="px-3 py-2">typ</th><th class="px-3 py-2">povinné</th><th class="px-3 py-2">popis</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">režim</td>
+          <td class="px-3 py-2 font-mono text-body">RuleMode <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/cs/docs/api/rules/#schema-RuleMode" class="text-fg-brand underline">RuleMode</a></td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body">Který ze dvou kanonických režimů, nebo žádný.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">validátor</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">ne</td>
+          <td class="px-3 py-2 text-body">Validátor, který dispečer volá, když je režim dispečerský.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">kategorie</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">ne</td>
+          <td class="px-3 py-2 text-body">Diagnostická kategorie, pod kterou validátor hlásí.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">exit_code</td>
+          <td class="px-3 py-2 font-mono text-body">integer | null</td>
+          <td class="px-3 py-2 font-mono text-body">ne</td>
+          <td class="px-3 py-2 text-body">Návratový kód, kterým validátor odmítá.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">enforced_by</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">ne</td>
+          <td class="px-3 py-2 text-body">Která hranice to vynucuje: slovo, které používá vlastní blok pravidla.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">tests</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">ne</td>
+          <td class="px-3 py-2 text-body">Každý test, který blok jmenuje, v pořadí, v jakém jej jmenuje.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">reviewed_because</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">ne</td>
+          <td class="px-3 py-2 text-body">Proč toto pravidlo nemůže vyjádřit nic spustitelného, když je režim reviewed. Je tam povinné: deklarovaná výjimka bez důvodu je dluh, který má nahradit.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Používá <a href="https://majordomus.dev/cs/docs/api/rules/#schema-RuleDefinition" class="font-mono text-fg-brand underline">RuleDefinition</a></p></article>
+<article id="schema-RuleFinding" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">RuleFinding</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Jedno pravidlo, jehož deklarovanou třídu důkaz nepodporuje.</p>
+<h4 id="schema-RuleFinding-example">Příklad</h4>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::rules::{Class, Finding, RuleState};</span></span>
+<span class="giallo-l"><span>let f = Finding {</span></span>
+<span class="giallo-l"><span>    rule: &quot;project.x&quot;.into(),</span></span>
+<span class="giallo-l"><span>    class: Class::Blocking,</span></span>
+<span class="giallo-l"><span>    state: RuleState::Dangling,</span></span>
+<span class="giallo-l"><span>    reason: &quot;it names a path that is not in the tree&quot;.into(),</span></span>
+<span class="giallo-l"><span>    reproduce: &quot;scripts/ci/rule-proof-check&quot;.into(),</span></span>
+<span class="giallo-l"><span>};</span></span>
+<span class="giallo-l"><span>assert_eq!(f.state, RuleState::Dangling);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">vlastnost</th><th class="px-3 py-2">typ</th><th class="px-3 py-2">povinné</th><th class="px-3 py-2">popis</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">pravidlo</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body">Id pravidla.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">třída</td>
+          <td class="px-3 py-2 font-mono text-body">RuleClass <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/cs/docs/api/rules/#schema-RuleClass" class="text-fg-brand underline">RuleClass</a></td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body">Třída, kterou deklaruje.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">state</td>
+          <td class="px-3 py-2 font-mono text-body">RuleState <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/cs/docs/api/rules/#schema-RuleState" class="text-fg-brand underline">RuleState</a></td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body">Stav, ve kterém je její důkaz.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">důvod</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body">Proč je tato kombinace nález.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">reprodukovat</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body">Příkaz, který to ukáže znovu.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Používá <a href="https://majordomus.dev/cs/docs/api/rules/#schema-RulesReport" class="font-mono text-fg-brand underline">RulesReport</a></p></article>
+<article id="schema-RuleMode" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">RuleMode</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">&quot;dispatched&quot; | &quot;gated&quot; | &quot;reviewed&quot; | &quot;declarative&quot;</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Jak se pravidlo vynucuje, tak jak to deklaruje jeho vlastní front matter.</p>
+<h4 id="schema-RuleMode-example">Příklad</h4>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::rules::Mode;</span></span>
+<span class="giallo-l"><span>assert_eq!(Mode::Dispatched.label(), &quot;dispatched&quot;);</span></span>
+<span class="giallo-l"><span>assert_eq!(Mode::Declarative.label(), &quot;declarative&quot;);</span></span></code></pre></div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">dispatched</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Jmenuje validátor, který dispečer doktríny volá za běhu.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">gated</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Jmenuje behaviorální případy a žádný validátor; spouští je kontrola.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">reviewed</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Nese důvod, proč to nic spustitelného nevyjádří, a tak deklaruje, že to vynucuje čtenář. Poctivá deklarace, nikoli absence: důvod <em>je</em> deklarace — vedle něj není žádný příznak, protože příznak lze nastavit a důvod nastavit nelze, aniž by se napsal — je počítán odděleně od každého spustitelného režimu a odlišuje pravidlo, které nikdo nemohl automatizovat, od pravidla, k němuž se nikdo nedostal.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">declarative</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Nejmenuje ani jedno. Správné pro pravidlo, které nic spustitelného nevyjádří; vada u blokujícího.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Používá <a href="https://majordomus.dev/cs/docs/api/rules/#schema-RuleEnforcement" class="font-mono text-fg-brand underline">RuleEnforcement</a></p></article>
+<article id="schema-RuleProof" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">RuleProof</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Jedno pravidlo, spojené se vším, co o něm repozitář umí ukázat.</p>
+<h4 id="schema-RuleProof-example">Příklad</h4>
+<p><code>RuleProof</code> je to, co <code>report</code> vytváří pro každé pravidlo; <code>satisfied</code> je to, zda stav podporuje třídu, kterou pravidlo deklaruje, což je celá otázka.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::rules::{report, RuleProof, RuleState};</span></span>
+<span class="giallo-l"><span>use majordomus_cli::evidence::Ledger;</span></span>
+<span class="giallo-l"><span>use majordomus_cli::synthetic::SyntheticRepository;</span></span>
+<span class="giallo-l"><span>let repo = SyntheticRepository::small().unwrap();</span></span>
+<span class="giallo-l"><span>let ledger = Ledger::load(repo.root()).unwrap();</span></span>
+<span class="giallo-l"><span>let r = report(&amp;repo.index().unwrap(), &amp;ledger);</span></span>
+<span class="giallo-l"><span>let first: &amp;RuleProof = &amp;r.rules[0];</span></span>
+<span class="giallo-l"><span>assert_eq!(first.state, RuleState::Unproven);</span></span>
+<span class="giallo-l"><span>assert!(first.satisfied, &quot;an advisory rule owes no executable proof&quot;);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">vlastnost</th><th class="px-3 py-2">typ</th><th class="px-3 py-2">povinné</th><th class="px-3 py-2">popis</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">pravidlo</td>
+          <td class="px-3 py-2 font-mono text-body">RuleDefinition <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/cs/docs/api/rules/#schema-RuleDefinition" class="text-fg-brand underline">RuleDefinition</a></td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body">Kanonická definice.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">validátor</td>
+          <td class="px-3 py-2 font-mono text-body">RuleValidator | null <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/cs/docs/api/rules/#schema-RuleValidator" class="text-fg-brand underline">RuleValidator</a></td>
+          <td class="px-3 py-2 font-mono text-body">ne</td>
+          <td class="px-3 py-2 text-body">Validátor, když je režim dispečerský.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">tests</td>
+          <td class="px-3 py-2 font-mono text-body">pole RuleTestProof <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/cs/docs/api/rules/#schema-RuleTestProof" class="text-fg-brand underline">RuleTestProof</a></td>
+          <td class="px-3 py-2 font-mono text-body">ne</td>
+          <td class="px-3 py-2 text-body">Každý test, který pravidlo jmenuje, spojený s ledgerem.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">kontroly</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">ne</td>
+          <td class="px-3 py-2 text-body">Každá kontrola CI, která spouští něco, co toto pravidlo jmenuje, bez duplicit.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">required_by</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">ne</td>
+          <td class="px-3 py-2 text-body">Pravidla, která na toto závisí, podle id — opak <code>depends_on</code>, který žádné pravidlo nedeklaruje a který čtenář vždy chce.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">state</td>
+          <td class="px-3 py-2 font-mono text-body">RuleState <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/cs/docs/api/rules/#schema-RuleState" class="text-fg-brand underline">RuleState</a></td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body">Co repozitář umí říct jako celek.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">význam</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body">Tento stav v jedné větě.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">splněno</td>
+          <td class="px-3 py-2 font-mono text-body">boolean</td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body">Zda je stav takový, s jakým může třída tohoto pravidla žít.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Používají <a href="https://majordomus.dev/cs/docs/api/rules/#schema-RuleDetail" class="font-mono text-fg-brand underline">RuleDetail</a> <a href="https://majordomus.dev/cs/docs/api/rules/#schema-RulesReport" class="font-mono text-fg-brand underline">RulesReport</a></p></article>
+<article id="schema-RuleState" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">RuleState</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">&quot;proven&quot; | &quot;inputs_unchanged&quot; | &quot;stale&quot; | &quot;gated&quot; | &quot;failing&quot; | &quot;not_run&quot; | &quot;reviewed&quot; | &quot;unrunnable&quot; | &quot;dangling&quot; | &quot;unproven&quot;</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Co o důkazu jednoho pravidla dokáže repozitář říct jako celek.</p>
+<p>Řazeno od nejsilnějšího k nejslabšímu, aby se shrnutí seřazené podle toho čte jako žebříček. Stav pravidla se skládá ze stavů jeho částí pomocí <code>crate::evidence::freshness::aggregate</code>: selhávající část ho činí selhávajícím, jinak rozhoduje nejslabší část, která může nést důkaz.</p>
+<h4 id="schema-RuleState-example">Příklad</h4>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::rules::RuleState;</span></span>
+<span class="giallo-l"><span>assert!(RuleState::Proven &lt; RuleState::Stale);</span></span>
+<span class="giallo-l"><span>assert!(RuleState::Stale.passing());</span></span>
+<span class="giallo-l"><span>assert!(!RuleState::Dangling.passing());</span></span></code></pre></div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">proven</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Každý artefakt, který jmenuje, je přítomen, a každý test, který jmenuje, má úspěšný běh, který nic neneplatní.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">inputs_unchanged</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Každý artefakt je přítomen a každý test prošel, ale alespoň jeden běh je jen neznehodnocený, ne změřený proti tomuto stromu.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">stale</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Prošlý běh existuje, ale něco, čeho se týká, se od té doby změnilo.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">gated</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Spustitelná kontrola provede, co toto pravidlo jmenuje, při každém běhu CI, který ji vybere. Mechanismus je ve stromě a zapojen; žádný verdikt pro něj zde není zaznamenán.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">failing</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Poslední běh testu, který toto pravidlo jmenuje, neprošel.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">not_run</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Každý artefakt je přítomen a nikdy nebyl zaznamenán běh alespoň jednoho pojmenovaného testu.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">reviewed</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Pravidlo deklaruje, s uvedeným důvodem, že ho nic spustitelného nedokáže vyjádřit. Poctivá výjimka: počítá se odděleně od každého dokázaného pravidla, nikdy jako jedno z nich.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">unrunnable</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Pravidlo jmenuje cestu, kterou v tomto repozitáři neřídí žádný runner.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">dangling</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Pravidlo jmenuje cestu, která není ve stromu. Důkaz, který neexistuje, je horší než žádný důkaz, protože pravidlo se čte jako dokázané.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">unproven</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Pravidlo nejmenuje ani validátor, ani test. Správně pro pravidlo, které nic spustitelného nevyjádří; vada u blokujícího.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Používá <a href="https://majordomus.dev/cs/docs/api/rules/#op-rules-report" class="font-mono text-fg-brand hover:underline">rules.report</a> <a href="https://majordomus.dev/cs/docs/api/rules/#schema-RuleFinding" class="font-mono text-fg-brand underline">RuleFinding</a> <a href="https://majordomus.dev/cs/docs/api/rules/#schema-RuleProof" class="font-mono text-fg-brand underline">RuleProof</a> <a href="https://majordomus.dev/cs/docs/api/rules/#schema-RuleSummary" class="font-mono text-fg-brand underline">RuleSummary</a></p></article>
+<article id="schema-RuleSummary" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">RuleSummary</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Pravidlo jmenované odjinud, s právě tolika údaji, aby se dalo rozhodnout, zda se jím řídit.</p>
+<h4 id="schema-RuleSummary-example">Příklad</h4>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::capability::builtin::rules::RuleSummary;</span></span>
+<span class="giallo-l"><span>use majordomus_cli::rules::{Class, RuleState};</span></span>
+<span class="giallo-l"><span>let s = RuleSummary {</span></span>
+<span class="giallo-l"><span>    id: &quot;project.x&quot;.into(),</span></span>
+<span class="giallo-l"><span>    title: &quot;X&quot;.into(),</span></span>
+<span class="giallo-l"><span>    class: Class::Advisory,</span></span>
+<span class="giallo-l"><span>    state: RuleState::Reviewed,</span></span>
+<span class="giallo-l"><span>};</span></span>
+<span class="giallo-l"><span>assert_eq!(s.state, RuleState::Reviewed);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">vlastnost</th><th class="px-3 py-2">typ</th><th class="px-3 py-2">povinné</th><th class="px-3 py-2">popis</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">id</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body">Id pravidla.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">název</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body">Název.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">třída</td>
+          <td class="px-3 py-2 font-mono text-body">RuleClass <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/cs/docs/api/rules/#schema-RuleClass" class="text-fg-brand underline">RuleClass</a></td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body">Jak silně zavazuje.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">state</td>
+          <td class="px-3 py-2 font-mono text-body">RuleState <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/cs/docs/api/rules/#schema-RuleState" class="text-fg-brand underline">RuleState</a></td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body">Co repozitář může říct o svém důkazu.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Používá <a href="https://majordomus.dev/cs/docs/api/rules/#schema-RuleDetail" class="font-mono text-fg-brand underline">RuleDetail</a> <a href="https://majordomus.dev/cs/docs/api/rules/#schema-TestSubjects" class="font-mono text-fg-brand underline">TestSubjects</a></p></article>
+<article id="schema-RuleTestProof" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">RuleTestProof</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Jeden test, který pravidlo jmenuje, spojený s tím, co bylo proti němu zaznamenáno.</p>
+<h4 id="schema-RuleTestProof-example">Příklad</h4>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::rules::{ArtifactKind, TestProof};</span></span>
+<span class="giallo-l"><span>use majordomus_cli::evidence::ProofState;</span></span>
+<span class="giallo-l"><span>let t = TestProof {</span></span>
+<span class="giallo-l"><span>    path: &quot;test/cases/07_scope.sh&quot;.into(),</span></span>
+<span class="giallo-l"><span>    kind: ArtifactKind::Case,</span></span>
+<span class="giallo-l"><span>    present: true,</span></span>
+<span class="giallo-l"><span>    test: Some(&quot;suite:07_scope&quot;.into()),</span></span>
+<span class="giallo-l"><span>    state: ProofState::NotRun,</span></span>
+<span class="giallo-l"><span>    meaning: ProofState::NotRun.meaning().into(),</span></span>
+<span class="giallo-l"><span>    execution: None,</span></span>
+<span class="giallo-l"><span>    reproduce: Some(&quot;bash test/run.sh 07_scope&quot;.into()),</span></span>
+<span class="giallo-l"><span>    gates: vec![&quot;shell-suite&quot;.into()],</span></span>
+<span class="giallo-l"><span>};</span></span>
+<span class="giallo-l"><span>assert_eq!(t.kind, ArtifactKind::Case);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">vlastnost</th><th class="px-3 py-2">typ</th><th class="px-3 py-2">povinné</th><th class="px-3 py-2">popis</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">path</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body">Cesta, kterou pravidlo jmenuje.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">druh</td>
+          <td class="px-3 py-2 font-mono text-body">RuleArtifactKind <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/cs/docs/api/rules/#schema-RuleArtifactKind" class="text-fg-brand underline">RuleArtifactKind</a></td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body">Co ho řídí: runner, CI kontrola, nebo nic.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">přítomno</td>
+          <td class="px-3 py-2 font-mono text-body">boolean</td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body">Zda je ta cesta ve stromu.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">test</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">ne</td>
+          <td class="px-3 py-2 text-body">Kanonická identita testu (<code>suite:&lt;case&gt;</code>, <code>crate:&lt;binary&gt;</code>), když cestu vlastní runner. Chybějící znamená, že ji žádný runner neřídí, takže nikdy nelze zaznamenat žádný její běh.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">state</td>
+          <td class="px-3 py-2 font-mono text-body">ProofState <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/cs/docs/api/shared/#schema-ProofState" class="text-fg-brand underline">ProofState</a></td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body">Co o posledním běhu tohoto testu může říct repozitář.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">význam</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body">Tento stav, jednou větou, z jediného místa, kde je formulován.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">provádění</td>
+          <td class="px-3 py-2 font-mono text-body">EvidenceExecution | null <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/cs/docs/api/shared/#schema-EvidenceExecution" class="text-fg-brand underline">EvidenceExecution</a></td>
+          <td class="px-3 py-2 font-mono text-body">ne</td>
+          <td class="px-3 py-2 text-body">Provedení za stavem, když existuje.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">reprodukovat</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">ne</td>
+          <td class="px-3 py-2 text-body">Příkaz, který tento test spustí znovu.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">kontroly</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">ne</td>
+          <td class="px-3 py-2 text-body">Kontroly CI, které tento test spouštějí, odvozené z vlastního modelu CI repozitáře.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Používá <a href="https://majordomus.dev/cs/docs/api/rules/#schema-RuleProof" class="font-mono text-fg-brand underline">RuleProof</a></p></article>
+<article id="schema-RuleValidator" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">RuleValidator</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Validátor, který odeslané pravidlo jmenuje, a zda jej něco definuje.</p>
+<p>Validátor <strong>není cesta</strong>. <code>validator: adr</code> jmenuje shellovou funkci <code>mj_validate_adr</code>, kterou volá dispečer doktrín; nástroj ji najde skenováním <code>lib/</code>, přesně jako <code>majordomus doctor</code>. Číst ji jako cestu je chyba, kterou stojí za to zde zaznamenat, protože je to ta, kterou tento typ měl opravit: způsobí, že každé dispatchované pravidlo ve vendorovaném balíčku hlásí, že jmenuje něco, co ve stromu není, což je opak pravdy — to jsou nejlépe vynucovaná pravidla, jaká existují.</p>
+<h4 id="schema-RuleValidator-example">Příklad</h4>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::rules::ValidatorRef;</span></span>
+<span class="giallo-l"><span>let v = ValidatorRef {</span></span>
+<span class="giallo-l"><span>    name: &quot;adr&quot;.into(),</span></span>
+<span class="giallo-l"><span>    function: &quot;mj_validate_adr&quot;.into(),</span></span>
+<span class="giallo-l"><span>    defined_in: Some(&quot;lib/adr.sh&quot;.into()),</span></span>
+<span class="giallo-l"><span>    present: true,</span></span>
+<span class="giallo-l"><span>};</span></span>
+<span class="giallo-l"><span>assert_eq!(v.function, &quot;mj_validate_adr&quot;);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">vlastnost</th><th class="px-3 py-2">typ</th><th class="px-3 py-2">povinné</th><th class="px-3 py-2">popis</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">název</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body">Jméno, které pravidlo deklaruje, bez předpony <code>mj_validate_</code>.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">funkce</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body">Funkce, kterou volá dispatcher.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">defined_in</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">ne</td>
+          <td class="px-3 py-2 text-body">Soubor, který ji definuje, je-li nějaký.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">přítomno</td>
+          <td class="px-3 py-2 font-mono text-body">boolean</td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body">Zda to cokoli v <code>lib/</code> definuje.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Používá <a href="https://majordomus.dev/cs/docs/api/rules/#schema-RuleProof" class="font-mono text-fg-brand underline">RuleProof</a></p></article>
+<article id="schema-RulesReport" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">RulesReport</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Celý korpus pravidel, ověřený.</p>
+<h4 id="schema-RulesReport-example">Příklad</h4>
+<p>Celý korpus spojený se stromem a ledgerem. <code>verdict</code> je to, co lze o korpusu říct, že dokazuje; <code>satisfied</code> je jen to, že nejsou žádné nálezy, a obojí se liší, kdykoli blokující pravidlo nebylo nikdy spuštěno.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::rules::{RulesReport, RulesVerdict};</span></span>
+<span class="giallo-l"><span>let r = RulesReport {</span></span>
+<span class="giallo-l"><span>    head: None,</span></span>
+<span class="giallo-l"><span>    working_tree: &quot;clean&quot;.into(),</span></span>
+<span class="giallo-l"><span>    verdict: RulesVerdict::Unproven,</span></span>
+<span class="giallo-l"><span>    rules: vec![],</span></span>
+<span class="giallo-l"><span>    states: Default::default(),</span></span>
+<span class="giallo-l"><span>    coverage: Default::default(),</span></span>
+<span class="giallo-l"><span>    findings: vec![],</span></span>
+<span class="giallo-l"><span>    satisfied: true,</span></span>
+<span class="giallo-l"><span>};</span></span>
+<span class="giallo-l"><span>assert!(r.satisfied());</span></span>
+<span class="giallo-l"><span>assert_ne!(r.verdict, RulesVerdict::Proven, &quot;no findings is not proof&quot;);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">vlastnost</th><th class="px-3 py-2">typ</th><th class="px-3 py-2">povinné</th><th class="px-3 py-2">popis</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">head</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">ne</td>
+          <td class="px-3 py-2 text-body">Commit, vůči kterému byla zpráva odvozena, pokud ho git uměl určit.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">working_tree</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body"><code>clean</code>, <code>dirty</code> nebo <code>unknown</code> v době odvození.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">verdikt</td>
+          <td class="px-3 py-2 font-mono text-body">RulesVerdict <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/cs/docs/api/rules/#schema-RulesVerdict" class="text-fg-brand underline">RulesVerdict</a></td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body">Co dokazuje celý korpus: <code>proven</code>, <code>unproven</code> nebo <code>failing</code>. Odvozeno nad celým korpusem před jakýmkoli filtrem, stejně jako součty.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">rules</td>
+          <td class="px-3 py-2 font-mono text-body">pole RuleProof <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/cs/docs/api/rules/#schema-RuleProof" class="text-fg-brand underline">RuleProof</a></td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body">Každé pravidlo, v pořadí kanonických id.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">stavy</td>
+          <td class="px-3 py-2 font-mono text-body">mapa celých čísel (uint)</td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body">Kolik pravidel je v jednotlivých stavech, podle vytištěného slova stavu.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">coverage</td>
+          <td class="px-3 py-2 font-mono text-body">RuleCoverage <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/cs/docs/api/rules/#schema-RuleCoverage" class="text-fg-brand underline">RuleCoverage</a></td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body">Části důkazu, spočtené.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">zjištění</td>
+          <td class="px-3 py-2 font-mono text-body">pole RuleFinding <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/cs/docs/api/rules/#schema-RuleFinding" class="text-fg-brand underline">RuleFinding</a></td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body">Každé pravidlo, jehož deklarovanou třídu důkaz nepodporuje.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">splněno</td>
+          <td class="px-3 py-2 font-mono text-body">boolean</td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body">Zda nejsou žádná zjištění — a nic víc. Korpus, jehož žádné blokující pravidlo nikdy neběželo, je <code>satisfied</code>; <code>verdict</code> je pole, které říká, zda bylo něco dokázáno.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Používá <a href="https://majordomus.dev/cs/docs/api/rules/#op-rules-report" class="font-mono text-fg-brand hover:underline">rules.report</a></p></article>
+<article id="schema-RulesVerdict" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">RulesVerdict</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">&quot;proven&quot; | &quot;unproven&quot; | &quot;failing&quot;</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Co lze o celém korpusu říci, že dokazuje, jedním slovem, dřív než se přečte jakékoli číslo.</p>
+<p><code>satisfied</code> odpovídá na užší otázku — jsou zde zjištění — a korpus, ve kterém nikdy neběželo žádné blokující pravidlo, žádná nemá, protože <code>not run</code>, <code>gated</code> a <code>reviewed</code> jsou slabší stavy, nikoli vady (docs/DOCTRINE.md). Čteno samo, <code>satisfied: true</code> nad takovým korpusem říká „každé pravidlo je vynucováno“ o repozitáři, který nic neprokázal. Verdikt je odpověď, kterou takto číst nelze: je <code>proven</code> jen tehdy, když je každé blokující pravidlo <code>proven</code> — úspěšný běh zaznamenaný na čistém stromě, na commitu, který od té doby nezměnilo nic než kniha důkazů. Pravidlo, jehož vstupy se prostě nezměnily, to není (ADR 0041) a nechává korpus <code>unproven</code>.</p>
+<h4 id="schema-RulesVerdict-example">Příklad</h4>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::rules::{RuleState, RulesVerdict};</span></span>
+<span class="giallo-l"><span>// a corpus with a finding is failing, whatever else is true of it</span></span>
+<span class="giallo-l"><span>assert_eq!(RulesVerdict::of([RuleState::Proven], true), RulesVerdict::Failing);</span></span>
+<span class="giallo-l"><span>// one blocking rule never run is enough to leave the corpus unproven</span></span>
+<span class="giallo-l"><span>assert_eq!(</span></span>
+<span class="giallo-l"><span>    RulesVerdict::of([RuleState::Proven, RuleState::NotRun], false),</span></span>
+<span class="giallo-l"><span>    RulesVerdict::Unproven</span></span>
+<span class="giallo-l"><span>);</span></span>
+<span class="giallo-l"><span>assert_eq!(RulesVerdict::of([RuleState::Proven], false), RulesVerdict::Proven);</span></span>
+<span class="giallo-l"><span>// a pass whose inputs are merely unchanged is not proven</span></span>
+<span class="giallo-l"><span>assert_eq!(</span></span>
+<span class="giallo-l"><span>    RulesVerdict::of([RuleState::Proven, RuleState::InputsUnchanged], false),</span></span>
+<span class="giallo-l"><span>    RulesVerdict::Unproven</span></span>
+<span class="giallo-l"><span>);</span></span></code></pre></div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">proven</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Každé blokující pravidlo je prokázáno: prošlým během zaznamenaným na čistém stromě, na commitu, který od té doby nezměnilo nic než ledger důkazů.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">unproven</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Žádné pravidlo není nález a alespoň jedno blokující pravidlo není doloženo — nikdy nespuštěno, kontrolováno, zrevidováno, zastaralé, nebo procházející jen s nezměněnými vstupy — nebo žádné blokující pravidlo vůbec neexistuje.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">failing</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Alespoň jedno pravidlo deklaruje třídu, kterou jeho důkaz nepodporuje.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Používá <a href="https://majordomus.dev/cs/docs/api/rules/#schema-RulesReport" class="font-mono text-fg-brand underline">RulesReport</a></p></article>
+<article id="schema-TestSubjects" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">TestSubjects</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Co dokazuje jeden test: opak <code>RuleDetail</code>.</p>
+<h4 id="schema-TestSubjects-example">Příklad</h4>
+<p>Opak <code>rules show</code>: co test dokazuje a která pravidla by zůstala bez jakéhokoli důkazu, kdyby byl smazán.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::capability::builtin::rules::TestSubjects;</span></span>
+<span class="giallo-l"><span>let t = TestSubjects {</span></span>
+<span class="giallo-l"><span>    test: Some(&quot;suite:07_scope&quot;.into()),</span></span>
+<span class="giallo-l"><span>    path: &quot;test/cases/07_scope.sh&quot;.into(),</span></span>
+<span class="giallo-l"><span>    present: true,</span></span>
+<span class="giallo-l"><span>    reproduce: Some(&quot;bash test/run.sh 07_scope&quot;.into()),</span></span>
+<span class="giallo-l"><span>    proves: vec![],</span></span>
+<span class="giallo-l"><span>    sole_proof_of: vec![],</span></span>
+<span class="giallo-l"><span>};</span></span>
+<span class="giallo-l"><span>assert!(t.present);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">vlastnost</th><th class="px-3 py-2">typ</th><th class="px-3 py-2">povinné</th><th class="px-3 py-2">popis</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">test</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">ne</td>
+          <td class="px-3 py-2 text-body">Kanonická identita testu, když cestu vlastní runner.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">path</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body">Cesta tak, jak byla zadána.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">přítomno</td>
+          <td class="px-3 py-2 font-mono text-body">boolean</td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body">Zda je ta cesta ve stromu.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">reprodukovat</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">ne</td>
+          <td class="px-3 py-2 text-body">Příkaz, který to spustí znovu.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">proves</td>
+          <td class="px-3 py-2 font-mono text-body">pole RuleSummary <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/cs/docs/api/rules/#schema-RuleSummary" class="text-fg-brand underline">RuleSummary</a></td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body">Každé pravidlo, které tento test jmenuje, se stavem, v němž je.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">sole_proof_of</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">ano</td>
+          <td class="px-3 py-2 text-body">Každé pravidlo, které by přišlo o svůj jediný důkaz, kdyby byl tento test smazán. To je otázka, na kterou jednosměrný vztah nikdy nemohl odpovědět.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Používá <a href="https://majordomus.dev/cs/docs/api/rules/#op-rules-proves" class="font-mono text-fg-brand hover:underline">rules.proves</a></p></article>
+</section>
+  </div>
+</div>
+
+</div>
+
+</main>
+
+<footer id="site-map" class="border-t border-default bg-neutral-primary-soft" aria-label="Mapa webu">
+  <div class="mx-auto w-full max-w-screen-xl p-4 md:py-8">
+    <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
+      
+      <div class="min-w-0 scroll-mt-20" id="site-map-1">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/cs/domains/" class="hover:text-heading hover:underline">Produkt</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/cs/domains/" class="hover:text-heading hover:underline">Produkt podle oblastí</a></li><li><a href="https://majordomus.dev/cs/why/" class="hover:text-heading hover:underline">Proč existuje: způsoby selhání</a></li><li><a href="https://majordomus.dev/cs/features/" class="hover:text-heading hover:underline">Funkce</a></li><li><a href="https://majordomus.dev/cs/features/matrix/" class="hover:text-heading hover:underline">Funkce a rozhraní</a></li><li><a href="https://majordomus.dev/cs/use-cases/" class="hover:text-heading hover:underline">Případy užití</a></li><li><a href="https://majordomus.dev/cs/applications/" class="hover:text-heading hover:underline">Aplikace</a></li><li><a href="https://majordomus.dev/cs/skills/" class="hover:text-heading hover:underline">Dovednosti</a></li><li><a href="https://majordomus.dev/cs/supervises/" class="hover:text-heading hover:underline">Na co dohlíží</a></li><li><a href="https://majordomus.dev/cs/docs/majordomus-ui/" class="hover:text-heading hover:underline">UI produktu</a></li><li><a href="https://majordomus.dev/cs/docs/cockpit/" class="hover:text-heading hover:underline">Cockpit</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0 scroll-mt-20" id="site-map-2">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/cs/method/" class="hover:text-heading hover:underline">Princip</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/cs/method/" class="hover:text-heading hover:underline">Doktrína, politika, pravidlo, vynucování</a></li><li><a href="https://majordomus.dev/cs/method/axes/" class="hover:text-heading hover:underline">Čtyři osy</a></li><li><a href="https://majordomus.dev/cs/method/argument/" class="hover:text-heading hover:underline">Celá argumentace</a></li><li><a href="https://majordomus.dev/cs/docs/concepts/" class="hover:text-heading hover:underline">Slovník</a></li><li><a href="https://majordomus.dev/cs/policy/" class="hover:text-heading hover:underline">Kanonická politika</a></li><li><a href="https://majordomus.dev/cs/context/" class="hover:text-heading hover:underline">Kontrakty adresářů</a></li><li><a href="https://majordomus.dev/cs/sessions/" class="hover:text-heading hover:underline">Relace</a></li><li><a href="https://majordomus.dev/cs/docs/planning/" class="hover:text-heading hover:underline">Jak funguje plánování</a></li><li><a href="https://majordomus.dev/cs/docs/design/" class="hover:text-heading hover:underline">Design</a></li><li><a href="https://majordomus.dev/cs/kit/" class="hover:text-heading hover:underline">Sada komponent</a></li><li><a href="https://majordomus.dev/cs/docs/surfaces/" class="hover:text-heading hover:underline">Jak se odvozují rozhraní</a></li><li><a href="https://majordomus.dev/cs/architecture/" class="hover:text-heading hover:underline">Jak je tento web postaven</a></li><li><a href="https://majordomus.dev/cs/docs/product/" class="hover:text-heading hover:underline">Jak se odvozuje stránka produktu</a></li><li><a href="https://majordomus.dev/cs/proof-carrying-documentation/" class="hover:text-heading hover:underline">Článek: dokumentace nesoucí důkaz</a></li><li><a href="https://majordomus.dev/cs/everything-followed/" class="hover:text-heading hover:underline">Článek: všechno, dohledatelně</a></li><li><a href="https://majordomus.dev/cs/dokumentace-kterou-lze-odmitnout/" class="hover:text-heading hover:underline">Stejná argumentace, napsaná česky</a></li><li><a href="https://majordomus.dev/cs/vsechno-v-jednom-proudu/" class="hover:text-heading hover:underline">Everything, followed, written in Czech</a></li><li><a href="https://majordomus.dev/cs/the-bet-on-a-layer/" class="hover:text-heading hover:underline">Essay: the bet on a layer, not a model</a></li><li><a href="https://majordomus.dev/cs/teze/" class="hover:text-heading hover:underline">Esej v češtině: sázka na vrstvu, ne na model</a></li><li><a href="https://majordomus.dev/cs/a-pasted-brief-becomes-a-plan/" class="hover:text-heading hover:underline">Article: a pasted brief becomes a plan</a></li><li><a href="https://majordomus.dev/cs/vlozene-zadani-se-stava-planem/" class="hover:text-heading hover:underline">The pasted brief, written in Czech</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0 scroll-mt-20" id="site-map-3">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/cs/challenge/" class="hover:text-heading hover:underline">Důkazy</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/cs/challenge/" class="hover:text-heading hover:underline">Výzva: sledujte, jak odmítne agenta</a></li><li><a href="https://majordomus.dev/cs/guarantees/" class="hover:text-heading hover:underline">Záruky</a></li><li><a href="https://majordomus.dev/cs/evidence/" class="hover:text-heading hover:underline">Graf důkazů</a></li><li><a href="https://majordomus.dev/cs/contract/" class="hover:text-heading hover:underline">Kontrakt dokončení</a></li><li><a href="https://majordomus.dev/cs/doctrines/" class="hover:text-heading hover:underline">Doktrína</a></li><li><a href="https://majordomus.dev/cs/adrs/" class="hover:text-heading hover:underline">Rozhodnutí</a></li><li><a href="https://majordomus.dev/cs/rules/" class="hover:text-heading hover:underline">Platná pravidla</a></li><li><a href="https://majordomus.dev/cs/registry/benchmarks/" class="hover:text-heading hover:underline">Měření výkonu</a></li><li><a href="https://majordomus.dev/cs/economics/" class="hover:text-heading hover:underline">Ekonomika tokenů</a></li><li><a href="https://majordomus.dev/cs/limitations/" class="hover:text-heading hover:underline">Omezení</a></li><li><a href="https://majordomus.dev/cs/roadmap/" class="hover:text-heading hover:underline">Plán rozvoje</a></li><li><a href="https://majordomus.dev/cs/plan/" class="hover:text-heading hover:underline">Milníky a úkoly</a></li><li><a href="https://majordomus.dev/cs/plan/dag/" class="hover:text-heading hover:underline">Graf závislostí</a></li><li><a href="https://majordomus.dev/cs/changelog/" class="hover:text-heading hover:underline">Changelog</a></li><li><a href="https://majordomus.dev/cs/docs/dogfooding/" class="hover:text-heading hover:underline">Dogfooding</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0 scroll-mt-20" id="site-map-4">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/cs/docs/" class="hover:text-heading hover:underline">Dokumenty</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/cs/docs/" class="hover:text-heading hover:underline">Všechny dokumenty</a></li><li><a href="https://majordomus.dev/cs/docs/install/" class="hover:text-heading hover:underline">Instalace</a></li><li><a href="https://majordomus.dev/cs/commands/" class="hover:text-heading hover:underline">Příkazy</a></li><li><a href="https://majordomus.dev/cs/profiles/" class="hover:text-heading hover:underline">Profily provádění</a></li><li><a href="https://majordomus.dev/cs/docs/cli/" class="hover:text-heading hover:underline">Přehled příkazů</a></li><li><a href="https://majordomus.dev/cs/docs/api/" class="hover:text-heading hover:underline">HTTP API</a></li><li><a href="https://majordomus.dev/rustdoc/" class="hover:text-heading hover:underline">Rust API</a></li><li><a href="https://majordomus.dev/cs/registry/mcp/" class="hover:text-heading hover:underline">Rozhraní MCP</a></li><li><a href="https://majordomus.dev/cs/docs/schemas/" class="hover:text-heading hover:underline">Schémata souborů</a></li><li><a href="https://majordomus.dev/cs/registry/" class="hover:text-heading hover:underline">Registr</a></li><li><a href="https://majordomus.dev/cs/map/" class="hover:text-heading hover:underline">Mapa programu</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/82ac259d0ae7c3901ee09bed461e2f62318a6642/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/82ac259d0ae7c3901ee09bed461e2f62318a6642/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/82ac259d0ae7c3901ee09bed461e2f62318a6642/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+        </ul>
+      </div>
+    </div>
+    <hr class="my-6 border-default sm:mx-auto lg:my-8"><div class="space-y-4">
+    <div class="sm:flex sm:items-center sm:justify-between">
+      <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
+    </div>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v1.0.0-alpha.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/82ac259d0ae7c3901ee09bed461e2f62318a6642" class="font-mono underline">82ac259</a> · inputs <span class="font-mono">ac7a158bc7ec</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    </div>
+  </div>
+</footer>
+<dialog id="site-search" data-site-search data-index="https://majordomus.dev/docs/index.json" aria-labelledby="site-search-label" class="m-0 h-dvh max-h-none w-full max-w-none border-0 bg-neutral-primary p-0 text-body backdrop:bg-neutral-primary-strong/80 sm:mx-auto sm:mt-20 sm:h-auto sm:max-h-[75vh] sm:max-w-2xl sm:rounded-base sm:border sm:border-default sm:shadow-lg">
+  <div class="flex h-full max-h-[inherit] flex-col">
+    <div class="flex items-center gap-2 border-b border-default p-3">
+      <label id="site-search-label" for="site-search-input" class="sr-only">Hledat na tomto webu</label>
+      <svg class="h-5 w-5 shrink-0 text-body-subtle" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z"/></svg>
+      <input id="site-search-input" type="search" role="combobox" aria-expanded="false" aria-controls="site-search-results" aria-autocomplete="list" aria-describedby="site-search-status" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go" placeholder="Pravidlo, rozhodnutí, příkaz, stránka…" class="block min-w-0 flex-1 rounded-base border border-default-medium bg-neutral-secondary-medium px-3 py-2.5 text-base text-heading focus:border-brand focus:ring-brand sm:text-sm">
+      <button type="button" data-site-search-close class="inline-flex h-10 shrink-0 items-center rounded-base border border-default px-3 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">Zavřít<span class="sr-only"> vyhledávání</span></button>
+    </div>
+    <p id="site-search-status" class="px-4 pt-3 text-xs text-body-subtle" aria-live="polite" data-site-search-status>Prohledává názvy a popisy všech stránek, které tento web publikuje.</p>
+    <div id="site-search-results" role="listbox" aria-label="Odpovídající stránky" class="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain px-2 py-2" data-site-search-results></div>
+    <template data-site-search-item><a tabindex="-1" class="block rounded-base px-3 py-2 hover:bg-neutral-secondary-medium aria-selected:bg-neutral-secondary-medium aria-selected:ring-2 aria-selected:ring-brand"><span class="block break-words font-medium text-heading" data-slot="title"></span><span class="block break-all font-mono text-xs text-body-subtle" data-slot="meta"></span><span class="mt-0.5 line-clamp-2 text-sm text-body" data-slot="description"></span></a></template>
+  </div>
+</dialog>
+
+<script defer src="https://majordomus.dev/js/nav.js"></script>
+<script defer src="https://majordomus.dev/js/search.js"></script>
+<script src="https://majordomus.dev/js/theme.js"></script>
+<script defer src="https://majordomus.dev/js/alpine.min.js"></script>
+
+</body>
+</html>

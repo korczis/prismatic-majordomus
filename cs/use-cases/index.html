@@ -1,0 +1,841 @@
+<!doctype html>
+<html lang="cs" class="scroll-smooth" data-theme-key="color-theme" data-theme-class="dark" data-design="944a896b2646">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Případy užití — Prismatic Majordomus</title>
+<meta name="description" content="Co s tím lidé dělají: úloha, příkazy, které na ni odpovídají, a co vám zůstane v rukou, vše dokázáno proti nástroji. Každý krok je skutečné volání, každé pravidlo a příslib skutečný objekt a každý příklad níže byl spuštěn, aby vznikla tato stránka.">
+<link rel="canonical" href="https://majordomus.dev/cs/use-cases/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Prismatic Majordomus">
+<meta property="og:title" content="Případy užití — Prismatic Majordomus">
+<meta property="og:description" content="Co s tím lidé dělají: úloha, příkazy, které na ni odpovídají, a co vám zůstane v rukou, vše dokázáno proti nástroji. Každý krok je skutečné volání, každé pravidlo a příslib skutečný objekt a každý příklad níže byl spuštěn, aby vznikla tato stránka.">
+<meta property="og:url" content="https://majordomus.dev/cs/use-cases/">
+<meta property="og:image" content="https://majordomus.dev/images/social-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
+<link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=3f5215cbacbe9c61f05a">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
+<script>(function(){try{var K="mj-lang",L=["en","cs"],S="en",B="https://majordomus.dev",d=document.documentElement,k;try{k=localStorage.getItem(K)}catch(e){}
+document.addEventListener("click",function(e){var a=e.target.closest&&e.target.closest("[data-i18n-lang]");if(a)try{localStorage.setItem(K,a.getAttribute("data-i18n-lang"))}catch(x){}},true);
+if(d.lang!==S)return;var r=document.referrer;if(r&&r.indexOf(location.origin)===0)return;
+var p=(k?[k]:navigator.languages||[navigator.language||""]).map(function(l){return String(l).slice(0,2).toLowerCase()});
+for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=location.href;if(u.indexOf(B)!==0)return;location.replace(B+"/"+p[i]+u.slice(B.length).replace(/^(?!\/)/,"/"));return}}}catch(e){}})();</script>
+
+<link rel="alternate" hreflang="en" href="https://majordomus.dev/use-cases/">
+<link rel="alternate" hreflang="cs" href="https://majordomus.dev/cs/use-cases/">
+<link rel="alternate" hreflang="x-default" href="https://majordomus.dev/use-cases/">
+</head>
+<body class="min-h-screen bg-neutral-primary text-body antialiased">
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white">Přeskočit na obsah</a>
+
+
+
+<nav class="sticky top-0 z-20 w-full border-b border-default bg-neutral-primary text-base" aria-label="Hlavní">
+  <div class="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between gap-x-2 gap-y-2 px-3 py-3 sm:p-4">
+    <a href="https://majordomus.dev/cs/" class="flex min-w-0 items-center gap-1.5 sm:gap-2.5 rtl:space-x-reverse">
+      <span class="inline-flex h-6 w-6 shrink-0 text-heading sm:h-7 sm:w-7 [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 1.0.0-alpha.1 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span>
+      <span class="self-center whitespace-nowrap text-base font-semibold text-heading sm:text-xl">Majordomus</span>
+      
+      
+      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading" data-release="0.30.2">v0.30.2</span>
+      
+    </a>
+    <div class="flex items-center gap-1 sm:gap-2 md:order-2"><button type="button" data-site-search-open hidden aria-haspopup="dialog" aria-controls="site-search" aria-expanded="false" aria-keyshortcuts="/ Control+K Meta+K" class="inline-flex h-10 min-w-10 items-center justify-center gap-2 rounded-base border border-default px-2.5 text-sm font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">
+        <svg class="h-5 w-5 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z"/></svg> <span class="sr-only lg:not-sr-only">Hledat</span> <kbd class="hidden rounded border border-default-medium px-1.5 font-mono text-xs text-body-subtle lg:inline" aria-hidden="true">/</kbd>
+      </button>
+      <div class="relative" data-i18n-switch>
+  <button type="button" aria-label="Jazyk" data-dropdown-toggle="language-menu" data-dropdown-placement="bottom-end" aria-haspopup="true" aria-controls="language-menu" aria-expanded="false" class="inline-flex h-10 items-center justify-center gap-1.5 rounded-base border border-default px-2.5 text-sm font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">
+    <svg class="h-5 w-5 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0 0c2.2-2.4 3.3-5.4 3.3-9S14.2 5.4 12 3m0 18c-2.2-2.4-3.3-5.4-3.3-9S9.8 5.4 12 3M3.5 9h17M3.5 15h17"/></svg>
+    <span class="font-mono text-xs uppercase" translate="no" data-i18n-current-label>cs</span>
+    <svg class="h-2.5 w-2.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg>
+  </button>
+  <div id="language-menu" class="absolute right-0 top-full z-50 mt-2 hidden w-44 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+    <ul class="p-2 text-sm font-medium text-body" translate="no">
+      <li><a href="https://majordomus.dev/use-cases/" hreflang="en" lang="en" data-i18n-keep data-i18n-current data-i18n-lang="en" class="group flex w-full items-center justify-between gap-3 rounded-sm px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading aria-[current=true]:text-heading"><span class="flex items-center gap-2"><span class="w-6 font-mono text-xs uppercase text-body-subtle">en</span>English</span><svg class="invisible h-4 w-4 text-fg-brand group-aria-[current=true]:visible" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 11.917 9.724 16.5 19 7.5"/></svg></a></li>
+      <li><a href="https://majordomus.dev/cs/use-cases/" hreflang="cs" lang="cs" data-i18n-keep data-i18n-current data-i18n-lang="cs" class="group flex w-full items-center justify-between gap-3 rounded-sm px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading aria-[current=true]:text-heading" aria-current="true"><span class="flex items-center gap-2"><span class="w-6 font-mono text-xs uppercase text-body-subtle">cs</span>Čeština</span><svg class="invisible h-4 w-4 text-fg-brand group-aria-[current=true]:visible" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 11.917 9.724 16.5 19 7.5"/></svg></a></li>
+    </ul>
+  </div>
+</div>
+
+      <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Přepnout tmavý režim">
+  <svg id="theme-toggle-dark-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+  <svg id="theme-toggle-light-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+</button>
+<a href="https://majordomus.dev/ui/" data-nav-primary="ui" class="hidden rounded-base border border-brand-subtle px-3 py-2 text-sm font-semibold text-fg-brand hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary xl:inline-flex">UI produktu</a>
+      <a href="https://github.com/korczis/prismatic-majordomus" class="hidden rounded-base border border-default px-3 py-2 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary sm:inline-flex">GitHub</a>
+      <a href="https://majordomus.dev/cs/getting-started/" class="hidden rounded-base bg-brand px-3 py-2 text-sm font-semibold text-white hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium md:inline-flex">Začít</a>
+      <button data-collapse-toggle="navbar-main" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-base p-2 text-sm text-body hover:bg-neutral-secondary-soft hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:hidden" aria-controls="navbar-main" aria-expanded="false">
+        <span class="sr-only">Otevřít hlavní nabídku</span> <svg class="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h14"/></svg>
+      </button>
+    </div><div class="hidden w-full min-w-0 md:order-1 md:block md:w-auto" id="navbar-main">
+      <ul class="mt-4 flex flex-col rounded-base border border-default bg-neutral-secondary-soft p-4 font-medium md:mt-0 md:flex-row md:flex-wrap md:items-center md:gap-x-2 md:gap-y-1 md:border-0 md:bg-neutral-primary md:p-0">
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          <button id="nav-1" data-dropdown-toggle="nav-menu-1" type="button" aria-controls="nav-menu-1" class="flex w-full items-center justify-between rounded px-3 py-2 text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Produkt<svg class="ms-1.5 h-3 w-3 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-1" class="hidden md:absolute md:left-0 md:top-full md:z-10 md:mt-2 md:w-64 md:rounded-base md:border md:border-default-medium md:bg-neutral-primary-medium md:shadow-lg">
+            <ul class="pb-2 ps-3 text-sm font-medium text-body md:p-2" aria-labelledby="nav-1">
+              <li><a href="https://majordomus.dev/cs/domains/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Produkt podle oblastí</a></li><li><a href="https://majordomus.dev/cs/why/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Proč existuje: způsoby selhání</a></li><li><a href="https://majordomus.dev/cs/features/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Funkce</a></li><li><a href="https://majordomus.dev/cs/use-cases/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2 text-fg-brand" aria-current="page">Případy užití</a></li><li><a href="https://majordomus.dev/ui/" data-nav-snapshot="ui" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">UI produktu <span data-nav-snapshot-note class="text-xs text-body-subtle">&middot; snímek</span></a></li><li><a href="https://majordomus.dev/cs/docs/cockpit/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Cockpit</a></li>
+              <li class="mt-1 border-t border-default pt-1"><a href="#site-map-1" class="block rounded px-3 py-2 text-body-subtle hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Všech 10 stránek v mapě webu &darr;</a></li>
+            </ul>
+          </div>
+        </li>
+        
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          <button id="nav-2" data-dropdown-toggle="nav-menu-2" type="button" aria-controls="nav-menu-2" class="flex w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Princip<svg class="ms-1.5 h-3 w-3 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-2" class="hidden md:absolute md:left-0 md:top-full md:z-10 md:mt-2 md:w-64 md:rounded-base md:border md:border-default-medium md:bg-neutral-primary-medium md:shadow-lg">
+            <ul class="pb-2 ps-3 text-sm font-medium text-body md:p-2" aria-labelledby="nav-2">
+              <li><a href="https://majordomus.dev/cs/method/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Doktrína, politika, pravidlo, vynucování</a></li><li><a href="https://majordomus.dev/cs/method/argument/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Celá argumentace</a></li><li><a href="https://majordomus.dev/cs/docs/concepts/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Slovník</a></li><li><a href="https://majordomus.dev/cs/sessions/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Relace</a></li>
+              <li class="mt-1 border-t border-default pt-1"><a href="#site-map-2" class="block rounded px-3 py-2 text-body-subtle hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">All 21 pages in the site map &darr;</a></li>
+            </ul>
+          </div>
+        </li>
+        
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          <button id="nav-3" data-dropdown-toggle="nav-menu-3" type="button" aria-controls="nav-menu-3" class="flex w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Důkazy<svg class="ms-1.5 h-3 w-3 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-3" class="hidden md:absolute md:left-0 md:top-full md:z-10 md:mt-2 md:w-64 md:rounded-base md:border md:border-default-medium md:bg-neutral-primary-medium md:shadow-lg">
+            <ul class="pb-2 ps-3 text-sm font-medium text-body md:p-2" aria-labelledby="nav-3">
+              <li><a href="https://majordomus.dev/cs/challenge/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Výzva: sledujte, jak odmítne agenta</a></li><li><a href="https://majordomus.dev/cs/guarantees/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Záruky</a></li><li><a href="https://majordomus.dev/cs/evidence/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Graf důkazů</a></li><li><a href="https://majordomus.dev/cs/limitations/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Omezení</a></li><li><a href="https://majordomus.dev/cs/roadmap/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Plán rozvoje</a></li>
+              <li class="mt-1 border-t border-default pt-1"><a href="#site-map-3" class="block rounded px-3 py-2 text-body-subtle hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Všech 15 stránek v mapě webu &darr;</a></li>
+            </ul>
+          </div>
+        </li>
+        
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          <button id="nav-4" data-dropdown-toggle="nav-menu-4" type="button" aria-controls="nav-menu-4" class="flex w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Dokumenty<svg class="ms-1.5 h-3 w-3 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-4" class="hidden md:absolute md:left-0 md:top-full md:z-10 md:mt-2 md:w-64 md:rounded-base md:border md:border-default-medium md:bg-neutral-primary-medium md:shadow-lg">
+            <ul class="pb-2 ps-3 text-sm font-medium text-body md:p-2" aria-labelledby="nav-4">
+              <li><a href="https://majordomus.dev/cs/docs/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Všechny dokumenty</a></li><li><a href="https://majordomus.dev/cs/docs/install/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Instalace</a></li><li><a href="https://majordomus.dev/cs/commands/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Příkazy</a></li><li><a href="https://majordomus.dev/cs/docs/api/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">HTTP API</a></li><li><a href="https://majordomus.dev/cs/registry/mcp/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Rozhraní MCP</a></li>
+              <li class="mt-1 border-t border-default pt-1"><a href="#site-map-4" class="block rounded px-3 py-2 text-body-subtle hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Všech 11 stránek v mapě webu &darr;</a></li>
+            </ul>
+          </div>
+        </li>
+        
+        
+        <li class="mt-3 md:hidden"><a href="https://majordomus.dev/ui/" data-nav-primary="ui" class="block rounded-base border border-brand-subtle px-3 py-2 text-center font-semibold text-fg-brand hover:bg-neutral-tertiary">UI produktu</a></li>
+        <li class="mt-3 md:hidden"><a href="https://majordomus.dev/cs/getting-started/" class="block rounded-base bg-brand px-3 py-2 text-center font-semibold text-white hover:bg-brand-strong">Začít</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+<div data-i18n-notice class="border-b border-default bg-neutral-secondary-soft">
+  <p class="mx-auto max-w-screen-xl px-4 py-2 text-xs text-body">Tato stránka byla automaticky přeložena z angličtiny, jediného jazyka, ve kterém se tento web píše. <a href="https://majordomus.dev/use-cases/" hreflang="en" lang="en" data-i18n-keep data-i18n-lang="en" class="font-medium underline">Číst originál</a>.</p>
+</div>
+<main id="main">
+<div class="border-b border-default bg-neutral-primary-soft"><div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8"><nav class="flex" aria-label="Drobečková navigace">
+  <ol class="inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2 rtl:space-x-reverse">
+    <li class="inline-flex items-center"><a href="https://majordomus.dev/cs/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Domů</a></li>
+    <li aria-hidden="true">/</li>
+    <li aria-current="page" class="font-medium text-heading">Případy užití</li>
+  </ol>
+</nav>
+<h1 class="mt-4 text-3xl font-bold tracking-tight text-heading sm:text-4xl">Případy užití</h1><p class="mt-3 max-w-3xl text-lg text-body">Co s tím lidé dělají: úloha, příkazy, které na ni odpovídají, a co vám zůstane v rukou, vše dokázáno proti nástroji. Každý krok je skutečné volání, každé pravidlo a příslib skutečný objekt a každý příklad níže byl spuštěn, aby vznikla tato stránka.</p>
+  <dl class="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm">
+    <div class="flex gap-1.5"><dt class="text-body-subtle">případy užití</dt><dd class="font-mono text-heading">49</dd></div>
+    <div class="flex gap-1.5"><dt class="text-body-subtle">kategorie</dt><dd class="font-mono text-heading">10</dd></div><div class="flex gap-1.5"><dt class="text-body-subtle">spustitelný soubor</dt><dd class="font-mono text-heading">2</dd></div><div class="flex gap-1.5"><dt class="text-body-subtle">zaručeno</dt><dd class="font-mono text-heading">45</dd></div><div class="flex gap-1.5"><dt class="text-body-subtle">ověřeno</dt><dd class="font-mono text-heading">2</dd></div><div class="flex gap-1.5"><dt class="text-body-subtle">coverage</dt><dd class="font-mono text-heading"><a href="https://majordomus.dev/cs/use-cases/coverage/" class="text-fg-brand hover:underline">148 z 351 cílů</a></dd></div>
+  </dl>
+</div></div>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8"><div x-data="{ q: '', app: 'all', actor: 'all', m: 'all' }">
+    <div class="flex flex-wrap items-center gap-3">
+      <label class="sr-only" for="uc-filter">Filtrovat případy užití</label>
+      <input id="uc-filter" type="search" x-model="q" placeholder="Filtrovat podle úlohy, příkazu nebo pravidla" class="w-full max-w-sm rounded-base border border-default bg-neutral-primary-soft px-3 py-2 text-sm text-heading placeholder:text-body-subtle focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">
+      <div class="flex flex-wrap gap-1" role="group" aria-label="Filtrovat podle aplikace">
+        <button type="button" x-on:click="app = 'all'" :aria-pressed="app === 'all' ? 'true' : 'false'" aria-pressed="true" :class="app === 'all' ? 'bg-brand-softer text-fg-brand-strong' : 'text-body hover:bg-neutral-secondary-medium'" class="rounded-base px-3 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">Všechny kontexty</button><button type="button" x-on:click="app = 'repository-with-authored-governance'" :aria-pressed="app === 'repository-with-authored-governance' ? 'true' : 'false'" aria-pressed="false" :class="app === 'repository-with-authored-governance' ? 'bg-brand-softer text-fg-brand-strong' : 'text-body hover:bg-neutral-secondary-medium'" class="rounded-base px-3 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">Repozitář, jehož pravidla psali lidé</button><button type="button" x-on:click="app = 'several-agents-one-repository'" :aria-pressed="app === 'several-agents-one-repository' ? 'true' : 'false'" aria-pressed="false" :class="app === 'several-agents-one-repository' ? 'bg-brand-softer text-fg-brand-strong' : 'text-body hover:bg-neutral-secondary-medium'" class="rounded-base px-3 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">Několik pracovníků v jednom repozitáři najednou</button><button type="button" x-on:click="app = 'ci-gated-project'" :aria-pressed="app === 'ci-gated-project' ? 'true' : 'false'" aria-pressed="false" :class="app === 'ci-gated-project' ? 'bg-brand-softer text-fg-brand-strong' : 'text-body hover:bg-neutral-secondary-medium'" class="rounded-base px-3 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">Projekt, kde o přijatelnosti rozhoduje CI</button><button type="button" x-on:click="app = 'long-running-work'" :aria-pressed="app === 'long-running-work' ? 'true' : 'false'" aria-pressed="false" :class="app === 'long-running-work' ? 'bg-brand-softer text-fg-brand-strong' : 'text-body hover:bg-neutral-secondary-medium'" class="rounded-base px-3 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">Práce, která přežije relaci, jež ji dělá</button><button type="button" x-on:click="app = 'repository-opened-in-ai-clients'" :aria-pressed="app === 'repository-opened-in-ai-clients' ? 'true' : 'false'" aria-pressed="false" :class="app === 'repository-opened-in-ai-clients' ? 'bg-brand-softer text-fg-brand-strong' : 'text-body hover:bg-neutral-secondary-medium'" class="rounded-base px-3 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">Repozitář otevřený v AI klientech, nejen lidmi</button></div>
+    </div>
+    <div class="mt-3 flex flex-wrap items-center gap-3 text-sm">
+      <div class="flex flex-wrap gap-1" role="group" aria-label="Filtrovat podle aktéra">
+        <button type="button" x-on:click="actor = 'all'" :class="actor === 'all' ? 'bg-brand-softer text-fg-brand-strong' : 'text-body hover:bg-neutral-secondary-medium'" class="rounded-base px-2.5 py-1 text-xs font-medium">jakýkoli aktér</button><button type="button" x-on:click="actor = 'agent'" :class="actor === 'agent' ? 'bg-brand-softer text-fg-brand-strong' : 'text-body hover:bg-neutral-secondary-medium'" class="rounded-base px-2.5 py-1 text-xs font-medium">agent</button><button type="button" x-on:click="actor = 'contributor'" :class="actor === 'contributor' ? 'bg-brand-softer text-fg-brand-strong' : 'text-body hover:bg-neutral-secondary-medium'" class="rounded-base px-2.5 py-1 text-xs font-medium">přispěvatel</button><button type="button" x-on:click="actor = 'maintainer'" :class="actor === 'maintainer' ? 'bg-brand-softer text-fg-brand-strong' : 'text-body hover:bg-neutral-secondary-medium'" class="rounded-base px-2.5 py-1 text-xs font-medium">maintainer</button><button type="button" x-on:click="actor = 'operator'" :class="actor === 'operator' ? 'bg-brand-softer text-fg-brand-strong' : 'text-body hover:bg-neutral-secondary-medium'" class="rounded-base px-2.5 py-1 text-xs font-medium">operátor</button><button type="button" x-on:click="actor = 'reviewer'" :class="actor === 'reviewer' ? 'bg-brand-softer text-fg-brand-strong' : 'text-body hover:bg-neutral-secondary-medium'" class="rounded-base px-2.5 py-1 text-xs font-medium">reviewer</button></div>
+      <div class="flex flex-wrap gap-1" role="group" aria-label="Filtrovat podle zralosti">
+        <button type="button" x-on:click="m = 'all'" :class="m === 'all' ? 'bg-brand-softer text-fg-brand-strong' : 'text-body hover:bg-neutral-secondary-medium'" class="rounded-base px-2.5 py-1 text-xs font-medium">jakákoli zralost</button><button type="button" x-on:click="m = 'executable'" :class="m === 'executable' ? 'bg-brand-softer text-fg-brand-strong' : 'text-body hover:bg-neutral-secondary-medium'" class="rounded-base px-2.5 py-1 text-xs font-medium">spustitelný soubor</button><button type="button" x-on:click="m = 'guaranteed'" :class="m === 'guaranteed' ? 'bg-brand-softer text-fg-brand-strong' : 'text-body hover:bg-neutral-secondary-medium'" class="rounded-base px-2.5 py-1 text-xs font-medium">zaručeno</button><button type="button" x-on:click="m = 'verified'" :class="m === 'verified' ? 'bg-brand-softer text-fg-brand-strong' : 'text-body hover:bg-neutral-secondary-medium'" class="rounded-base px-2.5 py-1 text-xs font-medium">ověřeno</button></div>
+    </div>
+    <p class="mt-2 text-xs text-body-subtle">Filtrování běží v prohlížeči. Bez JavaScriptu je každý případ užití níže stále uveden, po kategoriích.</p>
+    <section class="mt-10" aria-labelledby="cat-adoption">
+      <div class="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 id="cat-adoption" class="text-xl font-semibold tracking-tight text-heading"><a href="https://majordomus.dev/cs/use-cases/adoption/" class="hover:underline">Začínáme a převzetí</a> <span class="font-mono text-sm text-body-subtle">5</span></h2>
+        <p class="text-sm text-body">Zavedení Majordoma do repozitáře, nového či starého, aniž by se ztratilo, co lidé už napsali.</p>
+      </div>
+      <ul class="mt-4 grid gap-4 md:grid-cols-2" role="list"><li data-apps="repository-with-authored-governance" data-actors="maintainer"
+            data-maturity="guaranteed" data-text="adopt-an-existing-repository adopt a repository that already has its own rules init update doctor majordomus.projection-integrity majordomus.enforcement-wiring majordomus.policy-integrity"
+            x-show="(app === 'all' || $el.dataset.apps.split(' ').includes(app)) && (actor === 'all' || $el.dataset.actors.split(' ').includes(actor)) && (m === 'all' || m === $el.dataset.maturity) && $el.dataset.text.includes(q.toLowerCase())">
+          <a href="https://majordomus.dev/cs/use-cases/adopt-an-existing-repository/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+            <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed"><span aria-hidden="true">○</span>zaručeno</span>
+</span><span class="font-mono text-xs text-body-subtle">základní</span></div>
+            <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Převezměte repozitář, který už má vlastní pravidla</h3>
+            <p class="text-sm leading-relaxed text-body">Nainstalujte dozorovou vrstvu do repozitáře s ručně psaným CLAUDE.md, aniž by si nástroj přivlastnil soubor, který napsal někdo jiný.</p>
+            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">init · update · doctor</span>
+          </a>
+        </li><li data-apps="repository-with-authored-governance repository-opened-in-ai-clients" data-actors="operator maintainer"
+            data-maturity="guaranteed" data-text="install-the-tool-in-one-command install the tool in one command, on a machine with no toolchain version init doctor majordomus.ai-layout-integrity"
+            x-show="(app === 'all' || $el.dataset.apps.split(' ').includes(app)) && (actor === 'all' || $el.dataset.actors.split(' ').includes(actor)) && (m === 'all' || m === $el.dataset.maturity) && $el.dataset.text.includes(q.toLowerCase())">
+          <a href="https://majordomus.dev/cs/use-cases/install-the-tool-in-one-command/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+            <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed"><span aria-hidden="true">○</span>zaručeno</span>
+</span><span class="font-mono text-xs text-body-subtle">základní</span></div>
+            <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Nainstalujte nástroj jedním příkazem na stroji bez toolchainu</h3>
+            <p class="text-sm leading-relaxed text-body">Vložte jeden řádek, získejte ověřenou binárku pro tento stroj a spusťte majordomus init — bez gitu, Rustu, Node, Pythonu, rootu a bez možnosti nainstalovat archiv, jehož otisk nesouhlasí.</p>
+            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">version · init · doctor</span>
+          </a>
+        </li><li data-apps="ci-gated-project" data-actors="operator contributor"
+            data-maturity="guaranteed" data-text="know-which-tool-is-running check the version before trusting a diagnosis version "
+            x-show="(app === 'all' || $el.dataset.apps.split(' ').includes(app)) && (actor === 'all' || $el.dataset.actors.split(' ').includes(actor)) && (m === 'all' || m === $el.dataset.maturity) && $el.dataset.text.includes(q.toLowerCase())">
+          <a href="https://majordomus.dev/cs/use-cases/know-which-tool-is-running/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+            <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed"><span aria-hidden="true">○</span>zaručeno</span>
+</span><span class="font-mono text-xs text-body-subtle">základní</span></div>
+            <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Před důvěrou v diagnózu zkontrolujte verzi</h3>
+            <p class="text-sm leading-relaxed text-body">Vytiskne verzi, kterou odvozují všechny ostatní plochy, a ukáže argument, který odmítne.</p>
+            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">verze</span>
+          </a>
+        </li><li data-apps="repository-with-authored-governance" data-actors="maintainer"
+            data-maturity="guaranteed" data-text="migrate-from-the-old-layout move a repository from the pre-.ai layout to the layer migrate doctor majordomus.ai-layout-integrity majordomus.layout-integrity"
+            x-show="(app === 'all' || $el.dataset.apps.split(' ').includes(app)) && (actor === 'all' || $el.dataset.actors.split(' ').includes(actor)) && (m === 'all' || m === $el.dataset.maturity) && $el.dataset.text.includes(q.toLowerCase())">
+          <a href="https://majordomus.dev/cs/use-cases/migrate-from-the-old-layout/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+            <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed"><span aria-hidden="true">○</span>zaručeno</span>
+</span><span class="font-mono text-xs text-body-subtle">základní</span></div>
+            <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Přesuňte repozitář z rozložení před .ai na vrstvu</h3>
+            <p class="text-sm leading-relaxed text-body">Podívejte se, co by migrace přesunula, přesuňte to se zálohou a dokažte, že výsledek je vrstva, kterou nástroj čte.</p>
+            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">migrate · doctor</span>
+          </a>
+        </li><li data-apps="repository-opened-in-ai-clients" data-actors="operator maintainer"
+            data-maturity="guaranteed" data-text="use-the-tool-as-your-own-in-a-shared-repository use the tool as your own in a shared repository, and propose it to the team when it has made its case init update doctor majordomus.ai-layout-integrity"
+            x-show="(app === 'all' || $el.dataset.apps.split(' ').includes(app)) && (actor === 'all' || $el.dataset.actors.split(' ').includes(actor)) && (m === 'all' || m === $el.dataset.maturity) && $el.dataset.text.includes(q.toLowerCase())">
+          <a href="https://majordomus.dev/cs/use-cases/use-the-tool-as-your-own-in-a-shared-repository/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+            <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed"><span aria-hidden="true">○</span>zaručeno</span>
+</span><span class="font-mono text-xs text-body-subtle">základní</span></div>
+            <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Používejte nástroj jako vlastní ve sdíleném repozitáři a navrhněte ho týmu, až obhájí svůj přínos</h3>
+            <p class="text-sm leading-relaxed text-body">Jeden přepínač nainstaluje stejnou vrstvu jen pro vás: žádný sledovaný soubor se nezmění, do .gitignore se nic nepřidá, git status vypadá stejně — příkaz to ověří — a jeden další příkaz vrstvu předá týmu.</p>
+            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">init · update · doctor</span>
+          </a>
+        </li></ul>
+    </section>
+    <section class="mt-10" aria-labelledby="cat-continuity">
+      <div class="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 id="cat-continuity" class="text-xl font-semibold tracking-tight text-heading"><a href="https://majordomus.dev/cs/use-cases/continuity/" class="hover:underline">Relace a předávka</a> <span class="font-mono text-sm text-body-subtle">11</span></h2>
+        <p class="text-sm text-body">Zastavování a obnovování práce napříč relacemi a workery z trvalého stavu, nikdy z přepisu.</p>
+      </div>
+      <ul class="mt-4 grid gap-4 md:grid-cols-2" role="list"><li data-apps="long-running-work" data-actors="maintainer agent"
+            data-maturity="guaranteed" data-text="capture-the-prompts-that-started-the-work keep the prompts that started the work, below the model rather than around it capture majordomus.prompt-capture"
+            x-show="(app === 'all' || $el.dataset.apps.split(' ').includes(app)) && (actor === 'all' || $el.dataset.actors.split(' ').includes(actor)) && (m === 'all' || m === $el.dataset.maturity) && $el.dataset.text.includes(q.toLowerCase())">
+          <a href="https://majordomus.dev/cs/use-cases/capture-the-prompts-that-started-the-work/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+            <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed"><span aria-hidden="true">○</span>zaručeno</span>
+</span><span class="font-mono text-xs text-body-subtle">základní</span></div>
+            <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Uchovat prompty, které práci zahájily, pod modelem, ne kolem něj</h3>
+            <p class="text-sm leading-relaxed text-body">Zapojte hook providera, dokažte jej protažením payloadu a ověřte, že prompt, který nástroj nedokázal parsovat, se ohlásí, a ne tiše zahodí.</p>
+            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">záznam</span>
+          </a>
+        </li><li data-apps="long-running-work several-agents-one-repository" data-actors="agent reviewer"
+            data-maturity="guaranteed" data-text="carry-a-blocker-across-a-handover hand work over with a question still open, and keep it blocking handover start check question finish majordomus.handover-integrity majordomus.blocker-resolution majordomus.questions-store-integrity"
+            x-show="(app === 'all' || $el.dataset.apps.split(' ').includes(app)) && (actor === 'all' || $el.dataset.actors.split(' ').includes(actor)) && (m === 'all' || m === $el.dataset.maturity) && $el.dataset.text.includes(q.toLowerCase())">
+          <a href="https://majordomus.dev/cs/use-cases/carry-a-blocker-across-a-handover/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+            <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed"><span aria-hidden="true">○</span>zaručeno</span>
+</span><span class="font-mono text-xs text-body-subtle">pokročilý</span></div>
+            <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Předat práci s otevřenou otázkou a nechat ji dál blokovat</h3>
+            <p class="text-sm leading-relaxed text-body">Uzavřete úlohu do předávky, zatímco je otázka nevyřešená, spusťte navazující úlohu a podívejte se, že tatáž otázka tam stále odmítá přijetí.</p>
+            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">handover · start · check · question · finish</span>
+          </a>
+        </li><li data-apps="long-running-work" data-actors="agent contributor"
+            data-maturity="guaranteed" data-text="checkpoint-long-work checkpoint long work so a stop costs minutes, not the day checkpoint check context majordomus.checkpoint-freshness majordomus.state-consistency majordomus.task-continuity"
+            x-show="(app === 'all' || $el.dataset.apps.split(' ').includes(app)) && (actor === 'all' || $el.dataset.actors.split(' ').includes(actor)) && (m === 'all' || m === $el.dataset.maturity) && $el.dataset.text.includes(q.toLowerCase())">
+          <a href="https://majordomus.dev/cs/use-cases/checkpoint-long-work/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+            <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed"><span aria-hidden="true">○</span>zaručeno</span>
+</span><span class="font-mono text-xs text-body-subtle">základní</span></div>
+            <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Dělat u dlouhé práce kontrolní body, aby zastavení stálo minuty, ne celý den</h3>
+            <p class="text-sm leading-relaxed text-body">Zaznamenávejte stručný postup uvnitř aktivní úlohy v intervalu profilu, aby relace, která skončí bez varování, nechala další místo, kde začít.</p>
+            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">checkpoint · check · context</span>
+          </a>
+        </li><li data-apps="several-agents-one-repository long-running-work" data-actors="agent contributor"
+            data-maturity="verified" data-text="hand-work-between-sessions hand unfinished work to the next session checkpoint handover context check majordomus.handover-integrity majordomus.note-integrity majordomus.task-continuity majordomus.context-budget"
+            x-show="(app === 'all' || $el.dataset.apps.split(' ').includes(app)) && (actor === 'all' || $el.dataset.actors.split(' ').includes(actor)) && (m === 'all' || m === $el.dataset.maturity) && $el.dataset.text.includes(q.toLowerCase())">
+          <a href="https://majordomus.dev/cs/use-cases/hand-work-between-sessions/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+            <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--verified relative" data-status="verified"><span aria-hidden="true">•</span>ověřeno</span>
+</span><span class="font-mono text-xs text-body-subtle">základní</span></div>
+            <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Předat nedokončenou práci další relaci</h3>
+            <p class="text-sm leading-relaxed text-body">Zastavte uprostřed úlohy a zanechte dalšímu workerovi něco, s čím lze jednat a co není přepis.</p>
+            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">checkpoint · předávka · kontext · kontrola</span>
+          </a>
+        </li><li data-apps="long-running-work several-agents-one-repository" data-actors="agent contributor"
+            data-maturity="guaranteed" data-text="keep-decisions-out-of-the-transcript record a decision so the next worker can find it decision search history majordomus.decision-records majordomus.ledger-integrity"
+            x-show="(app === 'all' || $el.dataset.apps.split(' ').includes(app)) && (actor === 'all' || $el.dataset.actors.split(' ').includes(actor)) && (m === 'all' || m === $el.dataset.maturity) && $el.dataset.text.includes(q.toLowerCase())">
+          <a href="https://majordomus.dev/cs/use-cases/keep-decisions-out-of-the-transcript/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+            <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed"><span aria-hidden="true">○</span>zaručeno</span>
+</span><span class="font-mono text-xs text-body-subtle">základní</span></div>
+            <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Zaznamenat rozhodnutí, aby ho další pracovník našel</h3>
+            <p class="text-sm leading-relaxed text-body">Zapište, co bylo rozhodnuto a proč, jako stav, a pak to znovu najděte, aniž byste četli konverzaci.</p>
+            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">decision · search · history</span>
+          </a>
+        </li><li data-apps="several-agents-one-repository long-running-work" data-actors="agent operator"
+            data-maturity="guaranteed" data-text="let-the-provider-draw-the-episode-boundary have the session opened and closed without anybody remembering to capture session doctor start checkpoint handover majordomus.session-lifecycle majordomus.prompt-capture majordomus.session-records"
+            x-show="(app === 'all' || $el.dataset.apps.split(' ').includes(app)) && (actor === 'all' || $el.dataset.actors.split(' ').includes(actor)) && (m === 'all' || m === $el.dataset.maturity) && $el.dataset.text.includes(q.toLowerCase())">
+          <a href="https://majordomus.dev/cs/use-cases/let-the-provider-draw-the-episode-boundary/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+            <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed"><span aria-hidden="true">○</span>zaručeno</span>
+</span><span class="font-mono text-xs text-body-subtle">základní</span></div>
+            <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Nechat relaci otevřít a uzavřít, aniž by si na to kdokoli musel vzpomenout</h3>
+            <p class="text-sm leading-relaxed text-body">Zapojte vlastní události relace poskytovatele a epizoda se otevře, když sezení začne, předá pracovníkovi, co zanechalo to poslední, zaznamená, co se chystá zahodit komprimace, a uzavře se záznamem pokračování vedle své obálky.</p>
+            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">capture · session · doctor · start · checkpoint · handover</span>
+          </a>
+        </li><li data-apps="several-agents-one-repository long-running-work" data-actors="agent operator"
+            data-maturity="guaranteed" data-text="open-and-close-a-session record what one worker did in one sitting session history knowledge majordomus.ledger-integrity majordomus.session-records"
+            x-show="(app === 'all' || $el.dataset.apps.split(' ').includes(app)) && (actor === 'all' || $el.dataset.actors.split(' ').includes(actor)) && (m === 'all' || m === $el.dataset.maturity) && $el.dataset.text.includes(q.toLowerCase())">
+          <a href="https://majordomus.dev/cs/use-cases/open-and-close-a-session/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+            <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed"><span aria-hidden="true">○</span>zaručeno</span>
+</span><span class="font-mono text-xs text-body-subtle">základní</span></div>
+            <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Zaznamenat, co jeden pracovník udělal v jednom sezení</h3>
+            <p class="text-sm leading-relaxed text-body">Otevřete relaci, odvádějte práci v rámci úloh, kterých se dotkne, a uzavřete ji do obálky, která odkazuje na to, co vytvořila, a nic nekopíruje.</p>
+            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">relace · historie · znalosti</span>
+          </a>
+        </li><li data-apps="long-running-work repository-opened-in-ai-clients" data-actors="agent"
+            data-maturity="guaranteed" data-text="read-only-the-context-that-fits read only the context that fits the budget, and know what was dropped context check majordomus.context-integrity majordomus.context-budget majordomus.profile-requirements"
+            x-show="(app === 'all' || $el.dataset.apps.split(' ').includes(app)) && (actor === 'all' || $el.dataset.actors.split(' ').includes(actor)) && (m === 'all' || m === $el.dataset.maturity) && $el.dataset.text.includes(q.toLowerCase())">
+          <a href="https://majordomus.dev/cs/use-cases/read-only-the-context-that-fits/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+            <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed"><span aria-hidden="true">○</span>zaručeno</span>
+</span><span class="font-mono text-xs text-body-subtle">pokročilý</span></div>
+            <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Číst jen kontext, který se vejde do rozpočtu, a vědět, co bylo vynecháno</h3>
+            <p class="text-sm leading-relaxed text-body">Sestavte kontext, který worker potřebuje teď, v pořadí podle autority, oříznete ho na rozpočet řádků a uvidíte každou vypuštěnou sekci pojmenovanou i s důvodem.</p>
+            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">context · check</span>
+          </a>
+        </li><li data-apps="long-running-work" data-actors="operator agent"
+            data-maturity="guaranteed" data-text="recover-an-episode-nobody-closed close an episode whose client never came back recover "
+            x-show="(app === 'all' || $el.dataset.apps.split(' ').includes(app)) && (actor === 'all' || $el.dataset.actors.split(' ').includes(actor)) && (m === 'all' || m === $el.dataset.maturity) && $el.dataset.text.includes(q.toLowerCase())">
+          <a href="https://majordomus.dev/cs/use-cases/recover-an-episode-nobody-closed/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+            <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed"><span aria-hidden="true">○</span>zaručeno</span>
+</span><span class="font-mono text-xs text-body-subtle">pokročilý</span></div>
+            <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Uzavřít epizodu, jejíž klient se nikdy nevrátil</h3>
+            <p class="text-sm leading-relaxed text-body">Zabitý provider neposílá událost konce. Uzavřete epizodu, kterou zanechal otevřenou, na základě důkazů, právě jednou, bez nárokování práce, kterou neodvedl.</p>
+            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">recover</span>
+          </a>
+        </li><li data-apps="long-running-work several-agents-one-repository" data-actors="agent"
+            data-maturity="verified" data-text="resume-from-a-prompt-asset start a session from a rendered framing, not a pasted transcript prompt context majordomus.prompt-integrity majordomus.context-budget"
+            x-show="(app === 'all' || $el.dataset.apps.split(' ').includes(app)) && (actor === 'all' || $el.dataset.actors.split(' ').includes(actor)) && (m === 'all' || m === $el.dataset.maturity) && $el.dataset.text.includes(q.toLowerCase())">
+          <a href="https://majordomus.dev/cs/use-cases/resume-from-a-prompt-asset/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+            <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--verified relative" data-status="verified"><span aria-hidden="true">•</span>ověřeno</span>
+</span><span class="font-mono text-xs text-body-subtle">základní</span></div>
+            <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Zahájit relaci z vykresleného zarámování, ne z vloženého přepisu</h3>
+            <p class="text-sm leading-relaxed text-body">Vypište prompt assety, které repozitář dodává, vykreslete jeden proti trvalému stavu a přečtěte si kontext, který vkládá.</p>
+            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">prompt · kontext</span>
+          </a>
+        </li><li data-apps="several-agents-one-repository" data-actors="agent"
+            data-maturity="guaranteed" data-text="resume-in-the-right-worktree resume in the right worktree, never against somebody else’s task handover check context majordomus.handover-integrity majordomus.state-consistency majordomus.scope-integrity"
+            x-show="(app === 'all' || $el.dataset.apps.split(' ').includes(app)) && (actor === 'all' || $el.dataset.actors.split(' ').includes(actor)) && (m === 'all' || m === $el.dataset.maturity) && $el.dataset.text.includes(q.toLowerCase())">
+          <a href="https://majordomus.dev/cs/use-cases/resume-in-the-right-worktree/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+            <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed"><span aria-hidden="true">○</span>zaručeno</span>
+</span><span class="font-mono text-xs text-body-subtle">pokročilý</span></div>
+            <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Pokračovat ve správném worktree, nikdy proti cizí úloze</h3>
+            <p class="text-sm leading-relaxed text-body">Najděte předávku, která patří k tomuto worktree a větvi, a podívejte se, jak se záznam úlohy z jiného checkoutu hlásí jako cizí, místo aby se tu vynucoval.</p>
+            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">handover · check · context</span>
+          </a>
+        </li></ul>
+    </section>
+    <section class="mt-10" aria-labelledby="cat-workers">
+      <div class="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 id="cat-workers" class="text-xl font-semibold tracking-tight text-heading"><a href="https://majordomus.dev/cs/use-cases/workers/" class="hover:underline">Paralelní workery</a> <span class="font-mono text-sm text-body-subtle">3</span></h2>
+        <p class="text-sm text-body">Několik agentů nebo lidí v jednom repozitáři: nárokované rozsahy, překryv a kdo čeho se dotkl.</p>
+      </div>
+      <ul class="mt-4 grid gap-4 md:grid-cols-2" role="list"><li data-apps="several-agents-one-repository long-running-work" data-actors="maintainer agent"
+            data-maturity="guaranteed" data-text="deliver-issues-in-waves deliver issues in waves the graph computes, and take the next one plan start majordomus.project-integrity majordomus.dag-integrity majordomus.scope-integrity"
+            x-show="(app === 'all' || $el.dataset.apps.split(' ').includes(app)) && (actor === 'all' || $el.dataset.actors.split(' ').includes(actor)) && (m === 'all' || m === $el.dataset.maturity) && $el.dataset.text.includes(q.toLowerCase())">
+          <a href="https://majordomus.dev/cs/use-cases/deliver-issues-in-waves/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+            <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed"><span aria-hidden="true">○</span>zaručeno</span>
+</span><span class="font-mono text-xs text-body-subtle">pokročilý</span></div>
+            <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Dodávejte úkoly ve vlnách, které spočítá graf, a berte další</h3>
+            <p class="text-sm leading-relaxed text-body">Zvalidujte plán, přečtěte vlny provádění, které graf závislostí dává, podívejte se, které úkoly jsou připravené a které na čem blokované, a vezměte jeden úkol, který má worker udělat teď.</p>
+            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">plan · start</span>
+          </a>
+        </li><li data-apps="several-agents-one-repository" data-actors="agent operator"
+            data-maturity="guaranteed" data-text="run-several-workers-at-once run several workers in one repository without them colliding start check finish majordomus.scope-integrity majordomus.state-consistency"
+            x-show="(app === 'all' || $el.dataset.apps.split(' ').includes(app)) && (actor === 'all' || $el.dataset.actors.split(' ').includes(actor)) && (m === 'all' || m === $el.dataset.maturity) && $el.dataset.text.includes(q.toLowerCase())">
+          <a href="https://majordomus.dev/cs/use-cases/run-several-workers-at-once/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+            <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed"><span aria-hidden="true">○</span>zaručeno</span>
+</span><span class="font-mono text-xs text-body-subtle">pokročilý</span></div>
+            <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Provozujte více workerů v jednom repozitáři, aniž by se srazili</h3>
+            <p class="text-sm leading-relaxed text-body">Dejte každému workerovi deklarovaný rozsah a zjistěte okamžitě, když dva z nich nárokují stejné cesty.</p>
+            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">start · check · finish</span>
+          </a>
+        </li><li data-apps="long-running-work repository-opened-in-ai-clients" data-actors="agent maintainer"
+            data-maturity="guaranteed" data-text="work-on-a-branch-in-its-canonical-worktree work on a branch in the one worktree it belongs to doctor context majordomus.enforcement-wiring majordomus.scope-integrity"
+            x-show="(app === 'all' || $el.dataset.apps.split(' ').includes(app)) && (actor === 'all' || $el.dataset.actors.split(' ').includes(actor)) && (m === 'all' || m === $el.dataset.maturity) && $el.dataset.text.includes(q.toLowerCase())">
+          <a href="https://majordomus.dev/cs/use-cases/work-on-a-branch-in-its-canonical-worktree/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+            <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed"><span aria-hidden="true">○</span>zaručeno</span>
+</span><span class="font-mono text-xs text-body-subtle">pokročilý</span></div>
+            <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Pracujte na větvi v jediném worktree, které jí patří</h3>
+            <p class="text-sm leading-relaxed text-body">Založte větev, aniž byste volili cestu, najděte z kteréhokoli checkoutu všechny checkouty repozitáře a přiveďte zatoulaný domů s nedotčenou necommitnutou prací.</p>
+            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">doctor · kontext</span>
+          </a>
+        </li></ul>
+    </section>
+    <section class="mt-10" aria-labelledby="cat-policy">
+      <div class="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 id="cat-policy" class="text-xl font-semibold tracking-tight text-heading"><a href="https://majordomus.dev/cs/use-cases/policy/" class="hover:underline">Politika a vynucování</a> <span class="font-mono text-sm text-body-subtle">5</span></h2>
+        <p class="text-sm text-body">Deklarování pravidel, prokazování, že jsou zapojená, a reprodukce nálezu.</p>
+      </div>
+      <ul class="mt-4 grid gap-4 md:grid-cols-2" role="list"><li data-apps="ci-gated-project" data-actors="maintainer reviewer"
+            data-maturity="guaranteed" data-text="gate-ci-on-the-tool-itself gate ci on the tool itself, with an exit code that is a contract doctor watch doctrine check majordomus.enforcement-wiring majordomus.doctrine-wiring-integrity majordomus.command-surface majordomus.command-coverage"
+            x-show="(app === 'all' || $el.dataset.apps.split(' ').includes(app)) && (actor === 'all' || $el.dataset.actors.split(' ').includes(actor)) && (m === 'all' || m === $el.dataset.maturity) && $el.dataset.text.includes(q.toLowerCase())">
+          <a href="https://majordomus.dev/cs/use-cases/gate-ci-on-the-tool-itself/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+            <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed"><span aria-hidden="true">○</span>zaručeno</span>
+</span><span class="font-mono text-xs text-body-subtle">základní</span></div>
+            <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Podmiňte CI samotným nástrojem, s návratovým kódem, který je smlouvou</h3>
+            <p class="text-sm leading-relaxed text-body">Spouštějte kontroly, které spouští CI, čtěte každý nález s příkazem, který ho reprodukuje, a spoléhejte na návratové kódy, z nichž každý znamená jedinou věc: žádný kód neznamená varovat a pokračovat.</p>
+            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">doctor · watch · doktrína · kontrola</span>
+          </a>
+        </li><li data-apps="" data-actors="maintainer contributor agent"
+            data-maturity="executable" data-text="plan-a-commit-and-judge-its-message divide a working tree into commits, and hold every message to a policy doctrine majordomus.enforcement-wiring"
+            x-show="(app === 'all' || $el.dataset.apps.split(' ').includes(app)) && (actor === 'all' || $el.dataset.actors.split(' ').includes(actor)) && (m === 'all' || m === $el.dataset.maturity) && $el.dataset.text.includes(q.toLowerCase())">
+          <a href="https://majordomus.dev/cs/use-cases/plan-a-commit-and-judge-its-message/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+            <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--executable relative" data-status="executable"><span aria-hidden="true">!</span>spustitelné</span>
+</span><span class="font-mono text-xs text-body-subtle">pokročilý</span></div>
+            <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Rozdělte pracovní strom na commity a každou zprávu poměřte s politikou</h3>
+            <p class="text-sm leading-relaxed text-body">Zeptejte se, co by tento strom commitnul a proč, naučte se slovník rozsahů z historie místo z tabulky a získejte verdikt k jedné zprávě nebo k celému rozsahu dřív, než ho musí dát recenzent.</p>
+            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">doktrína</span>
+          </a>
+        </li><li data-apps="repository-with-authored-governance ci-gated-project" data-actors="maintainer reviewer"
+            data-maturity="guaranteed" data-text="prove-a-rule-is-enforced prove a rule is actually enforced, not merely written down doctrine doctor check majordomus.doctrine-wiring-integrity majordomus.enforcement-wiring"
+            x-show="(app === 'all' || $el.dataset.apps.split(' ').includes(app)) && (actor === 'all' || $el.dataset.actors.split(' ').includes(actor)) && (m === 'all' || m === $el.dataset.maturity) && $el.dataset.text.includes(q.toLowerCase())">
+          <a href="https://majordomus.dev/cs/use-cases/prove-a-rule-is-enforced/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+            <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed"><span aria-hidden="true">○</span>zaručeno</span>
+</span><span class="font-mono text-xs text-body-subtle">pokročilý</span></div>
+            <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Dokažte, že se pravidlo skutečně vynucuje, a nejen že je napsané</h3>
+            <p class="text-sm leading-relaxed text-body">Odpovědět na „je toto pravidlo skutečné?“ příkazem, ne čtením zdroje.</p>
+            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">doktrína · doctor · kontrola</span>
+          </a>
+        </li><li data-apps="repository-with-authored-governance ci-gated-project" data-actors="maintainer reviewer agent"
+            data-maturity="guaranteed" data-text="read-the-rules-the-tool-applies see which rules apply here and what enforces them rules doctrine majordomus.rule-package-integrity majordomus.doctrine-wiring-integrity"
+            x-show="(app === 'all' || $el.dataset.apps.split(' ').includes(app)) && (actor === 'all' || $el.dataset.actors.split(' ').includes(actor)) && (m === 'all' || m === $el.dataset.maturity) && $el.dataset.text.includes(q.toLowerCase())">
+          <a href="https://majordomus.dev/cs/use-cases/read-the-rules-the-tool-applies/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+            <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed"><span aria-hidden="true">○</span>zaručeno</span>
+</span><span class="font-mono text-xs text-body-subtle">základní</span></div>
+            <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Zjistěte, která pravidla tu platí a co je vynucuje</h3>
+            <p class="text-sm leading-relaxed text-body">Vypište efektivní sadu pravidel, přečtěte jedno pravidlo tak, jak ho čte nástroj, a zjistěte, která z nich nástroj vynucuje a odkud.</p>
+            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">rules · doctrine</span>
+          </a>
+        </li><li data-apps="repository-with-authored-governance ci-gated-project" data-actors="maintainer"
+            data-maturity="guaranteed" data-text="trust-the-policy-before-reading-it trust the policy and the profiles only after they are validated doctor check majordomus.policy-integrity majordomus.policy-completeness majordomus.profile-requirements majordomus.enforcement-wiring"
+            x-show="(app === 'all' || $el.dataset.apps.split(' ').includes(app)) && (actor === 'all' || $el.dataset.actors.split(' ').includes(actor)) && (m === 'all' || m === $el.dataset.maturity) && $el.dataset.text.includes(q.toLowerCase())">
+          <a href="https://majordomus.dev/cs/use-cases/trust-the-policy-before-reading-it/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+            <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed"><span aria-hidden="true">○</span>zaručeno</span>
+</span><span class="font-mono text-xs text-body-subtle">základní</span></div>
+            <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Politice a profilům důvěřujte, až když jsou ověřené</h3>
+            <p class="text-sm leading-relaxed text-body">Dokažte, že kanonická politika se parsuje se všemi potřebnými klíči, že se parsuje každý profil a existuje výchozí, a že to, co politika deklaruje jako vynucené, je to, co skutečně běží.</p>
+            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">doctor · check</span>
+          </a>
+        </li></ul>
+    </section>
+    <section class="mt-10" aria-labelledby="cat-completion">
+      <div class="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 id="cat-completion" class="text-xl font-semibold tracking-tight text-heading"><a href="https://majordomus.dev/cs/use-cases/completion/" class="hover:underline">Kontroly dokončení a kvality</a> <span class="font-mono text-sm text-body-subtle">7</span></h2>
+        <p class="text-sm text-body">Rozhodování, zda je práce hotová, se smlouvou, jejíž každý řádek buď projde, nebo selže.</p>
+      </div>
+      <ul class="mt-4 grid gap-4 md:grid-cols-2" role="list"><li data-apps="ci-gated-project long-running-work" data-actors="reviewer agent"
+            data-maturity="guaranteed" data-text="accept-or-refuse-finished-work decide whether finished work is actually finished finish question check majordomus.verification-integrity majordomus.blocker-resolution majordomus.profile-requirements majordomus.note-integrity"
+            x-show="(app === 'all' || $el.dataset.apps.split(' ').includes(app)) && (actor === 'all' || $el.dataset.actors.split(' ').includes(actor)) && (m === 'all' || m === $el.dataset.maturity) && $el.dataset.text.includes(q.toLowerCase())">
+          <a href="https://majordomus.dev/cs/use-cases/accept-or-refuse-finished-work/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+            <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed"><span aria-hidden="true">○</span>zaručeno</span>
+</span><span class="font-mono text-xs text-body-subtle">pokročilý</span></div>
+            <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Rozhodnout, zda je dokončená práce skutečně dokončená</h3>
+            <p class="text-sm leading-relaxed text-body">Vyhodnoťte smlouvu řádek po řádku, místo abyste přijali větu, která říká, že práce je hotová.</p>
+            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">finish · question · check</span>
+          </a>
+        </li><li data-apps="long-running-work ci-gated-project" data-actors="agent reviewer"
+            data-maturity="guaranteed" data-text="block-acceptance-on-an-open-question block acceptance on a question nobody has answered question finish check majordomus.blocker-resolution majordomus.questions-store-integrity majordomus.verification-integrity"
+            x-show="(app === 'all' || $el.dataset.apps.split(' ').includes(app)) && (actor === 'all' || $el.dataset.actors.split(' ').includes(actor)) && (m === 'all' || m === $el.dataset.maturity) && $el.dataset.text.includes(q.toLowerCase())">
+          <a href="https://majordomus.dev/cs/use-cases/block-acceptance-on-an-open-question/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+            <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed"><span aria-hidden="true">○</span>zaručeno</span>
+</span><span class="font-mono text-xs text-body-subtle">pokročilý</span></div>
+            <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Zablokovat přijetí kvůli otázce, na kterou nikdo neodpověděl</h3>
+            <p class="text-sm leading-relaxed text-body">Otevřete k úloze otázku, sledujte, jak finish odmítne dokončení, dokud není vyřešená, vyřešte ji odpovědí a teprve pak dokončete.</p>
+            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">question · finish · check</span>
+          </a>
+        </li><li data-apps="" data-actors="agent operator"
+            data-maturity="guaranteed" data-text="catch-an-agent-that-says-it-is-done catch an agent that says it is done when it is not start check finish handover context majordomus.scope-integrity majordomus.state-consistency"
+            x-show="(app === 'all' || $el.dataset.apps.split(' ').includes(app)) && (actor === 'all' || $el.dataset.actors.split(' ').includes(actor)) && (m === 'all' || m === $el.dataset.maturity) && $el.dataset.text.includes(q.toLowerCase())">
+          <a href="https://majordomus.dev/cs/use-cases/catch-an-agent-that-says-it-is-done/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+            <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed"><span aria-hidden="true">○</span>zaručeno</span>
+</span><span class="font-mono text-xs text-body-subtle">základní</span></div>
+            <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Přichytit agenta, který tvrdí, že je hotov, a není</h3>
+            <p class="text-sm leading-relaxed text-body">Jedna úloha od začátku do konce: pracovník vybočí ze svého rozsahu, tvrdí, že je hotov, předá a je přijat teprve tehdy, když projde vlastní ověření repozitáře.</p>
+            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">start · check · finish · handover · context</span>
+          </a>
+        </li><li data-apps="ci-gated-project long-running-work" data-actors="maintainer reviewer"
+            data-maturity="guaranteed" data-text="complete-an-issue-only-with-its-evidence complete an issue only when its evidence exists plan majordomus.project-integrity majordomus.roadmap-integrity majordomus.verification-integrity"
+            x-show="(app === 'all' || $el.dataset.apps.split(' ').includes(app)) && (actor === 'all' || $el.dataset.actors.split(' ').includes(actor)) && (m === 'all' || m === $el.dataset.maturity) && $el.dataset.text.includes(q.toLowerCase())">
+          <a href="https://majordomus.dev/cs/use-cases/complete-an-issue-only-with-its-evidence/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+            <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed"><span aria-hidden="true">○</span>zaručeno</span>
+</span><span class="font-mono text-xs text-body-subtle">pokročilý</span></div>
+            <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Dokončit úkol, jen pokud existují jeho důkazy</h3>
+            <p class="text-sm leading-relaxed text-body">Podívejte se, jak úkol odmítne dokončení, dokud chybí požadovaný důkaz, přečtěte plán rozvoje, který odvozuje stav milníku, a udržte projekci na GitHubu jen projekcí.</p>
+            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">plan</span>
+          </a>
+        </li><li data-apps="" data-actors="agent maintainer"
+            data-maturity="executable" data-text="know-whether-this-work-is-finished know whether the work in this checkout is finished check watch majordomus.obligation-closure majordomus.scope-integrity majordomus.state-consistency"
+            x-show="(app === 'all' || $el.dataset.apps.split(' ').includes(app)) && (actor === 'all' || $el.dataset.actors.split(' ').includes(actor)) && (m === 'all' || m === $el.dataset.maturity) && $el.dataset.text.includes(q.toLowerCase())">
+          <a href="https://majordomus.dev/cs/use-cases/know-whether-this-work-is-finished/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+            <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--executable relative" data-status="executable"><span aria-hidden="true">!</span>spustitelné</span>
+</span><span class="font-mono text-xs text-body-subtle">základní</span></div>
+            <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Vědět, zda je práce v tomto checkoutu dokončená</h3>
+            <p class="text-sm leading-relaxed text-body">Zeptejte se repozitáře, ve kterém stojíte, a nechte si jmenovitě říct, co zbývá dodat.</p>
+            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">check · watch</span>
+          </a>
+        </li><li data-apps="" data-actors="maintainer agent"
+            data-maturity="guaranteed" data-text="prove-what-a-task-owed-before-calling-it-done prove what a task owed before calling it done start evidence check finish majordomus.obligation-closure"
+            x-show="(app === 'all' || $el.dataset.apps.split(' ').includes(app)) && (actor === 'all' || $el.dataset.actors.split(' ').includes(actor)) && (m === 'all' || m === $el.dataset.maturity) && $el.dataset.text.includes(q.toLowerCase())">
+          <a href="https://majordomus.dev/cs/use-cases/prove-what-a-task-owed-before-calling-it-done/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+            <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed"><span aria-hidden="true">○</span>zaručeno</span>
+</span><span class="font-mono text-xs text-body-subtle">základní</span></div>
+            <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Dokázat, co úloha dlužila, než ji prohlásíme za hotovou</h3>
+            <p class="text-sm leading-relaxed text-body">Úloha deklaruje, co dluží, zaznamenává důkaz ke každému závazku a je odmítnuta, jakmile tento důkaz už nepopisuje strom, nad nímž vznikl.</p>
+            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">start · evidence · check · finish</span>
+          </a>
+        </li><li data-apps="" data-actors="maintainer agent"
+            data-maturity="guaranteed" data-text="say-what-reached-the-remote-and-what-did-not say what reached the remote and what did not evidence check finish majordomus.obligation-closure"
+            x-show="(app === 'all' || $el.dataset.apps.split(' ').includes(app)) && (actor === 'all' || $el.dataset.actors.split(' ').includes(actor)) && (m === 'all' || m === $el.dataset.maturity) && $el.dataset.text.includes(q.toLowerCase())">
+          <a href="https://majordomus.dev/cs/use-cases/say-what-reached-the-remote-and-what-did-not/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+            <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed"><span aria-hidden="true">○</span>zaručeno</span>
+</span><span class="font-mono text-xs text-body-subtle">základní</span></div>
+            <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Říct, co se dostalo na remote a co ne</h3>
+            <p class="text-sm leading-relaxed text-body">Závazky, které sahají za pracovní strom, se vyřizují dotazem na git a publikovaný web, takže hlášení nemůže označit necommitnutou práci za commitnutou ani nepushnutou za pushnutou.</p>
+            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">evidence · check · finish</span>
+          </a>
+        </li></ul>
+    </section>
+    <section class="mt-10" aria-labelledby="cat-drift">
+      <div class="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 id="cat-drift" class="text-xl font-semibold tracking-tight text-heading"><a href="https://majordomus.dev/cs/use-cases/drift/" class="hover:underline">Drift a rekonciliace</a> <span class="font-mono text-sm text-body-subtle">2</span></h2>
+        <p class="text-sm text-body">Zjišťování, že se politika, projekce, stav a git rozcházejí, a uvádění do souladu.</p>
+      </div>
+      <ul class="mt-4 grid gap-4 md:grid-cols-2" role="list"><li data-apps="repository-with-authored-governance long-running-work" data-actors="maintainer"
+            data-maturity="guaranteed" data-text="find-out-what-drifted find out what has drifted since anyone last looked watch update history majordomus.projection-integrity majordomus.policy-integrity majordomus.ledger-integrity majordomus.retention-caps"
+            x-show="(app === 'all' || $el.dataset.apps.split(' ').includes(app)) && (actor === 'all' || $el.dataset.actors.split(' ').includes(actor)) && (m === 'all' || m === $el.dataset.maturity) && $el.dataset.text.includes(q.toLowerCase())">
+          <a href="https://majordomus.dev/cs/use-cases/find-out-what-drifted/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+            <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed"><span aria-hidden="true">○</span>zaručeno</span>
+</span><span class="font-mono text-xs text-body-subtle">základní</span></div>
+            <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Zjistěte, co se změnilo od doby, kdy se někdo naposledy díval</h3>
+            <p class="text-sm leading-relaxed text-body">Ptejte se, co se pohnulo, místo zda je něco špatně.</p>
+            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">watch · update · history</span>
+          </a>
+        </li><li data-apps="repository-opened-in-ai-clients repository-with-authored-governance" data-actors="maintainer"
+            data-maturity="guaranteed" data-text="keep-the-bootstrap-thin-and-within-budget keep every provider bootstrap thin, generated and within budget update doctor watch majordomus.bootstrap-integrity majordomus.projection-integrity majordomus.context-budget"
+            x-show="(app === 'all' || $el.dataset.apps.split(' ').includes(app)) && (actor === 'all' || $el.dataset.actors.split(' ').includes(actor)) && (m === 'all' || m === $el.dataset.maturity) && $el.dataset.text.includes(q.toLowerCase())">
+          <a href="https://majordomus.dev/cs/use-cases/keep-the-bootstrap-thin-and-within-budget/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+            <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed"><span aria-hidden="true">○</span>zaručeno</span>
+</span><span class="font-mono text-xs text-body-subtle">základní</span></div>
+            <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Udržujte bootstrap každého providera tenký, generovaný a v rámci rozpočtu</h3>
+            <p class="text-sm leading-relaxed text-body">Přegenerujte AGENTS.md, CLAUDE.md a další soubory providerů z jedné politiky a dokažte, že jsou orazítkované, odkazují na vrstvu, drží se pod rozpočtem řádků a vyřeší každý odkaz.</p>
+            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">update · doctor · watch</span>
+          </a>
+        </li></ul>
+    </section>
+    <section class="mt-10" aria-labelledby="cat-knowledge">
+      <div class="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 id="cat-knowledge" class="text-xl font-semibold tracking-tight text-heading"><a href="https://majordomus.dev/cs/use-cases/knowledge/" class="hover:underline">Znalosti repozitáře</a> <span class="font-mono text-sm text-body-subtle">8</span></h2>
+        <p class="text-sm text-body">Co repozitář deklaruje o sobě: zdroje, uzly, hrany, plán a jejich vyhledávání.</p>
+      </div>
+      <ul class="mt-4 grid gap-4 md:grid-cols-2" role="list"><li data-apps="repository-opened-in-ai-clients repository-with-authored-governance" data-actors="maintainer"
+            data-maturity="guaranteed" data-text="classify-what-belongs-in-the-context decide what belongs in the ai context, as data knowledge doctor majordomus.ai-layout-integrity majordomus.policy-completeness"
+            x-show="(app === 'all' || $el.dataset.apps.split(' ').includes(app)) && (actor === 'all' || $el.dataset.actors.split(' ').includes(actor)) && (m === 'all' || m === $el.dataset.maturity) && $el.dataset.text.includes(q.toLowerCase())">
+          <a href="https://majordomus.dev/cs/use-cases/classify-what-belongs-in-the-context/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+            <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed"><span aria-hidden="true">○</span>zaručeno</span>
+</span><span class="font-mono text-xs text-body-subtle">pokročilý</span></div>
+            <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Určit jako data, co patří do AI kontextu</h3>
+            <p class="text-sm leading-relaxed text-body">Přečtěte deklarovanou politiku rozsahu repozitáře, zjistěte, které cesty jsou v indexu a které mimo něj, a nechte doctor a znalostní index aplikovat ji místo pevně zakódovaného seznamu.</p>
+            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">knowledge · doctor</span>
+          </a>
+        </li><li data-apps="repository-with-authored-governance" data-actors="maintainer reviewer"
+            data-maturity="guaranteed" data-text="document-every-directory-of-the-layer refuse a directory of the layer that documents nothing context doctor majordomus.context-integrity"
+            x-show="(app === 'all' || $el.dataset.apps.split(' ').includes(app)) && (actor === 'all' || $el.dataset.actors.split(' ').includes(actor)) && (m === 'all' || m === $el.dataset.maturity) && $el.dataset.text.includes(q.toLowerCase())">
+          <a href="https://majordomus.dev/cs/use-cases/document-every-directory-of-the-layer/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+            <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed"><span aria-hidden="true">○</span>zaručeno</span>
+</span><span class="font-mono text-xs text-body-subtle">pokročilý</span></div>
+            <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Odmítnout adresář vrstvy, který nic nedokumentuje</h3>
+            <p class="text-sm leading-relaxed text-body">Adresář přidaný pod vrstvu bez kontextového dokumentu neprojde validací, a to jmenovitě; nic se nevyřeší proti stromu, dokud neřekne, k čemu je, a tatáž hierarchie je čitelná přes MCP i API bez spuštění kontroly.</p>
+            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">context · doctor</span>
+          </a>
+        </li><li data-apps="" data-actors="maintainer agent"
+            data-maturity="guaranteed" data-text="hand-the-repository-to-a-reader hand the repository to someone who cannot clone it archive "
+            x-show="(app === 'all' || $el.dataset.apps.split(' ').includes(app)) && (actor === 'all' || $el.dataset.actors.split(' ').includes(actor)) && (m === 'all' || m === $el.dataset.maturity) && $el.dataset.text.includes(q.toLowerCase())">
+          <a href="https://majordomus.dev/cs/use-cases/hand-the-repository-to-a-reader/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+            <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed"><span aria-hidden="true">○</span>zaručeno</span>
+</span><span class="font-mono text-xs text-body-subtle">základní</span></div>
+            <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Předat repozitář někomu, kdo ho nemůže naklonovat</h3>
+            <p class="text-sm leading-relaxed text-body">Pořiďte snímek, který model přečte nebo kontrola v něm může běžet, bez odesílání čehokoli nesledovaného a bez ztráty režimů souborů cestou.</p>
+            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">archiv</span>
+          </a>
+        </li><li data-apps="repository-with-authored-governance" data-actors="maintainer agent"
+            data-maturity="guaranteed" data-text="keep-what-an-episode-learned keep what an episode learned, without a model and without a conversation start decision knowledge history majordomus.knowledge-observed majordomus.knowledge-integrity"
+            x-show="(app === 'all' || $el.dataset.apps.split(' ').includes(app)) && (actor === 'all' || $el.dataset.actors.split(' ').includes(actor)) && (m === 'all' || m === $el.dataset.maturity) && $el.dataset.text.includes(q.toLowerCase())">
+          <a href="https://majordomus.dev/cs/use-cases/keep-what-an-episode-learned/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+            <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed"><span aria-hidden="true">○</span>zaručeno</span>
+</span><span class="font-mono text-xs text-body-subtle">základní</span></div>
+            <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Uchovat, co se epizoda naučila, bez modelu a bez konverzace</h3>
+            <p class="text-sm leading-relaxed text-body">Zaznamenejte rozhodnutí uvnitř epizody, odvoďte ho z ledgeru do kandidátského záznamu znalostí, přečtěte důkaz, že odvození proběhlo, a sledujte, jak druhé odvození nic nezmění.</p>
+            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">start · decision · knowledge · history</span>
+          </a>
+        </li><li data-apps="long-running-work ci-gated-project" data-actors="maintainer agent"
+            data-maturity="guaranteed" data-text="plan-the-work-as-data keep the plan as milestones and issues the tool can validate plan majordomus.project-integrity majordomus.dag-integrity"
+            x-show="(app === 'all' || $el.dataset.apps.split(' ').includes(app)) && (actor === 'all' || $el.dataset.actors.split(' ').includes(actor)) && (m === 'all' || m === $el.dataset.maturity) && $el.dataset.text.includes(q.toLowerCase())">
+          <a href="https://majordomus.dev/cs/use-cases/plan-the-work-as-data/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+            <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed"><span aria-hidden="true">○</span>zaručeno</span>
+</span><span class="font-mono text-xs text-body-subtle">pokročilý</span></div>
+            <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Vést plán jako milníky a úkoly, které nástroj umí validovat</h3>
+            <p class="text-sm leading-relaxed text-body">Deklarujte milníky jako výsledky a úkoly jako prováděcí smlouvy a nechte nástroj říct, co je připravené a co blokované.</p>
+            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">plan</span>
+          </a>
+        </li><li data-apps="long-running-work several-agents-one-repository" data-actors="reviewer maintainer"
+            data-maturity="guaranteed" data-text="read-back-what-happened read back what happened, and keep the ledger within its cap history search watch majordomus.ledger-integrity majordomus.retention-caps"
+            x-show="(app === 'all' || $el.dataset.apps.split(' ').includes(app)) && (actor === 'all' || $el.dataset.actors.split(' ').includes(actor)) && (m === 'all' || m === $el.dataset.maturity) && $el.dataset.text.includes(q.toLowerCase())">
+          <a href="https://majordomus.dev/cs/use-cases/read-back-what-happened/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+            <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed"><span aria-hidden="true">○</span>zaručeno</span>
+</span><span class="font-mono text-xs text-body-subtle">základní</span></div>
+            <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Přečíst zpětně, co se stalo, a držet knihu záznamů v limitu</h3>
+            <p class="text-sm leading-relaxed text-body">Čtěte ledger určený jen k připojování jako provozní historii, filtrovanou podle úlohy a události, zvalidujte každý řádek a nejstarší řádky přesouvejte do archivu místo jejich mazání.</p>
+            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">historie · hledání · watch</span>
+          </a>
+        </li><li data-apps="long-running-work" data-actors="maintainer agent"
+            data-maturity="guaranteed" data-text="record-a-decision-before-it-is-forgotten record a decision as data, and prove the tool cannot accept it for you adr knowledge majordomus.adr-integrity"
+            x-show="(app === 'all' || $el.dataset.apps.split(' ').includes(app)) && (actor === 'all' || $el.dataset.actors.split(' ').includes(actor)) && (m === 'all' || m === $el.dataset.maturity) && $el.dataset.text.includes(q.toLowerCase())">
+          <a href="https://majordomus.dev/cs/use-cases/record-a-decision-before-it-is-forgotten/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+            <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed"><span aria-hidden="true">○</span>zaručeno</span>
+</span><span class="font-mono text-xs text-body-subtle">základní</span></div>
+            <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Zaznamenat rozhodnutí jako data a dokázat, že ho nástroj nemůže přijmout za vás</h3>
+            <p class="text-sm leading-relaxed text-body">Přečtěte rozhodnutí, která repozitář obsahuje, zvalidujte celou sadu jedním příkazem a sledujte, jak nástroj odmítne zapsat jediný stav, který smí zapsat jen člověk.</p>
+            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">adr · knowledge</span>
+          </a>
+        </li><li data-apps="repository-with-authored-governance repository-opened-in-ai-clients" data-actors="maintainer reviewer"
+            data-maturity="guaranteed" data-text="trace-a-change-to-the-context-it-affects trace a change to the context documents it affects context doctor majordomus.context-integrity majordomus.ai-layout-integrity"
+            x-show="(app === 'all' || $el.dataset.apps.split(' ').includes(app)) && (actor === 'all' || $el.dataset.actors.split(' ').includes(actor)) && (m === 'all' || m === $el.dataset.maturity) && $el.dataset.text.includes(q.toLowerCase())">
+          <a href="https://majordomus.dev/cs/use-cases/trace-a-change-to-the-context-it-affects/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+            <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed"><span aria-hidden="true">○</span>zaručeno</span>
+</span><span class="font-mono text-xs text-body-subtle">pokročilý</span></div>
+            <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Dohledat ke změně kontextové dokumenty, kterých se týká</h3>
+            <p class="text-sm leading-relaxed text-body">Vypište dokumenty s rozsahem kontextu, zjistěte, které platí pro cestu a proč, a před přistáním zjistěte, kterých dokumentů se sada změn dotýká.</p>
+            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">context · doctor</span>
+          </a>
+        </li></ul>
+    </section>
+    <section class="mt-10" aria-labelledby="cat-mcp">
+      <div class="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 id="cat-mcp" class="text-xl font-semibold tracking-tight text-heading"><a href="https://majordomus.dev/cs/use-cases/mcp/" class="hover:underline">Poskytování vrstvy AI klientům</a> <span class="font-mono text-sm text-body-subtle">3</span></h2>
+        <p class="text-sm text-body">Jeden sdílený server na repozitář, každý klient je peer, tatáž vrstva přes MCP, HTTP i příkazovou řádku.</p>
+      </div>
+      <ul class="mt-4 grid gap-4 md:grid-cols-2" role="list"><li data-apps="repository-opened-in-ai-clients" data-actors="agent"
+            data-maturity="guaranteed" data-text="find-an-object-without-reading-everything find an object of the layer without reading everything search knowledge prompt majordomus.ai-layout-integrity majordomus.prompt-integrity"
+            x-show="(app === 'all' || $el.dataset.apps.split(' ').includes(app)) && (actor === 'all' || $el.dataset.actors.split(' ').includes(actor)) && (m === 'all' || m === $el.dataset.maturity) && $el.dataset.text.includes(q.toLowerCase())">
+          <a href="https://majordomus.dev/cs/use-cases/find-an-object-without-reading-everything/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+            <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed"><span aria-hidden="true">○</span>zaručeno</span>
+</span><span class="font-mono text-xs text-body-subtle">základní</span></div>
+            <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Najděte objekt vrstvy, aniž byste četli všechno</h3>
+            <p class="text-sm leading-relaxed text-body">Prohledávejte trvalé záznamy doslovně napříč druhy z shellu a stejnou otázku položte sdílenému serveru přes MCP pomocí majordomus_search a majordomus_get.</p>
+            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">search · knowledge · prompt</span>
+          </a>
+        </li><li data-apps="repository-opened-in-ai-clients repository-with-authored-governance" data-actors="operator reviewer maintainer"
+            data-maturity="guaranteed" data-text="see-what-the-repository-holds-without-reading-it see what the repository holds, and run one of its capabilities, without reading a file doctor knowledge majordomus.projection-integrity majordomus.ai-layout-integrity"
+            x-show="(app === 'all' || $el.dataset.apps.split(' ').includes(app)) && (actor === 'all' || $el.dataset.actors.split(' ').includes(actor)) && (m === 'all' || m === $el.dataset.maturity) && $el.dataset.text.includes(q.toLowerCase())">
+          <a href="https://majordomus.dev/cs/use-cases/see-what-the-repository-holds-without-reading-it/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+            <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed"><span aria-hidden="true">○</span>zaručeno</span>
+</span><span class="font-mono text-xs text-body-subtle">základní</span></div>
+            <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Podívejte se, co repozitář obsahuje, a spusťte jednu z jeho schopností, aniž byste četli soubor</h3>
+            <p class="text-sm leading-relaxed text-body">Otevřete sdílený server v prohlížeči a získejte celou vrstvu jako stránky: co existuje, odkud co pochází, co na čem závisí, co selhává, a formulář, který spustí libovolnou schopnost.</p>
+            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">doctor · knowledge</span>
+          </a>
+        </li><li data-apps="repository-opened-in-ai-clients several-agents-one-repository" data-actors="operator agent"
+            data-maturity="guaranteed" data-text="serve-the-layer-to-ai-clients serve the repository&#39;s ai layer to every ai client through one shared server init doctor majordomus.ai-layout-integrity majordomus.projection-integrity majordomus.scope-integrity"
+            x-show="(app === 'all' || $el.dataset.apps.split(' ').includes(app)) && (actor === 'all' || $el.dataset.actors.split(' ').includes(actor)) && (m === 'all' || m === $el.dataset.maturity) && $el.dataset.text.includes(q.toLowerCase())">
+          <a href="https://majordomus.dev/cs/use-cases/serve-the-layer-to-ai-clients/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+            <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed"><span aria-hidden="true">○</span>zaručeno</span>
+</span><span class="font-mono text-xs text-body-subtle">základní</span></div>
+            <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Servírujte AI vrstvu repozitáře všem AI klientům jedním sdíleným serverem</h3>
+            <p class="text-sm leading-relaxed text-body">Otevřete repozitář v libovolném klientovi, pro nějž nástroj deklaruje providera (docs/generated/providers.md), a nechte každého z nich číst tutéž pravidla, prompty a znalosti přes MCP z jednoho procesu, přičemž se navzájem vidí.</p>
+            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">init · doctor</span>
+          </a>
+        </li></ul>
+    </section>
+    <section class="mt-10" aria-labelledby="cat-performance">
+      <div class="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 id="cat-performance" class="text-xl font-semibold tracking-tight text-heading"><a href="https://majordomus.dev/cs/use-cases/performance/" class="hover:underline">Výkon</a> <span class="font-mono text-sm text-body-subtle">1</span></h2>
+        <p class="text-sm text-body">Měření výkonu odvozená z registru, základní hodnoty jako data a rozpočty, vůči nimž doctor hlásí.</p>
+      </div>
+      <ul class="mt-4 grid gap-4 md:grid-cols-2" role="list"><li data-apps="ci-gated-project" data-actors="maintainer reviewer"
+            data-maturity="guaranteed" data-text="prove-performance-with-benchmarks prove the tool is fast, not assume it, and refuse a regression bench doctor majordomus.verification-integrity majordomus.enforcement-wiring majordomus.policy-completeness"
+            x-show="(app === 'all' || $el.dataset.apps.split(' ').includes(app)) && (actor === 'all' || $el.dataset.actors.split(' ').includes(actor)) && (m === 'all' || m === $el.dataset.maturity) && $el.dataset.text.includes(q.toLowerCase())">
+          <a href="https://majordomus.dev/cs/use-cases/prove-performance-with-benchmarks/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+            <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed"><span aria-hidden="true">○</span>zaručeno</span>
+</span><span class="font-mono text-xs text-body-subtle">pokročilý</span></div>
+            <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Dokažte, že je nástroj rychlý, místo abyste to předpokládali, a odmítněte regresi</h3>
+            <p class="text-sm leading-relaxed text-body">Změřte každý veřejný příkaz a každou schopnost spustitelného souboru proti commitnuté základní hodnotě a nechte kontrolu selhat při regresi, místo aby si jí později všiml recenzent.</p>
+            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">bench · doctor</span>
+          </a>
+        </li></ul>
+    </section>
+    <section class="mt-10" aria-labelledby="cat-extension">
+      <div class="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 id="cat-extension" class="text-xl font-semibold tracking-tight text-heading"><a href="https://majordomus.dev/cs/use-cases/extension/" class="hover:underline">Rozšíření</a> <span class="font-mono text-sm text-body-subtle">4</span></h2>
+        <p class="text-sm text-body">Přidání druhu, pravidla, příkazu nebo případu užití jako dat, s kontrolami, které z toho vyplývají.</p>
+      </div>
+      <ul class="mt-4 grid gap-4 md:grid-cols-2" role="list"><li data-apps="repository-with-authored-governance ci-gated-project" data-actors="maintainer agent"
+            data-maturity="guaranteed" data-text="add-a-use-case-and-prove-it add a use case and let the tool prove it usecase doctor majordomus.use-case-coverage majordomus.catalogue-integrity"
+            x-show="(app === 'all' || $el.dataset.apps.split(' ').includes(app)) && (actor === 'all' || $el.dataset.actors.split(' ').includes(actor)) && (m === 'all' || m === $el.dataset.maturity) && $el.dataset.text.includes(q.toLowerCase())">
+          <a href="https://majordomus.dev/cs/use-cases/add-a-use-case-and-prove-it/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+            <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed"><span aria-hidden="true">○</span>zaručeno</span>
+</span><span class="font-mono text-xs text-body-subtle">pokročilý</span></div>
+            <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Přidejte případ užití a nechte ho nástrojem dokázat</h3>
+            <p class="text-sm leading-relaxed text-body">Vytvořte scaffold návrhu pro nepokrytý příkaz, zvalidujte ho, spusťte jeho scénář proti skutečnému nástroji a sledujte, jak se pokrytí posune.</p>
+            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">usecase · doctor</span>
+          </a>
+        </li><li data-apps="repository-with-authored-governance repository-opened-in-ai-clients" data-actors="maintainer"
+            data-maturity="guaranteed" data-text="extend-what-the-executable-serves extend what the executable serves by adding a file, never by rebuilding it init update doctor knowledge majordomus.ai-layout-integrity majordomus.projection-integrity majordomus.policy-integrity"
+            x-show="(app === 'all' || $el.dataset.apps.split(' ').includes(app)) && (actor === 'all' || $el.dataset.actors.split(' ').includes(actor)) && (m === 'all' || m === $el.dataset.maturity) && $el.dataset.text.includes(q.toLowerCase())">
+          <a href="https://majordomus.dev/cs/use-cases/extend-what-the-executable-serves/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+            <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed"><span aria-hidden="true">○</span>zaručeno</span>
+</span><span class="font-mono text-xs text-body-subtle">pokročilé</span></div>
+            <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Rozšiřte, co spustitelný soubor servíruje, přidáním souboru, nikdy jeho přebuilděním</h3>
+            <p class="text-sm leading-relaxed text-body">Přidejte do .ai/ pravidlo, prompt nebo uzel znalostí a nechte ho objevit se jako zdroj MCP, trasa HTTP a položka reference, toutéž binárkou.</p>
+            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">init · update · doctor · knowledge</span>
+          </a>
+        </li><li data-apps="repository-with-authored-governance repository-opened-in-ai-clients" data-actors="maintainer agent"
+            data-maturity="guaranteed" data-text="follow-a-skill-the-repository-defines follow a procedure the repository defines, and add another one skills majordomus.skill-integrity"
+            x-show="(app === 'all' || $el.dataset.apps.split(' ').includes(app)) && (actor === 'all' || $el.dataset.actors.split(' ').includes(actor)) && (m === 'all' || m === $el.dataset.maturity) && $el.dataset.text.includes(q.toLowerCase())">
+          <a href="https://majordomus.dev/cs/use-cases/follow-a-skill-the-repository-defines/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+            <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed"><span aria-hidden="true">○</span>zaručeno</span>
+</span><span class="font-mono text-xs text-body-subtle">základní</span></div>
+            <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Postupujte podle procedury, kterou repozitář definuje, a přidejte další</h3>
+            <p class="text-sm leading-relaxed text-body">Přečtěte dovednosti repozitáře, převezměte jednu tak, jak je napsána, a novou přidejte napsáním jejího souboru — bez registru, bez kódu a s kontrolou, která řekne, co prověřila.</p>
+            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">skills</span>
+          </a>
+        </li><li data-apps="repository-with-authored-governance repository-opened-in-ai-clients" data-actors="maintainer contributor"
+            data-maturity="guaranteed" data-text="say-what-the-tool-is-for say what your work is for, once, and have every surface say it init context knowledge doctor majordomus.context-integrity majordomus.ai-layout-integrity majordomus.projection-integrity"
+            x-show="(app === 'all' || $el.dataset.apps.split(' ').includes(app)) && (actor === 'all' || $el.dataset.actors.split(' ').includes(actor)) && (m === 'all' || m === $el.dataset.maturity) && $el.dataset.text.includes(q.toLowerCase())">
+          <a href="https://majordomus.dev/cs/use-cases/say-what-the-tool-is-for/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+            <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed"><span aria-hidden="true">○</span>zaručeno</span>
+</span><span class="font-mono text-xs text-body-subtle">pokročilý</span></div>
+            <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Řekněte jednou, k čemu je vaše práce, a ať to říká každá plocha</h3>
+            <p class="text-sm leading-relaxed text-body">Zaznamenejte provozní režim selhání jako jeden soubor a nechte na něj odpovídat příkazovou řádku, API, MCP i web, aniž byste ho někde registrovali.</p>
+            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">init · kontext · znalosti · doctor</span>
+          </a>
+        </li></ul>
+    </section></div>
+
+  <div class="mt-12 max-w-3xl">
+    <h2 class="text-xl font-semibold tracking-tight text-heading">Co je zde případ užití</h2>
+    <p class="mt-3 text-body">Jeden soubor v <code class="font-mono text-heading">.ai/repo/use-cases/</code>: příkazy, pravidla a sliby, které pojmenovává, a scénář, který nástroj spouští proti sobě samému. Zralost zobrazená na každé kartě je pozorovaná, ne napsaná: případ užití je <em>guaranteed</em>, jen když jeho scénář prošel a každé tvrzení, které pojmenovává, je zaručeno. <a href="https://majordomus.dev/cs/use-cases/coverage/" class="text-fg-brand underline">Stránka pokrytí</a> říká, které schopnosti stále nemají případ užití.</p>
+    <p class="mt-3 text-body"><a href="https://majordomus.dev/cs/why/" class="text-fg-brand underline">Stránka why</a> je okamžik, který poznáte. Případ užití je úloha, kterou provádíte. <a href="https://majordomus.dev/cs/applications/" class="text-fg-brand underline">Aplikace</a> je kontext, kterému vyhovuje. <a href="https://majordomus.dev/cs/commands/" class="text-fg-brand underline">Stránka příkazu</a> je povrch jednoho příkazu.</p>
+  </div>
+</div>
+
+</main>
+
+<footer id="site-map" class="border-t border-default bg-neutral-primary-soft" aria-label="Mapa webu">
+  <div class="mx-auto w-full max-w-screen-xl p-4 md:py-8">
+    <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
+      
+      <div class="min-w-0 scroll-mt-20" id="site-map-1">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/cs/domains/" class="hover:text-heading hover:underline">Produkt</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/cs/domains/" class="hover:text-heading hover:underline">Produkt podle oblastí</a></li><li><a href="https://majordomus.dev/cs/why/" class="hover:text-heading hover:underline">Proč existuje: způsoby selhání</a></li><li><a href="https://majordomus.dev/cs/features/" class="hover:text-heading hover:underline">Funkce</a></li><li><a href="https://majordomus.dev/cs/features/matrix/" class="hover:text-heading hover:underline">Funkce a rozhraní</a></li><li><a href="https://majordomus.dev/cs/use-cases/" class="hover:text-heading hover:underline">Případy užití</a></li><li><a href="https://majordomus.dev/cs/applications/" class="hover:text-heading hover:underline">Aplikace</a></li><li><a href="https://majordomus.dev/cs/skills/" class="hover:text-heading hover:underline">Dovednosti</a></li><li><a href="https://majordomus.dev/cs/supervises/" class="hover:text-heading hover:underline">Na co dohlíží</a></li><li><a href="https://majordomus.dev/cs/docs/majordomus-ui/" class="hover:text-heading hover:underline">UI produktu</a></li><li><a href="https://majordomus.dev/cs/docs/cockpit/" class="hover:text-heading hover:underline">Cockpit</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0 scroll-mt-20" id="site-map-2">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/cs/method/" class="hover:text-heading hover:underline">Princip</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/cs/method/" class="hover:text-heading hover:underline">Doktrína, politika, pravidlo, vynucování</a></li><li><a href="https://majordomus.dev/cs/method/axes/" class="hover:text-heading hover:underline">Čtyři osy</a></li><li><a href="https://majordomus.dev/cs/method/argument/" class="hover:text-heading hover:underline">Celá argumentace</a></li><li><a href="https://majordomus.dev/cs/docs/concepts/" class="hover:text-heading hover:underline">Slovník</a></li><li><a href="https://majordomus.dev/cs/policy/" class="hover:text-heading hover:underline">Kanonická politika</a></li><li><a href="https://majordomus.dev/cs/context/" class="hover:text-heading hover:underline">Kontrakty adresářů</a></li><li><a href="https://majordomus.dev/cs/sessions/" class="hover:text-heading hover:underline">Relace</a></li><li><a href="https://majordomus.dev/cs/docs/planning/" class="hover:text-heading hover:underline">Jak funguje plánování</a></li><li><a href="https://majordomus.dev/cs/docs/design/" class="hover:text-heading hover:underline">Design</a></li><li><a href="https://majordomus.dev/cs/kit/" class="hover:text-heading hover:underline">Sada komponent</a></li><li><a href="https://majordomus.dev/cs/docs/surfaces/" class="hover:text-heading hover:underline">Jak se odvozují rozhraní</a></li><li><a href="https://majordomus.dev/cs/architecture/" class="hover:text-heading hover:underline">Jak je tento web postaven</a></li><li><a href="https://majordomus.dev/cs/docs/product/" class="hover:text-heading hover:underline">Jak se odvozuje stránka produktu</a></li><li><a href="https://majordomus.dev/cs/proof-carrying-documentation/" class="hover:text-heading hover:underline">Článek: dokumentace nesoucí důkaz</a></li><li><a href="https://majordomus.dev/cs/everything-followed/" class="hover:text-heading hover:underline">Článek: všechno, dohledatelně</a></li><li><a href="https://majordomus.dev/cs/dokumentace-kterou-lze-odmitnout/" class="hover:text-heading hover:underline">Stejná argumentace, napsaná česky</a></li><li><a href="https://majordomus.dev/cs/vsechno-v-jednom-proudu/" class="hover:text-heading hover:underline">Everything, followed, written in Czech</a></li><li><a href="https://majordomus.dev/cs/the-bet-on-a-layer/" class="hover:text-heading hover:underline">Essay: the bet on a layer, not a model</a></li><li><a href="https://majordomus.dev/cs/teze/" class="hover:text-heading hover:underline">Esej v češtině: sázka na vrstvu, ne na model</a></li><li><a href="https://majordomus.dev/cs/a-pasted-brief-becomes-a-plan/" class="hover:text-heading hover:underline">Article: a pasted brief becomes a plan</a></li><li><a href="https://majordomus.dev/cs/vlozene-zadani-se-stava-planem/" class="hover:text-heading hover:underline">The pasted brief, written in Czech</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0 scroll-mt-20" id="site-map-3">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/cs/challenge/" class="hover:text-heading hover:underline">Důkazy</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/cs/challenge/" class="hover:text-heading hover:underline">Výzva: sledujte, jak odmítne agenta</a></li><li><a href="https://majordomus.dev/cs/guarantees/" class="hover:text-heading hover:underline">Záruky</a></li><li><a href="https://majordomus.dev/cs/evidence/" class="hover:text-heading hover:underline">Graf důkazů</a></li><li><a href="https://majordomus.dev/cs/contract/" class="hover:text-heading hover:underline">Kontrakt dokončení</a></li><li><a href="https://majordomus.dev/cs/doctrines/" class="hover:text-heading hover:underline">Doktrína</a></li><li><a href="https://majordomus.dev/cs/adrs/" class="hover:text-heading hover:underline">Rozhodnutí</a></li><li><a href="https://majordomus.dev/cs/rules/" class="hover:text-heading hover:underline">Platná pravidla</a></li><li><a href="https://majordomus.dev/cs/registry/benchmarks/" class="hover:text-heading hover:underline">Měření výkonu</a></li><li><a href="https://majordomus.dev/cs/economics/" class="hover:text-heading hover:underline">Ekonomika tokenů</a></li><li><a href="https://majordomus.dev/cs/limitations/" class="hover:text-heading hover:underline">Omezení</a></li><li><a href="https://majordomus.dev/cs/roadmap/" class="hover:text-heading hover:underline">Plán rozvoje</a></li><li><a href="https://majordomus.dev/cs/plan/" class="hover:text-heading hover:underline">Milníky a úkoly</a></li><li><a href="https://majordomus.dev/cs/plan/dag/" class="hover:text-heading hover:underline">Graf závislostí</a></li><li><a href="https://majordomus.dev/cs/changelog/" class="hover:text-heading hover:underline">Changelog</a></li><li><a href="https://majordomus.dev/cs/docs/dogfooding/" class="hover:text-heading hover:underline">Dogfooding</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0 scroll-mt-20" id="site-map-4">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/cs/docs/" class="hover:text-heading hover:underline">Dokumenty</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/cs/docs/" class="hover:text-heading hover:underline">Všechny dokumenty</a></li><li><a href="https://majordomus.dev/cs/docs/install/" class="hover:text-heading hover:underline">Instalace</a></li><li><a href="https://majordomus.dev/cs/commands/" class="hover:text-heading hover:underline">Příkazy</a></li><li><a href="https://majordomus.dev/cs/profiles/" class="hover:text-heading hover:underline">Profily provádění</a></li><li><a href="https://majordomus.dev/cs/docs/cli/" class="hover:text-heading hover:underline">Přehled příkazů</a></li><li><a href="https://majordomus.dev/cs/docs/api/" class="hover:text-heading hover:underline">HTTP API</a></li><li><a href="https://majordomus.dev/rustdoc/" class="hover:text-heading hover:underline">Rust API</a></li><li><a href="https://majordomus.dev/cs/registry/mcp/" class="hover:text-heading hover:underline">Rozhraní MCP</a></li><li><a href="https://majordomus.dev/cs/docs/schemas/" class="hover:text-heading hover:underline">Schémata souborů</a></li><li><a href="https://majordomus.dev/cs/registry/" class="hover:text-heading hover:underline">Registr</a></li><li><a href="https://majordomus.dev/cs/map/" class="hover:text-heading hover:underline">Mapa programu</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/82ac259d0ae7c3901ee09bed461e2f62318a6642/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/82ac259d0ae7c3901ee09bed461e2f62318a6642/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/82ac259d0ae7c3901ee09bed461e2f62318a6642/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+        </ul>
+      </div>
+    </div>
+    <hr class="my-6 border-default sm:mx-auto lg:my-8"><div class="space-y-4">
+    <div class="sm:flex sm:items-center sm:justify-between">
+      <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
+    </div>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v1.0.0-alpha.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/82ac259d0ae7c3901ee09bed461e2f62318a6642" class="font-mono underline">82ac259</a> · inputs <span class="font-mono">ac7a158bc7ec</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    </div>
+  </div>
+</footer>
+<dialog id="site-search" data-site-search data-index="https://majordomus.dev/docs/index.json" aria-labelledby="site-search-label" class="m-0 h-dvh max-h-none w-full max-w-none border-0 bg-neutral-primary p-0 text-body backdrop:bg-neutral-primary-strong/80 sm:mx-auto sm:mt-20 sm:h-auto sm:max-h-[75vh] sm:max-w-2xl sm:rounded-base sm:border sm:border-default sm:shadow-lg">
+  <div class="flex h-full max-h-[inherit] flex-col">
+    <div class="flex items-center gap-2 border-b border-default p-3">
+      <label id="site-search-label" for="site-search-input" class="sr-only">Hledat na tomto webu</label>
+      <svg class="h-5 w-5 shrink-0 text-body-subtle" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z"/></svg>
+      <input id="site-search-input" type="search" role="combobox" aria-expanded="false" aria-controls="site-search-results" aria-autocomplete="list" aria-describedby="site-search-status" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go" placeholder="Pravidlo, rozhodnutí, příkaz, stránka…" class="block min-w-0 flex-1 rounded-base border border-default-medium bg-neutral-secondary-medium px-3 py-2.5 text-base text-heading focus:border-brand focus:ring-brand sm:text-sm">
+      <button type="button" data-site-search-close class="inline-flex h-10 shrink-0 items-center rounded-base border border-default px-3 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">Zavřít<span class="sr-only"> vyhledávání</span></button>
+    </div>
+    <p id="site-search-status" class="px-4 pt-3 text-xs text-body-subtle" aria-live="polite" data-site-search-status>Prohledává názvy a popisy všech stránek, které tento web publikuje.</p>
+    <div id="site-search-results" role="listbox" aria-label="Odpovídající stránky" class="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain px-2 py-2" data-site-search-results></div>
+    <template data-site-search-item><a tabindex="-1" class="block rounded-base px-3 py-2 hover:bg-neutral-secondary-medium aria-selected:bg-neutral-secondary-medium aria-selected:ring-2 aria-selected:ring-brand"><span class="block break-words font-medium text-heading" data-slot="title"></span><span class="block break-all font-mono text-xs text-body-subtle" data-slot="meta"></span><span class="mt-0.5 line-clamp-2 text-sm text-body" data-slot="description"></span></a></template>
+  </div>
+</dialog>
+
+<script defer src="https://majordomus.dev/js/nav.js"></script>
+<script defer src="https://majordomus.dev/js/search.js"></script>
+<script src="https://majordomus.dev/js/theme.js"></script>
+<script defer src="https://majordomus.dev/js/alpine.min.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,889 @@
+<!doctype html>
+<html lang="cs" class="scroll-smooth" data-theme-key="color-theme" data-theme-class="dark" data-design="944a896b2646">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>release.analysis — Prismatic Majordomus</title>
+<meta name="description" content="Veřejný povrch schopností tohoto stromu proti tomu, který publikoval poslední release, každý jeho pohyb pojmenovaný s důvodem, proč se počítá tak, jak se počítá, a nejmenší verze, kterou tento strom smí proto deklarovat. Úroveň kompatibility se měří z kontraktu, ne čte z předmětů commitů: schopnost, trasa, nástroj MCP, příkaz nebo povinné pole kteréhokoli ze dvou schémat, které volající mohl držet a už nemůže, je zásadní změna, ať se commit, který je odstranil, nazval jakkoli. Co o sobě commity řekly, se nese vedle verdiktu jako důkaz a odpověď říká, kdy se obojí rozchází.">
+<link rel="canonical" href="https://majordomus.dev/cs/registry/capabilities/release-analysis/"><meta name="robots" content="noindex">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Prismatic Majordomus">
+<meta property="og:title" content="release.analysis — Prismatic Majordomus">
+<meta property="og:description" content="Veřejný povrch schopností tohoto stromu proti tomu, který publikoval poslední release, každý jeho pohyb pojmenovaný s důvodem, proč se počítá tak, jak se počítá, a nejmenší verze, kterou tento strom smí proto deklarovat. Úroveň kompatibility se měří z kontraktu, ne čte z předmětů commitů: schopnost, trasa, nástroj MCP, příkaz nebo povinné pole kteréhokoli ze dvou schémat, které volající mohl držet a už nemůže, je zásadní změna, ať se commit, který je odstranil, nazval jakkoli. Co o sobě commity řekly, se nese vedle verdiktu jako důkaz a odpověď říká, kdy se obojí rozchází.">
+<meta property="og:url" content="https://majordomus.dev/cs/registry/capabilities/release-analysis/">
+<meta property="og:image" content="https://majordomus.dev/images/social-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
+<link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=3f5215cbacbe9c61f05a">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
+<script>(function(){try{var K="mj-lang",L=["en","cs"],S="en",B="https://majordomus.dev",d=document.documentElement,k;try{k=localStorage.getItem(K)}catch(e){}
+document.addEventListener("click",function(e){var a=e.target.closest&&e.target.closest("[data-i18n-lang]");if(a)try{localStorage.setItem(K,a.getAttribute("data-i18n-lang"))}catch(x){}},true);
+if(d.lang!==S)return;var r=document.referrer;if(r&&r.indexOf(location.origin)===0)return;
+var p=(k?[k]:navigator.languages||[navigator.language||""]).map(function(l){return String(l).slice(0,2).toLowerCase()});
+for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=location.href;if(u.indexOf(B)!==0)return;location.replace(B+"/"+p[i]+u.slice(B.length).replace(/^(?!\/)/,"/"));return}}}catch(e){}})();</script>
+
+<link rel="alternate" hreflang="en" href="https://majordomus.dev/registry/capabilities/release-analysis/">
+<link rel="alternate" hreflang="cs" href="https://majordomus.dev/cs/registry/capabilities/release-analysis/">
+<link rel="alternate" hreflang="x-default" href="https://majordomus.dev/registry/capabilities/release-analysis/">
+</head>
+<body class="min-h-screen bg-neutral-primary text-body antialiased">
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white">Přeskočit na obsah</a>
+
+
+
+<nav class="sticky top-0 z-20 w-full border-b border-default bg-neutral-primary text-base" aria-label="Hlavní">
+  <div class="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between gap-x-2 gap-y-2 px-3 py-3 sm:p-4">
+    <a href="https://majordomus.dev/cs/" class="flex min-w-0 items-center gap-1.5 sm:gap-2.5 rtl:space-x-reverse">
+      <span class="inline-flex h-6 w-6 shrink-0 text-heading sm:h-7 sm:w-7 [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 1.0.0-alpha.1 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span>
+      <span class="self-center whitespace-nowrap text-base font-semibold text-heading sm:text-xl">Majordomus</span>
+      
+      
+      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading" data-release="0.30.2">v0.30.2</span>
+      
+    </a>
+    <div class="flex items-center gap-1 sm:gap-2 md:order-2"><button type="button" data-site-search-open hidden aria-haspopup="dialog" aria-controls="site-search" aria-expanded="false" aria-keyshortcuts="/ Control+K Meta+K" class="inline-flex h-10 min-w-10 items-center justify-center gap-2 rounded-base border border-default px-2.5 text-sm font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">
+        <svg class="h-5 w-5 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z"/></svg> <span class="sr-only lg:not-sr-only">Hledat</span> <kbd class="hidden rounded border border-default-medium px-1.5 font-mono text-xs text-body-subtle lg:inline" aria-hidden="true">/</kbd>
+      </button>
+      <div class="relative" data-i18n-switch>
+  <button type="button" aria-label="Jazyk" data-dropdown-toggle="language-menu" data-dropdown-placement="bottom-end" aria-haspopup="true" aria-controls="language-menu" aria-expanded="false" class="inline-flex h-10 items-center justify-center gap-1.5 rounded-base border border-default px-2.5 text-sm font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">
+    <svg class="h-5 w-5 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0 0c2.2-2.4 3.3-5.4 3.3-9S14.2 5.4 12 3m0 18c-2.2-2.4-3.3-5.4-3.3-9S9.8 5.4 12 3M3.5 9h17M3.5 15h17"/></svg>
+    <span class="font-mono text-xs uppercase" translate="no" data-i18n-current-label>cs</span>
+    <svg class="h-2.5 w-2.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg>
+  </button>
+  <div id="language-menu" class="absolute right-0 top-full z-50 mt-2 hidden w-44 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+    <ul class="p-2 text-sm font-medium text-body" translate="no">
+      <li><a href="https://majordomus.dev/registry/capabilities/release-analysis/" hreflang="en" lang="en" data-i18n-keep data-i18n-current data-i18n-lang="en" class="group flex w-full items-center justify-between gap-3 rounded-sm px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading aria-[current=true]:text-heading"><span class="flex items-center gap-2"><span class="w-6 font-mono text-xs uppercase text-body-subtle">en</span>English</span><svg class="invisible h-4 w-4 text-fg-brand group-aria-[current=true]:visible" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 11.917 9.724 16.5 19 7.5"/></svg></a></li>
+      <li><a href="https://majordomus.dev/cs/registry/capabilities/release-analysis/" hreflang="cs" lang="cs" data-i18n-keep data-i18n-current data-i18n-lang="cs" class="group flex w-full items-center justify-between gap-3 rounded-sm px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading aria-[current=true]:text-heading" aria-current="true"><span class="flex items-center gap-2"><span class="w-6 font-mono text-xs uppercase text-body-subtle">cs</span>Čeština</span><svg class="invisible h-4 w-4 text-fg-brand group-aria-[current=true]:visible" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 11.917 9.724 16.5 19 7.5"/></svg></a></li>
+    </ul>
+  </div>
+</div>
+
+      <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Přepnout tmavý režim">
+  <svg id="theme-toggle-dark-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+  <svg id="theme-toggle-light-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+</button>
+<a href="https://majordomus.dev/ui/" data-nav-primary="ui" class="hidden rounded-base border border-brand-subtle px-3 py-2 text-sm font-semibold text-fg-brand hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary xl:inline-flex">UI produktu</a>
+      <a href="https://github.com/korczis/prismatic-majordomus" class="hidden rounded-base border border-default px-3 py-2 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary sm:inline-flex">GitHub</a>
+      <a href="https://majordomus.dev/cs/getting-started/" class="hidden rounded-base bg-brand px-3 py-2 text-sm font-semibold text-white hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium md:inline-flex">Začít</a>
+      <button data-collapse-toggle="navbar-main" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-base p-2 text-sm text-body hover:bg-neutral-secondary-soft hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:hidden" aria-controls="navbar-main" aria-expanded="false">
+        <span class="sr-only">Otevřít hlavní nabídku</span> <svg class="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h14"/></svg>
+      </button>
+    </div><div class="hidden w-full min-w-0 md:order-1 md:block md:w-auto" id="navbar-main">
+      <ul class="mt-4 flex flex-col rounded-base border border-default bg-neutral-secondary-soft p-4 font-medium md:mt-0 md:flex-row md:flex-wrap md:items-center md:gap-x-2 md:gap-y-1 md:border-0 md:bg-neutral-primary md:p-0">
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          <button id="nav-1" data-dropdown-toggle="nav-menu-1" type="button" aria-controls="nav-menu-1" class="flex w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Produkt<svg class="ms-1.5 h-3 w-3 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-1" class="hidden md:absolute md:left-0 md:top-full md:z-10 md:mt-2 md:w-64 md:rounded-base md:border md:border-default-medium md:bg-neutral-primary-medium md:shadow-lg">
+            <ul class="pb-2 ps-3 text-sm font-medium text-body md:p-2" aria-labelledby="nav-1">
+              <li><a href="https://majordomus.dev/cs/domains/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Produkt podle oblastí</a></li><li><a href="https://majordomus.dev/cs/why/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Proč existuje: způsoby selhání</a></li><li><a href="https://majordomus.dev/cs/features/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Funkce</a></li><li><a href="https://majordomus.dev/cs/use-cases/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Případy užití</a></li><li><a href="https://majordomus.dev/ui/" data-nav-snapshot="ui" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">UI produktu <span data-nav-snapshot-note class="text-xs text-body-subtle">&middot; snímek</span></a></li><li><a href="https://majordomus.dev/cs/docs/cockpit/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Cockpit</a></li>
+              <li class="mt-1 border-t border-default pt-1"><a href="#site-map-1" class="block rounded px-3 py-2 text-body-subtle hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Všech 10 stránek v mapě webu &darr;</a></li>
+            </ul>
+          </div>
+        </li>
+        
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          <button id="nav-2" data-dropdown-toggle="nav-menu-2" type="button" aria-controls="nav-menu-2" class="flex w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Princip<svg class="ms-1.5 h-3 w-3 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-2" class="hidden md:absolute md:left-0 md:top-full md:z-10 md:mt-2 md:w-64 md:rounded-base md:border md:border-default-medium md:bg-neutral-primary-medium md:shadow-lg">
+            <ul class="pb-2 ps-3 text-sm font-medium text-body md:p-2" aria-labelledby="nav-2">
+              <li><a href="https://majordomus.dev/cs/method/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Doktrína, politika, pravidlo, vynucování</a></li><li><a href="https://majordomus.dev/cs/method/argument/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Celá argumentace</a></li><li><a href="https://majordomus.dev/cs/docs/concepts/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Slovník</a></li><li><a href="https://majordomus.dev/cs/sessions/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Relace</a></li>
+              <li class="mt-1 border-t border-default pt-1"><a href="#site-map-2" class="block rounded px-3 py-2 text-body-subtle hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">All 21 pages in the site map &darr;</a></li>
+            </ul>
+          </div>
+        </li>
+        
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          <button id="nav-3" data-dropdown-toggle="nav-menu-3" type="button" aria-controls="nav-menu-3" class="flex w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Důkazy<svg class="ms-1.5 h-3 w-3 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-3" class="hidden md:absolute md:left-0 md:top-full md:z-10 md:mt-2 md:w-64 md:rounded-base md:border md:border-default-medium md:bg-neutral-primary-medium md:shadow-lg">
+            <ul class="pb-2 ps-3 text-sm font-medium text-body md:p-2" aria-labelledby="nav-3">
+              <li><a href="https://majordomus.dev/cs/challenge/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Výzva: sledujte, jak odmítne agenta</a></li><li><a href="https://majordomus.dev/cs/guarantees/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Záruky</a></li><li><a href="https://majordomus.dev/cs/evidence/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Graf důkazů</a></li><li><a href="https://majordomus.dev/cs/limitations/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Omezení</a></li><li><a href="https://majordomus.dev/cs/roadmap/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Plán rozvoje</a></li>
+              <li class="mt-1 border-t border-default pt-1"><a href="#site-map-3" class="block rounded px-3 py-2 text-body-subtle hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Všech 15 stránek v mapě webu &darr;</a></li>
+            </ul>
+          </div>
+        </li>
+        
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          <button id="nav-4" data-dropdown-toggle="nav-menu-4" type="button" aria-controls="nav-menu-4" class="flex w-full items-center justify-between rounded px-3 py-2 text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Dokumenty<svg class="ms-1.5 h-3 w-3 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-4" class="hidden md:absolute md:left-0 md:top-full md:z-10 md:mt-2 md:w-64 md:rounded-base md:border md:border-default-medium md:bg-neutral-primary-medium md:shadow-lg">
+            <ul class="pb-2 ps-3 text-sm font-medium text-body md:p-2" aria-labelledby="nav-4">
+              <li><a href="https://majordomus.dev/cs/docs/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Všechny dokumenty</a></li><li><a href="https://majordomus.dev/cs/docs/install/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Instalace</a></li><li><a href="https://majordomus.dev/cs/commands/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Příkazy</a></li><li><a href="https://majordomus.dev/cs/docs/api/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">HTTP API</a></li><li><a href="https://majordomus.dev/cs/registry/mcp/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Rozhraní MCP</a></li>
+              <li class="mt-1 border-t border-default pt-1"><a href="#site-map-4" class="block rounded px-3 py-2 text-body-subtle hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Všech 11 stránek v mapě webu &darr;</a></li>
+            </ul>
+          </div>
+        </li>
+        
+        
+        <li class="mt-3 md:hidden"><a href="https://majordomus.dev/ui/" data-nav-primary="ui" class="block rounded-base border border-brand-subtle px-3 py-2 text-center font-semibold text-fg-brand hover:bg-neutral-tertiary">UI produktu</a></li>
+        <li class="mt-3 md:hidden"><a href="https://majordomus.dev/cs/getting-started/" class="block rounded-base bg-brand px-3 py-2 text-center font-semibold text-white hover:bg-brand-strong">Začít</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+<div data-i18n-notice class="border-b border-default bg-neutral-secondary-soft">
+  <p class="mx-auto max-w-screen-xl px-4 py-2 text-xs text-body">Tato stránka byla automaticky přeložena z angličtiny, jediného jazyka, ve kterém se tento web píše. <a href="https://majordomus.dev/registry/capabilities/release-analysis/" hreflang="en" lang="en" data-i18n-keep data-i18n-lang="en" class="font-medium underline">Číst originál</a>.</p>
+</div>
+<main id="main">
+<div class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+    <nav class="flex" aria-label="Drobečková navigace">
+  <ol class="inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2 rtl:space-x-reverse">
+    <li class="inline-flex items-center"><a href="https://majordomus.dev/cs/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Domů</a></li><li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="https://majordomus.dev/cs/registry/capabilities/" class="font-medium text-body hover:text-fg-brand">Schopnosti</a></li>
+    <li aria-hidden="true">/</li>
+    <li aria-current="page" class="font-medium text-heading">release.analysis</li>
+  </ol>
+</nav>
+
+    <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">release.analysis</h1>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">Veřejný povrch schopností tohoto stromu proti tomu, který publikoval poslední release, každý jeho pohyb pojmenovaný s důvodem, proč se počítá tak, jak se počítá, a nejmenší verze, kterou tento strom smí proto deklarovat. Úroveň kompatibility se měří z kontraktu, ne čte z předmětů commitů: schopnost, trasa, nástroj MCP, příkaz nebo povinné pole kteréhokoli ze dvou schémat, které volající mohl držet a už nemůže, je zásadní změna, ať se commit, který je odstranil, nazval jakkoli. Co o sobě commity řekly, se nese vedle verdiktu jako důkaz a odpověď říká, kdy se obojí rozchází.</p>
+  </div>
+</div>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+  <nav aria-label="Spustitelný program v Rustu" class="-mx-1 flex flex-wrap gap-1 text-sm">
+  <a href="https://majordomus.dev/cs/registry/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Registr</a>
+  <a href="https://majordomus.dev/cs/registry/executable/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Spustitelný soubor</a>
+  <a href="https://majordomus.dev/cs/registry/modules/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Moduly</a>
+  <a href="https://majordomus.dev/cs/registry/capabilities/" class="rounded px-2 py-1 bg-brand-softer font-medium text-fg-brand-strong" aria-current="page">Schopnosti</a>
+  <a href="https://majordomus.dev/cs/registry/cli/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Příkazová řádka</a>
+  <a href="https://majordomus.dev/cs/registry/mcp/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">MCP</a>
+  <a href="https://majordomus.dev/cs/docs/api/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API</a>
+  <a href="https://majordomus.dev/cs/registry/artifacts/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Artefakty</a>
+  <a href="https://majordomus.dev/cs/registry/benchmarks/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Měření výkonu</a>
+</nav>
+
+<div class="mt-6 grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
+  <div class="min-w-0">
+    <p class="break-words text-lg text-body">Veřejný povrch schopností tohoto stromu proti tomu, který publikoval poslední release, každý jeho pohyb pojmenovaný s důvodem, proč se počítá tak, jak se počítá, a nejmenší verze, kterou tento strom smí proto deklarovat. Úroveň kompatibility se měří z kontraktu, ne čte z předmětů commitů: schopnost, trasa, nástroj MCP, příkaz nebo povinné pole kteréhokoli ze dvou schémat, které volající mohl držet a už nemůže, je zásadní změna, ať se commit, který je odstranil, nazval jakkoli. Co o sobě commity řekly, se nese vedle verdiktu jako důkaz a odpověď říká, kdy se obojí rozchází.</p>
+    <ul class="mt-4 flex flex-wrap gap-2 font-mono text-xs">
+      <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 text-heading">query</span></li>
+      <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-body">implementováno</span></li>
+      <li><a href="https://majordomus.dev/cs/registry/modules/release/" class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-fg-brand hover:underline">module release</a></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-body">#release</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-body">#version</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-body">#compatibility</span></li></ul>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Zpřístupnění</h2>
+    <p class="mt-2 text-sm text-body">Kde je tato jedna definice dosažitelná. Absence je explicitní: povrch, který není uveden, ji nenese.</p>
+    <div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+      <table class="w-full min-w-[24rem] text-left text-sm" tabindex="0">
+        <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">povrch</th><th class="px-3 py-2">jako</th></tr></thead>
+        <tbody>
+          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/cs/registry/mcp/" class="text-fg-brand hover:underline">MCP</a></td><td class="px-3 py-2 font-mono text-heading">nástroj <span class="break-all">majordomus_release_analysis</span></td></tr>
+          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/cs/docs/api/" class="text-fg-brand hover:underline">HTTP</a></td><td class="px-3 py-2 font-mono text-heading"><a href="https://majordomus.dev/cs/docs/api/release/#op-release-analysis" class="break-all text-fg-brand hover:underline inline-block py-1">GET /api/v1/release/analysis</a> <span class="text-xs text-body-subtle">operationId release.analysis</span></td></tr>
+          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/cs/registry/cli/" class="text-fg-brand hover:underline">příkazová řádka</a></td><td class="px-3 py-2 font-mono text-heading"><span class="text-body-subtle">—</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Schémata</h2>
+    <p class="mt-2 text-sm text-body">Kanonický vstup a výstup z typů Rustu; schéma nástroje MCP a parametry a odpovědi OpenAPI se odvozují z nich.</p>
+    <div class="mt-4 grid gap-6"><div class="min-w-0">
+  <h3 class="font-mono text-sm font-semibold text-heading">vstup · ReleaseAnalysisInput</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Vůči kterému release tento strom měřit.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::capability::builtin::release::AnalysisInput;</span></span>
+<span class="giallo-l"><span>// Absent means the last release the layer records, which is the canonical baseline.</span></span>
+<span class="giallo-l"><span>let input = AnalysisInput::default();</span></span>
+<span class="giallo-l"><span>assert!(input.since.is_none());</span></span>
+<span class="giallo-l"><span>let explicit = AnalysisInput { since: Some(&quot;v0.4.0&quot;.into()) };</span></span>
+<span class="giallo-l"><span>assert_eq!(explicit.since.as_deref(), Some(&quot;v0.4.0&quot;));</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">vlastnost</th><th class="px-3 py-2">typ</th><th class="px-3 py-2">povinné</th><th class="px-3 py-2">popis</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">od</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Ref, se kterým porovnávat místo posledního release: <code>v0.4.0</code> nebo jakýkoli commit, který nese commitnutý registr.</td>
+      </tr></tbody>
+    </table>
+  </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
+    <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
+    <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;additionalProperties&quot;: false,
+  &quot;description&quot;: &quot;Which release to measure this tree against.\n\n```\nuse majordomus_cli::capability::builtin::release::AnalysisInput;\n// Absent means the last release the layer records, which is the canonical baseline.\nlet input = AnalysisInput::default();\nassert!(input.since.is_none());\nlet explicit = AnalysisInput { since: Some(\&quot;v0.4.0\&quot;.into()) };\nassert_eq!(explicit.since.as_deref(), Some(\&quot;v0.4.0\&quot;));\n```&quot;,
+  &quot;properties&quot;: {
+    &quot;since&quot;: {
+      &quot;description&quot;: &quot;A ref to compare with instead of the last release: `v0.4.0`, or any commit that\ncarries a committed registry.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
+    }
+  },
+  &quot;title&quot;: &quot;ReleaseAnalysisInput&quot;,
+  &quot;type&quot;: &quot;object&quot;
+}</pre></div>
+  </details>
+</div>
+<div class="min-w-0">
+  <h3 class="font-mono text-sm font-semibold text-heading">výstup · ReleaseVersionPlan</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Celá odpověď: co se pohnulo, co to vyžaduje a co strom deklaruje.</p>
+<p>Jedna hodnota, kterou vykresluje každý povrch — příkazový řádek, <code>/api/v1/release/analysis</code>, nástroj MCP, panel Cockpitu, vygenerovaný dokument i kontrola CI. Nikde neexistuje druhý výpočet, což je vlastnost, díky níž číslo něco znamená.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::release::compat::{Status, VersionPlan};</span></span>
+<span class="giallo-l"><span>#### use majordomus_cli::release::compat::{Baseline, CommitEvidence, Impact, Policy};</span></span>
+<span class="giallo-l"><span>#### use majordomus_cli::release::version::Version;</span></span>
+<span class="giallo-l"><span>let plan = VersionPlan {</span></span>
+<span class="giallo-l"><span>    policy: Policy::for_version(Version::parse(&quot;0.5.0&quot;).unwrap()),</span></span>
+<span class="giallo-l"><span>    baseline: Baseline {</span></span>
+<span class="giallo-l"><span>        version: &quot;0.5.0&quot;.into(), reference: &quot;v0.5.0&quot;.into(), read_at: &quot;3a032c1e&quot;.into(),</span></span>
+<span class="giallo-l"><span>        commit: &quot;3a032c1e&quot;.into(), recorded: true, atoms: 300, fingerprint: &quot;sha256:a&quot;.into(),</span></span>
+<span class="giallo-l"><span>    },</span></span>
+<span class="giallo-l"><span>    declared_version: &quot;0.5.0&quot;.into(),</span></span>
+<span class="giallo-l"><span>    tool_version: &quot;0.5.0&quot;.into(),</span></span>
+<span class="giallo-l"><span>    writers_agree: true,</span></span>
+<span class="giallo-l"><span>    atoms: 333,</span></span>
+<span class="giallo-l"><span>    fingerprint: &quot;sha256:b&quot;.into(),</span></span>
+<span class="giallo-l"><span>    implied: Impact::Minor,</span></span>
+<span class="giallo-l"><span>    required: Impact::Minor,</span></span>
+<span class="giallo-l"><span>    declared: Impact::None,</span></span>
+<span class="giallo-l"><span>    required_version: &quot;0.6.0&quot;.into(),</span></span>
+<span class="giallo-l"><span>    status: Status::Blocked,</span></span>
+<span class="giallo-l"><span>    breaking: false,</span></span>
+<span class="giallo-l"><span>    changes: Vec::new(),</span></span>
+<span class="giallo-l"><span>    commits: CommitEvidence { commits: 24, implied: Impact::Patch, breaking: Vec::new() },</span></span>
+<span class="giallo-l"><span>    understated: true,</span></span>
+<span class="giallo-l"><span>    diagnostics: Vec::new(),</span></span>
+<span class="giallo-l"><span>};</span></span>
+<span class="giallo-l"><span>// The contract requires a minor and the version declares none: this tree may not land.</span></span>
+<span class="giallo-l"><span>assert_eq!(plan.status, Status::Blocked);</span></span>
+<span class="giallo-l"><span>assert!(plan.declared &lt; plan.required);</span></span>
+<span class="giallo-l"><span>assert!(plan.understated, &quot;the commit subjects claim less than the contract did&quot;);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">vlastnost</th><th class="px-3 py-2">typ</th><th class="px-3 py-2">povinné</th><th class="px-3 py-2">popis</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">atomy</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Kolik veřejných atomů tento strom nese.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">baseline</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Release, vůči kterému se měřilo.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">zpětně nekompatibilní</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Zda zmizelo něco, co mohl volající držet.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">změny</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Každý pohyb kontraktu, od nejhoršího.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">commity</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Co o sobě commity řekly.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">deklarováno</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Co již ta dvě čísla verzí představují.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">declared_version</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Verze, kterou deklaruje manifest crate — jediné místo, kde se tvoří.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">diagnostika</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Cokoli nekoherentního na stavu release, ať je verdikt jakýkoli.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">otisk</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Otisk povrchu tohoto stromu.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">implikováno</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Co samotný posun povrchu představuje.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">policy</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Politika, za které bylo dosaženo verdiktu.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">povinné</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Co od toho politika vyžaduje.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">required_version</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Nejmenší verze, kterou tento strom smí deklarovat.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">status</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Zda ano.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">tool_version</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Verze, kterou vypisuje <code>bin/majordomus</code>: to, co uvádí její projekce, <code>share/version.txt</code>.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">podhodnoceno</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Zda předměty commitů podhodnocují to, co smlouva skutečně udělala.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">writers_agree</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Zda je tato projekce aktuální — uvádí, co manifest deklaruje. Název zůstal z doby, kdy měla verze dva zapisovatele; nyní je jediným manifest.</td>
+      </tr></tbody>
+    </table>
+  </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
+    <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
+    <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;$defs&quot;: {
+    &quot;ReleaseBaseline&quot;: {
+      &quot;description&quot;: &quot;The release this tree is measured against, and how it was found.\n\n```\nuse majordomus_cli::release::compat::Baseline;\nlet baseline = Baseline {\n    version: \&quot;0.5.0\&quot;.into(),\n    reference: \&quot;v0.5.0\&quot;.into(),\n    read_at: \&quot;3a032c1e033b\&quot;.into(),\n    commit: \&quot;3a032c1e033b\&quot;.into(),\n    recorded: true,\n    atoms: 300,\n    fingerprint: \&quot;sha256:…\&quot;.into(),\n};\n// `recorded` is the half that matters: a baseline taken from a tag alone is reported.\nassert!(baseline.recorded);\nassert_eq!(baseline.reference, \&quot;v0.5.0\&quot;);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;atoms&quot;: {
+          &quot;description&quot;: &quot;How many public atoms it published.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;commit&quot;: {
+          &quot;description&quot;: &quot;The commit that ref resolved to.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;fingerprint&quot;: {
+          &quot;description&quot;: &quot;The fingerprint of the surface it published.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;read_at&quot;: {
+          &quot;description&quot;: &quot;The ref the surface was actually read from — the commit the release record names,\nwhich a clone always has, rather than a tag it may not.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;recorded&quot;: {
+          &quot;description&quot;: &quot;Whether the layer holds a release record for it, which is what makes it canonical\nrather than the newest thing that looked like a tag.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;reference&quot;: {
+          &quot;description&quot;: &quot;`v0.5.0`: the release, as a reader recognises it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;version&quot;: {
+          &quot;description&quot;: &quot;`0.5.0`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;version&quot;,
+        &quot;reference&quot;,
+        &quot;read_at&quot;,
+        &quot;commit&quot;,
+        &quot;recorded&quot;,
+        &quot;atoms&quot;,
+        &quot;fingerprint&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;ReleaseChangeDirection&quot;: {
+      &quot;description&quot;: &quot;Whether a change added, removed or altered part of the contract.\n\n```\nuse majordomus_cli::release::compat::Direction;\nassert_eq!(Direction::Removed.sign(), &#39;-&#39;);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;added&quot;,
+          &quot;description&quot;: &quot;It was not there before.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;removed&quot;,
+          &quot;description&quot;: &quot;It was there before and is not now.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;changed&quot;,
+          &quot;description&quot;: &quot;It is there in both, and differs.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;ReleaseCommitEvidence&quot;: {
+      &quot;description&quot;: &quot;What the commit subjects since the baseline said about themselves.\n\nEvidence, never authority. It is here so that a person can see the human account and the\nmeasured one side by side, and so that `VersionPlan::understated` can say when the two\ndisagree — which is the case this whole subsystem exists to catch.\n\n```\nuse majordomus_cli::release::compat::{CommitEvidence, Impact};\nlet commits = CommitEvidence {\n    commits: 24,\n    implied: Impact::Patch,\n    breaking: Vec::new(),\n};\n// The contract moved by a minor and the subjects claim a patch: the plan reports that\n// disagreement rather than deferring to the words.\nassert!(commits.implied &lt; Impact::Minor);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;breaking&quot;: {
+          &quot;description&quot;: &quot;The subjects of the ones that claimed to be breaking.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;commits&quot;: {
+          &quot;description&quot;: &quot;How many commits since the baseline.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;implied&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/ReleaseImpact&quot;,
+          &quot;description&quot;: &quot;What their conventional-commit types alone would have implied.&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;commits&quot;,
+        &quot;implied&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;ReleaseDiagnostic&quot;: {
+      &quot;description&quot;: &quot;Something about the release state that a person should be told, whatever the verdict.\n\n```\nuse majordomus_cli::release::compat::{Diagnostic, Severity};\nlet d = Diagnostic {\n    id: \&quot;tag-without-record\&quot;.into(),\n    severity: Severity::Warning,\n    message: \&quot;v0.1.0 is tagged and the layer holds no release record for it\&quot;.into(),\n};\nassert_eq!(d.severity, Severity::Warning, \&quot;a warning states the plan still stands\&quot;);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;`tag-without-record`, `tag-predates-records`, `record-without-tag`,\n`tag-commit-mismatch`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;message&quot;: {
+          &quot;description&quot;: &quot;What is wrong, in one sentence.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;severity&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/ReleaseSeverity&quot;,
+          &quot;description&quot;: &quot;Whether it stops a release, only warns, or only informs.&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;severity&quot;,
+        &quot;message&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;ReleaseImpact&quot;: {
+      &quot;description&quot;: &quot;How much a change moves the contract.\n\nOrdered, so that \&quot;the declared bump covers what is required\&quot; is a comparison rather than\na table:\n\n```\nuse majordomus_cli::release::compat::Impact;\nassert!(Impact::Major &gt; Impact::Minor);\nassert!(Impact::Minor &gt; Impact::Patch);\nassert!(Impact::Patch &gt; Impact::None);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;none&quot;,
+          &quot;description&quot;: &quot;The contract did not move.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;patch&quot;,
+          &quot;description&quot;: &quot;It moved behind the boundary: a caller cannot tell.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;minor&quot;,
+          &quot;description&quot;: &quot;Something arrived; every existing caller still works.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;major&quot;,
+          &quot;description&quot;: &quot;Something a caller could hold is gone or changed under it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;ReleasePolicy&quot;: {
+      &quot;description&quot;: &quot;The compatibility policy, named and versioned.\n\n```\nuse majordomus_cli::release::compat::{Impact, Policy, POLICY_SCHEMA};\nuse majordomus_cli::release::version::Version;\nlet policy = Policy::for_version(Version::parse(\&quot;0.5.0\&quot;).unwrap());\nassert_eq!(policy.schema, POLICY_SCHEMA, \&quot;a verdict carries the rules it was reached under\&quot;);\nassert_eq!(policy.required_of(Impact::Major), Impact::Minor);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;mode&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/ReleasePolicyMode&quot;,
+          &quot;description&quot;: &quot;Which rule is in force, decided by the baseline version alone.&quot;
+        },
+        &quot;schema&quot;: {
+          &quot;description&quot;: &quot;`majordomus/version-policy/v1`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;schema&quot;,
+        &quot;mode&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;ReleasePolicyMode&quot;: {
+      &quot;description&quot;: &quot;How this project turns a measured impact into the version it owes.\n\nSemantic versioning hands `0.y.z` a blanket exemption — \&quot;anything MAY change at any\ntime\&quot; — and Elm refuses the exemption by starting every package at `1.0.0`, because a\nrule with an escape hatch is a rule about when to use the hatch. This repository is `0.x`\nand has not earned `1.0.0`, so neither answer is available: demanding `major` would\ndemand `1.0.0` for a single removal, and granting the exemption would let a breaking\nchange ship as a patch.\n\nSo below `1.0.0` the floor is a minor. Any movement of the surface, gone or new, is at\nleast a minor release; only an unchanged surface owes nothing. That is the strongest\nsignal `0.x` has, and a removal is still *named* as breaking whatever the verdict, so the\nevidence does not quietly become a minor along with the number.\n\nAt `1.0.0` the shift ends: `Mode::Semver` is the ordinary rule, and the transition is\none line of `Policy::required_of`.\n\n```\nuse majordomus_cli::release::compat::{Mode, Policy};\nuse majordomus_cli::release::version::Version;\nassert_eq!(Policy::for_version(Version::parse(\&quot;0.9.0\&quot;).unwrap()).mode, Mode::Pre1_0Strict);\nassert_eq!(Policy::for_version(Version::parse(\&quot;1.0.0\&quot;).unwrap()).mode, Mode::Semver);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;pre1-0-strict&quot;,
+          &quot;description&quot;: &quot;Below `1.0.0`: breaking changes are allowed, and cost a minor rather than nothing.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;semver&quot;,
+          &quot;description&quot;: &quot;At or above `1.0.0`: the impact is the requirement.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;ReleaseSeverity&quot;: {
+      &quot;description&quot;: &quot;How much a diagnostic matters.\n\nAn error says the plan itself cannot be trusted and blocks the verdict; a warning says\nsomething about the release state is wrong and the verdict stands anyway; a note says\nsomething true and not wrong, so that the warnings keep meaning what they say.\n\n```\nuse majordomus_cli::release::compat::Severity;\nassert_ne!(Severity::Error, Severity::Warning);\nassert_ne!(Severity::Warning, Severity::Note);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;error&quot;,
+          &quot;description&quot;: &quot;The plan cannot be trusted; the verdict is blocked.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;warning&quot;,
+          &quot;description&quot;: &quot;The plan stands, and something is still wrong.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;note&quot;,
+          &quot;description&quot;: &quot;Nothing is wrong; the reader is told something about the release state anyway.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;ReleaseStatus&quot;: {
+      &quot;description&quot;: &quot;Whether the tree may land or ship as it stands.\n\n```\nuse majordomus_cli::release::compat::Status;\nassert_ne!(Status::Ok, Status::Blocked);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;ok&quot;,
+          &quot;description&quot;: &quot;The declared version covers what the contract did.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;blocked&quot;,
+          &quot;description&quot;: &quot;It does not, and the plan says by how much.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;ReleaseSurfaceChange&quot;: {
+      &quot;description&quot;: &quot;One movement of the public contract, with the reason it counts for what it does.\n\n```\nuse majordomus_cli::release::compat::{Direction, Impact, SurfaceChange, SurfaceKind};\nlet change = SurfaceChange {\n    impact: Impact::Major,\n    direction: Direction::Removed,\n    surface: SurfaceKind::Http,\n    capability: \&quot;alpha.list\&quot;.into(),\n    id: \&quot;GET /api/v1/alpha\&quot;.into(),\n    detail: \&quot;the capability survives; this way of reaching it does not\&quot;.into(),\n};\nassert_eq!(change.to_string(), \&quot;- route GET /api/v1/alpha\&quot;);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;capability&quot;: {
+          &quot;description&quot;: &quot;The capability it belongs to.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;detail&quot;: {
+          &quot;description&quot;: &quot;Why this impact and not a smaller one, in one clause.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;direction&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/ReleaseChangeDirection&quot;,
+          &quot;description&quot;: &quot;Added, removed, or altered.&quot;
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The thing itself: `GET /api/v1/foo`, `majordomus_release_analysis`, `release.analysis`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;impact&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/ReleaseImpact&quot;,
+          &quot;description&quot;: &quot;How much it moves the contract on its own.&quot;
+        },
+        &quot;surface&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/ReleaseSurfaceKind&quot;,
+          &quot;description&quot;: &quot;Which promise it is.&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;impact&quot;,
+        &quot;direction&quot;,
+        &quot;surface&quot;,
+        &quot;capability&quot;,
+        &quot;id&quot;,
+        &quot;detail&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;ReleaseSurfaceKind&quot;: {
+      &quot;description&quot;: &quot;Which projection of the contract a change is in.\n\nNot where it was *found* — everything here is found in the registry — but which promise\nit is, so that a reader sees \&quot;a route is gone\&quot; rather than a JSON pointer.\n\n```\nuse majordomus_cli::release::compat::SurfaceKind;\nassert_eq!(SurfaceKind::Http.as_str(), \&quot;route\&quot;);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;capability&quot;,
+          &quot;description&quot;: &quot;The capability itself.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;kind&quot;,
+          &quot;description&quot;: &quot;Whether calling it changes anything.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;mcp_tool&quot;,
+          &quot;description&quot;: &quot;An MCP tool name.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;mcp_resource&quot;,
+          &quot;description&quot;: &quot;An MCP resource URI.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;http&quot;,
+          &quot;description&quot;: &quot;An HTTP method and path.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;cli&quot;,
+          &quot;description&quot;: &quot;A command-line path.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;input&quot;,
+          &quot;description&quot;: &quot;What a caller may send.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;output&quot;,
+          &quot;description&quot;: &quot;What a caller is promised back.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    }
+  },
+  &quot;description&quot;: &quot;The whole answer: what moved, what that requires, and what the tree declares.\n\nOne value, and every surface renders it — the command line, `/api/v1/release/analysis`,\nthe MCP tool, the Cockpit panel, the generated document and the CI gate. There is no\nsecond computation anywhere, which is the property that makes the number mean something.\n\n```\nuse majordomus_cli::release::compat::{Status, VersionPlan};\n# use majordomus_cli::release::compat::{Baseline, CommitEvidence, Impact, Policy};\n# use majordomus_cli::release::version::Version;\nlet plan = VersionPlan {\n    policy: Policy::for_version(Version::parse(\&quot;0.5.0\&quot;).unwrap()),\n    baseline: Baseline {\n        version: \&quot;0.5.0\&quot;.into(), reference: \&quot;v0.5.0\&quot;.into(), read_at: \&quot;3a032c1e\&quot;.into(),\n        commit: \&quot;3a032c1e\&quot;.into(), recorded: true, atoms: 300, fingerprint: \&quot;sha256:a\&quot;.into(),\n    },\n    declared_version: \&quot;0.5.0\&quot;.into(),\n    tool_version: \&quot;0.5.0\&quot;.into(),\n    writers_agree: true,\n    atoms: 333,\n    fingerprint: \&quot;sha256:b\&quot;.into(),\n    implied: Impact::Minor,\n    required: Impact::Minor,\n    declared: Impact::None,\n    required_version: \&quot;0.6.0\&quot;.into(),\n    status: Status::Blocked,\n    breaking: false,\n    changes: Vec::new(),\n    commits: CommitEvidence { commits: 24, implied: Impact::Patch, breaking: Vec::new() },\n    understated: true,\n    diagnostics: Vec::new(),\n};\n// The contract requires a minor and the version declares none: this tree may not land.\nassert_eq!(plan.status, Status::Blocked);\nassert!(plan.declared &lt; plan.required);\nassert!(plan.understated, \&quot;the commit subjects claim less than the contract did\&quot;);\n```&quot;,
+  &quot;properties&quot;: {
+    &quot;atoms&quot;: {
+      &quot;description&quot;: &quot;How many public atoms this tree carries.&quot;,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;baseline&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/ReleaseBaseline&quot;,
+      &quot;description&quot;: &quot;The release this was measured against.&quot;
+    },
+    &quot;breaking&quot;: {
+      &quot;description&quot;: &quot;Whether anything a caller could hold is gone.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;changes&quot;: {
+      &quot;description&quot;: &quot;Every movement of the contract, worst first.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/ReleaseSurfaceChange&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;commits&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/ReleaseCommitEvidence&quot;,
+      &quot;description&quot;: &quot;What the commits said about themselves.&quot;
+    },
+    &quot;declared&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/ReleaseImpact&quot;,
+      &quot;description&quot;: &quot;What the two version numbers already represent.&quot;
+    },
+    &quot;declared_version&quot;: {
+      &quot;description&quot;: &quot;The version the crate manifest declares — the one place it is authored.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;diagnostics&quot;: {
+      &quot;description&quot;: &quot;Anything incoherent about the release state, whatever the verdict.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/ReleaseDiagnostic&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;fingerprint&quot;: {
+      &quot;description&quot;: &quot;The fingerprint of this tree&#39;s surface.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;implied&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/ReleaseImpact&quot;,
+      &quot;description&quot;: &quot;What the surface movement amounts to on its own.&quot;
+    },
+    &quot;policy&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/ReleasePolicy&quot;,
+      &quot;description&quot;: &quot;The policy the verdict was reached under.&quot;
+    },
+    &quot;required&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/ReleaseImpact&quot;,
+      &quot;description&quot;: &quot;What the policy requires of it.&quot;
+    },
+    &quot;required_version&quot;: {
+      &quot;description&quot;: &quot;The smallest version this tree may declare.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;status&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/ReleaseStatus&quot;,
+      &quot;description&quot;: &quot;Whether it does.&quot;
+    },
+    &quot;tool_version&quot;: {
+      &quot;description&quot;: &quot;The version `bin/majordomus` prints: what its projection, `share/version.txt`, states.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;understated&quot;: {
+      &quot;description&quot;: &quot;Whether the commit subjects understate what the contract actually did.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;writers_agree&quot;: {
+      &quot;description&quot;: &quot;Whether that projection is current — states what the manifest declares. The name is\nkept from when the version had two writers; the manifest is the only one now.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;policy&quot;,
+    &quot;baseline&quot;,
+    &quot;declared_version&quot;,
+    &quot;tool_version&quot;,
+    &quot;writers_agree&quot;,
+    &quot;atoms&quot;,
+    &quot;fingerprint&quot;,
+    &quot;implied&quot;,
+    &quot;required&quot;,
+    &quot;declared&quot;,
+    &quot;required_version&quot;,
+    &quot;status&quot;,
+    &quot;breaking&quot;,
+    &quot;changes&quot;,
+    &quot;commits&quot;,
+    &quot;understated&quot;
+  ],
+  &quot;title&quot;: &quot;ReleaseVersionPlan&quot;,
+  &quot;type&quot;: &quot;object&quot;
+}</pre></div>
+  </details>
+</div>
+
+    </div>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Politiky</h2>
+    <dl class="mt-3 grid gap-3 text-sm sm:grid-cols-2">
+      <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">benchmark</dt><dd class="mt-1 text-body"><span class="font-mono text-heading">waived</span> — prominuto: published_history</dd></div>
+      <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">cache</dt><dd class="mt-1 text-body"><span class="font-mono text-heading">vypnuto</span> — každé volání spustí handler</dd></div>
+    </dl>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Cíle benchmarku</h2><p class="mt-2 text-sm text-body">Odvozeno z registru pro tento repozitář: jeden požadavek na transport a případy, které poskytuje typ vstupu. Celá matice je na <a href="https://majordomus.dev/cs/registry/benchmarks/" class="text-fg-brand underline">stránce měření výkonu</a>.</p>
+    <div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+      <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+        <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">transport</th><th class="px-3 py-2">state</th><th class="px-3 py-2">případy</th><th class="px-3 py-2">targets</th></tr></thead>
+        <tbody><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">direct</td><td class="px-3 py-2 font-mono text-xs text-body">prominuto (published_history)</td><td class="px-3 py-2 font-mono text-xs text-body">0</td><td class="px-3 py-2 font-mono text-xs text-body"></td></tr><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">mcp</td><td class="px-3 py-2 font-mono text-xs text-body">prominuto (published_history)</td><td class="px-3 py-2 font-mono text-xs text-body">0</td><td class="px-3 py-2 font-mono text-xs text-body"></td></tr><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">http</td><td class="px-3 py-2 font-mono text-xs text-body">prominuto (published_history)</td><td class="px-3 py-2 font-mono text-xs text-body">0</td><td class="px-3 py-2 font-mono text-xs text-body"></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start">
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-4 text-sm">
+      <span class="mb-2 block font-mono text-xs uppercase tracking-wide text-body-subtle">provenance</span>
+      <dl class="space-y-2">
+        <div><dt class="text-body-subtle">id v registru</dt><dd class="min-w-0 break-all font-mono text-heading">release.analysis</dd></div>
+        <div><dt class="text-body-subtle">složeno v</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/release.rs" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">apps/majordomus-cli/src/capability/builtin/release.rs</a></dd></div>
+        <div><dt class="text-body-subtle">modul Rust</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::release</dd></div>
+        <div><dt class="text-body-subtle">typ vstupu</dt><dd class="font-mono text-heading">ReleaseAnalysisInput</dd></div>
+        <div><dt class="text-body-subtle">typ výstupu</dt><dd class="font-mono text-heading">ReleaseVersionPlan</dd></div>
+        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/82ac259d0ae7c3901ee09bed461e2f62318a6642/docs/generated/modules/release.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/release.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">9686a811bc71aae5047f16c8a045bb4eda91dc0d1487bc35bc839781a43e761e</dd></div>
+        <div><dt class="text-body-subtle">vygenerováno nástrojem</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.1</dd></div>
+      </dl>
+    </div>
+  </aside>
+</div>
+
+
+
+</div>
+
+</main>
+
+<footer id="site-map" class="border-t border-default bg-neutral-primary-soft" aria-label="Mapa webu">
+  <div class="mx-auto w-full max-w-screen-xl p-4 md:py-8">
+    <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
+      
+      <div class="min-w-0 scroll-mt-20" id="site-map-1">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/cs/domains/" class="hover:text-heading hover:underline">Produkt</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/cs/domains/" class="hover:text-heading hover:underline">Produkt podle oblastí</a></li><li><a href="https://majordomus.dev/cs/why/" class="hover:text-heading hover:underline">Proč existuje: způsoby selhání</a></li><li><a href="https://majordomus.dev/cs/features/" class="hover:text-heading hover:underline">Funkce</a></li><li><a href="https://majordomus.dev/cs/features/matrix/" class="hover:text-heading hover:underline">Funkce a rozhraní</a></li><li><a href="https://majordomus.dev/cs/use-cases/" class="hover:text-heading hover:underline">Případy užití</a></li><li><a href="https://majordomus.dev/cs/applications/" class="hover:text-heading hover:underline">Aplikace</a></li><li><a href="https://majordomus.dev/cs/skills/" class="hover:text-heading hover:underline">Dovednosti</a></li><li><a href="https://majordomus.dev/cs/supervises/" class="hover:text-heading hover:underline">Na co dohlíží</a></li><li><a href="https://majordomus.dev/cs/docs/majordomus-ui/" class="hover:text-heading hover:underline">UI produktu</a></li><li><a href="https://majordomus.dev/cs/docs/cockpit/" class="hover:text-heading hover:underline">Cockpit</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0 scroll-mt-20" id="site-map-2">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/cs/method/" class="hover:text-heading hover:underline">Princip</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/cs/method/" class="hover:text-heading hover:underline">Doktrína, politika, pravidlo, vynucování</a></li><li><a href="https://majordomus.dev/cs/method/axes/" class="hover:text-heading hover:underline">Čtyři osy</a></li><li><a href="https://majordomus.dev/cs/method/argument/" class="hover:text-heading hover:underline">Celá argumentace</a></li><li><a href="https://majordomus.dev/cs/docs/concepts/" class="hover:text-heading hover:underline">Slovník</a></li><li><a href="https://majordomus.dev/cs/policy/" class="hover:text-heading hover:underline">Kanonická politika</a></li><li><a href="https://majordomus.dev/cs/context/" class="hover:text-heading hover:underline">Kontrakty adresářů</a></li><li><a href="https://majordomus.dev/cs/sessions/" class="hover:text-heading hover:underline">Relace</a></li><li><a href="https://majordomus.dev/cs/docs/planning/" class="hover:text-heading hover:underline">Jak funguje plánování</a></li><li><a href="https://majordomus.dev/cs/docs/design/" class="hover:text-heading hover:underline">Design</a></li><li><a href="https://majordomus.dev/cs/kit/" class="hover:text-heading hover:underline">Sada komponent</a></li><li><a href="https://majordomus.dev/cs/docs/surfaces/" class="hover:text-heading hover:underline">Jak se odvozují rozhraní</a></li><li><a href="https://majordomus.dev/cs/architecture/" class="hover:text-heading hover:underline">Jak je tento web postaven</a></li><li><a href="https://majordomus.dev/cs/docs/product/" class="hover:text-heading hover:underline">Jak se odvozuje stránka produktu</a></li><li><a href="https://majordomus.dev/cs/proof-carrying-documentation/" class="hover:text-heading hover:underline">Článek: dokumentace nesoucí důkaz</a></li><li><a href="https://majordomus.dev/cs/everything-followed/" class="hover:text-heading hover:underline">Článek: všechno, dohledatelně</a></li><li><a href="https://majordomus.dev/cs/dokumentace-kterou-lze-odmitnout/" class="hover:text-heading hover:underline">Stejná argumentace, napsaná česky</a></li><li><a href="https://majordomus.dev/cs/vsechno-v-jednom-proudu/" class="hover:text-heading hover:underline">Everything, followed, written in Czech</a></li><li><a href="https://majordomus.dev/cs/the-bet-on-a-layer/" class="hover:text-heading hover:underline">Essay: the bet on a layer, not a model</a></li><li><a href="https://majordomus.dev/cs/teze/" class="hover:text-heading hover:underline">Esej v češtině: sázka na vrstvu, ne na model</a></li><li><a href="https://majordomus.dev/cs/a-pasted-brief-becomes-a-plan/" class="hover:text-heading hover:underline">Article: a pasted brief becomes a plan</a></li><li><a href="https://majordomus.dev/cs/vlozene-zadani-se-stava-planem/" class="hover:text-heading hover:underline">The pasted brief, written in Czech</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0 scroll-mt-20" id="site-map-3">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/cs/challenge/" class="hover:text-heading hover:underline">Důkazy</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/cs/challenge/" class="hover:text-heading hover:underline">Výzva: sledujte, jak odmítne agenta</a></li><li><a href="https://majordomus.dev/cs/guarantees/" class="hover:text-heading hover:underline">Záruky</a></li><li><a href="https://majordomus.dev/cs/evidence/" class="hover:text-heading hover:underline">Graf důkazů</a></li><li><a href="https://majordomus.dev/cs/contract/" class="hover:text-heading hover:underline">Kontrakt dokončení</a></li><li><a href="https://majordomus.dev/cs/doctrines/" class="hover:text-heading hover:underline">Doktrína</a></li><li><a href="https://majordomus.dev/cs/adrs/" class="hover:text-heading hover:underline">Rozhodnutí</a></li><li><a href="https://majordomus.dev/cs/rules/" class="hover:text-heading hover:underline">Platná pravidla</a></li><li><a href="https://majordomus.dev/cs/registry/benchmarks/" class="hover:text-heading hover:underline">Měření výkonu</a></li><li><a href="https://majordomus.dev/cs/economics/" class="hover:text-heading hover:underline">Ekonomika tokenů</a></li><li><a href="https://majordomus.dev/cs/limitations/" class="hover:text-heading hover:underline">Omezení</a></li><li><a href="https://majordomus.dev/cs/roadmap/" class="hover:text-heading hover:underline">Plán rozvoje</a></li><li><a href="https://majordomus.dev/cs/plan/" class="hover:text-heading hover:underline">Milníky a úkoly</a></li><li><a href="https://majordomus.dev/cs/plan/dag/" class="hover:text-heading hover:underline">Graf závislostí</a></li><li><a href="https://majordomus.dev/cs/changelog/" class="hover:text-heading hover:underline">Changelog</a></li><li><a href="https://majordomus.dev/cs/docs/dogfooding/" class="hover:text-heading hover:underline">Dogfooding</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0 scroll-mt-20" id="site-map-4">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/cs/docs/" class="hover:text-heading hover:underline">Dokumenty</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/cs/docs/" class="hover:text-heading hover:underline">Všechny dokumenty</a></li><li><a href="https://majordomus.dev/cs/docs/install/" class="hover:text-heading hover:underline">Instalace</a></li><li><a href="https://majordomus.dev/cs/commands/" class="hover:text-heading hover:underline">Příkazy</a></li><li><a href="https://majordomus.dev/cs/profiles/" class="hover:text-heading hover:underline">Profily provádění</a></li><li><a href="https://majordomus.dev/cs/docs/cli/" class="hover:text-heading hover:underline">Přehled příkazů</a></li><li><a href="https://majordomus.dev/cs/docs/api/" class="hover:text-heading hover:underline">HTTP API</a></li><li><a href="https://majordomus.dev/rustdoc/" class="hover:text-heading hover:underline">Rust API</a></li><li><a href="https://majordomus.dev/cs/registry/mcp/" class="hover:text-heading hover:underline">Rozhraní MCP</a></li><li><a href="https://majordomus.dev/cs/docs/schemas/" class="hover:text-heading hover:underline">Schémata souborů</a></li><li><a href="https://majordomus.dev/cs/registry/" class="hover:text-heading hover:underline">Registr</a></li><li><a href="https://majordomus.dev/cs/map/" class="hover:text-heading hover:underline">Mapa programu</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/82ac259d0ae7c3901ee09bed461e2f62318a6642/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/82ac259d0ae7c3901ee09bed461e2f62318a6642/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/82ac259d0ae7c3901ee09bed461e2f62318a6642/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+        </ul>
+      </div>
+    </div>
+    <hr class="my-6 border-default sm:mx-auto lg:my-8"><div class="space-y-4">
+    <div class="sm:flex sm:items-center sm:justify-between">
+      <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
+    </div>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v1.0.0-alpha.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/82ac259d0ae7c3901ee09bed461e2f62318a6642" class="font-mono underline">82ac259</a> · inputs <span class="font-mono">ac7a158bc7ec</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    </div>
+  </div>
+</footer>
+<dialog id="site-search" data-site-search data-index="https://majordomus.dev/docs/index.json" aria-labelledby="site-search-label" class="m-0 h-dvh max-h-none w-full max-w-none border-0 bg-neutral-primary p-0 text-body backdrop:bg-neutral-primary-strong/80 sm:mx-auto sm:mt-20 sm:h-auto sm:max-h-[75vh] sm:max-w-2xl sm:rounded-base sm:border sm:border-default sm:shadow-lg">
+  <div class="flex h-full max-h-[inherit] flex-col">
+    <div class="flex items-center gap-2 border-b border-default p-3">
+      <label id="site-search-label" for="site-search-input" class="sr-only">Hledat na tomto webu</label>
+      <svg class="h-5 w-5 shrink-0 text-body-subtle" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z"/></svg>
+      <input id="site-search-input" type="search" role="combobox" aria-expanded="false" aria-controls="site-search-results" aria-autocomplete="list" aria-describedby="site-search-status" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go" placeholder="Pravidlo, rozhodnutí, příkaz, stránka…" class="block min-w-0 flex-1 rounded-base border border-default-medium bg-neutral-secondary-medium px-3 py-2.5 text-base text-heading focus:border-brand focus:ring-brand sm:text-sm">
+      <button type="button" data-site-search-close class="inline-flex h-10 shrink-0 items-center rounded-base border border-default px-3 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">Zavřít<span class="sr-only"> vyhledávání</span></button>
+    </div>
+    <p id="site-search-status" class="px-4 pt-3 text-xs text-body-subtle" aria-live="polite" data-site-search-status>Prohledává názvy a popisy všech stránek, které tento web publikuje.</p>
+    <div id="site-search-results" role="listbox" aria-label="Odpovídající stránky" class="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain px-2 py-2" data-site-search-results></div>
+    <template data-site-search-item><a tabindex="-1" class="block rounded-base px-3 py-2 hover:bg-neutral-secondary-medium aria-selected:bg-neutral-secondary-medium aria-selected:ring-2 aria-selected:ring-brand"><span class="block break-words font-medium text-heading" data-slot="title"></span><span class="block break-all font-mono text-xs text-body-subtle" data-slot="meta"></span><span class="mt-0.5 line-clamp-2 text-sm text-body" data-slot="description"></span></a></template>
+  </div>
+</dialog>
+
+<script defer src="https://majordomus.dev/js/nav.js"></script>
+<script defer src="https://majordomus.dev/js/search.js"></script>
+<script src="https://majordomus.dev/js/theme.js"></script>
+<script defer src="https://majordomus.dev/js/alpine.min.js"></script>
+
+</body>
+</html>

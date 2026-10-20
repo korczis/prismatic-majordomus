@@ -1,0 +1,1071 @@
+<!doctype html>
+<html lang="cs" class="scroll-smooth" data-theme-key="color-theme" data-theme-class="dark" data-design="944a896b2646">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Relace — Prismatic Majordomus</title>
+<meta name="description" content="Každá uzavřená epizoda provádění, kterou tento repozitář drží: z čeho vyšla, co vytvořila a jak skončila. Zapisuje ji nástroj z gitu a ledgeru, nikdy z konverzace.">
+<link rel="canonical" href="https://majordomus.dev/cs/sessions/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Prismatic Majordomus">
+<meta property="og:title" content="Relace — Prismatic Majordomus">
+<meta property="og:description" content="Každá uzavřená epizoda provádění, kterou tento repozitář drží: z čeho vyšla, co vytvořila a jak skončila. Zapisuje ji nástroj z gitu a ledgeru, nikdy z konverzace.">
+<meta property="og:url" content="https://majordomus.dev/cs/sessions/">
+<meta property="og:image" content="https://majordomus.dev/images/social-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
+<link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=3f5215cbacbe9c61f05a">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
+<script>(function(){try{var K="mj-lang",L=["en","cs"],S="en",B="https://majordomus.dev",d=document.documentElement,k;try{k=localStorage.getItem(K)}catch(e){}
+document.addEventListener("click",function(e){var a=e.target.closest&&e.target.closest("[data-i18n-lang]");if(a)try{localStorage.setItem(K,a.getAttribute("data-i18n-lang"))}catch(x){}},true);
+if(d.lang!==S)return;var r=document.referrer;if(r&&r.indexOf(location.origin)===0)return;
+var p=(k?[k]:navigator.languages||[navigator.language||""]).map(function(l){return String(l).slice(0,2).toLowerCase()});
+for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=location.href;if(u.indexOf(B)!==0)return;location.replace(B+"/"+p[i]+u.slice(B.length).replace(/^(?!\/)/,"/"));return}}}catch(e){}})();</script>
+
+<link rel="alternate" hreflang="en" href="https://majordomus.dev/sessions/">
+<link rel="alternate" hreflang="cs" href="https://majordomus.dev/cs/sessions/">
+<link rel="alternate" hreflang="x-default" href="https://majordomus.dev/sessions/">
+</head>
+<body class="min-h-screen bg-neutral-primary text-body antialiased">
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white">Přeskočit na obsah</a>
+
+
+
+<nav class="sticky top-0 z-20 w-full border-b border-default bg-neutral-primary text-base" aria-label="Hlavní">
+  <div class="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between gap-x-2 gap-y-2 px-3 py-3 sm:p-4">
+    <a href="https://majordomus.dev/cs/" class="flex min-w-0 items-center gap-1.5 sm:gap-2.5 rtl:space-x-reverse">
+      <span class="inline-flex h-6 w-6 shrink-0 text-heading sm:h-7 sm:w-7 [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 1.0.0-alpha.1 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span>
+      <span class="self-center whitespace-nowrap text-base font-semibold text-heading sm:text-xl">Majordomus</span>
+      
+      
+      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading" data-release="0.30.2">v0.30.2</span>
+      
+    </a>
+    <div class="flex items-center gap-1 sm:gap-2 md:order-2"><button type="button" data-site-search-open hidden aria-haspopup="dialog" aria-controls="site-search" aria-expanded="false" aria-keyshortcuts="/ Control+K Meta+K" class="inline-flex h-10 min-w-10 items-center justify-center gap-2 rounded-base border border-default px-2.5 text-sm font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">
+        <svg class="h-5 w-5 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z"/></svg> <span class="sr-only lg:not-sr-only">Hledat</span> <kbd class="hidden rounded border border-default-medium px-1.5 font-mono text-xs text-body-subtle lg:inline" aria-hidden="true">/</kbd>
+      </button>
+      <div class="relative" data-i18n-switch>
+  <button type="button" aria-label="Jazyk" data-dropdown-toggle="language-menu" data-dropdown-placement="bottom-end" aria-haspopup="true" aria-controls="language-menu" aria-expanded="false" class="inline-flex h-10 items-center justify-center gap-1.5 rounded-base border border-default px-2.5 text-sm font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">
+    <svg class="h-5 w-5 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0 0c2.2-2.4 3.3-5.4 3.3-9S14.2 5.4 12 3m0 18c-2.2-2.4-3.3-5.4-3.3-9S9.8 5.4 12 3M3.5 9h17M3.5 15h17"/></svg>
+    <span class="font-mono text-xs uppercase" translate="no" data-i18n-current-label>cs</span>
+    <svg class="h-2.5 w-2.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg>
+  </button>
+  <div id="language-menu" class="absolute right-0 top-full z-50 mt-2 hidden w-44 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+    <ul class="p-2 text-sm font-medium text-body" translate="no">
+      <li><a href="https://majordomus.dev/sessions/" hreflang="en" lang="en" data-i18n-keep data-i18n-current data-i18n-lang="en" class="group flex w-full items-center justify-between gap-3 rounded-sm px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading aria-[current=true]:text-heading"><span class="flex items-center gap-2"><span class="w-6 font-mono text-xs uppercase text-body-subtle">en</span>English</span><svg class="invisible h-4 w-4 text-fg-brand group-aria-[current=true]:visible" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 11.917 9.724 16.5 19 7.5"/></svg></a></li>
+      <li><a href="https://majordomus.dev/cs/sessions/" hreflang="cs" lang="cs" data-i18n-keep data-i18n-current data-i18n-lang="cs" class="group flex w-full items-center justify-between gap-3 rounded-sm px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading aria-[current=true]:text-heading" aria-current="true"><span class="flex items-center gap-2"><span class="w-6 font-mono text-xs uppercase text-body-subtle">cs</span>Čeština</span><svg class="invisible h-4 w-4 text-fg-brand group-aria-[current=true]:visible" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 11.917 9.724 16.5 19 7.5"/></svg></a></li>
+    </ul>
+  </div>
+</div>
+
+      <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Přepnout tmavý režim">
+  <svg id="theme-toggle-dark-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+  <svg id="theme-toggle-light-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+</button>
+<a href="https://majordomus.dev/ui/" data-nav-primary="ui" class="hidden rounded-base border border-brand-subtle px-3 py-2 text-sm font-semibold text-fg-brand hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary xl:inline-flex">UI produktu</a>
+      <a href="https://github.com/korczis/prismatic-majordomus" class="hidden rounded-base border border-default px-3 py-2 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary sm:inline-flex">GitHub</a>
+      <a href="https://majordomus.dev/cs/getting-started/" class="hidden rounded-base bg-brand px-3 py-2 text-sm font-semibold text-white hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium md:inline-flex">Začít</a>
+      <button data-collapse-toggle="navbar-main" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-base p-2 text-sm text-body hover:bg-neutral-secondary-soft hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:hidden" aria-controls="navbar-main" aria-expanded="false">
+        <span class="sr-only">Otevřít hlavní nabídku</span> <svg class="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h14"/></svg>
+      </button>
+    </div><div class="hidden w-full min-w-0 md:order-1 md:block md:w-auto" id="navbar-main">
+      <ul class="mt-4 flex flex-col rounded-base border border-default bg-neutral-secondary-soft p-4 font-medium md:mt-0 md:flex-row md:flex-wrap md:items-center md:gap-x-2 md:gap-y-1 md:border-0 md:bg-neutral-primary md:p-0">
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          <button id="nav-1" data-dropdown-toggle="nav-menu-1" type="button" aria-controls="nav-menu-1" class="flex w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Produkt<svg class="ms-1.5 h-3 w-3 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-1" class="hidden md:absolute md:left-0 md:top-full md:z-10 md:mt-2 md:w-64 md:rounded-base md:border md:border-default-medium md:bg-neutral-primary-medium md:shadow-lg">
+            <ul class="pb-2 ps-3 text-sm font-medium text-body md:p-2" aria-labelledby="nav-1">
+              <li><a href="https://majordomus.dev/cs/domains/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Produkt podle oblastí</a></li><li><a href="https://majordomus.dev/cs/why/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Proč existuje: způsoby selhání</a></li><li><a href="https://majordomus.dev/cs/features/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Funkce</a></li><li><a href="https://majordomus.dev/cs/use-cases/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Případy užití</a></li><li><a href="https://majordomus.dev/ui/" data-nav-snapshot="ui" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">UI produktu <span data-nav-snapshot-note class="text-xs text-body-subtle">&middot; snímek</span></a></li><li><a href="https://majordomus.dev/cs/docs/cockpit/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Cockpit</a></li>
+              <li class="mt-1 border-t border-default pt-1"><a href="#site-map-1" class="block rounded px-3 py-2 text-body-subtle hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Všech 10 stránek v mapě webu &darr;</a></li>
+            </ul>
+          </div>
+        </li>
+        
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          <button id="nav-2" data-dropdown-toggle="nav-menu-2" type="button" aria-controls="nav-menu-2" class="flex w-full items-center justify-between rounded px-3 py-2 text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Princip<svg class="ms-1.5 h-3 w-3 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-2" class="hidden md:absolute md:left-0 md:top-full md:z-10 md:mt-2 md:w-64 md:rounded-base md:border md:border-default-medium md:bg-neutral-primary-medium md:shadow-lg">
+            <ul class="pb-2 ps-3 text-sm font-medium text-body md:p-2" aria-labelledby="nav-2">
+              <li><a href="https://majordomus.dev/cs/method/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Doktrína, politika, pravidlo, vynucování</a></li><li><a href="https://majordomus.dev/cs/method/argument/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Celá argumentace</a></li><li><a href="https://majordomus.dev/cs/docs/concepts/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Slovník</a></li><li><a href="https://majordomus.dev/cs/sessions/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2 text-fg-brand" aria-current="page">Relace</a></li>
+              <li class="mt-1 border-t border-default pt-1"><a href="#site-map-2" class="block rounded px-3 py-2 text-body-subtle hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">All 21 pages in the site map &darr;</a></li>
+            </ul>
+          </div>
+        </li>
+        
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          <button id="nav-3" data-dropdown-toggle="nav-menu-3" type="button" aria-controls="nav-menu-3" class="flex w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Důkazy<svg class="ms-1.5 h-3 w-3 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-3" class="hidden md:absolute md:left-0 md:top-full md:z-10 md:mt-2 md:w-64 md:rounded-base md:border md:border-default-medium md:bg-neutral-primary-medium md:shadow-lg">
+            <ul class="pb-2 ps-3 text-sm font-medium text-body md:p-2" aria-labelledby="nav-3">
+              <li><a href="https://majordomus.dev/cs/challenge/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Výzva: sledujte, jak odmítne agenta</a></li><li><a href="https://majordomus.dev/cs/guarantees/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Záruky</a></li><li><a href="https://majordomus.dev/cs/evidence/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Graf důkazů</a></li><li><a href="https://majordomus.dev/cs/limitations/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Omezení</a></li><li><a href="https://majordomus.dev/cs/roadmap/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Plán rozvoje</a></li>
+              <li class="mt-1 border-t border-default pt-1"><a href="#site-map-3" class="block rounded px-3 py-2 text-body-subtle hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Všech 15 stránek v mapě webu &darr;</a></li>
+            </ul>
+          </div>
+        </li>
+        
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          <button id="nav-4" data-dropdown-toggle="nav-menu-4" type="button" aria-controls="nav-menu-4" class="flex w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Dokumenty<svg class="ms-1.5 h-3 w-3 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-4" class="hidden md:absolute md:left-0 md:top-full md:z-10 md:mt-2 md:w-64 md:rounded-base md:border md:border-default-medium md:bg-neutral-primary-medium md:shadow-lg">
+            <ul class="pb-2 ps-3 text-sm font-medium text-body md:p-2" aria-labelledby="nav-4">
+              <li><a href="https://majordomus.dev/cs/docs/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Všechny dokumenty</a></li><li><a href="https://majordomus.dev/cs/docs/install/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Instalace</a></li><li><a href="https://majordomus.dev/cs/commands/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Příkazy</a></li><li><a href="https://majordomus.dev/cs/docs/api/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">HTTP API</a></li><li><a href="https://majordomus.dev/cs/registry/mcp/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Rozhraní MCP</a></li>
+              <li class="mt-1 border-t border-default pt-1"><a href="#site-map-4" class="block rounded px-3 py-2 text-body-subtle hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Všech 11 stránek v mapě webu &darr;</a></li>
+            </ul>
+          </div>
+        </li>
+        
+        
+        <li class="mt-3 md:hidden"><a href="https://majordomus.dev/ui/" data-nav-primary="ui" class="block rounded-base border border-brand-subtle px-3 py-2 text-center font-semibold text-fg-brand hover:bg-neutral-tertiary">UI produktu</a></li>
+        <li class="mt-3 md:hidden"><a href="https://majordomus.dev/cs/getting-started/" class="block rounded-base bg-brand px-3 py-2 text-center font-semibold text-white hover:bg-brand-strong">Začít</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+<div data-i18n-notice class="border-b border-default bg-neutral-secondary-soft">
+  <p class="mx-auto max-w-screen-xl px-4 py-2 text-xs text-body">Tato stránka byla automaticky přeložena z angličtiny, jediného jazyka, ve kterém se tento web píše. <a href="https://majordomus.dev/sessions/" hreflang="en" lang="en" data-i18n-keep data-i18n-lang="en" class="font-medium underline">Číst originál</a>.</p>
+</div>
+<main id="main">
+<div class="border-b border-default bg-neutral-primary-soft"><div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8"><nav class="flex" aria-label="Drobečková navigace">
+  <ol class="inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2 rtl:space-x-reverse">
+    <li class="inline-flex items-center"><a href="https://majordomus.dev/cs/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Domů</a></li>
+    <li aria-hidden="true">/</li>
+    <li aria-current="page" class="font-medium text-heading">Relace</li>
+  </ol>
+</nav>
+<h1 class="mt-4 text-3xl font-bold tracking-tight text-heading sm:text-4xl">Relace</h1><p class="mt-3 max-w-3xl text-lg text-body">Každá uzavřená epizoda provádění, kterou tento repozitář drží: z čeho vyšla, co vytvořila a jak skončila. Zapisuje ji nástroj z gitu a ledgeru, nikdy z konverzace.</p></div></div>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+
+  <p class="max-w-3xl text-sm text-body">Záznam píše <code class="font-mono">majordomus session close</code> a nic jiného. Každé jeho pole je odvozené — časy z hodin, hlavy a commity z gitu, seznamy odkazů z vlastních událostí účetní knihy pro danou epizodu — a jediná ručně psaná část je shrnutí. Pro konverzaci pole neexistuje a žádná hodnota nesmí být absolutní cesta: záznam nese to, co repozitář dokáže doložit.</p>
+  <ul class="mt-8 space-y-4" role="list">
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20261014003330-fef4/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20261014003330-fef4</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-14T00:37:52Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body"># Co se stalo V této epizodě nebyl vytvořen žádný commit; master se nepohnul. 0 souborů změněno od otevření epizody. # Poznámky o postupu - Na 2ee40c5 na masteru, pracovní strom čistý; 0 souborů změněno od začátku úlohy. Odvozeno, nikoli…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20261009091659-3ee5/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20261009091659-3ee5</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">feature/the-worker-is-asked-before-compaction</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-09T09:18:01Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Bezhlavý běh `claude -p` spuštěný k ověření, že Claude Code načítá mod majordomus-handover z .claude/skills; jeho hook SessionEnd byl při ukončení procesu zrušen, takže epizoda je uzavřena ručně.</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 6 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260911101024-420a/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260911101024-420a</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">zavřeno 2026-10-08T20:17:01Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body"># Summary Epizoda otevřená 2026-09-14 na masteru oknem Claude Code, jehož klient zmizel; nikdo ji nezavřel. Zavřena jako přerušená pozdější relací (s-20261008200001-76f2) při úklidu repozitáře; nepřisuzuje se jí žádný pracovní výstup.</p>
+      <p class="mt-2 text-xs text-body-subtle">1828 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20261003222101-0ddc/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20261003222101-0ddc</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:50Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tato epizoda byla uzavřena příkazem `majordomus recover`, ne workerem, který ji otevřel. Nikdy nedorazila koncová událost: provider byl zabit, spadl nebo ztratil spojení. - poslední známka života: 2026-10-03T22:21:01Z (z hlavní knihy) - stáří při obnově…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260916231308-892a/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260916231308-892a</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:50Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tato epizoda byla uzavřena příkazem `majordomus recover`, ne workerem, který ji otevřel. Nikdy nedorazila koncová událost: provider byl zabit, spadl nebo ztratil spojení. - poslední známka života: 2026-09-16T23:13:08Z (z hlavní knihy) - stáří při obnově…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20261003114003-b2ec/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20261003114003-b2ec</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:49Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tuto epizodu uzavřel `majordomus recover`, ne worker, který ji otevřel. Nikdy nedorazila žádná koncová událost: provider byl zabit, spadl, nebo ztratil spojení. - poslední známka života: 2026-10-03T23:40:14Z (z ledgeru) - stáří při obnově…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260916200058-9170/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260916200058-9170</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:49Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tuto epizodu uzavřel `majordomus recover`, ne pracovník, který ji otevřel. Nikdy nedorazila žádná koncová událost: provider byl zabit, spadl nebo ztratil spojení. - poslední známka života: 2026-09-16T20:24:46Z (z knihy) - stáří při obno…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260911120135-c46f/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260911120135-c46f</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:49Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tato epizoda byla uzavřena příkazem `majordomus recover`, ne workerem, který ji otevřel. Nepřišla žádná koncová událost: provider byl zabit, zhavaroval nebo ztratil spojení. - poslední známka života: 2026-09-11T12:01:35Z (z ledgeru) - age at rec…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260911080815-8fa4/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260911080815-8fa4</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:49Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tuto epizodu uzavřel `majordomus recover`, ne worker, který ji otevřel. Nikdy nedorazila koncová událost: provider byl zabit, spadl nebo ztratil spojení. - poslední známka života: 2026-09-11T08:08:15Z (z evidenční knihy) - stáří při obnově…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260911222939-5814/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260911222939-5814</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:48Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tuto epizodu uzavřel `majordomus recover`, ne pracovník, který ji otevřel. Nikdy nedorazila koncová událost: provider byl zabit, spadl nebo ztratil spojení. - poslední známka života: 2026-09-15T17:14:00Z (z knihy záznamů) - stáří při obnově…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260916231308-07c9/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260916231308-07c9</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:48Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tuto epizodu uzavřel `majordomus recover`, ne pracovník, který ji otevřel. Nikdy nedorazila žádná koncová událost: poskytovatel byl zabit, spadl nebo ztratil spojení. - poslední známka života: 2026-09-16T23:23:09Z (z ledgeru) - stáří při obn…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260916211754-94e5/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260916211754-94e5</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:48Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tato epizoda byla uzavřena příkazem `majordomus recover`, ne pracovníkem, který ji otevřel. Nikdy nedorazila koncová událost: poskytovatel byl zabit, spadl nebo ztratil spojení. - last sign of life: 2026-09-16T21:17:54Z (from the ledger) - age at rec…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260912063801-209b/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260912063801-209b</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:48Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tuto epizodu uzavřel `majordomus recover`, nikoli pracovník, který ji otevřel. Nikdy nepřišla událost konce: poskytovatel byl ukončen, spadl nebo ztratil spojení. - poslední známka života: 2026-09-12T11:04:55Z (z účetní knihy) - stáří při rec…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260911063532-b41b/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260911063532-b41b</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:47Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tato epizoda byla uzavřena příkazem `majordomus recover`, ne workerem, který ji otevřel. Nikdy nedorazila koncová událost: provider byl zabit, spadl nebo ztratil spojení. - poslední známka života: 2026-09-11T13:39:49Z (z hlavní knihy) - stáří při obnově…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260916231519-1549/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260916231519-1549</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:47Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tato epizoda byla uzavřena příkazem `majordomus recover`, ne pracovníkem, který ji otevřel. Nikdy nedorazila koncová událost: poskytovatel byl zabit, spadl nebo ztratil spojení. - last sign of life: 2026-09-16T23:15:20Z (from the ledger) - age at rec…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260916202947-fc7f/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260916202947-fc7f</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:47Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tuto epizodu uzavřel `majordomus recover`, ne worker, který ji otevřel. Nikdy nepřišla událost konce: provider byl ukončen, spadl nebo ztratil spojení. - poslední známka života: 2026-09-16T20:33:38Z (z ledgeru) - věk při rec…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260915180057-1a99/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260915180057-1a99</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:47Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tuto epizodu uzavřel `majordomus recover`, ne pracovník, který ji otevřel. Nikdy nedorazila událost konce: poskytovatel byl zabit, spadl nebo ztratil spojení. - poslední známka života: 2026-09-15T18:00:57Z (z knihy) - age at rec…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260916233109-d69e/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260916233109-d69e</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:46Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tato epizoda byla uzavřena příkazem `majordomus recover`, ne pracovníkem, který ji otevřel. Nikdy nedorazila koncová událost: poskytovatel byl zabit, spadl nebo ztratil spojení. - last sign of life: 2026-09-16T23:31:09Z (from the ledger) - age at rec…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20261003234111-d01d/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20261003234111-d01d</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:46Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tuto epizodu uzavřel `majordomus recover`, ne worker, který ji otevřel. Nepřišla žádná koncová událost: poskytovatel byl zabit, spadl nebo ztratil spojení. - poslední známka života: 2026-10-03T23:41:12Z (z knihy) - stáří při obn…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20261003194255-3541/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20261003194255-3541</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:46Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tuto epizodu uzavřel `majordomus recover`, ne worker, který ji otevřel. Nikdy nedorazila událost konce: poskytovatel byl zabit, spadl nebo ztratil spojení. - poslední známka života: 2026-10-03T19:42:55Z (z ledgeru) - stáří při obnově…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260916233157-4418/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260916233157-4418</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:46Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tato epizoda byla uzavřena příkazem `majordomus recover`, ne pracovníkem, který ji otevřel. Nikdy nepřišla koncová událost: poskytovatel byl zabit, spadl nebo ztratil spojení. - poslední známka života: 2026-09-17T18:29:21Z (z ledgeru) - stáří při obno…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260916231448-3ff7/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260916231448-3ff7</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:46Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tuto epizodu uzavřel `majordomus recover`, ne worker, který ji otevřel. Nepřišla žádná koncová událost: poskytovatel byl zabit, spadl nebo ztratil spojení. - poslední známka života: 2026-09-16T23:14:48Z (z knihy) - stáří při obn…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260913055646-d956/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260913055646-d956</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:46Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tuto epizodu uzavřel `majordomus recover`, ne worker, který ji otevřel. Nikdy nedorazila koncová událost: provider byl zabit, spadl nebo ztratil spojení. - poslední známka života: 2026-09-14T18:01:54Z (z ledgeru) - stáří při rec…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260930220421-5917/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260930220421-5917</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:45Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tuto epizodu uzavřel `majordomus recover`, ne pracovník, který ji otevřel. Nikdy nedorazila událost konce: poskytovatel byl zabit, spadl nebo ztratil spojení. - poslední známka života: 2026-09-30T22:49:47Z (z knihy) - age at rec…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260924131409-94a9/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260924131409-94a9</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:45Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tuto epizodu uzavřel `majordomus recover`, nikoli pracovník, který ji otevřel. Nikdy nepřišla událost konce: poskytovatel byl ukončen, spadl nebo ztratil spojení. - poslední známka života: 2026-09-30T12:58:28Z (z účetní knihy) - stáří při rec…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260924102525-7640/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260924102525-7640</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:45Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tato epizoda byla uzavřena příkazem `majordomus recover`, ne pracovníkem, který ji otevřel. Nikdy nepřišla koncová událost: poskytovatel byl zabit, spadl nebo ztratil spojení. - poslední známka života: 2026-09-24T10:25:26Z (z ledgeru) - stáří při obno…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260916231405-69f3/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260916231405-69f3</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:45Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tuto epizodu uzavřel `majordomus recover`, ne worker, který ji otevřel. Nikdy nedorazila žádná koncová událost: provider byl zabit, spadl, nebo ztratil spojení. - poslední známka života: 2026-09-17T00:15:08Z (z ledgeru) - stáří při obnově…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260915202711-27f1/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260915202711-27f1</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:45Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tuto epizodu uzavřel `majordomus recover`, ne worker, který ji otevřel. Nikdy nepřišla událost konce: provider byl zabit, spadl nebo ztratil spojení. - poslední známka života: 2026-09-15T20:27:13Z (z ledgeru) - stáří při obnovení…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260915152859-4c3d/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260915152859-4c3d</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:45Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tuto epizodu uzavřel `majordomus recover`, ne worker, který ji otevřel. Nikdy nepřišla událost konce: provider byl zabit, spadl nebo ztratil spojení. - poslední známka života: 2026-09-15T15:28:59Z (z ledgeru) - stáří při obnovení…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260911091724-cb7c/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260911091724-cb7c</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:44Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tato epizoda byla uzavřena příkazem `majordomus recover`, ne workerem, který ji otevřel. Nikdy nepřišla žádná koncová událost: poskytovatel byl ukončen, spadl nebo ztratil spojení. - poslední známka života: 2026-09-11T09:17:24Z (z účetní knihy) - stáří při obnově…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260930225436-b03a/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260930225436-b03a</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:44Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tuto epizodu uzavřel `majordomus recover`, ne pracovník, který ji otevřel. Nikdy nedorazila událost konce: poskytovatel byl zabit, spadl nebo ztratil spojení. - poslední známka života: 2026-10-01T14:49:45Z (z knihy) - age at rec…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260916232659-7ce6/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260916232659-7ce6</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:44Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tato epizoda byla uzavřena příkazem `majordomus recover`, ne workerem, který ji otevřel. Nikdy nepřišla žádná koncová událost: poskytovatel byl ukončen, spadl nebo ztratil spojení. - poslední známka života: 2026-09-16T23:26:59Z (z účetní knihy) - stáří při obnově…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260916231712-c4a4/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260916231712-c4a4</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:44Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tuto epizodu uzavřel `majordomus recover`, ne worker, který ji otevřel. Nikdy nepřišla událost konce: poskytovatel byl zabit, zhavaroval nebo ztratil spojení. - poslední známka života: 2026-09-16T23:17:12Z (z ledgeru) - stáří při obno…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260915214421-d1ad/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260915214421-d1ad</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:44Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tato epizoda byla uzavřena příkazem `majordomus recover`, ne workerem, který ji otevřel. Nikdy nepřišla žádná koncová událost: poskytovatel byl ukončen, spadl nebo ztratil spojení. - poslední známka života: 2026-09-16T19:06:02Z (z účetní knihy) - stáří při obnově…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260911220934-09c7/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260911220934-09c7</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:44Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tuto epizodu uzavřel `majordomus recover`, ne pracovník, který ji otevřel. Nikdy nedorazila žádná koncová událost: poskytovatel byl zabit, spadl nebo ztratil spojení. - poslední známka života: 2026-09-12T07:56:16Z (z ledgeru) - stáří při obn…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260929175851-de4c/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260929175851-de4c</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:43Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tuto epizodu uzavřel `majordomus recover`, ne pracovník, který ji otevřel. Nikdy nedorazila koncová událost: provider byl zabit, spadl nebo ztratil spojení. - poslední známka života: 2026-10-04T01:41:32Z (z knihy záznamů) - stáří při obnově…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260916203829-9000/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260916203829-9000</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:43Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tuto epizodu uzavřel `majordomus recover`, ne pracovník, který ji otevřel. Nikdy nedorazila koncová událost: provider byl zabit, spadl nebo ztratil spojení. - poslední známka života: 2026-09-16T21:17:52Z (z knihy záznamů) - stáří při obnově…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260915175504-3486/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260915175504-3486</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:43Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tuto epizodu uzavřel `majordomus recover`, nikoli pracovník, který ji otevřel. Nikdy nepřišla událost konce: poskytovatel byl ukončen, spadl nebo ztratil spojení. - poslední známka života: 2026-09-15T17:55:04Z (z účetní knihy) - stáří při rec…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260915171454-b161/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260915171454-b161</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:43Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tato epizoda byla uzavřena příkazem `majordomus recover`, ne workerem, který ji otevřel. Nikdy nepřišla žádná koncová událost: poskytovatel byl ukončen, spadl nebo ztratil spojení. - poslední známka života: 2026-09-15T19:09:59Z (z účetní knihy) - stáří při obnově…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260912075636-c542/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260912075636-c542</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:43Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tuto epizodu uzavřel `majordomus recover`, ne worker, který ji otevřel. Nikdy nedorazila závěrečná událost: poskytovatel byl zabit, spadl nebo ztratil spojení. - poslední známka života: 2026-09-12T11:07:15Z (z ledgeru) - stáří při obnově…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260911122020-b01d/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260911122020-b01d</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:43Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tuto epizodu uzavřel `majordomus recover`, ne worker, který ji otevřel. Nikdy nedorazila koncová událost: provider byl zabit, spadl nebo ztratil spojení. - poslední známka života: 2026-09-11T12:20:20Z (z evidenční knihy) - stáří při obnově…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260930225014-060c/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260930225014-060c</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:42Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tato epizoda byla uzavřena příkazem `majordomus recover`, nikoli pracovníkem, který ji otevřel. Nikdy nedorazila událost konce: provider byl zabit, spadl nebo ztratil spojení. - poslední známka života: 2026-09-30T22:54:32Z (z ledgeru) - age at rec…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260916232208-856f/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260916232208-856f</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:42Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tuto epizodu uzavřel `majordomus recover`, ne worker, který ji otevřel. Nikdy nepřišla událost konce: provider byl ukončen, spadl nebo ztratil spojení. - poslední známka života: 2026-09-16T23:22:08Z (z ledgeru) - věk při rec…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260912185145-bc8c/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260912185145-bc8c</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:42Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tuto epizodu uzavřel `majordomus recover`, ne worker, který ji otevřel. Nikdy nedorazila žádná koncová událost: provider byl zabit, spadl, nebo ztratil spojení. - poslední známka života: 2026-09-12T19:05:48Z (z ledgeru) - stáří při obnově…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260912184450-bec7/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260912184450-bec7</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:42Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tuto epizodu uzavřel `majordomus recover`, ne worker, který ji otevřel. Nikdy nedorazila žádná koncová událost: provider byl zabit, spadl, nebo ztratil spojení. - poslední známka života: 2026-09-15T17:14:24Z (z ledgeru) - stáří při obnově…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260911121531-e471/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260911121531-e471</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:42Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tato epizoda byla uzavřena příkazem `majordomus recover`, nikoli pracovníkem, který ji otevřel. Nikdy nedorazila událost konce: provider byl zabit, spadl nebo ztratil spojení. - poslední známka života: 2026-09-11T12:15:32Z (z ledgeru) - stáří při rec…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260911111124-edd8/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260911111124-edd8</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:42Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tato epizoda byla uzavřena příkazem `majordomus recover`, ne workerem, který ji otevřel. Nepřišla žádná koncová událost: provider byl zabit, zhavaroval nebo ztratil spojení. - poslední známka života: 2026-09-11T11:11:24Z (z ledgeru) - age at rec…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20261003212917-9079/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20261003212917-9079</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:41Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tuto epizodu uzavřel `majordomus recover`, ne worker, který ji otevřel. Nikdy nepřišla událost konce: poskytovatel byl zabit, zhavaroval nebo ztratil spojení. - poslední známka života: 2026-10-04T02:53:14Z (z ledgeru) - stáří při obno…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260924174955-5df1/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260924174955-5df1</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:41Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tato epizoda byla uzavřena příkazem `majordomus recover`, nikoli pracovníkem, který ji otevřel. Nikdy nedorazila událost konce: provider byl zabit, spadl nebo ztratil spojení. - poslední známka života: 2026-09-30T12:58:37Z (z ledgeru) - age at rec…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260923083805-2e37/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260923083805-2e37</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:41Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tuto epizodu uzavřel `majordomus recover`, ne pracovník, který ji otevřel. Nikdy nedorazila žádná koncová událost: provider byl zabit, spadl nebo ztratil spojení. - poslední známka života: 2026-09-24T17:23:35Z (z knihy) - stáří při obno…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260916221803-e4d0/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260916221803-e4d0</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:41Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tuto epizodu uzavřel `majordomus recover`, ne worker, který ji otevřel. Nikdy nepřišla událost konce: provider byl zabit, spadl nebo ztratil spojení. - poslední známka života: 2026-09-16T22:18:03Z (z ledgeru) - stáří při obnovení…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260911111626-a947/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260911111626-a947</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:41Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tato epizoda byla uzavřena příkazem `majordomus recover`, nikoli pracovníkem, který ji otevřel. Nikdy nedorazila událost konce: provider byl zabit, spadl nebo ztratil spojení. - poslední známka života: 2026-09-11T11:16:27Z (z ledgeru) - age at rec…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260911084942-cc41/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260911084942-cc41</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:41Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tuto epizodu uzavřel `majordomus recover`, ne worker, který ji otevřel. Nikdy nedorazila závěrečná událost: poskytovatel byl zabit, spadl nebo ztratil spojení. - poslední známka života: 2026-09-11T08:49:42Z (z ledgeru) - stáří při obnově…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20261004104409-31ef/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20261004104409-31ef</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:40Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tato epizoda byla uzavřena příkazem `majordomus recover`, ne workerem, který ji otevřel. Nepřišla žádná koncová událost: provider byl zabit, zhavaroval nebo ztratil spojení. - poslední známka života: 2026-10-04T10:45:00Z (z ledgeru) - age at rec…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260924172337-a434/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260924172337-a434</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:40Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tuto epizodu uzavřel `majordomus recover`, ne worker, který ji otevřel. Nikdy nepřišla událost konce: provider byl ukončen, spadl nebo ztratil spojení. - poslední známka života: 2026-09-30T12:58:07Z (z ledgeru) - věk při rec…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260916195820-cee6/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260916195820-cee6</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:40Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tato epizoda byla uzavřena příkazem `majordomus recover`, ne workerem, který ji otevřel. Nikdy nepřišla žádná koncová událost: poskytovatel byl ukončen, spadl nebo ztratil spojení. - poslední známka života: 2026-09-16T20:37:42Z (z účetní knihy) - stáří při obnově…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260916090000-6d58/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260916090000-6d58</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:40Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tuto epizodu uzavřel `majordomus recover`, ne pracovník, který ji otevřel. Nikdy nedorazila žádná koncová událost: provider byl zabit, spadl nebo ztratil spojení. - poslední známka života: 2026-09-16T15:29:17Z (z knihy) - stáří při obno…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260915191627-2136/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260915191627-2136</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:40Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tuto epizodu uzavřel `majordomus recover`, ne pracovník, který ji otevřel. Nikdy nedorazila žádná koncová událost: poskytovatel byl zabit, spadl nebo ztratil spojení. - poslední známka života: 2026-09-24T13:30:12Z (z ledgeru) - stáří při obn…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260910200453-afbb/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260910200453-afbb</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:40Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tato epizoda byla uzavřena příkazem `majordomus recover`, ne workerem, který ji otevřel. Nepřišla žádná koncová událost: provider byl zabit, zhavaroval nebo ztratil spojení. - poslední známka života: 2026-09-10T20:12:19Z (z ledgeru) - age at rec…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260930135207-a642/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260930135207-a642</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:39Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tuto epizodu uzavřel `majordomus recover`, ne worker, který ji otevřel. Nikdy nedorazila závěrečná událost: poskytovatel byl zabit, spadl nebo ztratil spojení. - poslední známka života: 2026-09-30T13:52:10Z (z ledgeru) - stáří při obnově…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260916232227-ce9f/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260916232227-ce9f</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:39Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tuto epizodu uzavřel `majordomus recover`, ne pracovník, který ji otevřel. Nikdy nedorazila žádná koncová událost: provider byl zabit, spadl nebo ztratil spojení. - poslední známka života: 2026-09-16T23:22:27Z (z knihy) - stáří při obno…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260915200727-30d3/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260915200727-30d3</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:39Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tuto epizodu uzavřel `majordomus recover`, ne pracovník, který ji otevřel. Nikdy nedorazila koncová událost: provider byl zabit, spadl nebo ztratil spojení. - poslední známka života: 2026-09-15T20:07:29Z (z knihy záznamů) - stáří při obnově…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260911121108-4457/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260911121108-4457</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:39Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tuto epizodu uzavřel `majordomus recover`, ne worker, který ji otevřel. Nikdy nepřišla událost konce: poskytovatel byl zabit, zhavaroval nebo ztratil spojení. - poslední známka života: 2026-09-11T12:11:09Z (z ledgeru) - stáří při obno…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260911071522-1779/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260911071522-1779</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:39Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tuto epizodu uzavřel `majordomus recover`, ne pracovník, který ji otevřel. Nikdy nedorazila událost konce: poskytovatel byl zabit, spadl nebo ztratil spojení. - poslední známka života: 2026-09-11T07:15:23Z (z knihy) - age at rec…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260910194205-72ea/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260910194205-72ea</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-10-07T13:28:39Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tuto epizodu uzavřel `majordomus recover`, ne pracovník, který ji otevřel. Nikdy nedorazila koncová událost: provider byl zabit, spadl nebo ztratil spojení. - poslední známka života: 2026-09-10T19:42:06Z (z knihy záznamů) - stáří při obnově…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260912111802-54ac/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260912111802-54ac</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-09-14T04:47:25Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tuto epizodu uzavřel `majordomus recover`, ne pracovník, který ji otevřel. Nikdy nedorazila žádná koncová událost: poskytovatel byl zabit, spadl nebo ztratil spojení. - poslední známka života: 2026-09-12T11:18:02Z (z ledgeru) - stáří při obn…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260912110906-d10e/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260912110906-d10e</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-09-14T04:47:25Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tato epizoda byla uzavřena příkazem `majordomus recover`, ne pracovníkem, který ji otevřel. Nikdy nepřišla koncová událost: poskytovatel byl zabit, spadl nebo ztratil spojení. - poslední známka života: 2026-09-12T11:09:06Z (z ledgeru) - stáří při obno…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260912100926-89ec/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260912100926-89ec</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-09-14T04:47:25Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Tato epizoda byla uzavřena příkazem `majordomus recover`, nikoli pracovníkem, který ji otevřel. Nikdy nedorazila událost konce: provider byl zabit, spadl nebo ztratil spojení. - poslední známka života: 2026-09-12T17:35:35Z (z ledgeru) - age at rec…</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260910214152-71cb/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260910214152-71cb</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-09-11T07:27:23Z</span>
+      </div>
+      <p class="mt-2 text-xs text-body-subtle">1 commit(ů), 12 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260910212104-f50d/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260910212104-f50d</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-09-11T07:27:23Z</span>
+      </div>
+      <p class="mt-2 text-xs text-body-subtle">1 commit(ů), 12 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260910211853-8a3e/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260910211853-8a3e</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-09-11T07:27:23Z</span>
+      </div>
+      <p class="mt-2 text-xs text-body-subtle">1 commit(ů), 12 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260910211505-3dbe/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260910211505-3dbe</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-09-11T07:27:23Z</span>
+      </div>
+      <p class="mt-2 text-xs text-body-subtle">1 commit(ů), 12 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260910222723-14ce/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260910222723-14ce</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-09-11T07:27:18Z</span>
+      </div>
+      <p class="mt-2 text-xs text-body-subtle">1 commit, 10 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260910214250-e597/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260910214250-e597</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-09-11T07:27:18Z</span>
+      </div>
+      <p class="mt-2 text-xs text-body-subtle">1 commit, 10 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260911054710-3523/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260911054710-3523</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">uzavřeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-09-11T06:38:11Z</span>
+      </div>
+      <p class="mt-2 text-xs text-body-subtle">0 commit(ů), 9 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260911060123-e0d4/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260911060123-e0d4</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">uzavřeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-09-11T06:35:31Z</span>
+      </div>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 8 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260910210510-8f20/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260910210510-8f20</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-09-10T21:15:03Z</span>
+      </div>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 42 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260910205542-e2a6/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260910205542-e2a6</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">zavřeno 2026-09-10T21:04:26Z</span>
+      </div>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 39 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260909152316-024f/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260909152316-024f</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">uzavřeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-09-10T10:39:31Z</span>
+      </div>
+      <p class="mt-2 text-xs text-body-subtle">296 commitů, 122 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260908193341-cdf1/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260908193341-cdf1</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">uzavřeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-09-09T15:08:32Z</span>
+      </div>
+      <p class="mt-2 text-xs text-body-subtle">16 commitů, 1 změněná cesta</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260908003954-b327/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260908003954-b327</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">uzavřeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-09-08T19:33:29Z</span>
+      </div>
+      <p class="mt-2 text-xs text-body-subtle">116 commit(ů), 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260906214710-1a63/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260906214710-1a63</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">přerušeno</span>
+        <span class="font-mono text-xs text-body-subtle">master</span>
+        <span class="text-xs text-body-subtle">zavřeno 2026-09-08T00:36:54Z</span>
+      </div>
+      <p class="mt-2 text-xs text-body-subtle">31 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260906104842-c7cf/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260906104842-c7cf</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">uzavřeno</span>
+        <span class="font-mono text-xs text-body-subtle">feature/ai-artifacts</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-09-06T11:05:57Z</span>
+      </div>
+      <p class="mt-2 text-xs text-body-subtle">0 commit(ů), 225 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260906100402-1b4e/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260906100402-1b4e</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">uzavřeno</span>
+        <span class="font-mono text-xs text-body-subtle">feature/ai-artifacts</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-09-06T10:41:35Z</span>
+      </div>
+      <p class="mt-2 text-xs text-body-subtle">5 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260906085201-3c11/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260906085201-3c11</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">uzavřeno</span>
+        <span class="font-mono text-xs text-body-subtle">feature/session-lifecycle</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-09-06T08:55:03Z</span>
+      </div>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 1 změněná cesta</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260906055253-ba53/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260906055253-ba53</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">uzavřeno</span>
+        <span class="font-mono text-xs text-body-subtle">feature/session-lifecycle</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-09-06T08:51:52Z</span>
+      </div>
+      <p class="mt-2 text-xs text-body-subtle">5 commitů, 0 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260906055206-8ece/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260906055206-8ece</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">uzavřeno</span>
+        <span class="font-mono text-xs text-body-subtle">feature/session-lifecycle</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-09-06T05:52:51Z</span>
+      </div>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 12 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260906054911-cbb8/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260906054911-cbb8</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">uzavřeno</span>
+        <span class="font-mono text-xs text-body-subtle">feature/session-lifecycle</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-09-06T05:51:16Z</span>
+      </div>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 11 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260906053339-ec22/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260906053339-ec22</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">uzavřeno</span>
+        <span class="font-mono text-xs text-body-subtle">feature/session-lifecycle</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-09-06T05:49:10Z</span>
+      </div>
+      <p class="mt-2 text-xs text-body-subtle">1 commit, 10 změněných cest</p>
+    </li>
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="https://majordomus.dev/cs/sessions/s-20260906035523-7b6c/" class="font-mono text-sm font-medium text-fg-brand hover:underline">s-20260906035523-7b6c</a>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">uzavřeno</span>
+        <span class="font-mono text-xs text-body-subtle">feature/session-records</span>
+        <span class="text-xs text-body-subtle">uzavřeno 2026-09-06T03:55:23Z</span>
+      </div><p class="mt-2 text-sm leading-relaxed text-body">Záznamy relací se staly objekty vrstvy.</p>
+      <p class="mt-2 text-xs text-body-subtle">0 commitů, 14 změněných cest</p>
+    </li>
+  </ul>
+</div>
+
+</main>
+
+<footer id="site-map" class="border-t border-default bg-neutral-primary-soft" aria-label="Mapa webu">
+  <div class="mx-auto w-full max-w-screen-xl p-4 md:py-8">
+    <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
+      
+      <div class="min-w-0 scroll-mt-20" id="site-map-1">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/cs/domains/" class="hover:text-heading hover:underline">Produkt</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/cs/domains/" class="hover:text-heading hover:underline">Produkt podle oblastí</a></li><li><a href="https://majordomus.dev/cs/why/" class="hover:text-heading hover:underline">Proč existuje: způsoby selhání</a></li><li><a href="https://majordomus.dev/cs/features/" class="hover:text-heading hover:underline">Funkce</a></li><li><a href="https://majordomus.dev/cs/features/matrix/" class="hover:text-heading hover:underline">Funkce a rozhraní</a></li><li><a href="https://majordomus.dev/cs/use-cases/" class="hover:text-heading hover:underline">Případy užití</a></li><li><a href="https://majordomus.dev/cs/applications/" class="hover:text-heading hover:underline">Aplikace</a></li><li><a href="https://majordomus.dev/cs/skills/" class="hover:text-heading hover:underline">Dovednosti</a></li><li><a href="https://majordomus.dev/cs/supervises/" class="hover:text-heading hover:underline">Na co dohlíží</a></li><li><a href="https://majordomus.dev/cs/docs/majordomus-ui/" class="hover:text-heading hover:underline">UI produktu</a></li><li><a href="https://majordomus.dev/cs/docs/cockpit/" class="hover:text-heading hover:underline">Cockpit</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0 scroll-mt-20" id="site-map-2">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/cs/method/" class="hover:text-heading hover:underline">Princip</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/cs/method/" class="hover:text-heading hover:underline">Doktrína, politika, pravidlo, vynucování</a></li><li><a href="https://majordomus.dev/cs/method/axes/" class="hover:text-heading hover:underline">Čtyři osy</a></li><li><a href="https://majordomus.dev/cs/method/argument/" class="hover:text-heading hover:underline">Celá argumentace</a></li><li><a href="https://majordomus.dev/cs/docs/concepts/" class="hover:text-heading hover:underline">Slovník</a></li><li><a href="https://majordomus.dev/cs/policy/" class="hover:text-heading hover:underline">Kanonická politika</a></li><li><a href="https://majordomus.dev/cs/context/" class="hover:text-heading hover:underline">Kontrakty adresářů</a></li><li><a href="https://majordomus.dev/cs/sessions/" class="hover:text-heading hover:underline">Relace</a></li><li><a href="https://majordomus.dev/cs/docs/planning/" class="hover:text-heading hover:underline">Jak funguje plánování</a></li><li><a href="https://majordomus.dev/cs/docs/design/" class="hover:text-heading hover:underline">Design</a></li><li><a href="https://majordomus.dev/cs/kit/" class="hover:text-heading hover:underline">Sada komponent</a></li><li><a href="https://majordomus.dev/cs/docs/surfaces/" class="hover:text-heading hover:underline">Jak se odvozují rozhraní</a></li><li><a href="https://majordomus.dev/cs/architecture/" class="hover:text-heading hover:underline">Jak je tento web postaven</a></li><li><a href="https://majordomus.dev/cs/docs/product/" class="hover:text-heading hover:underline">Jak se odvozuje stránka produktu</a></li><li><a href="https://majordomus.dev/cs/proof-carrying-documentation/" class="hover:text-heading hover:underline">Článek: dokumentace nesoucí důkaz</a></li><li><a href="https://majordomus.dev/cs/everything-followed/" class="hover:text-heading hover:underline">Článek: všechno, dohledatelně</a></li><li><a href="https://majordomus.dev/cs/dokumentace-kterou-lze-odmitnout/" class="hover:text-heading hover:underline">Stejná argumentace, napsaná česky</a></li><li><a href="https://majordomus.dev/cs/vsechno-v-jednom-proudu/" class="hover:text-heading hover:underline">Everything, followed, written in Czech</a></li><li><a href="https://majordomus.dev/cs/the-bet-on-a-layer/" class="hover:text-heading hover:underline">Essay: the bet on a layer, not a model</a></li><li><a href="https://majordomus.dev/cs/teze/" class="hover:text-heading hover:underline">Esej v češtině: sázka na vrstvu, ne na model</a></li><li><a href="https://majordomus.dev/cs/a-pasted-brief-becomes-a-plan/" class="hover:text-heading hover:underline">Article: a pasted brief becomes a plan</a></li><li><a href="https://majordomus.dev/cs/vlozene-zadani-se-stava-planem/" class="hover:text-heading hover:underline">The pasted brief, written in Czech</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0 scroll-mt-20" id="site-map-3">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/cs/challenge/" class="hover:text-heading hover:underline">Důkazy</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/cs/challenge/" class="hover:text-heading hover:underline">Výzva: sledujte, jak odmítne agenta</a></li><li><a href="https://majordomus.dev/cs/guarantees/" class="hover:text-heading hover:underline">Záruky</a></li><li><a href="https://majordomus.dev/cs/evidence/" class="hover:text-heading hover:underline">Graf důkazů</a></li><li><a href="https://majordomus.dev/cs/contract/" class="hover:text-heading hover:underline">Kontrakt dokončení</a></li><li><a href="https://majordomus.dev/cs/doctrines/" class="hover:text-heading hover:underline">Doktrína</a></li><li><a href="https://majordomus.dev/cs/adrs/" class="hover:text-heading hover:underline">Rozhodnutí</a></li><li><a href="https://majordomus.dev/cs/rules/" class="hover:text-heading hover:underline">Platná pravidla</a></li><li><a href="https://majordomus.dev/cs/registry/benchmarks/" class="hover:text-heading hover:underline">Měření výkonu</a></li><li><a href="https://majordomus.dev/cs/economics/" class="hover:text-heading hover:underline">Ekonomika tokenů</a></li><li><a href="https://majordomus.dev/cs/limitations/" class="hover:text-heading hover:underline">Omezení</a></li><li><a href="https://majordomus.dev/cs/roadmap/" class="hover:text-heading hover:underline">Plán rozvoje</a></li><li><a href="https://majordomus.dev/cs/plan/" class="hover:text-heading hover:underline">Milníky a úkoly</a></li><li><a href="https://majordomus.dev/cs/plan/dag/" class="hover:text-heading hover:underline">Graf závislostí</a></li><li><a href="https://majordomus.dev/cs/changelog/" class="hover:text-heading hover:underline">Changelog</a></li><li><a href="https://majordomus.dev/cs/docs/dogfooding/" class="hover:text-heading hover:underline">Dogfooding</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0 scroll-mt-20" id="site-map-4">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/cs/docs/" class="hover:text-heading hover:underline">Dokumenty</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/cs/docs/" class="hover:text-heading hover:underline">Všechny dokumenty</a></li><li><a href="https://majordomus.dev/cs/docs/install/" class="hover:text-heading hover:underline">Instalace</a></li><li><a href="https://majordomus.dev/cs/commands/" class="hover:text-heading hover:underline">Příkazy</a></li><li><a href="https://majordomus.dev/cs/profiles/" class="hover:text-heading hover:underline">Profily provádění</a></li><li><a href="https://majordomus.dev/cs/docs/cli/" class="hover:text-heading hover:underline">Přehled příkazů</a></li><li><a href="https://majordomus.dev/cs/docs/api/" class="hover:text-heading hover:underline">HTTP API</a></li><li><a href="https://majordomus.dev/rustdoc/" class="hover:text-heading hover:underline">Rust API</a></li><li><a href="https://majordomus.dev/cs/registry/mcp/" class="hover:text-heading hover:underline">Rozhraní MCP</a></li><li><a href="https://majordomus.dev/cs/docs/schemas/" class="hover:text-heading hover:underline">Schémata souborů</a></li><li><a href="https://majordomus.dev/cs/registry/" class="hover:text-heading hover:underline">Registr</a></li><li><a href="https://majordomus.dev/cs/map/" class="hover:text-heading hover:underline">Mapa programu</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/82ac259d0ae7c3901ee09bed461e2f62318a6642/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/82ac259d0ae7c3901ee09bed461e2f62318a6642/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/82ac259d0ae7c3901ee09bed461e2f62318a6642/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+        </ul>
+      </div>
+    </div>
+    <hr class="my-6 border-default sm:mx-auto lg:my-8"><div class="space-y-4">
+    <div class="sm:flex sm:items-center sm:justify-between">
+      <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
+    </div>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v1.0.0-alpha.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/82ac259d0ae7c3901ee09bed461e2f62318a6642" class="font-mono underline">82ac259</a> · inputs <span class="font-mono">ac7a158bc7ec</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    </div>
+  </div>
+</footer>
+<dialog id="site-search" data-site-search data-index="https://majordomus.dev/docs/index.json" aria-labelledby="site-search-label" class="m-0 h-dvh max-h-none w-full max-w-none border-0 bg-neutral-primary p-0 text-body backdrop:bg-neutral-primary-strong/80 sm:mx-auto sm:mt-20 sm:h-auto sm:max-h-[75vh] sm:max-w-2xl sm:rounded-base sm:border sm:border-default sm:shadow-lg">
+  <div class="flex h-full max-h-[inherit] flex-col">
+    <div class="flex items-center gap-2 border-b border-default p-3">
+      <label id="site-search-label" for="site-search-input" class="sr-only">Hledat na tomto webu</label>
+      <svg class="h-5 w-5 shrink-0 text-body-subtle" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z"/></svg>
+      <input id="site-search-input" type="search" role="combobox" aria-expanded="false" aria-controls="site-search-results" aria-autocomplete="list" aria-describedby="site-search-status" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go" placeholder="Pravidlo, rozhodnutí, příkaz, stránka…" class="block min-w-0 flex-1 rounded-base border border-default-medium bg-neutral-secondary-medium px-3 py-2.5 text-base text-heading focus:border-brand focus:ring-brand sm:text-sm">
+      <button type="button" data-site-search-close class="inline-flex h-10 shrink-0 items-center rounded-base border border-default px-3 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">Zavřít<span class="sr-only"> vyhledávání</span></button>
+    </div>
+    <p id="site-search-status" class="px-4 pt-3 text-xs text-body-subtle" aria-live="polite" data-site-search-status>Prohledává názvy a popisy všech stránek, které tento web publikuje.</p>
+    <div id="site-search-results" role="listbox" aria-label="Odpovídající stránky" class="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain px-2 py-2" data-site-search-results></div>
+    <template data-site-search-item><a tabindex="-1" class="block rounded-base px-3 py-2 hover:bg-neutral-secondary-medium aria-selected:bg-neutral-secondary-medium aria-selected:ring-2 aria-selected:ring-brand"><span class="block break-words font-medium text-heading" data-slot="title"></span><span class="block break-all font-mono text-xs text-body-subtle" data-slot="meta"></span><span class="mt-0.5 line-clamp-2 text-sm text-body" data-slot="description"></span></a></template>
+  </div>
+</dialog>
+
+<script defer src="https://majordomus.dev/js/nav.js"></script>
+<script defer src="https://majordomus.dev/js/search.js"></script>
+<script src="https://majordomus.dev/js/theme.js"></script>
+<script defer src="https://majordomus.dev/js/alpine.min.js"></script>
+
+</body>
+</html>
