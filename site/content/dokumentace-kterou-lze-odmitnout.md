@@ -4,8 +4,8 @@ description = "Tvrzení, které nemůže spadnout, je jen dobře naformátovaná
 template = "page.html"
 [extra]
 lang = "cs"
-alternate = "proof-carrying-documentation/"
-alternate_lang = "en"
+[extra.translations]
+en = "proof-carrying-documentation/"
 +++
 {% raw %}
 

@@ -1,0 +1,34 @@
+id: prismatic-lumen
+title: "Prismatic Lumen: the owner oversees and moves the whole mesh from one page, which owns nothing"
+slug: prismatic-lumen
+order: 164
+priority: p2
+problem: "The owner wants one place, on desktop, phone and in Claude Code, from which the whole mesh is understood and driven, and named it Prismatic Lumen on 2026-10-18. The parts exist on separate surfaces (/ui/mesh, majordomus monitor, mesh.* tools, the peer blackboard 5a is landing), and the name exists in no record, so the first worker to build it would also invent its nouns, a second UI and its own state, which rules no-new-nouns and derived-once forbid. Proposed in ADR 0201 (The persistent runtime is the authority; every operator surface, Lumen included, is a client of it); ADR 0209 (Prismatic Lumen names the owner's mesh-wide view, and it owns no scheduler, event bus, store or API) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c296#0, chatgpt-majordomus:c296#8, chatgpt-majordomus:c296#9, chatgpt-majordomus:c296#14, chatgpt-majordomus:c296#18."
+outcome: "Lumen is a declared term naming one composed view over the runtime: a page that reads blackboard, peers, mesh and monitor with freshness and reconnect recovery, offers one authorised action whose result comes from the journal, and has measured latency before any is claimed."
+current_state: "git grep -i lumen returns nothing on master 707a04c7ce8. apps/majordomus-cli/src/ui/mesh.rs renders the mesh. view::kpi_not_observed (I2943) and 5a's blackboard.snapshot, live push, socket.js and /ui/peers (I2980-I2983) are on unlanded peer branches, not on master; neither record is in this tree. safe-self-update owns self-update; web-sign-in and runtime-trust own authorisation."
+desired_state: "docs/CONCEPTS.md defines Lumen by the capabilities it composes; /ui/mesh (or the route the owner names) is that page; one mesh action is offered through an existing capability; latency is recorded against a baseline."
+scope:
+  - "docs/CONCEPTS.md"
+  - "apps/majordomus-cli/src/ui/mesh.rs"
+  - "share/ui"
+  - "docs/MAJORDOMUS_UI.md"
+  - ".ai/repo/benchmarks"
+non_scope:
+  - "A scheduler, event bus, store or API of Lumen's own"
+  - "Federation across other Prismatic projects"
+  - "Scheduled reports and notifications"
+  - "A gateway for Pages or mobile clients"
+  - "Self-update (safe-self-update)"
+  - "Anything before v1.0.0-alpha.1"
+acceptance_criteria:
+  - "Every criterion of intent the-owner-oversees-the-mesh-from-one-page has its evidence"
+  - "No capability, store or event type is added for Lumen alone"
+validation:
+  - "majordomus plan validate"
+evidence_required: []
+risks:
+  - "The critique of 2026-10-18 rates over-engineering risk as the main one: an orchestration framework disguised as UI"
+  - "Overlaps 5a's /ui/peers and f6's /proceed entrypoint, each proposed on its own unlanded branch; sequencing must follow them once they land"
+  - "It follows everything-is-followed-in-one-stream in practice; the edge is kept off the milestone so two milestones of one order are not reordered."
+created_at: 2026-10-18
+updated_at: 2026-10-18

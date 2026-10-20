@@ -4,7 +4,7 @@ description: "Turn a committed tree into token-bounded Markdown shards that a Ch
 ---
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: .ai/repo/skills/pack-for-chatgpt/SKILL.md; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.30.2 -->
+     Generator: majordomus-cli 1.0.0-alpha.1 -->
 
 # Pack the sources for a ChatGPT project
 

@@ -71,7 +71,7 @@ grep -q '<link rel="canonical" href="https://example.test/cs/">' "$CS" \
   || { echo "    the Czech copy is not its own canonical URL"; exit 1; }
 grep -q 'hreflang="cs" href="https://example.test/cs/"' "$SITE/public/index.html" \
   || { echo    "    the English page has no alternate naming its Czech copy"; exit 1; }
-grep -q 'href="https://example.test/cs/" data-i18n-keep data-i18n-current data-i18n-lang="cs" aria-current="page"' "$CS" \
+grep -q 'href="https://example.test/cs/" data-i18n-keep data-i18n-current data-i18n-lang="cs" aria-current="true"' "$CS" \
   || { echo "    the switch does not point at the Czech copy and mark it current"; exit 1; }
 grep -q 'href="https://example.test/" data-i18n-keep data-i18n-current data-i18n-lang="en">' "$CS" \
   || { echo "    the switch does not lead back to the English original"; exit 1; }

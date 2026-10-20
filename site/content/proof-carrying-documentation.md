@@ -4,8 +4,8 @@ description = "A claim that no test can fail is prose with good formatting. What
 template = "page.html"
 [extra]
 lang = "en"
-alternate = "dokumentace-kterou-lze-odmitnout/"
-alternate_lang = "cs"
+[extra.translations]
+cs = "dokumentace-kterou-lze-odmitnout/"
 +++
 {% raw %}
 

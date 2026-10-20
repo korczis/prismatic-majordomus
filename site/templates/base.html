@@ -31,8 +31,17 @@
     under its own language, and the counterpart under that one. Emitted through get_url, which
     scripts/site-basepath-check requires of every route a template writes, and resolved as an
     internal link by scripts/ci/link-check — so a counterpart that is not built is a finding
-    rather than a dead alternate. -#}
-{%- if page is defined and page.extra.alternate is defined %}
+    rather than a dead alternate. A page names its counterparts in [extra.translations]
+    (lang = "route/", for any number of languages) and gets one link per entry; the
+    two-language form, [extra] alternate and alternate_lang, is still read when it has no
+    table. scripts/site-check (check 21) holds every member of a group to naming the same
+    group back. -#}
+{%- if page is defined and page.extra.translations is defined %}
+<link rel="alternate" hreflang="{{ page_lang }}" href="{{ page_url }}">
+{%- for t_lang, t_path in page.extra.translations %}
+<link rel="alternate" hreflang="{{ t_lang }}" href="{{ get_url(path=t_path, trailing_slash=true) }}">
+{%- endfor %}
+{%- elif page is defined and page.extra.alternate is defined %}
 <link rel="alternate" hreflang="{{ page_lang }}" href="{{ page_url }}">
 <link rel="alternate" hreflang="{{ page.extra.alternate_lang }}" href="{{ get_url(path=page.extra.alternate, trailing_slash=true) }}">
 {%- endif %}

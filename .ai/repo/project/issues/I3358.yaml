@@ -1,0 +1,39 @@
+id: I3358
+milestone: the-proof-scorecard-is-published
+title: "economics check refuses a guaranteed claim of value that no passed proof test backs, in the claims matrix only"
+slug: a-value-claim-stands-on-a-passed-test
+priority: p1
+profile: implementation
+objective: "Extend apps/majordomus-cli/src/economics/claims.rs: a docs/CLAIMS.yaml claim named in a proof test's settles may carry status guaranteed only while that test reads passed, and a claim sentence that carries a value word the plan declares must be settled by some proof test. Each finding names the file, line, claim, word, test and status. An unreadable plan is a finding. General prose is not scanned for value words. Add the mutations to test/cases/431_economics_claims_gated.sh and the rule to docs/claims/economics-claims-gated.md."
+why: "The owner's report of 2026-10-19 says advantages must be measured and public claims evidence-backed. The critique counted dozens of existing hand-written sentences that use these words in other senses (for example site/content-src/proof-carrying-documentation.md:52), so a word scan of all prose would refuse master; binding the claims matrix suffices, because homepage-check's promises rule already requires a promise word's claim to be guaranteed and supported (homepage-check:523-531), and guaranteed would then require a passed test."
+current_state: "claims.rs:42-45 VOCABULARY and :51-75 SAVING decide a savings sentence; :100-112 PROSE lists the scanned files; :1093 check_claims binds claims only to methodology metrics. Case 431 holds the existing refusals."
+desired_state: "economics check is clean on master; a fixture guaranteed claim settled by T5 is refused while T5 is not passed; a fixture claim using 'fewer interventions' that no test settles is refused."
+scope:
+  - "apps/majordomus-cli/src/economics/claims.rs"
+  - "apps/majordomus-cli/tests/economics.rs"
+  - "test/cases/431_economics_claims_gated.sh"
+  - "docs/claims/economics-claims-gated.md"
+  - "docs/ECONOMICS.md"
+non_scope:
+  - "Scanning general prose for value words"
+  - "Changing homepage-check"
+  - "The refusals of I3297, which edits the same file"
+depends_on:
+  - "I3352"
+  - "I3354"
+serves:
+  - "the-product-proves-it-pays#no-unbacked-value-claim"
+acceptance_criteria:
+  - "A guaranteed claim settled by a test that is not passed is refused, and accepted in a fixture where the test reads passed"
+  - "A claim sentence with a declared value word that no test settles is refused"
+  - "An unreadable plan is a finding, never a clean result"
+  - "majordomus economics check passes on master's tree"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test economics"
+  - "bash test/run.sh 431_economics_claims_gated"
+  - "majordomus economics check"
+  - "cargo fmt --manifest-path apps/majordomus-cli/Cargo.toml --check"
+evidence_required:
+  - "case_value_claim_refused_until_passed"
+created_at: 2026-10-19
+updated_at: 2026-10-19

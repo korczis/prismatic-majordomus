@@ -524,7 +524,7 @@ export function switchLanguage(html, { lang, base, englishRoute, prefix, langs =
     let tag = `<a${a} data-i18n-lang="${l}"${b}>`;
     tag = tag.replace(/\shref="[^"]*"/, ` href="${url(l)}"`);
     tag = tag.replace(/\saria-current="[^"]*"/, '');
-    if (l === lang && /\sdata-i18n-current/.test(tag)) tag = tag.replace(/>$/, ' aria-current="page">');
+    if (l === lang && /\sdata-i18n-current/.test(tag)) tag = tag.replace(/>$/, ' aria-current="true">');
     return tag;
   });
   out = out.replace(/(<span[^>]*\sdata-i18n-current-label[^>]*>)[^<]*(<\/span>)/g, `$1${lang}$2`);

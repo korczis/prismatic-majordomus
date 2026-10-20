@@ -1,0 +1,31 @@
+id: I3224
+milestone: a-visitor-understands-and-checks-majordomus
+title: "Every problem and every step on the homepage leads to the feature and evidence behind it, with the maturity the product model derives"
+slug: every-homepage-node-leads-to-evidence
+priority: p2
+profile: implementation
+objective: "Make the recognise section's problems and the how section's steps nodes that name the features answering them, derived and never declared (a problem's features are its domain's; a step's are the product.json features whose commands contain its lifecycle command), with those features' evidence and each feature's declared status and claims' evidence verdict; a step that no feature names is labelled as such."
+why: "On 2026-10-12 ChatGPT proposed a clickable 'how it works' that never overclaims; the owner asked on 2026-10-10 for a project-oriented, click-through page. I2745 makes the page state no present it does not read; this extends that to the problem and step nodes. Sources: chatgpt-majordomus:c215#8, chatgpt-majordomus:c235#2."
+current_state: "Verified on master 707a04c7ce8: site/data/homepage.toml problems = [context, coordination, completion], each problem card links #domain-<id> on the map; the how section's steps link their recorded runs; feature status is stable, draft or deprecated (share/schemas/majordomus/feature/feature.v1.schema.json); site/data/registry/product.json carries features[].commands and evidence.claims."
+desired_state: "Node membership and labels are derived from site/data/registry/product.json, and homepage-check refuses a node without a feature and a label that is not the derived one."
+scope:
+  - "site/templates/index.html"
+  - "scripts/generate-site-data"
+  - "scripts/ci/homepage-check"
+non_scope:
+  - "New sections"
+  - "Audience variants"
+depends_on:
+  - "I2745"
+serves:
+  - "a-visitor-understands-and-checks-majordomus#every-node-leads-to-evidence"
+acceptance_criteria:
+  - "Every node links to at least one feature page and its evidence"
+validation:
+  - "scripts/ci/homepage-check"
+  - "scripts/site-check"
+  - "bash test/run.sh 333_homepage_narrative"
+evidence_required:
+  - "homepage_check_node_maturity"
+created_at: 2026-10-18
+updated_at: 2026-10-18
