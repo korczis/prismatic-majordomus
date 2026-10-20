@@ -1,0 +1,32 @@
+id: I3214
+milestone: the-ui-works-on-a-phone
+title: "The narrow-screen menu of /ui and /cockpit closes on Escape, on a choice and on its backdrop, and returns focus to its toggle"
+slug: the-narrow-menu-behaves
+priority: p1
+profile: implementation
+objective: "Give /ui and /cockpit one narrow-screen drawer shell (toggle, panel, backdrop) that each surface fills with its own entries: Escape, the backdrop and choosing an entry close it, focus returns to the toggle, the page behind does not scroll while it is open, it opens with scripts off, and only one menu toggle shows at a narrow width; the Cockpit gains the narrow navigation it lacks, and cockpit-probe holds the behaviour at every declared width."
+why: "On 2026-10-08 the owner wrote that drawers do not work on mobile and that this harms adoption; the conversation names no reproduction (see open question Q1). The site's navbar collapse has a behaviour spec (nav-collapse.mjs); the UI's sidebar checkbox has none. Proposed in ADR 0215 (A phone is the baseline width of every first-party surface, and the primary flow is accepted there before a surface grows) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c197#0, chatgpt-majordomus:c197#1, chatgpt-majordomus:c193#9."
+current_state: "Verified on master 707a04c7ce8: only /ui has a narrow menu, the mj-ui-menu checkbox (apps/majordomus-cli/src/ui/shell.rs, share/ui/src/ui.css); the Cockpit's sidebar is `sticky hidden ... lg:block` (share/cockpit/src/cockpit.css), so below 1024 px its sections are reached only through the JavaScript Ctrl-K palette; scripts/lib/interaction-specs/nav-collapse.mjs holds the site navbar's collapse at one width; I1016 (the Cockpit works on a phone) is BLOCKED on I1009."
+desired_state: "One drawer shell rendered by ui/shell.rs and cockpit/view.rs, each passing its own entries, and scripts/lib/cockpit-probe.mjs driving it on /ui and /cockpit at every width /api/v1/design declares."
+scope:
+  - "apps/majordomus-cli/src/ui/shell.rs"
+  - "apps/majordomus-cli/src/cockpit/view.rs"
+  - "share/ui/ui.js"
+  - "share/ui/src/ui.css"
+  - "docs/MAJORDOMUS_UI.md"
+non_scope:
+  - "The behaviour of the site navbar's collapse"
+  - "Any route or entry change"
+serves:
+  - "a-person-runs-majordomus-from-a-phone#the-menu-behaves"
+acceptance_criteria:
+  - "With scripts off the drawer still opens on /ui and /cockpit and every entry is reachable"
+  - "The ui audit and the navbar comparison of I2770 stay green"
+validation:
+  - "scripts/cockpit-probe --quick"
+  - "scripts/ui audit --only /ui"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::shell"
+evidence_required:
+  - "cockpit_probe_drawer_every_width"
+created_at: 2026-10-18
+updated_at: 2026-10-18

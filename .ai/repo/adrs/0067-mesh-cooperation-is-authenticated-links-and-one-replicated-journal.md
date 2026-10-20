@@ -158,3 +158,105 @@ through: a compaction must not change what the fold says about anything live.
 different digests while each compacts on its own schedule; the journal's unit and property
 tests, `tests/mesh_compaction.rs` and `test/cases/493_mesh_compaction_keeps_what_is_live.sh`
 hold them.
+
+## Addendum, 2026-10-15: a node key is rotated by a succession its predecessor signs (I2705)
+
+I2134 made a key withdrawn from `trust.allow` lose its links without a restart
+(`Cooperation::retrust`, called from the live reload). It left two things undone: a key cannot
+be replaced, only cut off (threat T11), and a withdrawn key's events stay in the running journal
+until the next restart's reload applies the trust in force (I2124). Both follow from this
+record's rules and are decided here rather than in a new ADR. Two facts shape the answer: the
+node key is machine-wide (`node.json` under `$XDG_STATE_HOME/majordomus` or
+`~/.local/state/majordomus`, shared by every worktree and repository on the machine), and the
+node id is the key's digest, so a new key is a new node.
+
+**A rotation is a succession statement.** `{schema: majordomus-mesh-succession/v1, old key, new
+key, at}`, signed under its own domain by the old key and countersigned by the new one: the old
+signature says the holder of the trusted key hands over, the new one that the successor's
+holder exists and agreed. The statement names no repository, because the key it succeeds is
+the machine's. Rotating writes the new `node.json` private from its first byte, keeps the
+statement beside it (public halves only) and destroys the old secret.
+
+**It travels as the closing event of every old-key stream.** Each runtime of the machine that
+is running holds the old key in memory; it writes `key_succeeded` carrying the statement as the
+last event of its stream, signed by the old key, and continues under the new key on a new
+stream, exactly as after a restart: sessions and claims are re-taken under the new stream and
+the old stream's expire with its beat. Nothing new is decided about claims. The event
+replicates like any other, so every runtime of every repository the machine cooperates in
+learns the succession, including runtimes it never linked to directly.
+
+**A peer follows a succession, and only through the trust in force.** Each runtime folds the
+successions it holds into its trust. A successor is trusted while its predecessor is trusted by
+the declaration in force, and only then. Withdrawing a stolen key from the trunk's
+`trust.allow` therefore also withdraws any successor its thief named, and a rotation cannot be
+used to escape a revocation. The depth is one: a key trusted only through a succession cannot
+name a successor until the trunk lists it. Two different successors of one key are a fork. A
+fork trusts neither and leaves the old key rejected, because only a stolen key can produce one,
+and `mesh doctor` names it.
+
+**The succeeded key is retired, not withdrawn.** From the moment a runtime folds the
+succession, the old key's hello is refused `untrusted` with a detail naming the successor. The
+refusal code stays `untrusted` because an older peer would read a new code as `malformed`. An
+old-key stream accepts nothing after its closing event, and an old-key stream the runtime had
+not seen before is refused. Streams that are still open without a closing event are accepted
+for one expiry and refused after it. The retired key's history is legitimate and is kept.
+
+**A withdrawn key's events leave the running journal at the retrust that withdrew it.** A key
+that is no longer trusted and has no trusted successor is treated as compromised. At that
+retrust the running journal drops its events with the predicate the reload applies
+(`Journal::open_trusting`), counts them by key in the cooperation reading, and tombstones its
+streams so that peers do not send them again. Only a beat from a trusted key lifts such a
+tombstone. The key's succession statements stay, inert, as the audit of what it said. The
+journal file is rewritten at the next compaction as it is today, and the next reload already
+refuses those lines.
+
+**The trust root stays the trunk's `trust.allow`.** A succession bridges the time until a person
+commits the replacement. `mesh rotate` prints the change to commit on the default branch (the
+new key in, the old key out), and `mesh doctor` warns while a key is trusted only through a
+succession. Once the commit lands, the new key is trusted directly and the old one is retired,
+not purged, because it has a trusted successor. A working tree still cannot widen the trunk's
+trust: the successor's trust comes from the statement and the trunk's listing of the
+predecessor, and the working tree's copy of the declaration plays no part.
+
+Rejected: trusting a successor on the statement alone (a stolen key escapes withdrawal);
+rotating only by committing a new `trust.allow` (every peer refuses the machine until the
+commit lands everywhere, which is the outage a rotation exists to avoid); a new refusal code
+(see above); and purging a retired key's history (an orderly rotation would drop unconsumed
+handovers and the audit trail). The advisors the reasoning plan selected were both
+rate-limited when this was decided. The decision rests on the local evidence recorded with the
+task.
+
+The work is five slices of at most an hour each, one pull request each, in this order:
+
+1. **The statement and the trust it confers** (`mesh/identity.rs`, `mesh/trust.rs`; no shared
+   file, so it can start now, beside the open #1179, #1188, #1197, #1207 and #1208).
+   `NodeIdentity::rotate` returns the signed `Succession` and writes the new key with
+   `write_private`. `trust::evaluate` takes the successions and answers
+   `Trusted("succession")`, `Retired(successor)` or `Rejected("succession fork")`. Tests:
+   `mesh::identity` `a_rotation_is_signed_by_the_old_key_and_countersigned_by_the_new`, and
+   `mesh::trust` `a_successor_is_trusted_only_while_its_predecessor_is` and
+   `a_fork_trusts_neither`.
+2. **The running journal drops a withdrawn key** (`mesh/journal.rs` `Journal::retain_trusted`,
+   the tombstone that only a trusted beat lifts; `mesh/cooperation.rs` `retrust` calls it and
+   reports `purged`). This slice goes after #1179 and #1207 land, because both touch
+   `journal.rs`. Test: `mesh::cooperation`
+   `a_withdrawn_keys_events_leave_the_running_journal_without_a_restart`, plus its
+   `tests/mesh_cooperation.rs` twin over TCP. It closes I2705's second acceptance criterion.
+3. **The succession is followed** (`mesh/journal.rs` `EventBody::KeySucceeded`, listed in
+   `.ai/repo/ci/mesh-event-fields.yaml`; `mesh/cooperation.rs` folds successions into the
+   trust, retrusts on ingest, refuses the retired key's hello and new streams, closes an old
+   stream at its closing event, and exempts a retired key from slice 2's purge). This slice
+   goes after #1188 (the event field list), #1197 (the hello check order) and slices 1 and 2.
+   Test: `mesh::cooperation` `a_peer_that_folds_a_succession_admits_the_new_key_and_refuses_the_old`.
+4. **A machine rotates** (`capability/builtin/mesh.rs` declares `mesh.rotate` and is followed by
+   `majordomus generate`; `Cooperation::rotate` writes the closing event and moves to the new
+   stream; `live.rs` switches every other server of the machine when `node.json` changes). This
+   slice goes after slice 3 and #1208 (`manager.rs`). Test: `tests/mesh_cooperation.rs`
+   `a_rotated_key_is_followed_and_the_old_key_is_refused`, two processes over TCP. Its result
+   is I2705's `key_rotation_test` evidence.
+5. **A peer that missed the event, the doctor and the words** (`mesh/link.rs` and
+   `mesh/cooperation.rs`: the new key's hello may carry the statement; `mesh/doctor.rs`
+   warns about trust held only through a succession and about a fork; `docs/MESH.md` gains
+   "Rotating a node key"). This slice goes last. Tests: `mesh::cooperation`
+   `a_hello_carrying_a_succession_is_admitted_by_a_peer_that_missed_the_event`, and a
+   `mesh::doctor` unit test for the warning.

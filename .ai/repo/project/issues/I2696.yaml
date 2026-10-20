@@ -1,0 +1,27 @@
+id: I2696
+milestone: development-runtime
+title: "p5 is a built, optional asset of the UI and the page says where it is"
+slug: ui-p5-is-a-built-optional-asset
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "A p5 scene is drawn when the library is served and is an honest statement when it is not."
+why: "scripts/cockpit-assets copies the pinned p5 into share/ui/vendor, the screen names it, and a checkout without it says so on the stage."
+current_state: "ADR 0160 proposes the scenes; the Observatory of ADR 0158 has eight."
+desired_state: "A p5 scene is drawn when the library is served and is an honest statement when it is not."
+scope:
+  - "scripts/cockpit-assets"
+  - "share/ui/observatory-kiosk.js"
+non_scope:
+  - "Stating a frame rate or a figure that was not measured"
+depends_on: []
+acceptance_criteria:
+  - "share/ui/vendor/p5.min.js is built and not committed"
+  - "The page carries data-p5-lib"
+  - "Without the library the stage says p5 is not built here and the rows hold the facts"
+validation:
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "observatory_proof_scenes"
+created_at: 2026-10-14
+updated_at: 2026-10-14

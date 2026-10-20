@@ -51,9 +51,15 @@ permissions:
   # scripts/ci/github-check reads the repository's issues and milestones to prove the
   # canonical project model and its GitHub projection still agree.
   issues: read
-  # `gh run cancel` of this run's own id, the last step of every gate job, and nothing else
-  # of Actions: a run on a branch ends at its first red (I2664, see `concurrency` below).
+  # `gh run cancel` of this run's own id, the last step of every gate job: a run on a branch
+  # ends at its first red (I2664, see `concurrency` below). The plan job's first step cancels
+  # its own run too when the release path holds the runners, and the ci job of a run that is
+  # not a pull request's re-requests the runs that yielded (I2710, scripts/ci/release-path).
   actions: write
+  # I2710: a pull request whose run yields to the release path is labelled ci:yielded and told
+  # which run it yielded to, and the label is removed when the run is re-requested. Both are
+  # made with this token, so neither starts a workflow.
+  pull-requests: write
 
 # One run of a pull request at a time, and a started run reaches its verdict. A newer commit
 # waits in the group and replaces any commit still waiting there, so a burst of pushes costs
@@ -73,6 +79,13 @@ permissions:
 # union) still run and report it red. A run of master, the schedule or a dispatch (which is how
 # the release pipeline asks for its record's verdict) is never cancelled this way: the
 # trunk's other jobs are the only reading of its other lanes. Case 3019 holds every job to it.
+#
+# A combined top is the exception: a pull request whose head is an `integration/*` branch runs
+# to the end, and the step only says so. A top carries many heads and is judged once for all of
+# them; on 2026-10-15 the grand top (#1183, integration/68-top-20261015) took three full cycles
+# because each run showed only its first red, and the job that held it read as cancelled. One
+# run of a top shows every red. The step reads $GITHUB_HEAD_REF rather than `if:`, so it stays
+# the last step of every job; case 3019 holds every job to the exemption too.
 concurrency:
   group: validate-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.run_id }}
   cancel-in-progress: false
@@ -109,10 +122,12 @@ jobs:
       intent_check: ${{ steps.plan.outputs.intent_check }}
       intent_realization: ${{ steps.plan.outputs.intent_realization }}
       release_record_cases: ${{ steps.plan.outputs.release_record_cases }}
+      plan_record_cases: ${{ steps.plan.outputs.plan_record_cases }}
       cockpit_assets: ${{ steps.plan.outputs.cockpit_assets }}
       cockpit_probe: ${{ steps.plan.outputs.cockpit_probe }}
       site_build: ${{ steps.plan.outputs.site_build }}
       site_probe: ${{ steps.plan.outputs.site_probe }}
+      site_languages: ${{ steps.plan.outputs.site_languages }}
       ui_audit: ${{ steps.plan.outputs.ui_audit }}
       interaction_probe: ${{ steps.plan.outputs.interaction_probe }}
       macos: ${{ steps.plan.outputs.macos }}
@@ -124,6 +139,20 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 2
+      # I2710: the release path goes first. While a release run, its record's verdict or the
+      # deploy it asked for is queued or running, a pull request's run gives its slots back:
+      # it labels its pull request, says which run it yielded to, and cancels itself, before
+      # any job of its own has asked for a runner. `release-path resume` runs it again once
+      # the path is clear. Never on master, the schedule or a dispatch, and never on a record
+      # branch; a reading that cannot be made lets the run proceed. Model and enforcer:
+      # .ai/repo/ci/release-path.yaml, scripts/ci/release-path; case 3027.
+      - name: the release path goes first
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_REF: ${{ github.head_ref }}
+        run: scripts/ci/release-path yield --event "$GITHUB_EVENT_NAME" --pr "$PR_NUMBER" --branch "$HEAD_REF" --self "$GITHUB_RUN_ID"
       - id: plan
         env:
           EVENT: ${{ github.event_name }}
@@ -171,7 +200,7 @@ jobs:
         if: failure() && github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled"
+        run: case "$GITHUB_HEAD_REF" in integration/*) echo "::notice::an integration/* top runs to the end, so every red of it is shown";; *) gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled";; esac
 
   # ------------------------------------------------------------------ structure
   # The cheap, deterministic gates every plan runs: the shell syntax and shellcheck, then
@@ -245,7 +274,7 @@ jobs:
         if: failure() && github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled"
+        run: case "$GITHUB_HEAD_REF" in integration/*) echo "::notice::an integration/* top runs to the end, so every red of it is shown";; *) gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled";; esac
 
   # ------------------------------------------------------------------ suite
   # Every behavioural case (test/run.sh), four at a time, in a disposable repository each.
@@ -365,7 +394,7 @@ jobs:
         if: failure() && github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled"
+        run: case "$GITHUB_HEAD_REF" in integration/*) echo "::notice::an integration/* top runs to the end, so every red of it is shown";; *) gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled";; esac
 
   # The suite's one verdict, over every shard: the four reports joined, every case under
   # test/cases/ present exactly once (test/run.sh --verify-report, so a shard that lost or
@@ -457,7 +486,7 @@ jobs:
         if: failure() && github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled"
+        run: case "$GITHUB_HEAD_REF" in integration/*) echo "::notice::an integration/* top runs to the end, so every red of it is shown";; *) gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled";; esac
 
   # ------------------------------------------------------------------ rust
   # The Rust executable through scripts/rust-check: every gate (--ci: format, lints as
@@ -467,7 +496,7 @@ jobs:
   # executable is the artifact majordomus-cli-<target> for a later job or a later phase.
   rust:
     needs: plan
-    if: needs.plan.outputs.rust_check == 'true' || needs.plan.outputs.rust_integration == 'true' || needs.plan.outputs.projection_closure == 'true' || needs.plan.outputs.web_topology == 'true' || needs.plan.outputs.command_graph == 'true' || needs.plan.outputs.version_surface == 'true' || needs.plan.outputs.rustdoc == 'true' || needs.plan.outputs.intent_check == 'true' || needs.plan.outputs.intent_realization == 'true' || needs.plan.outputs.release_record_cases == 'true'
+    if: needs.plan.outputs.rust_check == 'true' || needs.plan.outputs.rust_integration == 'true' || needs.plan.outputs.projection_closure == 'true' || needs.plan.outputs.web_topology == 'true' || needs.plan.outputs.command_graph == 'true' || needs.plan.outputs.version_surface == 'true' || needs.plan.outputs.rustdoc == 'true' || needs.plan.outputs.intent_check == 'true' || needs.plan.outputs.intent_realization == 'true' || needs.plan.outputs.release_record_cases == 'true' || needs.plan.outputs.plan_record_cases == 'true'
     # The bound. 30 minutes was set on 2026-09-09 from the observed maximum of twenty runs
     # plus headroom, and the work grew into it: of the 110 rust jobs that reached a verdict
     # from 2026-09-20 to 09-28 the slowest took 29.9 minutes (feature/mesh-cooperation, runs
@@ -488,7 +517,13 @@ jobs:
     # those, the ~50% doctrine the suite job's bound follows (.ai/repo/ci/suite.yaml): a
     # slow runner still reaches a verdict, and a hang still fails inside the hour. Raise it
     # again from a run that measured the whole job, not from this estimate.
-    timeout-minutes: 60
+    #
+    # Measured (top 70, run 38960010919, lane 3, 2026-10-16): rust-check ran 20:27-21:07
+    # (40 min), the plan's rust gates up to release-record-cases to 21:18 (11 min), and the
+    # plan-record-cases gate (#1185, ~50 cases at MJ_TEST_JOBS=4) was killed by the old bound
+    # at 21:28 after 10 of its minutes. 90 leaves that gate about 25 minutes and a slow runner
+    # its margin; lanes 1 and 2 finish far inside it.
+    timeout-minutes: 90
     runs-on: ubuntu-latest
     env:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
@@ -589,6 +624,12 @@ jobs:
       # only two skipped here.
       - name: the rust gates of the plan
         if: matrix.lane == 3
+        env:
+          # The case gates of this job (release-record-cases, plan-record-cases) drive the
+          # executable rust-check's `cargo test` built, as the suite shards do: without it a
+          # case takes the shell path, and `knowledge validate` warns that it could not ask
+          # the index (case 3075, top 70 run 38980212746).
+          MAJORDOMUS_BIN: ${{ github.workspace }}/apps/majordomus-cli/target/debug/majordomus
         run: MJ_CI_TIMINGS=timings.tsv scripts/ci/run-plan --plan plan.json --job rust --skip rust-check,rust-integration
       - id: target
         if: matrix.lane == 3
@@ -638,7 +679,7 @@ jobs:
         if: failure() && github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled"
+        run: case "$GITHUB_HEAD_REF" in integration/*) echo "::notice::an integration/* top runs to the end, so every red of it is shown";; *) gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled";; esac
 
   # ------------------------------------------------------------------ coverage
   # Line, function and region coverage of the crate, measured over the code that is under
@@ -726,7 +767,7 @@ jobs:
         if: failure() && github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled"
+        run: case "$GITHUB_HEAD_REF" in integration/*) echo "::notice::an integration/* top runs to the end, so every red of it is shown";; *) gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled";; esac
 
   # ------------------------------------------------------------------ evidence
   # What this run proved, kept where it happened (docs/EVIDENCE.md, ADR 68 as ADR 0087 amends
@@ -842,7 +883,7 @@ jobs:
         if: failure() && github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled"
+        run: case "$GITHUB_HEAD_REF" in integration/*) echo "::notice::an integration/* top runs to the end, so every red of it is shown";; *) gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled";; esac
 
   # ------------------------------------------------------------------ site
   # The site built once: the derived data current, the build, every static check over the
@@ -854,8 +895,15 @@ jobs:
     # probe, so a plan that asks for the probe or the Cockpit stylesheet and not for
     # site-build must still open the job — otherwise the gate is planned and the job that
     # would run it never starts. The UI audit is the ui job's, not this one's.
-    if: needs.plan.outputs.site_build == 'true' || needs.plan.outputs.cockpit_assets == 'true' || needs.plan.outputs.site_probe == 'true'
-    timeout-minutes: 50
+    if: needs.plan.outputs.site_build == 'true' || needs.plan.outputs.cockpit_assets == 'true' || needs.plan.outputs.site_probe == 'true' || needs.plan.outputs.site_languages == 'true'
+    # measured 2026-10-17 on batch 71a: 46, 47.5 and 50.4 min (the last one cancelled at 50);
+    # the browser probe grows with the site, so the bound keeps a quarter's headroom. The
+    # site-languages probe (ADR 0218) adds every page of every language copy: 5090 pages and
+    # 967900 links in 4 min 42 s at 4 jobs on 2026-10-19, so ten minutes are added for it. The
+    # browser probe itself took 43 min of its 45 on 2026-10-19 (39231800834) and ran past it
+    # on the next head (39317142394): its bound is 60 min; the steps before it now take 25 min
+    # with the Czech copy built, so the job is 105
+    timeout-minutes: 105
     runs-on: ubuntu-latest
     env:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
@@ -899,6 +947,13 @@ jobs:
       - name: check the site
         if: needs.plan.outputs.site_build == 'true'
         run: scripts/ci/timed --bound 2700 site-build site-check timings.tsv scripts/site-check --no-sync
+      # Every link of every page in every language the site declares lands, stays in its copy's
+      # language, and the switch and the alternates lead to every copy (ADR 0218). It reads the
+      # build as site-build left it, before any case or probe touches site/public. Timed, so it
+      # leaves the receipt the ci verdict asks gate site-languages for (run 39379416881).
+      - name: every language of the site
+        if: needs.plan.outputs.site_languages == 'true'
+        run: CHROME_BIN=google-chrome scripts/ci/timed --bound 1800 site-languages site-languages timings.tsv node scripts/lib/site-i18n-probe.mjs site/public "$(sed -n 's/^base_url = "\(.*\)"/\1/p' site/config.toml)" --jobs 4
       # The cases whose subject is the built site, which the suite runners do not have when they
       # run: each declares "# majordomus-skip-runs-in: site" and is excused there only because it
       # is held here, after the build, with no skip excused.
@@ -912,7 +967,7 @@ jobs:
       # template, which no sample of one route per template can see.
       - name: probe the site in a browser
         if: needs.plan.outputs.site_probe == 'true'
-        run: CHROME_BIN=google-chrome SITE_PROBE_JOBS=4 scripts/ci/timed --bound 2700 site-probe site-probe timings.tsv scripts/site-probe
+        run: CHROME_BIN=google-chrome SITE_PROBE_JOBS=4 scripts/ci/timed --bound 3600 site-probe site-probe timings.tsv scripts/site-probe
       - name: manifest
         run: cat site/data/generated/source.json
       - if: always()
@@ -940,7 +995,7 @@ jobs:
         if: failure() && github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled"
+        run: case "$GITHUB_HEAD_REF" in integration/*) echo "::notice::an integration/* top runs to the end, so every red of it is shown";; *) gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled";; esac
 
   # ----------------------------------------------------------------- interactions
   # Every interactive control on every page of the built site, exercised in a real browser by the behaviour spec
@@ -954,8 +1009,11 @@ jobs:
     # and a job killed at its bound reports cancelled, which the verdict counts as red. The probe grows with the
     # site: on 2026-10-12 (run 38202851612, the v0.21.0 top) it reached page 1850 of 1865 at its 2400 s bound, so
     # the step's bound is 3300 s and the job's 65 minutes; selecting only the pages a change can reach is the fix
-    # that lets these come down again, not a larger runner.
-    timeout-minutes: 65
+    # that lets these come down again, not a larger runner. On 2026-10-19 the v1.0.0-alpha.1 top passed in 57 min
+    # before its Czech copy (39231800834) and reached the 3300 s bound after it, the copy sampled (39317142394):
+    # the step's bound is 4800 s and the job's 90 minutes until the page selection lands (2586 pages at the
+    # observed rate need about 3880 s, and one stretch of pages ran 4.5 times slower).
+    timeout-minutes: 90
     runs-on: ubuntu-latest
     env:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
@@ -972,7 +1030,7 @@ jobs:
       - name: build the site
         run: scripts/ci/timed --bound 2400 interaction-probe site-build timings.tsv scripts/site-build --no-data
       - name: exercise every control
-        run: CHROME_BIN=google-chrome MJ_PROBE_JOBS=4 scripts/ci/timed --bound 3300 interaction-probe interaction-probe timings.tsv scripts/interaction-probe
+        run: CHROME_BIN=google-chrome MJ_PROBE_JOBS=4 scripts/ci/timed --bound 4800 interaction-probe interaction-probe timings.tsv scripts/interaction-probe
       - if: always()
         run: scripts/ci/summary --job interactions --timings timings.tsv --fact "npm cache hit=${{ steps.site.outputs.npm-cache-hit }}"
       - if: always()
@@ -994,7 +1052,7 @@ jobs:
         if: failure() && github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled"
+        run: case "$GITHUB_HEAD_REF" in integration/*) echo "::notice::an integration/* top runs to the end, so every red of it is shown";; *) gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled";; esac
 
   # ----------------------------------------------------------------- ui
   # Every discovered page at every width the compiled theme implies, in a browser, against the
@@ -1006,12 +1064,14 @@ jobs:
   # so it needs the executable; the Rust cache makes that a restore in nearly every run.
   # It grew with the site: on #723's run (int/batch-j be9f675f16) the audit took 2,345 s over
   # 5,902 visits of 1,740 pages at 4 jobs, 55 s inside its 2,400 s bound, and on master's run of
-  # the same tree (37087514909) it was stopped at 2,400 s mid-audit. The bound is 3,600 s and
-  # the job's 75 minutes, so a third more site still finishes and reports.
+  # the same tree (37087514909) it was stopped at 2,400 s mid-audit. It grew again: on batch
+  # 71b2 the audit took 3,581 s (run 39087400247, f17855bf9de) and was stopped at its 3,600 s
+  # bound at visit 7,850 with no finding (run 39097403850, bc782b40f28). The bound is 5,400 s
+  # and the job's 105 minutes, so half again as much site still finishes and reports.
   ui:
     needs: plan
     if: needs.plan.outputs.ui_audit == 'true'
-    timeout-minutes: 75
+    timeout-minutes: 105
     runs-on: ubuntu-latest
     env:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
@@ -1041,7 +1101,13 @@ jobs:
       - name: every warm screen of the UI is within its budget
         run: scripts/ci/timed --bound 600 ui-audit ui-budget timings.tsv "$MAJORDOMUS_BIN" bench system.http. --transport system --profile ci --no-write --check
       - name: audit the UI in a browser
-        run: scripts/ci/timed --bound 3600 ui-audit ui-audit timings.tsv scripts/ui audit --report
+        run: scripts/ci/timed --bound 5400 ui-audit ui-audit timings.tsv scripts/ui audit --report
+      # The cases whose subject is the live UI driven in a browser, which the suite runners do
+      # not have: each declares "# majordomus-skip-runs-in: ui" and is excused there only
+      # because it is held here, against the executable this job built, with no skip excused
+      # (3220, the IDD loop walked end to end).
+      - name: the cases that drive the UI in a browser
+        run: scripts/ci/timed --bound 900 ui-audit ui-cases timings.tsv bash test/run.sh --no-skips --runs-in ui
       - if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -1071,7 +1137,7 @@ jobs:
         if: failure() && github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled"
+        run: case "$GITHUB_HEAD_REF" in integration/*) echo "::notice::an integration/* top runs to the end, so every red of it is shown";; *) gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled";; esac
 
   # ----------------------------------------------------------------- cockpit
   # The Cockpit measured against a server this job starts: every route the server serves
@@ -1082,7 +1148,10 @@ jobs:
   cockpit:
     needs: plan
     if: needs.plan.outputs.cockpit_probe == 'true'
-    timeout-minutes: 25
+    # the probe crawls every route the server answers: 1048 s of its 1200 s bound on
+    # 2026-10-19 (39285861377), then over it as the routes grew a fifth (6554 -> 7699 crawled);
+    # the bound and the job keep a third's headroom
+    timeout-minutes: 35
     runs-on: ubuntu-latest
     env:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
@@ -1100,7 +1169,7 @@ jobs:
       - name: vendor the lazy-loaded libraries the probe expects to find
         run: scripts/ci/timed --bound 900 cockpit-probe cockpit-assets timings.tsv scripts/cockpit-assets
       - name: probe the Cockpit
-        run: CHROME_BIN=google-chrome scripts/ci/timed --bound 1200 cockpit-probe cockpit-probe timings.tsv scripts/cockpit-probe
+        run: CHROME_BIN=google-chrome scripts/ci/timed --bound 1800 cockpit-probe cockpit-probe timings.tsv scripts/cockpit-probe
       - if: always()
         run: scripts/ci/summary --job cockpit --timings timings.tsv --fact "npm cache hit=${{ steps.site.outputs.npm-cache-hit }}" --fact "rust cache hit=${{ steps.rust.outputs.cache-hit }}"
       - if: always()
@@ -1122,7 +1191,7 @@ jobs:
         if: failure() && github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled"
+        run: case "$GITHUB_HEAD_REF" in integration/*) echo "::notice::an integration/* top runs to the end, so every red of it is shown";; *) gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled";; esac
 
   # ------------------------------------------------------------------ mesh-lab
   # Mesh cooperation over a real network (test/mesh-lab/run, claim mesh-network-acceptance):
@@ -1182,7 +1251,7 @@ jobs:
         if: failure() && github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled"
+        run: case "$GITHUB_HEAD_REF" in integration/*) echo "::notice::an integration/* top runs to the end, so every red of it is shown";; *) gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled";; esac
 
   # ------------------------------------------------------------------ macos
   # The behaviour that depends on the platform: the suite under the stock macOS shell
@@ -1250,7 +1319,7 @@ jobs:
         if: failure() && github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled"
+        run: case "$GITHUB_HEAD_REF" in integration/*) echo "::notice::an integration/* top runs to the end, so every red of it is shown";; *) gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled";; esac
 
   # ------------------------------------------------------------------ install
   # The advertised command, from the published site, on two of the platforms it claims to
@@ -1296,7 +1365,7 @@ jobs:
         if: failure() && github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled"
+        run: case "$GITHUB_HEAD_REF" in integration/*) echo "::notice::an integration/* top runs to the end, so every red of it is shown";; *) gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled";; esac
 
   # ------------------------------------------------------------------ pages
   # Is what GitHub Pages serves a projection of this branch at all? One runner, because the
@@ -1313,7 +1382,9 @@ jobs:
   pages:
     needs: plan
     if: needs.plan.outputs.pages_live == 'true'
-    timeout-minutes: 10
+    # pages-check's bounded wait for the deploy of this commit (PAGES_CHECK_DEPLOY_WAIT, twenty
+    # minutes), its five-minute wait for gh-pages' head to be served, and the checks after them
+    timeout-minutes: 35
     runs-on: ubuntu-latest
     env:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
@@ -1327,11 +1398,17 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      # --for: this job runs beside the deploy of its own commit, and judging the site before
+      # that deploy is served judges the previous one (I2711: run 38600347235 went red on
+      # 2026-10-14 while the deploy of ff38297096 was in flight, and passed on a rerun). So it
+      # first waits, bounded and saying so every poll, until production serves this commit or
+      # a newer one; it refuses early only when production serves an older commit and no
+      # deployment is in flight. A pull request's merge commit is not on master: no wait.
       - name: the published site came from master, is current, and is being served
         id: pages
         env:
           GH_TOKEN: ${{ github.token }}
-        run: scripts/ci/pages-check
+        run: scripts/ci/pages-check --for "$GITHUB_SHA"
       - name: the pages receipt
         if: always()
         run: printf '%s\t%s\tpages\n' "pages-live" "${{ steps.pages.outcome }}" >> "$MJ_CI_RECEIPTS"
@@ -1348,7 +1425,7 @@ jobs:
         if: failure() && github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled"
+        run: case "$GITHUB_HEAD_REF" in integration/*) echo "::notice::an integration/* top runs to the end, so every red of it is shown";; *) gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled";; esac
 
   # ------------------------------------------------------------------ ci
   # The one status to require: green only when planning succeeded, every selected gate's job
@@ -1396,3 +1473,12 @@ jobs:
             needs.json
             ci-metrics.tsv
           retention-days: 90
+      # I2710: the pull requests whose runs yielded to the release path run again once it is
+      # clear. Asked at the end of every run that is not a pull request's — the record's
+      # verdict is one, and so is master's — and by .github/workflows/release-path.yml's
+      # schedule; it touches nothing while any run of the release path is queued or running.
+      - name: the runs that yielded to the release path run again
+        if: always() && github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/ci/release-path resume --self "$GITHUB_RUN_ID"

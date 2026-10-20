@@ -152,6 +152,9 @@ never reported as drift.
 
 `wired_by` values: `git-hook:<name>` (resolved through `core.hooksPath` or
 `.git/hooks/`), `ci:<path>` (a file that must exist and contain the invocation),
+`git-config:<key>` (a key the clone's own git configuration must set to a value naming the tool),
+`toolchain:<file>` (the pinned Rust toolchain the file names is installed on this machine, so
+`scripts/derive` and `prs repair --apply` can build),
 `manual` (documented, not verified; doctor lists it as unverified, never as wired).
 The hook line must not swallow the exit code (`|| true`, `|| exit 0`).
 
@@ -213,6 +216,8 @@ context:                      # toggles; projections turn them into loading guid
   failing_output: true
   recent_history_depth: 50    # commits; 0 disables
   architecture_notes: false
+  knowledge: true             # knowledge pointers: what the task's issue references
+  knowledge_max_items: 8      # at most this many; capped by context.max_list_items
 
 verification:
   verify_command_required: true
@@ -237,7 +242,7 @@ The four shipped profiles:
 | effort | low | medium | high | high, escalates to xhigh |
 | verbosity | terse | concise | concise | detailed |
 | presentation | machine | engineering | engineering | engineering |
-| context | task, state | + decisions, files | + failing output, history 50 | + architecture, history 200 |
+| context | task, state | + decisions, files, knowledge 8 | + failing output, history 50 | + architecture, history 200, knowledge 12 |
 | verify command | if files changed | required | required | required |
 | regression test | no | no | required | no |
 | decision record | no | no | no | required |

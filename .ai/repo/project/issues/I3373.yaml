@@ -1,0 +1,35 @@
+id: I3373
+milestone: a-registered-corpus-judges-majordomus
+title: "The program's blocked dependencies are cut or re-scoped by recorded owner decisions, or recorded as refused with the criteria they leave outside the window"
+slug: the-proof-path-is-unblocked
+priority: p0
+profile: docs
+objective: "Put to the owner, and record with majordomus decision, each cut the 30-day window needs: I3133 drops its dependency on I0401, because the benchmark's hidden tests decide acceptance on their own; I0401 moves out of milestone cost-per-accepted-outcome (which waits on execution-telemetry) into a milestone without that dependency, since its definition half needs no telemetry and its acceptance already tolerates an explicit absence; milestone delivery-flow-is-measured drops its dependency on development-runtime, or I3202 moves out of it; I3288 drops its dependency on I0301 if the loopback receiver needs no telemetry adapter; I3299 is raised from p3 to p1. Apply each accepted cut to its record with a why that cites the decision; for each refused cut, record which criteria of this intent it leaves outside the window."
+why: "The owner's report of 2026-10-19 asks for the proof within 30 days. The critique found that the plan's T2 and T3 paths run through chains plan.json derives as BLOCKED and that nothing in the plan cut them. These records belong to other intents, so each change waits on the owner's recorded decision."
+current_state: "site/data/generated/plan.json derives I3133 BLOCKED (depends_on I0401), I0401 BLOCKED (milestone cost-per-accepted-outcome depends on execution-telemetry, BLOCKED), I3202 BLOCKED (milestone delivery-flow-is-measured depends on development-runtime, ACTIVE), I3288 BLOCKED (depends on I0301, BLOCKED, and I3287, READY), I3293 BLOCKED (depends on I3288), I3299 READY at p3."
+desired_state: "Each cut is applied or recorded as refused; majordomus plan show reports the resulting statuses."
+scope:
+  - ".ai/repo/project/issues/I3133.yaml"
+  - ".ai/repo/project/issues/I0401.yaml"
+  - ".ai/repo/project/issues"
+  - ".ai/repo/project/milestones/delivery-flow-is-measured.yaml"
+non_scope:
+  - "Implementing any of those issues"
+  - "Cutting a dependency without the owner's recorded decision"
+serves:
+  - "the-product-proves-it-pays#the-corpus-verdict-is-published-with-its-losses"
+  - "the-product-proves-it-pays#accepted-is-the-finish-definition"
+  - "the-product-proves-it-pays#ci-reruns-are-attributed-to-the-issue"
+  - "the-product-proves-it-pays#spend-is-the-observed-usage-of-the-task"
+acceptance_criteria:
+  - "Each of the five cuts cites a recorded owner decision, accepted or refused"
+  - "Each accepted cut is applied and majordomus plan validate passes"
+  - "Each refused cut names the criteria of the-product-proves-it-pays it leaves outside the window"
+validation:
+  - "majordomus plan validate"
+  - "majordomus plan show I3133"
+  - "majordomus plan show I3202"
+evidence_required:
+  - "unblock_decisions_recorded"
+created_at: 2026-10-19
+updated_at: 2026-10-19

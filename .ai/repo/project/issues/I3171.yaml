@@ -1,0 +1,25 @@
+id: I3171
+milestone: development-runtime
+title: "The compiled context names source ranges with their reason and confidence, not only whole objects of the layer"
+slug: context-names-source-ranges
+priority: p3
+profile: deep-work
+objective: "Extend devcontext so a request with scope paths yields source entries (path, line range, symbol where known, reason, confidence, cost) beside layer objects, and measure the tokens saved against whole-file reading on a large file."
+why: "2026-10-13: a discovery delegate should return a manifest of paths, symbols and ranges rather than file contents, keeping the parent's context small. devcontext's ContextEntry is a layer object with provenance (devcontext/model.rs). Milestone development-runtime is named by no intent, so this issue is derived maintenance and serves no criterion (intent-bound-work#exemption-is-typed). Sources: chatgpt-majordomus:c252#2, chatgpt-majordomus:c252#5."
+current_state: "Entries are layer objects only."
+desired_state: "Source-range entries with provenance, budgeted like the rest."
+scope:
+  - "apps/majordomus-cli/src/devcontext"
+  - "apps/majordomus-cli/src/capability/builtin/devcontext.rs"
+  - "docs/CONTEXT.md"
+non_scope:
+  - "An LSP dependency"
+acceptance_criteria:
+  - "A large-file request is answered by ranges"
+  - "The measured cost is lower than whole-file reading and the answer says by how much"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib devcontext::"
+evidence_required:
+  - "test_context_source_ranges"
+created_at: 2026-10-18
+updated_at: 2026-10-18

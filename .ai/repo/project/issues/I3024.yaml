@@ -1,0 +1,23 @@
+id: I3024
+milestone: truthful-plan-surfaces
+title: "The Knowledge screen's manual link names a page the site has, on the server and on Pages"
+slug: the-knowledge-manual-link-resolves
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "The How to review panel of /ui/knowledge links to the knowledge manual as {DOCS_MOUNT}/docs/knowledge/, which a server serves from the site build mounted at /docs and which the published snapshot rebases to /docs/knowledge/ on majordomus.dev."
+why: "Verified live on v0.30.1 (majordomus.dev, 9904000d2df) with headless Playwright: the manual link rendered as href=\"/knowledge/\", which answers 404, while https://majordomus.dev/docs/knowledge/ answers 200. A server mounts the whole site build under /docs, and the snapshot strips that mount (web/report/snapshot.rs), so the link written as /docs/knowledge/ named the site page /knowledge/, which does not exist."
+current_state: "manual() links to {DOCS_MOUNT}/knowledge/, which resolves to /knowledge/ on Pages and to a missing page under the server's /docs mount."
+desired_state: "manual() links to {DOCS_MOUNT}/docs/knowledge/; a crate test proves that the path below the mount is a page of site/content."
+scope:
+  - "apps/majordomus-cli/src/ui/knowledge.rs"
+acceptance_criteria:
+  - "The manual link is {DOCS_MOUNT}/docs/knowledge/ and is rebased to /docs/knowledge/ in the published snapshot"
+  - "A crate test resolves the link's path below the documentation mount to an existing file under site/content"
+validation:
+  - "cargo test --lib ui::knowledge"
+  - "scripts/ui audit --only /ui/knowledge"
+evidence_required:
+  - "knowledge_manual_link_resolves"
+created_at: 2026-10-19
+updated_at: 2026-10-19

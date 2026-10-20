@@ -1,11 +1,11 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the `executions` module of the canonical Majordomus capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.26.0 -->
+     Generator: majordomus-cli 1.0.0-alpha.1 -->
 # Module `executions` — Executions
 
-Running a capability of this registry as work that can be watched: started, followed event by event over the live channel, read back afterwards, and asked to stop. In memory; an execution does not outlive the process that accepted it.
+Running a capability of this registry as work that can be watched: started, followed event by event over the live channel, read back afterwards, and asked to stop. One plane per checkout: `majordomus run` executes in its own process and reports the execution to the server already serving the checkout, so that server lists it beside its own; with no server it says that nothing else can see the run. In memory; an execution does not outlive the server that holds it.
 
-Stability: behaviorally_verified. Capabilities: 7.
+Stability: behaviorally_verified. Capabilities: 8.
 
 ## `executions.cancel` — Ask an execution to stop
 
@@ -101,7 +101,7 @@ Output: `ExecutionView`.
 
 ## `executions.list` — List executions
 
-Every execution this process remembers, newest first, narrowed by state or by capability. The counts beside them — remembered, active, queued, live channels — are what a control plane shows without asking a second question.
+Every execution this process remembers, newest first, narrowed by state or by capability: the ones it ran and the ones `majordomus run` in another process of the checkout reported to it, each with who started it. The counts beside them — remembered, active, queued, live channels — are what a control plane shows without asking a second question.
 
 | | |
 |---|---|
@@ -145,9 +145,38 @@ Input: none.
 
 Output: `ProtocolReport`.
 
+## `executions.report` — Report an execution another process runs
+
+What `majordomus run` posts while it runs a capability in its own process and a server already serves the checkout: the execution's description and its events after the last sequence this server took. The server holds it as an execution started by the command line, with the pid, in the same store, listing, Cockpit pages and live channel as its own; applies each event once and in order, answering where the next report starts; tells the reporter when somebody asked it to stop; and fails it with `unavailable` once the reporter has been silent for 30 s. Nothing runs here. Changes this process's memory only.
+
+| | |
+|---|---|
+| kind | command |
+| stability | behaviorally_verified |
+| HTTP | `POST /api/v1/executions/report` |
+| cache | — |
+| benchmark | waived (transient_state) |
+| provenance | builtin majordomus_cli::capability::builtin::executions |
+| tags | executions, control-plane |
+
+| input | type | required | description |
+|---|---|---|---|
+| `id` | string | yes | The execution's id, as the reporting process minted it. |
+| `capability` | string | yes | The capability it runs, by its canonical id. |
+| `title` | string | yes | That capability's title. |
+| `input` | object | no | The input it was given, as the reporting process stored it: already redacted there,
+and redacted again here by this registry's schema when this registry knows it. |
+| `cancellable` | boolean | no | Whether the capability stops when asked. When it does, a cancel asked of this server
+reaches the reporter in the answer to its next report. |
+| `pid` | integer | yes | The process that runs it. |
+| `events` | array | no | Its events after the last sequence this server answered `through`, in its own
+sequence, oldest first; at most 500. Empty is a heartbeat. |
+
+Output: `ReportAnswer`.
+
 ## `executions.start` — Start a capability as an execution
 
-Run any executable capability of this registry as an execution: the input is checked against that capability's own input schema, the work is queued, and this answers at once with the execution's id and the links to follow it. Nothing waits for the handler. The capability runs through the same executor every other interface calls, so there is no second implementation of anything.
+Run any executable capability of this registry as an execution: the input is checked against that capability's own input schema, the work is queued, and this answers at once with the execution's id and the links to follow it. Nothing waits for the handler. The capability runs through the same executor every other interface calls, so there is no second implementation of anything. On the command line (`majordomus run`) it runs in that process and is reported to the server serving the checkout, when one is, through executions.report; a run never starts a server.
 
 | | |
 |---|---|

@@ -7,13 +7,52 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import assert from 'node:assert/strict';
 
-import { breakpointsFromCss, commonPrefix, criticalWidths, discoverPages, tierPages, viewports, REFLOW_FLOOR } from './ui-discover.mjs';
+import { breakpointsFromCss, commonPrefix, criticalWidths, discoverPages, languageSample, tierPages, viewports, REFLOW_FLOOR } from './ui-discover.mjs';
 import { alignCells, escapes, nameTaskCheckboxes, normalise, normaliseRendered, plainClasses, scan, scrollingTags, textOf } from './ui-static.mjs';
 import { contrast, enforce, measure, raise, MINIMUM } from './ui-contrast.mjs';
 import { sample, siblingFamilies } from './ui-routes.mjs';
+import { compare, cut, fragment, GENERATED, VERSION_SLOT } from './ui-navbar.mjs';
 
 const tests = [];
 const test = (name, fn) => tests.push([name, fn]);
+
+// ------------------------------------------------------------------ language copies
+test('a language copy is sampled per section at the root and under a mount alike', () => {
+  const site = mkdtempSync(join(tmpdir(), 'mj-lang-'));
+  try {
+    mkdirSync(join(site, 'i18n'));
+    mkdirSync(join(site, 'public'));
+    writeFileSync(join(site, 'i18n', 'languages.json'), JSON.stringify({ source: 'en', languages: ['en', 'cs'] }));
+    const keep = languageSample(join(site, 'public'));
+    const routes = [
+      '/docs/guarantees/a/', '/docs/guarantees/b/',
+      '/docs/cs/guarantees/a/', '/docs/cs/guarantees/b/', '/docs/cs/guarantees/c/', '/docs/cs/adrs/x/',
+      '/cs/', '/cs/roadmap/', '/cs/roadmap/now/',
+    ];
+    assert.deepEqual(routes.filter(keep), [
+      '/docs/guarantees/a/', '/docs/guarantees/b/',
+      '/docs/cs/guarantees/a/', '/docs/cs/adrs/x/',
+      '/cs/', '/cs/roadmap/', '/cs/roadmap/now/',
+    ], 'the source keeps every page; a copy keeps the first of each section at each depth, mounted or not');
+  } finally {
+    rmSync(site, { recursive: true, force: true });
+  }
+});
+
+test('a directory with no i18n beside it is sampled by the repository\'s declaration', () => {
+  // the served documentation is built into target/web/docs: nothing beside it declares the
+  // languages, and a sampler that knew none kept every page of every copy
+  const web = mkdtempSync(join(tmpdir(), 'mj-web-'));
+  try {
+    mkdirSync(join(web, 'docs'));
+    const keep = languageSample(join(web, 'docs'));
+    const routes = ['/docs/cs/guarantees/', '/docs/cs/guarantees/a/', '/docs/cs/guarantees/b/', '/docs/guarantees/b/'];
+    assert.deepEqual(routes.filter(keep), ['/docs/cs/guarantees/', '/docs/cs/guarantees/a/', '/docs/guarantees/b/'],
+      'the copy is still sampled: its index and its first record page, every source page');
+  } finally {
+    rmSync(web, { recursive: true, force: true });
+  }
+});
 
 // ------------------------------------------------------------------ route sampling
 test('dozens of sibling families that differ in one segment are one renderer, sampled once', () => {
@@ -342,6 +381,48 @@ test('a new section brings its own sweep without a list changing', () => {
   assert.equal(before.filter((p) => p.tier === 'sweep').length, 2);
   assert.equal(after.filter((p) => p.tier === 'sweep').length, 3);
   assert.equal(after.find((p) => p.route === '/reports/').tier, 'sweep');
+});
+
+// ------------------------------------------------------------------ the site's bar
+const builtPage = (origin) => `<html><body><a href="#main">skip</a>
+<nav class="sticky" aria-label="Main"><a href="${origin}/">Majordomus <span data-release="0.27.0">v0.27.0</span></a>
+<!-- a comment of the build -->
+<a href="#site-map-1">All 9 pages</a></nav><main><nav aria-label="Other">x</nav></main></body></html>`;
+
+test('the bar is cut out of a built page as its first nav, by its place, and nothing after it', () => {
+  const bar = cut(builtPage('https://example.test'));
+  assert.ok(bar.startsWith('<nav class="sticky" aria-label="Main">') && bar.endsWith('</nav>'));
+  assert.ok(!bar.includes('Other'));
+  // found by its place, not its label: a translated page renames the landmark
+  assert.ok(cut('<html><body><nav aria-label="Primary">x</nav><nav aria-label="Other"></nav></body></html>').includes('Primary'));
+  assert.equal(cut('<html><body><p>no bar</p></body></html>'), null);
+});
+
+test('the copy leaves the version to the executable, drops the build\'s comments and leads the site map to the site', () => {
+  const f = fragment(builtPage('https://example.test'), 'https://example.test');
+  assert.ok(f.startsWith(GENERATED));
+  assert.ok(f.includes(`data-release="${VERSION_SLOT}">v${VERSION_SLOT}<`), f);
+  assert.ok(!f.includes('0.27.0') && !f.includes('a comment of the build'), f);
+  assert.ok(f.includes('href="https://example.test/#site-map-1"'), f);
+  assert.ok(!f.includes('href="#'), f);
+});
+
+test('a site built for another origin is refused, never copied', () => {
+  assert.throws(() => fragment(builtPage('/docs'), 'https://example.test'), /another origin/);
+  assert.throws(() => fragment('<html></html>', 'https://example.test'), /no <nav/);
+});
+
+test('two bars are compared element by element: a class, a box past a pixel, a style, a missing element', () => {
+  const el = (over = {}) => ({ path: 'nav', tag: 'nav', cls: 'a', id: '', label: 'Main', text: '', hidden: false,
+    box: [0, 0, 100, 73], style: { 'font-size': '16px', color: 'rgb(0, 0, 0)' }, ...over });
+  assert.deepEqual(compare([el()], [el({ box: [0, 0, 101, 73] })]), [], 'one pixel is rounding');
+  const d = compare([el(), el({ path: 'nav>a[0]', tag: 'a' })],
+    [el({ cls: 'b', box: [0, 0, 100, 67], style: { 'font-size': '14px', color: 'rgb(0, 0, 0)' } })]);
+  assert.ok(d.some((x) => /cls is "b" on the UI, "a" on the site/.test(x)), d.join('\n'));
+  assert.ok(d.some((x) => /box 0,0,100,67 on the UI, 0,0,100,73 on the site/.test(x)), d.join('\n'));
+  assert.ok(d.some((x) => /font-size is 14px on the UI, 16px on the site/.test(x)), d.join('\n'));
+  assert.ok(d.some((x) => /nav>a\[0\]: only the site has this element/.test(x)), d.join('\n'));
+  assert.deepEqual(compare(null, [el()]), ['the site page has no <nav aria-label="Main">']);
 });
 
 let failed = 0;
