@@ -61,7 +61,7 @@ steps:
     note: 'the version string'
     expect:
       exit: 0
-      stdout_contains: ['^majordomus [0-9]+\.[0-9]+\.[0-9]+$']
+      stdout_contains: ['^majordomus [0-9]+\.[0-9]+\.[0-9]+(-(alpha|beta|rc)\.[0-9]+)?$']
   - id: refuse
     run: ['version', '--no-such-option']
     note: 'a usage error'
@@ -346,7 +346,7 @@ done
 # and that evidence is the executed scenario, step by step: exit and output as observed
 jq -e '.use_cases[] | select(.id == "know-which-tool-is-running") | .evidence
        | .result == "pass" and (.steps | length) == 2
-         and .steps[0].exit == 0 and (.steps[0].output | test("^majordomus [0-9]+\\.[0-9]+\\.[0-9]+$"))
+         and .steps[0].exit == 0 and (.steps[0].output | test("^majordomus [0-9]+\\.[0-9]+\\.[0-9]+(-(alpha|beta|rc)\\.[0-9]+)?$"))
          and .steps[1].exit == 2 and .steps[1].expected_exit == 2 and (.steps[1].output | test("unknown option"))
          and all(.steps[]; .result == "pass" and (.assertions | length) > 0)' "$CAT" >/dev/null \
   || { echo "    the site's evidence is not the executed scenario"; jq '.use_cases[] | select(.id == "know-which-tool-is-running") | .evidence' "$CAT"; exit 1; }

@@ -127,6 +127,7 @@ jobs:
       cockpit_probe: ${{ steps.plan.outputs.cockpit_probe }}
       site_build: ${{ steps.plan.outputs.site_build }}
       site_probe: ${{ steps.plan.outputs.site_probe }}
+      site_languages: ${{ steps.plan.outputs.site_languages }}
       ui_audit: ${{ steps.plan.outputs.ui_audit }}
       interaction_probe: ${{ steps.plan.outputs.interaction_probe }}
       macos: ${{ steps.plan.outputs.macos }}
@@ -895,10 +896,15 @@ jobs:
     # site-build must still open the job — otherwise the gate is planned and the job that
     # would run it never starts. The UI audit is the ui job's, not this one's. The interaction
     # probe's shards drive this job's build, so a plan that asks for them opens it too (I3602).
-    if: needs.plan.outputs.site_build == 'true' || needs.plan.outputs.cockpit_assets == 'true' || needs.plan.outputs.site_probe == 'true' || needs.plan.outputs.interaction_probe == 'true'
+    if: needs.plan.outputs.site_build == 'true' || needs.plan.outputs.cockpit_assets == 'true' || needs.plan.outputs.site_probe == 'true' || needs.plan.outputs.site_languages == 'true' || needs.plan.outputs.interaction_probe == 'true'
     # measured 2026-10-17 on batch 71a: 46, 47.5 and 50.4 min (the last one cancelled at 50);
-    # the browser probe grows with the site, so the bound keeps a quarter's headroom
-    timeout-minutes: 65
+    # the browser probe grows with the site, so the bound keeps a quarter's headroom. The
+    # site-languages probe (ADR 0218) adds every page of every language copy: 5090 pages and
+    # 967900 links in 4 min 42 s at 4 jobs on 2026-10-19, so ten minutes are added for it. The
+    # browser probe itself took 43 min of its 45 on 2026-10-19 (39231800834) and ran past it
+    # on the next head (39317142394): its bound is 60 min; the steps before it now take 25 min
+    # with the Czech copy built, so the job is 105
+    timeout-minutes: 105
     runs-on: ubuntu-latest
     env:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
@@ -984,6 +990,12 @@ jobs:
       - name: check the site
         if: needs.plan.outputs.site_build == 'true'
         run: scripts/ci/timed --bound 2700 site-build site-check timings.tsv scripts/site-check --no-sync
+      # Every link of every page in every language the site declares lands, stays in its copy's
+      # language, and the switch and the alternates lead to every copy (ADR 0218). It reads the
+      # build as site-build left it, before any case or probe touches site/public.
+      - name: every language of the site
+        if: needs.plan.outputs.site_languages == 'true'
+        run: node scripts/lib/site-i18n-probe.mjs site/public "$(sed -n 's/^base_url = "\(.*\)"/\1/p' site/config.toml)" --jobs 4
       # The cases whose subject is the built site, which the suite runners do not have when they
       # run: each declares "# majordomus-skip-runs-in: site" and is excused there only because it
       # is held here, after the build, with no skip excused.
@@ -1299,7 +1311,10 @@ jobs:
   cockpit:
     needs: plan
     if: needs.plan.outputs.cockpit_probe == 'true'
-    timeout-minutes: 25
+    # the probe crawls every route the server answers: 1048 s of its 1200 s bound on
+    # 2026-10-19 (39285861377), then over it as the routes grew a fifth (6554 -> 7699 crawled);
+    # the bound and the job keep a third's headroom
+    timeout-minutes: 35
     runs-on: ubuntu-latest
     env:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
@@ -1317,7 +1332,7 @@ jobs:
       - name: vendor the lazy-loaded libraries the probe expects to find
         run: scripts/ci/timed --bound 900 cockpit-probe cockpit-assets timings.tsv scripts/cockpit-assets
       - name: probe the Cockpit
-        run: CHROME_BIN=google-chrome scripts/ci/timed --bound 1200 cockpit-probe cockpit-probe timings.tsv scripts/cockpit-probe
+        run: CHROME_BIN=google-chrome scripts/ci/timed --bound 1800 cockpit-probe cockpit-probe timings.tsv scripts/cockpit-probe
       - if: always()
         run: scripts/ci/summary --job cockpit --timings timings.tsv --fact "npm cache hit=${{ steps.site.outputs.npm-cache-hit }}" --fact "rust cache hit=${{ steps.rust.outputs.cache-hit }}"
       - if: always()

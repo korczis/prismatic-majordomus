@@ -1,0 +1,48 @@
+id: I3182
+milestone: the-runtime-supervises-itself
+title: "One read says which work is progressing, waiting, stalled, failed or orphaned, and on what evidence"
+slug: supervision-is-one-read
+priority: p1
+profile: implementation
+objective: "Add a read-only capability that folds health, mesh presence, session episodes, executions, claims and integration waits into one classification per item (progressing, legitimately waiting, suspected stall, unbounded, confirmed failure, orphaned, unknown outcome, repeated recovery failure) and per resource (leaked, not draining), each with the evidence and the age that decided it; project it to CLI, MCP and /ui."
+why: "Owner 2026-10-17: a watchdog must make sure the mesh runs, tasks drain and nobody waits for a timeout. The 10-17 design's phase S0/S1 is exactly a view without action; idle waiting for CI must not read as stuck. The 09-15 design asked for a cooperation doctor listing stale peers, orphan leases and unverified completions. Critique 10-18: the execution store lives only in memory and ExecutionPolicy declares no bound, so the bound has to be declared and the classification narrowed to live servers. The owner's 'no leaks' and the 10-17 design's S1 (stalls, resource leaks, blocked queues) need resource classes, not only item classes. Proposed in ADR 0200 (Supervision repairs only what is idempotent, owned and verified, and never restarts blindly) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c288#16, chatgpt-majordomus:c145#5."
+current_state: "Verified: health.report, monitor.stream, mesh doctor, recover orphans and scripts/liveness-check each judge one source; none classifies across them. ExecutionPolicy declares no progress bound and the execution store lives only in its process's memory (execution/store.rs)."
+desired_state: "supervision.status with stable categories and reproduce commands per finding."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/health.rs"
+  - "apps/majordomus-cli/src/capability/builtin/monitor.rs"
+  - "docs/MONITOR.md"
+  - "apps/majordomus-cli/src/capability/model.rs"
+  - "apps/majordomus-cli/src/execution/model.rs"
+  - "apps/majordomus-cli/src/execution/store.rs"
+  - "apps/majordomus-cli/src/capability/builtin/executions.rs"
+  - "apps/majordomus-cli/src/capability/builtin/server.rs"
+  - "scripts/reap-orphans"
+  - "apps/majordomus-cli/src/capability/builtin/mod.rs"
+  - "apps/majordomus-cli/src/ui/dashboard.rs"
+  - ".ai/repo/project/intents"
+non_scope:
+  - "Any repair (I3183)"
+  - "A peer's executions or sessions on another machine: no remote execution read exists. Mesh claims and peers are classified from the mesh registry, and executions only for this host's checkout servers."
+  - "A persisted execution tombstone store"
+  - "File-descriptor accounting"
+serves:
+  - "nothing-in-the-mesh-waits-on-something-dead#states-are-classified"
+acceptance_criteria:
+  - "A session waiting on a running CI check is 'waiting', not 'stalled'"
+  - "An execution with no event past its declared bound is 'suspected stall' with that bound named"
+  - "Every finding names its reproduce command"
+  - "The bound is declared per capability as a progress bound on ExecutionPolicy (capability/model.rs). An execution of a capability that declares none is classified 'unbounded', never 'suspected stall', and says so."
+  - "Executions are classified only while the server holding them lives. A checkout whose lease reads ServerStanding::Stale is one 'orphaned' item, and its executions are reported 'outcome unknown: server gone' with the lease as evidence. No execution history is reconstructed or invented."
+  - "Servers are classified from ServerStanding (absent, starting, ready, outdated, stale) as server.status serves it, with no second state vocabulary, so this read does not need I3179."
+  - "A majordomus serve or mcp process matching all five conjuncts of scripts/reap-orphans' predicate is classified 'leaked', with count, resident memory and ports as evidence."
+  - "Queued executions with none running past the declared bound are classified 'not draining'."
+  - "In the same change, the intent criterion states-are-classified records evidence: test with a ref to the file holding test_supervision_classifies, replacing the command evidence."
+validation:
+  - "majordomus plan validate"
+  - "cargo test --lib capability::builtin::health"
+  - "cargo test --lib capability::builtin::server"
+evidence_required:
+  - "test_supervision_classifies"
+created_at: 2026-10-18
+updated_at: 2026-10-18
