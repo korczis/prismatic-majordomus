@@ -75,7 +75,8 @@ is the part of the event a clone can check. A stamp without its seal moves no st
 `stamp_without_event` failure of `plan validate`; the stamps recorded before seals existed
 are named in each record's `unsealed_stamps`, a list that only shrinks
 (`project.no-plan-stamp-without-its-event`, ADR 0097). `done` is refused unless the issue is
-ACTIVE or VERIFY.
+ACTIVE or VERIFY, and it is decided and written in one place: `majordomus plan done` runs the
+`plan.transition` capability rather than stamping the record itself (I1504, ADR 0040).
 
 A milestone's status follows from its issues and its own evidence:
 

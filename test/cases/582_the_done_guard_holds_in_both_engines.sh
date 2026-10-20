@@ -92,5 +92,26 @@ move I0003 "done" || note "the MCP server failed on done I0003"
 [ "$TOOL_ERR" = true ] || note "the capability completed DONE I0003 a second time"
 expect_exit 0 "$MJ" plan validate || fail=1
 
+# ---------------------------------------------------------------- one engine for done (I1504)
+# `majordomus plan done` is plan.transition's move: the shell asks the executable and writes
+# nothing itself. Without the executable it refuses rather than stamp the record a second way;
+# with one that answers DONE and writes nothing, nothing is written — the stamp is the
+# capability's or no one's. I0005 is ACTIVE with its evidence, so only the engine is in question.
+pj_issue I0005 M000
+"$MJ" plan start I0005 >/dev/null 2>&1 || note "plan start I0005 failed"
+"$MJ" plan evidence I0005 --covers proof --type test --command true --result ok >/dev/null 2>&1 \
+  || note "attaching evidence to I0005 failed"
+git add -A >/dev/null 2>&1; git commit -qm "I0005 active" >/dev/null 2>&1
+before_records="$(records)"; before_ledger="$(cksum < "$L")"
+expect_exit 10 env MAJORDOMUS_BIN="$S/no-such-executable" "$MJ" plan "done" I0005 || fail=1
+expect_grep 'the runtime that moves an issue is not built' || fail=1
+printf '#!/bin/sh\nprintf %s\n' "'{\"output\":{\"to\":\"DONE\"}}'" > "$S/answers-only"; chmod +x "$S/answers-only"
+expect_exit 0 env MAJORDOMUS_BIN="$S/answers-only" "$MJ" plan "done" I0005 || fail=1
+[ "$(records)" = "$before_records" ] || note "plan done wrote a record the capability did not"
+[ "$(cksum < "$L")" = "$before_ledger" ] || note "plan done appended to the ledger the capability did not"
+[ "$(pj_status I0005)" = ACTIVE ] || note "I0005 moved to $(pj_status I0005) with no capability writing it"
+expect_exit 0 "$MJ" plan "done" I0005 || fail=1
+[ "$(pj_status I0005)" = DONE ] || note "ACTIVE I0005 done through the executable is $(pj_status I0005)"
+
 [ "$fail" = 0 ] || exit 1
-echo "    done requires a started issue in both engines: READY, CANCELLED and DONE are refused and write nothing"
+echo "    done requires a started issue in both engines: READY, CANCELLED and DONE are refused and write nothing; the shell's done is the capability's"
