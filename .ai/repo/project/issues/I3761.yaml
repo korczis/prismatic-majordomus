@@ -1,0 +1,38 @@
+# related: I2660 (the job that builds the site publishes it, same milestone, depends_on below) and I3448 (a deploy of master keeps every pre-release's metadata; planned on the unpushed branch docs/the-campaign-records-are-planned and owning a separate fault, so named here and not in depends_on)
+id: "I3761"
+milestone: "M004"
+title: "The Pages run of a release head publishes with fresh evidence, or publishes the site with the evidence lag stated, and never fails on a missing snapshot artifact"
+slug: "a-release-head-publishes-with-its-evidence-lag-stated"
+priority: "p1"
+profile: "implementation"
+parallel_safe: true
+objective: "Make the Pages run of a master head whose own validation has not recorded its evidence end in one of two stated outcomes: it publishes with that head's evidence once validate's evidence job has recorded it, or it publishes the site now with the UI snapshot's evidence lag stated (the commit the evidence was recorded at, how many commits and changed files behind, and that a later run replaces it). A refused UI snapshot never leaves the deploy job failing on a missing artifact and the whole site unpublished."
+why: "Found on 2026-10-20 at the v1.0.0-alpha.1 head 9a5a9b77520 (roadmap audit finding F10): Pages run 39438897759 failed in ui-snapshot, 'pages evidence: stale: recorded against 82ac259d0ae7, 3 commit(s) and 18 changed file(s) behind', and the deploy job then failed with 'Artifact not found for name: ui-snapshot'. The earlier push run 39392245576 failed as well. The live site stayed at the previous hand deploy, so /roadmap/ and the homepage lagged master while every check of the head was still running. A release head is the commit whose validation is always in flight when Pages first runs, so this happens on every release unless the run waits or states its lag."
+current_state: "Verified on origin/master 91c0b5d5658. .github/workflows/pages.yml:277-279 runs the ui-snapshot job on every push; its step at :336-341 runs scripts/pages evidence --ledger-out and then scripts/pages published-evidence, and the comment at :329-335 says that while the head's validation is still going the nearest validated ancestor's ledger is used and validate's evidence job dispatches Pages again when it finishes. scripts/pages:781 cmd_evidence labels an ancestor's run stale (:906-907) and, per its comment at :773, is never a gate; but cmd_published_evidence (scripts/pages:1578) exits 10 at :1619 when more claims would read not run than .ai/repo/evidence/published-not-run.txt allows (0), which a stale ledger readily exceeds, so the job fails. The deploy job (.github/workflows/pages.yml:399-401) needs ui-snapshot but runs when only rustdoc succeeded, and its download of the ui-snapshot artifact at :495-498 then fails, so nothing is published. I2853 (test-evidence, merged) excuses only claims whose test is newer than the ledger; it does not address an old ledger on a fresh head."
+desired_state: "When published-evidence refuses because the ledger is an ancestor's, the ui-snapshot job ends with a declared outcome (deferred, with the commit, distance and reason) instead of a failure; the deploy job reads that outcome and either publishes the site with the last published /ui and /cockpit kept as they are, or with the new snapshot carrying a visible lag line, and in both cases writes the lag into the run summary and the publication state. The dispatch from validate's evidence job then republishes with current evidence. The deploy job never downloads an artifact the ui-snapshot job did not upload. Which of the two snapshot behaviours holds is declared once in .ai/repo/ci/pages.yaml and stated in docs/GITHUB_PAGES_ARCHITECTURE.md."
+scope:
+  - ".github/workflows/pages.yml"
+  - "scripts/pages"
+  - ".ai/repo/ci/pages.yaml"
+  - "docs/GITHUB_PAGES_ARCHITECTURE.md"
+  - "test/cases/3734_a_release_head_publishes_with_its_lag_stated.sh"
+  - ".ai/repo/project/issues/I3761.yaml"
+non_scope:
+  - "The baseline of published-evidence, which may only fall"
+  - "Keeping pre-release metadata across deploys, which I3448 owns"
+  - "Moving publication to the Pages artifact model, which I2660 owns"
+  - "Making validate faster"
+acceptance_criteria:
+  - "A fixture run whose ledger was recorded at an ancestor three commits back: the ui-snapshot step ends deferred naming that commit and the distance, the deploy publishes the rest of the site, and the summary states the lag"
+  - "Negative: a fixture whose ledger is the head's own and within the baseline is published as current, with no lag line"
+  - "Negative: a ledger of the head itself that is over the baseline still refuses the UI, so the change hides no real not-run claim"
+  - "The deploy job never reaches a download of an artifact that was not uploaded: a workflow structure check over pages.yml refuses that wiring"
+  - "The next release head after this lands is published within one Pages run of its push, and the run after validate's evidence dispatch reads current"
+validation:
+  - "MJ_TEST_JOBS=2 bash test/run.sh 3734_a_release_head_publishes_with_its_lag_stated 3242_a_claim_newer_than_the_ledger_is_not_yet_recorded 26_ci_wiring"
+  - "scripts/ci/pages-check"
+  - "majordomus plan validate"
+evidence_required:
+  - "test_a_release_head_publishes_with_its_lag_stated"
+depends_on:
+  - "I2660"

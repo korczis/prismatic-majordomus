@@ -1,0 +1,36 @@
+# rehomed from NM1 (campaign.md listed it under the PLANNED a-visitor-understands-and-checks-majordomus for the landing polish): neither milestone is ACTIVE, so O1 refuses both; public-proof is ACTIVE, owns the homepage a visitor meets and holds site/ in its scope
+# the case number of 3732_every_languages_homepage_is_held_to_its_budget is allocated with the id
+id: "I3759"
+milestone: "public-proof"
+title: "Every language's homepage is held to the declared weight budget, and the capability list is fetched rather than inlined"
+slug: "every-languages-homepage-is-held-to-its-budget"
+priority: "p1"
+profile: "implementation"
+parallel_safe: false
+objective: "The weight section of scripts/ci/homepage-check measures the homepage of every language site/i18n/languages.json declares against the one [budget] of site/data/homepage.toml, naming the language of a page over it, and the For engineers block of site/templates/index.html stops inlining an option per capability and fills its picker from the graphs/surfaces.json it already fetches, so that every copy fits the budget in the change that adds the gate."
+why: "The landing audit of 2026-10-20 measured the published Czech homepage at 160,895 bytes against a declared 160,000, and the English at 158,121, under two kilobytes from failing its own gate; the gate reads only the English page, so the copy every Czech reader is sent to has no budget at all. A budget that one language escapes is a figure the site does not keep. The gate must land together with the trim, or it turns master red. It is not parallel_safe because site/templates/index.html sits under the claim held for I2745; it is taken once that claim is released. public-proof owns the homepage."
+current_state: "On origin/master scripts/ci/homepage-check:149 reads only site/public/index.html into home, and its weight section at :831-868 compares that page alone with html_bytes, assets_bytes and inline_json_bytes; site/data/homepage.toml:40-43 declares html_bytes = 160000 for the homepage without naming a language. site/templates/index.html:326-328 renders the capability <select> with one <option> per entry of reg.registry.builtin, inline in every copy, although its x-data at :323 already fetches graphs/surfaces.json on focus."
+desired_state: "homepage-check reads site/i18n/languages.json and measures site/public/index.html and site/public/<lang>/index.html for every other language, each against the same declared budget, with one ok line per language naming its bytes and one bad line per page over a limit naming the language; the capability picker ships with only the option it shows selected and fills the rest from graphs/surfaces.json when opened; every copy of master's homepage is under its budget with the headroom reported; case 3732_every_languages_homepage_is_held_to_its_budget holds the gate on fixture pages."
+scope:
+  - "scripts/ci/homepage-check"
+  - "site/templates/index.html"
+  - "test/cases/3732_every_languages_homepage_is_held_to_its_budget.sh"
+  - ".ai/repo/project/issues/I3759.yaml"
+non_scope:
+  - "Raising any figure of site/data/homepage.toml [budget]; raising a budget is its own reviewed change"
+  - "A separate budget per language; one declared budget holds every copy"
+  - "The homepage's copy or sections beyond the capability picker"
+  - "The translation memory, which I3753 and I3758 change"
+acceptance_criteria:
+  - "A fixture whose English homepage is under the budget and whose Czech copy is over it fails the weight section, naming cs and the bytes over"
+  - "A fixture where every language's homepage is under the budget passes with one ok line per declared language"
+  - "Negative: a language declared in languages.json whose homepage copy the build did not write fails, rather than being skipped"
+  - "The built homepage carries one capability <option> and the picker still lists every capability after it is opened"
+  - "Every copy of the homepage built from the branch is under html_bytes"
+validation:
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3732_every_languages_homepage_is_held_to_its_budget"
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 333_homepage_narrative"
+  - "scripts/site-build && scripts/ci/homepage-check && scripts/site-check"
+evidence_required:
+  - "every_languages_homepage_is_held_to_its_budget"
+depends_on: []

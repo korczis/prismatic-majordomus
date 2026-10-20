@@ -59586,6 +59586,1086 @@
         }
       },
       {
+        "id": "majordomus://issue/I3750",
+        "kind": "issue",
+        "label": "I3750",
+        "summary": "The milestone graph reads each edge in the direction it means, in its text and in its detail panel",
+        "route": "/cockpit/objects/issue/i3750",
+        "source": ".ai/repo/project/issues/I3750.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every edge of roadmap-graph.json has kind unblocks, and its target's depends_on names its source",
+            "On the rendered /roadmap/, every edge is listed under its source as 'unblocks -> target' and under its target as 'source unblocks -> this'",
+            "Negative: no edge listed in the text fallback carries the kind requires, so the inverted reading appears nowhere"
+          ],
+          "depends_on": [],
+          "evidence_required": [
+            "test_the_graph_text_reads_each_edge_its_way"
+          ],
+          "milestone": "truthful-plan-surfaces",
+          "non_scope": [
+            "The edge kinds of the other graphs (map, evidence, why, features), which already read from their source",
+            "Which milestones depend on which, which stays the plan's"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "scripts/generate-site-data",
+            "site/templates/partials/graph.html",
+            "test/cases/3723_the_graph_text_reads_each_edge_its_way.sh"
+          ],
+          "slug": "the-graph-text-reads-each-edge-its-way",
+          "validation": [
+            "bash test/run.sh 3723_the_graph_text_reads_each_edge_its_way 12_site_build",
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3751",
+        "kind": "issue",
+        "label": "I3751",
+        "summary": "The roadmap says only what the plan holds, with a bar and a date on every milestone",
+        "route": "/cockpit/objects/issue/i3751",
+        "source": ".ai/repo/project/issues/I3751.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every milestone of roadmap.json with required issues has one bar whose value and max equal its done and required counts",
+            "A milestone carried by a release shows that release's published_at date; an unreleased one with merged issues shows the latest merged_at of its issues",
+            "The closing paragraph's count equals the number of milestones in roadmap.json with a non-empty depends_on",
+            "An accepted milestone with no issues reads delivered, not 'no issues written yet'",
+            "Negative: the rendered page carries none of the withdrawn sentences ('depends on the ones before it', 'no progress bar', 'would be a lie')",
+            "The Czech memory holds a translation for each new sentence, and no new segment carries a number or a date in its key"
+          ],
+          "depends_on": [],
+          "evidence_required": [
+            "test_the_roadmap_says_what_the_plan_holds"
+          ],
+          "milestone": "truthful-plan-surfaces",
+          "non_scope": [
+            "The /ui/roadmap/ meters, which are I3440's",
+            "Translating the rest of the roadmap's missing Czech segments, which the multilingual work owns"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "site/templates/roadmap.html",
+            "site/content/roadmap.md",
+            "site/i18n/cs/memory",
+            "test/cases/3724_the_roadmap_says_what_the_plan_holds.sh"
+          ],
+          "slug": "the-roadmap-says-what-the-plan-holds",
+          "validation": [
+            "bash test/run.sh 3724_the_roadmap_says_what_the_plan_holds 3103_the_roadmap_draws_every_milestone",
+            "scripts/site-build && scripts/site-check",
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3752",
+        "kind": "issue",
+        "label": "I3752",
+        "summary": "The UI is one of the product's surfaces, so every count of the interfaces agrees",
+        "route": "/cockpit/objects/issue/i3752",
+        "source": ".ai/repo/project/issues/I3752.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "site/data/registry/product.json lists six surfaces, ui among them, and every stable feature carries a ui flag derived by the stated rule",
+            "The built homepage's hero figure, its evidence-chain surfaces node and its count of interface cards are the same number",
+            "The Surfaces domain headline names exactly the vocabulary's surfaces",
+            "The case fails when the homepage renders an interface card whose id the product model's surfaces do not name, naming the card (negative case, planted by removing ui from the fixture's product.json)",
+            "Surfaces has still refuses an id outside the vocabulary"
+          ],
+          "depends_on": [],
+          "evidence_required": [
+            "the_surface_vocabulary_is_closed_and_read_back_in_order",
+            "the_ui_is_a_surface_of_the_features_it_reads",
+            "every_interface_count_on_the_homepage_agrees"
+          ],
+          "milestone": "surfaces-never-disagree",
+          "non_scope": [
+            "The evidence-chain node sentences and figure links (I3760)",
+            "Adding the public site itself to the vocabulary; it is a projection, not a way to reach the executable",
+            "The features matrix template, which renders whatever columns the model gives"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/product.rs",
+            ".ai/repo/features/domains/surfaces.md",
+            "site/data/registry/product.json",
+            "site/data/registry/product-graph.json",
+            "docs/generated/graph.json",
+            "test/cases/3725_the_ui_is_one_of_the_surfaces.sh",
+            ".ai/repo/project/issues/I3752.yaml"
+          ],
+          "slug": "the-ui-is-one-of-the-surfaces",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib product::",
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3725_the_ui_is_one_of_the_surfaces",
+            "majordomus product validate && majordomus generate --check && scripts/site-build && scripts/ci/homepage-check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3753",
+        "kind": "issue",
+        "label": "I3753",
+        "summary": "The Czech copy says what the English says, in one vocabulary, with no segment of the homepage or the roadmap left in English",
+        "route": "/cockpit/objects/issue/i3753",
+        "source": ".ai/repo/project/issues/I3753.yaml",
+        "facts": {
+          "depends_on": [],
+          "evidence_required": [
+            "the_czech_copy_says_it_right"
+          ],
+          "milestone": "public-proof",
+          "non_scope": [
+            "The segmentation and keying of scripts/lib/site-i18n.mjs, which I3758 changes",
+            "Any English page, template or site/data file, including site/data/nav.toml; English is the only authored source (ADR 0218)",
+            "Articles and their counterparts, which I3436 and I3437 hold",
+            "Any language other than Czech"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "site/i18n/cs/memory",
+            "site/i18n/cs/guide.json",
+            "test/cases/3726_the_czech_copy_says_it_right.sh",
+            ".ai/repo/project/issues/I3753.yaml"
+          ],
+          "slug": "the-czech-copy-says-it-right",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3726_the_czech_copy_says_it_right",
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3590_the_site_is_derived_in_every_language",
+            "scripts/site-build && scripts/site-check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3754",
+        "kind": "issue",
+        "label": "I3754",
+        "summary": "plan.next never names an issue whose delivery is merged or released, and plan.roadmap names that issue with its drift",
+        "route": "/cockpit/objects/issue/i3754",
+        "source": ".ai/repo/project/issues/I3754.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A fixture whose highest-ranked READY issue is named by a merge on the trunk gets the next-ranked READY issue from plan.next, and passed_over names the first with stage merged and its merge commit",
+            "Negative: a READY issue named only by a branch or an open pull request is still handed out; only merged, released or deployed passes an issue over",
+            "Negative: a fixture with no delivered issue gets exactly the pick plan.rs ranks, and case 99's next comparison still agrees on its fixture",
+            "plan next on the command line, the MCP tool majordomus_plan_next, plan.status and plan.transition name the same issue for the same trunk commit",
+            "A merge that lands after a first answer changes the next answer of the same server without a restart",
+            "With a history that cannot be read, the answer names delivery as unread and returns the stamp ranking",
+            "plan.roadmap lists, under the milestone it holds open, each issue the history shows delivered while it is not DONE"
+          ],
+          "depends_on": [
+            "I2749"
+          ],
+          "evidence_required": [
+            "plan_next_passes_over_delivered_work",
+            "plan_next_hands_out_branch_only_work"
+          ],
+          "milestone": "truthful-plan-surfaces",
+          "non_scope": [
+            "Writing any stamp from inference: a merge is not acceptance (ADR 0166)",
+            "Recording I0702 or any other unrecorded issue; that is the record sweep",
+            "Changing the readiness derivation in plan.rs or lib/project.awk; statuses stay a function of the records",
+            "Live sources (branches, the forge observation, the published site) in the next answer",
+            "Which commits count as delivery; I2749 owns that rule",
+            "Which milestones are now and next; I3439 derives them once, and the delivered-issue list this issue adds to plan.roadmap names no now or next of its own"
+          ],
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/plan.rs",
+            "apps/majordomus-cli/src/plan/delivery.rs",
+            "lib/plan.sh",
+            "test/cases/99_plan_capabilities.sh",
+            "test/cases/3727_plan_next_never_names_delivered_work.sh",
+            "docs/PLANNING.md",
+            "docs/generated",
+            "site/data/generated",
+            "site/data/registry",
+            ".claude/skills/mj-plan/SKILL.md",
+            ".ai/repo/project/issues/I3754.yaml"
+          ],
+          "slug": "plan-next-never-names-delivered-work",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3727_plan_next_never_names_delivered_work 99_plan_capabilities",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib capability::builtin::plan",
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3755",
+        "kind": "issue",
+        "label": "I3755",
+        "summary": "/roadmap/ opens with now, next and a status summary, shows each milestone's priority, and keeps its issue groups collapsed",
+        "route": "/cockpit/objects/issue/i3755",
+        "source": ".ai/repo/project/issues/I3755.yaml",
+        "facts": {
+          "depends_on": [
+            "I3751",
+            "I3439"
+          ],
+          "evidence_required": [
+            "test_the_roadmap_opens_with_now_next_and_a_summary"
+          ],
+          "milestone": "truthful-plan-surfaces",
+          "non_scope": [
+            "How now and next are derived, which I3439 decides and this issue only reads",
+            "A client-side status filter or search on /roadmap/",
+            "Reducing the page weight below a budget, which collapsing does not change by itself",
+            "Dates on the roadmap: I3768; progress bars: I3773",
+            "The /ui roadmap table: I3441"
+          ],
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "site/templates/roadmap.html",
+            "scripts/site-build",
+            "scripts/site-check",
+            ".gitignore",
+            "test/cases/3728_the_roadmap_opens_with_now_next_and_a_summary.sh"
+          ],
+          "slug": "the-roadmap-opens-with-now-next-and-a-summary",
+          "validation": [
+            "bash test/run.sh 3728_the_roadmap_opens_with_now_next_and_a_summary 3103_the_roadmap_draws_every_milestone",
+            "scripts/site-build && scripts/site-check && scripts/ci/link-check",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3756",
+        "kind": "issue",
+        "label": "I3756",
+        "summary": "A published UI snapshot says once why it reads no mesh and no deployed commit, and shows no unread notice for either",
+        "route": "/cockpit/objects/issue/i3756",
+        "source": ".ai/repo/project/issues/I3756.yaml",
+        "facts": {
+          "depends_on": [],
+          "evidence_required": [
+            "test_a_snapshot_explains_what_it_cannot_read"
+          ],
+          "milestone": "truthful-plan-surfaces",
+          "non_scope": [
+            "Fetching the deployed commit into the Pages clone so the publication source can be read there",
+            "The meters and the now/next derivation, which I3440 and I3439 own",
+            "The mesh screen, which ui/mesh.rs already handles"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/roadmap.rs",
+            "apps/majordomus-cli/src/ui/mod.rs",
+            "apps/majordomus-cli/tests/ui_roadmap.rs",
+            "test/cases/3729_a_snapshot_explains_what_it_cannot_read.sh",
+            ".ai/repo/project/issues/I3756.yaml"
+          ],
+          "slug": "a-snapshot-explains-what-it-cannot-read",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test ui_roadmap",
+            "MJ_TEST_JOBS=2 bash test/run.sh 3729_a_snapshot_explains_what_it_cannot_read",
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3757",
+        "kind": "issue",
+        "label": "I3757",
+        "summary": "A BLOCKED milestone names what holds it: the milestones it waits on, or the issues outside it that hold every open issue inside it",
+        "route": "/cockpit/objects/issue/i3757",
+        "source": ".ai/repo/project/issues/I3757.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A milestone whose every open issue depends on a READY issue of another milestone is BLOCKED with waits_on naming that issue, in plan.rs and in lib/project.awk",
+            "A chain (an issue inside waits on a BLOCKED issue outside, which waits on an ACTIVE issue) names the ACTIVE issue and not the intermediate one",
+            "Negative: a milestone gated by an unfinished milestone keeps blocked_by and has an empty waits_on, and a milestone with one READY issue is not BLOCKED and has no waits_on",
+            "Negative: a milestone whose issues block only each other in a cycle reaches no holding issue and fails plan validate with blocked_without_reason beside the cycle finding, in both engines",
+            "case 99 compares waits_on field for field over this repository and its fixture",
+            "The /ui inspector and /roadmap/ of a fixture show the holding issue as a link, and an empty waits_on prints no sentence"
+          ],
+          "depends_on": [],
+          "evidence_required": [
+            "blocked_milestone_names_its_holding_issue",
+            "gated_milestone_has_no_waits_on"
+          ],
+          "milestone": "truthful-plan-surfaces",
+          "non_scope": [
+            "What finishing an issue would unblock (plan.impact, I3267)",
+            "When a milestone is BLOCKED; only the reason is added",
+            "Classes for blocked issues beyond the existing blocked_by",
+            "scripts/generate-site-data, which reads lib/plan_json.awk and needs no change"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/plan.rs",
+            "lib/project.awk",
+            "lib/project.sh",
+            "lib/plan_json.awk",
+            "apps/majordomus-cli/src/ui/milestone.rs",
+            "site/templates/roadmap.html",
+            "site/i18n/cs/memory",
+            "test/cases/99_plan_capabilities.sh",
+            "test/cases/3730_a_blocked_milestone_names_what_holds_it.sh",
+            "docs/PLANNING.md",
+            "docs/generated",
+            "site/data/generated",
+            ".ai/repo/project/issues/I3757.yaml"
+          ],
+          "slug": "a-blocked-milestone-names-what-holds-it",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3730_a_blocked_milestone_names_what_holds_it 99_plan_capabilities",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib plan::tests",
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3758",
+        "kind": "issue",
+        "label": "I3758",
+        "summary": "A number in a segment is a placeholder, so a changed count keeps its translation, and site-check reports each copy's untranslated share",
+        "route": "/cockpit/objects/issue/i3758",
+        "source": ".ai/repo/project/issues/I3758.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Two fixture pages that differ only in a count inside one sentence produce one memory key, and one translation serves both with each page's own number restored",
+            "Negative: a translation that drops, repeats or changes a value placeholder is not admitted and the segment is counted as missing",
+            "An identifier that contains digits, such as I1011 or v0.30.2, inside opaque markup or as a lone token stays untranslated and unchanged",
+            "site-translate rekey keeps every translation whose digits match its English, and the cs coverage after a rekey and rebuild of master is not lower than before it",
+            "/<lang>/i18n.json carries each route's segments, translated and untranslated share, and its route totals sum to the language total",
+            "site-check prints each language's untranslated share and fails, naming the missing segments, when the / copy of a language has one; a fixture with a fully translated / passes"
+          ],
+          "depends_on": [
+            "I3753"
+          ],
+          "evidence_required": [
+            "a_number_in_a_segment_is_a_placeholder",
+            "site_check_reports_each_copys_untranslated_share"
+          ],
+          "milestone": "public-proof",
+          "non_scope": [
+            "Translating a date or a version into a local format; a value placeholder carries the English digits unchanged",
+            "Content fixes to individual Czech entries, which I3753 makes",
+            "A model call from the build; the build stays a pure function of the English pages and the memory",
+            "A share floor for any route other than the homepage"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "scripts/lib/site-i18n.mjs",
+            "scripts/site-translate",
+            "scripts/site-check",
+            "site/i18n/cs/memory",
+            "test/cases/3731_a_number_in_a_segment_is_a_placeholder.sh",
+            "test/cases/3590_the_site_is_derived_in_every_language.sh",
+            ".ai/repo/adrs/0218-every-language-of-the-site-is-derived-from-the-english-build-and-a-translation-memory.md",
+            ".ai/repo/project/issues/I3758.yaml"
+          ],
+          "slug": "a-number-in-a-segment-is-a-placeholder",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3731_a_number_in_a_segment_is_a_placeholder",
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3590_the_site_is_derived_in_every_language",
+            "scripts/site-build && scripts/site-check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3759",
+        "kind": "issue",
+        "label": "I3759",
+        "summary": "Every language's homepage is held to the declared weight budget, and the capability list is fetched rather than inlined",
+        "route": "/cockpit/objects/issue/i3759",
+        "source": ".ai/repo/project/issues/I3759.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A fixture whose English homepage is under the budget and whose Czech copy is over it fails the weight section, naming cs and the bytes over",
+            "A fixture where every language's homepage is under the budget passes with one ok line per declared language",
+            "Negative: a language declared in languages.json whose homepage copy the build did not write fails, rather than being skipped",
+            "The built homepage carries one capability <option> and the picker still lists every capability after it is opened",
+            "Every copy of the homepage built from the branch is under html_bytes"
+          ],
+          "depends_on": [],
+          "evidence_required": [
+            "every_languages_homepage_is_held_to_its_budget"
+          ],
+          "milestone": "public-proof",
+          "non_scope": [
+            "Raising any figure of site/data/homepage.toml [budget]; raising a budget is its own reviewed change",
+            "A separate budget per language; one declared budget holds every copy",
+            "The homepage's copy or sections beyond the capability picker",
+            "The translation memory, which I3753 and I3758 change"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "scripts/ci/homepage-check",
+            "site/templates/index.html",
+            "test/cases/3732_every_languages_homepage_is_held_to_its_budget.sh",
+            ".ai/repo/project/issues/I3759.yaml"
+          ],
+          "slug": "every-languages-homepage-is-held-to-its-budget",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3732_every_languages_homepage_is_held_to_its_budget",
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 333_homepage_narrative",
+            "scripts/site-build && scripts/ci/homepage-check && scripts/site-check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3760",
+        "kind": "issue",
+        "label": "I3760",
+        "summary": "Each evidence-chain node says its own thing, and every homepage figure links to a page that counts the same number",
+        "route": "/cockpit/objects/issue/i3760",
+        "source": ".ai/repo/project/issues/I3760.yaml",
+        "facts": {
+          "depends_on": [],
+          "evidence_required": [
+            "every_figure_links_to_a_page_that_counts_it",
+            "every_chain_node_has_its_own_sentence"
+          ],
+          "milestone": "public-proof",
+          "non_scope": [
+            "Feeding the evidence ledger from CI (I2795)",
+            "The interface count and the UI surface (I3752)",
+            "The hero card's status figures and roadmap link (I3764)",
+            "The AI coding tools figure and the bb title (I3765)",
+            "Czech translations of the new sentences; the translation memory is I3753's and is exported after this lands"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "site/templates/partials/evidence-chain.html",
+            "site/templates/index.html",
+            "site/templates/doctrines-section.html",
+            "site/data/marketing.toml",
+            "scripts/ci/homepage-check",
+            "test/cases/3733_each_figure_links_to_the_page_that_counts_it.sh",
+            ".ai/repo/project/issues/I3760.yaml"
+          ],
+          "slug": "each-evidence-chain-node-says-its-own-thing",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3733_each_figure_links_to_the_page_that_counts_it",
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 333_homepage_narrative 3105_the_homepage_states_no_present_it_does_not_read",
+            "scripts/site-build && scripts/site-check && scripts/ci/homepage-check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3761",
+        "kind": "issue",
+        "label": "I3761",
+        "summary": "The Pages run of a release head publishes with fresh evidence, or publishes the site with the evidence lag stated, and never fails on a missing snapshot artifact",
+        "route": "/cockpit/objects/issue/i3761",
+        "source": ".ai/repo/project/issues/I3761.yaml",
+        "facts": {
+          "depends_on": [
+            "I2660"
+          ],
+          "evidence_required": [
+            "test_a_release_head_publishes_with_its_lag_stated"
+          ],
+          "milestone": "M004",
+          "non_scope": [
+            "The baseline of published-evidence, which may only fall",
+            "Keeping pre-release metadata across deploys, which I3448 owns",
+            "Moving publication to the Pages artifact model, which I2660 owns",
+            "Making validate faster"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".github/workflows/pages.yml",
+            "scripts/pages",
+            ".ai/repo/ci/pages.yaml",
+            "docs/GITHUB_PAGES_ARCHITECTURE.md",
+            "test/cases/3734_a_release_head_publishes_with_its_lag_stated.sh",
+            ".ai/repo/project/issues/I3761.yaml"
+          ],
+          "slug": "a-release-head-publishes-with-its-evidence-lag-stated",
+          "validation": [
+            "MJ_TEST_JOBS=2 bash test/run.sh 3734_a_release_head_publishes_with_its_lag_stated 3242_a_claim_newer_than_the_ledger_is_not_yet_recorded 26_ci_wiring",
+            "scripts/ci/pages-check",
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3762",
+        "kind": "issue",
+        "label": "I3762",
+        "summary": "plan validate warns on an open issue that declares no parallel_safe",
+        "route": "/cockpit/objects/issue/i3762",
+        "source": ".ai/repo/project/issues/I3762.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "An open issue without parallel_safe produces exactly one no_parallel_safe warning in plan validate, from both engines, and plan validate still exits 0",
+            "Negative: an issue with parallel_safe true or false, a DONE issue and a CANCELLED issue without the key produce no no_parallel_safe warning",
+            "Negative: the derived parallel_safe of an issue without the key is still true in plan.issues and in the shell's model",
+            "case 99's fixture produces no_parallel_safe and both engines agree on its findings and counts"
+          ],
+          "depends_on": [],
+          "evidence_required": [
+            "missing_parallel_safe_is_warned",
+            "decided_parallel_safe_is_not_warned"
+          ],
+          "milestone": "truthful-plan-surfaces",
+          "non_scope": [
+            "Setting parallel_safe on the records that lack it (a records step of the campaign)",
+            "Making parallel_safe required by the schema, or changing the default a missing key reads as",
+            "Finding the generator that stopped writing the key"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/plan.rs",
+            "lib/project.awk",
+            "apps/majordomus-cli/src/capability/builtin/plan.rs",
+            "test/lib.sh",
+            "test/cases/99_plan_capabilities.sh",
+            "test/cases/3735_plan_validate_warns_on_a_missing_parallel_safe.sh",
+            "docs/PLAN_STATUS.md",
+            "docs/generated",
+            "site/data/generated",
+            ".ai/repo/project/issues/I3762.yaml"
+          ],
+          "slug": "plan-validate-warns-on-a-missing-parallel-safe",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3735_plan_validate_warns_on_a_missing_parallel_safe 99_plan_capabilities",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib plan::tests",
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3763",
+        "kind": "issue",
+        "label": "I3763",
+        "summary": "A cancelled dependency that names its replacement is satisfied by that replacement, and one that names none is reported",
+        "route": "/cockpit/objects/issue/i3763",
+        "source": ".ai/repo/project/issues/I3763.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "An issue depending on a cancelled issue whose replacement is DONE is READY in both engines",
+            "Negative: an issue depending on a cancelled issue whose replacement is not DONE is BLOCKED, and blocked_by names the replacement, not the cancelled id",
+            "Negative: an issue depending on a cancelled issue with no replacement stays BLOCKED and plan validate warns cancelled_dependency naming both ids",
+            "superseded_by on an issue that is not cancelled, a replacement that is not an issue and a replacement chain that loops each fail plan validate by name in both engines",
+            "case 99 agrees on statuses, blocked_by and findings over a fixture holding each of these"
+          ],
+          "depends_on": [],
+          "evidence_required": [
+            "cancelled_dependency_is_satisfied_by_its_replacement",
+            "cancelled_dependency_without_replacement_is_reported"
+          ],
+          "milestone": "truthful-plan-surfaces",
+          "non_scope": [
+            "Repointing or cancelling the existing dependents of cancelled issues; those are records",
+            "Treating a cancelled dependency without a replacement as satisfied",
+            "A replacement for a milestone, which superseded_by already gives"
+          ],
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/plan.rs",
+            "lib/project.awk",
+            "share/schemas/majordomus/issue/issue.v1.schema.json",
+            "share/allow/issue.txt",
+            "test/cases/99_plan_capabilities.sh",
+            "test/cases/3736_a_cancelled_dependency_is_satisfied_by_its_replacement.sh",
+            "docs/PLANNING.md",
+            "docs/PLAN_STATUS.md",
+            "docs/generated",
+            "site/data/generated",
+            ".ai/repo/project/issues/I3763.yaml"
+          ],
+          "slug": "a-cancelled-dependency-is-satisfied-by-its-replacement",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3736_a_cancelled_dependency_is_satisfied_by_its_replacement 99_plan_capabilities",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib plan::tests",
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3764",
+        "kind": "issue",
+        "label": "I3764",
+        "summary": "The homepage's plan card says what each status means, links each to its issues, draws progress, and invites the roadmap",
+        "route": "/cockpit/objects/issue/i3764",
+        "source": ".ai/repo/project/issues/I3764.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every status the card draws carries its declared label, and no rendered label equals a status id lowercased",
+            "Every status count links to a fragment that exists in the built site and lists exactly that many issues of that status",
+            "The card draws a progress bar whose done and total figures equal plan.json's done count and its non-cancelled count, and shows both as text",
+            "A roadmap link outside any details element sits in the card beside the changelog link",
+            "homepage-check fails when a status the plan declares has no label in marketing.toml, naming the status (negative case)",
+            "homepage-check fails when a status count links to a fragment the built site does not carry, or to one listing another number, naming the status, the link and both numbers (negative case)"
+          ],
+          "depends_on": [],
+          "evidence_required": [
+            "every_plan_status_on_the_homepage_has_a_declared_label",
+            "every_plan_status_count_links_to_its_issues",
+            "the_plan_card_draws_progress_from_the_plan"
+          ],
+          "milestone": "truthful-plan-surfaces",
+          "non_scope": [
+            "The roadmap page's own summary, filters and collapsed groups (I3755) and its prose (I3751)",
+            "Release dates and the last delivery per open milestone on /roadmap/ and /ui (I3768)",
+            "The per-milestone progress bars of /roadmap/, the milestone pages and /ui (I3773); this card's one bar uses the same done-over-required rule",
+            "Which commit the delivery stages are observed at (I3769)",
+            "Czech translations of the new labels; the translation memory is I3753's and is exported after this lands"
+          ],
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "site/templates/index.html",
+            "site/templates/plan-section.html",
+            "site/data/marketing.toml",
+            "scripts/ci/homepage-check",
+            "test/cases/3737_the_plan_card_says_what_each_status_means.sh",
+            ".ai/repo/project/issues/I3764.yaml"
+          ],
+          "slug": "the-plan-card-says-what-each-status-means",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3737_the_plan_card_says_what_each_status_means",
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 333_homepage_narrative 3105_the_homepage_states_no_present_it_does_not_read",
+            "scripts/site-build && scripts/site-check && scripts/ci/homepage-check && scripts/ci/link-check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3765",
+        "kind": "issue",
+        "label": "I3765",
+        "summary": "The homepage's provider figure says what it counts, and every provider it names is a name a visitor can recognise",
+        "route": "/cockpit/objects/issue/i3765",
+        "source": ".ai/repo/project/issues/I3765.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The hero figure counting providers carries a label declared in marketing.toml that does not call every entry a tool",
+            "The bb chip on the homepage names what bb is",
+            "The figure links to a built page that lists every provider the product model names",
+            "homepage-check fails when a provider's title equals its id, naming the provider (negative case, planted in the case's fixture)",
+            "homepage-check still fails when the homepage names a provider the model does not, and when the model names one the homepage does not"
+          ],
+          "depends_on": [],
+          "evidence_required": [
+            "a_provider_title_is_not_its_id",
+            "the_provider_figure_names_what_it_counts"
+          ],
+          "milestone": "public-proof",
+          "non_scope": [
+            "A declared kind for providers that would let the model count tools apart from classes; that needs share.rs and product.rs and is a separate issue if wanted",
+            "Adding or removing a provider",
+            "The other hero figures and their links (I3760)"
+          ],
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "share/providers.yaml",
+            "site/templates/index.html",
+            "site/data/marketing.toml",
+            "scripts/ci/homepage-check",
+            "test/cases/3738_the_provider_figure_says_what_it_counts.sh",
+            ".ai/repo/project/issues/I3765.yaml"
+          ],
+          "slug": "the-provider-figure-says-what-it-counts",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3738_the_provider_figure_says_what_it_counts",
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 333_homepage_narrative",
+            "majordomus product validate && scripts/site-build && scripts/ci/homepage-check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3766",
+        "kind": "issue",
+        "label": "I3766",
+        "summary": "The install section links each page once, and the recorded refusals are grouped by the use case they prove",
+        "route": "/cockpit/objects/issue/i3766",
+        "source": ".ai/repo/project/issues/I3766.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The built homepage's install section carries exactly one link to /docs/install/",
+            "The button after the copy button carries a label declared in marketing.toml that is not the install action",
+            "The refusals disclosure names each use case once and lists every recorded refusal under its use case, and its summary count equals terminal.json counts.refusals",
+            "homepage-check fails when a section carries two links to the same page with the same text, naming the section, the text and the page (negative case, planted in the case's fixture)",
+            "homepage-check fails when the refusals list names one use case twice, naming the use case (negative case)"
+          ],
+          "depends_on": [],
+          "evidence_required": [
+            "a_homepage_section_links_each_page_once",
+            "recorded_refusals_are_grouped_by_use_case"
+          ],
+          "milestone": "public-proof",
+          "non_scope": [
+            "The refusal corpus or the order of terminal.json (scripts/generate-site-data)",
+            "The getting-started page and the install reference page",
+            "The install command and the installer",
+            "Czech translations of the changed labels; the translation memory is I3753's and is exported after this lands"
+          ],
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "site/templates/index.html",
+            "site/templates/components.html",
+            "site/data/marketing.toml",
+            "scripts/ci/homepage-check",
+            "test/cases/3739_the_install_section_links_each_page_once.sh",
+            ".ai/repo/project/issues/I3766.yaml"
+          ],
+          "slug": "the-install-section-links-each-page-once",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3739_the_install_section_links_each_page_once",
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 333_homepage_narrative",
+            "scripts/site-build && scripts/site-check && scripts/ci/homepage-check && scripts/ci/link-check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3767",
+        "kind": "issue",
+        "label": "I3767",
+        "summary": "The language switch of a UI or Cockpit page keeps the reader on that page, and says so when the surface has no copy in the language chosen",
+        "route": "/cockpit/objects/issue/i3767",
+        "source": ".ai/repo/project/issues/I3767.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Negative: on /ui/roadmap/ of a running server, the cs entry of the switch does not lead to the site's front page in Czech, nor to any /cs/ route the server or the site does not serve",
+            "With no Czech copy declared, the cs entry's target is the same route, it carries aria-disabled and the English-only note, and the en entry is current",
+            "A fixture that declares a Czech copy of one UI route makes the cs entry of that route lead to the copy, and of every other route stay in place",
+            "A Cockpit page follows the same rules as a UI page",
+            "scripts/ui navbar passes, and still fails when a style of the bar differs from the site's"
+          ],
+          "depends_on": [],
+          "evidence_required": [
+            "the_ui_language_switch_keeps_the_page"
+          ],
+          "milestone": "surfaces-never-disagree",
+          "non_scope": [
+            "A Czech copy of the UI or the Cockpit; that is the larger promise of the intent one-bar-and-one-language-on-every-surface",
+            "The switch on site pages, which site-i18n.mjs switchLanguage already points at each page's copy",
+            "Any change to the bar's look; scripts/ui navbar still refuses a box or computed style that differs from the site's"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/navbar.rs",
+            "apps/majordomus-cli/src/ui/navbar.html",
+            "apps/majordomus-cli/src/ui/shell.rs",
+            "apps/majordomus-cli/src/cockpit/view.rs",
+            "scripts/lib/ui-navbar.mjs",
+            ".ai/repo/rules/project/the-ui-wears-the-sites-navbar.v1.md",
+            "test/cases/3740_the_ui_language_switch_keeps_the_page.sh",
+            ".ai/repo/project/issues/I3767.yaml"
+          ],
+          "slug": "the-ui-language-switch-keeps-the-page",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3740_the_ui_language_switch_keeps_the_page",
+            "cargo test -p majordomus-cli navbar",
+            "scripts/ui navbar"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3768",
+        "kind": "issue",
+        "label": "I3768",
+        "summary": "Every plan surface answers 'when' from the records: a release's date beside its version, and the last delivery date of each open milestone",
+        "route": "/cockpit/objects/issue/i3768",
+        "source": ".ai/repo/project/issues/I3768.yaml",
+        "facts": {
+          "depends_on": [
+            "I3755",
+            "I3440",
+            "I3441"
+          ],
+          "evidence_required": [
+            "test_every_plan_surface_says_when_from_the_records"
+          ],
+          "milestone": "truthful-plan-surfaces",
+          "non_scope": [
+            "The public /roadmap/ itself, whose bars and dates I3751 delivers",
+            "Due dates, target dates, forecasts or a calendar or timeline view of milestones",
+            "A date field on milestone or issue records: dates stay observations, never declared values (ADR 0166)",
+            "Measuring delivery flow and its phases: milestone delivery-flow-is-measured",
+            "Translating the new labels: the multilingual work, after the English settles"
+          ],
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "site/templates/roadmap.html",
+            "site/templates/milestone.html",
+            "apps/majordomus-cli/src/ui/roadmap.rs",
+            "apps/majordomus-cli/src/ui/dashboard.rs",
+            "apps/majordomus-cli/src/ui/milestone.rs",
+            "apps/majordomus-cli/tests/ui_roadmap.rs",
+            "docs/MAJORDOMUS_UI.md",
+            "test/cases/3741_every_plan_surface_says_when_from_the_records.sh"
+          ],
+          "slug": "every-plan-surface-says-when-from-the-records",
+          "validation": [
+            "bash test/run.sh 3741_every_plan_surface_says_when_from_the_records 3103_the_roadmap_draws_every_milestone 3104_the_ui_roadmap_reads_delivery",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test ui_roadmap",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test dashboard",
+            "scripts/site-build && scripts/site-check",
+            "scripts/ui audit --only /ui/roadmap",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3769",
+        "kind": "issue",
+        "label": "I3769",
+        "summary": "A published page reads delivery at the commit it was built from, and names one commit",
+        "route": "/cockpit/objects/issue/i3769",
+        "source": ".ai/repo/project/issues/I3769.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A clean site-build at a commit writes site/data/build.json whose delivery.observed.commit is that commit",
+            "The built homepage and /roadmap/ name the build commit for delivery, and the hero card names one commit",
+            "Negative: a render without site/data/build.json still shows delivery from the committed file",
+            "homepage-check fails on a clean build whose hero delivery commit is not the build commit, naming both commits (negative case, planted by editing the fixture's build.json)",
+            "test/cases/51_derived_artifacts_committed.sh and generate-site-data --check pass unchanged"
+          ],
+          "depends_on": [],
+          "evidence_required": [
+            "a_built_page_reads_delivery_at_its_build_commit",
+            "a_render_without_a_build_record_falls_back_to_committed_delivery"
+          ],
+          "milestone": "truthful-plan-surfaces",
+          "non_scope": [
+            "The committed delivery.json and the generator's --check reproduction (scripts/generate-site-data)",
+            "Bringing the live stages branch, pr_open and deployed to the published site (I2743, I2744)",
+            "The hero card's status labels and links (I3764)",
+            "The Pages workflow and its evidence freshness (I2660, I3761)",
+            "The rest of /roadmap/ and of scripts/site-build, which I3755, I3773 and I3768 also change; this issue touches one delivery read in each and lands in whichever order the landing seat picks"
+          ],
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "scripts/site-build",
+            "site/templates/index.html",
+            "site/templates/roadmap.html",
+            "scripts/ci/homepage-check",
+            "test/cases/3742_a_published_page_reads_delivery_at_its_build_commit.sh",
+            ".ai/repo/project/issues/I3769.yaml"
+          ],
+          "slug": "a-published-page-reads-delivery-at-its-build-commit",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3742_a_published_page_reads_delivery_at_its_build_commit",
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 51_derived_artifacts_committed 333_homepage_narrative",
+            "scripts/generate-site-data --check && scripts/site-build && scripts/ci/homepage-check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3770",
+        "kind": "issue",
+        "label": "I3770",
+        "summary": "A server that lost its checkout lease answers every mesh read by naming the server that holds it, never with an empty mesh",
+        "route": "/cockpit/objects/issue/i3770",
+        "source": ".ai/repo/project/issues/I3770.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Two fixture servers of one checkout, the second taking the lease: the first answers mesh.state and mesh.cooperation with active false, a holder whose url is the second server's, and lost_at",
+            "A claim through the retired server is refused as not_active and the refusal names the holder's url",
+            "Negative: a server that never had the mesh (declaration disabled, or a command-line process) answers without any holder field, so a holder is never invented",
+            "Negative: with the lease file removed after the takeover, the retired server says the holder cannot be read, and does not report an empty mesh as active"
+          ],
+          "depends_on": [],
+          "evidence_required": [
+            "test_a_server_without_the_lease_points_to_the_holder"
+          ],
+          "milestone": "the-mesh-works-out-of-the-box",
+          "non_scope": [
+            "Moving the attached client to the holder automatically",
+            "Stopping either server, or deciding which of two servers of one checkout should hold the lease",
+            "The health report's own wording beyond adding the holder"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/shared.rs",
+            "apps/majordomus-cli/src/mesh/manager.rs",
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "apps/majordomus-cli/tests/mesh_lease_retirement.rs",
+            "docs/MESH.md",
+            "test/cases/3743_a_retired_server_names_the_lease_holder.sh",
+            ".ai/repo/project/issues/I3770.yaml"
+          ],
+          "slug": "a-server-without-the-lease-points-to-the-holder",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test mesh_lease_retirement",
+            "MJ_TEST_JOBS=2 bash test/run.sh 3743_a_retired_server_names_the_lease_holder 130_mesh",
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3771",
+        "kind": "issue",
+        "label": "I3771",
+        "summary": "A claim scope that is not a repository path is refused, or mapped to the record file it names, so a milestone claim excludes what it says",
+        "route": "/cockpit/objects/issue/i3771",
+        "source": ".ai/repo/project/issues/I3771.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "An exclusive claim on milestone:idd-workspace holds the scope .ai/repo/project/milestones/idd-workspace.yaml, and a second session's exclusive claim on that file is refused as claim_conflict",
+            "An exclusive claim on issue:I2781 meets a claim on .ai/repo/project/issues/I2781.yaml",
+            "Negative: an exclusive claim on intent:anything, or on a scope with an unknown namespace, is refused as scope_not_a_path and writes no event",
+            "Negative: the seat scopes release/seat, campaign/c1/landing and refs/heads/fix-x are accepted and mean exactly what they meant before",
+            "A replicated ClaimAcquired with scope milestone:x from a runtime that did not map it folds as excluding .ai/repo/project/milestones/x.yaml"
+          ],
+          "depends_on": [],
+          "evidence_required": [
+            "test_a_claim_scope_that_is_not_a_path_is_refused_or_mapped"
+          ],
+          "milestone": "mesh-journal-converges",
+          "non_scope": [
+            "Advisory board announcements of peers.rs, which refuse nothing by design",
+            "A milestone claim that also excludes every issue file of the milestone, which needs the plan inside the fold",
+            "Releasing the milestone: claims already held"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh/state.rs",
+            "apps/majordomus-cli/src/mesh/cooperation.rs",
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "apps/majordomus-cli/tests/mesh_cooperation.rs",
+            "docs/MESH.md",
+            "test/cases/3744_a_claim_scope_that_is_not_a_path_is_refused.sh",
+            ".ai/repo/project/issues/I3771.yaml"
+          ],
+          "slug": "a-claim-scope-that-is-not-a-path-is-refused-or-mapped",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::state",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test mesh_cooperation",
+            "MJ_TEST_JOBS=2 bash test/run.sh 3744_a_claim_scope_that_is_not_a_path_is_refused 130_mesh",
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3772",
+        "kind": "issue",
+        "label": "I3772",
+        "summary": "Every mesh link counts its failed sync rounds, and a link whose rounds fail does not read plainly connected",
+        "route": "/cockpit/objects/issue/i3772",
+        "source": ".ai/repo/project/issues/I3772.yaml",
+        "facts": {
+          "depends_on": [],
+          "evidence_required": [
+            "test_mesh_link_sync_failures_are_counted_and_shown"
+          ],
+          "milestone": "mesh-journal-converges",
+          "non_scope": [
+            "Finding and fixing why rounds fail, which is a follow-up once the counters have run",
+            "Changing the link state machine or the backoff",
+            "The /ui mesh screen, which reads the same status and follows in a later issue"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh/cooperation.rs",
+            "apps/majordomus-cli/src/mesh/doctor.rs",
+            "apps/majordomus-cli/src/cockpit/pages.rs",
+            "apps/majordomus-cli/tests/mesh_cooperation.rs",
+            "docs/MESH.md",
+            "test/cases/3745_mesh_link_sync_failures_are_counted.sh",
+            ".ai/repo/project/issues/I3772.yaml"
+          ],
+          "slug": "mesh-link-sync-failures-are-counted-and-shown",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test mesh_cooperation",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::doctor",
+            "MJ_TEST_JOBS=2 bash test/run.sh 3745_mesh_link_sync_failures_are_counted 130_mesh",
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3773",
+        "kind": "issue",
+        "label": "I3773",
+        "summary": "Every plan surface draws a milestone's progress as a bar of the issues it requires, a blocked milestone's bar says the gate is closed, and the roadmap no longer says a bar would be a lie",
+        "route": "/cockpit/objects/issue/i3773",
+        "source": ".ai/repo/project/issues/I3773.yaml",
+        "facts": {
+          "depends_on": [
+            "I3751",
+            "I3440"
+          ],
+          "evidence_required": [
+            "test_every_plan_surface_draws_progress_bars"
+          ],
+          "milestone": "truthful-plan-surfaces",
+          "non_scope": [
+            "The public /roadmap/ itself, whose bars and dates I3751 delivers",
+            "The denominator itself on /ui (required instead of total): I3440",
+            "Bars for intents, issues or pull requests, which keep the meters they have",
+            "Any percentage in the landing page's marketing copy, which homepage-check keeps refusing",
+            "The dependency and claim prose of the same paragraph: I3751, which this issue follows"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "site/templates/roadmap.html",
+            "site/templates/milestone.html",
+            "site/content/roadmap.md",
+            "site/i18n/cs/memory",
+            "apps/majordomus-cli/src/ui/view.rs",
+            "apps/majordomus-cli/src/ui/dashboard.rs",
+            "apps/majordomus-cli/src/ui/milestone.rs",
+            "test/cases/3746_every_plan_surface_draws_progress_bars.sh"
+          ],
+          "slug": "every-plan-surface-draws-progress-bars",
+          "validation": [
+            "bash test/run.sh 3746_every_plan_surface_draws_progress_bars 3103_the_roadmap_draws_every_milestone 3104_the_ui_roadmap_reads_delivery",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::view",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test dashboard",
+            "scripts/site-build && scripts/site-check",
+            "scripts/ui audit --only /ui/roadmap",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -116790,6 +117870,296 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3750",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3750",
+        "target": "majordomus://milestone/truthful-plan-surfaces",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3751",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3751",
+        "target": "majordomus://milestone/truthful-plan-surfaces",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3752",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3752",
+        "target": "majordomus://milestone/surfaces-never-disagree",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3753",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3753",
+        "target": "majordomus://milestone/public-proof",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3754",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3754",
+        "target": "majordomus://issue/I2749",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3754",
+        "target": "majordomus://milestone/truthful-plan-surfaces",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3755",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3755",
+        "target": "majordomus://issue/I3439",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3755",
+        "target": "majordomus://issue/I3751",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3755",
+        "target": "majordomus://milestone/truthful-plan-surfaces",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3756",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3756",
+        "target": "majordomus://milestone/truthful-plan-surfaces",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3757",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3757",
+        "target": "majordomus://milestone/truthful-plan-surfaces",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3758",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3758",
+        "target": "majordomus://issue/I3753",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3758",
+        "target": "majordomus://milestone/public-proof",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3759",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3759",
+        "target": "majordomus://milestone/public-proof",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3760",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3760",
+        "target": "majordomus://milestone/public-proof",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3761",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3761",
+        "target": "majordomus://issue/I2660",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3761",
+        "target": "majordomus://milestone/M004",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3762",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3762",
+        "target": "majordomus://milestone/truthful-plan-surfaces",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3763",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3763",
+        "target": "majordomus://milestone/truthful-plan-surfaces",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3764",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3764",
+        "target": "majordomus://milestone/truthful-plan-surfaces",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3765",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3765",
+        "target": "majordomus://milestone/public-proof",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3766",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3766",
+        "target": "majordomus://milestone/public-proof",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3767",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3767",
+        "target": "majordomus://milestone/surfaces-never-disagree",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3768",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3768",
+        "target": "majordomus://issue/I3440",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3768",
+        "target": "majordomus://issue/I3441",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3768",
+        "target": "majordomus://issue/I3755",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3768",
+        "target": "majordomus://milestone/truthful-plan-surfaces",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3769",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3769",
+        "target": "majordomus://milestone/truthful-plan-surfaces",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3770",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3770",
+        "target": "majordomus://milestone/the-mesh-works-out-of-the-box",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3771",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3771",
+        "target": "majordomus://milestone/mesh-journal-converges",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3772",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3772",
+        "target": "majordomus://milestone/mesh-journal-converges",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3773",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3773",
+        "target": "majordomus://issue/I3440",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3773",
+        "target": "majordomus://issue/I3751",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3773",
+        "target": "majordomus://milestone/truthful-plan-surfaces",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -127761,8 +129131,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3614,
-      "edges": 8406,
+      "nodes": 3638,
+      "edges": 8464,
       "acyclic": false,
       "truncated": false
     }

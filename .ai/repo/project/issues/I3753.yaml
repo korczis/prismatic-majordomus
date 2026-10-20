@@ -1,0 +1,36 @@
+# rehomed from NM1: a new milestone for the-site-is-always-fully-multilingual would derive PLANNED (no issue of it is ACTIVE, VERIFY or DONE; plan.rs milestone status), so O1 refuses it; public-proof is ACTIVE, owns what the public site tells a visitor, holds site/ in its scope, and already carries the article-language issues I3436 and I3437
+# the case number of 3726_the_czech_copy_says_it_right is allocated with the id
+id: "I3753"
+milestone: "public-proof"
+title: "The Czech copy says what the English says, in one vocabulary, with no segment of the homepage or the roadmap left in English"
+slug: "the-czech-copy-says-it-right"
+priority: "p1"
+profile: "implementation"
+parallel_safe: true
+objective: "Every segment of /cs/ and /cs/roadmap/ that the build lists as missing is translated and admitted through scripts/site-translate, the mistranslations, calques, English quotation marks and broken phrases the 2026-10-20 audit found are corrected in site/i18n/cs/memory, and site/i18n/cs/guide.json fixes one rendering for contract, worker, surface, domain, intent and the product's own description, with a rule that command names stay as they are; a new case refuses each of the known faults if it returns."
+why: "The landing and roadmap audits of 2026-10-20 found the Czech homepage and roadmap partly English and partly wrong: a reader of /cs/ is told a session undid last year's decision where the English says last week's, meets two words for one concept on the same page, and reads a doubled noun phrase in the page title. The intent the-site-is-always-fully-multilingual promises a copy that says what the English says; the milestone is public-proof because it owns what the public site tells a visitor, and its I3436 and I3437 already hold the articles' languages. This issue fixes the content; I3758 removes the cause that makes counts fall back to English."
+current_state: "On origin/master the memory renders last week's as last year's at site/i18n/cs/memory/17.jsonl:33; uses the inanimate plural workery at 5e.jsonl:7, c0.jsonl:28 and de.jsonl:247; renders surfaces as Povrchy at 13.jsonl:239, 1e.jsonl:134 and 39.jsonl:95 beside rozhraní elsewhere; uses kontrakt at 04.jsonl:111, 05.jsonl:243 and 14.jsonl:214 beside smlouva; carries the calques at 4f.jsonl:73 and 70.jsonl:217; leaves an English and inside the roadmap intro at ec.jsonl:210 and an ungrammatical phrase at bb.jsonl:265; and drops the preposition of Blocked by at 21.jsonl:70, 2f.jsonl:36 and 8c.jsonl:154. site/i18n/cs/guide.json:42 itself fixes the doubled noun phrase for supervisory control layer, and guide.json:5-49 has no entry for contract, worker, surface, domain or intent. The memory has entries for All 10, 11, 15 and 17 pages in the site map (1f.jsonl:225, 54.jsonl:93, e0.jsonl:12, 6b.jsonl:62) and none for the count the navbar renders now, and the site-map labels at site/data/nav.toml:91-96 reach /cs/ untranslated."
+desired_state: "A build of master writes target/site-i18n/missing.json with no segment whose routes include / or /roadmap/ for cs; every listed fault is gone from site/i18n/cs/memory; guide.json fixes the five terms and the product description and says command names stay verbatim; the site-map entries of a Czech page read as the titles of the Czech originals they lead to, through the memory and without a change to nav.toml; and case 3726_the_czech_copy_says_it_right holds all of it."
+scope:
+  - "site/i18n/cs/memory"
+  - "site/i18n/cs/guide.json"
+  - "test/cases/3726_the_czech_copy_says_it_right.sh"
+  - ".ai/repo/project/issues/I3753.yaml"
+non_scope:
+  - "The segmentation and keying of scripts/lib/site-i18n.mjs, which I3758 changes"
+  - "Any English page, template or site/data file, including site/data/nav.toml; English is the only authored source (ADR 0218)"
+  - "Articles and their counterparts, which I3436 and I3437 hold"
+  - "Any language other than Czech"
+acceptance_criteria:
+  - "After scripts/site-build, missing.json lists no cs segment that appears on / or /roadmap/"
+  - "None of the faulty renderings the audit named (loňské for last week's, workery, Povrchy, kontrakt beside smlouva, the English and in the roadmap intro, Blokováno without milníkem or úkolem) is present in site/i18n/cs/memory, and the case fails naming the memory file and key when one is planted back"
+  - "Negative: a Czech translation that carries English straight quotation marks around a word is refused by the case; Czech quotation marks pass"
+  - "site/i18n/cs/guide.json names one rendering for contract, worker, surface, domain and intent, replaces the doubled noun phrase for supervisory control layer, and states that command names stay verbatim; the case fails when one of the five terms is missing"
+  - "Every corrected entry is admitted by site-i18n.mjs admissible, so no translation is lost to a placeholder mismatch"
+validation:
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3726_the_czech_copy_says_it_right"
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3590_the_site_is_derived_in_every_language"
+  - "scripts/site-build && scripts/site-check"
+evidence_required:
+  - "the_czech_copy_says_it_right"
+depends_on: []

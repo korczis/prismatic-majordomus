@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.1"
   },
   "registry": {
-    "fingerprint": "175c5822a5ec7b05aec53afe2cd8314d48b7dba2b230105eb1f131072e600435",
+    "fingerprint": "08fb1f6b0146500c8025e7d7c08922c608b1e83c370e651cb539644c88e303ab",
     "summary": {
-      "total": 3167,
+      "total": 3191,
       "builtin": 206,
-      "declarative": 2961,
+      "declarative": 2985,
       "by_kind": {
         "command": 31,
         "query": 175,
-        "resource": 2961
+        "resource": 2985
       },
       "by_stability": {
         "behaviorally_verified": 142,
         "experimental": 55,
-        "implemented": 2970
+        "implemented": 2994
       },
       "mcp_tools": 196,
-      "mcp_resources": 3016,
+      "mcp_resources": 3040,
       "http_routes": 201,
       "cli_commands": 111,
       "modules": 92,
@@ -85404,7 +85404,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 808,
+        "capabilities": 832,
         "capability_ids": []
       },
       {
@@ -86070,7 +86070,7 @@
     ]
   },
   "index": {
-    "fingerprint": "e44fad4a7dbf84ef665c5c1c9b9dd3633c2cad17ba33d7430b8804bcb3432569",
+    "fingerprint": "7273bb7b1faec9ecb15e7c7c76a356c45e011a187240a195fc14efb8d49b99c2",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -86110,7 +86110,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 33,
-      "issue": 808,
+      "issue": 832,
       "knowledge": 50,
       "mesh-declaration": 1,
       "milestone": 100,
@@ -93308,7 +93308,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 437845
+        "bytes": 509180
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -106004,6 +106004,270 @@
         "bytes": 3729
       },
       {
+        "uri": "majordomus://issue/I3750",
+        "kind": "issue",
+        "identity": "I3750",
+        "title": "The milestone graph reads each edge in the direction it means, in its text and in its detail panel",
+        "description": "Make every reading of the roadmap's milestone graph say which milestone unblocks which: the edge a milestone's depends_on produces is named by the direction it is drawn in (the dependency unblocks the dependent), and the text fallback lists each edge under both of its ends, so no surface reads a dependency backwards.",
+        "path": ".ai/repo/project/issues/I3750.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2836
+      },
+      {
+        "uri": "majordomus://issue/I3751",
+        "kind": "issue",
+        "identity": "I3751",
+        "title": "The roadmap says only what the plan holds, with a bar and a date on every milestone",
+        "description": "Make /roadmap/ and its Czech copy state only what the plan and the history hold: every milestone with required issues draws a bar of its accepted issues against the ones it requires, every milestone shows the date of the release that carried it or of its last delivered issue, the share of milestones that depend on another is counted rather than asserted, and a milestone accepted with no issues reads as delivered.",
+        "path": ".ai/repo/project/issues/I3751.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3904
+      },
+      {
+        "uri": "majordomus://issue/I3752",
+        "kind": "issue",
+        "identity": "I3752",
+        "title": "The UI is one of the product's surfaces, so every count of the interfaces agrees",
+        "description": "Add ui to the product model's surface vocabulary (apps/majordomus-cli/src/product.rs SURFACES) with a derived ui flag on Surfaces, decided like the other five from what a feature's references project, so the homepage hero figure, the evidence-chain node, the interface cards and the Surfaces domain headline all name the same set; regenerate the projections that carry the vocabulary.",
+        "path": ".ai/repo/project/issues/I3752.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5441
+      },
+      {
+        "uri": "majordomus://issue/I3753",
+        "kind": "issue",
+        "identity": "I3753",
+        "title": "The Czech copy says what the English says, in one vocabulary, with no segment of the homepage or the roadmap left in English",
+        "description": "Every segment of /cs/ and /cs/roadmap/ that the build lists as missing is translated and admitted through scripts/site-translate, the mistranslations, calques, English quotation marks and broken phrases the 2026-10-20 audit found are corrected in site/i18n/cs/memory, and site/i18n/cs/guide.json fixes one rendering for contract, worker, surface, domain, intent and the product's own description, with a rule that command names stay as they are; a new case refuses each of the known faults if it returns.",
+        "path": ".ai/repo/project/issues/I3753.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5218
+      },
+      {
+        "uri": "majordomus://issue/I3754",
+        "kind": "issue",
+        "identity": "I3754",
+        "title": "plan.next never names an issue whose delivery is merged or released, and plan.roadmap names that issue with its drift",
+        "description": "Every answer that names the next issue (plan.next, plan.status's next_ready, plan.transition's next_ready and the shell's plan next) comes from one function: the plan.rs ranking of READY issues, each candidate then set against plan.delivery read from the trunk's history and release records only, and a candidate at stage merged, released or deployed passed over and listed with its stage, its proving commit and the remedy (record it with plan start, verify and done). plan.roadmap lists, under each open milestone, the issues of that milestone the history shows delivered while their status is not DONE, so the milestone named as now is read together with its drift.",
+        "path": ".ai/repo/project/issues/I3754.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 6202
+      },
+      {
+        "uri": "majordomus://issue/I3755",
+        "kind": "issue",
+        "identity": "I3755",
+        "title": "/roadmap/ opens with now, next and a status summary, shows each milestone's priority, and keeps its issue groups collapsed",
+        "description": "Make /roadmap/ answer 'where is the work and what comes next' before a reader scrolls: it names now and next from the one derivation every other plan surface reads (I3439), states how many milestones stand in each status, shows each milestone's declared priority on its card, and draws every issue group collapsed so the page reads as a list of milestones rather than 799 open rows.",
+        "path": ".ai/repo/project/issues/I3755.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4689
+      },
+      {
+        "uri": "majordomus://issue/I3756",
+        "kind": "issue",
+        "identity": "I3756",
+        "title": "A published UI snapshot says once why it reads no mesh and no deployed commit, and shows no unread notice for either",
+        "description": "When a screen is read as a published snapshot, the plan.flight sources that are unread because of the snapshot itself (the mesh, which no process on a Pages runner activates, and the publication pointer of a deployed commit the CI clone did not fetch) are not drawn as unread notices on /ui/roadmap/ and on every milestone inspector; the screen states once, in plain words, that a snapshot does not observe them and that the live UI does. Every other unread source is still drawn as unread, in the snapshot and live.",
+        "path": ".ai/repo/project/issues/I3756.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4684
+      },
+      {
+        "uri": "majordomus://issue/I3757",
+        "kind": "issue",
+        "identity": "I3757",
+        "title": "A BLOCKED milestone names what holds it: the milestones it waits on, or the issues outside it that hold every open issue inside it",
+        "description": "For every milestone that is BLOCKED while its milestone dependencies are DONE (blocked_by empty), the plan derives waits_on: the issues that hold its open issues, found by following each BLOCKED issue's blocked_by until an issue that is not BLOCKED (READY elsewhere, ACTIVE, VERIFY or CANCELLED) or a milestone gate, each named once. Both engines derive it identically, plan validate fails a BLOCKED milestone that has neither blocked_by nor waits_on, and the /ui milestone inspector and /roadmap/ state it in one sentence with each holding issue as a link.",
+        "path": ".ai/repo/project/issues/I3757.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5634
+      },
+      {
+        "uri": "majordomus://issue/I3758",
+        "kind": "issue",
+        "identity": "I3758",
+        "title": "A number in a segment is a placeholder, so a changed count keeps its translation, and site-check reports each copy's untranslated share",
+        "description": "scripts/lib/site-i18n.mjs cuts every run of digits in a segment's text into a numbered value placeholder that is never translated, so the memory key of a sentence does not change when the count inside it does; scripts/site-translate re-keys the existing memory to that form without losing an admitted translation; the build publishes each copy's untranslated share per route in /<lang>/i18n.json; and scripts/site-check prints that share for every language and refuses a homepage copy with any untranslated segment.",
+        "path": ".ai/repo/project/issues/I3758.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5694
+      },
+      {
+        "uri": "majordomus://issue/I3759",
+        "kind": "issue",
+        "identity": "I3759",
+        "title": "Every language's homepage is held to the declared weight budget, and the capability list is fetched rather than inlined",
+        "description": "The weight section of scripts/ci/homepage-check measures the homepage of every language site/i18n/languages.json declares against the one [budget] of site/data/homepage.toml, naming the language of a page over it, and the For engineers block of site/templates/index.html stops inlining an option per capability and fills its picker from the graphs/surfaces.json it already fetches, so that every copy fits the budget in the change that adds the gate.",
+        "path": ".ai/repo/project/issues/I3759.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4380
+      },
+      {
+        "uri": "majordomus://issue/I3760",
+        "kind": "issue",
+        "identity": "I3760",
+        "title": "Each evidence-chain node says its own thing, and every homepage figure links to a page that counts the same number",
+        "description": "Give every node of the homepage evidence chain a one-line sentence of its own, declared under the [chain] table of site/data/marketing.toml instead of borrowed from another section; point every chain node and every hero figure at a page whose own headline count is the same quantity, or relabel the figure to what its page counts; put the date and size of the newest recorded run beside the supported count, read from the product model; and have homepage-check refuse a figure whose page counts something else and a node sentence that repeats another section's copy.",
+        "path": ".ai/repo/project/issues/I3760.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 6457
+      },
+      {
+        "uri": "majordomus://issue/I3761",
+        "kind": "issue",
+        "identity": "I3761",
+        "title": "The Pages run of a release head publishes with fresh evidence, or publishes the site with the evidence lag stated, and never fails on a missing snapshot artifact",
+        "description": "Make the Pages run of a master head whose own validation has not recorded its evidence end in one of two stated outcomes: it publishes with that head's evidence once validate's evidence job has recorded it, or it publishes the site now with the UI snapshot's evidence lag stated (the commit the evidence was recorded at, how many commits and changed files behind, and that a later run replaces it). A refused UI snapshot never leaves the deploy job failing on a missing artifact and the whole site unpublished.",
+        "path": ".ai/repo/project/issues/I3761.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5301
+      },
+      {
+        "uri": "majordomus://issue/I3762",
+        "kind": "issue",
+        "identity": "I3762",
+        "title": "plan validate warns on an open issue that declares no parallel_safe",
+        "description": "Both engines emit a WARN finding no_parallel_safe for every issue that is neither DONE nor CANCELLED and has no parallel_safe key, immediately after no_evidence_required in derivation order, with a message that says the wave planner and devtask read the missing key as true; the default itself is unchanged, and the fixture helper used by the cases writes the key so existing fixtures stay quiet.",
+        "path": ".ai/repo/project/issues/I3762.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4058
+      },
+      {
+        "uri": "majordomus://issue/I3763",
+        "kind": "issue",
+        "identity": "I3763",
+        "title": "A cancelled dependency that names its replacement is satisfied by that replacement, and one that names none is reported",
+        "description": "An issue record may declare superseded_by (an issue id), and only beside cancelled true. In both engines a dependency on such an issue is satisfied exactly when its replacement, followed through further replacements, is DONE, and blocked_by names the replacement instead of the cancelled id. A dependency on a cancelled issue that names no replacement still blocks, and plan validate warns cancelled_dependency naming both issues, so a dependent that can never become READY is visible rather than silent.",
+        "path": ".ai/repo/project/issues/I3763.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4724
+      },
+      {
+        "uri": "majordomus://issue/I3764",
+        "kind": "issue",
+        "identity": "I3764",
+        "title": "The homepage's plan card says what each status means, links each to its issues, draws progress, and invites the roadmap",
+        "description": "In the homepage hero card, label each declared issue status with a plain phrase declared in site/data/marketing.toml (blocked reads as waiting on a dependency), link each status count to a place that lists exactly the issues with that status, say in one declared line why the history's released count and the records' done count differ, draw a progress bar of done issues over the issues that are not cancelled from the same counts the card already shows, and place a visible roadmap link beside the changelog link outside any disclosure.",
+        "path": ".ai/repo/project/issues/I3764.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 6040
+      },
+      {
+        "uri": "majordomus://issue/I3765",
+        "kind": "issue",
+        "identity": "I3765",
+        "title": "The homepage's provider figure says what it counts, and every provider it names is a name a visitor can recognise",
+        "description": "Relabel the hero figure that counts providers to what the number is, the agent bootstraps the policy generates (one per provider template), with the label declared in site/data/marketing.toml; give bb a title in share/providers.yaml that says what it is (the getbb.app orchestrator); link the figure to the page that lists the providers; and have homepage-check refuse a provider whose title is its bare id.",
+        "path": ".ai/repo/project/issues/I3765.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4561
+      },
+      {
+        "uri": "majordomus://issue/I3766",
+        "kind": "issue",
+        "identity": "I3766",
+        "title": "The install section links each page once, and the recorded refusals are grouped by the use case they prove",
+        "description": "Remove the second link to the install reference from the homepage's install section, give the button after the copy button a label that says what /getting-started/ adds rather than repeating the install action, and render the list of other recorded refusals grouped by use case, each use case named once with its refusals under it; have homepage-check refuse a section that links the same page twice with the same text and a refusal list that names one use case twice.",
+        "path": ".ai/repo/project/issues/I3766.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4860
+      },
+      {
+        "uri": "majordomus://issue/I3767",
+        "kind": "issue",
+        "identity": "I3767",
+        "title": "The language switch of a UI or Cockpit page keeps the reader on that page, and says so when the surface has no copy in the language chosen",
+        "description": "navbar::render is given the route of the page it draws the bar for, and each entry of the language switch leads to that route's copy in its language when the surface serves one, and otherwise stays on the route itself, marked as not translated with a note that the surface reads in English only; scripts/ui navbar names the switch's targets among what may differ from the site's bar, and no UI or Cockpit page, live or in the published snapshot, links a language entry to the site's front page.",
+        "path": ".ai/repo/project/issues/I3767.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5124
+      },
+      {
+        "uri": "majordomus://issue/I3768",
+        "kind": "issue",
+        "identity": "I3768",
+        "title": "Every plan surface answers 'when' from the records: a release's date beside its version, and the last delivery date of each open milestone",
+        "description": "Let a reader of /roadmap/ (both languages), a /plan/<milestone>/ page or /ui/roadmap tell when things happened without any date being typed or forecast: each release a milestone shipped in is drawn with the publication date its release record holds, each open milestone with the date of its newest delivered issue taken from the inferred delivery, and the latest release with its date, while the sentences saying the plan draws no dates are withdrawn.",
+        "path": ".ai/repo/project/issues/I3768.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5473
+      },
+      {
+        "uri": "majordomus://issue/I3769",
+        "kind": "issue",
+        "identity": "I3769",
+        "title": "A published page reads delivery at the commit it was built from, and names one commit",
+        "description": "Have scripts/site-build ask plan delivery at the build commit and carry the answer in the build's own uncommitted provenance (site/data/build.json), have the homepage hero card and /roadmap/ read that observation when the build carries one and the committed site/data/generated/delivery.json only otherwise, and have homepage-check refuse a built homepage whose delivery commit differs from its build commit on a clean build.",
+        "path": ".ai/repo/project/issues/I3769.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5400
+      },
+      {
+        "uri": "majordomus://issue/I3770",
+        "kind": "issue",
+        "identity": "I3770",
+        "title": "A server that lost its checkout lease answers every mesh read by naming the server that holds it, never with an empty mesh",
+        "description": "Make a shared server that has retired from the mesh because another process took its checkout lease answer mesh.status, mesh.state, mesh.cooperation and mesh.peers, and every refusal of a cooperation write, with the lease holder it can read: that holder's pid and URL, the time this server lost the lease, and the remedy (reconnect the client, or read the mesh through the holder). A client attached to such a server can then tell 'this server is retired' from 'nobody is working'.",
+        "path": ".ai/repo/project/issues/I3770.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4572
+      },
+      {
+        "uri": "majordomus://issue/I3771",
+        "kind": "issue",
+        "identity": "I3771",
+        "title": "A claim scope that is not a repository path is refused, or mapped to the record file it names, so a milestone claim excludes what it says",
+        "description": "Give the mesh one rule for a claim scope written as a namespace and a name (milestone:<id>, issue:<id>, or any other word followed by a colon): milestone:<id> and issue:<id> are mapped to .ai/repo/project/milestones/<id>.yaml and .ai/repo/project/issues/<id>.yaml before admission and in the fold, so they meet the record and anything claimed under it; any other namespaced scope is refused at admission as scope_not_a_path, naming the entry and the accepted forms. The seat scopes the cooperation rule declares (campaign/*/landing, release/seat, refs/heads/*) keep their meaning unchanged.",
+        "path": ".ai/repo/project/issues/I3771.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4808
+      },
+      {
+        "uri": "majordomus://issue/I3772",
+        "kind": "issue",
+        "identity": "I3772",
+        "title": "Every mesh link counts its failed sync rounds, and a link whose rounds fail does not read plainly connected",
+        "description": "Count sync failures per link and say them where a link is read: each PeerView carries cumulative rounds attempted and failed as the dialer, with the last error, beside the consecutive count it has today; the runtime-wide line states attempted and failed rounds so neither reads as a subset of the other; mesh doctor names a link whose recent outbound rounds mostly fail while it reads connected. This records the churn so it can be diagnosed; it does not diagnose or fix its cause.",
+        "path": ".ai/repo/project/issues/I3772.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4703
+      },
+      {
+        "uri": "majordomus://issue/I3773",
+        "kind": "issue",
+        "identity": "I3773",
+        "title": "Every plan surface draws a milestone's progress as a bar of the issues it requires, a blocked milestone's bar says the gate is closed, and the roadmap no longer says a bar would be a lie",
+        "description": "Settle the progress-bar doctrine the one way the owner chose on 2026-10-20: /roadmap/ (both languages), each /plan/<milestone>/ page and /ui draw, for every milestone, a bar of its done issues out of the issues it requires, with both numbers as text beside it; a BLOCKED milestone's bar is drawn in the blocked tone and captioned that its dependency, not its workload, holds it; a milestone that requires no issue draws no bar and says why; and the sentences on /roadmap/ that refuse a bar are withdrawn.",
+        "path": ".ai/repo/project/issues/I3773.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5414
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -118467,7 +118731,7 @@
       "identity": [
         "id"
       ],
-      "objects": 808
+      "objects": 832
     },
     {
       "name": "knowledge",
