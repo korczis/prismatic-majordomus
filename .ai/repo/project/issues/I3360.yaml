@@ -1,0 +1,35 @@
+id: I3360
+milestone: a-foreign-repository-is-adopted-and-measured
+title: "The T1 protocol and its selection floors are registered before any candidate is measured, and a record without an admitted candidate is refused"
+slug: the-t1-protocol-is-registered
+priority: p0
+profile: implementation
+objective: "Record the owner's decision on the selection floors with majordomus decision, then register the T1 trials protocol in .ai/repo/benchmarks/proof-plan.yaml: the record fields of the workflow, the candidate list file .ai/repo/benchmarks/trials/t1-external-onboarding/candidates.yaml, min_trials and min_successes, and the redaction classes per basis. Add the candidate check to economics::proof: a T1 record must name a candidate entry committed before its first step whose measurements meet the floors; and a test that reads the commit times from git."
+why: "T1 of the owner's report of 2026-10-19. Admitting candidates against floors fixed before measurement means the choice cannot follow the results; the critique asked for the floors to be an owner decision rather than the worker's."
+current_state: "No candidate, floor or T1 protocol is recorded. I3353's trial record has no candidate rule."
+desired_state: "The T1 protocol validates with its digest; a fixture record without a prior admitted candidate is refused."
+scope:
+  - ".ai/repo/benchmarks"
+  - "apps/majordomus-cli/src/economics"
+  - "apps/majordomus-cli/tests/economics.rs"
+non_scope:
+  - "Measuring candidates (I3362)"
+  - "Recording consent on the owner's behalf"
+depends_on:
+  - "I3352"
+  - "I3353"
+  - "I3359"
+serves:
+  - "the-product-proves-it-pays#a-foreign-repository-is-admitted-before-it-is-adopted"
+acceptance_criteria:
+  - "The floors cite a recorded owner decision dated before the candidates file's first commit"
+  - "The T1 protocol validates and the T1 row reads not_run with reason no counted record"
+  - "A fixture record whose candidate is missing, later than its first step, or below a floor is refused"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test economics"
+  - "majordomus economics proof"
+  - "majordomus plan validate"
+evidence_required:
+  - "test_t1_candidate_rule"
+created_at: 2026-10-19
+updated_at: 2026-10-19

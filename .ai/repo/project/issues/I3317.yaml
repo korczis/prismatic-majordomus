@@ -1,0 +1,34 @@
+id: I3317
+milestone: development-runtime
+title: "An execution records the commit it started at, and a writing execution the paths it changed"
+slug: an-execution-records-its-revision-and-changes
+priority: p3
+profile: implementation
+objective: "Stamp every execution with the commit HEAD named and whether the tree was clean when it started; for a capability whose declared effect writes the repository, also record the commit at its end and the tracked paths that changed between the two, so a person can see what a run changed and rerun it against the revision it ran on."
+why: "2026-09-09 the owner asked to run commands and skills from the Cockpit and to cowork on the same executions; the design discussed then separated rerun from replay-exactly and asked for a ledger of what each write execution changed. ADR 0033 makes an execution the watched record of a capability call, but that record names the repository and branch only: an execution of intent.propose, plan.transition or reasoning.record cannot say which commit it ran against or which files it wrote, so its result can be neither reproduced nor audited once the branch moves. Sources: chatgpt-majordomus:c082#8."
+current_state: "Verified on master 707a04c (2026-10-18): apps/majordomus-cli/src/execution/model.rs Execution carries capability, input, output, actor, steps and RepositoryRef {name, id, branch}; there is no commit, no clean/dirty flag and no changed paths. I3170 adds a campaign digest to the same record, not a git revision."
+desired_state: "An execution names its start commit and whether the tree was clean; a repository_mutation execution also names its end commit and the tracked paths that changed, each read from git once at the boundary. executions.get on CLI, MCP and HTTP and the Cockpit execution page show them from the one model. No diff body or file content is stored."
+scope:
+  - "apps/majordomus-cli/src/execution"
+  - "apps/majordomus-cli/src/capability/builtin/executions.rs"
+  - "apps/majordomus-cli/src/cockpit/pages.rs"
+  - "apps/majordomus-cli/src/git/mod.rs"
+  - "docs/generated/openapi.json"
+  - "docs/generated/openapi.yaml"
+  - "docs/generated/modules/executions.md"
+non_scope:
+  - "A revert, rerun or replay capability"
+  - "Storing diff bodies or file contents"
+  - "A field added to StartInput"
+acceptance_criteria:
+  - "An execution started on a clean checkout names the commit HEAD pointed at and reads clean"
+  - "An execution started on a dirty tree reads dirty and still names the commit"
+  - "A repository_mutation execution that writes a record lists that record among its changed paths, and a read-only execution lists none"
+  - "The fields reach CLI, MCP, HTTP and the OpenAPI schema from the one model, with no per-surface code"
+  - "Where git cannot answer the fields are absent and the execution still runs"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib execution::"
+evidence_required:
+  - "test_execution_records_its_revision"
+created_at: 2026-10-18
+updated_at: 2026-10-18

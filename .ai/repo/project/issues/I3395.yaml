@@ -1,0 +1,40 @@
+id: I3395
+milestone: a-newcomer-reaches-a-first-verified-intent
+title: "An intent criterion can cite a verification the repository's profile declares, and a recorded passing run of it at the current tree makes the criterion current"
+slug: a-criterion-cites-the-repositorys-own-check
+priority: p0
+profile: implementation
+objective: "Accept a verify:<name> evidence reference in apps/majordomus-cli/src/intent.rs that resolves against the effective profile's verification commands, and let majordomus evidence record --verify <name> run that command and record its exit, duration, tree digest and time in the evidence ledger. The criterion is current when the newest record at the current tree passed, and stale or failing otherwise. Extend case 367 with a fixture repository whose tests are pytest-style files outside test/cases/."
+why: "T6 of the owner's report of 2026-10-19 asks for a first verified intent without archaeology; today it is impossible in a foreign repository, because a test reference must name test/cases/ or apps/majordomus-cli/tests/ and a command criterion is never met."
+current_state: "apps/majordomus-cli/src/intent.rs:1092-1112 accepts test references by TestId and refuses others; :1131-1135 derives a command criterion NotDerivable; :1183-1193 test_id accepts only those paths and the suite: and crate: prefixes; apps/majordomus-cli/src/evidence/record.rs:1-10 records only test/run.sh reports and cargo output."
+desired_state: "In a foreign fixture, a verify: criterion goes from unresolved to current after a recorded passing run, and to stale after the tree changes."
+scope:
+  - "apps/majordomus-cli/src/intent.rs"
+  - "apps/majordomus-cli/src/evidence/record.rs"
+  - "apps/majordomus-cli/src/evidence/ledger.rs"
+  - "apps/majordomus-cli/src/commands/evidence.rs"
+  - "apps/majordomus-cli/tests/intent.rs"
+  - "test/cases/367_an_intent_is_satisfied_only_by_evidence.sh"
+  - "docs/generated/cli.json"
+  - "docs/generated/cli.md"
+  - "docs/generated/cli.yaml"
+  - "docs/generated/openapi.json"
+  - "docs/generated/openapi.yaml"
+non_scope:
+  - "Making command criteria derivable in general"
+  - "Changing how test/run.sh or cargo results are recorded"
+serves:
+  - "the-product-proves-it-pays#a-criterion-can-cite-the-repositorys-own-check"
+acceptance_criteria:
+  - "A verify: reference naming an undeclared verification is unresolved with a finding naming it"
+  - "A recorded passing run at the current tree makes the criterion current and, with no other criterion, the verdict satisfied"
+  - "A failing run, or a passing run at another tree, does not"
+  - "Case 367's existing assertions still hold"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test intent"
+  - "bash test/run.sh 367_an_intent_is_satisfied_only_by_evidence"
+  - "majordomus generate --check"
+evidence_required:
+  - "test_verify_criterion_in_foreign_repository"
+created_at: 2026-10-19
+updated_at: 2026-10-19
