@@ -42598,6 +42598,45 @@
         }
       },
       {
+        "id": "majordomus://issue/I3603",
+        "kind": "issue",
+        "label": "I3603",
+        "summary": "The main navigation has room at every width in every language, whatever the runner's fonts",
+        "route": "/cockpit/objects/issue/i3603",
+        "source": ".ai/repo/project/issues/I3603.yaml",
+        "facts": {
+          "created_at": "2026-10-20",
+          "current_state": "The md bar fits the brand, its version badge and four primary items with a margin of tens of pixels, and the margin depends on each language's labels and on the runner's font metrics.",
+          "depends_on": [
+            "I3600"
+          ],
+          "evidence_required": [
+            "bar_room_case"
+          ],
+          "milestone": "surfaces-never-disagree",
+          "non_scope": [
+            "Rewording translations to fit: a label is translated for its reader, not for the bar's width"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "site/templates/base.html",
+            "site/tailwind.css",
+            "apps/majordomus-cli/src/ui/navbar.html",
+            "scripts/lib/ui-navbar-locale.mjs",
+            "scripts/lib/site-i18n-probe.mjs",
+            "test/cases"
+          ],
+          "slug": "the-bar-has-room-in-every-language",
+          "updated_at": "2026-10-20",
+          "validation": [
+            "bin/majordomus plan validate",
+            "node scripts/lib/site-i18n-probe.mjs site/public <base_url> --jobs 4"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "label": "a-commit-stood-behind-a-build-lock",
@@ -88606,6 +88645,21 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3603",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3603",
+        "target": "majordomus://issue/I3600",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3603",
+        "target": "majordomus://milestone/surfaces-never-disagree",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -98847,8 +98901,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3076,
-      "edges": 6735,
+      "nodes": 3077,
+      "edges": 6738,
       "acyclic": false,
       "truncated": false
     }

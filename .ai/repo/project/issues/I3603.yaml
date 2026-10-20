@@ -1,0 +1,33 @@
+id: I3603
+milestone: surfaces-never-disagree
+title: "The main navigation has room at every width in every language, whatever the runner's fonts"
+slug: the-bar-has-room-in-every-language
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Give the site's main navigation slack at the md breakpoint that does not depend on the length of a translation or on the fonts of the machine measuring it, so that a translated bar is the source bar's height at every width on every runner. The language-neutral move is to hide the version badge beside the brand below lg (about 60 px for every language); a tighter md item gap is the fallback. The /ui and /cockpit copies of the bar follow from the one template."
+why: "On 2026-10-20 validate 39335772019 (alpha.1 top 5b5358d91c8) went red on site-i18n-probe: /cs/, /cs/docs/ and /cs/getting-started/ had a 157 px bar at 768 px against the English 121 px. Measured on macOS from the same build both were 121 px, but the Czech primary row (Produkt 101, Jak funguje 128, Důkazy 97, Dokumenty 127) left 34 px of slack before the brand against the English 60 px; the Linux runner's wider fonts used it up and the row wrapped. alpha.1 shipped a shorter translation (Jak funguje → Princip), which fixes this word and leaves the next long label to wrap the same way."
+current_state: "The md bar fits the brand, its version badge and four primary items with a margin of tens of pixels, and the margin depends on each language's labels and on the runner's font metrics."
+desired_state: "At md the bar holds every language's primary row with a stated margin left over on the runner, measured by the ui audit's navbar rules (I3600) at every width in every language, and no label has to be shortened to make it fit."
+scope:
+  - "site/templates/base.html"
+  - "site/tailwind.css"
+  - "apps/majordomus-cli/src/ui/navbar.html"
+  - "scripts/lib/ui-navbar-locale.mjs"
+  - "scripts/lib/site-i18n-probe.mjs"
+  - "test/cases"
+non_scope:
+  - "Rewording translations to fit: a label is translated for its reader, not for the bar's width"
+depends_on: [I3600]
+acceptance_criteria:
+  - "At 768 px on the CI runner the Czech and the English bar are the same height on every page site-i18n-probe measures"
+  - "Every language's bar keeps headroom_em >= 0.06 at every width (site-i18n-probe's layout check: the widest letter-spacing at which the bar keeps its drawn height and rows, independent of the machine's fonts), the English bar at 1280 and 1600 included, which measures 0 today"
+  - "site-i18n-probe's layout check (I3091) enforces that absolute floor of 0.06 for every language, the source language too, rather than only a copy relative to English, so a bar that loses its room is refused whichever language it is"
+  - "The version stays visible at lg and above, and in the menu below it"
+validation:
+  - "bin/majordomus plan validate"
+  - "node scripts/lib/site-i18n-probe.mjs site/public <base_url> --jobs 4"
+evidence_required:
+  - "bar_room_case"
+created_at: 2026-10-20
+updated_at: 2026-10-20
