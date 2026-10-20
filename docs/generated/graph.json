@@ -42778,6 +42778,46 @@
         }
       },
       {
+        "id": "majordomus://issue/I3605",
+        "kind": "issue",
+        "label": "I3605",
+        "summary": "A gate that leaves no receipt is refused before a run, not after it",
+        "route": "/cockpit/objects/issue/i3605",
+        "source": ".ai/repo/project/issues/I3605.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Case 26 refuses a workflow in which a gate's job has no step timed under the gate's name and no receipt row for it, naming the gate and the job",
+            "Case 26 passes on the repository's workflow, and on 82ac259d0ae it names site-languages in job site"
+          ],
+          "created_at": "2026-10-20",
+          "current_state": "A gate added without a receipt-producing step passes the structure job and every gate job, and is refused only by the verdict at the end of the run.",
+          "depends_on": [
+            "I3604"
+          ],
+          "desired_state": "Case 26 refuses it in the structure job, naming the gate and its job, before any long job runs.",
+          "evidence_required": [
+            "receipt_wiring_case"
+          ],
+          "milestone": "architecture-is-enforced",
+          "non_scope": [
+            "The verdict itself (scripts/ci/verdict), which stays the last word on what ran"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "test/cases/26_ci_wiring.sh",
+            ".ai/repo/project/issues/I3605.yaml"
+          ],
+          "slug": "a-gate-without-a-receipt-is-refused-before-a-run",
+          "updated_at": "2026-10-20",
+          "validation": [
+            "bin/majordomus plan validate",
+            "bash test/run.sh 26_ci_wiring"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "kind": "knowledge",
         "label": "a-commit-stood-behind-a-build-lock",
@@ -88887,6 +88927,21 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3605",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3605",
+        "target": "majordomus://issue/I3604",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3605",
+        "target": "majordomus://milestone/architecture-is-enforced",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-commit-stood-behind-a-build-lock",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -99153,8 +99208,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3085,
-      "edges": 6750,
+      "nodes": 3086,
+      "edges": 6753,
       "acyclic": false,
       "truncated": false
     }

@@ -300,7 +300,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/economics.json` | `economics` | json | 30840 | `deeb7ed7efd93970` |
 | `docs/generated/economics.md` | `economics` | markdown | 15299 | `fa2a0851d1d4d5ee` |
 | `docs/generated/economics.yaml` | `economics` | yaml | 25713 | `b4a1cf4208c1412b` |
-| `docs/generated/graph.json` | `graph` | json | 3798583 | `48e668ec84585c4d` |
+| `docs/generated/graph.json` | `graph` | json | 3800778 | `3caa1401e1cf556b` |
 | `docs/generated/graph.schema.json` | `graph-schema` | json | 7618 | `437456b9df1457ff` |
 | `docs/generated/modules/artifacts.md` | `modules/artifacts` | markdown | 1742 | `d1b9d5221fbeaaf4` |
 | `docs/generated/modules/brief.md` | `modules/brief` | markdown | 2394 | `0b365c5bd9687a1e` |
@@ -425,9 +425,9 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `site/data/registry/design.json` | `site-design` | json | 11587 | `0c0a0692dea085f7` |
 | `site/data/registry/distribution.json` | `site-distribution` | json | 3005 | `761f4a977c4d7a37` |
 | `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 816373 | `3551a94ca56a71a0` |
-| `site/data/registry/product-graph.json` | `site-product-graph` | json | 111709 | `d2a42af673db7dd0` |
-| `site/data/registry/product.json` | `site-product` | json | 763286 | `0777b2ed07d4cd41` |
-| `site/data/registry/registry.json` | `site-registry` | json | 7160944 | `a5e0999d3226df85` |
+| `site/data/registry/product-graph.json` | `site-product-graph` | json | 111709 | `6e57e9691a49a48e` |
+| `site/data/registry/product.json` | `site-product` | json | 763286 | `2a51e79621193411` |
+| `site/data/registry/registry.json` | `site-registry` | json | 7161637 | `b77f58f1d4d0140b` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180163 | `76ca3c4a2764248a` |
 | `site/data/registry/why.json` | `site-why` | json | 349924 | `4aae6ff4c6c797a0` |
 | `site/static/favicon.svg` | `design-mark` | text | 904 | `ff3ba58e469fc2e5` |

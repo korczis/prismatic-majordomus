@@ -1,0 +1,27 @@
+id: I3605
+milestone: architecture-is-enforced
+title: "A gate that leaves no receipt is refused before a run, not after it"
+slug: a-gate-without-a-receipt-is-refused-before-a-run
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Case 26 checks statically that every gate in .ai/repo/ci/gates.yaml is named by a receipt-producing step of the job it runs in: a step timed under the gate's name (scripts/ci/timed --bound N <gate> ...) or a receipt row printed for it, with jobs run by scripts/ci/run-plan exempt because run-plan receipts every gate it runs."
+why: "On 2026-10-20 validate 39379416881 (alpha.1 top 82ac259d0ae) passed every job and was still red: gate site-languages ran as a bare `run:` step and left no receipt, so scripts/ci/verdict refused it after the whole 90-minute run (I2416's rule, correctly applied, too late). Case 26 already held that every gate job sets MJ_CI_RECEIPTS and uploads its receipts, but not that each gate is named by a step that writes one."
+current_state: "A gate added without a receipt-producing step passes the structure job and every gate job, and is refused only by the verdict at the end of the run."
+desired_state: "Case 26 refuses it in the structure job, naming the gate and its job, before any long job runs."
+scope:
+  - "test/cases/26_ci_wiring.sh"
+  - ".ai/repo/project/issues/I3605.yaml"
+non_scope:
+  - "The verdict itself (scripts/ci/verdict), which stays the last word on what ran"
+depends_on: [I3604]
+acceptance_criteria:
+  - "Case 26 refuses a workflow in which a gate's job has no step timed under the gate's name and no receipt row for it, naming the gate and the job"
+  - "Case 26 passes on the repository's workflow, and on 82ac259d0ae it names site-languages in job site"
+validation:
+  - "bin/majordomus plan validate"
+  - "bash test/run.sh 26_ci_wiring"
+evidence_required:
+  - "receipt_wiring_case"
+created_at: 2026-10-20
+updated_at: 2026-10-20

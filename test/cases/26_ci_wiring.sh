@@ -221,6 +221,17 @@ for j in $(jq -r '.gates[].job' full.json | LC_ALL=C sort -u); do
   printf '%s\n' "$blk" | grep -qE '^          name: ci-receipts-' \
     || { echo "    job $j does not upload its receipts (ci-receipts-*); the verdict would find none"; exit 1; }
 done
+# ...and every gate is named by a step of its job that leaves its receipt (I3605): a step
+# timed under the gate's name (scripts/ci/timed --bound N <gate> ...) or a receipt row
+# printed for it. A job run by scripts/ci/run-plan receipts every gate it runs, so it is
+# exempt. Without this, a gate added with a bare `run:` passed every job and was refused only
+# by the verdict, after the whole run: site-languages on the alpha.1 top (run 39379416881).
+jq -r '.gates[] | "\(.id) \(.job)"' full.json | while read -r g j; do
+  blk="$(awk -v j="  $j:" '$0 == j {f=1; next} /^  [a-z][a-z_-]*:$/ {f=0} f' "$W")"
+  printf '%s\n' "$blk" | grep -q 'scripts/ci/run-plan' && continue
+  printf '%s\n' "$blk" | grep -qE "timed --bound [0-9]+ $g |[\"']$g[\"']" \
+    || { echo "    gate $g runs in job $j, and no step of $j leaves its receipt (scripts/ci/timed ... $g, or a receipt row); the verdict would refuse it after the whole run"; exit 1; }
+done || exit 1
 ci_blk="$(awk '$0 == "  ci:" {f=1; next} /^  [a-z][a-z-]*:$/ {f=0} f' "$W")"
 printf '%s\n' "$ci_blk" | grep -q 'pattern: ci-receipts-\*' || { echo "    the ci job does not download the receipts"; exit 1; }
 printf '%s\n' "$ci_blk" | grep -q 'scripts/ci/verdict .*--receipts receipts' || { echo "    the ci verdict is not asked for the receipts"; exit 1; }
