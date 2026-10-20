@@ -270,6 +270,25 @@ gates:
     runs: scripts/ci/skill-naming-check
     summary: every active skill is named where a test demands the whole list — the majordomus-skill header of apps/majordomus-cli/tests/skills.rs and the first marker line of test/cases/391_skills_are_proven_capabilities.sh — and neither names a skill that does not exist
 
+  # docs/COCKPIT_IDE_AUDIT.md's gap matrix says "Planned" requires a plan object, and nothing
+  # read it: a row could claim to be scheduled with nothing scheduling it (I1510). This reads
+  # the matrix and the plan's issue records together, keys on the status vocabulary and the
+  # issue ids only, and builds nothing.
+  - id: audit-plan
+    job: structure
+    runs: scripts/ci/audit-plan-check
+    summary: every row of docs/COCKPIT_IDE_AUDIT.md's gap matrix whose status is planned names an issue id, and every id it names is an issue of the plan; rows in the other statuses are evidence claims and are not read
+
+  # The release-record-cases gate below runs its cases by name, and a case that reads the
+  # release record and is not on that list is one the release record's pull request never
+  # runs. Which cases those are is defined once, in the script; case 94 asks the same script.
+  # On 2026-10-14 a branch that added such a case went red only in case 94, in a suite shard
+  # (I2716). This reads the cases and the model in seconds and builds nothing.
+  - id: release-record-listing
+    job: structure
+    runs: scripts/ci/release-record-cases-check
+    summary: every case that names the release record or reads what is offered from it is run by the release-record-cases gate, and every case that gate names exists
+
   # The ChatGPT source pack of this repository can be built (rule
   # project.packs-carry-only-sources): the plan of the `chatgpt` profile has no finding — no
   # file over a shard's token budget, no more files than a ChatGPT project indexes, no file
@@ -338,9 +357,14 @@ gates:
     runs: scripts/ci/mcp-tool-run-check
     summary: every MCP tool the registry projects is sent a tools/call by a case or an integration test of this repository; the verdict states its denominator and the populations it is not about, and the uninvoked set may not grow
 
+  # Without --summary: the verdict and the exit status are the same, and a failure lists each
+  # finding with its file, symbol and remedy instead of "findings were not listed". Two
+  # implementations failed here on 2026-10-14 and had to rerun the report to learn why
+  # (I2715). scripts/rust-check asks the same subcommand first, so an author meets the same
+  # finding text before the structure job does.
   - id: rust-quality
     job: structure
-    runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- quality report --summary
+    runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- quality report
     summary: the crate's own exported surface — documentation beyond the signature, an executable example on everything that carries behaviour, a module boundary something exercises — and every command of the command line accounted for against the capability registry
 
   - id: generation-converges
@@ -521,10 +545,25 @@ gates:
     runs: scripts/ci/step-bound-check
     summary: every timed step of a workflow declares a bound, and every bound is smaller than the bound of the job that runs it, so a step that runs out of time fails with a message instead of being killed by its job and reported as a cancellation
 
+  # network: true marks a gate that reaches beyond this machine (GitHub's API, the live
+  # site, the published installer). It is true or absent. scripts/ci/run-plan --before-push
+  # never runs such a gate before a push and says so (project.a-push-runs-what-ci-would-find-first).
   - id: github-projection
     job: structure
     runs: scripts/ci/github-check
+    network: true
     summary: the GitHub projection still agrees with the canonical model — no record behind, edited, in conflict or unmanaged, and the backlog of unprojected records no larger than its baseline
+
+  # ADR 0166, decision 2: merged work the plan has not recorded is drift. The executable judges
+  # it (`majordomus plan drift --gate head|trunk`, capability plan.drift) against the window
+  # .ai/repo/ci/plan.yaml declares; the script only says which tree the runner is. Every plan
+  # runs it because a stamp, a merge and a clock each move the verdict, and none of them is a
+  # changed path. Advisory under `drift.enforcement: advisory` until I2748 settles today's drift.
+  - id: plan-drift
+    job: structure
+    always: true
+    runs: scripts/ci/plan-drift-check
+    summary: merged work the plan has not recorded is pending on a head and inside the window declared in .ai/repo/ci/plan.yaml, and refused on the trunk past it with `majordomus plan verify|done <id>` named; active_without_work and done_without_trace are reported and never refuse; a missing or unreadable window refuses
 
   - id: providers-data
     job: structure
@@ -548,6 +587,15 @@ gates:
     requires: [site-build]
     runs: SITE_PROBE_JOBS=4 scripts/site-probe
     summary: every route at three widths in a real browser, the menu, the dropdown, the theme toggle, the diagrams
+
+  # Every link of every page, in every language the site declares, followed in Chromium with the
+  # page's scripts running and answered from the build itself (ADR 0218): each lands on a built
+  # file, stays in its copy's language, and the switch and the alternates lead to every copy.
+  - id: site-languages
+    job: site
+    requires: [site-build]
+    runs: node scripts/lib/site-i18n-probe.mjs site/public "$(sed -n 's/^base_url = "\(.*\)"/\1/p' site/config.toml)" --jobs 4
+    summary: every link of every page in every language lands, stays in its language, and the switch and the alternates lead to every copy
 
   # The crate's Rust API reference, judged as the published surface it is (ADR 0086): the pages
   # rustdoc wrote for the one invocation the rust-check gate proves warning-free, handed off by
@@ -576,8 +624,8 @@ gates:
   - id: ui-audit
     job: ui
     requires: [site-build]
-    runs: scripts/rust-check --doc && cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- bench system.http. --transport system --profile ci --no-write --check && scripts/ui audit --report
-    summary: every warm screen of the UI within the latency budget the benchmark policy declares, measured over a real socket; then every discovered page of every surface the executable serves — built directories and the routes it renders itself — at every width the theme implies, in a browser, against the responsive, semantic, component and WCAG invariants; the report is rendered at /tests/ui
+    runs: scripts/rust-check --doc && cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- bench system.http. --transport system --profile ci --no-write --check && scripts/ui audit --report && bash test/run.sh --no-skips --runs-in ui
+    summary: "every warm screen of the UI within the latency budget the benchmark policy declares, measured over a real socket; then every discovered page of every surface the executable serves — built directories and the routes it renders itself — at every width the theme implies, in a browser, against the responsive, semantic, component and WCAG invariants; the report is rendered at /tests/ui; then the cases that drive the UI in a browser (majordomus-skip-runs-in: ui), with no skip excused"
 
   # The one gate that measures the published site rather than this tree: the advertised
   # install command, run as it is written, against what GitHub Pages and GitHub Releases
@@ -630,6 +678,7 @@ gates:
     job: pages
     at-finish: true
     runs: scripts/ci/pages-check
+    network: true
     summary: the site GitHub Pages serves was built from a commit on master, no publication has been owed longer than the deploy window, the live site is serving what gh-pages published, the UI it holds at the UI's mount was read at that same commit and every page its record lists answers, GitHub's own build of that branch did not error, and the homepage, /releases/latest.json and the newest GitHub release name one release once the release window has passed
 
   # On demand: half of its matrix is a macOS runner, and `needs.install.result` is one value
@@ -641,6 +690,7 @@ gates:
     job: install
     on-demand: true
     runs: scripts/ci/install-check --wait 300
+    network: true
     summary: the install command the project advertises, fetched and run from the published site, installing the published release on this runner
 
   # The measurement this repository's macOS gates were made on-demand by, on 2026-09-10: four
@@ -674,7 +724,7 @@ gates:
   - id: diagram-check
     job: structure
     runs: scripts/ci/diagram-check
-    summary: no architectural relationship in a published document is typed in box art — every one is a mermaid block, with literal terminal output, file listings and quoted file content exempt by declaration
+    summary: no architectural relationship in a published document (docs, the site's pages and templates, the decisions, the rules, the handbook, the markdown majordomus ui renders) is typed in box art — every one is a mermaid block, with literal terminal output, file listings, quoted file content and the verbatim campaign packs exempt by declaration
 
   # The site's navigation is one declaration — site/data/nav.toml — and the navbar and the
   # footer are projections of it. Both halves of that have failed here: the footer rendered
@@ -750,13 +800,27 @@ gates:
   # executable. The suite runs them too; this gate exists for the plan that does not run the
   # suite, the release-record shape below. The list is every case that names a record path
   # (.ai/repo/releases, release-record, site/static/releases, scripts/ci/release-check) or reads
-  # the checkout's own installation guide, distribution projection or changelog, and
-  # test/cases/94_ci_plan.sh holds it to that grep, so a new such case cannot be left out.
+  # the checkout's own installation guide, distribution projection or changelog, as
+  # scripts/ci/release-record-cases-check defines it; that script is the release-record-listing
+  # gate of the structure job, and case 94 asks it too, so a new such case cannot be left out.
   - id: release-record-cases
     job: rust
     requires: [rust-integration]
-    runs: MJ_TEST_JOBS=4 bash test/run.sh --no-skips 84_distribution_model 87_release_pipeline 97_install_gate 103_release_projection 112_version_matches_surface 139_release_record_schema 352_the_version_the_site_shows_is_one_you_can_get 620_mcp_tools_are_invoked_and_answer 743_release_version_answers_with_the_contract 763_a_tag_older_than_the_record_practice_is_a_note 1041_a_release_publishes_its_metadata 1060_the_version_is_allocated_at_landing 1087_the_site_offers_the_release_it_published 3021_a_tag_does_not_freeze_the_queue
-    summary: the cases about the committed release record and what is offered from it — the distribution model, the release pipeline and projection, the record's schema, the version the site shows, the install gate, the stable channel the MCP tools resolve — pass against this tree
+    runs: MJ_TEST_JOBS=4 bash test/run.sh --no-skips 49_roadmap_doctrine 84_distribution_model 87_release_pipeline 97_install_gate 103_release_projection 112_version_matches_surface 139_release_record_schema 352_the_version_the_site_shows_is_one_you_can_get 620_mcp_tools_are_invoked_and_answer 743_release_version_answers_with_the_contract 763_a_tag_older_than_the_record_practice_is_a_note 1041_a_release_publishes_its_metadata 1060_the_version_is_allocated_at_landing 1087_the_site_offers_the_release_it_published 3021_a_tag_does_not_freeze_the_queue 3029_a_tag_in_flight_is_pending 3102_a_milestone_version_is_inferred 3100_an_issue_delivery_is_inferred 3104_the_ui_roadmap_reads_delivery 3055_a_derivation_needs_no_history 3179_a_prerelease_is_never_published_as_stable 3212_a_prerelease_version_is_bumped_and_ordered 3222_an_alpha_publishes_beside_the_latest_release 3224_a_published_alpha_owes_its_record 3225_the_installer_takes_an_alpha_only_by_name 3342_a_dry_run_initialises_nothing 996_the_record_pull_request_gets_its_verdict 3385_doctor_fits_its_budget_in_the_commit_hook
+    summary: the cases about the committed release record and what is offered from it — the distribution model, the release pipeline and projection, the record's schema, the version the site shows, the install gate, the stable channel the MCP tools resolve, the release the roadmap infers each milestone shipped in — pass against this tree
+
+  # The behavioural cases whose subject is the plan: its issue and milestone records, the
+  # commands that read and write them, the projections of them (docs/PLAN_STATUS.md, the plan
+  # pages, the GitHub projection) and the intents and tasks bound to them. The suite runs them
+  # too; this gate exists for the plan that does not run the suite, the plan-record shape
+  # below. The list is every case that names a plan record path or PLAN_STATUS, or runs a
+  # `plan` subcommand, and test/cases/94_ci_plan.sh holds it to that grep, so a new such case
+  # cannot be left out (I2662: a pull request that records evidence planned the whole suite).
+  - id: plan-record-cases
+    job: rust
+    requires: [rust-integration]
+    runs: MJ_TEST_JOBS=4 bash test/run.sh --no-skips 26_ci_wiring 40_project_model 41_project_status 42_dag_waves 43_plan_command 44_model_doctrine 45_github_projection 46_cross_surface 47_mutation 48_roadmap_graph 49_roadmap_doctrine 51_derived_artifacts_committed 53_status_vocabulary 57_derived_merge_driver 58_home_path_gate 74_knowledge_edges 75_knowledge_mutation 97_github_gate 98_traceability 99_plan_capabilities 99_work_graph_chain 103_release_projection 129_executable_issues 131_completion_gates 133_plan_transition 194_audit_rows_are_planned 274_commit_policy 367_an_intent_is_satisfied_only_by_evidence 386_a_plan_is_held_to_its_intent 388_an_intent_is_realised_across_providers_and_held_to_reality 400_derivation_is_one_graph 581_no_plan_stamp_without_its_event 582_the_done_guard_holds_in_both_engines 602_a_spliced_body_is_recognised_as_its_own 620_mcp_tools_are_invoked_and_answer 890_an_intent_criterion_is_met_only_by_current_evidence 892_what_is_said_of_intents_is_what_the_claims_matrix_says 893_preflight_follows_what_an_issue_serves 894_github_sync_applies_only_the_trunk 895_a_finished_task_does_not_satisfy_an_intent 960_a_task_starts_bound_to_what_it_serves 961_a_resumed_task_is_told_its_intent_moved 962_plan_start_asks_the_binding_in_both_engines 1038_a_head_is_judged_against_what_it_changes 1076_the_roadmap_opens_a_milestone 1081_an_intent_opens_what_serves_it 3048_a_derivation_survives_an_unrelated_merge 3053_a_repository_of_n_records_costs_n 3073_context_knowledge_slice 3075_knowledge_validate_judges_the_graph 3100_an_issue_delivery_is_inferred 3101_merged_work_unrecorded_is_drift 3102_a_milestone_version_is_inferred 3103_the_roadmap_draws_every_milestone 3104_the_ui_roadmap_reads_delivery 3220_the_idd_loop_is_walked_in_a_browser 3385_doctor_fits_its_budget_in_the_commit_hook 3400_a_recorded_commit_link_names_the_history
+    summary: the cases about the plan's records and what reads them — the project model, the plan command and its transitions, the DAG and roadmap, the GitHub projection, the intents bound to issues, the completion gates — pass against this tree
 
 # Shapes: changes whose plan is narrower than the union of their classes (the header's last
 # rule). Each names the paths that make a change of its shape (`records`, at least one must
@@ -812,6 +876,39 @@ shapes:
     records: [.ai/repo/releases/v*.yaml]
     others: derived
     gates: [rust-integration, version-surface, release-check, merge-policy, pack-plan, entity-check, site-basepath, site-build, release-record-cases]
+
+  # Plan records and nothing but their projections: the pull request that records an issue's
+  # evidence or marks it done (`majordomus plan evidence|verify|done`), or a milestone's, and
+  # the derive that follows it. Planned by the union (`layer` and `intent`) it was the full
+  # suite in four shards, the crate's integration lane, the site probe and the UI audit — on
+  # 2026-10-14 #1151 (I0806's record) queued behind six such runs in a pool that verifies about
+  # one pull request at a time (I2662).
+  #
+  # Soundness, as for release-record: every other path is derived and proven equal to its
+  # regeneration (rust-integration runs `generate --check`, core-check runs `generate-site-data
+  # --check` on every plan, merge-policy proves the derived block is the generators'), so the
+  # only authored input is the record, and what can break is what reads it:
+  #   rust-integration    the registry validates with the record as an object of the index,
+  #                       and every projection of the plan is current;
+  #   intent-check        intents link issues; a changed status or evidence can break a link
+  #                       or a criterion;
+  #   intent-realization  an intent's realisation is judged against the issues that serve it;
+  #   github-projection   an issue record is projected to its GitHub issue, and the drift
+  #                       check reads the record;
+  #   entity-check        the record is an addressable object with a route;
+  #   merge-policy        .gitattributes is the generators' (the soundness above);
+  #   diagram-check       a plan page renders the record's body, which must not type a
+  #                       relationship in box art;
+  #   site-build          the plan pages build from the new data and every link resolves;
+  #   plan-record-cases   the behavioural cases about the plan and what reads it.
+  # Left out, deliberately: the shell suite (its plan cases are the gate above), the crate's
+  # own tests and coverage (no code changed), and the browser gates, which measure templates,
+  # styles and controls a record does not change. The master push after the merge is a full
+  # plan and runs every one of them.
+  - id: plan-record
+    records: [.ai/repo/project/issues/I*.yaml, .ai/repo/project/milestones/*.yaml]
+    others: derived
+    gates: [rust-integration, intent-check, intent-realization, github-projection, entity-check, merge-policy, diagram-check, site-build, plan-record-cases]
 
 classes:
   # the pipeline itself: a change here can only be validated by running everything.
@@ -880,6 +977,13 @@ classes:
   - id: skills
     paths: [.ai/repo/skills/**, .ai/repo/prompts/**, .ai/repo/workflows/**, .ai/repo/profiles/**, .ai/repo/providers/**, .just/**, justfile, apps/majordomus-cli/src/skill/**, apps/majordomus-cli/src/capability/builtin/skills.rs, apps/majordomus-cli/src/commands/skills.rs, apps/majordomus-cli/tests/skills.rs, lib/skills.sh, test/cases/95_skills.sh, test/cases/391_skills_are_proven_capabilities.sh, test/cases/3020_an_active_skill_is_named_where_the_crate_test_demands.sh, .ai/repo/rules/project/skills-are-proven-capabilities.v1.md]
     gates: [skills-proof, skill-naming, shell-suite, rust-integration]
+
+  # the audit's gap matrix and the plan it names: a planned row is a claim on an issue, so an
+  # edit to the matrix, to an issue record (one renamed or deleted), to the gate or to its case
+  # runs the gate. `docs` and `layer` already select the suites; this class adds the gate.
+  - id: audit-plan
+    paths: [docs/COCKPIT_IDE_AUDIT.md, .ai/repo/project/issues/**, scripts/ci/audit-plan-check, test/cases/194_audit_rows_are_planned.sh]
+    gates: [audit-plan, shell-suite]
 
   # the source pack and the archive: one profile declaration, the selection both read, the
   # skill on top of them and the rule they hold. A change to any of them can move what a
@@ -979,7 +1083,7 @@ classes:
   # identities, and names the allocator, whose edits would otherwise escalate the whole plan.
   - id: cases
     paths: [test/cases/**, scripts/case-numbers, .ai/repo/ci/case-numbers-baseline.txt, .ai/repo/rules/project/a-number-names-one-case.v1.md]
-    gates: [case-numbers, shell-lint, shell-suite]
+    gates: [case-numbers, shell-lint, shell-suite, release-record-listing]
 
   # documents and the files the site generator reads at the root; documents are index objects
   - id: docs
@@ -988,8 +1092,8 @@ classes:
 
   # the site: templates, assets, styles, scripts, its build dependencies and its scripts
   - id: site
-    paths: [site/**, assets/**, package.json, package-lock.json, .nojekyll, scripts/site-build, scripts/site-check, scripts/site-basepath-check, scripts/site-probe, scripts/site-serve, scripts/ui, scripts/lib/ui-*.mjs, scripts/interaction-probe, scripts/lib/interactions.mjs, scripts/lib/interaction-specs/**, scripts/lib/browser.mjs, scripts/lib/project-links.awk]
-    gates: [shell-suite, site-basepath, site-build, site-probe, ui-audit, order-check, design, nav-check, interaction-probe, entity-check]
+    paths: [site/**, assets/**, package.json, package-lock.json, .nojekyll, scripts/site-build, scripts/site-check, scripts/site-basepath-check, scripts/site-probe, scripts/site-serve, scripts/site-translate, scripts/lib/site-i18n*.mjs, scripts/ui, scripts/lib/ui-*.mjs, scripts/interaction-probe, scripts/lib/interactions.mjs, scripts/lib/interaction-specs/**, scripts/lib/browser.mjs, scripts/lib/project-links.awk]
+    gates: [shell-suite, site-basepath, site-build, site-probe, site-languages, ui-audit, order-check, design, nav-check, interaction-probe, entity-check]
 
   # the release pipeline's own scripts: they pack, verify and record what a tag publishes,
   # and they ask the executable for every name they use, so the crate's registry checks and

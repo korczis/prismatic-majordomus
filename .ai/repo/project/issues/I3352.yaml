@@ -1,0 +1,38 @@
+id: I3352
+milestone: the-proof-tests-are-registered-before-they-run
+title: "The six proof tests are registered, each with the claim it settles and its instrument, and none carries a protocol yet"
+slug: the-six-proof-tests-are-registered
+priority: p0
+profile: docs
+objective: "Write .ai/repo/benchmarks/proof-plan.yaml with tests t1-external-onboarding, t2-ab-workflow, t3-delivery-economics, t4-mesh-value, t5-resilience and t6-first-intent, each with its question, dimension, value words and instrument: planned with the issues of this program that build it, and with I3133 (acceptance), I3298 (topology arm) and I3299 (own overhead) where those are reused. Add six planned claims to docs/CLAIMS.yaml, one per test, in plain future tense with no figure and no asserted advantage. Say in .ai/repo/benchmarks/README.md that the plan lives there and is validated by economics::proof."
+why: "The owner's report of 2026-10-19 asks for T1 to T6 within 30 days. Registering six rows first makes every omission visible on every surface as not_run. Each experiment milestone registers its own protocol, so this issue guesses no corpus, arm or threshold, and reusing I3133, I3298 and I3299 avoids a second acceptance metric, arm declaration and overhead bench."
+current_state: "git ls-files .ai/repo/benchmarks lists README.md and the subdirectories economics, observatory, pages and rust; no proof-plan.yaml. docs/CLAIMS.yaml:20-28 declares the statuses and holds no proof-test claim."
+desired_state: "economics::proof::load over the tracked tree validates six tests with no protocol; docs/CLAIMS.yaml carries six planned claims accepted by scripts/ci/claim-proof-check."
+scope:
+  - ".ai/repo/benchmarks"
+  - ".ai/repo/benchmarks/README.md"
+  - "docs/CLAIMS.yaml"
+  - "apps/majordomus-cli/tests/economics.rs"
+non_scope:
+  - "Any protocol, threshold, sample size or corpus"
+  - "Marking any claim guaranteed"
+  - "Editing the economics suites"
+depends_on:
+  - "I3351"
+serves:
+  - "the-product-proves-it-pays#plan-is-registered-before-runs"
+acceptance_criteria:
+  - "The plan validates with exactly six tests named for T1 to T6"
+  - "Each test settles one planned claim docs/CLAIMS.yaml holds, and no claim sentence names a figure or asserts an advantage"
+  - "Each planned instrument names at least one existing issue id or a key of this program"
+  - "A test in economics.rs loads the tracked plan and asserts six tests and no finding"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test economics"
+  - "scripts/generate-site-data --check"
+  - "scripts/ci/claim-proof-check"
+  - "majordomus economics check"
+  - "majordomus plan validate"
+evidence_required:
+  - "test_tracked_proof_plan_has_six_tests"
+created_at: 2026-10-19
+updated_at: 2026-10-19

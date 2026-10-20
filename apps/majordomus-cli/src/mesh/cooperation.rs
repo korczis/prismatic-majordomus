@@ -100,8 +100,8 @@ use serde::{Deserialize, Serialize};
 use super::config::{CooperationConfig, TrustConfig};
 use super::identity::{node_id_of_key, NodeIdentity};
 use super::journal::{
-    ClaimMode, EventBody, HandoverBody, Journal, JournalTallies, Marks, MeshEvent, Rejection,
-    SessionInfo, StreamId, StreamLiveness, HANDOVER_RETENTION,
+    ClaimMode, Durability, EventBody, HandoverBody, Journal, JournalTallies, Marks, MeshEvent,
+    Rejection, SessionInfo, StreamId, StreamLiveness, HANDOVER_RETENTION,
 };
 use super::link::{
     fresh_token, negotiate, sign, verify_signed, Domain, Hello, LinkRefusal, LinkReply,
@@ -953,13 +953,14 @@ impl MeshVerifyReport {
 /// #     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),
 /// # }).unwrap();
 /// use majordomus_cli::mesh::cooperation::Written;
-/// use majordomus_cli::mesh::journal::{ClaimMode, SessionInfo};
+/// use majordomus_cli::mesh::journal::{ClaimMode, Durability, SessionInfo};
 ///
 /// let session = SessionInfo::named("s1", "cli");
 /// let written: Written = cooperation
 ///     .claim(&session, vec!["docs".into()], None, ClaimMode::Advisory, None)
 ///     .unwrap();
 /// assert!(written.lamport > 0, "placed against every other runtime's events");
+/// assert_eq!(written.durability, Durability::Memory, "this journal has no file");
 ///
 /// // and the key it returned is how the claim is addressed from here on
 /// cooperation.release(&written.key).unwrap();
@@ -972,6 +973,11 @@ pub struct Written {
     pub event: String,
     /// The event's Lamport stamp.
     pub lamport: u64,
+    /// Whether the event reached this machine's disk: `synced`, `memory` (a journal with no
+    /// file, by configuration), or `not_durable` — held and replicated to peers, not on disk
+    /// here, and not acknowledged as durable. `unknown` from an executable that predates it.
+    #[serde(default)]
+    pub durability: Durability,
 }
 
 /// What a dial or a sync round did not do. The three are kept apart because they are acted
@@ -3383,14 +3389,15 @@ impl Cooperation {
     // ------------------------------------------------------------------ operations
 
     fn write(&self, body: EventBody, key: String) -> Result<Written, CooperationError> {
-        let event = self
+        let appended = self
             .journal
-            .append_own(body)
+            .append_acknowledged(body)
             .map_err(|e| CooperationError::Invalid(e.to_string()))?;
         Ok(Written {
             key,
-            event: event.id(),
-            lamport: event.lamport,
+            event: appended.event.id(),
+            lamport: appended.event.lamport,
+            durability: appended.durability,
         })
     }
 
@@ -3791,11 +3798,11 @@ impl Cooperation {
             EventBody::ReviewRequested {
                 review: review.clone(),
                 session: session.into(),
-                subject,
+                subject: redacted(subject),
                 scope,
                 issue,
                 reviewer,
-                body,
+                body: body.map(redacted),
             },
             self.own(&review),
         )
@@ -3861,8 +3868,8 @@ impl Cooperation {
             EventBody::ReviewAnswered {
                 request: request.into(),
                 session: session.into(),
-                verdict,
-                note,
+                verdict: redacted(verdict),
+                note: note.map(redacted),
             },
             request.into(),
         )
@@ -3932,11 +3939,21 @@ impl Cooperation {
             EventBody::ReviewWithdrawn {
                 request: request.into(),
                 session: session.into(),
-                note,
+                note: note.map(redacted),
             },
             request.into(),
         )
     }
+}
+
+/// Free text of a review as it is signed: every credential shape replaced by the marker that
+/// names it, through the one rule set (`redaction::redact_secrets`), as a handover body is.
+///
+/// A review's subject, body, verdict and notes are typed by a session and replicated in clear
+/// to every linked runtime, so a pasted credential would otherwise travel with them (I2708).
+/// The entries of `.ai/repo/ci/mesh-event-fields.yaml` that say `redacted` name these fields.
+fn redacted(text: String) -> String {
+    crate::redaction::redact_secrets(&text).text
 }
 
 /// A JSON error as the text a refusal or a round error carries.

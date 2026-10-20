@@ -214,8 +214,8 @@ impl SharedServer {
         // stopped pinging — on every path, not only while the owner waits for peers to
         // leave, so that a dead peer never stays `attached` on the board — and it checks
         // that the lease is still its own. A lease another process took over is that
-        // process's to remove; this one stops claiming it, serves the peers it has, and
-        // ends with them.
+        // process's to remove; this one stops claiming it and retires from the mesh,
+        // serves the peers it has, and ends with them.
         //
         // It is also the stopper of last resort. A signal asking this process to stop is only
         // recorded by its handler (`crate::lease` says why); when the owner's loop does not
@@ -265,9 +265,15 @@ impl SharedServer {
                         {
                             lost = true;
                             crate::lease::lost();
+                            // A successor has the same mesh runtime key. Leaving this
+                            // instance active makes both replace each other's links.
+                            // Retire discovery and cooperation, keeping HTTP sessions.
+                            mesh.begin_stop();
+                            mesh.stop();
+                            mesh.decline("the server no longer holds its checkout lease");
                             tracing::warn!(
                                 lease = %path.display(),
-                                "the lease is no longer this server's: another process took it over; this server serves the peers it has and ends with them"
+                                "the lease is no longer this server's: another process took it over; this server leaves the mesh, serves the peers it has and ends with them"
                             );
                         }
                     }

@@ -1,0 +1,38 @@
+id: I3161
+milestone: repository-automation-is-typed
+title: "The commit hook is one call of the executable that runs the commit subset of doctor, the worktree guard and pages current under a declared budget"
+slug: the-commit-hook-is-one-call
+priority: p2
+profile: implementation
+objective: "Replace .githooks/pre-commit's sequence of bin/majordomus doctor, worktree guard, scripts/pages current and providers-check with one hook command of the executable that composes them and reports its own time against benchmark.budget."
+why: "The inventory records the hook's doctor as the shell tool's slow path ('up to 136s' noted); owner, 2026-10-07: hooks, .envrc and installer shrink to exec-the-binary adapters. It extends milestone automation. Sources: chatgpt-majordomus:c192#8."
+current_state: ".githooks/pre-commit runs four commands, one of them the shell doctor; I0828 bounds doctor's time advisorily."
+desired_state: ".githooks/pre-commit is one exec line; the hook's verdicts are unchanged."
+scope:
+  - ".githooks/pre-commit"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "share/commands.yaml"
+  - ".ai/repo/automation/inventory.jsonl"
+  - "apps/majordomus-cli/src/commands/guard.rs"
+  - "apps/majordomus-cli/src/commands/worktree.rs"
+  - "apps/majordomus-cli/src/commands/mod.rs"
+  - "lib/doctor.sh"
+  - ".ai/repo/benchmarks/rust/policy.yaml"
+  - "docs/generated/cli.yaml"
+  - "test/cases/26_ci_wiring.sh"
+non_scope:
+  - "The pre-push hook"
+depends_on:
+  - "I3156"
+serves:
+  - "repository-automation-is-typed#the-commit-hook-is-one-call"
+acceptance_criteria:
+  - "Each refusal the four commands produce today is still produced"
+  - "The hook reports its wall time against a declared budget"
+  - "Each new case named here takes its number from `scripts/case-numbers next` and is announced on the board before the file is written (ADR 0053); a case number written in this record before that is provisional"
+validation:
+  - "bash test/run.sh 26_ci_wiring 56_derived_current_gate"
+evidence_required:
+  - "case_commit_hook_is_one_call"
+created_at: 2026-10-18
+updated_at: 2026-10-18

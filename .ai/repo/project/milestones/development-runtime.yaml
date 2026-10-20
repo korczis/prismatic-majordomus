@@ -1,7 +1,6 @@
 id: development-runtime
 title: The runtime has a development surface
 slug: development-runtime
-version: "0.6"
 order: 100
 priority: p0
 problem: "The Cockpit is a faithful projection of a registry that has almost nothing development-shaped in it. Re-measured on today's master, the registry declares exactly three capabilities of kind `command` — executions.start, executions.cancel, peers.announce — and the OpenAPI document the server serves has exactly those three non-GET operations to match. Every command of the development lifecycle lives in a second program, bin/majordomus, and every one of its nodes in the command graph is withheld from every machine surface. So no development surface can be built by adding pages: there is nothing behind the pages to call, and `majordomus_plan_done` answers `unknown tool` because there is no capability for a plan transition. docs/COCKPIT_IDE_AUDIT.md is the evidence; ADR 0040 is the decision it argues for. Until this milestone existed, none of it was in the plan at all: a keyword search of the issues and milestones for palette, diff view, CI status and syntax highlighting returned nothing, so the work could not be scheduled, blocked or reported."
