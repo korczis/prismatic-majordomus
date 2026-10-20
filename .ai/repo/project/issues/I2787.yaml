@@ -24,4 +24,15 @@ validation:
 evidence_required:
   - "case_deps_pruned"
 created_at: 2026-10-17
-updated_at: 2026-10-17
+updated_at: 2026-10-19T15:31:11Z
+started_at: 2026-10-19T15:30:54Z
+started_event: sha256:4e56e549088e3cefafce4c00d1fcecf04629c3ac6f8ad5b8ef27c0ca1eb3d26c
+completed_at: 2026-10-19T15:31:11Z
+completed_event: sha256:bb70a868358fd7ccd5dd6bbf28c658d72b662654f2f959c1cc49283271a1da96
+evidence:
+  - covers: case_deps_pruned
+    type: test
+    command: "bash test/run.sh 3196_stale_crate_artifacts_are_pruned_under_cargos_lock"
+    result: "3 passed, 0 failed, 0 skipped on master dd4c0a87cba (with 1060 and 2988); delivered by PR #1349 (36de9d12699, f6d28ada933), not by the plan commit cc536298674"
+    commit: dd4c0a87cba408222033c89f002ab2d63f48574c
+    recorded_at: 2026-10-19T15:31:06Z
