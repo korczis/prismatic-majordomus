@@ -1,0 +1,34 @@
+id: I3410
+milestone: a-provider-carries-the-contract-natively
+title: "A Codex prompt is captured through Codex's own UserPromptSubmit hook, and capture status stops calling Codex prompts unadapted"
+slug: a-codex-prompt-is-captured
+priority: p3
+profile: implementation
+objective: "Add a codex line to MJ_CAPTURE_ADAPTERS that reads Codex's prompt field, with the shim and config entry capture install writes, in the way it writes the Claude one. Before building, re-verify the dated vendor evidence in share/providers.yaml against the installed Codex."
+why: "The owner's 2026-10-19 Cognitive Fabric pack asks that event ingestion use the hooks each client actually offers (campaigns/prismatic-way-cognitive-fabric-prompt-pack/prompts/02_EVENTS_INTENTS.md). Codex sessions work this repository daily, and their prompts are never events. I3303 plans Codex session events and the guard, not prompts."
+current_state: "share/providers.yaml:135-154 records Codex UserPromptSubmit with the raw text in prompt. lib/capture.sh:249 has only a claude-code adapter, and lib/capture.sh:2037 reports Codex prompts unadapted."
+desired_state: "A Codex prompt payload writes one record with provider codex. capture status reports Codex prompts as wired or unwired by running the shim. Gemini stays unadapted and is reported so."
+scope:
+  - "lib/capture.sh"
+  - "share/providers.yaml"
+  - "test/cases/29_prompt_capture.sh"
+  - ".ai/repo/project/intents"
+non_scope:
+  - "A Gemini adapter (deferred, as in I3303)"
+  - "Codex session or edit-guard events (I3303)"
+depends_on:
+  - "I3303"
+  - "I3406"
+serves:
+  - "a-provider-carries-the-contract-natively#codex-prompts-are-captured"
+acceptance_criteria:
+  - "A Codex-shaped payload piped into the generated shim writes one record with provider codex"
+  - "The same prompt id from claude-code and codex writes two records (I3406's key)"
+  - "capture status no longer lists Codex prompts as unadapted once the adapter is installed"
+validation:
+  - "bash test/run.sh 29_prompt_capture 170_provider_lifecycle_declared"
+  - "majordomus capture status --json"
+evidence_required:
+  - "case_a_codex_prompt_is_captured (an assertion block added to test/cases/29_prompt_capture.sh)"
+created_at: 2026-10-19
+updated_at: 2026-10-19

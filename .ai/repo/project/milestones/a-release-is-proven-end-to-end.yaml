@@ -1,0 +1,33 @@
+id: a-release-is-proven-end-to-end
+title: "Whether a commit may be released, and whether its release arrived, is proved by one read and one case"
+slug: a-release-is-proven-end-to-end
+order: 180
+priority: p1
+problem: "The release path is well guarded once a tag is pushed (plan, verdict, build, verify, publish), but before the tag nothing answers whether it would pass, the site guard compares releases but not commits, and the v0.29.0 record commit's evidence job failed on 2026-10-18 with the planned-empty report I2717 owns. Sources: chatgpt-majordomus:c291#2, chatgpt-majordomus:c111#6, chatgpt-majordomus:c238#2, chatgpt-majordomus:c258#2, chatgpt-majordomus:c283#2, chatgpt-majordomus:c297#2, chatgpt-majordomus:c295#3."
+outcome: "release.readiness answers before a tag from the functions the workflow runs; site-deploy never goes back a commit; one case walks a fresh clone to published evidence; the first record commit after I2717 lands is observed with a green evidence job."
+current_state: "Verified on master 707a04c7ce8: .ai/repo/ci/release.yaml phases; scripts/ci/release-verdict; distribution.status chain; scripts/site-deploy refuses an older release and a HEAD off origin/master only. Prerelease isolation (I2829) and the release changelog (I2826) are on branches. I2717 (READY, p0) owns the record commit's planned-empty evidence failure."
+desired_state: "A release is decided by evidence read before and confirmed after, and every surface reads the same decision."
+scope:
+  - "apps/majordomus-cli/src/release"
+  - "apps/majordomus-cli/src/capability/builtin/release.rs"
+  - "scripts/site-deploy"
+  - ".github/workflows/validate.yml"
+  - "docs/RELEASE.md"
+non_scope:
+  - "A second release engine"
+  - "Automatic GO for a release"
+  - "Browser compute on the release path"
+acceptance_criteria:
+  - "release.readiness and the release workflow share their implementation"
+  - "A publication of an older commit than the served one is refused"
+  - "The fresh-clone case runs on the release candidate"
+validation:
+  - "majordomus plan validate"
+evidence_required: []
+depends_on:
+  - "safe-self-update"
+  - "test-evidence"
+risks:
+  - "The alpha top (0.30.0) and I2829 touch scripts/site-deploy and release.yml; I3201 and I3208 start after it lands"
+created_at: 2026-10-18
+updated_at: 2026-10-18

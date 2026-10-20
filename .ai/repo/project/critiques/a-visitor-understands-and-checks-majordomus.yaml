@@ -1,0 +1,94 @@
+intent: a-visitor-understands-and-checks-majordomus
+reviewed_at: 707a04c7ce8
+reviewed_by: "claude-code subagent (read-only, fresh context, Plan type, same model family as the author) dispatched by session 82f2734c over the staged records of branch docs/the-chatgpt-project-is-promoted and the ChatGPT-conversation sources they were promoted from; resolved by a second fresh subagent acting as the plan author. Read only: nothing was run. Disposition: Accept with required changes: all 10 findings are planned, including the 3 blocking ones. Eligibility, inline rendering, placement, commit source, verification and the I2417 transition move to I3223; the maturity source, derived membership, case 333 fixtures and sequencing after I2851 move to I3224."
+findings:
+  - id: challenge-does-not-end-in-a-refusal
+    class: unproven_assumption
+    subject: "a-visitor-understands-and-checks-majordomus#scenarios-are-recorded"
+    finding: "The criterion and I3223 both offer 'each recorded use case that ends in a refusal' and also keep the challenge as the default. The challenge does not end in a refusal. Its steps in site/data/generated/challenge.json end with finish accepted, and scripts/generate-site-data:1387-1388 refuses a challenge that does not end with the work accepted. Few runs qualify either way. Of the 49 use cases in catalogue.json, only 8 contain a refusal by check or finish: catch-an-agent, accept-or-refuse, carry-a-blocker, resume-in-the-right-worktree, prove-what-a-task-owed, say-what-reached-the-remote, trust-the-policy and block-acceptance. Most runs whose last step exits non-zero are doctor, archive, skills or version runs. 'Collision' is never a refusal in a recorded run: overlap is an INFO line with exit 0 in the challenge's start step. The checks/verdict extraction exists only for the one challenge (generate-site-data:1313-1395). Before work starts, restate eligibility as a derivable rule, for example 'contains a step whose argv[0] is check or finish and whose outcome is refused', drop collision or record a run of it, and say whether the decision-line extraction is generalised to every eligible scenario."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3223
+      because: "Eligibility becomes a rule that is already derived: the use cases that terminal.json `refusals` names. That list is every recorded lifecycle step that exited non-zero, built by scripts/generate-site-data:1281-1290, and today it covers 8 use cases and 12 refusals. The challenge stays the default as the run that is refused and then accepted, not as a run that ends in a refusal. Collision is dropped because no recorded run refuses on it. The decision-line extraction is not generalised. Each choice shows the verdict line terminal.json already derives (the first FAIL line, or the last line), and only the challenge keeps its line-by-line contract."
+  - id: inline-replays-undo-the-budget-cut
+    class: regression_risk
+    subject: "I3223"
+    finding: "I3223's current_state assumes the homepage replays challenge.json. It does not. index.html only loads ch and links to /challenge/ (index.html:93, 371-378), and only site/templates/challenge.html includes partials/challenge-replay.html. homepage.toml:16-20 and its [budget] comment record why: inline transcripts pushed the page to 243,477 bytes, and html_bytes is now 160000. The partial is designed so that every panel renders in order when scripts are off (challenge-replay.html:12-15). Rendering about 8 server-side replays in the hero would bring back exactly what was removed and break the budget the issue says it holds. Before implementing, decide that the choices are links to /use-cases/<id>/ (whose page already lists every step, use-case.html:53-55) or to /challenge/, with at most one compact verdict inline. Any switch done with scripts on should fetch published data, not inline it."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3223
+      because: "Each choice is a link: the default goes to /challenge/ and every other choice goes to /use-cases/<id>/, whose page already lists every step. Inline, a choice carries at most its one derived verdict line. No replay partial is rendered on the homepage, and the html_bytes budget of 160000 in site/data/homepage.toml stays as it is. A switch that runs with scripts on may only fetch data that is already published; it never inlines it."
+  - id: maturity-vocabulary-has-no-source
+    class: unproven_assumption
+    subject: "a-visitor-understands-and-checks-majordomus#every-node-leads-to-evidence"
+    finding: "The invariant and I3224 read 'shipped, partial, planned' from the product model, but no source gives those words. Feature status is stable|draft|deprecated (share/schemas/majordomus/feature/feature.v1.schema.json:53-56): 28 features are stable and 1 is draft. All 6 domains are stable, and index.html:170 drops a non-stable domain instead of labelling it. Delivery's DeliveryState is Delivered or NotDelivered{stage} (apps/majordomus-cli/src/delivery/mod.rs:170). It reads the public site and GitHub over the network (capability/builtin/delivery.rs:9-11), so it cannot feed the derivation that --check compares byte for byte. Claim evidence in site/data/registry/product.json supports 0 of 229 claims (214 not-run, 21 stale, 12 no-test). I3224's acceptance criterion 'a feature moved to planned' has no status to move to. The source and the mapping must be decided (feature status, claim evidence verdict, or I2851's delivery.json stages) and recorded before work. Otherwise every node wears 'stable', or every node wears 'not run'."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3224
+      because: "The mapping is now decided. A node's maturity has two derived parts, both from the committed site/data/registry/product.json. The first is the feature's declared status (stable, draft or deprecated, per feature.v1.schema). The second is the evidence verdict of the feature's claims, taken from product.json `evidence.claims` joined on features[].claims and shown with the verdict that qualifies it. delivery.json is excluded because it is read over the network. The words 'shipped, partial, planned' are not used, because no source gives them. If every node honestly reads 'not run' today, that is the true state shown, and it is not hidden. The 'moved to planned' criterion is replaced by one about a change of status or of verdict. Applied in the plan of 2026-10-18: the intent's invariant and the criterion every-node-leads-to-evidence are re-recorded to this mapping, and I3224's objective, desired_state and scope no longer use shipped/partial/planned or declare membership in site/data/homepage.toml."
+  - id: problem-and-step-links-mostly-exist
+    class: unnecessary_work
+    subject: "I3224"
+    finding: "The problems are domain ids (homepage.toml:30, ADR 0104). Each problem card already links to #domain-<id> on the map (index.html:171), and the domain-map there lists the domain's features with claim and tested counts. Steps can be mapped to features from product.json features[].commands without any new declaration: start/check/finish map to coordination and finish-contract, context to context and continuity, checkpoint and handover to continuity. Each step already links its recorded run (index.html:211). Declaring problem and step membership in site/data/homepage.toml, as desired_state proposes, would be a second product catalogue, which the intent lists as a non-goal. Narrow I3224 to three things: derive step features from commands, render the chosen derived label on the problem and step cards, and have homepage-check hold both directions."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3224
+      because: "Accepted as written. The membership of each node is derived, not declared. A problem's features are those of its domain, linked through the existing #domain-<id> anchor. A step's features are the product.json features whose `commands` contain the step's lifecycle command. Nothing is added to site/data/homepage.toml. The issue narrows to three things: derive the step features, render the derived label on the problem and step cards, and have homepage-check hold both directions."
+  - id: hero-column-is-the-product-panel
+    class: regression_risk
+    subject: "I3223"
+    finding: "The hero's second column is the product panel (index.html:121-160, held by homepage-check `product`). The owner-requested buyer rewrite (239df858cb4) deliberately kept it. The hero's comment (index.html:70-74) says the run's verdict belongs in the refuses section (index.html:329-378). A scenario picker in the hero would crowd out or replace the panel and change test/cases/333's fixtures. Before implementing, name where the choices go: the hero's left column under the reassure line, or the refuses section, with the criterion reworded to match."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3223
+      because: "The choices go in the hero's left column, under the reassure line, as a short list of links. That keeps the criterion's word 'hero' true. The product panel in the second column and its homepage-check `product` check stay untouched. The challenge's line-by-line verdict stays in the refuses section."
+  - id: named-commit-is-a-build-fact
+    class: unproven_assumption
+    subject: "I3223"
+    finding: "'Each with the commit it was recorded at' cannot come from scripts/generate-site-data as desired_state implies. Committed derived data carries no commit by design (generate-site-data:1895-1900, enforced by test/cases/51_derived_artifacts_committed.sh). Use-case evidence in catalogue.json has only schema, use_case, setup, result and steps. The commit exists only in site/static/build.json, which is not committed and is loaded with required=false (index.html:37). The issue should say the commit is build.json's. homepage-check should demand it only in publication mode; otherwise a local build fails, or passes without checking anything."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3223
+      because: "Accepted. The commit shown is the build's commit, taken from site/data/build.json, which scripts/site-build writes. It is never written into committed derived data. homepage-check demands the commit only when build.json is present, as in a publication build, and states that it skipped the check when build.json is absent."
+  - id: depends-on-an-issue-left-ready
+    class: unproven_assumption
+    subject: "I3223"
+    finding: "I3223 depends_on I2417. plan.json reports I2417 as READY, although its change landed (76fb37abef3; partials/evidence-chain.html and interaction spec evidence-chain.mjs exist). I3223 cannot become ready until someone transitions I2417 with its evidence or the dependency is dropped. Nothing in this plan does either."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3223
+      because: "Confirmed: `majordomus plan show I2417` reports READY (derived) although 76fb37abef3 landed it. Amendments are additive only, so the dependency is kept. I3223's first step becomes transitioning I2417 with the evidence of 76fb37abef3: site/templates/partials/evidence-chain.html and the evidence-chain interaction spec."
+  - id: statement-promises-more-than-criteria
+    class: missed_requirement
+    subject: "a-visitor-understands-and-checks-majordomus"
+    finding: "The statement promises four things the two criteria and two issues do not cover. (1) A first screen that says what Majordomus does: that is I3134 under public-proof and the proposed ADR 0210, which serve no criterion here. (2) Switching to 'the scenario closest to their problem' for a manager or a programmer: nothing maps a scenario to a problem or an audience, and why.json audiences already have their own pages. (3) Reaching the feature and evidence from any claim: that is the proof section's evidence chain (I2417). (4) 'Every figure stays derived' and the eight sections: these are held today by homepage-check. Either add criteria served by I3134 and by a declared scenario-to-problem link, or narrow the statement to what the two criteria prove."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3223
+      because: "Each promise now has an owner. (1) The first-screen sentence is I3134's. I3223 now depends on I3134, so the choices are placed under the sentence it declares. (2) A scenario's problem is derived, not declared: use case to product.json features[].use_cases to the feature's domain, which is the homepage problem id. Each choice names that problem. (3) Reaching evidence from a claim is I2417's evidence chain, which has landed. (4) The derived figures and the eight sections are held by homepage-check and by I3223's existing criterion. Applied in the plan of 2026-10-18: the invariants and both criteria are re-recorded to the derived rules (terminal.json refusals, the hero's left column, the problem each choice answers, the feature's declared status and its claims' evidence verdict), and a third criterion, the-published-page-is-probed, covers the visitor's published page. The statement stays, because each of its promises now has a named carrier."
+  - id: no-public-verification-or-refusal-case
+    class: delivery_verification
+    subject: "a-visitor-understands-and-checks-majordomus"
+    finding: "The intent is about a visitor of majordomus.dev, but neither issue verifies the published site. I1600 did that with scripts/pages verify --smoke; here validation lists only site-check, homepage-check and interaction-check. Both criteria point their evidence at 'majordomus intent explain', which reports coverage, not the page. No test case is named. Case 333 (test/cases/333_homepage_narrative.sh) is where the homepage-check refusals are proved, and it needs fixtures for 'a scenario without a recorded run' and 'a node without a feature'. The site-check nojs check (scripts/site-check:1101-1109) is static, so 'every scenario reachable with scripts off' also needs a link-reachability assertion. Add these, plus a post-deploy probe of the hero choices."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3223
+      because: "Accepted for both issues. Case 333 gains refusal fixtures: one for a scenario without a recorded run (I3223) and one for a node without a feature (I3224). homepage-check gains a reachability assertion: every hero choice is an <a href> to a page that exists in the built site. The published site is verified with `scripts/pages verify --smoke`, with the homepage's hero choices among the routes probed after deploy. Applied in the plan of 2026-10-18: the post-deploy probe of the hero choices is split from I3223 into its own issue in the same milestone (one worker, one issue, one PR), which serves the new criterion the-published-page-is-probed and depends on I3223; case 333's fixture and homepage-check's reachability assertion stay with I3223 and I3224. I3223's acceptance line on scripts/pages verify --smoke is carried by the split issue."
+  - id: collides-with-in-flight-homepage-work
+    class: regression_risk
+    subject: "I3224"
+    finding: "Several in-flight changes edit the same files. I2851 (ca277ce7484, on integration/0.30.0-top, not master) changes site/templates/index.html, scripts/ci/homepage-check and test/cases/333, and adds site/data/generated/delivery.json. I3134 changes homepage-check and generate-site-data. Board items I2965/I2970 (proof words and counts shown with the verdict that qualifies them) cover the same evidence labels I3224 would render. Sequence I3224 after I2851 lands on master, and reuse I2970's verdict rendering rather than adding a second maturity badge."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3224
+      because: "I2851, I2965 and I2970 have no issue record in this tree (ca277ce7484 is only on origin/integration/0.30.0-top-20261018), so they cannot be named in depends_on. The sequencing is therefore an acceptance criterion: I3224 starts from a master that contains ca277ce7484 and reuses I2970's verdict rendering, not a second badge. I3134's overlap is sequenced through I3223's new dependency on I3134."

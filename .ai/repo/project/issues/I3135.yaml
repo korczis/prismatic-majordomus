@@ -1,0 +1,32 @@
+id: I3135
+milestone: a-visitor-understands-and-checks-majordomus
+title: "The launch kit is held by the same promise check as the homepage, and the tool publishes none of it"
+slug: the-launch-kit-is-held-like-the-homepage
+priority: p3
+profile: implementation
+objective: "Extend homepage-check's [promises] and product-sentence checks to docs/LAUNCH.md and site/content/docs/launch.md, derive the kit's one-sentence pitch from the declaration, and correct what the kit states that the model does not (it runs 'in portable shell')."
+why: "The 2026-10-13 launch-kit proposal required every kit text to be regenerated from the product identity and nothing auto-published; the kit today is hand-written and repeats a claim the 2026-10-08 audit found false. Proposed in ADR 0210 (The sentence that says what Majordomus is has one declaration, and every surface reads it) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c250#5, chatgpt-majordomus:c193#1."
+current_state: "docs/LAUNCH.md last changed around 2026-10-11; its 'One sentence' differs from site/data/marketing.toml [hero] lead; it says 'It runs locally, in portable shell, and never calls a model' while bin/majordomus execs libexec/majordomus-cli for Rust commands."
+desired_state: "The kit's pitch is a projection; its other prose passes the promise vocabulary; its 'What not to say' list is read by the check."
+scope:
+  - "docs/LAUNCH.md"
+  - "site/content/docs/launch.md"
+  - "scripts/ci/homepage-check"
+  - "site/data/homepage.toml"
+non_scope:
+  - "Posting to LinkedIn, Facebook or communities"
+  - "Generated social images"
+depends_on:
+  - "I3134"
+serves:
+  - "a-visitor-understands-and-checks-majordomus#the-copy-says-only-what-is-proved"
+acceptance_criteria:
+  - "homepage-check fails on a promise word or a differing product sentence in the launch kit"
+  - "The kit states nothing about how the product is built that docs/CLI.md and the model contradict"
+validation:
+  - "scripts/ci/homepage-check"
+  - "scripts/site-check"
+evidence_required:
+  - "launch_kit_checked"
+created_at: 2026-10-18
+updated_at: 2026-10-18

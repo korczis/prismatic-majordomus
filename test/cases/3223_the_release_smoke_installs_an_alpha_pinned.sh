@@ -42,6 +42,13 @@ printf '%s\n' "$out" | grep -q "FAIL install-check  $HTTP_BASE/releases/latest.j
   || { echo "    the refusal does not say why:"; printf '%s\n' "$out" | sed 's/^/      /'; exit 1; }
 [ ! -e "$T/asked" ] || { echo "    the installer ran although the site was refused"; exit 1; }
 
+# The latest pointer must also reject a pre-release other than the one being checked.
+meta 1.0.0-alpha.2 > "$FIX/releases/v1.0.0-alpha.2.json"
+out="$(gate --expect v1.0.0-alpha.2)" && { echo "    the gate passed a site whose latest is another pre-release"; exit 1; }
+printf '%s\n' "$out" | grep -q "FAIL install-check  $HTTP_BASE/releases/latest.json names the pre-release v1.0.0-alpha.1; a pre-release is never the latest release" \
+  || { echo "    the other pre-release was accepted as latest:"; printf '%s\n' "$out" | sed 's/^/      /'; exit 1; }
+[ ! -e "$T/asked" ] || { echo "    the installer ran with another pre-release as latest"; exit 1; }
+
 # ---------------------------------------------------------------- 3. a stable release is checked as before
 meta 0.29.0 > "$FIX/releases/latest.json"
 out="$(gate --expect v0.29.0)" && { echo "    the stub installer cannot succeed, yet the gate passed"; exit 1; }

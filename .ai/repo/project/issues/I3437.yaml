@@ -1,0 +1,30 @@
+id: I3437
+milestone: public-proof
+title: "An article names every language version in one translations table, and every member names the same group"
+slug: an-article-names-every-language-version
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "An article's front matter may name every counterpart in [extra.translations] (lang = \"route/\") for any number of languages; site/templates/base.html emits one rel=alternate hreflang link per entry plus its own through get_url, the two-language alternate and alternate_lang pair stays readable, and site-check refuses a group that is not the same set from every member, a language listed twice and an article listing its own language."
+why: "The owner asked on 2026-10-19 for multilingual front matter, every language version named on the page. The two-language form names one counterpart, so a third language could not be declared at all. It belongs to public-proof with I3436, whose check it extends: the public site's language versions are its own statement about itself."
+current_state: "site/templates/base.html:35-37 reads only page.extra.alternate and page.extra.alternate_lang, one counterpart per page, and nothing reads a table of them; the reciprocity of I3436 compares one alternate with one alternate."
+desired_state: "base.html emits a link per [extra.translations] entry and falls back to the pair; check 21 reads the table, the inline table and dotted keys alike, treats the pair as a table of one entry, refuses a pair that disagrees with a table beside it, and holds every member to naming the whole group back; case 3503 renders the real block with zola and holds the check on a three-language fixture."
+scope:
+  - "site/templates/base.html"
+  - "scripts/site-check"
+  - "test/cases/3503_a_translation_group_agrees_and_keeps_up_with_its_source.sh"
+  - ".ai/repo/project/issues/I3437.yaml"
+acceptance_criteria:
+  - "A page with [extra.translations] renders one rel=alternate link per entry plus its own, and a page with the pair still renders its two"
+  - "A three-language group written in the table, inline and dotted-key forms passes"
+  - "A member that does not name every other member, a language listed twice and an article listing its own language each fail naming the file"
+validation:
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3503_a_translation_group_agrees_and_keeps_up_with_its_source"
+evidence_required:
+  - "translation_groups_are_reciprocal"
+  - "every_translation_is_linked_by_hreflang"
+depends_on:
+  - "I3436"
+serves: []
+created_at: 2026-10-19
+updated_at: 2026-10-19

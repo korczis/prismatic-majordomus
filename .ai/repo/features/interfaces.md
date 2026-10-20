@@ -5,7 +5,7 @@ kind: feature
 title: One registry over the command line, HTTP, OpenAPI, Swagger UI and MCP
 short_title: Interfaces
 headline: Every agent, script and person reads the same repository through the interface it already speaks, and none of the interfaces is maintained by hand.
-summary: The Rust executable serves the layer read-only over stdio MCP, MCP over HTTP, routes under /api/v1/, an OpenAPI document with a Swagger UI, and a command line, all derived from the capability registry; one shared server per repository, and every attached client is a peer the others can see.
+summary: The Rust executable serves the layer over stdio MCP, MCP over HTTP, routes under /api/v1/, an OpenAPI document with a Swagger UI, and a command line, all derived from the capability registry, which names what each capability changes; one shared server per repository, and every attached client is a peer the others can see.
 status: stable
 weight: 20
 domain: surfaces
@@ -42,11 +42,15 @@ publication and the validator all read.
 
 ## What it does not do
 
-Almost nothing here writes to the repository: all but two of the capabilities over MCP and
-HTTP are reads, and most of the commands that change anything change only this process's
-memory. The exceptions are named rather than implied — `plan.transition` and
-`recover.orphans` — and the `initialize` instructions every client reads name them too,
-counted off the registry rather than stated by hand, because a sentence that promises a
-read-only surface is exactly the sentence an agent acts on. There is no
+Most of what is served reads. Every capability carries its effect in the registry: a read,
+a change to the answering runtime's own state (the peer board, the mesh journal, the
+evidence ledger), or a change to the repository. The ones that write the repository are
+`continuity.publish`, `continuity.resume`, `continuity.sync`, `executions.start`,
+`intents.propose`, `plan.transition`, `reasoning.record` and `recover.orphans`;
+the `initialize` instructions every client reads name them from the registry, and case
+3363 refuses this page when its list and the registry's differ, because a sentence that
+promises a read-only surface is exactly the sentence an agent acts on. There is no
 authentication and no remote binding by default; the server is for the clients on this
-machine. It does not run a model and it does not route work to one.
+machine. When it is bound beyond loopback, its reads answer whoever reaches it, and every
+capability that changes something is refused to a remote caller unless a linked node
+signed the input. It does not run a model and it does not route work to one.
