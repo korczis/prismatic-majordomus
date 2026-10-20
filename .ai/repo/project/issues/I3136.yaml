@@ -1,0 +1,26 @@
+id: I3136
+milestone: a-visitor-understands-and-checks-majordomus
+title: "The copy refuses hype words that no recorded comparison permits"
+slug: the-copy-refuses-hype-words
+priority: p3
+profile: implementation
+objective: "Add to site/data/homepage.toml [promises] the words the positioning work ruled out (revolutionary, revolutionize, 10x, next-generation, AI-powered orchestration, unlock, transform), each \"\" until a claim permits it, so homepage-check refuses them in the copy files it reads."
+why: "The 2026-10-10 and 10-13 positioning work ruled out vague AI-platform words and comparative speed claims without evidence; the promise vocabulary today covers only autonomy words. Sources: chatgpt-majordomus:c250#5, chatgpt-majordomus:c218#3."
+current_state: "site/data/homepage.toml [promises] lists unattended, autonomous, fully automated, self-healing, zero-touch, hands-off and merge/release automation words."
+desired_state: "The listed words are refused while no claim permits them; a case or homepage-check fixture holds one of them."
+scope:
+  - "site/data/homepage.toml"
+  - "scripts/ci/homepage-check"
+non_scope:
+  - "Words in docs other than the copy files the check reads"
+serves:
+  - "a-visitor-understands-and-checks-majordomus#the-copy-says-only-what-is-proved"
+acceptance_criteria:
+  - "homepage-check fails when marketing.toml uses one of the new words"
+  - "The current copy passes"
+validation:
+  - "scripts/ci/homepage-check"
+evidence_required:
+  - "promise_words_refused"
+created_at: 2026-10-18
+updated_at: 2026-10-18

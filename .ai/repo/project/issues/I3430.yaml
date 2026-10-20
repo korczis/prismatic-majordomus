@@ -1,0 +1,40 @@
+id: I3430
+milestone: a-prompt-reaches-the-work-it-serves
+title: "The IDD standing panel and the Cockpit intent page show, under each criterion, the knowledge that bears on it, each with how it is known"
+slug: the-intent-shows-what-it-knows
+priority: p1
+profile: implementation
+objective: "Extend the standing panel I2789 landed on /ui/idd (apps/majordomus-cli/src/ui/idd.rs) instead of adding a screen. Under each criterion it already lists with its evidence state and serving issues, list the knowledge records that entity.affected reaches from those issues' scope paths and from the issues themselves (I3407, I3412), each with the epistemic class entity.show answers (I3427). Render the same rows on the Cockpit intent page (cockpit/intents.rs), each linked to its object route. The panel re-reads on the frame I3431 emits. No new route, navigation area or dashboard."
+why: "The owner's 2026-10-19 Cognitive Fabric pack asks for a live view of intents, knowledge and evidence inside the existing Cockpit navigation (campaigns/prismatic-way-cognitive-fabric-prompt-pack/prompts/05_SURFACES.md). prompts/00_MASTER.md and the pasted design end the first vertical slice at evidence shown in the Cockpit."
+current_state: "I2789 is landed on master. The /ui/idd standing panel shows each unmet criterion with its evidence state, the command that reproduces it and the serving issues (I2789.yaml objective; apps/majordomus-cli/src/ui/idd.rs). ui/intent.rs:1-7 and :95-156 render each criterion with its evidence from intents.list and plan.issues. cockpit/intents.rs reads intent_realization (apps/majordomus-cli/src/cockpit/intents.rs:1-8). /ui/knowledge reads knowledge_base.status and candidates with no intent link (apps/majordomus-cli/src/ui/knowledge.rs:1-6,24-25)."
+desired_state: "A reader of one intent sees, per criterion, what proves it, what is known about it and how that is known. A knowledge record that names a file or issue serving the criterion appears with no edit outside its own file."
+scope:
+  - "apps/majordomus-cli/src/ui/idd.rs"
+  - "apps/majordomus-cli/src/cockpit/intents.rs"
+  - "docs/MAJORDOMUS_UI.md"
+non_scope:
+  - "Promoting or rejecting knowledge from the screen"
+  - "A new knowledge reference prefix for intents"
+  - "A new route or navigation area"
+  - "Prompt matches (I3409, on the roadmap inspector only)"
+depends_on:
+  - "I3427"
+  - "I3412"
+  - "I3431"
+serves:
+  - "a-change-reconciles-what-it-affects#the-intent-shows-what-it-knows"
+acceptance_criteria:
+  - "A fixture knowledge record citing a file in the scope of an issue that serves criterion C is listed under C with its class, on /ui/idd and on the Cockpit intent page"
+  - "Removing that record removes it from both, with no other edit"
+  - "Every link the panel draws answers 200 under the ui_links walk"
+  - "scripts/ui audit finds nothing on /ui/idd at every declared width"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::idd"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test ui_links"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test cockpit"
+  - "scripts/ui audit"
+  - "majordomus plan validate"
+evidence_required:
+  - "ui_idd_standing_lists_knowledge"
+created_at: 2026-10-19
+updated_at: 2026-10-19

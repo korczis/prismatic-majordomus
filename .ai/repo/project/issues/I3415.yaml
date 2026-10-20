@@ -1,0 +1,45 @@
+id: I3415
+milestone: knowledge-is-reconciled-before-it-is-reviewed
+title: "knowledge promote refuses evidence that names no reference existing in this checkout, and knowledge.promoted records the references it stood on"
+slug: promotion-cites-resolvable-evidence
+priority: p1
+profile: implementation
+objective: "Require the promote evidence on stdin to contain at least one typed reference (file:, test:, commit:, issue:, claim:, knowledge:, rule: or adr:) that resolves through the existing resolver (mj_knowledge_resolve_refs, lib/knowledge.sh:1832). Otherwise refuse with exit 10 and write nothing. Add the resolved references to the knowledge.promoted ledger line as an evidence array declared in share/events.yaml. Update the documented examples and the fixtures that promote with prose. A reference that resolves exists; it is not proof, and the promoted record reads as decided."
+why: "The owner's 2026-10-19 Cognitive Fabric pack rules out promotion on the ground that models agree (campaigns/prismatic-way-cognitive-fabric-prompt-pack/prompts/03_KNOWLEDGE.md). verification/ACCEPTANCE.md has a row on absent evidence and a force-promote negative fixture, and contracts/ARCHITECTURE.md asks to verify before promoting."
+current_state: "lib/knowledge.sh:1586-1591 accepts any non-blank stdin without a transcript marker, and the knowledge.promoted line at :1616 carries id and path only. Case 709:60 promotes with free prose, and case 3004:77 with prose naming a case. docs/CLI.md:1560 documents a prose example, projected into site/content/docs/cli-specification.md and site/data/generated/commands.json."
+desired_state: "A promoted record always stands on at least one reference that existed when it was promoted, and the ledger says which."
+scope:
+  - "lib/knowledge.sh"
+  - "test/cases/709_knowledge_promotion_is_an_act.sh"
+  - "test/cases/3004_evolve_is_a_procedure_of_existing_commands.sh"
+  - "docs/CLI.md"
+  - "site/content/docs/cli-specification.md"
+  - "site/data/generated/commands.json"
+  - "docs/KNOWLEDGE.md"
+  - "site/content/docs/knowledge.md"
+  - "docs/claims/knowledge-promotion-is-an-act.md"
+  - "site/content/guarantees/knowledge-promotion-is-an-act.md"
+  - ".ai/repo/skills/evolve/SKILL.md"
+  - "share/events.yaml"
+non_scope:
+  - "Deciding whether an agent may promote (an owner question)"
+  - "Judging whether the evidence proves the statement"
+  - "Bulk promotion"
+depends_on:
+  - "I3414"
+serves:
+  - "a-change-reconciles-what-it-affects#promotion-cites-resolvable-evidence"
+acceptance_criteria:
+  - "Prose with no typed reference is refused with exit 10, and the candidate stays unchanged"
+  - "A typed reference that does not resolve is refused with exit 10 and is named in the message"
+  - "Evidence citing a tracked test path promotes, and knowledge.promoted carries that reference in the declared evidence array"
+  - "knowledge check passes on the promoted record in a fresh clone"
+  - "Every documented example promotes with a resolvable reference, and the projected pages follow from scripts/derive"
+validation:
+  - "bash test/run.sh 709_knowledge_promotion_is_an_act 3004_evolve_is_a_procedure_of_existing_commands 707_knowledge_check_refuses_malformed_records"
+  - "majordomus knowledge check"
+  - "majordomus plan validate"
+evidence_required:
+  - "case_promotion_cites_resolvable_evidence"
+created_at: 2026-10-19
+updated_at: 2026-10-19
