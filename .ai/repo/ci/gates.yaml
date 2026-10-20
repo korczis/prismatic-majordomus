@@ -591,6 +591,15 @@ gates:
     runs: SITE_PROBE_JOBS=4 SITE_PROBE_SHARD=K/6 scripts/site-probe, then scripts/site-probe --verify-report
     summary: every route at three widths in a real browser, split in six shards that together are the sweep, the menu, the dropdown, the theme toggle, the diagrams
 
+  # Every link of every page, in every language the site declares, followed in Chromium with the
+  # page's scripts running and answered from the build itself (ADR 0218): each lands on a built
+  # file, stays in its copy's language, and the switch and the alternates lead to every copy.
+  - id: site-languages
+    job: site
+    requires: [site-build]
+    runs: node scripts/lib/site-i18n-probe.mjs site/public "$(sed -n 's/^base_url = "\(.*\)"/\1/p' site/config.toml)" --jobs 4
+    summary: every link of every page in every language lands, stays in its language, and the switch and the alternates lead to every copy
+
   # The crate's Rust API reference, judged as the published surface it is (ADR 0086): the pages
   # rustdoc wrote for the one invocation the rust-check gate proves warning-free, handed off by
   # that same step into target/web/rustdoc — so it `requires` rust-check, whose --ci run in this
@@ -1092,8 +1101,8 @@ classes:
 
   # the site: templates, assets, styles, scripts, its build dependencies and its scripts
   - id: site
-    paths: [site/**, assets/**, package.json, package-lock.json, .nojekyll, scripts/site-build, scripts/site-check, scripts/site-basepath-check, scripts/site-probe, scripts/site-serve, scripts/ui, scripts/lib/ui-*.mjs, scripts/interaction-probe, scripts/lib/interactions.mjs, scripts/lib/interaction-specs/**, scripts/lib/browser.mjs, scripts/lib/project-links.awk]
-    gates: [shell-suite, site-basepath, site-build, site-probe, ui-audit, order-check, design, nav-check, interaction-probe, entity-check]
+    paths: [site/**, assets/**, package.json, package-lock.json, .nojekyll, scripts/site-build, scripts/site-check, scripts/site-basepath-check, scripts/site-probe, scripts/site-serve, scripts/site-translate, scripts/lib/site-i18n*.mjs, scripts/ui, scripts/lib/ui-*.mjs, scripts/interaction-probe, scripts/lib/interactions.mjs, scripts/lib/interaction-specs/**, scripts/lib/browser.mjs, scripts/lib/project-links.awk]
+    gates: [shell-suite, site-basepath, site-build, site-probe, site-languages, ui-audit, order-check, design, nav-check, interaction-probe, entity-check]
 
   # the release pipeline's own scripts: they pack, verify and record what a tag publishes,
   # and they ask the executable for every name they use, so the crate's registry checks and

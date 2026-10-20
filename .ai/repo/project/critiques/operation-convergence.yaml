@@ -1,0 +1,80 @@
+intent: operation-convergence
+reviewed_at: 707a04c7ce8
+reviewed_by: "claude-code subagent (read-only, fresh context, Plan type, same model family as the author) dispatched by session 82f2734c over the staged records of branch docs/the-chatgpt-project-is-promoted and the ChatGPT-conversation sources they were promoted from; resolved by a second fresh subagent acting as the plan author. Read only: nothing was run. Disposition: Accept with required changes: 5 of 9 findings are blocking. Three (the-criterion-proves-itself, criterion-wider-than-its-only-issue, i3276-reads-records-that-do-not-exist) are planned on I3276, and two (the-alpha-has-no-criterion, alpha-contracts-asserted-but-uncarried) stay open. Those two need the intent re-promoted after 71b/0.30.0 lands I2829 and I2812, plus an owner or release-seat decision on uninstall against ADR 0175. Until then, work on the intent stays refused."
+findings:
+  - id: the-alpha-has-no-criterion
+    class: missed_requirement
+    subject: "operation-convergence"
+    finding: "The intent is titled after the alpha, but its only satisfaction entry is the post-alpha measurement. Every alpha condition (green CI on the tag commit, pre-release isolation, install into a foreign repository and uninstall, refusal at finish, IDD only when case 3220 passes, compute labelled experimental) appears only as invariant prose with the note '(carried by work outside this intent's milestones)'. No carrier is named, and intent validate does not judge invariants. The milestone copies all seven as acceptance_criteria but holds one issue, I3276, which serves only AC 7. So the milestone will read DONE when I3276 is done, with ACs 1-6 never checked, and its own desired_state ('Every criterion of the intent is carried by an issue here') is false when it lands. The carriers exist but are not linked. Each one is on a branch, not on master 707a04c: I2829 with cases 3222-3225 (fix/an-alpha-is-published-as-a-prerelease), I2812 with case 3220, case 1024 for the foreign repository, I3213 for the composed fresh-clone case and I3208 for readiness (staged under finished-work-reaches-a-verified-release). Fix: make each alpha condition a criterion with test/claim evidence that names its carrier, or rename the intent to the measurement and record the alpha conditions as a verdict on the tag commit."
+    blocking: true
+    resolution:
+      state: open
+      because: "Both fixes change the intent record itself (its criteria, or the title taken from the owner's c286#23), and the additive issue amendments this resolution can make cannot express that. The carriers cannot be named yet either. I2829 (9f8baafeea4) and I2812 (627eae88290) have no issue record on this branch, and cases 3220 and 3222-3225 are not on master, so a test criterion naming them would read unresolved. The intent needs to be re-promoted with one criterion per alpha condition once the 0.30.0/71b top lands those branches. Whether it stays the alpha gate or becomes the measurement is for the release seat (9c) and the owner to decide."
+  - id: the-criterion-proves-itself
+    class: unproven_assumption
+    subject: "operation-convergence#the-method-is-measured-after-the-alpha"
+    finding: "The criterion has evidence: command, ref 'majordomus intent explain operation-convergence'. On master, intent.rs:1135-1139 maps every command criterion to NotDerivable, so it can never be met. After I3255 (on which I3276 depends) it is met by 'a passing receipt of exactly its ref'. But commands/intent.rs:106-109 returns Ok(0) from intent explain unconditionally, so one run of explain would make the criterion current and the intent satisfied with nothing measured. Either way no test can prove the criterion. The ref should be test_intent_to_verified_done_is_measured (evidence: test) and/or the cost-per-outcome / token-savings-measured claims in docs/CLAIMS.yaml. The same self-referential pattern appears in other imported intents (e.g. finished-work-reaches-a-verified-release), so the promotion step that produced it needs fixing too."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3276
+      because: "I3276 realises this criterion, so it also takes the intent record into scope and re-binds the criterion to evidence: test, ref apps/majordomus-cli/tests/economics.rs (TestId::of accepts that path as crate:economics), plus the cost-per-outcome claim. An explain receipt can then never satisfy it. The criterion is not rebound before I3276 lands, because the economics crate's existing tests would then satisfy it with nothing measured; until then it stays a command placeholder whose text names its planned test, and I3255 now refuses to count a criterion's own 'majordomus intent explain <intent>' as its proof, so an explain run cannot satisfy it in the meantime. The other imported intents are judged by their own critiques. The promotion step that wrote the self-referential ref belongs to the workflow script, not the repository, so it is out of I3276's scope (non_scope_add)."
+  - id: criterion-wider-than-its-only-issue
+    class: insufficient_work
+    subject: "operation-convergence#the-method-is-measured-after-the-alpha"
+    finding: "The criterion demands four metrics (time from intent to verified satisfaction, governance time, tokens, rework) on matched tasks with and without Majordomus, published only past ADR 0082's rule. I3276 derives only elapsed time, interventions and replans, and its desired_state defers the with/without comparison to ADR 0082's matched runs. No issue carries that comparison. 'Governance time' and 'rework' are defined nowhere: neither ADR 0082 nor apps/majordomus-cli/src/economics/ names them. The criterion cites 'planned proof: milestone cost-per-accepted-outcome', but the intent's milestones list omits that milestone. All of I0401-I0404 read BLOCKED (milestone depends_on execution-telemetry). I3276 cites I0403 for 'thin data says thin' but does not depend on it. As planned, the criterion cannot become true."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3276
+      because: "I3276 now depends on I0403 (thin denominators) and on I3133, the staged economics benchmark that measures with and without the finish contract and supplies the matched comparison. Its new criteria define governance time and rework in docs/ECONOMICS.md by the records each is derived from, read not_measured where no source exists, take tokens from economics/usage.rs, and add cost-per-accepted-outcome to the intent's milestones. Once its dependencies land, the criterion can become true. That this waits on execution-telemetry through I0403 is the honest post-alpha state."
+  - id: i3276-reads-records-that-do-not-exist
+    class: unproven_assumption
+    subject: "I3276"
+    finding: "The objective assumes data the records do not hold. (1) 'proposed_at (record)': the intent schema has only created_at, a date string (the staged records hold '2026-10-18'), so elapsed time is day-granular at best. (2) 'first satisfied verdict commit': per the intent schema description, 'No status is stored: ... satisfaction from the recorded evidence', so finding it means replaying the derivation over git history against evidence-ledger state per commit, and the issue names no source for that. (3) 'Replans' and 'owner-acknowledged refusals, manual overrides, exemptions' name no record or ledger to read them from. The AC 'An intent satisfied after two replans reports both' cannot be tested until a replan is defined as a recorded event. Name each input's source, or add a prior issue that records it."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3276
+      because: "The amendment names a source for every input. proposed_at is the commit that first added the intent record, with created_at shown only as the declared date. The first satisfied commit comes from evidence-ledger receipts: the earliest commit at which every criterion reads current, and unknown, not zero, when a receipt carries no commit. A replan is a git-derived event: a change to the intent's criteria or milestones, or to the set of issues serving it. Each intervention kind names its record or reads not_recorded, never 0. The two-replans criterion can then be tested."
+  - id: alpha-contracts-asserted-but-uncarried
+    class: missed_requirement
+    subject: "operation-convergence"
+    finding: "Two of the five contracts in the statement, from the owner-relayed plan c286#23, have no invariant, criterion or issue at all, not even 'carried outside': 'an AI client attached to the supervisory layer' (MCP resilience, #1312) and 'evidence and project state that agree' (evidence ledger, #1347). The uninstall invariant is contradicted by the current state. The only carrier, I1111 'Uninstall gives back exactly what was taken', reads BLOCKED (wave 5, two-folder-integration). share/install/INSTALL.md.in:147-157 is a manual rm. ADR 0175 on fix/the-alpha-says-what-it-can-do, the alpha's own declaration, says 'there is no tested uninstall path'. As written, the intent claims the alpha carries a contract its release declaration denies."
+    blocking: true
+    resolution:
+      state: open
+      because: "The statement is the owner's relayed word (c286#23), and the alpha's own declaration, ADR 0175 on fix/the-alpha-says-what-it-can-do, denies one of its contracts. There are two ways out, both owner/release-seat (9c) decisions: drop the uninstall clause from the statement, or make the alpha wait on I1111 (p0, BLOCKED in two-folder-integration). The two contracts with no carrier (MCP resilience #1312, evidence ledger #1347) are pull requests with no issue record in this bundle, so they cannot be linked by an additive issue amendment. They should become criteria of the re-promoted intent named in the-alpha-has-no-criterion."
+  - id: compute-label-has-no-carrier
+    class: surface_missing
+    subject: "operation-convergence"
+    finding: "The invariant 'every public page that mentions browser compute labels it experimental' has no issue and no check. The /ui/compute screen on feature/a-browser-computes-on-the-page (PR #1345, queued for batch 71b) opens with apps/majordomus-cli/src/ui/compute.rs:73-74, 'Whether this browser computes what the server computes.', and labels nothing experimental. The generated site page site/content/plan/browser-compute.md on feature/a-browser-computes-for-the-mesh is titled 'A browser computes for the project'. An issue is needed that labels /ui/compute, its published snapshot and the site/docs pages, plus a ui-audit or claim-proof-check rule that refuses an unlabelled mention and any 'visitor contributes to the mesh' wording."
+    blocking: false
+    resolution:
+      state: open
+      because: "No issue in this bundle touches browser compute, and the surfaces it names exist only on peer p4's branches (I2788, PR #1345, queued for 71b). The label belongs in I2788's own head, or in a follow-up issue in its milestone, which p4 or the landing seat (a3) has to take before 71b lands. Adding it to I3276 would widen an unrelated economics issue."
+  - id: release-notes-cannot-be-conditional
+    class: delivery_verification
+    subject: "operation-convergence"
+    finding: "The invariant 'release notes name the IDD workspace only when case 3220 passed on the tagged commit' depends on work deferred past the alpha. I2826 (release body = the tool's changelog) says 'Deferred past the alpha by the release seat', and .github/workflows/release.yml still uses gh release create --generate-notes. The alpha's notes are therefore GitHub's merged-PR list, which names the IDD PRs (#1341/#1342/#1348) whether or not 3220 passed. Nothing gates the notes on 3220. A recorded check of the published v1.0.0-alpha.1 body against case 3220's result on the tag commit is needed, or the invariant has to be weakened."
+    blocking: false
+    resolution:
+      state: open
+      because: "The release seat (9c) deferred I2826 past the alpha. Gating the notes on case 3220, or weakening the invariant, is a choice about the release workflow that 9c owns. This bundle holds no release issue that an amendment could make carry it."
+  - id: lands-after-the-alpha-it-governs
+    class: delivery_verification
+    subject: "operation-convergence"
+    finding: "These records sit on a branch the board marks 'records only, post-alpha' (p12, docs/the-chatgpt-project-is-promoted), and the alpha was planned for 2026-10-19. The pre-alpha invariants (no new front, at most three streams, backlog classified by ancestry, no check rewritten to green) cannot gate anything once these records land, and no issue checks after the fact that the actual tag satisfied them. Add a one-time verification against the tag commit: CI verdict, I3208 readiness, and cases 3222-3225/1024/3220 on that commit. Also, the replaced raw paste .ai/repo/project/intents/co-te-doporu-uji-operation-convergence.yaml is still untracked in the primary checkout (git status '??'), and no issue or step carries its deletion. Until it is deleted, the local index serves two intents for one decision."
+    blocking: false
+    resolution:
+      state: open
+      because: "A one-time verdict on the tag commit needs the tag to exist and I3208 (readiness) to land. It belongs to the release seat (9c), and it fits with re-promoting the intent's alpha criteria (the-alpha-has-no-criterion). The raw paste is an untracked file in the primary checkout, so no issue or tracked change can carry its deletion. The session that lands these records deletes it locally, as the intent's own 'replaces' field already says."
+  - id: i3276-surface-and-proof-out-of-scope
+    class: surface_missing
+    subject: "I3276"
+    finding: "desired_state promises 'a read capability and a /ui economics row', but the scope lacks apps/majordomus-cli/src/ui/economics.rs, the capability registration under capability/builtin, the published snapshot and docs/MAJORDOMUS_UI.md. Nothing covers /cockpit or the site. validation lists only plan validate and intent validate, not 'cargo test --test economics', which is the suite that would run evidence_required test_intent_to_verified_done_is_measured. The bare-directory scope 'apps/majordomus-cli/src/economics' is the shape I2945 will refuse."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3276
+      because: "The amendment adds the existing surfaces to scope. ui/economics.rs does not exist; economics renders through ui/observatory.rs (Source economics.runs) and its published script scripts/lib/ui-observatory.mjs. Also added: capability/builtin/economics.rs, docs/MAJORDOMUS_UI.md, docs/CLAIMS.yaml and the specific economics module files. A new criterion requires cargo test --test economics to run the required test, because validation itself cannot be appended. The bare directory entry stays, since amendments are additive, but the named files now cover the work."

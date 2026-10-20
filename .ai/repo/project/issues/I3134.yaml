@@ -1,0 +1,33 @@
+id: I3134
+milestone: a-visitor-understands-and-checks-majordomus
+title: "The product sentence is declared once, and the homepage, README, page titles, Open Graph and launch kit read it"
+slug: the-product-sentence-is-declared-once
+priority: p2
+profile: implementation
+objective: "Make the owner's chosen product sentence a field of the declared site copy, have scripts/generate-site-data read it instead of grepping README.md for '**A lightweight', render README's bold line and lead from it (or fail homepage-check when they differ), and close docs/HARDCODING_LEDGER.yaml row product-sentence-has-two-wordings."
+why: "The owner's standing order of 2026-10-13 is that the landing page reflects and derives the positioning. Today the sentence a visitor reads depends on the door: the homepage hero (edited 2026-10-16, I2745) and the README's 'A lightweight supervisory control layer' disagree, and every page title follows the README by a grep. Proposed in ADR 0210 (The sentence that says what Majordomus is has one declaration, and every surface reads it) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c250#2, chatgpt-majordomus:c250#4, chatgpt-majordomus:c156#4, chatgpt-majordomus:c001#26, chatgpt-majordomus:c038#0."
+current_state: "scripts/generate-site-data:317 TAGLINE=grep '^\\*\\*A lightweight' README.md; site/templates/base.html:27-51 use project.tagline for title, description and og:description; site/data/marketing.toml [hero] title/subtitle/lead; ledger row status open, recommended MOVE_TO_CANONICAL_DATA."
+desired_state: "One declaration; every reader derived; homepage-check holds README and titles to it."
+scope:
+  - "site/data/marketing.toml"
+  - "scripts/generate-site-data"
+  - "scripts/ci/homepage-check"
+  - "README.md"
+  - "docs/HARDCODING_LEDGER.yaml"
+non_scope:
+  - "Choosing the wording; that is the owner's"
+  - "Rewriting the rest of the README"
+serves:
+  - "a-visitor-understands-and-checks-majordomus#the-copy-says-only-what-is-proved"
+acceptance_criteria:
+  - "Changing the declared sentence changes the homepage, README bold line, every page title and og:description after one regeneration"
+  - "homepage-check fails when README states the sentence in other words"
+  - "The ledger row is closed with this issue's id"
+validation:
+  - "scripts/generate-site-data --check"
+  - "scripts/ci/homepage-check"
+  - "scripts/site-check"
+evidence_required:
+  - "site_reads_one_sentence"
+created_at: 2026-10-18
+updated_at: 2026-10-18

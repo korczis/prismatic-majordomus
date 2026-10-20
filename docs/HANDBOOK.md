@@ -58,7 +58,7 @@ and the decision is
 
 This repository's working artifacts are English. An edition is content addressed to a reader,
 like a translated page of the site, and
-[`project.english-only`](../.ai/repo/rules/project/english-only.v3.md) admits it under three
+[`project.english-only`](../.ai/repo/rules/project/english-only.v4.md) admits it under three
 conditions: it is `handbook/<language>/`; its `edition.toml` declares that language; and
 `scripts/ci/english-only-allow.txt` declares it as `edition <directory> <language> <why>`. The
 generator beside the editions is not inside one and stays English.

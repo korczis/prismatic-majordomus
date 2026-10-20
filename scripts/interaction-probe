@@ -63,6 +63,10 @@ let specs = await loadSpecs(env.MJ_PROBE_SPECS);
 if (env.MJ_PROBE_SPEC) specs = specs.filter((s) => s.id === env.MJ_PROBE_SPEC);
 const only = env.MJ_PROBE_ONLY ? new Set(env.MJ_PROBE_ONLY.split(/\s+/).filter(Boolean)) : null;
 
+// A language's copy of the site (ADR 0218) is driven page by page like the English build: a control a
+// translation broke is broken on its own page, which no sample of one page per section meets. The walk
+// is split into shards (MJ_PROBE_SHARD, I3602) so that every copy fits the bound, rather than sampled.
+
 // what the markup declares, per page and spec: the live counts must agree with it
 const plan = new Map();
 for (const r of classify(pub, specs, (env.MJ_PROBE_COMPOSED || '').split(/\s+/).filter(Boolean))) {

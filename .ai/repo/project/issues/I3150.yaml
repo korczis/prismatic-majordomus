@@ -1,0 +1,26 @@
+id: I3150
+milestone: entry-proves-what-it-handed
+title: "A handover carries the governance digest it was written under, and resolving it says when governance moved"
+slug: a-handover-pins-its-governance
+priority: p2
+profile: implementation
+objective: "Write the governance digest and manifest into a handover's front matter and have handover --resolve name the inputs that moved, beside the plan_revision drift I2003 reports."
+why: "The fingerprint was proposed for handovers on 2026-09-10; I2003 pins the intent binding only. Proposed in ADR 0181 (An episode records the governance and the briefing it was handed, each by one digest) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c103#2."
+current_state: "lib/handover.sh prints plan_revision drift (line 129); no governance pin."
+desired_state: "Resume names governance drift with the rules that moved."
+scope:
+  - "lib/handover.sh"
+  - "apps/majordomus-cli/src/continuity"
+depends_on:
+  - "I3147"
+  - "I2003"
+serves:
+  - "entry-proves-what-it-handed#handover-names-governance-drift"
+acceptance_criteria:
+  - "A handover written before a rule edit reports governance moved on resolve"
+validation:
+  - "bash test/run.sh 05_handover"
+evidence_required:
+  - "case_handover_reports_governance_drift"
+created_at: 2026-10-18
+updated_at: 2026-10-18

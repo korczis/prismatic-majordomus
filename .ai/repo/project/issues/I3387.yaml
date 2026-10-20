@@ -1,0 +1,32 @@
+id: I3387
+milestone: the-mesh-is-measured-against-one-agent
+title: "Batch tasks compose existing corpus tasks into sets of issues several workers can share, with their dependencies and the union of their hidden tests"
+slug: batch-tasks-compose-corpus-tasks
+priority: p2
+profile: implementation
+objective: "Add a batch kind to the task declaration: a batch names member task ids, their depends_on, and judges acceptance by the union of the members' hidden tests on the integrated tree. Declare four batches from existing tasks on the ledgerlite fixture (batch-invoicing, batch-reporting, batch-storage, batch-currency), choosing members that touch shared modules so conflicts are possible, and prove each with economics references."
+why: "T4 of the owner's report of 2026-10-19 compares coordinated workers with one agent on the same work; that work must be divisible. Composing existing proven tasks keeps the batches comparable with the T2 corpus and needs no new fixture."
+current_state: "model.rs:527 tasks declare complexity and sessions; no task names other tasks."
+desired_state: "Four batches load and economics references proves each fails on the start and passes with all members' references applied."
+scope:
+  - "apps/majordomus-cli/src/economics/model.rs"
+  - "apps/majordomus-cli/tests/economics.rs"
+  - ".ai/repo/benchmarks/economics/tasks"
+non_scope:
+  - "New member tasks"
+  - "Changing an existing task"
+depends_on:
+  - "I3367"
+serves:
+  - "the-product-proves-it-pays#a-mesh-arm-runs-coordinated-workers"
+acceptance_criteria:
+  - "A batch naming an unknown member or a cyclic depends_on is refused"
+  - "economics references proves each batch"
+  - "Each batch has at least two members that touch one module"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test economics"
+  - "majordomus economics references --work-dir \"$(mktemp -d)\""
+evidence_required:
+  - "references_batches"
+created_at: 2026-10-19
+updated_at: 2026-10-19
