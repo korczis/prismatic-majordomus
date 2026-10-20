@@ -183,12 +183,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 </div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="min-w-0">
-  <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--ready relative" data-status="ready"><span aria-hidden="true">○</span>READY</span>
+  <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--done relative" data-status="done"><span aria-hidden="true">✓</span>DONE</span>
 <span class="text-sm text-body">wave 0 · p0 · implementation profile · parallel safe</span></p>
   <p class="mt-3 text-sm text-body">Part of <a href="https://majordomus.dev/plan/truthful-plan-surfaces/" class="text-fg-brand underline">truthful-plan-surfaces — The plan&#39;s surfaces are inferred from delivery, and nothing they show is typed beside the repository</a>.</p>
-  <div class="mt-6 rounded-base border border-default bg-neutral-primary-soft p-4">
-    <p class="text-sm text-body">Ready. Every dependency is done, so <code class="font-mono text-heading">majordomus plan start I2850</code> will be accepted.</p>
-  </div>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Objective</h2>
   <p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">A UI page the snapshot writes carries every slow panel the screen defers to its script, already read, in the place the script would have put it: the published /ui/prs shows the drain, the Dashboard its pull requests and Deployments its delivery. The PR Drain&#39;s counts are the integration queue&#39;s own, one card per lane the queue counted, each a link to that lane.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Why</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Found by the landing seat on 2026-10-18 at master 707a04c7ce8 (v0.29.0), from a screenshot of the published https://majordomus.dev/ui/prs/ at 1440 px. The screen showed no pull request at all, only the placeholder line &#39;Open the drain on its own page&#39;, because the snapshot&#39;s script fetches no panel. Its hero counted plan issues from plan.status (ready 86, blocked 159), not pull requests. The drain&#39;s own cards were three lanes typed in the screen (&#39;repair&#39;, &#39;waiting&#39;, &#39;held&#39;), so a lane the queue adds was never counted.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Current state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">The snapshot writes each screen as its first paint: a slow panel is a placeholder with a link. The PR Drain&#39;s hero reads plan.status; its tally strip names three lanes literally.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Desired state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">The snapshot asks every page with the X-Majordomus-Snapshot header. The UI then replaces each data-panel-src placeholder with the panel&#39;s own view, through one dispatcher the server also routes by. The live UI still paints first and defers. The PR Drain&#39;s hero reads no plan source, and its strip has an Open card, one card per lane in /queue/tallies/by_lane linked to ?lane=&lt;word&gt;, and the merge throughput.</p>
@@ -214,17 +211,22 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 <ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li class="font-mono text-heading break-words">snapshot_reads_every_slow_panel_test</li><li class="font-mono text-heading break-words">counts_are_the_queues_lanes_test</li></ul>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Evidence</h2>
-  <p class="mt-2 text-sm text-body">None recorded. Every token above needs a command or an artifact behind it before this issue can be completed; narrative is refused.</p>
+  <div class="mt-4 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[34rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-soft text-xs uppercase tracking-wide text-body-subtle"><tr><th scope="col" class="px-4 py-2">covers</th><th scope="col" class="px-4 py-2">type</th><th scope="col" class="px-4 py-2">command</th><th scope="col" class="px-4 py-2">result</th><th scope="col" class="px-4 py-2">at commit</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top"><td class="px-4 py-2 font-mono text-xs text-heading">snapshot_reads_every_slow_panel_test</td><td class="px-4 py-2 font-mono text-xs text-body">ci</td><td class="px-4 py-2 font-mono text-xs text-body break-words">validate run 39438896504 at master 9a5a9b77520: rust (1-3) jobs 118683336143 118683336062 118683336401 run cargo test, incl. ui::a_snapshot_reads_every_slow_panel_into_its_screen (82ace9a104d)</td><td class="px-4 py-2 text-body">success (the run&#39;s only red job is pages, which runs no test)</td><td class="px-4 py-2 font-mono text-xs text-body-subtle">a81b1e3</td></tr><tr class="border-t border-default align-top"><td class="px-4 py-2 font-mono text-xs text-heading">counts_are_the_queues_lanes_test</td><td class="px-4 py-2 font-mono text-xs text-body">ci</td><td class="px-4 py-2 font-mono text-xs text-body break-words">validate run 39438896504 at master 9a5a9b77520: rust (1-3) jobs 118683336143 118683336062 118683336401 run cargo test, incl. ui::prs::the_counts_are_the_queues_own_lanes_and_never_the_plans_issues (38f2e9b7f21)</td><td class="px-4 py-2 text-body">success (the run&#39;s only red job is pages, which runs no test)</td><td class="px-4 py-2 font-mono text-xs text-body-subtle">a81b1e3</td></tr></tbody>
+    </table>
+  </div>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Timeline</h2>
   <dl class="mt-3 grid max-w-3xl grid-cols-1 gap-3 sm:grid-cols-3">
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">started</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">started</dt><dd class="mt-1 font-mono text-sm text-heading break-words">2026-10-20T16:15:52Z</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">verified</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">completed</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">completed</dt><dd class="mt-1 font-mono text-sm text-heading break-words">2026-10-20T16:29:16Z</dd></div>
   </dl>
   <p class="mt-3 max-w-3xl text-sm text-body">Those three fields, the evidence above and the state of the dependencies are all the status is made of. There is no status field to disagree with them.</p>
 
-  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/91c0b5d5658c0bcddcd724582068bfa1f51074d1/.ai/repo/project/issues/I2850.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/issues/I2850.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show I2850</code>.</p>
+  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/573df967bb5bc30cf23e542b8d0dff03d3bf5ee0/.ai/repo/project/issues/I2850.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/issues/I2850.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show I2850</code>.</p>
 </div>
 
 </div>
@@ -274,9 +276,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/91c0b5d5658c0bcddcd724582068bfa1f51074d1/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/91c0b5d5658c0bcddcd724582068bfa1f51074d1/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/91c0b5d5658c0bcddcd724582068bfa1f51074d1/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/573df967bb5bc30cf23e542b8d0dff03d3bf5ee0/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/573df967bb5bc30cf23e542b8d0dff03d3bf5ee0/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/573df967bb5bc30cf23e542b8d0dff03d3bf5ee0/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -284,7 +286,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v1.0.0-alpha.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/91c0b5d5658c0bcddcd724582068bfa1f51074d1" class="font-mono underline">91c0b5d</a> · inputs <span class="font-mono">91ba0499a8f2</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v1.0.0-alpha.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/573df967bb5bc30cf23e542b8d0dff03d3bf5ee0" class="font-mono underline">573df96</a> · inputs <span class="font-mono">3632352f278d</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

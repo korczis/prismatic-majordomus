@@ -2,17 +2,17 @@
  "schema": 1,
  "generated_by": "scripts/lib/docs-index.mjs",
  "build": {
-  "commit": "91c0b5d5658c0bcddcd724582068bfa1f51074d1",
+  "commit": "573df967bb5bc30cf23e542b8d0dff03d3bf5ee0",
   "source_version": "1.0.0-alpha.1",
-  "registry_fingerprint": "e9ec56f7ab16bbef8bfa492164289f99f59a1674c8eac92f270119ee244308fa"
+  "registry_fingerprint": "ee877cf301e37d16e7afe9ec59c0aecb7ee04a0635378d09a60e77f775f3ea2f"
  },
  "counts": {
-  "pages": 5341,
-  "capabilities": 3158,
+  "pages": 5345,
+  "capabilities": 3160,
   "cli_commands": 111,
   "http_routes": 201,
   "mcp_tools": 196,
-  "mcp_resources": 3007,
+  "mcp_resources": 3009,
   "modules": 92
  },
  "kinds": [
@@ -158,7 +158,7 @@
    "route": "/plan/",
    "title": null,
    "reason": null,
-   "count": 799
+   "count": 801
   },
   {
    "kind": "knowledge",
@@ -10917,6 +10917,12 @@
    "section": "Prismatic Majordomus — odlehčená řídicí dozorová vrstva pro práci s podporou AI"
   },
   {
+   "route": "/cs/plan/i3009/",
+   "title": "I3009 — No record's prose and no board announcement holds a template delimiter",
+   "description": "Refuse a template delimiter (a double brace, a brace-percent or a brace-hash) in every prose field of a plan record, at plan validate and in the commit hook, naming the record, the field and the remedy; and refuse one in a board announcement or claim text when it is made, since the continue prompt renders the live board.",
+   "section": "Prismatic Majordomus — odlehčená řídicí dozorová vrstva pro práci s podporou AI"
+  },
+  {
    "route": "/cs/plan/i3010/",
    "title": "I3010 — Manuál mesh říká, že hlídač úprav není zapojen, a jak jej zapojit ručně",
    "description": "docs/MESH.md přestává tvrdit, že je hlídač úprav zapojen v konfiguraci poskytovatele. Říká, že `capture install` nezapisuje žádný záznam PreToolUse, takže `session.edits_require_claim` zatím v Claude Code nic neodmítá; že skript hooku a guard.edit existují; jak jej člověk zapojí ručně (záznam, který soubor nastavení, nová relace); a že jeho zapojení a odmítání nezabrané úpravy jsou práce na generovaném pluginu po alfě.",
@@ -10962,6 +10968,12 @@
    "route": "/cs/plan/i3060/",
    "title": "I3060 — A provider hook declares its timeout, and the session end closes its episode inside the budget",
    "description": "`capture install` writes a per-hook `timeout` for every hook it generates. The values come from one declared table per provider and event, read by both the configuration writer and the end handler. The SessionEnd handler keeps the episode close inside that budget: it skips the optional closing checkpoint and continuation, as typed failures, when running them would leave the close too little of the budget. A configuration that byte-for-byte matches the shape this tool wrote before timeouts existed is rewritten to the new shape. Any other configuration is left as it is, and install names the timeouts it lacks.",
+   "section": "Prismatic Majordomus — odlehčená řídicí dozorová vrstva pro práci s podporou AI"
+  },
+  {
+   "route": "/cs/plan/i3079/",
+   "title": "I3079 — The links of the Deployments table on /ui/delivery meet the target size at every audited width",
+   "description": "Make the declaration's link in the first cell of each row of the Deployments table on /ui/delivery a target that accessibility.target-size accepts at every width scripts/ui audit visits: at least 24 by 24 px, or spaced so that no other target is within that distance. The cell is ui/deployments.rs summary_row. It holds the row's own link (the id and title) and, under it, the declaration's technical view, which view.rs object_if draws as an a.mj-ui-link.mj-ui-mono. The fix belongs in that row, in object or in the stylesheet source share/ui/src/ui.css that scripts/cockpit-assets builds into share/ui/ui.css. It is never an exemption in the audit.",
    "section": "Prismatic Majordomus — odlehčená řídicí dozorová vrstva pro práci s podporou AI"
   },
   {
@@ -24975,6 +24987,12 @@
    "section": "The plan"
   },
   {
+   "route": "/plan/i3009/",
+   "title": "I3009 — No record's prose and no board announcement holds a template delimiter",
+   "description": "Refuse a template delimiter (a double brace, a brace-percent or a brace-hash) in every prose field of a plan record, at plan validate and in the commit hook, naming the record, the field and the remedy; and refuse one in a board announcement or claim text when it is made, since the continue prompt renders the live board.",
+   "section": "The plan"
+  },
+  {
    "route": "/plan/i3010/",
    "title": "I3010 — The mesh manual says the edit guard is not wired, and how to wire it by hand",
    "description": "docs/MESH.md stops saying the edit guard is wired in the provider's configuration. It says that `capture install` writes no PreToolUse entry, so `session.edits_require_claim` refuses nothing in Claude Code yet; that the hook script and guard.edit exist; how a person wires it by hand (the entry, which settings file, a new session); and that wiring it and refusing an unclaimed edit are the generated-plugin work after the alpha.",
@@ -25020,6 +25038,12 @@
    "route": "/plan/i3060/",
    "title": "I3060 — A provider hook declares its timeout, and the session end closes its episode inside the budget",
    "description": "`capture install` writes a per-hook `timeout` for every hook it generates. The values come from one declared table per provider and event, read by both the configuration writer and the end handler. The SessionEnd handler keeps the episode close inside that budget: it skips the optional closing checkpoint and continuation, as typed failures, when running them would leave the close too little of the budget. A configuration that byte-for-byte matches the shape this tool wrote before timeouts existed is rewritten to the new shape. Any other configuration is left as it is, and install names the timeouts it lacks.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i3079/",
+   "title": "I3079 — The links of the Deployments table on /ui/delivery meet the target size at every audited width",
+   "description": "Make the declaration's link in the first cell of each row of the Deployments table on /ui/delivery a target that accessibility.target-size accepts at every width scripts/ui audit visits: at least 24 by 24 px, or spaced so that no other target is within that distance. The cell is ui/deployments.rs summary_row. It holds the row's own link (the id and title) and, under it, the declaration's technical view, which view.rs object_if draws as an a.mj-ui-link.mj-ui-mono. The fix belongs in that row, in object or in the stylesheet source share/ui/src/ui.css that scripts/cockpit-assets builds into share/ui/ui.css. It is never an exemption in the audit.",
    "section": "The plan"
   },
   {
@@ -30470,7 +30494,7 @@
   {
    "route": "/rustdoc/",
    "title": "majordomus-cli 1.0.0-alpha.1 — Rust API reference",
-   "description": "The rustdoc reference of majordomus-cli 1.0.0-alpha.1, built from commit 91c0b5d5658c0bcddcd724582068bfa1f51074d1: the public items of the library and of the executable, and the source they were built from.",
+   "description": "The rustdoc reference of majordomus-cli 1.0.0-alpha.1, built from commit 573df967bb5bc30cf23e542b8d0dff03d3bf5ee0: the public items of the library and of the executable, and the source they were built from.",
    "section": "majordomus-cli 1.0.0-alpha.1 — Rust API reference"
   },
   {
