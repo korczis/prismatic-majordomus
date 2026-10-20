@@ -9,6 +9,48 @@ Current version: **1.0.0-alpha.1**
 
 ## v1.0.0-alpha.1 — 2026-10-20
 
+### Decisions
+
+- **ADR-0218** Every language of the site is derived from the English build and a translation memory _(accepted)_
+- **ADR-0217** A change is reconciled by the modules that own its state: hooks only sense, reconciliation is derived on read and says how each join is known, a private read stays on its machine, and verified is answered only by proof _(proposed)_
+- **ADR-0216** Every live surface follows one channel with named follow streams, and nothing polls where a stream exists _(proposed)_
+- **ADR-0215** A phone is the baseline width of every first-party surface, and the primary flow is accepted there before a surface grows _(proposed)_
+- **ADR-0214** A provider's native extension points carry the contract as generated projections; Majordomus neither embeds nor patches the worker's runtime _(proposed)_
+- **ADR-0213** Usage is observed through each provider's official telemetry into one provider-neutral record, and reported, estimated and billed amounts are never merged _(proposed)_
+- **ADR-0212** A workspace is read in the operator's own signed-in browser or from the vendor's export, never through a launched automation profile or another tool's credential _(proposed)_
+- **ADR-0211** A record promoted from a workspace cites the message it came from by a typed reference that validates in every checkout and resolves only where the store is held _(proposed)_
+- **ADR-0210** The sentence that says what Majordomus is has one declaration, and every surface reads it _(proposed)_
+- **ADR-0209** Prismatic Lumen names the owner's mesh-wide view, and it owns no scheduler, event bus, store or API _(proposed)_
+- **ADR-0208** The product's value is stated as the false dones its finish caught, beside the friction it cost _(proposed)_
+- **ADR-0207** A new mechanism is admitted only with the measured problem it removes _(proposed)_
+- **ADR-0206** Public outreach begins only after a stranger has finished a first task unaided _(proposed)_
+- **ADR-0205** What a runtime can do is a set of separately evidenced facts, and detection never authorises _(proposed)_
+- **ADR-0204** The hub is reached privately over the tailnet first; a public ingress is a deployment target, never an application change _(proposed)_
+- **ADR-0203** GitHub Pages is a signed bootstrap anchor for the mesh, never its signalling channel _(proposed)_
+- **ADR-0202** The mesh routes work to an identity, never an address, and selects among proven transports instead of implementing NAT traversal _(proposed)_
+- **ADR-0201** The persistent runtime is the authority; every operator surface, Lumen included, is a client of it _(proposed)_
+- **ADR-0200** Supervision repairs only what is idempotent, owned and verified, and never restarts blindly _(proposed)_
+- **ADR-0199** A hub is a declared host service; a working checkout's server stays a client's child _(proposed)_
+- **ADR-0198** Delivery is judged by verified outcomes landed per day, with lead time p95 as its control, never by commits, pull requests or sessions _(proposed)_
+- **ADR-0197** The backlog is bounded by a declared bound that every session reads at start, and the bound reports rather than refuses _(proposed)_
+- **ADR-0196** Delivery latency targets are budgets of benchmark policy, measured per phase, and never a correctness gate on runners the repository does not own _(proposed)_
+- **ADR-0195** What accepting an issue unblocks is answered by one counterfactual evaluator over the plan graph _(proposed)_
+- **ADR-0194** An ingested brief is an intake revision, and its requirements are reconciled into the existing plan _(proposed)_
+- **ADR-0193** Conflicting evidence keeps the verdict vocabulary: the criterion reads unknown and cites both sides _(proposed)_
+- **ADR-0192** Replanning is bounded, idempotent and never weakens its intent _(proposed)_
+- **ADR-0191** A plan drafted from an intent is a proposal, checked by the plan's own validators before any record is written _(proposed)_
+- **ADR-0190** Mutation testing is scheduled evidence over declared critical predicates, never a gate on every change _(proposed)_
+- **ADR-0189** JUnit and Cobertura are formats evidence is imported from and exported to; the tracked ledger stays the only store _(proposed)_
+- **ADR-0188** A rule's proof of effect is a recorded refusal of its violation, not the presence of its wiring _(proposed)_
+- **ADR-0187** Tests are selected by the impact of a change, derived from what each case declares it reads, and a change of unknown impact runs every case _(proposed)_
+- **ADR-0186** A pull request's required verdict is the feedback lane, a gate whose inputs did not change is reused as inputs_unchanged, and the proof lane judges the combined top before it lands _(proposed)_
+- **ADR-0185** A derivation is a typed graph of the generators the executable already plans, keyed by the content of what each node reads, and the full derive stays its oracle _(proposed)_
+- **ADR-0184** Every command name is implemented by exactly one executable, and the other only delegates _(proposed)_
+- **ADR-0183** Evolution is scheduled at the episode boundary and carried out by a session; nothing promotes itself _(proposed)_
+- **ADR-0182** A closed session record is judged by what it can attribute, not only by its schema _(proposed)_
+- **ADR-0181** An episode records the governance and the briefing it was handed, each by one digest _(proposed)_
+- **ADR-0180** A prompt pack is a campaign: kept as received, indexed as a kind, and cited by the records it drove _(proposed)_
+
 ### Added
 
 - **site**: the Czech copy translates the segments the merge with master brought (`370fdf4cc`)
@@ -136,6 +178,11 @@ Current version: **1.0.0-alpha.1**
 
 
 ## v0.30.0 — 2026-10-18
+
+### Decisions
+
+- **ADR-0175** v1.0.0-alpha.1 declares what it can do and its limits, and every line of the declaration names its proof _(proposed)_
+- **ADR-0172** A client always gets a server, and a session that is opened starts by joining the cluster _(proposed)_
 
 ### Added
 
@@ -281,6 +328,11 @@ Current version: **1.0.0-alpha.1**
 
 ## v0.29.0 — 2026-10-17
 
+### Decisions
+
+- **ADR-0169** What an adoption leaves behind is measured, not remembered _(proposed)_
+- **ADR-0167** Work moves through seats on the mesh, lands in combined tops, and every checkout is kept current _(proposed)_
+
 ### Added
 
 - **features**: every capability module and every kind is named by a stable feature (`359f8223f`)
@@ -334,6 +386,15 @@ Current version: **1.0.0-alpha.1**
 
 
 ## v0.28.0 — 2026-10-17
+
+### Decisions
+
+- **ADR-0166** The plan's surfaces are inferred from delivery, and nothing the plan shows is typed beside it _(proposed)_
+- **ADR-0165** A skill is derived for every domain of the registry and shown wherever skills are _(accepted)_
+- **ADR-0164** A durable record names the session that wrote it, and relates a task only when the task is that session's _(proposed)_
+- **ADR-0163** A server serves only a share of its own version, with the surfaces it offers _(proposed)_
+- **ADR-0157** A mesh node may offer a shared build cache, peers discover and select it, and compilation never depends on it _(proposed)_
+- **ADR-0124** An uploaded prompt pack is a provenance-tracked input artifact, not a second intent model _(proposed)_
 
 ### Added
 
@@ -457,6 +518,13 @@ Current version: **1.0.0-alpha.1**
 
 
 ## v0.27.0 — 2026-10-16
+
+### Decisions
+
+- **ADR-0161** A mesh node follows the published release, through the one installer, forward only _(proposed)_
+- **ADR-0160** The kiosk draws what the repository proves, from the sources that already answer it, and draws it with p5 only where the build has it _(proposed)_
+- **ADR-0152** A diagram and a chart on the site are one viewer each, over what the build derived: interactive, linkable, and linked by inference _(proposed)_
+- **ADR-0069** A capability may be scripted, and repository automation is scripted capabilities rather than shell _(proposed)_
 
 ### Added
 
