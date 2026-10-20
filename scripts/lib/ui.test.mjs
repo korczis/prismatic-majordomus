@@ -452,7 +452,7 @@ test('the merge of every shard is what a single runner reports, and says it is c
   }
 });
 
-test('the merge refuses a route audited by two shards, and parts planned differently', () => {
+test('the merge refuses a route audited by two shards, a shard without its routes, and parts planned differently', () => {
   const parts = shardDocs(3);
   const twice = [...parts, { ...parts[0], shard: '1/3 again' }];
   assert.throws(() => merge(twice), /was audited by shard 1\/3 and by shard 1\/3 again/);
@@ -460,6 +460,9 @@ test('the merge refuses a route audited by two shards, and parts planned differe
   other[2] = { ...other[2], viewports: [320] };
   assert.throws(() => merge(other), /disagree on viewports/);
   assert.throws(() => merge([]), /no shard documents/);
+  const silent = shardDocs(3);
+  delete silent[1].routes;
+  assert.throws(() => merge(silent), /shard 2\/3 does not list the routes it audited/);
 });
 
 let failed = 0;

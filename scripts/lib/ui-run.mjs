@@ -145,10 +145,13 @@ export function merge(parts, { complete = false } = {}) {
     for (const key of ['source', 'breakpoints', 'viewports', 'surfaces']) {
       if (JSON.stringify(part[key]) !== JSON.stringify(first[key])) throw new Error(`the parts disagree on ${key}: they were not planned alike`);
     }
+    // a part that does not say which routes it audited cannot be checked for overlap, so the
+    // merge refuses it on its own rather than trusting site-probe --verify-report to have run
+    if (!Array.isArray(part.routes)) throw new Error(`shard ${part.shard ?? '(unnamed)'} does not list the routes it audited`);
   }
   const seen = new Map();
   for (const part of parts) {
-    for (const route of part.routes ?? []) {
+    for (const route of part.routes) {
       if (seen.has(route)) throw new Error(`${route} was audited by shard ${seen.get(route)} and by shard ${part.shard}`);
       seen.set(route, part.shard);
     }
