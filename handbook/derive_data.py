@@ -1002,6 +1002,26 @@ def derive_plan(plan):
                           "issues": [[i["id"], i["status"], i["title"]] for i in chain]}}
 
 
+# The keys of an intent the outlook reads. The others (statement, invariants, non_goals, ...)
+# are prose the page never shows, so they are dropped before the subset reader sees the record:
+# a sentence it would refuse there (a backslash in a double-quoted scalar, I3011) cannot stop
+# the figures it does read.
+INTENT_KEYS = ("id", "title", "satisfaction", "milestones")
+
+
+def top_level_keys(text, keys):
+    """`text` with only the blocks of the top-level keys named in `keys`: a top-level key line and
+    every following indented, blank or comment line belong to it."""
+    kept, keep = [], False
+    for line in text.split("\n"):
+        if line and not line.startswith((" ", "#", "-")):
+            m = _YAML_KEY.match(line)
+            keep = bool(m) and m.group(1) in keys
+        if keep:
+            kept.append(line)
+    return "\n".join(kept)
+
+
 def derive_intents(tree, judge, plan):
     """Each declared intent: its criteria and what the committed ledger says of each, judged
     as `intent realization` judges it (crate::intent, IntentEvidenceState): a `test` whose run
@@ -1012,7 +1032,7 @@ def derive_intents(tree, judge, plan):
     status = {m["id"]: m["status"] for m in plan["milestones"]}
     out = []
     for path in tree.under(INTENTS_DIR, ".yaml", direct=True):
-        doc = parse_yaml(tree.text(path), path)
+        doc = parse_yaml(top_level_keys(tree.text(path), INTENT_KEYS), path)
         states = []
         for criterion in doc.get("satisfaction") or []:
             kind, ref = criterion.get("evidence", ""), (criterion.get("ref") or "").strip()
