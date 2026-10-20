@@ -1,0 +1,35 @@
+id: nothing-in-the-mesh-waits-on-something-dead
+title: "Nothing in the mesh waits on something dead, and nothing alive is killed"
+statement: "The runtime knows which work is progressing, legitimately waiting, stalled, failed or orphaned, repairs by itself only what is safe and idempotent, and keeps the host's runtimes known even when no project is open, and work a peer held under a lease that was lost returns instead of waiting on it."
+invariants:
+  - "Liveness is not progress; a missing heartbeat is not a dead worker"
+  - "A repair has a reason, one owner, an idempotent action and a verification; repeated failure opens a breaker"
+  - "No process is killed by name or by age alone (rule project.reclaim-only-what-you-own)"
+  - "serve ensure's idle exit is honoured, never defeated by a supervisor"
+non_goals:
+  - "Restart-always for every process"
+  - "Forcing nodes to cooperate"
+  - "A second Majordomus server per host"
+milestones:
+  - "the-runtime-supervises-itself"
+  - "the-host-knows-its-runtimes"
+  - "mesh-peers-execute-assigned-work"
+satisfaction:
+  - id: states-are-classified
+    criterion: "One read classifies every session, execution, claim and server as progressing, waiting, suspected stalled, failed or orphaned, with its evidence (planned proof: test_supervision_classifies (I3182))"
+    evidence: command
+    ref: "majordomus intent explain nothing-in-the-mesh-waits-on-something-dead"
+  - id: repair-is-bounded
+    criterion: "A safe repair runs once per cause, verifies, and a third failure escalates instead of retrying (planned proof: case_a_repair_opens_its_breaker, numbered with scripts/case-numbers (I3183))"
+    evidence: command
+    ref: "majordomus intent explain nothing-in-the-mesh-waits-on-something-dead"
+  - id: host-lists-its-runtimes
+    criterion: "On a host with no checkout open, one command lists every Majordomus runtime of that user with version and repository (planned proof: case_a_host_lists_its_runtimes, numbered with scripts/case-numbers (I3184))"
+    evidence: command
+    ref: "majordomus intent explain nothing-in-the-mesh-waits-on-something-dead"
+  - id: assigned-work-returns
+    criterion: "Work offered to a peer under a fenced lease reaches only a peer whose declared capabilities and execution profile satisfy it, is refused with the missing one otherwise, and returns, saying so, when its lease is lost (planned proof: majordomus intent explain nothing-in-the-mesh-waits-on-something-dead)"
+    evidence: command
+    ref: "majordomus intent explain nothing-in-the-mesh-waits-on-something-dead"
+created_at: 2026-10-18
+updated_at: 2026-10-18

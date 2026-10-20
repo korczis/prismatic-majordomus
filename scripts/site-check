@@ -1340,6 +1340,12 @@ nav_exempt=" images js render-test releases "
 for redirect in $(sed -n 's/^from = "\/\([^/"]*\).*/\1/p' "$SITE/data/nav.toml" | LC_ALL=C sort -u); do
   nav_exempt="$nav_exempt$redirect "
 done
+# A language's copy of the whole site (ADR 0218) is not a section: every page reaches it through
+# the language switch in the bar, so each language site/i18n/languages.json declares beside the
+# source is named here, from the declaration rather than a pattern.
+for lang in $(jq -r '.source as $s | .languages[] | select(. != $s)' "$SITE/i18n/languages.json"); do
+  nav_exempt="$nav_exempt$lang "
+done
 for dir in "$PUB"/*/; do
   section="$(basename "$dir")"
   [ -f "$dir/index.html" ] || continue

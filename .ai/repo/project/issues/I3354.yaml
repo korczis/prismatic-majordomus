@@ -1,0 +1,37 @@
+id: I3354
+milestone: the-proof-scorecard-is-published
+title: "A pure scorecard function computes each proof test's status, counted sample, effect and losses from committed records, and withholds a verdict until the registered sample is complete"
+slug: the-scorecard-is-a-pure-function
+priority: p1
+profile: implementation
+objective: "Add economics::proof::scorecard(root): per test, status not_run (protocol not registered, instrument not built, or no counted record, each named), running (counted sample below the registered minimum, no verdict word and no effect shown), else passed, failed or inconclusive by the registered decision. paired: the suite's primary verdict as I3366's functions compute it. trials: min_successes and all_must_pass over counted trials. window: passed when the window closed and every field's not-observed share is within its bound, failed when one exceeds it, running while open. Losses list every invalid pair with its failing side, every pair or trial against the favourable direction, and every uncounted record with its reason. Totals per status are included. Fixture tests only; no capability."
+why: "The owner's report of 2026-10-19 asks that T1 to T6 be settled by measurement, losses included; a typed verdict is the forecast the report rejects. The critique split the original scorecard issue because a calculator, three decision kinds and a capability with its projections were more than one reviewable pull request. Withholding the verdict while running answers the critique's point that a republished report would otherwise show interim verdicts during the runs."
+current_state: "No function computes a proof status. stats.rs:260 provides bootstrap_median_clustered for the token metric, which suits a median of ratios, not a binary acceptance outcome."
+desired_state: "scorecard(root) over the tracked plan reads six not_run rows with their reasons; fixtures drive each status and each loss reason."
+scope:
+  - "apps/majordomus-cli/src/economics"
+  - "apps/majordomus-cli/tests/economics.rs"
+non_scope:
+  - "Declaring a capability or regenerating projections (I3355)"
+  - "Any statistic not in stats.rs"
+  - "Rendering"
+depends_on:
+  - "I3351"
+  - "I3353"
+  - "I3366"
+serves:
+  - "the-product-proves-it-pays#scorecard-is-published"
+acceptance_criteria:
+  - "Fixtures drive each of the five statuses, and not_run for each of its three reasons"
+  - "A paired fixture whose test does not reject reads inconclusive, never passed"
+  - "A running fixture shows no verdict word and no effect"
+  - "Per-status totals equal the number of tests"
+  - "A stale record, a record under another digest and one recorded before registered_at appear under losses and change no status"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test economics"
+  - "cargo fmt --manifest-path apps/majordomus-cli/Cargo.toml --check"
+evidence_required:
+  - "test_proof_status_is_computed"
+  - "test_uncounted_records_are_listed"
+created_at: 2026-10-19
+updated_at: 2026-10-19

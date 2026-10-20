@@ -136,7 +136,7 @@ expect_grep 'must name its language and say why'
 # outside the handbook: refused, whatever the directory says of itself
 allow 'edition docs cs prose that is not an edition'
 expect_exit 12 "$EN" --strict
-expect_grep 'one directory of the handbook named for its language'
+expect_grep "one directory of the handbook or of the site's languages named for its language"
 
 # one-sided: the list says Czech and the directory says another language
 printf 'lang = "pl"\n' > handbook/cs/edition.toml

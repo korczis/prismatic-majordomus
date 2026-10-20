@@ -5,11 +5,15 @@
 # capability the UI would not; every move is a click, and the page is never reloaded by the
 # test:
 #
-#   pick        the intent is chosen in /ui/idd from the list of intents
+#   pick        the intent is chosen in /ui/idd from the list of intents, and its title is the
+#               page's heading with the screen's name above it (I3001)
+#               and its panels stand in the order a person asks (I2916); it offers one
+#               primary action, the move its next issue's status admits: Start I0001 (I2917)
 #   read        its issues with their status, and the dependency: I0002 waits for I0001; every
 #               issue id on the screen is a link, and the issues that share a scope (I0001 and
 #               I0003) are one counted line that opens to the pairs (I2900)
-#   move        I0001 is started from its move form; the row reads active
+#   move        I0001 is started from its move form, opened by the primary action; the row
+#               reads active
 #   work        the work I0001 owes is written into its scope and committed
 #   test        the issue's own check, a real test of that work, fails before the work and
 #               passes after it; its command and result are recorded as I0001's evidence
@@ -194,6 +198,21 @@ try {
   await a.click('a[href="/ui/idd?intent=the-answer-is-known"]');
   await a.waitForURL(/intent=the-answer-is-known/);
   console.log('    pick: the workspace opened the-answer-is-known');
+  // the page is titled by the intent it opened, the screen's name above it (I3001)
+  const h1 = (await a.locator('h1').innerText()).trim();
+  if (h1 !== 'The answer is known') fail(`the page's heading reads "${h1}", not the intent's title`);
+  const eyebrow = (await a.locator('.mj-ui-eyebrow').innerText()).trim();
+  if (eyebrow.toLowerCase() !== 'intent workspace') fail(`the eyebrow reads "${eyebrow}"`);
+  // and it reads in the order a person asks: the intent, what it misses, the work, what was done (I2916)
+  const heads = await a.locator('.mj-ui-panel-title').allInnerTexts();
+  const order = ['What is this intent for?', 'What should happen next?', 'Why does it stand where it stands?', 'Which milestones carry it?',
+    'What work serves it?', 'What waits for what?', 'What was done here?'].map((t) => heads.indexOf(t));
+  if (order.some((i, k) => i < 0 || (k > 0 && i < order[k - 1]))) fail(`the panels stand out of order: ${heads.join(' | ')}`);
+  // one primary action: the plan's next issue of the intent and the move its status admits (I2917)
+  const primary = a.locator('a.mj-btn--primary');
+  if (await primary.count() !== 1) fail(`the workspace offers ${await primary.count()} primary actions, not one`);
+  const asks = (await primary.innerText()).trim();
+  if (asks !== 'Start I0001') fail(`the primary action reads "${asks}", not "Start I0001"`);
 
   // read: the issues and the dependency, as the plan derives them
   if (await status(a, 'I0001') !== 'ready') fail(`I0001 reads ${await status(a, 'I0001')}, not ready`);
@@ -216,8 +235,8 @@ try {
   await a.screenshot({ path: `${shots}/1-picked.png`, fullPage: true });
 
   step = 'move';
-  // move: start I0001 from its move form
-  await a.click('#issue-I0001 a[href^="/ui/idd?"][href*="issue=I0001"]');
+  // move: start I0001 from its move form, opened by the primary action (I2917)
+  await a.click('a.mj-btn--primary');
   await move(a, 'start');
   await until(a, 'I0001', 'active', 'move');
   console.log('    move: I0001 started from the UI and reads active');
@@ -274,10 +293,10 @@ try {
   step = 'explained';
   // explained: the standing panel, filled from its own route, explains the intent
   await a.waitForFunction(() => {
-    const s = document.querySelector('section[aria-label="Why it stands where it stands"]');
+    const s = document.querySelector('section[aria-label="Why does it stand where it stands?"]');
     return s && !s.hasAttribute('data-panel-src') && s.querySelector('.mj-ui-source');
   }, null, { timeout: WAIT }).catch(() => fail('the standing panel was never filled'));
-  const standing = await a.locator('section[aria-label="Why it stands where it stands"]').innerText();
+  const standing = await a.locator('section[aria-label="Why does it stand where it stands?"]').innerText();
   for (const want of ['the-answer-holds', 'intent_realization.explain']) {
     if (!standing.includes(want)) fail(`the standing panel does not explain ${want}`);
   }

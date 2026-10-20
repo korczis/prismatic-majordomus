@@ -145,6 +145,6 @@ This article was written in September 2026, at commit `d8c97273f0`, the one that
 - Tests: `ls test/cases/*.sh | wc -l` counts the shell cases; `grep -r '#\[test\]' apps/majordomus-cli | wc -l` the Rust test functions
 - Gates: declared in `.ai/repo/ci/gates.yaml`, those that run on every change marked `always: true`
 - Deployment: `build.json` on the published site names the source version, the commit and the generator
-- The rule this article had to amend: `.ai/repo/rules/project/english-only.v3.md`, and the decision that amended it
+- The rule this article had to amend: `.ai/repo/rules/project/english-only.v4.md`, and the decision that amended it
 
 The claims themselves are published one page per claim, each naming its test. If a sentence on that site is wrong, there is a specific file to open and a specific command that should have failed.
