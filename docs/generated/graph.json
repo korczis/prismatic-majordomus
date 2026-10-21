@@ -59499,6 +59499,47 @@
         }
       },
       {
+        "id": "majordomus://issue/I3835",
+        "kind": "issue",
+        "label": "I3835",
+        "summary": "A node the mesh lists as trusted and present but cannot link is said so, with why, on every surface that names it",
+        "route": "/cockpit/objects/issue/i3835",
+        "source": ".ai/repo/project/issues/I3835.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "With two runtimes of which one is discovered but never linked, mesh nodes and mesh peers both name it as present and unlinked, with the reason",
+            "A review request aimed at it refuses with the reason, and the refusal names the runtime and the node",
+            "mesh doctor reports a trusted, present, unlinked node as a finding",
+            "A node that links later stops being reported, without a restart"
+          ],
+          "created_at": "2026-10-21",
+          "current_state": "mesh nodes reports discovery (trust, presence, sources); mesh peers reports linked runtimes; nothing joins the two, and a request to an unlinked runtime answers not_found.",
+          "depends_on": [],
+          "desired_state": "Every trusted, present node without a link is listed with the reason, and every request aimed at one is refused with it.",
+          "evidence_required": [
+            "a_present_unlinked_node_says_why_test"
+          ],
+          "milestone": "the-mesh-works-out-of-the-box",
+          "non_scope": [
+            "A dead run's exclusive claim that nobody can release (mesh-journal-converges, beside I3798)"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh",
+            "apps/majordomus-cli/src/commands/mesh.rs",
+            "docs/MESH.md"
+          ],
+          "slug": "a-present-node-that-cannot-be-linked-says-why",
+          "updated_at": "2026-10-21",
+          "validation": [
+            "bash test/run.sh 3835_a_present_node_that_cannot_be_linked_says_why",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -116628,6 +116669,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3835",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3835",
+        "target": "majordomus://milestone/the-mesh-works-out-of-the-box",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -127599,8 +127650,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3607,
-      "edges": 8391,
+      "nodes": 3608,
+      "edges": 8393,
       "acyclic": false,
       "truncated": false
     }
