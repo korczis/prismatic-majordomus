@@ -765,8 +765,12 @@ MJ_UC_CACHE_EXCLUDE=".ai/repo/project .ai/repo/knowledge site docs test/cases"
 mj_uc_tool_key() { # prints the key of the tool the scenarios run, or nothing
   [ "${MJ_UC_CACHE:-1}" = 1 ] || return 0
   [ -n "${MAJORDOMUS_BIN:-}" ] && [ -f "$MAJORDOMUS_BIN" ] || return 0
-  # the tool's own source tree only: in an adopter the repository is not the tool
-  [ "$MJ_LIB_DIR" = "$MJ_ROOT/lib" ] && [ -f "$MJ_ROOT/apps/majordomus-cli/Cargo.toml" ] || return 0
+  # the tool's own source tree only: in an adopter the repository is not the tool. Compared
+  # physically: bin/majordomus sets MJ_LIB_DIR to "<bin>/../lib", which never equals the
+  # string "$MJ_ROOT/lib", and the cache then never engaged (found taking I0832 over).
+  [ -f "$MJ_ROOT/apps/majordomus-cli/Cargo.toml" ] \
+    && [ "$(cd "$MJ_LIB_DIR" 2>/dev/null && pwd -P)" = "$(cd "$MJ_ROOT/lib" && pwd -P)" ] \
+    || return 0
   git -C "$MJ_ROOT" rev-parse --verify -q HEAD >/dev/null 2>&1 || return 0
   local p list
   set -- .
