@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.1"
   },
   "registry": {
-    "fingerprint": "ee877cf301e37d16e7afe9ec59c0aecb7ee04a0635378d09a60e77f775f3ea2f",
+    "fingerprint": "2f521687d4e470acdabb84566316892d1e86c277224f1b140d13855447bcb2b0",
     "summary": {
-      "total": 3160,
+      "total": 3162,
       "builtin": 206,
-      "declarative": 2954,
+      "declarative": 2956,
       "by_kind": {
         "command": 31,
         "query": 175,
-        "resource": 2954
+        "resource": 2956
       },
       "by_stability": {
         "behaviorally_verified": 142,
         "experimental": 55,
-        "implemented": 2963
+        "implemented": 2965
       },
       "mcp_tools": 196,
-      "mcp_resources": 3009,
+      "mcp_resources": 3011,
       "http_routes": 201,
       "cli_commands": 111,
       "modules": 92,
@@ -85404,7 +85404,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 801,
+        "capabilities": 802,
         "capability_ids": []
       },
       {
@@ -85978,7 +85978,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 567,
+        "capabilities": 568,
         "capability_ids": []
       },
       {
@@ -86070,7 +86070,7 @@
     ]
   },
   "index": {
-    "fingerprint": "e47fc54aa585fcf6727bfaa9b52f4780b4111ce1b9741c77e316da39db537c18",
+    "fingerprint": "f5145fec217c90e2bae623a43a889aa69bae62526fe68a1dd0a2a01cc6e84b83",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -86110,7 +86110,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 33,
-      "issue": 801,
+      "issue": 802,
       "knowledge": 50,
       "mesh-declaration": 1,
       "milestone": 100,
@@ -86124,7 +86124,7 @@
       "session": 90,
       "skill": 8,
       "taxonomy": 10,
-      "test": 567,
+      "test": 568,
       "use-case": 49,
       "workspace": 1
     },
@@ -93308,7 +93308,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 521266
+        "bytes": 526858
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -105927,6 +105927,17 @@
         "bytes": 2704
       },
       {
+        "uri": "majordomus://issue/I3838",
+        "kind": "issue",
+        "identity": "I3838",
+        "title": "The plan page renders within the audit budget at every width, because a finding is counted rather than printed once per pair",
+        "description": "Bound the size of /plan/ (served at /docs/plan/) by what a reader needs rather than by the size of the backlog: site/templates/plan-section.html shows the plan's findings grouped by level and code, each group with its count and a few examples, and leaves the whole list to the data it is projected from (plan.json's findings_by_code beside findings, written by scripts/generate-site-data); and a case holds the page's element count to a declared ceiling, so ui-audit visits it at every width within VISIT_DEADLINE_MS (scripts/lib/ui-audit.mjs, 60 s) on a loaded machine.",
+        "path": ".ai/repo/project/issues/I3838.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4700
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -115668,6 +115679,14 @@
         "bytes": 9258
       },
       {
+        "uri": "majordomus://test/test/cases/3848_the_plan_page_fits_the_audit_budget.sh",
+        "kind": "test",
+        "identity": "test/cases/3848_the_plan_page_fits_the_audit_budget.sh",
+        "path": "test/cases/3848_the_plan_page_fits_the_audit_budget.sh",
+        "source_class": "case",
+        "bytes": 5192
+      },
+      {
         "uri": "majordomus://test/test/cases/384_a_deployment_is_evidence.sh",
         "kind": "test",
         "identity": "test/cases/384_a_deployment_is_evidence.sh",
@@ -118390,7 +118409,7 @@
       "identity": [
         "id"
       ],
-      "objects": 801
+      "objects": 802
     },
     {
       "name": "knowledge",
@@ -118542,7 +118561,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 567
+      "objects": 568
     },
     {
       "name": "use-case",

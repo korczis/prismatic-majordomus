@@ -59499,6 +59499,50 @@
         }
       },
       {
+        "id": "majordomus://issue/I3838",
+        "kind": "issue",
+        "label": "I3838",
+        "summary": "The plan page renders within the audit budget at every width, because a finding is counted rather than printed once per pair",
+        "route": "/cockpit/objects/issue/i3838",
+        "source": ".ai/repo/project/issues/I3838.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "/plan/ renders the findings grouped by (level, code), each group with its count, and the count of rows does not grow with the number of scope_conflict pairs",
+            "Every finding remains reachable from the data the page is projected from (site/data/generated/plan.json), and the page says so",
+            "A case fails when /plan/ in the built site passes its declared element ceiling, and passes at the tree it lands with",
+            "scripts/ui audit visits /plan/ at every declared width within VISIT_DEADLINE_MS on a loaded machine"
+          ],
+          "created_at": "2026-10-21",
+          "depends_on": [],
+          "evidence_required": [
+            "case_the_plan_page_fits_the_audit_budget"
+          ],
+          "milestone": "a-change-is-judged-in-minutes",
+          "non_scope": [
+            "Raising VISIT_DEADLINE_MS or excluding /plan/ from the audit",
+            "Changing how plan validate computes scope_conflict (whether a shared directory is a conflict is the planning model's question, not the page's)",
+            "The /plan/dag/ page (1.18 MB), unless the same bound reaches it for free",
+            "The waves list: one entry per issue, it grows with the backlog linearly, not with its square; the case's ceiling is what notices if it ever matters"
+          ],
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "site/templates/plan-section.html",
+            "scripts/generate-site-data",
+            "test/cases/3848_the_plan_page_fits_the_audit_budget.sh",
+            "site/content",
+            "site/data/generated",
+            "docs/generated"
+          ],
+          "slug": "the-plan-page-fits-the-audit-budget",
+          "updated_at": "2026-10-21",
+          "validation": [
+            "bash test/run.sh 3848_the_plan_page_fits_the_audit_budget",
+            "scripts/ui audit --report"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -81444,6 +81488,13 @@
         "label": "test/cases/383_convergence_is_enforced.sh",
         "route": "/cockpit/objects/test/test-cases-383-convergence-is-enforced-sh",
         "source": "test/cases/383_convergence_is_enforced.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3848_the_plan_page_fits_the_audit_budget.sh",
+        "kind": "test",
+        "label": "test/cases/3848_the_plan_page_fits_the_audit_budget.sh",
+        "route": "/cockpit/objects/test/test-cases-3848-the-plan-page-fits-the-audit-budget-sh",
+        "source": "test/cases/3848_the_plan_page_fits_the_audit_budget.sh"
       },
       {
         "id": "majordomus://test/test/cases/384_a_deployment_is_evidence.sh",
@@ -116628,6 +116679,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3838",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3838",
+        "target": "majordomus://milestone/a-change-is-judged-in-minutes",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -122473,6 +122534,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3848_the_plan_page_fits_the_audit_budget.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/384_a_deployment_is_evidence.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -127599,8 +127665,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3607,
-      "edges": 8391,
+      "nodes": 3609,
+      "edges": 8394,
       "acyclic": false,
       "truncated": false
     }
