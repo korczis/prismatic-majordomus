@@ -4,12 +4,26 @@ description = "A provider capability is declared once, with the citation it was 
 weight = 74
 [extra]
 kind = "rule"
-slug = "project-a-provider-capability-cites-its-evidence-1"
-identity = "project.a-provider-capability-cites-its-evidence@1"
+slug = "project-a-provider-capability-cites-its-evidence-2"
+identity = "project.a-provider-capability-cites-its-evidence@2"
 status = "active"
-source = ".ai/repo/rules/project/a-provider-capability-cites-its-evidence.v1.md"
+source = ".ai/repo/rules/project/a-provider-capability-cites-its-evidence.v2.md"
 +++
 {% raw %}
+
+## What changed in version 2, and why
+
+Version 1 declared two capabilities. On 2026-10-21 the owner asked for the Claude, browser
+extension and browser integration to work by itself, be described and be enforced, and a
+session found that the one path that drives a page and the live mesh in one session — Claude
+Code with the Claude in Chrome bridge — was declared nowhere and noticed by nothing: the
+bridge was unconnected and the only way to learn it was to call a browser tool and read the
+error. Whether a provider's client drives a browser beside this server is a claim about the
+vendor's product of exactly the kind this rule governs, so it is a third axis with its own
+citation, not a paragraph in a document. A bridge also names its native messaging host,
+which is how preflight sees that a machine has it, and the step a person takes to install
+it, which is what preflight says when it does not: a project cannot turn the bridge on, so
+naming the step is the whole of what the repository can do (I3829).
 
 ## Rationale
 
@@ -43,18 +57,27 @@ editing six surfaces is a provider six surfaces will eventually disagree about.
 ## Required behaviour
 
 `share/providers.yaml` is the one declaration. Each provider entry carries an `offers:`
-block with four keys:
+block with six keys, and a bridge two more:
 
 - `episode` — `hooks` (the provider fires its own session events), `connection` (it fires
   none, and the MCP connection is the boundary), or `none` (nothing can draw one);
 - `prompts` — `hook` (it hands the raw prompt to a command before the model runs) or `none`;
-- `episode_evidence` and `prompts_evidence` — where each of the two was verified: a vendor
+- `browser` — `bridge` (its client drives a browser through a vendor extension whose tools
+  arrive in the same session as this repository's MCP server) or `none`; a vendor's own
+  browser agent that reaches only the vendor's cloud is not a bridge;
+- `episode_evidence`, `prompts_evidence` and `browser_evidence` — where each was verified: a vendor
   documentation URL, or the statement that no such documentation exists together with what
   was searched for it and when.
 
-Both evidence strings are **required and non-empty**, for every value including `none`. An
+All three evidence strings are **required and non-empty**, for every value including `none`. An
 absence verified is a finding; an absence assumed is a guess wearing a finding's clothes,
 and the two must not look alike.
+
+A provider that declares `browser: bridge` also declares `browser_host`, the native messaging
+host the bridge registers with a Chromium browser, and `browser_setup`, what a person does
+once to install it. Preflight reports, for a provider whose client configuration is in the
+checkout, whether this machine has that host, and names the step when it does not; it is a
+finding, never a failure, because the step is the person's and not the repository's.
 
 A word outside either vocabulary fails the read of the whole file, naming it. It is never
 treated as `none`.
@@ -73,7 +96,8 @@ about the provider.
 ## Failure behaviour
 
 `scripts/provider-evidence-check` exits non-zero naming each provider, each aspect and each
-reason: a missing `offers` block, an empty citation, a value outside the vocabulary, or a
+reason: a missing `offers` block, an empty citation, a value outside the vocabulary, a bridge
+without its host or its setup step, or a
 provider the declaration names that `majordomus capture status` does not report. The
 repository's CI runs it as a gate; it is not advisory.
 
@@ -85,5 +109,9 @@ provider with its capability and its evidence, that a provider with no adapter i
 `unadapted` rather than `unsupported`, and that the whole connection lifecycle the
 `connection` capability claims actually runs over the real transport.
 `apps/majordomus-cli/src/share.rs`'s own suite proves that a word outside the vocabulary
-fails the read rather than degrading.
+fails the read rather than degrading. `apps/majordomus-cli/tests/provider_browser.rs` proves the
+browser axis end to end in-process: the declaration, the refusal of an unknown word, the
+preflight finding with and without the host on a laid-out home, and the providers document's
+column; `test/cases/3829_a_provider_declares_its_browser_bridge.sh` holds the gate to its own
+negative.
 {% endraw %}
