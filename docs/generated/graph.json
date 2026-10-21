@@ -37773,11 +37773,8 @@
         "route": "/cockpit/objects/issue/i2413",
         "source": ".ai/repo/project/issues/I2413.yaml",
         "facts": {
-          "acceptance_criteria": [
-            "In a linked worktree with no server, `mesh handover publish` and `mesh claim` reach the primary's running runtime",
-            "No command run in a worktree starts a server bound beyond loopback",
-            "A start whose binary is stale prints why no server was ensured and what to run"
-          ],
+          "completed_at": "2026-10-20T22:51:23Z",
+          "completed_event": "sha256:a7fc0ee2a2316b1b3f49e167816fb935a1d6acc8634b64e179790285c9c587bb",
           "created_at": "2026-10-10",
           "current_state": "A worktree without its own server is off the mesh; the start hook skips silently.",
           "desired_state": "A worktree's mesh commands reach the repository's running runtime; a start that ensures nothing prints the reason and the remedy.",
@@ -37796,7 +37793,9 @@
             "test/cases"
           ],
           "slug": "a-worktree-cooperates-through-the-primary",
-          "updated_at": "2026-10-10",
+          "started_at": "2026-10-20T22:50:43Z",
+          "started_event": "sha256:fe1bde435ffaf9f2a4beb9d1f53dd4d1b92ecf16dcab80b4be558692757098d3",
+          "updated_at": "2026-10-20T22:51:23Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --test mcp_shared"
