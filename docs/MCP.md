@@ -449,7 +449,7 @@ Set it up once, per person rather than per repository:
 
 - In Claude Code run `/chrome` and choose **Enabled by default**. It is a user setting: Claude Code
   ignores `CLAUDE_CODE_ENABLE_CFC` in a project's settings ("a project can't turn on Claude in
-  Chrome", <https://code.claude.com/docs/en/chrome>), so this repository does not try.
+  Chrome", Claude Code documentation, `code.claude.com/docs/en/chrome`), so this repository does not try.
 - Sign the extension in to the claude.ai organization that `/status` names in Claude Code. Claude
   Code needs a claude.ai login (Pro, Max, Team, Enterprise); an API key or a `setup-token` keeps
   the bridge off.
@@ -467,7 +467,7 @@ When it does not connect — `list_connected_browsers` answers an empty list, or
    `/status` names. Sign it in again with that organization.
 2. `/chrome` → **Reconnect extension**, then restart Chrome and Claude Code.
 3. An organization IP allowlist that blocks `bridge.claudeusercontent.com` blocks the bridge
-   (<https://code.claude.com/docs/en/network-config>).
+   (Claude Code documentation, `code.claude.com/docs/en/network-config`).
 4. A JavaScript dialog open in a controlled tab stops every later browser event until a person
    dismisses it.
 
