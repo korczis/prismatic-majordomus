@@ -18,10 +18,14 @@
 command -v jq >/dev/null || skip "jq absent"
 command -v python3 >/dev/null || skip "python3 absent"
 
-# The ceiling. axe, the audit's slowest pass, measured about 0.4 ms an element on a loaded
-# machine (14.4 s over 35,516); 15,000 elements keep it near 6 s of the audit's 60 s per
-# visit (scripts/lib/ui-audit.mjs VISIT_DEADLINE_MS), with every other pass and the CI
-# runner's slower cores on top. A page that needs more is a page to split, not a ceiling to raise.
+# The ceiling, on the elements the HTML carries. axe, the audit's slowest pass, measured about
+# 0.4 ms an element on a loaded machine (14.4 s over 35,516 before this case, 4.6 s over 21,589
+# after it, both at 1536 px on 2026-10-21). The browser's DOM is larger than the HTML: the plan
+# graph is drawn by mermaid from the page and adds about 12,700 SVG elements (8,894 in the HTML,
+# 21,589 live). 15,000 in the HTML keeps the live page near 28,000 and axe near 11 s of the
+# audit's 60 s per visit (scripts/lib/ui-audit.mjs VISIT_DEADLINE_MS), with every other pass and
+# a CI runner's slower cores on top. A page that needs more is a page to split, not a ceiling
+# to raise.
 ELEMENT_CEILING=15000
 PLAN="$ROOT/site/data/generated/plan.json"
 TEMPLATE="$ROOT/site/templates/plan-section.html"
@@ -31,14 +35,15 @@ TEMPLATE="$ROOT/site/templates/plan-section.html"
 jq -e '.findings_by_code | type == "array"' "$PLAN" >/dev/null \
   || { echo "    plan.json carries no findings_by_code; the page has nothing bounded to render"; exit 1; }
 verdict="$(jq -r '
-  (.findings | length) as $n
+  . as $p
+  | (.findings | length) as $n
   | (.findings_by_code | map(.count) | add // 0) as $counted
   | (.findings_by_code | map([.level, .code]) | unique | length) as $kinds
   | (.findings | map([.level, .code]) | unique | length) as $declared
   | ([.findings_by_code[] | . as $g | .examples[] | select(.level != $g.level or .code != $g.code)] | length) as $strays
   | ([.findings_by_code[] | select((.examples | length) > 3 or (.examples | length) > .count)] | length) as $long
   | if $counted != $n then "the groups count \($counted) finding(s) and there are \($n)"
-    elif $kinds != ($.findings_by_code | length) then "a (level, code) appears in more than one group"
+    elif $kinds != ($p.findings_by_code | length) then "a (level, code) appears in more than one group"
     elif $kinds != $declared then "\($declared) kind(s) of finding and \($kinds) group(s)"
     elif $strays > 0 then "\($strays) example(s) filed under a group they do not belong to"
     elif $long > 0 then "\($long) group(s) carry more than three examples, or more than they count"
