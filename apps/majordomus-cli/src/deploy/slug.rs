@@ -82,7 +82,7 @@ impl std::fmt::Display for SlugError {
 
 /// What to assemble: which object, at which commit, with which executable, into where.
 #[derive(Debug, Clone)]
-pub struct Request<'a> {
+pub(crate) struct Request<'a> {
     /// The repository root.
     pub root: &'a Path,
     /// The deployment object's repository-relative file, read at [`Request::commit`].
@@ -270,7 +270,7 @@ impl Plan {
 /// anything, when the object at the commit names no provider, when a build input is not
 /// tracked at the commit, when a provider file at the commit is not what the object renders,
 /// and when two files would land on one path.
-pub fn assemble(req: &Request<'_>) -> Result<Slug, SlugError> {
+pub(crate) fn assemble(req: &Request<'_>) -> Result<Slug, SlugError> {
     let commit = resolve(req.root, req.commit)?;
     let short = &commit[..12];
     let d = object_at(req.root, &commit, req.file)?;

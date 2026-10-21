@@ -409,6 +409,12 @@ pub enum ProviderName {
 impl ProviderName {
     /// The name as the object spells it, and the directory its files are rendered under
     /// (`deploy/<name>/`).
+    ///
+    /// ```
+    /// use majordomus_cli::deploy::ProviderName;
+    /// assert_eq!(ProviderName::Gigalixir.as_str(), "gigalixir");
+    /// assert_eq!(ProviderName::Gigalixir.to_string(), "gigalixir", "Display is the same word");
+    /// ```
     pub fn as_str(self) -> &'static str {
         match self {
             ProviderName::Gigalixir => "gigalixir",
