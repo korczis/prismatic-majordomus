@@ -3,26 +3,26 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and the index of this repository's layer; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "1.0.0-alpha.1"
+    "version": "1.0.0-alpha.3"
   },
   "registry": {
-    "fingerprint": "5a71610381526d86e56828e841851b90d45de2f6400578ae2e5c705583b3a84a",
+    "fingerprint": "7325ced4003a4d8ada758e8d9f3afac7b1712ea4a6035c18f02f592441ebc85c",
     "summary": {
-      "total": 3160,
+      "total": 3169,
       "builtin": 206,
-      "declarative": 2954,
+      "declarative": 2963,
       "by_kind": {
         "command": 31,
         "query": 175,
-        "resource": 2954
+        "resource": 2963
       },
       "by_stability": {
         "behaviorally_verified": 142,
         "experimental": 55,
-        "implemented": 2963
+        "implemented": 2972
       },
       "mcp_tools": 196,
-      "mcp_resources": 3009,
+      "mcp_resources": 3018,
       "http_routes": 201,
       "cli_commands": 111,
       "modules": 92,
@@ -85404,7 +85404,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 801,
+        "capabilities": 806,
         "capability_ids": []
       },
       {
@@ -85978,7 +85978,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 567,
+        "capabilities": 571,
         "capability_ids": []
       },
       {
@@ -86070,7 +86070,7 @@
     ]
   },
   "index": {
-    "fingerprint": "5dcd8c347c39f623408cd215d6c112f338e94818752283e19f572be89ff6aed9",
+    "fingerprint": "4305e5a7df13c60ec1f72579436ad30b2ea25a9245a22883393977d82ef860f6",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -86110,7 +86110,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 33,
-      "issue": 801,
+      "issue": 806,
       "knowledge": 50,
       "mesh-declaration": 1,
       "milestone": 100,
@@ -86124,7 +86124,7 @@
       "session": 90,
       "skill": 8,
       "taxonomy": 10,
-      "test": 567,
+      "test": 571,
       "use-case": 49,
       "workspace": 1
     },
@@ -88047,7 +88047,7 @@
         "path": ".ai/repo/adrs/0167-work-moves-through-seats-on-the-mesh-and-lands-in-combined-tops.md",
         "section": "adrs",
         "source_class": "adr",
-        "bytes": 8778,
+        "bytes": 9773,
         "tags": [
           "integration",
           "governance",
@@ -92768,7 +92768,7 @@
         "title": "AGENTS.md",
         "path": "AGENTS.md",
         "source_class": "readme",
-        "bytes": 8635
+        "bytes": 8709
       },
       {
         "uri": "majordomus://document/CLAUDE.md",
@@ -92777,7 +92777,7 @@
         "title": "CLAUDE.md",
         "path": "CLAUDE.md",
         "source_class": "readme",
-        "bytes": 7924
+        "bytes": 7998
       },
       {
         "uri": "majordomus://document/CONTRIBUTING.md",
@@ -92795,7 +92795,7 @@
         "title": "GEMINI.md",
         "path": "GEMINI.md",
         "source_class": "readme",
-        "bytes": 8142
+        "bytes": 8216
       },
       {
         "uri": "majordomus://document/README.md",
@@ -93137,7 +93137,7 @@
         "title": "GitHub Pages performance",
         "path": "docs/GITHUB_PAGES_PERFORMANCE.md",
         "source_class": "document",
-        "bytes": 27203
+        "bytes": 30392
       },
       {
         "uri": "majordomus://document/docs/GUIDE.md",
@@ -93227,7 +93227,7 @@
         "title": "MCP surface — `majordomus mcp`",
         "path": "docs/MCP.md",
         "source_class": "document",
-        "bytes": 77022
+        "bytes": 80600
       },
       {
         "uri": "majordomus://document/docs/MESH.md",
@@ -93272,7 +93272,7 @@
         "title": "GitHub Pages performance status",
         "path": "docs/PAGES_STATUS.md",
         "source_class": "document",
-        "bytes": 3425
+        "bytes": 3430
       },
       {
         "uri": "majordomus://document/docs/PERFORMANCE.md",
@@ -93308,7 +93308,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 515147
+        "bytes": 528327
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -96590,7 +96590,7 @@
         "identity": "lib/machine_lock.sh",
         "path": "lib/machine_lock.sh",
         "source_class": "library",
-        "bytes": 9407
+        "bytes": 12418
       },
       {
         "uri": "majordomus://implementation/lib/mermaid.awk",
@@ -100732,7 +100732,7 @@
         "path": ".ai/repo/project/issues/I2413.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1891
+        "bytes": 3028
       },
       {
         "uri": "majordomus://issue/I2414",
@@ -102638,6 +102638,17 @@
         "bytes": 2698
       },
       {
+        "uri": "majordomus://issue/I3018",
+        "kind": "issue",
+        "identity": "I3018",
+        "title": "The intent workspace borrows the plan instead of copying it on every request",
+        "description": "/ui/idd and the intent inspector it embeds read plan.issues and plan.roadmap through view::items, a borrow, wherever they only read, instead of view::list, which copies the whole answer: the issues serving the intent, the records the prose may name, the intent's own issues and its milestones.",
+        "path": ".ai/repo/project/issues/I3018.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2105
+      },
+      {
         "uri": "majordomus://issue/I3020",
         "kind": "issue",
         "identity": "I3020",
@@ -102735,6 +102746,17 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 1906
+      },
+      {
+        "uri": "majordomus://issue/I3098",
+        "kind": "issue",
+        "identity": "I3098",
+        "title": "Waiting derives take the machine's derive lock in the order they arrived",
+        "description": "Give lib/machine_lock.sh a queue: a waiting derive writes a ticket (arrival time, pid, branch) under <home>/.derive.queue, the lock goes to the oldest ticket whose pid is alive, a ticket whose pid is gone is reaped, and the priority marker still overrides the order; the waiting line names the position (\\\"2nd of 4, behind <branch>\\\") and the brief's derive row shows the queue.",
+        "path": ".ai/repo/project/issues/I3098.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2332
       },
       {
         "uri": "majordomus://issue/I3100",
@@ -104512,11 +104534,11 @@
         "kind": "issue",
         "identity": "I3285",
         "title": "A vendor workspace reads the plan through the authenticated remote MCP surface, and a tunnel never makes it look local",
-        "description": "Let a ChatGPT custom connector call the read capabilities (plan, intents, evidence) over the existing MCP-over-HTTP projection, through a listener of its own whose callers authenticate by the mechanism an ADR amending ADR 0126 defines (ADR 0126 admits reads beyond loopback without authentication), and refuse any deployment where a tunnel terminating on loopback would make vendor requests pass as local.",
+        "description": "Let a vendor's remote MCP connector — a ChatGPT custom connector, or a claude.ai custom connector, which the Claude in Chrome side panel and claude.ai chat call — call the read capabilities (plan, intents, evidence) over the existing MCP-over-HTTP projection, through a listener of its own whose callers authenticate by the mechanism an ADR amending ADR 0126 defines (ADR 0126 admits reads beyond loopback without authentication), and refuse any deployment where a tunnel terminating on loopback would make vendor requests pass as local.",
         "path": ".ai/repo/project/issues/I3285.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2943
+        "bytes": 3391
       },
       {
         "uri": "majordomus://issue/I3286",
@@ -105925,6 +105947,39 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 2704
+      },
+      {
+        "uri": "majordomus://issue/I3824",
+        "kind": "issue",
+        "identity": "I3824",
+        "title": "The cooperation rule says a worker lands its own green head, and every bootstrap says the same",
+        "description": "Rule project.the-cooperation-model-is-the-owners-word moves to version 2 with the owner's relaxation of 2026-10-20: a worker lands its own green pull request through the guarded lander's queue, pinned exactly as a top is pinned; at most five builders on one machine and none below 35 GiB free; cleanup that loses nothing is done without asking and announced; the Claude Code permission rules stay the owner's to write. ADR 0167 carries a dated amendment, the three provider templates carry the new bootstrap paragraph, every document that linked version 1 links version 2, and case 3824 holds the bootstrap to the rule.",
+        "path": ".ai/repo/project/issues/I3824.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3827
+      },
+      {
+        "uri": "majordomus://issue/I3825",
+        "kind": "issue",
+        "identity": "I3825",
+        "title": "A build refuses to start beside five others or below 35 GiB free",
+        "description": "The build guard holds the two machine limits of rule project.the-cooperation-model-is-the-owners-word clause 7: no build starts while five builders already run on the machine or while less than 35 GiB is free, each refusal naming the limit, the measured value and the override, so the limits stop being numbers a session has to remember.",
+        "path": ".ai/repo/project/issues/I3825.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1912
+      },
+      {
+        "uri": "majordomus://issue/I3835",
+        "kind": "issue",
+        "identity": "I3835",
+        "title": "A node the mesh lists as trusted and present but cannot link is said so, with why, on every surface that names it",
+        "description": "Make mesh nodes, mesh peers and mesh doctor name every trusted, present node this server holds no link to, with the reason the link is absent (never dialled, dial refused, hello refused, its runtime expired, no endpoint this server can reach), and make a mesh review request, claim release or handover aimed at such a node refuse with that same reason instead of a bare not_found.",
+        "path": ".ai/repo/project/issues/I3835.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2374
       },
       {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
@@ -111499,15 +111554,15 @@
         ]
       },
       {
-        "uri": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@1",
+        "uri": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@2",
         "kind": "rule",
-        "identity": "project.the-cooperation-model-is-the-owners-word@1",
-        "title": "Work moves through seats held as mesh claims, lands in combined tops, and every checkout is kept current",
-        "description": "The owner's operating decision of 2026-10-16. A seat (landing, release, repair, worker) is an exclusive mesh claim and nothing else; the landing seat lands combined tops pinned to the head one validation run judged; a stale checkout or branch is preserved in a rescue ref and brought current without asking; the release seat releases whenever master holds landed work past the last tag. Every surface that describes the model reads this record or the live claims, never a copy.",
-        "path": ".ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v1.md",
+        "identity": "project.the-cooperation-model-is-the-owners-word@2",
+        "title": "Work moves through seats held as mesh claims, a worker lands its own green head, and every checkout is kept current",
+        "description": "The owner's operating decision of 2026-10-16, relaxed by the owner on 2026-10-20. A seat (landing, release, repair, worker) is an exclusive mesh claim and nothing else; a worker lands its own green pull request through the guarded lander's queue, pinned to the head its ci judged; the landing seat composes combined tops only when heads must ship together; a stale checkout or branch is preserved in a rescue ref and brought current without asking; the release seat tags on master's own green ci whenever master holds landed work past the last tag. At most five builders run on one machine and none starts below 35 GiB free. Every surface that describes the model reads this record or the live claims, never a copy.",
+        "path": ".ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 8518,
+        "bytes": 13257,
         "tags": [
           "process",
           "integration",
@@ -113249,7 +113304,7 @@
         "identity": "test/cases/1018_one_derive_at_a_time_and_no_orphans.sh",
         "path": "test/cases/1018_one_derive_at_a_time_and_no_orphans.sh",
         "source_class": "case",
-        "bytes": 7728
+        "bytes": 9927
       },
       {
         "uri": "majordomus://test/test/cases/101_command_graph.sh",
@@ -115644,6 +115699,30 @@
         "bytes": 6714
       },
       {
+        "uri": "majordomus://test/test/cases/3747_a_gated_step_leaves_its_receipt.sh",
+        "kind": "test",
+        "identity": "test/cases/3747_a_gated_step_leaves_its_receipt.sh",
+        "path": "test/cases/3747_a_gated_step_leaves_its_receipt.sh",
+        "source_class": "case",
+        "bytes": 3341
+      },
+      {
+        "uri": "majordomus://test/test/cases/3748_a_pages_step_bound_follows_its_budget.sh",
+        "kind": "test",
+        "identity": "test/cases/3748_a_pages_step_bound_follows_its_budget.sh",
+        "path": "test/cases/3748_a_pages_step_bound_follows_its_budget.sh",
+        "source_class": "case",
+        "bytes": 4057
+      },
+      {
+        "uri": "majordomus://test/test/cases/3749_a_full_history_checkout_is_bounded.sh",
+        "kind": "test",
+        "identity": "test/cases/3749_a_full_history_checkout_is_bounded.sh",
+        "path": "test/cases/3749_a_full_history_checkout_is_bounded.sh",
+        "source_class": "case",
+        "bytes": 3766
+      },
+      {
         "uri": "majordomus://test/test/cases/374_delivery_unknown_is_not_delivered.sh",
         "kind": "test",
         "identity": "test/cases/374_delivery_unknown_is_not_delivered.sh",
@@ -115658,6 +115737,14 @@
         "path": "test/cases/37_responsibility_surface.sh",
         "source_class": "case",
         "bytes": 8372
+      },
+      {
+        "uri": "majordomus://test/test/cases/3824_the_bootstrap_says_what_the_cooperation_rule_says.sh",
+        "kind": "test",
+        "identity": "test/cases/3824_the_bootstrap_says_what_the_cooperation_rule_says.sh",
+        "path": "test/cases/3824_the_bootstrap_says_what_the_cooperation_rule_says.sh",
+        "source_class": "case",
+        "bytes": 4083
       },
       {
         "uri": "majordomus://test/test/cases/383_convergence_is_enforced.sh",
@@ -118390,7 +118477,7 @@
       "identity": [
         "id"
       ],
-      "objects": 801
+      "objects": 806
     },
     {
       "name": "knowledge",
@@ -118542,7 +118629,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 567
+      "objects": 571
     },
     {
       "name": "use-case",
