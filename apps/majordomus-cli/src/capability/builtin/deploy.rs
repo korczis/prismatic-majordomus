@@ -519,4 +519,111 @@ mod tests {
         assert!(check.ok);
         assert_eq!(check.decided, 0);
     }
+
+    fn slug_input(
+        deployment: Option<&str>,
+        commit: Option<&str>,
+        executable: &std::path::Path,
+        out: &std::path::Path,
+    ) -> SlugInput {
+        SlugInput {
+            deployment: deployment.map(String::from),
+            commit: commit.map(String::from),
+            executable: executable.display().to_string(),
+            out: out.display().to_string(),
+        }
+    }
+
+    /// A hosted deployment is assembled when it is named, and when it is the only one that
+    /// names a provider and none is named: at HEAD unless a commit is given.
+    #[test]
+    fn a_hosted_deployment_is_assembled_named_or_alone() {
+        let repo = crate::deploy::slug::testing::hosted_layer(&["hosted"]);
+        let ctx = repo.context().expect("a context");
+        let elsewhere = tempfile::tempdir().unwrap();
+        let exe = elsewhere.path().join("exe");
+        std::fs::write(&exe, b"an executable").unwrap();
+
+        let named = elsewhere.path().join("named");
+        let slug = deploy_slug(&ctx, slug_input(Some("hosted"), Some("HEAD"), &exe, &named))
+            .expect("assembled");
+        assert_eq!(slug.deployment, "hosted");
+        assert_eq!(slug.provider.app, "hosted-app");
+        assert!(
+            slug.entries.iter().any(|e| e == "docs"),
+            "{:?}",
+            slug.entries
+        );
+        assert!(named.join("Procfile").is_file());
+
+        let alone = elsewhere.path().join("alone");
+        let slug = deploy_slug(&ctx, slug_input(None, None, &exe, &alone)).expect("assembled");
+        assert_eq!(slug.deployment, "hosted");
+        assert!(alone.join(crate::deploy::slug::SOURCE_FILE).is_file());
+    }
+
+    /// What the assembler declines, cannot find, or fails at reaches the caller as a
+    /// refusal, a not-found and an internal error.
+    #[test]
+    fn what_the_assembler_says_is_the_slug_capabilitys_error() {
+        let repo = crate::deploy::slug::testing::hosted_layer(&["hosted"]);
+        let ctx = repo.context().expect("a context");
+        let elsewhere = tempfile::tempdir().unwrap();
+        let exe = elsewhere.path().join("exe");
+        std::fs::write(&exe, b"an executable").unwrap();
+
+        let absent = elsewhere.path().join("absent");
+        let e = deploy_slug(
+            &ctx,
+            slug_input(None, None, &absent, &elsewhere.path().join("a")),
+        )
+        .expect_err("not found");
+        assert!(
+            matches!(&e, CapabilityError::NotFound(m) if m.contains("absent")),
+            "{e}"
+        );
+
+        let full = elsewhere.path().join("full");
+        std::fs::create_dir(&full).unwrap();
+        std::fs::write(full.join("x"), b"x").unwrap();
+        let e = deploy_slug(&ctx, slug_input(None, None, &exe, &full)).expect_err("refused");
+        assert!(
+            matches!(&e, CapabilityError::Refused(m) if m.contains("not empty")),
+            "{e}"
+        );
+
+        let e =
+            deploy_slug(&ctx, slug_input(None, None, &exe, &exe.join("slug"))).expect_err("failed");
+        assert!(
+            matches!(&e, CapabilityError::Internal(m) if m.contains("cannot be written")),
+            "{e}"
+        );
+    }
+
+    /// With two hosted deployments and none named, the input is incomplete: both are named
+    /// so the caller can choose.
+    #[test]
+    fn two_hosted_deployments_need_the_slug_input_to_name_one() {
+        let repo = crate::deploy::slug::testing::hosted_layer(&["east", "west"]);
+        let ctx = repo.context().expect("a context");
+        let elsewhere = tempfile::tempdir().unwrap();
+        let out = elsewhere.path().join("slug");
+        let e = deploy_slug(&ctx, slug_input(None, None, &out, &out)).expect_err("ambiguous");
+        assert!(
+            matches!(&e, CapabilityError::InvalidInput(m)
+                if m.contains("2 deployments name a provider")
+                    && m.contains("east")
+                    && m.contains("west")),
+            "{e}"
+        );
+        assert!(!out.exists());
+    }
+
+    /// The slug is waived from the benchmark: it declares no case to time.
+    #[test]
+    fn the_deploy_slug_declares_no_benchmark_case() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let ctx = repo.context().expect("a context");
+        assert!(SlugInput::benchmark_cases(&CaseContext { index: &ctx.index }).is_empty());
+    }
 }

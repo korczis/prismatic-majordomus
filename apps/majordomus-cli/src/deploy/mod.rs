@@ -876,6 +876,23 @@ mod tests {
         assert!(!r.correction.is_empty());
     }
 
+    /// An object of another kind is refused by `from_metadata`, which the slug assembler
+    /// reads an object at a commit through, exactly as `parse` refuses it from the index.
+    #[test]
+    fn an_object_of_another_kind_is_refused_naming_the_kind() {
+        let mut v = object_text();
+        v["kind"] = serde_json::json!("rule");
+        let r = Deployment::from_metadata("at/a/commit.yaml", v.clone()).expect_err("refused");
+        assert_eq!(r.file, "at/a/commit.yaml");
+        assert_eq!(r.key, "kind");
+        assert_eq!(r.found, "rule");
+        assert!(r.correction.contains("kind: deployment"), "{r}");
+        assert_eq!(
+            Deployment::parse(&object(v)).expect_err("refused").key,
+            "kind"
+        );
+    }
+
     #[test]
     fn a_malformed_object_is_refused_naming_its_file() {
         let mut v = object_text();

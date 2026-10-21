@@ -33,7 +33,7 @@
 //! ```
 
 use std::collections::BTreeMap;
-use std::io::{BufRead, BufReader, Read, Write};
+use std::io::{BufRead, BufReader, Write};
 use std::path::{Component, Path, PathBuf};
 use std::process::Stdio;
 
@@ -396,8 +396,8 @@ pub fn assemble(req: &Request<'_>) -> Result<Slug, SlugError> {
         executable_sha256: executable_sha256.clone(),
         provider: provider.name,
     };
-    let record = serde_json::to_string_pretty(&source)
-        .map_err(|e| SlugError::Failed(format!("the slug's record cannot be written: {e}")))?;
+    // strings and a unit variant: a record that cannot fail to serialize
+    let record = serde_json::to_string_pretty(&source).expect("the slug's record serializes");
     plan.add(
         SOURCE_FILE,
         Content::Bytes(format!("{record}\n").into_bytes()),
@@ -479,27 +479,23 @@ fn outside(root: &Path, out: &Path) -> Result<PathBuf, SlugError> {
             out.display()
         )));
     }
-    let absolute = if out.is_absolute() {
-        out.to_path_buf()
-    } else {
-        std::env::current_dir()
-            .map_err(|e| SlugError::Failed(format!("the working directory is unreadable: {e}")))?
-            .join(out)
-    };
-    // the nearest ancestor that exists, resolved, and the part that does not exist yet
-    let mut existing = absolute.clone();
-    let mut rest = Vec::new();
-    while !existing.exists() {
-        match existing.file_name() {
-            Some(name) => rest.push(name.to_os_string()),
-            None => break,
-        }
-        existing.pop();
-    }
-    let mut resolved = existing.canonicalize().map_err(|e| {
-        SlugError::Failed(format!("{} cannot be resolved: {e}", existing.display()))
+    let absolute = std::path::absolute(out).map_err(|e| {
+        SlugError::Refused(format!(
+            "the out directory `{}` cannot be made absolute: {e}; name a directory",
+            out.display()
+        ))
     })?;
-    for name in rest.iter().rev() {
+    // the nearest ancestor that resolves, and the part below it that does not exist yet; the
+    // filesystem's root always resolves, so the fallback is the path as named
+    let (existing, mut resolved) = absolute
+        .ancestors()
+        .find_map(|a| a.canonicalize().ok().map(|c| (a, c)))
+        .unwrap_or((absolute.as_path(), absolute.clone()));
+    for name in absolute
+        .strip_prefix(existing)
+        .unwrap_or(Path::new(""))
+        .components()
+    {
         resolved.push(name);
     }
     let root = root
@@ -557,8 +553,13 @@ fn ls_tree(root: &Path, commit: &str, paths: &[&str]) -> Result<Vec<Tracked>, Sl
             String::from_utf8_lossy(&out.stderr).trim()
         )));
     }
+    parse_ls_tree(&out.stdout)
+}
+
+/// The entries of what `git ls-tree -r -z` printed.
+fn parse_ls_tree(stdout: &[u8]) -> Result<Vec<Tracked>, SlugError> {
     let mut tracked = Vec::new();
-    for raw in out.stdout.split(|b| *b == 0).filter(|r| !r.is_empty()) {
+    for raw in stdout.split(|b| *b == 0).filter(|r| !r.is_empty()) {
         let line = std::str::from_utf8(raw).map_err(|_| {
             SlugError::Refused(format!(
                 "a tracked path is not UTF-8: {}",
@@ -632,34 +633,7 @@ fn write(root: &Path, out: &Path, plan: &Plan) -> Result<(usize, u64), SlugError
             Ok(())
         });
         let mut reader = BufReader::new(child.stdout.take().expect("piped stdout"));
-        let streamed = (|| -> Result<u64, SlugError> {
-            let mut total = 0u64;
-            for (path, planned, oid) in &blobs {
-                let mut header = String::new();
-                reader
-                    .read_line(&mut header)
-                    .map_err(|e| SlugError::Failed(format!("git cat-file --batch: {e}")))?;
-                let fields: Vec<&str> = header.trim_end().split(' ').collect();
-                let size = match fields.as_slice() {
-                    [o, "blob", size] if *o == oid.as_str() => size.parse::<usize>().ok(),
-                    _ => None,
-                }
-                .ok_or_else(|| {
-                    SlugError::Failed(format!(
-                        "git cat-file --batch answered `{}` for {oid}",
-                        header.trim_end()
-                    ))
-                })?;
-                let mut content = vec![0u8; size + 1];
-                reader
-                    .read_exact(&mut content)
-                    .map_err(|e| SlugError::Failed(format!("git cat-file --batch: {e}")))?;
-                content.truncate(size);
-                place(out, path, &content, planned.mode)?;
-                total += size as u64;
-            }
-            Ok(total)
-        })();
+        let streamed = stream(&mut reader, out, &blobs);
         drop(reader);
         if streamed.is_err() {
             let _ = child.kill();
@@ -677,14 +651,48 @@ fn write(root: &Path, out: &Path, plan: &Plan) -> Result<(usize, u64), SlugError
     Ok((plan.0.len(), bytes))
 }
 
+/// Read what `git cat-file --batch` answers for each planned blob, in the order they were
+/// asked for, and place each. Answers the bytes placed.
+fn stream(
+    reader: &mut impl BufRead,
+    out: &Path,
+    blobs: &[(&String, &Planned, &String)],
+) -> Result<u64, SlugError> {
+    let mut total = 0u64;
+    for (path, planned, oid) in blobs {
+        let mut header = String::new();
+        reader
+            .read_line(&mut header)
+            .map_err(|e| SlugError::Failed(format!("git cat-file --batch: {e}")))?;
+        let fields: Vec<&str> = header.trim_end().split(' ').collect();
+        let size = match fields.as_slice() {
+            [o, "blob", size] if *o == oid.as_str() => size.parse::<usize>().ok(),
+            _ => None,
+        }
+        .ok_or_else(|| {
+            SlugError::Failed(format!(
+                "git cat-file --batch answered `{}` for {oid}",
+                header.trim_end()
+            ))
+        })?;
+        let mut content = vec![0u8; size + 1];
+        reader
+            .read_exact(&mut content)
+            .map_err(|e| SlugError::Failed(format!("git cat-file --batch: {e}")))?;
+        content.truncate(size);
+        place(out, path, &content, planned.mode)?;
+        total += size as u64;
+    }
+    Ok(total)
+}
+
 /// Write one file of the slug with its mode.
 fn place(out: &Path, rel: &str, content: &[u8], mode: Mode) -> Result<(), SlugError> {
     let path = out.join(rel);
     let io =
         |e: std::io::Error| SlugError::Failed(format!("{} cannot be written: {e}", path.display()));
-    if let Some(parent) = path.parent() {
-        std::fs::create_dir_all(parent).map_err(io)?;
-    }
+    // `rel` is never empty (`Plan::add`), so the path always has a parent
+    std::fs::create_dir_all(path.parent().unwrap_or(out)).map_err(io)?;
     match mode {
         Mode::Link => link(content, &path).map_err(io),
         Mode::File | Mode::Executable => {
@@ -720,18 +728,23 @@ fn permit(_: &Path, _: bool) -> std::io::Result<()> {
     Ok(())
 }
 
+/// What the tests of the slug, of `deploy.slug` and of `majordomus deploy` build their
+/// repositories from: one deployment object's text, and the object with the provider files it
+/// renders written and committed.
 #[cfg(test)]
-mod tests {
-    use super::*;
+pub(crate) mod testing {
+    use std::path::Path;
     use std::process::Command;
 
-    const OBJECT: &str = ".ai/repo/deployments/hosted.yaml";
+    use super::{render, Deployment};
 
-    fn yaml(inputs: &[&str], provider: bool) -> String {
-        let mut s = String::from(
-            "schema: deployment/v1\nkind: deployment\nid: hosted\ntitle: Hosted\n\
-             application: hosted\nbuild:\n  package: majordomus-cli\n  binary: majordomus\n  \
-             profile: release\n  inputs:\n",
+    /// A deployment object `id` with these build inputs, hosted on Gigalixir as `<id>-app`
+    /// when `provider` is set.
+    pub(crate) fn object_yaml(id: &str, inputs: &[&str], provider: bool) -> String {
+        let mut s = format!(
+            "schema: deployment/v1\nkind: deployment\nid: {id}\ntitle: Hosted\n\
+             application: {id}\nbuild:\n  package: majordomus-cli\n  binary: majordomus\n  \
+             profile: release\n  inputs:\n"
         );
         for i in inputs {
             s.push_str(&format!("    - {i}\n"));
@@ -743,12 +756,89 @@ mod tests {
              autostop: true\nregion: fra\n",
         );
         if provider {
-            s.push_str(
-                "provider:\n  name: gigalixir\n  app: hosted-app\n  stack: gigalixir-24\n  \
-                 url: https://hosted-app.gigalixirapp.com\n",
-            );
+            s.push_str(&format!(
+                "provider:\n  name: gigalixir\n  app: {id}-app\n  stack: gigalixir-24\n  \
+                 url: https://{id}-app.gigalixirapp.com\n"
+            ));
         }
         s
+    }
+
+    /// Run git in `root`, asserting it succeeded, and answer what it printed.
+    pub(crate) fn git(root: &Path, args: &[&str]) -> String {
+        let out = Command::new("git")
+            .arg("-C")
+            .arg(root)
+            .args(args)
+            .output()
+            .unwrap();
+        assert!(out.status.success(), "git {args:?}: {out:?}");
+        String::from_utf8(out.stdout).unwrap().trim().to_string()
+    }
+
+    /// Make `root` a repository a test can commit in.
+    pub(crate) fn init(root: &Path, extra: &[&str]) {
+        let mut args = vec!["init", "-q"];
+        args.extend_from_slice(extra);
+        git(root, &args);
+        git(root, &["config", "user.email", "t@example.com"]);
+        git(root, &["config", "user.name", "t"]);
+        git(root, &["config", "commit.gpgsign", "false"]);
+    }
+
+    /// Write a file under `root`, creating its directories.
+    pub(crate) fn write(root: &Path, rel: &str, content: &[u8]) {
+        let p = root.join(rel);
+        std::fs::create_dir_all(p.parent().unwrap()).unwrap();
+        std::fs::write(p, content).unwrap();
+    }
+
+    /// Write the object `text` at `file` and every provider file it renders.
+    pub(crate) fn write_object(root: &Path, file: &str, text: &str) {
+        write(root, file, text.as_bytes());
+        let map = crate::metadata::yaml::parse_mapping(text).unwrap();
+        let d = Deployment::from_metadata(file, serde_json::Value::Object(map)).unwrap();
+        for a in render::provider_artifacts(&d, file) {
+            write(root, &a.path, a.content.as_bytes());
+        }
+    }
+
+    /// Stage and commit everything.
+    pub(crate) fn commit(root: &Path, message: &str) {
+        git(root, &["add", "-A"]);
+        git(root, &["commit", "-qm", message]);
+    }
+
+    /// A synthetic layer that discovers deployments and declares `ids`, each hosted and
+    /// shipping `docs`, with the provider files rendered, all committed.
+    pub(crate) fn hosted_layer(ids: &[&str]) -> crate::synthetic::SyntheticRepository {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        init(repo.root(), &[]);
+        let sources = repo.root().join(".ai/repo/knowledge/sources.yaml");
+        let mut text = std::fs::read_to_string(&sources).unwrap();
+        text.push_str(
+            "  - id: deployment\n    kind: deployment\n    discovery: vcs\n    \
+             pathspec: ':(glob).ai/repo/deployments/*.yaml'\n    required: false\n",
+        );
+        std::fs::write(&sources, text).unwrap();
+        for id in ids {
+            let file = format!(".ai/repo/deployments/{id}.yaml");
+            write_object(repo.root(), &file, &object_yaml(id, &["docs"], true));
+        }
+        commit(repo.root(), "the layer");
+        repo
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::process::Command;
+
+    const OBJECT: &str = ".ai/repo/deployments/hosted.yaml";
+
+    fn yaml(inputs: &[&str], provider: bool) -> String {
+        testing::object_yaml("hosted", inputs, provider)
     }
 
     struct Fixture {
@@ -1030,5 +1120,502 @@ mod tests {
             matches!(&e, SlugError::Refused(m) if m.contains("`nowhere`")),
             "{e}"
         );
+    }
+
+    /// An error reads as its message, whatever its class.
+    #[test]
+    fn a_slug_error_reads_as_its_message() {
+        for e in [
+            SlugError::Refused("r".into()),
+            SlugError::Missing("m".into()),
+            SlugError::Failed("f".into()),
+        ] {
+            let (SlugError::Refused(m) | SlugError::Missing(m) | SlugError::Failed(m)) = &e;
+            assert_eq!(&e.to_string(), m);
+        }
+    }
+
+    fn bytes(b: &[u8]) -> Content {
+        Content::Bytes(b.to_vec())
+    }
+
+    /// A planned path is relative and stays inside the slug: an empty one, an absolute one
+    /// and one that climbs are failures of the assembler, never written.
+    #[test]
+    fn a_deploy_plan_path_outside_the_slug_is_a_failure() {
+        let mut plan = Plan::default();
+        for path in ["", "/etc/passwd", "../x", "a/../../x"] {
+            let e = plan.add(path, bytes(b"x"), Mode::File, "t").unwrap_err();
+            assert!(
+                matches!(&e, SlugError::Failed(m) if m.contains("not a relative path")),
+                "{path}: {e}"
+            );
+        }
+        assert!(plan.0.is_empty());
+    }
+
+    /// A file where another path needs a directory is refused before anything is written.
+    #[test]
+    fn a_deploy_plan_with_a_file_where_a_directory_is_needed_is_refused() {
+        let mut plan = Plan::default();
+        plan.add("a", bytes(b"x"), Mode::File, "the first").unwrap();
+        plan.add("a/b/c", bytes(b"y"), Mode::File, "the second")
+            .unwrap();
+        let e = plan.check_prefixes().unwrap_err();
+        assert!(
+            matches!(&e, SlugError::Refused(m) if m.contains("the first writes the file `a`")),
+            "{e}"
+        );
+    }
+
+    /// A build input that is a file where the slug keeps its own directory is refused.
+    #[test]
+    fn a_build_input_where_the_slug_needs_a_directory_is_refused() {
+        let f = Fixture::new();
+        f.write(".majordomus", "a file\n");
+        f.object(&["share", ".majordomus"], true);
+        let exe = f.elsewhere.path().join("exe");
+        let out = f.elsewhere.path().join("slug");
+        let e = assemble(&f.request(&out, &exe)).unwrap_err();
+        assert!(
+            matches!(&e, SlugError::Refused(m) if m.contains("needs a directory")),
+            "{e}"
+        );
+        assert!(!out.exists());
+    }
+
+    /// The buildpack line, the executable and the record are the slug's own: a build input
+    /// that would land on any of them is a collision, refused.
+    #[test]
+    fn a_build_input_never_takes_the_place_of_the_slugs_own_files() {
+        let f = Fixture::new();
+        let exe = f.elsewhere.path().join("exe");
+        let out = f.elsewhere.path().join("slug");
+        for own in [BUILDPACKS_FILE, ".majordomus/bin/majordomus", SOURCE_FILE] {
+            f.write(own, "mine\n");
+            f.object(&["share", own], true);
+            let e = assemble(&f.request(&out, &exe)).unwrap_err();
+            assert!(
+                matches!(&e, SlugError::Refused(m) if m.contains(&format!("would both write `{own}`"))),
+                "{own}: {e}"
+            );
+            f.git(&[
+                "rm",
+                "-rqf",
+                "--ignore-unmatch",
+                ".majordomus",
+                BUILDPACKS_FILE,
+            ]);
+        }
+        assert!(!out.exists());
+    }
+
+    /// The object at the file must be the deployment the request names.
+    #[test]
+    fn another_deployment_at_the_file_is_refused() {
+        let f = Fixture::new();
+        let exe = f.elsewhere.path().join("exe");
+        let out = f.elsewhere.path().join("slug");
+        let req = Request {
+            id: "other",
+            ..f.request(&out, &exe)
+        };
+        let e = assemble(&req).unwrap_err();
+        assert!(
+            matches!(&e, SlugError::Refused(m) if m.contains("not `other`")),
+            "{e}"
+        );
+    }
+
+    /// An object file the commit does not hold is missing; one that is not UTF-8, not YAML
+    /// this executable reads, or not a deployment is refused.
+    #[test]
+    fn an_object_the_commit_does_not_hold_or_cannot_read_is_named() {
+        let f = Fixture::new();
+        let exe = f.elsewhere.path().join("exe");
+        let out = f.elsewhere.path().join("slug");
+        let req = Request {
+            file: ".ai/repo/deployments/absent.yaml",
+            ..f.request(&out, &exe)
+        };
+        assert!(matches!(assemble(&req), Err(SlugError::Missing(m)) if m.contains("absent.yaml")),);
+
+        testing::write(f.repo.path(), "bad/latin1.yaml", b"id: \xff\xfe\n");
+        testing::write(f.repo.path(), "bad/tab.yaml", b"a:\tb\n");
+        testing::write(f.repo.path(), "bad/other.yaml", b"a: b\n");
+        f.git(&["add", "-A"]);
+        f.git(&["commit", "-qm", "bad objects"]);
+        let commit = resolve(f.repo.path(), "HEAD").unwrap();
+        for (file, said) in [
+            ("bad/latin1.yaml", "not UTF-8"),
+            ("bad/tab.yaml", "tab character"),
+            ("bad/other.yaml", "bad/other.yaml"),
+        ] {
+            let e = object_at(f.repo.path(), &commit, file).unwrap_err();
+            assert!(
+                matches!(&e, SlugError::Refused(m) if m.contains(said)),
+                "{file}: {e}"
+            );
+        }
+    }
+
+    /// A symbolic link the commit tracks lands as a link, not as the file it names.
+    #[cfg(unix)]
+    #[test]
+    fn a_tracked_link_lands_in_the_deploy_slug_as_a_link() {
+        let f = Fixture::new();
+        std::os::unix::fs::symlink("a.txt", f.repo.path().join("share/link")).unwrap();
+        f.git(&["add", "-A"]);
+        f.git(&["commit", "-qm", "a link"]);
+        let exe = f.elsewhere.path().join("exe");
+        let out = f.elsewhere.path().join("slug");
+        assemble(&f.request(&out, &exe)).unwrap();
+        assert_eq!(
+            std::fs::read_link(out.join("share/link")).unwrap(),
+            Path::new("a.txt")
+        );
+    }
+
+    /// A submodule among the inputs is another repository, never shipped.
+    #[test]
+    fn a_submodule_among_the_inputs_is_refused() {
+        let f = Fixture::new();
+        let head = testing::git(f.repo.path(), &["rev-parse", "HEAD"]);
+        f.git(&[
+            "update-index",
+            "--add",
+            "--cacheinfo",
+            &format!("160000,{head},share/sub"),
+        ]);
+        f.git(&["commit", "-qm", "a submodule"]);
+        let exe = f.elsewhere.path().join("exe");
+        let out = f.elsewhere.path().join("slug");
+        let e = assemble(&f.request(&out, &exe)).unwrap_err();
+        assert!(
+            matches!(&e, SlugError::Refused(m) if m.contains("`share/sub` is a commit")),
+            "{e}"
+        );
+    }
+
+    /// git's plumbing can record a tree entry named `..`; a path through it would write
+    /// outside the slug, and is a failure rather than a file.
+    #[test]
+    fn a_tracked_path_that_climbs_out_of_the_deploy_slug_is_a_failure() {
+        let f = Fixture::new();
+        let mktree = |text: &str| -> String {
+            let mut child = Command::new("git")
+                .arg("-C")
+                .arg(f.repo.path())
+                .arg("mktree")
+                .stdin(Stdio::piped())
+                .stdout(Stdio::piped())
+                .spawn()
+                .unwrap();
+            child
+                .stdin
+                .take()
+                .unwrap()
+                .write_all(text.as_bytes())
+                .unwrap();
+            let out = child.wait_with_output().unwrap();
+            assert!(out.status.success(), "{out:?}");
+            String::from_utf8(out.stdout).unwrap().trim().to_string()
+        };
+        let a = testing::git(f.repo.path(), &["rev-parse", "HEAD:share/a.txt"]);
+        let inner = mktree(&format!("100644 blob {a}\tx\n"));
+        let share = mktree(&format!(
+            "040000 tree {inner}\t..\n100644 blob {a}\ta.txt\n"
+        ));
+        let root: String = testing::git(f.repo.path(), &["ls-tree", "HEAD"])
+            .lines()
+            .map(|l| {
+                if l.ends_with("\tshare") {
+                    format!("040000 tree {share}\tshare\n")
+                } else {
+                    format!("{l}\n")
+                }
+            })
+            .collect();
+        let tree = mktree(&root);
+        let commit = testing::git(f.repo.path(), &["commit-tree", &tree, "-m", "climbs"]);
+        let exe = f.elsewhere.path().join("exe");
+        let out = f.elsewhere.path().join("slug");
+        let req = Request {
+            commit: &commit,
+            ..f.request(&out, &exe)
+        };
+        let e = assemble(&req).unwrap_err();
+        assert!(
+            matches!(&e, SlugError::Failed(m) if m.contains("`share/../x`")),
+            "{e}"
+        );
+        assert!(!out.exists());
+    }
+
+    /// A provider file the object renders and the commit does not hold is refused.
+    #[test]
+    fn a_provider_file_the_commit_does_not_hold_is_refused() {
+        let f = Fixture::new();
+        f.git(&["rm", "-q", "deploy/gigalixir/Procfile"]);
+        f.git(&["commit", "-qm", "no Procfile"]);
+        let exe = f.elsewhere.path().join("exe");
+        let out = f.elsewhere.path().join("slug");
+        let e = assemble(&f.request(&out, &exe)).unwrap_err();
+        assert!(
+            matches!(&e, SlugError::Refused(m) if m.contains("Procfile is not committed")),
+            "{e}"
+        );
+    }
+
+    /// An input git cannot list is git's failure, said with what git said.
+    #[test]
+    fn an_input_git_cannot_list_is_a_failure() {
+        let f = Fixture::new();
+        f.object(&["share", "../elsewhere"], true);
+        let exe = f.elsewhere.path().join("exe");
+        let out = f.elsewhere.path().join("slug");
+        let e = assemble(&f.request(&out, &exe)).unwrap_err();
+        assert!(
+            matches!(&e, SlugError::Failed(m) if m.contains("git ls-tree")),
+            "{e}"
+        );
+    }
+
+    /// The loose object `rev` names, removed from the store.
+    fn lose(f: &Fixture, rev: &str) {
+        let oid = testing::git(f.repo.path(), &["rev-parse", rev]);
+        let path = f
+            .repo
+            .path()
+            .join(".git/objects")
+            .join(&oid[..2])
+            .join(&oid[2..]);
+        std::fs::remove_file(&path).unwrap_or_else(|e| panic!("{}: {e}", path.display()));
+    }
+
+    /// A store that lost the provider's tree or one of its files is a failure, and no slug
+    /// is written from what remains.
+    #[test]
+    fn a_damaged_object_store_is_a_failure_not_a_deploy_slug() {
+        let exe_of = |f: &Fixture| f.elsewhere.path().join("exe");
+        for lost in [
+            "HEAD:deploy",
+            "HEAD:deploy/gigalixir/Procfile",
+            "HEAD:share/a.txt",
+        ] {
+            let f = Fixture::new();
+            lose(&f, lost);
+            let out = f.elsewhere.path().join("slug");
+            let e = assemble(&f.request(&out, &exe_of(&f))).unwrap_err();
+            assert!(matches!(&e, SlugError::Failed(_)), "{lost}: {e}");
+        }
+    }
+
+    /// A repository of SHA-256 objects names its commits in 64 hex digits, recorded whole.
+    #[test]
+    fn a_sha256_commit_resolves_in_full() {
+        let repo = tempfile::tempdir().unwrap();
+        testing::init(repo.path(), &["--object-format=sha256"]);
+        testing::write(repo.path(), "a", b"a\n");
+        testing::commit(repo.path(), "one");
+        let sha = resolve(repo.path(), "HEAD").unwrap();
+        assert_eq!(sha.len(), 64);
+    }
+
+    /// A git that cannot be started is a failure of every read, said as such.
+    #[test]
+    fn a_git_that_cannot_start_fails_every_deploy_read() {
+        // an argument holding NUL is refused by the process launcher before git runs
+        let root = Path::new("no\0where");
+        let commit = "0".repeat(40);
+        let started = |r: Result<(), SlugError>| {
+            assert!(
+                matches!(&r, Err(SlugError::Failed(m)) if m.contains("cannot run git")),
+                "{r:?}"
+            );
+        };
+        started(resolve(root, "HEAD").map(drop));
+        started(object_at(root, &commit, OBJECT).map(drop));
+        started(ls_tree(root, &commit, &["share"]).map(drop));
+        started(blob(root, &commit).map(drop));
+        let out = tempfile::tempdir().unwrap();
+        let mut plan = Plan::default();
+        plan.add("a", Content::Blob(commit.clone()), Mode::File, "t")
+            .unwrap();
+        started(write(root, out.path(), &plan).map(drop));
+    }
+
+    /// What the commit does not have is git's failure; no path asks for no file.
+    #[test]
+    fn what_git_does_not_have_is_a_deploy_failure() {
+        let f = Fixture::new();
+        let absent = "0".repeat(40);
+        assert!(matches!(
+            ls_tree(f.repo.path(), &absent, &["share"]),
+            Err(SlugError::Failed(m)) if m.contains("git ls-tree")
+        ));
+        assert!(ls_tree(f.repo.path(), "HEAD", &[]).unwrap().is_empty());
+        assert!(matches!(
+            blob(f.repo.path(), &absent),
+            Err(SlugError::Failed(m)) if m.contains("git cat-file blob")
+        ));
+    }
+
+    /// `git ls-tree` output this assembler does not understand is never guessed at.
+    #[test]
+    fn ls_tree_output_that_is_not_understood_is_never_guessed_at() {
+        let ok = parse_ls_tree(b"100644 blob abc\tshare/a.txt\0\0").unwrap();
+        assert_eq!(ok.len(), 1);
+        assert_eq!(
+            (ok[0].mode.as_str(), ok[0].kind.as_str(), ok[0].oid.as_str()),
+            ("100644", "blob", "abc")
+        );
+        assert_eq!(ok[0].path, "share/a.txt");
+        assert!(matches!(
+            parse_ls_tree(b"100644 blob abc\tshare/\xff\0"),
+            Err(SlugError::Refused(m)) if m.contains("not UTF-8")
+        ));
+        for said in [&b"no tab here\0"[..], b"100644 blob\tshare/a.txt\0"] {
+            assert!(matches!(
+                parse_ls_tree(said),
+                Err(SlugError::Failed(m)) if m.contains("git ls-tree said")
+            ));
+        }
+    }
+
+    /// The out directory is made absolute against the working directory and resolved
+    /// through its nearest existing ancestor; an empty name, an existing file and a root
+    /// that cannot be resolved are each refused or failed, and an empty directory is taken.
+    #[test]
+    fn the_deploy_out_directory_is_resolved_and_checked() {
+        let f = Fixture::new();
+        let e = outside(f.repo.path(), Path::new("")).unwrap_err();
+        assert!(
+            matches!(&e, SlugError::Refused(m) if m.contains("cannot be made absolute")),
+            "{e}"
+        );
+
+        let relative = Path::new("no-such-slug-directory/below");
+        let resolved = outside(f.repo.path(), relative).unwrap();
+        assert!(resolved.is_absolute() && resolved.ends_with(relative));
+        assert!(!resolved.exists());
+
+        let file = f.elsewhere.path().join("exe");
+        let e = outside(f.repo.path(), &file).unwrap_err();
+        assert!(
+            matches!(&e, SlugError::Refused(m) if m.contains("not a readable directory")),
+            "{e}"
+        );
+
+        let empty = f.elsewhere.path().join("empty");
+        std::fs::create_dir(&empty).unwrap();
+        assert_eq!(
+            outside(f.repo.path(), &empty).unwrap(),
+            empty.canonicalize().unwrap()
+        );
+
+        let e = outside(Path::new("no\0where"), &empty).unwrap_err();
+        assert!(
+            matches!(&e, SlugError::Failed(m) if m.contains("cannot be resolved")),
+            "{e}"
+        );
+    }
+
+    /// An out directory that cannot be created fails the slug with what the filesystem said.
+    #[test]
+    fn an_out_directory_below_a_file_fails_the_deploy_slug() {
+        let f = Fixture::new();
+        let exe = f.elsewhere.path().join("exe");
+        let out = exe.join("slug");
+        let e = assemble(&f.request(&out, &exe)).unwrap_err();
+        assert!(
+            matches!(&e, SlugError::Failed(m) if m.contains("cannot be written")),
+            "{e}"
+        );
+    }
+
+    /// git is asked for every blob while it answers: a blob it does not have is a failure,
+    /// and the asking stops when git is stopped, however much was left to ask.
+    #[test]
+    fn a_blob_git_does_not_answer_fails_the_deploy_write() {
+        let f = Fixture::new();
+        let out = f.elsewhere.path().join("slug");
+        let mut plan = Plan::default();
+        // far more requests than a pipe holds, so the asking is still blocked when git stops
+        for n in 0..20_000 {
+            plan.add(
+                &format!("f{n:05}"),
+                Content::Blob("0".repeat(40)),
+                Mode::File,
+                "t",
+            )
+            .unwrap();
+        }
+        let e = write(f.repo.path(), &out, &plan).unwrap_err();
+        assert!(
+            matches!(&e, SlugError::Failed(m) if m.contains("answered")),
+            "{e}"
+        );
+    }
+
+    /// A slug of bytes alone asks git for nothing; a file where a directory is needed fails
+    /// the write, whether its bytes are in hand or streamed from git.
+    #[test]
+    fn the_deploy_write_places_bytes_and_fails_where_a_path_cannot_be_written() {
+        let f = Fixture::new();
+        let mut plan = Plan::default();
+        plan.add("only", bytes(b"abc"), Mode::File, "t").unwrap();
+        let out = f.elsewhere.path().join("bytes");
+        assert_eq!(write(Path::new("no\0where"), &out, &plan).unwrap(), (1, 3));
+        assert_eq!(std::fs::read(out.join("only")).unwrap(), b"abc");
+
+        let mut plan = Plan::default();
+        plan.add("a", bytes(b"x"), Mode::File, "t").unwrap();
+        plan.add("a/b", bytes(b"y"), Mode::File, "t").unwrap();
+        let e = write(f.repo.path(), &f.elsewhere.path().join("held"), &plan).unwrap_err();
+        assert!(
+            matches!(&e, SlugError::Failed(m) if m.contains("cannot be written")),
+            "{e}"
+        );
+
+        let a = testing::git(f.repo.path(), &["rev-parse", "HEAD:share/a.txt"]);
+        let mut plan = Plan::default();
+        plan.add("a", Content::Blob(a.clone()), Mode::File, "t")
+            .unwrap();
+        plan.add("a/b", Content::Blob(a), Mode::File, "t").unwrap();
+        let e = write(f.repo.path(), &f.elsewhere.path().join("streamed"), &plan).unwrap_err();
+        assert!(
+            matches!(&e, SlugError::Failed(m) if m.contains("cannot be written")),
+            "{e}"
+        );
+    }
+
+    /// An answer that is not text, or shorter than the size it announced, is a failure.
+    #[test]
+    fn a_truncated_or_garbled_answer_fails_the_deploy_stream() {
+        let out = tempfile::tempdir().unwrap();
+        let oid = "a".repeat(40);
+        let path = "f".to_string();
+        let planned = Planned {
+            content: Content::Blob(oid.clone()),
+            mode: Mode::File,
+            origin: "t".into(),
+        };
+        let blobs = [(&path, &planned, &oid)];
+        for answer in [
+            b"\xff\xfe\n".to_vec(),
+            format!("{oid} blob 10\nabc").into_bytes(),
+            format!("{oid} missing\n").into_bytes(),
+        ] {
+            let mut reader = std::io::Cursor::new(answer);
+            let e = stream(&mut reader, out.path(), &blobs).unwrap_err();
+            assert!(
+                matches!(&e, SlugError::Failed(m) if m.contains("git cat-file --batch")),
+                "{e}"
+            );
+        }
+        let mut reader = std::io::Cursor::new(format!("{oid} blob 3\nabc\n").into_bytes());
+        assert_eq!(stream(&mut reader, out.path(), &blobs).unwrap(), 3);
+        assert_eq!(std::fs::read(out.path().join("f")).unwrap(), b"abc");
     }
 }
