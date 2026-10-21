@@ -4,6 +4,7 @@ description = "Zadání vložené do session je přání k jednomu dni, ne pokyn
 template = "page.html"
 [extra]
 lang = "cs"
+related = ["dokumentace-kterou-lze-odmitnout/", "teze/", "vsechno-v-jednom-proudu/", "kresla-ne-jmena/", "plan-se-napadne-driv-nez-se-postavi/"]
 [extra.translations]
 en = "a-pasted-brief-becomes-a-plan/"
 +++
