@@ -1826,6 +1826,11 @@ if mj_project_load; then
   # on and appears only on a Linux runner, as a red deploy rather than a red test. The issues
   # array crossed the limit as the plan grew and milestones was next. --slurpfile has no
   # ceiling at all rather than a larger one, so growth cannot bring this back.
+  # findings_by_code is what the plan page shows: one entry per (level, code) with its count
+  # and three examples. `plan validate` reports scope_conflict once per pair of issues sharing
+  # a path, so the findings grow with roughly the square of the backlog; printed one row each
+  # they were half of /plan/ (2,797 rows, 932 KB on 2026-10-21) and timed the UI audit out
+  # (I3838). The whole list stays in `findings`, beside it.
   for pair in "milestones:$MS" "issues:$IS" "waves:$WV" "edges:$EG" "findings:$FD"; do
     printf '%s' "${pair#*:}" > "$STAGE/plan-${pair%%:*}.json"
   done
@@ -1839,7 +1844,11 @@ if mj_project_load; then
       active_milestone:$active, next_ready:$next, mermaid:$mermaid, statuses:$statuses,
       worker_sequence:$worker_sequence,
       milestones:$milestones[0], issues:$issues[0], waves:$waves[0], edges:$edges[0],
-      findings:$findings[0]}' > "$OUT/plan.json"
+      findings:$findings[0],
+      findings_by_code:($findings[0] | group_by([.level, .code])
+        | map({level: .[0].level, code: .[0].code, count: length, examples: .[:3]})
+        | sort_by([(if .level == "FAIL" then 0 elif .level == "WARN" then 1 else 2 end), -.count, .code]))}' \
+    > "$OUT/plan.json"
 # Refuse an invalid model rather than project it. A cycle makes every milestone BLOCKED with
 # no rank, and without this the generator published that roadmap and exited 0 — a page saying
 # nothing is reachable, with no reason given. The engine has already said so by this point:
