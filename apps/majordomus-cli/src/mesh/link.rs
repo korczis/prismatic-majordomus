@@ -871,9 +871,10 @@ pub trait LinkTransport: Send + Sync {
     fn post(&self, endpoint: &str, path: &str, message: &Signed) -> Result<LinkReply, String>;
 }
 
-/// The transport the shared server answers: plain HTTP/1.1 through the crate's one
-/// minimal client (ADR 0032: no HTTP client dependency, no TLS). A private network or an
-/// overlay provides confidentiality; the protocol provides authenticity.
+/// The transport the shared server answers: HTTP/1.1 through the crate's one minimal client
+/// (ADR 0032: no HTTP client dependency). An `https://` seed is reached over TLS with its
+/// certificate verified; anything else is cleartext, which the client sends only to a
+/// loopback, private or overlay address (ADR 0220). The protocol provides authenticity.
 ///
 /// It refuses an oversized message before opening a socket, so the bound the protocol
 /// states is enforced by the sender too and a peer is never asked to read something it
@@ -899,7 +900,7 @@ impl LinkTransport for HttpTransport {
                 body.len()
             ));
         }
-        let base = if endpoint.starts_with("http://") {
+        let base = if endpoint.starts_with("http://") || endpoint.starts_with("https://") {
             endpoint.to_string()
         } else {
             format!("http://{endpoint}")
@@ -1049,5 +1050,26 @@ mod tests {
             .post("127.0.0.1:9", HELLO_PATH, &signed)
             .unwrap_err();
         assert!(error.contains("127.0.0.1:9"), "{error}");
+    }
+
+    /// A seed written `https://` keeps its scheme (it is not read as a host named "https"),
+    /// and a public address in cleartext is refused by the client before anything is sent.
+    #[test]
+    fn an_https_seed_keeps_its_scheme_and_a_public_cleartext_seed_is_refused() {
+        let node = NodeIdentity::ephemeral().unwrap();
+        let signed = sign(&node, Domain::Hello, serde_json::json!({}));
+        let error = HttpTransport
+            .post("https://bad..name:443", HELLO_PATH, &signed)
+            .unwrap_err();
+        assert!(error.starts_with("https://bad..name:443/"), "{error}");
+        assert!(
+            error.contains("is not a name a certificate can be checked against"),
+            "{error}"
+        );
+        let error = HttpTransport
+            .post("203.0.113.5:8742", HELLO_PATH, &signed)
+            .unwrap_err();
+        assert!(error.contains("203.0.113.5 is a public address"), "{error}");
+        assert!(error.contains("use https://203.0.113.5:8742"), "{error}");
     }
 }

@@ -1,5 +1,5 @@
 +++
-title = "A deployment object that breaks its closed contract, whether by a key the contract does not have, another schema version, a missing field, an interface, port, machine count or health route that could not work, a value that reads as a credential or an identity two files claim, is refused by doctor with the reason named"
+title = "A deployment object that breaks its closed contract, whether by a key the contract does not have, another schema version, a missing field, an interface, port, machine count or health route that could not work, a provider the contract does not know or a provider address that is not https, a value that reads as a credential or an identity two files claim, is refused by doctor with the reason named"
 description = "A deployment of the executable is one YAML object under the layer's deployments section,"
 weight = 202
 [extra]
@@ -23,6 +23,9 @@ names the reason:
 - a port outside the unprivileged range, since the deployed process does not run as root;
 - more machines kept running than the deployment has;
 - a health route written as a URL rather than a path;
+- a provider the contract does not know (it knows `gigalixir`, ADR 0219), a named provider
+  missing its application, stack or URL, a provider URL that is not `https://`, or a
+  provider beside a loopback interface;
 - a value that reads as a credential, in a field that does exist;
 - two objects claiming one identity.
 
@@ -36,7 +39,8 @@ finding, and a valid object added as one file is accepted and counted by `doctor
 flattens each object, compares its keys with `share/allow/deployment.txt` (an allow-list
 generated from the contract's schema, never written by hand), and then checks the schema
 version, the required fields, the interface, the port range, the machine counts, the health
-routes, the values that match known credential prefixes and the identities already seen.
+routes, the provider block when there is one, the values that match known credential
+prefixes and the identities already seen.
 Each violation is a `FAIL` finding under the `deployment` category with the reason and the
 command that shows the offending lines.
 
@@ -72,8 +76,9 @@ module's own tests, not by this case.
 The credential check matches the prefixes of known token formats. A secret in a format it
 does not know, written into a field the contract allows, is not recognised as one.
 
-It does not prove that the generated container definition and its ignore file match the
-object; `majordomus generate --check` holds that, and its own case proves it. Nothing
+It does not prove that the generated container definition, its ignore file and the
+provider's files match the object; `majordomus generate --check` holds that, and cases 86
+and 3820 prove it. Nothing
 here contacts a hosting provider or proves that a deployment, once accepted, will start.
 
 ## Why it exists
