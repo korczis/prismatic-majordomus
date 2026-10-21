@@ -46209,6 +46209,52 @@
         }
       },
       {
+        "id": "majordomus://issue/I3098",
+        "kind": "issue",
+        "label": "I3098",
+        "summary": "Waiting derives take the machine's derive lock in the order they arrived",
+        "route": "/cockpit/objects/issue/i3098",
+        "source": ".ai/repo/project/issues/I3098.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Two waiters that arrive in order A then B take the lock A then B, whichever polls first",
+            "A ticket whose pid has died is reaped and does not hold the queue",
+            "The priority marker still serves its branch first",
+            "The waiting line names the position and the branch ahead"
+          ],
+          "created_at": "2026-10-21",
+          "current_state": "machine_lock.sh takes <home>/.derive.lock by mkdir and polls every MAJORDOMUS_DERIVE_POLL seconds; there is no ticket, so arrival order is not kept, and the waiting line names only the holder.",
+          "depends_on": [],
+          "desired_state": "Waiters are served in arrival order unless the priority marker names a branch; each waiting line and `majordomus brief` say the position and who is ahead.",
+          "evidence_required": [
+            "arrival_order_is_kept",
+            "dead_ticket_is_reaped"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "The offload queue on other machines (I2398)"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/machine_lock.sh",
+            "scripts/derive",
+            "test/cases",
+            ".ai/repo/project/issues/I3098.yaml"
+          ],
+          "slug": "derives-take-the-lock-in-arrival-order",
+          "started_at": "2026-10-21T00:49:21Z",
+          "started_event": "sha256:6767c4077e2ce969e6c7f5a87d2de160194fd36f911016e7a1c0381470110fe4",
+          "updated_at": "2026-10-21T00:50:10Z",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE bash test/run.sh 1018"
+          ],
+          "verified_at": "2026-10-21T00:50:10Z",
+          "verified_event": "sha256:6062da34b87f794b073e01abe51577300ee38e5f683953bfcfff8b80a6495336"
+        }
+      },
+      {
         "id": "majordomus://issue/I3100",
         "kind": "issue",
         "label": "I3100",
@@ -111993,6 +112039,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3098",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3098",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I3100",
         "target": "kind:issue",
         "kind": "is_a"
@@ -127599,8 +127655,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3607,
-      "edges": 8391,
+      "nodes": 3608,
+      "edges": 8393,
       "acyclic": false,
       "truncated": false
     }
