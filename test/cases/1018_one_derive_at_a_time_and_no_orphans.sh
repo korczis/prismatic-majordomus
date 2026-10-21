@@ -142,6 +142,8 @@ lock_free
 # (I3098). A waits first with a slow poll and B second with a fast one; without the queue B
 # wins that race nearly every time. With it, A takes the lock first.
 Q="$T/machine/.derive.queue"
+# How many tickets the queue holds, counted with a glob (shellcheck SC2010: never ls | grep).
+tickets() { n=0; for t in "$Q"/*; do [ -e "$t" ] && n=$((n + 1)); done; echo "$n"; }
 a=""; b=""
 sleep 60 & live=$!
 # a failure below must not leave its waiters queued behind a holder that sleeps on
@@ -151,8 +153,8 @@ mkdir "$MAJORDOMUS_DERIVE_LOCK" && printf 'other-session %s\n' "$live" > "$MAJOR
 MAJORDOMUS_DERIVE_POLL=4 "$D" --locked -- sh -c 'echo A >> "$0"' "$T/order" 2> "$T/a.err" & a=$!
 sleep 1.2
 MAJORDOMUS_DERIVE_POLL=1 "$D" --locked -- sh -c 'echo B >> "$0"' "$T/order" 2> "$T/b.err" & b=$!
-for _ in $(seq 1 50); do [ "$(ls "$Q" 2>/dev/null | grep -c .)" = 2 ] && break; sleep 0.1; done
-[ "$(ls "$Q" 2>/dev/null | grep -c .)" = 2 ] || fail "two waiters left $(ls "$Q" 2>/dev/null | grep -c .) ticket(s), not 2"
+for _ in $(seq 1 50); do [ "$(tickets)" = 2 ] && break; sleep 0.1; done
+[ "$(tickets)" = 2 ] || fail "two waiters left $(tickets) ticket(s), not 2"
 sleep 1.5
 grep -q 'place 2 of 2 in the queue' "$T/b.err" || fail "the second waiter does not say its place: $(cat "$T/b.err")"
 kill "$live" 2>/dev/null || true; wait "$live" 2>/dev/null || true
