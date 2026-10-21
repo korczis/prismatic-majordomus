@@ -111,7 +111,10 @@ mj_lock_kill_tree() {
 
 # The queue (I3098). A waiter takes a ticket once and keeps it until it holds the lock or
 # leaves; a ticket whose pid no longer runs is a waiter that died and is removed by whoever
-# reads the queue next, aloud. Tickets order by arrival second, then by pid.
+# reads the queue next, aloud. A ticket is "<arrival epoch>-<pid>": a ten-digit epoch sorts
+# as text, so the shell's own glob order is the arrival order. Reading the queue forks
+# nothing (glob, `kill -0`), because every derive reads it on every look and a machine at
+# load 70 makes each fork cost.
 mj_lock_take_ticket() {
   [ -z "$MJ_LOCK_TICKET" ] || return 0
   mkdir -p "$MJ_LOCK_QUEUE" 2>/dev/null || return 0
@@ -122,22 +125,25 @@ mj_lock_leave_queue() {
   [ -n "$MJ_LOCK_TICKET" ] || return 0
   rm -f "$MJ_LOCK_TICKET"; MJ_LOCK_TICKET=""
 }
-# The live tickets, oldest first, one path per line; dead ones are reaped on the way.
-mj_lock_queue() {
-  local t pid
-  [ -d "$MJ_LOCK_QUEUE" ] || return 0
-  while read -r t; do
-    [ -n "$t" ] || continue
+# Reads the queue into MJ_Q_FIRST (the oldest live ticket), MJ_Q_COUNT and MJ_Q_POS (this
+# waiter's place, empty without a ticket); dead tickets are reaped on the way.
+mj_lock_read_queue() {
+  local t pid n=0
+  MJ_Q_FIRST=""; MJ_Q_COUNT=0; MJ_Q_POS=""
+  for t in "$MJ_LOCK_QUEUE"/*-*; do
+    [ -e "$t" ] || continue
     pid="${t##*-}"
     case "$pid" in ''|*[!0-9]*) continue ;; esac
-    if mj_lock_is_running "$pid"; then printf '%s\n' "$MJ_LOCK_QUEUE/$t"
-    else
-      mj_lock_say "removed a dead waiter's ticket: $(cat "$MJ_LOCK_QUEUE/$t" 2>/dev/null) (pid $pid is not running)"
-      rm -f "$MJ_LOCK_QUEUE/$t"
+    # `kill -0` also fails on another user's live process; `ps` settles only that rare case
+    if [ "$t" != "$MJ_LOCK_TICKET" ] && ! kill -0 "$pid" 2>/dev/null && ! mj_lock_is_running "$pid"; then
+      mj_lock_say "removed a dead waiter's ticket: $(cat "$t" 2>/dev/null) (pid $pid is not running)"
+      rm -f "$t"; continue
     fi
-  done <<EOF_QUEUE
-$(cd "$MJ_LOCK_QUEUE" && for f in *-*; do [ -e "$f" ] && printf '%s\n' "$f"; done | sort -t- -k1,1n -k2,2n)
-EOF_QUEUE
+    n=$((n + 1))
+    [ -n "$MJ_Q_FIRST" ] || MJ_Q_FIRST="$t"
+    [ "$t" != "$MJ_LOCK_TICKET" ] || MJ_Q_POS="$n"
+  done
+  MJ_Q_COUNT="$n"
 }
 
 mj_lock_release() {
@@ -177,7 +183,7 @@ mj_lock_run() {
 
 mj_lock_acquire() {
   local owner pid waited=0 said="" why poll="${MAJORDOMUS_DERIVE_POLL:-15}"
-  local max="${MAJORDOMUS_DERIVE_WAIT_MAX:-14400}" queue first ahead pos count
+  local max="${MAJORDOMUS_DERIVE_WAIT_MAX:-14400}" ahead
   mkdir -p "$(dirname "$MJ_LOCK_DIR")"
   mj_lock_take_ticket
   while :; do
@@ -195,16 +201,14 @@ mj_lock_acquire() {
     fi
     # the turn: a marker that names this branch goes first; without a marker the oldest live
     # ticket does; a waiter without a ticket (an unwritable queue) keeps the old race
-    queue="$(mj_lock_queue)"; first="$(printf '%s\n' "$queue" | sed -n 1p)"
-    count="$(printf '%s\n' "$queue" | grep -c . || true)"
-    pos="$(printf '%s\n' "$queue" | grep -nxF "$MJ_LOCK_TICKET" | cut -d: -f1 || true)"
+    mj_lock_read_queue
     if [ -e "$MJ_LOCK_PRIORITY" ] && [ "${MAJORDOMUS_DERIVE_IGNORE_PRIORITY:-}" != 1 ] \
       && ! mj_lock_marker_names_us; then
       why="$MJ_LOCK_PRIORITY names another branch: $(head -n 1 "$MJ_LOCK_PRIORITY" 2>/dev/null)"
-    elif [ ! -e "$MJ_LOCK_PRIORITY" ] && [ -n "$MJ_LOCK_TICKET" ] && [ -n "$first" ] \
-      && [ "$first" != "$MJ_LOCK_TICKET" ] && [ ! -d "$MJ_LOCK_DIR" ]; then
-      ahead="$(cat "$first" 2>/dev/null || true)"
-      why="the lock is free and ${ahead:-an earlier derive} arrived first (place ${pos:-?} of $count in the queue)"
+    elif [ ! -e "$MJ_LOCK_PRIORITY" ] && [ -n "$MJ_LOCK_TICKET" ] && [ -n "$MJ_Q_FIRST" ] \
+      && [ "$MJ_Q_FIRST" != "$MJ_LOCK_TICKET" ] && [ ! -d "$MJ_LOCK_DIR" ]; then
+      ahead="$(cat "$MJ_Q_FIRST" 2>/dev/null || true)"
+      why="the lock is free and ${ahead:-an earlier derive} arrived first (place ${MJ_Q_POS:-?} of $MJ_Q_COUNT in the queue)"
     elif mkdir "$MJ_LOCK_DIR" 2>/dev/null; then
       printf '%s\n' "$MJ_LOCK_LINE" > "$MJ_LOCK_DIR/owner"
       MJ_LOCK_HOLD=own
@@ -215,7 +219,7 @@ mj_lock_acquire() {
       why="$MJ_LOCK_DIR is held by an owner that names no pid, so it cannot be checked: $owner"
     else
       why="$MJ_LOCK_DIR is held by ${owner:-an owner still writing its name}"
-      [ -z "$pos" ] || why="$why (place $pos of $count in the queue)"
+      [ -z "$MJ_Q_POS" ] || why="$why (place $MJ_Q_POS of $MJ_Q_COUNT in the queue)"
     fi
     if [ "$why" != "$said" ]; then mj_lock_say "waiting: $why"; said="$why"; fi
     if [ "$waited" -ge "$max" ]; then
