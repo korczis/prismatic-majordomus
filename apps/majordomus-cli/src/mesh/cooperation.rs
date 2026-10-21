@@ -4039,7 +4039,7 @@ fn instances_check(doubled: &[(String, Vec<String>)]) -> MeshVerifyCheck {
             "two processes speak for one checkout: every peer that hears both keeps replacing one link with the other (handshakes rise with reconnects), and each claims and releases in its own stream".into()
         }),
         remediation: (!doubled.is_empty()).then(|| {
-            "one of them is a server that never left the mesh when another took its lease — an executable older than v0.27.0 does not: find the checkout's server processes (pgrep -fl 'majordomus (serve|mcp)'), keep the one its lease (.ai/local/state/mcp/server.json) names, and stop the other by its pid".into()
+            "one of them is a server that never left the mesh when another took its lease — an executable older than v0.27.0 does not: find the checkout's server processes (pgrep -fl 'majordomus (serve|mcp)'), keep the one `majordomus serve status` names, and stop the other by its pid".into()
         }),
     }
 }
