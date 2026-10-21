@@ -573,7 +573,7 @@ assertion is a mutation rather than a description: a variant of the workflow wit
 appended is refused, naming the tag.
 
 Since 2026-10-16 that decision has an owner and a cadence: the release seat of
-[rule `project.the-cooperation-model-is-the-owners-word`](../.ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v1.md)
+[rule `project.the-cooperation-model-is-the-owners-word`](../.ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md)
 (ADR 0167) cuts a release whenever master holds landed work past the last tag, not once per
 milestone, and verifies what the site serves after it. The rule says which mesh claim makes a
 session that seat; the tag still waits for `scripts/ci/release-verdict`.

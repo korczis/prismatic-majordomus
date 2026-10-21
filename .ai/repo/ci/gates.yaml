@@ -543,7 +543,7 @@ gates:
     job: structure
     always: true
     runs: scripts/ci/step-bound-check
-    summary: every timed step of a workflow declares a bound, and every bound is smaller than the bound of the job that runs it, so a step that runs out of time fails with a message instead of being killed by its job and reported as a cancellation
+    summary: every timed step and every full-history checkout of validate.yml and pages.yml declares a bound smaller than its job's, so a step that runs out of time fails with a message instead of being killed by its job and reported as a cancellation; every gate of this model has a step in its job that dispatches it, times it or writes its receipt, so the ci verdict never meets a green job with a silent gate; and a pages.yml step or job named after a row of .ai/repo/ci/pages.yaml is bounded at no less than budget.bound.percent of that row's warm budget
 
   # network: true marks a gate that reaches beyond this machine (GitHub's API, the live
   # site, the published installer). It is true or absent. scripts/ci/run-plan --before-push

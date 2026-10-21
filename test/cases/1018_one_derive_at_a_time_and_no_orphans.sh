@@ -8,7 +8,8 @@
 # runs a command under it without building or deriving anything. It proves each half: the
 # reclaim of a dead owner's lock (announced, never silent), the wait for a live owner and for a
 # priority marker that names another branch, re-entry under a wrapper that already holds the
-# lock, and a TERM that takes the command's whole tree down and releases the lock.
+# lock, a TERM that takes the command's whole tree down and releases the lock, and waiters
+# served in the order they arrived, with a dead waiter's ticket reaped (I3098).
 . "$ROOT/test/lib.sh"
 
 D="$ROOT/scripts/derive"
@@ -133,4 +134,40 @@ got="$(printf '%s\n' "$LAST_OUT" | awk '{print $1}' | sort | tr '\n' ' ')"
 [ "$got" = "4101 4102 4107 " ] \
   || fail "the reaper would take [$got], not exactly this checkout's orphans [4101 4102 4107 ]"
 # and the read-only listing takes no lock
+lock_free
+
+# ---------------------------------------------------------------- waiters are served in arrival order
+# On 2026-10-20 three derives of one session waited up to 150 minutes while derives that came
+# later took the lock: every waiter polled mkdir, and the first poll after a release won
+# (I3098). A waits first with a slow poll and B second with a fast one; without the queue B
+# wins that race nearly every time. With it, A takes the lock first.
+Q="$T/machine/.derive.queue"
+a=""; b=""
+sleep 60 & live=$!
+# a failure below must not leave its waiters queued behind a holder that sleeps on
+trap 'kill $live $a $b 2>/dev/null || true' EXIT
+mkdir "$MAJORDOMUS_DERIVE_LOCK" && printf 'other-session %s\n' "$live" > "$MAJORDOMUS_DERIVE_LOCK/owner"
+: > "$T/order"
+MAJORDOMUS_DERIVE_POLL=4 "$D" --locked -- sh -c 'echo A >> "$0"' "$T/order" 2> "$T/a.err" & a=$!
+sleep 1.2
+MAJORDOMUS_DERIVE_POLL=1 "$D" --locked -- sh -c 'echo B >> "$0"' "$T/order" 2> "$T/b.err" & b=$!
+for _ in $(seq 1 50); do [ "$(ls "$Q" 2>/dev/null | grep -c .)" = 2 ] && break; sleep 0.1; done
+[ "$(ls "$Q" 2>/dev/null | grep -c .)" = 2 ] || fail "two waiters left $(ls "$Q" 2>/dev/null | grep -c .) ticket(s), not 2"
+sleep 1.5
+grep -q 'place 2 of 2 in the queue' "$T/b.err" || fail "the second waiter does not say its place: $(cat "$T/b.err")"
+kill "$live" 2>/dev/null || true; wait "$live" 2>/dev/null || true
+rm -rf "$MAJORDOMUS_DERIVE_LOCK"
+wait "$a" || fail "the first waiter failed: $(cat "$T/a.err")"
+wait "$b" || fail "the second waiter failed: $(cat "$T/b.err")"
+[ "$(tr '\n' ' ' < "$T/order")" = "A B " ] || fail "served [$(tr '\n' ' ' < "$T/order")], not the arrival order [A B ]"
+[ -z "$(ls "$Q" 2>/dev/null)" ] || fail "tickets were left behind: $(ls "$Q")"
+trap - EXIT
+lock_free
+
+# a dead waiter's ticket is reaped, aloud, and holds nobody up
+sleep 0 & gone=$!; wait "$gone"
+mkdir -p "$Q" && printf 'ghost-waiter %s\n' "$gone" > "$Q/1-$gone"
+expect_exit 0 "$D" --locked -- true
+expect_grep "removed a dead waiter's ticket: ghost-waiter $gone"
+[ -z "$(ls "$Q" 2>/dev/null)" ] || fail "the dead ticket was left: $(ls "$Q")"
 lock_free

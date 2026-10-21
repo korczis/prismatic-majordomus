@@ -1,7 +1,7 @@
 {
   "schema": "majordomus/capability-graph/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and every object of the index; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 1.0.0-alpha.2",
+  "generator": "majordomus-cli 1.0.0-alpha.3",
   "graph": {
     "id": "composed",
     "title": "Everything, composed",
@@ -7896,7 +7896,7 @@
         "facts": {
           "date": "2026-10-16",
           "related": [
-            "file:.ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v1.md",
+            "file:.ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md",
             "file:.ai/repo/adrs/0101-pull-requests-are-integrated-one-at-a-time-against-the-current-master.md",
             "file:.ai/repo/adrs/0129-a-train-of-pull-requests-lands-in-one-run-of-the-required-check.md",
             "file:.ai/repo/adrs/0155-an-expedited-landing-is-the-owners-word.md",
@@ -34477,6 +34477,8 @@
             "A fixture episode with two decisions at two commits yields two candidates, each citing only its own commit",
             "A superseded decision yields no candidate"
           ],
+          "completed_at": "2026-10-20T21:53:17Z",
+          "completed_event": "sha256:91a0120f9a00078db8ce7917663650e183d7e0f6dc508c4a91d75b703daee195",
           "created_at": "2026-10-04",
           "current_state": "lib/knowledge.sh relates each candidate to the episode's whole footprint.",
           "depends_on": [
@@ -34499,7 +34501,7 @@
           "slug": "a-candidate-relates-to-its-own-commit",
           "started_at": "2026-10-17T10:00:20Z",
           "started_event": "sha256:883b3d3cfd32b9a1df5dfd53a9109f951e6452ac37fe80b0fef12ca1188e69ab",
-          "updated_at": "2026-10-17T10:00:20Z",
+          "updated_at": "2026-10-20T21:53:17Z",
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
@@ -36690,6 +36692,8 @@
         "route": "/cockpit/objects/issue/i2282",
         "source": ".ai/repo/project/issues/I2282.yaml",
         "facts": {
+          "completed_at": "2026-10-20T21:57:30Z",
+          "completed_event": "sha256:048d0db02ac1b148a909529ced0d74a354ff9e0fa3dd6dbb177b04aa49de8f4a",
           "created_at": "2026-10-10",
           "evidence_required": [
             "record_pull_request_mergeable_without_reopen",
@@ -36707,7 +36711,9 @@
             ".ai/repo/ci/release.yaml"
           ],
           "slug": "the-record-dispatch-is-not-a-verdict",
-          "updated_at": "2026-10-16",
+          "started_at": "2026-10-20T21:55:35Z",
+          "started_event": "sha256:c93a0e38f53e5a8185e1e37fbc25ae0a981f9f7d3376bbe63ddfc5171d364da3",
+          "updated_at": "2026-10-20T21:57:30Z",
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=4 bash test/run.sh 996"
@@ -37773,11 +37779,8 @@
         "route": "/cockpit/objects/issue/i2413",
         "source": ".ai/repo/project/issues/I2413.yaml",
         "facts": {
-          "acceptance_criteria": [
-            "In a linked worktree with no server, `mesh handover publish` and `mesh claim` reach the primary's running runtime",
-            "No command run in a worktree starts a server bound beyond loopback",
-            "A start whose binary is stale prints why no server was ensured and what to run"
-          ],
+          "completed_at": "2026-10-20T22:51:23Z",
+          "completed_event": "sha256:a7fc0ee2a2316b1b3f49e167816fb935a1d6acc8634b64e179790285c9c587bb",
           "created_at": "2026-10-10",
           "current_state": "A worktree without its own server is off the mesh; the start hook skips silently.",
           "desired_state": "A worktree's mesh commands reach the repository's running runtime; a start that ensures nothing prints the reason and the remedy.",
@@ -37796,7 +37799,9 @@
             "test/cases"
           ],
           "slug": "a-worktree-cooperates-through-the-primary",
-          "updated_at": "2026-10-10",
+          "started_at": "2026-10-20T22:50:43Z",
+          "started_event": "sha256:fe1bde435ffaf9f2a4beb9d1f53dd4d1b92ecf16dcab80b4be558692757098d3",
+          "updated_at": "2026-10-20T22:51:23Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --test mcp_shared"
@@ -46251,6 +46256,52 @@
         }
       },
       {
+        "id": "majordomus://issue/I3098",
+        "kind": "issue",
+        "label": "I3098",
+        "summary": "Waiting derives take the machine's derive lock in the order they arrived",
+        "route": "/cockpit/objects/issue/i3098",
+        "source": ".ai/repo/project/issues/I3098.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Two waiters that arrive in order A then B take the lock A then B, whichever polls first",
+            "A ticket whose pid has died is reaped and does not hold the queue",
+            "The priority marker still serves its branch first",
+            "The waiting line names the position and the branch ahead"
+          ],
+          "created_at": "2026-10-21",
+          "current_state": "machine_lock.sh takes <home>/.derive.lock by mkdir and polls every MAJORDOMUS_DERIVE_POLL seconds; there is no ticket, so arrival order is not kept, and the waiting line names only the holder.",
+          "depends_on": [],
+          "desired_state": "Waiters are served in arrival order unless the priority marker names a branch; each waiting line and `majordomus brief` say the position and who is ahead.",
+          "evidence_required": [
+            "arrival_order_is_kept",
+            "dead_ticket_is_reaped"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "The offload queue on other machines (I2398)"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/machine_lock.sh",
+            "scripts/derive",
+            "test/cases",
+            ".ai/repo/project/issues/I3098.yaml"
+          ],
+          "slug": "derives-take-the-lock-in-arrival-order",
+          "started_at": "2026-10-21T00:49:21Z",
+          "started_event": "sha256:6767c4077e2ce969e6c7f5a87d2de160194fd36f911016e7a1c0381470110fe4",
+          "updated_at": "2026-10-21T00:50:10Z",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE bash test/run.sh 1018"
+          ],
+          "verified_at": "2026-10-21T00:50:10Z",
+          "verified_event": "sha256:6062da34b87f794b073e01abe51577300ee38e5f683953bfcfff8b80a6495336"
+        }
+      },
+      {
         "id": "majordomus://issue/I3100",
         "kind": "issue",
         "label": "I3100",
@@ -53361,7 +53412,7 @@
             "A request through the vendor listener runs a read capability and is refused a repository_mutation one",
             "A request arriving on the loopback listener with a forwarding header is refused remote-only reads' privileges, not granted loopback ones",
             "No credential appears in output or logs",
-            "An ADR amending ADR 0126 defines how a vendor reader authenticates (OAuth for a ChatGPT connector) before the vendor listener admits any caller"
+            "An ADR amending ADR 0126 defines how a vendor reader authenticates (OAuth for a ChatGPT or a claude.ai connector) before the vendor listener admits any caller"
           ],
           "created_at": "2026-10-18",
           "current_state": "MCP over HTTP exists on the shared server; I2123 (runtime-trust) covers remote reads; nothing declares a vendor caller.",
@@ -53390,7 +53441,7 @@
             "what-a-workspace-decides-reaches-the-repository-with-its-source#a-vendor-reads-and-never-writes"
           ],
           "slug": "a-workspace-reads-the-plan",
-          "updated_at": "2026-10-18",
+          "updated_at": "2026-10-21",
           "validation": [
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test remote_callers",
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test http_host"
@@ -59537,6 +59588,135 @@
           "updated_at": "2026-10-19",
           "validation": [
             "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3503_a_translation_group_agrees_and_keeps_up_with_its_source"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3824",
+        "kind": "issue",
+        "label": "I3824",
+        "summary": "The cooperation rule says a worker lands its own green head, and every bootstrap says the same",
+        "route": "/cockpit/objects/issue/i3824",
+        "source": ".ai/repo/project/issues/I3824.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The rule is version 2, cites the owner's words of 2026-10-20 with their time, and states clauses 6, 7 and 8",
+            "Every provider template and every bootstrap generated from it says a worker lands its own green head through the guarded lander's queue, names five builders and 35 GiB, and none says 'never merges'",
+            "No tracked source file links the version 1 rule file",
+            "Case 3824 fails on a bootstrap that says 'never merges', on templates that disagree with each other, and on a bootstrap that does not name the rule"
+          ],
+          "created_at": "2026-10-21",
+          "depends_on": [],
+          "evidence_required": [
+            "bootstrap_agrees_with_rule",
+            "never_merges_is_refused"
+          ],
+          "milestone": "ci-critical-path",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md",
+            ".ai/repo/adrs/0167-work-moves-through-seats-on-the-mesh-and-lands-in-combined-tops.md",
+            ".ai/repo/providers",
+            "CLAUDE.md",
+            "AGENTS.md",
+            "GEMINI.md",
+            "docs/INTEGRATION.md",
+            "docs/MESH.md",
+            "docs/RELEASE.md",
+            "docs/MAJORDOMUS_UI.md",
+            "apps/majordomus-cli/src/ui/mesh.rs",
+            "test/cases/3150_the_cooperation_model_is_one_record.sh",
+            "test/cases/3824_the_bootstrap_says_what_the_cooperation_rule_says.sh",
+            ".ai/repo/project/issues/I3824.yaml",
+            ".ai/repo/project/issues/I3825.yaml"
+          ],
+          "serves": [],
+          "slug": "the-relaxed-cooperation-is-recorded",
+          "updated_at": "2026-10-21",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3824_the_bootstrap_says_what_the_cooperation_rule_says",
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3150_the_cooperation_model_is_one_record"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3825",
+        "kind": "issue",
+        "label": "I3825",
+        "summary": "A build refuses to start beside five others or below 35 GiB free",
+        "route": "/cockpit/objects/issue/i3825",
+        "source": ".ai/repo/project/issues/I3825.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A local build with five builders running refuses, naming the count and the override",
+            "A local build below 35 GiB free refuses, naming the free space and the override",
+            "A CI build keeps the CI floor and is not refused by the local limits"
+          ],
+          "created_at": "2026-10-21",
+          "depends_on": [
+            "I3824"
+          ],
+          "evidence_required": [
+            "builder_cap_refuses",
+            "disk_floor_refuses"
+          ],
+          "milestone": "ci-critical-path",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "lib/rust_bin.sh",
+            "test/cases",
+            ".ai/repo/project/issues/I3825.yaml"
+          ],
+          "serves": [],
+          "slug": "a-build-is-bounded-by-the-machine",
+          "updated_at": "2026-10-21",
+          "validation": [
+            "bash test/run.sh"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3835",
+        "kind": "issue",
+        "label": "I3835",
+        "summary": "A node the mesh lists as trusted and present but cannot link is said so, with why, on every surface that names it",
+        "route": "/cockpit/objects/issue/i3835",
+        "source": ".ai/repo/project/issues/I3835.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "With two runtimes of which one is discovered but never linked, mesh nodes and mesh peers both name it as present and unlinked, with the reason",
+            "A review request aimed at it refuses with the reason, and the refusal names the runtime and the node",
+            "mesh doctor reports a trusted, present, unlinked node as a finding",
+            "A node that links later stops being reported, without a restart"
+          ],
+          "created_at": "2026-10-21",
+          "current_state": "mesh nodes reports discovery (trust, presence, sources); mesh peers reports linked runtimes; nothing joins the two, and a request to an unlinked runtime answers not_found.",
+          "depends_on": [],
+          "desired_state": "Every trusted, present node without a link is listed with the reason, and every request aimed at one is refused with it.",
+          "evidence_required": [
+            "a_present_unlinked_node_says_why_test"
+          ],
+          "milestone": "the-mesh-works-out-of-the-box",
+          "non_scope": [
+            "A dead run's exclusive claim that nobody can release (mesh-journal-converges, beside I3798)"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh",
+            "apps/majordomus-cli/src/commands/mesh.rs",
+            "docs/MESH.md"
+          ],
+          "slug": "a-present-node-that-cannot-be-linked-says-why",
+          "updated_at": "2026-10-21",
+          "validation": [
+            "bash test/run.sh 3835_a_present_node_that_cannot_be_linked_says_why",
+            "bin/majordomus plan validate"
           ]
         }
       },
@@ -72388,12 +72568,12 @@
         }
       },
       {
-        "id": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@1",
+        "id": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@2",
         "kind": "rule",
-        "label": "project.the-cooperation-model-is-the-owners-word@1",
-        "summary": "Work moves through seats held as mesh claims, lands in combined tops, and every checkout is kept current",
-        "route": "/cockpit/objects/rule/project-the-cooperation-model-is-the-owners-word-1",
-        "source": ".ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v1.md",
+        "label": "project.the-cooperation-model-is-the-owners-word@2",
+        "summary": "Work moves through seats held as mesh claims, a worker lands its own green head, and every checkout is kept current",
+        "route": "/cockpit/objects/rule/project-the-cooperation-model-is-the-owners-word-2",
+        "source": ".ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md",
         "status": "active",
         "facts": {
           "class": "blocking",
@@ -81467,6 +81647,27 @@
         "source": "test/cases/373_delivery_is_computed.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3747_a_gated_step_leaves_its_receipt.sh",
+        "kind": "test",
+        "label": "test/cases/3747_a_gated_step_leaves_its_receipt.sh",
+        "route": "/cockpit/objects/test/test-cases-3747-a-gated-step-leaves-its-receipt-sh",
+        "source": "test/cases/3747_a_gated_step_leaves_its_receipt.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3748_a_pages_step_bound_follows_its_budget.sh",
+        "kind": "test",
+        "label": "test/cases/3748_a_pages_step_bound_follows_its_budget.sh",
+        "route": "/cockpit/objects/test/test-cases-3748-a-pages-step-bound-follows-its-budget-sh",
+        "source": "test/cases/3748_a_pages_step_bound_follows_its_budget.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3749_a_full_history_checkout_is_bounded.sh",
+        "kind": "test",
+        "label": "test/cases/3749_a_full_history_checkout_is_bounded.sh",
+        "route": "/cockpit/objects/test/test-cases-3749-a-full-history-checkout-is-bounded-sh",
+        "source": "test/cases/3749_a_full_history_checkout_is_bounded.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/374_delivery_unknown_is_not_delivered.sh",
         "kind": "test",
         "label": "test/cases/374_delivery_unknown_is_not_delivered.sh",
@@ -81479,6 +81680,13 @@
         "label": "test/cases/37_responsibility_surface.sh",
         "route": "/cockpit/objects/test/test-cases-37-responsibility-surface-sh",
         "source": "test/cases/37_responsibility_surface.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3824_the_bootstrap_says_what_the_cooperation_rule_says.sh",
+        "kind": "test",
+        "label": "test/cases/3824_the_bootstrap_says_what_the_cooperation_rule_says.sh",
+        "route": "/cockpit/objects/test/test-cases-3824-the-bootstrap-says-what-the-cooperation-rule-says-sh",
+        "source": "test/cases/3824_the_bootstrap_says_what_the_cooperation_rule_says.sh"
       },
       {
         "id": "majordomus://test/test/cases/383_convergence_is_enforced.sh",
@@ -94051,7 +94259,7 @@
       },
       {
         "source": "majordomus://adr/adr-0167",
-        "target": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@1",
+        "target": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@2",
         "kind": "put_in_force"
       },
       {
@@ -112045,6 +112253,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3098",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3098",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I3100",
         "target": "kind:issue",
         "kind": "is_a"
@@ -116680,6 +116898,41 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3824",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3824",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3825",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3825",
+        "target": "majordomus://issue/I3824",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3825",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3835",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3835",
+        "target": "majordomus://milestone/the-mesh-works-out-of-the-box",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -119920,27 +120173,27 @@
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@1",
+        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@2",
         "target": "kind:rule",
         "kind": "is_a"
       },
       {
-        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@1",
+        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@2",
         "target": "majordomus://rule/project.an-expedited-landing-is-the-owners-word@1",
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@1",
+        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@2",
         "target": "majordomus://rule/project.integration-follows-the-current-master@3",
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@1",
+        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@2",
         "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@1",
+        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@2",
         "target": "majordomus://rule/project.work-is-claimed-before-it-is-built@1",
         "kind": "depends_on"
       },
@@ -122510,12 +122763,32 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3747_a_gated_step_leaves_its_receipt.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3748_a_pages_step_bound_follows_its_budget.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3749_a_full_history_checkout_is_bounded.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/374_delivery_unknown_is_not_delivered.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
       {
         "source": "majordomus://test/test/cases/37_responsibility_surface.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3824_the_bootstrap_says_what_the_cooperation_rule_says.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -127651,8 +127924,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3608,
-      "edges": 8393,
+      "nodes": 3616,
+      "edges": 8406,
       "acyclic": false,
       "truncated": false
     }
