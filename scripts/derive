@@ -63,9 +63,41 @@ export MAJORDOMUS_SHARE="${MAJORDOMUS_SHARE:-$ROOT/share}"
 # print nothing as a phase begins and report only at exit, under MJ_TIMING. That is what a
 # profiler owes; it cannot break a silence while the silence is happening.
 now() { date +%s; }
-RUN_T0="$(now)"; STAGE_T0=0; STAGE=""
-step()     { STAGE="$1"; STAGE_T0="$(now)"; printf '==> derive: %s ...\n' "$1" >&2; }
-step_done() { printf '==> derive: %s: %ss\n' "$STAGE" "$(( $(now) - STAGE_T0 ))" >&2; }
+# Milliseconds as well, for the record below (I2521): a baseline that compares stages needs
+# more than whole seconds, and the lock wait is kept apart from the work, since a derive that
+# waited forty minutes for the lock did not cost forty minutes. Bash 5's EPOCHREALTIME where
+# it exists; whole seconds times a thousand where it does not (bash 3.2), and the record says
+# which clock it read.
+if [ -n "${EPOCHREALTIME:-}" ]; then
+  now_ms() { local t="${EPOCHREALTIME/[^0-9]/}"; printf '%s' "${t:0:${#t}-3}"; }; CLOCK=ms
+else
+  now_ms() { printf '%s000' "$(date +%s)"; }; CLOCK=s
+fi
+RUN_T0="$(now)"; RUN_T0_MS="$(now_ms)"; STAGE_T0=0; STAGE_T0_MS=0; STAGE=""; STAGES_JSON=""; LOCK_WAIT_MS=0
+step()     { STAGE="$1"; STAGE_T0="$(now)"; STAGE_T0_MS="$(now_ms)"; printf '==> derive: %s ...\n' "$1" >&2; }
+step_done() {
+  local ms=$(( $(now_ms) - STAGE_T0_MS ))
+  printf '==> derive: %s: %ss (%sms)\n' "$STAGE" "$(( $(now) - STAGE_T0 ))" "$ms" >&2
+  STAGES_JSON="${STAGES_JSON:+$STAGES_JSON,}$(jq -cn --arg s "$STAGE" --argjson ms "$ms" '{stage: $s, ms: $ms}')"
+}
+# One JSON line per finished derive, appended to a file of this machine's, not of the
+# repository: the measurements I2521 records are read from it, and it is never committed.
+# MAJORDOMUS_DERIVE_TIMINGS moves it; an empty value turns the record off.
+timings_record() {
+  local file="${MAJORDOMUS_DERIVE_TIMINGS-${XDG_STATE_HOME:-$HOME/.local/state}/majordomus/derive-timings.jsonl}"
+  [ -n "$file" ] || return 0
+  mkdir -p "$(dirname "$file")" 2>/dev/null || return 0
+  jq -cn --arg commit "$(git -C "$ROOT" rev-parse HEAD 2>/dev/null)" \
+    --arg branch "$(git -C "$ROOT" symbolic-ref --short -q HEAD 2>/dev/null)" \
+    --arg at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --arg clock "$CLOCK" \
+    --arg load "$(uptime 2>/dev/null | sed -n 's/.*load average[s]*: *//p')" \
+    --arg binary "$([ -n "${BORROWED_BIN:-}" ] && echo borrowed || echo built)" \
+    --argjson total "$(( $(now_ms) - RUN_T0_MS ))" --argjson lock_wait "$LOCK_WAIT_MS" \
+    --argjson stages "[${STAGES_JSON}]" \
+    '{schema: 1, at: $at, commit: $commit, branch: $branch, clock: $clock, load: $load,
+      binary: $binary, total_ms: $total, lock_wait_ms: $lock_wait, stages: $stages}' \
+    >> "$file" 2>/dev/null || true
+}
 
 # ---------------------------------------------------------------- one derive at a time
 # The machine's derive lock, its priority marker, and a stop that takes the whole process tree
@@ -116,7 +148,9 @@ if [ "${1:-}" = --preflight ]; then
 fi
 [ "${1:-}" = --locked ] || derive_preflight
 
+LOCK_T0_MS="$(now_ms)"
 mj_lock_acquire
+LOCK_WAIT_MS=$(( $(now_ms) - LOCK_T0_MS ))
 mj_lock_reap_orphans
 if [ "${1:-}" = --locked ]; then
   shift; [ "${1:-}" = -- ] && shift
@@ -132,7 +166,7 @@ fi
 # without a word. The executable refuses that now (`majordomus generate` compares its
 # generation against the tree's), but a run that names what it is using is a run whose log
 # answers "which binary?" without anyone having to guess.
-if [ -n "${MAJORDOMUS_BIN:-}" ]; then RB="$MAJORDOMUS_BIN"
+if [ -n "${MAJORDOMUS_BIN:-}" ]; then RB="$MAJORDOMUS_BIN"; BORROWED_BIN=1
   printf '==> derive: MAJORDOMUS_BIN=%s (not building; it must be of this tree'"'"'s generation)\n' "$RB" >&2
 else
   # a machine-wide rustflags profile can make a dev build refuse to link; the crate sets none.
@@ -193,4 +227,5 @@ step "stage D: scripts/gitattributes (the merge policy, from the generators)"
 # and until this ran it was a hand list that was wrong in both directions.
 mj_lock_run "$ROOT/scripts/gitattributes" >/dev/null
 step_done
-printf '==> derive: done in %ss; scripts/derive-check proves it\n' "$(( $(now) - RUN_T0 ))" >&2
+timings_record
+printf '==> derive: done in %ss (lock wait %sms apart); scripts/derive-check proves it\n' "$(( $(now) - RUN_T0 ))" "$LOCK_WAIT_MS" >&2

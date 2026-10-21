@@ -5,7 +5,7 @@ argument-hint: "[request]"
 ---
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: module:intents; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.0.0-alpha.3 -->
+     Generator: majordomus-cli 1.0.0-alpha.4 -->
 
 # Majordomus `intents`
 

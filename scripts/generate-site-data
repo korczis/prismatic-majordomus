@@ -146,14 +146,23 @@ LICENSE"
 LC_ALL=C; export LC_ALL
 
 # test cases are inputs because each one declares which commands it covers, and that
-# metadata is the evidence the command pages render
+# metadata is the evidence the command pages render. The programs this script sources or
+# runs (lib/, scripts/lib/, itself) and every file it reads by a literal "$ROOT/..." path are
+# inputs too: a projection, a hand-written page or the Pages model edited without moving
+# this fingerprint would leave the site data reading as current while it is stale (I2847).
+# Case 3246 refuses a literal read this list does not cover.
 for f in "$ROOT"/share/skeleton/profiles/*.yaml "$ROOT"/share/standard/majordomus/rules/*.md "$ROOT"/docs/*.md "$ROOT"/docs/claims/*.md \
          "$ROOT/$AI"/repo/skills/*/SKILL.md "$ROOT/$AI"/repo/skills/*/examples/*.md "$ROOT/$AI"/repo/knowledge/sources.yaml "$ROOT"/share/allow/skill.txt \
          "$ROOT"/test/cases/*.sh \
          "$ROOT"/test/fixtures/commands/*.json "$ROOT"/test/fixtures/commands/setup/*.sh \
          "$ROOT"/test/fixtures/commands/stdin/* \
          "$ROOT"/.ai/repo/use-cases/*.md "$ROOT"/.ai/repo/use-cases/taxonomy.yaml "$ROOT"/.ai/repo/applications/*.md \
-         "$ROOT"/lib/usecase.sh \
+         "$ROOT"/scripts/generate-site-data "$ROOT"/scripts/pages "$ROOT"/lib/*.sh "$ROOT"/lib/*.awk \
+         "$ROOT"/share/skeleton/ai/repo/workflows/*.md \
+         "$ROOT"/scripts/lib/*.jq "$ROOT"/scripts/lib/*.awk \
+         "$ROOT"/AGENTS.md "$ROOT"/.ai/repo/ci/pages.yaml \
+         "$ROOT"/site/data/registry/distribution.json \
+         "$ROOT"/site/content-src/*.md "$ROOT"/site/content-src/*/*.md \
          "$ROOT"/share/schemas/*/*.proto "$ROOT"/share/schemas/*/*.schema.json \
          "$ROOT"/share/schemas/*/*/*.proto "$ROOT"/share/schemas/*/*/*.schema.json \
          "$ROOT/$PJ"/project.yaml "$ROOT/$PJ"/milestones/*.yaml \

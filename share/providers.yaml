@@ -72,6 +72,12 @@
 #            which is how preflight sees that a machine has it, and what a person does once
 #            to install it. A project cannot install it; preflight names the step.
 #
+# A key this file gains is a key every older executable refuses: the offers block is read with
+# unknown keys refused, so that a typo never reads as `none`. Adding `browser` (I3829) made an
+# executable built before it fail on this file with "unknown field `browser`"; the remedy is the
+# executable of the tree, never a laxer reader. Whoever caches MAJORDOMUS_BIN refreshes it when
+# a key lands here.
+#
 # **Why every cell carries a citation.** Until ADR 0103 the answer to "can this provider do
 # X" lived in two shell string tables in lib/capture.sh, and a provider absent from one was
 # silently unsupported. `majordomus capture status` enumerated the providers *in the table*
