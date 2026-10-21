@@ -241,7 +241,7 @@ fn render(
         }
         (Some(id), Some(intent)) => {
             let mine = if unanswered(issues).is_none() {
-                serving(intent, &list(issues, "/issues"))
+                serving(intent, super::view::items(issues, "/issues"))
             } else {
                 Vec::new()
             };
@@ -333,7 +333,7 @@ fn milestones(roadmap: &Answer, intent: &Value) -> El {
         .map(|ms| ms.iter().map(|m| text(m, "id")).collect())
         .unwrap_or_default();
     let body = unanswered(roadmap).unwrap_or_else(|| {
-        let plan = list(roadmap, "/milestones");
+        let plan = super::view::items(roadmap, "/milestones");
         let mut rows: Vec<El> = plan
             .iter()
             .filter(|m| named.contains(&text(m, "id")))
@@ -679,11 +679,11 @@ fn wave_panel(waves: &Answer, mine: &[Value], known: &super::prose::Known) -> El
 /// an id in a sentence is a link exactly when there is a record behind it (I3000).
 fn known(issues: &Answer, roadmap: &Answer) -> super::prose::Known {
     super::prose::Known {
-        issues: list(issues, "/issues")
+        issues: super::view::items(issues, "/issues")
             .iter()
             .map(|x| text(x, "id"))
             .collect(),
-        milestones: list(roadmap, "/milestones")
+        milestones: super::view::items(roadmap, "/milestones")
             .iter()
             .map(|m| text(m, "id"))
             .collect(),

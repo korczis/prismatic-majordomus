@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.1"
   },
   "registry": {
-    "fingerprint": "ee877cf301e37d16e7afe9ec59c0aecb7ee04a0635378d09a60e77f775f3ea2f",
+    "fingerprint": "af8259022959801b86081a231f62fa5388d7db970d672c635c111f3a68ee2c92",
     "summary": {
-      "total": 3160,
+      "total": 3161,
       "builtin": 206,
-      "declarative": 2954,
+      "declarative": 2955,
       "by_kind": {
         "command": 31,
         "query": 175,
-        "resource": 2954
+        "resource": 2955
       },
       "by_stability": {
         "behaviorally_verified": 142,
         "experimental": 55,
-        "implemented": 2963
+        "implemented": 2964
       },
       "mcp_tools": 196,
-      "mcp_resources": 3009,
+      "mcp_resources": 3010,
       "http_routes": 201,
       "cli_commands": 111,
       "modules": 92,
@@ -85404,7 +85404,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 801,
+        "capabilities": 802,
         "capability_ids": []
       },
       {
@@ -86070,7 +86070,7 @@
     ]
   },
   "index": {
-    "fingerprint": "e47fc54aa585fcf6727bfaa9b52f4780b4111ce1b9741c77e316da39db537c18",
+    "fingerprint": "78bcee413cda588b1b54312aab5f8cfea1488492b60c06e4648fbf676dbf4fbc",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -86110,7 +86110,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 33,
-      "issue": 801,
+      "issue": 802,
       "knowledge": 50,
       "mesh-declaration": 1,
       "milestone": 100,
@@ -93308,7 +93308,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 521266
+        "bytes": 531035
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -102636,6 +102636,17 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 2698
+      },
+      {
+        "uri": "majordomus://issue/I3018",
+        "kind": "issue",
+        "identity": "I3018",
+        "title": "The intent workspace borrows the plan instead of copying it on every request",
+        "description": "/ui/idd and the intent inspector it embeds read plan.issues and plan.roadmap through view::items, a borrow, wherever they only read, instead of view::list, which copies the whole answer: the issues serving the intent, the records the prose may name, the intent's own issues and its milestones.",
+        "path": ".ai/repo/project/issues/I3018.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2105
       },
       {
         "uri": "majordomus://issue/I3020",
@@ -118390,7 +118401,7 @@
       "identity": [
         "id"
       ],
-      "objects": 801
+      "objects": 802
     },
     {
       "name": "knowledge",

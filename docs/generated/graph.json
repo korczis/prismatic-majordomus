@@ -45877,6 +45877,48 @@
         }
       },
       {
+        "id": "majordomus://issue/I3018",
+        "kind": "issue",
+        "label": "I3018",
+        "summary": "The intent workspace borrows the plan instead of copying it on every request",
+        "route": "/cockpit/objects/issue/i3018",
+        "source": ".ai/repo/project/issues/I3018.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "idd.rs and intent.rs read plan.issues and plan.roadmap through view::items wherever they only read them",
+            "system.http.ui.idd and system.http.live.ui.idd warm p95 are within their 100 ms budget in the ui job"
+          ],
+          "created_at": "2026-10-21",
+          "current_state": "idd.rs and intent.rs call view::list on plan.issues and plan.roadmap, a to_vec of the whole answer, on every request.",
+          "depends_on": [],
+          "desired_state": "They borrow the answer; only the intent's own issues are cloned, and the screen's cost no longer grows with the plan's other records.",
+          "evidence_required": [
+            "ui_idd_within_budget"
+          ],
+          "milestone": "M004",
+          "non_scope": [
+            "The budget itself, which stays at 100 ms",
+            "Other screens that copy plan.issues (issues.rs, prs.rs, work.rs, milestone.rs): a follow-up if their budgets move"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/idd.rs",
+            "apps/majordomus-cli/src/ui/intent.rs",
+            ".ai/repo/project/issues/I3018.yaml",
+            "site",
+            "docs"
+          ],
+          "slug": "the-intent-workspace-borrows-the-plan",
+          "updated_at": "2026-10-21",
+          "validation": [
+            "cargo test --lib ui::",
+            "majordomus bench system.http.ui.idd --transport system --profile ci --no-write --check"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I3020",
         "kind": "issue",
         "label": "I3020",
@@ -111903,6 +111945,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3018",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3018",
+        "target": "majordomus://milestone/M004",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I3020",
         "target": "kind:issue",
         "kind": "is_a"
@@ -127599,8 +127651,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3607,
-      "edges": 8391,
+      "nodes": 3608,
+      "edges": 8393,
       "acyclic": false,
       "truncated": false
     }
