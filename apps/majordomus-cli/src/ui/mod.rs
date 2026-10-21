@@ -514,6 +514,16 @@ fn catching_up_note(lag: &Lag, generation: u64) -> crate::cockpit::html::El {
 /// the script and the kiosk read to say so instead of "live".
 pub const RELOAD_FAILED: &str = "data-reload-failed";
 
+/// How a generation stands, as the pulse names it: the state word, and for a failed reload the
+/// first line of why and the whole seconds until the next attempt.
+fn pulse_fields(lag: &Lag) -> (&'static str, Option<&str>, Option<u64>) {
+    match lag {
+        Lag::Current => ("current", None, None),
+        Lag::Reloading => ("reloading", None, None),
+        Lag::Failed { error, retry_in } => ("failed", Some(error.as_str()), Some(retry_in.as_secs())),
+    }
+}
+
 impl Ui {
     /// The pulse: the generation, its head and how it stands, as JSON a page can compare
     /// with the one it was drawn from. Asking it also starts the reload a moved repository
@@ -521,13 +531,7 @@ impl Ui {
     fn pulse(&self) -> Response {
         let _ = self.live.view_without_waiting();
         let lag = self.live.lag();
-        let (state, error, retry_in) = match &lag {
-            Lag::Current => ("current", None, None),
-            Lag::Reloading => ("reloading", None, None),
-            Lag::Failed { error, retry_in } => {
-                ("failed", Some(error.as_str()), Some(retry_in.as_secs()))
-            }
-        };
+        let (state, error, retry_in) = pulse_fields(&lag);
         let body = serde_json::json!({
             "schema": "ui-pulse/v1",
             "generation": self.live.generation(),
@@ -947,5 +951,16 @@ mod tests {
                 "{route}"
             );
         }
+    }
+
+    /// The pulse says how the server stands in one of three words, and for a failed reload why and when
+    /// it is tried again; the other two say nothing more.
+    #[test]
+    fn the_pulse_names_the_three_ways_a_generation_can_stand() {
+        use std::time::Duration;
+        assert_eq!(pulse_fields(&Lag::Current), ("current", None, None));
+        assert_eq!(pulse_fields(&Lag::Reloading), ("reloading", None, None));
+        let failed = Lag::Failed { error: "manifest: duplicate key".into(), retry_in: Duration::from_millis(3400) };
+        assert_eq!(pulse_fields(&failed), ("failed", Some("manifest: duplicate key"), Some(3)));
     }
 }

@@ -572,9 +572,8 @@ impl Live {
             Some((stamp, _, at)) if stamp == taken => {
                 let since = (watch.clock)().saturating_duration_since(at);
                 Lag::Failed {
-                    error: lock(&watch.error)
-                        .clone()
-                        .unwrap_or_else(|| "the layer would not load".into()),
+                    // a failed load records its message before its stamp, so this is never empty
+                    error: lock(&watch.error).clone().unwrap_or_default(),
                     retry_in: RETRY_AFTER.saturating_sub(since),
                 }
             }
@@ -1421,5 +1420,17 @@ mod tests {
     fn a_reload_names_the_links_it_ended_and_is_silent_when_it_ended_none() {
         assert!(!warn_of_ended_links(&[]));
         assert!(warn_of_ended_links(&["node-a".to_string()]));
+    }
+
+    /// A message a page shows is its first line, trimmed, and at most 240 characters followed by an
+    /// ellipsis: a load error can be a whole stack, and a banner is one line.
+    #[test]
+    fn a_long_first_line_is_cut_with_an_ellipsis_and_a_short_one_is_kept() {
+        assert_eq!(first_line("  manifest: duplicate key  \nsecond line"), "manifest: duplicate key");
+        assert_eq!(first_line(""), "");
+        let long = "é".repeat(300);
+        let cut = first_line(&long);
+        assert_eq!(cut.chars().count(), 241, "240 characters and the ellipsis");
+        assert!(cut.ends_with('…') && cut.starts_with("éé"));
     }
 }
