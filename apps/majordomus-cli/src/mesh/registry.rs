@@ -57,6 +57,8 @@ pub enum MeshSource {
     UdpBroadcast,
     /// A rendezvous answer or registration.
     Rendezvous,
+    /// A tailnet peer asked as a rendezvous.
+    Tailscale,
     /// A synthetic provider (tests, self-check).
     Synthetic,
 }
@@ -68,6 +70,7 @@ impl MeshSource {
             MeshSource::UdpMulticast => "udp_multicast",
             MeshSource::UdpBroadcast => "udp_broadcast",
             MeshSource::Rendezvous => "rendezvous",
+            MeshSource::Tailscale => "tailscale",
             MeshSource::Synthetic => "synthetic",
         }
     }

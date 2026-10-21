@@ -32965,7 +32965,7 @@
       "is_enum": true,
       "name": "MeshSource",
       "properties": [],
-      "type": "\"udp_multicast\" | \"udp_broadcast\" | \"rendezvous\" | \"synthetic\"",
+      "type": "\"udp_multicast\" | \"udp_broadcast\" | \"rendezvous\" | \"tailscale\" | \"synthetic\"",
       "used_by": [],
       "used_by_schemas": [
         "Sighting"
@@ -32982,6 +32982,10 @@
         {
           "description": "A rendezvous answer or registration.",
           "value": "rendezvous"
+        },
+        {
+          "description": "A tailnet peer asked as a rendezvous.",
+          "value": "tailscale"
         },
         {
           "description": "A synthetic provider (tests, self-check).",
