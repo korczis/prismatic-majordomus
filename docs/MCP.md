@@ -375,11 +375,11 @@ others attach:
 | Gemini CLI | [`.gemini/settings.json`](../.gemini/settings.json) | the same launcher under `mcpServers.majordomus` |
 | Codex | [`.codex/config.toml`](../.codex/config.toml) | `[mcp_servers.majordomus]`, loaded when the project is trusted |
 | bb | nothing of its own | an orchestrator: the agent it starts (Claude Code, Codex, an ACP agent) reads its own file above, so a bb thread attaches through the agent, not through bb (ADR 0024). Claude Code under bb runs with `settingSources: project`, which loads `.mcp.json`; a server loaded from a settings file gets two seconds before the first turn, so a cold checkout that has to build the executable shows it `pending` at init and connected afterwards |
-
-The rows are the providers whose declaration names a client configuration; the whole set,
-with what each reads and where it keeps its scratch checkouts, is
-[`docs/generated/providers.md`](generated/providers.md), generated from the same declaration.
 | anything speaking Streamable HTTP | the running server's `/mcp` | `initialize` answers with an `Mcp-Session-Id`; every later request carries it; `DELETE /mcp` ends the session; an idle session expires and the client re-initialises on the 404, as the transport prescribes |
+
+The provider rows are the providers whose declaration names a client configuration; the whole
+set, with what each reads and where it keeps its scratch checkouts, is
+[`docs/generated/providers.md`](generated/providers.md), generated from the same declaration.
 
 `bin/majordomus-mcp` builds the executable when it is missing or older than its sources
 (`MAJORDOMUS_BUILD_PROFILE=release` for a release build; `MAJORDOMUS_BIN` names an
@@ -422,6 +422,57 @@ commit and every checkout that pulls it is updated; the file ships in the releas
 and is updated with it. `test/cases/3221_a_bare_session_start_joins_the_cluster.sh` proves it in
 bash and zsh. It is not installed for you: the installer touches nothing outside its prefix
 (`docs/DISTRIBUTION.md`), so sourcing the file is the one line a person adds.
+
+### Claude in the browser
+
+Three Claude surfaces meet a browser. Only one of them reaches this server today, and the
+other two must not be made to look as if they did:
+
+| surface | reaches this server through | reaches a page through | state |
+|---|---|---|---|
+| Claude Code (terminal, desktop, IDE) | `.mcp.json` above: stdio, then the shared server, as a loopback caller that reads and changes | the Claude in Chrome extension's bridge: the `mcp__claude-in-chrome__*` tools, on with `claude --chrome` or `/chrome` | works: the one path that drives a page and the live mesh in one session |
+| Claude in Chrome side panel | nothing yet | itself | an agent of its own on claude.ai, which calls only a connector Anthropic's cloud reaches over the public internet; a server on loopback or a LAN address is out of its reach |
+| claude.ai chat (web, desktop) | nothing yet | — | the same: a custom connector or nothing |
+
+A tunnel from the public internet to the loopback server would give a vendor's requests the
+loopback caller's right to change the repository (ADR 0126 judges a caller by its address), so
+none is set up. The side panel and the chat reach the mesh when a vendor caller has a listener
+of its own that authenticates it and serves reads only (I3285, which covers a claude.ai custom
+connector as well as a ChatGPT one), and the hosted hub serves the mesh over TLS to an
+authenticated caller only (the owner's decision of 2026-10-21: TLS first, then the hub, and no
+anonymous caller reads the mesh). Until then a side-panel session reads what is published:
+<https://majordomus.dev> and its `/ui/`, a snapshot built without a running mesh, which is why it
+says the mesh is not observed. To work on the live mesh from a page, drive the page from Claude
+Code.
+
+Set it up once, per person rather than per repository:
+
+- In Claude Code run `/chrome` and choose **Enabled by default**. It is a user setting: Claude Code
+  ignores `CLAUDE_CODE_ENABLE_CFC` in a project's settings ("a project can't turn on Claude in
+  Chrome", <https://code.claude.com/docs/en/chrome>), so this repository does not try.
+- Sign the extension in to the claude.ai organization that `/status` names in Claude Code. Claude
+  Code needs a claude.ai login (Pro, Max, Team, Enterprise); an API key or a `setup-token` keeps
+  the bridge off.
+- The first enable writes the native messaging host — on macOS
+  `~/Library/Application Support/Google/Chrome/NativeMessagingHosts/com.anthropic.claude_code_browser_extension.json`,
+  which runs `claude --chrome-native-host` — and Chrome finds it after a restart.
+
+Every browser action still passes the extension's own per-site permissions; a rule in
+`.claude/settings.json` does not lift them, and this repository pre-approves no browser tool.
+
+When it does not connect — `list_connected_browsers` answers an empty list, or a browser tool says
+"Browser extension is not connected":
+
+1. The extension is not running, or it is signed in to another account or organization than
+   `/status` names. Sign it in again with that organization.
+2. `/chrome` → **Reconnect extension**, then restart Chrome and Claude Code.
+3. An organization IP allowlist that blocks `bridge.claudeusercontent.com` blocks the bridge
+   (<https://code.claude.com/docs/en/network-config>).
+4. A JavaScript dialog open in a controlled tab stops every later browser event until a person
+   dismisses it.
+
+The mesh half is diagnosed as always, from the same session: `majordomus mesh doctor`, and
+`majordomus_peers` for the board.
 
 ## Peers
 
