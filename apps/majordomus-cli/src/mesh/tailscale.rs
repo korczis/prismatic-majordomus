@@ -43,6 +43,19 @@ const STATUS_TIMEOUT: Duration = Duration::from_secs(10);
 const SLICE: Duration = Duration::from_millis(500);
 
 /// The provider: its declaration, the counters its status reports, and its state.
+///
+/// ```
+/// use majordomus_cli::mesh::config::TailscaleConfig;
+/// use majordomus_cli::mesh::provider::{MeshProvider, MeshProviderState};
+/// use majordomus_cli::mesh::tailscale::TailscaleProvider;
+///
+/// let provider = TailscaleProvider::new(TailscaleConfig::default());
+/// assert_eq!(provider.id(), "tailscale");
+/// // nothing asked yet: stopped, and nothing sent
+/// let status = provider.status();
+/// assert!(matches!(status.state, MeshProviderState::Stopped));
+/// assert_eq!(status.sent, 0);
+/// ```
 pub struct TailscaleProvider {
     config: TailscaleConfig,
     counters: Arc<Counters>,
@@ -51,6 +64,16 @@ pub struct TailscaleProvider {
 
 impl TailscaleProvider {
     /// A provider over its declaration; nothing is asked until the manager calls `start`.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::config::TailscaleConfig;
+    /// use majordomus_cli::mesh::provider::MeshProvider;
+    /// use majordomus_cli::mesh::tailscale::TailscaleProvider;
+    ///
+    /// // a declared command that does not exist is only read at `start`, never here
+    /// let config = TailscaleConfig { command: "no-such-tailscale".into(), ..TailscaleConfig::default() };
+    /// assert_eq!(TailscaleProvider::new(config).status().id, "tailscale");
+    /// ```
     pub fn new(config: TailscaleConfig) -> Self {
         TailscaleProvider {
             config,
@@ -244,7 +267,9 @@ pub fn peers_of(status_json: &str) -> Vec<IpAddr> {
     let Some(peers) = status.get("Peer").and_then(|p| p.as_object()) else {
         return Vec::new();
     };
-    let mut found: Vec<IpAddr> = peers
+    // a set, not a sorted list: one candidate per address, in the address's own order,
+    // and nothing here is a presentation order (`crate::order` is for those)
+    let found: std::collections::BTreeSet<IpAddr> = peers
         .values()
         .filter(|peer| peer.get("Online").and_then(|o| o.as_bool()) == Some(true))
         .filter_map(|peer| {
@@ -261,9 +286,7 @@ pub fn peers_of(status_json: &str) -> Vec<IpAddr> {
                 .copied()
         })
         .collect();
-    found.sort();
-    found.dedup();
-    found
+    found.into_iter().collect()
 }
 
 /// The rendezvous endpoints of `peers` on `port`: `http://<address>:<port>`, an IPv6 address
