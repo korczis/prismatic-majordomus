@@ -13,6 +13,626 @@
     {
       "artifacts": [
         {
+          "name": "majordomus-v1.0.0-alpha.2-aarch64-apple-darwin.tar.gz",
+          "sha256": "baae30271835477db70806c1006609f21c47224e2825118595001183c68f6f1c",
+          "target": "macos-aarch64"
+        },
+        {
+          "name": "majordomus-v1.0.0-alpha.2-x86_64-apple-darwin.tar.gz",
+          "sha256": "5236640245e03a47b0095d82811bb6fd4fb42610d4aa17f4b209bb360e134a1d",
+          "target": "macos-x86_64"
+        },
+        {
+          "name": "majordomus-v1.0.0-alpha.2-x86_64-unknown-linux-gnu.tar.gz",
+          "sha256": "12dc25ea63880e45c26a3f50418a90b68dc098fb1c433e4c7b302b353f5b6947",
+          "target": "linux-x86_64-gnu"
+        },
+        {
+          "name": "majordomus-v1.0.0-alpha.2-x86_64-unknown-linux-musl.tar.gz",
+          "sha256": "376d53a9ca37b2bc98338cfd3a98077c7a3a94a25163e9c03b0b2ad8bcf4e6ea",
+          "target": "linux-x86_64-musl"
+        },
+        {
+          "name": "majordomus-v1.0.0-alpha.2-aarch64-unknown-linux-gnu.tar.gz",
+          "sha256": "3b246c41cf04f04383b16c77d36ce4491c5655d3b4931edc359c30aa762dcc9c",
+          "target": "linux-aarch64-gnu"
+        },
+        {
+          "name": "majordomus-v1.0.0-alpha.2-aarch64-unknown-linux-musl.tar.gz",
+          "sha256": "b4373e9151e5cae81e8d91278a4275c7ecabb7eea3402b6620144460402da616",
+          "target": "linux-aarch64-musl"
+        }
+      ],
+      "commit": "905159df7cc24f65c0455a16fc9ccbad37845571",
+      "compare_url": "https://github.com/korczis/prismatic-majordomus/compare/v1.0.0-alpha.1...v1.0.0-alpha.2",
+      "date": "2026-10-21T12:21:07Z",
+      "decisions": [],
+      "groups": [
+        {
+          "changes": [
+            {
+              "breaking": false,
+              "commit": "9129c6697",
+              "kind": "fix",
+              "references": [
+                {
+                  "id": "I3018",
+                  "kind": "issue",
+                  "route": "/plan/i3018/",
+                  "title": "The intent workspace borrows the plan instead of copying it on every request"
+                }
+              ],
+              "scope": "ui",
+              "subject": "the intent workspace borrows the plan instead of copying it (I3018)",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/9129c6697"
+            }
+          ],
+          "heading": "Fixed",
+          "kind": "fix",
+          "rank": 1
+        },
+        {
+          "changes": [
+            {
+              "breaking": false,
+              "commit": "ea81bca38",
+              "kind": "docs",
+              "references": [
+                {
+                  "id": "I3079",
+                  "kind": "issue",
+                  "route": "/plan/i3079/",
+                  "title": "The links of the Deployments table on /ui/delivery meet the target size at every audited width"
+                }
+              ],
+              "scope": "plan",
+              "subject": "record I3079, the Deployments table's link that is too small a target",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/ea81bca38"
+            },
+            {
+              "breaking": false,
+              "commit": "46ffa4e6e",
+              "kind": "docs",
+              "scope": "plan",
+              "subject": "the roadmap reads idd-workspace's release from the committed merge",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/46ffa4e6e"
+            },
+            {
+              "breaking": false,
+              "commit": "ce424b866",
+              "kind": "docs",
+              "references": [
+                {
+                  "id": "I3009",
+                  "kind": "issue",
+                  "route": "/plan/i3009/",
+                  "title": "No record's prose and no board announcement holds a template delimiter"
+                }
+              ],
+              "scope": "plan",
+              "subject": "the derived plan page of I3009",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/ce424b866"
+            },
+            {
+              "breaking": false,
+              "commit": "3c9797a27",
+              "kind": "docs",
+              "references": [
+                {
+                  "id": "I2781",
+                  "kind": "issue",
+                  "route": "/plan/i2781/",
+                  "title": "An issue is started, verified and finished from the intent workspace"
+                },
+                {
+                  "id": "I2783",
+                  "kind": "issue",
+                  "route": "/plan/i2783/",
+                  "title": "The intent workspace reads itself again when a move ends on its server"
+                },
+                {
+                  "id": "I2789",
+                  "kind": "issue",
+                  "route": "/plan/i2789/",
+                  "title": "The intent workspace shows why an intent stands where it stands and every move made on its issues"
+                },
+                {
+                  "id": "I2812",
+                  "kind": "issue",
+                  "route": "/plan/i2812/",
+                  "title": "The IDD loop is accepted end to end in a real browser on one commit"
+                },
+                {
+                  "id": "I2900",
+                  "kind": "issue",
+                  "route": "/plan/i2900/",
+                  "title": "Every issue id on the intent workspace is a link, the shared-scope pairs are one folded line, and no missing library is asked for"
+                },
+                {
+                  "id": "I2907",
+                  "kind": "issue",
+                  "route": "/plan/i2907/",
+                  "title": "The workspace's headline numbers are the chosen intent's"
+                },
+                {
+                  "id": "I3000",
+                  "kind": "issue",
+                  "route": "/plan/i3000/",
+                  "title": "The workspace's record texts are drawn as prose"
+                },
+                {
+                  "id": "I3001",
+                  "kind": "issue",
+                  "route": "/plan/i3001/",
+                  "title": "The intent is the page's title, and panels ask questions"
+                },
+                {
+                  "id": "I2915",
+                  "kind": "issue",
+                  "route": "/plan/i2915/",
+                  "title": "The workspace speaks in plain words"
+                },
+                {
+                  "id": "I2916",
+                  "kind": "issue",
+                  "route": "/plan/i2916/",
+                  "title": "The workspace reads in the order a person asks"
+                },
+                {
+                  "id": "I2917",
+                  "kind": "issue",
+                  "route": "/plan/i2917/",
+                  "title": "Each intent has one primary action"
+                },
+                {
+                  "id": "I2813",
+                  "kind": "issue",
+                  "route": "/plan/i2813/",
+                  "title": "A published page that answers 503, or does not answer, is asked again before it is called missing"
+                },
+                {
+                  "id": "I3007",
+                  "kind": "issue",
+                  "route": "/plan/i3007/",
+                  "title": "A commit that a record or the site's data names is a commit the history holds"
+                },
+                {
+                  "id": "I3010",
+                  "kind": "issue",
+                  "route": "/plan/i3010/",
+                  "title": "The mesh manual says the edit guard is not wired, and how to wire it by hand"
+                },
+                {
+                  "id": "I2914",
+                  "kind": "issue",
+                  "route": "/plan/i2914/",
+                  "title": "No /ui page shows an issue id that leads nowhere"
+                },
+                {
+                  "id": "I3009",
+                  "kind": "issue",
+                  "route": "/plan/i3009/",
+                  "title": "No record's prose and no board announcement holds a template delimiter"
+                }
+              ],
+              "scope": "plan",
+              "subject": "the landed IDD work is recorded, and idd-workspace is done",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/3c9797a27"
+            }
+          ],
+          "heading": "Documentation",
+          "kind": "docs",
+          "rank": 4
+        },
+        {
+          "changes": [
+            {
+              "breaking": false,
+              "commit": "905159df7",
+              "kind": "chore",
+              "references": [
+                {
+                  "id": "I3018",
+                  "kind": "issue",
+                  "route": "/plan/i3018/",
+                  "title": "The intent workspace borrows the plan instead of copying it on every request"
+                }
+              ],
+              "scope": "release",
+              "subject": "bump to 1.0.0-alpha.2, derived once",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/905159df7"
+            },
+            {
+              "breaking": false,
+              "commit": "573df967b",
+              "kind": "chore",
+              "scope": "top",
+              "subject": "the W0 records top, derived once",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/573df967b"
+            },
+            {
+              "breaking": false,
+              "commit": "91c0b5d56",
+              "kind": "chore",
+              "scope": "release",
+              "subject": "record v1.0.0-alpha.1 and the metadata it publishes",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/91c0b5d56"
+            },
+            {
+              "breaking": false,
+              "commit": "1c0a10454",
+              "kind": "chore",
+              "references": [
+                {
+                  "id": "I2882",
+                  "kind": "issue",
+                  "route": "/plan/i2882/",
+                  "title": "A remote derive builds only inside its own run directory"
+                },
+                {
+                  "id": "I2964",
+                  "kind": "issue",
+                  "route": "/plan/i2964/",
+                  "title": "Every step that reads a surface into the published snapshot can ask the forge"
+                },
+                {
+                  "id": "I2966",
+                  "kind": "issue",
+                  "route": "/plan/i2966/",
+                  "title": "A forge setting that could not be read is unknown, never \\\"allows nothing\\\""
+                },
+                {
+                  "id": "I2695",
+                  "kind": "issue",
+                  "route": "/plan/i2695/",
+                  "title": "The Observatory draws the proof, claim, surface, wave and release scenes from the capabilities that already answer them"
+                },
+                {
+                  "id": "I2696",
+                  "kind": "issue",
+                  "route": "/plan/i2696/",
+                  "title": "p5 is a built, optional asset of the UI and the page says where it is"
+                },
+                {
+                  "id": "I2813",
+                  "kind": "issue",
+                  "route": "/plan/i2813/",
+                  "title": "A published page that answers 503, or does not answer, is asked again before it is called missing"
+                },
+                {
+                  "id": "I2962",
+                  "kind": "issue",
+                  "route": "/plan/i2962/",
+                  "title": "What the served surfaces change is said as the registry says it"
+                },
+                {
+                  "id": "I2963",
+                  "kind": "issue",
+                  "route": "/plan/i2963/",
+                  "title": "The README's exit codes are the commands' contract"
+                },
+                {
+                  "id": "I2965",
+                  "kind": "issue",
+                  "route": "/plan/i2965/",
+                  "title": "The site says a test proves a guarantee only as far as recorded evidence supports it"
+                },
+                {
+                  "id": "I2967",
+                  "kind": "issue",
+                  "route": "/plan/i2967/",
+                  "title": "The site's own pages name the layout in force"
+                },
+                {
+                  "id": "I2114",
+                  "kind": "issue",
+                  "route": "/plan/i2114/",
+                  "title": "A task's scope admits what its derive writes"
+                }
+              ],
+              "scope": "plan",
+              "subject": "record five delivered development-runtime issues as done",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/1c0a10454"
+            },
+            {
+              "breaking": false,
+              "commit": "48092d192",
+              "kind": "chore",
+              "references": [
+                {
+                  "id": "I0702",
+                  "kind": "issue",
+                  "route": "/plan/i0702/",
+                  "title": "Decide how a record is attributed, between named alternatives"
+                },
+                {
+                  "id": "I2849",
+                  "kind": "issue",
+                  "route": "/plan/i2849/",
+                  "title": "release next raises from the trunk the repository names, never from a branch name written in the tool"
+                },
+                {
+                  "id": "I2713",
+                  "kind": "issue",
+                  "route": "/plan/i2713/",
+                  "title": "A build never lets idle incremental sessions fill the disk"
+                },
+                {
+                  "id": "I2787",
+                  "kind": "issue",
+                  "route": "/plan/i2787/",
+                  "title": "A build never lets the shared build directory's crate artifacts fill the disk"
+                },
+                {
+                  "id": "I1302",
+                  "kind": "issue",
+                  "route": "/plan/i1302/",
+                  "title": "Identity, provenance and support level are typed fields, not prose"
+                },
+                {
+                  "id": "I1305",
+                  "kind": "issue",
+                  "route": "/plan/i1305/",
+                  "title": "An observed contract has a fingerprint, a compatibility state and a fixture"
+                },
+                {
+                  "id": "I1962",
+                  "kind": "issue",
+                  "route": "/plan/i1962/",
+                  "title": "The evidence gates read subject findings and widgets"
+                },
+                {
+                  "id": "I1980",
+                  "kind": "issue",
+                  "route": "/plan/i1980/",
+                  "title": "A layer names the tool version it was written for, and doctor tells version skew from defects"
+                },
+                {
+                  "id": "I2114",
+                  "kind": "issue",
+                  "route": "/plan/i2114/",
+                  "title": "A task's scope admits what its derive writes"
+                },
+                {
+                  "id": "I2282",
+                  "kind": "issue",
+                  "route": "/plan/i2282/",
+                  "title": "The record pull request's dispatched verdict does not satisfy branch protection"
+                },
+                {
+                  "id": "I2661",
+                  "kind": "issue",
+                  "route": "/plan/i2661/",
+                  "title": "A publication that did not arrive is a finding the next reader meets, never a green step"
+                },
+                {
+                  "id": "I2673",
+                  "kind": "issue",
+                  "route": "/plan/i2673/",
+                  "title": "The sccache client configuration is derived from the selected offer, local disk first"
+                },
+                {
+                  "id": "I2674",
+                  "kind": "issue",
+                  "route": "/plan/i2674/",
+                  "title": "A node is provisioned as an S3 cache provider, idempotently, with no secret in the repository"
+                },
+                {
+                  "id": "I2733",
+                  "kind": "issue",
+                  "route": "/plan/i2733/",
+                  "title": "A resumed mesh.events walk returns every event exactly once, across partitions"
+                },
+                {
+                  "id": "I2748",
+                  "kind": "issue",
+                  "route": "/plan/i2748/",
+                  "title": "The drift already on the trunk is settled before the gate is made blocking"
+                },
+                {
+                  "id": "I2841",
+                  "kind": "issue",
+                  "route": "/plan/i2841/",
+                  "title": "The site's browser probe is split, so the site job runs well inside its timeout"
+                },
+                {
+                  "id": "I2842",
+                  "kind": "issue",
+                  "route": "/plan/i2842/",
+                  "title": "The live site is verified on a schedule, and its last verification is evidence"
+                },
+                {
+                  "id": "I2840",
+                  "kind": "issue",
+                  "route": "/plan/i2840/",
+                  "title": "A cancelled MCP call stops, and the client is told it stopped"
+                }
+              ],
+              "scope": "plan",
+              "subject": "four merged issues are recorded done by their own proof",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/48092d192"
+            },
+            {
+              "breaking": false,
+              "commit": "c2b6d98cd",
+              "kind": "chore",
+              "references": [
+                {
+                  "id": "I1023",
+                  "kind": "issue",
+                  "route": "/plan/i1023/",
+                  "title": "Nothing private reaches a published page"
+                },
+                {
+                  "id": "I2288",
+                  "kind": "issue",
+                  "route": "/plan/i2288/",
+                  "title": "A task is on the mesh while it works"
+                },
+                {
+                  "id": "I2813",
+                  "kind": "issue",
+                  "route": "/plan/i2813/",
+                  "title": "A published page that answers 503, or does not answer, is asked again before it is called missing"
+                },
+                {
+                  "id": "I2962",
+                  "kind": "issue",
+                  "route": "/plan/i2962/",
+                  "title": "What the served surfaces change is said as the registry says it"
+                },
+                {
+                  "id": "I2963",
+                  "kind": "issue",
+                  "route": "/plan/i2963/",
+                  "title": "The README's exit codes are the commands' contract"
+                },
+                {
+                  "id": "I2965",
+                  "kind": "issue",
+                  "route": "/plan/i2965/",
+                  "title": "The site says a test proves a guarantee only as far as recorded evidence supports it"
+                },
+                {
+                  "id": "I2967",
+                  "kind": "issue",
+                  "route": "/plan/i2967/",
+                  "title": "The site's own pages name the layout in force"
+                },
+                {
+                  "id": "I2781",
+                  "kind": "issue",
+                  "route": "/plan/i2781/",
+                  "title": "An issue is started, verified and finished from the intent workspace"
+                },
+                {
+                  "id": "I2783",
+                  "kind": "issue",
+                  "route": "/plan/i2783/",
+                  "title": "The intent workspace reads itself again when a move ends on its server"
+                },
+                {
+                  "id": "I2789",
+                  "kind": "issue",
+                  "route": "/plan/i2789/",
+                  "title": "The intent workspace shows why an intent stands where it stands and every move made on its issues"
+                },
+                {
+                  "id": "I2812",
+                  "kind": "issue",
+                  "route": "/plan/i2812/",
+                  "title": "The IDD loop is accepted end to end in a real browser on one commit"
+                },
+                {
+                  "id": "I2900",
+                  "kind": "issue",
+                  "route": "/plan/i2900/",
+                  "title": "Every issue id on the intent workspace is a link, the shared-scope pairs are one folded line, and no missing library is asked for"
+                },
+                {
+                  "id": "I2907",
+                  "kind": "issue",
+                  "route": "/plan/i2907/",
+                  "title": "The workspace's headline numbers are the chosen intent's"
+                },
+                {
+                  "id": "I2914",
+                  "kind": "issue",
+                  "route": "/plan/i2914/",
+                  "title": "No /ui page shows an issue id that leads nowhere"
+                },
+                {
+                  "id": "I2916",
+                  "kind": "issue",
+                  "route": "/plan/i2916/",
+                  "title": "The workspace reads in the order a person asks"
+                },
+                {
+                  "id": "I2917",
+                  "kind": "issue",
+                  "route": "/plan/i2917/",
+                  "title": "Each intent has one primary action"
+                },
+                {
+                  "id": "I3000",
+                  "kind": "issue",
+                  "route": "/plan/i3000/",
+                  "title": "The workspace's record texts are drawn as prose"
+                },
+                {
+                  "id": "I3001",
+                  "kind": "issue",
+                  "route": "/plan/i3001/",
+                  "title": "The intent is the page's title, and panels ask questions"
+                },
+                {
+                  "id": "I2735",
+                  "kind": "issue",
+                  "route": "/plan/i2735/",
+                  "title": "An edit no claim covers is refused"
+                },
+                {
+                  "id": "I2741",
+                  "kind": "issue",
+                  "route": "/plan/i2741/",
+                  "title": "Merged work the plan has not recorded is drift, and on the trunk past a window it is red"
+                },
+                {
+                  "id": "I2743",
+                  "kind": "issue",
+                  "route": "/plan/i2743/",
+                  "title": "The public roadmap draws every milestone in the graph's order, each issue with its inferred delivery"
+                },
+                {
+                  "id": "I2744",
+                  "kind": "issue",
+                  "route": "/plan/i2744/",
+                  "title": "The UI roadmap reads delivery and the releases themselves, and its now is where work is"
+                },
+                {
+                  "id": "I2851",
+                  "kind": "issue",
+                  "route": "/plan/i2851/",
+                  "title": "the homepage's product view counts the delivery the history proves beside the statuses the records declare, each count a link"
+                },
+                {
+                  "id": "I2289",
+                  "kind": "issue",
+                  "route": "/plan/i2289/",
+                  "title": "A task built off the mesh is refused"
+                },
+                {
+                  "id": "I2740",
+                  "kind": "issue",
+                  "route": "/plan/i2740/",
+                  "title": "An issue's delivery is inferred from branches, pull requests, merges, tags and the published site"
+                },
+                {
+                  "id": "I2742",
+                  "kind": "issue",
+                  "route": "/plan/i2742/",
+                  "title": "A milestone's version is inferred from the release that carried it, never typed"
+                }
+              ],
+              "scope": "plan",
+              "subject": "record 18 merged issues as done, each with its own evidence",
+              "url": "https://github.com/korczis/prismatic-majordomus/commit/c2b6d98cd"
+            }
+          ],
+          "heading": "Housekeeping",
+          "kind": "chore",
+          "rank": 7
+        }
+      ],
+      "notes_url": "https://github.com/korczis/prismatic-majordomus/releases/tag/v1.0.0-alpha.2",
+      "tag": "v1.0.0-alpha.2",
+      "tree_url": "https://github.com/korczis/prismatic-majordomus/tree/v1.0.0-alpha.2",
+      "unreleased": false,
+      "version": "1.0.0-alpha.2"
+    },
+    {
+      "artifacts": [
+        {
           "name": "majordomus-v1.0.0-alpha.1-aarch64-apple-darwin.tar.gz",
           "sha256": "afa2fe2f0e19397fc5b3b8e079c348a09a3080961b966b0b064e191adb104137",
           "target": "macos-aarch64"

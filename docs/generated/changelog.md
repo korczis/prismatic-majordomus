@@ -7,6 +7,38 @@ Every entry below is derived: a section per release the layer records, its decis
 
 Current version: **1.0.0-alpha.2**
 
+## v1.0.0-alpha.2 — 2026-10-21
+
+### Fixed
+
+- **ui**: the intent workspace borrows the plan instead of copying it (I3018) (`9129c6697`)
+
+### Documentation
+
+- **plan**: record I3079, the Deployments table's link that is too small a target (`ea81bca38`)
+- **plan**: the roadmap reads idd-workspace's release from the committed merge (`46ffa4e6e`)
+- **plan**: the derived plan page of I3009 (`ce424b866`)
+- **plan**: the landed IDD work is recorded, and idd-workspace is done (`3c9797a27`)
+
+### Housekeeping
+
+- **release**: bump to 1.0.0-alpha.2, derived once (`905159df7`)
+- **top**: the W0 records top, derived once (`573df967b`)
+- **release**: record v1.0.0-alpha.1 and the metadata it publishes (`91c0b5d56`)
+- **plan**: record five delivered development-runtime issues as done (`1c0a10454`)
+- **plan**: four merged issues are recorded done by their own proof (`48092d192`)
+- **plan**: record 18 merged issues as done, each with its own evidence (`c2b6d98cd`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v1.0.0-alpha.2-aarch64-apple-darwin.tar.gz (`baae30271835`)
+- `macos-x86_64` — majordomus-v1.0.0-alpha.2-x86_64-apple-darwin.tar.gz (`5236640245e0`)
+- `linux-x86_64-gnu` — majordomus-v1.0.0-alpha.2-x86_64-unknown-linux-gnu.tar.gz (`12dc25ea6388`)
+- `linux-x86_64-musl` — majordomus-v1.0.0-alpha.2-x86_64-unknown-linux-musl.tar.gz (`376d53a9ca37`)
+- `linux-aarch64-gnu` — majordomus-v1.0.0-alpha.2-aarch64-unknown-linux-gnu.tar.gz (`3b246c41cf04`)
+- `linux-aarch64-musl` — majordomus-v1.0.0-alpha.2-aarch64-unknown-linux-musl.tar.gz (`b4373e9151e5`)
+
+
 ## v1.0.0-alpha.1 — 2026-10-20
 
 ### Decisions
