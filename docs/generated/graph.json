@@ -7896,7 +7896,7 @@
         "facts": {
           "date": "2026-10-16",
           "related": [
-            "file:.ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v1.md",
+            "file:.ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md",
             "file:.ai/repo/adrs/0101-pull-requests-are-integrated-one-at-a-time-against-the-current-master.md",
             "file:.ai/repo/adrs/0129-a-train-of-pull-requests-lands-in-one-run-of-the-required-check.md",
             "file:.ai/repo/adrs/0155-an-expedited-landing-is-the-owners-word.md",
@@ -59499,6 +59499,94 @@
         }
       },
       {
+        "id": "majordomus://issue/I3824",
+        "kind": "issue",
+        "label": "I3824",
+        "summary": "The cooperation rule says a worker lands its own green head, and every bootstrap says the same",
+        "route": "/cockpit/objects/issue/i3824",
+        "source": ".ai/repo/project/issues/I3824.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The rule is version 2, cites the owner's words of 2026-10-20 with their time, and states clauses 6, 7 and 8",
+            "Every provider template and every bootstrap generated from it says a worker lands its own green head through the guarded lander's queue, names five builders and 35 GiB, and none says 'never merges'",
+            "No tracked source file links the version 1 rule file",
+            "Case 3824 fails on a bootstrap that says 'never merges', on templates that disagree with each other, and on a bootstrap that does not name the rule"
+          ],
+          "created_at": "2026-10-21",
+          "depends_on": [],
+          "evidence_required": [
+            "bootstrap_agrees_with_rule",
+            "never_merges_is_refused"
+          ],
+          "milestone": "ci-critical-path",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md",
+            ".ai/repo/adrs/0167-work-moves-through-seats-on-the-mesh-and-lands-in-combined-tops.md",
+            ".ai/repo/providers",
+            "CLAUDE.md",
+            "AGENTS.md",
+            "GEMINI.md",
+            "docs/INTEGRATION.md",
+            "docs/MESH.md",
+            "docs/RELEASE.md",
+            "docs/MAJORDOMUS_UI.md",
+            "apps/majordomus-cli/src/ui/mesh.rs",
+            "test/cases/3150_the_cooperation_model_is_one_record.sh",
+            "test/cases/3824_the_bootstrap_says_what_the_cooperation_rule_says.sh",
+            ".ai/repo/project/issues/I3824.yaml",
+            ".ai/repo/project/issues/I3825.yaml"
+          ],
+          "serves": [],
+          "slug": "the-relaxed-cooperation-is-recorded",
+          "updated_at": "2026-10-21",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3824_the_bootstrap_says_what_the_cooperation_rule_says",
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3150_the_cooperation_model_is_one_record"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3825",
+        "kind": "issue",
+        "label": "I3825",
+        "summary": "A build refuses to start beside five others or below 35 GiB free",
+        "route": "/cockpit/objects/issue/i3825",
+        "source": ".ai/repo/project/issues/I3825.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A local build with five builders running refuses, naming the count and the override",
+            "A local build below 35 GiB free refuses, naming the free space and the override",
+            "A CI build keeps the CI floor and is not refused by the local limits"
+          ],
+          "created_at": "2026-10-21",
+          "depends_on": [
+            "I3824"
+          ],
+          "evidence_required": [
+            "builder_cap_refuses",
+            "disk_floor_refuses"
+          ],
+          "milestone": "ci-critical-path",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "lib/rust_bin.sh",
+            "test/cases",
+            ".ai/repo/project/issues/I3825.yaml"
+          ],
+          "serves": [],
+          "slug": "a-build-is-bounded-by-the-machine",
+          "updated_at": "2026-10-21",
+          "validation": [
+            "bash test/run.sh"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -72346,12 +72434,12 @@
         }
       },
       {
-        "id": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@1",
+        "id": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@2",
         "kind": "rule",
-        "label": "project.the-cooperation-model-is-the-owners-word@1",
-        "summary": "Work moves through seats held as mesh claims, lands in combined tops, and every checkout is kept current",
-        "route": "/cockpit/objects/rule/project-the-cooperation-model-is-the-owners-word-1",
-        "source": ".ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v1.md",
+        "label": "project.the-cooperation-model-is-the-owners-word@2",
+        "summary": "Work moves through seats held as mesh claims, a worker lands its own green head, and every checkout is kept current",
+        "route": "/cockpit/objects/rule/project-the-cooperation-model-is-the-owners-word-2",
+        "source": ".ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md",
         "status": "active",
         "facts": {
           "class": "blocking",
@@ -81437,6 +81525,13 @@
         "label": "test/cases/37_responsibility_surface.sh",
         "route": "/cockpit/objects/test/test-cases-37-responsibility-surface-sh",
         "source": "test/cases/37_responsibility_surface.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3824_the_bootstrap_says_what_the_cooperation_rule_says.sh",
+        "kind": "test",
+        "label": "test/cases/3824_the_bootstrap_says_what_the_cooperation_rule_says.sh",
+        "route": "/cockpit/objects/test/test-cases-3824-the-bootstrap-says-what-the-cooperation-rule-says-sh",
+        "source": "test/cases/3824_the_bootstrap_says_what_the_cooperation_rule_says.sh"
       },
       {
         "id": "majordomus://test/test/cases/383_convergence_is_enforced.sh",
@@ -94009,7 +94104,7 @@
       },
       {
         "source": "majordomus://adr/adr-0167",
-        "target": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@1",
+        "target": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@2",
         "kind": "put_in_force"
       },
       {
@@ -116628,6 +116723,31 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3824",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3824",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3825",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3825",
+        "target": "majordomus://issue/I3824",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3825",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -119868,27 +119988,27 @@
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@1",
+        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@2",
         "target": "kind:rule",
         "kind": "is_a"
       },
       {
-        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@1",
+        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@2",
         "target": "majordomus://rule/project.an-expedited-landing-is-the-owners-word@1",
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@1",
+        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@2",
         "target": "majordomus://rule/project.integration-follows-the-current-master@3",
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@1",
+        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@2",
         "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@1",
+        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@2",
         "target": "majordomus://rule/project.work-is-claimed-before-it-is-built@1",
         "kind": "depends_on"
       },
@@ -122464,6 +122584,11 @@
       },
       {
         "source": "majordomus://test/test/cases/37_responsibility_surface.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3824_the_bootstrap_says_what_the_cooperation_rule_says.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -127599,8 +127724,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3607,
-      "edges": 8391,
+      "nodes": 3610,
+      "edges": 8397,
       "acyclic": false,
       "truncated": false
     }
