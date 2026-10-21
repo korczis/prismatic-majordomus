@@ -15,6 +15,10 @@
 # verified installed as local runtimes and declare no model, because which model a local
 # runtime serves is the machine's, not the distribution's.
 #
+# `claude-opus-5-5` entered on 2026-10-21 for the Claude API advisor, from the Anthropic
+# model table as cached on 2026-10-06 (id, 1M context, thinking always on); it is first
+# because the vendor names it the default model.
+#
 # `credential_env` names an environment variable; only its *presence* is ever
 # reported. No value is read, held or rendered anywhere.
 version: 1
@@ -36,6 +40,13 @@ vendors:
     inference: local
 
 models:
+  - id: claude-opus-5-5
+    vendor: anthropic
+    native_id: claude-opus-5-5
+    context_window: 1000000
+    capabilities: [text, vision, tools, structured_output, streaming, reasoning]
+    note: The current Opus and the vendor's default; thinking cannot be disabled, and effort defaults to medium.
+
   - id: claude-opus-5
     vendor: anthropic
     native_id: claude-opus-5
