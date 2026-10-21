@@ -302,7 +302,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/economics.json` | `economics` | json | 30847 | `8883892531dd3a5d` |
 | `docs/generated/economics.md` | `economics` | markdown | 15306 | `fcac4f7c5b05022e` |
 | `docs/generated/economics.yaml` | `economics` | yaml | 25727 | `b859321276f04697` |
-| `docs/generated/graph.json` | `graph` | json | 4966575 | `794851239182d180` |
+| `docs/generated/graph.json` | `graph` | json | 4987205 | `3daca9f8e9642eaf` |
 | `docs/generated/graph.schema.json` | `graph-schema` | json | 7632 | `e0da6cebdcafd4ba` |
 | `docs/generated/modules/artifacts.md` | `modules/artifacts` | markdown | 1749 | `7ee34501c032df5b` |
 | `docs/generated/modules/brief.md` | `modules/brief` | markdown | 2401 | `d2ce093c56a1372f` |
@@ -427,9 +427,9 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `site/data/registry/design.json` | `site-design` | json | 11594 | `d2d21262018998bf` |
 | `site/data/registry/distribution.json` | `site-distribution` | json | 3005 | `1dc59aaebd16174a` |
 | `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 817901 | `6fbdddc302a940b4` |
-| `site/data/registry/product-graph.json` | `site-product-graph` | json | 111720 | `85c5cfd5f55d4763` |
-| `site/data/registry/product.json` | `site-product` | json | 763305 | `bdc281df76998c5f` |
-| `site/data/registry/registry.json` | `site-registry` | json | 7550424 | `5508c8e5b8ca282b` |
+| `site/data/registry/product-graph.json` | `site-product-graph` | json | 111720 | `dd8ffe1cf5284fcc` |
+| `site/data/registry/product.json` | `site-product` | json | 763305 | `bc4537faedad341a` |
+| `site/data/registry/registry.json` | `site-registry` | json | 7552162 | `ec2ab78cb59fe7b0` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180170 | `41ca22c82649cafc` |
 | `site/data/registry/why.json` | `site-why` | json | 349931 | `4c09ca704fd73db3` |
 | `site/static/favicon.svg` | `design-mark` | text | 911 | `7e63c3da02f6fc0d` |
