@@ -59875,6 +59875,44 @@
         }
       },
       {
+        "id": "majordomus://issue/I3828",
+        "kind": "issue",
+        "label": "I3828",
+        "summary": "Coverage takes an exclusive lock on its build target, and a second run waits or refuses naming the holder",
+        "route": "/cockpit/objects/issue/i3828",
+        "source": ".ai/repo/project/issues/I3828.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A second coverage run waits and names the holder, or refuses with exit 75 under --no-wait",
+            "SIGINT to a run releases the lock and stops its cargo test child",
+            "The lock is the same mechanism the derive lock uses, not a second one"
+          ],
+          "created_at": "2026-10-21",
+          "current_state": "scripts/rust-coverage runs cargo llvm-cov against one shared target per machine with no lock; the slot is a convention handed between sessions by message.",
+          "depends_on": [],
+          "evidence_required": [
+            "second_run_waits_or_refuses",
+            "interrupted_run_releases"
+          ],
+          "milestone": "ci-critical-path",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "scripts/rust-coverage",
+            "lib/machine_lock.sh",
+            "test/cases",
+            ".ai/repo/project/issues/I3828.yaml"
+          ],
+          "serves": [],
+          "slug": "coverage-takes-its-lock",
+          "updated_at": "2026-10-21",
+          "validation": [
+            "bash test/run.sh"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -117236,6 +117274,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3828",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3828",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -128212,8 +128260,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3623,
-      "edges": 8437,
+      "nodes": 3624,
+      "edges": 8439,
       "acyclic": false,
       "truncated": false
     }

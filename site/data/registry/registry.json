@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.1"
   },
   "registry": {
-    "fingerprint": "bd9f41701561e18f4aabe99420aa47568dc6877faaed675e8b26c9a71e227447",
+    "fingerprint": "2707d69278768b8930f023fa0ecab0cb87916138a6144de62d92b2aed6c23990",
     "summary": {
-      "total": 3169,
+      "total": 3170,
       "builtin": 206,
-      "declarative": 2963,
+      "declarative": 2964,
       "by_kind": {
         "command": 31,
         "query": 175,
-        "resource": 2963
+        "resource": 2964
       },
       "by_stability": {
         "behaviorally_verified": 142,
         "experimental": 55,
-        "implemented": 2972
+        "implemented": 2973
       },
       "mcp_tools": 196,
-      "mcp_resources": 3018,
+      "mcp_resources": 3019,
       "http_routes": 201,
       "cli_commands": 111,
       "modules": 92,
@@ -85506,7 +85506,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 807,
+        "capabilities": 808,
         "capability_ids": []
       },
       {
@@ -86172,7 +86172,7 @@
     ]
   },
   "index": {
-    "fingerprint": "71129fa949a28654636c59e3cd4bdb9433aca1a2709451b5d9ddfde6ba6b93e2",
+    "fingerprint": "a5b84901af2e98c54fdd8efdfe126dcd64d09c987942abbc31a64d8d45be90e4",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -86212,7 +86212,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 33,
-      "issue": 807,
+      "issue": 808,
       "knowledge": 50,
       "mesh-declaration": 1,
       "milestone": 100,
@@ -93442,7 +93442,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 538631
+        "bytes": 545719
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -106127,6 +106127,17 @@
         "bytes": 1964
       },
       {
+        "uri": "majordomus://issue/I3828",
+        "kind": "issue",
+        "identity": "I3828",
+        "title": "Coverage takes an exclusive lock on its build target, and a second run waits or refuses naming the holder",
+        "description": "scripts/rust-coverage takes an exclusive lock over the shared llvm-cov target for the whole measurement, the way scripts/derive takes the machine's derive lock: a second run waits with a line naming the holder (session, worktree, pid, start time) or, with --no-wait, refuses with exit 75; a stopped run releases the lock with its whole process tree, orphaned cargo test included.",
+        "path": ".ai/repo/project/issues/I3828.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1990
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -118598,7 +118609,7 @@
       "identity": [
         "id"
       ],
-      "objects": 807
+      "objects": 808
     },
     {
       "name": "knowledge",

@@ -1,0 +1,29 @@
+id: I3828
+milestone: ci-critical-path
+title: "Coverage takes an exclusive lock on its build target, and a second run waits or refuses naming the holder"
+slug: coverage-takes-its-lock
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "scripts/rust-coverage takes an exclusive lock over the shared llvm-cov target for the whole measurement, the way scripts/derive takes the machine's derive lock: a second run waits with a line naming the holder (session, worktree, pid, start time) or, with --no-wait, refuses with exit 75; a stopped run releases the lock with its whole process tree, orphaned cargo test included."
+why: "On 2026-10-21 the llvm-cov slot was handed to session 0c by message; session 33 started its own coverage 19 minutes later without asking, cargo-llvm-cov cleaned the shared target on start, and 0c's run crawled an hour in tests/bench.rs and gave no verdict. A slot that is only a message is not a lock."
+current_state: "scripts/rust-coverage runs cargo llvm-cov against one shared target per machine with no lock; the slot is a convention handed between sessions by message."
+desired_state: "Two concurrent rust-coverage runs never share the target: the second waits naming the first, or refuses with --no-wait; stopping the first by SIGINT releases the lock and leaves no orphaned cargo test; a case proves the wait, the refusal and the release with a stubbed cargo-llvm-cov."
+scope:
+  - "scripts/rust-coverage"
+  - "lib/machine_lock.sh"
+  - "test/cases"
+  - ".ai/repo/project/issues/I3828.yaml"
+acceptance_criteria:
+  - "A second coverage run waits and names the holder, or refuses with exit 75 under --no-wait"
+  - "SIGINT to a run releases the lock and stops its cargo test child"
+  - "The lock is the same mechanism the derive lock uses, not a second one"
+validation:
+  - "bash test/run.sh"
+evidence_required:
+  - "second_run_waits_or_refuses"
+  - "interrupted_run_releases"
+depends_on: []
+serves: []
+created_at: 2026-10-21
+updated_at: 2026-10-21
