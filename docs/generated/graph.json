@@ -59672,6 +59672,129 @@
         }
       },
       {
+        "id": "majordomus://issue/I3798",
+        "kind": "issue",
+        "label": "I3798",
+        "summary": "A session's mesh claims outlive a lease takeover of the server it made them on",
+        "route": "/cockpit/objects/issue/i3798",
+        "source": ".ai/repo/project/issues/I3798.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A claim survives a lease takeover once its session re-attaches to the successor, and a later claim from another runtime conflicts with it",
+            "A claim expires at busy grace + one expiry when its session never re-attaches",
+            "An instance of a different runtime does not keep the claim alive"
+          ],
+          "created_at": "2026-10-20",
+          "depends_on": [],
+          "evidence_required": [
+            "claims_outlive_a_lease_takeover_test"
+          ],
+          "milestone": "mesh-journal-converges",
+          "non_scope": [
+            "Fencing an exclusive claim against a returning holder, which is I3174",
+            "The bridge's replay of board announcements after a re-attach, which is I3609"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh/state.rs",
+            "apps/majordomus-cli/src/mesh/cooperation.rs",
+            "apps/majordomus-cli/tests/mesh_cooperation.rs",
+            "docs/MESH.md"
+          ],
+          "slug": "a-session-s-claims-outlive-a-restart",
+          "updated_at": "2026-10-21",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --lib mesh::state",
+            "cargo test --lib mesh::journal",
+            "cargo test --test mesh_cooperation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3799",
+        "kind": "issue",
+        "label": "I3799",
+        "summary": "The Pages publication budgets are re-derived from the runs that publish the language copies",
+        "route": "/cockpit/objects/issue/i3799",
+        "source": ".ai/repo/project/issues/I3799.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every budget row in pages.yaml cites the Pages runs it was derived from, at least three since 2026-10-20, and the multiple applied",
+            "The next regular master publication reports its controlled path under the new budget",
+            "The validate pages job's wait bound is at least the new controlled total plus the queue allowance the file declares"
+          ],
+          "created_at": "2026-10-20",
+          "current_state": ".ai/repo/ci/pages.yaml budget: controlled 210 (and 465 on the other path), with per-row budgets measured before 2026-10-20 and a comment table of the runs they came from.",
+          "depends_on": [],
+          "evidence_required": [
+            "pages_budgets_rederived"
+          ],
+          "milestone": "M004",
+          "non_scope": [
+            "Making the publication faster, which is the rest of M004; this issue makes its budgets true"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/ci/pages.yaml",
+            "scripts/pages",
+            "docs/CI.md"
+          ],
+          "slug": "the-pages-budgets-are-re-derived",
+          "updated_at": "2026-10-20",
+          "validation": [
+            "bin/majordomus plan validate",
+            "scripts/pages report --check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3810",
+        "kind": "issue",
+        "label": "I3810",
+        "summary": "A mesh session whose client never comes back is closed by the server that served it",
+        "route": "/cockpit/objects/issue/i3810",
+        "source": ".ai/repo/project/issues/I3810.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "An episode reaped as interrupted closes its client's mesh session once, and that session's exclusive claim then reads expired (its session closed) on every runtime",
+            "A client that re-attaches inside the reattach grace keeps its mesh session and its claims",
+            "A reap with no mesh session for the client writes nothing to the journal"
+          ],
+          "created_at": "2026-10-21",
+          "depends_on": [],
+          "evidence_required": [
+            "a_gone_clients_mesh_session_is_closed_test"
+          ],
+          "milestone": "mesh-journal-converges",
+          "non_scope": [
+            "A claim surviving a lease takeover, which is I3798",
+            "Review requests that never lapse, which is I3608"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/http/mcp.rs",
+            "apps/majordomus-cli/src/mesh/cooperation.rs",
+            "apps/majordomus-cli/tests/mesh_cooperation.rs",
+            "docs/MESH.md"
+          ],
+          "slug": "a-gone-clients-mesh-session-is-closed",
+          "updated_at": "2026-10-21",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --lib http::mcp",
+            "cargo test --lib mesh::cooperation",
+            "cargo test --test mesh_cooperation"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -116983,6 +117106,36 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3798",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3798",
+        "target": "majordomus://milestone/mesh-journal-converges",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3799",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3799",
+        "target": "majordomus://milestone/M004",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3810",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3810",
+        "target": "majordomus://milestone/mesh-journal-converges",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -127959,8 +128112,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3618,
-      "edges": 8418,
+      "nodes": 3621,
+      "edges": 8424,
       "acyclic": false,
       "truncated": false
     }

@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.1"
   },
   "registry": {
-    "fingerprint": "8bb5d42d0f175855347d873d8b3b71ef540a6281d3a32ee648d23135f55fb567",
+    "fingerprint": "5cd1ef89f49828aab6d57318da9ab80efd27ddc9f922fc7b7ec32e4c7e5281da",
     "summary": {
-      "total": 3171,
+      "total": 3174,
       "builtin": 206,
-      "declarative": 2965,
+      "declarative": 2968,
       "by_kind": {
         "command": 31,
         "query": 175,
-        "resource": 2965
+        "resource": 2968
       },
       "by_stability": {
         "behaviorally_verified": 142,
         "experimental": 55,
-        "implemented": 2974
+        "implemented": 2977
       },
       "mcp_tools": 196,
-      "mcp_resources": 3020,
+      "mcp_resources": 3023,
       "http_routes": 201,
       "cli_commands": 111,
       "modules": 92,
@@ -85404,7 +85404,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 811,
+        "capabilities": 814,
         "capability_ids": []
       },
       {
@@ -86070,7 +86070,7 @@
     ]
   },
   "index": {
-    "fingerprint": "8e39856faf149b3e2583d8bd88e30dca0d2235fa31abf5127f5e38ff5ee83a81",
+    "fingerprint": "8b3fc000910fc8244752d63cec187bea81dd34bf4992b048cbad5367521c005d",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -86110,7 +86110,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 33,
-      "issue": 811,
+      "issue": 814,
       "knowledge": 50,
       "mesh-declaration": 1,
       "milestone": 101,
@@ -93308,7 +93308,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 440190
+        "bytes": 446319
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -106037,6 +106037,39 @@
         "bytes": 1238
       },
       {
+        "uri": "majordomus://issue/I3798",
+        "kind": "issue",
+        "identity": "I3798",
+        "title": "A session's mesh claims outlive a lease takeover of the server it made them on",
+        "description": "Keep a session's claims live across a lease takeover of the shared server: a claim stays held while any instance of the same node and runtime beats and its session re-opens on that runtime within the busy grace plus one expiry, keeping its original acquisition order; it expires at that bound when the session never comes back, and an instance of another runtime never keeps it alive. Implemented by f8, who holds mesh-journal-converges and found the cause (claim c-f1818acaf75b; its first key c-b50ea7240ad4 was itself dropped by a takeover, the bug demonstrated a fifth time).",
+        "path": ".ai/repo/project/issues/I3798.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3410
+      },
+      {
+        "uri": "majordomus://issue/I3799",
+        "kind": "issue",
+        "identity": "I3799",
+        "title": "The Pages publication budgets are re-derived from the runs that publish the language copies",
+        "description": "Re-derive the per-row budgets and the controlled total in .ai/repo/ci/pages.yaml from the timing rows of the Pages runs since the Czech copy landed (2026-10-20), the way suite.yaml's budgets are re-derived from the suite's measured durations: each budget a stated multiple of a cited measurement, the runs named, and nothing raised to fit a single run.",
+        "path": ".ai/repo/project/issues/I3799.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2277
+      },
+      {
+        "uri": "majordomus://issue/I3810",
+        "kind": "issue",
+        "identity": "I3810",
+        "title": "A mesh session whose client never comes back is closed by the server that served it",
+        "description": "When the shared server reaps an MCP connection's episode because no connection came back inside the reattach grace, it also closes that client's mesh session on its own stream (SessionClosed), so the session's claims end by the fold's existing rule (\\\"its session closed\\\") instead of being held for as long as the runtime beats. Implemented by f8 (779cc015), holder of mesh-journal-converges.",
+        "path": ".ai/repo/project/issues/I3810.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2824
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -118511,7 +118544,7 @@
       "identity": [
         "id"
       ],
-      "objects": 811
+      "objects": 814
     },
     {
       "name": "knowledge",

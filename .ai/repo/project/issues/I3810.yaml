@@ -1,0 +1,33 @@
+id: I3810
+milestone: mesh-journal-converges
+title: "A mesh session whose client never comes back is closed by the server that served it"
+slug: a-gone-clients-mesh-session-is-closed
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "When the shared server reaps an MCP connection's episode because no connection came back inside the reattach grace, it also closes that client's mesh session on its own stream (SessionClosed), so the session's claims end by the fold's existing rule (\"its session closed\") instead of being held for as long as the runtime beats. Implemented by f8 (779cc015), holder of mesh-journal-converges."
+why: "On 2026-10-21 dev-03 found exclusive claim c-e75ccd4c731d (node 5d81b5c9, I2720 scope, refs/heads/feature/self-update-wraps-the-installer) reading held, and nobody could release it: other runtimes are refused not_own and the holder is not reachable. The fold showed its stream live (beat 5 s before) and its session claude-code-9ab8a13c active, although its client had gone. http/mcp.rs reap_idle closes a reaped connection's episode after REATTACH_GRACE but writes no SessionClosed to the mesh; only an explicit `mesh session close` does. On a long-lived runtime a session whose client vanished is therefore active for ever, and its exclusive claims block every other worker."
+current_state: "HttpSessions::reap_idle forgets a silent connection after SESSION_IDLE_TIMEOUT and closes its episode after REATTACH_GRACE; the mesh session the client opened stays active in the fold, with every claim under it held, until the runtime itself stops beating."
+desired_state: "The server that reaps an episode as interrupted appends SessionClosed for the mesh session that episode's client opened, once; a client that re-attaches inside the grace keeps its session and claims; the fold, admission and other runtimes are unchanged."
+scope:
+  - "apps/majordomus-cli/src/http/mcp.rs"
+  - "apps/majordomus-cli/src/mesh/cooperation.rs"
+  - "apps/majordomus-cli/tests/mesh_cooperation.rs"
+  - "docs/MESH.md"
+non_scope:
+  - "A claim surviving a lease takeover, which is I3798"
+  - "Review requests that never lapse, which is I3608"
+depends_on: []
+acceptance_criteria:
+  - "An episode reaped as interrupted closes its client's mesh session once, and that session's exclusive claim then reads expired (its session closed) on every runtime"
+  - "A client that re-attaches inside the reattach grace keeps its mesh session and its claims"
+  - "A reap with no mesh session for the client writes nothing to the journal"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --lib http::mcp"
+  - "cargo test --lib mesh::cooperation"
+  - "cargo test --test mesh_cooperation"
+evidence_required:
+  - "a_gone_clients_mesh_session_is_closed_test"
+created_at: 2026-10-21
+updated_at: 2026-10-21
