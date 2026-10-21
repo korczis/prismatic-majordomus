@@ -37,7 +37,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <a href="https://majordomus.dev/cs/" class="flex min-w-0 items-center gap-1.5 sm:gap-2.5 rtl:space-x-reverse">
       <span class="inline-flex h-6 w-6 shrink-0 text-heading sm:h-7 sm:w-7 [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.0.0-alpha.2 -->
+     Generator: majordomus-cli 1.0.0-alpha.4 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
   <title>Prismatic Majordomus</title>
   <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
@@ -205,7 +205,7 @@ flowchart TD
   B --&gt; I[validators and gates]
   I --&gt; J[a refusal, with the command that reproduces it]
 </pre><div class="mj-diagram-bar" role="toolbar" aria-label="Diagram the-shape-of-the-system" aria-controls="diagram-the-shape-of-the-system" data-diagram-bar="diagram-the-shape-of-the-system" hidden><button type="button" class="mj-button mj-button--quiet" data-diagram-action="zoom-out" aria-label="Oddálit" title="Oddálit">−</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="zoom-in" aria-label="Přiblížit" title="Přiblížit">+</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="fit" aria-label="Přizpůsobit diagram rámu" title="Přizpůsobit diagram rámu">Přizpůsobit</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="expand" aria-label="Zobrazit na celou obrazovku" title="Zobrazit na celou obrazovku">Rozbalit</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="download" aria-label="Stáhnout SVG" title="Stáhnout SVG">SVG</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="link" aria-label="Odkaz: zkopírovat adresu tohoto diagramu" title="Odkaz: zkopírovat adresu tohoto diagramu">Odkaz</button><span class="mj-diagram-status" role="status"></span></div>
-<p>The registry is the part that pays for itself. Every operation is declared once, in Rust, with its identity, its effect and its exposure. As this page is built, that registry holds 3161 capabilities: 196 of them are exposed as MCP tools, 3010 as MCP resources, 201 as HTTP operations. Every one of those surfaces is rendered from the same rows, so an operation cannot exist in the API and be missing from the OpenAPI document, and a tool cannot appear over MCP that the registry does not know about. There is a gate that regenerates everything and fails if the result differs from what is committed.</p>
+<p>The registry is the part that pays for itself. Every operation is declared once, in Rust, with its identity, its effect and its exposure. As this page is built, that registry holds 3198 capabilities: 196 of them are exposed as MCP tools, 3047 as MCP resources, 201 as HTTP operations. Every one of those surfaces is rendered from the same rows, so an operation cannot exist in the API and be missing from the OpenAPI document, and a tool cannot appear over MCP that the registry does not know about. There is a gate that regenerates everything and fails if the result differs from what is committed.</p>
 <p>Chci být přesný v tom, co toto nepokrývá, protože poctivá verze je užitečnější než uhlazená. Příkazová řádka <strong>není</strong> čistá projekce. Příkazová řádka spustitelného souboru má 209 spustitelných příkazů a ne za každým z nich stojí schopnost — kolik jich je, říká sám nástroj ve stejné zprávě na řádku <code>commands no capability claims</code>. Tyto příkazy jsou druhá deklarace, kontrolovaná proti první, ne z ní odvozená. Uzavření této mezery je probíhající práce a dokud se neuzavře, „jedna deklarace, každý povrch“ platí pro API, povrch MCP a dokumentaci a pro CLI je to aspirace.</p>
 <h2 id="claims-as-objects"><a class="zola-anchor" href="#claims-as-objects" aria-label="Odkaz na kotvu: claims-as-objects">Tvrzení jako objekty</a></h2>
 <p>Mechanismus, který vám skutečně chci ukázat, je užší a podle mě přenositelnější.</p>
@@ -241,7 +241,7 @@ flowchart TD
 <div class="overflow-x-auto" tabindex="0">
 <table tabindex="0"><thead><tr><th>Výrok</th><th>Stav</th><th>Jak to můžete ověřit</th></tr></thead><tbody>
 <tr><td>Každé zaručené tvrzení jmenuje spustitelný test, který jmenuje je zpět</td><td>Ověřeno, vynuceno</td><td><code>scripts/ci/claim-proof-check --strict</code>, exit 0, prázdná základní hodnota</td></tr>
-<tr><td>Jeden registr vykresluje HTTP API, OpenAPI, MCP i dokumentaci</td><td>Ověřeno, změřeno</td><td><code>majordomus capabilities projections</code>: 3161 rows, 201 HTTP, 196 MCP tools, 3010 MCP resources</td></tr>
+<tr><td>Jeden registr vykresluje HTTP API, OpenAPI, MCP i dokumentaci</td><td>Ověřeno, změřeno</td><td><code>majordomus capabilities projections</code>: 3198 rows, 201 HTTP, 196 MCP tools, 3047 MCP resources</td></tr>
 <tr><td>CLI je odvozeno z tohoto registru</td><td><strong>Zatím neplatí</strong></td><td><code>majordomus capabilities projections</code> počítá, které z 209 spustitelných příkazů si nenárokuje žádná schopnost</td></tr>
 <tr><td>Každé blokující pravidlo nese validátor</td><td>Ověřeno</td><td><code>scripts/ci/rule-proof-check</code>, exit 0</td></tr>
 <tr><td>Tvrzení nesou zaznamenaný stav důkazu</td><td><strong>Implementováno, nekrmeno z CI</strong></td><td>ledger drží 14 provedení, všechna lokální; 0 z 250 tvrzení dokázáno</td></tr>
@@ -316,9 +316,9 @@ flowchart TD
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/905159df7cc24f65c0455a16fc9ccbad37845571/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/905159df7cc24f65c0455a16fc9ccbad37845571/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/905159df7cc24f65c0455a16fc9ccbad37845571/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/97391192dbbc85ee34b1f35d9ddec55ba61832d3/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/97391192dbbc85ee34b1f35d9ddec55ba61832d3/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/97391192dbbc85ee34b1f35d9ddec55ba61832d3/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -326,7 +326,7 @@ flowchart TD
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v1.0.0-alpha.2 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/905159df7cc24f65c0455a16fc9ccbad37845571" class="font-mono underline">905159d</a> · inputs <span class="font-mono">bdf7ac59c005</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v1.0.0-alpha.4 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/97391192dbbc85ee34b1f35d9ddec55ba61832d3" class="font-mono underline">9739119</a> · inputs <span class="font-mono">22b165003087</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

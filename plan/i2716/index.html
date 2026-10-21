@@ -38,7 +38,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <a href="https://majordomus.dev/" class="flex min-w-0 items-center gap-1.5 sm:gap-2.5 rtl:space-x-reverse">
       <span class="inline-flex h-6 w-6 shrink-0 text-heading sm:h-7 sm:w-7 [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.0.0-alpha.2 -->
+     Generator: majordomus-cli 1.0.0-alpha.4 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
   <title>Prismatic Majordomus</title>
   <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
@@ -183,43 +183,50 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 </div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="min-w-0">
-  <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--active relative" data-status="active"><span aria-hidden="true">•</span>ACTIVE</span>
+  <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--done relative" data-status="done"><span aria-hidden="true">✓</span>DONE</span>
 <span class="text-sm text-body">wave 0 · p2 · implementation profile · parallel safe</span></p>
   <p class="mt-3 text-sm text-body">Part of <a href="https://majordomus.dev/plan/m004/" class="text-fg-brand underline">M004 — Performance is executable evidence, and the hot path does no canonical work twice</a>.</p>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Objective</h2>
-  <p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Keep a case from failing because its subject grew: a budget, a count or a list of names that a case states by hand is derived from the model or carries the margin and the reason it holds.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Why</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">2026-10-14: master 2d226f0836 went red in suite-shard (2) because case 130 compared three surfaces at a hand-pinned 4000-token budget and a fresh init&#39;s governance tier grew to 4023 when #1143 added 235 bytes to the seeded scope; the same day case 94 failed a branch because the release-record-cases gate lists its cases by hand and a new case named the release record. Both were fixed by hand in #1145 (budget 16000 with a comment; case 3021 added to the list).</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Current state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Cases pin numbers and lists freely; a gate&#39;s hand list (release-record-cases) and a case&#39;s literal budget are found only when they break.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Desired state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">A lint over test/cases reports a literal budget, count or size compared against a product&#39;s output without a comment giving its margin, and the release-record-cases list is generated from the cases that name a release-record path (or checked against them by a structure gate, not only by case 94).</p>
+  <p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Keep a case from failing because its subject grew: a budget, a count or a list of names that a case states by hand is derived from the model or carries the margin and the reason it holds.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Why</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">2026-10-14: master 2d226f0836 went red in suite-shard (2) because case 130 compared three surfaces at a hand-pinned 4000-token budget and a fresh init&#39;s governance tier grew to 4023 when #1143 added 235 bytes to the seeded scope; the same day case 94 failed a branch because the release-record-cases gate lists its cases by hand and a new case named the release record. Both were fixed by hand in #1145 (budget 16000 with a comment; case 3021 added to the list).</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Current state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Cases pin numbers and lists freely; a gate&#39;s hand list (release-record-cases) and a case&#39;s literal budget are found only when they break.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Desired state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">The release-record-cases list is checked against the cases that name a release-record path by a structure gate (scripts/ci/release-record-cases-check), not only by case 94. Reporting a hand-pinned budget without a stated margin moved to I2846 (2026-10-21), so this issue closes on the listing alone.</p>
 
   
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Scope</h2>
 <ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li class="font-mono text-heading break-words">scripts/liveness-check</li><li class="font-mono text-heading break-words">.ai/repo/ci/gates.yaml</li><li class="font-mono text-heading break-words">test/cases</li></ul>
   
+<h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Out of scope</h2>
+<ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li>Reporting a literal budget, count or size a case compares against a product&#39;s output without a comment giving its margin: I2846, split off on 2026-10-21 when this issue&#39;s first half was found on master and the second was not.</li></ul>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Dependencies</h2>
   <p class="mt-2 text-sm text-body">None. This issue is a root of the graph.</p>
 
   
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Acceptance criteria</h2>
-<ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li>Adding a case that names the release record without listing it fails a structure gate, not only case 94</li><li>A hand-pinned budget in a case without a stated margin is reported</li></ul>
+<ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li>Adding a case that names the release record without listing it fails a structure gate, not only case 94</li></ul>
   
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Validation</h2>
 <ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li class="font-mono text-heading break-words">bin/majordomus plan validate</li></ul>
   
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Evidence required</h2>
-<ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li class="font-mono text-heading break-words">pinned_values_are_reported_case</li></ul>
+<ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li class="font-mono text-heading break-words">release_record_listing_case</li></ul>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Evidence</h2>
-  <p class="mt-2 text-sm text-body">None recorded. Every token above needs a command or an artifact behind it before this issue can be completed; narrative is refused.</p>
+  <div class="mt-4 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[34rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-soft text-xs uppercase tracking-wide text-body-subtle"><tr><th scope="col" class="px-4 py-2">covers</th><th scope="col" class="px-4 py-2">type</th><th scope="col" class="px-4 py-2">command</th><th scope="col" class="px-4 py-2">result</th><th scope="col" class="px-4 py-2">at commit</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top"><td class="px-4 py-2 font-mono text-xs text-heading">release_record_listing_case</td><td class="px-4 py-2 font-mono text-xs text-body">ci</td><td class="px-4 py-2 font-mono text-xs text-body break-words">validate run 39438896504 at master 9a5a9b77520: structure job 118758922399 runs scripts/ci/release-record-cases-check (27 cases name the release record, each run by release-record-cases); suite-shard (1) job 118683336189 runs 3033_a_release_record_case_is_listed_by_a_structure_gate (11e53f5a451)</td><td class="px-4 py-2 text-body">success (the run&#39;s only red job is pages, which runs no test)</td><td class="px-4 py-2 font-mono text-xs text-body-subtle">573df96</td></tr></tbody>
+    </table>
+  </div>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Timeline</h2>
   <dl class="mt-3 grid max-w-3xl grid-cols-1 gap-3 sm:grid-cols-3">
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">started</dt><dd class="mt-1 font-mono text-sm text-heading break-words">2026-10-14T22:50:08Z</dd></div>
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">verified</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">completed</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">verified</dt><dd class="mt-1 font-mono text-sm text-heading break-words">2026-10-20T22:20:19Z</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">completed</dt><dd class="mt-1 font-mono text-sm text-heading break-words">2026-10-20T22:21:05Z</dd></div>
   </dl>
   <p class="mt-3 max-w-3xl text-sm text-body">Those three fields, the evidence above and the state of the dependencies are all the status is made of. There is no status field to disagree with them.</p>
 
-  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/905159df7cc24f65c0455a16fc9ccbad37845571/.ai/repo/project/issues/I2716.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/issues/I2716.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show I2716</code>.</p>
+  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/97391192dbbc85ee34b1f35d9ddec55ba61832d3/.ai/repo/project/issues/I2716.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/issues/I2716.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show I2716</code>.</p>
 </div>
 
 </div>
@@ -269,9 +276,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/905159df7cc24f65c0455a16fc9ccbad37845571/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/905159df7cc24f65c0455a16fc9ccbad37845571/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/905159df7cc24f65c0455a16fc9ccbad37845571/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/97391192dbbc85ee34b1f35d9ddec55ba61832d3/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/97391192dbbc85ee34b1f35d9ddec55ba61832d3/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/97391192dbbc85ee34b1f35d9ddec55ba61832d3/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -279,7 +286,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v1.0.0-alpha.2 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/905159df7cc24f65c0455a16fc9ccbad37845571" class="font-mono underline">905159d</a> · inputs <span class="font-mono">bdf7ac59c005</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v1.0.0-alpha.4 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/97391192dbbc85ee34b1f35d9ddec55ba61832d3" class="font-mono underline">9739119</a> · inputs <span class="font-mono">22b165003087</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

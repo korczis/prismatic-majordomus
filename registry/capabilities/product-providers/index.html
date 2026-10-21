@@ -38,7 +38,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <a href="https://majordomus.dev/" class="flex min-w-0 items-center gap-1.5 sm:gap-2.5 rtl:space-x-reverse">
       <span class="inline-flex h-6 w-6 shrink-0 text-heading sm:h-7 sm:w-7 [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.0.0-alpha.2 -->
+     Generator: majordomus-cli 1.0.0-alpha.4 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
   <title>Prismatic Majordomus</title>
   <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
@@ -248,6 +248,21 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;$defs&quot;: {
+    &quot;BrowserSource&quot;: {
+      &quot;description&quot;: &quot;Whether one provider&#39;s client drives a browser in the same session as this repository&#39;s\nMCP server.\n\nA bridge is the one way a single session both works on a page and reads and changes the\nlive mesh (`docs/MCP.md`, \&quot;Claude in the browser\&quot;). It is a vendor capability like the two\nabove, so it is declared with its citation; whether *this machine* has the bridge is a\ndifferent fact, which preflight reads from the machine and never from here. A browser\nagent of the vendor&#39;s own — a side panel that reaches only the vendor&#39;s cloud — is not a\nbridge: nothing it does arrives in a session that holds this repository&#39;s server.\n\n```\nuse majordomus_cli::share::BrowserSource;\nassert_eq!(serde_json::from_str::&lt;BrowserSource&gt;(\&quot;\\\&quot;bridge\\\&quot;\&quot;).unwrap(), BrowserSource::Bridge);\nassert!(serde_json::from_str::&lt;BrowserSource&gt;(\&quot;\\\&quot;extension\\\&quot;\&quot;).is_err(), \&quot;one word for it\&quot;);\nassert_eq!(BrowserSource::default(), BrowserSource::None, \&quot;undeclared reads as none\&quot;);\nassert_eq!(BrowserSource::Bridge.as_str(), \&quot;bridge\&quot;);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;bridge&quot;,
+          &quot;description&quot;: &quot;The client drives a browser through a vendor extension whose tools arrive in the same\nsession as this repository&#39;s MCP server.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;none&quot;,
+          &quot;description&quot;: &quot;It does not, or not in a session that holds this repository&#39;s server.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
     &quot;EpisodeSource&quot;: {
       &quot;description&quot;: &quot;How an episode boundary can be drawn for one provider.\n\nThree words, because three things are true of different providers and collapsing them\ninto \&quot;supported / not supported\&quot; is what let this tool report one provider and stay\nsilent about five others. A provider that fires its own events is not the same as one\nthat fires none but speaks MCP, and neither is the same as one that can do nothing.\n\nThe words are the declaration&#39;s own, and a word outside them is refused rather than read\nas `none`:\n\n```\nuse majordomus_cli::share::EpisodeSource;\nlet read: EpisodeSource = serde_json::from_str(\&quot;\\\&quot;connection\\\&quot;\&quot;).unwrap();\nassert_eq!(read, EpisodeSource::Connection);\nassert_eq!(EpisodeSource::default(), EpisodeSource::None, \&quot;undeclared reads as none\&quot;);\nassert!(serde_json::from_str::&lt;EpisodeSource&gt;(\&quot;\\\&quot;hook\\\&quot;\&quot;).is_err(), \&quot;hooks, plural\&quot;);\n```&quot;,
       &quot;oneOf&quot;: [
@@ -299,6 +314,8 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         &quot;offers&quot;: {
           &quot;$ref&quot;: &quot;#/$defs/ProviderOffers&quot;,
           &quot;default&quot;: {
+            &quot;browser&quot;: &quot;none&quot;,
+            &quot;browser_evidence&quot;: &quot;&quot;,
             &quot;episode&quot;: &quot;none&quot;,
             &quot;episode_evidence&quot;: &quot;&quot;,
             &quot;prompts&quot;: &quot;none&quot;,
@@ -368,6 +385,30 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     &quot;ProviderOffers&quot;: {
       &quot;description&quot;: &quot;What one provider can do about the session lifecycle, and where that was verified.\n\n**Every cell carries its evidence.** A capability asserted with no citation is the defect\nthis type exists to make impossible: before it, a provider absent from a shell table was\nsilently unsupported and a provider present in one was silently capable, and no surface\ncould tell a reader which vendor page either answer came from — `capture status`\nenumerated the one provider that had an adapter and said nothing whatever about the\nother five this distribution declares. The rule\n`project.a-provider-capability-cites-its-evidence` refuses a declaration without one.\n\nA provider that declares nothing is `none` on both axes with empty evidence — the state\nthat rule refuses, so the gap is a finding rather than a silent \&quot;unsupported\&quot;:\n\n```\nuse majordomus_cli::share::{EpisodeSource, PromptSource, ProviderOffers};\nlet undeclared = ProviderOffers::default();\nassert_eq!((undeclared.episode, undeclared.prompts), (EpisodeSource::None, PromptSource::None));\nassert!(undeclared.episode_evidence.is_empty() &amp;&amp; undeclared.prompts_evidence.is_empty());\nlet generic: ProviderOffers = serde_json::from_value(serde_json::json!({\n    \&quot;episode\&quot;: \&quot;connection\&quot;, \&quot;episode_evidence\&quot;: \&quot;ADR 0103\&quot;,\n    \&quot;prompts\&quot;: \&quot;none\&quot;, \&quot;prompts_evidence\&quot;: \&quot;MCP carries no prompt\&quot;,\n})).unwrap();\nassert_eq!(generic.episode, EpisodeSource::Connection);\n```&quot;,
       &quot;properties&quot;: {
+        &quot;browser&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/BrowserSource&quot;,
+          &quot;default&quot;: &quot;none&quot;,
+          &quot;description&quot;: &quot;Whether the client drives a browser beside this repository&#39;s server. Absent in a\nvalue written before the axis existed, and read as `none` there.&quot;
+        },
+        &quot;browser_evidence&quot;: {
+          &quot;default&quot;: &quot;&quot;,
+          &quot;description&quot;: &quot;Where `browser` was verified, on the same terms as `episode_evidence`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;browser_host&quot;: {
+          &quot;description&quot;: &quot;The native messaging host a bridge registers with the browser, which is how a\nmachine is seen to have it. Declared for a `bridge` only.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;browser_setup&quot;: {
+          &quot;description&quot;: &quot;What a person does, once, to install the bridge on a machine, in the vendor&#39;s terms.\nDeclared for a `bridge` only.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
         &quot;episode&quot;: {
           &quot;$ref&quot;: &quot;#/$defs/EpisodeSource&quot;,
           &quot;description&quot;: &quot;How the episode boundary is drawn for this provider.&quot;
@@ -446,8 +487,8 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::product</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">Empty</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">ProviderList</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/905159df7cc24f65c0455a16fc9ccbad37845571/docs/generated/modules/product.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/product.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">c83bd8bda754ac4f405a227ff570ae9fa6b33f3a4992632f4ee3acee49653e09</dd></div>
-        <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.2</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/97391192dbbc85ee34b1f35d9ddec55ba61832d3/docs/generated/modules/product.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/product.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">7af162eb462c8abc6f377003f5495ea93b155616b629e2d6535e0c655cf105ac</dd></div>
+        <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.4</dd></div>
       </dl>
     </div>
   </aside>
@@ -502,9 +543,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/905159df7cc24f65c0455a16fc9ccbad37845571/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/905159df7cc24f65c0455a16fc9ccbad37845571/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/905159df7cc24f65c0455a16fc9ccbad37845571/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/97391192dbbc85ee34b1f35d9ddec55ba61832d3/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/97391192dbbc85ee34b1f35d9ddec55ba61832d3/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/97391192dbbc85ee34b1f35d9ddec55ba61832d3/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -512,7 +553,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v1.0.0-alpha.2 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/905159df7cc24f65c0455a16fc9ccbad37845571" class="font-mono underline">905159d</a> · inputs <span class="font-mono">bdf7ac59c005</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v1.0.0-alpha.4 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/97391192dbbc85ee34b1f35d9ddec55ba61832d3" class="font-mono underline">9739119</a> · inputs <span class="font-mono">22b165003087</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

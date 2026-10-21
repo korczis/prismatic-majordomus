@@ -38,7 +38,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <a href="https://majordomus.dev/" class="flex min-w-0 items-center gap-1.5 sm:gap-2.5 rtl:space-x-reverse">
       <span class="inline-flex h-6 w-6 shrink-0 text-heading sm:h-7 sm:w-7 [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.0.0-alpha.2 -->
+     Generator: majordomus-cli 1.0.0-alpha.4 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
   <title>Prismatic Majordomus</title>
   <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
@@ -183,12 +183,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 </div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="min-w-0">
-  <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--ready relative" data-status="ready"><span aria-hidden="true">○</span>READY</span>
+  <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--active relative" data-status="active"><span aria-hidden="true">•</span>ACTIVE</span>
 <span class="text-sm text-body">wave 0 · p2 · implementation profile · parallel safe</span></p>
   <p class="mt-3 text-sm text-body">Part of <a href="https://majordomus.dev/plan/architecture-is-enforced/" class="text-fg-brand underline">architecture-is-enforced — A violated invariant fails a gate, and green means every required check ran</a>.</p>
-  <div class="mt-6 rounded-base border border-default bg-neutral-primary-soft p-4">
-    <p class="text-sm text-body">Ready. Every dependency is done, so <code class="font-mono text-heading">majordomus plan start I2841</code> will be accepted.</p>
-  </div>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Objective</h2>
   <p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Split `probe the site in a browser` (scripts/site-probe over every route at 320, 390 and 1280 px) so the site job no longer runs at its timeout, and keep the full sweep: no route and no width is dropped.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Why</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Measured on 2026-10-17: the site job of validate took 46.3 min (master 39034132446), 47.5 min (39039860066) and was cancelled at 50.4 min by its own timeout-minutes 50 (39049547899, batch 71a with the 0.29.0 bump), in the browser probe, which alone ran 35-37 min. A job at 95% of its bound turns runner variance into a cancelled release run: the v0.29.0 tag slipped about 50 minutes for a rerun. Batch 71b2 raises the timeout to 65 min, which buys headroom for v1.0.0-alpha.1 but leaves the probe growing with every route the site adds (5330 routes on 25b5fce).</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Current state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">One step in the site job runs scripts/site-probe with SITE_PROBE_JOBS=4 under `scripts/ci/timed --bound 2700`; the job&#39;s timeout-minutes is 65 after 71b2 (50 before).</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Desired state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">The probe runs as a matrix of shards (by route partition) in parallel jobs, or in a job of its own beside the build, each with a stated bound and its measured duration beside it; together they cover every route at every width the single step covers today, proved by a case that the union of the shards&#39; route lists equals the built site&#39;s; the site job finishes in well under half its timeout.</p>
@@ -202,6 +199,10 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Dependencies</h2>
   <p class="mt-2 text-sm text-body">None. This issue is a root of the graph.</p>
+  <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">What waits on this</h2>
+  <ul class="mt-3 grid gap-2 sm:grid-cols-2"><li class="min-w-0"><a href="https://majordomus.dev/plan/i3602/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I3602</span><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOCKED</span>
+<span class="min-w-0 break-words text-sm text-heading">The interaction probe is split, so every control of every page is driven inside its bound</span></a></li>
+  </ul>
 
   
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Acceptance criteria</h2>
@@ -218,13 +219,13 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Timeline</h2>
   <dl class="mt-3 grid max-w-3xl grid-cols-1 gap-3 sm:grid-cols-3">
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">started</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">started</dt><dd class="mt-1 font-mono text-sm text-heading break-words">2026-10-19T20:38:09Z</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">verified</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">completed</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
   </dl>
   <p class="mt-3 max-w-3xl text-sm text-body">Those three fields, the evidence above and the state of the dependencies are all the status is made of. There is no status field to disagree with them.</p>
 
-  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/905159df7cc24f65c0455a16fc9ccbad37845571/.ai/repo/project/issues/I2841.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/issues/I2841.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show I2841</code>.</p>
+  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/97391192dbbc85ee34b1f35d9ddec55ba61832d3/.ai/repo/project/issues/I2841.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/issues/I2841.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show I2841</code>.</p>
 </div>
 
 </div>
@@ -274,9 +275,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/905159df7cc24f65c0455a16fc9ccbad37845571/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/905159df7cc24f65c0455a16fc9ccbad37845571/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/905159df7cc24f65c0455a16fc9ccbad37845571/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/97391192dbbc85ee34b1f35d9ddec55ba61832d3/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/97391192dbbc85ee34b1f35d9ddec55ba61832d3/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/97391192dbbc85ee34b1f35d9ddec55ba61832d3/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -284,7 +285,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v1.0.0-alpha.2 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/905159df7cc24f65c0455a16fc9ccbad37845571" class="font-mono underline">905159d</a> · inputs <span class="font-mono">bdf7ac59c005</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v1.0.0-alpha.4 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/97391192dbbc85ee34b1f35d9ddec55ba61832d3" class="font-mono underline">9739119</a> · inputs <span class="font-mono">22b165003087</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>
