@@ -22141,6 +22141,379 @@ cli:
           subcommands: []
     - path:
         - majordomus
+        - autonomy
+      route: /docs/cli/autonomy/
+      executable: false
+      usage: "majordomus autonomy [OPTIONS] <COMMAND>"
+      about: "How much a coding-agent session in this checkout may do unasked, read from the facts: the client's settings layers, the isolation evidence, the profile they support, the decision for one shell command, and what the permission layer actually cost"
+      args:
+        - name: repo
+          long: repo
+          positional: false
+          help: "Start the search for the repository root here (default: the current directory)"
+          value_name: PATH
+          takes_value: true
+          required: false
+          global: true
+          possible_values: []
+          defaults: []
+        - name: discovery
+          long: discovery
+          positional: false
+          help: How declarative files are enumerated
+          value_name: DISCOVERY
+          takes_value: true
+          required: false
+          global: true
+          possible_values:
+            - name: vcs
+              help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+            - name: filesystem
+              help: A walk of the work tree with the same glob semantics; untracked files included
+          defaults:
+            - vcs
+        - name: strict
+          long: strict
+          positional: false
+          help: Refuse to proceed when any file of the layer carries an error diagnostic
+          value_name: STRICT
+          takes_value: false
+          required: false
+          global: true
+          possible_values: []
+          defaults:
+            - "false"
+        - name: share
+          long: share
+          positional: false
+          help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+          value_name: DIR
+          takes_value: true
+          required: false
+          global: true
+          possible_values: []
+          defaults: []
+        - name: format
+          long: format
+          positional: false
+          help: Output shape
+          value_name: FORMAT
+          takes_value: true
+          required: false
+          global: true
+          possible_values:
+            - name: text
+              help: Lines for a person
+            - name: json
+              help: "One JSON document, deterministic"
+          defaults:
+            - text
+      examples: []
+      subcommands:
+        - path:
+            - majordomus
+            - autonomy
+            - status
+          route: /docs/cli/autonomy/status/
+          executable: true
+          usage: "majordomus autonomy status [OPTIONS]"
+          about: "The settings layers, the isolation evidence and the profile they support, with the recommended permission mode and what refused every stronger profile"
+          args:
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: autonomy-status-json
+              title: "The autonomy this checkout supports, and why no more"
+              description: "The Claude Code settings layers with their default mode, rule counts and hooks (never rule text), the isolation evidence with credential variables named and never valued, and the profile the facts support as `/profile` and `/recommended_mode`, with `/refused` naming the fact that refused every stronger profile. Reads only; always exit 0."
+              argv:
+                - autonomy
+                - status
+                - "--format"
+                - json
+              command: majordomus autonomy status --format json
+              setup: []
+              expectation: exits 0
+          subcommands: []
+        - path:
+            - majordomus
+            - autonomy
+            - explain
+          route: /docs/cli/autonomy/explain/
+          executable: true
+          usage: "majordomus autonomy explain [OPTIONS] <COMMAND>"
+          about: "What a static permission rule may do with one shell command: exit 0 when it may run unasked, 10 when the client's own permission layer decides, 11 when a person approves it under every profile"
+          args:
+            - name: command
+              positional: true
+              help: "The shell command, quoted as one argument"
+              value_name: COMMAND
+              takes_value: true
+              required: true
+              global: false
+              possible_values: []
+              defaults: []
+            - name: profile
+              long: profile
+              positional: false
+              help: "The profile to judge it under; the checkout's own when absent"
+              value_name: PROFILE
+              takes_value: true
+              required: false
+              global: false
+              possible_values:
+                - name: conservative
+                  help: "Reads only run unasked; Claude Code's `default` mode"
+                - name: balanced
+                  help: "Reads and quality operations; `acceptEdits`, the profile of an untrusted checkout"
+                - name: trusted
+                  help: "Also local history; `auto`, once the person accepted the checkout's trust dialog"
+                - name: isolated
+                  help: "`bypassPermissions` inside a verified container with no credential in reach"
+              defaults: []
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: autonomy-explain-routine
+              title: A repository-local quality operation runs unasked
+              description: "`cargo test` under the trusted profile is a repository-local quality operation: the decision is allow, exit 0."
+              argv:
+                - autonomy
+                - explain
+                - cargo test --lib
+                - "--profile"
+                - trusted
+              command: "majordomus autonomy explain 'cargo test --lib' --profile trusted"
+              setup: []
+              expectation: exits 0
+            - id: autonomy-explain-boundary
+              title: A history rewrite needs a person even inside isolation
+              description: "`git reset --hard` is destructive: under every profile, isolated included, the decision is require_approval, exit 11."
+              argv:
+                - autonomy
+                - explain
+                - git reset --hard
+                - "--profile"
+                - isolated
+              command: "majordomus autonomy explain 'git reset --hard' --profile isolated"
+              setup: []
+              expectation: exits 11
+          subcommands: []
+        - path:
+            - majordomus
+            - autonomy
+            - friction
+          route: /docs/cli/autonomy/friction/
+          executable: true
+          usage: "majordomus autonomy friction [OPTIONS]"
+          about: "Every refusal the permission layer made in this repository's Claude Code transcripts, by kind, reason and tool, with the rate per thousand tool calls"
+          args:
+            - name: since_days
+              long: since-days
+              positional: false
+              help: "How many days back to count, 1 to 90"
+              value_name: SINCE_DAYS
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults:
+                - "7"
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: autonomy-friction-day
+              title: What the permission layer cost today
+              description: "Every refusal in this repository's Claude Code transcripts of the last day, by kind, by the classifier's reason and by tool, with the rate per thousand tool calls. Counts only; a machine with no transcripts answers zero calls and no rate. Always exit 0."
+              argv:
+                - autonomy
+                - friction
+                - "--since-days"
+                - "1"
+                - "--format"
+                - json
+              command: majordomus autonomy friction --since-days 1 --format json
+              setup: []
+              expectation: exits 0
+          subcommands: []
+    - path:
+        - majordomus
         - pack
       route: /docs/cli/pack/
       executable: false

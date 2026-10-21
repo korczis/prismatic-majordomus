@@ -10,6 +10,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | module | title | stability | capabilities | reference |
 |---|---|---|---|---|
 | `artifacts` | Generated artifacts | behaviorally_verified | 1 | [`modules/artifacts.md`](modules/artifacts.md) |
+| `autonomy` | Autonomy | experimental | 3 | [`modules/autonomy.md`](modules/autonomy.md) |
 | `brief` | The session brief | behaviorally_verified | 1 | [`modules/brief.md`](modules/brief.md) |
 | `capabilities` | Capabilities | behaviorally_verified | 3 | [`modules/capabilities.md`](modules/capabilities.md) |
 | `commands` | Command graph | implemented | 3 | [`modules/commands.md`](modules/commands.md) |
@@ -73,6 +74,9 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | id | module | kind | stability | MCP tool | MCP resource | HTTP | CLI | cache | benchmark |
 |---|---|---|---|---|---|---|---|---|---|
 | `artifacts.list` | `artifacts` | query | behaviorally_verified | `majordomus_artifacts` | `majordomus://artifacts` | `GET /api/v1/artifacts` | — | process, 8 entries, 5s | required |
+| `autonomy.explain` | `autonomy` | query | experimental | `majordomus_autonomy_explain` | — | `GET /api/v1/autonomy/explain` | `majordomus autonomy explain` | — | required |
+| `autonomy.friction` | `autonomy` | query | experimental | `majordomus_autonomy_friction` | — | `GET /api/v1/autonomy/friction` | `majordomus autonomy friction` | — | required |
+| `autonomy.status` | `autonomy` | query | experimental | `majordomus_autonomy` | — | `GET /api/v1/autonomy` | `majordomus autonomy status` | — | required |
 | `brief.session` | `brief` | query | behaviorally_verified | `majordomus_brief` | — | `GET /api/v1/brief` | `majordomus brief` | — | required |
 | `capabilities.describe` | `capabilities` | query | behaviorally_verified | `majordomus_capability` | — | `GET /api/v1/capability` | `majordomus capabilities describe` | process, 512 entries | required |
 | `capabilities.list` | `capabilities` | query | behaviorally_verified | `majordomus_capabilities` | — | `GET /api/v1/capabilities` | `majordomus capabilities list` | process, 16 entries | required |

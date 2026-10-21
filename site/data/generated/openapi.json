@@ -1,6 +1,9 @@
 {
   "anchors": {
     "op-artifacts-list": "docs/api/artifacts/",
+    "op-autonomy-explain": "docs/api/autonomy/",
+    "op-autonomy-friction": "docs/api/autonomy/",
+    "op-autonomy-status": "docs/api/autonomy/",
     "op-brief-session": "docs/api/brief/",
     "op-capabilities-describe": "docs/api/capabilities/",
     "op-capabilities-list": "docs/api/capabilities/",
@@ -240,6 +243,8 @@
     "schema-Attribution": "docs/api/trace/",
     "schema-AudienceList": "docs/api/why/",
     "schema-AudienceView": "docs/api/why/",
+    "schema-AutonomyProfile": "docs/api/autonomy/",
+    "schema-AutonomyStatus": "docs/api/autonomy/",
     "schema-Backend": "docs/api/mesh/",
     "schema-Balance": "docs/api/lifecycle/",
     "schema-BenchmarkPolicy": "docs/api/capabilities/",
@@ -311,6 +316,7 @@
     "schema-ColourPart": "docs/api/design/",
     "schema-CommandArgument": "docs/api/commands/",
     "schema-CommandAvailability": "docs/api/commands/",
+    "schema-CommandDecision": "docs/api/autonomy/",
     "schema-CommandDeprecation": "docs/api/commands/",
     "schema-CommandDiagnostic": "docs/api/commands/",
     "schema-CommandDiagnosticSeverity": "docs/api/commands/",
@@ -379,6 +385,7 @@
     "schema-DashboardOverview": "docs/api/dashboard/",
     "schema-DashboardQuestion": "docs/api/dashboard/",
     "schema-DashboardSource": "docs/api/dashboard/",
+    "schema-Decision": "docs/api/autonomy/",
     "schema-Declaration": "docs/api/repository/",
     "schema-Deduplicated": "docs/api/devcontext/",
     "schema-DeliveryBranch": "docs/api/plan/",
@@ -579,6 +586,7 @@
     "schema-FlightRelease": "docs/api/plan/",
     "schema-Fonts": "docs/api/design/",
     "schema-Freshness": "docs/api/shared/",
+    "schema-Friction": "docs/api/autonomy/",
     "schema-GapCondition": "docs/api/intents/",
     "schema-Gate": "docs/api/gates/",
     "schema-GateClass": "docs/api/gates/",
@@ -679,6 +687,7 @@
     "schema-IntentWorkRef": "docs/api/intent-realization/",
     "schema-IntentWorkUnit": "docs/api/intent-realization/",
     "schema-Interface": "docs/api/deploy/",
+    "schema-IsolationEvidence": "docs/api/autonomy/",
     "schema-IssueDelivery": "docs/api/plan/",
     "schema-IssueDeliveryReport": "docs/api/plan/",
     "schema-IssueOrigin": "docs/api/intents/",
@@ -831,6 +840,7 @@
     "schema-PeerTree": "docs/api/mesh/",
     "schema-PeerVerdict": "docs/api/mesh/",
     "schema-PeerView": "docs/api/mesh/",
+    "schema-PermissionMode": "docs/api/autonomy/",
     "schema-PhaseTotals": "docs/api/perf/",
     "schema-Plan": "docs/api/plan/",
     "schema-PlanCounts": "docs/api/plan/",
@@ -876,6 +886,7 @@
     "schema-ProductFinding": "docs/api/product/",
     "schema-ProductProvider": "docs/api/product/",
     "schema-ProductValidationReport": "docs/api/product/",
+    "schema-ProfileRefusal": "docs/api/autonomy/",
     "schema-ProgressView": "docs/api/executions/",
     "schema-ProjectIdentity": "docs/api/environment/",
     "schema-ProjectionState": "docs/api/environment/",
@@ -1011,6 +1022,7 @@
     "schema-ReviewState": "docs/api/mesh/",
     "schema-ReviewView": "docs/api/mesh/",
     "schema-ReviewWithdrawInput": "docs/api/mesh/",
+    "schema-RiskClass": "docs/api/autonomy/",
     "schema-Role": "docs/api/mesh/",
     "schema-Route": "docs/api/deploy/",
     "schema-RouteCollision": "docs/api/entity/",
@@ -1069,6 +1081,7 @@
     "schema-SessionNode": "docs/api/mesh/",
     "schema-SessionState": "docs/api/mesh/",
     "schema-SessionView": "docs/api/mesh/",
+    "schema-SettingsLayer": "docs/api/autonomy/",
     "schema-Severity": "docs/api/shared/",
     "schema-ShardLimits": "docs/api/pack/",
     "schema-ShardPlan": "docs/api/pack/",
@@ -1207,6 +1220,7 @@
     "schema-WorktreeState": "docs/api/worktree/",
     "schema-Written": "docs/api/mesh/",
     "tag-artifacts": "docs/api/artifacts/",
+    "tag-autonomy": "docs/api/autonomy/",
     "tag-brief": "docs/api/brief/",
     "tag-capabilities": "docs/api/capabilities/",
     "tag-commands": "docs/api/commands/",
@@ -1267,9 +1281,9 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 201,
-    "schemas": 1005,
-    "tags": 58
+    "operations": 204,
+    "schemas": 1015,
+    "tags": 59
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "errors": [
@@ -1361,6 +1375,9 @@
   ],
   "op_homes": {
     "artifacts.list": "artifacts",
+    "autonomy.explain": "autonomy",
+    "autonomy.friction": "autonomy",
+    "autonomy.status": "autonomy",
     "brief.session": "brief",
     "capabilities.describe": "capabilities",
     "capabilities.list": "capabilities",
@@ -1604,6 +1621,8 @@
     "Attribution": "trace",
     "AudienceList": "why",
     "AudienceView": "why",
+    "AutonomyProfile": "autonomy",
+    "AutonomyStatus": "autonomy",
     "Backend": "mesh",
     "Balance": "lifecycle",
     "BenchmarkPolicy": "capabilities",
@@ -1675,6 +1694,7 @@
     "ColourPart": "design",
     "CommandArgument": "commands",
     "CommandAvailability": "commands",
+    "CommandDecision": "autonomy",
     "CommandDeprecation": "commands",
     "CommandDiagnostic": "commands",
     "CommandDiagnosticSeverity": "commands",
@@ -1743,6 +1763,7 @@
     "DashboardOverview": "dashboard",
     "DashboardQuestion": "dashboard",
     "DashboardSource": "dashboard",
+    "Decision": "autonomy",
     "Declaration": "repository",
     "Deduplicated": "devcontext",
     "DeliveryBranch": "plan",
@@ -1943,6 +1964,7 @@
     "FlightRelease": "plan",
     "Fonts": "design",
     "Freshness": "shared",
+    "Friction": "autonomy",
     "GapCondition": "intents",
     "Gate": "gates",
     "GateClass": "gates",
@@ -2043,6 +2065,7 @@
     "IntentWorkRef": "intent-realization",
     "IntentWorkUnit": "intent-realization",
     "Interface": "deploy",
+    "IsolationEvidence": "autonomy",
     "IssueDelivery": "plan",
     "IssueDeliveryReport": "plan",
     "IssueOrigin": "intents",
@@ -2195,6 +2218,7 @@
     "PeerTree": "mesh",
     "PeerVerdict": "mesh",
     "PeerView": "mesh",
+    "PermissionMode": "autonomy",
     "PhaseTotals": "perf",
     "Plan": "plan",
     "PlanCounts": "plan",
@@ -2240,6 +2264,7 @@
     "ProductFinding": "product",
     "ProductProvider": "product",
     "ProductValidationReport": "product",
+    "ProfileRefusal": "autonomy",
     "ProgressView": "executions",
     "ProjectIdentity": "environment",
     "ProjectionState": "environment",
@@ -2375,6 +2400,7 @@
     "ReviewState": "mesh",
     "ReviewView": "mesh",
     "ReviewWithdrawInput": "mesh",
+    "RiskClass": "autonomy",
     "Role": "mesh",
     "Route": "deploy",
     "RouteCollision": "entity",
@@ -2433,6 +2459,7 @@
     "SessionNode": "mesh",
     "SessionState": "mesh",
     "SessionView": "mesh",
+    "SettingsLayer": "autonomy",
     "Severity": "shared",
     "ShardLimits": "pack",
     "ShardPlan": "pack",
@@ -4547,6 +4574,157 @@
         "AudienceList",
         "CatalogueView"
       ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "An autonomy profile: how much a session may do without a person's approval.",
+      "home": "autonomy",
+      "is_enum": true,
+      "name": "AutonomyProfile",
+      "properties": [],
+      "type": "\"conservative\" | \"balanced\" | \"trusted\" | \"isolated\"",
+      "used_by": [
+        "autonomy.explain"
+      ],
+      "used_by_schemas": [
+        "AutonomyStatus",
+        "CommandDecision",
+        "ProfileRefusal"
+      ],
+      "values": [
+        {
+          "description": "The client's own defaults: every side effect is asked for.",
+          "value": "conservative"
+        },
+        {
+          "description": "Reads, repository edits, local builds and tests run unasked; external effects are asked.",
+          "value": "balanced"
+        },
+        {
+          "description": "Repository-local development runs unasked, including local commits; the client's own\nclassifier judges the rest, and the risk boundaries stay.",
+          "value": "trusted"
+        },
+        {
+          "description": "Hard isolation was verified and no credential is in reach: the client's permission\nprompts may be bypassed, and the risk boundaries still stand.",
+          "value": "isolated"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "The answer of `autonomy.status`.",
+      "home": "autonomy",
+      "is_enum": false,
+      "name": "AutonomyStatus",
+      "properties": [
+        {
+          "description": "`majordomus.autonomy.status/v1`.",
+          "name": "schema",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The checkout judged.",
+          "name": "root",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The client's version, when this process runs under it (`CLAUDE_CODE_VERSION`).",
+          "name": "client_version",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Whether this process runs inside a Claude Code session (`CLAUDECODE`).",
+          "name": "inside_client",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The settings layers, highest precedence first.",
+          "name": "layers",
+          "refs": [
+            "SettingsLayer"
+          ],
+          "required": true,
+          "type": "array of SettingsLayer"
+        },
+        {
+          "description": "The mode the layers configure, from the highest-precedence layer that sets one.",
+          "name": "configured_mode",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Whether the person accepted this checkout in the client's trust dialog, read from\nthe person's own `~/.claude.json`; absent when that could not be read.",
+          "name": "checkout_trusted",
+          "refs": [],
+          "required": false,
+          "type": "boolean | null"
+        },
+        {
+          "description": "The isolation evidence.",
+          "name": "isolation",
+          "refs": [
+            "IsolationEvidence"
+          ],
+          "required": true,
+          "type": "IsolationEvidence"
+        },
+        {
+          "description": "The profile the facts support.",
+          "name": "profile",
+          "refs": [
+            "AutonomyProfile"
+          ],
+          "required": true,
+          "type": "AutonomyProfile"
+        },
+        {
+          "description": "The permission mode that profile launches with.",
+          "name": "recommended_mode",
+          "refs": [
+            "PermissionMode"
+          ],
+          "required": true,
+          "type": "PermissionMode"
+        },
+        {
+          "description": "Why this profile, one fact per line.",
+          "name": "reasons",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "Every stronger profile, and what refused it.",
+          "name": "refused",
+          "refs": [
+            "ProfileRefusal"
+          ],
+          "required": true,
+          "type": "array of ProfileRefusal"
+        },
+        {
+          "description": "What this answer cannot see. The running session's effective mode is the client's\nand is not observable from a child process.",
+          "name": "limitations",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "autonomy.status"
+      ],
+      "used_by_schemas": [],
       "values": [],
       "variants": []
     },
@@ -8345,6 +8523,69 @@
       "used_by_schemas": [
         "CommandNode"
       ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The answer of `autonomy.explain`.",
+      "home": "autonomy",
+      "is_enum": false,
+      "name": "CommandDecision",
+      "properties": [
+        {
+          "description": "The command, as asked.",
+          "name": "command",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The profile it was judged under.",
+          "name": "profile",
+          "refs": [
+            "AutonomyProfile"
+          ],
+          "required": true,
+          "type": "AutonomyProfile"
+        },
+        {
+          "description": "The decision.",
+          "name": "decision",
+          "refs": [
+            "Decision"
+          ],
+          "required": true,
+          "type": "Decision"
+        },
+        {
+          "description": "The risk class.",
+          "name": "risk",
+          "refs": [
+            "RiskClass"
+          ],
+          "required": true,
+          "type": "RiskClass"
+        },
+        {
+          "description": "Why, in a sentence.",
+          "name": "reason",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The table entry that matched, when one did.",
+          "name": "rule",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "autonomy.explain"
+      ],
+      "used_by_schemas": [],
       "values": [],
       "variants": []
     },
@@ -12291,6 +12532,33 @@
         "DashboardCard"
       ],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "What a static rule may do with one command.",
+      "home": "autonomy",
+      "is_enum": true,
+      "name": "Decision",
+      "properties": [],
+      "type": "\"allow\" | \"defer\" | \"require_approval\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "CommandDecision"
+      ],
+      "values": [
+        {
+          "description": "A static allow rule may run it unasked under this profile.",
+          "value": "allow"
+        },
+        {
+          "description": "No static rule decides it: the client's own permission layer (its classifier, or a\nprompt) does.",
+          "value": "defer"
+        },
+        {
+          "description": "A person approves it, under every profile.",
+          "value": "require_approval"
+        }
+      ],
       "variants": []
     },
     {
@@ -19909,6 +20177,9 @@
       "type": "object",
       "used_by": [
         "artifacts.list",
+        "autonomy.status",
+        "autonomy.explain",
+        "autonomy.friction",
         "brief.session",
         "capabilities.list",
         "capabilities.projections",
@@ -23808,6 +24079,91 @@
           "value": "invalid"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "The answer of `autonomy.friction`.",
+      "home": "autonomy",
+      "is_enum": false,
+      "name": "Friction",
+      "properties": [
+        {
+          "description": "`majordomus.autonomy.friction/v1`.",
+          "name": "schema",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The first instant counted (RFC 3339, UTC).",
+          "name": "since",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The transcript directories read, written from `~`.",
+          "name": "directories",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "Transcripts read.",
+          "name": "transcripts",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Tool calls made in the window.",
+          "name": "tool_calls",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Refusals by kind: `classifier_denial`, `hook_block`, `safety_check`,\n`user_rejection`.",
+          "name": "by_kind",
+          "refs": [],
+          "required": true,
+          "type": "map of integer (uint)"
+        },
+        {
+          "description": "Classifier denials by the reason the classifier gave.",
+          "name": "by_reason",
+          "refs": [],
+          "required": true,
+          "type": "map of integer (uint)"
+        },
+        {
+          "description": "Refusals by tool.",
+          "name": "by_tool",
+          "refs": [],
+          "required": true,
+          "type": "map of integer (uint)"
+        },
+        {
+          "description": "Every refusal, per thousand tool calls; absent when no tool was called.",
+          "name": "per_thousand_calls",
+          "refs": [],
+          "required": false,
+          "type": "number | null"
+        },
+        {
+          "description": "What a transcript does not record.",
+          "name": "limitations",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "autonomy.friction"
+      ],
+      "used_by_schemas": [],
+      "values": [],
       "variants": []
     },
     {
@@ -29233,6 +29589,56 @@
           "value": "all"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "What this process can observe about the boundary it runs in.",
+      "home": "autonomy",
+      "is_enum": false,
+      "name": "IsolationEvidence",
+      "properties": [
+        {
+          "description": "Container markers found (`/.dockerenv`, `/run/.containerenv`, the `container`\nvariable). Empty means no container was observed, which is not proof there is none.",
+          "name": "container_markers",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "Whether a settings layer enables the client's own sandbox.",
+          "name": "client_sandbox",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Names (never values) of environment variables that carry a credential.",
+          "name": "credential_variables",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "Credential files present under the home directory, written from `~`.",
+          "name": "credential_files",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "Whether isolation counts as verified: a container marker, and no credential in reach.",
+          "name": "verified",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "AutonomyStatus"
+      ],
+      "values": [],
       "variants": []
     },
     {
@@ -37858,6 +38264,41 @@
       "variants": []
     },
     {
+      "description": "A Claude Code permission mode, as the client spells it in `permissions.defaultMode` and\n`--permission-mode`.",
+      "home": "autonomy",
+      "is_enum": true,
+      "name": "PermissionMode",
+      "properties": [],
+      "type": "\"default\" | \"acceptEdits\" | \"auto\" | \"dontAsk\" | \"bypassPermissions\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "AutonomyStatus"
+      ],
+      "values": [
+        {
+          "description": "Ask for everything not allowed by a rule.",
+          "value": "default"
+        },
+        {
+          "description": "Accept file edits in the working directory; ask for the rest.",
+          "value": "acceptEdits"
+        },
+        {
+          "description": "The client's classifier decides what a rule does not.",
+          "value": "auto"
+        },
+        {
+          "description": "Never prompt; refuse what no rule allows.",
+          "value": "dontAsk"
+        },
+        {
+          "description": "No permission prompts at all. Only inside verified isolation.",
+          "value": "bypassPermissions"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "A phase's totals.",
       "home": "perf",
       "is_enum": false,
@@ -39994,6 +40435,37 @@
         "product.validate"
       ],
       "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One profile this checkout was not given, and the fact that refused it.",
+      "home": "autonomy",
+      "is_enum": false,
+      "name": "ProfileRefusal",
+      "properties": [
+        {
+          "description": "The profile refused.",
+          "name": "profile",
+          "refs": [
+            "AutonomyProfile"
+          ],
+          "required": true,
+          "type": "AutonomyProfile"
+        },
+        {
+          "description": "Why.",
+          "name": "because",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "AutonomyStatus"
+      ],
       "values": [],
       "variants": []
     },
@@ -48630,6 +49102,53 @@
       "variants": []
     },
     {
+      "description": "The risk class of a command.",
+      "home": "autonomy",
+      "is_enum": true,
+      "name": "RiskClass",
+      "properties": [],
+      "type": "\"read\" | \"quality\" | \"local_history\" | \"compound\" | \"unknown\" | \"destructive\" | \"privileged\" | \"external\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "CommandDecision"
+      ],
+      "values": [
+        {
+          "description": "Reads the repository or the machine.",
+          "value": "read"
+        },
+        {
+          "description": "Builds, tests, formats or lints the repository.",
+          "value": "quality"
+        },
+        {
+          "description": "Writes local history (`git add`, `git commit`).",
+          "value": "local_history"
+        },
+        {
+          "description": "More than one command, or a redirection: the first word does not say what it does.",
+          "value": "compound"
+        },
+        {
+          "description": "Not in the table.",
+          "value": "unknown"
+        },
+        {
+          "description": "Rewrites or destroys history or files.",
+          "value": "destructive"
+        },
+        {
+          "description": "Raises privilege or stops processes.",
+          "value": "privileged"
+        },
+        {
+          "description": "Reaches a remote system or publishes.",
+          "value": "external"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "Why a rule exists: which part of the declaration implied it. The role is what a person\nreads beside the rule and what a verdict names, and it is serialised in snake case.\n\n```\nuse majordomus_cli::mesh::firewall::Role;\n\nassert_eq!(serde_json::to_value(Role::Hub).unwrap(), \"hub\");\nlet back: Role = serde_json::from_value(serde_json::json!(\"multicast\")).unwrap();\nassert_eq!(back, Role::Multicast);\n```",
       "home": "mesh",
       "is_enum": true,
@@ -51779,6 +52298,105 @@
       "used_by": [],
       "used_by_schemas": [
         "CooperationState"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One settings file the client reads, and what it declares about permissions. Rule text is\nnot carried, only counts: a rule may name a host, a path or a person.",
+      "home": "autonomy",
+      "is_enum": false,
+      "name": "SettingsLayer",
+      "properties": [
+        {
+          "description": "`managed`, `user`, `project` or `local`, highest precedence first.",
+          "name": "scope",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Where the file is, with the home directory written `~`.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether the file exists.",
+          "name": "present",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Why a present file could not be read as JSON; absent when it could.",
+          "name": "error",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "`permissions.defaultMode`, as written.",
+          "name": "default_mode",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "How many `permissions.allow` rules.",
+          "name": "allow",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many `permissions.ask` rules.",
+          "name": "ask",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many `permissions.deny` rules.",
+          "name": "deny",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many `autoMode.allow` entries, `$defaults` included.",
+          "name": "auto_mode_allow",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Whether `permissions.disableBypassPermissionsMode` is `disable`.",
+          "name": "bypass_disabled",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Whether `sandbox.enabled` is true.",
+          "name": "sandbox_enabled",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The hook events the file wires, sorted.",
+          "name": "hooks",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "AutonomyStatus"
       ],
       "values": [],
       "variants": []
@@ -58906,6 +59524,221 @@
         }
       ],
       "slug": "artifacts"
+    },
+    {
+      "description": "How much a coding-agent session in this checkout may do without a person's approval, read from the facts: the client's settings layers, the evidence for hard isolation, the person's own trust in the checkout, and what the permission layer actually cost. Fails closed; reads only; never grants itself anything.",
+      "name": "autonomy",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "autonomy status",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/autonomy\"",
+          "description": "The Claude Code settings layers (managed, local, project, user: presence, default mode, rule counts, hooks, never rule text), the isolation evidence (container markers, the client's sandbox, credential variables by name and credential files), the person's trust-dialog acceptance of the checkout, and the profile those facts support — conservative, balanced, trusted or isolated — with its recommended permission mode, the reason for it and the fact that refused every stronger one. isolated (bypassPermissions) needs a container marker and no credential in reach; trusted (auto) needs the person's acceptance, which the repository cannot check in; an unreadable layer or a managed default mode is a ceiling.",
+          "home": "autonomy",
+          "id": "autonomy.status",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_autonomy",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/autonomy",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::autonomy",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The autonomy this checkout supports: the result.",
+              "schema": "AutonomyStatus",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "AutonomyStatus",
+          "stability": "experimental",
+          "summary": "The autonomy this checkout supports"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "autonomy explain",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/autonomy/explain?command=git%20push%20--force%20origin%20master&profile=isolated\"",
+          "description": "What a static permission rule may do with one shell command under a profile: allow (it runs unasked), defer (the client's own classifier or prompt decides) or require_approval (a person approves it under every profile), with its risk class, the reason and the table entry that matched. A compound command — chaining, a pipe, a redirection, a substitution, a leading assignment, find -exec — never earns an allow; history rewrites, destructive removal, privilege and external effects require approval even inside isolation.",
+          "home": "autonomy",
+          "id": "autonomy.explain",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_autonomy_explain",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "The shell command, as a session would run it.",
+              "examples": [
+                {
+                  "case": "boundary",
+                  "value": "\"git push --force origin master\""
+                },
+                {
+                  "case": "routine",
+                  "value": "\"cargo test --lib autonomy\""
+                }
+              ],
+              "name": "command",
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "The profile to judge it under; the checkout's own, as `autonomy.status` derives it,\nwhen absent.",
+              "examples": [
+                {
+                  "case": "boundary",
+                  "value": "\"isolated\""
+                },
+                {
+                  "case": "routine",
+                  "value": "\"trusted\""
+                }
+              ],
+              "name": "profile",
+              "required": false,
+              "type": "AutonomyProfile | null"
+            }
+          ],
+          "path": "/api/v1/autonomy/explain",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::autonomy",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Judge one shell command: the result.",
+              "schema": "CommandDecision",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "CommandDecision",
+          "stability": "experimental",
+          "summary": "Judge one shell command"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "autonomy friction",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/autonomy/friction?since_days=1\"",
+          "description": "Counted from Claude Code's own transcripts of this repository's checkouts (the primary and every <repository>-wt/ worktree) over the last since_days days: tool calls, and every refusal by kind (classifier_denial, hook_block, safety_check, user_rejection), by the classifier's stated reason and by tool, with the rate per thousand calls. Counts only: no command, path or payload leaves a transcript. A prompt the person approved leaves no trace and is not counted.",
+          "home": "autonomy",
+          "id": "autonomy.friction",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_autonomy_friction",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "How many days back to count, 1 to 90; 7 when absent.",
+              "examples": [
+                {
+                  "case": "one-day",
+                  "value": "1"
+                }
+              ],
+              "name": "since_days",
+              "required": false,
+              "type": "integer (uint32)"
+            }
+          ],
+          "path": "/api/v1/autonomy/friction",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::autonomy",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "What the permission layer cost: the result.",
+              "schema": "Friction",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "Friction",
+          "stability": "experimental",
+          "summary": "What the permission layer cost"
+        }
+      ],
+      "slug": "autonomy"
     },
     {
       "description": "What surrounds one working session, in one line and in a few: its episode and task, the peers of every board, the mesh, the integration queue and the derive queue, each section asked of its owner once and saying whether it could be read. The answer a session reports on itself from without being asked, and the one a provider mod shows as its status line (ADR 0136). Writes nothing.",

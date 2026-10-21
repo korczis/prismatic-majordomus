@@ -6,20 +6,20 @@ generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark proje
 generator: majordomus-cli 1.0.0-alpha.1
 coverage:
   - scope: direct
-    required: 206
-    covered: 175
+    required: 209
+    covered: 178
     missing: 0
     waived: 31
     inapplicable: 0
   - scope: http
-    required: 201
-    covered: 175
+    required: 204
+    covered: 178
     missing: 0
     waived: 26
     inapplicable: 0
   - scope: mcp
-    required: 196
-    covered: 171
+    required: 199
+    covered: 174
     missing: 0
     waived: 25
     inapplicable: 0
@@ -30,8 +30,8 @@ coverage:
     waived: 0
     inapplicable: 0
   - scope: total
-    required: 617
-    covered: 535
+    required: 626
+    covered: 544
     missing: 0
     waived: 82
     inapplicable: 0
@@ -46,6 +46,34 @@ capabilities:
     cases:
       - all
       - one-encoding
+  - id: autonomy.explain
+    module: autonomy
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - routine
+      - boundary
+  - id: autonomy.friction
+    module: autonomy
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - one-day
+  - id: autonomy.status
+    module: autonomy
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
   - id: brief.session
     module: brief
     kind: query

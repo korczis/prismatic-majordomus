@@ -49,6 +49,21 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:autonomy.explain",
+      "path": "/evidence/capabilities/autonomy-explain/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:autonomy.friction",
+      "path": "/evidence/capabilities/autonomy-friction/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:autonomy.status",
+      "path": "/evidence/capabilities/autonomy-status/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:brief.session",
       "path": "/evidence/capabilities/brief-session/"
     },
@@ -2334,6 +2349,21 @@
     },
     {
       "kind": "command",
+      "subject": "command:autonomy explain",
+      "path": "/evidence/commands/autonomy-explain/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:autonomy friction",
+      "path": "/evidence/commands/autonomy-friction/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:autonomy status",
+      "path": "/evidence/commands/autonomy-status/"
+    },
+    {
+      "kind": "command",
       "subject": "command:bench baseline update",
       "path": "/evidence/commands/bench-baseline-update/"
     },
@@ -3910,6 +3940,42 @@
       "page": "/evidence/capabilities/artifacts-list/",
       "programs": [],
       "members": [],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:autonomy.explain": {
+      "kind": "capability",
+      "id": "autonomy.explain",
+      "page": "/evidence/capabilities/autonomy-explain/",
+      "programs": [],
+      "members": [
+        "command:autonomy explain"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:autonomy.friction": {
+      "kind": "capability",
+      "id": "autonomy.friction",
+      "page": "/evidence/capabilities/autonomy-friction/",
+      "programs": [],
+      "members": [
+        "command:autonomy friction"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:autonomy.status": {
+      "kind": "capability",
+      "id": "autonomy.status",
+      "page": "/evidence/capabilities/autonomy-status/",
+      "programs": [],
+      "members": [
+        "command:autonomy status"
+      ],
       "routes": [],
       "mechanisms": [],
       "findings": []
@@ -11990,6 +12056,63 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:autonomy explain": {
+      "kind": "command",
+      "id": "autonomy explain",
+      "page": "/evidence/commands/autonomy-explain/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:autonomy friction": {
+      "kind": "command",
+      "id": "autonomy friction",
+      "page": "/evidence/commands/autonomy-friction/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:autonomy status": {
+      "kind": "command",
+      "id": "autonomy status",
+      "page": "/evidence/commands/autonomy-status/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:bench": {
       "kind": "command",
       "id": "bench",
@@ -19532,6 +19655,42 @@
       "programs": [],
       "members": [
         "capability:artifacts.list"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_autonomy": {
+      "kind": "mcp",
+      "id": "majordomus_autonomy",
+      "alias_of": "capability:autonomy.status",
+      "programs": [],
+      "members": [
+        "capability:autonomy.status"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_autonomy_explain": {
+      "kind": "mcp",
+      "id": "majordomus_autonomy_explain",
+      "alias_of": "capability:autonomy.explain",
+      "programs": [],
+      "members": [
+        "capability:autonomy.explain"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_autonomy_friction": {
+      "kind": "mcp",
+      "id": "majordomus_autonomy_friction",
+      "alias_of": "capability:autonomy.friction",
+      "programs": [],
+      "members": [
+        "capability:autonomy.friction"
       ],
       "routes": [],
       "mechanisms": [],
@@ -28356,6 +28515,7 @@
     }
   },
   "excluded": [
+    "crate:autonomy_mcp",
     "crate:availability",
     "crate:bench",
     "crate:brief",
@@ -28586,6 +28746,7 @@
     "suite:37_responsibility_surface",
     "suite:384_a_deployment_is_evidence",
     "suite:387_no_payload_is_passed_through_argv",
+    "suite:3900_the_autonomy_a_session_has_is_read",
     "suite:390_unresolved_relation_refuses_generation",
     "suite:402_argv_limit",
     "suite:404_refused_files_are_named",
