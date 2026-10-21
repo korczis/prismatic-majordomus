@@ -192,6 +192,12 @@
           "route": "/docs/cli/served/"
         },
         {
+          "about": "The tree a deployment's provider receives, assembled outside the checkout from the deployment object at one commit: its build inputs, the provider's generated files, the buildpack line and the executable built at that commit",
+          "command": "majordomus deploy",
+          "name": "deploy",
+          "route": "/docs/cli/deploy/"
+        },
+        {
           "about": "Every rule against the proof there is for it: what each one names, whether it is in the tree, whether a runner drives it, whether anything ran, and whether what ran is older than what it is about",
           "command": "majordomus rules",
           "name": "rules",
@@ -29705,6 +29711,304 @@
       "usage": "majordomus served show [OPTIONS]"
     },
     {
+      "about": "The tree a deployment's provider receives, assembled outside the checkout from the deployment object at one commit: its build inputs, the provider's generated files, the buildpack line and the executable built at that commit",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [
+        {
+          "about": "Assemble the tree a provider receives into a directory outside the checkout",
+          "command": "majordomus deploy slug",
+          "name": "slug",
+          "route": "/docs/cli/deploy/slug/"
+        }
+      ],
+      "command": "majordomus deploy",
+      "depth": 1,
+      "examples": [],
+      "executable": false,
+      "long_about": null,
+      "name": "deploy",
+      "parent_route": "/docs/cli/",
+      "path": [
+        "majordomus",
+        "deploy"
+      ],
+      "route": "/docs/cli/deploy/",
+      "usage": "majordomus deploy [OPTIONS] <COMMAND>"
+    },
+    {
+      "about": "Assemble the tree a provider receives into a directory outside the checkout",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus deploy",
+          "name": "deploy",
+          "route": "/docs/cli/deploy/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The deployment (default: the one deployment that names a provider)",
+          "long": "deployment",
+          "name": "deployment",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DEPLOYMENT"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The commit every file is read at (default HEAD)",
+          "long": "commit",
+          "name": "commit",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "COMMIT"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The executable built at that commit",
+          "long": "executable",
+          "name": "executable",
+          "positional": false,
+          "possible_values": [],
+          "required": true,
+          "takes_value": true,
+          "value_name": "EXECUTABLE"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The directory the slug is written into: outside the checkout, absent or empty",
+          "long": "out",
+          "name": "out",
+          "positional": false,
+          "possible_values": [],
+          "required": true,
+          "takes_value": true,
+          "value_name": "OUT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus deploy slug",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "deploy",
+            "slug",
+            "--executable",
+            "majordomus",
+            "--out",
+            "/nonexistent/slug"
+          ],
+          "command": "majordomus deploy slug --executable majordomus --out /nonexistent/slug",
+          "description": "Nothing hosts a deployment that names no provider, so there is no slug: refused with exit 15, and nothing is written. Where a deployment names one, `--commit <sha> --executable <built at that commit> --out <a directory outside the checkout>` writes its build inputs at that commit, the provider's generated files at the slug's root, the buildpack line, the executable and `.majordomus/SOURCE.json` — the tree the provider workflow pushes.",
+          "expectation": "exits 15",
+          "id": "deploy-slug-no-provider",
+          "setup": [],
+          "title": "A repository whose deployments name no provider has no tree to assemble"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "slug",
+      "parent_route": "/docs/cli/deploy/",
+      "path": [
+        "majordomus",
+        "deploy",
+        "slug"
+      ],
+      "route": "/docs/cli/deploy/slug/",
+      "usage": "majordomus deploy slug [OPTIONS]"
+    },
+    {
       "about": "Every rule against the proof there is for it: what each one names, whether it is in the tree, whether a runner drives it, whether anything ran, and whether what ran is older than what it is about",
       "ancestors": [
         {
@@ -37828,10 +38132,10 @@
     }
   ],
   "counts": {
-    "arguments": 1638,
-    "commands": 238,
-    "examples": 242,
-    "runnable": 209
+    "arguments": 1652,
+    "commands": 240,
+    "examples": 243,
+    "runnable": 210
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "1.0.0-alpha.1",

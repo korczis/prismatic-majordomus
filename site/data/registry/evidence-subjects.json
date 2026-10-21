@@ -184,6 +184,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:deploy.slug",
+      "path": "/evidence/capabilities/deploy-slug/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:design.contrast",
       "path": "/evidence/capabilities/design-contrast/"
     },
@@ -2534,6 +2539,11 @@
     },
     {
       "kind": "command",
+      "subject": "command:deploy slug",
+      "path": "/evidence/commands/deploy-slug/"
+    },
+    {
+      "kind": "command",
       "subject": "command:devcontext compile",
       "path": "/evidence/commands/devcontext-compile/"
     },
@@ -4219,6 +4229,25 @@
       "programs": [],
       "members": [],
       "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:deploy.slug": {
+      "kind": "capability",
+      "id": "deploy.slug",
+      "page": "/evidence/capabilities/deploy-slug/",
+      "programs": [],
+      "members": [
+        "command:deploy slug"
+      ],
+      "routes": [
+        {
+          "via": "behaviour",
+          "test": "suite:3821_a_providers_tree_is_assembled_from_the_object",
+          "path": "test/cases/3821_a_providers_tree_is_assembled_from_the_object.sh",
+          "category": "e2e"
+        }
+      ],
       "mechanisms": [],
       "findings": []
     },
@@ -13307,6 +13336,25 @@
       "kind": "command",
       "id": "delivery show",
       "page": "/evidence/commands/delivery-show/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:deploy slug": {
+      "kind": "command",
+      "id": "deploy slug",
+      "page": "/evidence/commands/deploy-slug/",
       "programs": [
         "native"
       ],

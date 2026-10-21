@@ -99,6 +99,8 @@ pub enum Command {
     Evidence(EvidenceArgs),
     /// Whether a deployment serves the commit it was meant to: observe the build identity it serves, judged by commit containment, and read each deployment's recorded standing against a commit
     Served(ServedArgs),
+    /// The tree a deployment's provider receives, assembled outside the checkout from the deployment object at one commit: its build inputs, the provider's generated files, the buildpack line and the executable built at that commit
+    Deploy(DeployArgs),
     /// Every rule against the proof there is for it: what each one names, whether it is in the tree, whether a runner drives it, whether anything ran, and whether what ran is older than what it is about
     Rules(RulesArgs),
     /// What must become true above the milestones: every intent with its stage derived from the plan and its satisfaction from the recorded evidence, one intent, the model's own validation, and which intent a piece of work serves
@@ -2903,6 +2905,78 @@ pub enum ServedCommand {
 }
 
 #[derive(Debug, Args)]
+/// `majordomus deploy`: the command line of the deployment module's one command. Every read of
+/// a deployment (`deploy.list`, `deploy.get`, `deploy.check`, `deploy.observed`) is answered over
+/// HTTP and MCP; what is here writes, outside the checkout, and is a command line only.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, DeployArgs, DeployCommand};
+///
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "deploy", "slug", "--executable", "target/majordomus", "--out", "/tmp/slug",
+/// ])
+/// .unwrap();
+/// let Command::Deploy(args) = cli.command else { panic!("deploy") };
+/// let _: &DeployArgs = &args;
+/// assert!(matches!(
+///     args.command,
+///     DeployCommand::Slug { deployment: None, commit: None, ref out, .. } if out == "/tmp/slug"
+/// ));
+/// // the executable and the out directory are what a slug cannot be assembled without
+/// assert!(Cli::try_parse_from(["majordomus", "deploy", "slug", "--out", "/tmp/slug"]).is_err());
+/// assert!(Cli::try_parse_from(["majordomus", "deploy"]).is_err());
+/// ```
+pub struct DeployArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `slug`. Required: the group runs nothing of its own.
+    pub command: DeployCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus deploy`: `slug` is the command line of `deploy.slug`.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, DeployCommand};
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "deploy", "slug", "--deployment", "majordomus", "--commit", "HEAD~1",
+///     "--executable", "e", "--out", "o",
+/// ])
+/// .unwrap();
+/// let Command::Deploy(args) = cli.command else { panic!("deploy") };
+/// assert!(matches!(
+///     args.command,
+///     DeployCommand::Slug { deployment: Some(d), commit: Some(c), .. } if d == "majordomus" && c == "HEAD~1"
+/// ));
+/// ```
+pub enum DeployCommand {
+    /// Assemble the tree a provider receives into a directory outside the checkout
+    Slug {
+        /// The deployment (default: the one deployment that names a provider)
+        #[arg(long)]
+        deployment: Option<String>,
+        /// The commit every file is read at (default HEAD)
+        #[arg(long)]
+        commit: Option<String>,
+        /// The executable built at that commit
+        #[arg(long)]
+        executable: String,
+        /// The directory the slug is written into: outside the checkout, absent or empty
+        #[arg(long)]
+        out: String,
+    },
+}
+
+#[derive(Debug, Args)]
 /// `majordomus entity`. Every object of the layer as an addressable node.
 ///
 /// The command-line half of the projection the Cockpit renders and the HTTP and MCP
@@ -5621,6 +5695,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["evidence", "stamp", "--producer", "suite", "--format", "json"],
             setup: &[],
             expect: Expect::Json(&["/producer", "/commit", "/working_tree", "/recorder", "/host"]),
+        }],
+    },
+    CommandExamples {
+        command: "deploy slug",
+        examples: &[ExampleDoc {
+            id: "deploy-slug-no-provider",
+            title: "A repository whose deployments name no provider has no tree to assemble",
+            description: "Nothing hosts a deployment that names no provider, so there is no slug: refused with exit 15, and nothing is written. Where a deployment names one, `--commit <sha> --executable <built at that commit> --out <a directory outside the checkout>` writes its build inputs at that commit, the provider's generated files at the slug's root, the buildpack line, the executable and `.majordomus/SOURCE.json` — the tree the provider workflow pushes.",
+            argv: &["deploy", "slug", "--executable", "majordomus", "--out", "/nonexistent/slug"],
+            setup: &[],
+            expect: Expect::ExitCode(15),
         }],
     },
     CommandExamples {

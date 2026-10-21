@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "1.0.0-alpha.1"
   },
-  "fingerprint": "f25d2690858ba5944d36a207e4226ff80700a0aa0ca03f33cba6c4eb8eda3d46",
+  "fingerprint": "0a34571d4e27814c527a9e25d4ab60e42bc6f47c563cacf6bd38233d2f94bf37",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -3229,7 +3229,7 @@
         "use_cases": 10,
         "rules": 15,
         "enforced_rules": 14,
-        "capabilities": 137,
+        "capabilities": 138,
         "moments": 38
       },
       "evidence": {
@@ -11012,7 +11012,7 @@
         {
           "id": "deploy",
           "title": "Deployment",
-          "description": "The deployments this repository declares, read from the canonical objects the index holds, and whether they would work — decided against the capability registry this process built and the workspace it sits in. Every operation is a read: a deployment is changed by the trusted command line and by CI, never over HTTP and never by an MCP client.",
+          "description": "The deployments this repository declares, read from the canonical objects the index holds, and whether they would work — decided against the capability registry this process built and the workspace it sits in. Every operation over HTTP and MCP is a read; the one command, assembling the tree a provider receives, writes outside the checkout and is a command line only: a deployment is changed by the trusted command line and by CI, never over HTTP and never by an MCP client.",
           "stability": "behaviorally_verified",
           "source_path": "apps/majordomus-cli/src/capability/builtin/deploy.rs",
           "capabilities": [
@@ -11048,6 +11048,13 @@
               "stability": "behaviorally_verified",
               "tool": "majordomus_deployments_observed",
               "route": "GET /api/v1/deployments/observed"
+            },
+            {
+              "id": "deploy.slug",
+              "title": "Assemble the tree a provider receives",
+              "kind": "command",
+              "stability": "behaviorally_verified",
+              "cli": "majordomus deploy slug"
             }
           ]
         },
@@ -11679,11 +11686,11 @@
         "observatory"
       ],
       "counts": {
-        "capabilities": 100,
+        "capabilities": 101,
         "mcp_tools": 92,
         "mcp_resources": 16,
         "http_routes": 97,
-        "cli_paths": 43,
+        "cli_paths": 44,
         "commands": 0,
         "objects": 0,
         "rules": 3,
@@ -15555,7 +15562,7 @@
         {
           "id": "deploy",
           "title": "Deployment",
-          "description": "The deployments this repository declares, read from the canonical objects the index holds, and whether they would work — decided against the capability registry this process built and the workspace it sits in. Every operation is a read: a deployment is changed by the trusted command line and by CI, never over HTTP and never by an MCP client.",
+          "description": "The deployments this repository declares, read from the canonical objects the index holds, and whether they would work — decided against the capability registry this process built and the workspace it sits in. Every operation over HTTP and MCP is a read; the one command, assembling the tree a provider receives, writes outside the checkout and is a command line only: a deployment is changed by the trusted command line and by CI, never over HTTP and never by an MCP client.",
           "stability": "behaviorally_verified",
           "source_path": "apps/majordomus-cli/src/capability/builtin/deploy.rs",
           "capabilities": [
@@ -15591,6 +15598,13 @@
               "stability": "behaviorally_verified",
               "tool": "majordomus_deployments_observed",
               "route": "GET /api/v1/deployments/observed"
+            },
+            {
+              "id": "deploy.slug",
+              "title": "Assemble the tree a provider receives",
+              "kind": "command",
+              "stability": "behaviorally_verified",
+              "cli": "majordomus deploy slug"
             }
           ]
         },
@@ -15667,11 +15681,11 @@
       "moments": [],
       "backlinks": [],
       "counts": {
-        "capabilities": 6,
+        "capabilities": 7,
         "mcp_tools": 6,
         "mcp_resources": 2,
         "http_routes": 6,
-        "cli_paths": 2,
+        "cli_paths": 3,
         "commands": 0,
         "objects": 1,
         "rules": 1,
@@ -18372,17 +18386,17 @@
     }
   ],
   "telemetry": {
-    "capabilities": 3169,
-    "builtin": 206,
-    "declarative": 2963,
+    "capabilities": 3171,
+    "builtin": 207,
+    "declarative": 2964,
     "modules": 58,
     "mcp_tools": 196,
-    "mcp_resources": 3018,
+    "mcp_resources": 3019,
     "http_routes": 201,
-    "cli_commands": 209,
+    "cli_commands": 210,
     "shell_commands": 30,
     "kinds": 34,
-    "objects": 2963,
+    "objects": 2964,
     "by_kind": {
       "adr": 160,
       "application": 5,
@@ -18415,7 +18429,7 @@
       "session": 90,
       "skill": 8,
       "taxonomy": 10,
-      "test": 568,
+      "test": 569,
       "use-case": 49,
       "workspace": 1
     },

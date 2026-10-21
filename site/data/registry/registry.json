@@ -6,28 +6,28 @@
     "version": "1.0.0-alpha.1"
   },
   "registry": {
-    "fingerprint": "bd9f41701561e18f4aabe99420aa47568dc6877faaed675e8b26c9a71e227447",
+    "fingerprint": "5a757a2c4cc39d27bddd8e6676b094d210f59c87cc23cf7d69b35e5e8a81231b",
     "summary": {
-      "total": 3169,
-      "builtin": 206,
-      "declarative": 2963,
+      "total": 3171,
+      "builtin": 207,
+      "declarative": 2964,
       "by_kind": {
-        "command": 31,
+        "command": 32,
         "query": 175,
-        "resource": 2963
+        "resource": 2964
       },
       "by_stability": {
-        "behaviorally_verified": 142,
+        "behaviorally_verified": 143,
         "experimental": 55,
-        "implemented": 2972
+        "implemented": 2973
       },
       "mcp_tools": 196,
-      "mcp_resources": 3018,
+      "mcp_resources": 3019,
       "http_routes": 201,
-      "cli_commands": 111,
+      "cli_commands": 112,
       "modules": 92,
       "benchmark_required": 175,
-      "benchmark_waived": 31,
+      "benchmark_waived": 32,
       "cached": 54
     },
     "builtin": [
@@ -12231,6 +12231,197 @@
           "effect": "read",
           "cancellable": false,
           "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/deploy.rs"
+      },
+      {
+        "id": "deploy.slug",
+        "module": "deploy",
+        "kind": "command",
+        "title": "Assemble the tree a provider receives",
+        "description": "Writes, into a directory outside the checkout that is absent or empty, the tree the deployment's provider receives (ADR 0219): the object's build inputs except the package the executable is compiled from, read from git at one commit (HEAD unless named); the provider's generated files of that commit at the slug's root, each held to what the object renders and the hooks made executable; the provider's buildpack line; the executable built at that commit; and a record naming the deployment, the commit, the executable's digest and the provider. Refuses an out directory inside the checkout or not empty, a deployment that names no provider, a build input the commit does not track, a provider file the object does not render, and two files that would land on one path. Changes nothing in the repository and reaches no network; pushing the slug is the provider workflow's.",
+        "input": {
+          "name": "SlugInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "deployment": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The deployment's `id`; when absent, the one deployment that names a provider."
+              },
+              "commit": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The commit every file is read at, any revision git resolves; `HEAD` when absent."
+              },
+              "executable": {
+                "type": "string",
+                "description": "The executable built at that commit."
+              },
+              "out": {
+                "type": "string",
+                "description": "The directory the slug is written into: outside the checkout, absent or empty."
+              }
+            },
+            "required": [
+              "executable",
+              "out"
+            ],
+            "description": "The input of `deploy.slug`: which deployment, at which commit, with which executable, and\nwhere the slug is written. Relative paths are read against the working directory.",
+            "title": "SlugInput"
+          }
+        },
+        "output": {
+          "name": "Slug",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "deployment": {
+                "type": "string",
+                "description": "The deployment's `id`."
+              },
+              "commit": {
+                "type": "string",
+                "description": "The full commit every file was read at."
+              },
+              "out": {
+                "type": "string",
+                "description": "The directory the slug was written into, absolute."
+              },
+              "entries": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Every top-level entry of the slug, sorted: the whole of what a provider receives at\nits root."
+              },
+              "files": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many files (and links) were written."
+              },
+              "bytes": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0,
+                "description": "Their total size in bytes."
+              },
+              "executable": {
+                "type": "string",
+                "description": "Where the executable sits, relative to the slug's root."
+              },
+              "executable_sha256": {
+                "type": "string",
+                "description": "Its hex SHA-256."
+              },
+              "buildpack": {
+                "type": "string",
+                "description": "The buildpack line written to `BUILDPACKS_FILE`."
+              },
+              "liveness": {
+                "type": "string",
+                "description": "The route the deployment answers its commit on (`health.liveness`)."
+              },
+              "provider": {
+                "$ref": "#/$defs/Provider",
+                "description": "The provider block of the object, as read at the commit."
+              }
+            },
+            "required": [
+              "deployment",
+              "commit",
+              "out",
+              "entries",
+              "files",
+              "bytes",
+              "executable",
+              "executable_sha256",
+              "buildpack",
+              "liveness",
+              "provider"
+            ],
+            "description": "What was assembled: where, from what, and the provider facts a publisher needs to push\nit and to ask the deployment what it serves.\n\n```\nuse majordomus_cli::deploy::slug::Slug;\nlet json = r#\"{\"deployment\":\"majordomus\",\"commit\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\n  \"out\":\"/tmp/slug\",\"entries\":[\".buildpacks\",\"Procfile\"],\"files\":2,\"bytes\":10,\n  \"executable\":\".majordomus/bin/majordomus\",\"executable_sha256\":\"00\",\n  \"buildpack\":\"https://example.org/bp#0\",\"liveness\":\"/api/v1/live\",\n  \"provider\":{\"name\":\"gigalixir\",\"app\":\"a-b\",\"stack\":\"gigalixir-24\",\n              \"url\":\"https://a-b.gigalixirapp.com\"}}\"#;\nlet s: Slug = serde_json::from_str(json).unwrap();\nassert_eq!(s.provider.app, \"a-b\");\nassert_eq!(s.entries.len(), 2);\n```",
+            "title": "Slug",
+            "$defs": {
+              "Provider": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "name": {
+                    "$ref": "#/$defs/ProviderName",
+                    "description": "Which provider."
+                  },
+                  "app": {
+                    "type": "string",
+                    "description": "The application's name at the provider."
+                  },
+                  "stack": {
+                    "type": "string",
+                    "description": "The provider's stack the application runs on (`gigalixir-24`)."
+                  },
+                  "url": {
+                    "type": "string",
+                    "description": "The public URL the deployment answers on; always `https://`."
+                  }
+                },
+                "required": [
+                  "name",
+                  "app",
+                  "stack",
+                  "url"
+                ],
+                "description": "The hosting provider that runs the deployment, and the facts that are the provider's\nalone. Every file the provider reads is rendered from this block and the generic keys\n(see `render`); its credential is never one of these fields.\n\n```\nuse majordomus_cli::deploy::{Provider, ProviderName};\n\nlet p: Provider = serde_json::from_value(serde_json::json!({\n    \"name\": \"gigalixir\",\n    \"app\": \"prismatic-majordomus\",\n    \"stack\": \"gigalixir-24\",\n    \"url\": \"https://prismatic-majordomus.gigalixirapp.com\",\n}))\n.unwrap();\nassert_eq!(p.name, ProviderName::Gigalixir);\nassert_eq!(p.app, \"prismatic-majordomus\");\n\n// a key the provider block does not have is refused, a token above all\nassert!(serde_json::from_value::<Provider>(serde_json::json!({\n    \"name\": \"gigalixir\", \"app\": \"a-b-c\", \"stack\": \"gigalixir-24\",\n    \"url\": \"https://a-b-c.gigalixirapp.com\", \"api_key\": \"x\",\n}))\n.is_err());\n```"
+              },
+              "ProviderName": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "gigalixir",
+                    "description": "Gigalixir: a Heroku-compatible platform that runs a Procfile over a buildpack."
+                  }
+                ],
+                "description": "A hosting provider the contract knows. A name outside this list is refused at parse time:\na provider whose files nothing renders would be a block nothing reads.\n\n```\nuse majordomus_cli::deploy::ProviderName;\n\nlet name: ProviderName = serde_json::from_value(serde_json::json!(\"gigalixir\")).unwrap();\nassert_eq!(name, ProviderName::Gigalixir);\nassert_eq!(name.as_str(), \"gigalixir\");\nassert!(serde_json::from_value::<ProviderName>(serde_json::json!(\"fly\")).is_err());\n```"
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::deploy"
+        },
+        "exposure": {
+          "cli": {
+            "path": [
+              "deploy",
+              "slug"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "developer",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "deployment",
+          "delivery"
+        ],
+        "benchmark": {
+          "policy": "waived",
+          "reason": "destructive"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "process_state",
+          "cancellable": false,
+          "concurrency": "serial"
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/deploy.rs"
       },
@@ -85093,15 +85284,16 @@
       {
         "id": "deploy",
         "title": "Deployment",
-        "description": "The deployments this repository declares, read from the canonical objects the index holds, and whether they would work — decided against the capability registry this process built and the workspace it sits in. Every operation is a read: a deployment is changed by the trusted command line and by CI, never over HTTP and never by an MCP client.",
+        "description": "The deployments this repository declares, read from the canonical objects the index holds, and whether they would work — decided against the capability registry this process built and the workspace it sits in. Every operation over HTTP and MCP is a read; the one command, assembling the tree a provider receives, writes outside the checkout and is a command line only: a deployment is changed by the trusted command line and by CI, never over HTTP and never by an MCP client.",
         "stability": "behaviorally_verified",
         "source": "builtin",
-        "capabilities": 4,
+        "capabilities": 5,
         "capability_ids": [
           "deploy.check",
           "deploy.get",
           "deploy.list",
-          "deploy.observed"
+          "deploy.observed",
+          "deploy.slug"
         ],
         "source_path": "apps/majordomus-cli/src/capability/builtin/deploy.rs"
       },
@@ -86080,7 +86272,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 568,
+        "capabilities": 569,
         "capability_ids": []
       },
       {
@@ -86172,7 +86364,7 @@
     ]
   },
   "index": {
-    "fingerprint": "71129fa949a28654636c59e3cd4bdb9433aca1a2709451b5d9ddfde6ba6b93e2",
+    "fingerprint": "5508f34e50d9e08e379edc7a2d5f11b751528941c300f830f5952316fc511766",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -86226,7 +86418,7 @@
       "session": 90,
       "skill": 8,
       "taxonomy": 10,
-      "test": 568,
+      "test": 569,
       "use-case": 49,
       "workspace": 1
     },
@@ -92054,7 +92246,7 @@
         "description": "The gates this repository runs, which changed paths select them, and what publication may spend.",
         "path": ".ai/repo/ci/README.md",
         "source_class": "context",
-        "bytes": 2449
+        "bytes": 2716
       },
       {
         "uri": "majordomus://context/ai.repo.deployments",
@@ -93523,7 +93715,7 @@
         "title": "File schemas — every file Majordomus reads or writes",
         "path": "docs/SCHEMAS.md",
         "source_class": "document",
-        "bytes": 82154
+        "bytes": 83127
       },
       {
         "uri": "majordomus://document/docs/SCOPE.md",
@@ -115868,6 +116060,14 @@
         "bytes": 4855
       },
       {
+        "uri": "majordomus://test/test/cases/3821_a_providers_tree_is_assembled_from_the_object.sh",
+        "kind": "test",
+        "identity": "test/cases/3821_a_providers_tree_is_assembled_from_the_object.sh",
+        "path": "test/cases/3821_a_providers_tree_is_assembled_from_the_object.sh",
+        "source_class": "case",
+        "bytes": 7054
+      },
+      {
         "uri": "majordomus://test/test/cases/383_convergence_is_enforced.sh",
         "kind": "test",
         "identity": "test/cases/383_convergence_is_enforced.sh",
@@ -118750,7 +118950,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 568
+      "objects": 569
     },
     {
       "name": "use-case",
@@ -144349,6 +144549,269 @@
       {
         "path": [
           "majordomus",
+          "deploy"
+        ],
+        "route": "/docs/cli/deploy/",
+        "executable": false,
+        "usage": "majordomus deploy [OPTIONS] <COMMAND>",
+        "about": "The tree a deployment's provider receives, assembled outside the checkout from the deployment object at one commit: its build inputs, the provider's generated files, the buildpack line and the executable built at that commit",
+        "args": [
+          {
+            "name": "repo",
+            "long": "repo",
+            "positional": false,
+            "help": "Start the search for the repository root here (default: the current directory)",
+            "value_name": "PATH",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "discovery",
+            "long": "discovery",
+            "positional": false,
+            "help": "How declarative files are enumerated",
+            "value_name": "DISCOVERY",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "vcs",
+                "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+              },
+              {
+                "name": "filesystem",
+                "help": "A walk of the work tree with the same glob semantics; untracked files included"
+              }
+            ],
+            "defaults": [
+              "vcs"
+            ]
+          },
+          {
+            "name": "strict",
+            "long": "strict",
+            "positional": false,
+            "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+            "value_name": "STRICT",
+            "takes_value": false,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": [
+              "false"
+            ]
+          },
+          {
+            "name": "share",
+            "long": "share",
+            "positional": false,
+            "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+            "value_name": "DIR",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "format",
+            "long": "format",
+            "positional": false,
+            "help": "Output shape",
+            "value_name": "FORMAT",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "text",
+                "help": "Lines for a person"
+              },
+              {
+                "name": "json",
+                "help": "One JSON document, deterministic"
+              }
+            ],
+            "defaults": [
+              "text"
+            ]
+          }
+        ],
+        "examples": [],
+        "subcommands": [
+          {
+            "path": [
+              "majordomus",
+              "deploy",
+              "slug"
+            ],
+            "route": "/docs/cli/deploy/slug/",
+            "executable": true,
+            "usage": "majordomus deploy slug [OPTIONS]",
+            "about": "Assemble the tree a provider receives into a directory outside the checkout",
+            "args": [
+              {
+                "name": "deployment",
+                "long": "deployment",
+                "positional": false,
+                "help": "The deployment (default: the one deployment that names a provider)",
+                "value_name": "DEPLOYMENT",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "commit",
+                "long": "commit",
+                "positional": false,
+                "help": "The commit every file is read at (default HEAD)",
+                "value_name": "COMMIT",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "executable",
+                "long": "executable",
+                "positional": false,
+                "help": "The executable built at that commit",
+                "value_name": "EXECUTABLE",
+                "takes_value": true,
+                "required": true,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "out",
+                "long": "out",
+                "positional": false,
+                "help": "The directory the slug is written into: outside the checkout, absent or empty",
+                "value_name": "OUT",
+                "takes_value": true,
+                "required": true,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "deploy-slug-no-provider",
+                "title": "A repository whose deployments name no provider has no tree to assemble",
+                "description": "Nothing hosts a deployment that names no provider, so there is no slug: refused with exit 15, and nothing is written. Where a deployment names one, `--commit <sha> --executable <built at that commit> --out <a directory outside the checkout>` writes its build inputs at that commit, the provider's generated files at the slug's root, the buildpack line, the executable and `.majordomus/SOURCE.json` — the tree the provider workflow pushes.",
+                "argv": [
+                  "deploy",
+                  "slug",
+                  "--executable",
+                  "majordomus",
+                  "--out",
+                  "/nonexistent/slug"
+                ],
+                "command": "majordomus deploy slug --executable majordomus --out /nonexistent/slug",
+                "setup": [],
+                "expectation": "exits 15"
+              }
+            ],
+            "subcommands": []
+          }
+        ]
+      },
+      {
+        "path": [
+          "majordomus",
           "rules"
         ],
         "route": "/docs/cli/rules/",
@@ -164541,6 +165004,14 @@
           "cases": 1
         },
         {
+          "subject": "deploy.slug",
+          "module": "deploy",
+          "transport": "direct",
+          "state": "waived",
+          "cases": 0,
+          "reason": "destructive"
+        },
+        {
           "subject": "design.contrast",
           "module": "design",
           "transport": "direct",
@@ -168338,10 +168809,10 @@
       ],
       "tallies": {
         "direct": {
-          "required": 206,
+          "required": 207,
           "covered": 175,
           "missing": 0,
-          "waived": 31,
+          "waived": 32,
           "inapplicable": 0
         },
         "http": {
@@ -168366,10 +168837,10 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 617,
+          "required": 618,
           "covered": 535,
           "missing": 0,
-          "waived": 82,
+          "waived": 83,
           "inapplicable": 0
         }
       }

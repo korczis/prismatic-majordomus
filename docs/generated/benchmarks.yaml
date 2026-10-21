@@ -6,10 +6,10 @@ generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark proje
 generator: majordomus-cli 1.0.0-alpha.1
 coverage:
   - scope: direct
-    required: 206
+    required: 207
     covered: 175
     missing: 0
-    waived: 31
+    waived: 32
     inapplicable: 0
   - scope: http
     required: 201
@@ -30,10 +30,10 @@ coverage:
     waived: 0
     inapplicable: 0
   - scope: total
-    required: 617
+    required: 618
     covered: 535
     missing: 0
-    waived: 82
+    waived: 83
     inapplicable: 0
 capabilities:
   - id: artifacts.list
@@ -290,6 +290,14 @@ capabilities:
     http: covered
     cases:
       - default
+  - id: deploy.slug
+    module: deploy
+    kind: command
+    cache: "—"
+    direct: waived
+    mcp: none
+    http: none
+    cases: []
   - id: design.contrast
     module: design
     kind: query

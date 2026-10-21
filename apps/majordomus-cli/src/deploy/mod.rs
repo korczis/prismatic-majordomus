@@ -2,9 +2,11 @@
 //! values that cannot hold nonsense, and validated against what this repository actually
 //! contains before anything is built from them.
 //!
-//! Nothing here reaches the network, spawns a process or talks to a hosting provider. The
-//! question this module answers is the local one — would this deployment work — and it is
-//! answered while a test is cheap rather than after a rollout is not. The projections (the
+//! Nothing here reaches the network or talks to a hosting provider. The question this
+//! module answers is the local one — would this deployment work — and it is answered while
+//! a test is cheap rather than after a rollout is not. The one process anything here starts
+//! is git, read-only, when [`slug`] assembles the tree a provider receives from one commit;
+//! pushing that tree is a workflow's, never this module's. The projections (the
 //! image definition, its ignore file and the files of the provider the object names) read
 //! the values this module produces; they never re-read the file.
 //!
@@ -29,6 +31,7 @@ use crate::model::Object;
 
 pub(crate) mod observed;
 pub mod render;
+pub mod slug;
 
 /// The kind a deployment object is discovered as.
 pub const KIND: &str = "deployment";
@@ -592,10 +595,19 @@ impl Deployment {
     /// metadata is the whole YAML file, so this is where an unknown key, a missing field
     /// and a value outside its type are all refused at once.
     pub fn parse(object: &Object) -> Result<Deployment, Refusal> {
-        let file = object.provenance.path.clone();
-        let parsed: Deployment = serde_json::from_value(object.metadata.clone()).map_err(|e| {
+        Deployment::from_metadata(&object.provenance.path, object.metadata.clone())
+    }
+
+    /// Parse the whole YAML file of a deployment, already read into a value, as
+    /// [`Deployment::parse`] does for an indexed object. The slug assembler reads the object
+    /// at a commit rather than from the index ([`slug`]), and the two must refuse alike.
+    pub(crate) fn from_metadata(
+        file: &str,
+        metadata: serde_json::Value,
+    ) -> Result<Deployment, Refusal> {
+        let parsed: Deployment = serde_json::from_value(metadata).map_err(|e| {
             Refusal::new(
-                &file,
+                file,
                 "(the object)",
                 e,
                 "not a deployment this executable can read",
@@ -604,7 +616,7 @@ impl Deployment {
         })?;
         if parsed.schema != SCHEMA_VERSION {
             return Err(Refusal::new(
-                &file,
+                file,
                 "schema",
                 &parsed.schema,
                 &format!(
@@ -615,7 +627,7 @@ impl Deployment {
         }
         if parsed.kind != KIND {
             return Err(Refusal::new(
-                &file,
+                file,
                 "kind",
                 &parsed.kind,
                 &format!("not {KIND}"),

@@ -1269,6 +1269,19 @@ list cannot carry a header. A provider beside `listen.interface: loopback`, or a
 not `https://`, is refused. Fly.io was named here once, never ran, and stays no target
 (2026-10-12).
 
+**What a provider receives is assembled, never the repository.** `majordomus deploy slug
+--deployment <id> --commit <sha> --executable <path> --out <dir>` writes, into a directory
+outside the checkout that is absent or empty, the object's `build.inputs` read from git at
+that commit except the package the executable is compiled from, the provider's generated
+files of that commit at the slug's root (each held to what the object renders, the hooks
+mode 755), `.buildpacks` holding the pinned buildpack line, the executable at
+`.majordomus/bin/<binary>`, and `.majordomus/SOURCE.json` naming the deployment, the commit,
+the executable's SHA-256 and the provider. `.github/workflows/provider.yml` (model
+`.ai/repo/ci/provider.yaml`) runs it after master's `validate` concludes success, with an
+executable built at that commit, pushes the slug as one fast-forward commit on the
+provider's own history, and waits until `provider.url` + `health.liveness` answers that
+commit.
+
 **The port is stated once.** The process, the image and the provider's Procfile all read
 this one field; a literal
 port anywhere else is the drift this kind exists to prevent. The same holds for the health

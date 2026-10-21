@@ -134,8 +134,9 @@ fn package_dir(d: &Deployment) -> Option<&str> {
 }
 
 /// The inputs the running process reads: everything the build context carries except the
-/// package the builder compiles.
-fn runtime_inputs(d: &Deployment) -> Vec<&str> {
+/// package the builder compiles. The slug a provider receives carries exactly these, since
+/// its executable is built before it is assembled ([`super::slug`]).
+pub(crate) fn runtime_inputs(d: &Deployment) -> Vec<&str> {
     let pkg = package_dir(d);
     d.build
         .inputs
@@ -485,6 +486,22 @@ fn text_artifact(path: &str, source: &str, content: String) -> Artifact {
     }
 }
 
+/// The directory a provider's files are rendered under, repository-relative; the slug
+/// assembler strips it, so the provider reads each file at the slug's root.
+pub(crate) fn provider_dir(provider: ProviderName) -> &'static str {
+    match provider {
+        ProviderName::Gigalixir => GIGALIXIR_DIR,
+    }
+}
+
+/// The files of the provider a deployment names, or none when it names none.
+pub(crate) fn provider_artifacts(d: &Deployment, source: &str) -> Vec<Artifact> {
+    match d.provider.as_ref().map(|p| p.name) {
+        Some(ProviderName::Gigalixir) => gigalixir_artifacts(d, source),
+        None => Vec::new(),
+    }
+}
+
 /// Every artifact of one deployment: the image definition and its ignore file, and the
 /// files of the provider it names; `rust` is the builder's exact Rust version.
 pub fn artifacts(d: &Deployment, source: &str, rust: &str) -> Vec<Artifact> {
@@ -492,10 +509,7 @@ pub fn artifacts(d: &Deployment, source: &str, rust: &str) -> Vec<Artifact> {
         text_artifact(DOCKERFILE, source, dockerfile(d, source, rust)),
         text_artifact(DOCKERIGNORE, source, dockerignore(d, source)),
     ];
-    match d.provider.as_ref().map(|p| p.name) {
-        Some(ProviderName::Gigalixir) => out.extend(gigalixir_artifacts(d, source)),
-        None => {}
-    }
+    out.extend(provider_artifacts(d, source));
     out
 }
 
