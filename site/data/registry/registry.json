@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.1"
   },
   "registry": {
-    "fingerprint": "2c70b82c39bff3b9968cdd4ddb7e89a26e7ef926403362b5b5a289681c7ec7d6",
+    "fingerprint": "6a5b35a4af74a9b85b7379be938b8c500287181071d03b2297e484858f97010a",
     "summary": {
-      "total": 3172,
+      "total": 3173,
       "builtin": 207,
-      "declarative": 2965,
+      "declarative": 2966,
       "by_kind": {
         "command": 32,
         "query": 175,
-        "resource": 2965
+        "resource": 2966
       },
       "by_stability": {
         "behaviorally_verified": 143,
         "experimental": 55,
-        "implemented": 2974
+        "implemented": 2975
       },
       "mcp_tools": 196,
-      "mcp_resources": 3020,
+      "mcp_resources": 3021,
       "http_routes": 201,
       "cli_commands": 112,
       "modules": 92,
@@ -1567,6 +1567,10 @@
                   "signed_input": {
                     "type": "boolean",
                     "description": "Whether the input authenticates its caller.\n\nA handler whose input is a signed message, and which verifies the signature against\nthe trust policy before anything changes, admits its caller by that signature and not\nby the address the request came from. Only such a handler changes state for a caller\non another host; see `ExecutionPolicy::admits_remote`."
+                  },
+                  "local_only": {
+                    "type": "boolean",
+                    "description": "Whether only a caller on this machine may read it.\n\nA read that shows the mesh — its sessions, claims, handovers, nodes and journal — is\nnot the repository's to publish: a server reachable from another host would hand every\ntrusted node's working state to anyone who asked (ADR 0220 decision 4). Such a read\nanswers a loopback caller only; a node reads the mesh through its own server, which the\njournal already brings up to date. See `ExecutionPolicy::admits_remote`."
                   }
                 },
                 "required": [
@@ -46177,7 +46181,8 @@
         "execution": {
           "effect": "read",
           "cancellable": false,
-          "concurrency": "unrestricted"
+          "concurrency": "unrestricted",
+          "local_only": true
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
       },
@@ -46295,7 +46300,8 @@
         "execution": {
           "effect": "read",
           "cancellable": false,
-          "concurrency": "unrestricted"
+          "concurrency": "unrestricted",
+          "local_only": true
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
       },
@@ -46476,7 +46482,8 @@
         "execution": {
           "effect": "read",
           "cancellable": false,
-          "concurrency": "unrestricted"
+          "concurrency": "unrestricted",
+          "local_only": true
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
       },
@@ -46857,7 +46864,8 @@
         "execution": {
           "effect": "read",
           "cancellable": false,
-          "concurrency": "unrestricted"
+          "concurrency": "unrestricted",
+          "local_only": true
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
       },
@@ -48572,7 +48580,8 @@
         "execution": {
           "effect": "read",
           "cancellable": false,
-          "concurrency": "unrestricted"
+          "concurrency": "unrestricted",
+          "local_only": true
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
       },
@@ -49497,7 +49506,8 @@
         "execution": {
           "effect": "read",
           "cancellable": false,
-          "concurrency": "unrestricted"
+          "concurrency": "unrestricted",
+          "local_only": true
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
       },
@@ -50618,7 +50628,8 @@
         "execution": {
           "effect": "read",
           "cancellable": false,
-          "concurrency": "unrestricted"
+          "concurrency": "unrestricted",
+          "local_only": true
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
       },
@@ -52919,7 +52930,8 @@
         "execution": {
           "effect": "read",
           "cancellable": false,
-          "concurrency": "unrestricted"
+          "concurrency": "unrestricted",
+          "local_only": true
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
       },
@@ -52964,6 +52976,13 @@
                   }
                 ],
                 "description": "This node, when the mesh has an identity."
+              },
+              "advertised": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The endpoints this node advertises: what a peer dials to reach it. The bound\ninterface's addresses, or the one public URL a hosted hub is started with (ADR 0220)."
               },
               "trust_policy": {
                 "type": [
@@ -53257,7 +53276,8 @@
         "execution": {
           "effect": "read",
           "cancellable": false,
-          "concurrency": "unrestricted"
+          "concurrency": "unrestricted",
+          "local_only": true
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
       },
@@ -54242,7 +54262,8 @@
         "execution": {
           "effect": "read",
           "cancellable": false,
-          "concurrency": "unrestricted"
+          "concurrency": "unrestricted",
+          "local_only": true
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/monitor.rs"
       },
@@ -57448,7 +57469,8 @@
         "execution": {
           "effect": "read",
           "cancellable": false,
-          "concurrency": "unrestricted"
+          "concurrency": "unrestricted",
+          "local_only": true
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/peers.rs"
       },
@@ -86272,7 +86294,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 570,
+        "capabilities": 571,
         "capability_ids": []
       },
       {
@@ -86364,7 +86386,7 @@
     ]
   },
   "index": {
-    "fingerprint": "4bb619230a3f9364949ba90bdc0f795679034609c8edbf810c6f56dfcbcb337b",
+    "fingerprint": "b5e5be1c3e18065497b89d979390013c3a87986f063197115e5b2a56442d0403",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -86418,7 +86440,7 @@
       "session": 90,
       "skill": 8,
       "taxonomy": 10,
-      "test": 570,
+      "test": 571,
       "use-case": 49,
       "workspace": 1
     },
@@ -93562,7 +93584,7 @@
         "title": "Majordomus Mesh",
         "path": "docs/MESH.md",
         "source_class": "document",
-        "bytes": 68919
+        "bytes": 70381
       },
       {
         "uri": "majordomus://document/docs/MODELS.md",
@@ -106305,7 +106327,7 @@
         "path": ".ai/repo/project/issues/I3826.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2550
+        "bytes": 2621
       },
       {
         "uri": "majordomus://issue/I3827",
@@ -106316,7 +106338,7 @@
         "path": ".ai/repo/project/issues/I3827.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1964
+        "bytes": 2035
       },
       {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
@@ -116057,7 +116079,7 @@
         "identity": "test/cases/3820_a_deployment_renders_its_providers_files.sh",
         "path": "test/cases/3820_a_deployment_renders_its_providers_files.sh",
         "source_class": "case",
-        "bytes": 4855
+        "bytes": 4945
       },
       {
         "uri": "majordomus://test/test/cases/3821_a_providers_tree_is_assembled_from_the_object.sh",
@@ -116074,6 +116096,14 @@
         "path": "test/cases/3823_the_mesh_client_speaks_tls.sh",
         "source_class": "case",
         "bytes": 7106
+      },
+      {
+        "uri": "majordomus://test/test/cases/3826_a_hosted_hub_is_trusted_and_closed_to_strangers.sh",
+        "kind": "test",
+        "identity": "test/cases/3826_a_hosted_hub_is_trusted_and_closed_to_strangers.sh",
+        "path": "test/cases/3826_a_hosted_hub_is_trusted_and_closed_to_strangers.sh",
+        "source_class": "case",
+        "bytes": 6435
       },
       {
         "uri": "majordomus://test/test/cases/383_convergence_is_enforced.sh",
@@ -117449,7 +117479,7 @@
         "identity": "test/cases/86_deployment_projections.sh",
         "path": "test/cases/86_deployment_projections.sh",
         "source_class": "case",
-        "bytes": 12890
+        "bytes": 13223
       },
       {
         "uri": "majordomus://test/test/cases/86_installer_platform.sh",
@@ -118958,7 +118988,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 570
+      "objects": 571
     },
     {
       "name": "use-case",
@@ -119356,6 +119386,30 @@
             "positional": false,
             "help": "Bind the address this deployment object declares (`.ai/repo/deployments/<ID>.yaml`) instead of the local default. What a hosted process is started with; the address is the object's, not this command line's",
             "value_name": "ID",
+            "takes_value": true,
+            "required": false,
+            "global": false,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "node_seed_env",
+            "long": "node-seed-env",
+            "positional": false,
+            "help": "The environment variable holding this node's mesh key, a 64-hex seed: a hosted hub keeps one key across restarts on a disk that does not survive them, and without the variable its mesh stays off rather than minting a key nobody trusts (ADR 0220). The value is read, never printed. What a deployment's generated start command passes",
+            "value_name": "VAR",
+            "takes_value": true,
+            "required": false,
+            "global": false,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "advertise",
+            "long": "advertise",
+            "positional": false,
+            "help": "The one endpoint this node advertises to the mesh, instead of the addresses of the interface it binds: the public URL a hosted hub answers on (ADR 0220). What a deployment's generated start command passes",
+            "value_name": "URL",
             "takes_value": true,
             "required": false,
             "global": false,

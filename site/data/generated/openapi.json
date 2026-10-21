@@ -22071,6 +22071,13 @@
           "refs": [],
           "required": false,
           "type": "boolean"
+        },
+        {
+          "description": "Whether only a caller on this machine may read it.\n\nA read that shows the mesh — its sessions, claims, handovers, nodes and journal — is\nnot the repository's to publish: a server reachable from another host would hand every\ntrusted node's working state to anyone who asked (ADR 0220 decision 4). Such a read\nanswers a loopback caller only; a node reads the mesh through its own server, which the\njournal already brings up to date. See `ExecutionPolicy::admits_remote`.",
+          "name": "local_only",
+          "refs": [],
+          "required": false,
+          "type": "boolean"
         }
       ],
       "type": "object",
@@ -33096,6 +33103,13 @@
           ],
           "required": false,
           "type": "PublicIdentity | null"
+        },
+        {
+          "description": "The endpoints this node advertises: what a peer dials to reach it. The bound\ninterface's addresses, or the one public URL a hosted hub is started with (ADR 0220).",
+          "name": "advertised",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
         },
         {
           "description": "The trust policy in force.",

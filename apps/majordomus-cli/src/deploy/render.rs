@@ -406,10 +406,17 @@ pub fn slug_executable(d: &Deployment) -> String {
     format!("{SLUG_BIN_DIR}/{}", d.build.binary)
 }
 
+/// The secret environment variable a hosted hub's node key is read from (ADR 0220 decision
+/// 2): set on the provider by the owner, named in the start command, never written to the
+/// slug, a generated file or a log.
+pub const NODE_SEED_ENV: &str = "MAJORDOMUS_MESH_NODE_SEED";
+
 /// The Procfile. The provider injects the port as `PORT`; the object's own port is the
 /// fallback, so the process binds the declared one wherever `PORT` is absent. The interface
 /// is the object's, and discovery is a filesystem walk because the slug carries the layer
-/// without the repository that tracks it.
+/// without the repository that tracks it. On the mesh the process advertises the provider
+/// URL the object names and takes its node key from [`NODE_SEED_ENV`] (ADR 0220): without
+/// that secret its mesh stays off, and the server still answers.
 pub fn gigalixir_procfile(d: &Deployment, source: &str) -> String {
     let mut out = header(
         "#",
@@ -417,10 +424,15 @@ pub fn gigalixir_procfile(d: &Deployment, source: &str) -> String {
         "The Gigalixir Procfile of this repository's deployment.",
     );
     out.push_str(&format!(
-        "web: ./{exe} serve --repo . --discovery filesystem --host {host} --port ${{PORT:-{port}}} --idle 0\n",
+        "web: ./{exe} serve --repo . --discovery filesystem --host {host} --port ${{PORT:-{port}}} --idle 0{mesh}\n",
         exe = slug_executable(d),
         host = d.listen.interface.host(),
         port = d.listen.port,
+        mesh = d
+            .provider
+            .as_ref()
+            .map(|p| format!(" --advertise {} --node-seed-env {NODE_SEED_ENV}", p.url.trim_end_matches('/')))
+            .unwrap_or_default(),
     ));
     out
 }
@@ -784,7 +796,7 @@ mod tests {
         let web: Vec<&str> = procfile.lines().filter(|l| l.starts_with("web:")).collect();
         assert_eq!(
             web,
-            ["web: ./.majordomus/bin/majordomus serve --repo . --discovery filesystem --host 0.0.0.0 --port ${PORT:-8080} --idle 0"]
+            ["web: ./.majordomus/bin/majordomus serve --repo . --discovery filesystem --host 0.0.0.0 --port ${PORT:-8080} --idle 0 --advertise https://prismatic-majordomus.gigalixirapp.com --node-seed-env MAJORDOMUS_MESH_NODE_SEED"]
         );
         // every other line is a comment the provider ignores
         assert!(procfile

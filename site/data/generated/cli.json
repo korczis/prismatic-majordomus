@@ -643,6 +643,30 @@
           "required": false,
           "takes_value": true,
           "value_name": "ID"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The environment variable holding this node's mesh key, a 64-hex seed: a hosted hub keeps one key across restarts on a disk that does not survive them, and without the variable its mesh stays off rather than minting a key nobody trusts (ADR 0220). The value is read, never printed. What a deployment's generated start command passes",
+          "long": "node-seed-env",
+          "name": "node_seed_env",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "VAR"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The one endpoint this node advertises to the mesh, instead of the addresses of the interface it binds: the public URL a hosted hub answers on (ADR 0220). What a deployment's generated start command passes",
+          "long": "advertise",
+          "name": "advertise",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "URL"
         }
       ],
       "children": [
@@ -38132,7 +38156,7 @@
     }
   ],
   "counts": {
-    "arguments": 1652,
+    "arguments": 1654,
     "commands": 240,
     "examples": 243,
     "runnable": 210

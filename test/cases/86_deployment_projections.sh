@@ -42,11 +42,14 @@ for f in $GX/bin/detect $GX/bin/compile $GX/bin/release; do
   sed -n 2p "$ROOT/$f" | grep -q '^# GENERATED FILE' || { echo "    $f does not carry the banner on line 2"; exit 1; }
 done
 # The Procfile starts the executable the slug carries, serving the layer it carries, on the
-# provider's PORT and every interface; the fallback port is the object's own.
+# provider's PORT and every interface; the fallback port is the object's own. On the mesh it
+# advertises the provider URL the object names and reads its node key from the secret
+# MAJORDOMUS_MESH_NODE_SEED (ADR 0220), which the Procfile names and never holds.
 web="$(grep '^web: ' "$ROOT/$GX/Procfile")"
 [ "$(grep -c '^web: ' "$ROOT/$GX/Procfile")" = 1 ] || { echo "    the Procfile does not declare exactly one web process"; exit 1; }
+url="$(sed -n 's/^ *url: *//p' "$ROOT/.ai/repo/deployments/majordomus.yaml" | head -n 1)"
 case "$web" in
-  'web: ./.majordomus/bin/majordomus serve --repo . --discovery filesystem --host 0.0.0.0 --port ${PORT:-'*'} --idle 0') ;;
+  "web: ./.majordomus/bin/majordomus serve --repo . --discovery filesystem --host 0.0.0.0 --port \${PORT:-"*"} --idle 0 --advertise $url --node-seed-env MAJORDOMUS_MESH_NODE_SEED") ;;
   *) echo "    the Procfile's web process is not the declared start command: $web"; exit 1 ;;
 esac
 # every other line is a comment the provider ignores

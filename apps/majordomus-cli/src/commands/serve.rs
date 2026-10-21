@@ -148,6 +148,10 @@ fn serve(args: &ServeArgs, repo: &Repository) -> Result<u8> {
         declared.as_ref().map(|(file, _)| file.as_str()),
         lease,
         Some(app.share.dir()),
+        &crate::shared::MeshHosting {
+            node_seed_env: args.node_seed_env.clone(),
+            advertise: args.advertise.clone(),
+        },
     )?;
     // this loop answers a stop signal itself, so that the process ends by its own return
     shared.take_stop_requests();

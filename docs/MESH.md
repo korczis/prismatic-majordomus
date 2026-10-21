@@ -75,6 +75,13 @@ flowchart TD
 | session | one worker's session within a stream | named by the caller (`board-p2` for an MCP session, anything for the CLI) | the stream |
 | repository | the repository being cooperated on | digest of its root commits, or `cooperation.repository` | clones, paths, machines |
 
+A hosted hub has no disk that outlives a boot, so a key minted there would make it a new,
+untrusted node at every restart. `majordomus serve --node-seed-env VAR` takes the node key from
+the 64-hex-digit seed in that environment variable instead (a secret of the platform), writes
+nothing to `node.json`, and keeps one node id across every boot; with the variable unset or
+malformed the mesh stays off and its reason names the variable, never the value (ADR 0220,
+I3826). The seed's public key is what `trust.allow` lists for the hub.
+
 An address, a port, a host name or a PID is never identity. Two worktrees of one machine
 share the node key and are two runtimes; a restarted server keeps its runtime and changes
 its instance, so its peers list it once with `restarts` counted.
@@ -102,7 +109,11 @@ a mixed fleet shows the mismatch instead of going quiet.
 Multicast sockets are bound with `SO_REUSEADDR` and `SO_REUSEPORT`, so every runtime of a
 machine hears the group. A server bound to `0.0.0.0` advertises its interfaces' addresses,
 physical and overlay interfaces before container bridges; a server bound to loopback
-advertises loopback, which only its own machine can dial.
+advertises loopback, which only its own machine can dial. A server behind a platform's router
+dials nobody at its interface addresses, so `serve --advertise URL` advertises that one public
+URL instead; `mesh.status` lists what a node advertises as `advertised`. The Gigalixir
+deployment's generated Procfile passes both `--advertise` and `--node-seed-env` from the
+deployment object (ADR 0219, ADR 0220).
 
 ## Trust
 
@@ -533,7 +544,8 @@ What the mesh defends against, and how:
 | a hostile handover consumed here | every front-matter field is single-line at ingest; the record's file name keeps only timestamp digits, hex and `[A-Za-z0-9_-]`, and a path outside the handovers directory is refused |
 | a host on the network posting claims, sessions, handovers or reviews for this node to sign | a request from an address that is not loopback runs only a capability that reads or whose input is a signed message (`mesh.link.hello`, `mesh.link.sync`, `mesh.register`); every other route answers 403 `forbidden` before its handler runs (ADR 0126) |
 | a web page driving the server (DNS rebinding) | a state-changing request from a browser is accepted only from the server's own origin and only when addressed by an IP literal or `localhost` |
-| a registration that maps the mesh | a refused registration is answered with the refusal alone; an admitted one learns the hub and the trusted nodes of its own repositories, never observed strangers or another repository (I2133) |
+| a registration that maps the mesh | a refused registration is answered with the refusal alone; an admitted one learns the hub and, only when its own key is trusted, the trusted nodes of its own repositories, never observed strangers or another repository (I2133, I3826) |
+| a remote reader of the mesh's working state | the capabilities that show it (`mesh.status`, `mesh.state`, `mesh.peers`, `mesh.peer`, `mesh.nodes`, `mesh.events`, `mesh.cooperation`, `mesh.doctor`, `mesh.firewall`, `peers.list`, `monitor.stream`) are declared local-only and answer 403 `forbidden` to a caller beyond loopback, and so do `/ui/mesh` and `/cockpit/{mesh,peers,monitor}`; liveness, the repository's reads, `mesh.identity` and the signed-input routes (`mesh.register`, `mesh.link.*`) stay open (ADR 0220 decision 4, I3826) |
 | a stranger's hellos | the replay cache and the refusal list hold only what a trusted key of this repository sent, or are capped |
 | a stale peer holding a scope forever | claims live only while the holder's beat rises |
 | publishing arbitrary files | handover publication reads only `.ai/local/state/handovers/` |

@@ -338,6 +338,8 @@ majordomus serve [OPTIONS] [COMMAND]
 | `--fallback` | flag | — | When the port is taken, bind a free one instead and log both; without this a taken port is an error |
 | `--idle` | `<SECONDS>` | `0` | Stop when no peer has been attached for this many seconds; 0 runs until stopped. What a server no client owns is started with |
 | `--deployment` | `<ID>` | — | Bind the address this deployment object declares (`.ai/repo/deployments/<ID>.yaml`) instead of the local default. What a hosted process is started with; the address is the object's, not this command line's |
+| `--node-seed-env` | `<VAR>` | — | The environment variable holding this node's mesh key, a 64-hex seed: a hosted hub keeps one key across restarts on a disk that does not survive them, and without the variable its mesh stays off rather than minting a key nobody trusts (ADR 0220). The value is read, never printed. What a deployment's generated start command passes |
+| `--advertise` | `<URL>` | — | The one endpoint this node advertises to the mesh, instead of the addresses of the interface it binds: the public URL a hosted hub answers on (ADR 0220). What a deployment's generated start command passes |
 
 Examples:
 

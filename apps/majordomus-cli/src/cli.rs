@@ -4309,6 +4309,19 @@ pub struct ServeArgs {
     /// the object's, not this command line's
     #[arg(long, value_name = "ID", conflicts_with_all = ["host", "port"])]
     pub deployment: Option<String>,
+
+    /// The environment variable holding this node's mesh key, a 64-hex seed: a hosted hub
+    /// keeps one key across restarts on a disk that does not survive them, and without the
+    /// variable its mesh stays off rather than minting a key nobody trusts (ADR 0220). The
+    /// value is read, never printed. What a deployment's generated start command passes
+    #[arg(long, value_name = "VAR")]
+    pub node_seed_env: Option<String>,
+
+    /// The one endpoint this node advertises to the mesh, instead of the addresses of the
+    /// interface it binds: the public URL a hosted hub answers on (ADR 0220). What a
+    /// deployment's generated start command passes
+    #[arg(long, value_name = "URL")]
+    pub advertise: Option<String>,
 }
 
 /// How long a server started by `serve ensure` outlives its last peer, in seconds: long

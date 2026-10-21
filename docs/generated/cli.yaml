@@ -279,6 +279,26 @@ cli:
           global: false
           possible_values: []
           defaults: []
+        - name: node_seed_env
+          long: node-seed-env
+          positional: false
+          help: "The environment variable holding this node's mesh key, a 64-hex seed: a hosted hub keeps one key across restarts on a disk that does not survive them, and without the variable its mesh stays off rather than minting a key nobody trusts (ADR 0220). The value is read, never printed. What a deployment's generated start command passes"
+          value_name: VAR
+          takes_value: true
+          required: false
+          global: false
+          possible_values: []
+          defaults: []
+        - name: advertise
+          long: advertise
+          positional: false
+          help: "The one endpoint this node advertises to the mesh, instead of the addresses of the interface it binds: the public URL a hosted hub answers on (ADR 0220). What a deployment's generated start command passes"
+          value_name: URL
+          takes_value: true
+          required: false
+          global: false
+          possible_values: []
+          defaults: []
       examples:
         - id: serve-ephemeral-port
           title: Serve the same capabilities over HTTP on a free port

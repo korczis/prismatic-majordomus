@@ -59841,7 +59841,9 @@
             "docs/MESH.md",
             ".ai/repo/project/issues/I3826.yaml"
           ],
-          "serves": [],
+          "serves": [
+            "an-authorised-node-connects-from-anywhere#relay-when-no-direct-path"
+          ],
           "slug": "a-hosted-hub-is-trusted-and-closed-to-strangers",
           "updated_at": "2026-10-21",
           "validation": [
@@ -59882,7 +59884,9 @@
             "docs/MESH.md",
             ".ai/repo/project/issues/I3827.yaml"
           ],
-          "serves": [],
+          "serves": [
+            "an-authorised-node-connects-from-anywhere#relay-when-no-direct-path"
+          ],
           "slug": "the-hosted-hub-is-the-default-rendezvous",
           "updated_at": "2026-10-21",
           "validation": [
@@ -81851,6 +81855,13 @@
         "label": "test/cases/3823_the_mesh_client_speaks_tls.sh",
         "route": "/cockpit/objects/test/test-cases-3823-the-mesh-client-speaks-tls-sh",
         "source": "test/cases/3823_the_mesh_client_speaks_tls.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3826_a_hosted_hub_is_trusted_and_closed_to_strangers.sh",
+        "kind": "test",
+        "label": "test/cases/3826_a_hosted_hub_is_trusted_and_closed_to_strangers.sh",
+        "route": "/cockpit/objects/test/test-cases-3826-a-hosted-hub-is-trusted-and-closed-to-strangers-sh",
+        "source": "test/cases/3826_a_hosted_hub_is_trusted_and_closed_to_strangers.sh"
       },
       {
         "id": "majordomus://test/test/cases/383_convergence_is_enforced.sh",
@@ -123132,6 +123143,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3826_a_hosted_hub_is_trusted_and_closed_to_strangers.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/383_convergence_is_enforced.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -128268,8 +128284,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3626,
-      "edges": 8442,
+      "nodes": 3627,
+      "edges": 8443,
       "acyclic": false,
       "truncated": false
     }

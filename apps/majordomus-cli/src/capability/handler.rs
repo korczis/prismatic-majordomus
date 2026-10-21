@@ -560,6 +560,14 @@ impl Executable {
         self.capability.execution = self.capability.execution.authenticates_its_input();
         self
     }
+
+    /// The declaration, answering only a caller on this machine: a read that shows the
+    /// mesh's working state (ADR 0220 decision 4). See
+    /// [`crate::capability::ExecutionPolicy::reads_only_locally`].
+    pub fn reads_only_locally(mut self) -> Self {
+        self.capability.execution = self.capability.execution.reads_only_locally();
+        self
+    }
 }
 
 /// The one canonical declaration of an executable capability. From it every projection is

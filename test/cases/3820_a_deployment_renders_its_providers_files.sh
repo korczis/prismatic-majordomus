@@ -80,7 +80,7 @@ grep -qx '"$1/.majordomus/bin/majordomus" --version' $GX/bin/compile \
 [ "$(tail -1 $GX/bin/release)" = 'echo "--- {}"' ] || { echo "    the release hook does not declare an empty release"; exit 1; }
 
 # ---------------------------------------------------------------- the Procfile starts the declared executable
-want='web: ./.majordomus/bin/majordomus serve --repo . --discovery filesystem --host 0.0.0.0 --port ${PORT:-8091} --idle 0'
+want='web: ./.majordomus/bin/majordomus serve --repo . --discovery filesystem --host 0.0.0.0 --port ${PORT:-8091} --idle 0 --advertise https://hosted-app.gigalixirapp.com --node-seed-env MAJORDOMUS_MESH_NODE_SEED'
 [ "$(grep '^web: ' $GX/Procfile)" = "$want" ] \
   || { echo "    the Procfile is not the declared start command:"; cat $GX/Procfile; exit 1; }
 # the fallback port is the object's, read again after the object moves it
