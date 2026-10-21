@@ -301,6 +301,10 @@ struct Watch {
     /// the stamp and the count it was built at, so the change stays unconsumed and is read
     /// again.
     failed: Mutex<Option<(String, u64, Instant)>>,
+    /// Why the last load failed, as its first line: what a page says when it is behind
+    /// the repository for a reason, instead of saying it is being read again. Cleared by
+    /// the load that succeeds.
+    error: Mutex<Option<String>>,
     /// How many loads were attempted: what a test counts to hold a failing load to one
     /// attempt per interval.
     loads: AtomicU64,
@@ -398,6 +402,7 @@ impl Live {
                 stamp,
                 clock,
                 failed: Mutex::new(None),
+                error: Mutex::new(None),
                 loads: AtomicU64::new(0),
             }),
             state: RwLock::new(Generation {
@@ -540,6 +545,58 @@ impl Live {
         (existing, true)
     }
 
+    /// How the generation there is stands against the repository as it is now, without
+    /// reading anything: what a page says of itself when it is not current, and what the
+    /// UI's pulse answers a page that asks whether to read itself again.
+    ///
+    /// A pinned view follows nothing, so it is always current.
+    ///
+    /// ```
+    /// use majordomus_cli::live::{Lag, Live};
+    /// use majordomus_cli::synthetic::SyntheticRepository;
+    ///
+    /// let repo = SyntheticRepository::small().unwrap();
+    /// let live = Live::pinned(repo.context().unwrap());
+    /// assert_eq!(live.lag(), Lag::Current);
+    /// ```
+    pub fn lag(&self) -> Lag {
+        let Some(watch) = self.watch.as_ref() else {
+            return Lag::Current;
+        };
+        let taken = watch.stamp.take();
+        if read(&self.state).current(&taken) {
+            return Lag::Current;
+        }
+        let failed = lock(&watch.failed).clone();
+        match failed {
+            Some((stamp, _, at)) if stamp == taken => {
+                let since = (watch.clock)().saturating_duration_since(at);
+                Lag::Failed {
+                    error: lock(&watch.error)
+                        .clone()
+                        .unwrap_or_else(|| "the layer would not load".into()),
+                    retry_in: RETRY_AFTER.saturating_sub(since),
+                }
+            }
+            _ => Lag::Reloading,
+        }
+    }
+
+    /// The head of the generation there is, as the pulse names it: the commit it read, or
+    /// `-` when the repository is not a git one.
+    ///
+    /// ```
+    /// use majordomus_cli::live::Live;
+    /// use majordomus_cli::synthetic::SyntheticRepository;
+    ///
+    /// let repo = SyntheticRepository::small().unwrap();
+    /// let live = Live::pinned(repo.context().unwrap());
+    /// assert!(!live.head().is_empty());
+    /// ```
+    pub fn head(&self) -> String {
+        head_of(&read(&self.state).ctx)
+    }
+
     fn reload(&self, watch: &Watch, taken: String) -> View {
         // A caller that arrives mid-rebuild has already seen the stamp move: the generation
         // that exists is known to be stale, and answering from it is the frozen picture
@@ -578,6 +635,7 @@ impl Live {
         match built {
             Ok(app) => {
                 *lock(&watch.failed) = None;
+                *lock(&watch.error) = None;
                 state.writes = writes;
                 state.ctx = Arc::new(app.context.continuing(&previous));
                 state.number += 1;
@@ -601,6 +659,7 @@ impl Live {
                 // instead, and holds the retry off for RETRY_AFTER — never once per request,
                 // never given up on (Watch::waiting).
                 *lock(&watch.failed) = Some((taken, writes, (watch.clock)()));
+                *lock(&watch.error) = Some(first_line(&e.to_string()));
                 tracing::warn!(
                     error = %e,
                     "the repository moved but the layer would not load; serving generation {} and reading it again in {}s, or at once when it moves again",
@@ -613,6 +672,42 @@ impl Live {
             generation: state.number,
             ctx: Arc::clone(&state.ctx),
         }
+    }
+}
+
+/// How a generation stands against the repository as it is now.
+///
+/// ```
+/// use majordomus_cli::live::Lag;
+/// use std::time::Duration;
+///
+/// let failed = Lag::Failed { error: "manifest: duplicate key".into(), retry_in: Duration::from_secs(3) };
+/// assert_ne!(failed, Lag::Current);
+/// assert_ne!(Lag::Reloading, Lag::Current);
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Lag {
+    /// The repository is as the generation read it.
+    Current,
+    /// The repository moved and a new reading is on its way.
+    Reloading,
+    /// The repository moved and the layer would not load: the generation there is the last
+    /// that did, and the next attempt is `retry_in` away. Said so, because "being read
+    /// again" of a reading that fails every interval is not true.
+    Failed {
+        /// The first line of what the load said.
+        error: String,
+        /// How long until the next attempt.
+        retry_in: Duration,
+    },
+}
+
+/// The first line of a message, bounded, so that a page can show it.
+fn first_line(message: &str) -> String {
+    let line = message.lines().next().unwrap_or("").trim();
+    match line.char_indices().nth(240) {
+        Some((end, _)) => format!("{}…", &line[..end]),
+        None => line.to_string(),
     }
 }
 
@@ -911,6 +1006,42 @@ mod tests {
             let mut now = lock(&self.now);
             *now += by;
         }
+    }
+
+    #[test]
+    fn a_generation_behind_a_failing_load_says_why_and_when_it_is_tried_again() {
+        let l = Layer::new();
+        assert_eq!(l.live.lag(), Lag::Current);
+        let good = l.break_and_commit();
+        assert_eq!(
+            l.live.lag(),
+            Lag::Reloading,
+            "the repository moved and nothing has tried the load yet"
+        );
+        assert_eq!(l.live.view().generation, 0, "the layer will not load");
+        match l.live.lag() {
+            Lag::Failed { error, retry_in } => {
+                assert!(
+                    !error.is_empty() && !error.contains('\n'),
+                    "one line: {error:?}"
+                );
+                assert_eq!(retry_in, RETRY_AFTER, "the whole interval is still ahead");
+            }
+            other => panic!("a failed load is Failed, not {other:?}"),
+        }
+        l.advance(Duration::from_secs(2));
+        assert!(
+            matches!(l.live.lag(), Lag::Failed { retry_in, .. } if retry_in == RETRY_AFTER - Duration::from_secs(2)),
+            "the time to the next attempt counts down"
+        );
+        std::fs::write(l.manifest(), good).expect("the manifest is written");
+        l.advance(RETRY_AFTER);
+        assert_eq!(l.live.view().generation, 1);
+        assert_eq!(
+            l.live.lag(),
+            Lag::Current,
+            "a load that succeeds forgets the failure"
+        );
     }
 
     #[test]

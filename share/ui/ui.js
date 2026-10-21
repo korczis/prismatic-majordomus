@@ -221,11 +221,17 @@ async function drawGraphs() {
 // runs is also read again when one ends (`followExecutions`, below), and its line says what
 // that channel is doing; nothing claims more than that channel carries.
 //
+// Between those minutes the page asks the server's pulse (`/ui/pulse`) every PULSE_MS whether
+// the repository moved past the generation it was drawn from, and reads itself again at once
+// when it did, so a UI left open follows the repository instead of showing it as it was a
+// minute ago. The pulse is a few bytes and starts the reload a moved repository is owed.
+//
 // The server never makes a screen wait for a source. A value it read before the repository
 // last changed, or has not read yet, is shown as that, and its source line carries
 // `data-catching-up` while the server reads it again. A screen with such a line is read
 // again after CATCH_UP_MS, then after twice that, up to CATCH_UP_MAX_MS, until none is left.
 const REFRESH_MS = 60000;
+const PULSE_MS = 3000;
 const CATCH_UP_MS = 400;
 const CATCH_UP_MAX_MS = 6400;
 let catchUpIn = CATCH_UP_MS;
@@ -242,6 +248,32 @@ function catchUp() {
     await refresh();
     catchUp();
   }, catchUpIn);
+}
+let pulseGeneration = null;
+let pulseLag = 'current';
+async function pulse() {
+  if (document.visibilityState !== 'visible') return;
+  const controller = new AbortController();
+  inFlight.add(controller);
+  const timer = setTimeout(() => controller.abort(), PANEL_TIMEOUT_MS);
+  try {
+    const response = await fetch('/ui/pulse', { cache: 'no-store', signal: controller.signal });
+    if (!response.ok) return;
+    const beat = await response.json();
+    const moved = pulseGeneration !== null && beat.generation !== pulseGeneration;
+    const settled = pulseLag !== 'current' && beat.lag === 'current';
+    pulseGeneration = beat.generation;
+    pulseLag = beat.lag;
+    // the generation changed under the page, or the server caught up with the repository:
+    // what is shown was read before, and the next minute is too long to wait
+    if (moved || settled) await refresh();
+    document.body.toggleAttribute('data-server-behind', beat.lag !== 'current');
+  } catch (e) {
+    /* the page as it is stays; the next beat asks again */
+  } finally {
+    clearTimeout(timer);
+    inFlight.delete(controller);
+  }
 }
 async function refresh() {
   if (document.visibilityState !== 'visible') return;
@@ -402,5 +434,8 @@ if (SNAPSHOT) {
   window.addEventListener('hashchange', showSnapshotPath);
 } else if (!window.location.pathname.includes('/panels/')) {
   setInterval(refresh, REFRESH_MS);
+  setInterval(pulse, PULSE_MS);
+  document.addEventListener('visibilitychange', pulse);
+  pulse();
   catchUp();
 }
