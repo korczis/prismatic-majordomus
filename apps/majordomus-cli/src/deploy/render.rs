@@ -417,6 +417,29 @@ pub const NODE_SEED_ENV: &str = "MAJORDOMUS_MESH_NODE_SEED";
 /// without the repository that tracks it. On the mesh the process advertises the provider
 /// URL the object names and takes its node key from [`NODE_SEED_ENV`] (ADR 0220): without
 /// that secret its mesh stays off, and the server still answers.
+///
+/// ```
+/// # let d: majordomus_cli::deploy::Deployment = serde_json::from_value(serde_json::json!({
+/// #     "schema": "deployment/v1", "kind": "deployment", "id": "x", "title": "x",
+/// #     "application": "x",
+/// #     "build": { "package": "majordomus-cli", "binary": "majordomus", "profile": "release",
+/// #                "inputs": ["share"] },
+/// #     "listen": { "port": 8080, "interface": "all" },
+/// #     "health": { "liveness": "/api/v1/live", "readiness": "/api/v1/ready" },
+/// #     "resources": { "cpu_kind": "shared", "cpus": 1, "memory_mb": 256 },
+/// #     "machines": { "count": 1, "min_running": 0, "autostart": true, "autostop": true },
+/// #     "region": "fra",
+/// #     "provider": { "name": "gigalixir", "app": "x-app", "stack": "gigalixir-24",
+/// #                   "url": "https://x-app.gigalixirapp.com" },
+/// # })).unwrap();
+/// use majordomus_cli::deploy::render::gigalixir_procfile;
+///
+/// let web = gigalixir_procfile(&d, ".ai/repo/deployments/x.yaml");
+/// let line = web.lines().find(|l| l.starts_with("web: ")).unwrap();
+/// assert!(line.contains("serve --repo . --discovery filesystem"), "{line}");
+/// assert!(line.contains("--port ${PORT:-8080}"), "{line}");
+/// assert!(line.ends_with("--advertise https://x-app.gigalixirapp.com --node-seed-env MAJORDOMUS_MESH_NODE_SEED"), "{line}");
+/// ```
 pub fn gigalixir_procfile(d: &Deployment, source: &str) -> String {
     let mut out = header(
         "#",
@@ -445,6 +468,14 @@ fn hook(source: &str, what: &str, body: &str) -> String {
 }
 
 /// The detect hook: it accepts the slug and names it.
+///
+/// ```
+/// use majordomus_cli::deploy::render::gigalixir_detect;
+///
+/// let hook = gigalixir_detect(".ai/repo/deployments/x.yaml");
+/// assert!(hook.starts_with("#!/bin/sh\n"), "the kernel reads the interpreter on line one");
+/// assert!(hook.ends_with("echo majordomus\n"));
+/// ```
 pub fn gigalixir_detect(source: &str) -> String {
     hook(
         source,
@@ -456,6 +487,29 @@ pub fn gigalixir_detect(source: &str) -> String {
 /// The compile hook: the executable is prebuilt at the commit the slug was read from, so
 /// this compiles nothing; it makes the executable runnable and proves it starts. `$1` is the
 /// build directory the buildpack hands it.
+///
+/// ```
+/// # let d: majordomus_cli::deploy::Deployment = serde_json::from_value(serde_json::json!({
+/// #     "schema": "deployment/v1", "kind": "deployment", "id": "x", "title": "x",
+/// #     "application": "x",
+/// #     "build": { "package": "majordomus-cli", "binary": "majordomus", "profile": "release",
+/// #                "inputs": ["share"] },
+/// #     "listen": { "port": 8080, "interface": "all" },
+/// #     "health": { "liveness": "/api/v1/live", "readiness": "/api/v1/ready" },
+/// #     "resources": { "cpu_kind": "shared", "cpus": 1, "memory_mb": 256 },
+/// #     "machines": { "count": 1, "min_running": 0, "autostart": true, "autostop": true },
+/// #     "region": "fra",
+/// #     "provider": { "name": "gigalixir", "app": "x-app", "stack": "gigalixir-24",
+/// #                   "url": "https://x-app.gigalixirapp.com" },
+/// # })).unwrap();
+/// use majordomus_cli::deploy::render::gigalixir_compile;
+///
+/// let hook = gigalixir_compile(&d, ".ai/repo/deployments/x.yaml");
+/// assert!(hook.starts_with("#!/bin/sh\n"));
+/// assert!(hook.contains("chmod 755 \"$1/.majordomus/bin/majordomus\""));
+/// assert!(hook.contains("\"$1/.majordomus/bin/majordomus\" --version"));
+/// assert!(!hook.contains("cargo"), "the executable is prebuilt; nothing compiles here");
+/// ```
 pub fn gigalixir_compile(d: &Deployment, source: &str) -> String {
     let exe = slug_executable(d);
     hook(
@@ -466,6 +520,14 @@ pub fn gigalixir_compile(d: &Deployment, source: &str) -> String {
 }
 
 /// The release hook: no add-ons and no process beyond the Procfile's.
+///
+/// ```
+/// use majordomus_cli::deploy::render::gigalixir_release;
+///
+/// let hook = gigalixir_release(".ai/repo/deployments/x.yaml");
+/// assert!(hook.starts_with("#!/bin/sh\n"));
+/// assert!(hook.ends_with("echo \"--- {}\"\n"), "an empty release: no add-ons, no processes");
+/// ```
 pub fn gigalixir_release(source: &str) -> String {
     hook(
         source,
@@ -475,6 +537,29 @@ pub fn gigalixir_release(source: &str) -> String {
 }
 
 /// The four Gigalixir artifacts of one deployment.
+///
+/// ```
+/// # let d: majordomus_cli::deploy::Deployment = serde_json::from_value(serde_json::json!({
+/// #     "schema": "deployment/v1", "kind": "deployment", "id": "x", "title": "x",
+/// #     "application": "x",
+/// #     "build": { "package": "majordomus-cli", "binary": "majordomus", "profile": "release",
+/// #                "inputs": ["share"] },
+/// #     "listen": { "port": 8080, "interface": "all" },
+/// #     "health": { "liveness": "/api/v1/live", "readiness": "/api/v1/ready" },
+/// #     "resources": { "cpu_kind": "shared", "cpus": 1, "memory_mb": 256 },
+/// #     "machines": { "count": 1, "min_running": 0, "autostart": true, "autostop": true },
+/// #     "region": "fra",
+/// #     "provider": { "name": "gigalixir", "app": "x-app", "stack": "gigalixir-24",
+/// #                   "url": "https://x-app.gigalixirapp.com" },
+/// # })).unwrap();
+/// use majordomus_cli::deploy::render::{gigalixir_artifacts, GIGALIXIR_PROCFILE, GIGALIXIR_DETECT,
+///     GIGALIXIR_COMPILE, GIGALIXIR_RELEASE};
+///
+/// let all = gigalixir_artifacts(&d, ".ai/repo/deployments/x.yaml");
+/// let paths: Vec<&str> = all.iter().map(|a| a.path.as_str()).collect();
+/// assert_eq!(paths, [GIGALIXIR_PROCFILE, GIGALIXIR_DETECT, GIGALIXIR_COMPILE, GIGALIXIR_RELEASE]);
+/// assert!(all.iter().all(|a| a.source == ".ai/repo/deployments/x.yaml"));
+/// ```
 pub fn gigalixir_artifacts(d: &Deployment, source: &str) -> Vec<Artifact> {
     [
         (GIGALIXIR_PROCFILE, gigalixir_procfile(d, source)),

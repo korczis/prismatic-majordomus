@@ -72,6 +72,14 @@ impl Reply {
 pub const MAX_REPLY_BYTES: usize = 32 * 1024 * 1024;
 
 /// How an endpoint's bytes travel, once [`transport`] has allowed it.
+///
+/// ```
+/// use majordomus_cli::mcp::bridge::{transport, Transport};
+/// // a hub by name over TLS; a seed on a private network in cleartext
+/// assert_eq!(transport("https://prismatic-majordomus.gigalixirapp.com").unwrap(), Transport::Tls);
+/// assert_eq!(transport("http://192.168.1.20:8742").unwrap(), Transport::Cleartext);
+/// assert_ne!(Transport::Tls, Transport::Cleartext);
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Transport {
     /// `https://`: over TLS, the certificate and the host name verified.
