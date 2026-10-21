@@ -23,4 +23,18 @@ validation:
 evidence_required:
   - "verified"
 created_at: 2026-10-19
-updated_at: 2026-10-19
+updated_at: 2026-10-20T22:12:13Z
+started_at: 2026-10-20T22:09:53Z
+started_event: sha256:3019dfd557566bcc665de3b23617af2b2d99761bfd3073943720bb976f97e02f
+verified_at: 2026-10-20T22:11:14Z
+verified_event: sha256:5c2c7cb35796f16f2981a244f9a978c23ac622472a28716cbadd64ae24c9aaa0
+completed_at: 2026-10-20T22:12:13Z
+completed_event: sha256:1e8f3d1126454dd34e23d6642a08365786601382fe51a051c475a481a5fd0dc8
+evidence:
+  - covers: verified
+    type: test
+    command: "CI=true bash test/run.sh --no-skips 3460_a_session_end_hook_fits_its_budget"
+    result: "ok on master 573df967bb5 (1.0.0-alpha.1): every generated hook carries its declared timeout, the pre-timeout shape is upgraded, a foreign config is left and named, the end shim closes within its timeout, a spent budget skips the optional steps and still closes"
+    artifact: "c6556694ab7"
+    commit: 573df967bb5bc30cf23e542b8d0dff03d3bf5ee0
+    recorded_at: 2026-10-20T22:10:45Z

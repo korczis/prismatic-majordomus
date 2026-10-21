@@ -1,0 +1,27 @@
+id: I3061
+milestone: M003
+title: "A headless or nested provider session is not the worker: its end never hands over the task or writes a tracked record"
+slug: a-subprocess-session-is-not-the-worker
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "The lifecycle tells a provider session that is the worker apart from one the worker spawned, for example a headless `claude -p` run by an adopter's review script inside a supervised worktree, or a session started under another live session of the same checkout. A start event from such a session opens at most a local episode bound to nothing; it never adopts the checkout's active task. Its end event, interrupted or not, never marks the active task handed_over and never writes a tracked record under .ai/repo/sessions/; anything it keeps stays under .ai/local. The distinction is read from what the provider's payload and environment actually say (the CLAUDE_CODE_SESSION_ID column of MJ_CAPTURE_LIFECYCLE, the start source, whether a live episode of another provider session already holds the task), and the rule is stated where the lifecycle is declared."
+why: "Reported by the prismatic-platform adopter session on 0.30.0, 2026-10-19. A headless `claude -p` subprocess launched by a review script inside a supervised worktree bound to that worktree's active task (session s-20261019062312-c137, task t-20261018225527-077f). When it was killed mid-run, its SessionEnd hook did two things. (1) It wrote a TRACKED record .ai/repo/sessions/20261019T062345Z--s-20261019062312-c137--...--3bb1e48--867c75fadb2a05ec.md with outcome: interrupted, which dirtied the tree and blocked the adopter's push gate. (2) It marked the active task outcome: handed_over, so the real worker's next `finish --check` answered 'already handed_over' and the worker had to start again. Normal completions wrote nothing; the trigger is the interrupted end. The stray record is kept at /private/tmp/claude-501/-Users-korczis-dev-prismatic-platform/031be0ea-45bf-41ce-84e5-d7b951d35331/scratchpad/stray-session-records/."
+current_state: "mj_capture_session_start opens an episode for any provider session that fires SessionStart in the checkout. mj_capture_session_end runs `handover --derive --close` against the checkout's current task and closes the episode into a tracked record, whoever the session was."
+desired_state: "A session that is not the worker leaves the worker's task and the tracked tree exactly as they were, and says so in its local log. The worker's own interrupted end keeps today's behaviour."
+scope:
+  - "lib/capture.sh"
+  - "lib/session.sh"
+  - "test/cases/3461_a_subprocess_session_is_not_the_worker.sh"
+  - ".ai/repo/project/issues/I3061.yaml"
+acceptance_criteria:
+  - "With a worker episode open on an active task, a second provider session's start then interrupted end leaves the task's outcome unchanged (not handed_over) and git status clean under .ai/repo/sessions/"
+  - "The same second session's end writes its record, if any, under .ai/local only, and the worker's own end afterwards closes the worker's episode as before"
+  - "A worker's own interrupted end (no other live session) still hands the task over and writes its tracked record, as case 54 holds today"
+  - "Case 3461 drives all three through the shims the provider runs"
+validation:
+  - "CI=true bash test/run.sh --no-skips 3461_a_subprocess_session_is_not_the_worker 54_session_lifecycle_hooks"
+evidence_required:
+  - "verified"
+created_at: 2026-10-19
+updated_at: 2026-10-19
