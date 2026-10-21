@@ -289,5 +289,6 @@ Every screen and panel of the UI's own route list, read with `GET` and `Accept: 
 | `system.http.ui.panels.delivery` | `/ui/panels/delivery` | pinned | yes |
 | `system.http.ui.panels.drain` | `/ui/panels/drain` | pinned | yes |
 | `system.http.ui.panels.standing` | `/ui/panels/standing` | pinned | yes |
+| `system.http.ui.panels.shared_scope` | `/ui/panels/shared-scope` | pinned | yes |
 
 Cache modes: a cached capability is measured cold (the cache cleared before every sample) and warm (the same input repeated); the direct transport reports the handler invocations of each. Evidence: `.ai/local/benchmarks/` for local runs, `.ai/repo/benchmarks/rust/` for the accepted baselines and the regression policy.
