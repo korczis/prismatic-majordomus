@@ -241,7 +241,7 @@
 <a href=#241 id=241 data-nosnippet>241</a>        }
 <a href=#242 id=242 data-nosnippet>242</a>        (<span class="prelude-val">Some</span>(id), <span class="prelude-val">Some</span>(intent)) =&gt; {
 <a href=#243 id=243 data-nosnippet>243</a>            <span class="kw">let </span>mine = <span class="kw">if </span>unanswered(issues).is_none() {
-<a href=#244 id=244 data-nosnippet>244</a>                serving(intent, <span class="kw-2">&amp;</span>list(issues, <span class="string">"/issues"</span>))
+<a href=#244 id=244 data-nosnippet>244</a>                serving(intent, <span class="kw">super</span>::view::items(issues, <span class="string">"/issues"</span>))
 <a href=#245 id=245 data-nosnippet>245</a>            } <span class="kw">else </span>{
 <a href=#246 id=246 data-nosnippet>246</a>                Vec::new()
 <a href=#247 id=247 data-nosnippet>247</a>            };
@@ -333,7 +333,7 @@
 <a href=#333 id=333 data-nosnippet>333</a>        .map(|ms| ms.iter().map(|m| text(m, <span class="string">"id"</span>)).collect())
 <a href=#334 id=334 data-nosnippet>334</a>        .unwrap_or_default();
 <a href=#335 id=335 data-nosnippet>335</a>    <span class="kw">let </span>body = unanswered(roadmap).unwrap_or_else(|| {
-<a href=#336 id=336 data-nosnippet>336</a>        <span class="kw">let </span>plan = list(roadmap, <span class="string">"/milestones"</span>);
+<a href=#336 id=336 data-nosnippet>336</a>        <span class="kw">let </span>plan = <span class="kw">super</span>::view::items(roadmap, <span class="string">"/milestones"</span>);
 <a href=#337 id=337 data-nosnippet>337</a>        <span class="kw">let </span><span class="kw-2">mut </span>rows: Vec&lt;El&gt; = plan
 <a href=#338 id=338 data-nosnippet>338</a>            .iter()
 <a href=#339 id=339 data-nosnippet>339</a>            .filter(|m| named.contains(<span class="kw-2">&amp;</span>text(m, <span class="string">"id"</span>)))
@@ -679,11 +679,11 @@
 <a href=#679 id=679 data-nosnippet>679</a>/// an id in a sentence is a link exactly when there is a record behind it (I3000).
 <a href=#680 id=680 data-nosnippet>680</a></span><span class="kw">fn </span>known(issues: <span class="kw-2">&amp;</span>Answer, roadmap: <span class="kw-2">&amp;</span>Answer) -&gt; <span class="kw">super</span>::prose::Known {
 <a href=#681 id=681 data-nosnippet>681</a>    <span class="kw">super</span>::prose::Known {
-<a href=#682 id=682 data-nosnippet>682</a>        issues: list(issues, <span class="string">"/issues"</span>)
+<a href=#682 id=682 data-nosnippet>682</a>        issues: <span class="kw">super</span>::view::items(issues, <span class="string">"/issues"</span>)
 <a href=#683 id=683 data-nosnippet>683</a>            .iter()
 <a href=#684 id=684 data-nosnippet>684</a>            .map(|x| text(x, <span class="string">"id"</span>))
 <a href=#685 id=685 data-nosnippet>685</a>            .collect(),
-<a href=#686 id=686 data-nosnippet>686</a>        milestones: list(roadmap, <span class="string">"/milestones"</span>)
+<a href=#686 id=686 data-nosnippet>686</a>        milestones: <span class="kw">super</span>::view::items(roadmap, <span class="string">"/milestones"</span>)
 <a href=#687 id=687 data-nosnippet>687</a>            .iter()
 <a href=#688 id=688 data-nosnippet>688</a>            .map(|m| text(m, <span class="string">"id"</span>))
 <a href=#689 id=689 data-nosnippet>689</a>            .collect(),
