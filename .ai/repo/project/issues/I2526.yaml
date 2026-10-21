@@ -8,7 +8,7 @@ parallel_safe: false
 objective: "Split stage B into the nodes its real dependencies allow, starting with the execution of the use-case scenarios, so that an edit to one canonical file does not rerun every section of the site generator, and keep a coarser node wherever a finer one cannot be shown to be both correct and faster."
 why: "campaigns/majordomus-incremental-derive-prompt-pack/07_07_SITE_DOCS_GRANULARITY.md asks that a rule edit invalidate only the policies, registries, site data and pages that depend on it, with conservative fallbacks and with coarse nodes retained where they are faster. scripts/generate-site-data is 2622 lines that take one input list, stage every section into a temporary tree and publish it whole, and in the middle of it run majordomus usecase run for every scenario; scripts/derive records that this stage says nothing for minutes while it does so. Its one fingerprint covers milestones, issues, test cases, schemas and documents together, so adding one issue record moves the hash of everything."
 current_state: "Stage B is one unit with one input hash. It has two modes that bound the work: --no-scenarios, used by cases that test derivation, and --check, which stages a full generation and diffs it. The published trees under site/content are deleted and rewritten on every run (.gitattributes)."
-desired_state: "The graph declares at least the scenario run and its evidence as a node keyed by the use cases, the fixtures under test/fixtures/commands, lib/usecase.sh and the generation of the executable, and declares the remaining sections either as nodes or as one node, as the measurements of I2521 justify. scripts/generate-site-data accepts the result of the scenario node as an input instead of running it when the planner says reuse. The composite source_hash in site/data/generated/source.json, the bytes GitHub Pages expects and the merge policy are unchanged."
+desired_state: "The graph declares at least the scenario run and its evidence as a node keyed by the use cases, the fixtures under test/fixtures/commands, lib/usecase.sh and the generation of the executable, and declares the remaining sections either as nodes or as one node, as the measurements of I2521 justify. scripts/generate-site-data accepts the result of the scenario node as an input instead of running it when the planner says reuse. The composite source_hash in site/data/generated/source.json, the bytes GitHub Pages expects and the merge policy are unchanged. Amended on 2026-10-18 by the derive-performance plan: scenario reuse also applies on the generate-site-data --check path that scripts/derive-check runs, which today reruns every scenario; each scenario declares its input set, and the evidence value is unchanged."
 scope:
   - "scripts/generate-site-data"
   - "apps/majordomus-cli/src/derivation"
@@ -32,6 +32,7 @@ acceptance_criteria:
   - "For each of: a CLI source edit, a schema edit, a rule edit, one document edit, a shared site template edit, an indexed document added and one deleted, the incremental result is byte-identical to a full derive"
   - "scripts/generate-site-data --check and --fingerprint print what they printed before on an unchanged tree"
   - "For every split made, the recorded duration of the split run is lower than the unsplit run on the same machine; a split that is not faster is not made"
+  - "On an unchanged tree, the generate-site-data --check run of scripts/derive-check reruns no scenario whose declared inputs are unchanged, and the evidence it reports is the same"
 validation:
   - "bin/majordomus plan validate"
   - "MJ_TEST_JOBS=2 bash test/run.sh 10_site_data 11_site_derivation 12b_site_data_transactional 51_derived_artifacts_committed"
@@ -42,4 +43,4 @@ evidence_required:
   - "site_split_equals_full"
   - "split_measured_faster"
 created_at: 2026-10-13
-updated_at: 2026-10-13
+updated_at: 2026-10-18

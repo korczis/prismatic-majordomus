@@ -15,7 +15,7 @@ plan, evidence, the pull-request lane and the UI.
 
 ## 0. What this was measured against
 
-Adopter: `/Users/korczis/dev/progresus-ark-orchest` (a pnpm/TypeScript monorepo, vitest, GitHub
+Adopter: `progresus-ark-orchest`, checked out in a developer's working directory (a pnpm/TypeScript monorepo, vitest, GitHub
 flow with `develop` → `main`, deployed with Docker Compose to two GCP virtual machines, no git
 tags, 4,358 commits). Tool: majordomus 0.21.0, then 0.22.0 (installed), UI served by a 0.23.0 debug
 build from the worktree `fix/an-adopting-repository-is-not-read-as-unknown`. Date: 2026-10-13.

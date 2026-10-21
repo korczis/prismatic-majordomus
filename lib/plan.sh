@@ -125,6 +125,9 @@ mj_plan_roadmap() {
     for id in $(awk -F'\t' '$1 == "M" && $3 == "DONE" { print $2 }' "$MJ_PJ/model.tsv"); do
       printf '%s\t%s\n' "$id" "$(mj_pj_m_released_in "$id")"
     done > "$MJ_PJ/released.tsv"
+    # one sequence for both renderings: mj_pj_roadmap's rank, then order, then id, the key
+    # Plan::roadmap sorts by, so a tie inside one order never depends on the rows' positions
+    mj_pj_roadmap > "$MJ_PJ/roadmap.ids"
     awk -F'\t' '
       function esc(x) { gsub(/\\/, "\\\\", x); gsub(/"/, "\\\"", x); return x }
       function lst(x,   n, a, i, o) {
@@ -147,21 +150,18 @@ mj_plan_roadmap() {
         return "{\"total\":" t ",\"required\":" r ",\"by_status\":{" o "}}"
       }
       FILENAME ~ /released\.tsv$/ { rel[$1] = $2; next }
-      $1 == "M" { r[++n] = $10 + 0 "\t" $4 + 0 "\t" $0 }
+      FILENAME ~ /roadmap\.ids$/ { seq[++n] = $1; next }
+      $1 == "M" { row[$2] = $0 }
       END {
-        for (i = 1; i < n; i++) for (j = i + 1; j <= n; j++) {
-          split(r[i], x, "\t"); split(r[j], y, "\t")
-          if (x[1] > y[1] || (x[1] == y[1] && x[2] > y[2])) { t = r[i]; r[i] = r[j]; r[j] = t }
-        }
         printf "{\"schema\":1,\"milestones\":["
         for (i = 1; i <= n; i++) {
-          sub(/^[^\t]*\t[^\t]*\t/, "", r[i]); split(r[i], f, "\t")
+          split(row[seq[i]], f, "\t")
           printf "%s{\"id\":\"%s\",\"released_in\":\"%s\",\"title\":\"%s\",\"status\":\"%s\",\"rank\":%d,\"order\":%d,\"issues\":%s,\"depends_on\":%s,\"blocked_by\":%s,\"dependents\":%s,\"claims\":%s}", \
             (i > 1 ? "," : ""), esc(f[2]), esc((f[2] in rel) ? rel[f[2]] : "unreleased"), esc(f[6]), esc(f[3]), f[10], f[4], \
             counts(f[8]), lst(f[11]), lst(f[12]), lst(f[13]), lst(f[14])
         }
         printf "]}\n"
-      }' "$MJ_PJ/released.tsv" "$MJ_PJ/model.tsv"
+      }' "$MJ_PJ/released.tsv" "$MJ_PJ/roadmap.ids" "$MJ_PJ/model.tsv"
     return 0
   fi
   printf 'RELEASED    STATUS      MILESTONE                     TITLE\n'

@@ -1,0 +1,101 @@
+intent: what-a-workspace-decides-reaches-the-repository-with-its-source
+reviewed_at: 707a04c7ce8
+reviewed_by: "claude-code subagent (read-only, fresh context, Plan type, same model family as the author) dispatched by session 82f2734c over the staged records of branch docs/the-chatgpt-project-is-promoted and the ChatGPT-conversation sources they were promoted from; resolved by a second fresh subagent acting as the plan author, and reconciled with the plan by a third after the 2026-10-18 verification. Read only: nothing was run. Disposition: Accept with required changes: 8 of 11 findings are blocking; after the 2026-10-18 verification 9 are planned and 2 stay open (the owner's call on publishing conversation ids, and the vendor connector's tunnel hole and public endpoint), so work on the intent stays refused until those are settled."
+findings:
+  - id: import-references-are-prose-not-provenance
+    class: unproven_assumption
+    subject: "what-a-workspace-decides-reaches-the-repository-with-its-source#the-import-is-pinned"
+    finding: "The plan assumes the 2026-10-18 import wrote typed references that a validator can count. It did not. The staged worktree has 774 references across 310 records (194 issues, 35 milestones, 37 ADRs, 44 knowledge records), all in the prose form `chatgpt-majordomus:<conv>#<n>`. They sit in issue `why`, milestone `problem` and the ADR/knowledge `## Sources` bodies (for example I3280.yaml `why`, and knowledge/curated/no-vendor-api-reads-a-chatgpt-project.md lines 45-49). No `provenance.derived_from` carries a workspace reference anywhere. The grammar I3281 proposes, `workspace:chatgpt-majordomus/<conv>#<msg>`, matches none of them. `plan validate` and `knowledge check` read only structured fields, so the I3284 criterion 'plan validate reports zero positional workspace references' passes vacuously on the current tree, and no issue moves the prose references into typed fields. Fix before work starts: settle the grammar against what was actually written. Then either rewrite the staged import into typed provenance before it is committed, or give I3284 a migration plus a detector that scans prose for `chatgpt-majordomus:` and fails on any untyped reference."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3281
+      because: "Confirmed in the worktree: I3280.yaml `why` ends 'Sources: chatgpt-majordomus:c267#2' and no plan record has a provenance field. I3281 now settles the grammar against what was written: the typed form is `workspace:chatgpt-majordomus/<conv>#<msg>`, and the prose form `chatgpt-majordomus:<conv>#<n>` is what a detector recognises. I3281 also migrates the prose references into typed positional `derived_from` entries and adds a detector that fails any record citing a workspace only in prose. I3281 depends only on I3280 and I1301 (DONE), so this does not wait for the vendor pipeline. I3284 keeps the pinning to message ids, and its zero-positional criterion now counts typed entries plus the detector's result. Neither check can pass vacuously."
+  - id: two-provenance-definitions-differ
+    class: unproven_assumption
+    subject: "I3280"
+    finding: "I3280 and the milestone `current_state` say adr.v1 and knowledge.v1 share one Provenance with derived_from ^(decision|session|commit|issue|task|file|test):.+$. That is false. adr.v1.schema.json:114-121 has no `task:`. knowledge.v1.schema.json:141-148 has `task:`, and its description says decision/session/task references resolve against the ledger and session records. The two `origin` semantics also differ: an extracted ADR 'may not be accepted in the same act', while knowledge provenance is 'required for verified'. Merging them into 'one definition referenced by all five' does one of two things. It puts ledger-local `task:`/`decision:`/`session:` references on ADRs and plan records, which is exactly the cross-checkout failure that I3281's `why` cites from the adopter report. Or it strips `task:` from knowledge. The mechanism is also unscoped: jsonschema 0.53 is built with default-features=false, generate.rs:2248 compiles each schema with `validator_for` and no retriever, and no schema under share/schemas uses a cross-file `$ref`. Before starting, decide which reference types each kind admits (plan records should not take ledger-local types) and whether 'declared once' means a resolver or inlining at generate time."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3280
+      because: "Confirmed: the adr.v1 pattern is ^(decision|session|commit|issue|file|test):.+$ and the knowledge.v1 pattern adds task:. I3280 now decides both questions. 'Declared once' means one canonical reference grammar that `majordomus generate` inlines into each schema; it is not a runtime $ref resolver, so the jsonschema build is untouched. Each kind gets its own admitted subset. Plan records take only tracked-resolvable types (commit, issue, file, test, plus workspace via I3281). ADRs keep their current set. Knowledge keeps task:. Each kind keeps its own `origin` semantics. Ledger-local types are refused on plan records with the cross-checkout reason."
+  - id: structural-work-blocked-behind-external-workspaces
+    class: insufficient_work
+    subject: "a-promoted-record-opens-its-message"
+    finding: "The milestone declares `depends_on: external-workspaces`. In the worktree, `plan show a-promoted-record-opens-its-message` reports 'blocked: external-workspaces', and the p1 root I3280 derives BLOCKED with 'None. This issue is a root of the graph.' I3281 is BLOCKED as well. Every external-workspaces issue after I1301 is BLOCKED on master, chained behind I1302, which is READY but not started: I1303 through I1309, including the browser transport, sync, fingerprint, capability and gates. The schema and grammar work needs only I1301, which is DONE. The prose-to-typed fix the import needs (see import-references-are-prose-not-provenance) therefore cannot start until the whole vendor pipeline lands. Move the dependency to issue level: I3282 on I1308 and I3283 on I1309, and nothing at milestone level."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3280
+      because: "Applied in the plan on 2026-10-18: milestone a-promoted-record-opens-its-message no longer declares depends_on external-workspaces, so I3280 and I3281 start once their own issue dependencies hold (I1301 is DONE). The issue-level dependencies the finding asks for stay: I3282 on I1308, I3283 on I1309, I3278 on I1302/I1303, I3279 on I1302/I1305. I3280's why records the removal."
+  - id: resolve-serves-private-text-beyond-loopback
+    class: regression_risk
+    subject: "I3282"
+    finding: "I3282 makes `workspaces.resolve` a read capability on CLI, HTTP and MCP that returns a message's role, time and text. capability/model.rs:708-709 `admits_remote` admits every `Effect::Read` beyond loopback. http/server.rs:94-101 binds non-loopback addresses with only a warning, and I2123's `why` records servers that listened on every interface. Any host on the LAN or tailnet could therefore read the owner's private conversations, and I3285 would hand vendor callers the same read capabilities. I1308 also says the store gets 'one capability shaped like continuity', served and never published. A separate resolve capability contradicts that, and nothing restricts it to loopback. Before starting, add a local-only read policy class, or fold resolve into I1308's capability with a loopback-only guard. Add an acceptance criterion that a remote request gets 403 or a reference without text."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3282
+      because: "I3282 now folds resolution into I1308's single workspaces capability instead of adding a second one. It adds a local-only read policy in capability/model.rs that `admits_remote` refuses. It carries criteria for both outcomes: a remote request gets 403 (or the reference without text), and a loopback request gets the text. I3285 gets a non-scope saying message text is never served to a vendor caller."
+  - id: conversation-ids-already-published
+    class: missed_requirement
+    subject: "a-promoted-record-opens-its-message"
+    finding: "The milestone lists 'Conversation ids in a public repository are the owner's call (open question)' as a risk, yet the staged import had already answered it: its records carried the vendor's conversation ids and project URLs."
+    blocking: true
+    resolution:
+      state: rejected
+      because: "The owner decided on 2026-10-18: a public record cites a local alias (chatgpt-majordomus:cNNN#n), the map from alias to the vendor's conversation id stays in the operator's own store, and no vendor URL or conversation id is committed. The import was rewritten that way before its first commit, so nothing remains to plan."
+  - id: criteria-made-true-by-issues-outside-the-intent
+    class: missed_requirement
+    subject: "what-a-workspace-decides-reaches-the-repository-with-its-source#the-store-holds-the-workspace"
+    finding: "'majordomus workspaces reports chatgpt-majordomus as synced with checkpoint age, counts and support level' needs four pieces this plan does not own: the capability is I1308 (BLOCKED; share/commands.yaml has no `workspaces` command), the support level is I1305's fingerprint, and the planned proof `a_workspace_sync_resumes_and_repeats` is I1306's criterion. The only serving issue, I3278, is a one-shot import scoped to scripts/ and builds none of them. Coverage will still show the criterion as carried. The same applies to #nothing-synced-is-published, whose proof is 'I1309's gate case', while I1309 serves nothing in this intent. Fix: make I1305, I1306, I1308 and I1309 serve these criteria, or rewrite the criteria to what I3278 and I3283 actually deliver."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3278
+      because: "I1305, I1306, I1308 and I1309 are not issues of this bundle, so their `serves` cannot be amended here. The serving issues depend on them instead, and the criteria name that proof. I3278 depends on I1305, I1306 and I1308, and its criteria require `majordomus workspaces` to report the imported store as synced, with checkpoint age, counts and I1305's support level, and I1306's resume-and-repeat case to run green against it; #the-store-holds-the-workspace now cites exactly that proof. I3283 depends on I1309 and owns the #nothing-synced-is-published proof with its own fixture case (see snapshot-leak-test-must-hold-a-store). Coverage can no longer show either criterion as carried before the pieces that make it true have landed."
+  - id: export-transport-premise-unverified
+    class: unproven_assumption
+    subject: "I3279"
+    finding: "I3279's own `why` says it is unverified whether the account export includes Project conversations. I3284 depends on I3279 as the only source of message ids, because the 2026-10-18 corpus kept role, time and text only. If the export leaves out Project conversations, I3279 is wasted for this intent and #the-import-is-pinned has no route. Settle it first with one real export, which is the owner's act. Or plan the fallback: re-read through I1304's transport and keep upstream message ids. Also, the workspace.v1 transports enum is official|browser|private_http (workspace.v1.schema.json:185), and .ai/repo/workspaces/chatgpt-majordomus.yaml declares only [browser]. The export needs a declared transport value and a change to the declaration, and I3279 scopes neither."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3284
+      because: "Both routes are now planned. I3284 gains depends_on I1304 and a criterion that, where the export lacks Project conversations, pins come from an I1304 re-read that keeps upstream ids. The intent's route to #the-import-is-pinned therefore no longer rests on the unverified premise. I3279 now owns the transport declaration. The export is the vendor's documented interface, so it maps to the existing `official` enum value (workspace.v1 describes `official` as 'a documented vendor interface'). I3279 adds `official` to .ai/repo/workspaces/chatgpt-majordomus.yaml. Before any mapping code is written, it records whether one real owner export holds Project conversations."
+  - id: vendor-connector-premises-are-wrong
+    class: unproven_assumption
+    subject: "I3285"
+    finding: "(a) ADR 0126 does not authenticate readers. `admits_remote` (model.rs:709) admits every read unauthenticated, so 'the caller authenticated beyond loopback per ADR 0126' is a new mechanism with no ADR behind it; a ChatGPT connector would need OAuth. (b) The tunnel threat is partly handled already. router.rs:914 `rebound()` refuses any loopback request whose Host is neither an address nor localhost, so a tunnel that keeps the public Host is refused, reads included. Only a tunnel that rewrites Host to localhost passes. That hole affects every mutation today and belongs to runtime-trust at a higher priority than this p3 vendor work. (c) ChatGPT connectors need a publicly reachable HTTPS endpoint; source c239#7 says so itself. With non_scope 'Hosting a public endpoint' plus the tunnel refusal, ChatGPT has no way to reach the server. I3285 and I3286 also serve #a-reference-validates-everywhere, which they do nothing for. Milestone a-workspace-reaches-the-repository has no criterion of its own: either give it one or move it to its own intent."
+    blocking: true
+    resolution:
+      state: open
+      because: "Part (a) is planned: I3285 needs an ADR amending ADR 0126 on authenticating vendor readers (OAuth for a ChatGPT connector) before any vendor caller is admitted, and its objective and why no longer claim ADR 0126 authenticates readers; its why records the router's rebound() refusal. The serves part is applied in the plan on 2026-10-18 without a new intent: milestone a-workspace-reaches-the-repository gains criteria of its own in this intent, #a-vendor-reads-and-never-writes (served by I3285) and #a-proposal-names-its-source (served by I3286), and neither issue serves #a-reference-validates-everywhere any more. What remains open: (b) the tunnel that rewrites Host to localhost needs a runtime-trust issue at higher priority than this p3 work, whose id a peer allocates on the board; (c) whether anything public is hosted at all, against a connector's need for a public HTTPS endpoint, is the owner's call."
+  - id: i3278-overlaps-stale-transport-branch
+    class: unnecessary_work
+    subject: "I3278"
+    finding: "I3278's scope (scripts/workspace, scripts/lib/workspace.mjs, share/schemas/majordomus/workspace-record) is exactly the set of files on feature/workspace-browser-transport 0c5419192f2. That branch is unmerged and 2953 commits behind master, and its work belongs to I1302/I1304. I3278's acceptance criteria restate I1306 (a replay changes no byte) and I1303 (doctor against the retention cap). No issue owns rebasing or landing that branch, so two writers would build the same files. The capture also arrived through an unverified local transport, so I3278 should record the acquisition as unverified rather than treat the corpus as integrity-checked. Narrow I3278 to a data migration on top of I1302/I1303."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3278
+      because: "Confirmed: feature/workspace-browser-transport exists locally and on origin, and share/schemas/majordomus/workspace-record is not on master. I3278 is narrowed to a data migration on top of I1302/I1303: its scope is test/cases and docs/WORKSPACES.md, and a non-scope keeps it out of the store and transport tooling that the branch and I1302/I1304 own. A criterion records the 2026-10-18 acquisition in the store as made through an unverified local transport."
+  - id: snapshot-leak-test-must-hold-a-store
+    class: delivery_verification
+    subject: "what-a-workspace-decides-reaches-the-repository-with-its-source#nothing-synced-is-published"
+    finding: "The manual Pages path builds the UI snapshot in the owner's checkout (`majordomus web report ui-snapshot`, .ai/repo/skills/deploy-site/SKILL.md:65), and that checkout will hold .ai/local/workspaces once I3278 lands. CI has no store, so a snapshot or site check run only in CI proves nothing. I3283's acceptance criterion and I1309's gate must build the snapshot and the site inside a fixture checkout that holds a store seeded with a canary message and title, then grep for the canary. No issue verifies that majordomus.dev shows the reference as text after a deploy."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3283
+      because: "I3283 gains two criteria. A test case builds the UI snapshot and the site inside a fixture checkout whose .ai/local/workspaces store holds a canary message and title, and fails if either canary appears. A post-deploy check confirms that majordomus.dev shows a promoted record's workspace reference as text with no message content. I1309's gate is not in this bundle; I3283's case gives the criterion a proof of its own."
+  - id: promotion-path-and-surfaces-unplanned
+    class: surface_missing
+    subject: "what-a-workspace-decides-reaches-the-repository-with-its-source#a-reference-validates-everywhere"
+    finding: "No issue makes the promotion step emit typed references: neither the tool or skill a person promotes with, nor a gate that refuses a promoted record citing a workspace only in prose. The next import will repeat the prose form. The owner asked for this to be integrated across 'doc, ui, ux, cli, mcp, skills, markdowns, enforce it' (c239#0), with 'gh pages, bumped version deployed' (#5) and 'stejne tak at funguje pro claude' (#9). The plan covers /ui only. Nothing covers /cockpit, a site/docs page, a skill or rule for promotion, or a release. The non_goal 'a second vendor (a Claude Project) before the first is proven' defers an explicit owner request without recording that the owner agreed."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3281
+      because: "I3281 carries the enforcement: the prose detector refuses a record that cites a workspace only in prose, plus a project rule and the promotion skill guidance under .ai/repo/rules/project and .ai/repo/skills. I3284 makes the promotion script emit typed provenance, so the next import cannot repeat the prose form. I3283 adds /cockpit, a site docs page and a release that ships it. The intent's non-goal on a Claude Project now says the owner asked for Claude parity and that the order stands only until the owner confirms or reverses it, and I3281's why records the same."

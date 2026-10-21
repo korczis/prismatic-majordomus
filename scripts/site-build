@@ -581,6 +581,18 @@ if [ -d "$PUBLIC" ]; then
   [ -n "$DIAGRAM_BASE" ] || DIAGRAM_BASE="$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$SITE/config.toml")"
   node "$ROOT/scripts/lib/diagrams.mjs" "$PUBLIC" "$SITE/data/generated" "$DIAGRAM_BASE"
 fi
+# Every language the site declares, derived from the English pages just written (ADR 0218):
+# site/i18n/languages.json names them, site/i18n/<lang>/memory holds what is translated, and
+# each page is copied under /<lang>/ with every segment the memory knows replaced and its links
+# pointed at that language. Before the composition below, which adds pages that are not the
+# site's to translate. What the memory does not know is listed for scripts/site-translate.
+if [ -d "$PUBLIC" ] && [ -f "$SITE/i18n/languages.json" ]; then
+  echo "== languages"
+  I18N_BASE="$BASE"
+  [ -n "$I18N_BASE" ] || I18N_BASE="$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$SITE/config.toml")"
+  node "$ROOT/scripts/lib/site-i18n.mjs" build "$PUBLIC" "$SITE/i18n" "$I18N_BASE" \
+    "$ROOT/target/site-i18n/missing.json" || exit 10
+fi
 # the site's own routes, counted before another surface's pages join them
 routes="$(find "$PUBLIC" -name 'index.html' | wc -l | tr -d ' ')"
 # The composition. After Zola, which empties its output directory on every build, and after

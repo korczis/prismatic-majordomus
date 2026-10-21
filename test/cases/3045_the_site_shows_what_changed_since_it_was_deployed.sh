@@ -244,6 +244,7 @@ grep -qF 'MJ_SITE_SINCE_DEPLOY_RECORD: ${{ steps.since.outputs.record }}' "$ROOT
   || fail "the Pages workflow does not hand the build the record it composed"
 grep -qF '{% include "partials/since-deploy.html" %}' "$ROOT/site/templates/changelog.html" \
   || fail "/changelog/ does not render the section"
-grep -qE 'href="\{\{ get_url\(path="/changelog/", trailing_slash=true\) \}\}#since-deploy"[^>]*data-since-deploy-link' \
-  "$ROOT/site/templates/index.html" || fail "the homepage's trust strip does not link the section"
+# The homepage does not link the section: its HTML budget (site/data/homepage.toml) has no room
+# for it, and the site seat decided on 2026-10-21 that the link returns only with one reviewed
+# budget change that measures the page.
 exit 0

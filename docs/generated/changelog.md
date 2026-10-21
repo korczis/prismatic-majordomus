@@ -1,11 +1,94 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the layer's release records, the decisions dated in each release's window, and the commits in its range; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.30.2 -->
+     Generator: majordomus-cli 1.0.0-alpha.1 -->
 # Changelog
 
 Every entry below is derived: a section per release the layer records, its decisions the ADRs dated inside that release's window, its changes the conventional commits in its range, its artifacts the record's own evidence. Nothing here is written by hand, and `majordomus generate changelog --check` fails when it stops matching the tree.
 
-Current version: **0.30.2**
+Current version: **1.0.0-alpha.1**
+
+## v1.0.0-alpha.1 — 2026-10-20
+
+### Added
+
+- **site**: the Czech copy translates the segments the merge with master brought (`370fdf4cc`)
+- **site**: the Czech copy is complete and its rule is enforced (`ce0b7e58c`)
+- **site**: every page in Czech, derived from the English build and a translation memory (`0ce1424df`)
+- **site**: every article reads in every language, and a translation keeps up with its source (`4624a38df`)
+
+### Fixed
+
+- **top**: suite budgets re-derived from the release head's run (`9a5a9b775`)
+- **top**: a milestone title GitHub can hold, and Pages bounds for two languages (`88ce9857e`)
+- **top**: the site-languages step leaves the receipt the ci verdict asks for (`bd676bbe3`)
+- **top**: the UI audit warms each surface and retries a timed-out load once (I3090) (`82ac259d0`)
+- **top**: the bar's own "How it works" is Princip in Czech too (`35f5241ad`)
+- **top**: the UI audit samples the served docs' Czech copy, and its breadcrumb fits at 320 (`9bf2b7258`)
+- **top**: the Czech bar fits at 768 px, and a graph's reset restores the page's own words (`ca83931eb`)
+- **top**: the UI audit samples a language copy under a mount as well as at the root (`5b5358d91`)
+- **top**: two more cases the Czech copy reached, cases 97 and 1071 (`aa936b537`)
+- **top**: what the Czech copy of the site asked of the checks that read every page (`4fc1ffe7f`)
+- **top**: the reds the re-cut's own checks found before its push (`f2420807a`)
+- **site**: every language's copy is in the sitemap, and an alias leads to its target's copy (`b3bf6ed7e`)
+- **capture**: a provider hook declares its timeout, and the session end closes inside it (I3060) (`c6556694a`)
+- **ui**: the UI and the Cockpit wear the site's bar with the language switch (`b12a5fcb5`)
+- **test**: case 3590 compares the second pass by diff, not shasum (`c24cdc1a2`)
+- **ui**: every Knowledge tile reads whole at a phone's width (I3025) (`b9b6dbfa5`)
+- **ui**: the Knowledge manual link names a page the site has (I3024) (`19d5dda61`)
+- **plan**: the promoted records pass the pre-push gates and name only what they touch (`596cd5ebb`)
+- **plan**: the promoted records wait on what 0.30.0 landed and on what their owners answered (`51916f41d`)
+- **plan**: the promoted records name only paths that exist and break two order ties (`d3229ef16`)
+
+### Documentation
+
+- **plan**: the owner's two 10-19 briefs become a proof program and a gap-only cognitive fabric (`bd8ca33c1`)
+- **plan**: promote what the owner's ChatGPT project decided, each record naming its source message (`5ef3c3251`)
+
+### Pipeline
+
+- **validate**: three browser probes outgrew their bounds; each bound grows with its measurement (`6e2aadba1`)
+
+### Housekeeping
+
+- **derive**: the I3060 plan page (`07f15d4c0`)
+- **release**: record v0.30.2 and the metadata it publishes (`94372c0fa`)
+- **derive**: the projections follow the merge with master (`b0e833128`)
+- **plan**: revive the derive, CI critical-path and IDD drafting records that never landed (`321f5dde6`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v1.0.0-alpha.1-aarch64-apple-darwin.tar.gz (`afa2fe2f0e19`)
+- `macos-x86_64` — majordomus-v1.0.0-alpha.1-x86_64-apple-darwin.tar.gz (`84d7c08db6f1`)
+- `linux-x86_64-gnu` — majordomus-v1.0.0-alpha.1-x86_64-unknown-linux-gnu.tar.gz (`45b14249c8fa`)
+- `linux-x86_64-musl` — majordomus-v1.0.0-alpha.1-x86_64-unknown-linux-musl.tar.gz (`298c3832116c`)
+- `linux-aarch64-gnu` — majordomus-v1.0.0-alpha.1-aarch64-unknown-linux-gnu.tar.gz (`46302b271585`)
+- `linux-aarch64-musl` — majordomus-v1.0.0-alpha.1-aarch64-unknown-linux-musl.tar.gz (`38ff14c89ad3`)
+
+
+## v0.30.2 — 2026-10-19
+
+### Fixed
+
+- **top**: I2917's nothing-to-move arm of the intent's primary action has a test (`dd4c0a87c`)
+- **ui**: each intent has one primary action (I2917) (`d93b93ad1`)
+- **ui**: the intent workspace's panels stand in the order a person asks (I2916) (`069970820`)
+- **ui**: the intent is the workspace's title and every panel asks a plain question (I3001) (`d65aee8a7`)
+- **pages**: a claim newer than the ledger is not yet recorded, not a refusal (I2853) (`29acb77dd`)
+- **ui**: every record text on the workspace is drawn as prose (I3000) (`d09232416`)
+
+### Housekeeping
+
+- **release**: record v0.30.1 and the metadata it publishes (`e6268966b`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v0.30.2-aarch64-apple-darwin.tar.gz (`b44b8da00054`)
+- `macos-x86_64` — majordomus-v0.30.2-x86_64-apple-darwin.tar.gz (`60735a8fdad4`)
+- `linux-x86_64-gnu` — majordomus-v0.30.2-x86_64-unknown-linux-gnu.tar.gz (`eed5fce0af6b`)
+- `linux-x86_64-musl` — majordomus-v0.30.2-x86_64-unknown-linux-musl.tar.gz (`2b404e30a78f`)
+- `linux-aarch64-gnu` — majordomus-v0.30.2-aarch64-unknown-linux-gnu.tar.gz (`6292503a7ab1`)
+- `linux-aarch64-musl` — majordomus-v0.30.2-aarch64-unknown-linux-musl.tar.gz (`05777434fd01`)
+
 
 ## v0.30.1 — 2026-10-19
 

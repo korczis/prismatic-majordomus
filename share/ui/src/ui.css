@@ -451,6 +451,12 @@
   .mj-ui-badges {
     @apply flex flex-wrap gap-1;
   }
+  /* a badge holding a long unbroken value (an intent id in a chip) shrinks with its row and
+     truncates inside, rather than widening the page: a flex item keeps its content's width
+     unless it is allowed to shrink (alpha.1 top, /ui/idd and /ui/roadmap at 320 px) */
+  .mj-ui-badges > * {
+    @apply min-w-0 max-w-full;
+  }
 
   /* a meter: the bar is a picture of the two numbers written beside it */
   .mj-ui-meter {

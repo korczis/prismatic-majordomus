@@ -24,4 +24,21 @@ validation:
 evidence_required:
   - "region_host_is_not_judged_case"
 created_at: 2026-10-13
-updated_at: 2026-10-13
+updated_at: 2026-10-13T18:08:39Z
+started_at: 2026-10-13T11:17:46Z
+started_event: sha256:6d908b8b69c389d6d3f08dfc28f2074f781bfcede344b10179a154269121d41b
+verified_at: 2026-10-13T18:08:39Z
+verified_event: sha256:2cd596e1ab969ded4db025f444e5e45ed1ac355cd98b1f270b00ee60792b9b81
+evidence:
+  - covers: region_host_is_not_judged_case
+    type: test
+    command: "MJ_TEST_JOBS=4 bash test/run.sh 13_region_projection"
+    result: "failed before the fix with 'did not expect /FAIL bootstrap/ in doctor.out'; ok after it (1 passed, 0 failed); neighbours 03_update and 899_a_bootstrap_names_only_rules_in_force ok"
+    commit: e506c041a44ca9e5853500e10452c648b19ca858
+    recorded_at: 2026-10-13T12:17:22Z
+  - covers: region_host_is_not_judged_case
+    type: test
+    command: "MJ_TEST_JOBS=4 bash test/run.sh 13_region_projection"
+    result: "on master f0696ec535 plus the fix: ok (with 03_update and 899 ok, 3 passed 0 failed); before the fix it failed with 'did not expect /FAIL bootstrap/ in doctor.out'"
+    commit: f0696ec535a43f2a16e72732462bb2d2ea8ec2a6
+    recorded_at: 2026-10-13T17:43:54Z

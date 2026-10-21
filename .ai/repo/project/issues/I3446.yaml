@@ -1,0 +1,25 @@
+id: I3446
+milestone: surfaces-never-disagree
+title: "The shell's JSON roadmap orders milestones by rank, order and id, as the executable and the shell's own text do"
+slug: the-roadmap-orders-ties-by-id
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make `majordomus plan roadmap --json` (lib/plan.sh, mj_plan_roadmap) list milestones in the sequence mj_pj_roadmap derives (rank, then order, then id, byte order), which is the key Plan::roadmap sorts by and the shell's text roadmap already uses, so two milestones that share a rank and an order are never listed in an order that depends on where their rows happen to sit."
+why: "Found on 2026-10-19 by case 99_plan_capabilities on the combined tops e7-top-1 and e7-top-2: the shell's JSON roadmap and the executable's plan.roadmap held the same milestones and disagreed on the order of two that share rank 0 and order 130 (automation, a-session-leaves-what-it-observed). The JSON branch sorted with an exchange sort keyed only on (rank, order), which is not stable, so adding one unrelated milestone file (#1346's knowledge-base) moved the swaps and reversed the pair. The executable (plan.rs, Plan::roadmap) and the shell's text path (lib/project.sh, mj_pj_roadmap) both break the tie by id. Master has the same latent defect with three tied pairs (95, 130, 340) and agrees with the executable only by the position of its rows."
+current_state: "lib/plan.sh mj_plan_roadmap, MJ_JSON branch: rows keyed rank and order, ordered by an O(n^2) exchange sort with no id tie-break; the text branch and Plan::roadmap order by rank, order, id."
+desired_state: "The JSON branch prints the rows in mj_pj_roadmap's sequence, so the shell's two renderings and the executable share one documented order, and case 99_plan_capabilities holds whichever milestone files a repository adds."
+scope:
+  - "lib/plan.sh"
+  - ".ai/repo/project/issues/I3446.yaml"
+non_scope:
+  - "Changing the order or rank of any milestone record"
+acceptance_criteria:
+  - "On master and on a tree that adds a milestone with an order another milestone already holds, the shell's plan roadmap --json and plan.roadmap list the same ids in the same sequence"
+  - "The shell's JSON and text roadmaps list milestones in the same sequence"
+validation:
+  - "bash test/run.sh 99_plan_capabilities"
+  - "majordomus plan validate"
+evidence_required:
+  - "99_plan_capabilities"
+depends_on: []

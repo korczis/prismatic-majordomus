@@ -1,0 +1,49 @@
+id: I3128
+milestone: a-stranger-adopts-it-unaided
+title: "init ends with what it found in the repository it adopted, each finding naming its file"
+slug: init-says-what-it-found
+priority: p2
+profile: implementation
+objective: "After init writes the layer, print a read-only account of the adopting repository, each line naming the file it read: which instruction files share/providers.yaml declares exist and whether they agree by a rule docs/ADOPTION.md states, which hooks git would run (core.hooksPath and the hook files there) are wired to doctor or check, and whether the effective profile declares verification.verify_commands (I3123)."
+why: "The 2026-09-15 promotion analysis put a concrete finding about the adopter's own repository at the end of the first three minutes, instead of an onboarding form. Today init answers what it created and what hooks to paste, which tells a stranger nothing about why the tool is worth keeping. Proposed in ADR 0206 (Public outreach begins only after a stranger has finished a first task unaided) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c137#2."
+current_state: "lib/init.sh prints 'created ...', the personal/shared cover and hook advice; I1989 (DONE) seeds a scope for the stack it finds; share/providers.yaml declares agents, bb, claude-code, codex, gemini and generic; doctor's wiring check reads only the policy's own enforcement entries; an unlanded peer change (I2941, p7) makes init append an AGENTS.md line to an existing README."
+desired_state: "init's last block is 'found:' lines derived from the same providers/editors data update renders from, with nothing written by it; an adoption fixture asserts each line."
+scope:
+  - "lib/init.sh"
+  - "docs/ADOPTION.md"
+  - "test/fixtures/commands/init.json"
+  - "share/commands.yaml"
+  - ".ai/repo/use-cases/adopt-an-existing-repository.md"
+  - ".ai/repo/use-cases/install-the-tool-in-one-command.md"
+  - ".ai/repo/use-cases/use-the-tool-as-your-own-in-a-shared-repository.md"
+  - ".ai/repo/use-cases/say-what-the-tool-is-for.md"
+  - "site/data/generated/catalogue.json"
+  - "site/content/docs/adoption.md"
+  - ".ai/repo/project/intents"
+  - "share/providers.yaml"
+non_scope:
+  - "Fixing anything it finds"
+  - "A new audit command or noun"
+  - "Cursor rules, until share/providers.yaml declares a cursor provider"
+  - "Detecting test entry points such as package.json scripts or Makefile targets"
+depends_on:
+  - "I3123"
+serves:
+  - "a-stranger-adopts-it-unaided#init-says-what-it-found"
+acceptance_criteria:
+  - "In a fixture with two disagreeing instruction files, an unwired pre-commit hook and no verify command, init prints one finding for each, naming the file"
+  - "The findings write nothing; the tree after init is what it was without them"
+  - "The verify-command finding reads verification.verify_commands from the effective profile (I3123) and names the profile file it read; no test entry point is scanned"
+  - "The hook finding reads git config core.hooksPath and the hook files git would run there, so it also sees hooks wired by husky or lefthook"
+  - "The instruction-file finding covers exactly the targets share/providers.yaml declares and compares them by a rule stated in docs/ADOPTION.md"
+  - "The self-check runs init in a temporary clone of this repository with .ai/ removed, and its findings are empty or true; nothing in this checkout is written"
+  - "test/fixtures/commands/init.json, the init note in share/commands.yaml and the recorded init runs in the four use cases are updated, and derive-check passes over site/data/generated/catalogue.json and site/content/docs/adoption.md"
+  - "A personal init's git-status-unchanged check still holds after the findings run"
+  - "In the same change as its case, the intent's criterion init-says-what-it-found is re-recorded as evidence: test with the concrete case path, the case numbered by `scripts/case-numbers next` and announced on the board at start"
+validation:
+  - "bash test/run.sh 3113_the_adoption_footprint_is_inventoried"
+  - "majordomus plan validate"
+evidence_required:
+  - "case_init_findings"
+created_at: 2026-10-18
+updated_at: 2026-10-18

@@ -82,6 +82,7 @@ on:
       - scripts/lib/project-links.awk
       - scripts/lib/ui-*.mjs
       - scripts/lib/ui-routes.mjs
+      - scripts/lib/site-i18n*.mjs
       - scripts/pages
       - scripts/rules-package
       - scripts/rust-check
@@ -91,6 +92,7 @@ on:
       - scripts/site-deploy
       - scripts/site-probe
       - scripts/site-serve
+      - scripts/site-translate
       - scripts/ui
       - share/**
       - share/allow/**
@@ -398,7 +400,7 @@ jobs:
     needs: [owed, rustdoc, ui-snapshot]
     if: ${{ !cancelled() && needs.rustdoc.result == 'success' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     steps:
       # when the push was accepted, so that queue and runner allocation are measured as what
       # they are — GitHub's latency, reported beside this repository's and never mixed into it
@@ -514,16 +516,20 @@ jobs:
           fi
 
       # the committed derived data proved current by hash, then rendered; no generation. What moved
-      # since the last deploy is the record the step above composed, adopted when it names this commit
+      # since the last deploy is the record the step above composed, adopted when it names this commit.
+      # The bound followed the site's languages (ADR 0218): build 15 s on 39228746039 (English
+      # only), 173 s on 39392245576 with the Czech copy, against a bound of 180.
       - name: build
-        timeout-minutes: 3
+        timeout-minutes: 8
         env:
           MJ_SITE_SINCE_DEPLOY_RECORD: ${{ steps.since.outputs.record }}
         run: scripts/pages build
 
       # every static check over the output; the browser probe stays in validate.yml
+      # 169 s on 39228746039 over the English site alone; with the Czech copy the pages it
+      # reads doubled and 39392245576 was killed at the old bound of 3 minutes
       - name: check
-        timeout-minutes: 3
+        timeout-minutes: 10
         run: scripts/pages check
 
       # The UI's snapshot of this commit (ADR 0141), from the ui-snapshot job of this run, placed
