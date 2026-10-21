@@ -1157,6 +1157,13 @@ jobs:
           path: receipts.tsv
           if-no-files-found: ignore
           retention-days: 14
+      # I2664: a run on a branch ends at its first red. Last, so this job's upload has run;
+      # never on master, the schedule or a dispatch (see `concurrency`).
+      - name: a failed branch run ends here
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: case "$GITHUB_HEAD_REF" in integration/*) echo "::notice::an integration/* top runs to the end, so every red of it is shown";; *) gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled";; esac
 
   # ----------------------------------------------------------------- interactions
   # Every interactive control on every page of the built site, exercised in a real browser by the behaviour spec
@@ -1251,6 +1258,13 @@ jobs:
           path: receipts.tsv
           if-no-files-found: ignore
           retention-days: 14
+      # I2664: a run on a branch ends at its first red. Last, so this job's upload has run;
+      # never on master, the schedule or a dispatch (see `concurrency`).
+      - name: a failed branch run ends here
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: case "$GITHUB_HEAD_REF" in integration/*) echo "::notice::an integration/* top runs to the end, so every red of it is shown";; *) gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled";; esac
 
   # ----------------------------------------------------------------- ui
   # Every discovered page at every width the compiled theme implies, in a browser, against the
