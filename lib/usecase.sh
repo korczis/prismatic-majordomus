@@ -786,7 +786,7 @@ mj_uc_tool_key() { # prints the key of the tool the scenarios run, or nothing
 mj_uc_run_cached() { # index, evidence-file, keep: a cached passing run of the same key, or a run
   local i="$1" out="$2" keep="${3:-0}" id f key dir hit rc=0
   [ -n "${MJ_UC_TOOL_KEY:-}" ] && [ "$keep" = 0 ] || { mj_uc_run_one "$@"; return; }
-  id="$(mj_uc_v "$i" id)"; eval "f=\$MJ_UC_FILE_$i"
+  id="$(mj_uc_v "$i" id)"; f="$(mj_uc_file "$i")"
   key="$(printf '%s %s' "$MJ_UC_TOOL_KEY" "$(mj_sha256 "$f")" | mj_sha256_hex)"
   dir="$MJ_AI_LOCAL_DIR/cache/use-cases"; hit="$dir/$id.$key.json"
   if [ -s "$hit" ]; then cp "$hit" "$out"; return 0; fi

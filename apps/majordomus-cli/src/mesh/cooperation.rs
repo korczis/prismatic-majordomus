@@ -3996,7 +3996,7 @@ fn doubled_runtimes(
     live.into_iter()
         .filter(|(_, instances)| instances.len() > 1)
         .map(|(runtime, mut instances)| {
-            instances.sort();
+            crate::order::canonical_strings(&mut instances);
             (runtime, instances)
         })
         .collect()

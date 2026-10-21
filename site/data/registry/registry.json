@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.4"
   },
   "registry": {
-    "fingerprint": "2c06670582c9917b30561e3a1ec02ae3ac3dcf190182413335efcc7781256ad1",
+    "fingerprint": "ed2cf788e7ab814c02d2269a2d244a51207f91ca4dabeb6003b4c58bdd36b2f4",
     "summary": {
-      "total": 3196,
+      "total": 3198,
       "builtin": 206,
-      "declarative": 2990,
+      "declarative": 2992,
       "by_kind": {
         "command": 31,
         "query": 175,
-        "resource": 2990
+        "resource": 2992
       },
       "by_stability": {
         "behaviorally_verified": 142,
         "experimental": 55,
-        "implemented": 2999
+        "implemented": 3001
       },
       "mcp_tools": 196,
-      "mcp_resources": 3045,
+      "mcp_resources": 3047,
       "http_routes": 201,
       "cli_commands": 111,
       "modules": 92,
@@ -85445,7 +85445,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 823,
+        "capabilities": 824,
         "capability_ids": []
       },
       {
@@ -86019,7 +86019,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 580,
+        "capabilities": 581,
         "capability_ids": []
       },
       {
@@ -86111,7 +86111,7 @@
     ]
   },
   "index": {
-    "fingerprint": "6ac52e10d41fa36b3e4cb12209b726f6e28620c0bd3f677976f12d32a616be42",
+    "fingerprint": "5dcc19ad8d7382d4ba9e1e2b8279436f343899ea0525857fbf7894b1fa186938",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -86151,7 +86151,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 33,
-      "issue": 823,
+      "issue": 824,
       "knowledge": 50,
       "mesh-declaration": 1,
       "milestone": 100,
@@ -86165,7 +86165,7 @@
       "session": 90,
       "skill": 8,
       "taxonomy": 10,
-      "test": 580,
+      "test": 581,
       "use-case": 49,
       "workspace": 1
     },
@@ -93349,7 +93349,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 594260
+        "bytes": 594473
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -96783,7 +96783,7 @@
         "identity": "lib/usecase.sh",
         "path": "lib/usecase.sh",
         "source_class": "library",
-        "bytes": 74087
+        "bytes": 74085
       },
       {
         "uri": "majordomus://implementation/lib/watch.sh",
@@ -102181,7 +102181,7 @@
         "path": ".ai/repo/project/issues/I2846.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1965
+        "bytes": 1948
       },
       {
         "uri": "majordomus://issue/I2847",
@@ -102203,7 +102203,7 @@
         "path": ".ai/repo/project/issues/I2848.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2734
+        "bytes": 2662
       },
       {
         "uri": "majordomus://issue/I2849",
@@ -102743,6 +102743,17 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 2698
+      },
+      {
+        "uri": "majordomus://issue/I3013",
+        "kind": "issue",
+        "identity": "I3013",
+        "title": "The evidence job runs only when a planned lane ran tests, so a records-only pull request is not red",
+        "description": "validate.yml's evidence job runs when the plan selected a lane that runs tests and leaves a report (the shell suite, or the crate's tests under rust_check) and that lane ran, instead of whenever the rust job succeeded. A records-only plan, whose rust lanes only build the executable and run the registry checks (rust_integration), then skips the evidence job rather than failing it at evidence-collect's exit 12.",
+        "path": ".ai/repo/project/issues/I3013.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2982
       },
       {
         "uri": "majordomus://issue/I3018",
@@ -115761,6 +115772,14 @@
         "bytes": 4296
       },
       {
+        "uri": "majordomus://test/test/cases/3402_a_records_only_plan_skips_the_evidence_job.sh",
+        "kind": "test",
+        "identity": "test/cases/3402_a_records_only_plan_skips_the_evidence_job.sh",
+        "path": "test/cases/3402_a_records_only_plan_skips_the_evidence_job.sh",
+        "source_class": "case",
+        "bytes": 4263
+      },
+      {
         "uri": "majordomus://test/test/cases/340_a_brief_is_kept_as_received.sh",
         "kind": "test",
         "identity": "test/cases/340_a_brief_is_kept_as_received.sh",
@@ -118787,7 +118806,7 @@
       "identity": [
         "id"
       ],
-      "objects": 823
+      "objects": 824
     },
     {
       "name": "knowledge",
@@ -118939,7 +118958,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 580
+      "objects": 581
     },
     {
       "name": "use-case",

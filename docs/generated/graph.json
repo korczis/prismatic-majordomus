@@ -43942,7 +43942,6 @@
           "priority": "p2",
           "profile": "implementation",
           "scope": [
-            "test/cases",
             ".ai/repo/ci/gates.yaml",
             ".ai/repo/automation"
           ],
@@ -44018,7 +44017,6 @@
           "scope": [
             ".ai/repo/ci/gates.yaml",
             "scripts/ci/run-plan",
-            "test/cases/3248_a_pre_push_gate_does_not_wait_on_another_build.sh",
             ".ai/repo/project/issues/I2848.yaml"
           ],
           "slug": "a-pre-push-gate-does-not-wait-on-another-build",
@@ -46126,6 +46124,43 @@
           ],
           "verified_at": "2026-10-19T10:08:31Z",
           "verified_event": "sha256:b7fe6c0d1a2bfff1f8ae10e586dc8ccc750e716fff9374d7c2b0fd165a79e253"
+        }
+      },
+      {
+        "id": "majordomus://issue/I3013",
+        "kind": "issue",
+        "label": "I3013",
+        "summary": "The evidence job runs only when a planned lane ran tests, so a records-only pull request is not red",
+        "route": "/cockpit/objects/issue/i3013",
+        "source": ".ai/repo/project/issues/I3013.yaml",
+        "facts": {
+          "created_at": "2026-10-20",
+          "depends_on": [],
+          "evidence_required": [
+            "records_only_plan_case"
+          ],
+          "milestone": "test-evidence",
+          "non_scope": [
+            "Making evidence-collect pass with nothing to record: a planned lane that left no report stays a failure",
+            "The rust lanes' modes and what rust-check --integration runs"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".github/workflows/validate.yml",
+            "test/cases/3402_a_records_only_plan_skips_the_evidence_job.sh",
+            ".ai/repo/project/issues/I3013.yaml",
+            "site"
+          ],
+          "slug": "the-evidence-job-runs-only-when-a-lane-left-a-report",
+          "updated_at": "2026-10-20",
+          "validation": [
+            "bash test/run.sh 3402_a_records_only_plan_skips_the_evidence_job",
+            "bash test/run.sh 26_ci_wiring",
+            "majordomus plan validate",
+            "scripts/derive-check"
+          ]
         }
       },
       {
@@ -82222,6 +82257,13 @@
         "source": "test/cases/3401_a_hero_link_with_a_fragment_resolves_to_its_id.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3402_a_records_only_plan_skips_the_evidence_job.sh",
+        "kind": "test",
+        "label": "test/cases/3402_a_records_only_plan_skips_the_evidence_job.sh",
+        "route": "/cockpit/objects/test/test-cases-3402-a-records-only-plan-skips-the-evidence-job-sh",
+        "source": "test/cases/3402_a_records_only_plan_skips_the_evidence_job.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/340_a_brief_is_kept_as_received.sh",
         "kind": "test",
         "label": "test/cases/340_a_brief_is_kept_as_received.sh",
@@ -113005,6 +113047,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3013",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3013",
+        "target": "majordomus://milestone/test-evidence",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I3018",
         "target": "kind:issue",
         "kind": "is_a"
@@ -123630,6 +123682,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3402_a_records_only_plan_skips_the_evidence_job.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/340_a_brief_is_kept_as_received.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -128946,8 +129003,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3643,
-      "edges": 8452,
+      "nodes": 3645,
+      "edges": 8455,
       "acyclic": false,
       "truncated": false
     }
