@@ -152,6 +152,8 @@ fi
 S="$PWD/site-copy"
 rm -rf "$S"; mkdir -p "$S/site"
 cp -R "$ROOT/site/content" "$ROOT/site/templates" "$ROOT/site/static" "$ROOT/site/data" "$ROOT/site/config.toml" "$S/site/"
+# every page's base template loads i18n/languages.json for its language switch (ADR 0218)
+[ ! -d "$ROOT/site/i18n" ] || cp -R "$ROOT/site/i18n" "$S/site/"
 # the stylesheets are Tailwind build products, ignored by git; the pages only link them
 for css in app.css kit.css; do [ -f "$S/site/static/$css" ] || printf '/* fixture */\n' > "$S/site/static/$css"; done
 printf '{"schema": 1, "commit": "%s", "dirty": false, "surfaces": [], "snapshots": [], "release": null}\n' \

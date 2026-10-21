@@ -1,0 +1,39 @@
+id: I3081
+milestone: public-proof
+title: "An article explains continuity in both languages: a session ends, the work does not"
+slug: a-session-ends-the-work-does-not
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Publish site/content-src/a-session-ends-the-work-does-not.md, an English article on how work survives the session that was doing it. It covers why the conversation is not saved (docs/CONTINUITY.md), the episode boundary the provider draws (ADR 0015), and the briefing an opening episode is handed, with the checkpoint at a compaction and the handover at an end (ADR 0017). It covers the checkpoint and the handover as two objects, and the fields computed from git that a body may not state. It covers the six days of 2026-09 without a checkpoint or a handover, and what ADR 0052 changed: the lifecycle no longer depends on a task, every event is recorded first, and freshness sits beside divergence. It covers the request for a handover before the window fills (ADR 0123), and the published handover that moves between machines, refused rather than redacted (ADR 0105, project.session-continuity-is-portable). Every statement is one that docs/CONTINUITY.md, those ADRs, that rule, lib/capture.sh or .ai/repo/policy.yaml on master states, and no count is typed by hand. site/content-src/session-skonci-prace-ne.md is its Czech translation, naming translated_from and its source's digest. site/data/nav.toml lists both. Both relate the bet on a layer, the monitor article and the claiming article, each of which names them back in its own language."
+why: "The owner asked on 2026-10-19 that the site's articles be developed and interlinked in every language. A session that ends in the middle of the work is the everyday condition of AI work, and how the next one is told where the work stands is a promise the product makes. The site explained it only in docs/CONTINUITY.md and the ADRs, which are written for the sessions that follow them."
+current_state: "No article explains continuity. The eight article groups relate each other, and none of them names it."
+desired_state: "/a-session-ends-the-work-does-not/ and /session-skonci-prace-ne/ are built, are counterparts of each other, are listed in the navigation, and are related both ways with three other groups. Check 21 passes, with the translation at its source's digest."
+scope:
+  - ".ai/repo/project/issues/I3081.yaml"
+  - "site/content-src/a-session-ends-the-work-does-not.md"
+  - "site/content-src/session-skonci-prace-ne.md"
+  - "site/content-src/the-bet-on-a-layer.md"
+  - "site/content-src/teze.md"
+  - "site/content-src/everything-followed.md"
+  - "site/content-src/vsechno-v-jednom-proudu.md"
+  - "site/content-src/claimed-before-it-is-built.md"
+  - "site/content-src/zabrano-driv-nez-se-stavi.md"
+  - "site/data/nav.toml"
+  - "scripts/ci/english-only-allow.txt"
+non_scope:
+  - "Changing the continuity lifecycle, its commands, its policy or the ADRs the article explains"
+depends_on:
+  - "I3080"
+acceptance_criteria:
+  - "Both articles are built, declare each other in [extra.translations], and the Czech one records translated_from = a-session-ends-the-work-does-not/ and the digest check 21 computes of its source"
+  - "Each statement is one a record, script or policy on master states, and check 19 finds no count typed by hand"
+  - "scripts/site-check --articles passes the tree, counting the new related links"
+validation:
+  - "majordomus plan validate"
+  - "scripts/site-check --articles site/content-src site/data/nav.toml site/config.toml"
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3389_related_articles_answer_each_other_in_every_language"
+evidence_required: []
+serves: []
+created_at: 2026-10-19
+updated_at: 2026-10-19

@@ -98,3 +98,27 @@ it bilingual were on the table:
   the original.
 - Search, the sitemap and the JavaScript strings of the site are not yet translated; they are
   outside the pages this pass reads.
+
+### Amendment, 2026-10-21: an article's declared translation is a second source, held to the first
+
+Point 1 said nobody writes a page in another language, and kept the four hand-written Czech
+pages as its one exception. Since then the site holds articles to a stricter rule than that
+exception allowed for. `scripts/site-check` check 21 (I3436, I3437, I3438) requires every article
+the navigation lists to read in every language the site declares, with the members of a
+translation group naming each other in one `[extra.translations]` table. A translation names the
+article it was made from (`translated_from`) and the digest of that article's body
+(`source_digest`). Check 21 recomputes the digest and refuses a translation its source has moved
+past, without ever rewriting it. Point 1 and that gate disagreed. Train 3 carries six such pages
+(I3075, I3077, I3078, I3080–I3082) and four more exist; the gate is the one being enforced.
+
+So point 1 reads, from this date: **English is the only source, except an article's declared
+translation, which check 21 holds to its source's digest.** Such a page is carried into its
+language's copy unchanged, as the four Czech pages always were. The language's machine copy of
+the English article names the authored translation as canonical. Every other page in every
+other language is still the pass of point 2 over the English build. Nothing else is written by
+hand, and a page that is neither is refused.
+
+The alternative, dropping article counterparts from check 21 and deleting the ten pages, would
+have kept point 1's wording. It would also have removed the one place where a translation is
+proved to keep up with its source. The owner's order is a site that reads in every language and
+stays current, so the gate stays and the record moves to it.

@@ -4,7 +4,7 @@ description = "Nine sessions on one machine, more than a hundred open pull reque
 template = "page.html"
 [extra]
 lang = "en"
-related = ["everything-followed/", "the-bet-on-a-layer/", "a-pasted-brief-becomes-a-plan/", "a-plan-is-attacked-before-it-is-built/"]
+related = ["everything-followed/", "the-bet-on-a-layer/", "a-pasted-brief-becomes-a-plan/", "a-plan-is-attacked-before-it-is-built/", "claimed-before-it-is-built/"]
 [extra.translations]
 cs = "kresla-ne-jmena/"
 +++

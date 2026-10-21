@@ -6,7 +6,7 @@ template = "page.html"
 lang = "cs"
 translated_from = "everything-followed/"
 source_digest = "2fd4eb0ff28e2bb5767724e5d664f44bbef19fa23cc485a399606c43305fb1ed"
-related = ["teze/", "dokumentace-kterou-lze-odmitnout/", "vlozene-zadani-se-stava-planem/", "kresla-ne-jmena/"]
+related = ["teze/", "dokumentace-kterou-lze-odmitnout/", "vlozene-zadani-se-stava-planem/", "kresla-ne-jmena/", "zabrano-driv-nez-se-stavi/", "session-skonci-prace-ne/"]
 [extra.translations]
 en = "everything-followed/"
 +++

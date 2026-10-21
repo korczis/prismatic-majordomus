@@ -1,0 +1,32 @@
+id: I3447
+milestone: the-ui-runs-and-explains
+title: "No two published paths differ only in case, and a publication that holds two is refused before it is built"
+slug: no-two-published-paths-differ-only-in-case
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make every path the site and the UI snapshot publish unique without regard to case: (a) the Work page's 'Open the whole list' link reaches the issue status page by the status's one spelling, so the snapshot no longer carries issues/_status/ready beside issues/_status/READY; and (b) a check over every publication (the site's site/public, the UI and Cockpit snapshots) refuses two paths that are equal when case is folded, naming both, before anything is deployed."
+why: "Found on 2026-10-20 during the hand deploy of master 82ac259d0ae, after the Pages run 39392245576 published nothing. The ui-snapshot artifact of that run could not be extracted on macOS: 'error extracting issues/_status/ready/index.html: file exists', because the archive also holds issues/_status/READY/index.html. A case-insensitive filesystem holds one of the two, so a person on a Mac cannot deploy the site without a case-sensitive volume, and git with core.ignorecase folds one of the paths away. GitHub Pages serves both, so the duplicate is invisible on the live site."
+current_state: "The UI snapshot at 82ac259d0ae holds seven status pages under issues/_status/: ACTIVE, BLOCKED, CANCELLED, DONE, READY, VERIFY and also ready. The only link to the lowercase one is on /ui/work/: 'The first 16 of 179; 163 more not shown here. Open the whole list', with href ../issues/_status/ready/index.html (apps/majordomus-cli/src/ui/view.rs:420 renders the link from the href its caller passes). The snapshot crawler follows that link and writes a page for it. No gate compares published paths with case folded."
+desired_state: "The Work page links the status page by the status as the plan declares it, so the snapshot has one page per status. scripts/site-check, or the snapshot producer, refuses any two published paths under one mount that are equal case-folded, naming both, and the deploy refuses the same way. A Mac can extract the snapshot and run scripts/site-deploy with no special volume."
+scope:
+  - "apps/majordomus-cli/src/ui/view.rs"
+  - "apps/majordomus-cli/src/ui/work.rs"
+  - "apps/majordomus-cli/src/web/report/snapshot.rs"
+  - "scripts/site-check"
+  - "test/cases/3720_no_two_published_paths_differ_only_in_case.sh"
+non_scope:
+  - "Renaming plan statuses, which stay upper case as the plan declares them"
+  - "Changing how GitHub Pages serves paths"
+acceptance_criteria:
+  - "The UI snapshot of the change holds exactly one page per declared status under issues/_status/, and /ui/work/'s whole-list link resolves to one of them"
+  - "A fixture publication holding a/X/index.html and a/x/index.html is refused by the check, which names both paths"
+  - "Negative: a publication whose paths differ in more than case passes the check"
+  - "The snapshot archive of the change extracts on a case-insensitive filesystem with no 'file exists' error"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::"
+  - "bash test/run.sh 3720_no_two_published_paths_differ_only_in_case 09_site_mobile_first"
+  - "majordomus plan validate"
+evidence_required:
+  - "test_no_two_published_paths_differ_only_in_case"
+depends_on: []
