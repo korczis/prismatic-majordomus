@@ -579,6 +579,9 @@
     "schema-FlightRelease": "docs/api/plan/",
     "schema-Fonts": "docs/api/design/",
     "schema-Freshness": "docs/api/shared/",
+    "schema-FundingEvidence": "docs/api/models/",
+    "schema-FundingKind": "docs/api/models/",
+    "schema-FundingSource": "docs/api/models/",
     "schema-GapCondition": "docs/api/intents/",
     "schema-Gate": "docs/api/gates/",
     "schema-GateClass": "docs/api/gates/",
@@ -980,6 +983,7 @@
     "schema-ReleaseVersionReport": "docs/api/release/",
     "schema-ReleaseView": "docs/api/distribution/",
     "schema-ReleasesReport": "docs/api/distribution/",
+    "schema-Renewal": "docs/api/models/",
     "schema-ReportAnswer": "docs/api/executions/",
     "schema-ReportInput": "docs/api/executions/",
     "schema-RepositoryEnvironment": "docs/api/environment/",
@@ -1268,7 +1272,7 @@
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
     "operations": 201,
-    "schemas": 1005,
+    "schemas": 1009,
     "tags": 58
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1943,6 +1947,9 @@
     "FlightRelease": "plan",
     "Fonts": "design",
     "Freshness": "shared",
+    "FundingEvidence": "models",
+    "FundingKind": "models",
+    "FundingSource": "models",
     "GapCondition": "intents",
     "Gate": "gates",
     "GateClass": "gates",
@@ -2344,6 +2351,7 @@
     "ReleaseVersionReport": "release",
     "ReleaseView": "distribution",
     "ReleasesReport": "distribution",
+    "Renewal": "models",
     "ReportAnswer": "executions",
     "ReportInput": "executions",
     "RepositoryEnvironment": "environment",
@@ -23808,6 +23816,143 @@
           "value": "invalid"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "Where a funding declaration was read, and when.",
+      "home": "models",
+      "is_enum": false,
+      "name": "FundingEvidence",
+      "properties": [
+        {
+          "description": "The page or record it was read from.",
+          "name": "url",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The day it was read, `YYYY-MM-DD`.",
+          "name": "checked",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The vendor's own words, verbatim, when a sentence settles it.",
+          "name": "quote",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "FundingSource"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The kinds of funding source, in the order a policy most often prefers them.",
+      "home": "models",
+      "is_enum": true,
+      "name": "FundingKind",
+      "properties": [],
+      "type": "\"local\" | \"credit_grant\" | \"subscription\" | \"metered\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "FundingSource"
+      ],
+      "values": [
+        {
+          "description": "Inference on this machine; no money changes hands.",
+          "value": "local"
+        },
+        {
+          "description": "A recurring allowance of API usage that comes with something else the owner\npays for, such as the API credits a subscription plan includes.",
+          "value": "credit_grant"
+        },
+        {
+          "description": "A subscription seat, used through the client signed in with it.",
+          "value": "subscription"
+        },
+        {
+          "description": "Pay-as-you-go usage, billed by what was used.",
+          "value": "metered"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "One way a vendor lets a call be paid. A kind and a credential, never an amount: a\nprice or a balance this tool cannot verify is a fact it must not state.\n\n```\nuse majordomus_cli::models::{FundingKind, ModelCatalogue};\n\nlet c = ModelCatalogue::parse(concat!(\n    \"version: 1\\nvendors:\\n  - id: acme\\n    title: Acme\\n    funding:\\n\",\n    \"      - id: grant\\n        kind: credit_grant\\n        credential_env: ACME_API_KEY\\n\",\n    \"        renews: monthly\\n        claim_url: https://acme.example/claim\\n\",\n    \"        evidence:\\n          url: https://acme.example/docs\\n          checked: 2026-10-21\\n\",\n)).unwrap();\nassert_eq!(c.vendors[0].funding[0].kind, FundingKind::CreditGrant);\nassert!(c.diagnostics().is_empty());\n```",
+      "home": "models",
+      "is_enum": false,
+      "name": "FundingSource",
+      "properties": [
+        {
+          "description": "The source id, unique within its vendor.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What kind of source it is.",
+          "name": "kind",
+          "refs": [
+            "FundingKind"
+          ],
+          "required": true,
+          "type": "FundingKind"
+        },
+        {
+          "description": "The environment variable whose presence reaches this source. Two sources may\nname the same one: a credit grant and metered billing are both reached through\none API credential, and nothing local tells them apart.",
+          "name": "credential_env",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The period an allowance renews over, for a source that has one.",
+          "name": "renews",
+          "refs": [
+            "Renewal"
+          ],
+          "required": false,
+          "type": "Renewal | null"
+        },
+        {
+          "description": "Where the owner claims or links the source, as the vendor published it. Shown as\nevidence; Majordomus never follows it.",
+          "name": "claim_url",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "What the declaration stands on.",
+          "name": "evidence",
+          "refs": [
+            "FundingEvidence"
+          ],
+          "required": true,
+          "type": "FundingEvidence"
+        },
+        {
+          "description": "One line a person needs when choosing.",
+          "name": "note",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "VendorView"
+      ],
+      "values": [],
       "variants": []
     },
     {
@@ -46496,6 +46641,25 @@
       "variants": []
     },
     {
+      "description": "The period an allowance renews over.",
+      "home": "models",
+      "is_enum": true,
+      "name": "Renewal",
+      "properties": [],
+      "type": "\"monthly\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "FundingSource"
+      ],
+      "values": [
+        {
+          "description": "Every calendar month, or every billing month, as the vendor states it.",
+          "value": "monthly"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "The answer of `executions.report`.",
       "home": "executions",
       "is_enum": false,
@@ -57828,6 +57992,15 @@
           "refs": [],
           "required": false,
           "type": "string | null"
+        },
+        {
+          "description": "How a call to this vendor can be paid: the sources the vendor offers, each with\nthe evidence it was read from. What the vendor *offers* is the distribution's;\nwhich of them the owner *holds*, and any amount, is the owner's and never here.",
+          "name": "funding",
+          "refs": [
+            "FundingSource"
+          ],
+          "required": false,
+          "type": "array of FundingSource"
         },
         {
           "description": "Whether the named credential variable is set in this process's environment.\n`None` when the vendor names no variable.",

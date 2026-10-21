@@ -24883,6 +24883,78 @@ components:
           const: invalid
           description: "A timestamp that does not parse, or one in the future."
       description: "How old a record is, judged against `session.freshness` in the policy.\n\nThis is the second of two independent judgements every record carries, and it exists\nbecause the first one cannot answer this question. `Divergence` says where a record's\ncommit sits relative to HEAD; `advanced` means that commit is an ancestor of this one,\nwhich sounds like agreement and is identically true on the day the record is written and\na month later. Between 2026-09-05 and 2026-09-11 this repository served a handover that\nwas `advanced` and six days dead, and every surface that read this model — MCP, the HTTP\nAPI, the Cockpit — presented its `Next Action` as the thing to do (ADR 0052).\n\nThe thresholds are policy and are read, never restated here: a constant in this file\nwould be a second source of truth for a number the policy owns, and a repository whose\npolicy predates the key is reported as `Freshness::Unknown` naming the missing key\nrather than judged against a default nobody declared.\n\nThe five words divide into two groups, and the division is the one a caller acts on:\n`fresh` and `aging` are current and may be presented as the instruction, `stale` and\n`invalid` must be shown as history, and `unknown` is neither — a record nobody can date\nis not thereby an old record, and treating it as one would quietly discard a briefing\nthat is perfectly good. `Freshness::history` is that division, and it is the only\nplace it is decided.\n\n```\nuse majordomus_cli::capability::builtin::continuity::Freshness;\n\n// the two renderings are one value: the serialised word is the word `as_str` gives,\n// so a reader who met `stale` from MCP and from the command line met one fact\nlet stale = serde_json::to_value(Freshness::Stale).unwrap();\nassert_eq!(stale, serde_json::json!(\"stale\"));\nassert_eq!(stale.as_str(), Some(Freshness::Stale.as_str()));\n\n// and the division a caller acts on: absence of a judgement is not a bad judgement\nassert!(Freshness::Stale.history() && Freshness::Invalid.history());\nassert!(!Freshness::Unknown.history(), \"undated is not old\");\nassert!(!Freshness::Fresh.history() && !Freshness::Aging.history());\n```"
+    FundingEvidence:
+      type: object
+      additionalProperties: false
+      properties:
+        url:
+          type: string
+          description: The page or record it was read from.
+        checked:
+          type: string
+          description: "The day it was read, `YYYY-MM-DD`."
+        quote:
+          type:
+            - string
+            - "null"
+          description: "The vendor's own words, verbatim, when a sentence settles it."
+      required:
+        - url
+        - checked
+      description: "Where a funding declaration was read, and when."
+    FundingKind:
+      oneOf:
+        - type: string
+          const: local
+          description: Inference on this machine; no money changes hands.
+        - type: string
+          const: credit_grant
+          description: "A recurring allowance of API usage that comes with something else the owner\npays for, such as the API credits a subscription plan includes."
+        - type: string
+          const: subscription
+          description: "A subscription seat, used through the client signed in with it."
+        - type: string
+          const: metered
+          description: "Pay-as-you-go usage, billed by what was used."
+      description: "The kinds of funding source, in the order a policy most often prefers them."
+    FundingSource:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          description: "The source id, unique within its vendor."
+        kind:
+          "$ref": "#/components/schemas/FundingKind"
+          description: What kind of source it is.
+        credential_env:
+          type:
+            - string
+            - "null"
+          description: "The environment variable whose presence reaches this source. Two sources may\nname the same one: a credit grant and metered billing are both reached through\none API credential, and nothing local tells them apart."
+        renews:
+          anyOf:
+            - "$ref": "#/components/schemas/Renewal"
+            - type: "null"
+          description: "The period an allowance renews over, for a source that has one."
+        claim_url:
+          type:
+            - string
+            - "null"
+          description: "Where the owner claims or links the source, as the vendor published it. Shown as\nevidence; Majordomus never follows it."
+        evidence:
+          "$ref": "#/components/schemas/FundingEvidence"
+          description: What the declaration stands on.
+        note:
+          type:
+            - string
+            - "null"
+          description: One line a person needs when choosing.
+      required:
+        - id
+        - kind
+        - evidence
+      description: "One way a vendor lets a call be paid. A kind and a credential, never an amount: a\nprice or a balance this tool cannot verify is a fact it must not state.\n\n```\nuse majordomus_cli::models::{FundingKind, ModelCatalogue};\n\nlet c = ModelCatalogue::parse(concat!(\n    \"version: 1\\nvendors:\\n  - id: acme\\n    title: Acme\\n    funding:\\n\",\n    \"      - id: grant\\n        kind: credit_grant\\n        credential_env: ACME_API_KEY\\n\",\n    \"        renews: monthly\\n        claim_url: https://acme.example/claim\\n\",\n    \"        evidence:\\n          url: https://acme.example/docs\\n          checked: 2026-10-21\\n\",\n)).unwrap();\nassert_eq!(c.vendors[0].funding[0].kind, FundingKind::CreditGrant);\nassert!(c.diagnostics().is_empty());\n```"
     GapCondition:
       type: object
       properties:
@@ -37512,6 +37584,12 @@ components:
         - count
         - releases
       description: "The releases this repository recorded, and the one an unpinned installation resolves to."
+    Renewal:
+      oneOf:
+        - type: string
+          const: monthly
+          description: "Every calendar month, or every billing month, as the vendor states it."
+      description: The period an allowance renews over.
     ReportAnswer:
       type: object
       properties:
@@ -43778,6 +43856,11 @@ components:
             - string
             - "null"
           description: "The environment variable whose *presence* means a credential is configured.\nOnly the name lives here, and only presence is ever reported — no code in this\ncrate reads the value, and the environment cache refuses to hold one."
+        funding:
+          type: array
+          items:
+            "$ref": "#/components/schemas/FundingSource"
+          description: "How a call to this vendor can be paid: the sources the vendor offers, each with\nthe evidence it was read from. What the vendor *offers* is the distribution's;\nwhich of them the owner *holds*, and any amount, is the owner's and never here."
         credential_configured:
           type:
             - boolean

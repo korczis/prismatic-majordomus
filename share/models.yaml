@@ -17,6 +17,13 @@
 #
 # `credential_env` names an environment variable; only its *presence* is ever
 # reported. No value is read, held or rendered anywhere.
+#
+# `funding` (2026-10-21) lists how a call to the vendor can be paid — a subscription seat,
+# a recurring credit grant, metered use, or a local runtime — each with the page it was
+# read from, the day, and the vendor's own words. It states what a vendor offers, never
+# what the owner holds and never an amount: holdings and caps are the owner's local
+# declaration. The quoted credit-grant notice names an amount because it is the vendor's
+# sentence; no field carries one.
 version: 1
 
 vendors:
@@ -24,16 +31,66 @@ vendors:
     title: Anthropic
     inference: remote
     credential_env: ANTHROPIC_API_KEY
+    funding:
+      - id: subscription
+        kind: subscription
+        credential_env: CLAUDE_CODE_OAUTH_TOKEN
+        note: A Pro, Max, Team or Enterprise seat; Claude Code's own /login uses it without the variable.
+        evidence:
+          url: https://code.claude.com/docs/en/authentication
+          checked: 2026-10-21
+          quote: "This token authenticates with your Claude subscription and requires a Pro, Max, Team, or Enterprise plan."
+      - id: api-credits
+        kind: credit_grant
+        credential_env: ANTHROPIC_API_KEY
+        renews: monthly
+        claim_url: https://claude.ai/settings/billing?action=link_org
+        note: Claimed by linking an API organization to the plan, where clau.de/api-credits redirects; that organization's key reaches the credits, and nothing local tells them from metered use.
+        evidence:
+          url: https://claude.ai/settings/billing?action=link_org
+          checked: 2026-10-21
+          quote: "Your Max plan includes $200 a month in API credits to power your apps and agents. Claim them at https://clau.de/api-credits"
+      - id: metered
+        kind: metered
+        credential_env: ANTHROPIC_API_KEY
+        note: Outranks CLAUDE_CODE_OAUTH_TOKEN in Claude Code, and in non-interactive mode is always used when present.
+        evidence:
+          url: https://code.claude.com/docs/en/authentication
+          checked: 2026-10-21
+          quote: "Use this for direct Anthropic API access with a key from the Claude Console."
   - id: openai
     title: OpenAI
     inference: remote
     credential_env: OPENAI_API_KEY
+    funding:
+      - id: api
+        kind: metered
+        credential_env: OPENAI_API_KEY
+        note: Proven only to answer; whether the organization pays ahead or after is not recorded.
+        evidence:
+          url: share/models.yaml
+          checked: 2026-10-01
+          quote: "OpenAI's `gpt-4o` was verified by a chat completion answered under that id on that date"
   - id: ollama
     title: Ollama
     inference: local
+    funding:
+      - id: local
+        kind: local
+        evidence:
+          url: share/models.yaml
+          checked: 2026-10-01
+          quote: "Ollama and LM Studio were verified installed as local runtimes"
   - id: lmstudio
     title: LM Studio
     inference: local
+    funding:
+      - id: local
+        kind: local
+        evidence:
+          url: share/models.yaml
+          checked: 2026-10-01
+          quote: "Ollama and LM Studio were verified installed as local runtimes"
 
 models:
   - id: claude-opus-5

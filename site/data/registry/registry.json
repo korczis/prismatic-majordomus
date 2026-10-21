@@ -6,7 +6,7 @@
     "version": "1.0.0-alpha.1"
   },
   "registry": {
-    "fingerprint": "511b9b082c957f1821d3a411b898b77b52c52263b23b9f21efb30239c52dbf0e",
+    "fingerprint": "00d4c9370a22ca789c3effe2c968f55b309ffb871af6691fbc402b40871fa791",
     "summary": {
       "total": 3169,
       "builtin": 206,
@@ -53288,6 +53288,13 @@
                     ],
                     "description": "The environment variable whose *presence* means a credential is configured.\nOnly the name lives here, and only presence is ever reported — no code in this\ncrate reads the value, and the environment cache refuses to hold one."
                   },
+                  "funding": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/FundingSource"
+                    },
+                    "description": "How a call to this vendor can be paid: the sources the vendor offers, each with\nthe evidence it was read from. What the vendor *offers* is the distribution's;\nwhich of them the owner *holds*, and any amount, is the owner's and never here."
+                  },
                   "credential_configured": {
                     "type": [
                       "boolean",
@@ -53315,6 +53322,123 @@
                   }
                 ],
                 "description": "Where a vendor's inference runs."
+              },
+              "FundingSource": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The source id, unique within its vendor."
+                  },
+                  "kind": {
+                    "$ref": "#/$defs/FundingKind",
+                    "description": "What kind of source it is."
+                  },
+                  "credential_env": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The environment variable whose presence reaches this source. Two sources may\nname the same one: a credit grant and metered billing are both reached through\none API credential, and nothing local tells them apart."
+                  },
+                  "renews": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/Renewal"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "The period an allowance renews over, for a source that has one."
+                  },
+                  "claim_url": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Where the owner claims or links the source, as the vendor published it. Shown as\nevidence; Majordomus never follows it."
+                  },
+                  "evidence": {
+                    "$ref": "#/$defs/FundingEvidence",
+                    "description": "What the declaration stands on."
+                  },
+                  "note": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "One line a person needs when choosing."
+                  }
+                },
+                "required": [
+                  "id",
+                  "kind",
+                  "evidence"
+                ],
+                "description": "One way a vendor lets a call be paid. A kind and a credential, never an amount: a\nprice or a balance this tool cannot verify is a fact it must not state.\n\n```\nuse majordomus_cli::models::{FundingKind, ModelCatalogue};\n\nlet c = ModelCatalogue::parse(concat!(\n    \"version: 1\\nvendors:\\n  - id: acme\\n    title: Acme\\n    funding:\\n\",\n    \"      - id: grant\\n        kind: credit_grant\\n        credential_env: ACME_API_KEY\\n\",\n    \"        renews: monthly\\n        claim_url: https://acme.example/claim\\n\",\n    \"        evidence:\\n          url: https://acme.example/docs\\n          checked: 2026-10-21\\n\",\n)).unwrap();\nassert_eq!(c.vendors[0].funding[0].kind, FundingKind::CreditGrant);\nassert!(c.diagnostics().is_empty());\n```"
+              },
+              "FundingKind": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "local",
+                    "description": "Inference on this machine; no money changes hands."
+                  },
+                  {
+                    "type": "string",
+                    "const": "credit_grant",
+                    "description": "A recurring allowance of API usage that comes with something else the owner\npays for, such as the API credits a subscription plan includes."
+                  },
+                  {
+                    "type": "string",
+                    "const": "subscription",
+                    "description": "A subscription seat, used through the client signed in with it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "metered",
+                    "description": "Pay-as-you-go usage, billed by what was used."
+                  }
+                ],
+                "description": "The kinds of funding source, in the order a policy most often prefers them."
+              },
+              "Renewal": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "monthly",
+                    "description": "Every calendar month, or every billing month, as the vendor states it."
+                  }
+                ],
+                "description": "The period an allowance renews over."
+              },
+              "FundingEvidence": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "description": "The page or record it was read from."
+                  },
+                  "checked": {
+                    "type": "string",
+                    "description": "The day it was read, `YYYY-MM-DD`."
+                  },
+                  "quote": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The vendor's own words, verbatim, when a sentence settles it."
+                  }
+                },
+                "required": [
+                  "url",
+                  "checked"
+                ],
+                "description": "Where a funding declaration was read, and when."
               },
               "ModelEntry": {
                 "type": "object",
@@ -86070,7 +86194,7 @@
     ]
   },
   "index": {
-    "fingerprint": "7b0a7605a3b5041c3ccff18e7cb0841ea13c324784920a75c707f9eb5e20907f",
+    "fingerprint": "8244c30c0f3bb335c69d421ba15d4da84386abb48b191544522e9a33aa2cd9e0",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
