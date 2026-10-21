@@ -29,9 +29,9 @@ for size in 1 2 3 4 5 6 7 8 9 10 11 12 13; do
       [ "$c" -lt "$min" ] && min=$c; [ "$c" -gt "$max" ] && max=$c
       cat "shard.$k" >> union
     done
-    if ! diff -q <(sort list) <(sort union) >/dev/null; then
+    if ! diff -q <(LC_ALL=C sort list) <(LC_ALL=C sort union) >/dev/null; then
       echo "    FAIL: $size route(s) in $n shard(s): the union is not the list"
-      diff <(sort list) <(sort union) | sed 's/^/    | /' | head -6; fail=1
+      diff <(LC_ALL=C sort list) <(LC_ALL=C sort union) | sed 's/^/    | /' | head -6; fail=1
     fi
     dup="$(sort union | uniq -d | head -1)"
     [ -z "$dup" ] || { echo "    FAIL: $size route(s) in $n shard(s): $dup is in more than one shard"; fail=1; }
