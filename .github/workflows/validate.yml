@@ -225,7 +225,12 @@ jobs:
       # depth-1 checkout with no tags gives it neither, so the gate failed for want of the
       # data rather than for anything about the tree, on every run it has ever had. The
       # suite job already checks out in full, for the same class of reason.
+      # Every full-history checkout of this file carries a bound of its own, smaller than its
+      # job's (scripts/ci/step-bound-check): they take 95 to 212 s (2026-10-20), and the one
+      # that did not return that day waited out the coverage job's 55 minutes and read as
+      # cancelled, with nothing measured (run 39438896504).
       - uses: actions/checkout@v4
+        timeout-minutes: 10
         with:
           fetch-depth: 0
       - run: sudo apt-get install -y shellcheck >/dev/null
@@ -320,6 +325,7 @@ jobs:
       # the whole history: a case that clones this checkout into a fixture and pushes
       # (96_site_deploy does, to a bare repository of its own) cannot push a shallow clone
       - uses: actions/checkout@v4
+        timeout-minutes: 10
         with:
           fetch-depth: 0
       - id: site
@@ -548,6 +554,7 @@ jobs:
       # document it is required to write. The gate then reported the committed artifact stale
       # for a reason no branch had caused. A check reads its inputs; this job now fetches them.
       - uses: actions/checkout@v4
+        timeout-minutes: 10
         with:
           fetch-depth: 0
       - id: rust
@@ -711,12 +718,32 @@ jobs:
       run:
         working-directory: apps/majordomus-cli
     steps:
+      # One commit deep. Until 2026-10-20 this was the whole history, every head and every tag,
+      # for the differential's base alone, and on run 39438896504 that fetch did not return: it
+      # waited out the job's 55 minutes and read as cancelled, with nothing measured. The
+      # differential needs one more commit, not the history (next step).
       - uses: actions/checkout@v4
-        with:
-          # The differential gate diffs against the merge-base with the trunk. A shallow
-          # clone has no merge-base, and this gate answers UNKNOWN rather than passing
-          # silently, so the history it reads has to be here.
-          fetch-depth: 0
+        timeout-minutes: 5
+      # The base the differential diffs against, and nothing else. `rust-coverage --changed`
+      # diffs that commit's tree against the working tree, so on a pull request the base
+      # commit itself is enough. Without a base (a push, the schedule, a dispatch) the gate
+      # takes the merge-base of HEAD and origin/master: when HEAD is origin/master's tip, as on
+      # every master run, that is HEAD and nothing is fetched; otherwise master's history is
+      # fetched, still without tags or other heads. A base git cannot resolve stays UNKNOWN
+      # (exit 13), never a pass.
+      - name: the differential's base
+        if: needs.plan.outputs.coverage_differential == 'true'
+        timeout-minutes: 10
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if [ -n "$BASE" ]; then
+            git fetch --no-tags --depth=1 origin "$BASE"
+          elif [ "$(git rev-parse HEAD)" = "$(git rev-parse --verify --quiet refs/remotes/origin/master)" ]; then
+            echo "HEAD is origin/master's tip: the differential's base is HEAD itself, and nothing is fetched"
+          else
+            git fetch --no-tags --unshallow origin +refs/heads/master:refs/remotes/origin/master
+          fi
       - id: rust
         uses: ./.github/actions/setup-rust
         with:
@@ -799,6 +826,7 @@ jobs:
     steps:
       # the whole history: the report compares each execution's commit with the tree
       - uses: actions/checkout@v4
+        timeout-minutes: 10
         with:
           fetch-depth: 0
       - id: rust
@@ -913,6 +941,7 @@ jobs:
       # commit is in the history being published, and refuses to report clean from a shallow
       # clone that cannot say.
       - uses: actions/checkout@v4
+        timeout-minutes: 10
         with:
           fetch-depth: 0
       - id: site
@@ -1268,6 +1297,7 @@ jobs:
       MJ_CI_RECEIPTS: ${{ github.workspace }}/receipts.tsv
     steps:
       - uses: actions/checkout@v4
+        timeout-minutes: 10
         with:
           fetch-depth: 0
       - id: site
@@ -1396,6 +1426,7 @@ jobs:
       actions: write
     steps:
       - uses: actions/checkout@v4
+        timeout-minutes: 10
         with:
           fetch-depth: 0
       # --for: this job runs beside the deploy of its own commit, and judging the site before
