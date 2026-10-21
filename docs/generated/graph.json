@@ -12568,12 +12568,11 @@
         "id": "majordomus://claim/provider-capability-evidence",
         "kind": "claim",
         "label": "provider-capability-evidence",
-        "summary": "What each provider can do about the session lifecycle and prompt capture is one declaration with a citation per cell, every surface projects it, and no provider the declaration names goes unreported",
+        "summary": "What each provider can do about the session lifecycle, prompt capture and driving a browser beside this server is one declaration with a citation per cell, every surface projects it, and no provider the declaration names goes unreported",
         "route": "/cockpit/objects/claim/provider-capability-evidence",
         "source": "docs/CLAIMS.yaml",
         "status": "guaranteed",
         "facts": {
-          "claim": "What each provider can do about the session lifecycle and prompt capture is one declaration with a citation per cell, every surface projects it, and no provider the declaration names goes unreported",
           "implementation": "share/providers.yaml",
           "responsibility": "projection",
           "source": "docs/CONCEPTS.md",
@@ -59499,6 +59498,57 @@
         }
       },
       {
+        "id": "majordomus://issue/I3829",
+        "kind": "issue",
+        "label": "I3829",
+        "summary": "A provider declares whether its client drives a browser beside the server, and preflight says when this machine's bridge is missing",
+        "route": "/cockpit/objects/issue/i3829",
+        "source": ".ai/repo/project/issues/I3829.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A provider entry without browser_evidence, or with a browser word outside the vocabulary, fails the read of share/providers.yaml with the path named",
+            "claude-code declares browser: bridge with a citation; every other provider declares its value with one",
+            "Preflight in a checkout whose .mcp.json is present reports the missing Claude Code native messaging host as a finding naming /chrome, and reports nothing when the host is present",
+            "docs/generated/providers.md and majordomus product providers show the browser column from the one declaration"
+          ],
+          "created_at": "2026-10-21",
+          "current_state": "share/providers.yaml declares episode and prompts per provider; nothing says which client drives a browser, and no check looks for the Claude in Chrome native host.",
+          "depends_on": [],
+          "evidence_required": [
+            "case_a_provider_declares_its_browser_bridge"
+          ],
+          "milestone": "a-provider-carries-the-contract-natively",
+          "non_scope": [
+            "Turning the bridge on for a person (a user setting; a project cannot)",
+            "Pre-approving any browser tool in .claude/settings.json",
+            "A remote connector for the Claude in Chrome side panel (I3285, and 0c's hosted hub)"
+          ],
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "share/providers.yaml",
+            "apps/majordomus-cli/src/share.rs",
+            "apps/majordomus-cli/src/product.rs",
+            "apps/majordomus-cli/src/environment/preflight.rs",
+            "apps/majordomus-cli/tests/provider_browser.rs",
+            ".ai/repo/rules/project/a-provider-capability-cites-its-evidence.v2.md",
+            "scripts/provider-evidence-check",
+            "test/cases/3829_a_provider_declares_its_browser_bridge.sh",
+            "docs/MCP.md",
+            "docs/CLAIMS.yaml",
+            "docs/claims",
+            "docs/generated",
+            "site"
+          ],
+          "slug": "the-browser-bridge-is-declared",
+          "updated_at": "2026-10-21",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test provider_browser",
+            "bash test/cases/3829_a_provider_declares_its_browser_bridge.sh"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -70433,12 +70483,12 @@
         }
       },
       {
-        "id": "majordomus://rule/project.a-provider-capability-cites-its-evidence@1",
+        "id": "majordomus://rule/project.a-provider-capability-cites-its-evidence@2",
         "kind": "rule",
-        "label": "project.a-provider-capability-cites-its-evidence@1",
+        "label": "project.a-provider-capability-cites-its-evidence@2",
         "summary": "A provider capability is declared once, with the citation it was verified from",
-        "route": "/cockpit/objects/rule/project-a-provider-capability-cites-its-evidence-1",
-        "source": ".ai/repo/rules/project/a-provider-capability-cites-its-evidence.v1.md",
+        "route": "/cockpit/objects/rule/project-a-provider-capability-cites-its-evidence-2",
+        "source": ".ai/repo/rules/project/a-provider-capability-cites-its-evidence.v2.md",
         "status": "active",
         "facts": {
           "class": "blocking",
@@ -81439,6 +81489,13 @@
         "source": "test/cases/37_responsibility_surface.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3829_a_provider_declares_its_browser_bridge.sh",
+        "kind": "test",
+        "label": "test/cases/3829_a_provider_declares_its_browser_bridge.sh",
+        "route": "/cockpit/objects/test/test-cases-3829-a-provider-declares-its-browser-bridge-sh",
+        "source": "test/cases/3829_a_provider_declares_its_browser_bridge.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/383_convergence_is_enforced.sh",
         "kind": "test",
         "label": "test/cases/383_convergence_is_enforced.sh",
@@ -92329,7 +92386,7 @@
       },
       {
         "source": "majordomus://adr/adr-0103",
-        "target": "majordomus://rule/project.a-provider-capability-cites-its-evidence@1",
+        "target": "majordomus://rule/project.a-provider-capability-cites-its-evidence@2",
         "kind": "put_in_force"
       },
       {
@@ -116628,6 +116685,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3829",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3829",
+        "target": "majordomus://milestone/a-provider-carries-the-contract-natively",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -118773,17 +118840,17 @@
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.a-provider-capability-cites-its-evidence@1",
+        "source": "majordomus://rule/project.a-provider-capability-cites-its-evidence@2",
         "target": "kind:rule",
         "kind": "is_a"
       },
       {
-        "source": "majordomus://rule/project.a-provider-capability-cites-its-evidence@1",
+        "source": "majordomus://rule/project.a-provider-capability-cites-its-evidence@2",
         "target": "majordomus://rule/project.empty-is-not-failure@1",
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.a-provider-capability-cites-its-evidence@1",
+        "source": "majordomus://rule/project.a-provider-capability-cites-its-evidence@2",
         "target": "majordomus://rule/project.interfaces-are-projections@1",
         "kind": "depends_on"
       },
@@ -122464,6 +122531,11 @@
       },
       {
         "source": "majordomus://test/test/cases/37_responsibility_surface.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3829_a_provider_declares_its_browser_bridge.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -127599,8 +127671,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3607,
-      "edges": 8391,
+      "nodes": 3609,
+      "edges": 8394,
       "acyclic": false,
       "truncated": false
     }

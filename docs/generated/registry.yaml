@@ -45697,6 +45697,8 @@ capabilities:
                   episode_evidence: ""
                   prompts: none
                   prompts_evidence: ""
+                  browser: none
+                  browser_evidence: ""
             required:
               - id
               - title
@@ -45735,6 +45737,24 @@ capabilities:
               prompts_evidence:
                 type: string
                 description: "Where `prompts` was verified, on the same terms as `episode_evidence`."
+              browser:
+                "$ref": "#/$defs/BrowserSource"
+                description: "Whether the client drives a browser beside this repository's server. Absent in a\nvalue written before the axis existed, and read as `none` there."
+                default: none
+              browser_evidence:
+                type: string
+                description: "Where `browser` was verified, on the same terms as `episode_evidence`."
+                default: ""
+              browser_host:
+                type:
+                  - string
+                  - "null"
+                description: "The native messaging host a bridge registers with the browser, which is how a\nmachine is seen to have it. Declared for a `bridge` only."
+              browser_setup:
+                type:
+                  - string
+                  - "null"
+                description: "What a person does, once, to install the bridge on a machine, in the vendor's terms.\nDeclared for a `bridge` only."
             required:
               - episode
               - episode_evidence
@@ -45762,6 +45782,15 @@ capabilities:
                 const: none
                 description: It does not. Nothing this tool can do makes the prompt observable.
             description: "Whether the person's raw prompt can be captured below the model for one provider.\n\nThere is no `connection` here and there must not be: an MCP server is handed tool calls,\nnever the prompt that produced them. Prompt capture is provider-specific and the\ndeclaration says so rather than pretending the connection can stand in for it.\n\n```\nuse majordomus_cli::share::PromptSource;\nassert_eq!(serde_json::from_str::<PromptSource>(\"\\\"hook\\\"\").unwrap(), PromptSource::Hook);\nassert!(serde_json::from_str::<PromptSource>(\"\\\"connection\\\"\").is_err(),\n        \"no connection can observe a prompt\");\nassert_eq!(PromptSource::default(), PromptSource::None);\n```"
+          BrowserSource:
+            oneOf:
+              - type: string
+                const: bridge
+                description: "The client drives a browser through a vendor extension whose tools arrive in the same\nsession as this repository's MCP server."
+              - type: string
+                const: none
+                description: "It does not, or not in a session that holds this repository's server."
+            description: "Whether one provider's client drives a browser in the same session as this repository's\nMCP server.\n\nA bridge is the one way a single session both works on a page and reads and changes the\nlive mesh (`docs/MCP.md`, \"Claude in the browser\"). It is a vendor capability like the two\nabove, so it is declared with its citation; whether *this machine* has the bridge is a\ndifferent fact, which preflight reads from the machine and never from here. A browser\nagent of the vendor's own — a side panel that reaches only the vendor's cloud — is not a\nbridge: nothing it does arrives in a session that holds this repository's server.\n\n```\nuse majordomus_cli::share::BrowserSource;\nassert_eq!(serde_json::from_str::<BrowserSource>(\"\\\"bridge\\\"\").unwrap(), BrowserSource::Bridge);\nassert!(serde_json::from_str::<BrowserSource>(\"\\\"extension\\\"\").is_err(), \"one word for it\");\nassert_eq!(BrowserSource::default(), BrowserSource::None, \"undeclared reads as none\");\nassert_eq!(BrowserSource::Bridge.as_str(), \"bridge\");\n```"
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::product
