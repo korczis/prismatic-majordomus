@@ -58,7 +58,7 @@ pub struct Vendor {
 /// price or a balance this tool cannot verify is a fact it must not state.
 ///
 /// ```
-/// use majordomus_cli::models::{FundingKind, ModelCatalogue};
+/// use majordomus_cli::models::{FundingKind, FundingSource, ModelCatalogue};
 ///
 /// let c = ModelCatalogue::parse(concat!(
 ///     "version: 1\nvendors:\n  - id: acme\n    title: Acme\n    funding:\n",
@@ -66,7 +66,9 @@ pub struct Vendor {
 ///     "        renews: monthly\n        claim_url: https://acme.example/claim\n",
 ///     "        evidence:\n          url: https://acme.example/docs\n          checked: 2026-10-21\n",
 /// )).unwrap();
-/// assert_eq!(c.vendors[0].funding[0].kind, FundingKind::CreditGrant);
+/// let grant: &FundingSource = &c.vendors[0].funding[0];
+/// assert_eq!(grant.kind, FundingKind::CreditGrant);
+/// assert_eq!(grant.credential_env.as_deref(), Some("ACME_API_KEY"));
 /// assert!(c.diagnostics().is_empty());
 /// ```
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -96,6 +98,14 @@ pub struct FundingSource {
 }
 
 /// The kinds of funding source, in the order a policy most often prefers them.
+///
+/// ```
+/// use majordomus_cli::models::FundingKind;
+///
+/// let kind: FundingKind = serde_json::from_str(r#""credit_grant""#).unwrap();
+/// assert_eq!(kind, FundingKind::CreditGrant);
+/// assert!(serde_json::from_str::<FundingKind>(r#""voucher""#).is_err(), "the set is closed");
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum FundingKind {
@@ -111,6 +121,13 @@ pub enum FundingKind {
 }
 
 /// The period an allowance renews over.
+///
+/// ```
+/// use majordomus_cli::models::Renewal;
+///
+/// assert_eq!(serde_json::from_str::<Renewal>(r#""monthly""#).unwrap(), Renewal::Monthly);
+/// assert_eq!(serde_json::to_string(&Renewal::Monthly).unwrap(), r#""monthly""#);
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum Renewal {
@@ -119,6 +136,17 @@ pub enum Renewal {
 }
 
 /// Where a funding declaration was read, and when.
+///
+/// ```
+/// use majordomus_cli::models::FundingEvidence;
+///
+/// let e: FundingEvidence = serde_json::from_str(
+///     r#"{"url":"https://acme.example/docs","checked":"2026-10-21","quote":"Pay as you go."}"#,
+/// ).unwrap();
+/// assert_eq!(e.checked, "2026-10-21");
+/// assert!(serde_json::from_str::<FundingEvidence>(r#"{"url":"x","checked":"y","price":1}"#).is_err(),
+///     "no field could carry an amount");
+/// ```
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct FundingEvidence {
@@ -232,6 +260,18 @@ impl ModelCatalogue {
     /// or otherwise unreadable is set aside and reported by [`ModelCatalogue::diagnostics`]
     /// naming its vendor and its id — a typed parse alone would fail the whole file and
     /// say only that a field is missing somewhere.
+    ///
+    /// ```
+    /// use majordomus_cli::models::ModelCatalogue;
+    ///
+    /// let c = ModelCatalogue::parse(concat!(
+    ///     "version: 1\nvendors:\n  - id: acme\n    title: Acme\n    funding:\n",
+    ///     "      - id: grant\n        kind: credit_grant\n",
+    ///     "models: []\n",
+    /// )).unwrap();
+    /// assert!(c.vendors[0].funding.is_empty(), "the unreadable source is set aside");
+    /// assert!(c.diagnostics()[0].contains("vendor 'acme' funding source 'grant' declares no evidence"));
+    /// ```
     pub fn parse(text: &str) -> Result<ModelCatalogue, String> {
         let mut map = crate::metadata::yaml::parse_mapping(text)?;
         let unread = set_aside_unreadable_funding(&mut map);
@@ -243,6 +283,19 @@ impl ModelCatalogue {
 
     /// Every credential variable the catalogue names, the vendors' and their funding
     /// sources', once each in declaration order: what no CI gate may depend on.
+    ///
+    /// ```
+    /// use majordomus_cli::models::ModelCatalogue;
+    ///
+    /// let c = ModelCatalogue::parse(concat!(
+    ///     "version: 1\nvendors:\n  - id: acme\n    title: Acme\n    credential_env: ACME_KEY\n",
+    ///     "    funding:\n      - id: seat\n        kind: subscription\n        credential_env: ACME_SEAT\n",
+    ///     "        evidence:\n          url: https://acme.example/docs\n          checked: 2026-10-21\n",
+    ///     "      - id: metered\n        kind: metered\n        credential_env: ACME_KEY\n",
+    ///     "        evidence:\n          url: https://acme.example/docs\n          checked: 2026-10-21\n",
+    /// )).unwrap();
+    /// assert_eq!(c.credential_variables(), ["ACME_KEY", "ACME_SEAT"]);
+    /// ```
     pub fn credential_variables(&self) -> Vec<&str> {
         let mut names: Vec<&str> = Vec::new();
         for vendor in &self.vendors {

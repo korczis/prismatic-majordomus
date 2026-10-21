@@ -23819,7 +23819,7 @@
       "variants": []
     },
     {
-      "description": "Where a funding declaration was read, and when.",
+      "description": "Where a funding declaration was read, and when.\n\n```\nuse majordomus_cli::models::FundingEvidence;\n\nlet e: FundingEvidence = serde_json::from_str(\n    r#\"{\"url\":\"https://acme.example/docs\",\"checked\":\"2026-10-21\",\"quote\":\"Pay as you go.\"}\"#,\n).unwrap();\nassert_eq!(e.checked, \"2026-10-21\");\nassert!(serde_json::from_str::<FundingEvidence>(r#\"{\"url\":\"x\",\"checked\":\"y\",\"price\":1}\"#).is_err(),\n    \"no field could carry an amount\");\n```",
       "home": "models",
       "is_enum": false,
       "name": "FundingEvidence",
@@ -23855,7 +23855,7 @@
       "variants": []
     },
     {
-      "description": "The kinds of funding source, in the order a policy most often prefers them.",
+      "description": "The kinds of funding source, in the order a policy most often prefers them.\n\n```\nuse majordomus_cli::models::FundingKind;\n\nlet kind: FundingKind = serde_json::from_str(r#\"\"credit_grant\"\"#).unwrap();\nassert_eq!(kind, FundingKind::CreditGrant);\nassert!(serde_json::from_str::<FundingKind>(r#\"\"voucher\"\"#).is_err(), \"the set is closed\");\n```",
       "home": "models",
       "is_enum": true,
       "name": "FundingKind",
@@ -23886,7 +23886,7 @@
       "variants": []
     },
     {
-      "description": "One way a vendor lets a call be paid. A kind and a credential, never an amount: a\nprice or a balance this tool cannot verify is a fact it must not state.\n\n```\nuse majordomus_cli::models::{FundingKind, ModelCatalogue};\n\nlet c = ModelCatalogue::parse(concat!(\n    \"version: 1\\nvendors:\\n  - id: acme\\n    title: Acme\\n    funding:\\n\",\n    \"      - id: grant\\n        kind: credit_grant\\n        credential_env: ACME_API_KEY\\n\",\n    \"        renews: monthly\\n        claim_url: https://acme.example/claim\\n\",\n    \"        evidence:\\n          url: https://acme.example/docs\\n          checked: 2026-10-21\\n\",\n)).unwrap();\nassert_eq!(c.vendors[0].funding[0].kind, FundingKind::CreditGrant);\nassert!(c.diagnostics().is_empty());\n```",
+      "description": "One way a vendor lets a call be paid. A kind and a credential, never an amount: a\nprice or a balance this tool cannot verify is a fact it must not state.\n\n```\nuse majordomus_cli::models::{FundingKind, FundingSource, ModelCatalogue};\n\nlet c = ModelCatalogue::parse(concat!(\n    \"version: 1\\nvendors:\\n  - id: acme\\n    title: Acme\\n    funding:\\n\",\n    \"      - id: grant\\n        kind: credit_grant\\n        credential_env: ACME_API_KEY\\n\",\n    \"        renews: monthly\\n        claim_url: https://acme.example/claim\\n\",\n    \"        evidence:\\n          url: https://acme.example/docs\\n          checked: 2026-10-21\\n\",\n)).unwrap();\nlet grant: &FundingSource = &c.vendors[0].funding[0];\nassert_eq!(grant.kind, FundingKind::CreditGrant);\nassert_eq!(grant.credential_env.as_deref(), Some(\"ACME_API_KEY\"));\nassert!(c.diagnostics().is_empty());\n```",
       "home": "models",
       "is_enum": false,
       "name": "FundingSource",
@@ -46641,7 +46641,7 @@
       "variants": []
     },
     {
-      "description": "The period an allowance renews over.",
+      "description": "The period an allowance renews over.\n\n```\nuse majordomus_cli::models::Renewal;\n\nassert_eq!(serde_json::from_str::<Renewal>(r#\"\"monthly\"\"#).unwrap(), Renewal::Monthly);\nassert_eq!(serde_json::to_string(&Renewal::Monthly).unwrap(), r#\"\"monthly\"\"#);\n```",
       "home": "models",
       "is_enum": true,
       "name": "Renewal",
