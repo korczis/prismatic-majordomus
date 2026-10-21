@@ -302,7 +302,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/economics.json` | `economics` | json | 30847 | `482d3f5c821ad7c3` |
 | `docs/generated/economics.md` | `economics` | markdown | 15306 | `6666ce35ff2c48a6` |
 | `docs/generated/economics.yaml` | `economics` | yaml | 25727 | `434c78e26154a54a` |
-| `docs/generated/graph.json` | `graph` | json | 4973582 | `a63ade69f974ea14` |
+| `docs/generated/graph.json` | `graph` | json | 4976226 | `c138b6ea9aee156d` |
 | `docs/generated/graph.schema.json` | `graph-schema` | json | 7632 | `ec01a56a9c8c8cbc` |
 | `docs/generated/modules/artifacts.md` | `modules/artifacts` | markdown | 1749 | `3d81f98d612dee40` |
 | `docs/generated/modules/brief.md` | `modules/brief` | markdown | 2401 | `01de7f94d2fae410` |
@@ -427,9 +427,9 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `site/data/registry/design.json` | `site-design` | json | 11594 | `787ad95ea4ce8a73` |
 | `site/data/registry/distribution.json` | `site-distribution` | json | 3005 | `1dc59aaebd16174a` |
 | `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 817842 | `4c7840226756ff0d` |
-| `site/data/registry/product-graph.json` | `site-product-graph` | json | 111720 | `5c9b112dedb0b903` |
-| `site/data/registry/product.json` | `site-product` | json | 763305 | `d4608bc3b6c11b87` |
-| `site/data/registry/registry.json` | `site-registry` | json | 7554704 | `6dce7b0f6627f00c` |
+| `site/data/registry/product-graph.json` | `site-product-graph` | json | 111720 | `b94f306cfa66898f` |
+| `site/data/registry/product.json` | `site-product` | json | 763305 | `8327441fb8150722` |
+| `site/data/registry/registry.json` | `site-registry` | json | 7555465 | `139773ede7ed33b9` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180170 | `449f398d697f1b83` |
 | `site/data/registry/why.json` | `site-why` | json | 349931 | `2485d2dc9c008bd8` |
 | `site/static/favicon.svg` | `design-mark` | text | 911 | `c76f9216b0e8764e` |

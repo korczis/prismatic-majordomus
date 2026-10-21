@@ -21,7 +21,7 @@
 //   node scripts/lib/site-i18n.mjs build <public> <i18n-dir> <base-url> <missing-out>
 
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, unlinkSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 
 const VOID = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta',
@@ -425,6 +425,10 @@ export function saveMemory(dir, memory) {
     shards.get(s).push(JSON.stringify({ k, en, ...rest }));
   }
   for (const [s, lines] of shards) writeFileSync(join(dir, `${s}.jsonl`), `${lines.join('\n')}\n`);
+  // a shard whose every entry was removed goes too, or the removal comes back on the next load
+  for (const f of readdirSync(dir)) {
+    if (f.endsWith('.jsonl') && !shards.has(f.slice(0, -'.jsonl'.length))) unlinkSync(join(dir, f));
+  }
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -531,7 +535,7 @@ export function localise(html, { lang, memory, base, routes, route, englishRoute
   }
   out = out.replace(/<html([^>]*?)\slang="[^"]*"/, `<html$1 lang="${lang}"`);
   out = switchLanguage(out, { lang, base, route, englishRoute, prefix });
-  return { html: out, total, done, missing };
+  return { html: out, total, done, missing, keys: segs.map((x) => x.key) };
 }
 
 /** A page written in another language at an English address names only itself, in its own
@@ -581,8 +585,13 @@ export function build({ publicDir, i18nDir, base, missingOut, exclude = [] }) {
     .map((p) => routeOf(relative(publicDir, p))));
   const report = { schema: 'site-i18n/v1', source: config.source, languages: {} };
   const missingAll = {};
+  // every key the English pages carry, with the pages it is on (I3092): what a memory entry
+  // can reach. The pages are the same for every language, so the first one counts them.
+  const reach = new Map();
+  let reachLang = null;
   for (const lang of config.languages) {
     if (lang === config.source) continue;
+    if (reachLang === null) reachLang = lang;
     const memory = loadMemory(join(i18nDir, lang, 'memory'));
     let total = 0;
     let done = 0;
@@ -614,6 +623,14 @@ export function build({ publicDir, i18nDir, base, missingOut, exclude = [] }) {
         result.total = 0; result.done = 0; result.missing = [];
       } else {
         result = localise(html, { lang, memory, base, routes, route: englishRoute, englishRoute });
+        if (lang === reachLang) {
+          for (const k of new Set(result.keys)) {
+            const r = reach.get(k) ?? { pages: 0, routes: [] };
+            r.pages += 1;
+            if (r.routes.length < 8) r.routes.push(englishRoute);
+            reach.set(k, r);
+          }
+        }
       }
       total += result.total;
       done += result.done;
@@ -651,8 +668,27 @@ export function build({ publicDir, i18nDir, base, missingOut, exclude = [] }) {
   if (missingOut) {
     mkdirSync(dirname(missingOut), { recursive: true });
     writeFileSync(missingOut, `${JSON.stringify(missingAll)}\n`);
+    writeFileSync(join(dirname(missingOut), 'reach.json'), `${JSON.stringify({
+      schema: 'site-i18n-reach/v1', keys: Object.fromEntries([...reach].sort((a, b) =>
+        (a[0] < b[0] ? -1 : 1)).map(([k, r]) => [k, { pages: r.pages, routes: r.routes.sort() }])) })}\n`);
   }
   return report;
+}
+
+/** The keys of `after` whose entry is new or differs from `before` in its English or in `lang`,
+ *  sorted: what an edit or an import changed. */
+export function memoryChanges(before, after, lang) {
+  const out = [];
+  for (const [k, e] of after) {
+    const b = before.get(k);
+    if (!b || b.en !== e.en || b[lang] !== e[lang]) out.push(k);
+  }
+  return out.sort();
+}
+
+/** Each key with the pages reach.json says carry it; `pages: 0` is a translation no page reads. */
+export function reachOf(keys, reach) {
+  return keys.map((k) => ({ k, pages: reach[k]?.pages ?? 0, routes: reach[k]?.routes ?? [] }));
 }
 
 /** Every indexable page in every language, in the sitemap the build wrote: each English entry is
@@ -679,7 +715,21 @@ export function sitemap({ publicDir, base, routes, languages, source }) {
   writeFileSync(file, body);
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (import.meta.url === `file://${process.argv[1]}` && process.argv[2] === 'reach') {
+  // node site-i18n.mjs reach <reach.json> <memory-after> <memory-before> [lang]
+  const [, reachFile, afterDir, beforeDir, lang = 'cs'] = process.argv.slice(2);
+  const reach = JSON.parse(readFileSync(reachFile, 'utf8')).keys;
+  const after = loadMemory(afterDir);
+  const rows = reachOf(memoryChanges(loadMemory(beforeDir), after, lang), reach);
+  for (const r of rows) {
+    const en = after.get(r.k)?.en ?? '';
+    console.log(r.pages ? `  ${r.k} reaches ${r.pages} page(s): ${r.routes.join(' ')}  ${JSON.stringify(en)}`
+      : `  ${r.k} reaches no page: no English page carries ${JSON.stringify(en)}`);
+  }
+  const none = rows.filter((r) => !r.pages);
+  console.log(`site-i18n reach: ${rows.length} changed key(s), ${none.length} reaching no page`);
+  process.exit(none.length ? 10 : 0);
+} else if (import.meta.url === `file://${process.argv[1]}`) {
   const [cmd, publicDir, i18nDir, base, missingOut, exclude] = process.argv.slice(2);
   if (cmd !== 'build' || !publicDir || !i18nDir) {
     process.stderr.write('usage: site-i18n.mjs build <public> <i18n-dir> <base-url> [missing-out]\n');

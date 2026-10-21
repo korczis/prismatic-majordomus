@@ -45944,6 +45944,50 @@
         }
       },
       {
+        "id": "majordomus://issue/I3092",
+        "kind": "issue",
+        "label": "I3092",
+        "summary": "A translation-memory edit says which pages each changed key reaches, and refuses one that reaches none",
+        "route": "/cockpit/objects/issue/i3092",
+        "source": ".ai/repo/project/issues/I3092.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "reach.json lists every segment key of the English pages with its page count",
+            "A changed memory entry whose key no page carries is named and refused; one whose key a page carries is listed with its pages",
+            "import refuses an entry whose key reaches no page"
+          ],
+          "created_at": "2026-10-21",
+          "current_state": "The pass lists only what the memory does not know (missing.json); an entry whose key no page carries is kept silently, and site-translate import admits any key with a matching English.",
+          "depends_on": [],
+          "desired_state": "reach.json is written beside missing.json; `site-translate reach` names, for each changed key, its pages or that it reaches none, and fails on the latter; import refuses an unreachable key.",
+          "evidence_required": [
+            "unreached_key_is_refused"
+          ],
+          "milestone": "public-proof",
+          "non_scope": [
+            "Garbage-collecting unreachable entries already in the memory (they are listed, not removed)"
+          ],
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "scripts/lib/site-i18n.mjs",
+            "scripts/site-translate",
+            "test/cases/3590_the_site_is_derived_in_every_language.sh",
+            ".ai/repo/project/issues/I3092.yaml"
+          ],
+          "slug": "a-memory-edit-reaches-a-page",
+          "started_at": "2026-10-21T01:47:57Z",
+          "started_event": "sha256:e63ef61de8465fb4c85e5c16ee82cd6257c2414738f3cf57ca551638362fca0e",
+          "updated_at": "2026-10-21T01:51:20Z",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE bash test/run.sh 3590_the_site_is_derived_in_every_language"
+          ],
+          "verified_at": "2026-10-21T01:51:20Z",
+          "verified_event": "sha256:2566475d4cc4f88895d41fb6d413d584591f2073f8d8465f48d62776c217cf6a"
+        }
+      },
+      {
         "id": "majordomus://issue/I3094",
         "kind": "issue",
         "label": "I3094",
@@ -46006,7 +46050,7 @@
           ],
           "milestone": "public-proof",
           "non_scope": [
-            "Plural forms by count (one form per template; Czech 1 uzel / 2 uzly / 5 uzlů is a follow-up)"
+            "Plural forms by count (one form per template; a language whose noun changes form for one, two and five is a follow-up)"
           ],
           "parallel_safe": false,
           "priority": "p1",
@@ -111876,6 +111920,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3092",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3092",
+        "target": "majordomus://milestone/public-proof",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I3094",
         "target": "kind:issue",
         "kind": "is_a"
@@ -127522,8 +127576,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3612,
-      "edges": 8397,
+      "nodes": 3613,
+      "edges": 8399,
       "acyclic": false,
       "truncated": false
     }

@@ -101,3 +101,41 @@ grep -q 'hreflang="cs" href="https://example.test/cs/guide/"' "$SITE/public/site
 cp -R "$SITE/public" "$PWD/before"
 node "$PASS" build "$SITE/public" "$SITE/i18n" https://example.test "$PWD/missing.json" >/dev/null
 diff -r "$PWD/before" "$SITE/public" >/dev/null || { echo "    a second pass changed the site"; exit 1; }
+
+# A memory edit says which pages each changed key reaches, and one that reaches none is refused
+# (I3092). On 2026-10-20 the Czech of the bar's toggle went onto the key of the plain sentence,
+# which no bar carries; the memory took it and the bar stayed English. Here: an edit changes a
+# translation every page reads and adds one for a sentence no page carries.
+node --input-type=module - "$PASS" "$PWD/reach.json" <<'JS' || exit 1
+const [pass, file] = process.argv.slice(2);
+const { keyOf } = await import(pass);
+const keys = JSON.parse((await import('node:fs')).readFileSync(file, 'utf8')).keys;
+const r = keys[keyOf('Getting started')];
+if (!r || r.pages !== 2) { console.log(`    reach.json does not count the title on both pages: ${JSON.stringify(r)}`); process.exit(1); }
+JS
+cp -R "$SITE/i18n/cs/memory" "$PWD/memory-before"
+cp -R "$SITE/i18n/cs/memory" "$PWD/memory-after"
+node --input-type=module - "$PASS" "$PWD/memory-after" <<'JS' || exit 1
+const [pass, dir] = process.argv.slice(2);
+const { keyOf, loadMemory, saveMemory } = await import(pass);
+const m = loadMemory(dir);
+m.set(keyOf('Getting started'), { k: keyOf('Getting started'), en: 'Getting started', cs: 'Jak začít' });
+m.set(keyOf('How it works'), { k: keyOf('How it works'), en: 'How it works', cs: 'Princip' });
+saveMemory(dir, m);
+JS
+rc=0; out="$(node "$PASS" reach "$PWD/reach.json" "$PWD/memory-after" "$PWD/memory-before" cs)" || rc=$?
+[ "$rc" = 10 ] || { echo "    an edit with a key no page carries exited $rc, not 10: $out"; exit 1; }
+printf '%s\n' "$out" | grep -q 'reaches no page: no English page carries "How it works"' \
+  || { echo "    the unreachable key is not named: $out"; exit 1; }
+printf '%s\n' "$out" | grep -q 'reaches 2 page(s): / /guide/  "Getting started"' \
+  || { echo    "    the reachable key does not list its pages: $out"; exit 1; }
+# the same edit without the stray key passes
+node --input-type=module - "$PASS" "$PWD/memory-after" <<'JS' || exit 1
+const [pass, dir] = process.argv.slice(2);
+const { keyOf, loadMemory, saveMemory } = await import(pass);
+const m = loadMemory(dir);
+m.delete(keyOf('How it works'));
+saveMemory(dir, m);
+JS
+node "$PASS" reach "$PWD/reach.json" "$PWD/memory-after" "$PWD/memory-before" cs >/dev/null \
+  || { echo "    an edit whose every key reaches a page was refused"; exit 1; }
