@@ -53319,7 +53319,7 @@
             "A request through the vendor listener runs a read capability and is refused a repository_mutation one",
             "A request arriving on the loopback listener with a forwarding header is refused remote-only reads' privileges, not granted loopback ones",
             "No credential appears in output or logs",
-            "An ADR amending ADR 0126 defines how a vendor reader authenticates (OAuth for a ChatGPT connector) before the vendor listener admits any caller"
+            "An ADR amending ADR 0126 defines how a vendor reader authenticates (OAuth for a ChatGPT or a claude.ai connector) before the vendor listener admits any caller"
           ],
           "created_at": "2026-10-18",
           "current_state": "MCP over HTTP exists on the shared server; I2123 (runtime-trust) covers remote reads; nothing declares a vendor caller.",
@@ -53348,7 +53348,7 @@
             "what-a-workspace-decides-reaches-the-repository-with-its-source#a-vendor-reads-and-never-writes"
           ],
           "slug": "a-workspace-reads-the-plan",
-          "updated_at": "2026-10-18",
+          "updated_at": "2026-10-21",
           "validation": [
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test remote_callers",
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test http_host"
