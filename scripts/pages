@@ -54,8 +54,9 @@
 #                                         --timeout 0 is a single probe. 0 it serves it,
 #                                         10 it serves something else, 12 it never answered.
 #                                         --smoke then fetches every deploy.smoke route of the
-#                                         model and exits 10 naming each one whose marker is
-#                                         missing or which does not answer
+#                                         model and every hero choice the published homepage
+#                                         offers (data-hero-scenarios), and exits 10 naming each
+#                                         one whose marker is missing or which does not answer
 #   scripts/pages publication --commit SHA --published OUTCOME --served OUTCOME [--url URL]
 #                       [--timings FILE]
 #                                         state a deployment that has already happened: the summary
@@ -635,8 +636,29 @@ cmd_verify() {
         i=$((i + 1))
       done
       [ "$asked" -gt 0 ] || { echo "pages verify: --smoke, and ${MODEL#"$ROOT"/} declares no deploy.smoke route; nothing was asked" >&2; return 10; }
+      # The hero's choices (I3324): the published homepage says which recorded scenarios it
+      # offers, inside data-hero-scenarios, so they are read from it and each is asked, with no
+      # route list kept here. A homepage that offers none, or a choice whose page does not
+      # answer, is a miss, named.
+      local home choices href target n_choices=0
+      home="$(curl -fsSL --max-time "${MJ_PAGES_PROBE_SECONDS:-10}" -H 'Cache-Control: no-cache' "${url%/}/?t=$(now)" 2>/dev/null || true)"
+      choices="$(printf '%s' "$home" | tr '\n' ' ' | sed -n 's/.*<div data-hero-scenarios[^>]*>\(.*\)/\1/p' \
+        | sed 's#</div>.*##' | grep -o 'href="[^"]*" data-scenario="[^"]*"' | sed 's/^href="\([^"]*\)".*/\1/' || true)"
+      if [ -z "$choices" ]; then
+        printf 'pages verify: smoke %s offers no hero choice (no data-hero-scenarios link)\n' "${url%/}/" >&2
+        missing=$((missing + 1))
+      fi
+      while read -r href; do
+        [ -n "$href" ] || continue
+        case "$href" in http://*|https://*) target="$href" ;; *) target="${url%/}$href" ;; esac
+        n_choices=$((n_choices + 1))
+        curl -fsS -o /dev/null --max-time "${MJ_PAGES_PROBE_SECONDS:-10}" -H 'Cache-Control: no-cache' "$target" 2>/dev/null || {
+          printf 'pages verify: smoke hero choice %s did not answer\n' "$target" >&2; missing=$((missing + 1)); }
+      done <<EOF_CHOICES
+$choices
+EOF_CHOICES
       [ "$missing" = 0 ] || return 10
-      [ "$quiet" = 1 ] || printf 'pages verify: smoke %s route check(s) answered with their markers\n' "$asked"
+      [ "$quiet" = 1 ] || printf 'pages verify: smoke %s route check(s) answered with their markers, and %s hero choice(s)\n' "$asked" "$n_choices"
       return 0
     fi
     [ $(( $(now) - t0 )) -lt "$timeout" ] || {

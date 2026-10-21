@@ -28,8 +28,25 @@ evidence_required:
   - "arrival_order_is_kept"
   - "dead_ticket_is_reaped"
 created_at: 2026-10-21
-updated_at: 2026-10-21T00:50:10Z
+updated_at: 2026-10-21T17:48:29Z
 started_at: 2026-10-21T00:49:21Z
 started_event: sha256:6767c4077e2ce969e6c7f5a87d2de160194fd36f911016e7a1c0381470110fe4
 verified_at: 2026-10-21T00:50:10Z
 verified_event: sha256:6062da34b87f794b073e01abe51577300ee38e5f683953bfcfff8b80a6495336
+completed_at: 2026-10-21T17:48:29Z
+completed_event: sha256:6e996de7bff533b73a5336493e463605152d22f2c1e5ebd8840bf82647b38c6b
+evidence:
+  - covers: arrival_order_is_kept
+    type: ci
+    command: "bash test/run.sh 1018_one_derive_at_a_time_and_no_orphans"
+    result: "passed in train 2 validate 39634495999 (97391192dbb, landed on master), suite job"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39634495999"
+    commit: 97391192dbbc85ee34b1f35d9ddec55ba61832d3
+    recorded_at: 2026-10-21T17:47:59Z
+  - covers: dead_ticket_is_reaped
+    type: ci
+    command: "bash test/run.sh 1018_one_derive_at_a_time_and_no_orphans"
+    result: "passed in train 2 validate 39634495999 (97391192dbb, landed on master), suite job"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39634495999"
+    commit: 97391192dbbc85ee34b1f35d9ddec55ba61832d3
+    recorded_at: 2026-10-21T17:48:08Z

@@ -324,7 +324,13 @@ VERSION="${VERSION#majordomus }"
 # (`release`) and read by every page from there (project.the-site-offers-the-release-it-published).
 # Until 2026-10-12 this file carried a `release` read from the records alone, and the homepage
 # offered the previous release for hours after every publication.
-TAGLINE="$(grep -m1 -E '^\*\*A lightweight' "$ROOT/README.md" | sed 's/\*\*//g')"
+# The product sentence is declared once, as the homepage hero's title and subtitle in
+# site/data/marketing.toml (I3134, the owner's choice of 2026-10-20). Every page title and
+# og:description read this tagline; README.md's bold line is held to it by homepage-check.
+TAGLINE="$(awk -F' = ' '/^\[/ { s = $0 } s == "[hero]" && ($1 == "title" || $1 == "subtitle") {
+  v = $2; sub(/^"/, "", v); sub(/"$/, "", v); printf "%s%s", (n++ ? " " : ""), v }' "$ROOT/site/data/marketing.toml")"
+[ -n "$TAGLINE" ] || {
+  echo "generate-site-data: site/data/marketing.toml [hero] declares no title and subtitle" >&2; exit 12; }
 LICENSE_NAME="$(head -1 "$ROOT/LICENSE" | sed 's/ License$//')"
 COMMANDS="$(sed -n '/^usage: majordomus <command>/,/^global options:/p' "$ROOT/bin/majordomus" \
   | grep -E '^  [a-z]' | sed -E 's/^  ([a-z]+)( <[a-z]+>)? +(.*)$/\1|\3/' \
@@ -1306,7 +1312,14 @@ jq -S --slurpfile lc "$OUT/lifecycle.json" '
                 walkthrough: ([ $order[] | . as $cmd | $lifesteps | map(select(.argv[0] == $cmd and .result == "pass")) | length | select(. > 0) ] | length),
                 refusals: ( $lifesteps | map(select(.exit != 0)) | group_by([.command, .exit, .output]) | length ),
                 executions: ($steps | length),
-                scenarios: ([ $steps[].use_case ] | unique | length) } }' \
+                scenarios: ([ $steps[].use_case ] | unique | length) } }
+  # The choices of the hero (I3223): every use case the refusals name, once, in the order of the
+  # refusals, each with the recorded command it refused and the verdict line its run printed.
+  # Derived from the refusals above, so a scenario is offered only while a recorded run refuses.
+  | .scenarios = ( .refusals | reduce .[] as $r ([];
+      if any(.[]; .use_case == $r.use_case) then .
+      else . + [{ use_case: $r.use_case, title: $r.use_case_title, route: $r.route,
+                  command: $r.command, verdict: $r.what }] end) )' \
   "$OUT/catalogue.json" > "$OUT/terminal.json"
 TERM_W="$(jq -r '.counts.walkthrough' "$OUT/terminal.json")"; TERM_L="$(jq -r '.counts.lifecycle' "$OUT/terminal.json")"
 # The two refusals hold the page to what the tool did, so they apply where the scenarios
@@ -1840,6 +1853,12 @@ if mj_project_load; then
   # a path, so the findings grow with roughly the square of the backlog; printed one row each
   # they were half of /plan/ (2,797 rows, 932 KB on 2026-10-21) and timed the UI audit out
   # (I3838). The whole list stays in `findings`, beside it.
+  # milestone_edges and milestone_mermaid are the graph the plan pages draw: one node per
+  # milestone, an arrow wherever an issue of one depends on an issue of another, counted. The
+  # graph of every issue (`mermaid`, 824 nodes and 82,663 characters on 2026-10-21) kept
+  # /plan/dag/ from answering the site probe within 90 s (I3841); each milestone's page draws
+  # its own issues and the edges between them; an edge that crosses milestones is listed, by
+  # its issues, under the milestone edge it is counted in. The whole list stays in `edges`.
   for pair in "milestones:$MS" "issues:$IS" "waves:$WV" "edges:$EG" "findings:$FD"; do
     printf '%s' "${pair#*:}" > "$STAGE/plan-${pair%%:*}.json"
   done
@@ -1856,7 +1875,21 @@ if mj_project_load; then
       findings:$findings[0],
       findings_by_code:($findings[0] | group_by([.level, .code])
         | map({level: .[0].level, code: .[0].code, count: length, examples: .[:3]})
-        | sort_by([(if .level == "FAIL" then 0 elif .level == "WARN" then 1 else 2 end), -.count, .code]))}' \
+        | sort_by([(if .level == "FAIL" then 0 elif .level == "WARN" then 1 else 2 end), -.count, .code]))}
+    | (.issues | map({key: .id, value: .milestone}) | from_entries) as $of
+    | ([.edges[] | {from: $of[.from], to: $of[.to], issue_from: .from, issue_to: .to}
+        | select(.from != null and .to != null and .from != .to)]
+        | group_by([.from, .to])
+        | map({from: .[0].from, to: .[0].to, count: length,
+               issues: map({from: .issue_from, to: .issue_to})})) as $medges
+    | def node: "M_" + gsub("[^A-Za-z0-9]"; "_");
+      . + {milestone_edges: $medges,
+           milestone_mermaid: ("flowchart LR\n"
+             + ([.milestones | sort_by(.order)[]
+                 | "    \(.id | node)[\"\(.id)<br/>\(.counts.by_status.DONE // 0) of \(.counts.required) done\"]:::\(.status | ascii_downcase)"]
+                | join("\n"))
+             + "\n" + ([$medges[] | "    \(.from | node) -->|\(.count)| \(.to | node)"] | join("\n"))
+             + "\n" + ($mermaid | split("\n") | map(select(test("^ *classDef "))) | join("\n")))}' \
     > "$OUT/plan.json"
 # Refuse an invalid model rather than project it. A cycle makes every milestone BLOCKED with
 # no rank, and without this the generator published that roadmap and exited 0 — a page saying
@@ -1876,12 +1909,12 @@ if mj_project_load; then
   # /map/ and /evidence/ already use rather than adding a third picture of a dependency graph.
   jq '{schema: 1,
        source: ".ai/repo/project/milestones/",
-       edge_kinds: {requires: "the target cannot begin until the source is accepted"},
+       edge_kinds: {unblocks: "the source unblocks the target: the target cannot begin until the source is accepted"},
        nodes: [.milestones[] | {id: .id, kind: "milestone",
                                 label: (if .released_in == "unreleased" then .id else .released_in + "  " + .id end),
                                 status: .status, route: ("/plan/" + (.id | ascii_downcase) + "/"),
                                 external: false, summary: .title}],
-       edges: [.milestones[] | . as $m | $m.depends_on[] | {source: ., target: $m.id, kind: "requires"}]}' \
+       edges: [.milestones[] | . as $m | $m.depends_on[] | {source: ., target: $m.id, kind: "unblocks"}]}' \
     "$OUT/roadmap.json" > "$OUT/roadmap-graph.json"
   [ -s "$OUT/roadmap.json" ] || { echo "generate-site-data: the roadmap projection produced nothing" >&2; exit 13; }
   # The gate the engine enforces: a milestone whose dependencies are not all DONE is BLOCKED,
@@ -1999,7 +2032,7 @@ i=0; jq -r '.doctrines[] | [.id, .slug, .title, .summary] | @tsv' "$OUT/doctrine
   jstr_to L1 "$title"; jstr_to L2 "$id"; jstr_to L3 "$summary"
   printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nid = %s\nsource = %s\n+++\n' "$L1" "$L3" "$i" "$L2" "$(jq -r --arg id "$id" '.doctrines[] | select(.id==$id) | .source' "$OUT/doctrines.json" | jline)" > "$CONTENT_ROOT/doctrines/$slug.md"; done
 mk_section plan "The plan" "Milestones as executable outcome specifications, issues as execution contracts, and the dependency graph that decides what may be executed next. Every figure is derived from .ai/repo/project." plan-section.html issue.html 21
-printf -- '+++\ntitle = "Dependency graph"\ndescription = "Every issue, every dependency, and the execution waves the graph implies — drawn from the canonical edges, never by hand."\nweight = 1\ntemplate = "dag.html"\n+++\n' > "$CONTENT_ROOT/plan/dag.md"
+printf -- '+++\ntitle = "Dependency graph"\ndescription = "Every milestone and the dependencies between them, counted from the issues that cross them — drawn from the canonical edges, never by hand."\nweight = 1\ntemplate = "dag.html"\n+++\n' > "$CONTENT_ROOT/plan/dag.md"
 # the milestones in their order, then every issue: one row per page, each id a word as the
 # shell split it, its title every value the id selects and its description the first line
 lit_rows "$STAGE/plan-pages.tsv" '
