@@ -46116,6 +46116,8 @@
             "The SessionEnd shim, given a provider session that was started, closes the episode in less than its declared timeout",
             "With the end budget forced below the optional steps' cost, the episode still closes, and the skipped checkpoint and continuation are recorded as typed failures"
           ],
+          "completed_at": "2026-10-20T22:12:13Z",
+          "completed_event": "sha256:1e8f3d1126454dd34e23d6642a08365786601382fe51a051c475a481a5fd0dc8",
           "created_at": "2026-10-19",
           "evidence_required": [
             "verified"
@@ -46130,9 +46132,49 @@
             ".ai/repo/project/issues/I3060.yaml"
           ],
           "slug": "a-session-end-hook-fits-its-budget",
-          "updated_at": "2026-10-19",
+          "started_at": "2026-10-20T22:09:53Z",
+          "started_event": "sha256:3019dfd557566bcc665de3b23617af2b2d99761bfd3073943720bb976f97e02f",
+          "updated_at": "2026-10-20T22:12:13Z",
           "validation": [
             "CI=true bash test/run.sh --no-skips 3460"
+          ],
+          "verified_at": "2026-10-20T22:11:14Z",
+          "verified_event": "sha256:5c2c7cb35796f16f2981a244f9a978c23ac622472a28716cbadd64ae24c9aaa0"
+        }
+      },
+      {
+        "id": "majordomus://issue/I3061",
+        "kind": "issue",
+        "label": "I3061",
+        "summary": "A headless or nested provider session is not the worker: its end never hands over the task or writes a tracked record",
+        "route": "/cockpit/objects/issue/i3061",
+        "source": ".ai/repo/project/issues/I3061.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "With a worker episode open on an active task, a second provider session's start then interrupted end leaves the task's outcome unchanged (not handed_over) and git status clean under .ai/repo/sessions/",
+            "The same second session's end writes its record, if any, under .ai/local only, and the worker's own end afterwards closes the worker's episode as before",
+            "A worker's own interrupted end (no other live session) still hands the task over and writes its tracked record, as case 54 holds today",
+            "Case 3461 drives all three through the shims the provider runs"
+          ],
+          "created_at": "2026-10-19",
+          "desired_state": "A session that is not the worker leaves the worker's task and the tracked tree exactly as they were, and says so in its local log. The worker's own interrupted end keeps today's behaviour.",
+          "evidence_required": [
+            "verified"
+          ],
+          "milestone": "M003",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/capture.sh",
+            "lib/session.sh",
+            "test/cases/3461_a_subprocess_session_is_not_the_worker.sh",
+            ".ai/repo/project/issues/I3061.yaml"
+          ],
+          "slug": "a-subprocess-session-is-not-the-worker",
+          "updated_at": "2026-10-19",
+          "validation": [
+            "CI=true bash test/run.sh --no-skips 3461_a_subprocess_session_is_not_the_worker 54_session_lifecycle_hooks"
           ]
         }
       },
@@ -111973,6 +112015,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3061",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3061",
+        "target": "majordomus://milestone/M003",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I3079",
         "target": "kind:issue",
         "kind": "is_a"
@@ -127599,8 +127651,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3607,
-      "edges": 8391,
+      "nodes": 3608,
+      "edges": 8393,
       "acyclic": false,
       "truncated": false
     }

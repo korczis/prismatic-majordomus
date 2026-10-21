@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.1"
   },
   "registry": {
-    "fingerprint": "ee877cf301e37d16e7afe9ec59c0aecb7ee04a0635378d09a60e77f775f3ea2f",
+    "fingerprint": "772b9a7f39086ebab09ad8c0728ab162b12de2316db52f0d20847d8f21cb718c",
     "summary": {
-      "total": 3160,
+      "total": 3161,
       "builtin": 206,
-      "declarative": 2954,
+      "declarative": 2955,
       "by_kind": {
         "command": 31,
         "query": 175,
-        "resource": 2954
+        "resource": 2955
       },
       "by_stability": {
         "behaviorally_verified": 142,
         "experimental": 55,
-        "implemented": 2963
+        "implemented": 2964
       },
       "mcp_tools": 196,
-      "mcp_resources": 3009,
+      "mcp_resources": 3010,
       "http_routes": 201,
       "cli_commands": 111,
       "modules": 92,
@@ -85404,7 +85404,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 801,
+        "capabilities": 802,
         "capability_ids": []
       },
       {
@@ -86070,7 +86070,7 @@
     ]
   },
   "index": {
-    "fingerprint": "e47fc54aa585fcf6727bfaa9b52f4780b4111ce1b9741c77e316da39db537c18",
+    "fingerprint": "3dcc261a5727f232a2c587d6f17103c168f4e2e6aebbda252eaa0619864249bd",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -86110,7 +86110,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 33,
-      "issue": 801,
+      "issue": 802,
       "knowledge": 50,
       "mesh-declaration": 1,
       "milestone": 100,
@@ -93308,7 +93308,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 521266
+        "bytes": 521592
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -102712,7 +102712,18 @@
         "path": ".ai/repo/project/issues/I3060.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3229
+        "bytes": 4136
+      },
+      {
+        "uri": "majordomus://issue/I3061",
+        "kind": "issue",
+        "identity": "I3061",
+        "title": "A headless or nested provider session is not the worker: its end never hands over the task or writes a tracked record",
+        "description": "The lifecycle tells a provider session that is the worker apart from one the worker spawned, for example a headless `claude -p` run by an adopter's review script inside a supervised worktree, or a session started under another live session of the same checkout. A start event from such a session opens at most a local episode bound to nothing; it never adopts the checkout's active task. Its end event, interrupted or not, never marks the active task handed_over and never writes a tracked record under .ai/repo/sessions/; anything it keeps stays under .ai/local. The distinction is read from what the provider's payload and environment actually say (the CLAUDE_CODE_SESSION_ID column of MJ_CAPTURE_LIFECYCLE, the start source, whether a live episode of another provider session already holds the task), and the rule is stated where the lifecycle is declared.",
+        "path": ".ai/repo/project/issues/I3061.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3515
       },
       {
         "uri": "majordomus://issue/I3079",
@@ -118390,7 +118401,7 @@
       "identity": [
         "id"
       ],
-      "objects": 801
+      "objects": 802
     },
     {
       "name": "knowledge",
