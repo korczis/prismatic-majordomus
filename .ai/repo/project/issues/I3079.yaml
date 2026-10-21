@@ -1,0 +1,27 @@
+id: I3079
+milestone: truthful-plan-surfaces
+title: "The links of the Deployments table on /ui/delivery meet the target size at every audited width"
+slug: the-deployment-link-meets-the-target-size
+priority: p3
+profile: implementation
+parallel_safe: true
+objective: "Make the declaration's link in the first cell of each row of the Deployments table on /ui/delivery a target that accessibility.target-size accepts at every width scripts/ui audit visits: at least 24 by 24 px, or spaced so that no other target is within that distance. The cell is ui/deployments.rs summary_row. It holds the row's own link (the id and title) and, under it, the declaration's technical view, which view.rs object_if draws as an a.mj-ui-link.mj-ui-mono. The fix belongs in that row, in object or in the stylesheet source share/ui/src/ui.css that scripts/cockpit-assets builds into share/ui/ui.css. It is never an exemption in the audit."
+why: "On 2026-10-19 the I3071 receipt ran scripts/ui audit --only /ui/delivery and got one finding, accessibility.target-size (serious), at 1024 px on that link. The same audit with delivery.rs at its base gives the same finding, so it predates I3071. The CI/CD screen draws the same row, and the published UI snapshot shows the screen to every visitor. The release seat (9c) asked that it be recorded and owned rather than left in a receipt."
+current_state: "scripts/ui audit --only /ui/delivery reports accessibility.target-size at 1024 px on section[aria-label=\"Deployments\"] > .mj-ui-panel-body > .mj-table-wrap > table > tbody > tr > td:nth-child(1) > .mj-ui-mono.mj-ui-link."
+desired_state: "The audit of /ui/delivery reports no finding at any width, and each link of the Deployments table is a target a finger can hit."
+scope:
+  - ".ai/repo/project/issues/I3079.yaml"
+  - "apps/majordomus-cli/src/ui/deployments.rs"
+  - "apps/majordomus-cli/src/ui/view.rs"
+  - "share/ui/src/ui.css"
+  - "share/ui/ui.css"
+depends_on: []
+acceptance_criteria:
+  - "scripts/ui audit --only /ui/delivery reports no accessibility.target-size finding at any audited width"
+  - "No audit rule is exempted and no width is skipped to get there"
+validation:
+  - "majordomus plan validate"
+  - "scripts/ui audit --only /ui/delivery"
+evidence_required: []
+created_at: 2026-10-19
+updated_at: 2026-10-19
