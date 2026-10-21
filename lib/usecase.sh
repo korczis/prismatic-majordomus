@@ -571,6 +571,10 @@ mj_uc_run_one() { # index, evidence-file, keep(0|1)
   # The scenario says it is not asked, and the reader reports that, the same everywhere; the
   # check itself is the suite's (case 405), which runs where an executable is built.
   MAJORDOMUS_KNOWLEDGE_SCHEMA=unasked; export MAJORDOMUS_KNOWLEDGE_SCHEMA
+  # A caller timing its own run (MJ_TIMING=1 scripts/generate-site-data) must not time the
+  # scenario's commands: their timing report lands in the recorded output, and the committed
+  # evidence then differs from a run without it (seen on 2026-10-21, I0832).
+  unset MJ_TIMING MJ_TIMING_FILE
   fix="$(mj_uc_fixture_dir)"
   tmp="$(mktemp -d "${TMPDIR:-/tmp}/mj-uc.XXXXXX")"
   W="$tmp/repo"; mkdir -p "$W"
@@ -746,6 +750,49 @@ mj_uc_run_live() { # index, evidence-file
   return 0
 }
 
+# ---------------------------------------------------------------- the scenario cache (I0832)
+# A scenario's evidence is a function of its use case, its fixture and the tool that runs it,
+# and of nothing a records commit changes. Every derive used to execute every scenario again,
+# records-only commits included, and that was 60% of a site generation (catalogue.json, 1406 of
+# 2334 s, measured on 2026-10-21). A PASSING run is now kept beside the evidence and reused
+# when its key matches: the executable's own bytes (the binary MAJORDOMUS_BIN names), the blob
+# ids of every tracked file the tool is made of, and the use case's own file. Anything the key
+# cannot vouch for runs as before: no MAJORDOMUS_BIN, a tree that is not this tool's own source,
+# an uncommitted change outside the record paths, a failed run (never cached), --keep, or
+# MJ_UC_CACHE=0. The reused file is the very evidence that run wrote, so the site data built
+# from it is byte-identical, which `generate-site-data --check` proves.
+MJ_UC_CACHE_EXCLUDE=".ai/repo/project .ai/repo/knowledge site docs test/cases"
+mj_uc_tool_key() { # prints the key of the tool the scenarios run, or nothing
+  [ "${MJ_UC_CACHE:-1}" = 1 ] || return 0
+  [ -n "${MAJORDOMUS_BIN:-}" ] && [ -f "$MAJORDOMUS_BIN" ] || return 0
+  # the tool's own source tree only: in an adopter the repository is not the tool
+  [ "$MJ_LIB_DIR" = "$MJ_ROOT/lib" ] && [ -f "$MJ_ROOT/apps/majordomus-cli/Cargo.toml" ] || return 0
+  git -C "$MJ_ROOT" rev-parse --verify -q HEAD >/dev/null 2>&1 || return 0
+  local p list
+  set -- .
+  for p in $MJ_UC_CACHE_EXCLUDE "$(mj_rel "$MJ_UC_DIR")"; do set -- "$@" ":(exclude)$p"; done
+  # an uncommitted change to the tool is in no key: then nothing is reused
+  [ -z "$(git -C "$MJ_ROOT" status --porcelain --untracked-files=all -- "$@" 2>/dev/null)" ] || return 0
+  list="$(mktemp "${TMPDIR:-/tmp}/mj-uckey.XXXXXX")"
+  { mj_sha256 "$MAJORDOMUS_BIN"; git -C "$MJ_ROOT" ls-files -s -- "$@"; } > "$list" 2>/dev/null \
+    && mj_sha256 "$list"
+  rm -f "$list"
+}
+
+mj_uc_run_cached() { # index, evidence-file, keep: a cached passing run of the same key, or a run
+  local i="$1" out="$2" keep="${3:-0}" id f key dir hit rc=0
+  [ -n "${MJ_UC_TOOL_KEY:-}" ] && [ "$keep" = 0 ] || { mj_uc_run_one "$@"; return; }
+  id="$(mj_uc_v "$i" id)"; eval "f=\$MJ_UC_FILE_$i"
+  key="$(printf '%s %s' "$MJ_UC_TOOL_KEY" "$(mj_sha256 "$f")" | mj_sha256_hex)"
+  dir="$MJ_AI_LOCAL_DIR/cache/use-cases"; hit="$dir/$id.$key.json"
+  if [ -s "$hit" ]; then cp "$hit" "$out"; return 0; fi
+  mj_uc_run_one "$@" || rc=$?
+  if [ "$rc" = 0 ] && [ -s "$out" ]; then
+    mkdir -p "$dir" && rm -f "$dir/$id".*.json && cp "$out" "$hit.tmp.$$" && mv "$hit.tmp.$$" "$hit"
+  fi
+  return "$rc"
+}
+
 mj_uc_cmd_run() {
   local json="${MJ_JSON:-0}" outdir="" keep=0 ids="" named=0 want_live=0 i id ev rc fails=0 unmets=0 lived=0 ran=0 skipped=0 first=1 jobs=0 maxjobs="${MJ_UC_JOBS:-8}"
   while [ $# -gt 0 ]; do case "$1" in
@@ -765,12 +812,13 @@ mj_uc_cmd_run() {
   # the scenarios are independent (a repository each), so they run a few at a time; the
   # report is printed in list order once every one has finished, so the output is stable
   local tmp; tmp="$(mktemp -d "${TMPDIR:-/tmp}/mj-ucrc.XXXXXX")"
+  MJ_UC_TOOL_KEY="$(mj_uc_tool_key)"
   for id in $ids; do
     i="$(mj_uc_index "$id")"
     mj_uc_has_scenario "$i" || continue
     mj_uc_selected "$i" "$named" "$want_live" || continue
     if mj_uc_is_live "$i"; then continue; fi
-    ( mj_uc_run_one "$i" "$MJ_UC_EVIDENCE/$id.json" "$keep"; echo $? > "$tmp/$id" ) &
+    ( mj_uc_run_cached "$i" "$MJ_UC_EVIDENCE/$id.json" "$keep"; echo $? > "$tmp/$id" ) &
     jobs=$((jobs+1))
     if [ "$jobs" -ge "$maxjobs" ]; then wait -n 2>/dev/null || wait; jobs=$((jobs-1)); fi
   done
