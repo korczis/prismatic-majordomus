@@ -1143,8 +1143,9 @@ See [`CLI.md`](CLI.md) for `majordomus adr`.
 ## `.ai/repo/deployments/<id>.yaml`
 
 One deployment of this repository's executable, and the only authoritative statement of
-it. The container image definition (`deploy/Dockerfile`) and its ignore file
-(`.dockerignore`) are **generated** from this object; each carries a provenance header naming
+it. The container image definition (`deploy/Dockerfile`), its ignore file
+(`.dockerignore`) and the files of the provider it names (`deploy/<provider>/`) are
+**generated** from this object; each carries a provenance header naming
 this file and the command that regenerates it, and `majordomus generate --check` fails
 when one is edited by hand. Contract:
 [`share/schemas/majordomus/deployment/deployment.v1.schema.json`](../share/schemas/majordomus/deployment/deployment.v1.schema.json)
@@ -1199,15 +1200,29 @@ budgets:                        # each written by the run that measured it; none
   resident_memory_mb: ...
   blocking_check_ms: ...
   request_p99_ms: ...
+
+provider:                       # optional: the provider that hosts it (ADR 0219)
+  name: gigalixir               # only a provider the contract knows; another is refused
+  app: prismatic-majordomus     # the application at the provider, ^[a-z][a-z0-9-]{2,62}$
+  stack: gigalixir-24           # the provider's stack
+  url: https://prismatic-majordomus.gigalixirapp.com   # always https://
 ```
 
-**No hosting provider is named.** None is a target: the release binaries, GitHub Pages and
-the GHCR image built from `deploy/Dockerfile` are what ships. The object once carried a
-`provider` block naming Fly.io, rendered into `fly.toml`; nothing ever ran there, and on
-2026-10-12 the block, its reader and `fly.toml` were removed together. A `provider` key is
-now refused like any other key the contract does not have.
+**A provider is optional, and only a known one.** Absent, nobody hosts the deployment: the
+GHCR image built from `deploy/Dockerfile` is published and run by nobody. Named, it is one
+the contract knows — today `gigalixir` — and `majordomus generate deployment` renders every
+file it reads under `deploy/<provider>/`: for Gigalixir `Procfile` (the executable the slug
+carries at `.majordomus/bin/<binary>`, started with `serve --discovery filesystem` on the
+listen interface and the provider's `PORT`, falling back to `listen.port`) and the inline
+buildpack's `bin/detect`, `bin/compile` and `bin/release`, each opening with `#!/bin/sh` and
+carrying the provenance header on the next line. The buildpack itself, pinned by commit, is
+a constant of the renderer (`render::buildpack`) rather than a file, because a buildpack
+list cannot carry a header. A provider beside `listen.interface: loopback`, or a URL that is
+not `https://`, is refused. Fly.io was named here once, never ran, and stays no target
+(2026-10-12).
 
-**The port is stated once.** The process and the image both read this one field; a literal
+**The port is stated once.** The process, the image and the provider's Procfile all read
+this one field; a literal
 port anywhere else is the drift this kind exists to prevent. The same holds for the health
 routes and the build inputs.
 
@@ -1217,7 +1232,8 @@ layer or into a log.
 
 The schema decides shape; `majordomus deploy doctor` decides sense — a health route no
 capability registers, a package or binary the workspace does not contain, a build input
-that does not resolve, a `min_running` above `count` — and each refusal names the file, the
+that does not resolve, a `min_running` above `count`, a provider URL that is not https, a
+provider beside a loopback interface — and each refusal names the file, the
 key, the value found and the correction.
 
 **The image is built in stages that a cache can carry.** `deploy/Dockerfile` is rendered with

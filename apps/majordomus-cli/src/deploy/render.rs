@@ -1,16 +1,18 @@
 //! The deployment artifacts, rendered from the canonical deployment object: the container
-//! image definition and the ignore file that bounds its build context. No provider
-//! configuration is rendered: no hosting provider is a target (see [`super`]).
+//! image definition, the ignore file that bounds its build context, and — when the object
+//! names a provider (ADR 0219) — every file that provider reads, under `deploy/<provider>/`.
+//! For Gigalixir those are the Procfile and the three hooks of the inline buildpack
+//! ([`gigalixir_artifacts`]).
 //!
-//! Neither is authoritative and neither is written by hand. Each carries a header naming
-//! the object it came from and the command that regenerates it, and
+//! None is authoritative and none is written by hand. Each carries a header naming the
+//! object it came from and the command that regenerates it, and
 //! `majordomus generate --check` refuses a tree where one of them was edited. That is the
 //! whole point of the kind: the port, the routes and the build inputs are stated once, and
 //! these files are views of that one statement.
 
 use crate::generate::{Artifact, ArtifactFormat};
 
-use super::Deployment;
+use super::{Deployment, ProviderName};
 
 /// Where the image definition goes.
 pub const DOCKERFILE: &str = "deploy/Dockerfile";
@@ -341,26 +343,160 @@ pub fn dockerignore(d: &Deployment, source: &str) -> String {
     out
 }
 
-/// The two artifacts of one deployment; `rust` is the builder's exact Rust version.
-pub fn artifacts(d: &Deployment, source: &str, rust: &str) -> Vec<Artifact> {
-    vec![
-        Artifact {
-            path: DOCKERFILE.into(),
-            document: "deployment".into(),
-            format: ArtifactFormat::Text,
-            schema: None,
-            source: source.into(),
-            content: dockerfile(d, source, rust),
-        },
-        Artifact {
-            path: DOCKERIGNORE.into(),
-            document: "deployment".into(),
-            format: ArtifactFormat::Text,
-            schema: None,
-            source: source.into(),
-            content: dockerignore(d, source),
-        },
+// ---------------------------------------------------------------- Gigalixir
+
+/// Where the Gigalixir files go: the provider's own directory, never the repository root,
+/// because what is pushed to the provider is assembled (ADR 0219) and the repository is not.
+pub const GIGALIXIR_DIR: &str = "deploy/gigalixir";
+/// The Procfile: the start command, the interface and the port the provider injects.
+pub const GIGALIXIR_PROCFILE: &str = "deploy/gigalixir/Procfile";
+/// The inline buildpack's detect hook: it names the application and accepts it.
+pub const GIGALIXIR_DETECT: &str = "deploy/gigalixir/bin/detect";
+/// The inline buildpack's compile hook: it compiles nothing, it makes the prebuilt
+/// executable runnable and proves it starts.
+pub const GIGALIXIR_COMPILE: &str = "deploy/gigalixir/bin/compile";
+/// The inline buildpack's release hook: no add-ons, no default process beyond the Procfile.
+pub const GIGALIXIR_RELEASE: &str = "deploy/gigalixir/bin/release";
+/// Where the assembled slug carries the deployment's executable, relative to the slug root:
+/// a directory of its own, so the executable never shadows a file of the layer it serves.
+pub const SLUG_BIN_DIR: &str = ".majordomus/bin";
+/// The buildpack that runs the slug's own hooks, pinned by commit so a push builds with the
+/// same code every day. A buildpack list cannot carry a comment, so it is not rendered as a
+/// file; the slug assembler writes this line ([`buildpack`]).
+pub const INLINE_BUILDPACK: &str =
+    "https://github.com/kr/heroku-buildpack-inline#d094b444d6530dcc38dccf5d7844d6990380a08b";
+
+/// The buildpack line a provider's slug is built with: for Gigalixir, the inline buildpack
+/// pinned by commit, which runs the generated hooks and compiles nothing.
+///
+/// ```
+/// use majordomus_cli::deploy::{render::{buildpack, INLINE_BUILDPACK}, ProviderName};
+///
+/// assert_eq!(buildpack(ProviderName::Gigalixir), INLINE_BUILDPACK);
+/// let (_, commit) = INLINE_BUILDPACK.split_once('#').unwrap();
+/// assert_eq!(commit.len(), 40, "pinned by a full commit, never a branch");
+/// ```
+pub fn buildpack(provider: ProviderName) -> &'static str {
+    match provider {
+        ProviderName::Gigalixir => INLINE_BUILDPACK,
+    }
+}
+
+/// Where the slug carries the deployment's executable: [`SLUG_BIN_DIR`] and the object's
+/// `build.binary`.
+///
+/// ```
+/// # let d: majordomus_cli::deploy::Deployment = serde_json::from_value(serde_json::json!({
+/// #     "schema": "deployment/v1", "kind": "deployment", "id": "x", "title": "x",
+/// #     "application": "x",
+/// #     "build": { "package": "majordomus-cli", "binary": "majordomus", "profile": "release",
+/// #                "inputs": ["share"] },
+/// #     "listen": { "port": 8080, "interface": "all" },
+/// #     "health": { "liveness": "/api/v1/live", "readiness": "/api/v1/ready" },
+/// #     "resources": { "cpu_kind": "shared", "cpus": 1, "memory_mb": 256 },
+/// #     "machines": { "count": 1, "min_running": 0, "autostart": true, "autostop": true },
+/// #     "region": "fra",
+/// # })).unwrap();
+/// use majordomus_cli::deploy::render::slug_executable;
+///
+/// assert_eq!(slug_executable(&d), ".majordomus/bin/majordomus");
+/// ```
+pub fn slug_executable(d: &Deployment) -> String {
+    format!("{SLUG_BIN_DIR}/{}", d.build.binary)
+}
+
+/// The Procfile. The provider injects the port as `PORT`; the object's own port is the
+/// fallback, so the process binds the declared one wherever `PORT` is absent. The interface
+/// is the object's, and discovery is a filesystem walk because the slug carries the layer
+/// without the repository that tracks it.
+pub fn gigalixir_procfile(d: &Deployment, source: &str) -> String {
+    let mut out = header(
+        "#",
+        source,
+        "The Gigalixir Procfile of this repository's deployment.",
+    );
+    out.push_str(&format!(
+        "web: ./{exe} serve --repo . --discovery filesystem --host {host} --port ${{PORT:-{port}}} --idle 0\n",
+        exe = slug_executable(d),
+        host = d.listen.interface.host(),
+        port = d.listen.port,
+    ));
+    out
+}
+
+/// One hook of the inline buildpack: the `#!` line first, because the kernel reads it there,
+/// and the provenance header on the line after (`generate::opens_with_banner` reserves the
+/// first line of a script for it).
+fn hook(source: &str, what: &str, body: &str) -> String {
+    format!("#!/bin/sh\n{}{body}", header("#", source, what))
+}
+
+/// The detect hook: it accepts the slug and names it.
+pub fn gigalixir_detect(source: &str) -> String {
+    hook(
+        source,
+        "The inline buildpack's detect hook: it accepts the slug and names it.",
+        "echo majordomus\n",
+    )
+}
+
+/// The compile hook: the executable is prebuilt at the commit the slug was read from, so
+/// this compiles nothing; it makes the executable runnable and proves it starts. `$1` is the
+/// build directory the buildpack hands it.
+pub fn gigalixir_compile(d: &Deployment, source: &str) -> String {
+    let exe = slug_executable(d);
+    hook(
+        source,
+        "The inline buildpack's compile hook: it compiles nothing and proves the executable runs.",
+        &format!("chmod 755 \"$1/{exe}\"\n\"$1/{exe}\" --version\n"),
+    )
+}
+
+/// The release hook: no add-ons and no process beyond the Procfile's.
+pub fn gigalixir_release(source: &str) -> String {
+    hook(
+        source,
+        "The inline buildpack's release hook: no add-ons, no process beyond the Procfile.",
+        "echo \"--- {}\"\n",
+    )
+}
+
+/// The four Gigalixir artifacts of one deployment.
+pub fn gigalixir_artifacts(d: &Deployment, source: &str) -> Vec<Artifact> {
+    [
+        (GIGALIXIR_PROCFILE, gigalixir_procfile(d, source)),
+        (GIGALIXIR_DETECT, gigalixir_detect(source)),
+        (GIGALIXIR_COMPILE, gigalixir_compile(d, source)),
+        (GIGALIXIR_RELEASE, gigalixir_release(source)),
     ]
+    .into_iter()
+    .map(|(path, content)| text_artifact(path, source, content))
+    .collect()
+}
+
+fn text_artifact(path: &str, source: &str, content: String) -> Artifact {
+    Artifact {
+        path: path.into(),
+        document: "deployment".into(),
+        format: ArtifactFormat::Text,
+        schema: None,
+        source: source.into(),
+        content,
+    }
+}
+
+/// Every artifact of one deployment: the image definition and its ignore file, and the
+/// files of the provider it names; `rust` is the builder's exact Rust version.
+pub fn artifacts(d: &Deployment, source: &str, rust: &str) -> Vec<Artifact> {
+    let mut out = vec![
+        text_artifact(DOCKERFILE, source, dockerfile(d, source, rust)),
+        text_artifact(DOCKERIGNORE, source, dockerignore(d, source)),
+    ];
+    match d.provider.as_ref().map(|p| p.name) {
+        Some(ProviderName::Gigalixir) => out.extend(gigalixir_artifacts(d, source)),
+        None => {}
+    }
+    out
 }
 
 #[cfg(test)]
@@ -576,6 +712,106 @@ mod tests {
         // a deployment that serves no layer has no layer to write into
         let none = dockerfile(&deployment(), "x.yaml", "1.98.1");
         assert!(!none.contains(".ai/local"));
+    }
+
+    fn gigalixir() -> Deployment {
+        let mut d = deployment();
+        d.provider = Some(super::super::Provider {
+            name: ProviderName::Gigalixir,
+            app: "prismatic-majordomus".into(),
+            stack: "gigalixir-24".into(),
+            url: "https://prismatic-majordomus.gigalixirapp.com".into(),
+        });
+        d
+    }
+
+    #[test]
+    fn a_deployment_without_a_provider_renders_no_provider_file() {
+        let paths: Vec<String> = artifacts(&deployment(), "x.yaml", "1.98.1")
+            .into_iter()
+            .map(|a| a.path)
+            .collect();
+        assert_eq!(paths, [DOCKERFILE, DOCKERIGNORE]);
+    }
+
+    #[test]
+    fn a_gigalixir_deployment_renders_its_four_files_under_its_directory() {
+        let arts = artifacts(&gigalixir(), "x.yaml", "1.98.1");
+        let paths: Vec<&str> = arts.iter().map(|a| a.path.as_str()).collect();
+        assert_eq!(
+            paths,
+            [
+                DOCKERFILE,
+                DOCKERIGNORE,
+                GIGALIXIR_PROCFILE,
+                GIGALIXIR_DETECT,
+                GIGALIXIR_COMPILE,
+                GIGALIXIR_RELEASE
+            ]
+        );
+        for a in &arts[2..] {
+            assert!(a.path.starts_with(GIGALIXIR_DIR), "{}", a.path);
+            assert_eq!(a.format, ArtifactFormat::Text);
+            assert!(a
+                .content
+                .contains("GENERATED by `majordomus generate deployment` from x.yaml."));
+            let banner = format!("# {}", crate::generate::HEADER);
+            assert!(
+                crate::generate::opens_with_banner(&a.content, &banner),
+                "{} does not open with the banner",
+                a.path
+            );
+        }
+    }
+
+    #[test]
+    fn the_procfile_starts_the_executable_on_the_providers_port_falling_back_to_the_declared_one() {
+        let procfile = gigalixir_procfile(&gigalixir(), "x.yaml");
+        let web: Vec<&str> = procfile.lines().filter(|l| l.starts_with("web:")).collect();
+        assert_eq!(
+            web,
+            ["web: ./.majordomus/bin/majordomus serve --repo . --discovery filesystem --host 0.0.0.0 --port ${PORT:-8080} --idle 0"]
+        );
+        // every other line is a comment the provider ignores
+        assert!(procfile
+            .lines()
+            .all(|l| l.starts_with("web:") || l.starts_with('#') || l.is_empty()));
+        let mut moved = gigalixir();
+        moved.listen.port = super::super::Port::new(9090).expect("a port");
+        assert!(gigalixir_procfile(&moved, "x.yaml").contains("--port ${PORT:-9090} "));
+    }
+
+    #[test]
+    fn every_hook_opens_with_its_interpreter_and_carries_the_header_next() {
+        let d = gigalixir();
+        for (name, hook) in [
+            ("detect", gigalixir_detect("x.yaml")),
+            ("compile", gigalixir_compile(&d, "x.yaml")),
+            ("release", gigalixir_release("x.yaml")),
+        ] {
+            let mut lines = hook.lines();
+            assert_eq!(lines.next(), Some("#!/bin/sh"), "{name}");
+            assert_eq!(
+                lines.next(),
+                Some(format!("# {}", crate::generate::HEADER).as_str()),
+                "{name}"
+            );
+        }
+        assert!(gigalixir_detect("x.yaml").ends_with("\necho majordomus\n"));
+        assert!(gigalixir_compile(&d, "x.yaml").ends_with(
+            "\nchmod 755 \"$1/.majordomus/bin/majordomus\"\n\"$1/.majordomus/bin/majordomus\" --version\n"
+        ));
+        assert!(gigalixir_release("x.yaml").ends_with("\necho \"--- {}\"\n"));
+    }
+
+    #[test]
+    fn the_inline_buildpack_is_pinned_by_a_full_commit() {
+        let (repo, commit) = buildpack(ProviderName::Gigalixir)
+            .split_once('#')
+            .expect("a pinned buildpack");
+        assert_eq!(repo, "https://github.com/kr/heroku-buildpack-inline");
+        assert_eq!(commit.len(), 40);
+        assert!(commit.bytes().all(|b| b.is_ascii_hexdigit()));
     }
 
     fn deployment_with(inputs: &[&str]) -> Deployment {

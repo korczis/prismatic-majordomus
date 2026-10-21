@@ -888,10 +888,12 @@
     "schema-Protocol": "docs/api/mesh/",
     "schema-ProtocolReport": "docs/api/executions/",
     "schema-Provenance": "docs/api/web/",
+    "schema-Provider": "docs/api/deploy/",
     "schema-ProviderBootstrap": "docs/api/product/",
     "schema-ProviderLifecycle": "docs/api/lifecycle/",
     "schema-ProviderLifecycles": "docs/api/lifecycle/",
     "schema-ProviderList": "docs/api/product/",
+    "schema-ProviderName": "docs/api/deploy/",
     "schema-ProviderOffers": "docs/api/product/",
     "schema-ProviderState": "docs/api/environment/",
     "schema-ProviderStatus": "docs/api/mesh/",
@@ -1268,7 +1270,7 @@
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
     "operations": 201,
-    "schemas": 1005,
+    "schemas": 1007,
     "tags": 58
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -2252,10 +2254,12 @@
     "Protocol": "mesh",
     "ProtocolReport": "executions",
     "Provenance": "web",
+    "Provider": "deploy",
     "ProviderBootstrap": "product",
     "ProviderLifecycle": "lifecycle",
     "ProviderLifecycles": "lifecycle",
     "ProviderList": "product",
+    "ProviderName": "deploy",
     "ProviderOffers": "product",
     "ProviderState": "environment",
     "ProviderStatus": "mesh",
@@ -13343,6 +13347,15 @@
           ],
           "required": false,
           "type": "Budgets"
+        },
+        {
+          "description": "The hosting provider that runs it, when one does; absent, nobody hosts it.",
+          "name": "provider",
+          "refs": [
+            "Provider"
+          ],
+          "required": false,
+          "type": "Provider | null"
         },
         {
           "description": "When the object was written.",
@@ -40567,6 +40580,51 @@
       ]
     },
     {
+      "description": "The hosting provider that runs the deployment, and the facts that are the provider's\nalone. Every file the provider reads is rendered from this block and the generic keys\n(see `render`); its credential is never one of these fields.\n\n```\nuse majordomus_cli::deploy::{Provider, ProviderName};\n\nlet p: Provider = serde_json::from_value(serde_json::json!({\n    \"name\": \"gigalixir\",\n    \"app\": \"prismatic-majordomus\",\n    \"stack\": \"gigalixir-24\",\n    \"url\": \"https://prismatic-majordomus.gigalixirapp.com\",\n}))\n.unwrap();\nassert_eq!(p.name, ProviderName::Gigalixir);\nassert_eq!(p.app, \"prismatic-majordomus\");\n\n// a key the provider block does not have is refused, a token above all\nassert!(serde_json::from_value::<Provider>(serde_json::json!({\n    \"name\": \"gigalixir\", \"app\": \"a-b-c\", \"stack\": \"gigalixir-24\",\n    \"url\": \"https://a-b-c.gigalixirapp.com\", \"api_key\": \"x\",\n}))\n.is_err());\n```",
+      "home": "deploy",
+      "is_enum": false,
+      "name": "Provider",
+      "properties": [
+        {
+          "description": "Which provider.",
+          "name": "name",
+          "refs": [
+            "ProviderName"
+          ],
+          "required": true,
+          "type": "ProviderName"
+        },
+        {
+          "description": "The application's name at the provider.",
+          "name": "app",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The provider's stack the application runs on (`gigalixir-24`).",
+          "name": "stack",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The public URL the deployment answers on; always `https://`.",
+          "name": "url",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DeploymentView"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One bootstrap a provider renders.",
       "home": "product",
       "is_enum": false,
@@ -40733,6 +40791,25 @@
       ],
       "used_by_schemas": [],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "A hosting provider the contract knows. A name outside this list is refused at parse time:\na provider whose files nothing renders would be a block nothing reads.\n\n```\nuse majordomus_cli::deploy::ProviderName;\n\nlet name: ProviderName = serde_json::from_value(serde_json::json!(\"gigalixir\")).unwrap();\nassert_eq!(name, ProviderName::Gigalixir);\nassert_eq!(name.as_str(), \"gigalixir\");\nassert!(serde_json::from_value::<ProviderName>(serde_json::json!(\"fly\")).is_err());\n```",
+      "home": "deploy",
+      "is_enum": true,
+      "name": "ProviderName",
+      "properties": [],
+      "type": "\"gigalixir\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "Provider"
+      ],
+      "values": [
+        {
+          "description": "Gigalixir: a Heroku-compatible platform that runs a Procfile over a buildpack.",
+          "value": "gigalixir"
+        }
+      ],
       "variants": []
     },
     {

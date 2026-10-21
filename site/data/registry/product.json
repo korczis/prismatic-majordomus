@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "1.0.0-alpha.1"
   },
-  "fingerprint": "efc8190a52b65183ab4e2cd47fb4f5e120b8ccfe074c435e4e48d63ff11f4a0a",
+  "fingerprint": "533fabb79f19ab32a028e294cc52cb6a15691bdc99c4b412bc843cc123774054",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -7460,7 +7460,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 158
+          "objects": 159
         },
         {
           "name": "knowledge",
@@ -7741,11 +7741,11 @@
       "counts": {
         "capabilities": 5,
         "mcp_tools": 5,
-        "mcp_resources": 561,
+        "mcp_resources": 562,
         "http_routes": 5,
         "cli_paths": 3,
         "commands": 6,
-        "objects": 558,
+        "objects": 559,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -13228,7 +13228,7 @@
         },
         {
           "name": "issue",
-          "objects": 801
+          "objects": 802
         },
         {
           "name": "intent",
@@ -13438,11 +13438,11 @@
       "counts": {
         "capabilities": 26,
         "mcp_tools": 26,
-        "mcp_resources": 970,
+        "mcp_resources": 971,
         "http_routes": 26,
         "cli_paths": 13,
         "commands": 1,
-        "objects": 967,
+        "objects": 968,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -15506,7 +15506,7 @@
       "title": "A deployment is one canonical object, and every artifact built from it is generated from it",
       "short_title": "Deployments",
       "headline": "The port, the routes and the build inputs of the executable's container image are stated once, and the image definition and its ignore file are projections that cannot drift from it.",
-      "summary": "One deployment object per deployment of the executable, validated against the registry this process built; the container image definition and its ignore file are generated from it and checked for drift.",
+      "summary": "One deployment object per deployment of the executable, validated against the registry this process built; the container image definition, its ignore file and the files of the provider it names are generated from it and checked for drift.",
       "status": "draft",
       "weight": 200,
       "featured": false,
@@ -15632,11 +15632,11 @@
       "rule_refs": [
         {
           "id": "majordomus.deployment-contract",
-          "identity": "majordomus.deployment-contract@1",
+          "identity": "majordomus.deployment-contract@2",
           "title": "A deployment is described once, and every artifact built from it is generated from it",
           "class": "blocking",
           "enforced": true,
-          "path": ".ai/repo/rules/vendor/majordomus/rules/deployment-contract.v1.md"
+          "path": ".ai/repo/rules/vendor/majordomus/rules/deployment-contract.v2.md"
         }
       ],
       "doc_refs": [
@@ -15656,7 +15656,7 @@
       "claim_refs": [
         {
           "id": "deployment-contract-refuses-by-name",
-          "claim": "A deployment object that breaks its closed contract, whether by a key the contract does not have, another schema version, a missing field, an interface, port, machine count or health route that could not work, a value that reads as a credential or an identity two files claim, is refused by doctor with the reason named",
+          "claim": "A deployment object that breaks its closed contract, whether by a key the contract does not have, another schema version, a missing field, an interface, port, machine count or health route that could not work, a provider the contract does not know or a provider address that is not https, a value that reads as a credential or an identity two files claim, is refused by doctor with the reason named",
           "status": "guaranteed",
           "test": "test/cases/84_deployment_contract.sh"
         }
@@ -17246,7 +17246,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (158)",
+        "title": "adr (159)",
         "features": [
           "knowledge"
         ]
@@ -17351,7 +17351,7 @@
       },
       {
         "id": "issue",
-        "title": "issue (801)",
+        "title": "issue (802)",
         "features": [
           "planning"
         ]
@@ -18372,19 +18372,19 @@
     }
   ],
   "telemetry": {
-    "capabilities": 3160,
+    "capabilities": 3163,
     "builtin": 206,
-    "declarative": 2954,
+    "declarative": 2957,
     "modules": 58,
     "mcp_tools": 196,
-    "mcp_resources": 3009,
+    "mcp_resources": 3012,
     "http_routes": 201,
     "cli_commands": 209,
     "shell_commands": 30,
     "kinds": 34,
-    "objects": 2954,
+    "objects": 2957,
     "by_kind": {
-      "adr": 158,
+      "adr": 159,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -18401,7 +18401,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 33,
-      "issue": 801,
+      "issue": 802,
       "knowledge": 50,
       "mesh-declaration": 1,
       "milestone": 100,
@@ -18415,7 +18415,7 @@
       "session": 90,
       "skill": 8,
       "taxonomy": 10,
-      "test": 567,
+      "test": 568,
       "use-case": 49,
       "workspace": 1
     },

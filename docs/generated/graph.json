@@ -2702,6 +2702,22 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/deploy/mod.rs",
+        "kind": "file",
+        "label": "mod.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/deploy/mod.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/deploy/render.rs",
+        "kind": "file",
+        "label": "render.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/deploy/render.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/design/mod.rs",
         "kind": "file",
         "label": "mod.rs",
@@ -3379,6 +3395,14 @@
         "label": "scope.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/scope.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/served.rs",
+        "kind": "file",
+        "label": "served.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/served.rs",
         "external": true
       },
       {
@@ -9138,6 +9162,37 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0219",
+        "kind": "adr",
+        "label": "adr-0219",
+        "summary": "A deployment names the provider that hosts it, and every provider file is derived from it",
+        "route": "/cockpit/objects/adr/adr-0219",
+        "source": ".ai/repo/adrs/0219-a-deployment-names-its-provider-and-every-provider-file-is-derived.md",
+        "status": "accepted",
+        "facts": {
+          "date": "2026-10-21",
+          "related": [
+            "file:.ai/repo/deployments/majordomus.yaml",
+            "file:.ai/repo/project/milestones/fly-deployment.yaml",
+            "file:.ai/repo/project/issues/I0909.yaml",
+            "file:.ai/repo/rules/vendor/majordomus/rules/deployment-contract.v2.md",
+            "file:share/schemas/majordomus/deployment/deployment.v1.schema.json",
+            "file:apps/majordomus-cli/src/deploy/mod.rs",
+            "file:apps/majordomus-cli/src/deploy/render.rs",
+            "file:apps/majordomus-cli/src/served.rs",
+            "file:.ai/repo/adrs/0126-a-caller-beyond-loopback-reads-and-changes-nothing-it-cannot-authenticate.md",
+            "file:.ai/repo/adrs/0204-the-hub-is-reached-privately-over-the-tailnet-first-a-public-ing.md",
+            "test:test/cases/84_deployment_contract.sh",
+            "test:test/cases/86_deployment_projections.sh"
+          ],
+          "tags": [
+            "deployment",
+            "derivation",
+            "hosting"
+          ]
+        }
+      },
+      {
         "id": "majordomus://application/ci-gated-project",
         "kind": "application",
         "label": "ci-gated-project",
@@ -10552,14 +10607,14 @@
         "id": "majordomus://claim/deployment-contract-refuses-by-name",
         "kind": "claim",
         "label": "deployment-contract-refuses-by-name",
-        "summary": "A deployment object that breaks its closed contract, whether by a key the contract does not have, another schema version, a missing field, an interface, port, machine count or health route that could not work, a value that reads as a credential or an identity two files claim, is refused by doctor with the reason named",
+        "summary": "A deployment object that breaks its closed contract, whether by a key the contract does not have, another schema version, a missing field, an interface, port, machine count or health route that could not work, a provider the contract does not know or a provider address that is not https, a value that reads as a credential or an identity two files claim, is refused by doctor with the reason named",
         "route": "/cockpit/objects/claim/deployment-contract-refuses-by-name",
         "source": "docs/CLAIMS.yaml",
         "status": "guaranteed",
         "facts": {
           "implementation": "lib/deployment.sh",
           "responsibility": "none",
-          "source": ".ai/repo/rules/vendor/majordomus/rules/deployment-contract.v1.md",
+          "source": ".ai/repo/rules/vendor/majordomus/rules/deployment-contract.v2.md",
           "test": "test/cases/84_deployment_contract.sh"
         }
       },
@@ -16101,7 +16156,7 @@
           "application": "majordomus",
           "created_at": "2026-09-06",
           "region": "fra",
-          "updated_at": "2026-10-12"
+          "updated_at": "2026-10-21"
         }
       },
       {
@@ -59499,6 +59554,54 @@
         }
       },
       {
+        "id": "majordomus://issue/I3820",
+        "kind": "issue",
+        "label": "I3820",
+        "summary": "A deployment names the provider that hosts it, and the provider's files are generated from it",
+        "route": "/cockpit/objects/issue/i3820",
+        "source": ".ai/repo/project/issues/I3820.yaml",
+        "facts": {
+          "created_at": "2026-10-21",
+          "depends_on": [],
+          "evidence_required": [
+            "provider_block_parses",
+            "provider_files_generated",
+            "unknown_provider_refused"
+          ],
+          "milestone": "fly-deployment",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/adrs/0219-a-deployment-names-its-provider-and-every-provider-file-is-derived.md",
+            ".ai/repo/project/issues/I3820.yaml",
+            ".ai/repo/deployments",
+            ".ai/repo/rules/vendor/majordomus/rules",
+            "share/standard/majordomus/rules",
+            "share/schemas/majordomus/deployment",
+            "share/allow/deployment.txt",
+            "apps/majordomus-cli/src/deploy",
+            "apps/majordomus-cli/build.rs",
+            "deploy/gigalixir",
+            "lib/deployment.sh",
+            "test/cases/84_deployment_contract.sh",
+            "test/cases/86_deployment_projections.sh",
+            "test/cases/3820_a_deployment_renders_its_providers_files.sh",
+            ".gitattributes",
+            "docs",
+            "site"
+          ],
+          "serves": [],
+          "slug": "a-deployment-derives-its-provider-files",
+          "updated_at": "2026-10-21",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 84_deployment_contract 86_deployment_projections 3820_a_deployment_renders_its_providers_files",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib deploy::",
+            "majordomus generate --check"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -69304,12 +69407,12 @@
         }
       },
       {
-        "id": "majordomus://rule/majordomus.deployment-contract@1",
+        "id": "majordomus://rule/majordomus.deployment-contract@2",
         "kind": "rule",
-        "label": "majordomus.deployment-contract@1",
+        "label": "majordomus.deployment-contract@2",
         "summary": "A deployment is described once, and every artifact built from it is generated from it",
-        "route": "/cockpit/objects/rule/majordomus-deployment-contract-1",
-        "source": ".ai/repo/rules/vendor/majordomus/rules/deployment-contract.v1.md",
+        "route": "/cockpit/objects/rule/majordomus-deployment-contract-2",
+        "source": ".ai/repo/rules/vendor/majordomus/rules/deployment-contract.v2.md",
         "status": "active",
         "facts": {
           "class": "blocking",
@@ -81437,6 +81540,13 @@
         "label": "test/cases/37_responsibility_surface.sh",
         "route": "/cockpit/objects/test/test-cases-37-responsibility-surface-sh",
         "source": "test/cases/37_responsibility_surface.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3820_a_deployment_renders_its_providers_files.sh",
+        "kind": "test",
+        "label": "test/cases/3820_a_deployment_renders_its_providers_files.sh",
+        "route": "/cockpit/objects/test/test-cases-3820-a-deployment-renders-its-providers-files-sh",
+        "source": "test/cases/3820_a_deployment_renders_its_providers_files.sh"
       },
       {
         "id": "majordomus://test/test/cases/383_convergence_is_enforced.sh",
@@ -96508,6 +96618,71 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0219",
+        "target": "file:apps/majordomus-cli/src/deploy/mod.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0219",
+        "target": "file:apps/majordomus-cli/src/deploy/render.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0219",
+        "target": "file:apps/majordomus-cli/src/served.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0219",
+        "target": "file:share/schemas/majordomus/deployment/deployment.v1.schema.json",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0219",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0219",
+        "target": "majordomus://adr/adr-0126",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0219",
+        "target": "majordomus://adr/adr-0204",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0219",
+        "target": "majordomus://deployment/majordomus",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0219",
+        "target": "majordomus://issue/I0909",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0219",
+        "target": "majordomus://milestone/fly-deployment",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0219",
+        "target": "majordomus://rule/majordomus.deployment-contract@2",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0219",
+        "target": "majordomus://test/test/cases/84_deployment_contract.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0219",
+        "target": "majordomus://test/test/cases/86_deployment_projections.sh",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://application/ci-gated-project",
         "target": "kind:application",
         "kind": "is_a"
@@ -97744,7 +97919,7 @@
       },
       {
         "source": "majordomus://claim/deployment-contract-refuses-by-name",
-        "target": "majordomus://rule/majordomus.deployment-contract@1",
+        "target": "majordomus://rule/majordomus.deployment-contract@2",
         "kind": "defined_in"
       },
       {
@@ -116628,6 +116803,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3820",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3820",
+        "target": "majordomus://milestone/fly-deployment",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -118178,17 +118363,17 @@
         "kind": "is_a"
       },
       {
-        "source": "majordomus://rule/majordomus.deployment-contract@1",
+        "source": "majordomus://rule/majordomus.deployment-contract@2",
         "target": "kind:rule",
         "kind": "is_a"
       },
       {
-        "source": "majordomus://rule/majordomus.deployment-contract@1",
+        "source": "majordomus://rule/majordomus.deployment-contract@2",
         "target": "majordomus://rule/majordomus.ai-layout-integrity@1",
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/majordomus.deployment-contract@1",
+        "source": "majordomus://rule/majordomus.deployment-contract@2",
         "target": "majordomus://rule/majordomus.projection-integrity@1",
         "kind": "depends_on"
       },
@@ -122464,6 +122649,11 @@
       },
       {
         "source": "majordomus://test/test/cases/37_responsibility_surface.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3820_a_deployment_renders_its_providers_files.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -127599,8 +127789,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3607,
-      "edges": 8391,
+      "nodes": 3613,
+      "edges": 8407,
       "acyclic": false,
       "truncated": false
     }

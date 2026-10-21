@@ -7920,6 +7920,12 @@ capabilities:
               resident_memory_mb: null
               blocking_check_ms: null
               request_p99_ms: null
+          provider:
+            anyOf:
+              - "$ref": "#/$defs/Provider"
+              - type: "null"
+            description: "The hosting provider that runs it, when one does; absent, nobody hosts it."
+            default: null
           created_at:
             type:
               - string
@@ -8159,6 +8165,34 @@ capabilities:
                 description: Longest accepted p99 for a served request.
                 default: null
             description: "The measured figures this deployment is held to. Each is written by the run that\nmeasured it; an absent one has not been measured yet and is not a licence."
+          Provider:
+            type: object
+            additionalProperties: false
+            properties:
+              name:
+                "$ref": "#/$defs/ProviderName"
+                description: Which provider.
+              app:
+                type: string
+                description: "The application's name at the provider."
+              stack:
+                type: string
+                description: "The provider's stack the application runs on (`gigalixir-24`)."
+              url:
+                type: string
+                description: "The public URL the deployment answers on; always `https://`."
+            required:
+              - name
+              - app
+              - stack
+              - url
+            description: "The hosting provider that runs the deployment, and the facts that are the provider's\nalone. Every file the provider reads is rendered from this block and the generic keys\n(see `render`); its credential is never one of these fields.\n\n```\nuse majordomus_cli::deploy::{Provider, ProviderName};\n\nlet p: Provider = serde_json::from_value(serde_json::json!({\n    \"name\": \"gigalixir\",\n    \"app\": \"prismatic-majordomus\",\n    \"stack\": \"gigalixir-24\",\n    \"url\": \"https://prismatic-majordomus.gigalixirapp.com\",\n}))\n.unwrap();\nassert_eq!(p.name, ProviderName::Gigalixir);\nassert_eq!(p.app, \"prismatic-majordomus\");\n\n// a key the provider block does not have is refused, a token above all\nassert!(serde_json::from_value::<Provider>(serde_json::json!({\n    \"name\": \"gigalixir\", \"app\": \"a-b-c\", \"stack\": \"gigalixir-24\",\n    \"url\": \"https://a-b-c.gigalixirapp.com\", \"api_key\": \"x\",\n}))\n.is_err());\n```"
+          ProviderName:
+            oneOf:
+              - type: string
+                const: gigalixir
+                description: "Gigalixir: a Heroku-compatible platform that runs a Procfile over a buildpack."
+            description: "A hosting provider the contract knows. A name outside this list is refused at parse time:\na provider whose files nothing renders would be a block nothing reads.\n\n```\nuse majordomus_cli::deploy::ProviderName;\n\nlet name: ProviderName = serde_json::from_value(serde_json::json!(\"gigalixir\")).unwrap();\nassert_eq!(name, ProviderName::Gigalixir);\nassert_eq!(name.as_str(), \"gigalixir\");\nassert!(serde_json::from_value::<ProviderName>(serde_json::json!(\"fly\")).is_err());\n```"
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::deploy
@@ -8282,6 +8316,12 @@ capabilities:
                   resident_memory_mb: null
                   blocking_check_ms: null
                   request_p99_ms: null
+              provider:
+                anyOf:
+                  - "$ref": "#/$defs/Provider"
+                  - type: "null"
+                description: "The hosting provider that runs it, when one does; absent, nobody hosts it."
+                default: null
               created_at:
                 type:
                   - string
@@ -8519,6 +8559,34 @@ capabilities:
                 description: Longest accepted p99 for a served request.
                 default: null
             description: "The measured figures this deployment is held to. Each is written by the run that\nmeasured it; an absent one has not been measured yet and is not a licence."
+          Provider:
+            type: object
+            additionalProperties: false
+            properties:
+              name:
+                "$ref": "#/$defs/ProviderName"
+                description: Which provider.
+              app:
+                type: string
+                description: "The application's name at the provider."
+              stack:
+                type: string
+                description: "The provider's stack the application runs on (`gigalixir-24`)."
+              url:
+                type: string
+                description: "The public URL the deployment answers on; always `https://`."
+            required:
+              - name
+              - app
+              - stack
+              - url
+            description: "The hosting provider that runs the deployment, and the facts that are the provider's\nalone. Every file the provider reads is rendered from this block and the generic keys\n(see `render`); its credential is never one of these fields.\n\n```\nuse majordomus_cli::deploy::{Provider, ProviderName};\n\nlet p: Provider = serde_json::from_value(serde_json::json!({\n    \"name\": \"gigalixir\",\n    \"app\": \"prismatic-majordomus\",\n    \"stack\": \"gigalixir-24\",\n    \"url\": \"https://prismatic-majordomus.gigalixirapp.com\",\n}))\n.unwrap();\nassert_eq!(p.name, ProviderName::Gigalixir);\nassert_eq!(p.app, \"prismatic-majordomus\");\n\n// a key the provider block does not have is refused, a token above all\nassert!(serde_json::from_value::<Provider>(serde_json::json!({\n    \"name\": \"gigalixir\", \"app\": \"a-b-c\", \"stack\": \"gigalixir-24\",\n    \"url\": \"https://a-b-c.gigalixirapp.com\", \"api_key\": \"x\",\n}))\n.is_err());\n```"
+          ProviderName:
+            oneOf:
+              - type: string
+                const: gigalixir
+                description: "Gigalixir: a Heroku-compatible platform that runs a Procfile over a buildpack."
+            description: "A hosting provider the contract knows. A name outside this list is refused at parse time:\na provider whose files nothing renders would be a block nothing reads.\n\n```\nuse majordomus_cli::deploy::ProviderName;\n\nlet name: ProviderName = serde_json::from_value(serde_json::json!(\"gigalixir\")).unwrap();\nassert_eq!(name, ProviderName::Gigalixir);\nassert_eq!(name.as_str(), \"gigalixir\");\nassert!(serde_json::from_value::<ProviderName>(serde_json::json!(\"fly\")).is_err());\n```"
           Refusal:
             type: object
             properties:
