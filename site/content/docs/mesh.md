@@ -33,8 +33,9 @@ that disappears stops holding anything, everywhere, on its own.
 
 **It is not** a lock service with strong consistency (a partition lets both sides claim; the
 conflict is named after healing), a file synchroniser (git owns source), a remote execution
-facility (nothing a peer sends runs anything), an encrypted transport (there is no TLS in the
-executable), or a WAN federation (no NAT traversal; rendezvous and seeds need reachable
+facility (nothing a peer sends runs anything), an encrypted transport (only an `https://` hub
+or seed is reached over TLS; discovery and links to advertised addresses are cleartext, kept off
+public networks), or a WAN federation (no NAT traversal; rendezvous and seeds need reachable
 addresses).
 
 ## The shape
@@ -203,10 +204,19 @@ counted in `refused_in`/`refused_out` and listed with its detail on `mesh.cooper
 ## Transport
 
 The link protocol posts `Signed` messages through `LinkTransport`. The shared server's
-transport is plain HTTP/1.1 through the crate's one minimal client (ADR 0032: no HTTP client
-dependency, no TLS, no async runtime); unit tests put runtimes behind an in-process transport
-that runs the same protocol. Authenticity is the protocol's; confidentiality is the network's
-— run links on a private network or an overlay (a tailnet, WireGuard).
+transport is HTTP/1.1 through the crate's one minimal client (ADR 0032: no HTTP client
+dependency, no async runtime); unit tests put runtimes behind an in-process transport that runs
+the same protocol. An endpoint written `https://host[:port]` — a rendezvous hub or a seed, by
+host name or address — is reached over TLS (rustls with the ring provider), the certificate
+verified against the Mozilla roots compiled into the executable and the host name checked
+against it; a certificate that does not verify is refused naming the endpoint, before any byte
+of the request is sent. An `http://` endpoint, and an advertised `host:port` a link dials, is
+cleartext, and the client sends it only when every address the host resolves to is loopback,
+RFC 1918 private, link-local, `100.64.0.0/10` (a tailnet) or IPv6 unique-local: a public address
+is refused before the connection, with the correction `use https://` (ADR 0220). `mesh doctor`
+reports the same verdict for every declared hub and seed as its `transport` check, without
+dialing. Authenticity is the protocol's; confidentiality is TLS's for an `https://` endpoint and
+the network's otherwise — run links on a private network or an overlay (a tailnet, WireGuard).
 
 ## Presence, heartbeats and expiry
 
@@ -565,9 +575,10 @@ What the mesh defends against, and how:
 
 What it does not defend against: an observer on the network sees that a Majordomus runs, its
 advertisements and — for linked peers — session intents, claim scopes, review subjects and
-published handover bodies, because nothing is encrypted; run it on a private network or an
-overlay. A holder of an allowed node key is that node. A compromised trusted peer can publish
-misleading claims and handovers under its own identity — they are attributed to it and expire
+published handover bodies, because nothing but a request to an `https://` hub or seed is
+encrypted; run it on a private network or an overlay. A holder of an allowed node key is that
+node. A compromised trusted peer can publish misleading claims and handovers under its own
+identity — they are attributed to it and expire
 with it, but they are believed until then. The default — no declaration, or `enabled: false` —
 exists for environments where presence disclosure is unacceptable.
 
@@ -656,9 +667,10 @@ answers requests, exactly as one with none (`mesh status` shows the `rendezvous`
 
 **What travels.** What the security model above says: advertisements on the local segment and
 to the hubs; to linked runtimes of the owner's machines, session metadata, claim scopes, review
-subjects and published handover bodies. Nothing is encrypted; every hub address is on the
-private network or the tailnet, and `test/cases/491_the_mesh_is_on_here.sh` refuses a
-declaration that names a public one.
+subjects and published handover bodies. Nothing is encrypted but a request to an `https://`
+hub; every hub address is on the private network or the tailnet, the client refuses cleartext
+to a public one, and `test/cases/491_the_mesh_is_on_here.sh` refuses a declaration that names
+a public one.
 
 **Adding a machine.** Run `majordomus mesh identity` there, add the key under `trust.allow` with
 a comment naming the machine and its node id to the trust row of the table above, and commit

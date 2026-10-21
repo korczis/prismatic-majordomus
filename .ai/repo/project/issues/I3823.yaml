@@ -12,10 +12,18 @@ desired_state: "An https endpoint completes a register round-trip over TLS again
 scope:
   - "apps/majordomus-cli/src/mcp/bridge.rs"
   - "apps/majordomus-cli/src/mesh/config.rs"
+  - "apps/majordomus-cli/src/mesh/doctor.rs"
+  - "apps/majordomus-cli/src/mesh/link.rs"
+  - "apps/majordomus-cli/src/mesh/rendezvous.rs"
   - "apps/majordomus-cli/Cargo.toml"
   - "apps/majordomus-cli/Cargo.lock"
   - "test/cases/3823_the_mesh_client_speaks_tls.sh"
   - "docs/MESH.md"
+  - "docs/claims/mesh-cooperation-links.md"
+  - "scripts/ci/crate-boundary"
+  - "test/cases/360_the_crate_boundary_is_measured.sh"
+  - ".ai/repo/adrs/0032-an-external-workspace-is-not-a-provider-the-term-the-depende.md"
+  - ".ai/repo/ci/gates.yaml"
   - ".ai/repo/project/issues/I3823.yaml"
 acceptance_criteria:
   - "An https endpoint is reached over TLS with a verified certificate"

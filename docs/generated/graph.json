@@ -59783,10 +59783,18 @@
           "scope": [
             "apps/majordomus-cli/src/mcp/bridge.rs",
             "apps/majordomus-cli/src/mesh/config.rs",
+            "apps/majordomus-cli/src/mesh/doctor.rs",
+            "apps/majordomus-cli/src/mesh/link.rs",
+            "apps/majordomus-cli/src/mesh/rendezvous.rs",
             "apps/majordomus-cli/Cargo.toml",
             "apps/majordomus-cli/Cargo.lock",
             "test/cases/3823_the_mesh_client_speaks_tls.sh",
             "docs/MESH.md",
+            "docs/claims/mesh-cooperation-links.md",
+            "scripts/ci/crate-boundary",
+            "test/cases/360_the_crate_boundary_is_measured.sh",
+            ".ai/repo/adrs/0032-an-external-workspace-is-not-a-provider-the-term-the-depende.md",
+            ".ai/repo/ci/gates.yaml",
             ".ai/repo/project/issues/I3823.yaml"
           ],
           "serves": [],
@@ -81836,6 +81844,13 @@
         "label": "test/cases/3821_a_providers_tree_is_assembled_from_the_object.sh",
         "route": "/cockpit/objects/test/test-cases-3821-a-providers-tree-is-assembled-from-the-object-sh",
         "source": "test/cases/3821_a_providers_tree_is_assembled_from_the_object.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3823_the_mesh_client_speaks_tls.sh",
+        "kind": "test",
+        "label": "test/cases/3823_the_mesh_client_speaks_tls.sh",
+        "route": "/cockpit/objects/test/test-cases-3823-the-mesh-client-speaks-tls-sh",
+        "source": "test/cases/3823_the_mesh_client_speaks_tls.sh"
       },
       {
         "id": "majordomus://test/test/cases/383_convergence_is_enforced.sh",
@@ -123112,6 +123127,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3823_the_mesh_client_speaks_tls.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/383_convergence_is_enforced.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -128248,8 +128268,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3625,
-      "edges": 8441,
+      "nodes": 3626,
+      "edges": 8442,
       "acyclic": false,
       "truncated": false
     }

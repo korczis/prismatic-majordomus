@@ -5125,7 +5125,14 @@
       "members": [
         "command:mesh doctor"
       ],
-      "routes": [],
+      "routes": [
+        {
+          "via": "behaviour",
+          "test": "suite:3823_the_mesh_client_speaks_tls",
+          "path": "test/cases/3823_the_mesh_client_speaks_tls.sh",
+          "category": "e2e"
+        }
+      ],
       "mechanisms": [],
       "findings": []
     },

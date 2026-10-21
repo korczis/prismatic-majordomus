@@ -53312,10 +53312,18 @@
       "scope": [
         "apps/majordomus-cli/src/mcp/bridge.rs",
         "apps/majordomus-cli/src/mesh/config.rs",
+        "apps/majordomus-cli/src/mesh/doctor.rs",
+        "apps/majordomus-cli/src/mesh/link.rs",
+        "apps/majordomus-cli/src/mesh/rendezvous.rs",
         "apps/majordomus-cli/Cargo.toml",
         "apps/majordomus-cli/Cargo.lock",
         "test/cases/3823_the_mesh_client_speaks_tls.sh",
         "docs/MESH.md",
+        "docs/claims/mesh-cooperation-links.md",
+        "scripts/ci/crate-boundary",
+        "test/cases/360_the_crate_boundary_is_measured.sh",
+        ".ai/repo/adrs/0032-an-external-workspace-is-not-a-provider-the-term-the-depende.md",
+        ".ai/repo/ci/gates.yaml",
         ".ai/repo/project/issues/I3823.yaml"
       ],
       "non_scope": [],
@@ -58976,7 +58984,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I1512",
-      "message": "shares test/cases with I3823; they may not run concurrently"
+      "message": "shares scripts/ci with I3823; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -59355,6 +59363,12 @@
       "code": "scope_conflict",
       "subject": "I1900",
       "message": "shares apps/majordomus-cli/src/intent.rs with I3395; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1900",
+      "message": "shares .ai/repo/ci/gates.yaml with I3823; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -62407,6 +62421,12 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
+      "subject": "I2350",
+      "message": "shares .ai/repo/ci/gates.yaml with I3823; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
       "subject": "I2402",
       "message": "shares test/cases/1050_the_monitor_folds_the_noise.sh with I2487; they may not run concurrently"
     },
@@ -64399,6 +64419,12 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
+      "subject": "I2662",
+      "message": "shares .ai/repo/ci/gates.yaml with I3823; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
       "subject": "I2670",
       "message": "shares apps/majordomus-cli/src/mesh/build_cache/ with I2723; they may not run concurrently"
     },
@@ -65198,7 +65224,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2716",
-      "message": "shares test/cases with I3823; they may not run concurrently"
+      "message": "shares .ai/repo/ci/gates.yaml with I3823; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -66386,7 +66412,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2825",
-      "message": "shares docs/MESH.md with I3823; they may not run concurrently"
+      "message": "shares apps/majordomus-cli/src/mesh/link.rs with I3823; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -66717,6 +66743,12 @@
       "code": "scope_conflict",
       "subject": "I2841",
       "message": "shares scripts/ci with I3319; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I2841",
+      "message": "shares scripts/ci with I3823; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -74083,6 +74115,12 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
+      "subject": "I3116",
+      "message": "shares .ai/repo/ci/gates.yaml with I3823; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
       "subject": "I3117",
       "message": "shares .ai/repo/project/intents with I3229; they may not run concurrently"
     },
@@ -74175,6 +74213,12 @@
       "code": "scope_conflict",
       "subject": "I3120",
       "message": "shares docs/COVERAGE.md with I3820; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I3120",
+      "message": "shares .ai/repo/ci/gates.yaml with I3823; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -74349,6 +74393,12 @@
       "code": "scope_conflict",
       "subject": "I3160",
       "message": "shares .ai/repo/ci/gates.yaml with I3319; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I3160",
+      "message": "shares .ai/repo/ci/gates.yaml with I3823; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -74612,7 +74662,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I3175",
-      "message": "shares docs/MESH.md with I3823; they may not run concurrently"
+      "message": "shares apps/majordomus-cli/src/mesh/doctor.rs with I3823; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -75009,6 +75059,12 @@
       "code": "scope_conflict",
       "subject": "I3319",
       "message": "shares site/content/adrs/adr-0017.md with I3820; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I3319",
+      "message": "shares .ai/repo/ci/gates.yaml with I3823; they may not run concurrently"
     },
     {
       "level": "WARN",
