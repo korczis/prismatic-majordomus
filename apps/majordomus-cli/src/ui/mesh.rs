@@ -919,7 +919,7 @@ mod tests {
     #[test]
     fn every_seat_is_named_by_the_rule() {
         let rule = include_str!(
-            "../../../../.ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v1.md"
+            "../../../../.ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md"
         );
         for seat in SEATS {
             let row = format!("| {} | `{}` |", seat.name.to_lowercase(), seat.scope);
