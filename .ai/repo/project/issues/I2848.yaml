@@ -17,6 +17,8 @@ scope:
 non_scope:
   - "The shared build directory's own locking and reclaim (I2713, I2787)"
   - "The one-push-at-a-time rule between sessions, which is coordination on the board"
+serves:
+  - "a-change-is-judged-in-minutes#pr-verdict-within-five-minutes"
 acceptance_criteria:
   - "With MAJORDOMUS_BIN naming a binary of the commit's crate, economics-claims runs no cargo process"
   - "run-plan's summary states lock wait and gate time separately for a gate that built"

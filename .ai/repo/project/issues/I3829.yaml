@@ -27,6 +27,8 @@ non_scope:
   - "Pre-approving any browser tool in .claude/settings.json"
   - "A remote connector for the Claude in Chrome side panel (I3285, and 0c's hosted hub)"
 depends_on: []
+serves:
+  - "a-provider-carries-the-contract-natively#the-browser-bridge-is-declared"
 acceptance_criteria:
   - "A provider entry without browser_evidence, or with a browser word outside the vocabulary, fails the read of share/providers.yaml with the path named"
   - "claude-code declares browser: bridge with a citation; every other provider declares its value with one"
