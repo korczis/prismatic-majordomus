@@ -130,6 +130,24 @@ fn a_checkout_configured_for_claude_code_is_told_when_the_machine_has_no_bridge(
     assert_eq!(check.next, None);
 }
 
+/// A bridge declared without the host it registers is one no machine can be seen to have:
+/// the evidence gate refuses the declaration, and preflight, reading it anyway, says nothing
+/// rather than inventing a host to look for.
+#[test]
+fn a_bridge_without_its_host_is_not_looked_for() {
+    let (_share, read) = share_with(
+        "version: 1\nproviders:\n  x:\n    client_config: .mcp.json\n    offers:\n      browser: \"bridge\"\n",
+    );
+    let declared = read.expect("a bridge without a host still reads");
+    let checkout = tempfile::tempdir().unwrap();
+    std::fs::write(checkout.path().join(".mcp.json"), "{}").unwrap();
+    let home = tempfile::tempdir().unwrap();
+    assert!(
+        browser_observations(checkout.path(), &declared, Some(home.path())).is_empty(),
+        "no host declared, nothing to look for"
+    );
+}
+
 #[test]
 fn the_host_is_looked_for_in_every_chromium_browser_on_both_systems() {
     let home = tempfile::tempdir().unwrap();
