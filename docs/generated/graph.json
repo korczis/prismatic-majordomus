@@ -59499,6 +59499,214 @@
         }
       },
       {
+        "id": "majordomus://issue/I3830",
+        "kind": "issue",
+        "label": "I3830",
+        "summary": "A local gate reports and CI decides: pre-commit and pre-push refuse only on integrity",
+        "route": "/cockpit/objects/issue/i3830",
+        "source": ".ai/repo/project/issues/I3830.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A fixture push whose run-plan gate fails exits 0 with a line naming the gate and saying CI holds the verdict, and CI's validate refuses the same head",
+            "A commit that moves a canonical input without regenerating is still refused by scripts/pages current",
+            "An uncomputable plan (exit 12), a failed finish --check and a duplicate case number still refuse the push",
+            "doctor still finds each enforcement wired by its hook"
+          ],
+          "created_at": "2026-10-21",
+          "depends_on": [],
+          "evidence_required": [
+            "a_local_gate_reports_and_ci_decides_test"
+          ],
+          "milestone": "ci-critical-path",
+          "non_scope": [
+            "Changing which checks CI requires",
+            "Claude Code permission settings, which are the owner's to paste"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".githooks",
+            "bin/majordomus-cli",
+            ".ai/repo/rules/project",
+            "test/cases/1021_a_push_runs_what_ci_would_find_first.sh",
+            "test/cases/3025_abandoned_work_in_a_worktree_is_named.sh",
+            "test/cases/26_ci_wiring.sh",
+            "docs/CI.md"
+          ],
+          "slug": "a-local-gate-reports-and-ci-decides",
+          "updated_at": "2026-10-21",
+          "validation": [
+            "bash test/run.sh 1021_a_push_runs_what_ci_would_find_first 3830_a_local_gate_reports_and_ci_decides 26_ci_wiring",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3831",
+        "kind": "issue",
+        "label": "I3831",
+        "summary": "A hook never starts a cold cargo build: a stale executable is the installed release, or the check is skipped and says so",
+        "route": "/cockpit/objects/issue/i3831",
+        "source": ".ai/repo/project/issues/I3831.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "With a stale executable and an installed release, a hook's guard runs the installed release and says so on stderr, and no cargo process starts",
+            "With a stale executable and no installed release, the hook skips the check with a line naming it and exits as its gate class says",
+            "Outside a hook the launcher builds as before"
+          ],
+          "created_at": "2026-10-21",
+          "current_state": "bin/majordomus-cli builds whenever the executable is stale unless MAJORDOMUS_BIN or MAJORDOMUS_NO_BUILD is set; only `mcp` falls back to the installed release (use_installed_for_mcp).",
+          "depends_on": [],
+          "desired_state": "No hook starts cargo; a hook run with a stale executable names the release it used or the check it skipped.",
+          "evidence_required": [
+            "a_hook_never_starts_a_cold_build_test"
+          ],
+          "milestone": "ci-critical-path",
+          "non_scope": [
+            "Changing which checks CI requires",
+            "Claude Code permission settings, which are the owner's to paste"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "bin/majordomus-cli",
+            "lib/rust_bin.sh",
+            ".githooks",
+            "docs/WORKTREES.md"
+          ],
+          "slug": "the-worktree-guard-never-starts-a-cold-build",
+          "updated_at": "2026-10-21",
+          "validation": [
+            "bash test/run.sh 3831_a_hook_never_starts_a_cold_build 96_worktree_topology",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3832",
+        "kind": "issue",
+        "label": "I3832",
+        "summary": "majordomus worktree sweep removes merged, clean, idle worktrees, never with force, and announces each on the mesh",
+        "route": "/cockpit/objects/issue/i3832",
+        "source": ".ai/repo/project/issues/I3832.yaml",
+        "facts": {
+          "created_at": "2026-10-21",
+          "current_state": "scripts/reap-orphans reclaims build output only; removing a worktree is a hand-written loop.",
+          "depends_on": [],
+          "desired_state": "One capability, the same on every machine, that the owner can allow by name; --check is read-only.",
+          "evidence_required": [
+            "merged_idle_worktrees_are_swept_test"
+          ],
+          "milestone": "ci-critical-path",
+          "non_scope": [
+            "Changing which checks CI requires",
+            "Claude Code permission settings, which are the owner's to paste"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/worktree.rs",
+            "apps/majordomus-cli/src/worktree",
+            "share/commands.yaml",
+            "docs/WORKTREES.md"
+          ],
+          "slug": "merged-idle-worktrees-are-swept",
+          "updated_at": "2026-10-21",
+          "validation": [
+            "bash test/run.sh 3832_merged_idle_worktrees_are_swept",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3833",
+        "kind": "issue",
+        "label": "I3833",
+        "summary": "majordomus disk prune reclaims the container runtime's caches by name: build cache, anonymous unused volumes, dangling images, then trims the VM disk",
+        "route": "/cockpit/objects/issue/i3833",
+        "source": ".ai/repo/project/issues/I3833.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "--check reports what each step would reclaim and writes nothing",
+            "--apply never removes a named volume or a tagged image, which a fixture with a stubbed docker proves",
+            "A machine without docker or colima reports the step as absent, never as a failure",
+            "Each applied step is announced on the mesh with the bytes it reclaimed"
+          ],
+          "created_at": "2026-10-21",
+          "current_state": "No capability; the steps were typed by hand.",
+          "depends_on": [],
+          "desired_state": "One named capability the owner can allow; --check is read-only; named volumes and tagged images are never removed.",
+          "evidence_required": [
+            "the_container_runtime_is_pruned_by_name_test"
+          ],
+          "milestone": "ci-critical-path",
+          "non_scope": [
+            "Changing which checks CI requires",
+            "Claude Code permission settings, which are the owner's to paste"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin",
+            "share/commands.yaml",
+            "docs/DEVELOPMENT_RUNTIME.md"
+          ],
+          "slug": "the-container-runtime-is-pruned-by-name",
+          "updated_at": "2026-10-21",
+          "validation": [
+            "bash test/run.sh 3833_the_container_runtime_is_pruned_by_name",
+            "bin/majordomus plan validate"
+          ],
+          "why": "The owner's relaxation of 2026-10-21 (I3824 clause 8). On 2026-10-20 these four steps shrank the colima disk image from 73 GiB to 43 GiB without touching a named data volume."
+        }
+      },
+      {
+        "id": "majordomus://issue/I3834",
+        "kind": "issue",
+        "label": "I3834",
+        "summary": "A case run removes its own scratch dir however it ends: passed, failed, timed out or interrupted",
+        "route": "/cockpit/objects/issue/i3834",
+        "source": ".ai/repo/project/issues/I3834.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A passing case leaves no mj-test.* directory in TMPDIR",
+            "A failing case leaves none",
+            "A runner terminated with TERM while its case runs exits, and leaves none, and the case's process group is stopped",
+            "MJ_TEST_KEEP=1 keeps exactly one directory and the runner prints its path",
+            "Against the runner of master 573df967bb5 the interrupted run leaves its directory, so the case fails there"
+          ],
+          "created_at": "2026-10-21",
+          "current_state": "test/run.sh run_case calls rm -rf \\\"$T\\\" \\\"$mark\\\" after the case returns and after a timeout; no trap covers an interrupted runner; there is no keep flag.",
+          "depends_on": [],
+          "desired_state": "No case run leaves its scratch dir unless MJ_TEST_KEEP=1 is set, and then the runner prints the kept path.",
+          "evidence_required": [
+            "a_case_run_removes_its_own_dir_test"
+          ],
+          "milestone": "ci-critical-path",
+          "non_scope": [
+            "Sweeping orphans older runs already left (I3832, I3833)",
+            "A runner killed with SIGKILL, which no trap can see"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "test/run.sh",
+            "test/cases/3834_a_case_run_removes_its_own_dir.sh"
+          ],
+          "slug": "a-case-run-removes-its-own-dir",
+          "updated_at": "2026-10-21",
+          "validation": [
+            "bash test/run.sh 3834_a_case_run_removes_its_own_dir 123_case_bound 413_a_skipped_case_is_not_a_proof",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -81437,6 +81645,13 @@
         "label": "test/cases/37_responsibility_surface.sh",
         "route": "/cockpit/objects/test/test-cases-37-responsibility-surface-sh",
         "source": "test/cases/37_responsibility_surface.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3834_a_case_run_removes_its_own_dir.sh",
+        "kind": "test",
+        "label": "test/cases/3834_a_case_run_removes_its_own_dir.sh",
+        "route": "/cockpit/objects/test/test-cases-3834-a-case-run-removes-its-own-dir-sh",
+        "source": "test/cases/3834_a_case_run_removes_its_own_dir.sh"
       },
       {
         "id": "majordomus://test/test/cases/383_convergence_is_enforced.sh",
@@ -116628,6 +116843,56 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3830",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3830",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3831",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3831",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3832",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3832",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3833",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3833",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3834",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3834",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -122468,6 +122733,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3834_a_case_run_removes_its_own_dir.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/383_convergence_is_enforced.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -127599,8 +127869,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3607,
-      "edges": 8391,
+      "nodes": 3613,
+      "edges": 8402,
       "acyclic": false,
       "truncated": false
     }

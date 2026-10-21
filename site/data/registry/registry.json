@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.1"
   },
   "registry": {
-    "fingerprint": "ee877cf301e37d16e7afe9ec59c0aecb7ee04a0635378d09a60e77f775f3ea2f",
+    "fingerprint": "e1d178e652dbd93cc509954948e234642d011e25033710510896950514c0481c",
     "summary": {
-      "total": 3160,
+      "total": 3166,
       "builtin": 206,
-      "declarative": 2954,
+      "declarative": 2960,
       "by_kind": {
         "command": 31,
         "query": 175,
-        "resource": 2954
+        "resource": 2960
       },
       "by_stability": {
         "behaviorally_verified": 142,
         "experimental": 55,
-        "implemented": 2963
+        "implemented": 2969
       },
       "mcp_tools": 196,
-      "mcp_resources": 3009,
+      "mcp_resources": 3015,
       "http_routes": 201,
       "cli_commands": 111,
       "modules": 92,
@@ -85404,7 +85404,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 801,
+        "capabilities": 806,
         "capability_ids": []
       },
       {
@@ -85978,7 +85978,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 567,
+        "capabilities": 568,
         "capability_ids": []
       },
       {
@@ -86070,7 +86070,7 @@
     ]
   },
   "index": {
-    "fingerprint": "e47fc54aa585fcf6727bfaa9b52f4780b4111ce1b9741c77e316da39db537c18",
+    "fingerprint": "fa0cc4fb312c2eb259956918392221b4c42d585a6e2a19db9978cbdd92c20557",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -86110,7 +86110,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 33,
-      "issue": 801,
+      "issue": 806,
       "knowledge": 50,
       "mesh-declaration": 1,
       "milestone": 100,
@@ -86124,7 +86124,7 @@
       "session": 90,
       "skill": 8,
       "taxonomy": 10,
-      "test": 567,
+      "test": 568,
       "use-case": 49,
       "workspace": 1
     },
@@ -93308,7 +93308,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 521266
+        "bytes": 540204
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -105927,6 +105927,61 @@
         "bytes": 2704
       },
       {
+        "uri": "majordomus://issue/I3830",
+        "kind": "issue",
+        "identity": "I3830",
+        "title": "A local gate reports and CI decides: pre-commit and pre-push refuse only on integrity",
+        "description": "Make doctor, the worktree guard, rustdoc and scripts/ci/run-plan --before-push report their findings in the pre-commit and pre-push hooks without refusing, while derive-current (scripts/pages current), the SSH permissions check, finish --check, case numbers and an uncomputable plan keep refusing; CI keeps every required check and remains the verdict.",
+        "path": ".ai/repo/project/issues/I3830.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2581
+      },
+      {
+        "uri": "majordomus://issue/I3831",
+        "kind": "issue",
+        "identity": "I3831",
+        "title": "A hook never starts a cold cargo build: a stale executable is the installed release, or the check is skipped and says so",
+        "description": "Make bin/majordomus-cli, when run from a git hook (MAJORDOMUS_HOOK set) with a missing or stale executable, run the installed release the way `mcp` already does (mj_rust_installed, ADR 0172), and when there is none, skip with a line naming what was not checked, instead of building the crate.",
+        "path": ".ai/repo/project/issues/I3831.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1997
+      },
+      {
+        "uri": "majordomus://issue/I3832",
+        "kind": "issue",
+        "identity": "I3832",
+        "title": "majordomus worktree sweep removes merged, clean, idle worktrees, never with force, and announces each on the mesh",
+        "description": "Add a typed capability worktree.sweep (CLI `majordomus worktree sweep`, --check and --apply) that lists, and with --apply removes through `git worktree remove` without --force, every linked worktree whose head is an ancestor of origin/master but not its tip, whose status is empty, with no file modified within the idle window, no process cwd or open file inside it, not named in the derive lock's owner, a mesh claim or a CARGO_*_DIR of a running process; branches are kept, and each removal is announced on the mesh.",
+        "path": ".ai/repo/project/issues/I3832.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2923
+      },
+      {
+        "uri": "majordomus://issue/I3833",
+        "kind": "issue",
+        "identity": "I3833",
+        "title": "majordomus disk prune reclaims the container runtime's caches by name: build cache, anonymous unused volumes, dangling images, then trims the VM disk",
+        "description": "Add a typed capability disk.prune (CLI `majordomus disk prune`, --check and --apply) that reports and, with --apply, runs docker builder prune -af, docker volume prune -f (anonymous unused volumes only, never a named volume), docker image prune -f (dangling only), and on colima `colima ssh -- sudo fstrim -av`, reporting the space each step gave back and announcing it on the mesh; it starts no stopped VM unless asked.",
+        "path": ".ai/repo/project/issues/I3833.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1956
+      },
+      {
+        "uri": "majordomus://issue/I3834",
+        "kind": "issue",
+        "identity": "I3834",
+        "title": "A case run removes its own scratch dir however it ends: passed, failed, timed out or interrupted",
+        "description": "Make test/run.sh remove each case's $TMPDIR/mj-test.* directory and its skip mark when the case passes, fails, times out, or when the runner itself is interrupted or terminated while the case runs (an EXIT, INT, TERM and HUP trap that first stops the case's process group), and keep it only when MJ_TEST_KEEP=1 asks, naming the kept path.",
+        "path": ".ai/repo/project/issues/I3834.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2135
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -115660,6 +115715,14 @@
         "bytes": 8372
       },
       {
+        "uri": "majordomus://test/test/cases/3834_a_case_run_removes_its_own_dir.sh",
+        "kind": "test",
+        "identity": "test/cases/3834_a_case_run_removes_its_own_dir.sh",
+        "path": "test/cases/3834_a_case_run_removes_its_own_dir.sh",
+        "source_class": "case",
+        "bytes": 3180
+      },
+      {
         "uri": "majordomus://test/test/cases/383_convergence_is_enforced.sh",
         "kind": "test",
         "identity": "test/cases/383_convergence_is_enforced.sh",
@@ -118390,7 +118453,7 @@
       "identity": [
         "id"
       ],
-      "objects": 801
+      "objects": 806
     },
     {
       "name": "knowledge",
@@ -118542,7 +118605,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 567
+      "objects": 568
     },
     {
       "name": "use-case",
