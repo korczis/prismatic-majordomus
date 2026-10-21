@@ -1307,9 +1307,26 @@ PJ="$SITE/data/generated/plan.json"
 for id in $(jq -r '.milestones[].id, .issues[].id' "$PJ"); do
   [ -f "$PUB/plan/$(printf '%s' "$id" | tr 'A-Z' 'a-z')/index.html" ] || bad tiles "no page for plan record $id"
 done
-# the diagram is HTML, so its arrows are escaped; compare against what the browser receives
-jq -r '.edges[] | .from + " --&gt; " + .to' "$PJ" > "$PAGEROWS.found"; while read -r e; do
-  grep -qF -- "$e" "$PUB/plan/dag/index.html" || bad tiles "edge ${e/--&gt;/-->} is in plan.json but not in the rendered graph"
+# Where each edge is drawn (I3841): /plan/dag/ draws the milestone graph, one counted arrow per
+# pair of milestones an issue dependency crosses, and lists the issues behind each arrow; a
+# milestone's page draws the edges between its own issues. Every edge of plan.json is checked on
+# the page that owns it. The diagram is HTML, so its arrows are escaped; compare against what the
+# browser receives.
+jq -r 'def node: "M_" + gsub("[^A-Za-z0-9]"; "_");
+  .milestone_edges[] | (.from | node) + " --&gt;|" + (.count | tostring) + "| " + (.to | node)' "$PJ" > "$PAGEROWS.found"
+while read -r e; do
+  grep -qF -- "$e" "$PUB/plan/dag/index.html" || bad tiles "milestone edge ${e/--&gt;/-->} is in plan.json but not in the graph /plan/dag/ draws"
+done < "$PAGEROWS.found"
+jq -r '(.issues | map({key: .id, value: .milestone}) | from_entries) as $of
+  | .edges[] | [.from, .to, $of[.from], $of[.to]] | @tsv' "$PJ" > "$PAGEROWS.found"
+while IFS="$MJ_TAB" read -r from to mfrom mto; do
+  if [ "$mfrom" = "$mto" ]; then
+    page="$PUB/plan/$(printf '%s' "$mfrom" | tr 'A-Z' 'a-z')/index.html"
+    grep -qF -- "$from --&gt; $to" "$page" || bad tiles "edge $from --> $to is in plan.json but not in the graph milestone $mfrom's page draws"
+  else
+    grep -qE -- ">$from</a> → <a href=\"[^\"]*\" class=\"[^\"]*\">$to</a>" "$PUB/plan/dag/index.html" \
+      || bad tiles "edge $from --> $to crosses $mfrom and $mto and is not listed on /plan/dag/"
+  fi
 done < "$PAGEROWS.found"
 for id in $(jq -r '.issues[] | select(.status=="READY") | .id' "$PJ"); do
   grep -qF "plan/$(printf '%s' "$id" | tr 'A-Z' 'a-z')/" "$PUB/plan/index.html" || bad tiles "READY issue $id is not linked from /plan/"

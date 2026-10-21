@@ -5,7 +5,7 @@ template = "page.html"
 [extra]
 lang = "cs"
 translated_from = "seats-not-names/"
-source_digest = "f5c4e2cbdec72548e785dd36cadc0057afdc6ae92dbcab826329eaf2f875e3d5"
+source_digest = "5b26414f155534e79c5587a3457a7c8faf3d2188b7f4151836050397fc9ad48c"
 related = ["vsechno-v-jednom-proudu/", "teze/", "vlozene-zadani-se-stava-planem/", "plan-se-napadne-driv-nez-se-postavi/", "zabrano-driv-nez-se-stavi/"]
 [extra.translations]
 en = "seats-not-names/"
@@ -33,16 +33,16 @@ Vlastník repozitáře sessions to ráno odpověděl několika řádky v češti
 
 První rozhodnutí se týkalo toho, kdo co dělá. Integrace potřebuje několik rolí, které smí v jednu chvíli držet jen jedna session: někdo přistává, někdo vydává. Nejjednodušší je zapsat to jménem do dokumentu: „vydává session 9c“. Jenže to jméno přestane platit ve chvíli, kdy se session znovu připojí pod jinou identitou, spadne nebo práci předá, a nic si toho nevšimne.
 
-Role je proto **křeslo** (seat) a křeslo se drží tak, že se drží exkluzivní claim na meshi, a nijak jinak. Claim už je podepsaná událost, kterou replikuje každý stroj, která žije jen tak dlouho jako heartbeat její session a kterou jiná session nemůže vzít, dokud ji drží. Pravidlo [project.the-cooperation-model-is-the-owners-word](@/rules/project-the-cooperation-model-is-the-owners-word-1.md) jmenuje čtyři křesla:
+Role je proto **křeslo** (seat) a křeslo se drží tak, že se drží exkluzivní claim na meshi, a nijak jinak. Claim už je podepsaná událost, kterou replikuje každý stroj, která žije jen tak dlouho jako heartbeat její session a kterou jiná session nemůže vzít, dokud ji drží. Pravidlo [project.the-cooperation-model-is-the-owners-word](@/rules/project-the-cooperation-model-is-the-owners-word-2.md) jmenuje čtyři křesla:
 
 <div class="overflow-x-auto" tabindex="0">
 
 | křeslo | claimuje | dělá |
 |---|---|---|
-| landing seat | `campaign/*/landing` | přistává každý zelený head, připnutý k headu, který posoudilo CI, a skládá kombinované topy |
-| release seat | `release/seat` | zvedá verzi, taguje, zapisuje vydání a ověřuje web, kdykoli master drží přistálou práci za posledním tagem |
-| repair lane | `refs/heads/*` | merguje master do pull requestu, který je v konfliktu, na vlastní větvi toho pull requestu |
-| worker | cesty svého jednoho issue | jedno issue, jeden pull request; zelený head předá landing seatu a nikdy nemerguje |
+| landing seat | `campaign/*/landing` | skládá a přistává kombinované topy, když heady musí vyjít spolu, připnuté k headu, který posoudilo CI, a obsluhuje frontu hlídaného landeru |
+| release seat | `release/seat` | zvedá verzi, taguje na zeleném `ci` samotného masteru, zapisuje vydání a po přistáních ověřuje web, kdykoli master drží přistálou práci za posledním tagem |
+| repair lane | `refs/heads/*` | merguje master do pull requestu, který je v konfliktu, na vlastní větvi toho pull requestu, jeden claim na větev |
+| worker | cesty svého jednoho issue | jedno issue, jeden pull request; svůj zelený head přistane sám přes frontu hlídaného landeru |
 
 </div>
 
@@ -57,6 +57,10 @@ Top je aktuální master s heady všech pull requestů, které nejsou v konflikt
 
 Nic z toho ale nic nepovoluje. Merge je `gh pr merge <n> --admin --merge --match-head-commit <sha>` a je dovolený jen tehdy, když `ci` přesně toho headu skončilo úspěchem a head obsahuje aktuální `origin/master`. Administrátorské přebití se utrácí za strom, který byl posouzený, nikdy za přeskočení posouzení. Kvůli přistání se nevypíná žádný hook ani gate, `--no-verify` se nepoužívá nikdy a tag se pushne jen na commit, jehož `ci` uspělo.
 
+## Worker přistane svůj zelený head sám
+
+První verze dělala z každého přistání práci landing seatu a do 20. října se čekání, které s tím přišlo, stalo úzkým hrdlem: worker předal svůj head a čekal na slovo křesla a buildy čekaly na pořadí slotů. Ten večer vlastník pravidla zmírnil a druhá verze pravidla zaznamenává, jak to křesla přečetla. Worker, jehož pull request je zelený, zapíše jeho číslo do fronty hlídaného landeru a na žádné křeslo nečeká. Lander posune master dopředu jen tehdy, když nejnovější běh `ci` na headu pull requestu skončil úspěchem, ten head je pořád headem pull requestu a obsahuje `origin/master`; všechno ostatní zůstane ve frontě a je jmenované. Head, který musí vyjít s jinými, jde dál k landing seatu jako člen kombinovaného topu. Buildy omezuje stroj, ne pořadí slotů, a úklid, při kterém se nic neztratí, se dělá bez ptaní a ohlásí se na meshi. Nezmírnilo se připnutí: přistání dál potřebuje head, jehož `ci` uspělo a který obsahuje aktuální master, nic nepřeskakuje kontrolu ani hook a cesty i identifikátory se dál claimují dřív, než se postaví.
+
 ## Nikdo nečeká, až ho někdo požádá
 
 Třetí rozhodnutí se týkalo zastaralé práce. Checkout nebo větev, která zaostala za masterem, dotáhne na aktuální stav ten, kdo ji najde, a nikoho se neptá. Co drží, se nejdřív uchová: necommitnutá práce se uloží do commitu, na který ještě nic neukazuje (`git stash create`), a připne se pod `refs/rescue/`, takže ji dotažení stromu nemůže ztratit.
@@ -69,7 +73,7 @@ Větev, kterou si nikdo jiný nestáhl, smí jít resetovat nebo rebasovat. Vět
 
 ## Co hotové není
 
-[ADR 0167](@/adrs/adr-0167.md) je pořád `proposed`. Praxe přesto platí, protože pravidlo, které ji nese, je aktivní a blokující. Jeho testy jsou case 3150, 2999 a 720.
+[ADR 0167](@/adrs/adr-0167.md) je pořád `proposed`. Praxe přesto platí, protože pravidlo, které ji nese, je aktivní a blokující. Jeho testy jsou case 3150, 3824, 2999 a 720.
 
 Topy skládá landing seat vlastním postupem, ne přes schopnost repozitáře. Typované `prs compose`, které by členy topu zapsalo jako manifest, nikdy nepřistálo. Dokud se tak nestane, záznamem topu je jeho pull request: jeho popis jmenuje členy a jejich heady a rodiči jeho merge commitu jsou master a top. Executor, který postavilo ADR 0101, dál přistává jeden připravený pull request najednou a nikdy nepředává `--admin`. Kombinovaný top je čin landing seatu, ne executoru.
 

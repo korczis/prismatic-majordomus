@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.5"
   },
   "registry": {
-    "fingerprint": "a7ae5f853ef4e05e03bd093ed000f4369deb085d5bc38b7ca0a22776ae430809",
+    "fingerprint": "79e601c4fc7a6d69e847c993fb0cd734a11dfdc777db5eea1e99415c5601165f",
     "summary": {
-      "total": 3258,
+      "total": 3261,
       "builtin": 206,
-      "declarative": 3052,
+      "declarative": 3055,
       "by_kind": {
         "command": 31,
         "query": 175,
-        "resource": 3052
+        "resource": 3055
       },
       "by_stability": {
         "behaviorally_verified": 142,
         "experimental": 55,
-        "implemented": 3061
+        "implemented": 3064
       },
       "mcp_tools": 196,
-      "mcp_resources": 3107,
+      "mcp_resources": 3110,
       "http_routes": 201,
       "cli_commands": 111,
       "modules": 92,
@@ -85445,7 +85445,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 871,
+        "capabilities": 872,
         "capability_ids": []
       },
       {
@@ -85848,7 +85848,7 @@
         "title": "release-record",
         "description": "Declarative objects of kind 'release-record' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 34,
+        "capabilities": 35,
         "capability_ids": []
       },
       {
@@ -86019,7 +86019,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 585,
+        "capabilities": 586,
         "capability_ids": []
       },
       {
@@ -86111,7 +86111,7 @@
     ]
   },
   "index": {
-    "fingerprint": "355248630171a06ddb7fcd4886f7f0f896bfc9c299b5b9d540870507ec40e37f",
+    "fingerprint": "640dacf8b0c1b518efbb7cf67d43f53530d2ce531741f1148b62f6d48e61c73d",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -86151,7 +86151,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 33,
-      "issue": 871,
+      "issue": 872,
       "knowledge": 58,
       "mesh-declaration": 1,
       "milestone": 100,
@@ -86159,13 +86159,13 @@
       "policy": 1,
       "profile": 4,
       "prompt": 5,
-      "release-record": 34,
+      "release-record": 35,
       "rule": 189,
       "scope": 1,
       "session": 91,
       "skill": 8,
       "taxonomy": 10,
-      "test": 585,
+      "test": 586,
       "use-case": 49,
       "workspace": 1
     },
@@ -93214,7 +93214,7 @@
         "title": "Installing Majordomus",
         "path": "docs/INSTALL.md",
         "source_class": "document",
-        "bytes": 15705
+        "bytes": 15835
       },
       {
         "uri": "majordomus://document/docs/INTEGRATION.md",
@@ -93349,7 +93349,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 739620
+        "bytes": 747121
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -96857,7 +96857,7 @@
         "path": ".ai/repo/project/intents/a-provider-carries-the-contract-natively.yaml",
         "section": "project",
         "source_class": "intent",
-        "bytes": 5902
+        "bytes": 6522
       },
       {
         "uri": "majordomus://intent/a-session-leaves-what-it-observed",
@@ -102203,7 +102203,7 @@
         "path": ".ai/repo/project/issues/I2848.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2662
+        "bytes": 2737
       },
       {
         "uri": "majordomus://issue/I2849",
@@ -102940,7 +102940,7 @@
         "path": ".ai/repo/project/issues/I3083.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3052
+        "bytes": 3108
       },
       {
         "uri": "majordomus://issue/I3090",
@@ -103006,7 +103006,7 @@
         "path": ".ai/repo/project/issues/I3098.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2332
+        "bytes": 3258
       },
       {
         "uri": "majordomus://issue/I3100",
@@ -106273,7 +106273,7 @@
         "path": ".ai/repo/project/issues/I3447.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3410
+        "bytes": 3409
       },
       {
         "uri": "majordomus://issue/I3448",
@@ -106625,7 +106625,7 @@
         "path": ".ai/repo/project/issues/I3829.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 4139
+        "bytes": 4225
       },
       {
         "uri": "majordomus://issue/I3830",
@@ -106724,7 +106724,7 @@
         "path": ".ai/repo/project/issues/I3838.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 5074
+        "bytes": 5157
       },
       {
         "uri": "majordomus://issue/I3839",
@@ -106736,6 +106736,17 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 2645
+      },
+      {
+        "uri": "majordomus://issue/I3841",
+        "kind": "issue",
+        "identity": "I3841",
+        "title": "The plan's graph is drawn by milestone, so /plan/dag/ answers the site probe within its budget however large the backlog grows",
+        "description": "Bound what /plan/dag/ and /plan/ draw by the number of milestones rather than the number of issues: scripts/generate-site-data adds to plan.json a milestone graph (milestone_edges, one entry per pair of milestones an issue dependency crosses, counted, and milestone_mermaid, one node per milestone with its done count and status), both pages draw it, /plan/dag/ lists the milestone edges as its text equivalent and points to the waves on /plan/, and every milestone node links to the milestone's own page, which already draws its issues; a case holds /plan/dag/ to an element ceiling and its graph to one node per milestone.",
+        "path": ".ai/repo/project/issues/I3841.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4045
       },
       {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
@@ -109810,6 +109821,16 @@
         "identity": "v1.0.0-alpha.2",
         "title": "v1.0.0-alpha.2",
         "path": ".ai/repo/releases/v1.0.0-alpha.2.yaml",
+        "section": "releases",
+        "source_class": "release",
+        "bytes": 2593
+      },
+      {
+        "uri": "majordomus://release-record/v1.0.0-alpha.4",
+        "kind": "release-record",
+        "identity": "v1.0.0-alpha.4",
+        "title": "v1.0.0-alpha.4",
+        "path": ".ai/repo/releases/v1.0.0-alpha.4.yaml",
         "section": "releases",
         "source_class": "release",
         "bytes": 2593
@@ -115817,7 +115838,7 @@
         "identity": "test/cases/3055_a_derivation_needs_no_history.sh",
         "path": "test/cases/3055_a_derivation_needs_no_history.sh",
         "source_class": "case",
-        "bytes": 4097
+        "bytes": 4558
       },
       {
         "uri": "majordomus://test/test/cases/3056_every_failure_class_names_its_proof.sh",
@@ -116772,6 +116793,14 @@
         "bytes": 6607
       },
       {
+        "uri": "majordomus://test/test/cases/3860_the_plan_graph_is_drawn_by_milestone.sh",
+        "kind": "test",
+        "identity": "test/cases/3860_the_plan_graph_is_drawn_by_milestone.sh",
+        "path": "test/cases/3860_the_plan_graph_is_drawn_by_milestone.sh",
+        "source_class": "case",
+        "bytes": 4649
+      },
+      {
         "uri": "majordomus://test/test/cases/386_a_plan_is_held_to_its_intent.sh",
         "kind": "test",
         "identity": "test/cases/386_a_plan_is_held_to_its_intent.sh",
@@ -117369,7 +117398,7 @@
         "identity": "test/cases/56_derived_current_gate.sh",
         "path": "test/cases/56_derived_current_gate.sh",
         "source_class": "case",
-        "bytes": 11932
+        "bytes": 12570
       },
       {
         "uri": "majordomus://test/test/cases/572_verification_records_the_tree_it_proved.sh",
@@ -119486,7 +119515,7 @@
       "identity": [
         "id"
       ],
-      "objects": 871
+      "objects": 872
     },
     {
       "name": "knowledge",
@@ -119572,7 +119601,7 @@
       "identity": [
         "tag"
       ],
-      "objects": 34
+      "objects": 35
     },
     {
       "name": "rule",
@@ -119638,7 +119667,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 585
+      "objects": 586
     },
     {
       "name": "use-case",

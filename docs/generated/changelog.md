@@ -7,6 +7,69 @@ Every entry below is derived: a section per release the layer records, its decis
 
 Current version: **1.0.0-alpha.5**
 
+## v1.0.0-alpha.4 — 2026-10-21
+
+### Added
+
+- **providers**: a provider declares its browser bridge, and preflight names the missing host (`b30ee30a1`)
+- **ci**: the interaction probe runs in six shards, verified as one sweep (I3602) (`7666c365b`)
+- **ci**: the site's browser probe runs in four shards that are the sweep (I2841) (`95357325d`)
+
+### Fixed
+
+- **top**: #1765's reds, fixed at their sources and derived once (`97391192d`)
+- **top**: train 2's pre-push reds — canonical order, no eval, scopes that exist (`98707ace2`)
+- **top**: the mesh doctor's remediation names `serve status`, not the lease path (`712729721`)
+- **top**: cases 3247 and 3836 name why their globals look unused (`76158b704`)
+- **top**: case 1018 counts the queue's tickets with a glob, not ls | grep (`374fa149e`)
+- **site**: the plan page counts its findings instead of printing one row per pair (I3838) (`c278259ab`)
+- **site-data**: the scenario cache engages; the tool's lib dir is compared physically (I0832) (`57c1a9d91`)
+- **mcp**: the Claude in the browser sources are cited as text, not links (`6ea3de94b`)
+- **derive**: waiting derives take the machine lock in the order they arrived (I3098) (`fe464a41d`)
+- **test**: a case run removes its own scratch dir however it ends (I3834) (`34ca69681`)
+- **ci**: a gated step leaves its receipt and a step bound follows its measured time (L1, L2, L7) (`6240bc2d7`)
+- **ci**: the evidence job runs only when a planned lane ran tests (I3013) (`99727f47c`)
+- **test**: case 3602 compares its route lists in C order (I2841) (`a9f29e563`)
+- **ci**: the site probe runs in six shards, since the Czech copies doubled the routes (I2841) (`3ad4310f4`)
+
+### Performance
+
+- **derive**: reading the derive queue forks nothing (I3098) (`4b36890a9`)
+- **site-data**: a scenario whose tool and use case are unchanged is not re-executed (I0832) (`73d26b129`)
+
+### Documentation
+
+- **plan**: the roadmap reads idd-workspace's release from the committed merge (`603164312`)
+- **plan**: a node the mesh lists as present but cannot link says why (I3835) (`12c702cdc`)
+- **mcp**: Claude in the browser reaches the mesh through Claude Code (`ebf58f233`)
+- **rules**: a worker lands its own green head, and every bootstrap says so (I3824) (`8d394f3c2`)
+
+### Tests
+
+- **provider**: a bridge without its host is not looked for (`f21025614`)
+- **site**: case 3848 reads its own plan, and says what its ceiling counts (I3838) (`0545642b7`)
+
+### Housekeeping
+
+- **top**: train 2 carries the v1.0.0-alpha.2 record, derived once (`b5140729d`)
+- **release**: record v1.0.0-alpha.2 and the metadata it publishes (`81063e55d`)
+- **release**: train 2, members applied, bump to 1.0.0-alpha.4, derived once (`69fd62f1d`)
+- **derive**: delivery observes a commit origin holds (I3834) (`42a1ce389`)
+- **release**: bump to 1.0.0-alpha.3, train 1 derived once (`784960b08`)
+- **plan**: I2413 is recorded done; a worktree already cooperates through the primary (`42291f9ef`)
+- **plan**: I1985 and I2282 are recorded done, each on a test that ran green on master (`35a559f3e`)
+- **plan**: I3013, the evidence job runs only when a planned lane ran tests (`2937f3ebf`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v1.0.0-alpha.4-aarch64-apple-darwin.tar.gz (`87b5f17a05d8`)
+- `macos-x86_64` — majordomus-v1.0.0-alpha.4-x86_64-apple-darwin.tar.gz (`db150297c237`)
+- `linux-x86_64-gnu` — majordomus-v1.0.0-alpha.4-x86_64-unknown-linux-gnu.tar.gz (`aadc60edec30`)
+- `linux-x86_64-musl` — majordomus-v1.0.0-alpha.4-x86_64-unknown-linux-musl.tar.gz (`f4022f2b79ab`)
+- `linux-aarch64-gnu` — majordomus-v1.0.0-alpha.4-aarch64-unknown-linux-gnu.tar.gz (`1aafbed99a30`)
+- `linux-aarch64-musl` — majordomus-v1.0.0-alpha.4-aarch64-unknown-linux-musl.tar.gz (`49152c6ced56`)
+
+
 ## v1.0.0-alpha.2 — 2026-10-21
 
 ### Fixed

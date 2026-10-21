@@ -31,16 +31,16 @@ The owner answered the sessions that morning in a few lines of Czech. Split the 
 
 The first decision was about who does what. Integration needs a few roles that only one session may hold at a time: someone lands, someone releases. The obvious way to record that is a name in a document: "session 9c releases". That name is out of date the moment the session reconnects under another identity, crashes, or hands the job over, and nothing would notice.
 
-So a role is a **seat**, and a seat is held by holding an exclusive claim on the mesh, and in no other way. A claim is already a signed event that every machine replicates, that lives only while its session's heartbeat does, and that another session cannot take while it holds. The rule [project.the-cooperation-model-is-the-owners-word](@/rules/project-the-cooperation-model-is-the-owners-word-1.md) lists four seats:
+So a role is a **seat**, and a seat is held by holding an exclusive claim on the mesh, and in no other way. A claim is already a signed event that every machine replicates, that lives only while its session's heartbeat does, and that another session cannot take while it holds. The rule [project.the-cooperation-model-is-the-owners-word](@/rules/project-the-cooperation-model-is-the-owners-word-2.md) lists four seats:
 
 <div class="overflow-x-auto" tabindex="0">
 
 | seat | claims | does |
 |---|---|---|
-| landing seat | `campaign/*/landing` | lands every green head, pinned to the head CI judged, and builds combined tops |
-| release seat | `release/seat` | bumps, tags, records and verifies the site whenever master holds landed work past the last tag |
-| repair lane | `refs/heads/*` | merges master into a pull request that conflicts, on that pull request's own branch |
-| worker | the paths of its one issue | one issue, one pull request; hands its green head to the landing seat and never merges |
+| landing seat | `campaign/*/landing` | composes and lands combined tops when heads must ship together, pinned to the head CI judged, and runs the guarded lander's queue |
+| release seat | `release/seat` | bumps, tags on master's own green `ci`, records and verifies the site after landings, whenever master holds landed work past the last tag |
+| repair lane | `refs/heads/*` | merges master into a pull request that conflicts, on that pull request's own branch, one claim per branch |
+| worker | the paths of its one issue | one issue, one pull request; lands its own green head through the guarded lander's queue |
 
 </div>
 
@@ -55,6 +55,10 @@ A top is the current master with the heads of every pull request that conflicts 
 
 What it does not do is relax anything. The merge is `gh pr merge <n> --admin --merge --match-head-commit <sha>`, and it is allowed only when that exact head's `ci` concluded success and the head contains the current `origin/master`. The administrator's override is spent on a tree that was judged, never to skip a judgement. No hook or gate is disabled to land, `--no-verify` is never used, and a tag is pushed only on a commit whose `ci` succeeded.
 
+## A worker lands its own green head
+
+The first version made every landing the landing seat's, and by 20 October the waits that came with it were the bottleneck: a worker handed its head over and waited for a seat's word, and builds waited for a slot order. That evening the owner relaxed the rules, and the second version of the rule records how the seats read that. A worker whose pull request is green enters its number in the guarded lander's queue and does not wait for a seat. The lander fast-forwards master only when the newest `ci` run on the pull request's head concluded success, that head is still the pull request's head, and it contains `origin/master`; anything else stays queued and is named. A head that must ship with others still goes to the landing seat as a member of a combined top. Builds are bounded by the machine rather than by a slot order, and cleanup that loses nothing is done without asking and announced on the mesh. What did not relax is the pin: a landing still needs a head whose `ci` succeeded and which contains the current master, nothing skips a check or a hook, and paths and identifiers are still claimed before they are built.
+
 ## Nobody waits to be asked
 
 The third decision was about stale work. A checkout or a branch that has fallen behind master is brought current by whoever finds it, without asking anyone. What it holds is preserved first: uncommitted work goes into a commit that nothing references yet (`git stash create`) and is pinned under `refs/rescue/`, so bringing the tree current cannot lose it.
@@ -67,7 +71,7 @@ The fourth decision was about time. The release seat does not wait for a milesto
 
 ## What is not done
 
-[ADR 0167](@/adrs/adr-0167.md) is still `proposed`. The practice is in force anyway, because the rule that carries it is active and blocking. Its tests are cases 3150, 2999 and 720.
+[ADR 0167](@/adrs/adr-0167.md) is still `proposed`. The practice is in force anyway, because the rule that carries it is active and blocking. Its tests are cases 3150, 3824, 2999 and 720.
 
 The landing seat assembles tops by its own procedure, not through a capability of the repository. The typed `prs compose`, which would record a top's members as a manifest, never landed. Until it does, the record of a top is its pull request: its body names the members and their heads, and its merge commit's parents are master and the top. The executor that ADR 0101 built still lands one ready pull request at a time and never passes `--admin`. A combined top is the landing seat's act, not the executor's.
 
