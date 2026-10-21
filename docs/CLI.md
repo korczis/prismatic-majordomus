@@ -1784,7 +1784,13 @@ once the tree is settled. `--note <file>` supplies the
 completion note; otherwise the newest handover naming this task is used. `--check`
 evaluates scope and state without writing and exits `0` when no task is active or the
 task is already finished, so a pre-push hook never blocks a repository with nothing to
-enforce.
+enforce. `--check --pushed <file>` judges a push instead of the checkout: the file holds the
+lines git gives a pre-push hook (`<local ref> <local sha> <remote ref> <remote sha>`), and
+each pushed `refs/heads/<b>` is judged by the task of the checkout that has `<b>` checked out,
+this checkout's task only of its own branch. A branch no checkout holds is admitted and
+named on one line; a deleted ref and every ref outside `refs/heads/` are skipped. A refusal
+names the branch and the checkout whose task refused it (ADR 0105, amendment of 2026-10-15;
+case 3700). This repository's `.githooks/pre-push` passes the refs it read.
 
 Profile requirements are also evaluated for `completed`: `regression_test_required`
 passes when a touched path looks like a test (`test/`, `spec/`, `_test.`, `.spec.`);

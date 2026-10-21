@@ -15,27 +15,75 @@ MJ_FINISH_OUTCOME=""; MJ_FINISH_VERIFY=""; MJ_FINISH_NOTE=""
 MJ_FINISH_VEXIT=""; MJ_FINISH_VSECS=""; MJ_FINISH_VTREE=""
 export MJ_FINISH_OUTCOME
 
+# The checkout that has refs/heads/<branch> checked out, by git's own list; empty when none does.
+mj_worktree_holding() {
+  git -C "$MJ_ROOT" worktree list --porcelain 2>/dev/null | awk -v want="branch refs/heads/$1" '
+    /^worktree / { wt = substr($0, 10) }
+    $0 == want { print wt; exit }'
+}
+
+# The pre-push contract (ADR 0105, amendment of 2026-10-15, I1990): each pushed refs/heads/<b>
+# is judged by the task of the checkout that has <b> checked out, and this checkout's task only
+# of its own branch. A branch no checkout holds is admitted as a push without a task is, named on
+# one line; refs/majordomus/* and every ref outside refs/heads/ stay outside the contract, and a
+# deleted ref (an all-zero local sha) is skipped. `file` holds the lines git gave the hook.
+mj_finish_check_pushed() {
+  local file="$1" here _lref lsha rref _rsha branch wt rc=0
+  here="$(cd "$MJ_ROOT" && pwd -P)"
+  while read -r _lref lsha rref _rsha; do
+    case "$rref" in refs/heads/*) branch="${rref#refs/heads/}" ;; *) continue ;; esac
+    case "$lsha" in *[!0]*) ;; *) continue ;; esac
+    wt="$(mj_worktree_holding "$branch")"
+    if [ -z "$wt" ]; then
+      mj_info finish "-" "pushed branch $branch: no checkout holds it, so no task judges it; admitted"
+      continue
+    fi
+    wt="$(cd "$wt" 2>/dev/null && pwd -P)" || wt=""
+    if [ -z "$wt" ]; then
+      mj_info finish "-" "pushed branch $branch: its checkout is gone; admitted"
+      continue
+    fi
+    if [ "$wt" = "$here" ]; then
+      ( mj_cmd_finish --check ) || { rc=$?; printf 'finish --check: pushed branch %s is refused by this checkout'"'"'s task\n' "$branch" >&2; }
+    else
+      "$MJ_SELF" --repo "$wt" finish --check || { rc=$?; printf 'finish --check: pushed branch %s is refused by the task of %s\n' "$branch" "$wt" >&2; }
+    fi
+  done < "$file"
+  return "$rc"
+}
+
 mj_cmd_finish() {
-  local outcome="" verify="" check=0 note=""
+  local outcome="" verify="" check=0 note="" pushed=""
   while [ $# -gt 0 ]; do case "$1" in
     --outcome) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--outcome needs a value"; outcome="$2"; shift 2 ;;
     --outcome=*) outcome="${1#--outcome=}"; shift ;;
     --verify-command) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--verify-command needs a command"; verify="$2"; shift 2 ;;
     --note) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--note needs a file"; note="$2"; shift 2 ;;
     --check) check=1; shift ;;
+    --pushed) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--pushed needs the file of pushed refs"; pushed="$2"; shift 2 ;;
     --help|-h) cat <<H
 usage: majordomus finish --outcome <completed|partial|blocked|no_match|failed> [--verify-command "<cmd>"] [--note <file>]
-       majordomus finish --check
+       majordomus finish --check [--pushed <file>]
   evaluates every line of the finish contract, prints pass/fail for each, refuses (10) if any fails
   --verify-command  the project's own verification; its command, exit code, duration and the
                     tree it ran over are recorded, and a tree that changed under it is not a pass.
                     A command that cannot verify anything (true, :, exit 0, only echo) is refused
   --note            a completion note (required sections as a handover); otherwise the newest handover for this task is used
   --check           evaluate the current task against scope and state without writing; exit 0 when no task is active
+  --pushed <file>   with --check: the refs a push carries, as git gives them to the pre-push hook;
+                    each pushed branch is judged by the task of the checkout that holds it, and
+                    this checkout's task only of its own branch
 H
       return 0 ;;
     *) mj_die "$MJ_EX_USAGE" "finish: unknown option $1" ;;
   esac; done
+  if [ -n "$pushed" ]; then
+    [ "$check" = 1 ] || mj_die "$MJ_EX_USAGE" "finish: --pushed goes with --check"
+    [ -r "$pushed" ] || mj_die "$MJ_EX_USAGE" "finish: cannot read the pushed refs in $pushed"
+    mj_require_installed
+    mj_finish_check_pushed "$pushed" && return 0
+    exit "$MJ_EX_CONTRACT"
+  fi
   mj_require_installed
   mj_load_policy || mj_die "$MJ_EX_CONTRACT" "policy does not parse (run: majordomus doctor)"
   if ! mj_load_current; then

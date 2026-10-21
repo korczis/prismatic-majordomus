@@ -3,14 +3,20 @@
 # store (`majordomus-cli continuity sync`), whose records are handovers, never work. The
 # finish contract asks whether the task's work may be published, which is not this
 # question, and asking it would refuse a handover for exactly the task it hands over.
-# Any other ref in the same push and the contract applies to the whole push, as before.
+# Any other ref in the same push and the finish contract judges the branches pushed: each by
+# the task of the checkout that has it checked out, this checkout's task only of its own
+# branch (ADR 0105, amendment of 2026-10-15, I1990). The refs git gave are passed on, since
+# the hook has already read them from standard input.
+pushed="$(mktemp "${TMPDIR:-/tmp}/mj-pre-push.XXXXXX")" || exit 1
+trap 'rm -f "$pushed"' EXIT
 only_layer=1 any=0 heads=""
-while read -r _local_ref local_sha remote_ref _remote_sha; do
+while read -r local_ref local_sha remote_ref remote_sha; do
   any=1
+  printf '%s %s %s %s\n' "$local_ref" "$local_sha" "$remote_ref" "$remote_sha" >> "$pushed"
   case "$remote_ref" in refs/majordomus/*) ;; *) only_layer=0; heads="$heads $local_sha" ;; esac
 done
 [ "$any" = 1 ] && [ "$only_layer" = 1 ] && exit 0
-bin/majordomus finish --check || exit $?
+bin/majordomus finish --check --pushed "$pushed" || exit $?
 # No two cases share a number. Each branch is clean alone and the pair exists only once both
 # are merged, so the trunk is where it was found (2026-10-12, two cases numbered 1096): the
 # check reads file names, takes under a second, and is asked of every push.
