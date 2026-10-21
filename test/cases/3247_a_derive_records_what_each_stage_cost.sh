@@ -23,6 +23,7 @@ run_block() {   # run_block <timings file or empty>
   ( set -eu; ROOT="$ROOT"; export MAJORDOMUS_DERIVE_TIMINGS="$1"
     # shellcheck disable=SC1090
     . "$block"
+    # shellcheck disable=SC2034  # read by timings_record in the sourced block
     LOCK_WAIT_MS=1234
     step "stage A: one"; sleep 0.05; step_done
     step "stage B: two"; step_done

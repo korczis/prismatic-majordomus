@@ -34,12 +34,14 @@ drive() {   # drive <usecase.sh to load> <cache dir>: prints "key=<0|1> calls=<n
     . "$ROOT/lib/common.sh"
     # shellcheck disable=SC1090
     . "$lib"
-    MJ_ROOT="$R"; MJ_LIB_DIR="$R/bin/../lib"
-    MJ_UC_DIR="$R/.ai/repo/use-cases"; MJ_AI_LOCAL_DIR="$dir"
+    # shellcheck disable=SC2034  # these globals are read by the sourced lib/usecase.sh
+    { MJ_ROOT="$R"; MJ_LIB_DIR="$R/bin/../lib"
+      MJ_UC_DIR="$R/.ai/repo/use-cases"; MJ_AI_LOCAL_DIR="$dir"; }
     MAJORDOMUS_BIN="$T/bin.fixture"; export MAJORDOMUS_BIN
     calls=0
     mj_uc_run_one() { calls=$((calls + 1)); printf '{"evidence":"run %s"}\n' "$calls" > "$2"; }
     mj_uc_v() { printf 'demo'; }
+    # shellcheck disable=SC2034  # read by mj_uc_tool_key in the sourced lib/usecase.sh
     MJ_UC_FILE_1="$T/demo.md"
     MJ_UC_TOOL_KEY="$(mj_uc_tool_key)"
     mkdir -p "$dir"
