@@ -400,7 +400,7 @@
     "schema-DeploymentCheck": "docs/api/deploy/",
     "schema-DeploymentList": "docs/api/deploy/",
     "schema-DeploymentStanding": "docs/api/served/",
-    "schema-DeploymentStatus": "docs/api/deploy/",
+    "schema-DeploymentStatus": "docs/api/shared/",
     "schema-DeploymentView": "docs/api/deploy/",
     "schema-DesignReport": "docs/api/design/",
     "schema-Desired": "docs/api/server/",
@@ -1766,7 +1766,7 @@
     "DeploymentCheck": "deploy",
     "DeploymentList": "deploy",
     "DeploymentStanding": "served",
-    "DeploymentStatus": "deploy",
+    "DeploymentStatus": "shared",
     "DeploymentView": "deploy",
     "DesignReport": "design",
     "Desired": "server",
@@ -13186,6 +13186,15 @@
           ],
           "required": true,
           "type": "Judgement"
+        },
+        {
+          "description": "For a deployment the layer declares as an object: `active` while `now` is served,\n`declared` otherwise, `retired` when the object says so. Derived from the newest\nobservation, never set by hand (I3822); absent for a name no object carries.",
+          "name": "status",
+          "refs": [
+            "DeploymentStatus"
+          ],
+          "required": false,
+          "type": "DeploymentStatus | null"
         }
       ],
       "type": "object",
@@ -13198,13 +13207,14 @@
     },
     {
       "description": "Where a deployment stands.\n\n`Status` is the right name inside this module; the schema component namespace is flat,\nand `distribution::Status` answers a different question, so each says which it is.",
-      "home": "deploy",
+      "home": "shared",
       "is_enum": true,
       "name": "DeploymentStatus",
       "properties": [],
       "type": "\"declared\" | \"active\" | \"retired\"",
       "used_by": [],
       "used_by_schemas": [
+        "DeploymentStanding",
         "DeploymentView"
       ],
       "values": [
@@ -71364,7 +71374,7 @@
           "cache_detail": "",
           "cli": "served show",
           "curl": "curl -s \"http://127.0.0.1:8741/api/v1/served?commit=HEAD&deployment=pages\"",
-          "description": "The newest recorded observation of each deployment, re-judged against a commit (HEAD unless named). A record keeps proving every commit its served build contains and stops proving the moment the commit asked about is not among them; a record that received nothing proves nothing. Asks no network and writes nothing.",
+          "description": "The newest recorded observation of each deployment, re-judged against a commit (HEAD unless named), and for a deployment the layer declares as an object its status derived from that: `active` only while it serves the commit. A record keeps proving every commit its served build contains and stops proving the moment the commit asked about is not among them; a record that received nothing proves nothing. Asks no network and writes nothing.",
           "home": "served",
           "id": "served.show",
           "kind": "query",

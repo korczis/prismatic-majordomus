@@ -59797,7 +59797,9 @@
             ".ai/repo/ci/gates.yaml",
             ".ai/repo/project/issues/I3823.yaml"
           ],
-          "serves": [],
+          "serves": [
+            "an-authorised-node-connects-from-anywhere#relay-when-no-direct-path"
+          ],
           "slug": "the-mesh-client-speaks-tls",
           "updated_at": "2026-10-21",
           "validation": [
@@ -81848,6 +81850,13 @@
         "label": "test/cases/3821_a_providers_tree_is_assembled_from_the_object.sh",
         "route": "/cockpit/objects/test/test-cases-3821-a-providers-tree-is-assembled-from-the-object-sh",
         "source": "test/cases/3821_a_providers_tree_is_assembled_from_the_object.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3822_a_provider_deployment_is_observed_at_its_url.sh",
+        "kind": "test",
+        "label": "test/cases/3822_a_provider_deployment_is_observed_at_its_url.sh",
+        "route": "/cockpit/objects/test/test-cases-3822-a-provider-deployment-is-observed-at-its-url-sh",
+        "source": "test/cases/3822_a_provider_deployment_is_observed_at_its_url.sh"
       },
       {
         "id": "majordomus://test/test/cases/3823_the_mesh_client_speaks_tls.sh",
@@ -123138,6 +123147,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3822_a_provider_deployment_is_observed_at_its_url.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/3823_the_mesh_client_speaks_tls.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -128284,8 +128298,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3627,
-      "edges": 8443,
+      "nodes": 3628,
+      "edges": 8444,
       "acyclic": false,
       "truncated": false
     }

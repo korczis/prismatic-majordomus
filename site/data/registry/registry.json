@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.1"
   },
   "registry": {
-    "fingerprint": "6a5b35a4af74a9b85b7379be938b8c500287181071d03b2297e484858f97010a",
+    "fingerprint": "3e5caef265a447e8cf33d863e086e415e4962add34bba31ea820a96e5702e3df",
     "summary": {
-      "total": 3173,
+      "total": 3174,
       "builtin": 207,
-      "declarative": 2966,
+      "declarative": 2967,
       "by_kind": {
         "command": 32,
         "query": 175,
-        "resource": 2966
+        "resource": 2967
       },
       "by_stability": {
         "behaviorally_verified": 143,
         "experimental": 55,
-        "implemented": 2975
+        "implemented": 2976
       },
       "mcp_tools": 196,
-      "mcp_resources": 3021,
+      "mcp_resources": 3022,
       "http_routes": 201,
       "cli_commands": 112,
       "modules": 92,
@@ -75606,7 +75606,7 @@
         "module": "served",
         "kind": "command",
         "title": "Observe what a deployment serves",
-        "description": "Fetches the build identity the site serves (`build.json` under the configured base URL, one bounded probe, no shell), judges it against the expected commit (HEAD unless named) by containment and appends the observation to the checkout-local record. Exit 0 when the deployment serves a build containing the commit, 10 when it measurably does not (behind, or built dirty), 12 when the question could not be answered (unreachable, unreadable, or a served commit this clone lacks).",
+        "description": "Fetches the build identity a deployment serves (one bounded probe, no shell): for a `deployment` naming an object with a provider, its liveness route at the provider's URL; otherwise `build.json` under the configured base URL. It judges it against the expected commit (HEAD unless named) by containment and appends the observation to the checkout-local record. Exit 0 when the deployment serves a build containing the commit, 10 when it measurably does not (behind, or built dirty), 12 when the question could not be answered (unreachable, unreadable, or a served commit this clone lacks).",
         "input": {
           "name": "ObserveInput",
           "schema": {
@@ -75625,14 +75625,14 @@
                   "string",
                   "null"
                 ],
-                "description": "The site's base URL; `base_url` of `site/config.toml` when absent."
+                "description": "The base URL; when absent, the `provider.url` of the deployment object `deployment`\nnames, else `base_url` of `site/config.toml` (I3822)."
               },
               "identity": {
                 "type": [
                   "string",
                   "null"
                 ],
-                "description": "The identity file under the base; `build.json` when absent."
+                "description": "The identity under the base; when absent, the `health.liveness` route of the\ndeployment object `deployment` names (which answers `commit` and `dirty`), else\n`build.json`."
               },
               "commit": {
                 "type": [
@@ -75852,7 +75852,7 @@
         "module": "served",
         "kind": "query",
         "title": "What each deployment was last seen serving",
-        "description": "The newest recorded observation of each deployment, re-judged against a commit (HEAD unless named). A record keeps proving every commit its served build contains and stops proving the moment the commit asked about is not among them; a record that received nothing proves nothing. Asks no network and writes nothing.",
+        "description": "The newest recorded observation of each deployment, re-judged against a commit (HEAD unless named), and for a deployment the layer declares as an object its status derived from that: `active` only while it serves the commit. A record keeps proving every commit its served build contains and stops proving the moment the commit asked about is not among them; a record that received nothing proves nothing. Asks no network and writes nothing.",
         "input": {
           "name": "ShowInput",
           "schema": {
@@ -75928,6 +75928,17 @@
                   "now": {
                     "$ref": "#/$defs/Judgement",
                     "description": "That record re-judged against the commit asked about. This, not the recorded\njudgement, is what a reader acts on."
+                  },
+                  "status": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/DeploymentStatus"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "For a deployment the layer declares as an object: `active` while `now` is served,\n`declared` otherwise, `retired` when the object says so. Derived from the newest\nobservation, never set by hand (I3822); absent for a name no object carries."
                   }
                 },
                 "required": [
@@ -76075,6 +76086,26 @@
                   "reason"
                 ],
                 "description": "The judgement of one served identity against one expected commit, with its reason. The\nreason travels with the verdict so that every surface can say *why* without re-deriving\nit.\n\n```\nuse majordomus_cli::served::{judge, Fetched, Judgement, ServedVerdict};\nlet j: Judgement = judge(&Err(Fetched::Unreachable(\"timeout\".into())), &\"a\".repeat(40), &fake());\nassert_eq!(j.verdict, ServedVerdict::Unreachable);\nassert!(j.reason.contains(\"timeout\"));\n# use majordomus_cli::served::Ancestry;\n# struct N; impl Ancestry for N {\n#     fn has(&self, _: &str) -> Option<bool> { Some(true) }\n#     fn contains(&self, _: &str, _: &str) -> Option<bool> { Some(true) }\n# }\n# fn fake() -> impl Ancestry { N }\n```"
+              },
+              "DeploymentStatus": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "declared",
+                    "description": "The object exists and nothing is deployed from it yet."
+                  },
+                  {
+                    "type": "string",
+                    "const": "active",
+                    "description": "It is deployed."
+                  },
+                  {
+                    "type": "string",
+                    "const": "retired",
+                    "description": "It was, and the object is kept for the record."
+                  }
+                ],
+                "description": "Where a deployment stands.\n\n`Status` is the right name inside this module; the schema component namespace is flat,\nand `distribution::Status` answers a different question, so each says which it is."
               }
             }
           }
@@ -86294,7 +86325,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 571,
+        "capabilities": 572,
         "capability_ids": []
       },
       {
@@ -86386,7 +86417,7 @@
     ]
   },
   "index": {
-    "fingerprint": "b5e5be1c3e18065497b89d979390013c3a87986f063197115e5b2a56442d0403",
+    "fingerprint": "cfd262e43196415affb4ecee0932eeb95ff3c58770e5880e89b26fd364909e39",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -86440,7 +86471,7 @@
       "session": 90,
       "skill": 8,
       "taxonomy": 10,
-      "test": 571,
+      "test": 572,
       "use-case": 49,
       "workspace": 1
     },
@@ -106316,7 +106347,7 @@
         "path": ".ai/repo/project/issues/I3823.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2519
+        "bytes": 2590
       },
       {
         "uri": "majordomus://issue/I3826",
@@ -116090,6 +116121,14 @@
         "bytes": 8066
       },
       {
+        "uri": "majordomus://test/test/cases/3822_a_provider_deployment_is_observed_at_its_url.sh",
+        "kind": "test",
+        "identity": "test/cases/3822_a_provider_deployment_is_observed_at_its_url.sh",
+        "path": "test/cases/3822_a_provider_deployment_is_observed_at_its_url.sh",
+        "source_class": "case",
+        "bytes": 5523
+      },
+      {
         "uri": "majordomus://test/test/cases/3823_the_mesh_client_speaks_tls.sh",
         "kind": "test",
         "identity": "test/cases/3823_the_mesh_client_speaks_tls.sh",
@@ -118988,7 +119027,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 571
+      "objects": 572
     },
     {
       "name": "use-case",
@@ -144192,7 +144231,7 @@
                 "name": "url",
                 "long": "url",
                 "positional": false,
-                "help": "The site's base URL (default: base_url of site/config.toml)",
+                "help": "The base URL (default: the provider URL of the deployment object --deployment names, else base_url of site/config.toml)",
                 "value_name": "URL",
                 "takes_value": true,
                 "required": false,
@@ -144204,7 +144243,7 @@
                 "name": "identity",
                 "long": "identity",
                 "positional": false,
-                "help": "The identity file under the base (default build.json)",
+                "help": "The identity under the base (default: that object's liveness route, else build.json)",
                 "value_name": "IDENTITY",
                 "takes_value": true,
                 "required": false,
@@ -154786,7 +154825,7 @@
         "name": "majordomus_served",
         "id": "served.show",
         "title": "What each deployment was last seen serving",
-        "description": "The newest recorded observation of each deployment, re-judged against a commit (HEAD unless named). A record keeps proving every commit its served build contains and stops proving the moment the commit asked about is not among them; a record that received nothing proves nothing. Asks no network and writes nothing.",
+        "description": "The newest recorded observation of each deployment, re-judged against a commit (HEAD unless named), and for a deployment the layer declares as an object its status derived from that: `active` only while it serves the commit. A record keeps proving every commit its served build contains and stops proving the moment the commit asked about is not among them; a record that received nothing proves nothing. Asks no network and writes nothing.",
         "kind": "query",
         "read_only": true,
         "effect": "read",
