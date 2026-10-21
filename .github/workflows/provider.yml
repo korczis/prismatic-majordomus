@@ -74,7 +74,26 @@ jobs:
           [ "${#sha}" = 40 ] || { echo "::error::not a full commit: '$sha'"; exit 1; }
           echo "sha=$sha" >> "$GITHUB_OUTPUT"
 
+      # Until the owner sets the provider's credentials, a green master is not turned red by a
+      # deployment nobody can authorise: the run says so in a notice and does nothing else. Once
+      # both secrets are set, every step below runs, and a failed push or wait fails the job.
+      - name: whether the provider's credentials are set
+        id: credentials
+        timeout-minutes: 1
+        env:
+          GIGALIXIR_EMAIL: ${{ secrets.GIGALIXIR_EMAIL }}
+          GIGALIXIR_API_KEY: ${{ secrets.GIGALIXIR_API_KEY }}
+        run: |
+          set -eu
+          if [ -n "$GIGALIXIR_EMAIL" ] && [ -n "$GIGALIXIR_API_KEY" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::provider push skipped: secrets not set (GIGALIXIR_EMAIL, GIGALIXIR_API_KEY)"
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: actions/checkout@v4
+        if: steps.credentials.outputs.present == 'true'
         timeout-minutes: 3
         with:
           ref: ${{ steps.subject.outputs.sha }}
@@ -84,6 +103,7 @@ jobs:
       # The target and the packages it needs are the distribution model's, as release.yml
       # builds the same target; nothing here names a second list.
       - name: the musl target, from the distribution model
+        if: steps.credentials.outputs.present == 'true'
         id: target
         timeout-minutes: 5
         run: |
@@ -99,15 +119,18 @@ jobs:
           echo "target=$target" >> "$GITHUB_OUTPUT"
 
       - uses: ./.github/actions/setup-rust
+        if: steps.credentials.outputs.present == 'true'
         timeout-minutes: 5
 
       - name: the target this executable is for
+        if: steps.credentials.outputs.present == 'true'
         timeout-minutes: 2
         run: rustup target add "${{ steps.target.outputs.target }}"
 
       # Built at the commit the slug is read from, so /api/v1/live answers the commit the
       # deployment serves (ADR 0219 decision 4).
       - name: the executable, built at that commit
+        if: steps.credentials.outputs.present == 'true'
         id: build
         timeout-minutes: 40
         env:
@@ -122,6 +145,7 @@ jobs:
           echo "bin=$bin" >> "$GITHUB_OUTPUT"
 
       - name: the slug, assembled from the deployment object
+        if: steps.credentials.outputs.present == 'true'
         id: slug
         timeout-minutes: 5
         env:
@@ -150,6 +174,7 @@ jobs:
       # One commit on top of whatever the provider holds: the push is a fast-forward, never
       # forced. A push the provider rejects fails the job; nothing retries with --force.
       - name: the slug, pushed to the provider
+        if: steps.credentials.outputs.present == 'true'
         timeout-minutes: 20
         env:
           GIGALIXIR_EMAIL: ${{ secrets.GIGALIXIR_EMAIL }}
@@ -186,6 +211,7 @@ jobs:
           git push "$remote" "$commit:refs/heads/main"
 
       - name: the deployment answers master's commit
+        if: steps.credentials.outputs.present == 'true'
         timeout-minutes: 11
         env:
           ENDPOINT: ${{ steps.slug.outputs.url }}${{ steps.slug.outputs.live }}

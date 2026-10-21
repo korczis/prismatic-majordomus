@@ -137,4 +137,18 @@ git add -A >/dev/null; git commit -qm "the deployment names no provider" >/dev/n
 expect_exit 15 "$RB" deploy slug --repo . --deployment hosted --executable "$ELSEWHERE/exe" --out "$ELSEWHERE/none"
 expect_grep 'names no provider'
 [ ! -e "$ELSEWHERE/none" ] || { echo "    a deployment with no provider produced a slug"; exit 1; }
+
+# ---------------------------------------------------------------- the workflow without secrets
+# Until the provider's credentials are set, a green master stays green: the workflow says so in
+# a notice and every step after the check is skipped. Once they are set nothing is skipped, and a
+# failed push or wait fails the job.
+WF="$ROOT/.github/workflows/provider.yml"
+grep -qF '::notice::provider push skipped: secrets not set' "$WF" \
+  || { echo "    provider.yml does not say in a notice that it skipped for missing secrets"; exit 1; }
+steps_after="$(awk '/^      - /{n++} /id: credentials/{c=n} END{print n-c}' "$WF")"
+gated="$(grep -c "if: steps.credentials.outputs.present == 'true'" "$WF")"
+[ "$steps_after" -gt 0 ] && [ "$gated" = "$steps_after" ] \
+  || { echo "    provider.yml gates $gated of the $steps_after steps after the credentials check"; exit 1; }
+grep -q '::error::.*answered' "$WF" \
+  || { echo "    provider.yml no longer fails when the deployment does not answer the commit"; exit 1; }
 exit 0
