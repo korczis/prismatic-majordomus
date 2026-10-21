@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.1"
   },
   "registry": {
-    "fingerprint": "f78b227dbab3d977b3469b06cf769806fe0254004d954182f96894833e58d962",
+    "fingerprint": "bd9f41701561e18f4aabe99420aa47568dc6877faaed675e8b26c9a71e227447",
     "summary": {
-      "total": 3163,
+      "total": 3169,
       "builtin": 206,
-      "declarative": 2957,
+      "declarative": 2963,
       "by_kind": {
         "command": 31,
         "query": 175,
-        "resource": 2957
+        "resource": 2963
       },
       "by_stability": {
         "behaviorally_verified": 142,
         "experimental": 55,
-        "implemented": 2966
+        "implemented": 2972
       },
       "mcp_tools": 196,
-      "mcp_resources": 3012,
+      "mcp_resources": 3018,
       "http_routes": 201,
       "cli_commands": 111,
       "modules": 92,
@@ -84883,7 +84883,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 159,
+        "capabilities": 160,
         "capability_ids": []
       },
       {
@@ -85506,7 +85506,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 802,
+        "capabilities": 807,
         "capability_ids": []
       },
       {
@@ -86172,7 +86172,7 @@
     ]
   },
   "index": {
-    "fingerprint": "55b2477614ee677f2e580c8f816b520f5c0653d1cc925f3ec71b2dcdeb12b2a7",
+    "fingerprint": "71129fa949a28654636c59e3cd4bdb9433aca1a2709451b5d9ddfde6ba6b93e2",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -86195,7 +86195,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 159,
+      "adr": 160,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -86212,7 +86212,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 33,
-      "issue": 802,
+      "issue": 807,
       "knowledge": 50,
       "mesh-declaration": 1,
       "milestone": 100,
@@ -88808,6 +88808,22 @@
           "deployment",
           "derivation",
           "hosting"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0220",
+        "kind": "adr",
+        "identity": "adr-0220",
+        "title": "A hosted server is a rendezvous only over TLS, with its key held as a secret and the mesh read only by those it trusts",
+        "description": "A hosted server is a rendezvous only over TLS, with its key held as a secret and the mesh read only by those it trusts",
+        "path": ".ai/repo/adrs/0220-a-hosted-server-is-a-rendezvous-only-over-tls-with-its-key-held-as-a-secret.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 6109,
+        "tags": [
+          "mesh-runtime",
+          "deployment",
+          "security"
         ]
       },
       {
@@ -93426,7 +93442,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 532303
+        "bytes": 538631
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -106056,6 +106072,61 @@
         "bytes": 4167
       },
       {
+        "uri": "majordomus://issue/I3821",
+        "kind": "issue",
+        "identity": "I3821",
+        "title": "The tree a provider receives is assembled from the deployment object, and master publishes it after green ci",
+        "description": "A typed capability deploy.slug assembles, outside the checkout, the tree a provider receives: the deployment object's build.inputs read at one commit, the generated provider files of that commit made executable, the inline buildpack line, and the executable built at that same commit; a workflow builds the musl executable at master's commit after master's ci succeeds, assembles the slug and pushes it to the provider with a workflow secret, and nothing else ever pushes to the provider. ADR 0219 decisions 3 and 5.",
+        "path": ".ai/repo/project/issues/I3821.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2867
+      },
+      {
+        "uri": "majordomus://issue/I3822",
+        "kind": "issue",
+        "identity": "I3822",
+        "title": "A deployment that names a provider is observed at its own URL, and is active only while it serves master",
+        "description": "served.observe defaults its url to the deployment object's provider.url and its identity to the object's health.liveness route when --deployment names an object with a provider; the publishing workflow observes after every push; the object's status moves from declared to active only on an observation that judged it serving master, and a stale or unreachable observation is a finding. ADR 0219 decision 5.",
+        "path": ".ai/repo/project/issues/I3822.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2240
+      },
+      {
+        "uri": "majordomus://issue/I3823",
+        "kind": "issue",
+        "identity": "I3823",
+        "title": "The mesh client reaches an https endpoint over TLS and refuses cleartext to a public address",
+        "description": "mcp::bridge::request reaches an https:// rendezvous endpoint or seed over TLS with the certificate verified against the system roots; an http:// endpoint whose address is neither loopback, private nor overlay is refused with the correction; the mesh declaration accepts https:// endpoints and seeds by host name. ADR 0220 decision 1, the owner's 'TLS first' of 2026-10-21.",
+        "path": ".ai/repo/project/issues/I3823.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2133
+      },
+      {
+        "uri": "majordomus://issue/I3826",
+        "kind": "issue",
+        "identity": "I3826",
+        "title": "A hosted hub keeps one key from a secret, advertises its URL, and shows the mesh only to those it trusts",
+        "description": "A server started with a deployment that names a provider reads its node seed from one secret environment variable and refuses to open its mesh without it, advertises provider.url instead of its interface addresses, answers the mesh's read capabilities to a remote caller only on a request signed by a key in trust.allow, and answers mesh.register from an untrusted caller with its own envelope only. ADR 0220 decisions 2 to 5.",
+        "path": ".ai/repo/project/issues/I3826.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2550
+      },
+      {
+        "uri": "majordomus://issue/I3827",
+        "kind": "issue",
+        "identity": "I3827",
+        "title": "The hosted hub is this repository's default rendezvous, and every node shows it as the path from anywhere",
+        "description": "Once TLS (I3823) and the hub's closures (I3826) hold, the owner's trust.allow entry for the hub's key is committed and https://prismatic-majordomus.gigalixirapp.com is added to rendezvous.endpoints of .ai/repo/mesh/majordomus.yaml; case 491 accepts an https public hub and still refuses a public http one; /ui/mesh on the hub shows every trusted runtime heard through it to a trusted reader, and the live hub is observed to fold and relay the journal. ADR 0220 decision 6.",
+        "path": ".ai/repo/project/issues/I3827.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1964
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -118364,7 +118435,7 @@
       "identity": [
         "id"
       ],
-      "objects": 159
+      "objects": 160
     },
     {
       "name": "application",
@@ -118527,7 +118598,7 @@
       "identity": [
         "id"
       ],
-      "objects": 802
+      "objects": 807
     },
     {
       "name": "knowledge",

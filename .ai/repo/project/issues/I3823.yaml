@@ -1,0 +1,32 @@
+id: I3823
+milestone: an-authorised-node-connects-from-anywhere
+title: "The mesh client reaches an https endpoint over TLS and refuses cleartext to a public address"
+slug: the-mesh-client-speaks-tls
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "mcp::bridge::request reaches an https:// rendezvous endpoint or seed over TLS with the certificate verified against the system roots; an http:// endpoint whose address is neither loopback, private nor overlay is refused with the correction; the mesh declaration accepts https:// endpoints and seeds by host name. ADR 0220 decision 1, the owner's 'TLS first' of 2026-10-21."
+why: "The owner chose TLS before any public hub. The client today strips http:// and writes to a bare TcpStream, so an https endpoint cannot work and a public http one would carry the journal in cleartext."
+current_state: "bridge::connect accepts only http:// and opens a TcpStream; config.rs validates seeds as http://host:port; case 491 refuses any hub outside the private and overlay ranges."
+desired_state: "An https endpoint completes a register round-trip over TLS against a local test server with a test certificate authority; a public http endpoint is refused before any byte is sent; case 3823 proves both and that a private http endpoint still works."
+scope:
+  - "apps/majordomus-cli/src/mcp/bridge.rs"
+  - "apps/majordomus-cli/src/mesh/config.rs"
+  - "apps/majordomus-cli/Cargo.toml"
+  - "apps/majordomus-cli/Cargo.lock"
+  - "test/cases/3823_the_mesh_client_speaks_tls.sh"
+  - "docs/MESH.md"
+  - ".ai/repo/project/issues/I3823.yaml"
+acceptance_criteria:
+  - "An https endpoint is reached over TLS with a verified certificate"
+  - "An unverifiable certificate is refused naming the endpoint"
+  - "A public http endpoint is refused before connecting; loopback, private and overlay http endpoints still work"
+validation:
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3823_the_mesh_client_speaks_tls"
+evidence_required:
+  - "tls_endpoint_reached"
+  - "public_cleartext_refused"
+depends_on: []
+serves: []
+created_at: 2026-10-21
+updated_at: 2026-10-21

@@ -3110,6 +3110,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/mcp/bridge.rs",
+        "kind": "file",
+        "label": "bridge.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/mcp/bridge.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/mcp/protocol.rs",
         "kind": "file",
         "label": "protocol.rs",
@@ -3123,6 +3131,14 @@
         "label": "surface.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/mcp/surface.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/mesh/address.rs",
+        "kind": "file",
+        "label": "address.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/mesh/address.rs",
         "external": true
       },
       {
@@ -3150,6 +3166,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/mesh/identity.rs",
+        "kind": "file",
+        "label": "identity.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/mesh/identity.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/mesh/journal.rs",
         "kind": "file",
         "label": "journal.rs",
@@ -3163,6 +3187,14 @@
         "label": "registry.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/mesh/registry.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/mesh/rendezvous.rs",
+        "kind": "file",
+        "label": "rendezvous.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/mesh/rendezvous.rs",
         "external": true
       },
       {
@@ -9189,6 +9221,38 @@
             "deployment",
             "derivation",
             "hosting"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0220",
+        "kind": "adr",
+        "label": "adr-0220",
+        "summary": "A hosted server is a rendezvous only over TLS, with its key held as a secret and the mesh read only by those it trusts",
+        "route": "/cockpit/objects/adr/adr-0220",
+        "source": ".ai/repo/adrs/0220-a-hosted-server-is-a-rendezvous-only-over-tls-with-its-key-held-as-a-secret.md",
+        "status": "accepted",
+        "facts": {
+          "date": "2026-10-21",
+          "related": [
+            "file:.ai/repo/adrs/0219-a-deployment-names-its-provider-and-every-provider-file-is-derived.md",
+            "file:.ai/repo/adrs/0050-mesh-peer-discovery-is-provider-based-observation-with-authe.md",
+            "file:.ai/repo/adrs/0067-mesh-cooperation-is-authenticated-links-and-one-replicated-journal.md",
+            "file:.ai/repo/adrs/0126-a-caller-beyond-loopback-reads-and-changes-nothing-it-cannot-authenticate.md",
+            "file:.ai/repo/adrs/0204-the-hub-is-reached-privately-over-the-tailnet-first-a-public-ing.md",
+            "file:.ai/repo/mesh/majordomus.yaml",
+            "file:.ai/repo/project/intents/an-authorised-node-connects-from-anywhere.yaml",
+            "file:apps/majordomus-cli/src/mesh/rendezvous.rs",
+            "file:apps/majordomus-cli/src/mesh/identity.rs",
+            "file:apps/majordomus-cli/src/mesh/address.rs",
+            "file:apps/majordomus-cli/src/mcp/bridge.rs",
+            "file:apps/majordomus-cli/src/http/router.rs",
+            "test:test/cases/491_the_mesh_is_on_here.sh"
+          ],
+          "tags": [
+            "mesh-runtime",
+            "deployment",
+            "security"
           ]
         }
       },
@@ -59602,6 +59666,215 @@
         }
       },
       {
+        "id": "majordomus://issue/I3821",
+        "kind": "issue",
+        "label": "I3821",
+        "summary": "The tree a provider receives is assembled from the deployment object, and master publishes it after green ci",
+        "route": "/cockpit/objects/issue/i3821",
+        "source": ".ai/repo/project/issues/I3821.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The slug holds the object's build.inputs at the named commit, the provider files with bin/* executable, the buildpack line and the executable, and nothing else",
+            "An out directory inside the checkout is refused",
+            "The workflow runs only after master's ci succeeded, builds at master's commit and pushes with secrets that appear in no file or log",
+            "The deployed /api/v1/live answers master's commit"
+          ],
+          "created_at": "2026-10-21",
+          "depends_on": [
+            "I3820"
+          ],
+          "evidence_required": [
+            "slug_assembled_from_object",
+            "master_publishes_after_green_ci"
+          ],
+          "milestone": "fly-deployment",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/deploy",
+            "apps/majordomus-cli/src/capability/builtin/deploy.rs",
+            ".github/workflows/provider.yml",
+            "test/cases/3821_a_providers_tree_is_assembled_from_the_object.sh",
+            "docs",
+            ".ai/repo/project/issues/I3821.yaml"
+          ],
+          "serves": [],
+          "slug": "master-publishes-its-provider-deployment",
+          "updated_at": "2026-10-21",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3821_a_providers_tree_is_assembled_from_the_object"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3822",
+        "kind": "issue",
+        "label": "I3822",
+        "summary": "A deployment that names a provider is observed at its own URL, and is active only while it serves master",
+        "route": "/cockpit/objects/issue/i3822",
+        "source": ".ai/repo/project/issues/I3822.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "An object with a provider is observed at its url and liveness route without --url",
+            "A deployment answering master is served, one answering an older commit is stale, one not answering is unreachable",
+            "The status is active only while the newest observation is served"
+          ],
+          "created_at": "2026-10-21",
+          "current_state": "served.observe takes --url or falls back to site/config.toml's base_url with identity build.json; /api/v1/live already answers commit and dirty; the object's status is declared.",
+          "depends_on": [
+            "I3821"
+          ],
+          "evidence_required": [
+            "observed_at_provider_url"
+          ],
+          "milestone": "fly-deployment",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/served.rs",
+            "apps/majordomus-cli/src/capability/builtin/served.rs",
+            ".ai/repo/deployments",
+            "test/cases/3822_a_provider_deployment_is_observed_at_its_url.sh",
+            ".ai/repo/project/issues/I3822.yaml"
+          ],
+          "serves": [],
+          "slug": "a-provider-deployment-is-observed-at-its-url",
+          "updated_at": "2026-10-21",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3822_a_provider_deployment_is_observed_at_its_url"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3823",
+        "kind": "issue",
+        "label": "I3823",
+        "summary": "The mesh client reaches an https endpoint over TLS and refuses cleartext to a public address",
+        "route": "/cockpit/objects/issue/i3823",
+        "source": ".ai/repo/project/issues/I3823.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "An https endpoint is reached over TLS with a verified certificate",
+            "An unverifiable certificate is refused naming the endpoint",
+            "A public http endpoint is refused before connecting; loopback, private and overlay http endpoints still work"
+          ],
+          "created_at": "2026-10-21",
+          "current_state": "bridge::connect accepts only http:// and opens a TcpStream; config.rs validates seeds as http://host:port; case 491 refuses any hub outside the private and overlay ranges.",
+          "depends_on": [],
+          "evidence_required": [
+            "tls_endpoint_reached",
+            "public_cleartext_refused"
+          ],
+          "milestone": "an-authorised-node-connects-from-anywhere",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mcp/bridge.rs",
+            "apps/majordomus-cli/src/mesh/config.rs",
+            "apps/majordomus-cli/Cargo.toml",
+            "apps/majordomus-cli/Cargo.lock",
+            "test/cases/3823_the_mesh_client_speaks_tls.sh",
+            "docs/MESH.md",
+            ".ai/repo/project/issues/I3823.yaml"
+          ],
+          "serves": [],
+          "slug": "the-mesh-client-speaks-tls",
+          "updated_at": "2026-10-21",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3823_the_mesh_client_speaks_tls"
+          ],
+          "why": "The owner chose TLS before any public hub. The client today strips http:// and writes to a bare TcpStream, so an https endpoint cannot work and a public http one would carry the journal in cleartext."
+        }
+      },
+      {
+        "id": "majordomus://issue/I3826",
+        "kind": "issue",
+        "label": "I3826",
+        "summary": "A hosted hub keeps one key from a secret, advertises its URL, and shows the mesh only to those it trusts",
+        "route": "/cockpit/objects/issue/i3826",
+        "source": ".ai/repo/project/issues/I3826.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "One seed variable gives one node id across restarts; without it the mesh stays closed and says why",
+            "The hub advertises its provider url",
+            "A remote caller without a trusted signature reads liveness but no mesh capability",
+            "An untrusted registration learns no trusted node",
+            "The seed is never logged or answered"
+          ],
+          "created_at": "2026-10-21",
+          "depends_on": [
+            "I3820"
+          ],
+          "evidence_required": [
+            "seed_from_secret",
+            "mesh_reads_gated"
+          ],
+          "milestone": "an-authorised-node-connects-from-anywhere",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh",
+            "apps/majordomus-cli/src/http/router.rs",
+            "apps/majordomus-cli/src/shared.rs",
+            "test/cases/3826_a_hosted_hub_is_trusted_and_closed_to_strangers.sh",
+            "docs/MESH.md",
+            ".ai/repo/project/issues/I3826.yaml"
+          ],
+          "serves": [],
+          "slug": "a-hosted-hub-is-trusted-and-closed-to-strangers",
+          "updated_at": "2026-10-21",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3826_a_hosted_hub_is_trusted_and_closed_to_strangers"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3827",
+        "kind": "issue",
+        "label": "I3827",
+        "summary": "The hosted hub is this repository's default rendezvous, and every node shows it as the path from anywhere",
+        "route": "/cockpit/objects/issue/i3827",
+        "source": ".ai/repo/project/issues/I3827.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The declaration names the hub over https and the hub's key by the owner's decision",
+            "Case 491 accepts an https public hub and refuses a public http one",
+            "Two nodes on different networks exchange a claim through the hub"
+          ],
+          "created_at": "2026-10-21",
+          "current_state": "The declaration lists six private and tailnet hubs on port 8791; the hosted application's mesh is closed (its key is not in trust.allow).",
+          "depends_on": [
+            "I3823",
+            "I3826",
+            "I3822"
+          ],
+          "evidence_required": [
+            "hub_relays_a_claim"
+          ],
+          "milestone": "an-authorised-node-connects-from-anywhere",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/mesh/majordomus.yaml",
+            "test/cases/491_the_mesh_is_on_here.sh",
+            "docs/MESH.md",
+            ".ai/repo/project/issues/I3827.yaml"
+          ],
+          "serves": [],
+          "slug": "the-hosted-hub-is-the-default-rendezvous",
+          "updated_at": "2026-10-21",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 491_the_mesh_is_on_here"
+          ],
+          "why": "The owner asked on 2026-10-21 for the Gigalixir server to be an optional but default rendezvous that shows the whole mesh."
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -96683,6 +96956,76 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0220",
+        "target": "file:apps/majordomus-cli/src/http/router.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0220",
+        "target": "file:apps/majordomus-cli/src/mcp/bridge.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0220",
+        "target": "file:apps/majordomus-cli/src/mesh/address.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0220",
+        "target": "file:apps/majordomus-cli/src/mesh/identity.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0220",
+        "target": "file:apps/majordomus-cli/src/mesh/rendezvous.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0220",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0220",
+        "target": "majordomus://adr/adr-0050",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0220",
+        "target": "majordomus://adr/adr-0067",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0220",
+        "target": "majordomus://adr/adr-0126",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0220",
+        "target": "majordomus://adr/adr-0204",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0220",
+        "target": "majordomus://adr/adr-0219",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0220",
+        "target": "majordomus://intent/an-authorised-node-connects-from-anywhere",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0220",
+        "target": "majordomus://mesh-declaration/majordomus",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0220",
+        "target": "majordomus://test/test/cases/491_the_mesh_is_on_here.sh",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://application/ci-gated-project",
         "target": "kind:application",
         "kind": "is_a"
@@ -116813,6 +117156,86 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3821",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3821",
+        "target": "majordomus://issue/I3820",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3821",
+        "target": "majordomus://milestone/fly-deployment",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3822",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3822",
+        "target": "majordomus://issue/I3821",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3822",
+        "target": "majordomus://milestone/fly-deployment",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3823",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3823",
+        "target": "majordomus://milestone/an-authorised-node-connects-from-anywhere",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3826",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3826",
+        "target": "majordomus://issue/I3820",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3826",
+        "target": "majordomus://milestone/an-authorised-node-connects-from-anywhere",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3827",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3827",
+        "target": "majordomus://issue/I3822",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3827",
+        "target": "majordomus://issue/I3823",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3827",
+        "target": "majordomus://issue/I3826",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3827",
+        "target": "majordomus://milestone/an-authorised-node-connects-from-anywhere",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -127789,8 +128212,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3613,
-      "edges": 8407,
+      "nodes": 3623,
+      "edges": 8437,
       "acyclic": false,
       "truncated": false
     }

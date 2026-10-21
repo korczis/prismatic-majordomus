@@ -1,0 +1,31 @@
+id: I3827
+milestone: an-authorised-node-connects-from-anywhere
+title: "The hosted hub is this repository's default rendezvous, and every node shows it as the path from anywhere"
+slug: the-hosted-hub-is-the-default-rendezvous
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Once TLS (I3823) and the hub's closures (I3826) hold, the owner's trust.allow entry for the hub's key is committed and https://prismatic-majordomus.gigalixirapp.com is added to rendezvous.endpoints of .ai/repo/mesh/majordomus.yaml; case 491 accepts an https public hub and still refuses a public http one; /ui/mesh on the hub shows every trusted runtime heard through it to a trusted reader, and the live hub is observed to fold and relay the journal. ADR 0220 decision 6."
+why: "The owner asked on 2026-10-21 for the Gigalixir server to be an optional but default rendezvous that shows the whole mesh."
+current_state: "The declaration lists six private and tailnet hubs on port 8791; the hosted application's mesh is closed (its key is not in trust.allow)."
+desired_state: "The declaration names the hosted hub, the hub's key is in trust.allow by the owner's recorded decision, two nodes on different networks see each other's claims through the hub, and a working tree can narrow the endpoint out."
+scope:
+  - ".ai/repo/mesh/majordomus.yaml"
+  - "test/cases/491_the_mesh_is_on_here.sh"
+  - "docs/MESH.md"
+  - ".ai/repo/project/issues/I3827.yaml"
+acceptance_criteria:
+  - "The declaration names the hub over https and the hub's key by the owner's decision"
+  - "Case 491 accepts an https public hub and refuses a public http one"
+  - "Two nodes on different networks exchange a claim through the hub"
+validation:
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 491_the_mesh_is_on_here"
+evidence_required:
+  - "hub_relays_a_claim"
+depends_on:
+  - "I3823"
+  - "I3826"
+  - "I3822"
+serves: []
+created_at: 2026-10-21
+updated_at: 2026-10-21

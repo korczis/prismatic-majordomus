@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 159,
+      "count": 160,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 159
+      "count": 160
     },
     {
       "kind": "application",
@@ -173,7 +173,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 802
+      "count": 807
     },
     {
       "kind": "knowledge",
@@ -3607,6 +3607,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0203/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0220",
+          "kind": "adr",
+          "route": "/adrs/adr-0220/",
+          "external": false
         }
       ]
     },
@@ -4444,6 +4451,13 @@
           "label": "adr-0202",
           "kind": "adr",
           "route": "/adrs/adr-0202/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0220",
+          "kind": "adr",
+          "route": "/adrs/adr-0220/",
           "external": false
         }
       ]
@@ -7525,6 +7539,13 @@
           "label": "adr-0219",
           "kind": "adr",
           "route": "/adrs/adr-0219/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0220",
+          "kind": "adr",
+          "route": "/adrs/adr-0220/",
           "external": false
         }
       ]
@@ -12530,6 +12551,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0219/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0220",
+          "kind": "adr",
+          "route": "/adrs/adr-0220/",
+          "external": false
         }
       ]
     },
@@ -14080,6 +14108,123 @@
         {
           "edge": "put_in_force",
           "label": "test/cases/86_deployment_projections.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0220",
+          "kind": "adr",
+          "route": "/adrs/adr-0220/",
+          "external": false
+        }
+      ]
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0220",
+      "identity": "adr-0220",
+      "slug": "adr-0220",
+      "cockpit": "/cockpit/objects/adr/adr-0220",
+      "title": "A hosted server is a rendezvous only over TLS, with its key held as a secret and the mesh read only by those it trusts",
+      "status": "accepted",
+      "tags": [
+        "mesh-runtime",
+        "deployment",
+        "security"
+      ],
+      "source": ".ai/repo/adrs/0220-a-hosted-server-is-a-rendezvous-only-over-tls-with-its-key-held-as-a-secret.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/http/router.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/mcp/bridge.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/mesh/address.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/mesh/identity.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/mesh/rendezvous.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0050",
+          "kind": "adr",
+          "route": "/adrs/adr-0050/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0067",
+          "kind": "adr",
+          "route": "/adrs/adr-0067/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0126",
+          "kind": "adr",
+          "route": "/adrs/adr-0126/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0204",
+          "kind": "adr",
+          "route": "/adrs/adr-0204/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0219",
+          "kind": "adr",
+          "route": "/adrs/adr-0219/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "an-authorised-node-connects-from-anywhere",
+          "kind": "intent",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "majordomus",
+          "kind": "mesh-declaration",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/491_the_mesh_is_on_here.sh",
           "kind": "test",
           "route": null,
           "external": false
