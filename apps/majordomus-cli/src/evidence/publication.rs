@@ -46,7 +46,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 
 use super::freshness::{changed_between, Judgement, Presented, TreeState};
-use super::run::{weaken_by_records, EvidenceRunRecord};
+use super::run::EvidenceRunRecord;
+use super::supplementary::weaken_naming;
 use super::{EvidenceReport, Origin, ProofState};
 use crate::git::Containment;
 
@@ -626,7 +627,8 @@ fn redact(value: &mut Value, root: &Path, home: Option<&Path>) -> usize {
 }
 
 /// One claim's verdict after the monotone rule over `records`, and the records that capped
-/// it, each found by applying the rule to that record alone.
+/// it, each found by applying the rule to that record alone: the one application a subject's
+/// answer makes as well ([`super::supplementary::weaken_naming`]).
 fn capped(
     claim: &super::ClaimProof,
     records: &[EvidenceRunRecord],
@@ -638,24 +640,13 @@ fn capped(
         changed: claim.changed.clone(),
         detail: claim.detail.clone(),
     };
-    let execution = claim.execution.as_ref();
-    let by: Vec<String> = records
-        .iter()
-        .filter(|r| {
-            let alone = std::slice::from_ref(*r);
-            let j = weaken_by_records(
-                judgement.clone(),
-                execution,
-                alone,
-                Some(presented),
-                contains,
-            );
-            j.state != judgement.state
-        })
-        .map(|r| r.id.clone())
-        .collect();
-    let all = weaken_by_records(judgement, execution, records, Some(presented), contains);
-    (all, by)
+    weaken_naming(
+        judgement,
+        claim.execution.as_ref(),
+        records,
+        Some(presented),
+        contains,
+    )
 }
 
 /// The publication of `report` (the claims judged from the ledger committed at the

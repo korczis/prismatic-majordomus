@@ -95,8 +95,16 @@ pub fn run(args: EvidenceArgs) -> Result<u8> {
             coverage,
             ledger,
             run_record,
+            run,
+            cases,
         } => {
             let mut input = json!({});
+            if let Some(r) = &run {
+                input["run"] = json!(r);
+            }
+            if !cases.is_empty() {
+                input["cases"] = json!(cases);
+            }
             if !provenance.is_empty() {
                 input["provenance"] = json!(provenance);
             }
@@ -148,12 +156,15 @@ pub fn run(args: EvidenceArgs) -> Result<u8> {
             key,
             presented,
             presented_tree,
+            from,
         } => {
-            // an absent revision or tree is the null an optional input reads as absent
+            // an absent revision, tree or source is the null an optional input reads as
+            // absent; a path a person types is handed over absolute, as `coverage` does
             let input = json!({
                 "subject": key,
                 "presented": presented,
                 "presented_tree": presented_tree,
+                "from": typed(from),
             });
             let v = execute(ctx, &["evidence", "subject"], input)?;
             answer(&mut out, &v, args.format, subject_text).map(|()| 0)
@@ -172,6 +183,18 @@ pub fn run(args: EvidenceArgs) -> Result<u8> {
             });
             let v = execute(ctx, &["evidence", "coverage"], input)?;
             answer(&mut out, &v, args.format, coverage_text).map(|()| 0)
+        }
+
+        EvidenceCommand::Runs { from } => {
+            let input = json!({ "from": typed(from) });
+            let v = execute(ctx, &["evidence", "runs"], input)?;
+            answer(&mut out, &v, args.format, runs_text).map(|()| 0)
+        }
+
+        EvidenceCommand::Run { id, from } => {
+            let input = json!({ "id": id, "from": typed(from) });
+            let v = execute(ctx, &["evidence", "run"], input)?;
+            answer(&mut out, &v, args.format, run_text).map(|()| 0)
         }
 
         EvidenceCommand::Publish {
@@ -195,6 +218,13 @@ pub fn run(args: EvidenceArgs) -> Result<u8> {
             answer(&mut out, &v, args.format, publish_text).map(|()| 0)
         }
     }
+}
+
+/// A path a person typed, as the capability reads it: absolute, because the capability reads
+/// a relative one against the repository and the person typed it where they stood.
+fn typed(path: Option<PathBuf>) -> Option<String> {
+    path.map(|p| std::path::absolute(&p).unwrap_or(p))
+        .map(|p| p.to_string_lossy().into_owned())
 }
 
 /// An answer in the format asked: the document itself, or the text rendering of it.
@@ -265,6 +295,146 @@ fn subject_text(out: &mut dyn Write, v: &Value) -> std::io::Result<()> {
             "finding      {}: {}",
             s(&f["code"]),
             s(&f["message"])
+        ));
+    }
+    let sup = &v["supplementary"];
+    if sup.is_object() {
+        let records = sup["records"].as_array().map_or(0, Vec::len);
+        lines.push(format!(
+            "supplementary {records} run record(s) from {}{}, which can only weaken",
+            s(&sup["source"]),
+            if sup["present"].as_bool().unwrap_or(false) {
+                ""
+            } else {
+                " (not there)"
+            }
+        ));
+        for w in sup["weakened"].as_array().into_iter().flatten() {
+            let by: Vec<String> = w["by"].as_array().into_iter().flatten().map(s).collect();
+            lines.push(format!(
+                "weakened     {} {} -> {} by {}",
+                s(&w["test"]),
+                s(&w["from"]),
+                s(&w["to"]),
+                by.join(", ")
+            ));
+        }
+        for u in sup["unread"].as_array().into_iter().flatten() {
+            lines.push(format!(
+                "unread       {} ({})",
+                s(&u["file"]),
+                s(&u["reason"])
+            ));
+        }
+    }
+    writeln!(out, "{}", lines.join("\n"))
+}
+
+/// The source and whether it is there, then one line per run, newest first: the outcome it
+/// stands for, its id, its commit and tree, its executions and its file; then what was not
+/// read. Rendered into one string and written once.
+fn runs_text(out: &mut dyn Write, v: &Value) -> std::io::Result<()> {
+    let s = |v: &Value| v.as_str().unwrap_or("?").to_string();
+    let mut lines = vec![format!(
+        "source       {}{}",
+        s(&v["source"]),
+        if v["present"].as_bool().unwrap_or(false) {
+            ""
+        } else {
+            "  (not there: nothing has recorded a local run)"
+        }
+    )];
+    let runs = v["runs"].as_array().map_or(&[][..], Vec::as_slice);
+    lines.push(format!("runs         {} read", runs.len()));
+    for r in runs {
+        lines.push(format!(
+            "{:<12} {} at {} ({}) · {} execution(s) · {}",
+            r["outcome"].as_str().unwrap_or("nothing"),
+            s(&r["id"]),
+            twelve(r["commit"].as_str().unwrap_or("?")),
+            s(&r["working_tree"]),
+            r["totals"]["executions"],
+            s(&r["file"])
+        ));
+    }
+    for u in v["unread"].as_array().into_iter().flatten() {
+        lines.push(format!(
+            "unread       {} ({})",
+            s(&u["file"]),
+            s(&u["reason"])
+        ));
+    }
+    writeln!(out, "{}", lines.join("\n"))
+}
+
+/// One run: what it is, where it ran, the outcome it stands for and its totals, then each
+/// execution, each per-test result, each dropped entry and each line no case holds.
+/// Rendered into one string and written once.
+fn run_text(out: &mut dyn Write, v: &Value) -> std::io::Result<()> {
+    let s = |v: &Value| v.as_str().unwrap_or("?").to_string();
+    let r = &v["run"];
+    let outcomes: Vec<String> = r["totals"]["outcomes"]
+        .as_object()
+        .into_iter()
+        .flatten()
+        .map(|(word, n)| format!("{word} {n}"))
+        .collect();
+    let mut lines = vec![
+        format!("run          {} ({})", s(&r["id"]), s(&r["origin"])),
+        format!("file         {}", s(&r["file"])),
+        format!(
+            "commit       {} ({})",
+            twelve(r["commit"].as_str().unwrap_or("?")),
+            s(&r["working_tree"])
+        ),
+        format!("recorded     {}", s(&r["recorded_at"])),
+        format!(
+            "outcome      {}",
+            r["outcome"].as_str().unwrap_or("nothing recorded")
+        ),
+        format!(
+            "totals       {} execution(s){}{}",
+            r["totals"]["executions"],
+            if outcomes.is_empty() { "" } else { ": " },
+            outcomes.join(", ")
+        ),
+    ];
+    let record = &v["record"];
+    for e in record["executions"].as_array().into_iter().flatten() {
+        lines.push(format!(
+            "execution    {:<8} {}",
+            s(&e["outcome"]),
+            s(&e["test"])
+        ));
+    }
+    for c in v["cases"].as_array().into_iter().flatten() {
+        let phase = c["phase"]
+            .as_str()
+            .map(|p| format!(" [{p}]"))
+            .unwrap_or_default();
+        lines.push(format!(
+            "case         {:<8} {} {}{phase}",
+            s(&c["outcome"]),
+            s(&c["test"]),
+            s(&c["name"])
+        ));
+    }
+    for d in record["dropped"].as_array().into_iter().flatten() {
+        lines.push(format!(
+            "dropped      {} {}: {}",
+            s(&d["producer"]),
+            s(&d["what"]),
+            s(&d["reason"])
+        ));
+    }
+    for d in record["dropped_lines"].as_array().into_iter().flatten() {
+        lines.push(format!(
+            "dropped line {} {}:{} {} ({})",
+            s(&d["producer"]),
+            s(&d["stream"]),
+            d["line"],
+            s(&d["text"]),
+            s(&d["reason"])
         ));
     }
     writeln!(out, "{}", lines.join("\n"))
@@ -459,8 +629,46 @@ fn record_text(out: &mut impl Write, v: &Value, run_record: Option<&Path>) -> Re
     for u in v["unknown"].as_array().into_iter().flatten() {
         writeln!(out, "unknown      {} (no such test here)", u).map_err(Error::Transport)?;
     }
+    let lines: Vec<String> = r["lines"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .map(|l| {
+            format!(
+                "{} {} ({} of {} read)",
+                l["producer"].as_str().unwrap_or("?"),
+                l["stream"].as_str().unwrap_or("?"),
+                l["read"],
+                l["lines"]
+            )
+        })
+        .collect();
+    if !lines.is_empty() {
+        writeln!(out, "lines        {}", lines.join(", ")).map_err(Error::Transport)?;
+    }
+    // every line no case result holds is in the run record; here, how many and why
+    let mut why: Vec<String> = r["dropped_lines"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter_map(|d| d["reason"].as_str().map(str::to_string))
+        .collect();
+    crate::order::canonical_strings(&mut why);
+    let mut counted: Vec<(String, usize)> = Vec::new();
+    for reason in why {
+        match counted.last_mut() {
+            Some((r, n)) if *r == reason => *n += 1,
+            _ => counted.push((reason, 1)),
+        }
+    }
+    for (reason, n) in counted {
+        writeln!(out, "not read     {n} line(s): {reason}").map_err(Error::Transport)?;
+    }
     if let Some(p) = run_record {
         writeln!(out, "run record   {}", p.display()).map_err(Error::Transport)?;
+    }
+    if let Some(p) = v["local_run"].as_str() {
+        writeln!(out, "local run    {p}").map_err(Error::Transport)?;
     }
     Ok(())
 }
@@ -1077,6 +1285,8 @@ mod tests {
                 coverage: None,
                 ledger: None,
                 run_record: None,
+                run: None,
+                cases: vec![],
             },
             format: OutputFormat::Text,
         };
@@ -1225,6 +1435,7 @@ mod tests {
                 key: "capability:evidence.subject".into(),
                 presented: None,
                 presented_tree: None,
+                from: None,
             };
             assert_eq!(run(evidence(&repo, cmd, format)).unwrap(), 0);
             let cmd = EvidenceCommand::Coverage {
@@ -1237,6 +1448,7 @@ mod tests {
             key: "feature:no-such".into(),
             presented: Some("HEAD".into()),
             presented_tree: None,
+            from: None,
         };
         let err = run(evidence(&repo, cmd, OutputFormat::Text)).unwrap_err();
         assert_eq!(err.exit_code(), 13, "{err}");
@@ -1253,6 +1465,114 @@ mod tests {
         };
         let err = run(evidence(&repo, cmd, OutputFormat::Json)).unwrap_err();
         assert!(err.to_string().contains("outside the repository"), "{err}");
+    }
+
+    /// The supplementary lines of a subject: the source and how many records it held, then
+    /// each weakening with the records that made it, and what was not read.
+    #[test]
+    fn a_subject_prints_what_its_supplementary_records_weakened() {
+        let mut buf = Vec::new();
+        let v = json!({
+            "subject": "claim:a", "kind": "claim",
+            "presented": { "revision": "working_tree", "tree": "clean" },
+            "verdict": "stale", "meaning": "m", "totals": {}, "routes": [], "members": [],
+            "mechanisms": [], "subject_findings": [],
+            "supplementary": {
+                "source": ".ai/local/evidence/runs", "present": true,
+                "records": [{ "id": "r1" }, { "id": "r2" }],
+                "weakened": [{ "test": "suite:01_a", "from": "proven", "to": "stale",
+                               "by": ["r1", "r2"], "detail": "d" }],
+                "unread": [{ "file": "m.json", "reason": "not a run record" }]
+            }
+        });
+        subject_text(&mut buf, &v).unwrap();
+        let text = String::from_utf8(buf).unwrap();
+        let tail: Vec<&str> = text.lines().rev().take(3).collect();
+        assert_eq!(
+            tail,
+            [
+                "unread       m.json (not a run record)",
+                "weakened     suite:01_a proven -> stale by r1, r2",
+                "supplementary 2 run record(s) from .ai/local/evidence/runs, which can only weaken",
+            ]
+        );
+    }
+
+    /// The run lines: the source, the count, one line per run with its outcome, and one run
+    /// with its executions, cases, dropped entries and dropped lines.
+    #[test]
+    fn runs_and_a_run_print_one_line_per_part() {
+        let render = |text: fn(&mut dyn Write, &Value) -> std::io::Result<()>, v: Value| {
+            let mut buf = Vec::new();
+            text(&mut buf, &v).unwrap();
+            String::from_utf8(buf).unwrap()
+        };
+        let run = json!({
+            "id": "local:0123456789ab:20261022T120000Z", "origin": "local",
+            "file": ".ai/local/evidence/runs/run-x.json",
+            "commit": "0123456789abcdef0123456789abcdef01234567", "working_tree": "clean",
+            "recorded_at": "2026-10-22T12:00:00Z", "outcome": "fail",
+            "totals": { "executions": 1, "outcomes": { "fail": 1 } }
+        });
+        let text = render(
+            runs_text,
+            json!({ "source": "s", "present": false, "runs": [run], "unread": [] }),
+        );
+        let lines: Vec<&str> = text.lines().collect();
+        assert_eq!(
+            lines,
+            [
+                "source       s  (not there: nothing has recorded a local run)",
+                "runs         1 read",
+                "fail         local:0123456789ab:20261022T120000Z at 0123456789ab (clean) \
+                 · 1 execution(s) · .ai/local/evidence/runs/run-x.json",
+            ]
+        );
+        let text = render(
+            run_text,
+            json!({
+                "source": "s", "run": run,
+                "cases": [{ "test": "suite:01_a", "name": "01_a", "outcome": "fail", "phase": "run" }],
+                "record": {
+                    "executions": [{ "test": "suite:01_a", "outcome": "fail" }],
+                    "dropped": [{ "producer": "crate", "what": "unittests", "reason": "r" }],
+                    "dropped_lines": [{ "producer": "suite", "stream": "output", "line": 3,
+                                        "text": "noise", "reason": "no case" }]
+                }
+            }),
+        );
+        let lines: Vec<&str> = text.lines().collect();
+        assert_eq!(
+            lines[0],
+            "run          local:0123456789ab:20261022T120000Z (local)"
+        );
+        assert_eq!(lines[4], "outcome      fail");
+        assert_eq!(lines[5], "totals       1 execution(s): fail 1");
+        assert_eq!(lines[6], "execution    fail     suite:01_a");
+        assert_eq!(lines[7], "case         fail     suite:01_a 01_a [run]");
+        assert_eq!(lines[8], "dropped      crate unittests: r");
+        assert_eq!(lines[9], "dropped line suite output:3 noise (no case)");
+    }
+
+    /// `evidence runs` and `evidence run` run through the command; an unknown run is an
+    /// error of the command with exit 13, naming where the runs are listed.
+    #[test]
+    fn runs_and_run_run_through_the_command() {
+        let repo = committed();
+        for format in [OutputFormat::Text, OutputFormat::Json] {
+            let cmd = EvidenceCommand::Runs { from: None };
+            assert_eq!(run(evidence(&repo, cmd, format)).unwrap(), 0);
+        }
+        let cmd = EvidenceCommand::Run {
+            id: "local:000000000000:20260101T000000Z".into(),
+            from: None,
+        };
+        let err = run(evidence(&repo, cmd, OutputFormat::Text)).unwrap_err();
+        assert_eq!(err.exit_code(), 13, "{err}");
+        assert!(
+            err.to_string().contains("majordomus evidence runs"),
+            "{err}"
+        );
     }
 
     /// The publication lines: the state at the commit presented, each reason, each record
@@ -1414,6 +1734,8 @@ mod tests {
             coverage: None,
             ledger: None,
             run_record: None,
+            run: None,
+            cases: vec![],
         }
     }
 
@@ -1449,6 +1771,8 @@ mod tests {
             coverage: None,
             ledger: Some("local".into()),
             run_record: Some(run_record.clone()),
+            run: None,
+            cases: vec![],
         };
         assert_eq!(run(evidence(&repo, cmd, OutputFormat::Json)).unwrap(), 0);
         let v: Value =
@@ -1476,6 +1800,8 @@ mod tests {
             coverage: Some(reports.path().join("coverage.json")),
             ledger: None,
             run_record: None,
+            run: None,
+            cases: vec![],
         };
         let err = run(evidence(&repo, cmd, OutputFormat::Text)).unwrap_err();
         assert!(err.to_string().contains("absent.json"), "{err}");

@@ -43,6 +43,8 @@
 //!         "evidence.stamp",
 //!         "evidence.subject",
 //!         "evidence.coverage",
+//!         "evidence.runs",
+//!         "evidence.run",
 //!         "evidence.publish"
 //!     ]
 //! );
@@ -80,6 +82,14 @@
 //! reads run records only from inside the checkout, because a network client must not
 //! choose a file outside it for this executable to read.
 //!
+//! The run records `evidence.subject` reads are supplementary
+//! ([`crate::evidence::supplementary`]): the local run directory by default, or a source
+//! named inside the checkout, listed beside the verdict and applied only through the
+//! monotone rule, so that a record can withhold `proven` and never grant it, and every
+//! weakening names its record. `evidence.runs` lists those records, newest first, and
+//! `evidence.run` shows one with its cases and the lines no case holds; neither judges
+//! anything (ADR 0087, decision 3).
+//!
 //! # The site's publication
 //!
 //! `evidence.publish` writes the site's evidence publication
@@ -100,7 +110,7 @@
 //! use majordomus_cli::capability::builtin::evidence::module;
 //! let m = module();
 //! assert_eq!(m.id.as_str(), "evidence");
-//! assert_eq!(m.capabilities.len(), 8);
+//! assert_eq!(m.capabilities.len(), 10);
 //! ```
 
 use schemars::JsonSchema;
@@ -113,8 +123,12 @@ use crate::capability::model::{
     WaiverReason,
 };
 use crate::capability::module::ModuleDescriptor;
+use crate::evidence::local_runs::LocalRun;
 use crate::evidence::publication::{self, EvidencePublication, PublishedUnread, Run};
-use crate::evidence::subject::{self, SubjectEvidence, SubjectKind};
+use crate::evidence::subject::{SubjectEvidence, SubjectKind};
+use crate::evidence::supplementary::{
+    self, EvidenceRunCase, EvidenceRunSummary, SupplementarySource, SupplementaryUnread,
+};
 use crate::evidence::{
     self, freshness, ClaimProof, EvidenceCoverage, EvidenceDropped, EvidenceProducer,
     EvidenceProvenance, EvidenceReport, EvidenceRunRecord, Execution, Ledger, LedgerTarget, Origin,
@@ -128,8 +142,13 @@ use super::{get, mcp};
 pub const EVIDENCE_URI: &str = "majordomus://evidence";
 
 /// Where `evidence.coverage` reads run records when no source is named: the local run
-/// directory ADR 0087 (decision 2) declares, inside the ignored local layer.
-pub const RUNS_DIR: &str = ".ai/local/evidence/runs";
+/// directory ADR 0087 (decision 2) declares, inside the ignored local layer, which the local
+/// run index ([`crate::evidence::local_runs`]) writes.
+pub const RUNS_DIR: &str = crate::evidence::LOCAL_RUNS_DIR;
+
+/// How a reader that named an unknown run finds the ones there are.
+const LIST_RUNS: &str = "every run there is listed, with its id, by `majordomus evidence runs` \
+(`GET /api/v1/evidence/runs`, the MCP tool `majordomus_evidence_runs`)";
 
 /// How a reader that named an unknown subject finds the ones there are.
 const LIST_SUBJECTS: &str = "every subject is listed under `subjects` in \
@@ -347,6 +366,29 @@ pub struct EvidenceRecordInput {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     /// Also write the run record to this file.
     pub run_record: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// Run a runner and record that run, instead of reading a report another run wrote:
+    /// `suite` runs `test/run.sh`, stamps the checkout it left and records it as a local run,
+    /// kept in the local run index and never in the tracked ledger.
+    pub run: Option<EvidenceRecordRun>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    /// The cases a `run` runs, by name; every case when none is named.
+    pub cases: Vec<String>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+/// The runner `evidence record --run` runs itself.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::evidence::EvidenceRecordRun;
+/// let r: EvidenceRecordRun = serde_json::from_str(r#""suite""#).unwrap();
+/// assert_eq!(r, EvidenceRecordRun::Suite);
+/// assert!(serde_json::from_str::<EvidenceRecordRun>(r#""crate""#).is_err());
+/// ```
+pub enum EvidenceRecordRun {
+    /// `test/run.sh`: the suite, or the cases named.
+    Suite,
 }
 
 impl BenchmarkCases for EvidenceRecordInput {
@@ -435,6 +477,11 @@ pub struct EvidenceSubjectInput {
     /// `unknown`). It can only weaken the measured state, and it means nothing without
     /// `presented`.
     pub presented_tree: Option<TreeState>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// The supplementary run records to read beside the verdict: a run record or a directory
+    /// of them (a CI evidence artifact), inside the repository. Absent: the local run
+    /// directory, `.ai/local/evidence/runs`. They can only weaken the verdict.
+    pub from: Option<String>,
 }
 
 impl BenchmarkCases for EvidenceSubjectInput {
@@ -453,6 +500,7 @@ impl BenchmarkCases for EvidenceSubjectInput {
             subject,
             presented: None,
             presented_tree: None,
+            from: None,
         };
         vec![
             NamedCase::new("first-claim", at(claim)),
@@ -513,6 +561,69 @@ impl BenchmarkCases for EvidenceCoverageInput {
                 },
             ),
         ]
+    }
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+/// Where the run records are listed from.
+///
+/// Saying nothing reads the local run directory, [`RUNS_DIR`], which the local run index
+/// ([`crate::evidence::local_runs`]) writes.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::evidence::EvidenceRunsInput;
+///
+/// let all: EvidenceRunsInput = serde_json::from_str("{}").unwrap();
+/// assert!(all.from.is_none());
+/// assert!(serde_json::from_str::<EvidenceRunsInput>(r#"{"limit": 3}"#).is_err());
+/// ```
+pub struct EvidenceRunsInput {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// A run record, or a directory whose `*.json` files are read as run records, inside the
+    /// repository. Absent: the local run directory, `.ai/local/evidence/runs`.
+    pub from: Option<String>,
+}
+
+impl BenchmarkCases for EvidenceRunsInput {
+    /// The local run directory, the only source the benchmark repository has a name for: a
+    /// named path it lacks would time the refusal.
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        vec![NamedCase::new("local-runs", EvidenceRunsInput::default())]
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+/// One run record, by its id or its file, and where to look for it.
+///
+/// The id is required: there is no spelling of this input that means "every run", which is
+/// what `evidence.runs` answers.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::evidence::EvidenceRunInput;
+///
+/// let one: EvidenceRunInput =
+///     serde_json::from_str(r#"{"id": "local:0123456789ab:20261022T120000Z"}"#).unwrap();
+/// assert_eq!(one.id, "local:0123456789ab:20261022T120000Z");
+/// assert!(one.from.is_none());
+/// assert!(serde_json::from_str::<EvidenceRunInput>("{}").is_err());
+/// ```
+pub struct EvidenceRunInput {
+    /// The run's id, as `evidence runs` lists it, or the file it was read from.
+    pub id: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// A run record, or a directory of them, inside the repository. Absent: the local run
+    /// directory, `.ai/local/evidence/runs`.
+    pub from: Option<String>,
+}
+
+impl BenchmarkCases for EvidenceRunInput {
+    /// Nothing: a run record is written by a run of a suite, which the benchmark repository
+    /// has never had, so every case would time the not-found rather than a read. The
+    /// capability is waived as depending on a recorded run the benchmark host cannot provide.
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        Vec::new()
     }
 }
 
@@ -695,6 +806,7 @@ pub struct TestEvidence {
 ///     unknown: vec!["docs/CLAIMS.yaml".to_string()],
 ///     dropped: vec![],
 ///     ledger: majordomus_cli::evidence::LEDGER_PATH.to_string(),
+///     local_run: None,
 ///     run_record: serde_json::from_value(serde_json::json!({
 ///         "schema": 1, "id": "local:06fa258913a1:20260926T120000Z", "origin": "local",
 ///         "commit": "06fa258913a1b2c3d4e5f60718293a4b5c6d7e8f", "working_tree": "clean",
@@ -729,6 +841,10 @@ pub struct RecordReport {
     pub dropped: Vec<EvidenceDropped>,
     /// Where the ledger was written: the path of the target the recording named.
     pub ledger: String,
+    /// Where the local run index keeps the recording, for a local run: a recording into the
+    /// local ledger, `--run suite` among them. Absent from the document otherwise.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub local_run: Option<String>,
     /// The recording as a typed run.
     pub run_record: EvidenceRunRecord,
 }
@@ -880,6 +996,69 @@ pub struct EvidenceCoverageAnswer {
     pub records: Vec<EvidenceCoverageRecord>,
     /// The files of the source that are not run records.
     pub unread: Vec<EvidenceCoverageUnread>,
+}
+
+#[derive(Debug, Clone, Serialize, JsonSchema)]
+/// The run records of one source, newest first, each with its id, commit, tree, outcome and
+/// counts. They are supplementary records shown as they are: nothing here judges a verdict.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::evidence::EvidenceRunsAnswer;
+///
+/// let answer = EvidenceRunsAnswer {
+///     source: ".ai/local/evidence/runs".into(),
+///     present: false,
+///     runs: Vec::new(),
+///     unread: Vec::new(),
+/// };
+/// let json = serde_json::to_value(&answer).unwrap();
+/// assert_eq!(json["present"], false, "a source that does not exist says so");
+/// assert_eq!(json["runs"], serde_json::json!([]));
+/// ```
+pub struct EvidenceRunsAnswer {
+    /// The file or directory read, repository-relative.
+    pub source: String,
+    /// Whether it exists. The default local run directory may not, before a local run.
+    pub present: bool,
+    /// Every run record read, newest first.
+    pub runs: Vec<EvidenceRunSummary>,
+    /// The files of the source that are not run records.
+    pub unread: Vec<SupplementaryUnread>,
+}
+
+#[derive(Debug, Clone, Serialize, JsonSchema)]
+/// One run record in full: its summary as `evidence.runs` lists it, every per-test result its
+/// executions carry, and the record itself, with what its reports held that no case holds.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::evidence::EvidenceRunAnswer;
+/// use majordomus_cli::evidence::supplementary::EvidenceRunSummary;
+/// use majordomus_cli::evidence::EvidenceRunRecord;
+///
+/// let record: EvidenceRunRecord = serde_json::from_value(serde_json::json!({
+///     "schema": 1, "id": "local:0123456789ab:20261022T120000Z", "origin": "local",
+///     "commit": "0123456789abcdef0123456789abcdef01234567", "working_tree": "clean",
+///     "recorded_at": "2026-10-22T12:00:00Z", "ledger": "local"
+/// })).unwrap();
+/// let answer = EvidenceRunAnswer {
+///     source: ".ai/local/evidence/runs".into(),
+///     run: EvidenceRunSummary::of(".ai/local/evidence/runs/run-x.json", &record),
+///     cases: Vec::new(),
+///     record,
+/// };
+/// let json = serde_json::to_value(&answer).unwrap();
+/// assert_eq!(json["run"]["id"], json["record"]["id"]);
+/// ```
+pub struct EvidenceRunAnswer {
+    /// The file or directory it was found in, repository-relative.
+    pub source: String,
+    /// Its summary, exactly as `evidence.runs` lists it.
+    pub run: EvidenceRunSummary,
+    /// Every per-test result its executions carry, with the test each belongs to.
+    pub cases: Vec<EvidenceRunCase>,
+    /// The record itself: its executions, what was absent or dropped, the lines each report
+    /// held and every line no case result holds (`dropped_lines`).
+    pub record: EvidenceRunRecord,
 }
 
 #[derive(Debug, Clone, Serialize, JsonSchema)]
@@ -1067,6 +1246,14 @@ fn test(ctx: &Context, input: EvidenceTestInput) -> Result<TestEvidence, Capabil
 
 fn record(ctx: &Context, input: EvidenceRecordInput) -> Result<RecordReport, CapabilityError> {
     let root = root_of(ctx);
+    if input.run == Some(EvidenceRecordRun::Suite) {
+        return run_suite(&root, input);
+    }
+    if !input.cases.is_empty() {
+        return Err(CapabilityError::InvalidInput(
+            "a case is named only for a run the recorder runs itself: give --run suite".into(),
+        ));
+    }
     let origin = match input.origin.as_deref() {
         None => Origin::Local,
         Some(w) => Origin::parse(w).ok_or_else(|| {
@@ -1111,6 +1298,67 @@ fn record(ctx: &Context, input: EvidenceRecordInput) -> Result<RecordReport, Cap
         unknown: got.unknown,
         dropped: got.dropped,
         ledger: ledger.path().to_string(),
+        local_run: got.local_run,
+        run_record: got.run_record,
+    })
+}
+
+/// `evidence record --run suite`: the suite run here and now, stamped by this run, recorded
+/// as a local run into the local ledger and the local run index, and never into the tracked
+/// ledger. It reads no report another run wrote, so a report, a measurement, an origin other
+/// than local or the tracked ledger is refused rather than ignored.
+fn run_suite(
+    root: &std::path::Path,
+    input: EvidenceRecordInput,
+) -> Result<RecordReport, CapabilityError> {
+    let given: Vec<&str> = [
+        ("--suite", input.suite.is_some()),
+        ("--crate-output", input.crate_output.is_some()),
+        ("--coverage", input.coverage.is_some()),
+        ("--provenance", !input.provenance.is_empty()),
+    ]
+    .into_iter()
+    .filter_map(|(flag, is)| is.then_some(flag))
+    .collect();
+    if !given.is_empty() {
+        return Err(CapabilityError::InvalidInput(format!(
+            "--run suite runs the suite and measures the checkout itself; it reads no report \
+             or measurement, so {} cannot be given with it",
+            given.join(", ")
+        )));
+    }
+    if input
+        .origin
+        .as_deref()
+        .is_some_and(|o| Origin::parse(o) != Some(Origin::Local))
+    {
+        return Err(CapabilityError::InvalidInput(
+            "--run suite is a local run: its origin is local".into(),
+        ));
+    }
+    if input.ledger == Some(LedgerTarget::Repo) {
+        return Err(CapabilityError::InvalidInput(format!(
+            "a local run never reaches the tracked ledger: --run suite records into {} and \
+             keeps the run in {RUNS_DIR}",
+            LedgerTarget::Local.path()
+        )));
+    }
+    let req = evidence::SuiteRunRequest {
+        cases: input.cases,
+        run_record: input.run_record.map(std::path::PathBuf::from),
+    };
+    // the runner's own output goes where a person watching sees it, never into the answer
+    let got =
+        evidence::run_suite(root, &req, &mut std::io::stderr()).map_err(refused_or_internal)?;
+    Ok(RecordReport {
+        recorded: got.recorded,
+        passed: got.passed,
+        commit: got.commit,
+        working_tree: got.working_tree,
+        unknown: got.unknown,
+        dropped: got.dropped,
+        ledger: LedgerTarget::Local.path().to_string(),
+        local_run: got.local_run,
         run_record: got.run_record,
     })
 }
@@ -1141,6 +1389,7 @@ fn subject_of(
     ctx: &Context,
     input: EvidenceSubjectInput,
 ) -> Result<SubjectEvidence, CapabilityError> {
+    let read = run_records(ctx, input.from.as_deref())?;
     let (ledger, held, presented) = match (&input.presented, input.presented_tree) {
         (Some(rev), given) => committed(ctx, rev, given)?,
         (None, Some(_)) => return Err(tree_without_commit()),
@@ -1150,16 +1399,97 @@ fn subject_of(
             Presented::WorkingTree,
         ),
     };
-    subject::answer(
-        &ctx.index,
-        &ctx.product,
-        &ctx.registry,
-        &ledger,
-        &held,
-        &presented,
-        &input.subject,
-    )
-    .map_err(|unknown| CapabilityError::NotFound(format!("{unknown}; {LIST_SUBJECTS}")))
+    supplementary::answer(ctx, &ledger, &held, &presented, &input.subject, &read)
+        .map_err(|unknown| CapabilityError::NotFound(format!("{unknown}; {LIST_SUBJECTS}")))
+}
+
+/// The run records of the source a caller named, or of the local run directory: every file
+/// of it read as a run record, in the canonical order (oldest first), and every file that is
+/// not one named with the reason. A named source must be inside the checkout.
+fn run_records(ctx: &Context, from: Option<&str>) -> Result<SupplementarySource, CapabilityError> {
+    let given = root_of(ctx);
+    // the root as the filesystem resolves it, so that a named source is compared with the
+    // same spelling of the checkout it must be inside
+    let root = given.canonicalize().unwrap_or(given);
+    let source = match from {
+        Some(from) => inside(&root, from)?,
+        None => root.join(RUNS_DIR),
+    };
+    let mut read = SupplementarySource {
+        source: relative(&root, &source),
+        present: source.exists(),
+        runs: Vec::new(),
+        unread: Vec::new(),
+    };
+    for file in run_files(&source) {
+        let name = relative(&root, &file);
+        match read_run(&file) {
+            Ok(record) => read.runs.push(LocalRun { file: name, record }),
+            Err(reason) => read.unread.push(SupplementaryUnread { file: name, reason }),
+        }
+    }
+    crate::order::canonical(&mut read.runs);
+    Ok(read)
+}
+
+/// Every run record of the source, newest first, each summarised.
+fn runs(ctx: &Context, input: EvidenceRunsInput) -> Result<EvidenceRunsAnswer, CapabilityError> {
+    let read = run_records(ctx, input.from.as_deref())?;
+    Ok(EvidenceRunsAnswer {
+        source: read.source,
+        present: read.present,
+        runs: read
+            .runs
+            .iter()
+            .rev()
+            .map(|r| EvidenceRunSummary::of(&r.file, &r.record))
+            .collect(),
+        unread: read.unread,
+    })
+}
+
+/// One run record of the source, by its id or its file. An id no record holds is a
+/// not-found that says where the runs are listed; an id two records share (two recordings in
+/// one second) is refused, naming the files that tell them apart.
+fn run(ctx: &Context, input: EvidenceRunInput) -> Result<EvidenceRunAnswer, CapabilityError> {
+    let read = run_records(ctx, input.from.as_deref())?;
+    let id = input.id.as_str();
+    let by_file: Vec<&LocalRun> = read
+        .runs
+        .iter()
+        .filter(|r| {
+            r.file == id
+                || std::path::Path::new(&r.file).file_name() == Some(std::ffi::OsStr::new(id))
+        })
+        .collect();
+    let matched: Vec<&LocalRun> = if by_file.is_empty() {
+        read.runs.iter().filter(|r| r.record.id == id).collect()
+    } else {
+        by_file
+    };
+    let found = match matched.as_slice() {
+        [] => {
+            return Err(CapabilityError::NotFound(format!(
+                "`{id}` is not a run of {}; {LIST_RUNS}",
+                read.source
+            )))
+        }
+        [one] => *one,
+        many => {
+            let files: Vec<&str> = many.iter().map(|r| r.file.as_str()).collect();
+            return Err(CapabilityError::InvalidInput(format!(
+                "`{id}` names {} runs ({}): name one by its file",
+                many.len(),
+                files.join(", ")
+            )));
+        }
+    };
+    Ok(EvidenceRunAnswer {
+        source: read.source.clone(),
+        run: EvidenceRunSummary::of(&found.file, &found.record),
+        cases: EvidenceRunCase::all(&found.record),
+        record: found.record.clone(),
+    })
 }
 
 /// Every coverage record of the run records at the source, each judged against the
@@ -1532,7 +1862,7 @@ pub fn module() -> ModuleDescriptor {
                 id: "evidence.record",
                 kind: CapabilityKind::Command,
                 title: "Record a run that happened",
-                description: "Reads what the runs already wrote — the suite's TSV report, cargo test's output, a coverage summary — carries into each result what that run measured about its own checkout (the commit and the tree, from the measurement `evidence stamp` wrote), with the digest of the test's own source, the time and the origin, and merges it into the ledger. It records; it decides nothing: a case that failed is a case the runner said failed, and a test no report named is left exactly as it was, so recording one case never erases the evidence for the rest. It refuses a tree with no commit, a measurement of another commit or of another report, a local measurement that names no report, and a CI report without a measurement; a local report recorded without one carries the tree unknown, which never reads proven. Every recording returns a run record (its commit, the tree each report's run measured, its totals and what was absent, dropped or unknown, and a coverage summary bound to its commit), and --ledger local writes only the ignored local ledger. A crate binary that ran no test, or only a filtered subset, is recorded as a skip, and what no claim can name yet (the crate's own unit tests, its doctests) is listed as dropped.",
+                description: "Reads what the runs already wrote — the suite's TSV report, cargo test's output, a coverage summary — carries into each result what that run measured about its own checkout (the commit and the tree, from the measurement `evidence stamp` wrote), with the digest of the test's own source, the time and the origin, and merges it into the ledger. It records; it decides nothing: a case that failed is a case the runner said failed, and a test no report named is left exactly as it was, so recording one case never erases the evidence for the rest. It refuses a tree with no commit, a measurement of another commit or of another report, a local measurement that names no report, and a CI report without a measurement; a local report recorded without one carries the tree unknown, which never reads proven. Every recording returns a run record (its commit, the tree each report's run measured, its totals and what was absent, dropped or unknown, and a coverage summary bound to its commit), and --ledger local writes only the ignored local layer: the local ledger, and the run record into the local run index .ai/local/evidence/runs, which keeps the newest 50. Each execution carries the per-test results its runner's own lines reported (a crate binary's tests, a suite case with its phase) and what the runner printed about it (a suite case's log, a failing binary's result line); every line a runner printed that no case result holds is listed in the run record with why. A crate binary that ran no test, or only a filtered subset, is recorded as a skip, and what no claim can name yet (the crate's own unit tests, its doctests) is listed as dropped, with its cases. --run suite runs test/run.sh itself (the cases named with --case, or every case), stamps the checkout the run left and records it as a local run, never into the tracked ledger.",
                 input: EvidenceRecordInput,
                 output: RecordReport,
                 stability: Stability::BehaviorallyVerified,
@@ -1566,7 +1896,7 @@ pub fn module() -> ModuleDescriptor {
             capability! {
                 id: "evidence.subject",
                 title: "What proves this subject",
-                description: "One subject of the evidence index — a claim, a rule, a feature, a command, a capability, an MCP tool or a use case, named <kind>:<id> — judged at the presented revision: the working tree by default, or the checked-out commit as committed, read from the ledger that commit holds exactly as evidence.report reads it. Its verdict is the one aggregation over its own routes and its members' own verdicts: a failing part makes it failing, otherwise the weakest part that can carry proof decides, and the totals by state are always beside it. Each route carries its state, the execution behind it and the command that runs it again; each member carries its own verdict; a rule's paths no runner drives are listed as mechanisms, and the subject's advisory findings sit beside the verdict. A key the index does not hold is a not-found that says where the keys are listed, never an empty verdict. Kept per checkout state, never longer.",
+                description: "One subject of the evidence index — a claim, a rule, a feature, a command, a capability, an MCP tool or a use case, named <kind>:<id> — judged at the presented revision: the working tree by default, or the checked-out commit as committed, read from the ledger that commit holds exactly as evidence.report reads it. Its verdict is the one aggregation over its own routes and its members' own verdicts: a failing part makes it failing, otherwise the weakest part that can carry proof decides, and the totals by state are always beside it. Each route carries its state, the execution behind it and the command that runs it again; each member carries its own verdict; a rule's paths no runner drives are listed as mechanisms, and the subject's advisory findings sit beside the verdict. A key the index does not hold is a not-found that says where the keys are listed, never an empty verdict. The supplementary run records — the local run directory .ai/local/evidence/runs by default, or a run record or a directory of them named inside the checkout — are listed beside the verdict and applied only through the monotone rule: a record that failed, timed out or errored on a clean tree, at a commit that contains the evidence and that the presented revision contains, caps a proven route at stale; a passing record never raises one. Every weakening names the records that made it, and every record names the tests it weakened. Nothing is kept: the run records are ignored files that change outside this process.",
                 input: EvidenceSubjectInput,
                 output: SubjectEvidence,
                 stability: Stability::BehaviorallyVerified,
@@ -1576,7 +1906,7 @@ pub fn module() -> ModuleDescriptor {
                     cli: Some(CliExposure { path: vec!["evidence".into(), "subject".into()] }),
                 },
                 tags: ["evidence", "subjects", "verification", "provenance"],
-                cache: CachePolicy::Checkout { max_entries: 32 },
+                cache: CachePolicy::Disabled,
                 handler: subject_of,
             },
             capability! {
@@ -1594,6 +1924,39 @@ pub fn module() -> ModuleDescriptor {
                 tags: ["evidence", "coverage", "verification", "provenance"],
                 cache: CachePolicy::Disabled,
                 handler: coverage,
+            },
+            capability! {
+                id: "evidence.runs",
+                title: "The recorded runs",
+                description: "Every run record of the local run index .ai/local/evidence/runs by default, or of a run record or a directory of them (a CI evidence artifact) named inside the checkout, newest first: each with its id, its file, its origin, the commit it ran at, the tree its reports measured, when it was recorded, the ledger it went into, the outcome it stands for (the weakest of its executions; none when it recorded nothing), its totals by outcome and runner, and how many per-test results, dropped entries, dropped lines and unknown tests it holds. Run records are supplementary: listed as they are, deciding no verdict. A file of the source that is not a run record is listed with the reason rather than skipped. A source outside the checkout is refused, because a network client must not choose a file outside it for this executable to read.",
+                input: EvidenceRunsInput,
+                output: EvidenceRunsAnswer,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_evidence_runs"),
+                    http: get("/api/v1/evidence/runs"),
+                    cli: Some(CliExposure { path: vec!["evidence".into(), "runs".into()] }),
+                },
+                tags: ["evidence", "runs", "verification", "provenance"],
+                cache: CachePolicy::Disabled,
+                handler: runs,
+            },
+            capability! {
+                id: "evidence.run",
+                title: "One recorded run",
+                description: "One run record, named by the id evidence runs lists or by its file, from the local run index .ai/local/evidence/runs or a source named inside the checkout: its summary as evidence runs lists it, every per-test result its executions carry with the test each belongs to, and the record itself — its executions, its measured provenance, what was absent or dropped, how many lines each report held and every line no case result holds, with why. It decides no verdict. An id no record holds is a not-found that says where the runs are listed; an id two records share is refused, naming the files that tell them apart.",
+                input: EvidenceRunInput,
+                output: EvidenceRunAnswer,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_evidence_run"),
+                    http: get("/api/v1/evidence/run"),
+                    cli: Some(CliExposure { path: vec!["evidence".into(), "run".into()] }),
+                },
+                tags: ["evidence", "runs", "verification", "provenance"],
+                cache: CachePolicy::Disabled,
+                benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::ExternalDependency },
+                handler: run,
             },
             capability! {
                 id: "evidence.publish",
@@ -1665,6 +2028,18 @@ mod tests {
                 Some("majordomus_evidence_coverage"),
                 Some("/api/v1/evidence/coverage"),
                 &["evidence", "coverage"],
+            ),
+            (
+                "evidence.runs",
+                Some("majordomus_evidence_runs"),
+                Some("/api/v1/evidence/runs"),
+                &["evidence", "runs"],
+            ),
+            (
+                "evidence.run",
+                Some("majordomus_evidence_run"),
+                Some("/api/v1/evidence/run"),
+                &["evidence", "run"],
             ),
             ("evidence.publish", None, None, &["evidence", "publish"]),
         ];

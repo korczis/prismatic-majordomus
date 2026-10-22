@@ -7,7 +7,7 @@ profile: implementation
 parallel_safe: false
 objective: "Add the evidence.subject, evidence.coverage, evidence.runs and evidence.run capabilities, so that the CLI, HTTP and MCP answer by subject from the one authority and read supplementary records only through the monotone rule (ADR 0087 decision 3)."
 why: "Only claims and rules can be asked about today. A feature, a command, a capability, an MCP tool and a use case have no answer, although each is what a reader of the site or the Cockpit is looking at."
-current_state: "Slice 1 delivered evidence.subject and evidence.coverage, declared once in the evidence module and served over the CLI (evidence subject <key>, evidence coverage), HTTP and MCP: every subject kind of the index answers through the index's own judge at the working tree or a presented commit, an unknown subject is a not-found that exits 13 and names where the subjects are listed, and coverage is read from run records (the local run directory, or a run record or CI artifact directory named inside the checkout) and shown current only for its own commit on a clean tree. Case 508 and tests/evidence.rs hold them. Waiting for I1957's local run index: evidence runs, evidence run <id>, and supplementary records applied to a subject's verdict through the monotone rule (case 509)."
+current_state: "Both slices are delivered, not yet landed. Slice 1 delivered evidence.subject and evidence.coverage, declared once in the evidence module and served over the CLI (evidence subject <key>, evidence coverage), HTTP and MCP: every subject kind of the index answers through the index's own judge at the working tree or a presented commit, an unknown subject is a not-found that exits 13 and names where the subjects are listed, and coverage is shown current only for its own commit on a clean tree. Slice 2 delivered evidence.runs and evidence.run over the same three surfaces, reading the local run index (or a source named inside the checkout) newest first with each run's id, commit, tree, outcome and counts, and one run with its cases and dropped lines, an unknown run id being a not-found that exits 13; and evidence.subject now lists the supplementary run records beside the verdict and applies them only through the monotone rule, through supplementary::weaken_naming, the one function the site's publication calls as well, so a record only ever weakens a route to stale and each weakening names its records. Case 508, case 509 and tests/evidence.rs (supplementary_only_weakens among them) hold them."
 desired_state: "majordomus evidence subject <key>, evidence coverage, evidence runs and evidence run <id> exist as declared capabilities served over the CLI, HTTP and MCP tool calls; an unknown subject exits 13; supplementary records are listed beside the verdict and applied only through the monotone rule."
 scope:
   - apps/majordomus-cli/src/capability/builtin/evidence.rs
@@ -16,6 +16,8 @@ scope:
   - apps/majordomus-cli/src/evidence/supplementary.rs
   - apps/majordomus-cli/src/evidence/mod.rs
   - apps/majordomus-cli/src/evidence/subject.rs
+  - apps/majordomus-cli/src/evidence/publication.rs
+  - apps/majordomus-cli/tests/evidence.rs
   - test/cases
   - docs/EVIDENCE.md
   - docs/HOW_IT_WORKS.md

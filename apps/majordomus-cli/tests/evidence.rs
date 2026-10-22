@@ -6,6 +6,11 @@
 //! command line, HTTP and an MCP `tools/call` must give the same document for the same
 //! question, about a real repository with a recorded run in it; an unknown subject is
 //! refused on each of them, with exit 13 on the command line.
+//!
+//! `evidence.runs` and `evidence.run` show the local run index the same way on the three
+//! surfaces, and an unknown run is refused on each. The run records an answer by subject
+//! reads beside its verdict are supplementary: they only ever weaken it, through the
+//! monotone rule, and each weakening names its record (ADR 0087, decision 2).
 
 mod common;
 
@@ -74,6 +79,11 @@ const SUBJECTS: [&str; 7] = [
 /// The fixture with a use case, and a run of its one case recorded, measured and committed,
 /// so that the verdicts are judged over a ledger that holds something.
 fn recorded() -> (Fixture, String) {
+    recorded_as("ok")
+}
+
+/// [`recorded`], with the case's run recorded as `outcome` (a TSV outcome word).
+fn recorded_as(outcome: &str) -> (Fixture, String) {
     let f = Fixture::new();
     // the shared fixture's source classes index no use case; the class is the one the
     // installed skeleton declares, so the use case reaches the index as `init` would put it
@@ -89,7 +99,7 @@ fn recorded() -> (Fixture, String) {
     f.commit("a use case");
     let reports = tempfile::tempdir().unwrap();
     let tsv = reports.path().join("run.tsv");
-    std::fs::write(&tsv, "00_x\tok\t1\tparallel\n").unwrap();
+    std::fs::write(&tsv, format!("00_x\t{outcome}\t1\tparallel\n")).unwrap();
     let stamp = reports.path().join("stamp.json");
     let (tsv, stamp) = (tsv.display().to_string(), stamp.display().to_string());
     let (code, _, err) = run_in(
@@ -334,4 +344,242 @@ fn coverage_answers_the_same_on_every_surface_and_is_current_only_at_its_commit(
     // a source outside the checkout is refused
     let (status, body) = s.get("/api/v1/evidence/coverage?from=..");
     assert_eq!(status, 422, "{body}");
+}
+
+/// Record one run of the fixture's case as a local run, through the real stamp and recorder:
+/// the run lands in the local run index under `.ai/local/`, and the tree stays clean. Returns
+/// the run's id.
+fn local_run(f: &Fixture, outcome: &str) -> String {
+    let reports = tempfile::tempdir().unwrap();
+    let tsv = reports.path().join("run.tsv");
+    std::fs::write(&tsv, format!("00_x\t{outcome}\t1\tparallel\n")).unwrap();
+    let stamp = reports.path().join("stamp.json");
+    let (tsv, stamp) = (tsv.display().to_string(), stamp.display().to_string());
+    let (code, _, err) = run_in(
+        &f.root(),
+        &[
+            "evidence",
+            "stamp",
+            "--producer",
+            "suite",
+            "--report",
+            &tsv,
+            "--out",
+            &stamp,
+        ],
+        "",
+    );
+    assert_eq!(code, 0, "{err}");
+    let provenance = format!("suite={stamp}");
+    let recorded = cli(
+        f,
+        &[
+            "evidence",
+            "record",
+            "--suite",
+            &tsv,
+            "--provenance",
+            &provenance,
+            "--ledger",
+            "local",
+        ],
+    )
+    .unwrap_or_else(|(code, err)| panic!("{code}: {err}"));
+    assert!(
+        recorded["local_run"].is_string(),
+        "a local recording did not reach the local run index: {recorded}"
+    );
+    assert_eq!(
+        f.git(&["status", "--porcelain"]),
+        "",
+        "a local run dirtied the tree"
+    );
+    recorded["run_record"]["id"].as_str().unwrap().to_string()
+}
+
+#[test]
+fn runs_and_a_run_answer_the_same_on_every_surface() {
+    let (f, head) = recorded();
+    let empty = cli(&f, &["evidence", "runs"]).unwrap();
+    assert_eq!(empty["source"], ".ai/local/evidence/runs", "{empty}");
+    assert_eq!(empty["runs"], json!([]), "{empty}");
+
+    let failed = local_run(&f, "fail");
+    let runs = cli(&f, &["evidence", "runs"]).unwrap();
+    assert_eq!(runs["present"], true, "{runs}");
+    let listed = &runs["runs"][0];
+    assert_eq!(listed["id"], failed.as_str(), "{runs}");
+    assert_eq!(listed["commit"], head.as_str(), "{runs}");
+    assert_eq!(listed["working_tree"], "clean", "{runs}");
+    assert_eq!(listed["outcome"], "fail", "{runs}");
+    assert_eq!(listed["totals"]["executions"], 1, "{runs}");
+
+    let s = Served::start(&f.root(), &[]);
+    let (status, by_http) = s.get("/api/v1/evidence/runs");
+    assert_eq!(status, 200, "{by_http}");
+    assert_eq!(by_http, runs, "HTTP and the command line disagree");
+    let by_mcp = mcp_call(&f, "majordomus_evidence_runs", json!({}));
+    assert_ne!(by_mcp["isError"], json!(true), "{by_mcp}");
+    assert_eq!(
+        by_mcp["structuredContent"], runs,
+        "MCP and the command line disagree"
+    );
+
+    // one run, by its id and by its file, with its cases and its record
+    let one = cli(&f, &["evidence", "run", &failed]).unwrap();
+    assert_eq!(
+        one["run"], *listed,
+        "the run is not summarised as the list shows it"
+    );
+    assert_eq!(one["record"]["id"], failed.as_str(), "{one}");
+    assert!(one["cases"].is_array(), "{one}");
+    assert_eq!(one["record"]["executions"][0]["outcome"], "fail", "{one}");
+    let file = listed["file"].as_str().unwrap();
+    let by_file = cli(&f, &["evidence", "run", file]).unwrap();
+    assert_eq!(by_file, one, "a run named by its file is not the same run");
+
+    let (status, by_http) = s.get(&format!("/api/v1/evidence/run?id={}", query(&failed)));
+    assert_eq!(status, 200, "{by_http}");
+    assert_eq!(by_http, one, "HTTP and the command line disagree");
+    let by_mcp = mcp_call(&f, "majordomus_evidence_run", json!({ "id": failed }));
+    assert_ne!(by_mcp["isError"], json!(true), "{by_mcp}");
+    assert_eq!(
+        by_mcp["structuredContent"], one,
+        "MCP and the command line disagree"
+    );
+
+    // a source outside the checkout is refused
+    let (status, body) = s.get("/api/v1/evidence/runs?from=..");
+    assert_eq!(status, 422, "{body}");
+}
+
+#[test]
+fn an_unknown_run_is_refused_on_every_surface() {
+    let (f, _) = recorded();
+    local_run(&f, "ok");
+    let unknown = "local:000000000000:20260101T000000Z";
+    let (code, err) = cli(&f, &["evidence", "run", unknown]).unwrap_err();
+    assert_eq!(code, 13, "{err}");
+    assert!(err.contains(&format!("`{unknown}` is not a run")), "{err}");
+    assert!(
+        err.contains("majordomus evidence runs"),
+        "the refusal does not say where the runs are listed: {err}"
+    );
+
+    let s = Served::start(&f.root(), &[]);
+    let (status, body) = s.get(&format!("/api/v1/evidence/run?id={}", query(unknown)));
+    assert_eq!(status, 404, "{body}");
+    assert_eq!(body["error"]["code"], "not_found", "{body}");
+
+    let by_mcp = mcp_call(&f, "majordomus_evidence_run", json!({ "id": unknown }));
+    assert_eq!(by_mcp["isError"], true, "{by_mcp}");
+    assert!(by_mcp.to_string().contains(unknown), "{by_mcp}");
+}
+
+/// The verdict a subject answers with, its route on the fixture's test, and its
+/// supplementary section, on the command line.
+fn judged(f: &Fixture, key: &str) -> (String, Value, Value) {
+    let v = cli(f, &["evidence", "subject", key]).unwrap();
+    let route = v["routes"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|r| r["test"] == "suite:00_x")
+        .cloned()
+        .unwrap_or(Value::Null);
+    (
+        v["verdict"].as_str().unwrap().to_string(),
+        route,
+        v["supplementary"].clone(),
+    )
+}
+
+/// A supplementary record only ever weakens a verdict, and each weakening names its record
+/// (I1953's `supplementary_only_weakens`, ADR 0087 decision 2): a clean failing local run of
+/// the claim's test caps a passing claim at stale, on every surface and through the subjects
+/// made of it, naming the run; a passing run never raises a failing claim.
+#[test]
+fn supplementary_only_weakens() {
+    // a passing claim, and a failing local run of its test at a commit after the evidence
+    let (f, _) = recorded();
+    let (before, route, supplementary) = judged(&f, "claim:policy-parse");
+    assert!(
+        before == "proven" || before == "inputs_unchanged",
+        "the fixture's claim does not start passing: {before}"
+    );
+    assert_eq!(supplementary["present"], false, "{supplementary}");
+    assert_eq!(supplementary["records"], json!([]));
+    assert_eq!(route["state"], before.as_str(), "{route}");
+
+    let failed = local_run(&f, "fail");
+    let (after, route, supplementary) = judged(&f, "claim:policy-parse");
+    assert_eq!(
+        after, "stale",
+        "a clean failing run did not withhold proven"
+    );
+    assert_eq!(route["state"], "stale", "{route}");
+    assert!(
+        route["detail"]
+            .as_str()
+            .unwrap_or_default()
+            .contains(&failed),
+        "the weakened route does not name its record: {route}"
+    );
+    assert_eq!(
+        supplementary["weakened"],
+        json!([{
+            "test": "suite:00_x", "from": before, "to": "stale", "by": [failed],
+            "detail": route["detail"]
+        }]),
+        "{supplementary}"
+    );
+    assert_eq!(supplementary["records"][0]["id"], failed.as_str());
+    assert_eq!(
+        supplementary["records"][0]["weakened"],
+        json!(["suite:00_x"])
+    );
+
+    // the subjects made of the claim read the weakened member, never their old verdict
+    let feature = cli(&f, &["evidence", "subject", "feature:fixture-feature"]).unwrap();
+    let member = feature["members"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|m| m["subject"] == "claim:policy-parse")
+        .unwrap();
+    assert_eq!(member["state"], "stale", "{feature}");
+
+    // the same answer on every surface
+    let by_cli = cli(&f, &["evidence", "subject", "claim:policy-parse"]).unwrap();
+    let s = Served::start(&f.root(), &[]);
+    let (status, by_http) = s.get("/api/v1/evidence/subject?subject=claim%3Apolicy-parse");
+    assert_eq!(status, 200, "{by_http}");
+    assert_eq!(by_http, by_cli, "HTTP and the command line disagree");
+    let by_mcp = mcp_call(
+        &f,
+        "majordomus_evidence_subject",
+        json!({ "subject": "claim:policy-parse" }),
+    );
+    assert_eq!(
+        by_mcp["structuredContent"], by_cli,
+        "MCP and the command line disagree"
+    );
+
+    // a stronger record never raises: a failing claim and a passing local run of its test
+    let (g, _) = recorded_as("fail");
+    let (before, _, _) = judged(&g, "claim:policy-parse");
+    assert_eq!(
+        before, "failing",
+        "the fixture's claim does not start failing"
+    );
+    let passed = local_run(&g, "ok");
+    let (after, route, supplementary) = judged(&g, "claim:policy-parse");
+    assert_eq!(
+        after, "failing",
+        "a passing supplementary record raised a verdict"
+    );
+    assert_eq!(route["state"], "failing", "{route}");
+    assert_eq!(supplementary["records"][0]["id"], passed.as_str());
+    assert_eq!(supplementary["records"][0]["weakened"], json!([]));
+    assert_eq!(supplementary["weakened"], json!([]), "{supplementary}");
 }

@@ -2732,11 +2732,12 @@ pub struct EvidenceArgs {
 
 #[derive(Debug, Subcommand)]
 /// The subcommands of `majordomus evidence`: the whole matrix, one claim, one test, any
-/// subject, the coverage the run records carry, the recorder, and the site's publication.
+/// subject, the coverage the run records carry, the recorded runs, the recorder, and the
+/// site's publication.
 ///
-/// `show`, `claim`, `proves`, `subject` and `coverage` are the command line of
-/// `evidence.report`, `evidence.claim`, `evidence.test`, `evidence.subject` and
-/// `evidence.coverage`; `record` is the command line of
+/// `show`, `claim`, `proves`, `subject`, `coverage`, `runs` and `run` are the command line
+/// of `evidence.report`, `evidence.claim`, `evidence.test`, `evidence.subject`,
+/// `evidence.coverage`, `evidence.runs` and `evidence.run`; `record` is the command line of
 /// `evidence.record`, which is a command line and nothing else because it writes a tracked
 /// file and this server is read-only; `stamp` is the command line of `evidence.stamp`, a
 /// read offered only here because it reads a path its caller names; `publish` is the command
@@ -2780,6 +2781,17 @@ pub struct EvidenceArgs {
 ///     EvidenceCommand::Coverage { from: None, presented_tree: Some(t) } if t == "dirty"
 /// ));
 ///
+/// // the recorded runs, and one of them by its id
+/// assert!(matches!(
+///     parse(&["majordomus", "evidence", "runs"]),
+///     EvidenceCommand::Runs { from: None }
+/// ));
+/// assert!(matches!(
+///     parse(&["majordomus", "evidence", "run", "local:0123456789ab:20261022T120000Z"]),
+///     EvidenceCommand::Run { id, from: None } if id.starts_with("local:")
+/// ));
+/// assert!(Cli::try_parse_from(["majordomus", "evidence", "run"]).is_err());
+///
 /// // the site's publication names the commit it presents and where it goes
 /// assert!(matches!(
 ///     parse(&[
@@ -2794,8 +2806,15 @@ pub struct EvidenceArgs {
 /// // recording reads a report a runner already wrote; it runs no test
 /// assert!(matches!(
 ///     parse(&["majordomus", "evidence", "record", "--suite", "tmp/report.tsv"]),
-///     EvidenceCommand::Record { suite: Some(p), origin: None, .. } if p.ends_with("report.tsv")
+///     EvidenceCommand::Record { suite: Some(p), origin: None, run: None, .. }
+///         if p.ends_with("report.tsv")
 /// ));
+/// // unless it is asked to run the suite itself, as a local run
+/// assert!(matches!(
+///     parse(&["majordomus", "evidence", "record", "--run", "suite", "--case", "07_scope"]),
+///     EvidenceCommand::Record { run: Some(r), cases, .. } if r == "suite" && cases == ["07_scope"]
+/// ));
+/// assert!(Cli::try_parse_from(["majordomus", "evidence", "record", "--run", "crate"]).is_err());
 ///
 /// // a run measures the checkout it left; the recording carries that measurement
 /// assert!(matches!(
@@ -2868,6 +2887,12 @@ pub enum EvidenceCommand {
         /// Also write the run record to this file
         #[arg(long)]
         run_record: Option<PathBuf>,
+        /// Run this runner and record the run as a local run, instead of reading a report: `suite` runs test/run.sh, stamps the checkout it left and keeps the run in .ai/local/evidence/runs, never in the tracked ledger
+        #[arg(long, value_name = "RUNNER", value_parser = local_runners())]
+        run: Option<String>,
+        /// A case for `--run suite` to run, by name (repeatable); every case when none is named
+        #[arg(long = "case", value_name = "NAME")]
+        cases: Vec<String>,
     },
     /// Measure the checkout as a run left it, for `record --provenance`
     Stamp {
@@ -2894,6 +2919,9 @@ pub enum EvidenceCommand {
         /// What you know about the presented commit's tree (clean, dirty, unknown); it can only weaken the measured state
         #[arg(long, value_name = "TREE", value_parser = presented_trees())]
         presented_tree: Option<String>,
+        /// The supplementary run records to read beside the verdict, which can only weaken it: a run record, or a directory of them, inside the repository (default: .ai/local/evidence/runs)
+        #[arg(long, value_name = "PATH")]
+        from: Option<PathBuf>,
     },
     /// The coverage the run records carry, each current only for its own commit on a clean tree
     Coverage {
@@ -2903,6 +2931,20 @@ pub enum EvidenceCommand {
         /// What you know about the checked-out commit's tree (clean, dirty, unknown); it can only weaken the measured state
         #[arg(long, value_name = "TREE", value_parser = presented_trees())]
         presented_tree: Option<String>,
+    },
+    /// The recorded runs, newest first: each run's id, commit, tree, outcome and counts
+    Runs {
+        /// A run record, or a directory of them such as a CI evidence artifact, inside the repository (default: .ai/local/evidence/runs)
+        #[arg(long, value_name = "PATH")]
+        from: Option<PathBuf>,
+    },
+    /// One recorded run: its summary, its cases and every line no case holds
+    Run {
+        /// The run's id, as `evidence runs` lists it, or the file it was read from
+        id: String,
+        /// A run record, or a directory of them such as a CI evidence artifact, inside the repository (default: .ai/local/evidence/runs)
+        #[arg(long, value_name = "PATH")]
+        from: Option<PathBuf>,
     },
     /// Write the site's evidence publication of the checked-out commit, outside the checkout
     Publish {
@@ -2947,6 +2989,24 @@ pub fn ci_runs() -> clap::builder::PossibleValuesParser {
         clap::builder::PossibleValue::new("absent")
             .help("No CI run of the commit is found; without a record the publication is unknown"),
     ])
+}
+
+/// The runners `evidence record --run` runs itself, each with what it means.
+///
+/// ```
+/// use majordomus_cli::cli::local_runners;
+/// use clap::builder::TypedValueParser;
+///
+/// let words: Vec<String> = local_runners()
+///     .possible_values()
+///     .unwrap()
+///     .map(|v| v.get_name().to_string())
+///     .collect();
+/// assert_eq!(words, ["suite"]);
+/// ```
+pub fn local_runners() -> clap::builder::PossibleValuesParser {
+    clap::builder::PossibleValuesParser::new([clap::builder::PossibleValue::new("suite")
+        .help("Run test/run.sh, stamp the checkout it left and keep the run as a local run")])
 }
 
 /// The words `--presented-tree` accepts, each with what it means: one declaration for every
@@ -5740,6 +5800,28 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["evidence", "coverage", "--format", "json"],
             setup: &[],
             expect: Expect::Json(&["/presented/commit", "/source", "/present", "/records"]),
+        }],
+    },
+    CommandExamples {
+        command: "evidence runs",
+        examples: &[ExampleDoc {
+            id: "evidence-runs-json",
+            title: "The recorded runs, newest first",
+            description: "The same answer `GET /api/v1/evidence/runs` and the MCP tool `majordomus_evidence_runs` return: every run record of the local run index, newest first, each with its id, commit, tree, outcome and counts. Run records are supplementary and decide no verdict. Nothing has recorded a local run in a fresh repository, so the answer names the directory it read, says it is not there, and lists no run.",
+            argv: &["evidence", "runs", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/source", "/present", "/runs", "/unread"]),
+        }],
+    },
+    CommandExamples {
+        command: "evidence run",
+        examples: &[ExampleDoc {
+            id: "evidence-run-unknown",
+            title: "A run the index does not hold",
+            description: "A run id no record holds is a not-found, with where the runs are listed, rather than an empty run. Given an id `evidence runs` lists, or the file it was read from, it answers that run's summary, every per-test result its executions carry, and the record itself with every line no case result holds.",
+            argv: &["evidence", "run", "no-such-run"],
+            setup: &[],
+            expect: Expect::ExitCode(13),
         }],
     },
     CommandExamples {
