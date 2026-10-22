@@ -117,6 +117,8 @@ pub enum Command {
     Shell(ShellArgs),
     /// The boundary between the layer's tracked and local halves, checked against the layouts their contracts declare: every path a contract excludes, named with the contract
     Layout(LayoutArgs),
+    /// What this machine can give back, reclaimed by name: the build directories nobody is using, each removed only while every cargo lock in it is held (I3833)
+    Disk(DiskArgs),
     /// The tracked tree as token-bounded text shards for a language model's file search: plan what a profile carries and leaves out, build it under tmp/packs/, and verify a written pack against its manifest; never a binary, a worktree, a link or build output
     Pack(PackArgs),
     /// The Dashboard Suite: each page a projection of the capabilities that hold its facts, every card carrying its source capability, the JSON pointer its value was read from, the Cockpit page with the evidence and the command that acts on it
@@ -154,7 +156,7 @@ pub struct IntentArgs {
 
     #[command(subcommand)]
     /// `list`, `show`, `validate`, `coverage`, `preflight`, `binding`, `realization`,
-    /// `explain` or `propose`.
+    /// `explain`, `draft` or `propose`.
     pub command: IntentCommand,
 
     #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
@@ -229,6 +231,12 @@ pub enum IntentCommand {
         /// The intent's id
         id: String,
     },
+    /// Draft a record from what the repository already derives, and print it; nothing is written
+    Draft {
+        #[command(subcommand)]
+        /// What to draft: `gap`.
+        what: IntentDraftCommand,
+    },
     /// Write a new, unplanned intent: what must become true (ADR 0144)
     Propose {
         /// What must become true, kept verbatim
@@ -240,6 +248,33 @@ pub enum IntentCommand {
         /// The identity and file name; the title's slug when absent
         #[arg(long)]
         id: Option<String>,
+    },
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus intent draft`: each prints a record drafted from what the
+/// repository already derives, for a worker to read, complete and commit. Only `gap` today —
+/// the command line of `intents.draft_gap`.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, IntentCommand, IntentDraftCommand};
+///
+/// let cli = Cli::try_parse_from(["majordomus", "intent", "draft", "gap", "intent-planning"]).unwrap();
+/// let Command::Intent(args) = cli.command else { panic!("intent") };
+/// let IntentCommand::Draft { what: IntentDraftCommand::Gap { intent } } = args.command else {
+///     panic!("draft gap")
+/// };
+/// assert_eq!(intent, "intent-planning");
+/// // the group drafts nothing of its own, and a gap is of one named intent
+/// assert!(Cli::try_parse_from(["majordomus", "intent", "draft"]).is_err());
+/// assert!(Cli::try_parse_from(["majordomus", "intent", "draft", "gap"]).is_err());
+/// ```
+pub enum IntentDraftCommand {
+    /// The gap of one intent: each criterion's state derived from the evidence at HEAD, each citing the ledger execution or claim it read, printed as the record to save under .ai/repo/project/gaps/
+    Gap {
+        /// The intent's id, which is also its file name and the gap's
+        intent: String,
     },
 }
 
@@ -505,6 +540,55 @@ pub struct LayoutArgs {
 pub enum LayoutCommand {
     /// Refuse every path a declared layout excludes, naming the contract; exit 10 on a finding, 12 when the halves cannot be read
     Check,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus disk`. The output shape is global, so it reads the way a person writes it.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, DiskCommand};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "disk", "prune"]).unwrap();
+/// let Command::Disk(args) = cli.command else { panic!("not the disk command") };
+/// // a check unless --apply is said, and the idle bound is named
+/// let DiskCommand::Prune { apply, idle_minutes, .. } = args.command;
+/// assert!(!apply);
+/// assert_eq!(idle_minutes, 30);
+/// ```
+pub struct DiskArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `prune`. Required: the group runs nothing of its own.
+    pub command: DiskCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus disk`: `prune` reports, and with `--apply` removes, the
+/// build directories nobody is using, under their locks.
+pub enum DiskCommand {
+    /// Report the build directories nobody is using, and with --apply remove them, each only while every cargo lock in it is held; exit 0 whatever is kept
+    Prune {
+        /// Remove what the report finds removable; without it, nothing is removed
+        #[arg(long)]
+        apply: bool,
+        /// A directory is a candidate only when nothing in it changed for this many minutes
+        #[arg(long, default_value_t = 30)]
+        idle_minutes: u64,
+        /// A further build directory to consider (an llvm-cov-target, say); repeatable
+        #[arg(long = "extra", value_name = "DIR")]
+        extra: Vec<String>,
+        /// Also prune the container runtime's unused build cache and dangling images, and trim a colima VM; never volumes, containers or tagged images, and a stopped runtime is not started
+        #[arg(long)]
+        containers: bool,
+    },
 }
 
 #[derive(Debug, Args)]
@@ -6332,6 +6416,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
         }],
     },
     CommandExamples {
+        command: "disk prune",
+        examples: &[ExampleDoc {
+            id: "disk-prune-check",
+            title: "What this machine could give back, with nothing removed",
+            description: "Without --apply a prune is a check: every idle build directory under <CARGO_HOME>/build-private is listed with its size and why it would be kept or removed, and nothing is removed. --apply removes each one only while every cargo lock in it is held, so a build starting at the same moment never loses its directory (I3833).",
+            argv: &["disk", "prune"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["nothing was removed"]),
+        }],
+    },
+    CommandExamples {
         command: "distribution",
         examples: &[ExampleDoc {
             id: "distribution-show-default",
@@ -6914,6 +7009,31 @@ pub const EXAMPLES: &[CommandExamples] = &[
             setup: &[],
             expect: Expect::StdoutContains(&["fixture-intent", "the-case-passes"]),
         }],
+    },
+    CommandExamples {
+        command: "intent draft gap",
+        examples: &[
+            ExampleDoc {
+                id: "intent-draft-gap",
+                title: "Draft the evidence half of a gap from the ledger",
+                description: "Prints the gap record of the fixture's intent, drafted at HEAD and written nowhere: one observation per criterion naming what the ledger holds for it, and one condition per criterion whose state follows the evidence — the fixture's case has no recorded run, so it is `missing`. Saved as `.ai/repo/project/gaps/fixture-intent.yaml`, it passes `intent validate` unchanged; two drafts at one commit are the same bytes.",
+                argv: &["intent", "draft", "gap", "fixture-intent"],
+                setup: &[],
+                expect: Expect::StdoutContains(&[
+                    "intent: fixture-intent",
+                    "source: test:test/cases/00_x.sh",
+                    "state: missing",
+                ]),
+            },
+            ExampleDoc {
+                id: "intent-draft-gap-json",
+                title: "The same, as the shape the API and MCP answer with",
+                description: "What `GET /api/v1/intents/draft/gap` returns and the `majordomus_intent_draft_gap` tool answers: the record as JSON, its keys in the order the gap schema lists them.",
+                argv: &["intent", "draft", "gap", "fixture-intent", "--format", "json"],
+                setup: &[],
+                expect: Expect::Json(&["/observed_at", "/observations/0/source", "/conditions/0/state"]),
+            },
+        ],
     },
     CommandExamples {
         command: "intent propose",

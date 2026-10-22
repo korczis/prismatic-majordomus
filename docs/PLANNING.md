@@ -233,6 +233,21 @@ below): where it is `required`, the issue never becomes `ACTIVE`.
 Codex, Gemini — does the observing and the criticising, and the repository refuses the result
 when it does not hold together. Nothing here derives a plan from an intent automatically.
 
+The one part of a gap Majordomus can derive, it drafts and prints rather than leaving it to be
+copied by hand: `majordomus intent draft gap <intent>` (the `intents.draft_gap` capability,
+the same value over HTTP and MCP) answers a gap record for one intent at HEAD, with one
+observation per criterion citing what was read — the ledger execution with its outcome,
+commit, time and runner (`test:<ref>`), the claim (`claim:<id>`), or the `command:` or
+`deployment:` reference the ledger cannot settle — and one condition per criterion citing it.
+The state follows one table: `current` evidence is `satisfied`; `failing` is `conflicting`
+when an issue serving the criterion is `DONE` and `missing` otherwise; `not_run` and
+`unresolved` are `missing`; `stale` and `not_derivable` are `unknown`. `observed_at` is HEAD,
+`recorded_at` its committer date and `recorded_by` the executable, so two drafts at one commit
+are the same bytes; a working tree that differs from HEAD is the one risk named, and `work` is
+left empty. Nothing is written: the worker saves the draft as
+`.ai/repo/project/gaps/<intent>.yaml`, adds what only a reader observes, and commits it, and
+`intent validate` judges it like any other gap.
+
 ### Preflight: may this work proceed, and what is it held to
 
 `majordomus intent preflight --issue <id>` (or `--path <p>`, repeated) is the one join a session

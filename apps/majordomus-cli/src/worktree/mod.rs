@@ -55,6 +55,7 @@ pub(crate) mod model;
 pub(crate) mod path;
 pub(crate) mod service;
 pub mod state;
+pub mod sweep;
 pub(crate) mod topology;
 pub(crate) mod trace;
 pub mod trunk;

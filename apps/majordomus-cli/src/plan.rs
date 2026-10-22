@@ -137,6 +137,50 @@ fn clean(s: &str) -> String {
     s.replace('\t', " ")
 }
 
+/// Every template delimiter a record's fields hold, as `(flattened key, the delimiter in words)`:
+/// `delimiter()` in `lib/project.awk` (I3009). A record's prose is rendered into the site's plan
+/// pages, where a delimiter left in the text reaches the built HTML unresolved. Keys are named as
+/// the flattener names them (`acceptance_criteria.0`, `evidence.0.covers`), in the file's order,
+/// and each key is tested for the three in one order, so the findings match the engine's. The
+/// delimiters are built from a single brace, so that this file, which the published crate
+/// reference shows, holds none of them.
+fn delimiters(meta: &Value) -> Vec<(String, &'static str)> {
+    fn walk(v: &Value, key: &str, out: &mut Vec<(String, &'static str)>) {
+        match v {
+            Value::Object(m) => {
+                for (k, x) in m {
+                    let k = if key.is_empty() {
+                        k.clone()
+                    } else {
+                        format!("{key}.{k}")
+                    };
+                    walk(x, &k, out);
+                }
+            }
+            Value::Array(items) => {
+                for (n, x) in items.iter().enumerate() {
+                    walk(x, &format!("{key}.{n}"), out);
+                }
+            }
+            Value::String(s) => {
+                for (second, name) in [
+                    ('{', "a double brace"),
+                    ('%', "a brace-percent"),
+                    ('#', "a brace-hash"),
+                ] {
+                    if s.contains(&String::from_iter(['{', second])) {
+                        out.push((key.to_string(), name));
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+    let mut out = Vec::new();
+    walk(meta, "", &mut out);
+    out
+}
+
 // ---------------------------------------------------------------- the event behind a stamp
 
 /// The first instant a stamp could only have been written with its seal (ADR 0097).
@@ -212,6 +256,7 @@ struct PlanIssueRaw {
     validation: usize,
     evidence_required: Vec<String>,
     evidence_have: Vec<String>,
+    delimiters: Vec<(String, &'static str)>,
 }
 
 /// One milestone as its file declares it, with nothing derived.
@@ -229,6 +274,7 @@ struct PlanMilestoneRaw {
     claims: Vec<String>,
     evidence_required: Vec<String>,
     evidence_have: Vec<String>,
+    delimiters: Vec<(String, &'static str)>,
 }
 
 impl PlanIssueRaw {
@@ -257,6 +303,7 @@ impl PlanIssueRaw {
             validation: list(meta, "validation").len(),
             evidence_required: list(meta, "evidence_required"),
             evidence_have: evidence_covers(meta),
+            delimiters: delimiters(meta),
         }
     }
 
@@ -319,6 +366,7 @@ impl PlanMilestoneRaw {
             claims: list(meta, "claims"),
             evidence_required: list(meta, "evidence_required"),
             evidence_have: evidence_covers(meta),
+            delimiters: delimiters(meta),
         }
     }
 }
@@ -709,6 +757,25 @@ fn derive(mut header: PlanProject, mraw: Vec<PlanMilestoneRaw>, iraw: Vec<PlanIs
     let iseen: BTreeSet<&str> = iids.iter().map(String::as_str).collect();
     let mseen: BTreeSet<&str> = mids.iter().map(String::as_str).collect();
     let ix = |id: &str| -> Option<usize> { iraw.iter().position(|r| r.id == id) };
+
+    // --- a template delimiter in a record's prose (I3009), reported where the engine reports it:
+    //     at ingest, before every derived finding, milestones before issues.
+    for (id, found) in mraw
+        .iter()
+        .map(|m| (&m.id, &m.delimiters))
+        .chain(iraw.iter().map(|i| (&i.id, &i.delimiters)))
+    {
+        for (key, name) in found {
+            v.fail(
+                "template_delimiter",
+                id,
+                format!(
+                    "{key} holds {name}, which the site renders raw on the record's plan page; \
+                     describe the template syntax in words"
+                ),
+            );
+        }
+    }
 
     // --- the event behind every stamp. A stamp its transition did not write is not a fact
     //     about the issue: it moves no status, and it is a failure by name (ADR 0097).
@@ -1564,6 +1631,70 @@ mod tests {
             default_branch: "master".into(),
             active_milestone: String::new(),
         }
+    }
+
+    /// A template delimiter in a record's prose is a failure naming the record, the key and
+    /// the delimiter in words, milestones before issues and keys in file order, as
+    /// `lib/project.awk` reports it (I3009); a single brace is prose. Case 3726 holds the shell.
+    #[test]
+    fn a_template_delimiter_in_record_prose_is_refused_in_words() {
+        let b = '{';
+        let double = String::from_iter([b, b]);
+        let percent = String::from_iter([b, '%']);
+        let hash = String::from_iter([b, '#']);
+        let m = PlanMilestoneRaw::of(
+            "M000",
+            &json!({"id": "M000", "title": "t", "outcome": format!("a comment {hash} stays out"),
+                    "evidence_required": ["proof"]}),
+        );
+        let quoted = PlanIssueRaw::of(
+            "I0002",
+            &json!({"id": "I0002", "milestone": "M000", "title": "t",
+                    "why": format!("prints {double} commit"),
+                    "acceptance_criteria": ["fine", format!("the loop {percent} for f")],
+                    "validation": ["true"], "evidence_required": ["proof"]}),
+        );
+        let single = PlanIssueRaw::of(
+            "I0003",
+            &json!({"id": "I0003", "milestone": "M000", "title": "a set like {a, b}",
+                    "acceptance_criteria": ["ok"], "validation": ["true"], "evidence_required": ["proof"]}),
+        );
+        let p = derive(
+            header(),
+            vec![m],
+            vec![issue("I0001", "M000", &[]), quoted, single],
+        );
+        let found: Vec<(String, String)> = p
+            .findings
+            .iter()
+            .filter(|f| f.code == "template_delimiter")
+            .map(|f| (f.subject.clone(), f.message.clone()))
+            .collect();
+        let tail = ", which the site renders raw on the record's plan page; describe the template syntax in words";
+        assert_eq!(
+            found,
+            vec![
+                (
+                    "M000".to_string(),
+                    format!("outcome holds a brace-hash{tail}")
+                ),
+                (
+                    "I0002".to_string(),
+                    format!("why holds a double brace{tail}")
+                ),
+                (
+                    "I0002".to_string(),
+                    format!("acceptance_criteria.1 holds a brace-percent{tail}")
+                ),
+            ]
+        );
+        assert!(p
+            .findings
+            .iter()
+            .all(|f| f.subject != "I0003" || f.code != "template_delimiter"));
+        assert!(found.iter().all(|(_, msg)| !msg.contains(&double)
+            && !msg.contains(&percent)
+            && !msg.contains(&hash)));
     }
 
     /// A diamond places each issue one layer past its deepest dependency, and the tip waits

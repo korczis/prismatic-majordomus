@@ -7,12 +7,15 @@ profile: implementation
 parallel_safe: false
 objective: "Rewrite the remaining validators that loop mj_yget or mj_git per item so that each reads its inputs with one pass."
 why: "Together they cost 2.3 s of doctor after the two largest validators are fixed."
-current_state: "validate:catalogue 0.8 s, validate:context 0.6 s, validate:dag 0.5 s, validate:command_surface 0.35 s."
+current_state: "Measured 2026-10-21 by MJ_TIMING=1 doctor, three interleaved runs each, load average 33 to 58: validate:dag 10.3 to 11.2 s before, 1.8 to 2.7 s after (the project load: a basename per record, every field of every record loaded as a variable through a pipe, and a quadratic scope-conflict pass in project.awk); validate:context 2.5 to 5.0 s before, 0.49 to 0.58 s after (1.9 s in one run at load 58) (every candidate document split, flattened and validated by one process each instead of four or five per document, the cross checks read by expansion instead of a command substitution, and every tracks pathspec asked of the index in one ls-files --error-unmatch); validate:command_surface 465 to 592 ms before, 51 to 58 ms after; validate:command_coverage 766 to 882 ms before, 268 to 383 ms after. Findings byte-identical to master. validate:catalogue unchanged (4.4 to 9.2 s): its per-use-case loop is lib/usecase.sh (mj_uc_load, mj_uc_validate_all), outside this scope. Not under 150 ms for dag or context on this loaded machine: the remaining dag floor is the flattener of the 900 project records in lib/common.sh (about 0.45 s at load 35). The catalogue now reads its use cases once (2026-10-21, lib/usecase.sh): mj_uc_load is one split awk, one mj_yaml_flatten_many and one variables awk over every use case, application and the taxonomy instead of about ten processes per file, and mj_uc_validate_all answers every reference, heading and unknown key in the shell or in one grep; validate:catalogue measured 4919, 7471 and 15977 ms before against 540, 570 and 589 ms after in three interleaved doctor runs at load 38 to 63 (285 to 345 ms at load 23 to 37), with byte-identical findings from doctor and every usecase subcommand, so it is an order of magnitude faster but not yet under 150 ms on a loaded machine. Known remainder, outside these four: validate:use_case_coverage costs about 2.6 s under load (2026-10-21) and is not yet sliced."
 desired_state: "Each of the four under 150 ms on this repository, with identical findings."
 scope:
   - lib/doctor.sh
   - lib/context_docs.sh
   - lib/commands.sh
+  - lib/project.sh
+  - lib/project.awk
+  - lib/usecase.sh
   - test/cases/28_catalogue.sh
   - test/cases/42_dag_waves.sh
   - test/cases/69_context_documents.sh
@@ -30,4 +33,4 @@ evidence_required:
   - batch_reads
 risk: "The context validator shells out to git per document; batching it must keep the tracked-only rule."
 created_at: 2026-09-05
-updated_at: 2026-09-05
+updated_at: 2026-10-21
