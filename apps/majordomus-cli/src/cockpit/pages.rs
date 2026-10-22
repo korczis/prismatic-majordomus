@@ -403,6 +403,7 @@ fn brief_card(ctx: &Context) -> El {
             section("peers", b.peers.state, &b.peers.summary),
             section("mesh", b.mesh.state, &b.mesh.summary),
             section("integration", b.integration.state, &b.integration.summary),
+            section("release", b.release.state, &b.release.summary),
             section("derive", b.derive.state, &b.derive.summary),
         ],
     ));

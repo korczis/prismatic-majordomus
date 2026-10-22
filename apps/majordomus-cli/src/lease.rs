@@ -732,12 +732,35 @@ fn stale_reason(me: &ExecutableIdentity) -> Option<String> {
 /// to a debug build — makes no claim either way and is left alone, so two legitimate
 /// binaries never fight over the lease.
 fn superseded(doc: &LeaseDocument) -> Option<String> {
+    superseded_by(doc, &executable_identity()?, crate::VERSION)
+}
+
+/// The judgement [`superseded`] makes, over the identity and version it is handed.
+///
+/// A file replaced at the lease's path says the server runs code no longer on disk, not that
+/// this process runs newer code: a build of an older tree written to the same path is a
+/// replacement too. So a server whose lease records a newer version than `my_version` is
+/// never taken over on that ground (I3097): this process is the older one, and attaching to
+/// the newer server is the verdict [`version_verdict`] already gives everywhere else.
+fn superseded_by(
+    doc: &LeaseDocument,
+    mine: &ExecutableIdentity,
+    my_version: &str,
+) -> Option<String> {
     let recorded = doc.executable.as_ref()?;
-    let mine = executable_identity()?;
     if recorded.path != mine.path {
         return None;
     }
     if recorded.mtime == mine.mtime && recorded.size == mine.size {
+        return None;
+    }
+    if version_verdict(doc.version.as_deref(), my_version) == VersionVerdict::ServerNewer {
+        tracing::warn!(
+            server = doc.version.as_deref().unwrap_or_default(),
+            mine = my_version,
+            "the server's executable was replaced, but the server runs a newer version than this \
+             executable; attaching to it rather than taking it over"
+        );
         return None;
     }
     Some(format!(
@@ -1749,6 +1772,50 @@ mod tests {
             !reason.contains(&exe.display().to_string()),
             "the reason names no path: {reason}"
         );
+    }
+
+    /// A lease whose server was started from `exe` as it was then, at `version`.
+    fn lease_from(exe: &ExecutableIdentity, version: &str) -> LeaseDocument {
+        LeaseDocument {
+            schema: SCHEMA.into(),
+            pid: 1,
+            token: "t".into(),
+            root: "/r".into(),
+            url: Some("http://127.0.0.1:1".into()),
+            started_at: "2026-10-20T22:25:31Z".into(),
+            executable: Some(exe.clone()),
+            version: Some(version.into()),
+        }
+    }
+
+    #[test]
+    fn older_replacement_attaches() {
+        // 2026-10-20 22:27:58Z: a 1.0.0-alpha.1 server lost its lease to 0.30.2, because a
+        // build of an older tree had rewritten the file the server was started from
+        let dir = tempfile::tempdir().unwrap();
+        let exe = dir.path().join("majordomus");
+        fs::write(&exe, b"the newer code the server loaded").unwrap();
+        let lease = lease_from(&identity_of(&exe), "1.0.0-alpha.1");
+        fs::write(&exe, b"an older tree's build, written over the same path").unwrap();
+        assert_eq!(superseded_by(&lease, &identity_of(&exe), "0.30.2"), None);
+    }
+
+    #[test]
+    fn newer_replacement_takes_over() {
+        let dir = tempfile::tempdir().unwrap();
+        let exe = dir.path().join("majordomus");
+        fs::write(&exe, b"the code the server loaded").unwrap();
+        let pinned = identity_of(&exe);
+        fs::write(&exe, b"a rebuild of the same or a newer tree").unwrap();
+        let mine = identity_of(&exe);
+        for (served, version) in [
+            ("1.0.0-alpha.1", "1.0.0-alpha.1"),
+            ("0.30.2", "1.0.0-alpha.1"),
+        ] {
+            let reason = superseded_by(&lease_from(&pinned, served), &mine, version)
+                .unwrap_or_else(|| panic!("{version} replacing a {served} server takes it over"));
+            assert!(reason.contains("has been replaced since"), "{reason}");
+        }
     }
 
     #[test]

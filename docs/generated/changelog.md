@@ -1,11 +1,11 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the layer's release records, the decisions dated in each release's window, and the commits in its range; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.0.0-alpha.5 -->
+     Generator: majordomus-cli 1.0.0-alpha.6 -->
 # Changelog
 
 Every entry below is derived: a section per release the layer records, its decisions the ADRs dated inside that release's window, its changes the conventional commits in its range, its artifacts the record's own evidence. Nothing here is written by hand, and `majordomus generate changelog --check` fails when it stops matching the tree.
 
-Current version: **1.0.0-alpha.5**
+Current version: **1.0.0-alpha.6**
 
 ## v1.0.0-alpha.4 — 2026-10-21
 
