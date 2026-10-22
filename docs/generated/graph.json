@@ -16106,6 +16106,18 @@
         }
       },
       {
+        "id": "majordomus://critique/landing-survives-any-session",
+        "kind": "critique",
+        "label": "landing-survives-any-session",
+        "summary": "landing-survives-any-session",
+        "route": "/cockpit/objects/critique/landing-survives-any-session",
+        "source": ".ai/repo/project/critiques/landing-survives-any-session.yaml",
+        "facts": {
+          "intent": "landing-survives-any-session",
+          "reviewed_at": "2034d4a3f0b"
+        }
+      },
+      {
         "id": "majordomus://critique/nothing-in-the-mesh-waits-on-something-dead",
         "kind": "critique",
         "label": "nothing-in-the-mesh-waits-on-something-dead",
@@ -22044,6 +22056,26 @@
             "Judging whether a criterion is met; that is the evidence's question (ADR 0070)"
           ],
           "updated_at": "2026-09-15"
+        }
+      },
+      {
+        "id": "majordomus://intent/landing-survives-any-session",
+        "kind": "intent",
+        "label": "landing-survives-any-session",
+        "summary": "Landing green work survives any session, any restart and any machine",
+        "route": "/cockpit/objects/intent/landing-survives-any-session",
+        "source": ".ai/repo/project/intents/landing-survives-any-session.yaml",
+        "facts": {
+          "created_at": "2026-10-22",
+          "milestones": [
+            "landing-survives-any-session"
+          ],
+          "non_goals": [
+            "A second executor beside crate::integration",
+            "Landing a pull request whose required check is not success on its head",
+            "Strong consistency of the mesh; the forge arbitrates, the mesh announces"
+          ],
+          "updated_at": "2026-10-22"
         }
       },
       {
@@ -61427,7 +61459,7 @@
             "The version bump policy, which stays release analyze's (scripts/ci/version-matches-surface)"
           ],
           "parallel_safe": false,
-          "priority": "p1",
+          "priority": "p0",
           "profile": "implementation",
           "scope": [
             "site/templates/partials/navbar.html",
@@ -63561,6 +63593,435 @@
           "validation": [
             "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3861_a_remote_caller_never_sees_the_executions",
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib http::router"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3910",
+        "kind": "issue",
+        "label": "I3910",
+        "summary": "The integration executor fast-forwards master to every green head, a combined top included, and nothing else lands",
+        "route": "/cockpit/objects/issue/i3910",
+        "source": ".ai/repo/project/issues/I3910.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A train pull request green on its head and containing master is ready, and a drain fast-forwards master to that head and verifies master equals it (case a_green_train_is_fast_forwarded_and_verified)",
+            "A fast-forward refused because master moved is not an unverified landing: the drain observes again and decides from the new master",
+            "A pull request labelled hold is never landed; one a landed train contains is classified Redundant, and the drain closes nothing",
+            "While master's required check is red the drain lands only the red's named carrier (I2709)",
+            "Rule v3 and ADR 0167 name prs drain as the lander and the fast-forward as its act; no document, rule or script names --admin or a queue file as a way to land"
+          ],
+          "created_at": "2026-10-22",
+          "depends_on": [],
+          "evidence_required": [
+            "one_executor"
+          ],
+          "milestone": "landing-survives-any-session",
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/tests/integration_executor.rs",
+            ".ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md",
+            "apps/majordomus-cli/src/integration/drain.rs",
+            "apps/majordomus-cli/src/integration/classify.rs",
+            "apps/majordomus-cli/src/integration/train.rs",
+            ".ai/repo/adrs/0167-work-moves-through-seats-on-the-mesh-and-lands-in-combined-tops.md",
+            "docs/INTEGRATION.md",
+            ".ai/repo/project/issues/I3910.yaml"
+          ],
+          "serves": [
+            "landing-survives-any-session#one-executor"
+          ],
+          "slug": "the-executor-lands-every-green-head",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "bin/majordomus plan validate",
+            "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- integration::",
+            "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test integration_executor"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3911",
+        "kind": "issue",
+        "label": "I3911",
+        "summary": "The executor reads its audit trail, its halt and its lease from origin, so any clone continues it and a stale holder is refused",
+        "route": "/cockpit/objects/issue/i3911",
+        "source": ".ai/repo/project/issues/I3911.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A clone with no local trail reads the verified count and the halt from origin",
+            "A lease whose holder stopped renewing it is taken over after its expiry and not before",
+            "A holder whose lease was taken over is refused at its renewal and lands nothing (case an_expired_lease_holder_is_refused_before_it_lands)"
+          ],
+          "created_at": "2026-10-22",
+          "depends_on": [],
+          "evidence_required": [
+            "state_on_origin"
+          ],
+          "milestone": "landing-survives-any-session",
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/tests/integration_executor.rs",
+            "apps/majordomus-cli/tests/integration_trail.rs",
+            "apps/majordomus-cli/src/integration/drain.rs",
+            "apps/majordomus-cli/src/integration/exclusive.rs",
+            "apps/majordomus-cli/src/integration/metrics.rs",
+            "docs/INTEGRATION.md",
+            "docs/INTEGRATION_ROLLOUT.md",
+            ".ai/repo/project/issues/I3911.yaml"
+          ],
+          "serves": [
+            "landing-survives-any-session#state-on-origin"
+          ],
+          "slug": "the-executor-state-is-on-origin",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "bin/majordomus plan validate",
+            "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- integration::",
+            "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test integration_executor"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3912",
+        "kind": "issue",
+        "label": "I3912",
+        "summary": "A seat whose holder stopped beating is reported vacant and offered to live sessions by capability",
+        "route": "/cockpit/objects/issue/i3912",
+        "source": ".ai/repo/project/issues/I3912.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A seat claim whose stream stopped beating is reported vacant in mesh.state and the monitor within one expiry, naming the evidence (case a_vacant_seat_is_reported_and_offered)",
+            "The vacancy is offered only to sessions that declare the seat's capability, and exactly one acceptance holds it under a new epoch",
+            "A holder returning under the old epoch is refused"
+          ],
+          "created_at": "2026-10-22",
+          "current_state": "mesh/state.rs marks claims of a silent stream Expired by liveness, never as an event (state.rs:735-745); ui/mesh.rs draws a seat as vacant; no code reports or offers a seat.",
+          "depends_on": [
+            "I3174",
+            "I3182",
+            "I3198"
+          ],
+          "evidence_required": [
+            "vacant_seat_is_taken"
+          ],
+          "milestone": "landing-survives-any-session",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh/cooperation.rs",
+            "apps/majordomus-cli/src/mesh/state.rs",
+            "apps/majordomus-cli/src/monitor",
+            "apps/majordomus-cli/tests/mesh_cooperation.rs",
+            "docs/MESH.md",
+            "docs/MONITOR.md",
+            ".ai/repo/project/issues/I3912.yaml"
+          ],
+          "serves": [
+            "landing-survives-any-session#vacant-seat-is-taken"
+          ],
+          "slug": "a-vacant-seat-is-reported-and-offered",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "bin/majordomus plan validate",
+            "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- mesh::",
+            "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test mesh_cooperation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3913",
+        "kind": "issue",
+        "label": "I3913",
+        "summary": "The executor runs as a user service outside every agent session, restarted after a crash and never after a halt",
+        "route": "/cockpit/objects/issue/i3913",
+        "source": ".ai/repo/project/issues/I3913.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "install writes one unit naming this checkout through I2722's writer; a second install changes nothing",
+            "A killed executor is restarted; an exit by halt or refusal is not (case a_halted_executor_is_not_restarted, proven without a service manager)",
+            "status reports running or not, the last decision and its time; uninstall removes the unit"
+          ],
+          "created_at": "2026-10-22",
+          "current_state": "No launchd or systemd unit for the executor exists; prs drain runs only on demand; I2722 plans the user-unit writer for the hub.",
+          "depends_on": [
+            "I3910",
+            "I3911",
+            "I2722"
+          ],
+          "desired_state": "After install the executor runs and lands the next green head; killing it restarts it; a halt or a refusal leaves it stopped and status says why; uninstall leaves nothing behind.",
+          "evidence_required": [
+            "survives_a_restart"
+          ],
+          "milestone": "landing-survives-any-session",
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/tests/integration_executor.rs",
+            "apps/majordomus-cli/src/integration",
+            "apps/majordomus-cli/src/commands/prs.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "docs/INTEGRATION.md",
+            ".ai/repo/project/issues/I3913.yaml"
+          ],
+          "serves": [
+            "landing-survives-any-session#survives-a-restart"
+          ],
+          "slug": "the-executor-runs-as-a-service",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "bin/majordomus plan validate",
+            "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- integration::",
+            "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test integration_executor"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3914",
+        "kind": "issue",
+        "label": "I3914",
+        "summary": "A standing approval is one owner-attributed record in the repository, each machine reports whether it carries it, and only the owner writes it",
+        "route": "/cockpit/objects/issue/i3914",
+        "source": ".ai/repo/project/issues/I3914.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Each declared approval names its date, the owner's words and its bounds",
+            "status lists, per settings layer, the declared approvals present and missing (case a_missing_approval_is_reported_per_machine)",
+            "apply writes only missing approvals, keeps $defaults first, is idempotent, and refuses inside an agent session or without confirmation",
+            "Exactly one rule states who writes an approval, and it is the owner"
+          ],
+          "created_at": "2026-10-22",
+          "depends_on": [
+            "I3910"
+          ],
+          "evidence_required": [
+            "approvals_are_declared"
+          ],
+          "milestone": "landing-survives-any-session",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/rules/project/a-standing-approval-is-written-where-permissions-are-read.v1.md",
+            ".ai/repo/project/issues/I3914.yaml"
+          ],
+          "serves": [
+            "landing-survives-any-session#approvals-are-declared"
+          ],
+          "slug": "a-standing-approval-is-declared-once",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "bin/majordomus plan validate",
+            "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- autonomy::"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3915",
+        "kind": "issue",
+        "label": "I3915",
+        "summary": "A combined top is composed by a typed command from members declared in a tracked train manifest",
+        "route": "/cockpit/objects/issue/i3915",
+        "source": ".ai/repo/project/issues/I3915.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "compose applies the manifest's members in order on a scratch index and names each member that does not apply",
+            "Two compositions of one manifest give the same member list and the same pre-derive tree (case a_train_manifest_composes_one_tree)",
+            "No member order is read from a session cache"
+          ],
+          "created_at": "2026-10-22",
+          "current_state": "train.rs reads stacked pull requests and refs/prep only; prs compose was planned in ADR 0167 and never landed; train member order lives in session caches.",
+          "depends_on": [
+            "I3910"
+          ],
+          "desired_state": "A seat composes a train with one command from its manifest; another seat on another machine composes the same pre-derive tree from the same manifest.",
+          "evidence_required": [
+            "trains_are_composed"
+          ],
+          "milestone": "landing-survives-any-session",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/tests/integration_executor.rs",
+            "apps/majordomus-cli/src/integration/train.rs",
+            "apps/majordomus-cli/src/commands/prs.rs",
+            "docs/INTEGRATION.md",
+            ".ai/repo/project/issues/I3915.yaml"
+          ],
+          "serves": [
+            "landing-survives-any-session#trains-are-composed"
+          ],
+          "slug": "a-train-is-composed-by-a-command",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "bin/majordomus plan validate",
+            "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- integration::train"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3916",
+        "kind": "issue",
+        "label": "I3916",
+        "summary": "The homepage counts supported claims from the run the evidence page reads, and names the revision it was recorded at",
+        "route": "/cockpit/objects/issue/i3916",
+        "source": ".ai/repo/project/issues/I3916.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The homepage's supported count equals the evidence page's for the same build",
+            "The figure names the revision its run was recorded at, and says when it is behind the built revision",
+            "With no recorded run the figure reads not yet measured, never 0"
+          ],
+          "created_at": "2026-10-22",
+          "depends_on": [],
+          "evidence_required": [
+            "homepage_supported_equals_evidence_page",
+            "no_bare_zero"
+          ],
+          "milestone": "truthful-plan-surfaces",
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "site/templates/index.html",
+            "apps/majordomus-cli/src/site.rs",
+            "scripts/pages",
+            "scripts/ci/homepage-check",
+            "test/cases/544_the_homepage_counts_declared_apart_from_supported.sh",
+            "test/cases/502_evidence_is_judged_at_the_presented_revision.sh",
+            ".ai/repo/project/issues/I3916.yaml"
+          ],
+          "serves": [],
+          "slug": "the-proof-figure-reads-the-recorded-run",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "bin/majordomus plan validate",
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 544_the_homepage_counts_declared_apart_from_supported",
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 502_evidence_is_judged_at_the_presented_revision"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3917",
+        "kind": "issue",
+        "label": "I3917",
+        "summary": "The plan's status counts leave the homepage hero and stay on the roadmap",
+        "route": "/cockpit/objects/issue/i3917",
+        "source": ".ai/repo/project/issues/I3917.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The built homepage hero carries no data-issues count",
+            "/roadmap still shows every status count from the plan",
+            "Rule v2 and homepage-check agree, and a case fails when plan counts return to the hero"
+          ],
+          "created_at": "2026-10-22",
+          "depends_on": [],
+          "desired_state": "The hero shows no plan counts; /roadmap shows them; rule v2 and homepage-check agree, and a case refuses plan counts back on the hero.",
+          "evidence_required": [
+            "hero_carries_no_plan_counts"
+          ],
+          "milestone": "truthful-plan-surfaces",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/rules/project/homepage-tells-a-declared-story.v1.md",
+            "site/templates/index.html",
+            "scripts/ci/homepage-check",
+            ".ai/repo/project/issues/I3917.yaml"
+          ],
+          "serves": [],
+          "slug": "the-plan-counts-leave-the-hero",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "bin/majordomus plan validate",
+            "scripts/ci/homepage-check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3918",
+        "kind": "issue",
+        "label": "I3918",
+        "summary": "README, CONTRIBUTING and the homepage say truthfully how big the tool is and what its registry counts are",
+        "route": "/cockpit/objects/issue/i3918",
+        "source": ".ai/repo/project/issues/I3918.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "No tracked document says the tool needs bash and nothing else",
+            "The homepage names builtin capabilities and generated resources apart, each from the dataset",
+            "site-check fails when either figure disagrees with the dataset"
+          ],
+          "created_at": "2026-10-22",
+          "current_state": "README.md:129 and CONTRIBUTING.md:3,36 as quoted; product.json telemetry counts 3300 capabilities as 208 builtin and 3092 declarative, one per object (site.rs:1247-1260).",
+          "depends_on": [],
+          "evidence_required": [
+            "size_said_truthfully",
+            "registry_figures_explained"
+          ],
+          "milestone": "truthful-plan-surfaces",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "README.md",
+            "CONTRIBUTING.md",
+            "site/templates/index.html",
+            "site/data/marketing.toml",
+            "scripts/site-check",
+            ".ai/repo/project/issues/I3918.yaml"
+          ],
+          "serves": [],
+          "slug": "the-size-of-the-tool-is-said-truthfully",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "bin/majordomus plan validate",
+            "scripts/site-check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3919",
+        "kind": "issue",
+        "label": "I3919",
+        "summary": "The coverage gate finds the end of a test module across multi-line and raw string literals",
+        "route": "/cockpit/objects/issue/i3919",
+        "source": ".ai/repo/project/issues/I3919.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A multi-line raw string inside a test module leaves the whole module test code",
+            "A raw string with hashes and braces is skipped whole",
+            "Case 132 fails if the scanner closes the module early"
+          ],
+          "created_at": "2026-10-22",
+          "current_state": "test_lines (scripts/rust-coverage:268-318) skips a string only within one line and does not know raw strings.",
+          "depends_on": [],
+          "desired_state": "A test module holding multi-line and raw string literals is test code to its real closing brace; case 132 proves it with a fixture.",
+          "evidence_required": [
+            "raw_strings_stay_in_test_module"
+          ],
+          "milestone": "ci-critical-path",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "scripts/rust-coverage",
+            "test/cases/132_coverage_differential.sh",
+            ".ai/repo/project/issues/I3919.yaml"
+          ],
+          "serves": [],
+          "slug": "the-coverage-scanner-reads-raw-strings",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "bin/majordomus plan validate",
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 132_coverage_differential"
           ]
         }
       },
@@ -67821,6 +68282,43 @@
           "updated_at": "2026-10-19",
           "validation": [
             "majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/landing-survives-any-session",
+        "kind": "milestone",
+        "label": "landing-survives-any-session",
+        "summary": "Landing green work survives any session, any restart and any machine",
+        "route": "/cockpit/objects/milestone/landing-survives-any-session",
+        "source": ".ai/repo/project/milestones/landing-survives-any-session.yaml",
+        "facts": {
+          "created_at": "2026-10-22",
+          "desired_state": "Every criterion of the intent is carried by an issue here and proven by its test.",
+          "evidence_required": [
+            "one_executor",
+            "state_on_origin",
+            "vacant_seat_is_taken",
+            "survives_a_restart",
+            "approvals_are_declared",
+            "trains_are_composed"
+          ],
+          "order": 513,
+          "outcome": "Landing green work on master never waits on a person or on one session staying alive.",
+          "priority": "p0",
+          "scope": [
+            "apps/majordomus-cli/src/integration",
+            "apps/majordomus-cli/src/mesh",
+            "apps/majordomus-cli/src/autonomy",
+            ".ai/repo/rules/project",
+            "docs/INTEGRATION.md",
+            "docs/MESH.md"
+          ],
+          "slug": "landing-survives-any-session",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "bin/majordomus plan validate",
+            "bin/majordomus intent validate"
           ]
         }
       },
@@ -107149,6 +107647,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://critique/landing-survives-any-session",
+        "target": "kind:critique",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://critique/nothing-in-the-mesh-waits-on-something-dead",
         "target": "kind:critique",
         "kind": "is_a"
@@ -109525,6 +110028,11 @@
       },
       {
         "source": "majordomus://intent/intent-planning",
+        "target": "kind:intent",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://intent/landing-survives-any-session",
         "target": "kind:intent",
         "kind": "is_a"
       },
@@ -122509,6 +123017,146 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3910",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3910",
+        "target": "majordomus://milestone/landing-survives-any-session",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3911",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3911",
+        "target": "majordomus://milestone/landing-survives-any-session",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3912",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3912",
+        "target": "majordomus://issue/I3174",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3912",
+        "target": "majordomus://issue/I3182",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3912",
+        "target": "majordomus://issue/I3198",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3912",
+        "target": "majordomus://milestone/landing-survives-any-session",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3913",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3913",
+        "target": "majordomus://issue/I2722",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3913",
+        "target": "majordomus://issue/I3910",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3913",
+        "target": "majordomus://issue/I3911",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3913",
+        "target": "majordomus://milestone/landing-survives-any-session",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3914",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3914",
+        "target": "majordomus://issue/I3910",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3914",
+        "target": "majordomus://milestone/landing-survives-any-session",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3915",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3915",
+        "target": "majordomus://issue/I3910",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3915",
+        "target": "majordomus://milestone/landing-survives-any-session",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3916",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3916",
+        "target": "majordomus://milestone/truthful-plan-surfaces",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3917",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3917",
+        "target": "majordomus://milestone/truthful-plan-surfaces",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3918",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3918",
+        "target": "majordomus://milestone/truthful-plan-surfaces",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3919",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3919",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I3960",
         "target": "kind:issue",
         "kind": "is_a"
@@ -123257,6 +123905,11 @@
         "source": "majordomus://milestone/knowledge-is-reconciled-before-it-is-reviewed",
         "target": "majordomus://milestone/knowledge-acts-on-what-it-learns",
         "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://milestone/landing-survives-any-session",
+        "target": "kind:milestone",
+        "kind": "is_a"
       },
       {
         "source": "majordomus://milestone/mcp-transports-are-reliable",
@@ -133745,8 +134398,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3756,
-      "edges": 8683,
+      "nodes": 3769,
+      "edges": 8714,
       "acyclic": false,
       "truncated": false
     }
