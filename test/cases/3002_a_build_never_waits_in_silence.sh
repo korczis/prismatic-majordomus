@@ -51,7 +51,8 @@ run() {
   : > "$CALLS"
   RC=0
   ERR="$(env PATH="$FAKE:$PATH" FAKE_MODE="$mode" FAKE_CALLS="$CALLS" CARGO_HOME="$T/cargo-home" \
-        MAJORDOMUS_BUILD_LOCK_WAIT="$bound" MAJORDOMUS_MIN_FREE_MB=0 MAJORDOMUS_INCREMENTAL_IDLE_MIN=0 "$@" \
+        MAJORDOMUS_BUILD_LOCK_WAIT="$bound" MAJORDOMUS_MIN_FREE_MB=0 MAJORDOMUS_INCREMENTAL_IDLE_MIN=0 \
+        MAJORDOMUS_PRIVATE_BUILD_ABOVE_MB=0 "$@" \
         sh -c '. "$1"; mj_cargo_bounded "$2" build --quiet --locked' sh "$LIB" "$T" 2>&1 >/dev/null)" || RC=$?
 }
 calls() { wc -l < "$CALLS" | tr -d ' '; }

@@ -169,6 +169,7 @@
     "op-recover-orphans": "docs/api/recover/",
     "op-release-analysis": "docs/api/release/",
     "op-release-changelog": "docs/api/release/",
+    "op-release-currency": "docs/api/release/",
     "op-release-next": "docs/api/release/",
     "op-release-version": "docs/api/release/",
     "op-repository-info": "docs/api/repository/",
@@ -260,6 +261,7 @@
     "schema-BriefMeshSection": "docs/api/brief/",
     "schema-BriefOrigin": "docs/api/brief/",
     "schema-BriefPeersSection": "docs/api/brief/",
+    "schema-BriefReleaseSection": "docs/api/brief/",
     "schema-BriefSectionState": "docs/api/brief/",
     "schema-BriefSessionSection": "docs/api/brief/",
     "schema-BrowserSource": "docs/api/product/",
@@ -889,10 +891,12 @@
     "schema-Protocol": "docs/api/mesh/",
     "schema-ProtocolReport": "docs/api/executions/",
     "schema-Provenance": "docs/api/web/",
+    "schema-Provider": "docs/api/deploy/",
     "schema-ProviderBootstrap": "docs/api/product/",
     "schema-ProviderLifecycle": "docs/api/lifecycle/",
     "schema-ProviderLifecycles": "docs/api/lifecycle/",
     "schema-ProviderList": "docs/api/product/",
+    "schema-ProviderName": "docs/api/deploy/",
     "schema-ProviderOffers": "docs/api/product/",
     "schema-ProviderState": "docs/api/environment/",
     "schema-ProviderStatus": "docs/api/mesh/",
@@ -962,6 +966,10 @@
     "schema-ReleaseChangelog": "docs/api/release/",
     "schema-ReleaseChangelogArtifact": "docs/api/release/",
     "schema-ReleaseCommitEvidence": "docs/api/release/",
+    "schema-ReleaseCurrency": "docs/api/release/",
+    "schema-ReleaseCurrencyLandedAt": "docs/api/release/",
+    "schema-ReleaseCurrencyRelease": "docs/api/release/",
+    "schema-ReleaseCurrencyStance": "docs/api/shared/",
     "schema-ReleaseDecision": "docs/api/release/",
     "schema-ReleaseDiagnostic": "docs/api/release/",
     "schema-ReleaseImpact": "docs/api/release/",
@@ -1268,8 +1276,8 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 201,
-    "schemas": 1006,
+    "operations": 202,
+    "schemas": 1013,
     "tags": 58
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1299,7 +1307,7 @@
     "description": "The API reference, rendered from this document.",
     "url": "https://majordomus.dev/docs/api/"
   },
-  "generated_by": "majordomus-cli 1.0.0-alpha.5",
+  "generated_by": "majordomus-cli 1.0.0-alpha.6",
   "generator": "scripts/generate-site-data (scripts/lib/openapi-site.jq)",
   "info": {
     "contact_name": "Majordomus",
@@ -1308,7 +1316,7 @@
     "license": "MIT",
     "summary": "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.",
     "title": "Majordomus",
-    "version": "1.0.0-alpha.5"
+    "version": "1.0.0-alpha.6"
   },
   "infrastructure": [
     {
@@ -1530,6 +1538,7 @@
     "recover.orphans": "recover",
     "release.analysis": "release",
     "release.changelog": "release",
+    "release.currency": "release",
     "release.next": "release",
     "release.version": "release",
     "repository.info": "repository",
@@ -1625,6 +1634,7 @@
     "BriefMeshSection": "brief",
     "BriefOrigin": "brief",
     "BriefPeersSection": "brief",
+    "BriefReleaseSection": "brief",
     "BriefSectionState": "brief",
     "BriefSessionSection": "brief",
     "BrowserSource": "product",
@@ -2254,10 +2264,12 @@
     "Protocol": "mesh",
     "ProtocolReport": "executions",
     "Provenance": "web",
+    "Provider": "deploy",
     "ProviderBootstrap": "product",
     "ProviderLifecycle": "lifecycle",
     "ProviderLifecycles": "lifecycle",
     "ProviderList": "product",
+    "ProviderName": "deploy",
     "ProviderOffers": "product",
     "ProviderState": "environment",
     "ProviderStatus": "mesh",
@@ -2327,6 +2339,10 @@
     "ReleaseChangelog": "release",
     "ReleaseChangelogArtifact": "release",
     "ReleaseCommitEvidence": "release",
+    "ReleaseCurrency": "release",
+    "ReleaseCurrencyLandedAt": "release",
+    "ReleaseCurrencyRelease": "release",
+    "ReleaseCurrencyStance": "shared",
     "ReleaseDecision": "release",
     "ReleaseDiagnostic": "release",
     "ReleaseImpact": "release",
@@ -5606,6 +5622,53 @@
       "variants": []
     },
     {
+      "description": "Whether the trunk's landed work is released, as `release.currency` says it (I3070).",
+      "home": "brief",
+      "is_enum": false,
+      "name": "BriefReleaseSection",
+      "properties": [
+        {
+          "description": "`read` when it was measured, `unread` when it could not be, with the summary saying why.",
+          "name": "state",
+          "refs": [
+            "BriefSectionState"
+          ],
+          "required": true,
+          "type": "BriefSectionState"
+        },
+        {
+          "description": "Current, owed, overdue or unknown, when the capability answered.",
+          "name": "stance",
+          "refs": [
+            "ReleaseCurrencyStance"
+          ],
+          "required": false,
+          "type": "ReleaseCurrencyStance | null"
+        },
+        {
+          "description": "Landed commits past the last release.",
+          "name": "landed",
+          "refs": [],
+          "required": false,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The section in words.",
+          "name": "summary",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "SessionBrief"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "Whether a section of the brief could be read.",
       "home": "brief",
       "is_enum": true,
@@ -5618,6 +5681,7 @@
         "BriefIntegrationSection",
         "BriefMeshSection",
         "BriefPeersSection",
+        "BriefReleaseSection",
         "BriefSessionSection"
       ],
       "values": [
@@ -13370,6 +13434,15 @@
           "type": "Budgets"
         },
         {
+          "description": "The hosting provider that runs it, when one does; absent, nobody hosts it.",
+          "name": "provider",
+          "refs": [
+            "Provider"
+          ],
+          "required": false,
+          "type": "Provider | null"
+        },
+        {
           "description": "When the object was written.",
           "name": "created_at",
           "refs": [],
@@ -20101,6 +20174,7 @@
         "reasoning.record",
         "recover.orphans",
         "release.analysis",
+        "release.currency",
         "release.next",
         "release.version",
         "repository.info",
@@ -22080,6 +22154,13 @@
         {
           "description": "Whether the input authenticates its caller.\n\nA handler whose input is a signed message, and which verifies the signature against\nthe trust policy before anything changes, admits its caller by that signature and not\nby the address the request came from. Only such a handler changes state for a caller\non another host; see `ExecutionPolicy::admits_remote`.",
           "name": "signed_input",
+          "refs": [],
+          "required": false,
+          "type": "boolean"
+        },
+        {
+          "description": "Whether only a caller on this machine may read it.\n\nA read that shows the mesh — its sessions, claims, handovers, nodes and journal — is\nnot the repository's to publish: a server reachable from another host would hand every\ntrusted node's working state to anyone who asked (ADR 0220 decision 4). Such a read\nanswers a loopback caller only; a node reads the mesh through its own server, which the\njournal already brings up to date. See `ExecutionPolicy::admits_remote`.",
+          "name": "local_only",
           "refs": [],
           "required": false,
           "type": "boolean"
@@ -33110,6 +33191,13 @@
           "type": "PublicIdentity | null"
         },
         {
+          "description": "The endpoints this node advertises: what a peer dials to reach it. The bound\ninterface's addresses, or the one public URL a hosted hub is started with (ADR 0220).",
+          "name": "advertised",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
           "description": "The trust policy in force.",
           "name": "trust_policy",
           "refs": [],
@@ -40592,6 +40680,51 @@
       ]
     },
     {
+      "description": "The hosting provider that runs the deployment, and the facts that are the provider's\nalone. Every file the provider reads is rendered from this block and the generic keys\n(see `render`); its credential is never one of these fields.\n\n```\nuse majordomus_cli::deploy::{Provider, ProviderName};\n\nlet p: Provider = serde_json::from_value(serde_json::json!({\n    \"name\": \"gigalixir\",\n    \"app\": \"prismatic-majordomus\",\n    \"stack\": \"gigalixir-24\",\n    \"url\": \"https://prismatic-majordomus.gigalixirapp.com\",\n}))\n.unwrap();\nassert_eq!(p.name, ProviderName::Gigalixir);\nassert_eq!(p.app, \"prismatic-majordomus\");\n\n// a key the provider block does not have is refused, a token above all\nassert!(serde_json::from_value::<Provider>(serde_json::json!({\n    \"name\": \"gigalixir\", \"app\": \"a-b-c\", \"stack\": \"gigalixir-24\",\n    \"url\": \"https://a-b-c.gigalixirapp.com\", \"api_key\": \"x\",\n}))\n.is_err());\n```",
+      "home": "deploy",
+      "is_enum": false,
+      "name": "Provider",
+      "properties": [
+        {
+          "description": "Which provider.",
+          "name": "name",
+          "refs": [
+            "ProviderName"
+          ],
+          "required": true,
+          "type": "ProviderName"
+        },
+        {
+          "description": "The application's name at the provider.",
+          "name": "app",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The provider's stack the application runs on (`gigalixir-24`).",
+          "name": "stack",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The public URL the deployment answers on; always `https://`.",
+          "name": "url",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DeploymentView"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One bootstrap a provider renders.",
       "home": "product",
       "is_enum": false,
@@ -40758,6 +40891,25 @@
       ],
       "used_by_schemas": [],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "A hosting provider the contract knows. A name outside this list is refused at parse time:\na provider whose files nothing renders would be a block nothing reads.\n\n```\nuse majordomus_cli::deploy::ProviderName;\n\nlet name: ProviderName = serde_json::from_value(serde_json::json!(\"gigalixir\")).unwrap();\nassert_eq!(name, ProviderName::Gigalixir);\nassert_eq!(name.as_str(), \"gigalixir\");\nassert!(serde_json::from_value::<ProviderName>(serde_json::json!(\"fly\")).is_err());\n```",
+      "home": "deploy",
+      "is_enum": true,
+      "name": "ProviderName",
+      "properties": [],
+      "type": "\"gigalixir\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "Provider"
+      ],
+      "values": [
+        {
+          "description": "Gigalixir: a Heroku-compatible platform that runs a Procfile over a buildpack.",
+          "value": "gigalixir"
+        }
+      ],
       "variants": []
     },
     {
@@ -45284,6 +45436,7 @@
       "used_by": [],
       "used_by_schemas": [
         "ReleaseChangeGroup",
+        "ReleaseCurrency",
         "ReleaseVersionReport"
       ],
       "values": [],
@@ -45558,6 +45711,218 @@
         "ReleaseVersionPlan"
       ],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "The answer of `release.currency`: whether the trunk's landed work is released.\n\n```\nuse majordomus_cli::release::currency::{measure, Currency, Stance};\nlet nowhere = tempfile::tempdir().unwrap();\nlet answer: Currency = measure(nowhere.path(), &[], std::time::SystemTime::now());\n// a directory with no trunk is not measured, and says why\nassert_eq!(answer.stance, Stance::Unknown);\nassert!(answer.summary.contains(\"trunk\"), \"{}\", answer.summary);\n```",
+      "home": "release",
+      "is_enum": false,
+      "name": "ReleaseCurrency",
+      "properties": [
+        {
+          "description": "Whether the landed work is released.",
+          "name": "stance",
+          "refs": [
+            "ReleaseCurrencyStance"
+          ],
+          "required": true,
+          "type": "ReleaseCurrencyStance"
+        },
+        {
+          "description": "The answer in one sentence: the brief's and doctor's line.",
+          "name": "summary",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The remote-tracking ref of the trunk it was measured on (`origin/master`).",
+          "name": "trunk",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The last release.",
+          "name": "release",
+          "refs": [
+            "ReleaseCurrencyRelease"
+          ],
+          "required": false,
+          "type": "ReleaseCurrencyRelease | null"
+        },
+        {
+          "description": "Landed commits past the last release, merges and release commits left out.",
+          "name": "landed",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The landings of the trunk's first-parent history that brought them.",
+          "name": "landings",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "When the oldest of those landings landed, RFC 3339, dated as `landed_at`\nsays.",
+          "name": "oldest_landing",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "How `oldest_landing` was dated: when this clone saw it arrive\non the trunk, or its commit time as an upper bound on the wait.",
+          "name": "landed_at",
+          "refs": [
+            "ReleaseCurrencyLandedAt"
+          ],
+          "required": false,
+          "type": "ReleaseCurrencyLandedAt | null"
+        },
+        {
+          "description": "How long the work has waited since then, in seconds.",
+          "name": "waited_seconds",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "How long it may wait before it is overdue (`OVERDUE_AFTER`).",
+          "name": "overdue_after_seconds",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "The version the public contract requires for the landed work (ADR 0051), when it was\ndecided.",
+          "name": "next",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Why that version was not decided, when it was asked for and could not be.",
+          "name": "next_unmeasured",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The landed changes, newest first, at most `LISTED`.",
+          "name": "changes",
+          "refs": [
+            "ReleaseChange"
+          ],
+          "required": false,
+          "type": "array of ReleaseChange"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "release.currency"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "How the oldest landing was dated, and so which way its wait may be wrong (the plan\ncritique of 2026-10-19: a top lands by a fast-forward push hours after its commits).\n\n```\nuse majordomus_cli::release::currency::LandedAt;\nassert_eq!(serde_json::to_value(LandedAt::Reflog).unwrap(), \"reflog\");\nassert_eq!(serde_json::to_value(LandedAt::Commit).unwrap(), \"commit\");\n```",
+      "home": "release",
+      "is_enum": true,
+      "name": "ReleaseCurrencyLandedAt",
+      "properties": [],
+      "type": "\"reflog\" | \"commit\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "ReleaseCurrency"
+      ],
+      "values": [
+        {
+          "description": "When this clone's remote-tracking trunk first held it, from that ref's reflog. A landing\nis seen no earlier than it lands, so the wait counted from here is a lower bound, and it\nis the one date that can make the stance overdue.",
+          "value": "reflog"
+        },
+        {
+          "description": "Its commit time, where the reflog does not show it arrive: a commit lands no earlier than\nit is made, so the wait counted from here is an upper bound, and it never makes the\nstance overdue by itself.",
+          "value": "commit"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "The release the trunk is measured from.\n\n```\nuse majordomus_cli::release::currency::Released;\nlet tagged = Released {\n    version: \"0.30.1\".into(),\n    reference: \"v0.30.1\".into(),\n    at: \"v0.30.1\".into(),\n    recorded: false,\n};\n// a tag pushed before its record landed is read at the tag itself\nassert_eq!(tagged.at, tagged.reference);\n```",
+      "home": "release",
+      "is_enum": false,
+      "name": "ReleaseCurrencyRelease",
+      "properties": [
+        {
+          "description": "`0.30.1`.",
+          "name": "version",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`v0.30.1`: the release as a reader recognises it.",
+          "name": "reference",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What the trunk is measured from: the commit its record names, else its tag.",
+          "name": "at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether the layer holds a record for it yet.",
+          "name": "recorded",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ReleaseCurrency"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Whether the trunk's landed work is released.\n\n```\nuse majordomus_cli::release::currency::{Stance, OVERDUE_AFTER};\nuse std::time::Duration;\nassert_eq!(Stance::of(0, OVERDUE_AFTER), Stance::Current, \"nothing landed, nothing owed\");\nassert_eq!(Stance::of(2, Duration::from_secs(60)), Stance::Owed);\nassert_eq!(Stance::of(2, OVERDUE_AFTER), Stance::Overdue);\nassert_eq!(Stance::Overdue.as_str(), \"overdue\");\n```",
+      "home": "shared",
+      "is_enum": true,
+      "name": "ReleaseCurrencyStance",
+      "properties": [],
+      "type": "\"current\" | \"owed\" | \"overdue\" | \"unknown\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "BriefReleaseSection",
+        "ReleaseCurrency"
+      ],
+      "values": [
+        {
+          "description": "Nothing has landed past the last release.",
+          "value": "current"
+        },
+        {
+          "description": "Work has landed past it, and has waited less than `OVERDUE_AFTER`.",
+          "value": "owed"
+        },
+        {
+          "description": "Work has landed past it, and has waited at least `OVERDUE_AFTER`.",
+          "value": "overdue"
+        },
+        {
+          "description": "It could not be measured: no trunk, no release, or a release this clone cannot read.",
+          "value": "unknown"
+        }
+      ],
       "variants": []
     },
     {
@@ -51444,6 +51809,15 @@
           ],
           "required": true,
           "type": "BriefIntegrationSection"
+        },
+        {
+          "description": "Whether the trunk's landed work is released. Absent from the answer of a server older\nthan this section, which leaves it unread rather than failing the whole brief.",
+          "name": "release",
+          "refs": [
+            "BriefReleaseSection"
+          ],
+          "required": false,
+          "type": "BriefReleaseSection"
         },
         {
           "description": "The derive queue.",
@@ -60526,7 +60900,7 @@
       "slug": "delivery"
     },
     {
-      "description": "The deployments this repository declares, read from the canonical objects the index holds, and whether they would work — decided against the capability registry this process built and the workspace it sits in. Every operation is a read: a deployment is changed by the trusted command line and by CI, never over HTTP and never by an MCP client.",
+      "description": "The deployments this repository declares, read from the canonical objects the index holds, and whether they would work — decided against the capability registry this process built and the workspace it sits in. Every operation over HTTP and MCP is a read; the one command, assembling the tree a provider receives, writes outside the checkout and is a command line only: a deployment is changed by the trusted command line and by CI, never over HTTP and never by an MCP client.",
       "name": "deploy",
       "operations": [
         {
@@ -70747,6 +71121,68 @@
           "result_schema": "ReleaseVersionPlan",
           "stability": "implemented",
           "summary": "What the public contract did, and the smallest version it allows"
+        },
+        {
+          "benchmark": "waived",
+          "benchmark_reason": "published_history",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/release/currency\"",
+          "description": "How much landed work the trunk holds past the last release, since when, and at which version, measured when asked (I3070). The last release is the newer of the release the layer records and the newest version tag the trunk contains: a tag is pushed before its record lands. Landed work is every commit of the trunk past it except merges and release commits. A landing is a commit of the trunk's first-parent history, and the work has waited since the oldest landing that brought anything but release commits. The stance is current when nothing has landed past the release, owed when work has, and overdue once it has waited longer than six hours. The version the public contract requires is decided by the version selection release.version makes, but only from a recorded release and only in a checkout at the trunk; otherwise the answer says which it is not. Ask with next false to leave the version out, as the brief and doctor do. It reads git and the clock, so it is never committed into derived data.",
+          "home": "release",
+          "id": "release.currency",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_release_currency",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "Whether to decide the version the public contract requires for the landed work, which\nreads the last release's registry: yes when absent. The brief and doctor say no.",
+              "examples": [],
+              "name": "next",
+              "required": false,
+              "type": "boolean"
+            }
+          ],
+          "path": "/api/v1/release/currency",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::release",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Whether the trunk's landed work is released: the result.",
+              "schema": "ReleaseCurrency",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "ReleaseCurrency",
+          "stability": "implemented",
+          "summary": "Whether the trunk's landed work is released"
         },
         {
           "benchmark": "waived",

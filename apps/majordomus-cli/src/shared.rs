@@ -41,9 +41,24 @@ pub struct SharedServer {
     owner_answers: Arc<AtomicBool>,
 }
 
+/// How a hosted hub differs from a checkout's server on the mesh (ADR 0220 decisions 2
+/// and 3). Both are what the deployment object's generated start command passes; a
+/// developer's server passes neither and keeps its key in the state directory and its
+/// interface addresses as its endpoints.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct MeshHosting {
+    /// The environment variable that holds the node's 32-byte seed, in hex. When named,
+    /// the identity is that seed and nothing else: absent or malformed, the mesh stays off
+    /// with the reason, and no key is minted that nobody trusts.
+    pub node_seed_env: Option<String>,
+    /// The one endpoint this node advertises, instead of the addresses of the interface it
+    /// is bound to: what a peer outside the platform's network can dial.
+    pub advertise: Option<String>,
+}
+
 /// Activate the mesh from the repository's declaration, when there is one and it is
 /// enabled. Every failure is a reason on `mesh.status`, never a failed server.
-fn activate_mesh(ctx: &Arc<Context>, version: &str, url: &str) {
+fn activate_mesh(ctx: &Arc<Context>, version: &str, url: &str, hosting: &MeshHosting) {
     let resolved = crate::capability::builtin::mesh::resolved_declaration(ctx);
     if !resolved.narrowed.is_empty() {
         // obeyed as narrowed; `mesh doctor` fails its `trust-root` check with the same lines
@@ -68,24 +83,51 @@ fn activate_mesh(ctx: &Arc<Context>, version: &str, url: &str) {
         ctx.mesh.decline("the mesh declaration is disabled");
         return;
     }
-    let Some(identity_path) = crate::mesh::default_identity_path() else {
-        ctx.mesh
-            .decline("no HOME and no XDG_STATE_HOME: nowhere to keep a node identity");
-        return;
-    };
-    let identity = match crate::mesh::NodeIdentity::load_or_create(&identity_path) {
-        Ok(identity) => identity,
-        Err(e) => {
-            tracing::warn!(error = %e, "the node identity did not load; the mesh stays off");
-            ctx.mesh.decline(&e.to_string());
-            return;
+    let identity = match hosting.node_seed_env.as_deref() {
+        // A hosted hub's key is its deployment's secret, held in memory only; its disk is
+        // gone at every boot, and a fresh key would be one nobody trusts (ADR 0220).
+        Some(var) => match std::env::var(var) {
+            Ok(seed) => match crate::mesh::NodeIdentity::from_seed_hex(&seed, var) {
+                Ok(identity) => identity,
+                Err(e) => {
+                    tracing::warn!(error = %e, "the hosted node's seed did not load; the mesh stays off");
+                    ctx.mesh.decline(&e.to_string());
+                    return;
+                }
+            },
+            Err(_) => {
+                let reason = format!(
+                    "{var} is not set: a hosted hub takes its node key from that secret and mints none of its own, because a fresh key is one no trust.allow lists"
+                );
+                tracing::warn!(reason = %reason, "the mesh stays off");
+                ctx.mesh.decline(&reason);
+                return;
+            }
+        },
+        None => {
+            let Some(identity_path) = crate::mesh::default_identity_path() else {
+                ctx.mesh
+                    .decline("no HOME and no XDG_STATE_HOME: nowhere to keep a node identity");
+                return;
+            };
+            match crate::mesh::NodeIdentity::load_or_create(&identity_path) {
+                Ok(identity) => identity,
+                Err(e) => {
+                    tracing::warn!(error = %e, "the node identity did not load; the mesh stays off");
+                    ctx.mesh.decline(&e.to_string());
+                    return;
+                }
+            }
         }
     };
-    // Where peers can reach this server: the bound address, or every interface's address
-    // when it is bound to all of them. A loopback bind is reachable from this machine
-    // only, and `mesh doctor` says so.
+    // Where peers can reach this server: the URL a hosted hub advertises, else the bound
+    // address, or every interface's address when it is bound to all of them. A loopback
+    // bind is reachable from this machine only, and `mesh doctor` says so.
     let bound = url.trim_start_matches("http://").trim_end_matches('/');
-    let endpoints = crate::mesh::address::advertised_endpoints(bound);
+    let endpoints = match hosting.advertise.as_deref() {
+        Some(public) => vec![public.trim_end_matches('/').to_string()],
+        None => crate::mesh::address::advertised_endpoints(bound),
+    };
     let root = std::path::Path::new(&ctx.index.repository.root);
     // One runtime per checkout, and one repository identity per repository on every
     // machine — derived from content or declared, never from a path.
@@ -178,6 +220,7 @@ impl SharedServer {
         declared_by: Option<&str>,
         lease: Lease,
         share_dir: Option<&std::path::Path>,
+        hosting: &MeshHosting,
     ) -> Result<Self> {
         // Three ways to arrive at a socket, and they are not interchangeable: a canonical
         // object declared this address (bind it, say which object said so), the port is a
@@ -200,7 +243,7 @@ impl SharedServer {
         // the activated runtime. Never blocking: providers open sockets on their own
         // threads, and a declaration that is absent, disabled or malformed leaves the
         // runtime inactive with the reason `mesh.status` reports.
-        activate_mesh(&ctx_for_mesh, version, &url);
+        activate_mesh(&ctx_for_mesh, version, &url, hosting);
         // what it serves is read off the resolution, so this line cannot name a route the
         // process does not have or miss one it does
         let surfaces = router.served()?.summary(&url);
@@ -500,6 +543,7 @@ mod tests {
             None,
             lease,
             None,
+            &MeshHosting::default(),
         )
         .is_err());
     }
@@ -557,6 +601,7 @@ mod tests {
             None,
             lease,
             None,
+            &MeshHosting::default(),
         )
         .unwrap();
         (fixture, shared)

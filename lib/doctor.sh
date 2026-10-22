@@ -623,6 +623,42 @@ mj_report_clone() {
   fi
   mj_report_uncommitted
   mj_report_trunk_distance
+  mj_report_release_currency
+}
+
+# Whether the trunk's landed work is released (release.currency, I3070; the owner's order of
+# 2026-10-19: a measured version after every session and milestone). The measurement is the
+# executable's, read here and judged nowhere else. Current is OK. Owed work, landed and
+# waiting for the release seat, is a WARN, and overdue, past the six hours it may wait, is a
+# WARN saying so. Unknown (no trunk, no release this clone can read) is INFO. A clone with no
+# remote-tracking branch says so the same way whether or not the executable is at hand,
+# because the use-case catalogue records this line, as it does trunk's.
+mj_report_release_currency() {
+  if [ -z "$(git -C "$MJ_ROOT" for-each-ref --count=1 --format='%(refname)' refs/remotes 2>/dev/null)" ]; then
+    mj_info clone "release" "no remote-tracking branch, so whether the trunk's landed work is released cannot be measured"
+    return 0
+  fi
+  # shellcheck source=rust_bin.sh
+  . "$MJ_LIB_DIR/rust_bin.sh"
+  local bin share out stance summary
+  bin="$(mj_rust_bin "$MJ_HOME")"
+  if [ ! -x "$bin" ] || ! mj_has jq; then
+    mj_info clone "release" "the executable or jq is absent, so whether the trunk is released is not measured here (majordomus run release.currency)"
+    return 0
+  fi
+  share="$(mj_rust_share "$MJ_ROOT")"
+  out="$( ( [ -z "$share" ] || export MAJORDOMUS_SHARE="$share"
+            "$bin" run release.currency --input '{"next":false}' --quiet --format json --repo "$MJ_ROOT" ) 2>/dev/null | jq -c '.output // empty' 2>/dev/null )" || true
+  stance="$(printf '%s' "$out" | jq -r '.stance // empty' 2>/dev/null)"
+  summary="$(printf '%s' "$out" | jq -r '.summary // empty' 2>/dev/null)"
+  case "$stance" in
+    current) mj_ok clone "release" "$summary" ;;
+    owed) mj_warn clone "release" "$summary" "the release seat releases it: majordomus run release.currency" ;;
+    overdue) mj_warn clone "release" "OVERDUE: $summary" "the release seat releases it now: majordomus run release.currency" ;;
+    unknown) mj_info clone "release" "$summary" "majordomus run release.currency" ;;
+    *) mj_info clone "release" "whether the trunk is released could not be read (majordomus run release.currency)" ;;
+  esac
+  return 0
 }
 
 # How far this checkout is from the remote trunk (project.a-checkout-serves-the-current-trunk).
