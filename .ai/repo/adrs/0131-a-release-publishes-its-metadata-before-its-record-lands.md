@@ -45,12 +45,14 @@ The owner set the bound at 15 minutes from tag to served release and chose, aske
 
 ## Decision
 
-1. **The release publishes its own metadata.** The publish job, after the record and every
-   projection of it are derived and judged by `scripts/derive-check`, runs `scripts/site-deploy
-   --release-metadata <tag>`. It copies `site/static/releases/<tag>.json` and
-   `site/static/releases/latest.json` of that tree onto what `gh-pages` serves, commits them
-   alone, and pushes. It is the one deploy script with one more mode, not a second deploy
-   path.
+1. **The release publishes its own metadata.** The publish job, once the record is staged and
+   the `distribution` target has written its two public files from it (`majordomus generate
+   distribution`) and judged them (`majordomus generate distribution --check`), runs
+   `scripts/site-deploy --release-metadata <tag>`. It copies `site/static/releases/<tag>.json`
+   and `site/static/releases/latest.json` of that tree onto what `gh-pages` serves, commits
+   them alone, and pushes. It is the one deploy script with one more mode, not a second deploy
+   path. The derivation of every other projection and `scripts/derive-check` over the whole
+   tree follow, and still come before the record is proposed (amended 2026-10-14; see below).
 
 2. **Two files and nothing else.** `build.json`, every page and every other file stay what
    master's last deploy published. The `pages-live` gate, which asks that the site was built
@@ -91,6 +93,28 @@ and v0.20.0 windows.
 
 The smoke job, which waits for `latest.json` to name the release, no longer waits for a
 person to merge the record.
+
+## Amendment, 2026-10-14: the metadata is judged by its own target, not by the whole tree
+
+Decision 1 first ran `scripts/site-deploy --release-metadata` after `scripts/derive` and
+`scripts/derive-check` of the whole tree. In v0.26.0's publish job (run 38613749519) those two
+took 240 and 224 seconds: seven and a half of the minutes between the record being written
+(18:59:28Z) and the site being asked to serve it (19:07:12Z). On 2026-10-14 the owner set the
+bound at five to ten minutes from tag to served release.
+
+The two files the installer reads are artifacts of one generation target, `distribution`, and
+of nothing else. Everything else the full derivation writes, the installation guide's row and
+the site's data and content derived from it, is nothing the installer reads. So the metadata
+is now written by `majordomus generate distribution` from the staged record and judged by
+`majordomus generate distribution --check`, the same check `scripts/derive-check` gives those
+two files, and served at once. The full derivation and its check run afterwards as before,
+and the record is still proposed only after them, so its pull request is judged as it was.
+
+What this gives up: the site may serve metadata whose record's tree then fails the full
+derivation check. The record is then not proposed, and `release-check` names a served release
+that master does not record. That is the window the consequences above already accept for a
+record that never lands. A person repairs the tree before the record lands. The metadata
+itself was judged by the generator that writes it.
 
 ## Alternatives rejected
 

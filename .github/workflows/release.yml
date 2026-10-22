@@ -245,6 +245,35 @@ jobs:
             --notes-url "${{ github.server_url }}/${{ github.repository }}/releases/tag/$tag"
           git add -- ".ai/repo/releases/$tag.yaml"
 
+      # The two files the installer reads, from the record and nothing else, and judged.
+      # releases/<tag>.json and releases/latest.json are artifacts of the `distribution`
+      # target alone: `generate distribution` writes them from the staged record and the
+      # model, and `generate distribution --check` holds them to the registry, the same
+      # judgement scripts/derive-check gives them in the full check below (ADR 0131, amended
+      # on 2026-10-14). Nothing else of the site depends on them, so the release does not wait
+      # for the derivation of everything else: v0.26.0 served its metadata seven and a half
+      # minutes after its record was written, all of it the full derivation and its check.
+      - name: the release's metadata, generated from its record and judged
+        env:
+          MAJORDOMUS_BIN: ${{ github.workspace }}/apps/majordomus-cli/target/debug/majordomus
+        run: |
+          "$MAJORDOMUS_BIN" generate distribution
+          "$MAJORDOMUS_BIN" generate distribution --check
+
+      # The release reaches the site now, not after its record's pull request has passed a
+      # suite of an hour and a half, nor after the whole tree has been derived (ADR 0131).
+      # What the installer reads is releases/latest.json and releases/<tag>.json, judged
+      # above, and nothing else of the site depends on them. They go onto what gh-pages serves
+      # and nothing else does: build.json keeps naming the master commit the site was built
+      # from, so the pages-live gate still reads master. A deploy of master before the record
+      # lands keeps this release as the latest rather than taking the site back a version
+      # (scripts/site-deploy). The record's pull request follows, under the full verdict.
+      - name: the site serves this release's metadata, ahead of its record
+        env:
+          GIT_AUTHOR_NAME: github-actions[bot]
+          GIT_AUTHOR_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+        run: scripts/site-deploy --release-metadata '${{ needs.plan.outputs.tag }}'
+
       # Not `generate --target distribution` alone: the record moves docs/INSTALL.md, and that
       # document is a canonical input of the site's derived data, so regenerating only the
       # distribution's own projections leaves site/data/generated stale and the Pages build —
@@ -275,20 +304,6 @@ jobs:
             echo "::error::the record and its projections are not what scripts/derive produces from them, so the record pull request would fail generate --check; nothing was pushed. Run scripts/derive over the record and propose the result by hand."
             exit 1
           }
-
-      # The release reaches the site now, not after its record's pull request has passed a
-      # suite of an hour and a half (ADR 0131). What the installer reads is releases/latest.json
-      # and releases/<tag>.json; both are projections of the record just derived and judged
-      # above, and nothing else of the site depends on them. They go onto what gh-pages serves
-      # and nothing else does: build.json keeps naming the master commit the site was built
-      # from, so the pages-live gate still reads master. A deploy of master before the record
-      # lands keeps this release as the latest rather than taking the site back a version
-      # (scripts/site-deploy). The record's pull request follows, under the full verdict.
-      - name: the site serves this release's metadata, ahead of its record
-        env:
-          GIT_AUTHOR_NAME: github-actions[bot]
-          GIT_AUTHOR_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
-        run: scripts/site-deploy --release-metadata '${{ needs.plan.outputs.tag }}'
 
       - name: propose the record and the metadata it publishes
         id: record

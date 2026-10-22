@@ -166,17 +166,25 @@ awk '/^  publish:/{p=1} /^  smoke:/{p=0} p && $0 !~ /^[ \t]*#/ && /set \+e/{foun
   || { echo "    the publication job turns off bash -e, so a refused scripts/derive-check need not fail it"; exit 1; }
 
 # --- the release publishes its metadata itself, and smoke waits for what the installer reads ----
-# ADR 0131: the publish job puts releases/<tag>.json and latest.json on the site after the
-# derivation was judged and before the record is proposed, so smoke no longer begins by asking
-# whether the record is on the default branch (it failed every release whose record was still
-# a proposal). The wait's one success exit is inside its bounded loop; nothing before the loop
-# may pass the step, and its diagnostic still names the record's pull request.
-judged="$(job_line publish 'scripts/derive-check')"
+# ADR 0131, as amended on 2026-10-14: the publish job puts releases/<tag>.json and latest.json
+# on the site as soon as the `distribution` target has written them from the staged record and
+# `generate distribution --check` has judged them, ahead of the derivation of everything else,
+# and before the record is proposed; smoke no longer begins by asking whether the record is on
+# the default branch (it failed every release whose record was still a proposal). The wait's
+# one success exit is inside its bounded loop; nothing before the loop may pass the step, and
+# its diagnostic still names the record's pull request.
+written="$(job_line publish '"[$]MAJORDOMUS_BIN" generate distribution[ \t]*$')"
+metadata_judged="$(job_line publish '"[$]MAJORDOMUS_BIN" generate distribution --check')"
 overlay="$(job_line publish "scripts/site-deploy --release-metadata '[$][{][{] needs[.]plan[.]outputs[.]tag [}][}]'")"
 proposed="$(job_line publish 'gh pr create')"
 [ -n "$overlay" ] || { echo "    the publication job does not put the release's metadata on the site"; exit 1; }
-before "$judged" "$overlay" "the metadata is published before scripts/derive-check judged it"
+[ -n "$written" ] || { echo "    the publication job does not write the release's metadata from its record before serving it"; exit 1; }
+[ -n "$metadata_judged" ] || { echo "    the publication job serves the release's metadata without judging it"; exit 1; }
+before "$staged" "$written" "the release's metadata is written before its record is staged"
+before "$written" "$metadata_judged" "the release's metadata is judged before it is written"
+before "$metadata_judged" "$overlay" "the metadata is published before generate distribution --check judged it"
 before "$overlay" "$proposed" "the record is proposed before the site serves its metadata"
+before "$checked" "$proposed" "the record is proposed before scripts/derive-check judged the whole tree"
 if job_line smoke 'contents/[$]record' | grep -q .; then
   echo "    the smoke job still waits for the record to be on the default branch"; exit 1
 fi
