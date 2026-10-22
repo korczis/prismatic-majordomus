@@ -178,6 +178,41 @@ pub struct Policy {
     /// number nobody wrote down.
     #[serde(default)]
     pub checkout: CheckoutPolicy,
+    /// `regenerated:` — the tracked paths this repository's own tooling rewrites, each with
+    /// what rewrites it (I1999). Absent declares none.
+    #[serde(default)]
+    pub regenerated: Vec<Regenerated>,
+}
+
+/// One `regenerated[]` entry: a tracked path (a file or a directory prefix) that the
+/// repository's own tooling rewrites, a post-checkout hook for one, and the reason. A change
+/// to it is the machine's, not the worker's. An entry with no reason is read but never
+/// honoured, and the shell `check` fails it: the reason is what tells a reader this is not
+/// a hole in the scope. It is not refused here, because the policy is read by every
+/// projection, and one bad entry must not stop all of them.
+///
+/// ```
+/// use majordomus_cli::policy::Regenerated;
+/// let r: Regenerated = serde_json::from_str(r#"{"path": "a.lock", "reason": "the hook"}"#).unwrap();
+/// assert!(r.honoured());
+/// let r: Regenerated = serde_json::from_str(r#"{"path": "a.lock"}"#).unwrap();
+/// assert!(!r.honoured(), "no reason, no admission");
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Default)]
+pub struct Regenerated {
+    /// The path, repository-relative.
+    #[serde(default)]
+    pub path: String,
+    /// What rewrites it.
+    #[serde(default)]
+    pub reason: String,
+}
+
+impl Regenerated {
+    /// Whether the declaration admits anything: it names a path and gives a reason.
+    pub fn honoured(&self) -> bool {
+        !self.path.trim().is_empty() && !self.reason.trim().is_empty()
+    }
 }
 
 /// `checkout:` — how far a checkout may drift from the remote trunk before what it serves

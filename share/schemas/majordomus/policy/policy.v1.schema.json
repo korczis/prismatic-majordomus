@@ -430,6 +430,28 @@
         }
       }
     },
+    "regenerated": {
+      "type": "array",
+      "description": "Tracked paths this repository's own tooling rewrites (a post-checkout hook, a formatter run on every checkout), each with what rewrites it. check and finish read a change to one as the machine's, not the task's: named, never failing a scope. A path is a file or a directory prefix, as in a task scope (I1999).",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "path",
+          "reason"
+        ],
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
     "benchmark": {
       "type": "object",
       "additionalProperties": false,

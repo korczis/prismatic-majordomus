@@ -334,7 +334,17 @@ Is the current task consistent with policy, scope, and state? Read-only.
 - Git divergence label for the record: `exact`, `advanced`, `diverged`,
   `different_context`. `diverged` and `different_context` are findings.
 - Touched files (`git status --porcelain` plus `git diff --name-only <base>..HEAD`) are
-  within the claimed scope. Any outside → finding.
+  within the claimed scope. Any outside → finding, naming the two remedies: name the path in
+  the task's scope, or stop tracking it (`git rm --cached`).
+- A path the policy declares under `regenerated:` (each entry a `path` and the `reason`:
+  what rewrites it, a post-checkout hook for one) is the machine's, not the task's: `INFO`,
+  naming the declaration, never a failure. An entry without a reason is a `FAIL`. The edit
+  guard (`guard hook`) lets the same path through (I1999; case 3703).
+- While `verification.finish_requires` names `note_present`, a `WARN note` says what
+  `finish --outcome completed` will refuse over the note (no handover yet, or a handover
+  missing a required section) and the command that settles it; it is gone once a handover
+  carries every section. A `WARN`, because check is asked all through a task and the
+  handover is written at its end.
 - Checkpoint age against the profile's `checkpoint_interval` (`WARN`, never `FAIL`).
 - Files under `.ai/` and the projection targets are always in scope.
 - `--checkpoint` updates `checkpoint_at` and appends `task.checkpoint` to the ledger:

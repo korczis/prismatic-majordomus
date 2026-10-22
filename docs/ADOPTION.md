@@ -119,6 +119,23 @@ and leave the dispatcher alone. `doctor` looks in `<hook>.d/` as well and names 
 that carries it. A subhook that is present but not executable is reported as not wired,
 because that is what the dispatcher does with it.
 
+## Files your own hooks rewrite
+
+A tracked file that a hook of yours rewrites on every checkout changes under every task,
+and `check` would fail each one for work it never did. Declare it once in
+`.ai/repo/policy.yaml`, with what rewrites it:
+
+```yaml
+regenerated:
+  - path: config/generated.lock
+    reason: rewritten by the post-checkout hook from config/source.yaml
+```
+
+`check` then names a change to it as the machine's and passes; `finish` and the edit
+guard read it the same way. A declaration with no reason is refused. Any other file
+outside a task's scope still fails, and the finding names the two remedies: name it in
+the scope, or stop tracking it.
+
 ## Week one: adjust the policy, not the projections
 
 Every rule the workers see comes from `.ai/repo/policy.yaml`, the profiles and the rules

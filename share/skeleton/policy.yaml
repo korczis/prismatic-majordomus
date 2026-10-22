@@ -207,3 +207,11 @@ projections:
     target: CLAUDE.md
   - provider: gemini
     target: GEMINI.md
+
+# Tracked files this repository's own tooling rewrites (a post-checkout hook, a formatter run
+# on every checkout) change under every task without the task touching them. Declare each
+# once, with what rewrites it, and check reads such a change as the machine's: named, never
+# failing the scope. A declaration without a reason is refused.
+# regenerated:
+#   - path: config/generated.lock
+#     reason: rewritten by the post-checkout hook from config/source.yaml
