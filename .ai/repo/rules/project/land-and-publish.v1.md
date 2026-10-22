@@ -11,7 +11,7 @@ depends_on: [project.derived-files-regenerated@1, project.interfaces-are-project
 tags: [process, integration, deployment, evidence]
 
 x-majordomus:
-  tests: [test/cases/104_published_site.sh, test/cases/97_pages_fast_path.sh, test/cases/57_derived_merge_driver.sh, test/cases/911_repair_decides_and_moves_nothing.sh, test/cases/912_repair_acts_under_the_lease_and_the_trail.sh, test/cases/3470_the_release_follows_the_work.sh]
+  tests: [test/cases/104_published_site.sh, test/cases/97_pages_fast_path.sh, test/cases/57_derived_merge_driver.sh, test/cases/911_repair_decides_and_moves_nothing.sh, test/cases/912_repair_acts_under_the_lease_and_the_trail.sh, test/cases/3470_the_release_follows_the_work.sh, test/cases/3471_the_delivery_screen_shows_what_waits_for_a_release.sh]
 ---
 
 # Rationale
