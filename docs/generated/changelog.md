@@ -1,11 +1,106 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the layer's release records, the decisions dated in each release's window, and the commits in its range; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.0.0-alpha.1 -->
+     Generator: majordomus-cli 1.0.0-alpha.5 -->
 # Changelog
 
 Every entry below is derived: a section per release the layer records, its decisions the ADRs dated inside that release's window, its changes the conventional commits in its range, its artifacts the record's own evidence. Nothing here is written by hand, and `majordomus generate changelog --check` fails when it stops matching the tree.
 
-Current version: **1.0.0-alpha.1**
+Current version: **1.0.0-alpha.5**
+
+## v1.0.0-alpha.4 — 2026-10-21
+
+### Added
+
+- **providers**: a provider declares its browser bridge, and preflight names the missing host (`b30ee30a1`)
+- **ci**: the interaction probe runs in six shards, verified as one sweep (I3602) (`7666c365b`)
+- **ci**: the site's browser probe runs in four shards that are the sweep (I2841) (`95357325d`)
+
+### Fixed
+
+- **top**: #1765's reds, fixed at their sources and derived once (`97391192d`)
+- **top**: train 2's pre-push reds — canonical order, no eval, scopes that exist (`98707ace2`)
+- **top**: the mesh doctor's remediation names `serve status`, not the lease path (`712729721`)
+- **top**: cases 3247 and 3836 name why their globals look unused (`76158b704`)
+- **top**: case 1018 counts the queue's tickets with a glob, not ls | grep (`374fa149e`)
+- **site**: the plan page counts its findings instead of printing one row per pair (I3838) (`c278259ab`)
+- **site-data**: the scenario cache engages; the tool's lib dir is compared physically (I0832) (`57c1a9d91`)
+- **mcp**: the Claude in the browser sources are cited as text, not links (`6ea3de94b`)
+- **derive**: waiting derives take the machine lock in the order they arrived (I3098) (`fe464a41d`)
+- **test**: a case run removes its own scratch dir however it ends (I3834) (`34ca69681`)
+- **ci**: a gated step leaves its receipt and a step bound follows its measured time (L1, L2, L7) (`6240bc2d7`)
+- **ci**: the evidence job runs only when a planned lane ran tests (I3013) (`99727f47c`)
+- **test**: case 3602 compares its route lists in C order (I2841) (`a9f29e563`)
+- **ci**: the site probe runs in six shards, since the Czech copies doubled the routes (I2841) (`3ad4310f4`)
+
+### Performance
+
+- **derive**: reading the derive queue forks nothing (I3098) (`4b36890a9`)
+- **site-data**: a scenario whose tool and use case are unchanged is not re-executed (I0832) (`73d26b129`)
+
+### Documentation
+
+- **plan**: the roadmap reads idd-workspace's release from the committed merge (`603164312`)
+- **plan**: a node the mesh lists as present but cannot link says why (I3835) (`12c702cdc`)
+- **mcp**: Claude in the browser reaches the mesh through Claude Code (`ebf58f233`)
+- **rules**: a worker lands its own green head, and every bootstrap says so (I3824) (`8d394f3c2`)
+
+### Tests
+
+- **provider**: a bridge without its host is not looked for (`f21025614`)
+- **site**: case 3848 reads its own plan, and says what its ceiling counts (I3838) (`0545642b7`)
+
+### Housekeeping
+
+- **top**: train 2 carries the v1.0.0-alpha.2 record, derived once (`b5140729d`)
+- **release**: record v1.0.0-alpha.2 and the metadata it publishes (`81063e55d`)
+- **release**: train 2, members applied, bump to 1.0.0-alpha.4, derived once (`69fd62f1d`)
+- **derive**: delivery observes a commit origin holds (I3834) (`42a1ce389`)
+- **release**: bump to 1.0.0-alpha.3, train 1 derived once (`784960b08`)
+- **plan**: I2413 is recorded done; a worktree already cooperates through the primary (`42291f9ef`)
+- **plan**: I1985 and I2282 are recorded done, each on a test that ran green on master (`35a559f3e`)
+- **plan**: I3013, the evidence job runs only when a planned lane ran tests (`2937f3ebf`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v1.0.0-alpha.4-aarch64-apple-darwin.tar.gz (`87b5f17a05d8`)
+- `macos-x86_64` — majordomus-v1.0.0-alpha.4-x86_64-apple-darwin.tar.gz (`db150297c237`)
+- `linux-x86_64-gnu` — majordomus-v1.0.0-alpha.4-x86_64-unknown-linux-gnu.tar.gz (`aadc60edec30`)
+- `linux-x86_64-musl` — majordomus-v1.0.0-alpha.4-x86_64-unknown-linux-musl.tar.gz (`f4022f2b79ab`)
+- `linux-aarch64-gnu` — majordomus-v1.0.0-alpha.4-aarch64-unknown-linux-gnu.tar.gz (`1aafbed99a30`)
+- `linux-aarch64-musl` — majordomus-v1.0.0-alpha.4-aarch64-unknown-linux-musl.tar.gz (`49152c6ced56`)
+
+
+## v1.0.0-alpha.2 — 2026-10-21
+
+### Fixed
+
+- **ui**: the intent workspace borrows the plan instead of copying it (I3018) (`9129c6697`)
+
+### Documentation
+
+- **plan**: record I3079, the Deployments table's link that is too small a target (`ea81bca38`)
+- **plan**: the roadmap reads idd-workspace's release from the committed merge (`46ffa4e6e`)
+- **plan**: the derived plan page of I3009 (`ce424b866`)
+- **plan**: the landed IDD work is recorded, and idd-workspace is done (`3c9797a27`)
+
+### Housekeeping
+
+- **release**: bump to 1.0.0-alpha.2, derived once (`905159df7`)
+- **top**: the W0 records top, derived once (`573df967b`)
+- **release**: record v1.0.0-alpha.1 and the metadata it publishes (`91c0b5d56`)
+- **plan**: record five delivered development-runtime issues as done (`1c0a10454`)
+- **plan**: four merged issues are recorded done by their own proof (`48092d192`)
+- **plan**: record 18 merged issues as done, each with its own evidence (`c2b6d98cd`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v1.0.0-alpha.2-aarch64-apple-darwin.tar.gz (`baae30271835`)
+- `macos-x86_64` — majordomus-v1.0.0-alpha.2-x86_64-apple-darwin.tar.gz (`5236640245e0`)
+- `linux-x86_64-gnu` — majordomus-v1.0.0-alpha.2-x86_64-unknown-linux-gnu.tar.gz (`12dc25ea6388`)
+- `linux-x86_64-musl` — majordomus-v1.0.0-alpha.2-x86_64-unknown-linux-musl.tar.gz (`376d53a9ca37`)
+- `linux-aarch64-gnu` — majordomus-v1.0.0-alpha.2-aarch64-unknown-linux-gnu.tar.gz (`3b246c41cf04`)
+- `linux-aarch64-musl` — majordomus-v1.0.0-alpha.2-aarch64-unknown-linux-musl.tar.gz (`b4373e9151e5`)
+
 
 ## v1.0.0-alpha.1 — 2026-10-20
 

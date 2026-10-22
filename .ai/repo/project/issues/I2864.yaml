@@ -1,0 +1,28 @@
+id: I2864
+milestone: derived-data-integrity
+title: "The site generator reads no output of a later derive stage"
+slug: the-site-generator-reads-no-later-output
+priority: p2
+profile: implementation
+parallel_safe: true
+depends_on: []
+objective: "scripts/generate-site-data (derive stage B) takes the editors projection's skill files from a source stage A has already written, not from docs/generated/artifacts.json, which stage C rewrites after it. No stage then reads another stage's later output, as scripts/derive's header already claims."
+why: "Found on 2026-10-21 while closing I2847. scripts/generate-site-data reads docs/generated/artifacts.json (the .claude/skills/*/SKILL.md rows of the editors projection) to list the skills an agent reads by name. scripts/derive's header says stage C writes that manifest after stage B, and that 'no stage reads its own output; stage C's outputs are read by nothing but the site build'. So stage B reads the manifest the previous derive left. Declaring it an input (the first cut of I2847) moved the fingerprint on every derive, and the commit was refused as stale. I2847 therefore exempts it, and the ordering defect is left open here."
+current_state: "Stage B reads docs/generated/artifacts.json, which stage C writes after it. A derive that adds or removes a skill shows the change on the site only one derive later."
+desired_state: "Stage B lists the editors projection's skill files from stage A's output, or from the projection's own declaration, never from the manifest stage C writes. Case 3246 then drops docs/generated/artifacts.json from its exemptions, and a single derive after adding a skill shows it."
+scope:
+  - "scripts/generate-site-data"
+  - "test/cases/3246_every_file_the_site_generator_reads_is_an_input.sh"
+  - ".ai/repo/project/issues/I2864.yaml"
+non_scope:
+  - "Reordering derive's stages"
+acceptance_criteria:
+  - "scripts/generate-site-data reads no file that scripts/derive's stage C writes"
+  - "Case 3246 carries no exemption for docs/generated/artifacts.json and passes"
+validation:
+  - "bin/majordomus plan validate"
+  - "bash test/run.sh 3246_every_file_the_site_generator_reads_is_an_input"
+evidence_required:
+  - "no_stage_reads_a_later_output_case"
+created_at: 2026-10-21
+updated_at: 2026-10-21

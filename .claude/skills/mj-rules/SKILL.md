@@ -5,7 +5,7 @@ argument-hint: "[request]"
 ---
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: module:rules; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.0.0-alpha.1 -->
+     Generator: majordomus-cli 1.0.0-alpha.5 -->
 
 # Majordomus `rules`
 

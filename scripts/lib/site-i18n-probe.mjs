@@ -232,6 +232,9 @@ const tokens = readFileSync(new URL('../../share/design/tokens.yaml', import.met
 const WIDTHS = [...new Set([...(/^viewports:\s*\[([^\]]*)\]/m.exec(tokens)?.[1] ?? '320, 1280')
   .split(',').map(Number), 768])].sort((a, b) => a - b);
 const SAMPLE = ['/', '/getting-started/', '/docs/'].filter((p) => pages.includes(p));
+const HEADROOM_STEP = 0.02;
+const HEADROOM_MAX = 0.12;
+const HEADROOM_FLOOR = 0.06;
 for (const width of WIDTHS) {
   const layout = await browser.newContext({ viewport: { width, height: 900 } });
   await layout.route('**/*', (route) => {
@@ -247,15 +250,34 @@ for (const width of WIDTHS) {
   });
   await layout.addInitScript(() => { try { localStorage.setItem('mj-lang', 'en'); } catch {} });
   const page = await layout.newPage();
+  // The bar as drawn, and its headroom: the widest letter-spacing, in steps of HEADROOM_STEP em,
+  // at which it keeps that height and those rows. Text metrics differ between machines — the CI
+  // runner's Linux Chrome sets the same labels about 0.04 em wider than macOS does, so a Czech
+  // bar that fit on a Mac wrapped on the runner (2026-10-20) — and headroom is what makes the
+  // check hold on either: a copy must keep at least its English page's headroom, up to
+  // HEADROOM_FLOOR, so a translation never has less room to spare than the text it translates.
   const bar = async (path) => {
     await page.goto(`${base}${path}`, { waitUntil: 'load' });
-    return page.evaluate(() => {
+    return page.evaluate(({ step, max }) => {
       const nav = document.querySelector('body nav');
-      const r = nav.getBoundingClientRect();
-      const tops = new Set([...nav.querySelectorAll('a, button')].filter((e) => e.offsetParent)
-        .map((e) => Math.round(e.getBoundingClientRect().top)));
-      return { height: Math.round(r.height), rows: tops.size, overflow: nav.scrollWidth > nav.clientWidth };
-    });
+      const shape = () => {
+        const tops = new Set([...nav.querySelectorAll('a, button')].filter((e) => e.offsetParent)
+          .map((e) => Math.round(e.getBoundingClientRect().top)));
+        return { height: Math.round(nav.getBoundingClientRect().height), rows: tops.size };
+      };
+      const drawn = shape();
+      const style = document.createElement('style');
+      document.head.append(style);
+      let headroom = 0;
+      for (let em = step; em <= max + 1e-9; em += step) {
+        style.textContent = `body nav, body nav * { letter-spacing: ${em.toFixed(2)}em !important; }`;
+        const s = shape();
+        if (s.height !== drawn.height || s.rows !== drawn.rows) break;
+        headroom = Number(em.toFixed(2));
+      }
+      style.remove();
+      return { ...drawn, headroom, overflow: nav.scrollWidth > nav.clientWidth };
+    }, { step: HEADROOM_STEP, max: HEADROOM_MAX });
   };
   for (const path of SAMPLE) {
     const english = await bar(path);
@@ -263,8 +285,11 @@ for (const width of WIDTHS) {
       const copy = `/${l}${path}`;
       if (!pages.includes(copy)) continue;
       const seen = await bar(copy);
+      const owed = Math.min(english.headroom, HEADROOM_FLOOR);
       if (seen.height !== english.height || seen.rows !== english.rows || seen.overflow) {
         finding(copy, 'layout', `at ${width}px the bar is ${seen.height}px in ${seen.rows} row(s)${seen.overflow ? ', overflowing' : ''}; the English is ${english.height}px in ${english.rows}`);
+      } else if (seen.headroom < owed) {
+        finding(copy, 'layout', `at ${width}px the bar has headroom_em ${seen.headroom}, the English ${english.headroom}; a copy owes ${owed}, or it wraps where the text is set wider`);
       }
     }
   }

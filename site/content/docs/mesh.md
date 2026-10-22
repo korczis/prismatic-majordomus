@@ -340,7 +340,7 @@ releases, the lanes that repair conflicting branches, and the workers. A seat is
 holding its exclusive claim, so it is subject to everything above: it is refused to a second
 session while it is held, it moves when the claim is released, and it falls vacant when its
 holder stops beating. Which seats there are and which scope each one claims is
-[rule `project.the-cooperation-model-is-the-owners-word`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v1.md)
+[rule `project.the-cooperation-model-is-the-owners-word`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md)
 (ADR 0167), the one record of it; this document does not copy the table. The Mesh screen of
 the UI (`/ui/mesh`) asks `mesh.state` for the live claims and draws who holds each seat now.
 
@@ -362,14 +362,20 @@ Every server restart is a new stream, so a journal that kept everything would gr
 bound and a machine would fill its 64-stream quota by running. Compaction drops the streams
 nothing needs any more. Each runtime runs it on its own, every sixty heartbeats (five minutes
 at the defaults), and only when its journal holds more than 20 000 events or 768 streams or
-when one node holds 48 streams — then that node's streams alone are due. A stream can go only
+when one node holds 48 streams or 15 000 events — then that node's streams alone are due. A
+node's own crowding matters because the journal-wide bound is no larger than one node's quota
+of 20 000 events: a machine alone fills its quota before the journal is over its bound, and past
+the quota every event of that machine is refused, a claim's release among them. A stream can go only
 when it has been silent for longer than the expiry plus 15 minutes, measured on the local
 clock from the last beat heard or, for a stream never heard beating, from when the journal
 learned of it (so the streams a restart reloads are not taken for dead at once). A runtime
 never drops its own stream. Of the streams that could go, one stays while:
 
 - **it published a handover nobody has taken** — for at most a day past those 15 minutes
-  (`HANDOVER_RETENTION`). A handover is continuity meant to outlive the run that wrote it;
+  (`HANDOVER_RETENTION`), counted on the local clock or from the handover's signed
+  publication time, whichever lapses first: the local count restarts with every server, so on
+  its own a machine whose servers never live a day would keep a dead stream for ever. A
+  handover is continuity meant to outlive the run that wrote it;
   the day bounds how much of its node's quota a machine's untaken handovers can hold. A
   handover somebody has taken keeps nothing. A lapsed one is still its author's record, and
   `mesh handover publish` offers it again under the same id.
@@ -522,6 +528,8 @@ referenced artifact a peer materialises.
 | a peer's process is killed | its links go degraded → unreachable → expired; its stream stops beating; its sessions and claims expire | on restart it is the same runtime, new instance; it re-handshakes into one table row and syncs; its previous run's claims stay expired |
 | the network partitions | each side expires the other's streams and may claim what the other held | on healing, one round each way; concurrent exclusive claims resolve to one named winner; digests agree |
 | a peer restarts while linked | the answerer refuses the old link id as `unknown_link`; the dialer says hello again | the table row is kept, `restarts` counts |
+| one machine's dead streams fill its node's event quota | every later event of that machine is refused as `capacity` — claims, releases, closes; `mesh verify`'s `rejections` check fails naming `capacity`; the node is due for compaction at three quarters of its quota, and a dead stream's untaken handover lapses by its signed publication time, so a restart does not renew it | once the dead streams go, the refused events are offered again and accepted; the release arrives and the claim reads released everywhere (I2825) |
+| two processes speak for one checkout (a server older than v0.27.0 that never left the mesh when another took its lease) | every peer that hears both replaces one link with the other each round, and `unknown_link: … previous instance` repeats; `mesh verify`'s `instances` check fails naming both instances | stopping the process the lease does not name ends the flapping; the lease's holder is the checkout's one runtime |
 | a relay dies in a line A–B–C | A and C expire each other's streams through lost beats | when B returns, marks re-align and nothing is duplicated |
 | hostile or broken input | typed refusal, counted, listed; the runtime keeps serving | nothing enters the journal |
 | a crash tears the journal file, or the disk refuses an append | an append writes a missing newline first and syncs; a failed append is counted (`write_failures`) and its operation answers `"durability": "not_durable"` — never acknowledged as durable, and `mesh claim`, `mesh session open` and the other writes print `NOT DURABLE`; a line that does not read on reload is counted (`unreadable`), and `mesh doctor` fails its `journal` check; compaction writes a synced file and renames it over the old one; the file is the owner's alone (0600) | every complete event reloads, the event after a torn line reads, and an event that did not reach the disk is still replicated from memory and from peers |

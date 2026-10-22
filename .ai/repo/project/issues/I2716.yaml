@@ -9,19 +9,32 @@ depends_on: []
 objective: "Keep a case from failing because its subject grew: a budget, a count or a list of names that a case states by hand is derived from the model or carries the margin and the reason it holds."
 why: "2026-10-14: master 2d226f0836 went red in suite-shard (2) because case 130 compared three surfaces at a hand-pinned 4000-token budget and a fresh init's governance tier grew to 4023 when #1143 added 235 bytes to the seeded scope; the same day case 94 failed a branch because the release-record-cases gate lists its cases by hand and a new case named the release record. Both were fixed by hand in #1145 (budget 16000 with a comment; case 3021 added to the list)."
 current_state: "Cases pin numbers and lists freely; a gate's hand list (release-record-cases) and a case's literal budget are found only when they break."
-desired_state: "A lint over test/cases reports a literal budget, count or size compared against a product's output without a comment giving its margin, and the release-record-cases list is generated from the cases that name a release-record path (or checked against them by a structure gate, not only by case 94)."
+desired_state: "The release-record-cases list is checked against the cases that name a release-record path by a structure gate (scripts/ci/release-record-cases-check), not only by case 94. Reporting a hand-pinned budget without a stated margin moved to I2846 (2026-10-21), so this issue closes on the listing alone."
 scope:
   - scripts/liveness-check
   - .ai/repo/ci/gates.yaml
   - test/cases
+non_scope:
+  - "Reporting a literal budget, count or size a case compares against a product's output without a comment giving its margin: I2846, split off on 2026-10-21 when this issue's first half was found on master and the second was not."
 acceptance_criteria:
   - "Adding a case that names the release record without listing it fails a structure gate, not only case 94"
-  - "A hand-pinned budget in a case without a stated margin is reported"
 validation:
   - "bin/majordomus plan validate"
 evidence_required:
-  - "pinned_values_are_reported_case"
+  - "release_record_listing_case"
 created_at: 2026-10-14
-updated_at: 2026-10-14T22:50:08Z
+updated_at: 2026-10-20T22:21:05Z
 started_at: 2026-10-14T22:50:08Z
 started_event: sha256:b7c1824e422782365720dc1ff59631bfa4da5ad046f243aeefe503b7e5e8a094
+verified_at: 2026-10-20T22:20:19Z
+verified_event: sha256:fde48b015dae7205d69a60336e7534f0bc3aeb094408b57c6a8a8bfbfddc1449
+completed_at: 2026-10-20T22:21:05Z
+completed_event: sha256:6b5839f3261c5edeaad92980b5fec04a0c81778612084cafc03d07dc69a7e733
+evidence:
+  - covers: release_record_listing_case
+    type: ci
+    command: "validate run 39438896504 at master 9a5a9b77520: structure job 118758922399 runs scripts/ci/release-record-cases-check (27 cases name the release record, each run by release-record-cases); suite-shard (1) job 118683336189 runs 3033_a_release_record_case_is_listed_by_a_structure_gate (11e53f5a451)"
+    result: "success (the run's only red job is pages, which runs no test)"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39438896504"
+    commit: 573df967bb5bc30cf23e542b8d0dff03d3bf5ee0
+    recorded_at: 2026-10-20T22:20:52Z

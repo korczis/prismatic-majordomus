@@ -21,7 +21,7 @@
 //   node scripts/lib/site-i18n.mjs build <public> <i18n-dir> <base-url> <missing-out>
 
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, unlinkSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 
 const VOID = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta',
@@ -185,6 +185,28 @@ export function translatable(plain) {
 export const keyOf = (source) =>
   createHash('sha256').update(source.replace(/\s+/g, ' ').trim()).digest('hex').slice(0, 20);
 
+// A count inside a sentence is data, not words: "153 nodes, 549 edges" and "4 of 26" are the
+// sentences "<n1/> nodes, <n2/> edges" and "<n1/> of <n2/>", translated once and filled with
+// whatever this build counts. Keyed with the numbers inside, every changed count was a new
+// segment the memory had never seen, and 58 of 100 Czech roadmap titles fell back to English
+// (2026-10-20). Only a standalone number is a slot: a number joined to letters, a hyphen, a dot
+// or a hash (I3091, v0.30.2, 2026-10-20, 82ac259, #1434) is an identifier and stays as written.
+const NUMBER = /(?<![\p{L}\p{N}_.\-#])\d+(?:[.,]\d+)?(?![\p{L}\p{N}_\-]|[.,]\d)/gu;
+const SLOT = /<n(\d+)\/>/g;
+
+/** A source with its standalone numbers replaced by `<nK/>` slots, and the values they hold. */
+export function numberSlots(source) {
+  const values = [];
+  // the numbers inside a placeholder (<t12>) are the placeholder's, never the reader's
+  const template = source.split(/(<\/?t\d+\/?>)/).map((part, i) => (i % 2 ? part
+    : part.replace(NUMBER, (n) => { values.push(n); return `<n${values.length}/>`; }))).join('');
+  return { template, values };
+}
+
+/** A translation template with its `<nK/>` slots filled from the source's values. */
+export const fillSlots = (template, values) =>
+  template.replace(SLOT, (m, k) => values[Number(k) - 1] ?? m);
+
 // One run of inline content: its range, the source a translator sees, and the raw tags each
 // placeholder stands for.
 function runSegment(html, nodes) {
@@ -239,9 +261,9 @@ function runSegment(html, nodes) {
     parts.push(`</t${id}>`);
   };
   for (let k = first; k <= last; k += 1) walk(nodes[k], start, end);
-  const source = parts.join('').replace(/\s+/g, ' ').trim();
   if (!translatable(plain)) return null;
-  return { kind: 'html', start, end, source, tags, key: keyOf(source) };
+  const { template: source, values } = numberSlots(parts.join('').replace(/\s+/g, ' ').trim());
+  return { kind: 'html', start, end, source, values, tags, key: keyOf(source) };
 }
 
 /** Every segment of a page, in document order, with the ranges they replace. */
@@ -256,8 +278,9 @@ export function segments(html, root = parse(html)) {
         if ((ATTRIBUTES.includes(a.name) || META.has(metaName)) && a.vstart >= 0) {
           const plain = decode(a.value);
           if (translatable(plain)) {
-            const source = plain.replace(/\s+/g, ' ').trim();
-            out.push({ kind: 'attr', start: a.vstart, end: a.vend, source, key: keyOf(source) });
+            const { template: source, values } = numberSlots(plain.replace(/\s+/g, ' ').trim());
+            out.push({ kind: 'attr', start: a.vstart, end: a.vend, source, values,
+              key: keyOf(source) });
           }
         }
       }
@@ -267,8 +290,9 @@ export function segments(html, root = parse(html)) {
       if (t) {
         const plain = decode(html.slice(t.start, t.end));
         if (translatable(plain)) {
-          const source = plain.replace(/\s+/g, ' ').trim();
-          out.push({ kind: 'text', start: t.start, end: t.end, source, key: keyOf(source) });
+          const { template: source, values } = numberSlots(plain.replace(/\s+/g, ' ').trim());
+          out.push({ kind: 'text', start: t.start, end: t.end, source, values,
+            key: keyOf(source) });
         }
       }
       return;
@@ -297,9 +321,9 @@ export function segments(html, root = parse(html)) {
         if (ATTRIBUTES.includes(a.name) && a.vstart >= 0) {
           const plain = decode(a.value);
           if (translatable(plain)) {
-            const source = plain.replace(/\s+/g, ' ').trim();
-            out.push({ kind: 'attr', start: a.vstart, end: a.vend, source, key: keyOf(source),
-              inner: true });
+            const { template: source, values } = numberSlots(plain.replace(/\s+/g, ' ').trim());
+            out.push({ kind: 'attr', start: a.vstart, end: a.vend, source, values,
+              key: keyOf(source), inner: true });
           }
         }
       }
@@ -330,7 +354,7 @@ const PLACEHOLDER = /<(\/?)t(\d+)(\/?)>/g;
 export function admissible(source, translation) {
   if (typeof translation !== 'string' || translation.trim() === '') return false;
   const shape = (s) => {
-    const seen = [];
+    const seen = [...s.matchAll(SLOT)].map((m) => `n${m[1]}`);
     const stack = [];
     for (const m of s.matchAll(PLACEHOLDER)) {
       const [, close, id, selfClose] = m;
@@ -354,7 +378,8 @@ const escapeText = (s) => s.replace(/&(?!#?[0-9a-z]+;)/gi, '&amp;').replace(/</g
   .replace(/>/g, '&gt;');
 const escapeAttr = (s) => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 
-function restore(html, seg, translation, rewriteTag) {
+function restore(html, seg, template, rewriteTag) {
+  const translation = fillSlots(template, seg.values ?? []);
   if (seg.kind === 'attr') return escapeAttr(translation);
   if (seg.kind === 'text') return escapeText(translation);
   const byId = new Map(seg.tags.map((t) => [String(t.id), t]));
@@ -400,6 +425,10 @@ export function saveMemory(dir, memory) {
     shards.get(s).push(JSON.stringify({ k, en, ...rest }));
   }
   for (const [s, lines] of shards) writeFileSync(join(dir, `${s}.jsonl`), `${lines.join('\n')}\n`);
+  // a shard whose every entry was removed goes too, or the removal comes back on the next load
+  for (const f of readdirSync(dir)) {
+    if (f.endsWith('.jsonl') && !shards.has(f.slice(0, -'.jsonl'.length))) unlinkSync(join(dir, f));
+  }
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -506,7 +535,7 @@ export function localise(html, { lang, memory, base, routes, route, englishRoute
   }
   out = out.replace(/<html([^>]*?)\slang="[^"]*"/, `<html$1 lang="${lang}"`);
   out = switchLanguage(out, { lang, base, route, englishRoute, prefix });
-  return { html: out, total, done, missing };
+  return { html: out, total, done, missing, keys: segs.map((x) => x.key) };
 }
 
 /** A page written in another language at an English address names only itself, in its own
@@ -556,8 +585,13 @@ export function build({ publicDir, i18nDir, base, missingOut, exclude = [] }) {
     .map((p) => routeOf(relative(publicDir, p))));
   const report = { schema: 'site-i18n/v1', source: config.source, languages: {} };
   const missingAll = {};
+  // every key the English pages carry, with the pages it is on (I3092): what a memory entry
+  // can reach. The pages are the same for every language, so the first one counts them.
+  const reach = new Map();
+  let reachLang = null;
   for (const lang of config.languages) {
     if (lang === config.source) continue;
+    if (reachLang === null) reachLang = lang;
     const memory = loadMemory(join(i18nDir, lang, 'memory'));
     let total = 0;
     let done = 0;
@@ -589,6 +623,14 @@ export function build({ publicDir, i18nDir, base, missingOut, exclude = [] }) {
         result.total = 0; result.done = 0; result.missing = [];
       } else {
         result = localise(html, { lang, memory, base, routes, route: englishRoute, englishRoute });
+        if (lang === reachLang) {
+          for (const k of new Set(result.keys)) {
+            const r = reach.get(k) ?? { pages: 0, routes: [] };
+            r.pages += 1;
+            if (r.routes.length < 8) r.routes.push(englishRoute);
+            reach.set(k, r);
+          }
+        }
       }
       total += result.total;
       done += result.done;
@@ -626,8 +668,27 @@ export function build({ publicDir, i18nDir, base, missingOut, exclude = [] }) {
   if (missingOut) {
     mkdirSync(dirname(missingOut), { recursive: true });
     writeFileSync(missingOut, `${JSON.stringify(missingAll)}\n`);
+    writeFileSync(join(dirname(missingOut), 'reach.json'), `${JSON.stringify({
+      schema: 'site-i18n-reach/v1', keys: Object.fromEntries([...reach].sort((a, b) =>
+        (a[0] < b[0] ? -1 : 1)).map(([k, r]) => [k, { pages: r.pages, routes: r.routes.sort() }])) })}\n`);
   }
   return report;
+}
+
+/** The keys of `after` whose entry is new or differs from `before` in its English or in `lang`,
+ *  sorted: what an edit or an import changed. */
+export function memoryChanges(before, after, lang) {
+  const out = [];
+  for (const [k, e] of after) {
+    const b = before.get(k);
+    if (!b || b.en !== e.en || b[lang] !== e[lang]) out.push(k);
+  }
+  return out.sort();
+}
+
+/** Each key with the pages reach.json says carry it; `pages: 0` is a translation no page reads. */
+export function reachOf(keys, reach) {
+  return keys.map((k) => ({ k, pages: reach[k]?.pages ?? 0, routes: reach[k]?.routes ?? [] }));
 }
 
 /** Every indexable page in every language, in the sitemap the build wrote: each English entry is
@@ -654,7 +715,21 @@ export function sitemap({ publicDir, base, routes, languages, source }) {
   writeFileSync(file, body);
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (import.meta.url === `file://${process.argv[1]}` && process.argv[2] === 'reach') {
+  // node site-i18n.mjs reach <reach.json> <memory-after> <memory-before> [lang]
+  const [, reachFile, afterDir, beforeDir, lang = 'cs'] = process.argv.slice(2);
+  const reach = JSON.parse(readFileSync(reachFile, 'utf8')).keys;
+  const after = loadMemory(afterDir);
+  const rows = reachOf(memoryChanges(loadMemory(beforeDir), after, lang), reach);
+  for (const r of rows) {
+    const en = after.get(r.k)?.en ?? '';
+    console.log(r.pages ? `  ${r.k} reaches ${r.pages} page(s): ${r.routes.join(' ')}  ${JSON.stringify(en)}`
+      : `  ${r.k} reaches no page: no English page carries ${JSON.stringify(en)}`);
+  }
+  const none = rows.filter((r) => !r.pages);
+  console.log(`site-i18n reach: ${rows.length} changed key(s), ${none.length} reaching no page`);
+  process.exit(none.length ? 10 : 0);
+} else if (import.meta.url === `file://${process.argv[1]}`) {
   const [cmd, publicDir, i18nDir, base, missingOut, exclude] = process.argv.slice(2);
   if (cmd !== 'build' || !publicDir || !i18nDir) {
     process.stderr.write('usage: site-i18n.mjs build <public> <i18n-dir> <base-url> [missing-out]\n');

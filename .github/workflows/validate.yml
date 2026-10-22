@@ -225,7 +225,12 @@ jobs:
       # depth-1 checkout with no tags gives it neither, so the gate failed for want of the
       # data rather than for anything about the tree, on every run it has ever had. The
       # suite job already checks out in full, for the same class of reason.
+      # Every full-history checkout of this file carries a bound of its own, smaller than its
+      # job's (scripts/ci/step-bound-check): they take 95 to 212 s (2026-10-20), and the one
+      # that did not return that day waited out the coverage job's 55 minutes and read as
+      # cancelled, with nothing measured (run 39438896504).
       - uses: actions/checkout@v4
+        timeout-minutes: 10
         with:
           fetch-depth: 0
       - run: sudo apt-get install -y shellcheck >/dev/null
@@ -320,6 +325,7 @@ jobs:
       # the whole history: a case that clones this checkout into a fixture and pushes
       # (96_site_deploy does, to a bare repository of its own) cannot push a shallow clone
       - uses: actions/checkout@v4
+        timeout-minutes: 10
         with:
           fetch-depth: 0
       - id: site
@@ -548,6 +554,7 @@ jobs:
       # document it is required to write. The gate then reported the committed artifact stale
       # for a reason no branch had caused. A check reads its inputs; this job now fetches them.
       - uses: actions/checkout@v4
+        timeout-minutes: 10
         with:
           fetch-depth: 0
       - id: rust
@@ -711,12 +718,32 @@ jobs:
       run:
         working-directory: apps/majordomus-cli
     steps:
+      # One commit deep. Until 2026-10-20 this was the whole history, every head and every tag,
+      # for the differential's base alone, and on run 39438896504 that fetch did not return: it
+      # waited out the job's 55 minutes and read as cancelled, with nothing measured. The
+      # differential needs one more commit, not the history (next step).
       - uses: actions/checkout@v4
-        with:
-          # The differential gate diffs against the merge-base with the trunk. A shallow
-          # clone has no merge-base, and this gate answers UNKNOWN rather than passing
-          # silently, so the history it reads has to be here.
-          fetch-depth: 0
+        timeout-minutes: 5
+      # The base the differential diffs against, and nothing else. `rust-coverage --changed`
+      # diffs that commit's tree against the working tree, so on a pull request the base
+      # commit itself is enough. Without a base (a push, the schedule, a dispatch) the gate
+      # takes the merge-base of HEAD and origin/master: when HEAD is origin/master's tip, as on
+      # every master run, that is HEAD and nothing is fetched; otherwise master's history is
+      # fetched, still without tags or other heads. A base git cannot resolve stays UNKNOWN
+      # (exit 13), never a pass.
+      - name: the differential's base
+        if: needs.plan.outputs.coverage_differential == 'true'
+        timeout-minutes: 10
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if [ -n "$BASE" ]; then
+            git fetch --no-tags --depth=1 origin "$BASE"
+          elif [ "$(git rev-parse HEAD)" = "$(git rev-parse --verify --quiet refs/remotes/origin/master)" ]; then
+            echo "HEAD is origin/master's tip: the differential's base is HEAD itself, and nothing is fetched"
+          else
+            git fetch --no-tags --unshallow origin +refs/heads/master:refs/remotes/origin/master
+          fi
       - id: rust
         uses: ./.github/actions/setup-rust
         with:
@@ -779,14 +806,19 @@ jobs:
   # The reports and the result live under the runner's temporary directory, never in the
   # checkout the report is derived in. It is not a gate and the verdict does not need it: it
   # reads jobs that have already decided, and a red suite is exactly the evidence worth
-  # keeping. It runs whenever the suite or the crate produced anything, whatever they concluded.
+  # keeping. It runs whenever the plan ran the suite or the crate's tests (shell_suite,
+  # rust_check), whatever they concluded. A plan of records alone runs neither: its rust lanes
+  # build the executable and run the registry checks (rust_integration), which write no test
+  # output, so the job is skipped there rather than failing at evidence-collect's "no report to
+  # record" (#1745, #1746 and #1749 were red for that alone; I3013, case 3402). A planned lane
+  # that left no report is still refused.
   #
   # On master, when this commit is still the tip, it then dispatches the pages workflow, so the
   # site that was published at once with the nearest older evidence (labelled stale) republishes
   # with the evidence of the commit it shows. pages.yml stays triggered by the push alone.
   evidence:
     needs: [plan, suite, rust, coverage]
-    if: always() && (needs.suite.result == 'success' || needs.suite.result == 'failure' || needs.rust.result == 'success' || needs.rust.result == 'failure')
+    if: always() && ((needs.plan.outputs.shell_suite == 'true' && (needs.suite.result == 'success' || needs.suite.result == 'failure')) || (needs.plan.outputs.rust_check == 'true' && (needs.rust.result == 'success' || needs.rust.result == 'failure')))
     timeout-minutes: 30
     runs-on: ubuntu-latest
     permissions:
@@ -799,6 +831,7 @@ jobs:
     steps:
       # the whole history: the report compares each execution's commit with the tree
       - uses: actions/checkout@v4
+        timeout-minutes: 10
         with:
           fetch-depth: 0
       - id: rust
@@ -894,8 +927,9 @@ jobs:
     # Every gate this job carries, not only the first: the build is a prerequisite of the
     # probe, so a plan that asks for the probe or the Cockpit stylesheet and not for
     # site-build must still open the job — otherwise the gate is planned and the job that
-    # would run it never starts. The UI audit is the ui job's, not this one's.
-    if: needs.plan.outputs.site_build == 'true' || needs.plan.outputs.cockpit_assets == 'true' || needs.plan.outputs.site_probe == 'true' || needs.plan.outputs.site_languages == 'true'
+    # would run it never starts. The UI audit is the ui job's, not this one's. The interaction
+    # probe's shards drive this job's build, so a plan that asks for them opens it too (I3602).
+    if: needs.plan.outputs.site_build == 'true' || needs.plan.outputs.cockpit_assets == 'true' || needs.plan.outputs.site_probe == 'true' || needs.plan.outputs.site_languages == 'true' || needs.plan.outputs.interaction_probe == 'true'
     # measured 2026-10-17 on batch 71a: 46, 47.5 and 50.4 min (the last one cancelled at 50);
     # the browser probe grows with the site, so the bound keeps a quarter's headroom. The
     # site-languages probe (ADR 0218) adds every page of every language copy: 5090 pages and
@@ -913,6 +947,7 @@ jobs:
       # commit is in the history being published, and refuses to report clean from a shallow
       # clone that cannot say.
       - uses: actions/checkout@v4
+        timeout-minutes: 10
         with:
           fetch-depth: 0
       - id: site
@@ -940,7 +975,49 @@ jobs:
         with:
           timings: timings.tsv
       - name: build the site
+        id: build
         run: scripts/ci/timed --bound 2700 site-build site-build timings.tsv scripts/site-build --no-data
+      # What the browser probe's own Zola build needs and the checkout does not hold: every file
+      # the build generated under site/static that git ignores (the compiled stylesheets, the
+      # vendored scripts, the graphs, build.json; listed by git, never by hand), and the public
+      # assets the probe copies over its build (scripts/site-probe). About 10 MB, handed to the
+      # site-probe-shard jobs before this job's checks, so the probe measures what was built
+      # even when a check later in this job is red.
+      - name: pack the probe's inputs
+        id: probe-inputs
+        if: always() && needs.plan.outputs.site_probe == 'true' && steps.build.outcome == 'success'
+        run: |
+          git ls-files --others --ignored --exclude-standard -- site/static > probe-inputs.list
+          printf '%s\n' site/public/app.css site/public/giallo-light.css site/public/giallo-dark.css site/public/js site/public/images >> probe-inputs.list
+          tar -cf probe-inputs.tar -T probe-inputs.list
+          echo "$(wc -l < probe-inputs.list | tr -d ' ') path(s), $(du -h probe-inputs.tar | cut -f1)"
+      - if: always() && steps.probe-inputs.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: site-probe-inputs
+          path: probe-inputs.tar
+          if-no-files-found: error
+          retention-days: 1
+      # The built site the interaction-probe-shard jobs drive (I3602), without the composed
+      # surfaces: their controls are their producers' to answer for, and the probe never opens
+      # them. The mounts are the topology's (lib/common.sh), never named here. About 26 MB
+      # compressed, where each shard building the site again would cost it the whole build.
+      - name: pack the built site for the interaction probe
+        id: site-public
+        if: always() && needs.plan.outputs.interaction_probe == 'true' && steps.build.outcome == 'success'
+        run: |
+          . lib/common.sh
+          set --
+          for m in $(mj_web_composed "$PWD" mounts); do set -- "$@" "--exclude=site/public$m"; done
+          tar "$@" -czf site-public.tar.gz site/public
+          echo "composed and left out: $(mj_web_composed "$PWD" mounts | tr '\n' ' ')$(du -h site-public.tar.gz | cut -f1)"
+      - if: always() && steps.site-public.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: interaction-probe-site
+          path: site-public.tar.gz
+          if-no-files-found: error
+          retention-days: 1
       # Metadata and landmarks on every route, no unrendered template delimiter, every
       # internal link resolving, no remote asset, no credential, and the generated data
       # still matching its canonical sources.
@@ -961,13 +1038,6 @@ jobs:
         id: site-cases
         if: needs.plan.outputs.site_build == 'true'
         run: bash test/run.sh --no-skips --runs-in site
-      # Browser-measured: no horizontal overflow at 320/390/1280 on every route, the mobile
-      # menu, the dropdowns, the theme toggle, Mermaid rendering. The full sweep, deliberately:
-      # every overflow this site has produced came from canonical data rendered into a shared
-      # template, which no sample of one route per template can see.
-      - name: probe the site in a browser
-        if: needs.plan.outputs.site_probe == 'true'
-        run: CHROME_BIN=google-chrome SITE_PROBE_JOBS=4 scripts/ci/timed --bound 3600 site-probe site-probe timings.tsv scripts/site-probe
       - name: manifest
         run: cat site/data/generated/source.json
       - if: always()
@@ -997,48 +1067,190 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: case "$GITHUB_HEAD_REF" in integration/*) echo "::notice::an integration/* top runs to the end, so every red of it is shown";; *) gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled";; esac
 
+  # ----------------------------------------------------------------- site-probe
+  # Browser-measured: no horizontal overflow at 320/390/1280 on every route, the mobile menu,
+  # the dropdowns, the theme toggle, Mermaid rendering. The full sweep, deliberately: every
+  # overflow this site has produced came from canonical data rendered into a shared template,
+  # which no sample of one route per template can see. Split in six (I2841): as one step of
+  # the site job it took 35-37 minutes and held that job at 46-50 of its 50 minutes (runs
+  # 39034132446, 39039860066, cancelled at its bound in 39049547899). Each shard is a stride of
+  # the sorted route list (scripts/site-probe SITE_PROBE_SHARD), runs its own Zola build with
+  # the site job's compiled assets, and reports the routes it measured; the fan-in below
+  # proves the reports are the whole sweep, each route once, before the gate's receipt.
+  site-probe-shard:
+    needs: [plan, site]
+    if: always() && needs.plan.outputs.site_probe == 'true' && needs.site.result != 'skipped'
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6]
+    # a sixth of a sweep that no longer fits 45 minutes (the Czech copies doubled the routes:
+    # run 39317142394 stopped the single step at its 2700 s bound), plus the build and setup
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: site
+        uses: ./.github/actions/setup-site
+      - uses: actions/download-artifact@v4
+        with:
+          name: site-probe-inputs
+      - name: the site job's generated inputs
+        run: tar -xf probe-inputs.tar && rm probe-inputs.tar
+      - name: probe this shard in a browser
+        env:
+          CHROME_BIN: google-chrome
+          SITE_PROBE_JOBS: 4
+          SITE_PROBE_SHARD: ${{ matrix.shard }}/6
+          SITE_PROBE_REPORT: site-probe-routes.txt
+        run: scripts/ci/timed --bound 1500 site-probe "site-probe-${{ matrix.shard }}" timings.tsv scripts/site-probe
+      - if: always()
+        run: scripts/ci/summary --job site-probe --timings timings.tsv --fact "shard=${{ matrix.shard }}/6" --fact "npm cache hit=${{ steps.site.outputs.npm-cache-hit }}"
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: site-probe-shard-${{ matrix.shard }}
+          path: site-probe-routes.txt
+          if-no-files-found: ignore
+          retention-days: 3
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-metrics-site-probe-${{ matrix.shard }}
+          path: timings.tsv
+          retention-days: 14
+      - name: a failed branch run ends here
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: case "$GITHUB_HEAD_REF" in integration/*) echo "::notice::an integration/* top runs to the end, so every red of it is shown";; *) gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled";; esac
+
+  site-probe:
+    needs: [plan, site-probe-shard]
+    if: always() && needs.plan.outputs.site_probe == 'true'
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    env:
+      MJ_CI_RECEIPTS: ${{ github.workspace }}/receipts.tsv
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: site-probe-shard-*
+          path: shards
+      - name: every route, exactly once
+        id: union
+        run: scripts/site-probe --verify-report shards
+      - name: every shard passed
+        id: shards
+        if: always()
+        run: |
+          echo "the shards concluded: ${{ needs.site-probe-shard.result }}"
+          [ "${{ needs.site-probe-shard.result }}" = success ]
+      - name: the probe's receipt
+        if: always()
+        run: printf '%s\t%s\tsite-probe/union\n%s\t%s\tsite-probe/shards\n' "site-probe" "${{ steps.union.outcome }}" "site-probe" "${{ steps.shards.outcome }}" >> "$MJ_CI_RECEIPTS"
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-receipts-site-probe
+          path: receipts.tsv
+          if-no-files-found: ignore
+          retention-days: 14
+      # I2664: a run on a branch ends at its first red. Last, so this job's upload has run;
+      # never on master, the schedule or a dispatch (see `concurrency`).
+      - name: a failed branch run ends here
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: case "$GITHUB_HEAD_REF" in integration/*) echo "::notice::an integration/* top runs to the end, so every red of it is shown";; *) gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled";; esac
+
   # ----------------------------------------------------------------- interactions
   # Every interactive control on every page of the built site, exercised in a real browser by the behaviour spec
   # that claims it (project.every-link-and-control-is-tested). Its own job: the site job's browser steps already
   # run to that job's bound, and a gate in a job that never finishes enforces nothing. The installed Chrome drives
   # it; a missing browser under CI is a failure, never a skip.
+  #
+  # Split in six (I3602), as the site probe is (I2841). As one job it rebuilt the site and drove every page: it
+  # reached page 1850 of 1865 at a 2400 s bound on 2026-10-12 (run 38202851612), and once the Czech copies doubled
+  # the pages run 39317142394 stopped it at its 3300 s bound. Each shard now drives a stride of the sorted pages of
+  # the site job's own build (scripts/site-probe --partition, the one rule for both probes) and reports the pages it
+  # drove; the interactions job below proves the reports are every page once before the gate's receipt.
+  interaction-probe-shard:
+    needs: [plan, site]
+    if: always() && needs.plan.outputs.interaction_probe == 'true' && needs.site.result != 'skipped'
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6]
+    # a sixth of a probe that no longer fits 55 minutes, plus the setup
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: site
+        uses: ./.github/actions/setup-site
+      - uses: actions/download-artifact@v4
+        with:
+          name: interaction-probe-site
+      - name: the site job's build
+        run: tar -xzf site-public.tar.gz && rm site-public.tar.gz
+      - name: exercise every control of this shard
+        env:
+          CHROME_BIN: google-chrome
+          MJ_PROBE_JOBS: 4
+          MJ_PROBE_SHARD: ${{ matrix.shard }}/6
+          MJ_PROBE_REPORT: interaction-probe-routes.txt
+        run: scripts/ci/timed --bound 1500 interaction-probe "interaction-probe-${{ matrix.shard }}" timings.tsv scripts/interaction-probe
+      - if: always()
+        run: scripts/ci/summary --job interactions --timings timings.tsv --fact "shard=${{ matrix.shard }}/6" --fact "npm cache hit=${{ steps.site.outputs.npm-cache-hit }}"
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: interaction-probe-shard-${{ matrix.shard }}
+          path: interaction-probe-routes.txt
+          if-no-files-found: ignore
+          retention-days: 3
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-metrics-interactions-${{ matrix.shard }}
+          path: timings.tsv
+          retention-days: 14
+      # I2664: a run on a branch ends at its first red. Last, so this job's uploads and
+      # summary have run; never on master, the schedule or a dispatch (see `concurrency`).
+      - name: a failed branch run ends here
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: case "$GITHUB_HEAD_REF" in integration/*) echo "::notice::an integration/* top runs to the end, so every red of it is shown";; *) gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" || echo "::warning::run $GITHUB_RUN_ID could not be cancelled";; esac
+
   interactions:
-    needs: plan
-    if: needs.plan.outputs.interaction_probe == 'true'
-    # the full probe measured 599 s on a 4-job local run over every page with a control; a hosted runner is slower,
-    # and a job killed at its bound reports cancelled, which the verdict counts as red. The probe grows with the
-    # site: on 2026-10-12 (run 38202851612, the v0.21.0 top) it reached page 1850 of 1865 at its 2400 s bound, so
-    # the step's bound is 3300 s and the job's 65 minutes; selecting only the pages a change can reach is the fix
-    # that lets these come down again, not a larger runner. On 2026-10-19 the v1.0.0-alpha.1 top passed in 57 min
-    # before its Czech copy (39231800834) and reached the 3300 s bound after it, the copy sampled (39317142394):
-    # the step's bound is 4800 s and the job's 90 minutes until the page selection lands (2586 pages at the
-    # observed rate need about 3880 s, and one stretch of pages ran 4.5 times slower).
-    timeout-minutes: 90
+    needs: [plan, interaction-probe-shard]
+    if: always() && needs.plan.outputs.interaction_probe == 'true'
+    timeout-minutes: 10
     runs-on: ubuntu-latest
     env:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
       MJ_CI_RECEIPTS: ${{ github.workspace }}/receipts.tsv
     steps:
       - uses: actions/checkout@v4
-      - id: site
-        uses: ./.github/actions/setup-site
-      # the build refuses without the crate's reference, which it composes at /rustdoc
-      - name: the crate's Rust API reference
-        uses: ./.github/actions/rustdoc
+      - uses: actions/download-artifact@v4
         with:
-          timings: timings.tsv
-      - name: build the site
-        run: scripts/ci/timed --bound 2400 interaction-probe site-build timings.tsv scripts/site-build --no-data
-      - name: exercise every control
-        run: CHROME_BIN=google-chrome MJ_PROBE_JOBS=4 scripts/ci/timed --bound 4800 interaction-probe interaction-probe timings.tsv scripts/interaction-probe
-      - if: always()
-        run: scripts/ci/summary --job interactions --timings timings.tsv --fact "npm cache hit=${{ steps.site.outputs.npm-cache-hit }}"
-      - if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: ci-metrics-interactions
-          path: timings.tsv
-          retention-days: 14
+          pattern: interaction-probe-shard-*
+          path: shards
+      - name: every page, exactly once
+        id: union
+        run: scripts/site-probe --verify-report shards
+      - name: every shard passed
+        id: shards
+        if: always()
+        run: |
+          echo "the shards concluded: ${{ needs.interaction-probe-shard.result }}"
+          [ "${{ needs.interaction-probe-shard.result }}" = success ]
+      - name: the probe's receipt
+        if: always()
+        run: printf '%s\t%s\tinteractions/union\n%s\t%s\tinteractions/shards\n' "interaction-probe" "${{ steps.union.outcome }}" "interaction-probe" "${{ steps.shards.outcome }}" >> "$MJ_CI_RECEIPTS"
       - if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -1046,8 +1258,8 @@ jobs:
           path: receipts.tsv
           if-no-files-found: ignore
           retention-days: 14
-      # I2664: a run on a branch ends at its first red. Last, so this job's uploads and
-      # summary have run; never on master, the schedule or a dispatch (see `concurrency`).
+      # I2664: a run on a branch ends at its first red. Last, so this job's upload has run;
+      # never on master, the schedule or a dispatch (see `concurrency`).
       - name: a failed branch run ends here
         if: failure() && github.event_name == 'pull_request'
         env:
@@ -1268,6 +1480,7 @@ jobs:
       MJ_CI_RECEIPTS: ${{ github.workspace }}/receipts.tsv
     steps:
       - uses: actions/checkout@v4
+        timeout-minutes: 10
         with:
           fetch-depth: 0
       - id: site
@@ -1396,6 +1609,7 @@ jobs:
       actions: write
     steps:
       - uses: actions/checkout@v4
+        timeout-minutes: 10
         with:
           fetch-depth: 0
       # --for: this job runs beside the deploy of its own commit, and judging the site before
@@ -1439,7 +1653,7 @@ jobs:
   # setting and is not made here; until it is required, this is a verdict a person can read
   # and not one the merge obeys.
   ci:
-    needs: [plan, structure, suite, rust, coverage, bench, site, interactions, ui, cockpit, mesh-lab, macos, install, pages]
+    needs: [plan, structure, suite, rust, coverage, bench, site, site-probe, interactions, ui, cockpit, mesh-lab, macos, install, pages]
     if: always()
     timeout-minutes: 15
     runs-on: ubuntu-latest

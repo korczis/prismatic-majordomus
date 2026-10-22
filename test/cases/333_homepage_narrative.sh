@@ -47,7 +47,7 @@ fresh() {
   printf '<html><head><title>p</title></head><body>plain</body></html>\n' > "$F/site/public/docs/plain/index.html"
   printf '<html><head><title>d</title><script src="https://x.test/js/mermaid.min.js"></script></head><body><pre class="mermaid">graph TD</pre></body></html>\n' > "$F/site/public/docs/diagram/index.html"
   printf '[[groups]]\nlabel = "Plan"\nhref = "/plan/"\n\n[indexing]\nunlisted = ["plan"]\n' > "$F/site/data/nav.toml"
-  printf '%s\n' '{"features":[{"id":"good","route":"/features/good/","status":"stable"},{"id":"draft","route":"/features/draft/","status":"draft"}],"domains":[],"providers":[{"id":"one","title":"Tool One"},{"id":"two","title":"Tool Two","route":"/providers/two/"}],"evidence":{"available":false,"claims":{}}}' > "$F/site/data/registry/product.json"
+  printf '%s\n' '{"features":[{"id":"good","route":"/features/good/","status":"stable","weight":1,"commands":["init"]},{"id":"draft","route":"/features/draft/","status":"draft"}],"domains":[],"providers":[{"id":"one","title":"Tool One"},{"id":"two","title":"Tool Two","route":"/providers/two/"}],"evidence":{"available":false,"claims":{}}}' > "$F/site/data/registry/product.json"
   printf '%s\n' '{"install_command":"curl -fsSL https://x.test/install.sh | sh","next_command":"majordomus init","verify_command":"majordomus --version","latest":{"version":"9.9.9","published_at":"2026-09-16T00:00:00Z"}}' > "$F/site/data/registry/distribution.json"
   mkdir -p "$F/site/data/generated" "$F/docs/generated" "$F/site/public/ref/api"
   # the topology: the app, and one surface site-build composes at /ref, whose pages are that
@@ -60,9 +60,22 @@ fresh() {
   printf '%s\n' '{"status_order":["guaranteed"],"claims":[]}' > "$F/site/data/generated/capabilities.json"
   printf '%s\n' '{"states":{"guaranteed":"neutral","unknown":"neutral"}}' > "$F/site/data/registry/design.json"
   printf '%s\n' '{"commit":"abcdef1234567890","dirty":false,"release":{"version":"9.9.9","published_at":"2026-09-16T00:00:00Z"}}' > "$F/site/data/build.json"
+  # the one product sentence (marketing.toml's hero) and every projection of it saying it
+  printf '# m\n\n**Keep the work moving**\n' > "$F/README.md"
+  printf 'description = "Keep the work moving"\n' > "$F/site/config.toml"
+  printf '%s\n' '{"tagline":"Keep the work moving"}' > "$F/site/data/generated/project.json"
+  mkdir -p "$F/share/design/brand" "$F/site/public/use-cases/a"
+  printf '<svg><text x="0" fill="#cbd5e1">Keep the work moving</text></svg>\n' > "$F/share/design/brand/social-card.svg"
+  printf '# Launch\n\n## One sentence\n\nKeep the work moving\n' > "$F/docs/LAUNCH.md"
+  # one recorded refusal the hero offers after the challenge, and one walkthrough step whose
+  # command a stable feature carries
+  printf '%s\n' '{"scenarios":[{"use_case":"a","route":"/use-cases/a/"}],"walkthrough":[{"label":"init"}]}' > "$F/site/data/generated/terminal.json"
+  printf '<html><head><title>a</title></head><body>a</body></html>\n' > "$F/site/public/use-cases/a/index.html"
   cat > "$F/site/public/index.html" <<'HTML'
 <html><head><title>home</title><script defer src="https://x.test/js/app.js"></script></head><body><main>
 <section id="hero"><h1>t</h1><a href="/features/good/">good</a>
+<div data-hero-scenarios><a href="/challenge/" data-scenario="challenge">c</a><a href="/use-cases/a/" data-scenario="a">a</a></div>
+<ul data-node-features="step:init"><li><a href="/features/good/" data-feature="good">good</a></li></ul>
 <dl><dt>generated for</dt><dd data-providers><span>Tool One</span><a href="/providers/two/">Tool Two</a></dd></dl>
 <dl data-trust>
 <div data-trust-key="release"><dt>release</dt><dd>9.9.9</dd></div>
@@ -87,7 +100,7 @@ HTML
   printf '<html><head><title>d</title></head><body>d</body></html>\n' > "$F/site/public/features/draft/index.html"
   cat > "$F/site/public/sitemap.xml" <<'XML'
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset><url><loc>https://x.test/</loc></url><url><loc>https://x.test/docs/plain/</loc></url><url><loc>https://x.test/docs/diagram/</loc></url><url><loc>https://x.test/plan/</loc></url><url><loc>https://x.test/features/good/</loc></url><url><loc>https://x.test/features/draft/</loc></url></urlset>
+<urlset><url><loc>https://x.test/</loc></url><url><loc>https://x.test/docs/plain/</loc></url><url><loc>https://x.test/docs/diagram/</loc></url><url><loc>https://x.test/plan/</loc></url><url><loc>https://x.test/features/good/</loc></url><url><loc>https://x.test/features/draft/</loc></url><url><loc>https://x.test/use-cases/a/</loc></url></urlset>
 XML
 }
 run() { MJ_ROOT="$F" "$CHECK" > out.txt 2>&1; echo $?; }
@@ -100,7 +113,7 @@ expect_finding() { # <exit> <pattern> <what>
 # --- a clean tree passes, every check reporting
 fresh
 expect_finding 0 '^OK   narrative ' "a clean tree"
-for c in substance honesty map install runtime providers trust surfaces interfaces product evidence declared promises present weight indexing; do grep -q "^OK   $c " out.txt || { echo "    a clean tree did not report $c"; cat out.txt; exit 1; }; done
+for c in substance sentence scenarios nodes honesty map install runtime providers trust surfaces interfaces product evidence declared promises present weight indexing; do grep -q "^OK   $c " out.txt || { echo "    a clean tree did not report $c"; cat out.txt; exit 1; }; done
 
 # --- narrative, both directions and the order
 fresh; sed -i.bak 's#<section id="how">#<section id="extra"><a href="/x/">x</a></section><section id="how">#' "$F/site/public/index.html"
@@ -166,7 +179,7 @@ expect_finding 10 'links asset\(s\) the build did not produce: /js/app.js' "a li
 #     /good that only a process serves, so the page lists good, then cli, states the mount
 #     and links no published copy
 faces() {
-  printf '%s\n' '{"features":[{"id":"good","route":"/features/good/","status":"stable","weight":5},{"id":"draft","route":"/features/draft/","status":"draft"}],"surfaces":[{"id":"cli","title":"Command line","route":"/docs/cli/"}],"domains":[],"providers":[{"id":"one","title":"Tool One"},{"id":"two","title":"Tool Two","route":"/providers/two/"}],"evidence":{"available":false,"claims":{}}}' > "$F/site/data/registry/product.json"
+  printf '%s\n' '{"features":[{"id":"good","route":"/features/good/","status":"stable","weight":5,"commands":["init"]},{"id":"draft","route":"/features/draft/","status":"draft"}],"surfaces":[{"id":"cli","title":"Command line","route":"/docs/cli/"}],"domains":[],"providers":[{"id":"one","title":"Tool One"},{"id":"two","title":"Tool Two","route":"/providers/two/"}],"evidence":{"available":false,"claims":{}}}' > "$F/site/data/registry/product.json"
   printf '%s\n' '{"surfaces":[{"id":"good","category":"interface","feature":"good","mount":"/good","visibility":"public","availability":"served-only"}]}' > "$F/site/data/generated/web.json"
   sed -i.bak 's#<section id="how">#<section id="how"><ul><li data-interface="good">Good, at <code>/good</code></li><li data-interface="cli">Command line</li></ul>#' "$F/site/public/index.html"
   # and the hero opens the first of them, at the page about it, beside a view of it
@@ -278,10 +291,10 @@ expect_finding 12 'web.json is missing' "a topology that cannot be read"
 #     map drawing a domain the model does not show, missing one it does, leaving a member out,
 #     or a declared problem that is not a shown domain each fail
 domains() { # the model shows domain alpha, whose one member is the stable feature `good`
-  printf '%s\n' '{"features":[{"id":"good","route":"/features/good/","status":"stable"},{"id":"draft","route":"/features/draft/","status":"draft"}],"domains":[{"id":"alpha","route":"/domains/alpha/","status":"stable","features":[{"id":"good","route":"/features/good/"}]},{"id":"empty","route":"/domains/empty/","status":"stable","features":[]}],"providers":[{"id":"one","title":"Tool One"},{"id":"two","title":"Tool Two","route":"/providers/two/"}],"evidence":{"available":false,"claims":{}}}' > "$F/site/data/registry/product.json"
+  printf '%s\n' '{"features":[{"id":"good","route":"/features/good/","status":"stable","domain":"alpha","weight":1,"commands":["init"]},{"id":"draft","route":"/features/draft/","status":"draft"}],"domains":[{"id":"alpha","route":"/domains/alpha/","status":"stable","features":[{"id":"good","route":"/features/good/"}]},{"id":"empty","route":"/domains/empty/","status":"stable","features":[]}],"providers":[{"id":"one","title":"Tool One"},{"id":"two","title":"Tool Two","route":"/providers/two/"}],"evidence":{"available":false,"claims":{}}}' > "$F/site/data/registry/product.json"
   printf 'order = ["hero", "how", "install"]\nproblems = ["alpha"]\n\n[budget]\nhtml_bytes = 4000\nassets_bytes = 100\ninline_json_bytes = 20\n' > "$F/site/data/homepage.toml"
   promises
-  sed -i.bak 's#<section id="how">#<section id="how"><a href="\#domain-alpha" data-problem="alpha">p</a><ol><li id="domain-alpha" data-domain="alpha"><a href="/features/good/">good</a><a href="/domains/alpha/">alpha</a></li></ol>#' "$F/site/public/index.html"
+  sed -i.bak 's#<section id="how">#<section id="how"><a href="\#domain-alpha" data-problem="alpha">p</a><ol><li id="domain-alpha" data-domain="alpha"><a href="/features/good/">good</a><a href="/domains/alpha/">alpha</a></li></ol><p data-node-features="problem:alpha"><a href="/features/good/" data-feature="good">good</a></p>#' "$F/site/public/index.html"
 }
 fresh; domains
 expect_finding 0 '^OK   map +the map draws the 1 domain' "a map that draws the model's domains"
@@ -330,6 +343,22 @@ fresh; claims guaranteed true
 sed -i.bak 's#{"id":"draft","route":"/features/draft/","status":"draft"}#{"id":"draft","route":"/features/draft/","status":"draft","short_title":"Deployments"}#' "$F/site/data/registry/product.json"
 printf '[intro]\nlead = "Deployments are one object."\n' > "$F/site/data/manifesto.toml"
 promise_finding 10 "site/data/manifesto.toml:2 names feature 'draft' \('Deployments'\), which the product model calls draft" "a draft feature named in the copy"
+# --- sentence, scenarios and nodes (I3134, I3223, I3224): every projection says the declared
+# sentence, the hero offers what the recorded refusals derive, a node names what the model derives
+fresh; printf '# m\n\n**Keep the work going**\n' > "$F/README.md"
+expect_finding 10 "README.md's bold line says 'Keep the work going'" "a README saying it in other words"
+fresh; sed -i.bak 's#<a href="/use-cases/a/" data-scenario="a">a</a>##' "$F/site/public/index.html"
+expect_finding 10 "the hero offers \\[\\], terminal.json's recorded refusals derive \\['a'\\]" "a recorded refusal not offered"
+fresh; sed -i.bak 's#<li><a href="/features/good/" data-feature="good">good</a></li>##' "$F/site/public/index.html"
+expect_finding 10 "step:init names \\[\\], the product model derives \\['good'\\]" "a step naming none of its features"
+# an input only these checks read is their finding when missing, and stops no other check
+fresh; rm "$F/site/data/generated/terminal.json"
+expect_finding 10 'scenarios +site/data/generated/terminal.json missing' "terminal.json missing"
+grep -qE '^FAIL nodes +site/data/generated/terminal.json missing' out.txt || { echo "    nodes did not report terminal.json missing"; cat out.txt; exit 1; }
+grep -q '^OK   narrative ' out.txt || { echo "    a missing terminal.json stopped the other checks"; cat out.txt; exit 1; }
+rc=0; MJ_ROOT="$F" "$CHECK" --only evidence > out.txt 2>&1 || rc=$?
+[ "$rc" = 0 ] || { echo "    --only evidence exited $rc when terminal.json was missing"; cat out.txt; exit 1; }
+
 # --- present: the template's text states no present it does not read (case 3105 holds the rest)
 fresh; printf '<p>Milestones under way</p>\n' >> "$F/site/templates/index.html"
 expect_finding 10 "present +site/templates/index.html:3 states the present \('under way'\)" "a template sentence stating how the work stands"

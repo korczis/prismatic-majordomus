@@ -543,7 +543,7 @@ gates:
     job: structure
     always: true
     runs: scripts/ci/step-bound-check
-    summary: every timed step of a workflow declares a bound, and every bound is smaller than the bound of the job that runs it, so a step that runs out of time fails with a message instead of being killed by its job and reported as a cancellation
+    summary: every timed step and every full-history checkout of validate.yml and pages.yml declares a bound smaller than its job's, so a step that runs out of time fails with a message instead of being killed by its job and reported as a cancellation; every gate of this model has a step in its job that dispatches it, times it or writes its receipt, so the ci verdict never meets a green job with a silent gate; and a pages.yml step or job named after a row of .ai/repo/ci/pages.yaml is bounded at no less than budget.bound.percent of that row's warm budget
 
   # network: true marks a gate that reaches beyond this machine (GitHub's API, the live
   # site, the published installer). It is true or absent. scripts/ci/run-plan --before-push
@@ -582,11 +582,14 @@ gates:
     runs: scripts/rust-check --doc && scripts/site-build && scripts/site-check
     summary: the derived data current, the site built once, every static check over the output
 
+  # Split in six shards (I2841): the site-probe-shard jobs each measure a stride of the routes
+  # with the assets the site job built, and the site-probe job's receipt says both that every
+  # shard passed and that their reports are every route once (scripts/site-probe --verify-report).
   - id: site-probe
-    job: site
+    job: site-probe
     requires: [site-build]
-    runs: SITE_PROBE_JOBS=4 scripts/site-probe
-    summary: every route at three widths in a real browser, the menu, the dropdown, the theme toggle, the diagrams
+    runs: SITE_PROBE_JOBS=4 SITE_PROBE_SHARD=K/6 scripts/site-probe, then scripts/site-probe --verify-report
+    summary: every route at three widths in a real browser, split in six shards that together are the sweep, the menu, the dropdown, the theme toggle, the diagrams
 
   # Every link of every page, in every language the site declares, followed in Chromium with the
   # page's scripts running and answered from the build itself (ADR 0218): each lands on a built
@@ -614,9 +617,12 @@ gates:
   # Every interactive control on every page of the built site, exercised in a browser by the behaviour spec
   # that claims it (project.every-link-and-control-is-tested). A job of its own: the site job's browser
   # steps already use its whole bound, and a gate that shares a job which never finishes enforces nothing.
+  # Split in six shards (I3602): the interaction-probe-shard jobs each drive a stride of the pages of the
+  # site job's build, and the interactions job's receipt says both that every shard passed and that their
+  # reports are every page once (scripts/site-probe --verify-report, the one fan-in for both probes).
   - id: interaction-probe
     job: interactions
-    runs: scripts/rust-check --doc && scripts/site-build --no-data && scripts/interaction-probe
+    runs: scripts/site-build --no-data, then MJ_PROBE_SHARD=K/6 scripts/interaction-probe per shard, then scripts/site-probe --verify-report
     summary: every interactive control on every page is claimed by one behaviour spec and does what it says in a browser — menus, dropdowns, theme, copy buttons, tabs, filters, the diagnosis, the contract, the changelog, the graphs and every keyboard scroll region
 
   # A job of its own for the same reason as interaction-probe: after the site job's build, check and
@@ -806,7 +812,7 @@ gates:
   - id: release-record-cases
     job: rust
     requires: [rust-integration]
-    runs: MJ_TEST_JOBS=4 bash test/run.sh --no-skips 49_roadmap_doctrine 84_distribution_model 87_release_pipeline 97_install_gate 103_release_projection 112_version_matches_surface 139_release_record_schema 352_the_version_the_site_shows_is_one_you_can_get 620_mcp_tools_are_invoked_and_answer 743_release_version_answers_with_the_contract 763_a_tag_older_than_the_record_practice_is_a_note 1041_a_release_publishes_its_metadata 1060_the_version_is_allocated_at_landing 1087_the_site_offers_the_release_it_published 3021_a_tag_does_not_freeze_the_queue 3029_a_tag_in_flight_is_pending 3102_a_milestone_version_is_inferred 3100_an_issue_delivery_is_inferred 3104_the_ui_roadmap_reads_delivery 3055_a_derivation_needs_no_history 3179_a_prerelease_is_never_published_as_stable 3212_a_prerelease_version_is_bumped_and_ordered 3222_an_alpha_publishes_beside_the_latest_release 3224_a_published_alpha_owes_its_record 3225_the_installer_takes_an_alpha_only_by_name 3342_a_dry_run_initialises_nothing 996_the_record_pull_request_gets_its_verdict 3385_doctor_fits_its_budget_in_the_commit_hook
+    runs: MJ_TEST_JOBS=4 bash test/run.sh --no-skips 49_roadmap_doctrine 84_distribution_model 87_release_pipeline 97_install_gate 103_release_projection 112_version_matches_surface 139_release_record_schema 352_the_version_the_site_shows_is_one_you_can_get 620_mcp_tools_are_invoked_and_answer 743_release_version_answers_with_the_contract 763_a_tag_older_than_the_record_practice_is_a_note 1041_a_release_publishes_its_metadata 1060_the_version_is_allocated_at_landing 1087_the_site_offers_the_release_it_published 3021_a_tag_does_not_freeze_the_queue 3029_a_tag_in_flight_is_pending 3102_a_milestone_version_is_inferred 3100_an_issue_delivery_is_inferred 3104_the_ui_roadmap_reads_delivery 3055_a_derivation_needs_no_history 3179_a_prerelease_is_never_published_as_stable 3212_a_prerelease_version_is_bumped_and_ordered 3222_an_alpha_publishes_beside_the_latest_release 3224_a_published_alpha_owes_its_record 3225_the_installer_takes_an_alpha_only_by_name 3342_a_dry_run_initialises_nothing 996_the_record_pull_request_gets_its_verdict 3385_doctor_fits_its_budget_in_the_commit_hook 3724_the_roadmap_says_what_the_plan_holds
     summary: the cases about the committed release record and what is offered from it — the distribution model, the release pipeline and projection, the record's schema, the version the site shows, the install gate, the stable channel the MCP tools resolve, the release the roadmap infers each milestone shipped in — pass against this tree
 
   # The behavioural cases whose subject is the plan: its issue and milestone records, the
@@ -819,7 +825,7 @@ gates:
   - id: plan-record-cases
     job: rust
     requires: [rust-integration]
-    runs: MJ_TEST_JOBS=4 bash test/run.sh --no-skips 26_ci_wiring 40_project_model 41_project_status 42_dag_waves 43_plan_command 44_model_doctrine 45_github_projection 46_cross_surface 47_mutation 48_roadmap_graph 49_roadmap_doctrine 51_derived_artifacts_committed 53_status_vocabulary 57_derived_merge_driver 58_home_path_gate 74_knowledge_edges 75_knowledge_mutation 97_github_gate 98_traceability 99_plan_capabilities 99_work_graph_chain 103_release_projection 129_executable_issues 131_completion_gates 133_plan_transition 194_audit_rows_are_planned 274_commit_policy 367_an_intent_is_satisfied_only_by_evidence 386_a_plan_is_held_to_its_intent 388_an_intent_is_realised_across_providers_and_held_to_reality 400_derivation_is_one_graph 581_no_plan_stamp_without_its_event 582_the_done_guard_holds_in_both_engines 602_a_spliced_body_is_recognised_as_its_own 620_mcp_tools_are_invoked_and_answer 890_an_intent_criterion_is_met_only_by_current_evidence 892_what_is_said_of_intents_is_what_the_claims_matrix_says 893_preflight_follows_what_an_issue_serves 894_github_sync_applies_only_the_trunk 895_a_finished_task_does_not_satisfy_an_intent 960_a_task_starts_bound_to_what_it_serves 961_a_resumed_task_is_told_its_intent_moved 962_plan_start_asks_the_binding_in_both_engines 1038_a_head_is_judged_against_what_it_changes 1076_the_roadmap_opens_a_milestone 1081_an_intent_opens_what_serves_it 3048_a_derivation_survives_an_unrelated_merge 3053_a_repository_of_n_records_costs_n 3073_context_knowledge_slice 3075_knowledge_validate_judges_the_graph 3100_an_issue_delivery_is_inferred 3101_merged_work_unrecorded_is_drift 3102_a_milestone_version_is_inferred 3103_the_roadmap_draws_every_milestone 3104_the_ui_roadmap_reads_delivery 3220_the_idd_loop_is_walked_in_a_browser 3385_doctor_fits_its_budget_in_the_commit_hook 3400_a_recorded_commit_link_names_the_history
+    runs: MJ_TEST_JOBS=4 bash test/run.sh --no-skips 26_ci_wiring 40_project_model 41_project_status 42_dag_waves 43_plan_command 44_model_doctrine 45_github_projection 46_cross_surface 47_mutation 48_roadmap_graph 49_roadmap_doctrine 51_derived_artifacts_committed 53_status_vocabulary 57_derived_merge_driver 58_home_path_gate 74_knowledge_edges 75_knowledge_mutation 97_github_gate 98_traceability 99_plan_capabilities 99_work_graph_chain 103_release_projection 129_executable_issues 131_completion_gates 133_plan_transition 194_audit_rows_are_planned 274_commit_policy 367_an_intent_is_satisfied_only_by_evidence 386_a_plan_is_held_to_its_intent 388_an_intent_is_realised_across_providers_and_held_to_reality 400_derivation_is_one_graph 581_no_plan_stamp_without_its_event 582_the_done_guard_holds_in_both_engines 602_a_spliced_body_is_recognised_as_its_own 620_mcp_tools_are_invoked_and_answer 890_an_intent_criterion_is_met_only_by_current_evidence 892_what_is_said_of_intents_is_what_the_claims_matrix_says 893_preflight_follows_what_an_issue_serves 894_github_sync_applies_only_the_trunk 895_a_finished_task_does_not_satisfy_an_intent 960_a_task_starts_bound_to_what_it_serves 961_a_resumed_task_is_told_its_intent_moved 962_plan_start_asks_the_binding_in_both_engines 1038_a_head_is_judged_against_what_it_changes 1076_the_roadmap_opens_a_milestone 1081_an_intent_opens_what_serves_it 3048_a_derivation_survives_an_unrelated_merge 3053_a_repository_of_n_records_costs_n 3073_context_knowledge_slice 3075_knowledge_validate_judges_the_graph 3100_an_issue_delivery_is_inferred 3101_merged_work_unrecorded_is_drift 3102_a_milestone_version_is_inferred 3103_the_roadmap_draws_every_milestone 3104_the_ui_roadmap_reads_delivery 3220_the_idd_loop_is_walked_in_a_browser 3246_every_file_the_site_generator_reads_is_an_input 3385_doctor_fits_its_budget_in_the_commit_hook 3400_a_recorded_commit_link_names_the_history
     summary: the cases about the plan's records and what reads them — the project model, the plan command and its transitions, the DAG and roadmap, the GitHub projection, the intents bound to issues, the completion gates — pass against this tree
 
 # Shapes: changes whose plan is narrower than the union of their classes (the header's last

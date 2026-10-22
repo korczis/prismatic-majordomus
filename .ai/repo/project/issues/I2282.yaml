@@ -26,4 +26,23 @@ evidence_required:
   - "record_pull_request_mergeable_without_reopen"
   - "distribution_claims_match_pipeline"
 created_at: 2026-10-10
-updated_at: 2026-10-16
+updated_at: 2026-10-20T21:57:30Z
+started_at: 2026-10-20T21:55:35Z
+started_event: sha256:c93a0e38f53e5a8185e1e37fbc25ae0a981f9f7d3376bbe63ddfc5171d364da3
+completed_at: 2026-10-20T21:57:30Z
+completed_event: sha256:048d0db02ac1b148a909529ced0d74a354ff9e0fa3dd6dbb177b04aa49de8f4a
+evidence:
+  - covers: distribution_claims_match_pipeline
+    type: ci
+    command: "gh run view --job 118758852989 --log (validate run 39438896504, suite-shard (4), runs MJ_TEST_JOBS=4 bash test/run.sh 996)"
+    result: "996_the_record_pull_request_gets_its_verdict ok in suite-shard (4) job 118758852989 of validate run 39438896504 on master 9a5a9b77520 (carries fix 8ed40f6eb7c); listed ok in that job's suite.tsv artifact (shard 149 passed, 0 failed, 1 skipped, not 996). Sections 6-7 prove neither release.yml nor docs/DISTRIBUTION.md calls the dispatch the record's verdict ('That run is not the record's verdict.'; branch protection reads no check suite a dispatch created), and that the record PR body, the publish notice, runbook step 6 and the failure-table row name the person's step (approve the waiting run, gh pr close/reopen, majordomus prs drain); the header says the case observes no merge, approval or reopen (criterion 3)"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39438896504/job/118758852989"
+    commit: 91c0b5d5658c0bcddcd724582068bfa1f51074d1
+    recorded_at: 2026-10-20T21:56:15Z
+  - covers: record_pull_request_mergeable_without_reopen
+    type: artifact
+    command: "read docs/DISTRIBUTION.md ('Who starts the record's verdict', runbook step 6, failure table) on origin/master 91c0b5d5658; gh run view --job 118758852989 --log (validate run 39438896504, suite-shard (4), case 996)"
+    result: "Criterion 1 is satisfied by its documented alternative, not by a record that merges on its own: the issue's objective and criterion 1 allow 'or docs/DISTRIBUTION.md no longer says that it does', and fix 8ed40f6eb7c took it. docs/DISTRIBUTION.md now says 'That run is not the record's verdict.', that branch protection reads no check suite a dispatch created, and names the person's step (approve the waiting run, gh pr close/reopen, majordomus prs drain) with the token remedy left as the owner's decision. Case 996 (sections 6-7) asserts exactly that text and ran ok in suite-shard (4) job 118758852989 of validate run 39438896504 on master 9a5a9b77520. A record PR mergeable without reopen is not shown; it needs the owner's GitHub App or fine-grained token and belongs in a new issue if wanted"
+    artifact: "docs/DISTRIBUTION.md"
+    commit: 91c0b5d5658c0bcddcd724582068bfa1f51074d1
+    recorded_at: 2026-10-20T21:57:03Z
