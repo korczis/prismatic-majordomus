@@ -114,8 +114,9 @@ pub struct CooperationConfig {
     /// anyone.
     #[serde(default = "default_expiry")]
     pub expiry_seconds: u64,
-    /// Endpoints (`http://host:port`) to dial whether or not discovery heard them: a
-    /// static fleet, or a segment neither multicast nor a rendezvous reaches.
+    /// Endpoints (`https://host[:port]` or `http://host:port`) to dial whether or not
+    /// discovery heard them: a static fleet, or a segment neither multicast nor a rendezvous
+    /// reaches.
     #[serde(default)]
     pub seeds: Vec<String>,
     /// The repository's mesh identity, declared rather than derived from its root commits:
@@ -225,15 +226,16 @@ impl Default for BroadcastConfig {
     }
 }
 
-/// Rendezvous settings: other Majordomus servers to register with. Plain HTTP on a
-/// private network; there is no TLS in this executable, and the protocol assumes none —
-/// candidates verify end-to-end by signature, a poisoned rendezvous can withhold nodes
-/// but not invent them.
+/// Rendezvous settings: other Majordomus servers to register with. An `https://` hub is
+/// reached over TLS with its certificate verified; an `http://` hub only at an address that is
+/// loopback, private or an overlay's, because the client refuses cleartext to a public one
+/// (ADR 0220). Either way candidates verify end-to-end by signature: a poisoned rendezvous can
+/// withhold nodes but not invent them.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct RendezvousConfig {
-    /// Base URLs, `http://host:port`. Several endpoints are several independent
-    /// sources; one failing never stops another.
+    /// Base URLs, `https://host[:port]` or `http://host:port` (a bare `host:port` is http).
+    /// Several endpoints are several independent sources; one failing never stops another.
     #[serde(default)]
     pub endpoints: Vec<String>,
     /// Seconds between registrations per endpoint (backoff stretches it on failure).
@@ -286,8 +288,8 @@ fn rendezvous_interval() -> u64 {
 
 impl CooperationConfig {
     /// Refuse the settings that cannot work: a zero heartbeat, an expiry under three
-    /// heartbeats (one lost round would expire a live runtime), a seed that is not
-    /// `http://host:port`, an empty or oversized declared repository.
+    /// heartbeats (one lost round would expire a live runtime), a seed that is neither
+    /// `https://host[:port]` nor `http://host:port`, an empty or oversized declared repository.
     ///
     /// ```
     /// use majordomus_cli::mesh::config::CooperationConfig;
@@ -307,9 +309,10 @@ impl CooperationConfig {
             ));
         }
         for seed in &self.seeds {
-            let authority = seed.strip_prefix("http://").unwrap_or_default();
-            if authority.is_empty() || !authority.contains(':') || authority.contains('/') {
-                return Err(format!("cooperation seed '{seed}' is not http://host:port"));
+            if !endpoint_shape(seed, false) {
+                return Err(format!(
+                    "cooperation seed '{seed}' is not https://host[:port] or http://host:port"
+                ));
             }
         }
         if let Some(repository) = &self.repository {
@@ -368,8 +371,51 @@ impl MeshConfig {
             .cooperation
             .validate()
             .map_err(|e| MeshError::Config(format!("{}: {e}", uri)))?;
+        if let Some(endpoint) = parsed
+            .rendezvous
+            .endpoints
+            .iter()
+            .find(|e| !endpoint_shape(e, true))
+        {
+            return Err(MeshError::Config(format!(
+                "{uri}: rendezvous endpoint '{endpoint}' is not https://host[:port] or http://host:port"
+            )));
+        }
         Ok(parsed)
     }
+}
+
+/// Whether `value` is an endpoint the mesh client can dial: `https://host[:port]`, where the
+/// host may be a name and the port defaults to 443, or `http://host:port`, and — where
+/// `bare` allows it, as a rendezvous endpoint always has — `host:port` read as http. No path,
+/// no other scheme. Whether an http endpoint's address may carry cleartext is the client's
+/// question, asked at every dial ([`crate::mcp::bridge::transport`]): an address is not a
+/// shape, and a name resolves differently on different days.
+///
+/// ```
+/// use majordomus_cli::mesh::config::endpoint_shape;
+/// assert!(endpoint_shape("https://hub.example", false));
+/// assert!(endpoint_shape("https://hub.example:8443", false));
+/// assert!(endpoint_shape("http://10.0.0.2:8742", false));
+/// assert!(!endpoint_shape("http://10.0.0.2", false), "an http endpoint names its port");
+/// assert!(!endpoint_shape("10.0.0.2:8742", false));
+/// assert!(endpoint_shape("10.0.0.2:8742", true));
+/// assert!(!endpoint_shape("ws://hub.example:80", true));
+/// assert!(!endpoint_shape("https://hub.example/mesh", false));
+/// ```
+pub fn endpoint_shape(value: &str, bare: bool) -> bool {
+    let (tls, authority) = if let Some(rest) = value.strip_prefix("https://") {
+        (true, rest)
+    } else if let Some(rest) = value.strip_prefix("http://") {
+        (false, rest)
+    } else if bare && !value.contains("://") {
+        (false, value)
+    } else {
+        return false;
+    };
+    !authority.contains('/')
+        && crate::mcp::bridge::split_authority(authority)
+            .is_ok_and(|(_, port)| tls || port.is_some())
 }
 
 #[cfg(test)]
@@ -453,5 +499,74 @@ mod tests {
             "multicast": {"interval_seconds": 0}
         })))
         .is_err());
+    }
+
+    #[test]
+    fn https_seeds_and_endpoints_are_accepted_by_host_name_and_other_schemes_are_refused() {
+        let declaration = |seeds: serde_json::Value, endpoints: serde_json::Value| {
+            MeshConfig::from_metadata(
+                &serde_json::json!({
+                    "schema": "mesh/v1", "kind": "mesh-declaration", "id": "x",
+                    "rendezvous": { "endpoints": endpoints },
+                    "cooperation": { "seeds": seeds }
+                }),
+                "master:m.yaml",
+            )
+        };
+        let accepted = declaration(
+            serde_json::json!([
+                "https://hub.example",
+                "https://hub.example:8443",
+                "http://10.0.0.2:8742"
+            ]),
+            serde_json::json!([
+                "https://hub.example",
+                "http://192.168.100.30:8791",
+                "127.0.0.1:8791",
+                "http://[::1]:8791"
+            ]),
+        )
+        .unwrap();
+        assert_eq!(accepted.cooperation.seeds.len(), 3);
+        assert_eq!(accepted.rendezvous.endpoints.len(), 4);
+        // a public http hub is a shape the declaration accepts and the client refuses to dial
+        assert!(declaration(
+            serde_json::json!([]),
+            serde_json::json!(["http://203.0.113.5:8791"])
+        )
+        .is_ok());
+
+        let refused = |seeds: serde_json::Value, endpoints: serde_json::Value| {
+            declaration(seeds, endpoints).unwrap_err().to_string()
+        };
+        for seed in [
+            "ws://hub.example:80",
+            "10.0.0.2:8742",
+            "http://10.0.0.2",
+            "https://hub.example/mesh",
+            "https://:443",
+        ] {
+            let text = refused(serde_json::json!([seed]), serde_json::json!([]));
+            assert!(
+                text.contains(&format!(
+                    "cooperation seed '{seed}' is not https://host[:port] or http://host:port"
+                )),
+                "{text}"
+            );
+        }
+        for endpoint in [
+            "ftp://hub.example:21",
+            "http://hub.example",
+            "https://hub.example:0",
+            "http://10.0.0.2:8791/x",
+        ] {
+            let text = refused(serde_json::json!([]), serde_json::json!([endpoint]));
+            assert!(
+                text.contains(&format!(
+                    "master:m.yaml: rendezvous endpoint '{endpoint}' is not https://host[:port]"
+                )),
+                "{text}"
+            );
+        }
     }
 }

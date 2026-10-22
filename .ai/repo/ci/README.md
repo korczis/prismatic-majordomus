@@ -27,7 +27,10 @@ trunk may carry a landed change that nothing has applied yet. `plan.yaml` declar
 of the plan's drift gate: how long the trunk may carry merged work the plan has not recorded
 (`scripts/ci/plan-drift-check`, ADR 0166), and whether a refusal fails the trunk yet. `docker-image.yaml` models the deployment image: when it
 is built, what its smoke proves, the immutable name it is published under, and which build may
-write which cache.
+write which cache. `provider.yaml` models the provider deployment (ADR 0219): the tree
+`majordomus deploy slug` assembles at master's commit after `validate` succeeds, the
+fast-forward push to the provider with a workflow secret, and the liveness answer that proves
+the commit arrived.
 
 `baseline.json` records what CI cost before the model existed. It is evidence for the
 claim that the overhaul was worth running, not an input to any decision; nothing reads it
