@@ -6,6 +6,13 @@
 //! process — the documentation and the API — named by the constants of the modules that
 //! declare them, and the Cockpit as the technical reference. On a narrow screen the sidebar
 //! is a menu that opens without JavaScript (a checkbox and its label).
+//!
+//! It is an application shell: the screens stand in the groups of [`super::GROUPS`], and
+//! under the top bar a trail says where the reader is — the dashboard, the group, the
+//! screen, and what the query selected — beside the kinds of record the screen's facts are
+//! declared as, each with how many this repository declares (`repository.info`). A screen
+//! that is empty therefore names what would fill it, and a kind that is declared leads to
+//! its records.
 
 use crate::capability::Context;
 use crate::cockpit::html::{document, el, El};
@@ -15,7 +22,10 @@ use crate::design::DesignSystem;
 use super::icons::icon;
 use super::source::{ask, Reading, Source};
 use super::view::{day, shown};
-use super::{PREFIX, SCREENS};
+use super::{screens_of, Screen, FRAGMENT, GROUPS, PREFIX, SCREENS};
+
+/// The source of the declared kinds: how many objects of each kind this repository holds.
+const REPOSITORY: Source = Source::of("repository.info");
 
 /// The canonical mark, the same file the Cockpit's top bar and the favicons are written from.
 pub const MARK: &str = include_str!("../cockpit/logo-mark.svg");
@@ -45,6 +55,9 @@ impl View {
 pub struct Frame<'a> {
     /// The route being answered, which marks the current screen.
     pub current: &'a str,
+    /// The query the route was asked with: what the reader selected or filtered by, which
+    /// the trail names after the screen.
+    pub query: &'a [(String, String)],
     /// The stylesheet URL, with its digest.
     pub stylesheet: String,
     /// The favicon URL, with its digest.
@@ -108,6 +121,7 @@ pub fn page(ctx: &Context, frame: &Frame<'_>, view: &View) -> String {
                     el("div")
                         .class("mj-ui-body")
                         .child(topbar(&crate::peers::rfc3339(std::time::SystemTime::now())))
+                        .child(wayfinding(ctx, frame, view))
                         .child(
                             el("main")
                                 .attr("id", "main")
@@ -125,22 +139,36 @@ pub fn page(ctx: &Context, frame: &Frame<'_>, view: &View) -> String {
     document(&format!("{} · majordomus ui", view.title), head, body)
 }
 
-/// The sidebar: the brand, the screens, and the version card.
+/// The sidebar: the brand, the screens group by group, and the version card.
 fn sidebar(ctx: &Context, frame: &Frame<'_>) -> El {
-    let screens = el("ul")
-        .class("mj-ui-nav-list")
-        .attr("aria-label", "Screens")
-        .children(SCREENS.iter().map(|s| {
-            el("li").child(
-                el("a")
-                    .class("mj-ui-nav-item")
-                    .attr("href", s.route)
-                    .attr("title", s.answers)
-                    .attr_if("aria-current", (frame.current == s.route).then_some("page"))
-                    .child(icon(s.icon))
-                    .child(el("span").class("mj-ui-label").text(s.title)),
+    let item = |s: &Screen| {
+        el("li").child(
+            el("a")
+                .class("mj-ui-nav-item")
+                .attr("href", s.route)
+                .attr("title", s.answers)
+                .attr_if("aria-current", (frame.current == s.route).then_some("page"))
+                .child(icon(s.icon))
+                .child(el("span").class("mj-ui-label").text(s.title)),
+        )
+    };
+    let groups = GROUPS.iter().map(|group| {
+        let id = format!("mj-ui-group-{}", group.to_lowercase());
+        el("div")
+            .class("mj-ui-nav-group")
+            .child(
+                el("p")
+                    .class("mj-ui-nav-heading")
+                    .attr("id", id.clone())
+                    .child(el("span").class("mj-ui-label").text(*group)),
             )
-        }));
+            .child(
+                el("ul")
+                    .class("mj-ui-nav-list")
+                    .attr("aria-labelledby", id)
+                    .children(screens_of(group).map(item)),
+            )
+    });
     el("aside")
         .class("mj-ui-sidebar")
         .attr("aria-label", "majordomus ui")
@@ -165,9 +193,118 @@ fn sidebar(ctx: &Context, frame: &Frame<'_>) -> El {
             el("nav")
                 .class("mj-ui-nav")
                 .attr("aria-label", "Screens")
-                .child(screens),
+                .children(groups),
         )
         .child(version_card(ctx, frame))
+}
+
+/// The bar under the top bar: where the reader is, and what the screen is declared as.
+fn wayfinding(ctx: &Context, frame: &Frame<'_>, view: &View) -> El {
+    let screen = SCREENS.iter().find(|s| s.route == frame.current);
+    el("div")
+        .class("mj-ui-wayfinding")
+        .child(trail(frame, screen, &view.title))
+        .children(screen.and_then(|s| declared(ctx, s)))
+        .child(el("noscript").child(el("p").class("mj-ui-dim").text(
+            "Without JavaScript nothing here is read again by itself, and a panel that arrives after its screen is opened by its own link.",
+        )))
+}
+
+/// The trail: the dashboard, the screen's group, the screen, and each thing the query
+/// selected. The last step is where the reader is and is not a link; a route that is no
+/// screen (a panel read as a page, or nothing at all) is named by its own title.
+fn trail(frame: &Frame<'_>, screen: Option<&Screen>, title: &str) -> El {
+    let selected: Vec<String> = frame
+        .query
+        .iter()
+        .filter(|(k, v)| k != FRAGMENT && !v.is_empty())
+        .map(|(k, v)| format!("{k} {v}"))
+        .collect();
+    let mut steps: Vec<(String, Option<String>)> = Vec::new();
+    if frame.current != PREFIX {
+        steps.push(("Dashboard".into(), Some(PREFIX.into())));
+    }
+    match screen {
+        Some(s) => {
+            if s.route != PREFIX {
+                steps.push((s.group.into(), None));
+            }
+            steps.push((s.title.into(), Some(s.route.into())));
+        }
+        None => steps.push((title.into(), None)),
+    }
+    steps.extend(selected.into_iter().map(|s| (s, None)));
+    let last = steps.len().saturating_sub(1);
+    el("nav")
+        .class("mj-ui-crumbs")
+        .attr("aria-label", "Where you are")
+        .child(
+            el("ol")
+                .class("mj-ui-crumb-list")
+                .children(steps.into_iter().enumerate().map(|(i, (label, href))| {
+                    let step = match href {
+                        Some(href) if i != last => {
+                            el("a").class("mj-ui-crumb").attr("href", href).text(label)
+                        }
+                        _ => el("span")
+                            .class("mj-ui-crumb")
+                            .attr_if("aria-current", (i == last).then_some("location"))
+                            .text(label),
+                    };
+                    el("li").class("mj-ui-crumb-item").child(step)
+                })),
+        )
+}
+
+/// What the screen's facts are declared as: each kind with how many objects of it this
+/// repository holds, as `repository.info` counted them, leading to those objects. A kind
+/// with none says so, which is what an empty screen is waiting for; a count that could not
+/// be read is unknown and never zero. A screen that names no kind draws nothing.
+fn declared(ctx: &Context, screen: &Screen) -> Option<El> {
+    if screen.kinds.is_empty() {
+        return None;
+    }
+    let info = ask(ctx, REPOSITORY);
+    let kinds = info.ok().and_then(|v| v.get("kinds"));
+    let chips = screen.kinds.iter().map(|kind| {
+        let count = kinds.map(|k| k.get(*kind).and_then(serde_json::Value::as_u64));
+        let (word, state) = match count {
+            Some(Some(n)) => (n.to_string(), "declared"),
+            Some(None) => ("none".to_string(), "absent"),
+            None => ("unknown".to_string(), "unknown"),
+        };
+        el("li").child(
+            el("a")
+                .class("mj-ui-declared-kind")
+                .attr("data-state", state)
+                .attr("href", format!("{}/objects?kind={kind}", crate::cockpit::PREFIX))
+                .attr(
+                    "title",
+                    match state {
+                        "declared" => format!("the {word} object(s) of kind {kind} this repository declares"),
+                        "absent" => format!("this repository declares no object of kind {kind}: this screen has nothing of it to show until one is recorded"),
+                        _ => format!("{} could not say how many objects of kind {kind} there are", REPOSITORY.capability),
+                    },
+                )
+                .child(el("span").class("mj-ui-declared-name").text(*kind))
+                .child(el("span").class("mj-ui-declared-count").text(word)),
+        )
+    });
+    Some(
+        el("div")
+            .class("mj-ui-declared")
+            .attr("title", format!("read from {}", info.provenance()))
+            .child(el("span").class("mj-ui-declared-label").text("Declared as"))
+            .child(
+                el("ul")
+                    .class("mj-ui-declared-list")
+                    .attr(
+                        "aria-label",
+                        "The kinds of record this screen is drawn from",
+                    )
+                    .children(chips),
+            ),
+    )
 }
 
 /// The version card: what this executable is, and what was last released, as
@@ -323,6 +460,7 @@ mod tests {
     fn frame(current: &str) -> Frame<'_> {
         Frame {
             current,
+            query: &[],
             stylesheet: "/ui/assets/ui.css?v=1".into(),
             favicon: "/ui/assets/favicon.svg?v=1".into(),
             script: "/ui/assets/ui.js?v=1".into(),
@@ -401,13 +539,98 @@ mod tests {
     #[test]
     fn the_cockpit_is_a_reference_not_a_destination() {
         let html = render(PREFIX);
-        let nav = html.split("mj-ui-nav-list").nth(1).unwrap_or_default();
-        let nav = nav.split("</ul>").next().unwrap_or_default();
+        let nav = html.split("class=\"mj-ui-nav\"").nth(1).unwrap_or_default();
+        let nav = nav.split("</nav>").next().unwrap_or_default();
+        assert!(nav.contains("mj-ui-nav-item"), "no navigation was read");
         assert!(
             !nav.contains("/cockpit"),
             "the navigation leads into the Cockpit: {nav}"
         );
         assert!(html.contains("aria-label=\"Other surfaces\""));
+    }
+
+    /// The navigation is the groups in their order, each with its screens, and the trail says
+    /// where the reader is: the group and the screen, and what the query selected, with the
+    /// last step no link.
+    #[test]
+    fn the_shell_groups_the_screens_and_says_where_the_reader_is() {
+        let html = render(PREFIX);
+        let mut at = 0;
+        for group in GROUPS {
+            let found = html[at..]
+                .find(&format!("<span class=\"mj-ui-label\">{group}</span>"))
+                .unwrap_or_else(|| panic!("{group} is missing or out of order"));
+            at += found;
+        }
+        assert_eq!(html.matches("aria-current=\"location\"").count(), 1);
+
+        let repo = SyntheticRepository::new(Shape::default()).expect("a synthetic repository");
+        let ctx = repo.context().expect("a context");
+        let query = vec![
+            ("milestone".to_string(), "M001".to_string()),
+            (FRAGMENT.to_string(), String::new()),
+        ];
+        let mut inspecting = frame(crate::ui::roadmap::ROUTE);
+        inspecting.query = &query;
+        let html = page(&ctx, &inspecting, &View::new("Roadmap", el("p")));
+        let trail = html.split("mj-ui-crumb-list").nth(1).unwrap_or_default();
+        let trail = trail.split("</ol>").next().unwrap_or_default();
+        let dashboard = format!("href=\"{PREFIX}\"");
+        let roadmap = format!("href=\"{}\"", crate::ui::roadmap::ROUTE);
+        assert!(
+            trail.contains(&dashboard) && trail.contains(&roadmap),
+            "{trail}"
+        );
+        assert!(trail.contains(">Plan<"), "{trail}");
+        assert!(
+            trail.contains("aria-current=\"location\">milestone M001<"),
+            "{trail}"
+        );
+        assert!(!trail.contains(FRAGMENT), "{trail}");
+
+        // a route that is no screen is named by its own title
+        let v = not_found("/ui/nowhere");
+        let html = page(&ctx, &frame("/ui/nowhere"), &v);
+        assert!(html.contains("aria-current=\"location\">Not a screen<"));
+    }
+
+    /// A screen says which kinds of record it is drawn from and how many of each the
+    /// repository declares, as `repository.info` counted them: a kind with none is said to
+    /// be absent, never drawn as zero records of something present.
+    #[test]
+    fn a_screen_names_the_kinds_it_is_declared_as_and_how_many_there_are() {
+        let repo = SyntheticRepository::new(Shape::default()).expect("a synthetic repository");
+        let ctx = repo.context().expect("a context");
+        let info = ask(&ctx, REPOSITORY);
+        let kinds = info
+            .ok()
+            .and_then(|v| v.get("kinds"))
+            .cloned()
+            .expect("the kinds");
+        for screen in SCREENS {
+            let html = page(
+                &ctx,
+                &frame(screen.route),
+                &View::new(screen.title, el("p")),
+            );
+            assert_eq!(
+                html.matches("mj-ui-declared-kind").count(),
+                screen.kinds.len(),
+                "{}",
+                screen.title
+            );
+            for kind in screen.kinds {
+                let expected = match kinds.get(*kind).and_then(serde_json::Value::as_u64) {
+                    Some(n) => format!(
+                        "data-state=\"declared\" href=\"/cockpit/objects?kind={kind}\" title=\"the {n} object(s)"
+                    ),
+                    None => format!(
+                        "data-state=\"absent\" href=\"/cockpit/objects?kind={kind}\""
+                    ),
+                };
+                assert!(html.contains(&expected), "{}: {kind}: {html}", screen.title);
+            }
+        }
     }
 
     /// The page carries exactly one inline script, the theme statement the policy allows,

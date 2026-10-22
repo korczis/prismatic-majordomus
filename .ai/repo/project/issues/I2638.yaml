@@ -1,0 +1,36 @@
+id: I2638
+milestone: development-runtime
+title: "The UI is an application shell: grouped navigation, a trail, the kinds a screen is declared as, and tables a reader can arrange"
+slug: the-ui-is-an-application-shell
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Give majordomus ui the shell of an application: a sidebar whose screens stand in groups and fold to a rail, a trail that says where the reader is, a line that names the kinds of record a screen is drawn from with how many the repository declares, tables a reader can filter, sort and page through, and a palette that reaches every screen and panel from the keyboard."
+why: "The owner opened majordomus ui in an adopting repository on 2026-10-13 and found thirteen screens of headings and empty states that named nothing to author, and asked for a dense, interlinked application shell following Flowbite's, with derived tables. An adopter whose plan lives elsewhere has no milestone, issue, release record or claim under .ai/, and no screen said so; a table of three hundred rows could be neither filtered nor sorted; thirteen screens stood in one flat list."
+current_state: "The sidebar is one list of thirteen screens. A screen does not say where the reader is beyond the marked navigation item, and an inspector or a filter chosen by the query is named nowhere in the frame. An empty screen says that nothing is there, not which kind of record would fill it. A long table is drawn whole, in the server's order, with no filter."
+desired_state: "SCREENS names each screen's group (GROUPS: Overview, Plan, Delivery, Assurance, Reference) and the object kinds of share/kinds.yaml its facts are declared as. The sidebar draws the groups; under the top bar a trail reads dashboard, group, screen and what the query selected, its last step no link; beside it each declared kind carries the count repository.info gives and leads to those objects, reads none when the repository declares none and unknown when the count could not be read, never zero. share/ui/ui.js gives a table of eight rows or more a filter, sortable headers and pages of twenty-five with a count, kept across the refresh; folds the sidebar to a rail and remembers it; and opens a palette on Ctrl or Cmd K and on / over the page's own screens, surfaces and panels, handing anything else to the top bar's search. None of the script's conveniences reads a source or states a fact, and every screen stays complete without it. The repository is public, so the shell is built on the MIT flowbite package the UI already imports and carries no licensed block."
+scope:
+  - "apps/majordomus-cli/src/ui/mod.rs"
+  - "apps/majordomus-cli/src/ui/shell.rs"
+  - "share/ui/ui.js"
+  - "share/ui/src/ui.css"
+  - "share/ui/ui.css"
+  - "docs/MAJORDOMUS_UI.md"
+  - ".ai/repo/project/issues/I2638.yaml"
+depends_on: ["I2481"]
+acceptance_criteria:
+  - "every screen stands in exactly one group, the screens of a group stand together, and no group is empty"
+  - "the trail names the group, the screen and each thing the query selected, and its last step is not a link"
+  - "every kind a screen names is a kind of share/kinds.yaml, its count is the one repository.info answers, and a kind the repository does not declare reads none"
+  - "a table of eight rows or more can be filtered, sorted by any column and paged, and says how many of how many rows are shown"
+  - "the palette lists every screen of the navigation and every panel of the current screen, and the page is complete without the script"
+  - "no stylesheet rule of the shell names a colour outside the design tokens"
+validation:
+  - "cargo test --lib ui::"
+  - "scripts/ci/cockpit-projection-check --ui-integrity"
+  - "scripts/cockpit-assets --check"
+  - "scripts/ci/design-check"
+evidence_required:
+  - "ui_shell_unit_tests"
+created_at: 2026-10-13
+updated_at: 2026-10-13

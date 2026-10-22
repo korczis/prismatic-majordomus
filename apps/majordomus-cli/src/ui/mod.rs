@@ -96,7 +96,8 @@ pub const GRAPH_LIB: &str = "vendor/cytoscape.min.js";
 pub const FRAGMENT: &str = "fragment";
 
 /// One screen of the UI: where it is, what the navigation calls it, its icon in the kit's
-/// set, and the question it answers.
+/// set, the question it answers, the group of the navigation it stands in, and the kinds of
+/// object its facts are declared as.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) struct Screen {
     /// The route.
@@ -107,91 +108,133 @@ pub(crate) struct Screen {
     pub icon: &'static str,
     /// One line: the question the screen answers.
     pub answers: &'static str,
+    /// The group of the navigation it stands in: one of [`GROUPS`].
+    pub group: &'static str,
+    /// The object kinds (`share/kinds.yaml`) the screen's facts are declared as, in the
+    /// order they matter to it. The frame says how many of each this repository declares,
+    /// so a screen that is empty names the records that would fill it. A screen whose
+    /// facts are the executable's own names none.
+    pub kinds: &'static [&'static str],
 }
 
-/// The screens there are, in the order the navigation shows them. A screen of the owner's
-/// concept that has no route yet is not listed, because a link to nothing is a dead end
-/// (`every_screen_is_answered_and_every_answered_route_is_a_screen_or_a_panel`).
+/// The groups of the navigation, in the order the sidebar shows them: the delivery at a
+/// glance, the plan, what is shipped and where it runs, what is proven, and the reference.
+pub(crate) const GROUPS: &[&str] = &["Overview", "Plan", "Delivery", "Assurance", "Reference"];
+
+/// The screens there are, in the order the navigation shows them, group by group. A screen
+/// of the owner's concept that has no route yet is not listed, because a link to nothing is
+/// a dead end (`every_screen_is_answered_and_every_answered_route_is_a_screen_or_a_panel`).
 pub(crate) const SCREENS: &[Screen] = &[
     Screen {
         route: PREFIX,
         title: "Dashboard",
         icon: "home",
         answers: "How the delivery stands: health, release, plan, mesh and the queue.",
+        group: "Overview",
+        kinds: &["issue", "milestone", "release-record", "mesh-declaration"],
     },
     Screen {
         route: command::ROUTE,
         title: "Command",
         icon: "terminal",
         answers: "Everything that can be run, what it changes, and what is running.",
+        group: "Overview",
+        kinds: &["command"],
     },
     Screen {
         route: roadmap::ROUTE,
         title: "Roadmap",
         icon: "target",
         answers: "Which milestones are open, in what order, and which intents they serve.",
+        group: "Plan",
+        kinds: &["milestone", "intent"],
     },
     Screen {
         route: work::ROUTE,
         title: "Issues & PRs",
         icon: "merge",
         answers: "Which issues are ready or blocked, and what the pull-request queue would do.",
+        group: "Plan",
+        kinds: &["issue"],
     },
     Screen {
         route: issues::ROUTE,
         title: "Issues",
         icon: "list",
         answers: "Every issue of the plan, by status, milestone, priority or text.",
+        group: "Plan",
+        kinds: &["issue", "milestone"],
     },
     Screen {
         route: prs::ROUTE,
         title: "PR Drain",
         icon: "branch",
         answers: "Every open pull request, what the lane would do with it, and why.",
-    },
-    Screen {
-        route: capabilities::ROUTE,
-        title: "Capabilities",
-        icon: "puzzle",
-        answers: "Everything the product can be asked, and on which surfaces.",
-    },
-    Screen {
-        route: mesh::ROUTE,
-        title: "Mesh",
-        icon: "nodes",
-        answers: "Which machines and runtimes are on the mesh, and what they recorded.",
+        group: "Plan",
+        kinds: &["issue"],
     },
     Screen {
         route: delivery::ROUTE,
         title: "CI/CD & Releases",
         icon: "layers",
         answers: "What was released, what the tree declares, and what the CI model runs.",
+        group: "Delivery",
+        kinds: &["release-record"],
     },
     Screen {
         route: deployments::ROUTE,
         title: "Deployments",
         icon: "server",
         answers: "What is live, and whether it is what was built.",
+        group: "Delivery",
+        kinds: &["deployment", "release-record"],
+    },
+    Screen {
+        route: mesh::ROUTE,
+        title: "Mesh",
+        icon: "nodes",
+        answers: "Which machines and runtimes are on the mesh, and what they recorded.",
+        group: "Delivery",
+        kinds: &["mesh-declaration"],
     },
     Screen {
         route: evidence::ROUTE,
         title: "Evidence",
         icon: "file-check",
         answers: "Which claims hold, which are stale or untested, and why.",
-    },
-    Screen {
-        route: docs::ROUTE,
-        title: "Documentation",
-        icon: "book",
-        answers: "What the product does, and where it is written down.",
+        group: "Assurance",
+        kinds: &["claim", "test", "use-case"],
     },
     Screen {
         route: governance::ROUTE,
         title: "Governance",
         icon: "shield-check",
         answers: "Which rules bind this repository and how each is proven.",
+        group: "Assurance",
+        kinds: &["rule", "adr"],
+    },
+    Screen {
+        route: capabilities::ROUTE,
+        title: "Capabilities",
+        icon: "puzzle",
+        answers: "Everything the product can be asked, and on which surfaces.",
+        group: "Reference",
+        kinds: &[],
+    },
+    Screen {
+        route: docs::ROUTE,
+        title: "Documentation",
+        icon: "book",
+        answers: "What the product does, and where it is written down.",
+        group: "Reference",
+        kinds: &["feature", "document"],
     },
 ];
+
+/// The screens of one group, in the navigation's order.
+pub(crate) fn screens_of(group: &str) -> impl Iterator<Item = &'static Screen> + '_ {
+    SCREENS.iter().filter(move |s| s.group == group)
+}
 
 /// The routes that answer one panel of a screen, each also a page of its own for a reader
 /// without JavaScript.
@@ -344,6 +387,7 @@ impl Ui {
                 &ctx,
                 &shell::Frame {
                     current: path,
+                    query: &req.query,
                     stylesheet: self.assets.url(STYLESHEET),
                     favicon: self.assets.url("favicon.svg"),
                     script: self.assets.url(SCRIPT),
@@ -409,6 +453,32 @@ mod tests {
             SCREENS.len() + PANELS.len(),
             "a route is declared twice"
         );
+    }
+
+    /// The navigation's groups and the screens describe one order: every screen stands in a
+    /// group there is, no group is empty, and the screens of a group stand together. Every
+    /// kind a screen says its facts are declared as is a kind the catalogue knows.
+    #[test]
+    fn every_screen_stands_in_a_group_and_names_kinds_the_catalogue_knows() {
+        let mut met: Vec<&str> = SCREENS.iter().map(|s| s.group).collect();
+        met.dedup();
+        assert_eq!(met, GROUPS, "the screens are not listed group by group");
+        for group in GROUPS {
+            assert!(
+                screens_of(group).next().is_some(),
+                "{group} holds no screen"
+            );
+        }
+        let kinds = include_str!("../../../../share/kinds.yaml");
+        for screen in SCREENS {
+            for kind in screen.kinds {
+                assert!(
+                    kinds.lines().any(|l| l == format!("  {kind}:")),
+                    "{} names the kind {kind}, which share/kinds.yaml does not declare",
+                    screen.title
+                );
+            }
+        }
     }
 
     /// The UI answers in-process exactly as it does over a socket: every screen and panel as

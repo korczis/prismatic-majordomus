@@ -249,11 +249,43 @@ Cytoscape, loaded only by a screen that has a graph, draws them:
 The table of the same edges stays beneath the graph, and it is what a reader without
 JavaScript, or without the library, reads. Only nodes that take part in an edge are drawn.
 
+## The application shell
+
+The frame follows Flowbite's application shell: a sidebar of screens, a top bar with the
+search, a bar that says where the reader is, and the screen. The server draws all of it:
+
+- **Groups.** The sidebar lists the screens in the groups of `GROUPS` (`ui/mod.rs`):
+  Overview, Plan, Delivery, Assurance, Reference. A screen names its group in `SCREENS`, and
+  a test holds that the screens of a group stand together and that no group is empty.
+- **The trail.** Under the top bar: the dashboard, the screen's group, the screen, and each
+  thing the query selected (`milestone M001`, `status READY`). The last step is where the
+  reader is and is not a link. A route that is no screen, such as a panel read as a page,
+  is named by its own title.
+- **Declared as.** Beside the trail, the kinds of record the screen's facts are declared as
+  (`kinds` in `SCREENS`, each a kind of `share/kinds.yaml`), with how many objects of each
+  this repository holds as `repository.info` counted them. A count leads to those objects.
+  A kind with none reads `none` and is drawn dashed: that is what an empty screen is waiting
+  for, in a repository that has not recorded it yet. A count that could not be read is
+  `unknown`, never zero.
+
+`share/ui/ui.js` adds three conveniences to the shell. Each one arranges or
+reaches what the server already put on the page; none of them reads a source or states a fact.
+
+| Convenience | What it does | What it does not do |
+|---|---|---|
+| table tools | a table of eight rows or more gets a filter, sortable headers (ascending, descending, the server's order) and pages of twenty-five, and says how many of how many rows are shown; the choice is kept across the minute's refresh | it asks the server for nothing: the rows are the ones the screen was rendered with, and a filter that belongs to the source (the Issues browser's status, milestone and priority) stays the server's form |
+| the rail | the sidebar folds to its icons on a wide screen, and the choice is remembered in the browser | a narrow screen keeps the menu that opens without a script |
+| the palette | `Ctrl K` or `Cmd K`, or `/` outside a field, lists the screens, the other surfaces and the panels of the current screen, read from the page's own links and headings; anything else is handed to the top bar's search | it has no index of its own |
+
+A table's header stays in sight while its rows scroll. The tools are drawn only once the
+script has made them, so a reader without it sees the whole table and none of the tools.
+
 ## Without JavaScript
 
 Every screen is complete HTML, and the menu of a narrow screen opens with a checkbox and its
 label. `share/ui/ui.js` is the only script of the UI's own: it pulls in slow panels, refreshes
-the screen, draws graphs and reveals the theme toggle. The one inline script is the theme
+the screen, draws graphs, reveals the theme toggle and adds the application shell's
+conveniences above. The one inline script is the theme
 statement the policy allows by its digest, the same one the Cockpit ships. A served test
 asserts that the UI and the Cockpit carry one identical policy.
 
@@ -293,7 +325,8 @@ part of the screen answers the same question as the rest of it.
 
 1. Add a module under `apps/majordomus-cli/src/ui/` that asks its sources with
    `source::ask_all` and composes `view` components from readings, never a value of its own.
-2. Add it to `SCREENS` in `ui/mod.rs` with its icon, and its arm to the dispatcher.
+2. Add it to `SCREENS` in `ui/mod.rs` with its icon, its group and the kinds its facts are
+   declared as, and its arm to the dispatcher.
 3. A source too slow for a first paint becomes a panel route in `PANELS`, drawn as a
    placeholder with `data-panel-src`.
    Either list makes the route a benchmark target; nothing else is edited.

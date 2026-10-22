@@ -393,6 +393,7 @@ majordomus usecase scaffold --missing    <span class="c"># kostry pro nepokryté
   <p>Tabulka rout v dokumentaci se testem porovnává se seznamem rout v kódu a hlídají ji gates <code>cockpit-projection</code> a <code>ui-integrity</code>.</p>
   <h3><code>majordomus ui</code>: povrch pro člověka</h3>
   <p>ADR 0135 (přijaté 11. 10. 2026) dělá z <code>/ui</code> primární povrch ve slovníku dodávky: issues, pull requesty, roadmapa, dodávka, nasazení, důkazy, governance. Cockpit zůstává technickou vrstvou pod ním. Obojí je stejný server a stejný executor, bez vlastního úložiště. Starší servery <code>/ui</code> neznají a vrátí 404.</p>
+  <p>Rámec je aplikační shell. Postranní panel řadí obrazovky do skupin Overview, Plan, Delivery, Assurance a Reference a dá se sbalit na lištu ikon. Pod horní lištou stojí cesta: dashboard, skupina, obrazovka a to, co vybral dotaz. Vedle ní řádek <em>Declared as</em> jmenuje druhy záznamů, ze kterých se obrazovka kreslí, a kolik jich repozitář deklaruje podle <code>repository.info</code>; počet vede na ty záznamy a <code>none</code> říká, co prázdné obrazovce chybí. Tabulka s osmi a více řádky má filtr, řazení podle sloupce a stránky. <kbd>Ctrl</kbd>/<kbd>Cmd</kbd>+<kbd>K</kbd> nebo <kbd>/</kbd> otevře paletu s obrazovkami a panely. Nic z toho nečte zdroj ani netvrdí fakt: bez skriptu je každá obrazovka úplná.</p>
 </section>
 
 <section id="x-exec">

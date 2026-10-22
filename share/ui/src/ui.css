@@ -646,3 +646,254 @@
     overflow-wrap: anywhere;
   }
 }
+
+/* ------------------------------------------------------- the application shell
+
+   What share/ui/ui.js adds to a page that is complete without it, after Flowbite's
+   application shell: a table's tools (filter, sortable headers, pages), the sidebar folded
+   to a rail, and the palette. Every one of these is drawn only once the script has made it,
+   so a reader without the script sees none of them and misses no fact. */
+
+@layer components {
+  /* a long table keeps its header in sight while its rows scroll under the top bar */
+  .mj-ui-main .mj-table thead th {
+    @apply sticky top-0 z-10;
+    background: var(--mj-raised);
+  }
+  .mj-ui-table-tools {
+    @apply flex min-w-0 flex-wrap items-center gap-2 pb-2;
+  }
+  .mj-ui-table-filter {
+    @apply h-8 min-w-0 flex-1 basis-40 rounded-lg px-2.5 py-1 text-sm sm:max-w-xs;
+    color: var(--mj-fg);
+    background: var(--mj-bg);
+    border: 1px solid var(--mj-line);
+  }
+  .mj-ui-table-filter:focus {
+    border-color: var(--mj-accent);
+    @apply outline-none ring-0;
+  }
+  .mj-ui-table-count {
+    @apply m-0 font-mono text-xs;
+    color: var(--mj-muted);
+  }
+  .mj-ui-table-pager {
+    @apply ml-auto inline-flex overflow-hidden rounded-lg;
+    border: 1px solid var(--mj-line);
+  }
+  .mj-ui-table-pager[hidden] {
+    @apply hidden;
+  }
+  .mj-ui-table-step {
+    @apply cursor-pointer px-3 py-1 text-xs font-medium;
+    color: var(--mj-body);
+    background: var(--mj-raised);
+  }
+  .mj-ui-table-step + .mj-ui-table-step {
+    border-left: 1px solid var(--mj-line);
+  }
+  .mj-ui-table-step:hover:not(:disabled) {
+    color: var(--mj-fg);
+    background: var(--mj-sunken);
+  }
+  .mj-ui-table-step:disabled {
+    @apply cursor-default opacity-50;
+  }
+  .mj-ui-sort {
+    @apply inline-flex cursor-pointer items-center gap-1 uppercase;
+    font: inherit;
+    letter-spacing: inherit;
+    color: inherit;
+  }
+  .mj-ui-sort:hover {
+    color: var(--mj-fg);
+  }
+  /* the direction is drawn, and said in the header's aria-sort */
+  .mj-ui-sort::after {
+    content: "";
+    @apply inline-block h-0 w-0 opacity-0;
+    border-left: 0.25rem solid transparent;
+    border-right: 0.25rem solid transparent;
+    border-bottom: 0.3rem solid currentColor;
+  }
+  .mj-ui-sort[data-dir="ascending"]::after {
+    @apply opacity-100;
+  }
+  .mj-ui-sort[data-dir="descending"]::after {
+    @apply rotate-180 opacity-100;
+  }
+  .mj-ui-sort[data-dir="ascending"],
+  .mj-ui-sort[data-dir="descending"] {
+    color: var(--mj-accent);
+  }
+  /* rows the reader ordered or filtered are no longer the even and odd rows of the source */
+  .mj-ui-main .mj-table[data-enhanced] tbody tr:nth-child(even) td {
+    background: transparent;
+  }
+  .mj-ui-main .mj-table[data-enhanced] tbody tr:hover td {
+    background: var(--mj-sunken);
+  }
+
+  /* the rail: the sidebar as icons, on a wide screen only — a narrow one opens it whole */
+  .mj-ui-rail-toggle {
+    @apply hidden min-w-0 cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-xs font-medium lg:flex;
+    color: var(--mj-muted);
+  }
+  .mj-ui-rail-toggle:hover {
+    color: var(--mj-fg);
+    background: var(--mj-sunken);
+  }
+  .mj-ui-rail-mark {
+    @apply inline-block h-5 w-5 shrink-0 rounded-md;
+    border: 1px solid currentColor;
+    border-left-width: 0.375rem;
+  }
+  @media (width >= 64rem) {
+    .mj-ui-rail .mj-ui-sidebar {
+      @apply w-16 items-center px-2;
+    }
+    .mj-ui-rail .mj-ui-sidebar .mj-ui-label,
+    .mj-ui-rail .mj-ui-brand-text,
+    .mj-ui-rail .mj-ui-version-card {
+      @apply hidden;
+    }
+    .mj-ui-rail .mj-ui-nav-item,
+    .mj-ui-rail .mj-ui-rail-toggle {
+      @apply justify-center px-0;
+      @apply w-11;
+    }
+    .mj-ui-rail .mj-ui-rail-mark {
+      border-left-width: 1px;
+      border-right-width: 0.375rem;
+    }
+  }
+
+  /* the palette */
+  .mj-ui-kbd {
+    @apply hidden shrink-0 cursor-pointer rounded-md px-1.5 py-0.5 font-mono text-xs sm:inline-block;
+    color: var(--mj-muted);
+    background: var(--mj-sunken);
+    border: 1px solid var(--mj-line);
+  }
+  .mj-ui-kbd:hover {
+    color: var(--mj-fg);
+  }
+  .mj-ui-palette {
+    @apply mx-auto mt-24 w-full max-w-xl overflow-hidden rounded-2xl p-0 shadow-2xl;
+    color: var(--mj-body);
+    background: var(--mj-raised);
+    border: 1px solid var(--mj-line);
+  }
+  .mj-ui-palette::backdrop {
+    background: color-mix(in oklab, var(--mj-bg) 70%, transparent);
+    backdrop-filter: blur(2px);
+  }
+  .mj-ui-palette-input {
+    @apply w-full border-0 bg-transparent px-4 py-3.5 text-base focus:ring-0;
+    color: var(--mj-fg);
+    border-bottom: 1px solid var(--mj-line);
+  }
+  .mj-ui-palette-list {
+    @apply m-0 max-h-96 list-none overflow-y-auto p-1.5;
+  }
+  .mj-ui-palette-item {
+    @apply grid cursor-pointer items-baseline gap-x-3 rounded-lg px-3 py-2;
+    grid-template-columns: 7rem minmax(0, 1fr);
+  }
+  .mj-ui-palette-item[aria-selected="true"],
+  .mj-ui-palette-item:hover {
+    background: var(--mj-sunken);
+  }
+  .mj-ui-palette-item[aria-selected="true"] .mj-ui-palette-name {
+    color: var(--mj-accent);
+  }
+  .mj-ui-palette-kind {
+    @apply truncate font-mono text-xs;
+    color: var(--mj-muted);
+  }
+  .mj-ui-palette-name {
+    @apply truncate text-sm font-medium;
+    color: var(--mj-fg);
+  }
+  .mj-ui-palette-note {
+    @apply col-start-2 truncate text-xs;
+    color: var(--mj-muted);
+  }
+  .mj-ui-palette-none {
+    @apply px-3 py-4 text-sm;
+    color: var(--mj-muted);
+  }
+
+  /* the navigation's groups, and the bar that says where the reader is */
+  .mj-ui-nav {
+    @apply grid content-start gap-4;
+  }
+  .mj-ui-nav-group {
+    @apply grid gap-1;
+  }
+  .mj-ui-nav-heading {
+    @apply m-0 px-3 text-xs font-semibold uppercase tracking-wider;
+    color: var(--mj-muted);
+  }
+  .mj-ui-wayfinding {
+    @apply mx-auto flex w-full min-w-0 max-w-[var(--mj-cockpit)] flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 pt-4 lg:px-6;
+  }
+  .mj-ui-crumb-list {
+    @apply m-0 flex min-w-0 list-none flex-wrap items-center gap-x-2 gap-y-1 p-0 text-sm;
+  }
+  .mj-ui-crumb-item {
+    @apply inline-flex min-w-0 items-center gap-2;
+    color: var(--mj-muted);
+  }
+  .mj-ui-crumb-item + .mj-ui-crumb-item::before {
+    content: "/";
+    color: var(--mj-line);
+  }
+  .mj-ui-crumb {
+    @apply truncate no-underline;
+    color: inherit;
+  }
+  a.mj-ui-crumb:hover {
+    @apply underline;
+    color: var(--mj-accent);
+  }
+  .mj-ui-crumb[aria-current="location"] {
+    @apply font-medium;
+    color: var(--mj-fg);
+  }
+  .mj-ui-declared {
+    @apply flex min-w-0 flex-wrap items-center gap-2 text-xs;
+    color: var(--mj-muted);
+  }
+  .mj-ui-declared-list {
+    @apply m-0 flex list-none flex-wrap items-center gap-1.5 p-0;
+  }
+  .mj-ui-declared-kind {
+    @apply inline-flex items-center gap-1.5 rounded-md px-1.5 py-0.5 font-mono no-underline;
+    color: var(--mj-body);
+    background: var(--mj-sunken);
+    border: 1px solid var(--mj-line);
+  }
+  .mj-ui-declared-kind:hover {
+    color: var(--mj-fg);
+    border-color: var(--mj-accent-line);
+  }
+  .mj-ui-declared-count {
+    @apply font-semibold;
+    color: var(--mj-fg);
+  }
+  .mj-ui-declared-kind[data-state="absent"],
+  .mj-ui-declared-kind[data-state="unknown"] {
+    border-style: dashed;
+  }
+  .mj-ui-declared-kind[data-state="absent"] .mj-ui-declared-count,
+  .mj-ui-declared-kind[data-state="unknown"] .mj-ui-declared-count {
+    color: var(--mj-muted);
+  }
+  @media (width >= 64rem) {
+    .mj-ui-rail .mj-ui-nav-heading {
+      @apply mx-auto h-px w-6 p-0;
+      background: var(--mj-line);
+    }
+  }
+}
