@@ -33,7 +33,7 @@ provenance:
   origin: authored
 ---
 
-# 22. An execution is a watched capability call, not a second registry
+# 33. An execution is a watched capability call, not a second registry
 
 ## Context
 

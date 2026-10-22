@@ -61,6 +61,10 @@ pub struct NodeList {
     pub count: usize,
     /// The nodes, in node-id order — the one canonical order every surface shows.
     pub nodes: Vec<NodeRecord>,
+    /// The present, trusted runtimes among them that hold no link here, with why (I3835).
+    /// Empty where cooperation does not run.
+    #[serde(default)]
+    pub unlinked: Vec<crate::mesh::cooperation::UnlinkedView>,
 }
 
 fn mesh_nodes(ctx: &Context, _: Empty) -> Result<NodeList, CapabilityError> {
@@ -68,6 +72,11 @@ fn mesh_nodes(ctx: &Context, _: Empty) -> Result<NodeList, CapabilityError> {
     Ok(NodeList {
         count: nodes.len(),
         nodes,
+        unlinked: ctx
+            .mesh
+            .cooperation()
+            .map(|c| c.unlinked())
+            .unwrap_or_default(),
     })
 }
 
@@ -222,6 +231,9 @@ fn mesh_doctor(ctx: &Context, _: Empty) -> Result<MeshDoctorReport, CapabilityEr
         report.checks.push(crate::mesh::doctor::journal_check(
             &cooperation.journal().tallies(),
         ));
+        report
+            .checks
+            .push(crate::mesh::doctor::unlinked_check(&cooperation.unlinked()));
     }
     // one conjunction over every check, so neither added check's failure can be lost
     report.ok = report.checks.iter().all(|c| c.ok);
@@ -347,6 +359,7 @@ fn map_error(e: CooperationError) -> CapabilityError {
         }
         CooperationError::Invalid(m) => CapabilityError::InvalidInput(m),
         CooperationError::RateBound(m) => CapabilityError::Refused(format!("rate_bound: {m}")),
+        CooperationError::NotLinked(m) => CapabilityError::Refused(format!("not_linked: {m}")),
     }
 }
 
@@ -456,6 +469,10 @@ pub struct PeerTree {
     pub machines: Vec<MachineNode>,
     /// Candidates refused, with the rule.
     pub refused: Vec<RefusedView>,
+    /// The present, trusted runtimes the registry lists that hold no link here, with why
+    /// (I3835).
+    #[serde(default)]
+    pub unlinked: Vec<crate::mesh::cooperation::UnlinkedView>,
     /// The digest of the cooperation state: equal digests, equal state.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub digest: Option<String>,
@@ -604,6 +621,7 @@ pub fn peer_tree(c: &Cooperation, query: &Query) -> PeerTree {
         repository: status.repository.map(|r| r.id),
         machines,
         refused: status.refused,
+        unlinked: status.unlinked,
         digest: Some(whole.digest),
     }
 }
@@ -619,6 +637,7 @@ fn mesh_peers(ctx: &Context, query: Query) -> Result<PeerTree, CapabilityError> 
             repository: None,
             machines: Vec::new(),
             refused: Vec::new(),
+            unlinked: Vec::new(),
             digest: None,
         },
     })

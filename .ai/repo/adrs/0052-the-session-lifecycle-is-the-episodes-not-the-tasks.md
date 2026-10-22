@@ -27,7 +27,7 @@ provenance:
   origin: authored
 ---
 
-# 41. The session lifecycle is the episode's, not the task's
+# 52. The session lifecycle is the episode's, not the task's
 
 ## Context
 

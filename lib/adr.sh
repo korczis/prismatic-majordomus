@@ -172,7 +172,7 @@ mj_adr_validate() {
   mj_adr_validate_loaded "$f" "$base"
 }
 mj_adr_validate_loaded() {
-  local f="$1" base="$2" rc=0 v s unk missing="" origin refs n
+  local f="$1" base="$2" rc=0 v s unk missing="" origin refs n hn
   local f_schema f_kind f_id f_title f_status f_date f_sb f_origin
   unk="$(mj_yaml_unknown_keys "$MJ_ADR_FLAT" "$MJ_ALLOW_DIR/adr.txt" || true)"
   [ -n "$unk" ] && { printf 'unknown front-matter key(s): %s\n' "$(printf '%s' "$unk" | tr '\n' ' ' | sed 's/ $//')"; rc=1; }
@@ -245,6 +245,21 @@ mj_adr_validate_loaded() {
       /^---$/ { c++ }
       END { for (i = 1; i <= n; i++) if (!(found[i] && body[i])) printf " %s", h[i] }' "$f")"
   [ -n "$missing" ] && { printf 'body is missing or empty in section(s):%s\n' "$missing"; rc=1; }
+  # the heading numbers the decision it heads. `adr propose` writes `# <n>. <title>` from the
+  # identity, so a heading that carries another number came from another record or from a
+  # renumbering, and it misnames the decision to everyone who reads the page (I3864). A
+  # heading that numbers nothing is not judged: the number is a convention, not a field.
+  hn="$(awk 'c >= 2 && /^# / { print; exit } /^---$/ { c++ }' "$f")"
+  case "$hn" in "# "[0-9]*". "*) hn="${hn#"# "}"; hn="${hn%%.*}" ;; *) hn="" ;; esac
+  case "$hn" in
+    ''|*[!0-9]*) ;;
+    *)
+      case "$f_id" in
+        adr-[0-9][0-9][0-9][0-9])
+          [ "$((10#$hn))" = "$((10#${f_id#adr-}))" ] \
+            || { printf 'heading "# %s." numbers decision %s, but the identity is %s\n' "$hn" "$((10#$hn))" "$f_id"; rc=1; } ;;
+      esac ;;
+  esac
   return "$rc"
 }
 

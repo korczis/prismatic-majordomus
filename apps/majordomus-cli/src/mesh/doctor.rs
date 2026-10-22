@@ -123,6 +123,39 @@ pub fn declaration_source(resolved: &super::root::Resolved) -> Option<DoctorChec
     ))
 }
 
+/// Every runtime the registry lists as present and trusted holds a link here (I3835). One
+/// that does not is named with why: discovery and linking disagreeing, said by no surface,
+/// left a claim holder unreachable on 2026-10-21.
+///
+/// ```
+/// use majordomus_cli::mesh::cooperation::{UnlinkedReason, UnlinkedView};
+/// use majordomus_cli::mesh::doctor::unlinked_check;
+/// assert!(unlinked_check(&[]).ok);
+/// let far = UnlinkedView { runtime: "5d81-b10f".into(), node: "5d81".into(), name: "mb2".into(),
+///     endpoints: vec!["100.1.1.1:8791".into()], reason: UnlinkedReason::Unreachable,
+///     detail: "unreachable: connection refused".into(), at: None };
+/// let check = unlinked_check(&[far]);
+/// assert!(!check.ok && check.detail.contains("5d81-b10f") && check.detail.contains("unreachable"));
+/// ```
+pub fn unlinked_check(unlinked: &[super::cooperation::UnlinkedView]) -> DoctorCheck {
+    if unlinked.is_empty() {
+        return DoctorCheck::pass(
+            "links",
+            "every runtime the registry lists as present and trusted holds a link here",
+        );
+    }
+    DoctorCheck::fail(
+        "links",
+        unlinked
+            .iter()
+            .map(|u| u.sentence())
+            .collect::<Vec<_>>()
+            .join("; "),
+        "a review request, a handover or a claim of that runtime's session cannot reach this one, and a claim it holds cannot be talked about here",
+        "read the reason: unreachable is a firewall or an address (majordomus mesh firewall), refused names the rule that refused, awaiting_their_dial resolves when the other side dials, and other_repository or no_endpoint is the other side's declaration",
+    )
+}
+
 /// The `journal` check: whether the cooperation journal's file holds what the journal
 /// holds. A failed append keeps the event in memory and in replication, loses it from this
 /// machine's disk and is not acknowledged as durable; an unreadable line is one the last

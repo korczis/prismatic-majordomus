@@ -164,7 +164,7 @@ pub fn module() -> ModuleDescriptor {
                 description: "Every state an episode can be in, whether it is terminal and what it may move to; every transition — open, resume, checkpoint, detach, close, recover — with the states it runs between and whether it moves the state at all. Derived from the types, so a diagram that disagrees with the code cannot exist. What the machine deliberately does not depend on is stated rather than left to be inferred: task state, which is ADR 0052.",
                 input: Empty,
                 output: MachineReport,
-                stability: Stability::BehaviorallyVerified,
+                stability: Stability::Implemented,
                 exposure: Exposure {
                     mcp: Some(McpExposure {
                         tool: Some("majordomus_session_machine".into()),
@@ -186,7 +186,7 @@ pub fn module() -> ModuleDescriptor {
                 description: "The repository, the checkout, the open episode and the provider session, each with the canonical value this executable computes and each store's own spelling beside it. The stores record the repository sometimes as an absolute .git path and sometimes as a remote URL, the worktree as a path and as a digest, and the session as both an episode id and a provider UUID; this is the surface that says so, so that a reader never compares two spellings of different things and concludes they disagree.",
                 input: Empty,
                 output: IdentityReport,
-                stability: Stability::BehaviorallyVerified,
+                stability: Stability::Implemented,
                 exposure: Exposure {
                     mcp: Some(McpExposure {
                         tool: Some("majordomus_session_identity".into()),

@@ -4,7 +4,7 @@ description = "A claim that no test can fail is prose with good formatting. What
 template = "page.html"
 [extra]
 lang = "en"
-related = ["the-bet-on-a-layer/", "a-pasted-brief-becomes-a-plan/", "everything-followed/", "a-plan-is-attacked-before-it-is-built/", "written-once-derived-everywhere/", "silence-is-not-a-verdict/", "automation-is-a-capability/", "a-saving-is-measured-not-claimed/"]
+related = ["the-bet-on-a-layer/", "a-pasted-brief-becomes-a-plan/", "everything-followed/", "a-plan-is-attacked-before-it-is-built/", "written-once-derived-everywhere/", "silence-is-not-a-verdict/", "automation-is-a-capability/", "a-saving-is-measured-not-claimed/", "a-rule-is-proven-by-what-it-refuses/", "a-use-case-is-run-not-described/"]
 [extra.translations]
 cs = "dokumentace-kterou-lze-odmitnout/"
 +++
@@ -76,7 +76,7 @@ claim-proof-check: every guaranteed claim names a test that names it back
 
 The matrix holds {{ <cite_figure name="claims_guaranteed" /> }} guaranteed claims as this page is built, and the check runs strict over every one of them: the exemption baseline beside it contains comments and no exempted claim. There is nothing on a waiver list.
 
-The same shape applies one level up, to rules. A rule in this repository is a versioned Markdown document with a machine-readable block declaring how it is enforced. The repository's object graph indexes {{ <cite_figure name="rule_objects" /> }} rule documents; the rules they define resolve in a deterministic order, and every blocking one carries a validator — `scripts/ci/rule-proof-check` is the reader that decides it. The standard package alone, the part every adopting repository inherits, declares {{ <cite_figure name="doctrines_declared" /> }} rules, {{ <cite_figure name="doctrines_blocking" /> }} of them blocking. A few rules declare that a human reader enforces them — and that is a *typed* state with a required reason, not an absence. The distinction matters: "we review this by hand, because an automated check would have to guess" is a defensible engineering position. "Nobody ever decided this" wearing the same clothes is not.
+The same shape applies one level up, to rules. A rule in this repository is a versioned Markdown document with a machine-readable block declaring how it is enforced. The repository's object graph indexes {{ <cite_figure name="rule_objects" /> }} rule documents; the rules they define resolve in a deterministic order, and every one of them names what proves it — a validator, a test, or the reason a reader enforces it — and `scripts/ci/rule-proof-check` is the reader that decides it. The standard package alone, the part every adopting repository inherits, declares {{ <cite_figure name="doctrines_declared" /> }} rules, {{ <cite_figure name="doctrines_blocking" /> }} of them blocking. A few rules declare that a human reader enforces them — and that is a *typed* state with a required reason, not an absence. The distinction matters: "we review this by hand, because an automated check would have to guess" is a defensible engineering position. "Nobody ever decided this" wearing the same clothes is not.
 
 ## The place where it stops
 
@@ -119,7 +119,7 @@ That is what I mean by executable governance. Not that a document says the rules
 | Every guaranteed claim names a runnable test that names it back | Verified, enforced | `scripts/ci/claim-proof-check --strict`, exit 0, empty baseline |
 | One registry renders the HTTP API, OpenAPI, MCP and the docs | Verified, measured | `majordomus capabilities projections`: {{ <cite_figure name="capabilities" /> }} rows, {{ <cite_figure name="http_routes" /> }} HTTP, {{ <cite_figure name="mcp_tools" /> }} MCP tools, {{ <cite_figure name="mcp_resources" /> }} MCP resources |
 | The CLI is derived from that registry | **Not true yet** | `majordomus capabilities projections` counts which of the {{ <cite_figure name="cli_commands" /> }} runnable commands no capability claims |
-| Every blocking rule carries a validator | Verified | `scripts/ci/rule-proof-check`, exit 0 |
+| Every rule names a validator, a test or the reason a reader enforces it | Verified | `scripts/ci/rule-proof-check`, exit 0 |
 | Claims carry a recorded proof state | **Implemented, not fed by CI** | ledger holds {{ <cite_figure name="evidence_executions" /> }} executions, all local; {{ <cite_figure name="claims_proven" /> }} of {{ <cite_figure name="evidence_claims" /> }} claims proven |
 | The published site is generated from the repository | Verified, deployed | `build.json` names the version, the commit and the generator |
 | Mesh: servers discover each other across machines | Experimental, off | `enabled: false` by default; status reports inactive |
