@@ -313,6 +313,13 @@ struct Refused {
     at: String,
 }
 
+/// The last dial of a known runtime that ended without a link: why, and when (I3835).
+struct DialFailure {
+    why: String,
+    refused: bool,
+    at: String,
+}
+
 #[derive(Default)]
 struct Table {
     peers: BTreeMap<String, PeerLink>,
@@ -320,6 +327,9 @@ struct Table {
     nonces: BTreeMap<(String, String), u64>,
     refused: BTreeMap<String, Refused>,
     workers: BTreeMap<String, Arc<AtomicBool>>,
+    /// Keyed by runtime key, so a node the registry lists can be told why it has no link.
+    /// Bounded by the dial targets, which are bounded per node.
+    dial_failures: BTreeMap<String, DialFailure>,
 }
 
 #[derive(Default)]
@@ -571,6 +581,115 @@ pub struct CooperationCounters {
     pub refused_out: BTreeMap<RefusalCode, u64>,
 }
 
+/// Why a present, trusted runtime holds no link here (I3835): the one reason `mesh nodes`,
+/// `mesh peers`, `mesh doctor` and a refused review request all name, on the wire as its
+/// snake-case word.
+///
+/// ```
+/// use majordomus_cli::mesh::cooperation::UnlinkedReason;
+/// let r = UnlinkedReason::AwaitingTheirDial;
+/// assert_eq!(serde_json::to_value(r).unwrap(), "awaiting_their_dial");
+/// assert_eq!(r.as_str(), "awaiting_their_dial", "the wire word and as_str are one word");
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum UnlinkedReason {
+    /// It is a dial target and no dial of it has ended yet.
+    NotDialed,
+    /// It is the higher runtime key: the lower one dials, and has not.
+    AwaitingTheirDial,
+    /// The last dial reached no endpoint.
+    Unreachable,
+    /// The last hello was refused, by it or by this runtime's check of it.
+    Refused,
+    /// A link existed and nothing arrived within the expiry.
+    Expired,
+    /// It serves another repository.
+    OtherRepository,
+    /// It advertises no endpoint.
+    NoEndpoint,
+    /// Its node already has as many runtimes dialed as one node may.
+    OverDialCap,
+}
+
+impl UnlinkedReason {
+    /// The word on the wire and in a refusal.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::cooperation::UnlinkedReason;
+    /// assert_eq!(UnlinkedReason::Unreachable.as_str(), "unreachable");
+    /// assert_eq!(UnlinkedReason::OverDialCap.as_str(), "over_dial_cap");
+    /// ```
+    pub fn as_str(self) -> &'static str {
+        match self {
+            UnlinkedReason::NotDialed => "not_dialed",
+            UnlinkedReason::AwaitingTheirDial => "awaiting_their_dial",
+            UnlinkedReason::Unreachable => "unreachable",
+            UnlinkedReason::Refused => "refused",
+            UnlinkedReason::Expired => "expired",
+            UnlinkedReason::OtherRepository => "other_repository",
+            UnlinkedReason::NoEndpoint => "no_endpoint",
+            UnlinkedReason::OverDialCap => "over_dial_cap",
+        }
+    }
+}
+
+/// A present, trusted runtime this runtime holds no link to, and why (I3835): what the
+/// registry says of it and what the last attempt to link met.
+///
+/// ```
+/// use majordomus_cli::mesh::cooperation::{UnlinkedReason, UnlinkedView};
+/// let far = UnlinkedView { runtime: "5d81-b10f".into(), node: "5d81".into(), name: "mb2".into(),
+///     endpoints: vec!["100.64.1.2:8741".into()], reason: UnlinkedReason::Unreachable,
+///     detail: "unreachable: connection refused".into(), at: None };
+/// assert_eq!(serde_json::to_value(&far).unwrap()["reason"], "unreachable");
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct UnlinkedView {
+    /// `<node>-<runtime>`.
+    pub runtime: String,
+    /// The node.
+    pub node: String,
+    /// The name it advertises.
+    pub name: String,
+    /// The endpoints it advertises.
+    pub endpoints: Vec<String>,
+    /// Why there is no link.
+    pub reason: UnlinkedReason,
+    /// What was seen: the refusal, the dial error, the expiry.
+    pub detail: String,
+    /// When the refusal or the failed dial happened, RFC 3339.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub at: Option<String>,
+}
+
+impl UnlinkedView {
+    /// One sentence: the runtime, the node, the reason and what was seen. It is what a
+    /// review request aimed at the runtime is refused with, and the doctor's finding.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::cooperation::{UnlinkedReason, UnlinkedView};
+    /// let v = UnlinkedView { runtime: "5d81-b10f".into(), node: "5d81".into(), name: "mb2".into(),
+    ///     endpoints: vec![], reason: UnlinkedReason::NoEndpoint, detail: String::new(), at: None };
+    /// let s = v.sentence();
+    /// assert!(s.starts_with("5d81-b10f (node 5d81, mb2)") && s.ends_with("no_endpoint"), "{s}");
+    /// ```
+    pub fn sentence(&self) -> String {
+        let detail = if self.detail.is_empty() {
+            String::new()
+        } else {
+            format!(": {}", self.detail)
+        };
+        format!(
+            "{} (node {}, {}) is present and trusted but not linked, {}{detail}",
+            self.runtime,
+            self.node,
+            self.name,
+            self.reason.as_str()
+        )
+    }
+}
+
 /// The whole cooperation runtime, as every surface reports it: the command line, the HTTP
 /// surface and MCP all render this one value, so that a person and an agent asking the same
 /// question of the same runtime are never told different things.
@@ -607,6 +726,10 @@ pub struct CooperationCounters {
 /// ```
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct CooperationStatus {
+    /// Every runtime the registry lists as present and trusted that holds no live link
+    /// here, with why (I3835).
+    #[serde(default)]
+    pub unlinked: Vec<UnlinkedView>,
     /// Whether cooperation runs in this process.
     pub active: bool,
     /// Why not, when it does not.
@@ -675,6 +798,7 @@ impl CooperationStatus {
             endpoints: Vec::new(),
             seeds: Vec::new(),
             peers: Vec::new(),
+            unlinked: Vec::new(),
             refused: Vec::new(),
             counters: CooperationCounters::default(),
             journal: JournalTallies::default(),
@@ -739,6 +863,10 @@ pub enum CooperationError {
     /// Out of bounds.
     #[error("{0}")]
     Invalid(String),
+    /// The target runtime is present and trusted, and holds no link here: the sentence says
+    /// why (I3835).
+    #[error("{0}")]
+    NotLinked(String),
     /// Valid, and too soon: a bound on how often a session may write this (I2874's one
     /// notice a minute). Refused rather than invalid, because the same call later succeeds.
     #[error("{0}")]
@@ -2755,6 +2883,162 @@ impl Cooperation {
         }
     }
 
+    /// Keep what the last dial of `key` came to: a failure is remembered until a dial links.
+    fn remember_dial(&self, key: &str, outcome: &Result<String, RoundError>) {
+        let mut table = self.table.lock().expect("cooperation table");
+        match outcome {
+            Ok(_) => {
+                table.dial_failures.remove(key);
+            }
+            Err(e) => {
+                table.dial_failures.insert(
+                    key.to_string(),
+                    DialFailure {
+                        why: e.to_string(),
+                        refused: matches!(e, RoundError::Refused(_)),
+                        at: rfc3339_now(),
+                    },
+                );
+            }
+        }
+    }
+
+    /// Every runtime the registry lists as present and this runtime trusts, of this
+    /// repository or not, that holds no live link here, each with why (I3835). Read from the
+    /// registry and the link table as they are now, so a runtime that links stops being
+    /// listed at the next call.
+    ///
+    /// ```
+    /// # use std::sync::Arc;
+    /// # use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
+    /// # use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};
+    /// # use majordomus_cli::mesh::identity::NodeIdentity;
+    /// # use majordomus_cli::mesh::link::HttpTransport;
+    /// # use majordomus_cli::mesh::registry::MeshRegistry;
+    /// # use majordomus_cli::mesh::repository::of_root_commits;
+    /// # let cooperation = Cooperation::new(CooperationSetup {
+    /// #     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: "0000000000000001".into(),
+    /// #     repository: of_root_commits(&["root".into()]), endpoints: vec!["127.0.0.1:9".into()],
+    /// #     version: "doc".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),
+    /// #     journal_path: None, registry: Arc::new(MeshRegistry::new()),
+    /// #     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),
+    /// # }).unwrap();
+    /// // nothing discovered, nothing to say
+    /// assert!(cooperation.unlinked().is_empty());
+    /// ```
+    pub fn unlinked(&self) -> Vec<UnlinkedView> {
+        let records = self.registry.list();
+        let dialed: Vec<String> =
+            dial_targets(&records, &self.repository.id, &self.own_key, |public_key| {
+                self.trust_of_key(public_key).is_trusted()
+            })
+            .into_iter()
+            .filter_map(|t| t.key)
+            .collect();
+        let mut found = Vec::new();
+        for record in &records {
+            if record.runtime.is_empty() || record.presence != Presence::Present {
+                continue;
+            }
+            let key = format!("{}-{}", record.node_id, record.runtime);
+            if key == self.own_key || !self.trust_of_key(&record.public_key).is_trusted() {
+                continue;
+            }
+            let (reason, detail, at) = {
+                let table = self.table.lock().expect("cooperation table");
+                match table.peers.get(&key) {
+                    Some(peer) if !peer.expired => continue,
+                    Some(peer) => (
+                        UnlinkedReason::Expired,
+                        format!(
+                            "its link expired: nothing arrived within {} s{}",
+                            self.config.expiry_seconds,
+                            peer.last_error
+                                .as_deref()
+                                .map(|e| format!("; last error: {e}"))
+                                .unwrap_or_default()
+                        ),
+                        None,
+                    ),
+                    None => {
+                        let refused = table.refused.iter().find(|(endpoint, r)| {
+                            r.runtime.as_deref() == Some(key.as_str())
+                                || record.endpoints.iter().any(|e| e == *endpoint)
+                        });
+                        if let Some((endpoint, r)) = refused {
+                            (
+                                UnlinkedReason::Refused,
+                                format!(
+                                    "{} refused at {endpoint} ({}): {}",
+                                    r.direction,
+                                    r.refusal.code.as_str(),
+                                    r.refusal.detail
+                                ),
+                                Some(r.at.clone()),
+                            )
+                        } else if let Some(f) = table.dial_failures.get(&key) {
+                            let reason = if f.refused {
+                                UnlinkedReason::Refused
+                            } else {
+                                UnlinkedReason::Unreachable
+                            };
+                            (reason, f.why.clone(), Some(f.at.clone()))
+                        } else if !record.repositories.iter().any(|r| r == &self.repository.id) {
+                            (
+                                UnlinkedReason::OtherRepository,
+                                format!(
+                                    "it serves {} and this runtime serves {}",
+                                    record.repositories.join(", "),
+                                    self.repository.id
+                                ),
+                                None,
+                            )
+                        } else if record.endpoints.is_empty() {
+                            (
+                                UnlinkedReason::NoEndpoint,
+                                "it advertises no endpoint this runtime could dial".into(),
+                                None,
+                            )
+                        } else if !dialed.contains(&key) {
+                            (
+                                UnlinkedReason::OverDialCap,
+                                format!(
+                                    "its node already has {MAX_TARGETS_PER_NODE} runtimes dialed \
+                                     before it"
+                                ),
+                                None,
+                            )
+                        } else {
+                            (UnlinkedReason::NotDialed, String::new(), None)
+                        }
+                    }
+                }
+            };
+            let (reason, detail) = match reason {
+                // the table lock is released: should_dial takes it again
+                UnlinkedReason::NotDialed if !self.should_dial(&key) => (
+                    UnlinkedReason::AwaitingTheirDial,
+                    "the lower runtime key dials, and it has not dialed here yet".to_string(),
+                ),
+                UnlinkedReason::NotDialed => (
+                    UnlinkedReason::NotDialed,
+                    "it is a dial target and no dial has ended yet".to_string(),
+                ),
+                other => (other, detail),
+            };
+            found.push(UnlinkedView {
+                runtime: key,
+                node: record.node_id.to_string(),
+                name: record.display_name.clone(),
+                endpoints: record.endpoints.clone(),
+                reason,
+                detail,
+                at,
+            });
+        }
+        found
+    }
+
     /// Whether this runtime should dial a known peer: the lower runtime key dials, and
     /// the higher one dials only when nothing has arrived from the peer lately — so a
     /// pair keeps one link when both can reach each other, and two when only one can.
@@ -2796,7 +3080,11 @@ impl Cooperation {
                     }
                     // addressed whenever the runtime behind the endpoints is known
                     let to = learned.as_deref().or(target.key.as_deref());
-                    match self.dial_to(to, &target.endpoints) {
+                    let dialed = self.dial_to(to, &target.endpoints);
+                    if let Some(key) = target.key.as_deref() {
+                        self.remember_dial(key, &dialed);
+                    }
+                    match dialed {
                         Ok(key) => {
                             learned = Some(key.clone());
                             // A fresh link syncs at once: the peer should see this
@@ -3038,6 +3326,7 @@ impl Cooperation {
             endpoints: self.card.endpoints.clone(),
             seeds: self.config.seeds.clone(),
             peers: self.peers(),
+            unlinked: self.unlinked(),
             refused,
             counters: CooperationCounters {
                 handshakes_out: load(&c.handshakes_out),
@@ -3864,6 +4153,21 @@ impl Cooperation {
     ) -> Result<Written, CooperationError> {
         if let Some(target) = &reviewer {
             if *target != self.own_key {
+                let linked = {
+                    let table = self.table.lock().expect("cooperation table");
+                    table.peers.get(target).is_some_and(|p| !p.expired)
+                };
+                if !linked {
+                    // a runtime the mesh can see is told apart from one nobody has heard of,
+                    // and says why it has no link (I3835)
+                    if let Some(u) = self.unlinked().into_iter().find(|u| &u.runtime == target) {
+                        return Err(CooperationError::NotLinked(u.sentence()));
+                    }
+                    return Err(CooperationError::NotFound(format!(
+                        "no linked peer {target}, and the registry lists no present, trusted \
+                         runtime by that key"
+                    )));
+                }
                 let table = self.table.lock().expect("cooperation table");
                 match table.peers.get(target) {
                     None => {
@@ -5388,6 +5692,80 @@ mod tests {
             (1, 1),
             "one winner, one named conflict — never two holders"
         );
+    }
+
+    /// I3835's evidence: a runtime the registry lists as present and trusted, with no link,
+    /// is named with why; a review request aimed at it is refused with that sentence; a
+    /// failed dial changes the reason; and once it links it is no longer listed.
+    #[test]
+    fn a_present_unlinked_node_says_why() {
+        let net = Arc::new(InProcess::default());
+        let a = runtime(&net, "a:1", "root", TrustPolicy::Tofu);
+        let b = runtime(&net, "b:1", "root", TrustPolicy::Tofu);
+        let b_key = b.runtime_key().to_string();
+        let (b_node, b_runtime) = b_key.split_once('-').unwrap();
+        let heard = crate::mesh::protocol::advertise_as(
+            &b.identity,
+            b_runtime,
+            1,
+            &["b:1".into()],
+            &[],
+            std::slice::from_ref(&a.repository.id),
+            "test",
+        );
+        a.registry.observe(
+            &heard.adv,
+            b.identity.public.node_id.clone(),
+            TrustState::Trusted("tofu".into()),
+            crate::mesh::registry::MeshSource::Synthetic,
+            "test",
+            serde_json::Value::Null,
+        );
+
+        // discovered and never dialed
+        let unlinked = a.unlinked();
+        assert_eq!(unlinked.len(), 1, "{unlinked:?}");
+        assert_eq!(unlinked[0].runtime, b_key);
+        assert!(
+            matches!(
+                unlinked[0].reason,
+                UnlinkedReason::NotDialed | UnlinkedReason::AwaitingTheirDial
+            ),
+            "{unlinked:?}"
+        );
+        assert_eq!(
+            a.status().unlinked,
+            unlinked,
+            "the status carries the same list"
+        );
+        let refused = a.request_review("s1", "x".into(), vec![], None, Some(b_key.clone()), None);
+        let Err(CooperationError::NotLinked(why)) = refused else {
+            panic!("not refused as unlinked: {refused:?}");
+        };
+        assert!(why.contains(&b_key) && why.contains(b_node), "{why}");
+
+        // a dial that reaches no endpoint is the reason, with what it met
+        net.cut.lock().unwrap().push("b:1".into());
+        let dialed = a.dial_to(Some(&b_key), &["b:1".into()]);
+        a.remember_dial(&b_key, &dialed);
+        let unlinked = a.unlinked();
+        assert_eq!(
+            unlinked[0].reason,
+            UnlinkedReason::Unreachable,
+            "{unlinked:?}"
+        );
+        assert!(unlinked[0].detail.contains("partitioned"), "{unlinked:?}");
+        assert!(unlinked[0].at.is_some());
+
+        // healed: the next dial links, and the runtime is no longer listed, without a restart
+        net.cut.lock().unwrap().clear();
+        let dialed = a.dial_to(Some(&b_key), &["b:1".into()]);
+        assert!(dialed.is_ok(), "{dialed:?}");
+        a.remember_dial(&b_key, &dialed);
+        assert!(a.unlinked().is_empty(), "{:?}", a.unlinked());
+        assert!(a
+            .request_review("s1", "x".into(), vec![], None, Some(b_key), None)
+            .is_ok());
     }
 
     #[test]

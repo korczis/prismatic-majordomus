@@ -73,6 +73,30 @@ pub(crate) fn projection(graph_document: &Value, declaration: &str) -> Result<Va
     }
     let text = |v: Option<&Value>| v.and_then(Value::as_str).map(str::to_string);
     let kind_of = |k: &Map<String, Value>| text(k.get("kind")).unwrap_or_default();
+    // the declaration's own rules, which the shell checked before this was a target: every
+    // kind spelled once, and a projection one of the three words
+    let mut seen = std::collections::BTreeSet::new();
+    for k in &pubs {
+        let kind = kind_of(k);
+        if !seen.insert(kind.clone()) {
+            return Err(Error::Protocol {
+                reason: format!(
+                    "{} declares the kind '{kind}' twice",
+                    crate::entity::PUBLICATION
+                ),
+            });
+        }
+        let projection = text(k.get("projection")).unwrap_or_default();
+        if !["entity", "section", "none"].contains(&projection.as_str()) {
+            return Err(Error::Protocol {
+                reason: format!(
+                    "{} gives the kind '{kind}' the projection '{projection}', which is not \
+                     entity, section or none",
+                    crate::entity::PUBLICATION
+                ),
+            });
+        }
+    }
     let graph = &graph_document["graph"];
     let empty = Vec::new();
     let nodes = graph["nodes"].as_array().unwrap_or(&empty);
@@ -373,6 +397,22 @@ mod tests {
         );
         assert!(publication_kinds("kind = \"orphan\"\n").unwrap().is_empty());
         assert!(publication_kinds("[[kinds]]\nkind = unquoted\n").is_err());
+    }
+
+    /// The declaration's rules hold where the shell used to hold them (I1007 slice 2).
+    #[test]
+    fn a_declaration_that_breaks_its_rules_is_refused() {
+        let twice = "[[kinds]]\nkind = \"adr\"\nprojection = \"none\"\n\
+                     [[kinds]]\nkind = \"adr\"\nprojection = \"none\"\n";
+        let refused = projection(&graph(), twice).unwrap_err().to_string();
+        assert!(refused.contains("twice"), "{refused}");
+        let odd = "[[kinds]]\nkind = \"adr\"\nprojection = \"page\"\n";
+        let refused = projection(&graph(), odd).unwrap_err().to_string();
+        assert!(refused.contains("not entity, section or none"), "{refused}");
+        assert!(
+            projection(&graph(), "# nothing\n").is_err(),
+            "no kind at all"
+        );
     }
 
     #[test]

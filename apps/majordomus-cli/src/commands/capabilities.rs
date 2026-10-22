@@ -315,6 +315,24 @@ pub fn run(args: CapabilitiesArgs) -> Result<u8> {
                 }
             }
 
+            // "behaviorally verified" is a measurement: a test reaches the capability through
+            // the evidence subject index, by the routes the coverage matrix reads (I3019). Only
+            // the repository that carries this executable's crate can hold such a test.
+            if crate::capability_coverage::carries_this_crate(app.repository.root()) {
+                let unverified = crate::capability_coverage::verified_without_a_test(ctx);
+                if unverified.is_empty() {
+                    w(&mut out, "OK   verified    every capability declared behaviorally_verified is reached by a test".to_string())?;
+                } else {
+                    failures += unverified.len();
+                    w(&mut out, format!("FAIL verified    {} capability(ies) declared behaviorally_verified that no test reaches  [reproduce: GET /api/v1/health/coverage]", unverified.len()))?;
+                    for id in &unverified {
+                        w(&mut out, format!("     {id}: add a case whose majordomus-covers header names capability:{id}, or declare it implemented"))?;
+                    }
+                }
+            } else {
+                w(&mut out, "OK   verified    not judged here: only the repository that carries this executable's crate holds the tests that reach its capabilities".to_string())?;
+            }
+
             let projection = crate::bench::BenchmarkProjection::from_context(ctx);
             let coverage = crate::bench::Coverage::compute(ctx, &projection);
             let total = coverage.tallies.get("total").cloned().unwrap_or_default();

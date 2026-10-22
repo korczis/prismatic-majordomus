@@ -1,0 +1,41 @@
+id: I3863
+milestone: public-proof
+title: "An article explains in both languages what proves a rule, and where that proof stops"
+slug: a-rule-is-proven-by-what-it-refuses
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Publish site/content-src/a-rule-is-proven-by-what-it-refuses.md, an English article on what Majordomus accepts as proof that a rule is enforced. It covers the badge the proof graph replaced, the three enforcement modes of ADR 0048 and the reason a review must give, what scripts/ci/rule-proof-check decides (dangling and unproven, the class that is not an exemption, the one vendored exemption), the ten states of the rules module and the three that never collapse, the floor the gate's own guarantee names, the shell floor that case 08 named and case 3480 now reads, and the refusal that ADR 0188 and the intent a-claim-stands-only-on-its-evidence ask for, with I3110, I3111 and I3112. Its time-bound statements are dated. Every statement is one that an ADR, a rule, a guarantee, an issue, the rules module, the gate or a case on master states, and no count is typed by hand. site/content-src/pravidlo-se-dokazuje-odmitnutim.md is its Czech translation, naming translated_from and its source's digest. site/data/nav.toml lists both. Both relate the proof-carrying documentation, silence and automation articles, each of which names them back in its own language."
+why: "The owner asked on 2026-10-19 that the site's articles be developed and interlinked in every language. Whether a blocking rule is really enforced is the question the owner's intent a-claim-stands-only-on-its-evidence asks, and no article tells a reader what the repository counts as proof of a rule today, or where that proof stops."
+current_state: "No article explains how a rule is proven. The article groups relate each other, and none of them names it."
+desired_state: "/a-rule-is-proven-by-what-it-refuses/ and /pravidlo-se-dokazuje-odmitnutim/ are built, are counterparts of each other, are listed in the navigation, and are related both ways with three other groups. Check 21 and check 19 pass, with the translation at its source's digest."
+scope:
+  - ".ai/repo/project/issues/I3863.yaml"
+  - "site/content-src/a-rule-is-proven-by-what-it-refuses.md"
+  - "site/content-src/pravidlo-se-dokazuje-odmitnutim.md"
+  - "site/content-src/proof-carrying-documentation.md"
+  - "site/content-src/dokumentace-kterou-lze-odmitnout.md"
+  - "site/content-src/silence-is-not-a-verdict.md"
+  - "site/content-src/mlceni-neni-verdikt.md"
+  - "site/content-src/automation-is-a-capability.md"
+  - "site/content-src/automatizace-je-schopnost.md"
+  - "site/data/nav.toml"
+  - "scripts/ci/english-only-allow.txt"
+non_scope:
+  - "Implementing the refusal proof (I3110, I3111, I3112) or settling the contradictions the fact-check found (I3864)"
+depends_on:
+  - "I3860"
+  - "I3862"
+acceptance_criteria:
+  - "Both articles are built, declare each other in [extra.translations], and the Czech one records translated_from = a-rule-is-proven-by-what-it-refuses/ and the digest check 21 computes of its source"
+  - "Each statement is one a record, the code or a case on master states, and check 19 finds no count typed by hand"
+  - "scripts/site-check --articles passes the tree, counting the new related links"
+validation:
+  - "majordomus plan validate"
+  - "scripts/site-check --articles site/content-src site/data/nav.toml site/config.toml"
+  - "scripts/site-check --prose-figures site/content-src"
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3389_related_articles_answer_each_other_in_every_language"
+evidence_required: []
+serves: []
+created_at: 2026-10-22
+updated_at: 2026-10-22

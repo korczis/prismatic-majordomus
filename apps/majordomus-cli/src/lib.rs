@@ -17,6 +17,9 @@ pub(crate) mod automation;
 pub mod bench;
 pub mod build_identity;
 pub mod capability;
+/// The coverage matrix behind `health.coverage` (I1011): read through the capability, not
+/// linked against, so it is no part of the crate's public API.
+pub(crate) mod capability_coverage;
 pub(crate) mod change;
 pub mod cli;
 pub mod cockpit;

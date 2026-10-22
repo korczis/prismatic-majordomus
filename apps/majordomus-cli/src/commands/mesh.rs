@@ -618,7 +618,23 @@ fn render_nodes(v: &Value) -> String {
             n["last_seen"].as_str().unwrap_or("?"),
         ));
     }
+    render_unlinked(v, &mut out);
     out.trim_end().to_string()
+}
+
+/// One line per present, trusted runtime without a link, with why (I3835): the line that
+/// tells a discovered node from a reachable one, such as
+/// `unlinked   <node>-<runtime>  mb2  unreachable  unreachable: <endpoint>: connection refused`.
+fn render_unlinked(v: &Value, out: &mut String) {
+    for u in v["unlinked"].as_array().into_iter().flatten() {
+        out.push_str(&format!(
+            "unlinked   {}  {}  {}  {}\n",
+            u["runtime"].as_str().unwrap_or("?"),
+            u["name"].as_str().unwrap_or(""),
+            u["reason"].as_str().unwrap_or("?"),
+            u["detail"].as_str().unwrap_or(""),
+        ));
+    }
 }
 
 fn render_enrolment(v: &Value) -> String {
@@ -899,6 +915,7 @@ fn render_peers(v: &Value) -> String {
             s(&r["refusal"], "detail")
         ));
     }
+    render_unlinked(v, &mut out);
     out.push_str(&format!("digest     {}", s(v, "digest")));
     out
 }

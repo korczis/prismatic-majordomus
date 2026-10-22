@@ -1,0 +1,40 @@
+id: I3866
+milestone: public-proof
+title: "An article explains in both languages how a use case is proved by a scenario the site runs itself"
+slug: a-use-case-is-run-not-described
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Publish site/content-src/a-use-case-is-run-not-described.md, an English article on executable use cases (docs/USE_CASES.md). It covers the one file a use case is and everything derived from it, what validation refuses, the scenario and its steps run against the real tool in a disposable repository, the worker step and the challenge, fixture and live scenarios with the obligation step and the unmet verdict (ADR 0038), normalised evidence and the site generator that runs every scenario itself, the observed maturity, and the coverage the policy can require. Every statement is one that docs/USE_CASES.md, ADR 0038 or 0005, docs/CLAIMS.yaml, the policy or the vendored rules state on master, and no count is typed by hand. site/content-src/pripad-uziti-se-spousti-ne-popisuje.md is its Czech translation, naming translated_from and its source's digest. site/data/nav.toml lists both. Both relate the proof-carrying documentation, rule-proof and derivation articles, each of which names them back in its own language."
+why: "The owner asked on 2026-10-19 that the site's articles be developed and interlinked in every language. A list of what a tool can do is the page most sites carry and the first to go stale, and no article tells a reader why the use cases on this site are runs rather than descriptions."
+current_state: "No article explains executable use cases. The article groups relate each other, and none of them names it."
+desired_state: "/a-use-case-is-run-not-described/ and /pripad-uziti-se-spousti-ne-popisuje/ are built, are counterparts of each other, are listed in the navigation, and are related both ways with three other groups. Check 21 and check 19 pass, with the translation at its source's digest."
+scope:
+  - ".ai/repo/project/issues/I3866.yaml"
+  - "site/content-src/a-use-case-is-run-not-described.md"
+  - "site/content-src/pripad-uziti-se-spousti-ne-popisuje.md"
+  - "site/content-src/proof-carrying-documentation.md"
+  - "site/content-src/dokumentace-kterou-lze-odmitnout.md"
+  - "site/content-src/a-rule-is-proven-by-what-it-refuses.md"
+  - "site/content-src/pravidlo-se-dokazuje-odmitnutim.md"
+  - "site/content-src/written-once-derived-everywhere.md"
+  - "site/content-src/napsano-jednou-odvozeno-vsude.md"
+  - "site/data/nav.toml"
+  - "scripts/ci/english-only-allow.txt"
+non_scope:
+  - "Changing a use case, the scenario runner, the generator or the coverage policy"
+depends_on:
+  - "I3865"
+acceptance_criteria:
+  - "Both articles are built, declare each other in [extra.translations], and the Czech one records translated_from = a-use-case-is-run-not-described/ and the digest check 21 computes of its source"
+  - "Each statement is one a record, manual or policy on master states, and check 19 finds no count typed by hand"
+  - "scripts/site-check --articles passes the tree, counting the new related links"
+validation:
+  - "majordomus plan validate"
+  - "scripts/site-check --articles site/content-src site/data/nav.toml site/config.toml"
+  - "scripts/site-check --prose-figures site/content-src"
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3389_related_articles_answer_each_other_in_every_language"
+evidence_required: []
+serves: []
+created_at: 2026-10-22
+updated_at: 2026-10-22

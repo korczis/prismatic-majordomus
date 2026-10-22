@@ -1,0 +1,29 @@
+id: I3776
+milestone: truthful-plan-surfaces
+title: "An open issue's current state cites only repository paths that exist"
+slug: an-open-issues-current-state-cites-only-paths-that-exist
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Refuse, at plan validate and in the commit hook, an issue that is not done whose current_state names a repository path that does not exist in the tree being validated, naming the issue, the path and the remedy (cite the path that now holds it, or say in words that it is gone)."
+why: "Found on 2026-10-22 when train 3a (#1789) went red in case 3824: I3771's current_state cited .ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v1.md:44-46, and the rule had been bumped to v2 while the record waited in a train. Nothing in the plan checks noticed; only a case written for that one rule did. scripts/ci/reference-check refuses a missing path in authored Markdown prose, but exempts records by design, because a record says what was true when it was written. That reasoning holds for a done issue and for fields that narrate the past, but current_state of an open issue is a claim about the repository now, and it rots exactly like prose."
+current_state: "scripts/ci/reference-check checks the prose of authored Markdown documents and exempts every record and its derived projections. Neither engine of plan validate (apps/majordomus-cli/src/plan.rs, lib/project.awk) reads a path out of a record's prose. A sweep of master, train 3a, train 3b and the dry train 4 on 2026-10-22 found I3771 (fixed in 3a's fix commit) plus I1962 and I2746, whose missing rule paths sit in scope: as files the issue plans to write, which is legitimate."
+desired_state: "For every issue whose status is not done, each repository path written in current_state either exists in the tree or is one the issue's own scope lists (a file it plans to create). Otherwise both engines report one finding, code dead_path_citation, naming the issue, the path and the remedy, with byte-identical messages so case 99_plan_capabilities keeps its parity. Done issues, milestones, ADRs, sessions and every field other than current_state stay exempt, as reference-check decides for records."
+scope:
+  - "apps/majordomus-cli/src/plan.rs"
+  - "lib/project.awk"
+  - "test/cases"
+  - ".ai/repo/project/issues/I3776.yaml"
+non_scope:
+  - "Rewriting a done issue, an ADR or a session record to keep a path current"
+  - "Markdown documents, which scripts/ci/reference-check already holds"
+  - "Fields other than current_state, which narrate why and what is wanted rather than what is"
+acceptance_criteria:
+  - "plan validate names an open issue whose current_state cites a missing repository path, with the path and the remedy, in both engines with identical messages"
+  - "A missing path that the same issue lists in scope is not reported, and neither is any path in a done issue"
+  - "Negative: a fixture plan with an open issue citing a v1 rule file whose v2 exists fails, and removing the check turns its case red"
+validation:
+  - "majordomus plan validate"
+evidence_required:
+  - "test_an_open_issues_current_state_cites_only_paths_that_exist"
+depends_on: []

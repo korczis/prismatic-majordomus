@@ -45,6 +45,7 @@ use crate::capability::handler::{CapabilityError, Context};
 use crate::capability::model::{Exposure, McpExposure, McpResource, Stability};
 use crate::capability::module::ModuleDescriptor;
 use crate::capability::CachePolicy;
+use crate::capability_coverage::CapabilityCoverage;
 use crate::generate;
 use crate::git::GitState;
 use crate::index::State;
@@ -780,7 +781,7 @@ pub fn module() -> ModuleDescriptor {
                 description: "Every dimension of what this process serves — the layer as it was read, the registry, the scope, version control, benchmark coverage, the committed registry manifest, the shared server of this checkout and the attached peers — each decided by the engine that owns it, with the command that reproduces the verdict.",
                 input: Empty,
                 output: Health,
-                stability: Stability::BehaviorallyVerified,
+                stability: Stability::Implemented,
                 exposure: Exposure {
                     mcp: Some(McpExposure {
                         tool: Some("majordomus_health".into()),
@@ -799,7 +800,7 @@ pub fn module() -> ModuleDescriptor {
                 description: "Is this process alive: the cheapest true statement this executable can make about itself, with the version that answered. No filesystem traversal, no index build, no network — this is what a hosting platform polls, and it must cost nothing to say.",
                 input: Empty,
                 output: Liveness,
-                stability: Stability::BehaviorallyVerified,
+                stability: Stability::Implemented,
                 exposure: Exposure { mcp: None, http: get("/api/v1/live"), cli: None },
                 tags: ["health", "deployment"],
                 handler: liveness,
@@ -810,13 +811,42 @@ pub fn module() -> ModuleDescriptor {
                 description: "Can this process serve traffic: the registry and the index it built at start-up, already resident, and how the layer read. Only local initialisation — never an external provider, a database or another service, because a readiness check that probes a dependency fails a deployment for something that is not this process.",
                 input: Empty,
                 output: Readiness,
-                stability: Stability::BehaviorallyVerified,
+                stability: Stability::Implemented,
                 exposure: Exposure { mcp: None, http: get("/api/v1/ready"), cli: None },
                 tags: ["health", "deployment"],
                 handler: readiness,
             },
+            capability! {
+                id: "health.coverage",
+                title: "Coverage matrix of every executable capability",
+                description: "For every executable capability, whether it is exposed, documented, tested, enforced and benchmarked, each cell naming the artifact that supports it — a transport, a hand-written document or command example, a route of the evidence subject index, a benchmark case — or, when it is a gap, what is missing and which end of a relation failed. Which columns a capability must resolve is the repository's `coverage:` policy; a relation that claims evidence and does not resolve is a gap whatever the policy says (I1011).",
+                input: Empty,
+                output: CapabilityCoverage,
+                stability: Stability::Implemented,
+                exposure: Exposure {
+                    mcp: super::mcp("majordomus_coverage"),
+                    http: get("/api/v1/health/coverage"),
+                    cli: None,
+                },
+                tags: ["health", "evidence", "introspection"],
+                cache: CachePolicy::Process { max_entries: 2, ttl_seconds: Some(30) },
+                handler: coverage,
+            },
         ],
     }
+}
+
+/// `health.coverage`: the matrix under the repository's `coverage:` policy. A policy that
+/// cannot be read requires nothing, so the matrix still reports every cell; whether the
+/// policy reads is `doctor`'s finding.
+fn coverage(ctx: &Context, _: Empty) -> Result<CapabilityCoverage, CapabilityError> {
+    let root = std::path::PathBuf::from(&ctx.index.repository.root);
+    let policy = crate::repository::Repository::open(&root)
+        .ok()
+        .and_then(|repo| crate::policy::LoadedPolicy::load(&repo).ok())
+        .map(|loaded| loaded.policy.coverage)
+        .unwrap_or_default();
+    Ok(crate::capability_coverage::matrix(ctx, &policy))
 }
 
 /// What the continuity store says about the repository's health: the worst severity among

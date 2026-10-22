@@ -132,6 +132,54 @@ pub struct KnowledgePolicy {
     pub candidate_max_age_minutes: Option<i64>,
 }
 
+/// `coverage:` — which columns of the coverage matrix (`health.coverage`, I1011) a capability
+/// must resolve. Each rule names a capability kind, a stability, or both, and the columns a
+/// capability it matches requires; a capability requires the union over every rule that
+/// matches it. The policy is the repository's: nothing in the renderer decides that a
+/// descriptive capability owes no behavioural test, the absence of a rule does.
+///
+/// ```
+/// use majordomus_cli::policy::CoveragePolicy;
+/// let p: CoveragePolicy = serde_json::from_str(
+///     r#"{"require": [{"stability": "behaviorally_verified", "columns": ["tested"]}]}"#,
+/// ).unwrap();
+/// assert_eq!(p.require[0].columns, ["tested"]);
+/// assert_eq!(p.require[0].kind, None, "a rule that names no kind matches every kind");
+/// assert!(CoveragePolicy::default().require.is_empty(), "absent requires nothing");
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Default)]
+pub struct CoveragePolicy {
+    /// `coverage.require:` — the rules, in the file's order.
+    #[serde(default)]
+    pub require: Vec<CoverageRequirement>,
+}
+
+/// One rule of `coverage.require:`: the columns a capability must resolve when its kind and
+/// stability match. A field the rule leaves out matches every value, so a rule naming neither
+/// holds every executable capability to its columns.
+///
+/// ```
+/// use majordomus_cli::policy::CoverageRequirement;
+/// let rule: CoverageRequirement =
+///     serde_json::from_str(r#"{"kind": "command", "columns": ["tested", "documented"]}"#).unwrap();
+/// assert_eq!(rule.kind.as_deref(), Some("command"));
+/// assert_eq!(rule.stability, None, "absent matches every stability");
+/// assert_eq!(rule.columns, ["tested", "documented"]);
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+pub struct CoverageRequirement {
+    /// The capability kind it applies to (`query`, `command`); absent is every kind.
+    #[serde(default)]
+    pub kind: Option<String>,
+    /// The stability it applies to (`implemented`, `behaviorally_verified`, ...); absent is
+    /// every stability.
+    #[serde(default)]
+    pub stability: Option<String>,
+    /// The columns a matching capability must resolve: `exposed`, `documented`, `tested`,
+    /// `enforced`, `benchmarked`.
+    pub columns: Vec<String>,
+}
+
 /// The policy, typed to what the projections consume. Every other key is carried through
 /// unread: the policy schema under `share/schemas/majordomus/policy/policy.v1.schema.json` owns the full shape.
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Default)]
@@ -151,6 +199,10 @@ pub struct Policy {
     /// `knowledge:`.
     #[serde(default)]
     pub knowledge: KnowledgePolicy,
+    /// `coverage:` — the evidence the coverage matrix holds each capability to (I1011).
+    /// Absent requires nothing: every cell is still reported, and none is a gap.
+    #[serde(default)]
+    pub coverage: CoveragePolicy,
     /// `projections:`.
     #[serde(default)]
     pub projections: Vec<Projection>,

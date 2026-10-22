@@ -3,8 +3,9 @@
 //! Evidence carries text nobody wrote for a reader outside the machine it ran on: the reason
 //! a case skipped, the tail of a failure, a command's captured output. Any of it can hold a
 //! credential the command echoed or a path that names the account it ran under, and once it
-//! is on a public page it cannot be taken back. [`public_text`] is the rule for that text;
-//! wiring the evidence publication to it is I1955, and until then nothing calls it.
+//! is on a public page it cannot be taken back. [`public_text`] is the rule for that text,
+//! and its one caller is the evidence publication: every text the site's publication carries
+//! passes through it in `evidence::publication::published_text` (I1955).
 //!
 //! [`redact_secrets`] alone is applied today wherever this process hands back or sends text
 //! it did not write (I2161): every HTTP error body (`http::router::error_response`, which

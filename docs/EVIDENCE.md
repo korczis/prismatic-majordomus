@@ -474,13 +474,16 @@ every surface is derived from it ([`CAPABILITIES.md`](CAPABILITIES.md)).
 | `evidence.test` | `majordomus evidence proves <id>` | `GET /api/v1/evidence/test` | tool `majordomus_evidence_test` |
 | `evidence.record` | `majordomus evidence record` | — | — |
 | `evidence.stamp` | `majordomus evidence stamp` | — | — |
+| `evidence.subject` | `majordomus evidence subject <key>` | `GET /api/v1/evidence/subject` | tool `majordomus_evidence_subject` |
+| `evidence.coverage` | `majordomus evidence coverage` | `GET /api/v1/evidence/coverage` | tool `majordomus_evidence_coverage` |
+| `evidence.publish` | `majordomus evidence publish` | — | — |
 
-These five are subcommands of the Rust executable, and `majordomus` is the one program an
+These eight are subcommands of the Rust executable, and `majordomus` is the one program an
 installed tool puts on `PATH`. The shell tool has a command of the same name, which records
 what a task owes (`majordomus evidence --covers <token>`, `--gate <id>`;
 [`CLI.md`](CLI.md#majordomus-evidence)) and takes options only. So a word in the first
-position is never the shell tool's: the launcher hands `show`, `claim`, `proves`, `record`
-and `stamp` to the executable with every argument unchanged, the global `--repo` included
+position is never the shell tool's: the launcher hands `show`, `claim`, `proves`, `record`,
+`stamp`, `subject`, `coverage` and `publish` to the executable with every argument unchanged, the global `--repo` included
 on either side of the command, and the exit code is then the executable's. Which words
 those are is read from the executable's own declaration, never listed in the launcher, and
 `majordomus evidence --help` prints both halves. Through 0.22.0 the word reached the
@@ -507,6 +510,11 @@ repository's evidence.
 
 `evidence.stamp` writes nothing, and it is command-line only too: it reads a report whose
 path its caller names, and a network client must not choose a file this executable reads.
+
+`evidence.publish` writes the site's publication into a directory outside the checkout, and
+nothing in the repository. It reads a directory its caller names and writes into another, so
+it is command-line only and waived from the benchmark, as the recorder is
+([The site's publication](#the-sites-publication)).
 
 ## Navigating in both directions
 
@@ -619,6 +627,112 @@ derivations of subject to test that came before it:
 jq '.subjects["feature:evidence"]' site/data/registry/evidence-subjects.json
 majordomus generate site --check
 ```
+
+### Asking about one subject
+
+`evidence subject <key>` answers for any subject of the index, by its key, through the
+index's own judge: the verdict over its own routes and its members' own verdicts, the totals
+by state beside it, each route with its state, the execution behind it and the command that
+runs it again, each member with its own verdict, a rule's mechanisms, and the subject's
+advisory findings. It is the capability `evidence.subject`, so the command line,
+`GET /api/v1/evidence/subject?subject=<key>` and the MCP tool `majordomus_evidence_subject`
+give the same document for the same key. It reads the working tree by default and, with
+`--presented <rev>`, the checked-out commit as committed, from the ledger that commit holds
+exactly as `evidence show --presented` reads it, so a subject never reads greener than the
+claims it is made of.
+
+A key the index does not hold is a not-found, never an empty verdict: the command line exits
+`13`, HTTP answers `404` and MCP a tool error, each naming the key and where the keys are
+listed (`subjects` in `site/data/registry/evidence-subjects.json`).
+
+<!-- majordomus:unrun it names subjects of this repository's own index, which the command-line examples' fixture does not hold; the example `evidence subject rule:project.alpha --format json`, case 508 and tests/evidence.rs run the same command against a fixture's every subject kind -->
+```sh
+majordomus evidence subject feature:evidence
+majordomus evidence subject "command:evidence show" --format json
+majordomus evidence subject rule:project.canonical-order --presented HEAD
+```
+
+### Coverage beside the verdict
+
+`evidence coverage` lists the coverage records the run records carry. A run record is what
+`evidence record --run-record <file>` writes, or the `run_record` of a CI evidence artifact's
+`record.json`; a coverage record is inside one when the recording was given a coverage
+summary. By default the records are read from `.ai/local/evidence/runs/`, the local run
+directory of ADR 0087 decision 2, which nothing writes yet but `--run-record`; `--from` names
+a run record, or a directory whose `*.json` files are read as run records, inside the
+checkout. A source outside the checkout is refused, because a network client must not choose
+a file outside the repository for this executable to read; copy a downloaded CI artifact
+under the local layer first.
+
+Each record is judged against the checked-out commit and its tree, measured ignoring the
+evidence ledger's working copy: it is `current` only when it was measured at that commit, its
+own run measured a clean tree and the checkout is clean, and otherwise `stale`, with the
+reason and its own commit. `--presented-tree` can only weaken the measured tree. Coverage is
+supporting evidence (decision 12): nothing here moves a verdict. A file of the source that is
+not a run record is listed under `unread` with the reason, and a run record without coverage
+is counted in `runs`.
+
+<!-- majordomus:unrun the second line reads a CI evidence artifact copied under the local layer, which no checkout holds until one is downloaded; the example `evidence coverage --format json`, case 508 and tests/evidence.rs run the command over a fixture's run records -->
+```sh
+majordomus evidence coverage
+majordomus evidence coverage --from .ai/local/ci-evidence --format json
+```
+
+The run index itself, `evidence runs` and `evidence run <id>`, and reading supplementary
+records into a subject's verdict through the monotone rule wait for the local run index
+(I1957).
+
+### The site's publication
+
+`evidence publish` writes what the site publishes about evidence, as
+`evidence-publication.json` in the directory `--out` names (ADR 0087, decisions 3 and 14).
+It runs in the build's checkout of the presented commit P: `--presented` is
+`build.json.commit` and must be the checked-out commit, and `--presented-tree` is
+`build.json.dirty`, which can only weaken the tree as measured. Every claim is judged from
+the ledger P holds, exactly as `evidence show --presented` judges it. The run records read
+from `--from` (P's own CI evidence artifact, or its nearest ancestor's: a run record, or a
+directory whose `*.json` files are read as run records) can only weaken a verdict, through the
+monotone rule: a clean failing run of the same test at a commit that contains the evidence
+and that P contains caps the verdict at `stale`, naming the record. No verdict in the
+publication is stronger than the ledger committed at P.
+
+The publication carries one state, the first matching row of decision 3's table, decided from
+what it observes: the presented tree, the records read, and `--run`, what became of P's CI
+run (`pending`, `concluded` or `absent`), which no file of the checkout holds.
+
+| # | Observed | State |
+|---|---|---|
+| 1 | the presented tree is not clean | `dirty` |
+| 2 | a record read, P's own or an ancestor's, caps at least one verdict | `stale` |
+| 3 | P's own record is read, and every tree it carries was measured clean | `current` |
+| 4 | P's own record is not read, and `--run pending` | `pending` |
+| 5 | anything else: P's run concluded without a record, P's record carries a dirty or unknown tree, no run of P is found, or what became of it was not given | `unknown`, naming which |
+
+Whatever row matched, every record that capped a verdict is named under `capped_by`, in
+`reasons`, and on the claims it capped, so a dirty build that a record also contradicts reads
+`dirty` and still names that record. A record of an ancestor only can cap a verdict and
+nothing else: it is listed by its commit, with the commits and the changed files between, and
+it never makes the publication `current`. A record of another history is listed as
+`unrelated` and says nothing. No state blocks publishing.
+
+What is published is a projection. Its fields are named one by one in
+`evidence::publication::ALLOW_LIST`, the one declaration of what the site may know about
+evidence, and a field not on it is not published, whatever the type carries: no execution, no
+command, no digest, no claim sentence and no captured output. Every text passes the one
+redactor (`redaction::public_text`), which normalises machine paths and redacts credentials; a
+text it refuses is published as a fixed `[withheld: …]` sentence and counted under `withheld`.
+The rendered artifact still passes the generator's refusal of machine paths and credential
+markers, or nothing is written. An `--out` inside the checkout is refused with exit `13`, so
+publishing changes nothing in the repository.
+
+<!-- majordomus:unrun it reads a CI evidence artifact downloaded outside the checkout and writes outside it, which no documentation check repeats; the example `evidence publish --presented HEAD --out .`, case 512 and tests/evidence_publication.rs run the command against a fixture's recorded runs -->
+```sh
+majordomus evidence publish --presented HEAD --presented-tree clean \
+  --from "$RUNNER_TEMP/evidence" --run concluded --out "$RUNNER_TEMP/publication"
+```
+
+`scripts/pages` keeps the interim "Recorded by CI" section until the publication slice (I1959)
+makes it call `evidence publish`.
 
 ADR 0087 (proposed) records the decision to index evidence by subject.
 

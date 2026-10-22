@@ -147,6 +147,7 @@ pub mod coverage;
 pub mod freshness;
 pub mod ledger;
 pub mod provenance;
+pub mod publication;
 pub mod record;
 pub mod run;
 pub mod subject;
