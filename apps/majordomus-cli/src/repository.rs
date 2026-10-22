@@ -69,6 +69,40 @@ pub struct LocalHalf {
     pub tracked: bool,
     /// Loaded into a worker's context implicitly? The contract says `false`.
     pub implicit_context: bool,
+    /// The lifecycle of what lives in the local half, which carries no tracked contract of
+    /// its own to say it (I2870): `runtime`. Optional, so a layer written before it stays
+    /// valid; the boundary check (I2871) judges only what is declared.
+    #[serde(default)]
+    pub lifecycle: Option<Lifecycle>,
+    /// What must never appear in the local half: `canonical`, a copy of authored knowledge.
+    #[serde(default)]
+    pub excludes: Vec<String>,
+}
+
+/// How what lives in a directory comes to exist and how long it lasts: the classes of
+/// docs/TWO_FOLDER_CONSOLIDATION.md, the same values `context/v1`'s `layout.lifecycle` takes.
+///
+/// ```
+/// use majordomus_cli::repository::Lifecycle;
+/// let l: Lifecycle = serde_json::from_str(r#""runtime""#).unwrap();
+/// assert_eq!(l, Lifecycle::Runtime);
+/// assert!(serde_json::from_str::<Lifecycle>(r#""ephemeral""#).is_err());
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Lifecycle {
+    /// Once written, it is the person's file.
+    Canonical,
+    /// Computed from this repository's own `.ai/` content, committed and regenerable.
+    Derived,
+    /// Laid down from the tool's distribution, identical at one version.
+    Generated,
+    /// Recomputable state with no meaning of its own.
+    Cache,
+    /// State of one clone, machine or process; never travels through git as content.
+    Runtime,
+    /// Written although it serves no purpose where it is.
+    Accidental,
 }
 
 /// The scoped context documents: file names that must carry the context contract
@@ -445,6 +479,68 @@ mod tests {
         let with_context = format!("{MANIFEST_TEXT}context:\n  documents: [README.md]\n");
         let m = Manifest::parse(Path::new("m"), &with_context).unwrap();
         assert_eq!(m.context.unwrap().documents, vec!["README.md"]);
+    }
+
+    /// The local half declares its lifecycle and what it excludes (I2870), and the type and
+    /// the distribution's hand-written schema agree on its keys until I2873 generates the
+    /// schema: every key the schema names is read by the type, an unknown one is refused by
+    /// both, and a layer written before the keys existed still parses.
+    #[test]
+    fn the_local_half_and_its_schema_name_the_same_keys() {
+        let schema: serde_json::Value = serde_json::from_str(include_str!(
+            "../../../share/schemas/majordomus/manifest/manifest.v1.schema.json"
+        ))
+        .expect("the manifest schema");
+        let local = &schema["properties"]["local"];
+        let mut keys: Vec<&str> = local["properties"]
+            .as_object()
+            .expect("local's properties")
+            .keys()
+            .map(String::as_str)
+            .collect();
+        keys.sort_unstable();
+        assert_eq!(
+            keys,
+            [
+                "excludes",
+                "implicit_context",
+                "lifecycle",
+                "path",
+                "tracked"
+            ],
+            "LocalHalf's fields and the schema's local keys"
+        );
+        assert_eq!(
+            local["additionalProperties"], false,
+            "the schema refuses an unknown key"
+        );
+
+        let declared = MANIFEST_TEXT.replace(
+            "  implicit_context: false\n",
+            "  implicit_context: false\n  lifecycle: runtime\n  excludes: [canonical]\n",
+        );
+        let m = Manifest::parse(Path::new("m"), &declared).unwrap();
+        assert_eq!(m.local.lifecycle, Some(Lifecycle::Runtime));
+        assert_eq!(m.local.excludes, vec!["canonical"]);
+        let older = Manifest::parse(Path::new("m"), MANIFEST_TEXT).unwrap();
+        assert_eq!(
+            (older.local.lifecycle, older.local.excludes.len()),
+            (None, 0)
+        );
+
+        let unknown = MANIFEST_TEXT.replace(
+            "  implicit_context: false\n",
+            "  implicit_context: false\n  retention: forever\n",
+        );
+        assert!(
+            Manifest::parse(Path::new("m"), &unknown).is_err(),
+            "the type refuses it too"
+        );
+        let wrong = declared.replace("lifecycle: runtime", "lifecycle: ephemeral");
+        assert!(
+            Manifest::parse(Path::new("m"), &wrong).is_err(),
+            "not a lifecycle"
+        );
     }
 
     #[test]
