@@ -159,6 +159,13 @@ fn hundreds_of_http_requests_rebuild_nothing_and_openapi_is_built_once() {
     let baseline = startup_work(&before);
     assert_eq!(before["openapi_builds"], 1);
     assert_eq!(before["http_projection_builds"], 1);
+    // serve finds the repository to elect a server and loads the layer from that same
+    // repository rather than discovering it again (I3015): one walk, one manifest read
+    assert_eq!(
+        before["phases"]["repository_discovery"]["count"], 1,
+        "serve discovers the repository once at startup: {before}"
+    );
+    assert_eq!(before["repository_discoveries"], 1);
     let paths = [
         "/openapi.json",
         "/swagger",
