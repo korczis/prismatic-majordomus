@@ -27,7 +27,7 @@ print({c["id"]:c["verdict"] for s in d["sections"] for c in s["checks"]}["verifi
 }
 ledger() {   # <commit> <outcome>
   local digest
-  digest="sha256:$(shasum -a 256 test/cases/01_ok.sh | cut -d' ' -f1)"
+  digest="sha256:$(mj_sha256_hex test/cases/01_ok.sh)"
   mkdir -p .ai/repo/evidence
   printf '{"version":1,"executions":[{"test":"suite:01_ok","runner":"suite","source":"test/cases/01_ok.sh","outcome":"%s","seconds":1,"commit":"%s","working_tree":"clean","digest":"%s","at":"2026-10-21T00:00:00Z","origin":"local","command":"bash test/run.sh 01_ok"}]}\n' \
     "$2" "$1" "$digest" > .ai/repo/evidence/ledger.json
