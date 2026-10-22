@@ -78,6 +78,9 @@ H
   # the protocol and the registry, then every tracked section
   mj_init_file "$skel/ai/README.md" "$MJ_AI_DIR/README.md"
   mj_init_file "$skel/ai/manifest.yaml" "$MJ_AI_MANIFEST"
+  # a manifest seeded now names the tool it was written for (I1980); one already there is
+  # the layer's own, and `migrate --layer` is what advances it
+  case " $MJ_INIT_CREATED " in *" $(mj_rel "$MJ_AI_MANIFEST") "*) mj_layer_stamp_tool "$MJ_AI_MANIFEST" >/dev/null ;; esac
   mj_init_file "$skel/ai/repo/README.md" "$MJ_AI_REPO_DIR/README.md"
   # a policy this run seeds, as opposed to one an --extend found: only the former is fitted
   local seeds_policy=0; [ -e "$MJ_POLICY_FILE" ] || seeds_policy=1

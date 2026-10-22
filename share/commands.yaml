@@ -103,9 +103,9 @@ commands:
     requires_task: optional
     json: true
     syntax: majordomus doctor [--json]
-    reads: [.ai/repo/policy.yaml, .ai/repo/profiles/, git hooks, .ai/local/state/, .ai/repo/rules/]
+    reads: [.ai/manifest.yaml, .ai/repo/policy.yaml, .ai/repo/profiles/, git hooks, .ai/local/state/, .ai/repo/rules/]
     writes: []
-    exit_codes: [0, 2, 10, 12]
+    exit_codes: [0, 2, 10, 11, 12]
     demo: doctor-findings
     note: "The primary guarantee is wiring reconciliation — a declared enforcement that no hook invokes, or whose exit code a hook swallows, is a failure rather than a passing line. It reads nothing of the checkout's server, its lease or the mesh: a stale server is reported by `majordomus serve status`, the mesh by `majordomus mesh doctor`, and the server's own health by GET /api/v1/health and GET /api/v1/ready."
 
@@ -555,7 +555,7 @@ commands:
 
   - id: migrate
     title: migrate
-    summary: Move pre-.ai project data from .majordomus/ into .ai/, explicitly and backed up.
+    summary: Move pre-.ai project data from .majordomus/ into .ai/, explicitly and backed up; with --layer, record the tool version the layer is written for.
     category: system
     stage: setup
     visibility: public
@@ -564,12 +564,12 @@ commands:
     requires_installed: false
     requires_task: none
     json: false
-    syntax: majordomus migrate [--dry-run]
-    reads: [.majordomus/, share/skeleton/ai]
+    syntax: majordomus migrate [--dry-run] [--layer]
+    reads: [.majordomus/, share/skeleton/ai, .ai/manifest.yaml]
     writes: [.ai/, tmp/majordomus-migrate-backup/, .gitignore, .ai/local/state/ledger.jsonl]
     exit_codes: [0, 2, 10, 12, 13, 15]
     demo: layout-migration
-    note: Runs on the legacy layout only. It copies the local state aside before anything moves, never deletes a file it does not know, and refuses a directory that holds both project data and a tool installation.
+    note: Without --layer it runs on the legacy layout only; it copies the local state aside before anything moves, never deletes a file it does not know, and refuses a directory that holds both project data and a tool installation. With --layer it writes the manifest's tool key and nothing else, which ends doctor's reading of findings as version skew (I1980).
 
   - id: recover
     title: recover

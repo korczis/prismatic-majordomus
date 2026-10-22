@@ -264,6 +264,12 @@ mj_load_manifest() {
   fi
   k="$(mj_yaml_unknown_keys "$MJ_MAN_FLAT" "$MJ_ALLOW_DIR/manifest.txt" || true)"
   [ -z "$k" ] || { MJ_MANIFEST_ERROR="unknown key(s): $(printf '%s' "$k" | tr '\n' ' ')"; return 1; }
+  # A layer written for a newer tool is refused in one sentence naming both versions, not
+  # read until something deeper fails in a cascade nobody can trace back to the version (I1980)
+  if [ "$(mj_layer_skew)" = newer ]; then
+    MJ_MANIFEST_ERROR="it was written for majordomus $(mj_yget "$MJ_MAN_FLAT" tool), newer than this one ($MJ_VERSION); install $(mj_yget "$MJ_MAN_FLAT" tool) or newer before using this repository: curl -fsSL https://majordomus.dev/install.sh | sh"
+    return 1
+  fi
   for k in repo.path local.path sections.policy sections.profiles sections.rules sections.prompts \
            sections.skills sections.workflows sections.knowledge sections.adrs sections.project; do
     [ -n "$(mj_yget "$MJ_MAN_FLAT" "$k")" ] || { MJ_MANIFEST_ERROR="missing key $k"; return 1; }
@@ -271,6 +277,40 @@ mj_load_manifest() {
   return 0
 }
 mj_man() { [ -n "${MJ_MAN_FLAT:-}" ] || return 0; mj_yget "$MJ_MAN_FLAT" "$1"; }
+
+# The tool version a layer was written for: the manifest's `tool`, major.minor, written by
+# init and advanced by `migrate --layer`. A patch release changes nothing a layer must say,
+# so the patch is not part of it. Absent in a layer written before the key existed.
+mj_tool_minor() { # version -> major.minor
+  local v="${1%%-*}"; printf '%s.%s' "$(printf '%s' "$v" | cut -d. -f1)" "$(printf '%s' "$v" | cut -d. -f2)"
+}
+# Where the layer stands against this tool: older, same, newer, or unknown when the
+# manifest names no version (or one that is not major.minor).
+mj_layer_skew() {
+  local layer mine lmaj lmin tmaj tmin
+  layer="$(mj_man tool)"; mine="$(mj_tool_minor "$MJ_VERSION")"
+  case "$layer" in [0-9]*.[0-9]*) ;; *) printf unknown; return 0 ;; esac
+  lmaj="${layer%%.*}"; lmin="${layer#*.}"; tmaj="${mine%%.*}"; tmin="${mine#*.}"
+  case "$lmaj$lmin$tmaj$tmin" in *[!0-9]*) printf unknown; return 0 ;; esac
+  if [ "$lmaj" -gt "$tmaj" ] || { [ "$lmaj" -eq "$tmaj" ] && [ "$lmin" -gt "$tmin" ]; }; then printf newer
+  elif [ "$lmaj" -eq "$tmaj" ] && [ "$lmin" -eq "$tmin" ]; then printf same
+  else printf older; fi
+}
+# Write this tool's major.minor into the manifest as `tool`, right after `schema:`, or
+# replace the one there. Prints what it was before (empty when the key was absent).
+mj_layer_stamp_tool() { # manifest path
+  local f="$1" was tmp mine
+  mine="$(mj_tool_minor "$MJ_VERSION")"
+  was="$(sed -n 's/^tool:[[:space:]]*"\{0,1\}\([0-9][0-9.]*\)"\{0,1\}[[:space:]]*$/\1/p' "$f" | head -n 1)"
+  tmp="$(mktemp "${TMPDIR:-/tmp}/mj.tool.XXXXXX")"
+  if grep -q '^tool:' "$f"; then
+    sed "s/^tool:.*/tool: \"$mine\"/" "$f" > "$tmp"
+  else
+    awk -v line="tool: \"$mine\"" '{ print } /^schema:/ && !done { print line; done = 1 }' "$f" > "$tmp"
+  fi
+  cat "$tmp" > "$f"; rm -f "$tmp"
+  printf '%s' "$was"
+}
 
 # The provider template for a projection: the repository's own override under its AI
 # layer when it has one, otherwise the adapter the distribution ships.

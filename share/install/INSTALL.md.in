@@ -150,6 +150,22 @@ Run the same command again. The installer is idempotent:
 - a newer version installed and no version pinned — it refuses to move you backwards, and
   says how to do it anyway (`--force`, or `--version`).
 
+A repository's layer names the tool version it was written for: `tool:` in
+`.ai/manifest.yaml`, `major.minor`, written by `majordomus init`. After an upgrade, migrate
+each repository on a branch before every launcher that commits to it is switched:
+
+1. Run `majordomus doctor` with the new version. Against a layer written for an older one,
+   it says so first, and failures exit 11 (version skew) rather than 10, because a check
+   the upgrade introduced is not yet a defect of the layer.
+2. Fix or accept what it reports, then run `majordomus migrate --layer`, which advances
+   `tool:` to the new version and changes nothing else. From then on doctor reads every
+   failure as a defect.
+3. Merge the branch, then switch the launchers.
+
+A layer written for a newer tool than the one reading it is refused with one message naming
+both versions; install that version or newer. A layer that names no version is judged as
+before, and `majordomus migrate --layer` adds the key.
+
 ## Uninstalling
 
 ```bash

@@ -93,6 +93,40 @@ pub struct Manifest {
     /// Optional: absent in a layer written before context documents existed.
     #[serde(default)]
     pub context: Option<ContextConventions>,
+    /// The tool version the layer was written for, `major.minor`: written by init and
+    /// advanced by `migrate --layer`. Absent in a layer written before the key existed.
+    #[serde(default)]
+    pub tool: Option<String>,
+}
+
+/// `major.minor` of a version, the patch and any pre-release dropped: what a layer names.
+fn minor_of(version: &str) -> Option<(u64, u64)> {
+    let mut parts = version.split('-').next()?.split('.');
+    let major = parts.next()?.parse().ok()?;
+    let minor = parts.next()?.parse().ok()?;
+    Some((major, minor))
+}
+
+/// The refusal of a layer written for a newer tool, in one sentence naming both versions:
+/// read further, it fails later in ways nobody can trace back to the version (I1980).
+///
+/// ```
+/// use majordomus_cli::repository::newer_layer;
+///
+/// assert!(newer_layer(Some("99.0"), "0.26.0").unwrap().contains("written for majordomus 99.0"));
+/// assert!(newer_layer(Some("0.26"), "0.26.3").is_none(), "a patch is not a newer layer");
+/// assert!(newer_layer(Some("0.12"), "0.26.0").is_none(), "an older layer is read");
+/// assert!(newer_layer(None, "0.26.0").is_none(), "a layer that names no version is read");
+/// ```
+pub fn newer_layer(layer: Option<&str>, tool: &str) -> Option<String> {
+    let layer = layer?;
+    if minor_of(layer)? > minor_of(tool)? {
+        Some(format!(
+            "it was written for majordomus {layer}, newer than this one ({tool}); install {layer} or newer before using this repository: curl -fsSL https://majordomus.dev/install.sh | sh"
+        ))
+    } else {
+        None
+    }
 }
 
 impl Manifest {
@@ -116,19 +150,27 @@ impl Manifest {
                 supported: LAYER_SCHEMA.to_string(),
             });
         }
-        serde_json::from_value(serde_json::Value::Object(map)).map_err(|e| {
-            let reason = e.to_string();
-            match reason.strip_prefix("unknown field `") {
-                Some(rest) => Error::UnknownKeys {
-                    path: path.to_path_buf(),
-                    keys: vec![rest.split('`').next().unwrap_or(rest).to_string()],
-                },
-                None => Error::InvalidManifest {
-                    path: path.to_path_buf(),
-                    reason,
-                },
-            }
-        })
+        let manifest: Manifest =
+            serde_json::from_value(serde_json::Value::Object(map)).map_err(|e| {
+                let reason = e.to_string();
+                match reason.strip_prefix("unknown field `") {
+                    Some(rest) => Error::UnknownKeys {
+                        path: path.to_path_buf(),
+                        keys: vec![rest.split('`').next().unwrap_or(rest).to_string()],
+                    },
+                    None => Error::InvalidManifest {
+                        path: path.to_path_buf(),
+                        reason,
+                    },
+                }
+            })?;
+        if let Some(reason) = newer_layer(manifest.tool.as_deref(), env!("CARGO_PKG_VERSION")) {
+            return Err(Error::InvalidManifest {
+                path: path.to_path_buf(),
+                reason,
+            });
+        }
+        Ok(manifest)
     }
 }
 

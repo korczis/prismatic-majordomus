@@ -55,7 +55,7 @@ mj_cmd_doctor() {
   case " $* " in *" --help "*|*" -h "*) mj_doctor_reach ;; esac
   local a
   for a in "$@"; do case "$a" in
-    --help|-h) echo "usage: majordomus doctor [--json]   (read-only; exit 0 healthy, 10 failures, 12 missing)"
+    --help|-h) echo "usage: majordomus doctor [--json]   (read-only; exit 0 healthy, 10 failures, 11 failures in a layer written for an older tool (version skew), 12 missing)"
                echo "  MAJORDOMUS_DOCTOR_CONTEXT=commit   the pre-commit hook's run: leaves out the per-worktree uncommitted-work reading and says so"
                return 0 ;;
     *) mj_die "$MJ_EX_USAGE" "doctor: unknown option $a" ;;
@@ -77,11 +77,27 @@ mj_cmd_doctor() {
     mj_finish_doctor; return
   fi
 
+  mj_report_layer_version
   mj_doctrine_dispatch doctor
   mj_report_environment
   mj_report_reasoning
   mj_report_budget doctor "$t_start"
   mj_finish_doctor
+}
+
+# Which tool version the layer was written for, against this one (I1980). A layer older than
+# the tool is read, but what fails in it may be a check the upgrade introduced rather than a
+# defect: doctor says so first and exits with the skew status, naming the migration, instead
+# of 10 for every finding. A layer that names no version is judged as it always was.
+MJ_DOCTOR_SKEW=""
+mj_report_layer_version() {
+  local layer mine; layer="$(mj_man tool)"; mine="$(mj_tool_minor "$MJ_VERSION")"
+  MJ_DOCTOR_SKEW="$(mj_layer_skew)"
+  case "$MJ_DOCTOR_SKEW" in
+    older) mj_warn layer "version" "written for majordomus $layer, read by $mine: a failure below may be a check $mine introduced, i.e. version skew rather than a defect" "majordomus migrate --layer   (on a branch, before switching every launcher)" ;;
+    same) mj_ok layer "version" "written for majordomus $layer, this tool's version" ;;
+    *) mj_info layer "version" "the manifest names no tool version; findings are judged as defects (init writes it, majordomus migrate --layer adds it)" "majordomus migrate --layer" ;;
+  esac
 }
 
 # The command's own wall time against the policy's budget for it: WARN over budget, INFO
@@ -761,7 +777,14 @@ mj_hook_binary_ok() {
 mj_finish_doctor() {
   [ "$MJ_JSON" = 1 ] || printf 'doctor: %s failure(s)\n' "$MJ_FAILS"
   if [ "$MJ_DOCTOR_MISSING" = 1 ]; then exit "$MJ_EX_MISSING"; fi
-  [ "$MJ_FAILS" = 0 ] && exit "$MJ_EX_OK" || exit "$MJ_EX_CONTRACT"
+  [ "$MJ_FAILS" = 0 ] && exit "$MJ_EX_OK"
+  # an older layer's failures are version skew until it is migrated: exit 11, not 10 (I1980)
+  if [ "${MJ_DOCTOR_SKEW:-}" = older ]; then
+    [ "$MJ_JSON" = 1 ] || printf 'doctor: version skew: the layer is written for majordomus %s and this is %s; migrate on a branch (majordomus migrate --layer) once the findings above are fixed or accepted\n' \
+      "$(mj_man tool)" "$(mj_tool_minor "$MJ_VERSION")"
+    exit "$MJ_EX_DRIFT"
+  fi
+  exit "$MJ_EX_CONTRACT"
 }
 
 # Prove the continuity subsystem is wired, not merely installed. Each check runs the real

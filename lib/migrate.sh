@@ -23,15 +23,19 @@ MJ_MIG_SRC=""         # the legacy directory
 MJ_MIG_MANIFEST=""    # flattened skeleton manifest: the destinations come from it
 
 mj_cmd_migrate() {
-  local dry=0 a
+  local dry=0 layer=0 a
   for a in "$@"; do case "$a" in
     --dry-run) dry=1 ;;
+    --layer) layer=1 ;;
     --help|-h) cat <<H
-usage: majordomus migrate [--dry-run]
+usage: majordomus migrate [--dry-run] [--layer]
   moves this repository's project data from the pre-.ai layout under .majordomus/ into
   the portable AI layer under .ai/, and creates the rest of that layer from the skeleton
   legacy marker   .majordomus/policy.yaml          new marker   .ai/manifest.yaml
   tool install    .majordomus/bin/majordomus       never project data; left alone
+  --layer     record in .ai/manifest.yaml (tool:) that the layer is now written for this
+              tool's version. Run it on a branch, after an upgrade, once doctor's version-skew
+              findings are fixed or accepted: from then on doctor reads them as defects
   --dry-run   print the full plan, every file and where it goes, and write nothing
   exit 0 when migrated, or when nothing is left to migrate (already on the .ai layout)
   exit 12 when there is nothing to migrate and no .ai layer (run: majordomus init)
@@ -44,6 +48,7 @@ H
     *) mj_die "$MJ_EX_USAGE" "migrate: unknown option $a" ;;
   esac; done
   mj_require_repo
+  if [ "$layer" = 1 ]; then mj_migrate_layer "$dry"; return; fi
   local legacy="$MJ_ROOT/.majordomus" skel="$MJ_SKELETON_DIR"
   local has_legacy=0 has_new=0 has_tool=0
   [ -f "$legacy/policy.yaml" ] && has_legacy=1
@@ -87,6 +92,22 @@ H
   fi
   mj_migrate_apply
   rm -f "$MJ_MIG_MANIFEST"
+}
+
+# Advance the layer's `tool` to this version (I1980). A layer written for a newer tool never
+# gets here: resolving the layout refuses it, naming both versions.
+mj_migrate_layer() { # dry-run flag
+  [ -f "$MJ_AI_MANIFEST" ] || mj_die "$MJ_EX_MISSING" "no .ai/manifest.yaml in $MJ_ROOT (run: majordomus init)"
+  local was mine; mine="$(mj_tool_minor "$MJ_VERSION")"; was="$(mj_man tool)"
+  if [ "$was" = "$mine" ]; then
+    printf 'layer: already written for majordomus %s\n' "$mine"; return 0
+  fi
+  if [ "$1" = 1 ]; then
+    printf 'layer: tool %s -> %s in %s (dry run: nothing written)\n' "${was:-none}" "$mine" "$(mj_rel "$MJ_AI_MANIFEST")"; return 0
+  fi
+  mj_layer_stamp_tool "$MJ_AI_MANIFEST" >/dev/null
+  printf 'layer: tool %s -> %s in %s; doctor now reads its findings as defects of the layer, not as version skew\n' \
+    "${was:-none}" "$mine" "$(mj_rel "$MJ_AI_MANIFEST")"
 }
 
 # the destination of a section, from the manifest that is about to be installed
@@ -171,6 +192,7 @@ mj_migrate_apply() {
   mkdir -p "$MJ_ROOT/.ai"
   cp "$MJ_SKELETON_DIR/ai/README.md" "$MJ_ROOT/.ai/README.md"
   cp "$MJ_SKELETON_DIR/ai/manifest.yaml" "$MJ_ROOT/.ai/manifest.yaml"
+  mj_layer_stamp_tool "$MJ_ROOT/.ai/manifest.yaml" >/dev/null
   # shellcheck disable=SC2034  # the manifest cache is read by mj_load_manifest; cleared so it reloads
   MJ_MAN_FLAT=""; mj_resolve_layout
   [ "$MJ_LAYOUT" = ai ] || mj_die "$MJ_EX_INTERNAL" "the layout did not resolve as .ai after the manifest was written"

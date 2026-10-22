@@ -16,6 +16,11 @@
     "schema": {
       "const": "ai-repository/v1"
     },
+    "tool": {
+      "description": "The tool version this layer was written for, major.minor: written by init, advanced by `majordomus migrate --layer`. A tool older than it refuses the layer naming both versions; a newer tool reads findings it introduced as version skew rather than defects. Absent in a layer written before the key existed.",
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+$"
+    },
     "repo": {
       "type": "object",
       "additionalProperties": false,
