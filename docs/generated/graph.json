@@ -43852,6 +43852,42 @@
         }
       },
       {
+        "id": "majordomus://issue/I2847",
+        "kind": "issue",
+        "label": "I2847",
+        "summary": "every file the site generator reads by a literal path is one of its declared inputs",
+        "route": "/cockpit/objects/issue/i2847",
+        "source": ".ai/repo/project/issues/I2847.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every literal \\\"$ROOT/...\\\" file read of scripts/generate-site-data is in its --inputs, or is one of its outputs",
+            "Every tracked file under a directory the script names by a literal path is in --inputs, unless the directory is an output",
+            "Removing scripts/lib/*.jq from the list makes case 3246 fail and name scripts/lib/cli-site.jq"
+          ],
+          "created_at": "2026-10-21",
+          "current_state": "The INPUTS list held 2093 entries and omitted the generator's own programs and several files it reads by literal path. Nothing checked the list against what the script reads.",
+          "depends_on": [],
+          "evidence_required": [
+            "every_literal_read_is_an_input_case"
+          ],
+          "milestone": "a-derive-does-only-the-work-its-inputs-changed",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "scripts/generate-site-data",
+            "test/cases/3246_every_file_the_site_generator_reads_is_an_input.sh",
+            ".ai/repo/project/issues/I2847.yaml"
+          ],
+          "slug": "every-file-the-site-generator-reads-is-an-input",
+          "updated_at": "2026-10-21",
+          "validation": [
+            "bin/majordomus plan validate",
+            "bash test/run.sh 3246_every_file_the_site_generator_reads_is_an_input 10_site_data 56_derived_current_gate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I2849",
         "kind": "issue",
         "label": "I2849",
@@ -81089,6 +81125,13 @@
         "source": "test/cases/3242_a_claim_newer_than_the_ledger_is_not_yet_recorded.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3246_every_file_the_site_generator_reads_is_an_input.sh",
+        "kind": "test",
+        "label": "test/cases/3246_every_file_the_site_generator_reads_is_an_input.sh",
+        "route": "/cockpit/objects/test/test-cases-3246-every-file-the-site-generator-reads-is-an-input-sh",
+        "source": "test/cases/3246_every_file_the_site_generator_reads_is_an_input.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/32_refusal_lifecycle.sh",
         "kind": "test",
         "label": "test/cases/32_refusal_lifecycle.sh",
@@ -111413,6 +111456,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2847",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2847",
+        "target": "majordomus://milestone/a-derive-does-only-the-work-its-inputs-changed",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I2849",
         "target": "kind:issue",
         "kind": "is_a"
@@ -122218,6 +122271,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3246_every_file_the_site_generator_reads_is_an_input.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/32_refusal_lifecycle.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -127599,8 +127657,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3607,
-      "edges": 8391,
+      "nodes": 3609,
+      "edges": 8394,
       "acyclic": false,
       "truncated": false
     }

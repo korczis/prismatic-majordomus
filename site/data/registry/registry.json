@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.1"
   },
   "registry": {
-    "fingerprint": "ee877cf301e37d16e7afe9ec59c0aecb7ee04a0635378d09a60e77f775f3ea2f",
+    "fingerprint": "76d84088c41fddfad31d6b6d39ba80e3ed45d7da554d1a36aed7689d292ec344",
     "summary": {
-      "total": 3160,
+      "total": 3162,
       "builtin": 206,
-      "declarative": 2954,
+      "declarative": 2956,
       "by_kind": {
         "command": 31,
         "query": 175,
-        "resource": 2954
+        "resource": 2956
       },
       "by_stability": {
         "behaviorally_verified": 142,
         "experimental": 55,
-        "implemented": 2963
+        "implemented": 2965
       },
       "mcp_tools": 196,
-      "mcp_resources": 3009,
+      "mcp_resources": 3011,
       "http_routes": 201,
       "cli_commands": 111,
       "modules": 92,
@@ -85404,7 +85404,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 801,
+        "capabilities": 802,
         "capability_ids": []
       },
       {
@@ -85978,7 +85978,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 567,
+        "capabilities": 568,
         "capability_ids": []
       },
       {
@@ -86070,7 +86070,7 @@
     ]
   },
   "index": {
-    "fingerprint": "e47fc54aa585fcf6727bfaa9b52f4780b4111ce1b9741c77e316da39db537c18",
+    "fingerprint": "9f82552c74fe7011ee83c304e95ab23728bcc0f288ffa3c13099b7c9649c075d",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -86110,7 +86110,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 33,
-      "issue": 801,
+      "issue": 802,
       "knowledge": 50,
       "mesh-declaration": 1,
       "milestone": 100,
@@ -86124,7 +86124,7 @@
       "session": 90,
       "skill": 8,
       "taxonomy": 10,
-      "test": 567,
+      "test": 568,
       "use-case": 49,
       "workspace": 1
     },
@@ -93308,7 +93308,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 521266
+        "bytes": 526661
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -102119,6 +102119,17 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 3498
+      },
+      {
+        "uri": "majordomus://issue/I2847",
+        "kind": "issue",
+        "identity": "I2847",
+        "title": "every file the site generator reads by a literal path is one of its declared inputs",
+        "description": "scripts/generate-site-data declares among its inputs every file it reads by a literal \\\"$ROOT/...\\\" path: the programs it sources or runs (lib/*.sh, lib/*.awk, scripts/lib/*.jq, scripts/lib/*.awk, scripts/pages, itself), the hand-written pages under site/content-src, the workflow skeletons it counts, the Pages model, artifacts.json, distribution.json and AGENTS.md. Case 3246 refuses a literal read that the list does not cover.",
+        "path": ".ai/repo/project/issues/I2847.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2961
       },
       {
         "uri": "majordomus://issue/I2849",
@@ -115260,6 +115271,14 @@
         "bytes": 3687
       },
       {
+        "uri": "majordomus://test/test/cases/3246_every_file_the_site_generator_reads_is_an_input.sh",
+        "kind": "test",
+        "identity": "test/cases/3246_every_file_the_site_generator_reads_is_an_input.sh",
+        "path": "test/cases/3246_every_file_the_site_generator_reads_is_an_input.sh",
+        "source_class": "case",
+        "bytes": 3852
+      },
+      {
         "uri": "majordomus://test/test/cases/32_refusal_lifecycle.sh",
         "kind": "test",
         "identity": "test/cases/32_refusal_lifecycle.sh",
@@ -118390,7 +118409,7 @@
       "identity": [
         "id"
       ],
-      "objects": 801
+      "objects": 802
     },
     {
       "name": "knowledge",
@@ -118542,7 +118561,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 567
+      "objects": 568
     },
     {
       "name": "use-case",
