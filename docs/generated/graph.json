@@ -12705,7 +12705,7 @@
         "id": "majordomus://claim/provider-capability-evidence",
         "kind": "claim",
         "label": "provider-capability-evidence",
-        "summary": "What each provider can do about the session lifecycle, prompt capture and driving a browser beside this server is one declaration with a citation per cell, every surface projects it, and no provider the declaration names goes unreported",
+        "summary": "What each provider can do about the session lifecycle, prompt capture, driving a browser beside this server and reporting what a session consumed is one declaration with a citation per cell, every surface projects it, and no provider the declaration names goes unreported",
         "route": "/cockpit/objects/claim/provider-capability-evidence",
         "source": "docs/CLAIMS.yaml",
         "status": "guaranteed",
@@ -23648,7 +23648,6 @@
             "The schema is documented where the other file formats are"
           ],
           "created_at": "2026-09-04",
-          "current_state": "Nothing measures a session. The economics document states what measurement would take and deliberately claims nothing, and no schema exists to be filled.",
           "depends_on": [],
           "desired_state": "One schema, with an allowlist like every other record here, in which each measured field names its reporter, and not_reported is a first-class value carrying why it is absent.",
           "evidence_required": [
@@ -23664,12 +23663,15 @@
           "profile": "deep-work",
           "risk": "A schema designed around one provider's numbers becomes that provider's schema; the reporter field is what keeps a second provider from having to lie to fit.",
           "scope": [
-            "share",
-            "lib",
+            "share/schemas",
+            "share/kinds.yaml",
+            "share/allow",
+            "apps/majordomus-cli/src/economics",
+            "apps/majordomus-cli/tests/metadata_contract.rs",
             "docs"
           ],
           "slug": "telemetry-record-schema",
-          "updated_at": "2026-09-04",
+          "updated_at": "2026-10-22",
           "validation": [
             "bash test/run.sh"
           ]
@@ -23689,6 +23691,7 @@
             "No code path fabricates, interpolates or defaults a measured value",
             "The command works with no network and leaves no background process"
           ],
+          "cancelled": true,
           "created_at": "2026-09-04",
           "current_state": "The record has a shape and nothing writes one.",
           "depends_on": [
@@ -23713,7 +23716,7 @@
             "bin"
           ],
           "slug": "record-reported-telemetry",
-          "updated_at": "2026-09-04",
+          "updated_at": "2026-10-22",
           "validation": [
             "bash test/run.sh"
           ],
@@ -23734,9 +23737,8 @@
             "No surface prints a number for a task that reported none"
           ],
           "created_at": "2026-09-04",
-          "current_state": "The recording path exists. What happens when nobody reports anything is untested.",
           "depends_on": [
-            "I0302"
+            "I3288"
           ],
           "desired_state": "A case demonstrates the silent path end to end, and a grep-like assertion over the reporting surfaces shows no estimated value is ever printed as measured.",
           "evidence_required": [
@@ -23754,7 +23756,7 @@
             "test/cases"
           ],
           "slug": "absence-not-estimate",
-          "updated_at": "2026-09-04",
+          "updated_at": "2026-10-22",
           "validation": [
             "bash test/run.sh"
           ]
@@ -23786,17 +23788,17 @@
           "non_scope": [
             "Aggregation, averages or any figure derived across tasks; that is the next milestone"
           ],
-          "objective": "Make recorded execution facts readable through the surface that already answers questions about past tasks, with the same retention bound the other durable stores carry.",
           "parallel_safe": false,
           "priority": "p2",
           "profile": "implementation",
           "risk": "Showing per-task numbers invites reading a trend into them; the surface has to present facts without implying a series.",
           "scope": [
-            "lib",
+            "apps/majordomus-cli/src/economics",
+            "apps/majordomus-cli/src/capability/builtin",
             "docs"
           ],
           "slug": "telemetry-in-history",
-          "updated_at": "2026-09-04",
+          "updated_at": "2026-10-22",
           "validation": [
             "bash test/run.sh"
           ]
@@ -54985,7 +54987,7 @@
             "every-sessions-usage-is-observed#claude-code-usage-recorded"
           ],
           "slug": "a-provider-declares-its-usage-seam",
-          "updated_at": "2026-10-18",
+          "updated_at": "2026-10-22",
           "validation": [
             "majordomus product validate",
             "majordomus generate --check",
@@ -55033,7 +55035,7 @@
             "every-sessions-usage-is-observed#a-silent-provider-is-absent"
           ],
           "slug": "claude-code-usage-is-received",
-          "updated_at": "2026-10-18",
+          "updated_at": "2026-10-22",
           "validation": [
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test economics",
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib economics::usage"
@@ -63049,7 +63051,7 @@
             "apps/majordomus-cli/src/product.rs",
             "apps/majordomus-cli/src/environment/preflight.rs",
             "apps/majordomus-cli/tests/provider_browser.rs",
-            ".ai/repo/rules/project/a-provider-capability-cites-its-evidence.v2.md",
+            ".ai/repo/rules/project/a-provider-capability-cites-its-evidence.v3.md",
             "scripts/provider-evidence-check",
             "test/cases/3829_a_provider_declares_its_browser_bridge.sh",
             "docs/MCP.md",
@@ -67072,10 +67074,6 @@
             "telemetry"
           ],
           "created_at": "2026-09-04",
-          "current_state": "Not started. docs/ECONOMICS.md states what it would take and deliberately claims nothing.",
-          "depends_on": [
-            "runtime-adapters"
-          ],
           "desired_state": "A completed task carries measured execution facts, or an explicit record that the provider did not supply them.",
           "evidence_required": [
             "suite"
@@ -67091,15 +67089,15 @@
             "A provider's self-reported usage may itself be unreliable; the record must say who reported it."
           ],
           "scope": [
-            "bin",
-            "lib",
+            "apps/majordomus-cli/src/economics",
+            "share/schemas",
             "share",
             "test/cases",
             "docs",
             "site/data/generated"
           ],
           "slug": "execution-telemetry",
-          "updated_at": "2026-09-04T14:05:00Z",
+          "updated_at": "2026-10-22",
           "validation": [
             "bash test/run.sh"
           ]
@@ -74744,12 +74742,12 @@
         }
       },
       {
-        "id": "majordomus://rule/project.a-provider-capability-cites-its-evidence@2",
+        "id": "majordomus://rule/project.a-provider-capability-cites-its-evidence@3",
         "kind": "rule",
-        "label": "project.a-provider-capability-cites-its-evidence@2",
+        "label": "project.a-provider-capability-cites-its-evidence@3",
         "summary": "A provider capability is declared once, with the citation it was verified from",
-        "route": "/cockpit/objects/rule/project-a-provider-capability-cites-its-evidence-2",
-        "source": ".ai/repo/rules/project/a-provider-capability-cites-its-evidence.v2.md",
+        "route": "/cockpit/objects/rule/project-a-provider-capability-cites-its-evidence-3",
+        "source": ".ai/repo/rules/project/a-provider-capability-cites-its-evidence.v3.md",
         "status": "active",
         "facts": {
           "class": "blocking",
@@ -85478,6 +85476,13 @@
         "label": "test/cases/3248_a_pre_push_gate_does_not_wait_on_another_build.sh",
         "route": "/cockpit/objects/test/test-cases-3248-a-pre-push-gate-does-not-wait-on-another-build-sh",
         "source": "test/cases/3248_a_pre_push_gate_does_not_wait_on_another_build.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3287_a_provider_declares_its_usage_seam.sh",
+        "kind": "test",
+        "label": "test/cases/3287_a_provider_declares_its_usage_seam.sh",
+        "route": "/cockpit/objects/test/test-cases-3287-a-provider-declares-its-usage-seam-sh",
+        "source": "test/cases/3287_a_provider_declares_its_usage_seam.sh"
       },
       {
         "id": "majordomus://test/test/cases/32_refusal_lifecycle.sh",
@@ -96955,7 +96960,7 @@
       },
       {
         "source": "majordomus://adr/adr-0103",
-        "target": "majordomus://rule/project.a-provider-capability-cites-its-evidence@2",
+        "target": "majordomus://rule/project.a-provider-capability-cites-its-evidence@3",
         "kind": "put_in_force"
       },
       {
@@ -109925,7 +109930,7 @@
       },
       {
         "source": "majordomus://issue/I0303",
-        "target": "majordomus://issue/I0302",
+        "target": "majordomus://issue/I3288",
         "kind": "depends_on"
       },
       {
@@ -123054,11 +123059,6 @@
         "kind": "evidences"
       },
       {
-        "source": "majordomus://milestone/execution-telemetry",
-        "target": "majordomus://milestone/runtime-adapters",
-        "kind": "depends_on"
-      },
-      {
         "source": "majordomus://milestone/external-workspaces",
         "target": "kind:milestone",
         "kind": "is_a"
@@ -124624,17 +124624,17 @@
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.a-provider-capability-cites-its-evidence@2",
+        "source": "majordomus://rule/project.a-provider-capability-cites-its-evidence@3",
         "target": "kind:rule",
         "kind": "is_a"
       },
       {
-        "source": "majordomus://rule/project.a-provider-capability-cites-its-evidence@2",
+        "source": "majordomus://rule/project.a-provider-capability-cites-its-evidence@3",
         "target": "majordomus://rule/project.empty-is-not-failure@1",
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.a-provider-capability-cites-its-evidence@2",
+        "source": "majordomus://rule/project.a-provider-capability-cites-its-evidence@3",
         "target": "majordomus://rule/project.interfaces-are-projections@1",
         "kind": "depends_on"
       },
@@ -128095,6 +128095,11 @@
       },
       {
         "source": "majordomus://test/test/cases/3248_a_pre_push_gate_does_not_wait_on_another_build.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3287_a_provider_declares_its_usage_seam.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -133640,7 +133645,7 @@
       }
     ],
     "metadata": {
-      "nodes": 3754,
+      "nodes": 3755,
       "edges": 8679,
       "acyclic": false,
       "truncated": false

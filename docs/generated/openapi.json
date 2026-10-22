@@ -9141,7 +9141,7 @@
       "get": {
         "operationId": "lifecycle.providers",
         "summary": "What each provider's adapter declares",
-        "description": "Per provider: the lifecycle events its adapter declares in the provider's own vocabulary, whether it can archive prompts, and which of this repository's enforcement entries name its hook. Declared in share/providers.yaml and in the policy; never inferred from whether a shim happens to be on disk.",
+        "description": "Per provider: the lifecycle events its adapter declares in the provider's own vocabulary, whether it can archive prompts, the official seams through which it reports what a session consumed (usage, with the citation), and which of this repository's enforcement entries name its hook. Declared in share/providers.yaml and in the policy; never inferred from whether a shim happens to be on disk.",
         "tags": [
           "lifecycle"
         ],
@@ -49358,7 +49358,9 @@
               "prompts": "none",
               "prompts_evidence": "",
               "browser": "none",
-              "browser_evidence": ""
+              "browser_evidence": "",
+              "usage": [],
+              "usage_evidence": ""
             }
           }
         },
@@ -49919,6 +49921,18 @@
             },
             "description": "The enforcement entries of *this repository's* policy that name this provider's hook\nin `wired_by`. Declared wiring, not a file on disk: whether a shim is installed is a\nquestion for `majordomus capture status`, which is the command that owns it."
           },
+          "usage": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UsageSource"
+            },
+            "description": "The official seams through which the provider reports what a session consumed, as\nshare/providers.yaml declares them (`otel`, `app-server`, `stream-json`, or `none`\nalone; I3287). Empty when the declaration says nothing, which is not the same answer\nas `none`.",
+            "default": []
+          },
+          "usage_evidence": {
+            "type": "string",
+            "description": "Where `usage` was verified."
+          },
           "note": {
             "type": "string",
             "description": "What the two together mean."
@@ -50037,6 +50051,19 @@
               "null"
             ],
             "description": "What a person does, once, to install the bridge on a machine, in the vendor's terms.\nDeclared for a `bridge` only."
+          },
+          "usage": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UsageSource"
+            },
+            "description": "The official seams through which the provider reports what a session consumed (I3287,\nADR 0213), every one it offers: `none` alone when it offers nothing a receiver could\nread. Empty in a value written before the axis existed, which declares nothing.",
+            "default": []
+          },
+          "usage_evidence": {
+            "type": "string",
+            "description": "Where `usage` was verified, on the same terms as `episode_evidence`.",
+            "default": ""
           }
         },
         "required": [
@@ -63347,6 +63374,31 @@
           "gone"
         ],
         "description": "A branch's upstream and how far the two have moved apart, from `for-each-ref` in one\nsubprocess for every branch, never a fetch."
+      },
+      "UsageSource": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "otel",
+            "description": "The provider's own OpenTelemetry export, which the person enables."
+          },
+          {
+            "type": "string",
+            "const": "app-server",
+            "description": "A notification of the client's own app server protocol."
+          },
+          {
+            "type": "string",
+            "const": "stream-json",
+            "description": "The usage a non-interactive run reports in its structured (`stream-json`) output."
+          },
+          {
+            "type": "string",
+            "const": "none",
+            "description": "No official seam reports usage."
+          }
+        ],
+        "description": "One official seam through which a provider reports what a session consumed.\n\nUsage is read only where the provider itself reports it (ADR 0213): an official\nOpenTelemetry export, a protocol notification of the client's own server, or the usage a\nnon-interactive run prints in its structured output. Never a transcript, a proxy, or a\npatched client. `none` is the declared answer for a provider that offers no such seam,\nand it stands alone.\n\n```\nuse majordomus_cli::share::UsageSource;\nassert_eq!(serde_json::from_str::<UsageSource>(\"\\\"otel\\\"\").unwrap(), UsageSource::Otel);\nassert_eq!(serde_json::from_str::<UsageSource>(\"\\\"app-server\\\"\").unwrap(), UsageSource::AppServer);\nassert!(serde_json::from_str::<UsageSource>(\"\\\"transcript\\\"\").is_err(), \"no transcript seam\");\nassert_eq!(UsageSource::StreamJson.as_str(), \"stream-json\");\n```"
       },
       "UseCaseRef": {
         "type": "object",

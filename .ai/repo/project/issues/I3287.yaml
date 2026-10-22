@@ -30,7 +30,7 @@ acceptance_criteria:
   - "Every provider row states usage and its evidence"
   - "lifecycle providers and product validate report the usage seam"
   - "A row with usage and no evidence is refused"
-  - "execution-telemetry no longer depends_on runtime-adapters (ADR 0213 Consequences) and depends on every-sessions-usage-is-observed, and `majordomus plan show I0301` no longer derives BLOCKED from its milestone"
+  - "execution-telemetry no longer depends_on runtime-adapters (ADR 0213 Consequences) and depends on no milestone, its order with every-sessions-usage-is-observed carried by its issues (I0303 after I3288), and `majordomus plan show I0301` no longer derives BLOCKED from its milestone. Amended 2026-10-22 at implementation: the planned milestone dependency on every-sessions-usage-is-observed blocks I0301, which I3288 in that milestone depends on, so neither milestone could finish"
   - "I0301 is rescoped to apps/majordomus-cli/src/economics and share/schemas and defines the usage record (Option<u64> per category, an absence reason, a named reporter per field)"
   - "I0302 is cancelled as superseded by I3288 with its criteria carried into I3288; I0303 is rescoped to test/cases over the Rust receiver; I0304 is rescoped to the Rust economics read surface with a declared retention bound"
   - "No acceptance criterion is ranked by both execution-telemetry and every-sessions-usage-is-observed (`majordomus plan validate` passes)"
@@ -44,4 +44,4 @@ validation:
 evidence_required:
   - "case_a_provider_declares_its_usage_seam"
 created_at: 2026-10-18
-updated_at: 2026-10-18
+updated_at: 2026-10-22

@@ -288,6 +288,10 @@ struct ProviderOffersEntry {
     browser_host: Option<String>,
     #[serde(default)]
     browser_setup: Option<String>,
+    #[serde(default)]
+    usage: Option<Vec<UsageSource>>,
+    #[serde(default)]
+    usage_evidence: Option<String>,
 }
 
 fn offers_of(e: &ProviderOffersEntry) -> ProviderOffers {
@@ -300,6 +304,8 @@ fn offers_of(e: &ProviderOffersEntry) -> ProviderOffers {
         browser_evidence: e.browser_evidence.clone().unwrap_or_default(),
         browser_host: e.browser_host.clone(),
         browser_setup: e.browser_setup.clone(),
+        usage: e.usage.clone().unwrap_or_default(),
+        usage_evidence: e.usage_evidence.clone().unwrap_or_default(),
     }
 }
 
@@ -519,6 +525,62 @@ pub struct ProviderOffers {
     /// Declared for a `bridge` only.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub browser_setup: Option<String>,
+    /// The official seams through which the provider reports what a session consumed (I3287,
+    /// ADR 0213), every one it offers: `none` alone when it offers nothing a receiver could
+    /// read. Empty in a value written before the axis existed, which declares nothing.
+    #[serde(default)]
+    pub usage: Vec<UsageSource>,
+    /// Where `usage` was verified, on the same terms as `episode_evidence`.
+    #[serde(default)]
+    pub usage_evidence: String,
+}
+
+/// One official seam through which a provider reports what a session consumed.
+///
+/// Usage is read only where the provider itself reports it (ADR 0213): an official
+/// OpenTelemetry export, a protocol notification of the client's own server, or the usage a
+/// non-interactive run prints in its structured output. Never a transcript, a proxy, or a
+/// patched client. `none` is the declared answer for a provider that offers no such seam,
+/// and it stands alone.
+///
+/// ```
+/// use majordomus_cli::share::UsageSource;
+/// assert_eq!(serde_json::from_str::<UsageSource>("\"otel\"").unwrap(), UsageSource::Otel);
+/// assert_eq!(serde_json::from_str::<UsageSource>("\"app-server\"").unwrap(), UsageSource::AppServer);
+/// assert!(serde_json::from_str::<UsageSource>("\"transcript\"").is_err(), "no transcript seam");
+/// assert_eq!(UsageSource::StreamJson.as_str(), "stream-json");
+/// ```
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize, schemars::JsonSchema,
+)]
+#[serde(rename_all = "kebab-case")]
+pub enum UsageSource {
+    /// The provider's own OpenTelemetry export, which the person enables.
+    Otel,
+    /// A notification of the client's own app server protocol.
+    AppServer,
+    /// The usage a non-interactive run reports in its structured (`stream-json`) output.
+    StreamJson,
+    /// No official seam reports usage.
+    None,
+}
+
+impl UsageSource {
+    /// The word as the declaration writes it, which is also how it serialises.
+    ///
+    /// ```
+    /// use majordomus_cli::share::UsageSource;
+    /// assert_eq!(UsageSource::None.as_str(), "none");
+    /// assert_eq!(serde_json::to_string(&UsageSource::AppServer).unwrap(), "\"app-server\"");
+    /// ```
+    pub fn as_str(self) -> &'static str {
+        match self {
+            UsageSource::Otel => "otel",
+            UsageSource::AppServer => "app-server",
+            UsageSource::StreamJson => "stream-json",
+            UsageSource::None => "none",
+        }
+    }
 }
 
 /// What the distribution declares about its providers, joined with the templates it ships.
