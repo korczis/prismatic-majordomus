@@ -2,17 +2,17 @@
  "schema": 1,
  "generated_by": "scripts/lib/docs-index.mjs",
  "build": {
-  "commit": "2034d4a3f0b2f00ee0260f291330788448556b3b",
+  "commit": "355a0cee79aab7030af2e9e4e39a617ffd47c5dd",
   "source_version": "1.0.0-alpha.6",
-  "registry_fingerprint": "88dad26b6264527f9aa79e5d4a83fcd69629be1b5a78ac5a1fca127fed014dcf"
+  "registry_fingerprint": "ef38b11d9bedf033ec3dd3b0585bce92890f9c1a9822a48566de22c9bafebc3d"
  },
  "counts": {
-  "pages": 5561,
-  "capabilities": 3300,
+  "pages": 5583,
+  "capabilities": 3313,
   "cli_commands": 112,
   "http_routes": 202,
   "mcp_tools": 197,
-  "mcp_resources": 3147,
+  "mcp_resources": 3160,
   "modules": 92
  },
  "kinds": [
@@ -78,7 +78,7 @@
    "route": null,
    "title": null,
    "reason": "A critique is the adversarial pass over one intent's plan, written by a worker, and work started under the intent without it or with a blocking finding open fails intent validation (ADR 0073). It is planning state of this repository; what the plan became is published on /plan/.",
-   "count": 30
+   "count": 31
   },
   {
    "kind": "deployment",
@@ -150,7 +150,7 @@
    "route": null,
    "title": null,
    "reason": "An intent's stage and criteria are derived on every read from the plan and the evidence ledger (ADR 0070); a static page would freeze a derivation at the commit the site was built from. The milestones that realise an intent are published on /plan/, and `majordomus intent show` and the Cockpit's /cockpit/intents answer for the intent itself.",
-   "count": 34
+   "count": 35
   },
   {
    "kind": "issue",
@@ -158,7 +158,7 @@
    "route": "/plan/",
    "title": null,
    "reason": null,
-   "count": 888
+   "count": 898
   },
   {
    "kind": "knowledge",
@@ -182,7 +182,7 @@
    "route": "/plan/",
    "title": null,
    "reason": null,
-   "count": 101
+   "count": 102
   },
   {
    "kind": "moment",
@@ -13359,6 +13359,66 @@
    "section": "Prismatic Majordomus — your ai agents say the work is done. majordomus makes them prove it"
   },
   {
+   "route": "/cs/plan/i3910/",
+   "title": "I3910 — The integration executor fast-forwards master to every green head, a combined top included, and nothing else lands",
+   "description": "majordomus prs drain is the one way work reaches master, and it lands by a non-forced fast-forward of master to the head its checks judged green, never by a merge commit: the owner decided on 2026-10-22 (answering how the autonomous lander moves master) that landing is a fast-forward, because only a fast-forward is a compare-and-swap the forge enforces with protection strict: false. A combined top (an integration/train-* pull request whose head contains master and whose ci is success on that head) is landed like any pull request; one a train carries is held by the label hold until the train lands, and is then classified Redundant (the forge marks it merged); the drain closes nothing. The drain does not land while master's own ci is red unless the head is the red's named carrier (I2709). Rule the-cooperation-model-is-the-owners-word moves to version 3 naming prs drain as the guarded lander, with no --admin and no queue file, and ADR 0167 carries a dated amendment saying the same.",
+   "section": "Prismatic Majordomus — your ai agents say the work is done. majordomus makes them prove it"
+  },
+  {
+   "route": "/cs/plan/i3911/",
+   "title": "I3911 — The executor reads its audit trail, its halt and its lease from origin, so any clone continues it and a stale holder is refused",
+   "description": "The integration audit trail, the halt left by an unverified landing and the executor lease move from one clone (.git/majordomus/integration/events.jsonl, an flock under the common git dir) to a ref on origin, appended by non-forced pushes. The lease names its holder, its host and its expiry, and the holder renews it with a non-forced push immediately before every landing, so a holder that slept past its expiry and wakes after another clone took over is refused before it lands. The --continuous gate counts verified landings from that ref, so a takeover machine is admitted with the same record and stopped by the same halt.",
+   "section": "Prismatic Majordomus — your ai agents say the work is done. majordomus makes them prove it"
+  },
+  {
+   "route": "/cs/plan/i3912/",
+   "title": "I3912 — A seat whose holder stopped beating is reported vacant and offered to live sessions by capability",
+   "description": "A claim on a seat scope (the landing seat, the release seat) whose stream stopped beating is reported as a vacant seat by mesh.state and by majordomus monitor within one expiry, with the evidence I3182 classifies it on: a missing heartbeat is reported as such and is not declared a dead worker. The vacancy is offered by capability to live sessions through I3198's fenced offer; a session that accepts holds the seat under a new fencing epoch (I3174) and consumes the newest handover published for that seat. A runtime never takes a seat by itself: only a session that can do the seat's work accepts it.",
+   "section": "Prismatic Majordomus — your ai agents say the work is done. majordomus makes them prove it"
+  },
+  {
+   "route": "/cs/plan/i3913/",
+   "title": "I3913 — The executor runs as a user service outside every agent session, restarted after a crash and never after a halt",
+   "description": "majordomus prs service install, run by the owner, writes a user service (launchd on macOS, systemd --user on Linux) through the one unit writer I2722 owns, running prs drain --continuous for this checkout; prs service status and uninstall manage it. The unit restarts the executor after an exit that is a crash or an outage, and never after a halt (an unverified landing) or a refusal, which keeps the halt of ADR 0101 D7 and the outage bound (CONTINUOUS_TRANSIENT_LIMIT, drain.rs:1886) in force. It logs under the local half and is never written without the owner running the command.",
+   "section": "Prismatic Majordomus — your ai agents say the work is done. majordomus makes them prove it"
+  },
+  {
+   "route": "/cs/plan/i3914/",
+   "title": "I3914 — A standing approval is one owner-attributed record in the repository, each machine reports whether it carries it, and only the owner writes it",
+   "description": "The owner's standing approvals are declared as dated, owner-attributed records under .ai/repo/autonomy, each with the owner's words and its bounds. majordomus autonomy status reports per machine which declared approval its Claude Code settings carry and which they lack. autonomy apply writes the missing ones into the user settings with $defaults kept first, and refuses to run inside an agent session (CLAUDECODE set, or no terminal) and without an interactive confirmation, so no session writes its own permissions through the binary. The two rules that disagree about who writes an approval are reconciled into one. Built on I2790's autonomy reading, which is on branch feature/the-autonomy-a-session-has-is-measured (#1311) and must land first.",
+   "section": "Prismatic Majordomus — your ai agents say the work is done. majordomus makes them prove it"
+  },
+  {
+   "route": "/cs/plan/i3915/",
+   "title": "I3915 — A combined top is composed by a typed command from members declared in a tracked train manifest",
+   "description": "majordomus prs compose builds a combined top from a tracked train manifest under .ai/repo/integration/trains/ that lists its members (a branch head or a source patch, with its seat, its issue and its order constraints) and its base. It composes them in order on a scratch index, names each member that does not apply, and only then runs one derive and opens or updates the train pull request. Two machines composing the same manifest produce the same member list and the same tree before the derive; the derived output is the derive's, which ADR 0101 does not hold deterministic per tree.",
+   "section": "Prismatic Majordomus — your ai agents say the work is done. majordomus makes them prove it"
+  },
+  {
+   "route": "/cs/plan/i3916/",
+   "title": "I3916 — The homepage counts supported claims from the run the evidence page reads, and names the revision it was recorded at",
+   "description": "The homepage's proof figure (data-supported, site/templates/index.html:454-460) reads the same recorded evidence the evidence page reads (site/data/evidence.json from scripts/pages evidence: the nearest complete ancestor run, with its state, commit and how far behind it is), not the committed ledger .ai/repo/evidence/ledger.json. It shows the count with the revision it was recorded at and says when that revision is behind the one the page was built from; it never shows a bare 0 for a revision whose run is not recorded yet.",
+   "section": "Prismatic Majordomus — your ai agents say the work is done. majordomus makes them prove it"
+  },
+  {
+   "route": "/cs/plan/i3917/",
+   "title": "I3917 — The plan's status counts leave the homepage hero and stay on the roadmap",
+   "description": "The homepage hero no longer shows the plan's issue counts by status (ready, blocked, active and the rest, index.html:154-158); the counts stay on /roadmap and /ui, where a reader comes for them. Rule homepage-tells-a-declared-story moves to version 2 without the clause that the hero's product view counts the plan, and homepage-check's product check follows it. The owner decided this on 2026-10-22.",
+   "section": "Prismatic Majordomus — your ai agents say the work is done. majordomus makes them prove it"
+  },
+  {
+   "route": "/cs/plan/i3918/",
+   "title": "I3918 — README, CONTRIBUTING and the homepage say truthfully how big the tool is and what its registry counts are",
+   "description": "README.md and CONTRIBUTING.md stop saying the tool needs bash 3.2 and nothing else: they say that the shell tool is small and portable and hands every other command to the Rust executable it ships, prebuilt. The homepage's surfaces section (index.html:328-332) says what its numbers are: the capabilities are the builtin ones plus one generated resource per object of the layer (208 plus 3092 at 2026-10-22), and the MCP tools and HTTP routes are those builtin capabilities projected, so a reader does not read a small tool and a 3300-capability platform as a contradiction.",
+   "section": "Prismatic Majordomus — your ai agents say the work is done. majordomus makes them prove it"
+  },
+  {
+   "route": "/cs/plan/i3919/",
+   "title": "I3919 — The coverage gate finds the end of a test module across multi-line and raw string literals",
+   "description": "scripts/rust-coverage's test_lines, which finds where an inline #[cfg(test)] module ends by matching braces, follows a string literal across lines and reads raw strings (r#...#) with their hashes, so braces inside a multi-line or raw string never close the module early. Case 132 gains a fixture whose test module holds a multi-line raw JSON string and whose uncovered panic branch after it is test code and owes nothing.",
+   "section": "Prismatic Majordomus — your ai agents say the work is done. majordomus makes them prove it"
+  },
+  {
    "route": "/cs/plan/idd-reads-at-a-glance/",
    "title": "idd-reads-at-a-glance — Pracovní prostor záměrů se čte na první pohled a vede všude, kam odkazuje",
    "description": "Pracoviště se čte v pořadí, v jakém se člověk ptá (co je záměr, co chybí, co dělat dál, práce, důkazy), každé id na něm je odkaz, jeho čísla jsou čísla záměru, jeho texty se vykreslují jediným rendererem prózy UI, nabízí jednu primární akci a pravidla auditu od nynějška drží holá id a surový markdown mimo každou stránku /ui.",
@@ -13404,6 +13464,12 @@
    "route": "/cs/plan/knowledge-is-reconciled-before-it-is-reviewed/",
    "title": "knowledge-is-reconciled-before-it-is-reviewed — To, co relace navrhuje jako znalost, se před recenzí člověkem sladí s tím, co repozitář již ví, a povýšení stojí na důkazech, které se přeloží",
    "description": "Známý fakt dostane jednoho kandidáta. Každá skupina kandidátů jmenuje to, co už o jejím předmětu mluví, čtené z vrstvy entit, ne z druhé derivace. Povýšení potřebuje řešitelnou referenci a zaznamená ji. Pozorování může citovat review, které jej našlo.",
+   "section": "Prismatic Majordomus — your ai agents say the work is done. majordomus makes them prove it"
+  },
+  {
+   "route": "/cs/plan/landing-survives-any-session/",
+   "title": "landing-survives-any-session — Landing green work survives any session, any restart and any machine",
+   "description": "Landing green work on master never waits on a person or on one session staying alive.",
    "section": "Prismatic Majordomus — your ai agents say the work is done. majordomus makes them prove it"
   },
   {
@@ -28041,6 +28107,66 @@
    "section": "The plan"
   },
   {
+   "route": "/plan/i3910/",
+   "title": "I3910 — The integration executor fast-forwards master to every green head, a combined top included, and nothing else lands",
+   "description": "majordomus prs drain is the one way work reaches master, and it lands by a non-forced fast-forward of master to the head its checks judged green, never by a merge commit: the owner decided on 2026-10-22 (answering how the autonomous lander moves master) that landing is a fast-forward, because only a fast-forward is a compare-and-swap the forge enforces with protection strict: false. A combined top (an integration/train-* pull request whose head contains master and whose ci is success on that head) is landed like any pull request; one a train carries is held by the label hold until the train lands, and is then classified Redundant (the forge marks it merged); the drain closes nothing. The drain does not land while master's own ci is red unless the head is the red's named carrier (I2709). Rule the-cooperation-model-is-the-owners-word moves to version 3 naming prs drain as the guarded lander, with no --admin and no queue file, and ADR 0167 carries a dated amendment saying the same.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i3911/",
+   "title": "I3911 — The executor reads its audit trail, its halt and its lease from origin, so any clone continues it and a stale holder is refused",
+   "description": "The integration audit trail, the halt left by an unverified landing and the executor lease move from one clone (.git/majordomus/integration/events.jsonl, an flock under the common git dir) to a ref on origin, appended by non-forced pushes. The lease names its holder, its host and its expiry, and the holder renews it with a non-forced push immediately before every landing, so a holder that slept past its expiry and wakes after another clone took over is refused before it lands. The --continuous gate counts verified landings from that ref, so a takeover machine is admitted with the same record and stopped by the same halt.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i3912/",
+   "title": "I3912 — A seat whose holder stopped beating is reported vacant and offered to live sessions by capability",
+   "description": "A claim on a seat scope (the landing seat, the release seat) whose stream stopped beating is reported as a vacant seat by mesh.state and by majordomus monitor within one expiry, with the evidence I3182 classifies it on: a missing heartbeat is reported as such and is not declared a dead worker. The vacancy is offered by capability to live sessions through I3198's fenced offer; a session that accepts holds the seat under a new fencing epoch (I3174) and consumes the newest handover published for that seat. A runtime never takes a seat by itself: only a session that can do the seat's work accepts it.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i3913/",
+   "title": "I3913 — The executor runs as a user service outside every agent session, restarted after a crash and never after a halt",
+   "description": "majordomus prs service install, run by the owner, writes a user service (launchd on macOS, systemd --user on Linux) through the one unit writer I2722 owns, running prs drain --continuous for this checkout; prs service status and uninstall manage it. The unit restarts the executor after an exit that is a crash or an outage, and never after a halt (an unverified landing) or a refusal, which keeps the halt of ADR 0101 D7 and the outage bound (CONTINUOUS_TRANSIENT_LIMIT, drain.rs:1886) in force. It logs under the local half and is never written without the owner running the command.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i3914/",
+   "title": "I3914 — A standing approval is one owner-attributed record in the repository, each machine reports whether it carries it, and only the owner writes it",
+   "description": "The owner's standing approvals are declared as dated, owner-attributed records under .ai/repo/autonomy, each with the owner's words and its bounds. majordomus autonomy status reports per machine which declared approval its Claude Code settings carry and which they lack. autonomy apply writes the missing ones into the user settings with $defaults kept first, and refuses to run inside an agent session (CLAUDECODE set, or no terminal) and without an interactive confirmation, so no session writes its own permissions through the binary. The two rules that disagree about who writes an approval are reconciled into one. Built on I2790's autonomy reading, which is on branch feature/the-autonomy-a-session-has-is-measured (#1311) and must land first.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i3915/",
+   "title": "I3915 — A combined top is composed by a typed command from members declared in a tracked train manifest",
+   "description": "majordomus prs compose builds a combined top from a tracked train manifest under .ai/repo/integration/trains/ that lists its members (a branch head or a source patch, with its seat, its issue and its order constraints) and its base. It composes them in order on a scratch index, names each member that does not apply, and only then runs one derive and opens or updates the train pull request. Two machines composing the same manifest produce the same member list and the same tree before the derive; the derived output is the derive's, which ADR 0101 does not hold deterministic per tree.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i3916/",
+   "title": "I3916 — The homepage counts supported claims from the run the evidence page reads, and names the revision it was recorded at",
+   "description": "The homepage's proof figure (data-supported, site/templates/index.html:454-460) reads the same recorded evidence the evidence page reads (site/data/evidence.json from scripts/pages evidence: the nearest complete ancestor run, with its state, commit and how far behind it is), not the committed ledger .ai/repo/evidence/ledger.json. It shows the count with the revision it was recorded at and says when that revision is behind the one the page was built from; it never shows a bare 0 for a revision whose run is not recorded yet.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i3917/",
+   "title": "I3917 — The plan's status counts leave the homepage hero and stay on the roadmap",
+   "description": "The homepage hero no longer shows the plan's issue counts by status (ready, blocked, active and the rest, index.html:154-158); the counts stay on /roadmap and /ui, where a reader comes for them. Rule homepage-tells-a-declared-story moves to version 2 without the clause that the hero's product view counts the plan, and homepage-check's product check follows it. The owner decided this on 2026-10-22.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i3918/",
+   "title": "I3918 — README, CONTRIBUTING and the homepage say truthfully how big the tool is and what its registry counts are",
+   "description": "README.md and CONTRIBUTING.md stop saying the tool needs bash 3.2 and nothing else: they say that the shell tool is small and portable and hands every other command to the Rust executable it ships, prebuilt. The homepage's surfaces section (index.html:328-332) says what its numbers are: the capabilities are the builtin ones plus one generated resource per object of the layer (208 plus 3092 at 2026-10-22), and the MCP tools and HTTP routes are those builtin capabilities projected, so a reader does not read a small tool and a 3300-capability platform as a contradiction.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i3919/",
+   "title": "I3919 — The coverage gate finds the end of a test module across multi-line and raw string literals",
+   "description": "scripts/rust-coverage's test_lines, which finds where an inline #[cfg(test)] module ends by matching braces, follows a string literal across lines and reads raw strings (r#...#) with their hashes, so braces inside a multi-line or raw string never close the module early. Case 132 gains a fixture whose test module holds a multi-line raw JSON string and whose uncovered panic branch after it is test code and owes nothing.",
+   "section": "The plan"
+  },
+  {
    "route": "/plan/idd-reads-at-a-glance/",
    "title": "idd-reads-at-a-glance — The intent workspace reads at a glance and leads everywhere it names",
    "description": "The workspace reads in the order a person asks (what the intent is, what is missing, what to do next, the work, the evidence), every id on it is a link, its numbers are the intent's, its texts render through the UI's one prose renderer, it offers one primary action, and audit rules keep bare ids and raw markdown off every /ui page from now on.",
@@ -28086,6 +28212,12 @@
    "route": "/plan/knowledge-is-reconciled-before-it-is-reviewed/",
    "title": "knowledge-is-reconciled-before-it-is-reviewed — What a session proposes as knowledge is reconciled with what the repository already knows before a person reviews it, and a promotion stands on evidence that resolves",
    "description": "A known fact gets one candidate. Each candidate group names what already speaks about its subject, read from the entity layer rather than from a second derivation. A promotion needs a resolvable reference and records it. An observation can cite the review that found it.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/landing-survives-any-session/",
+   "title": "landing-survives-any-session — Landing green work survives any session, any restart and any machine",
+   "description": "Landing green work on master never waits on a person or on one session staying alive.",
    "section": "The plan"
   },
   {
@@ -31754,7 +31886,7 @@
   {
    "route": "/rustdoc/",
    "title": "majordomus-cli 1.0.0-alpha.6 — Rust API reference",
-   "description": "The rustdoc reference of majordomus-cli 1.0.0-alpha.6, built from commit 2034d4a3f0b2f00ee0260f291330788448556b3b: the public items of the library and of the executable, and the source they were built from.",
+   "description": "The rustdoc reference of majordomus-cli 1.0.0-alpha.6, built from commit 355a0cee79aab7030af2e9e4e39a617ffd47c5dd: the public items of the library and of the executable, and the source they were built from.",
    "section": "majordomus-cli 1.0.0-alpha.6 — Rust API reference"
   },
   {
