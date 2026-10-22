@@ -109,6 +109,9 @@ git -C "$ROOT" ls-files -- bin lib scripts share .githooks test > "$S/tracked"
 while IFS= read -r f; do
   [ -f "$ROOT/$f" ] || continue
   case "$f" in
+    # this case: its scanner's messages name every construct it refuses, so it is the one
+    # unit that cannot be read by it (the fixture above holds the scanner to its answer)
+    test/cases/3480_the_shell_floor_is_bash_3_2_and_bsd_userland.sh) continue ;;
     test/cases/*.sh) printf '%s\n' "$ROOT/$f" >> "$S/units"; continue ;;
   esac
   case "$(head -n 1 "$ROOT/$f" 2>/dev/null)" in
