@@ -112,6 +112,43 @@ them changes, the evidence is reported as **stale**, and a claim bound to it los
 guarantee until the suite is run again. Evidence recorded under another methodology version is
 **incompatible** and never pooled.
 
+## The proof plan
+
+The token benchmark answers one question. The proof tests that are to settle the rest (accepted
+results, wall time, human interventions, CI reruns, spend, recovery, onboarding) are registered
+in the plan file `proof-plan.yaml` under `.ai/repo/benchmarks/` (schema `proof-plan/v1`) before
+any of their records exists, and `economics::proof::load` validates the plan fail-closed: it
+returns the plan or every finding, and an absent file is the finding "no proof plan is
+registered", never an empty valid plan.
+
+Each test names its question, the claims of `docs/CLAIMS.yaml` it settles, its dimension, the
+words a result is stated in, and its instrument: `built`, or `planned` with the issues that
+build it. Once its experiment is designed, a test gains a **protocol**: a version, the time it
+was registered, a change log entry for every version, and a decision of one of three kinds.
+
+| Decision | Declares |
+| --- | --- |
+| `paired` | an economics suite and the digest of that suite's own `registration` block, so pre-registration is written once |
+| `trials` | the fields every trial record carries with their classes (observed, counted or derived), the minimum trials and successes, and whether every trial must pass |
+| `window` | the period observed, the work it admits, and for each field the largest share of that work it may leave not observed, in basis points |
+
+A protocol carries `registered_digest`: the SHA-256 of its own canonical form, which is the
+protocol as written without that field, with object keys sorted and no whitespace. The same
+function, `economics::proof::digest`, digests a suite's registration block. The validator
+refuses a digest that does not match, naming the test and both digests, and also an unknown
+dimension or decision kind, a duplicate test id, a claim `docs/CLAIMS.yaml` lacks, a paired
+protocol whose suite or registration digest does not resolve, and a version without a change
+log entry.
+
+A record counts toward a test only when it carries that test's protocol digest and was recorded
+after `registered_at` (`economics::proof::counts_toward`); otherwise the answer says why not:
+no protocol yet, another protocol, too early, or a time it cannot read. Each protocol is frozen
+by its own digest rather than by the plan file's, so registering one test's protocol never
+makes another test's records stale. For the same reason the plan file is a freshness input of
+no suite, and the validator refuses a suite whose `freshness_inputs` could select it, read as
+`git ls-files` reads them: a directory above it, a wildcard or pathspec magic that matches it,
+or a list with no including pathspec, which selects every tracked file.
+
 ## Reproducing it
 
 ```bash
