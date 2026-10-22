@@ -371,8 +371,8 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/providers.json` | `providers` | json | 7080 | `d2cd6ec74e5f3d13` |
 | `docs/generated/providers.md` | `providers` | markdown | 2317 | `c71c0f462db87a06` |
 | `docs/generated/providers.yaml` | `providers` | yaml | 6557 | `d2aeaef887b19f89` |
-| `docs/generated/registry.json` | `registry` | json | 3859836 | `800e57eaffbb5fd4` |
-| `docs/generated/registry.yaml` | `registry` | yaml | 3115003 | `e97ea872a05391fa` |
+| `docs/generated/registry.json` | `registry` | json | 3859948 | `fe0a6fa403b22cd5` |
+| `docs/generated/registry.yaml` | `registry` | yaml | 3115095 | `2d0b0ea2284291e8` |
 | `docs/generated/web.json` | `web` | json | 5562 | `1772602a66d593f5` |
 | `docs/generated/web.yaml` | `web` | yaml | 4233 | `448f20ad710c3bed` |
 | `share/allow/adr.txt` | `allow/adr` | text | 380 | `0d41e6de87ab8a4f` |
@@ -430,10 +430,10 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `share/version.txt` | `version` | text | 245 | `e7559a638ce619fc` |
 | `site/data/registry/design.json` | `site-design` | json | 11594 | `787ad95ea4ce8a73` |
 | `site/data/registry/distribution.json` | `site-distribution` | json | 3005 | `1dc59aaebd16174a` |
-| `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 820307 | `6386b83dc75bda24` |
+| `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 821271 | `15fe212375e78923` |
 | `site/data/registry/product-graph.json` | `site-product-graph` | json | 111829 | `50f13d7028a0f4e2` |
 | `site/data/registry/product.json` | `site-product` | json | 764202 | `8747ebd36b91feb1` |
-| `site/data/registry/registry.json` | `site-registry` | json | 7587941 | `178bd560d3c3985a` |
+| `site/data/registry/registry.json` | `site-registry` | json | 7588061 | `4cd92e1b89a93bc0` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180170 | `449f398d697f1b83` |
 | `site/data/registry/why.json` | `site-why` | json | 349931 | `2485d2dc9c008bd8` |
 | `site/static/favicon.svg` | `design-mark` | text | 911 | `c76f9216b0e8764e` |
