@@ -23647,11 +23647,13 @@
             "Unknown keys are refused like every other record in this repository",
             "The schema is documented where the other file formats are"
           ],
+          "completed_at": "2026-10-22T18:30:02Z",
+          "completed_event": "sha256:1b53ae3c62c757cd997536734bb6405367f847f083e29fb4e20bc48f1942e3f1",
           "created_at": "2026-09-04",
           "depends_on": [],
           "desired_state": "One schema, with an allowlist like every other record here, in which each measured field names its reporter, and not_reported is a first-class value carrying why it is absent.",
           "evidence_required": [
-            "suite"
+            "telemetry_contract"
           ],
           "milestone": "execution-telemetry",
           "non_scope": [
@@ -23671,10 +23673,14 @@
             "docs"
           ],
           "slug": "telemetry-record-schema",
-          "updated_at": "2026-10-22",
+          "started_at": "2026-10-22T18:29:29Z",
+          "started_event": "sha256:01099aee49d06b2877cf1a6102f91ae3a6e881260352a70f500601824d7e33b4",
+          "updated_at": "2026-10-22T18:30:02Z",
           "validation": [
-            "bash test/run.sh"
-          ]
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test metadata_contract a_telemetry"
+          ],
+          "verified_at": "2026-10-22T18:29:42Z",
+          "verified_event": "sha256:a74fbfe9571126d55b51751defa00e5ce78f42d3de62925bd26d82d7e019a041"
         }
       },
       {
