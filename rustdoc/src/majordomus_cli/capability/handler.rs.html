@@ -560,113 +560,138 @@
 <a href=#560 id=560 data-nosnippet>560</a>        <span class="self">self</span>.capability.execution = <span class="self">self</span>.capability.execution.authenticates_its_input();
 <a href=#561 id=561 data-nosnippet>561</a>        <span class="self">self
 <a href=#562 id=562 data-nosnippet>562</a>    </span>}
-<a href=#563 id=563 data-nosnippet>563</a>}
-<a href=#564 id=564 data-nosnippet>564</a>
-<a href=#565 id=565 data-nosnippet>565</a><span class="doccomment">/// The one canonical declaration of an executable capability. From it every projection is
-<a href=#566 id=566 data-nosnippet>566</a>/// derived: the MCP tool and its schemas, the HTTP route and its OpenAPI operation, the
-<a href=#567 id=567 data-nosnippet>567</a>/// Swagger UI entry, the command line's introspection, the benchmark targets for every
-<a href=#568 id=568 data-nosnippet>568</a>/// transport it is exposed on, the cache policy the executor applies, and the generated
-<a href=#569 id=569 data-nosnippet>569</a>/// reference. Nothing is declared a second time anywhere.
-<a href=#570 id=570 data-nosnippet>570</a>///
-<a href=#571 id=571 data-nosnippet>571</a>/// Fields, in this order: `id`, an optional `kind` (a query by default;
-<a href=#572 id=572 data-nosnippet>572</a>/// `CapabilityKind::Command` for one that changes this process's memory), `title`,
-<a href=#573 id=573 data-nosnippet>573</a>/// `description`, `input`, `output`, `stability`, `exposure`, `tags`, an optional `cache`
-<a href=#574 id=574 data-nosnippet>574</a>/// (`CachePolicy::Disabled` by default), an optional `benchmark`
-<a href=#575 id=575 data-nosnippet>575</a>/// (`BenchmarkPolicy::Required` by default), and `handler`. `$input` and `$output` derive
-<a href=#576 id=576 data-nosnippet>576</a>/// `schemars::JsonSchema` (and serde), and `$input` implements
-<a href=#577 id=577 data-nosnippet>577</a>/// [`super::benchmark::BenchmarkCases`]: their schemas become the canonical schemas,
-<a href=#578 id=578 data-nosnippet>578</a>/// their doc comments the descriptions a client reads, and the input's cases the
-<a href=#579 id=579 data-nosnippet>579</a>/// benchmark inputs of every transport. The provenance is the Rust module the macro is
-<a href=#580 id=580 data-nosnippet>580</a>/// expanded in; the capability's module is stamped by [`crate::module!`]. Nothing here
-<a href=#581 id=581 data-nosnippet>581</a>/// registers anything: the result is composed explicitly into a module.
-<a href=#582 id=582 data-nosnippet>582</a>///
-<a href=#583 id=583 data-nosnippet>583</a>/// ```
-<a href=#584 id=584 data-nosnippet>584</a>/// use majordomus_cli::capability;
-<a href=#585 id=585 data-nosnippet>585</a>/// use majordomus_cli::capability::{BenchmarkCases, CachePolicy, CaseContext, Context, CapabilityError, Exposure, NamedCase, Stability};
-<a href=#586 id=586 data-nosnippet>586</a>/// #[derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema)]
-<a href=#587 id=587 data-nosnippet>587</a>/// struct In {}
-<a href=#588 id=588 data-nosnippet>588</a>/// impl BenchmarkCases for In {
-<a href=#589 id=589 data-nosnippet>589</a>///     fn benchmark_cases(_: &amp;CaseContext&lt;'_&gt;) -&gt; Vec&lt;NamedCase&lt;Self&gt;&gt; { vec![NamedCase::new("default", In {})] }
-<a href=#590 id=590 data-nosnippet>590</a>/// }
-<a href=#591 id=591 data-nosnippet>591</a>/// #[derive(serde::Serialize, schemars::JsonSchema)]
-<a href=#592 id=592 data-nosnippet>592</a>/// struct Out { ok: bool }
-<a href=#593 id=593 data-nosnippet>593</a>/// fn ping(_: &amp;Context, _: In) -&gt; Result&lt;Out, CapabilityError&gt; { Ok(Out { ok: true }) }
-<a href=#594 id=594 data-nosnippet>594</a>/// let e = capability! {
-<a href=#595 id=595 data-nosnippet>595</a>///     id: "demo.ping", title: "Ping", description: "Answers.", input: In, output: Out,
-<a href=#596 id=596 data-nosnippet>596</a>///     stability: Stability::Experimental, exposure: Exposure::default(), tags: ["demo"],
-<a href=#597 id=597 data-nosnippet>597</a>///     cache: CachePolicy::Process { max_entries: 8, ttl_seconds: None },
-<a href=#598 id=598 data-nosnippet>598</a>///     handler: ping,
-<a href=#599 id=599 data-nosnippet>599</a>/// };
-<a href=#600 id=600 data-nosnippet>600</a>/// assert_eq!(e.capability.id.as_str(), "demo.ping");
-<a href=#601 id=601 data-nosnippet>601</a>/// assert!(e.capability.cache.is_enabled());
-<a href=#602 id=602 data-nosnippet>602</a>/// ```
-<a href=#603 id=603 data-nosnippet>603</a></span><span class="attr">#[macro_export]
-<a href=#604 id=604 data-nosnippet>604</a></span><span class="macro">macro_rules!</span> capability {
-<a href=#605 id=605 data-nosnippet>605</a>    <span class="comment">// ---- the full form: every field present
-<a href=#606 id=606 data-nosnippet>606</a>    </span>(
-<a href=#607 id=607 data-nosnippet>607</a>        id: <span class="macro-nonterminal">$id</span>:expr,
-<a href=#608 id=608 data-nosnippet>608</a>        kind: <span class="macro-nonterminal">$kind</span>:expr,
-<a href=#609 id=609 data-nosnippet>609</a>        title: <span class="macro-nonterminal">$title</span>:expr,
-<a href=#610 id=610 data-nosnippet>610</a>        description: <span class="macro-nonterminal">$description</span>:expr,
-<a href=#611 id=611 data-nosnippet>611</a>        input: <span class="macro-nonterminal">$input</span>:ty,
-<a href=#612 id=612 data-nosnippet>612</a>        output: <span class="macro-nonterminal">$output</span>:ty,
-<a href=#613 id=613 data-nosnippet>613</a>        stability: <span class="macro-nonterminal">$stability</span>:expr,
-<a href=#614 id=614 data-nosnippet>614</a>        exposure: <span class="macro-nonterminal">$exposure</span>:expr,
-<a href=#615 id=615 data-nosnippet>615</a>        tags: [$(<span class="macro-nonterminal">$tag</span>:expr),* $(,)<span class="question-mark">?</span>],
-<a href=#616 id=616 data-nosnippet>616</a>        cache: <span class="macro-nonterminal">$cache</span>:expr,
-<a href=#617 id=617 data-nosnippet>617</a>        benchmark: <span class="macro-nonterminal">$benchmark</span>:expr,
-<a href=#618 id=618 data-nosnippet>618</a>        handler: <span class="macro-nonterminal">$handler</span>:expr $(,)<span class="question-mark">?
-<a href=#619 id=619 data-nosnippet>619</a>    </span>) =&gt; {{
-<a href=#620 id=620 data-nosnippet>620</a>        <span class="comment">// classified here, from the kind and the exposure this declaration already
-<a href=#621 id=621 data-nosnippet>621</a>        // carries, so that no declaration restates what it has just said and no
-<a href=#622 id=622 data-nosnippet>622</a>        // projection decides it later
-<a href=#623 id=623 data-nosnippet>623</a>        </span><span class="kw">let </span>kind = <span class="macro-nonterminal">$kind</span>;
-<a href=#624 id=624 data-nosnippet>624</a>        <span class="kw">let </span>exposure = <span class="macro-nonterminal">$exposure</span>;
-<a href=#625 id=625 data-nosnippet>625</a>        <span class="macro-nonterminal">$crate::capability::Executable </span>{
-<a href=#626 id=626 data-nosnippet>626</a>            capability: <span class="macro-nonterminal">$crate::capability::Capability </span>{
-<a href=#627 id=627 data-nosnippet>627</a>                id: <span class="macro-nonterminal">$crate::capability::CapabilityId::unchecked</span>(<span class="macro-nonterminal">$id</span>),
-<a href=#628 id=628 data-nosnippet>628</a>                module: <span class="macro-nonterminal">$crate::capability::ModuleId::unchecked</span>(<span class="string">""</span>),
-<a href=#629 id=629 data-nosnippet>629</a>                kind,
-<a href=#630 id=630 data-nosnippet>630</a>                title: String::from(<span class="macro-nonterminal">$title</span>),
-<a href=#631 id=631 data-nosnippet>631</a>                description: String::from(<span class="macro-nonterminal">$description</span>),
-<a href=#632 id=632 data-nosnippet>632</a>                input: <span class="macro-nonterminal">$crate::capability::CanonicalSchema::of</span>::&lt;<span class="macro-nonterminal">$input</span>&gt;(),
-<a href=#633 id=633 data-nosnippet>633</a>                output: <span class="macro-nonterminal">$crate::capability::CanonicalSchema::of</span>::&lt;<span class="macro-nonterminal">$output</span>&gt;(),
-<a href=#634 id=634 data-nosnippet>634</a>                provenance: <span class="macro-nonterminal">$crate::capability::Provenance::Builtin </span>{ module: String::from(<span class="macro">module_path!</span>()) },
-<a href=#635 id=635 data-nosnippet>635</a>                availability: <span class="macro-nonterminal">$crate::capability::Availability::classify</span>(kind, <span class="kw-2">&amp;</span>exposure),
-<a href=#636 id=636 data-nosnippet>636</a>                visibility: <span class="macro-nonterminal">$crate::capability::Visibility::classify</span>(<span class="kw-2">&amp;</span>exposure),
-<a href=#637 id=637 data-nosnippet>637</a>                exposure,
-<a href=#638 id=638 data-nosnippet>638</a>                stability: <span class="macro-nonterminal">$stability</span>,
-<a href=#639 id=639 data-nosnippet>639</a>                tags: <span class="macro">vec!</span>[$(String::from(<span class="macro-nonterminal">$tag</span>)),<span class="kw-2">*</span>],
-<a href=#640 id=640 data-nosnippet>640</a>                benchmark: <span class="macro-nonterminal">$benchmark</span>,
-<a href=#641 id=641 data-nosnippet>641</a>                cache: <span class="macro-nonterminal">$cache</span>,
-<a href=#642 id=642 data-nosnippet>642</a>                execution: <span class="macro-nonterminal">$crate::capability::ExecutionPolicy::classify</span>(kind),
-<a href=#643 id=643 data-nosnippet>643</a>                skill: <span class="prelude-val">None</span>,
-<a href=#644 id=644 data-nosnippet>644</a>            },
-<a href=#645 id=645 data-nosnippet>645</a>            handler: <span class="macro-nonterminal">$crate::capability::handler::handler</span>::&lt;<span class="macro-nonterminal">$input</span>, <span class="macro-nonterminal">$output</span>, <span class="kw">_</span>&gt;(<span class="macro-nonterminal">$handler</span>),
-<a href=#646 id=646 data-nosnippet>646</a>            cases: &lt;<span class="macro-nonterminal">$input </span><span class="kw">as </span><span class="macro-nonterminal">$crate::capability::BenchmarkCases</span>&gt;::benchmark_cases_json,
-<a href=#647 id=647 data-nosnippet>647</a>        }
-<a href=#648 id=648 data-nosnippet>648</a>    }};
-<a href=#649 id=649 data-nosnippet>649</a>    <span class="comment">// ---- defaults: kind Query, cache Disabled, benchmark Required, in every combination
-<a href=#650 id=650 data-nosnippet>650</a>    </span>( id: <span class="macro-nonterminal">$id</span>:expr, title: <span class="macro-nonterminal">$title</span>:expr, description: <span class="macro-nonterminal">$d</span>:expr, input: <span class="macro-nonterminal">$i</span>:ty, output: <span class="macro-nonterminal">$o</span>:ty, stability: <span class="macro-nonterminal">$s</span>:expr, exposure: <span class="macro-nonterminal">$e</span>:expr, tags: [$(<span class="macro-nonterminal">$t</span>:expr),* $(,)<span class="question-mark">?</span>], handler: <span class="macro-nonterminal">$h</span>:expr $(,)<span class="question-mark">? </span>) =&gt; {
-<a href=#651 id=651 data-nosnippet>651</a>        <span class="macro-nonterminal">$crate::capability</span>! { id: <span class="macro-nonterminal">$id</span>, kind: <span class="macro-nonterminal">$crate::capability::CapabilityKind::Query</span>, title: <span class="macro-nonterminal">$title</span>, description: <span class="macro-nonterminal">$d</span>, input: <span class="macro-nonterminal">$i</span>, output: <span class="macro-nonterminal">$o</span>, stability: <span class="macro-nonterminal">$s</span>, exposure: <span class="macro-nonterminal">$e</span>, tags: [$(<span class="macro-nonterminal">$t</span>),<span class="kw-2">*</span>], cache: <span class="macro-nonterminal">$crate::capability::CachePolicy::Disabled</span>, benchmark: <span class="macro-nonterminal">$crate::capability::BenchmarkPolicy::Required</span>, handler: <span class="macro-nonterminal">$h </span>}
-<a href=#652 id=652 data-nosnippet>652</a>    };
-<a href=#653 id=653 data-nosnippet>653</a>    ( id: <span class="macro-nonterminal">$id</span>:expr, kind: <span class="macro-nonterminal">$k</span>:expr, title: <span class="macro-nonterminal">$title</span>:expr, description: <span class="macro-nonterminal">$d</span>:expr, input: <span class="macro-nonterminal">$i</span>:ty, output: <span class="macro-nonterminal">$o</span>:ty, stability: <span class="macro-nonterminal">$s</span>:expr, exposure: <span class="macro-nonterminal">$e</span>:expr, tags: [$(<span class="macro-nonterminal">$t</span>:expr),* $(,)<span class="question-mark">?</span>], handler: <span class="macro-nonterminal">$h</span>:expr $(,)<span class="question-mark">? </span>) =&gt; {
-<a href=#654 id=654 data-nosnippet>654</a>        <span class="macro-nonterminal">$crate::capability</span>! { id: <span class="macro-nonterminal">$id</span>, kind: <span class="macro-nonterminal">$k</span>, title: <span class="macro-nonterminal">$title</span>, description: <span class="macro-nonterminal">$d</span>, input: <span class="macro-nonterminal">$i</span>, output: <span class="macro-nonterminal">$o</span>, stability: <span class="macro-nonterminal">$s</span>, exposure: <span class="macro-nonterminal">$e</span>, tags: [$(<span class="macro-nonterminal">$t</span>),<span class="kw-2">*</span>], cache: <span class="macro-nonterminal">$crate::capability::CachePolicy::Disabled</span>, benchmark: <span class="macro-nonterminal">$crate::capability::BenchmarkPolicy::Required</span>, handler: <span class="macro-nonterminal">$h </span>}
-<a href=#655 id=655 data-nosnippet>655</a>    };
-<a href=#656 id=656 data-nosnippet>656</a>    ( id: <span class="macro-nonterminal">$id</span>:expr, title: <span class="macro-nonterminal">$title</span>:expr, description: <span class="macro-nonterminal">$d</span>:expr, input: <span class="macro-nonterminal">$i</span>:ty, output: <span class="macro-nonterminal">$o</span>:ty, stability: <span class="macro-nonterminal">$s</span>:expr, exposure: <span class="macro-nonterminal">$e</span>:expr, tags: [$(<span class="macro-nonterminal">$t</span>:expr),* $(,)<span class="question-mark">?</span>], cache: <span class="macro-nonterminal">$c</span>:expr, handler: <span class="macro-nonterminal">$h</span>:expr $(,)<span class="question-mark">? </span>) =&gt; {
-<a href=#657 id=657 data-nosnippet>657</a>        <span class="macro-nonterminal">$crate::capability</span>! { id: <span class="macro-nonterminal">$id</span>, kind: <span class="macro-nonterminal">$crate::capability::CapabilityKind::Query</span>, title: <span class="macro-nonterminal">$title</span>, description: <span class="macro-nonterminal">$d</span>, input: <span class="macro-nonterminal">$i</span>, output: <span class="macro-nonterminal">$o</span>, stability: <span class="macro-nonterminal">$s</span>, exposure: <span class="macro-nonterminal">$e</span>, tags: [$(<span class="macro-nonterminal">$t</span>),<span class="kw-2">*</span>], cache: <span class="macro-nonterminal">$c</span>, benchmark: <span class="macro-nonterminal">$crate::capability::BenchmarkPolicy::Required</span>, handler: <span class="macro-nonterminal">$h </span>}
-<a href=#658 id=658 data-nosnippet>658</a>    };
-<a href=#659 id=659 data-nosnippet>659</a>    ( id: <span class="macro-nonterminal">$id</span>:expr, kind: <span class="macro-nonterminal">$k</span>:expr, title: <span class="macro-nonterminal">$title</span>:expr, description: <span class="macro-nonterminal">$d</span>:expr, input: <span class="macro-nonterminal">$i</span>:ty, output: <span class="macro-nonterminal">$o</span>:ty, stability: <span class="macro-nonterminal">$s</span>:expr, exposure: <span class="macro-nonterminal">$e</span>:expr, tags: [$(<span class="macro-nonterminal">$t</span>:expr),* $(,)<span class="question-mark">?</span>], cache: <span class="macro-nonterminal">$c</span>:expr, handler: <span class="macro-nonterminal">$h</span>:expr $(,)<span class="question-mark">? </span>) =&gt; {
-<a href=#660 id=660 data-nosnippet>660</a>        <span class="macro-nonterminal">$crate::capability</span>! { id: <span class="macro-nonterminal">$id</span>, kind: <span class="macro-nonterminal">$k</span>, title: <span class="macro-nonterminal">$title</span>, description: <span class="macro-nonterminal">$d</span>, input: <span class="macro-nonterminal">$i</span>, output: <span class="macro-nonterminal">$o</span>, stability: <span class="macro-nonterminal">$s</span>, exposure: <span class="macro-nonterminal">$e</span>, tags: [$(<span class="macro-nonterminal">$t</span>),<span class="kw-2">*</span>], cache: <span class="macro-nonterminal">$c</span>, benchmark: <span class="macro-nonterminal">$crate::capability::BenchmarkPolicy::Required</span>, handler: <span class="macro-nonterminal">$h </span>}
-<a href=#661 id=661 data-nosnippet>661</a>    };
-<a href=#662 id=662 data-nosnippet>662</a>    ( id: <span class="macro-nonterminal">$id</span>:expr, title: <span class="macro-nonterminal">$title</span>:expr, description: <span class="macro-nonterminal">$d</span>:expr, input: <span class="macro-nonterminal">$i</span>:ty, output: <span class="macro-nonterminal">$o</span>:ty, stability: <span class="macro-nonterminal">$s</span>:expr, exposure: <span class="macro-nonterminal">$e</span>:expr, tags: [$(<span class="macro-nonterminal">$t</span>:expr),* $(,)<span class="question-mark">?</span>], benchmark: <span class="macro-nonterminal">$b</span>:expr, handler: <span class="macro-nonterminal">$h</span>:expr $(,)<span class="question-mark">? </span>) =&gt; {
-<a href=#663 id=663 data-nosnippet>663</a>        <span class="macro-nonterminal">$crate::capability</span>! { id: <span class="macro-nonterminal">$id</span>, kind: <span class="macro-nonterminal">$crate::capability::CapabilityKind::Query</span>, title: <span class="macro-nonterminal">$title</span>, description: <span class="macro-nonterminal">$d</span>, input: <span class="macro-nonterminal">$i</span>, output: <span class="macro-nonterminal">$o</span>, stability: <span class="macro-nonterminal">$s</span>, exposure: <span class="macro-nonterminal">$e</span>, tags: [$(<span class="macro-nonterminal">$t</span>),<span class="kw-2">*</span>], cache: <span class="macro-nonterminal">$crate::capability::CachePolicy::Disabled</span>, benchmark: <span class="macro-nonterminal">$b</span>, handler: <span class="macro-nonterminal">$h </span>}
-<a href=#664 id=664 data-nosnippet>664</a>    };
-<a href=#665 id=665 data-nosnippet>665</a>    ( id: <span class="macro-nonterminal">$id</span>:expr, kind: <span class="macro-nonterminal">$k</span>:expr, title: <span class="macro-nonterminal">$title</span>:expr, description: <span class="macro-nonterminal">$d</span>:expr, input: <span class="macro-nonterminal">$i</span>:ty, output: <span class="macro-nonterminal">$o</span>:ty, stability: <span class="macro-nonterminal">$s</span>:expr, exposure: <span class="macro-nonterminal">$e</span>:expr, tags: [$(<span class="macro-nonterminal">$t</span>:expr),* $(,)<span class="question-mark">?</span>], benchmark: <span class="macro-nonterminal">$b</span>:expr, handler: <span class="macro-nonterminal">$h</span>:expr $(,)<span class="question-mark">? </span>) =&gt; {
-<a href=#666 id=666 data-nosnippet>666</a>        <span class="macro-nonterminal">$crate::capability</span>! { id: <span class="macro-nonterminal">$id</span>, kind: <span class="macro-nonterminal">$k</span>, title: <span class="macro-nonterminal">$title</span>, description: <span class="macro-nonterminal">$d</span>, input: <span class="macro-nonterminal">$i</span>, output: <span class="macro-nonterminal">$o</span>, stability: <span class="macro-nonterminal">$s</span>, exposure: <span class="macro-nonterminal">$e</span>, tags: [$(<span class="macro-nonterminal">$t</span>),<span class="kw-2">*</span>], cache: <span class="macro-nonterminal">$crate::capability::CachePolicy::Disabled</span>, benchmark: <span class="macro-nonterminal">$b</span>, handler: <span class="macro-nonterminal">$h </span>}
-<a href=#667 id=667 data-nosnippet>667</a>    };
-<a href=#668 id=668 data-nosnippet>668</a>    ( id: <span class="macro-nonterminal">$id</span>:expr, title: <span class="macro-nonterminal">$title</span>:expr, description: <span class="macro-nonterminal">$d</span>:expr, input: <span class="macro-nonterminal">$i</span>:ty, output: <span class="macro-nonterminal">$o</span>:ty, stability: <span class="macro-nonterminal">$s</span>:expr, exposure: <span class="macro-nonterminal">$e</span>:expr, tags: [$(<span class="macro-nonterminal">$t</span>:expr),* $(,)<span class="question-mark">?</span>], cache: <span class="macro-nonterminal">$c</span>:expr, benchmark: <span class="macro-nonterminal">$b</span>:expr, handler: <span class="macro-nonterminal">$h</span>:expr $(,)<span class="question-mark">? </span>) =&gt; {
-<a href=#669 id=669 data-nosnippet>669</a>        <span class="macro-nonterminal">$crate::capability</span>! { id: <span class="macro-nonterminal">$id</span>, kind: <span class="macro-nonterminal">$crate::capability::CapabilityKind::Query</span>, title: <span class="macro-nonterminal">$title</span>, description: <span class="macro-nonterminal">$d</span>, input: <span class="macro-nonterminal">$i</span>, output: <span class="macro-nonterminal">$o</span>, stability: <span class="macro-nonterminal">$s</span>, exposure: <span class="macro-nonterminal">$e</span>, tags: [$(<span class="macro-nonterminal">$t</span>),<span class="kw-2">*</span>], cache: <span class="macro-nonterminal">$c</span>, benchmark: <span class="macro-nonterminal">$b</span>, handler: <span class="macro-nonterminal">$h </span>}
-<a href=#670 id=670 data-nosnippet>670</a>    };
-<a href=#671 id=671 data-nosnippet>671</a>}
+<a href=#563 id=563 data-nosnippet>563</a>
+<a href=#564 id=564 data-nosnippet>564</a>    <span class="doccomment">/// The declaration, answering only a caller on this machine: a read that shows the
+<a href=#565 id=565 data-nosnippet>565</a>    /// mesh's working state (ADR 0220 decision 4). See
+<a href=#566 id=566 data-nosnippet>566</a>    /// [`crate::capability::ExecutionPolicy::reads_only_locally`].
+<a href=#567 id=567 data-nosnippet>567</a>    ///
+<a href=#568 id=568 data-nosnippet>568</a>    /// ```
+<a href=#569 id=569 data-nosnippet>569</a>    /// use majordomus_cli::capability;
+<a href=#570 id=570 data-nosnippet>570</a>    /// use majordomus_cli::capability::{CapabilityKind, Context, CapabilityError, Effect, Exposure, Stability};
+<a href=#571 id=571 data-nosnippet>571</a>    /// use majordomus_cli::capability::builtin::Empty;
+<a href=#572 id=572 data-nosnippet>572</a>    /// #[derive(serde::Serialize, schemars::JsonSchema)]
+<a href=#573 id=573 data-nosnippet>573</a>    /// struct Board { peers: usize }
+<a href=#574 id=574 data-nosnippet>574</a>    /// fn board(_: &amp;Context, _: Empty) -&gt; Result&lt;Board, CapabilityError&gt; { Ok(Board { peers: 0 }) }
+<a href=#575 id=575 data-nosnippet>575</a>    /// let e = capability! {
+<a href=#576 id=576 data-nosnippet>576</a>    ///     id: "demo.board", kind: CapabilityKind::Query, title: "Board", description: "Who works here.",
+<a href=#577 id=577 data-nosnippet>577</a>    ///     input: Empty, output: Board, stability: Stability::Experimental,
+<a href=#578 id=578 data-nosnippet>578</a>    ///     exposure: Exposure::default(), tags: [], handler: board,
+<a href=#579 id=579 data-nosnippet>579</a>    /// }.reads_only_locally();
+<a href=#580 id=580 data-nosnippet>580</a>    /// let policy = e.capability.execution;
+<a href=#581 id=581 data-nosnippet>581</a>    /// assert!(policy.local_only &amp;&amp; !policy.admits_remote(), "a caller beyond loopback is refused");
+<a href=#582 id=582 data-nosnippet>582</a>    /// assert_eq!(policy.effect, Effect::Read, "it is still a read");
+<a href=#583 id=583 data-nosnippet>583</a>    /// ```
+<a href=#584 id=584 data-nosnippet>584</a>    </span><span class="kw">pub fn </span>reads_only_locally(<span class="kw-2">mut </span><span class="self">self</span>) -&gt; <span class="self">Self </span>{
+<a href=#585 id=585 data-nosnippet>585</a>        <span class="self">self</span>.capability.execution = <span class="self">self</span>.capability.execution.reads_only_locally();
+<a href=#586 id=586 data-nosnippet>586</a>        <span class="self">self
+<a href=#587 id=587 data-nosnippet>587</a>    </span>}
+<a href=#588 id=588 data-nosnippet>588</a>}
+<a href=#589 id=589 data-nosnippet>589</a>
+<a href=#590 id=590 data-nosnippet>590</a><span class="doccomment">/// The one canonical declaration of an executable capability. From it every projection is
+<a href=#591 id=591 data-nosnippet>591</a>/// derived: the MCP tool and its schemas, the HTTP route and its OpenAPI operation, the
+<a href=#592 id=592 data-nosnippet>592</a>/// Swagger UI entry, the command line's introspection, the benchmark targets for every
+<a href=#593 id=593 data-nosnippet>593</a>/// transport it is exposed on, the cache policy the executor applies, and the generated
+<a href=#594 id=594 data-nosnippet>594</a>/// reference. Nothing is declared a second time anywhere.
+<a href=#595 id=595 data-nosnippet>595</a>///
+<a href=#596 id=596 data-nosnippet>596</a>/// Fields, in this order: `id`, an optional `kind` (a query by default;
+<a href=#597 id=597 data-nosnippet>597</a>/// `CapabilityKind::Command` for one that changes this process's memory), `title`,
+<a href=#598 id=598 data-nosnippet>598</a>/// `description`, `input`, `output`, `stability`, `exposure`, `tags`, an optional `cache`
+<a href=#599 id=599 data-nosnippet>599</a>/// (`CachePolicy::Disabled` by default), an optional `benchmark`
+<a href=#600 id=600 data-nosnippet>600</a>/// (`BenchmarkPolicy::Required` by default), and `handler`. `$input` and `$output` derive
+<a href=#601 id=601 data-nosnippet>601</a>/// `schemars::JsonSchema` (and serde), and `$input` implements
+<a href=#602 id=602 data-nosnippet>602</a>/// [`super::benchmark::BenchmarkCases`]: their schemas become the canonical schemas,
+<a href=#603 id=603 data-nosnippet>603</a>/// their doc comments the descriptions a client reads, and the input's cases the
+<a href=#604 id=604 data-nosnippet>604</a>/// benchmark inputs of every transport. The provenance is the Rust module the macro is
+<a href=#605 id=605 data-nosnippet>605</a>/// expanded in; the capability's module is stamped by [`crate::module!`]. Nothing here
+<a href=#606 id=606 data-nosnippet>606</a>/// registers anything: the result is composed explicitly into a module.
+<a href=#607 id=607 data-nosnippet>607</a>///
+<a href=#608 id=608 data-nosnippet>608</a>/// ```
+<a href=#609 id=609 data-nosnippet>609</a>/// use majordomus_cli::capability;
+<a href=#610 id=610 data-nosnippet>610</a>/// use majordomus_cli::capability::{BenchmarkCases, CachePolicy, CaseContext, Context, CapabilityError, Exposure, NamedCase, Stability};
+<a href=#611 id=611 data-nosnippet>611</a>/// #[derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema)]
+<a href=#612 id=612 data-nosnippet>612</a>/// struct In {}
+<a href=#613 id=613 data-nosnippet>613</a>/// impl BenchmarkCases for In {
+<a href=#614 id=614 data-nosnippet>614</a>///     fn benchmark_cases(_: &amp;CaseContext&lt;'_&gt;) -&gt; Vec&lt;NamedCase&lt;Self&gt;&gt; { vec![NamedCase::new("default", In {})] }
+<a href=#615 id=615 data-nosnippet>615</a>/// }
+<a href=#616 id=616 data-nosnippet>616</a>/// #[derive(serde::Serialize, schemars::JsonSchema)]
+<a href=#617 id=617 data-nosnippet>617</a>/// struct Out { ok: bool }
+<a href=#618 id=618 data-nosnippet>618</a>/// fn ping(_: &amp;Context, _: In) -&gt; Result&lt;Out, CapabilityError&gt; { Ok(Out { ok: true }) }
+<a href=#619 id=619 data-nosnippet>619</a>/// let e = capability! {
+<a href=#620 id=620 data-nosnippet>620</a>///     id: "demo.ping", title: "Ping", description: "Answers.", input: In, output: Out,
+<a href=#621 id=621 data-nosnippet>621</a>///     stability: Stability::Experimental, exposure: Exposure::default(), tags: ["demo"],
+<a href=#622 id=622 data-nosnippet>622</a>///     cache: CachePolicy::Process { max_entries: 8, ttl_seconds: None },
+<a href=#623 id=623 data-nosnippet>623</a>///     handler: ping,
+<a href=#624 id=624 data-nosnippet>624</a>/// };
+<a href=#625 id=625 data-nosnippet>625</a>/// assert_eq!(e.capability.id.as_str(), "demo.ping");
+<a href=#626 id=626 data-nosnippet>626</a>/// assert!(e.capability.cache.is_enabled());
+<a href=#627 id=627 data-nosnippet>627</a>/// ```
+<a href=#628 id=628 data-nosnippet>628</a></span><span class="attr">#[macro_export]
+<a href=#629 id=629 data-nosnippet>629</a></span><span class="macro">macro_rules!</span> capability {
+<a href=#630 id=630 data-nosnippet>630</a>    <span class="comment">// ---- the full form: every field present
+<a href=#631 id=631 data-nosnippet>631</a>    </span>(
+<a href=#632 id=632 data-nosnippet>632</a>        id: <span class="macro-nonterminal">$id</span>:expr,
+<a href=#633 id=633 data-nosnippet>633</a>        kind: <span class="macro-nonterminal">$kind</span>:expr,
+<a href=#634 id=634 data-nosnippet>634</a>        title: <span class="macro-nonterminal">$title</span>:expr,
+<a href=#635 id=635 data-nosnippet>635</a>        description: <span class="macro-nonterminal">$description</span>:expr,
+<a href=#636 id=636 data-nosnippet>636</a>        input: <span class="macro-nonterminal">$input</span>:ty,
+<a href=#637 id=637 data-nosnippet>637</a>        output: <span class="macro-nonterminal">$output</span>:ty,
+<a href=#638 id=638 data-nosnippet>638</a>        stability: <span class="macro-nonterminal">$stability</span>:expr,
+<a href=#639 id=639 data-nosnippet>639</a>        exposure: <span class="macro-nonterminal">$exposure</span>:expr,
+<a href=#640 id=640 data-nosnippet>640</a>        tags: [$(<span class="macro-nonterminal">$tag</span>:expr),* $(,)<span class="question-mark">?</span>],
+<a href=#641 id=641 data-nosnippet>641</a>        cache: <span class="macro-nonterminal">$cache</span>:expr,
+<a href=#642 id=642 data-nosnippet>642</a>        benchmark: <span class="macro-nonterminal">$benchmark</span>:expr,
+<a href=#643 id=643 data-nosnippet>643</a>        handler: <span class="macro-nonterminal">$handler</span>:expr $(,)<span class="question-mark">?
+<a href=#644 id=644 data-nosnippet>644</a>    </span>) =&gt; {{
+<a href=#645 id=645 data-nosnippet>645</a>        <span class="comment">// classified here, from the kind and the exposure this declaration already
+<a href=#646 id=646 data-nosnippet>646</a>        // carries, so that no declaration restates what it has just said and no
+<a href=#647 id=647 data-nosnippet>647</a>        // projection decides it later
+<a href=#648 id=648 data-nosnippet>648</a>        </span><span class="kw">let </span>kind = <span class="macro-nonterminal">$kind</span>;
+<a href=#649 id=649 data-nosnippet>649</a>        <span class="kw">let </span>exposure = <span class="macro-nonterminal">$exposure</span>;
+<a href=#650 id=650 data-nosnippet>650</a>        <span class="macro-nonterminal">$crate::capability::Executable </span>{
+<a href=#651 id=651 data-nosnippet>651</a>            capability: <span class="macro-nonterminal">$crate::capability::Capability </span>{
+<a href=#652 id=652 data-nosnippet>652</a>                id: <span class="macro-nonterminal">$crate::capability::CapabilityId::unchecked</span>(<span class="macro-nonterminal">$id</span>),
+<a href=#653 id=653 data-nosnippet>653</a>                module: <span class="macro-nonterminal">$crate::capability::ModuleId::unchecked</span>(<span class="string">""</span>),
+<a href=#654 id=654 data-nosnippet>654</a>                kind,
+<a href=#655 id=655 data-nosnippet>655</a>                title: String::from(<span class="macro-nonterminal">$title</span>),
+<a href=#656 id=656 data-nosnippet>656</a>                description: String::from(<span class="macro-nonterminal">$description</span>),
+<a href=#657 id=657 data-nosnippet>657</a>                input: <span class="macro-nonterminal">$crate::capability::CanonicalSchema::of</span>::&lt;<span class="macro-nonterminal">$input</span>&gt;(),
+<a href=#658 id=658 data-nosnippet>658</a>                output: <span class="macro-nonterminal">$crate::capability::CanonicalSchema::of</span>::&lt;<span class="macro-nonterminal">$output</span>&gt;(),
+<a href=#659 id=659 data-nosnippet>659</a>                provenance: <span class="macro-nonterminal">$crate::capability::Provenance::Builtin </span>{ module: String::from(<span class="macro">module_path!</span>()) },
+<a href=#660 id=660 data-nosnippet>660</a>                availability: <span class="macro-nonterminal">$crate::capability::Availability::classify</span>(kind, <span class="kw-2">&amp;</span>exposure),
+<a href=#661 id=661 data-nosnippet>661</a>                visibility: <span class="macro-nonterminal">$crate::capability::Visibility::classify</span>(<span class="kw-2">&amp;</span>exposure),
+<a href=#662 id=662 data-nosnippet>662</a>                exposure,
+<a href=#663 id=663 data-nosnippet>663</a>                stability: <span class="macro-nonterminal">$stability</span>,
+<a href=#664 id=664 data-nosnippet>664</a>                tags: <span class="macro">vec!</span>[$(String::from(<span class="macro-nonterminal">$tag</span>)),<span class="kw-2">*</span>],
+<a href=#665 id=665 data-nosnippet>665</a>                benchmark: <span class="macro-nonterminal">$benchmark</span>,
+<a href=#666 id=666 data-nosnippet>666</a>                cache: <span class="macro-nonterminal">$cache</span>,
+<a href=#667 id=667 data-nosnippet>667</a>                execution: <span class="macro-nonterminal">$crate::capability::ExecutionPolicy::classify</span>(kind),
+<a href=#668 id=668 data-nosnippet>668</a>                skill: <span class="prelude-val">None</span>,
+<a href=#669 id=669 data-nosnippet>669</a>            },
+<a href=#670 id=670 data-nosnippet>670</a>            handler: <span class="macro-nonterminal">$crate::capability::handler::handler</span>::&lt;<span class="macro-nonterminal">$input</span>, <span class="macro-nonterminal">$output</span>, <span class="kw">_</span>&gt;(<span class="macro-nonterminal">$handler</span>),
+<a href=#671 id=671 data-nosnippet>671</a>            cases: &lt;<span class="macro-nonterminal">$input </span><span class="kw">as </span><span class="macro-nonterminal">$crate::capability::BenchmarkCases</span>&gt;::benchmark_cases_json,
+<a href=#672 id=672 data-nosnippet>672</a>        }
+<a href=#673 id=673 data-nosnippet>673</a>    }};
+<a href=#674 id=674 data-nosnippet>674</a>    <span class="comment">// ---- defaults: kind Query, cache Disabled, benchmark Required, in every combination
+<a href=#675 id=675 data-nosnippet>675</a>    </span>( id: <span class="macro-nonterminal">$id</span>:expr, title: <span class="macro-nonterminal">$title</span>:expr, description: <span class="macro-nonterminal">$d</span>:expr, input: <span class="macro-nonterminal">$i</span>:ty, output: <span class="macro-nonterminal">$o</span>:ty, stability: <span class="macro-nonterminal">$s</span>:expr, exposure: <span class="macro-nonterminal">$e</span>:expr, tags: [$(<span class="macro-nonterminal">$t</span>:expr),* $(,)<span class="question-mark">?</span>], handler: <span class="macro-nonterminal">$h</span>:expr $(,)<span class="question-mark">? </span>) =&gt; {
+<a href=#676 id=676 data-nosnippet>676</a>        <span class="macro-nonterminal">$crate::capability</span>! { id: <span class="macro-nonterminal">$id</span>, kind: <span class="macro-nonterminal">$crate::capability::CapabilityKind::Query</span>, title: <span class="macro-nonterminal">$title</span>, description: <span class="macro-nonterminal">$d</span>, input: <span class="macro-nonterminal">$i</span>, output: <span class="macro-nonterminal">$o</span>, stability: <span class="macro-nonterminal">$s</span>, exposure: <span class="macro-nonterminal">$e</span>, tags: [$(<span class="macro-nonterminal">$t</span>),<span class="kw-2">*</span>], cache: <span class="macro-nonterminal">$crate::capability::CachePolicy::Disabled</span>, benchmark: <span class="macro-nonterminal">$crate::capability::BenchmarkPolicy::Required</span>, handler: <span class="macro-nonterminal">$h </span>}
+<a href=#677 id=677 data-nosnippet>677</a>    };
+<a href=#678 id=678 data-nosnippet>678</a>    ( id: <span class="macro-nonterminal">$id</span>:expr, kind: <span class="macro-nonterminal">$k</span>:expr, title: <span class="macro-nonterminal">$title</span>:expr, description: <span class="macro-nonterminal">$d</span>:expr, input: <span class="macro-nonterminal">$i</span>:ty, output: <span class="macro-nonterminal">$o</span>:ty, stability: <span class="macro-nonterminal">$s</span>:expr, exposure: <span class="macro-nonterminal">$e</span>:expr, tags: [$(<span class="macro-nonterminal">$t</span>:expr),* $(,)<span class="question-mark">?</span>], handler: <span class="macro-nonterminal">$h</span>:expr $(,)<span class="question-mark">? </span>) =&gt; {
+<a href=#679 id=679 data-nosnippet>679</a>        <span class="macro-nonterminal">$crate::capability</span>! { id: <span class="macro-nonterminal">$id</span>, kind: <span class="macro-nonterminal">$k</span>, title: <span class="macro-nonterminal">$title</span>, description: <span class="macro-nonterminal">$d</span>, input: <span class="macro-nonterminal">$i</span>, output: <span class="macro-nonterminal">$o</span>, stability: <span class="macro-nonterminal">$s</span>, exposure: <span class="macro-nonterminal">$e</span>, tags: [$(<span class="macro-nonterminal">$t</span>),<span class="kw-2">*</span>], cache: <span class="macro-nonterminal">$crate::capability::CachePolicy::Disabled</span>, benchmark: <span class="macro-nonterminal">$crate::capability::BenchmarkPolicy::Required</span>, handler: <span class="macro-nonterminal">$h </span>}
+<a href=#680 id=680 data-nosnippet>680</a>    };
+<a href=#681 id=681 data-nosnippet>681</a>    ( id: <span class="macro-nonterminal">$id</span>:expr, title: <span class="macro-nonterminal">$title</span>:expr, description: <span class="macro-nonterminal">$d</span>:expr, input: <span class="macro-nonterminal">$i</span>:ty, output: <span class="macro-nonterminal">$o</span>:ty, stability: <span class="macro-nonterminal">$s</span>:expr, exposure: <span class="macro-nonterminal">$e</span>:expr, tags: [$(<span class="macro-nonterminal">$t</span>:expr),* $(,)<span class="question-mark">?</span>], cache: <span class="macro-nonterminal">$c</span>:expr, handler: <span class="macro-nonterminal">$h</span>:expr $(,)<span class="question-mark">? </span>) =&gt; {
+<a href=#682 id=682 data-nosnippet>682</a>        <span class="macro-nonterminal">$crate::capability</span>! { id: <span class="macro-nonterminal">$id</span>, kind: <span class="macro-nonterminal">$crate::capability::CapabilityKind::Query</span>, title: <span class="macro-nonterminal">$title</span>, description: <span class="macro-nonterminal">$d</span>, input: <span class="macro-nonterminal">$i</span>, output: <span class="macro-nonterminal">$o</span>, stability: <span class="macro-nonterminal">$s</span>, exposure: <span class="macro-nonterminal">$e</span>, tags: [$(<span class="macro-nonterminal">$t</span>),<span class="kw-2">*</span>], cache: <span class="macro-nonterminal">$c</span>, benchmark: <span class="macro-nonterminal">$crate::capability::BenchmarkPolicy::Required</span>, handler: <span class="macro-nonterminal">$h </span>}
+<a href=#683 id=683 data-nosnippet>683</a>    };
+<a href=#684 id=684 data-nosnippet>684</a>    ( id: <span class="macro-nonterminal">$id</span>:expr, kind: <span class="macro-nonterminal">$k</span>:expr, title: <span class="macro-nonterminal">$title</span>:expr, description: <span class="macro-nonterminal">$d</span>:expr, input: <span class="macro-nonterminal">$i</span>:ty, output: <span class="macro-nonterminal">$o</span>:ty, stability: <span class="macro-nonterminal">$s</span>:expr, exposure: <span class="macro-nonterminal">$e</span>:expr, tags: [$(<span class="macro-nonterminal">$t</span>:expr),* $(,)<span class="question-mark">?</span>], cache: <span class="macro-nonterminal">$c</span>:expr, handler: <span class="macro-nonterminal">$h</span>:expr $(,)<span class="question-mark">? </span>) =&gt; {
+<a href=#685 id=685 data-nosnippet>685</a>        <span class="macro-nonterminal">$crate::capability</span>! { id: <span class="macro-nonterminal">$id</span>, kind: <span class="macro-nonterminal">$k</span>, title: <span class="macro-nonterminal">$title</span>, description: <span class="macro-nonterminal">$d</span>, input: <span class="macro-nonterminal">$i</span>, output: <span class="macro-nonterminal">$o</span>, stability: <span class="macro-nonterminal">$s</span>, exposure: <span class="macro-nonterminal">$e</span>, tags: [$(<span class="macro-nonterminal">$t</span>),<span class="kw-2">*</span>], cache: <span class="macro-nonterminal">$c</span>, benchmark: <span class="macro-nonterminal">$crate::capability::BenchmarkPolicy::Required</span>, handler: <span class="macro-nonterminal">$h </span>}
+<a href=#686 id=686 data-nosnippet>686</a>    };
+<a href=#687 id=687 data-nosnippet>687</a>    ( id: <span class="macro-nonterminal">$id</span>:expr, title: <span class="macro-nonterminal">$title</span>:expr, description: <span class="macro-nonterminal">$d</span>:expr, input: <span class="macro-nonterminal">$i</span>:ty, output: <span class="macro-nonterminal">$o</span>:ty, stability: <span class="macro-nonterminal">$s</span>:expr, exposure: <span class="macro-nonterminal">$e</span>:expr, tags: [$(<span class="macro-nonterminal">$t</span>:expr),* $(,)<span class="question-mark">?</span>], benchmark: <span class="macro-nonterminal">$b</span>:expr, handler: <span class="macro-nonterminal">$h</span>:expr $(,)<span class="question-mark">? </span>) =&gt; {
+<a href=#688 id=688 data-nosnippet>688</a>        <span class="macro-nonterminal">$crate::capability</span>! { id: <span class="macro-nonterminal">$id</span>, kind: <span class="macro-nonterminal">$crate::capability::CapabilityKind::Query</span>, title: <span class="macro-nonterminal">$title</span>, description: <span class="macro-nonterminal">$d</span>, input: <span class="macro-nonterminal">$i</span>, output: <span class="macro-nonterminal">$o</span>, stability: <span class="macro-nonterminal">$s</span>, exposure: <span class="macro-nonterminal">$e</span>, tags: [$(<span class="macro-nonterminal">$t</span>),<span class="kw-2">*</span>], cache: <span class="macro-nonterminal">$crate::capability::CachePolicy::Disabled</span>, benchmark: <span class="macro-nonterminal">$b</span>, handler: <span class="macro-nonterminal">$h </span>}
+<a href=#689 id=689 data-nosnippet>689</a>    };
+<a href=#690 id=690 data-nosnippet>690</a>    ( id: <span class="macro-nonterminal">$id</span>:expr, kind: <span class="macro-nonterminal">$k</span>:expr, title: <span class="macro-nonterminal">$title</span>:expr, description: <span class="macro-nonterminal">$d</span>:expr, input: <span class="macro-nonterminal">$i</span>:ty, output: <span class="macro-nonterminal">$o</span>:ty, stability: <span class="macro-nonterminal">$s</span>:expr, exposure: <span class="macro-nonterminal">$e</span>:expr, tags: [$(<span class="macro-nonterminal">$t</span>:expr),* $(,)<span class="question-mark">?</span>], benchmark: <span class="macro-nonterminal">$b</span>:expr, handler: <span class="macro-nonterminal">$h</span>:expr $(,)<span class="question-mark">? </span>) =&gt; {
+<a href=#691 id=691 data-nosnippet>691</a>        <span class="macro-nonterminal">$crate::capability</span>! { id: <span class="macro-nonterminal">$id</span>, kind: <span class="macro-nonterminal">$k</span>, title: <span class="macro-nonterminal">$title</span>, description: <span class="macro-nonterminal">$d</span>, input: <span class="macro-nonterminal">$i</span>, output: <span class="macro-nonterminal">$o</span>, stability: <span class="macro-nonterminal">$s</span>, exposure: <span class="macro-nonterminal">$e</span>, tags: [$(<span class="macro-nonterminal">$t</span>),<span class="kw-2">*</span>], cache: <span class="macro-nonterminal">$crate::capability::CachePolicy::Disabled</span>, benchmark: <span class="macro-nonterminal">$b</span>, handler: <span class="macro-nonterminal">$h </span>}
+<a href=#692 id=692 data-nosnippet>692</a>    };
+<a href=#693 id=693 data-nosnippet>693</a>    ( id: <span class="macro-nonterminal">$id</span>:expr, title: <span class="macro-nonterminal">$title</span>:expr, description: <span class="macro-nonterminal">$d</span>:expr, input: <span class="macro-nonterminal">$i</span>:ty, output: <span class="macro-nonterminal">$o</span>:ty, stability: <span class="macro-nonterminal">$s</span>:expr, exposure: <span class="macro-nonterminal">$e</span>:expr, tags: [$(<span class="macro-nonterminal">$t</span>:expr),* $(,)<span class="question-mark">?</span>], cache: <span class="macro-nonterminal">$c</span>:expr, benchmark: <span class="macro-nonterminal">$b</span>:expr, handler: <span class="macro-nonterminal">$h</span>:expr $(,)<span class="question-mark">? </span>) =&gt; {
+<a href=#694 id=694 data-nosnippet>694</a>        <span class="macro-nonterminal">$crate::capability</span>! { id: <span class="macro-nonterminal">$id</span>, kind: <span class="macro-nonterminal">$crate::capability::CapabilityKind::Query</span>, title: <span class="macro-nonterminal">$title</span>, description: <span class="macro-nonterminal">$d</span>, input: <span class="macro-nonterminal">$i</span>, output: <span class="macro-nonterminal">$o</span>, stability: <span class="macro-nonterminal">$s</span>, exposure: <span class="macro-nonterminal">$e</span>, tags: [$(<span class="macro-nonterminal">$t</span>),<span class="kw-2">*</span>], cache: <span class="macro-nonterminal">$c</span>, benchmark: <span class="macro-nonterminal">$b</span>, handler: <span class="macro-nonterminal">$h </span>}
+<a href=#695 id=695 data-nosnippet>695</a>    };
+<a href=#696 id=696 data-nosnippet>696</a>}
 </code></pre></div></section></main></body></html>

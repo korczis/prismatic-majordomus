@@ -1,0 +1,1642 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/deploy/slug.rs`."><title>slug.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="majordomus_cli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.98.1 (48a229cea 2026-09-01)" data-channel="1.98.1" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../static.files/storage-41dd4d93.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1><div class="sub-heading">majordomus_cli/deploy/</div>slug.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! The tree a provider receives, assembled from the deployment object at one commit (ADR
+<a href=#2 id=2 data-nosnippet>2</a>//! 0219, decisions 3 and 4).
+<a href=#3 id=3 data-nosnippet>3</a>//!
+<a href=#4 id=4 data-nosnippet>4</a>//! What is pushed to a provider is never the repository: not its history, not the
+<a href=#5 id=5 data-nosnippet>5</a>//! checkout-local half, not a file the object does not name. It is built from three things
+<a href=#6 id=6 data-nosnippet>6</a>//! only, all read at one commit:
+<a href=#7 id=7 data-nosnippet>7</a>//!
+<a href=#8 id=8 data-nosnippet>8</a>//! - the object's `build.inputs`, except the package directory the executable is compiled
+<a href=#9 id=9 data-nosnippet>9</a>//!   from (`render::runtime_inputs`), read from git rather than from the working tree, so a
+<a href=#10 id=10 data-nosnippet>10</a>//!   file edited and not committed never reaches a provider;
+<a href=#11 id=11 data-nosnippet>11</a>//! - the provider's generated files (`deploy/&lt;provider&gt;/`), moved to the slug's root where
+<a href=#12 id=12 data-nosnippet>12</a>//!   the provider reads them, each held to what the object renders at that commit and the
+<a href=#13 id=13 data-nosnippet>13</a>//!   hooks made executable;
+<a href=#14 id=14 data-nosnippet>14</a>//! - the executable built at that same commit, installed at [`render::slug_executable`], and
+<a href=#15 id=15 data-nosnippet>15</a>//!   the provider's buildpack line ([`render::buildpack`]).
+<a href=#16 id=16 data-nosnippet>16</a>//!
+<a href=#17 id=17 data-nosnippet>17</a>//! Beside them the slug carries one record, [`SOURCE_FILE`], naming the deployment, the
+<a href=#18 id=18 data-nosnippet>18</a>//! commit, the executable's digest and the provider, so a person reading the slug can tell
+<a href=#19 id=19 data-nosnippet>19</a>//! what it was assembled from without asking anyone.
+<a href=#20 id=20 data-nosnippet>20</a>//!
+<a href=#21 id=21 data-nosnippet>21</a>//! The assembler writes only into a directory outside the checkout, absent or empty, and
+<a href=#22 id=22 data-nosnippet>22</a>//! never into the repository: the only process it starts is git, read-only
+<a href=#23 id=23 data-nosnippet>23</a>//! ([`crate::git::read_only`]). Pushing the result is a workflow's work
+<a href=#24 id=24 data-nosnippet>24</a>//! (`.github/workflows/provider.yml`), with a credential this module never sees.
+<a href=#25 id=25 data-nosnippet>25</a>//!
+<a href=#26 id=26 data-nosnippet>26</a>//! ```
+<a href=#27 id=27 data-nosnippet>27</a>//! use majordomus_cli::deploy::slug::{BUILDPACKS_FILE, SOURCE_FILE, SOURCE_SCHEMA};
+<a href=#28 id=28 data-nosnippet>28</a>//!
+<a href=#29 id=29 data-nosnippet>29</a>//! // the record and the buildpack list sit beside the provider files, at fixed places
+<a href=#30 id=30 data-nosnippet>30</a>//! assert_eq!(SOURCE_FILE, ".majordomus/SOURCE.json");
+<a href=#31 id=31 data-nosnippet>31</a>//! assert_eq!(BUILDPACKS_FILE, ".buildpacks");
+<a href=#32 id=32 data-nosnippet>32</a>//! assert!(SOURCE_SCHEMA.ends_with("/v1"));
+<a href=#33 id=33 data-nosnippet>33</a>//! ```
+<a href=#34 id=34 data-nosnippet>34</a>
+<a href=#35 id=35 data-nosnippet>35</a></span><span class="kw">use </span>std::collections::BTreeMap;
+<a href=#36 id=36 data-nosnippet>36</a><span class="kw">use </span>std::io::{BufRead, BufReader, Write};
+<a href=#37 id=37 data-nosnippet>37</a><span class="kw">use </span>std::path::{Component, Path, PathBuf};
+<a href=#38 id=38 data-nosnippet>38</a><span class="kw">use </span>std::process::Stdio;
+<a href=#39 id=39 data-nosnippet>39</a>
+<a href=#40 id=40 data-nosnippet>40</a><span class="kw">use </span>schemars::JsonSchema;
+<a href=#41 id=41 data-nosnippet>41</a><span class="kw">use </span>serde::{Deserialize, Serialize};
+<a href=#42 id=42 data-nosnippet>42</a>
+<a href=#43 id=43 data-nosnippet>43</a><span class="kw">use super</span>::{render, Deployment, Provider, ProviderName};
+<a href=#44 id=44 data-nosnippet>44</a>
+<a href=#45 id=45 data-nosnippet>45</a><span class="doccomment">/// Where the slug records what it was assembled from, relative to its root: beside the
+<a href=#46 id=46 data-nosnippet>46</a>/// executable, in the directory the slug keeps for itself.
+<a href=#47 id=47 data-nosnippet>47</a></span><span class="kw">pub const </span>SOURCE_FILE: <span class="kw-2">&amp;</span>str = <span class="string">".majordomus/SOURCE.json"</span>;
+<a href=#48 id=48 data-nosnippet>48</a><span class="doccomment">/// The format of [`SOURCE_FILE`].
+<a href=#49 id=49 data-nosnippet>49</a></span><span class="kw">pub const </span>SOURCE_SCHEMA: <span class="kw-2">&amp;</span>str = <span class="string">"majordomus.slug-source/v1"</span>;
+<a href=#50 id=50 data-nosnippet>50</a><span class="doccomment">/// The buildpack list a Heroku-compatible provider reads at the slug's root. It cannot carry
+<a href=#51 id=51 data-nosnippet>51</a>/// a comment, so it is written here from [`render::buildpack`] rather than generated into
+<a href=#52 id=52 data-nosnippet>52</a>/// the repository.
+<a href=#53 id=53 data-nosnippet>53</a></span><span class="kw">pub const </span>BUILDPACKS_FILE: <span class="kw-2">&amp;</span>str = <span class="string">".buildpacks"</span>;
+<a href=#54 id=54 data-nosnippet>54</a>
+<a href=#55 id=55 data-nosnippet>55</a><span class="doccomment">/// Why a slug was not assembled.
+<a href=#56 id=56 data-nosnippet>56</a>///
+<a href=#57 id=57 data-nosnippet>57</a>/// ```
+<a href=#58 id=58 data-nosnippet>58</a>/// use majordomus_cli::deploy::slug::SlugError;
+<a href=#59 id=59 data-nosnippet>59</a>/// let e = SlugError::Refused("an out directory inside the checkout".into());
+<a href=#60 id=60 data-nosnippet>60</a>/// assert_eq!(e.to_string(), "an out directory inside the checkout");
+<a href=#61 id=61 data-nosnippet>61</a>/// ```
+<a href=#62 id=62 data-nosnippet>62</a></span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq)]
+<a href=#63 id=63 data-nosnippet>63</a></span><span class="kw">pub enum </span>SlugError {
+<a href=#64 id=64 data-nosnippet>64</a>    <span class="doccomment">/// The request is well-formed and declined: an out directory inside the checkout or not
+<a href=#65 id=65 data-nosnippet>65</a>    /// empty, a deployment that names no provider, a provider file the object does not
+<a href=#66 id=66 data-nosnippet>66</a>    /// render, two files that would land on one path.
+<a href=#67 id=67 data-nosnippet>67</a>    </span>Refused(String),
+<a href=#68 id=68 data-nosnippet>68</a>    <span class="doccomment">/// Something the request names does not exist: the commit, the object at that commit,
+<a href=#69 id=69 data-nosnippet>69</a>    /// the executable.
+<a href=#70 id=70 data-nosnippet>70</a>    </span>Missing(String),
+<a href=#71 id=71 data-nosnippet>71</a>    <span class="doccomment">/// git or the filesystem failed under a request that was otherwise sound.
+<a href=#72 id=72 data-nosnippet>72</a>    </span>Failed(String),
+<a href=#73 id=73 data-nosnippet>73</a>}
+<a href=#74 id=74 data-nosnippet>74</a>
+<a href=#75 id=75 data-nosnippet>75</a><span class="kw">impl </span>std::fmt::Display <span class="kw">for </span>SlugError {
+<a href=#76 id=76 data-nosnippet>76</a>    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; std::fmt::Result {
+<a href=#77 id=77 data-nosnippet>77</a>        <span class="kw">match </span><span class="self">self </span>{
+<a href=#78 id=78 data-nosnippet>78</a>            SlugError::Refused(s) | SlugError::Missing(s) | SlugError::Failed(s) =&gt; f.write_str(s),
+<a href=#79 id=79 data-nosnippet>79</a>        }
+<a href=#80 id=80 data-nosnippet>80</a>    }
+<a href=#81 id=81 data-nosnippet>81</a>}
+<a href=#82 id=82 data-nosnippet>82</a>
+<a href=#83 id=83 data-nosnippet>83</a><span class="doccomment">/// What to assemble: which object, at which commit, with which executable, into where.
+<a href=#84 id=84 data-nosnippet>84</a></span><span class="attr">#[derive(Debug, Clone)]
+<a href=#85 id=85 data-nosnippet>85</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>Request&lt;<span class="lifetime">'a</span>&gt; {
+<a href=#86 id=86 data-nosnippet>86</a>    <span class="doccomment">/// The repository root.
+<a href=#87 id=87 data-nosnippet>87</a>    </span><span class="kw">pub </span>root: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Path,
+<a href=#88 id=88 data-nosnippet>88</a>    <span class="doccomment">/// The deployment object's repository-relative file, read at [`Request::commit`].
+<a href=#89 id=89 data-nosnippet>89</a>    </span><span class="kw">pub </span>file: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>str,
+<a href=#90 id=90 data-nosnippet>90</a>    <span class="doccomment">/// The deployment's `id`; the object read at the commit must carry it.
+<a href=#91 id=91 data-nosnippet>91</a>    </span><span class="kw">pub </span>id: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>str,
+<a href=#92 id=92 data-nosnippet>92</a>    <span class="doccomment">/// Any revision git resolves to a commit; recorded in full.
+<a href=#93 id=93 data-nosnippet>93</a>    </span><span class="kw">pub </span>commit: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>str,
+<a href=#94 id=94 data-nosnippet>94</a>    <span class="doccomment">/// The executable built at that commit.
+<a href=#95 id=95 data-nosnippet>95</a>    </span><span class="kw">pub </span>executable: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Path,
+<a href=#96 id=96 data-nosnippet>96</a>    <span class="doccomment">/// The directory the slug is written into: outside the checkout, absent or empty.
+<a href=#97 id=97 data-nosnippet>97</a>    </span><span class="kw">pub </span>out: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Path,
+<a href=#98 id=98 data-nosnippet>98</a>}
+<a href=#99 id=99 data-nosnippet>99</a>
+<a href=#100 id=100 data-nosnippet>100</a><span class="doccomment">/// The record a slug carries at [`SOURCE_FILE`].
+<a href=#101 id=101 data-nosnippet>101</a>///
+<a href=#102 id=102 data-nosnippet>102</a>/// ```
+<a href=#103 id=103 data-nosnippet>103</a>/// use majordomus_cli::deploy::slug::Source;
+<a href=#104 id=104 data-nosnippet>104</a>/// let s: Source = serde_json::from_str(r#"{"schema":"majordomus.slug-source/v1",
+<a href=#105 id=105 data-nosnippet>105</a>///   "deployment":"majordomus","commit":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+<a href=#106 id=106 data-nosnippet>106</a>///   "executable_sha256":"00","provider":"gigalixir"}"#).unwrap();
+<a href=#107 id=107 data-nosnippet>107</a>/// assert_eq!(s.deployment, "majordomus");
+<a href=#108 id=108 data-nosnippet>108</a>/// // a field the record does not have is refused rather than carried along
+<a href=#109 id=109 data-nosnippet>109</a>/// assert!(serde_json::from_str::&lt;Source&gt;(r#"{"schema":"x","deployment":"d","commit":"c",
+<a href=#110 id=110 data-nosnippet>110</a>///   "executable_sha256":"0","provider":"gigalixir","token":"t"}"#).is_err());
+<a href=#111 id=111 data-nosnippet>111</a>/// ```
+<a href=#112 id=112 data-nosnippet>112</a></span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+<a href=#113 id=113 data-nosnippet>113</a>#[serde(deny_unknown_fields)]
+<a href=#114 id=114 data-nosnippet>114</a></span><span class="kw">pub struct </span>Source {
+<a href=#115 id=115 data-nosnippet>115</a>    <span class="doccomment">/// Always [`SOURCE_SCHEMA`].
+<a href=#116 id=116 data-nosnippet>116</a>    </span><span class="kw">pub </span>schema: String,
+<a href=#117 id=117 data-nosnippet>117</a>    <span class="doccomment">/// The deployment's `id`.
+<a href=#118 id=118 data-nosnippet>118</a>    </span><span class="kw">pub </span>deployment: String,
+<a href=#119 id=119 data-nosnippet>119</a>    <span class="doccomment">/// The full commit every file of the slug was read at.
+<a href=#120 id=120 data-nosnippet>120</a>    </span><span class="kw">pub </span>commit: String,
+<a href=#121 id=121 data-nosnippet>121</a>    <span class="doccomment">/// The hex SHA-256 of the executable the slug carries.
+<a href=#122 id=122 data-nosnippet>122</a>    </span><span class="kw">pub </span>executable_sha256: String,
+<a href=#123 id=123 data-nosnippet>123</a>    <span class="doccomment">/// The provider the slug is for.
+<a href=#124 id=124 data-nosnippet>124</a>    </span><span class="kw">pub </span>provider: ProviderName,
+<a href=#125 id=125 data-nosnippet>125</a>}
+<a href=#126 id=126 data-nosnippet>126</a>
+<a href=#127 id=127 data-nosnippet>127</a><span class="doccomment">/// What was assembled: where, from what, and the provider facts a publisher needs to push
+<a href=#128 id=128 data-nosnippet>128</a>/// it and to ask the deployment what it serves.
+<a href=#129 id=129 data-nosnippet>129</a>///
+<a href=#130 id=130 data-nosnippet>130</a>/// ```
+<a href=#131 id=131 data-nosnippet>131</a>/// use majordomus_cli::deploy::slug::Slug;
+<a href=#132 id=132 data-nosnippet>132</a>/// let json = r#"{"deployment":"majordomus","commit":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+<a href=#133 id=133 data-nosnippet>133</a>///   "out":"/tmp/slug","entries":[".buildpacks","Procfile"],"files":2,"bytes":10,
+<a href=#134 id=134 data-nosnippet>134</a>///   "executable":".majordomus/bin/majordomus","executable_sha256":"00",
+<a href=#135 id=135 data-nosnippet>135</a>///   "buildpack":"https://example.org/bp#0","liveness":"/api/v1/live",
+<a href=#136 id=136 data-nosnippet>136</a>///   "provider":{"name":"gigalixir","app":"a-b","stack":"gigalixir-24",
+<a href=#137 id=137 data-nosnippet>137</a>///               "url":"https://a-b.gigalixirapp.com"}}"#;
+<a href=#138 id=138 data-nosnippet>138</a>/// let s: Slug = serde_json::from_str(json).unwrap();
+<a href=#139 id=139 data-nosnippet>139</a>/// assert_eq!(s.provider.app, "a-b");
+<a href=#140 id=140 data-nosnippet>140</a>/// assert_eq!(s.entries.len(), 2);
+<a href=#141 id=141 data-nosnippet>141</a>/// ```
+<a href=#142 id=142 data-nosnippet>142</a></span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+<a href=#143 id=143 data-nosnippet>143</a></span><span class="kw">pub struct </span>Slug {
+<a href=#144 id=144 data-nosnippet>144</a>    <span class="doccomment">/// The deployment's `id`.
+<a href=#145 id=145 data-nosnippet>145</a>    </span><span class="kw">pub </span>deployment: String,
+<a href=#146 id=146 data-nosnippet>146</a>    <span class="doccomment">/// The full commit every file was read at.
+<a href=#147 id=147 data-nosnippet>147</a>    </span><span class="kw">pub </span>commit: String,
+<a href=#148 id=148 data-nosnippet>148</a>    <span class="doccomment">/// The directory the slug was written into, absolute.
+<a href=#149 id=149 data-nosnippet>149</a>    </span><span class="kw">pub </span>out: String,
+<a href=#150 id=150 data-nosnippet>150</a>    <span class="doccomment">/// Every top-level entry of the slug, sorted: the whole of what a provider receives at
+<a href=#151 id=151 data-nosnippet>151</a>    /// its root.
+<a href=#152 id=152 data-nosnippet>152</a>    </span><span class="kw">pub </span>entries: Vec&lt;String&gt;,
+<a href=#153 id=153 data-nosnippet>153</a>    <span class="doccomment">/// How many files (and links) were written.
+<a href=#154 id=154 data-nosnippet>154</a>    </span><span class="kw">pub </span>files: usize,
+<a href=#155 id=155 data-nosnippet>155</a>    <span class="doccomment">/// Their total size in bytes.
+<a href=#156 id=156 data-nosnippet>156</a>    </span><span class="kw">pub </span>bytes: u64,
+<a href=#157 id=157 data-nosnippet>157</a>    <span class="doccomment">/// Where the executable sits, relative to the slug's root.
+<a href=#158 id=158 data-nosnippet>158</a>    </span><span class="kw">pub </span>executable: String,
+<a href=#159 id=159 data-nosnippet>159</a>    <span class="doccomment">/// Its hex SHA-256.
+<a href=#160 id=160 data-nosnippet>160</a>    </span><span class="kw">pub </span>executable_sha256: String,
+<a href=#161 id=161 data-nosnippet>161</a>    <span class="doccomment">/// The buildpack line written to [`BUILDPACKS_FILE`].
+<a href=#162 id=162 data-nosnippet>162</a>    </span><span class="kw">pub </span>buildpack: String,
+<a href=#163 id=163 data-nosnippet>163</a>    <span class="doccomment">/// The route the deployment answers its commit on (`health.liveness`).
+<a href=#164 id=164 data-nosnippet>164</a>    </span><span class="kw">pub </span>liveness: String,
+<a href=#165 id=165 data-nosnippet>165</a>    <span class="doccomment">/// The provider block of the object, as read at the commit.
+<a href=#166 id=166 data-nosnippet>166</a>    </span><span class="kw">pub </span>provider: Provider,
+<a href=#167 id=167 data-nosnippet>167</a>}
+<a href=#168 id=168 data-nosnippet>168</a>
+<a href=#169 id=169 data-nosnippet>169</a><span class="doccomment">/// How a file lands in the slug.
+<a href=#170 id=170 data-nosnippet>170</a></span><span class="attr">#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+<a href=#171 id=171 data-nosnippet>171</a></span><span class="kw">enum </span>Mode {
+<a href=#172 id=172 data-nosnippet>172</a>    <span class="doccomment">/// An ordinary file, `0644`.
+<a href=#173 id=173 data-nosnippet>173</a>    </span>File,
+<a href=#174 id=174 data-nosnippet>174</a>    <span class="doccomment">/// An executable file, `0755`.
+<a href=#175 id=175 data-nosnippet>175</a>    </span>Executable,
+<a href=#176 id=176 data-nosnippet>176</a>    <span class="doccomment">/// A symbolic link whose target is the content.
+<a href=#177 id=177 data-nosnippet>177</a>    </span>Link,
+<a href=#178 id=178 data-nosnippet>178</a>}
+<a href=#179 id=179 data-nosnippet>179</a>
+<a href=#180 id=180 data-nosnippet>180</a><span class="doccomment">/// Where a file's bytes come from.
+<a href=#181 id=181 data-nosnippet>181</a></span><span class="attr">#[derive(Debug, Clone)]
+<a href=#182 id=182 data-nosnippet>182</a></span><span class="kw">enum </span>Content {
+<a href=#183 id=183 data-nosnippet>183</a>    <span class="doccomment">/// A blob of the commit, streamed from git when the slug is written.
+<a href=#184 id=184 data-nosnippet>184</a>    </span>Blob(String),
+<a href=#185 id=185 data-nosnippet>185</a>    <span class="doccomment">/// Bytes already in hand: a provider file, the buildpack line, the record, the executable.
+<a href=#186 id=186 data-nosnippet>186</a>    </span>Bytes(Vec&lt;u8&gt;),
+<a href=#187 id=187 data-nosnippet>187</a>}
+<a href=#188 id=188 data-nosnippet>188</a>
+<a href=#189 id=189 data-nosnippet>189</a><span class="doccomment">/// One path of the slug: its bytes, its mode, and what put it there (for a collision's
+<a href=#190 id=190 data-nosnippet>190</a>/// message).
+<a href=#191 id=191 data-nosnippet>191</a></span><span class="attr">#[derive(Debug, Clone)]
+<a href=#192 id=192 data-nosnippet>192</a></span><span class="kw">struct </span>Planned {
+<a href=#193 id=193 data-nosnippet>193</a>    content: Content,
+<a href=#194 id=194 data-nosnippet>194</a>    mode: Mode,
+<a href=#195 id=195 data-nosnippet>195</a>    origin: String,
+<a href=#196 id=196 data-nosnippet>196</a>}
+<a href=#197 id=197 data-nosnippet>197</a>
+<a href=#198 id=198 data-nosnippet>198</a><span class="doccomment">/// Every path of the slug before any is written, so that a collision refuses the whole slug
+<a href=#199 id=199 data-nosnippet>199</a>/// rather than leaving half of one.
+<a href=#200 id=200 data-nosnippet>200</a></span><span class="attr">#[derive(Debug, Default)]
+<a href=#201 id=201 data-nosnippet>201</a></span><span class="kw">struct </span>Plan(BTreeMap&lt;String, Planned&gt;);
+<a href=#202 id=202 data-nosnippet>202</a>
+<a href=#203 id=203 data-nosnippet>203</a><span class="kw">impl </span>Plan {
+<a href=#204 id=204 data-nosnippet>204</a>    <span class="kw">fn </span>add(
+<a href=#205 id=205 data-nosnippet>205</a>        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+<a href=#206 id=206 data-nosnippet>206</a>        path: <span class="kw-2">&amp;</span>str,
+<a href=#207 id=207 data-nosnippet>207</a>        content: Content,
+<a href=#208 id=208 data-nosnippet>208</a>        mode: Mode,
+<a href=#209 id=209 data-nosnippet>209</a>        origin: <span class="kw-2">&amp;</span>str,
+<a href=#210 id=210 data-nosnippet>210</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), SlugError&gt; {
+<a href=#211 id=211 data-nosnippet>211</a>        <span class="kw">let </span>safe = !path.is_empty()
+<a href=#212 id=212 data-nosnippet>212</a>            &amp;&amp; Path::new(path)
+<a href=#213 id=213 data-nosnippet>213</a>                .components()
+<a href=#214 id=214 data-nosnippet>214</a>                .all(|c| <span class="macro">matches!</span>(c, Component::Normal(<span class="kw">_</span>)));
+<a href=#215 id=215 data-nosnippet>215</a>        <span class="kw">if </span>!safe {
+<a href=#216 id=216 data-nosnippet>216</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(SlugError::Failed(<span class="macro">format!</span>(
+<a href=#217 id=217 data-nosnippet>217</a>                <span class="string">"{origin} would write `{path}`, which is not a relative path inside the slug"
+<a href=#218 id=218 data-nosnippet>218</a>            </span>)));
+<a href=#219 id=219 data-nosnippet>219</a>        }
+<a href=#220 id=220 data-nosnippet>220</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(there) = <span class="self">self</span>.<span class="number">0</span>.get(path) {
+<a href=#221 id=221 data-nosnippet>221</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(SlugError::Refused(<span class="macro">format!</span>(
+<a href=#222 id=222 data-nosnippet>222</a>                <span class="string">"{origin} and {} would both write `{path}` in the slug; a provider file must not \
+<a href=#223 id=223 data-nosnippet>223</a>                 shadow a build input — rename one of them in the deployment object"</span>,
+<a href=#224 id=224 data-nosnippet>224</a>                there.origin
+<a href=#225 id=225 data-nosnippet>225</a>            )));
+<a href=#226 id=226 data-nosnippet>226</a>        }
+<a href=#227 id=227 data-nosnippet>227</a>        <span class="self">self</span>.<span class="number">0</span>.insert(
+<a href=#228 id=228 data-nosnippet>228</a>            path.to_string(),
+<a href=#229 id=229 data-nosnippet>229</a>            Planned {
+<a href=#230 id=230 data-nosnippet>230</a>                content,
+<a href=#231 id=231 data-nosnippet>231</a>                mode,
+<a href=#232 id=232 data-nosnippet>232</a>                origin: origin.to_string(),
+<a href=#233 id=233 data-nosnippet>233</a>            },
+<a href=#234 id=234 data-nosnippet>234</a>        );
+<a href=#235 id=235 data-nosnippet>235</a>        <span class="prelude-val">Ok</span>(())
+<a href=#236 id=236 data-nosnippet>236</a>    }
+<a href=#237 id=237 data-nosnippet>237</a>
+<a href=#238 id=238 data-nosnippet>238</a>    <span class="doccomment">/// No file may stand where another needs a directory.
+<a href=#239 id=239 data-nosnippet>239</a>    </span><span class="kw">fn </span>check_prefixes(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(), SlugError&gt; {
+<a href=#240 id=240 data-nosnippet>240</a>        <span class="kw">for </span>path <span class="kw">in </span><span class="self">self</span>.<span class="number">0</span>.keys() {
+<a href=#241 id=241 data-nosnippet>241</a>            <span class="kw">let </span><span class="kw-2">mut </span>ancestor = Path::new(path).parent();
+<a href=#242 id=242 data-nosnippet>242</a>            <span class="kw">while let </span><span class="prelude-val">Some</span>(dir) = ancestor.filter(|d| !d.as_os_str().is_empty()) {
+<a href=#243 id=243 data-nosnippet>243</a>                <span class="kw">if let </span><span class="prelude-val">Some</span>(file) = <span class="self">self</span>.<span class="number">0</span>.get(dir.to_string_lossy().as_ref()) {
+<a href=#244 id=244 data-nosnippet>244</a>                    <span class="kw">return </span><span class="prelude-val">Err</span>(SlugError::Refused(<span class="macro">format!</span>(
+<a href=#245 id=245 data-nosnippet>245</a>                        <span class="string">"{} writes the file `{}`, where `{path}` needs a directory"</span>,
+<a href=#246 id=246 data-nosnippet>246</a>                        file.origin,
+<a href=#247 id=247 data-nosnippet>247</a>                        dir.display()
+<a href=#248 id=248 data-nosnippet>248</a>                    )));
+<a href=#249 id=249 data-nosnippet>249</a>                }
+<a href=#250 id=250 data-nosnippet>250</a>                ancestor = dir.parent();
+<a href=#251 id=251 data-nosnippet>251</a>            }
+<a href=#252 id=252 data-nosnippet>252</a>        }
+<a href=#253 id=253 data-nosnippet>253</a>        <span class="prelude-val">Ok</span>(())
+<a href=#254 id=254 data-nosnippet>254</a>    }
+<a href=#255 id=255 data-nosnippet>255</a>
+<a href=#256 id=256 data-nosnippet>256</a>    <span class="doccomment">/// The sorted top-level names.
+<a href=#257 id=257 data-nosnippet>257</a>    </span><span class="kw">fn </span>entries(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;String&gt; {
+<a href=#258 id=258 data-nosnippet>258</a>        <span class="kw">let </span>top: std::collections::BTreeSet&lt;<span class="kw-2">&amp;</span>str&gt; = <span class="self">self
+<a href=#259 id=259 data-nosnippet>259</a>            </span>.<span class="number">0
+<a href=#260 id=260 data-nosnippet>260</a>            </span>.keys()
+<a href=#261 id=261 data-nosnippet>261</a>            .map(|p| p.split(<span class="string">'/'</span>).next().unwrap_or(p))
+<a href=#262 id=262 data-nosnippet>262</a>            .collect();
+<a href=#263 id=263 data-nosnippet>263</a>        top.into_iter().map(String::from).collect()
+<a href=#264 id=264 data-nosnippet>264</a>    }
+<a href=#265 id=265 data-nosnippet>265</a>}
+<a href=#266 id=266 data-nosnippet>266</a>
+<a href=#267 id=267 data-nosnippet>267</a><span class="doccomment">/// Assemble the slug a request names and write it into its out directory.
+<a href=#268 id=268 data-nosnippet>268</a>///
+<a href=#269 id=269 data-nosnippet>269</a>/// Refused, with nothing written, when the out directory is inside the checkout or holds
+<a href=#270 id=270 data-nosnippet>270</a>/// anything, when the object at the commit names no provider, when a build input is not
+<a href=#271 id=271 data-nosnippet>271</a>/// tracked at the commit, when a provider file at the commit is not what the object renders,
+<a href=#272 id=272 data-nosnippet>272</a>/// and when two files would land on one path.
+<a href=#273 id=273 data-nosnippet>273</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>assemble(req: <span class="kw-2">&amp;</span>Request&lt;<span class="lifetime">'_</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;Slug, SlugError&gt; {
+<a href=#274 id=274 data-nosnippet>274</a>    <span class="kw">let </span>commit = resolve(req.root, req.commit)<span class="question-mark">?</span>;
+<a href=#275 id=275 data-nosnippet>275</a>    <span class="kw">let </span>short = <span class="kw-2">&amp;</span>commit[..<span class="number">12</span>];
+<a href=#276 id=276 data-nosnippet>276</a>    <span class="kw">let </span>d = object_at(req.root, <span class="kw-2">&amp;</span>commit, req.file)<span class="question-mark">?</span>;
+<a href=#277 id=277 data-nosnippet>277</a>    <span class="kw">if </span>d.id != req.id {
+<a href=#278 id=278 data-nosnippet>278</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(SlugError::Refused(<span class="macro">format!</span>(
+<a href=#279 id=279 data-nosnippet>279</a>            <span class="string">"{} at {short} is the deployment `{}`, not `{}`"</span>,
+<a href=#280 id=280 data-nosnippet>280</a>            req.file, d.id, req.id
+<a href=#281 id=281 data-nosnippet>281</a>        )));
+<a href=#282 id=282 data-nosnippet>282</a>    }
+<a href=#283 id=283 data-nosnippet>283</a>    <span class="kw">let </span>provider = d.provider.clone().ok_or_else(|| {
+<a href=#284 id=284 data-nosnippet>284</a>        SlugError::Refused(<span class="macro">format!</span>(
+<a href=#285 id=285 data-nosnippet>285</a>            <span class="string">"the deployment `{}` names no provider at {short} ({}), so nothing hosts it and \
+<a href=#286 id=286 data-nosnippet>286</a>             there is no tree to assemble; add a `provider` block (ADR 0219)"</span>,
+<a href=#287 id=287 data-nosnippet>287</a>            d.id, req.file
+<a href=#288 id=288 data-nosnippet>288</a>        ))
+<a href=#289 id=289 data-nosnippet>289</a>    })<span class="question-mark">?</span>;
+<a href=#290 id=290 data-nosnippet>290</a>    <span class="kw">let </span>out = outside(req.root, req.out)<span class="question-mark">?</span>;
+<a href=#291 id=291 data-nosnippet>291</a>    <span class="kw">let </span>executable = std::fs::read(req.executable).map_err(|e| {
+<a href=#292 id=292 data-nosnippet>292</a>        SlugError::Missing(<span class="macro">format!</span>(
+<a href=#293 id=293 data-nosnippet>293</a>            <span class="string">"the executable {} cannot be read: {e}"</span>,
+<a href=#294 id=294 data-nosnippet>294</a>            req.executable.display()
+<a href=#295 id=295 data-nosnippet>295</a>        ))
+<a href=#296 id=296 data-nosnippet>296</a>    })<span class="question-mark">?</span>;
+<a href=#297 id=297 data-nosnippet>297</a>    <span class="kw">let </span>executable_sha256 = <span class="kw">crate</span>::policy::sha256_bytes_hex(<span class="kw-2">&amp;</span>executable);
+<a href=#298 id=298 data-nosnippet>298</a>
+<a href=#299 id=299 data-nosnippet>299</a>    <span class="kw">let </span><span class="kw-2">mut </span>plan = Plan::default();
+<a href=#300 id=300 data-nosnippet>300</a>
+<a href=#301 id=301 data-nosnippet>301</a>    <span class="comment">// --- the build inputs the running process reads, at the commit
+<a href=#302 id=302 data-nosnippet>302</a>    </span><span class="kw">let </span>inputs: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = render::runtime_inputs(<span class="kw-2">&amp;</span>d)
+<a href=#303 id=303 data-nosnippet>303</a>        .into_iter()
+<a href=#304 id=304 data-nosnippet>304</a>        .map(|p| p.trim_end_matches(<span class="string">'/'</span>))
+<a href=#305 id=305 data-nosnippet>305</a>        .collect();
+<a href=#306 id=306 data-nosnippet>306</a>    <span class="kw">let </span>tracked = ls_tree(req.root, <span class="kw-2">&amp;</span>commit, <span class="kw-2">&amp;</span>inputs)<span class="question-mark">?</span>;
+<a href=#307 id=307 data-nosnippet>307</a>    <span class="kw">for </span>input <span class="kw">in </span><span class="kw-2">&amp;</span>inputs {
+<a href=#308 id=308 data-nosnippet>308</a>        <span class="kw">if </span>!tracked.iter().any(|t| under(<span class="kw-2">&amp;</span>t.path, input)) {
+<a href=#309 id=309 data-nosnippet>309</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(SlugError::Refused(<span class="macro">format!</span>(
+<a href=#310 id=310 data-nosnippet>310</a>                <span class="string">"build.inputs names `{input}`, which {short} does not track; a slug carries \
+<a href=#311 id=311 data-nosnippet>311</a>                 what the commit holds"
+<a href=#312 id=312 data-nosnippet>312</a>            </span>)));
+<a href=#313 id=313 data-nosnippet>313</a>        }
+<a href=#314 id=314 data-nosnippet>314</a>    }
+<a href=#315 id=315 data-nosnippet>315</a>    <span class="kw">for </span>t <span class="kw">in </span>tracked
+<a href=#316 id=316 data-nosnippet>316</a>        .iter()
+<a href=#317 id=317 data-nosnippet>317</a>        .filter(|t| inputs.iter().any(|i| under(<span class="kw-2">&amp;</span>t.path, i)))
+<a href=#318 id=318 data-nosnippet>318</a>    {
+<a href=#319 id=319 data-nosnippet>319</a>        <span class="kw">let </span>mode = <span class="kw">match </span>(t.kind.as_str(), t.mode.as_str()) {
+<a href=#320 id=320 data-nosnippet>320</a>            (<span class="string">"blob"</span>, <span class="string">"100755"</span>) =&gt; Mode::Executable,
+<a href=#321 id=321 data-nosnippet>321</a>            (<span class="string">"blob"</span>, <span class="string">"120000"</span>) =&gt; Mode::Link,
+<a href=#322 id=322 data-nosnippet>322</a>            (<span class="string">"blob"</span>, <span class="kw">_</span>) =&gt; Mode::File,
+<a href=#323 id=323 data-nosnippet>323</a>            <span class="kw">_ </span>=&gt; {
+<a href=#324 id=324 data-nosnippet>324</a>                <span class="kw">return </span><span class="prelude-val">Err</span>(SlugError::Refused(<span class="macro">format!</span>(
+<a href=#325 id=325 data-nosnippet>325</a>                    <span class="string">"`{}` is a {} at {short}, not a file; a slug carries files, never another \
+<a href=#326 id=326 data-nosnippet>326</a>                     repository"</span>,
+<a href=#327 id=327 data-nosnippet>327</a>                    t.path, t.kind
+<a href=#328 id=328 data-nosnippet>328</a>                )))
+<a href=#329 id=329 data-nosnippet>329</a>            }
+<a href=#330 id=330 data-nosnippet>330</a>        };
+<a href=#331 id=331 data-nosnippet>331</a>        plan.add(
+<a href=#332 id=332 data-nosnippet>332</a>            <span class="kw-2">&amp;</span>t.path,
+<a href=#333 id=333 data-nosnippet>333</a>            Content::Blob(t.oid.clone()),
+<a href=#334 id=334 data-nosnippet>334</a>            mode,
+<a href=#335 id=335 data-nosnippet>335</a>            <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"build.inputs `{}`"</span>, t.path),
+<a href=#336 id=336 data-nosnippet>336</a>        )<span class="question-mark">?</span>;
+<a href=#337 id=337 data-nosnippet>337</a>    }
+<a href=#338 id=338 data-nosnippet>338</a>
+<a href=#339 id=339 data-nosnippet>339</a>    <span class="comment">// --- the provider's files, held to what the object renders, moved to the root
+<a href=#340 id=340 data-nosnippet>340</a>    </span><span class="kw">let </span>dir = render::provider_dir(provider.name);
+<a href=#341 id=341 data-nosnippet>341</a>    <span class="kw">let </span>rendered = render::provider_artifacts(<span class="kw-2">&amp;</span>d, req.file);
+<a href=#342 id=342 data-nosnippet>342</a>    <span class="kw">let </span>paths: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = rendered.iter().map(|a| a.path.as_str()).collect();
+<a href=#343 id=343 data-nosnippet>343</a>    <span class="kw">let </span>committed: BTreeMap&lt;String, Tracked&gt; = ls_tree(req.root, <span class="kw-2">&amp;</span>commit, <span class="kw-2">&amp;</span>paths)<span class="question-mark">?
+<a href=#344 id=344 data-nosnippet>344</a>        </span>.into_iter()
+<a href=#345 id=345 data-nosnippet>345</a>        .map(|t| (t.path.clone(), t))
+<a href=#346 id=346 data-nosnippet>346</a>        .collect();
+<a href=#347 id=347 data-nosnippet>347</a>    <span class="kw">for </span>artifact <span class="kw">in </span><span class="kw-2">&amp;</span>rendered {
+<a href=#348 id=348 data-nosnippet>348</a>        <span class="kw">let </span>at = committed.get(<span class="kw-2">&amp;</span>artifact.path).ok_or_else(|| {
+<a href=#349 id=349 data-nosnippet>349</a>            SlugError::Refused(<span class="macro">format!</span>(
+<a href=#350 id=350 data-nosnippet>350</a>                <span class="string">"{} is not committed at {short}; run `majordomus generate deployment` and \
+<a href=#351 id=351 data-nosnippet>351</a>                 commit what it writes"</span>,
+<a href=#352 id=352 data-nosnippet>352</a>                artifact.path
+<a href=#353 id=353 data-nosnippet>353</a>            ))
+<a href=#354 id=354 data-nosnippet>354</a>        })<span class="question-mark">?</span>;
+<a href=#355 id=355 data-nosnippet>355</a>        <span class="kw">let </span>bytes = blob(req.root, <span class="kw-2">&amp;</span>at.oid)<span class="question-mark">?</span>;
+<a href=#356 id=356 data-nosnippet>356</a>        <span class="kw">if </span>bytes != artifact.content.as_bytes() {
+<a href=#357 id=357 data-nosnippet>357</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(SlugError::Refused(<span class="macro">format!</span>(
+<a href=#358 id=358 data-nosnippet>358</a>                <span class="string">"{} at {short} is not what {} renders; run `majordomus generate deployment` \
+<a href=#359 id=359 data-nosnippet>359</a>                 and commit what it writes"</span>,
+<a href=#360 id=360 data-nosnippet>360</a>                artifact.path, req.file
+<a href=#361 id=361 data-nosnippet>361</a>            )));
+<a href=#362 id=362 data-nosnippet>362</a>        }
+<a href=#363 id=363 data-nosnippet>363</a>        <span class="kw">let </span>rel = artifact
+<a href=#364 id=364 data-nosnippet>364</a>            .path
+<a href=#365 id=365 data-nosnippet>365</a>            .strip_prefix(dir)
+<a href=#366 id=366 data-nosnippet>366</a>            .and_then(|p| p.strip_prefix(<span class="string">'/'</span>))
+<a href=#367 id=367 data-nosnippet>367</a>            .unwrap_or(<span class="kw-2">&amp;</span>artifact.path);
+<a href=#368 id=368 data-nosnippet>368</a>        <span class="comment">// a script names its interpreter on its first line; every other file is data
+<a href=#369 id=369 data-nosnippet>369</a>        </span><span class="kw">let </span>mode = <span class="kw">if </span>artifact.content.starts_with(<span class="string">"#!"</span>) {
+<a href=#370 id=370 data-nosnippet>370</a>            Mode::Executable
+<a href=#371 id=371 data-nosnippet>371</a>        } <span class="kw">else </span>{
+<a href=#372 id=372 data-nosnippet>372</a>            Mode::File
+<a href=#373 id=373 data-nosnippet>373</a>        };
+<a href=#374 id=374 data-nosnippet>374</a>        plan.add(rel, Content::Bytes(bytes), mode, <span class="kw-2">&amp;</span>artifact.path)<span class="question-mark">?</span>;
+<a href=#375 id=375 data-nosnippet>375</a>    }
+<a href=#376 id=376 data-nosnippet>376</a>
+<a href=#377 id=377 data-nosnippet>377</a>    <span class="comment">// --- the buildpack line, the executable and the record
+<a href=#378 id=378 data-nosnippet>378</a>    </span><span class="kw">let </span>buildpack = render::buildpack(provider.name).to_string();
+<a href=#379 id=379 data-nosnippet>379</a>    plan.add(
+<a href=#380 id=380 data-nosnippet>380</a>        BUILDPACKS_FILE,
+<a href=#381 id=381 data-nosnippet>381</a>        Content::Bytes(<span class="macro">format!</span>(<span class="string">"{buildpack}\n"</span>).into_bytes()),
+<a href=#382 id=382 data-nosnippet>382</a>        Mode::File,
+<a href=#383 id=383 data-nosnippet>383</a>        <span class="string">"the provider's buildpack line"</span>,
+<a href=#384 id=384 data-nosnippet>384</a>    )<span class="question-mark">?</span>;
+<a href=#385 id=385 data-nosnippet>385</a>    <span class="kw">let </span>installed = render::slug_executable(<span class="kw-2">&amp;</span>d);
+<a href=#386 id=386 data-nosnippet>386</a>    plan.add(
+<a href=#387 id=387 data-nosnippet>387</a>        <span class="kw-2">&amp;</span>installed,
+<a href=#388 id=388 data-nosnippet>388</a>        Content::Bytes(executable),
+<a href=#389 id=389 data-nosnippet>389</a>        Mode::Executable,
+<a href=#390 id=390 data-nosnippet>390</a>        <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"the executable {}"</span>, req.executable.display()),
+<a href=#391 id=391 data-nosnippet>391</a>    )<span class="question-mark">?</span>;
+<a href=#392 id=392 data-nosnippet>392</a>    <span class="kw">let </span>source = Source {
+<a href=#393 id=393 data-nosnippet>393</a>        schema: SOURCE_SCHEMA.into(),
+<a href=#394 id=394 data-nosnippet>394</a>        deployment: d.id.clone(),
+<a href=#395 id=395 data-nosnippet>395</a>        commit: commit.clone(),
+<a href=#396 id=396 data-nosnippet>396</a>        executable_sha256: executable_sha256.clone(),
+<a href=#397 id=397 data-nosnippet>397</a>        provider: provider.name,
+<a href=#398 id=398 data-nosnippet>398</a>    };
+<a href=#399 id=399 data-nosnippet>399</a>    <span class="comment">// strings and a unit variant: a record that cannot fail to serialize
+<a href=#400 id=400 data-nosnippet>400</a>    </span><span class="kw">let </span>record = serde_json::to_string_pretty(<span class="kw-2">&amp;</span>source).expect(<span class="string">"the slug's record serializes"</span>);
+<a href=#401 id=401 data-nosnippet>401</a>    plan.add(
+<a href=#402 id=402 data-nosnippet>402</a>        SOURCE_FILE,
+<a href=#403 id=403 data-nosnippet>403</a>        Content::Bytes(<span class="macro">format!</span>(<span class="string">"{record}\n"</span>).into_bytes()),
+<a href=#404 id=404 data-nosnippet>404</a>        Mode::File,
+<a href=#405 id=405 data-nosnippet>405</a>        <span class="string">"the slug's record"</span>,
+<a href=#406 id=406 data-nosnippet>406</a>    )<span class="question-mark">?</span>;
+<a href=#407 id=407 data-nosnippet>407</a>    plan.check_prefixes()<span class="question-mark">?</span>;
+<a href=#408 id=408 data-nosnippet>408</a>
+<a href=#409 id=409 data-nosnippet>409</a>    <span class="kw">let </span>(files, bytes) = write(req.root, <span class="kw-2">&amp;</span>out, <span class="kw-2">&amp;</span>plan)<span class="question-mark">?</span>;
+<a href=#410 id=410 data-nosnippet>410</a>    <span class="prelude-val">Ok</span>(Slug {
+<a href=#411 id=411 data-nosnippet>411</a>        deployment: d.id.clone(),
+<a href=#412 id=412 data-nosnippet>412</a>        commit,
+<a href=#413 id=413 data-nosnippet>413</a>        out: out.display().to_string(),
+<a href=#414 id=414 data-nosnippet>414</a>        entries: plan.entries(),
+<a href=#415 id=415 data-nosnippet>415</a>        files,
+<a href=#416 id=416 data-nosnippet>416</a>        bytes,
+<a href=#417 id=417 data-nosnippet>417</a>        executable: installed,
+<a href=#418 id=418 data-nosnippet>418</a>        executable_sha256,
+<a href=#419 id=419 data-nosnippet>419</a>        buildpack,
+<a href=#420 id=420 data-nosnippet>420</a>        liveness: d.health.liveness.as_str().to_string(),
+<a href=#421 id=421 data-nosnippet>421</a>        provider,
+<a href=#422 id=422 data-nosnippet>422</a>    })
+<a href=#423 id=423 data-nosnippet>423</a>}
+<a href=#424 id=424 data-nosnippet>424</a>
+<a href=#425 id=425 data-nosnippet>425</a><span class="doccomment">/// Is `path` the input itself or a file under it?
+<a href=#426 id=426 data-nosnippet>426</a></span><span class="kw">fn </span>under(path: <span class="kw-2">&amp;</span>str, input: <span class="kw-2">&amp;</span>str) -&gt; bool {
+<a href=#427 id=427 data-nosnippet>427</a>    path == input
+<a href=#428 id=428 data-nosnippet>428</a>        || path
+<a href=#429 id=429 data-nosnippet>429</a>            .strip_prefix(input)
+<a href=#430 id=430 data-nosnippet>430</a>            .is_some_and(|rest| rest.starts_with(<span class="string">'/'</span>))
+<a href=#431 id=431 data-nosnippet>431</a>}
+<a href=#432 id=432 data-nosnippet>432</a>
+<a href=#433 id=433 data-nosnippet>433</a><span class="doccomment">/// The full commit a revision names.
+<a href=#434 id=434 data-nosnippet>434</a></span><span class="kw">fn </span>resolve(root: <span class="kw-2">&amp;</span>Path, rev: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;String, SlugError&gt; {
+<a href=#435 id=435 data-nosnippet>435</a>    <span class="kw">let </span>out = <span class="kw">crate</span>::git::read_only(root)
+<a href=#436 id=436 data-nosnippet>436</a>        .args([
+<a href=#437 id=437 data-nosnippet>437</a>            <span class="string">"rev-parse"</span>,
+<a href=#438 id=438 data-nosnippet>438</a>            <span class="string">"--verify"</span>,
+<a href=#439 id=439 data-nosnippet>439</a>            <span class="string">"--quiet"</span>,
+<a href=#440 id=440 data-nosnippet>440</a>            <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{rev}^{{commit}}"</span>),
+<a href=#441 id=441 data-nosnippet>441</a>        ])
+<a href=#442 id=442 data-nosnippet>442</a>        .output()
+<a href=#443 id=443 data-nosnippet>443</a>        .map_err(|e| SlugError::Failed(<span class="macro">format!</span>(<span class="string">"cannot run git: {e}"</span>)))<span class="question-mark">?</span>;
+<a href=#444 id=444 data-nosnippet>444</a>    <span class="kw">let </span>sha = String::from_utf8_lossy(<span class="kw-2">&amp;</span>out.stdout).trim().to_string();
+<a href=#445 id=445 data-nosnippet>445</a>    <span class="kw">let </span>hex = sha.chars().all(|c| c.is_ascii_hexdigit());
+<a href=#446 id=446 data-nosnippet>446</a>    <span class="kw">if </span>!out.status.success() || !hex || !(sha.len() == <span class="number">40 </span>|| sha.len() == <span class="number">64</span>) {
+<a href=#447 id=447 data-nosnippet>447</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(SlugError::Missing(<span class="macro">format!</span>(
+<a href=#448 id=448 data-nosnippet>448</a>            <span class="string">"`{rev}` does not name a commit this clone has"
+<a href=#449 id=449 data-nosnippet>449</a>        </span>)));
+<a href=#450 id=450 data-nosnippet>450</a>    }
+<a href=#451 id=451 data-nosnippet>451</a>    <span class="prelude-val">Ok</span>(sha)
+<a href=#452 id=452 data-nosnippet>452</a>}
+<a href=#453 id=453 data-nosnippet>453</a>
+<a href=#454 id=454 data-nosnippet>454</a><span class="doccomment">/// The deployment object as the commit holds it.
+<a href=#455 id=455 data-nosnippet>455</a></span><span class="kw">fn </span>object_at(root: <span class="kw-2">&amp;</span>Path, commit: <span class="kw-2">&amp;</span>str, file: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;Deployment, SlugError&gt; {
+<a href=#456 id=456 data-nosnippet>456</a>    <span class="kw">let </span>out = <span class="kw">crate</span>::git::read_only(root)
+<a href=#457 id=457 data-nosnippet>457</a>        .args([<span class="string">"cat-file"</span>, <span class="string">"blob"</span>, <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{commit}:{file}"</span>)])
+<a href=#458 id=458 data-nosnippet>458</a>        .output()
+<a href=#459 id=459 data-nosnippet>459</a>        .map_err(|e| SlugError::Failed(<span class="macro">format!</span>(<span class="string">"cannot run git: {e}"</span>)))<span class="question-mark">?</span>;
+<a href=#460 id=460 data-nosnippet>460</a>    <span class="kw">if </span>!out.status.success() {
+<a href=#461 id=461 data-nosnippet>461</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(SlugError::Missing(<span class="macro">format!</span>(
+<a href=#462 id=462 data-nosnippet>462</a>            <span class="string">"{file} does not exist at {}; the slug is assembled from the object the commit holds"</span>,
+<a href=#463 id=463 data-nosnippet>463</a>            <span class="kw-2">&amp;</span>commit[..<span class="number">12</span>]
+<a href=#464 id=464 data-nosnippet>464</a>        )));
+<a href=#465 id=465 data-nosnippet>465</a>    }
+<a href=#466 id=466 data-nosnippet>466</a>    <span class="kw">let </span>text = String::from_utf8(out.stdout)
+<a href=#467 id=467 data-nosnippet>467</a>        .map_err(|<span class="kw">_</span>| SlugError::Refused(<span class="macro">format!</span>(<span class="string">"{file} at {} is not UTF-8"</span>, <span class="kw-2">&amp;</span>commit[..<span class="number">12</span>])))<span class="question-mark">?</span>;
+<a href=#468 id=468 data-nosnippet>468</a>    <span class="kw">let </span>map = <span class="kw">crate</span>::metadata::yaml::parse_mapping(<span class="kw-2">&amp;</span>text)
+<a href=#469 id=469 data-nosnippet>469</a>        .map_err(|e| SlugError::Refused(<span class="macro">format!</span>(<span class="string">"{file} at {}: {e}"</span>, <span class="kw-2">&amp;</span>commit[..<span class="number">12</span>])))<span class="question-mark">?</span>;
+<a href=#470 id=470 data-nosnippet>470</a>    Deployment::from_metadata(file, serde_json::Value::Object(map))
+<a href=#471 id=471 data-nosnippet>471</a>        .map_err(|r| SlugError::Refused(r.to_string()))
+<a href=#472 id=472 data-nosnippet>472</a>}
+<a href=#473 id=473 data-nosnippet>473</a>
+<a href=#474 id=474 data-nosnippet>474</a><span class="doccomment">/// The out directory, absolute and checked: outside the checkout, and absent or empty.
+<a href=#475 id=475 data-nosnippet>475</a></span><span class="kw">fn </span>outside(root: <span class="kw-2">&amp;</span>Path, out: <span class="kw-2">&amp;</span>Path) -&gt; <span class="prelude-ty">Result</span>&lt;PathBuf, SlugError&gt; {
+<a href=#476 id=476 data-nosnippet>476</a>    <span class="kw">if </span>out.components().any(|c| <span class="macro">matches!</span>(c, Component::ParentDir)) {
+<a href=#477 id=477 data-nosnippet>477</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(SlugError::Refused(<span class="macro">format!</span>(
+<a href=#478 id=478 data-nosnippet>478</a>            <span class="string">"the out directory {} climbs with `..`; name it directly"</span>,
+<a href=#479 id=479 data-nosnippet>479</a>            out.display()
+<a href=#480 id=480 data-nosnippet>480</a>        )));
+<a href=#481 id=481 data-nosnippet>481</a>    }
+<a href=#482 id=482 data-nosnippet>482</a>    <span class="kw">let </span>absolute = std::path::absolute(out).map_err(|e| {
+<a href=#483 id=483 data-nosnippet>483</a>        SlugError::Refused(<span class="macro">format!</span>(
+<a href=#484 id=484 data-nosnippet>484</a>            <span class="string">"the out directory `{}` cannot be made absolute: {e}; name a directory"</span>,
+<a href=#485 id=485 data-nosnippet>485</a>            out.display()
+<a href=#486 id=486 data-nosnippet>486</a>        ))
+<a href=#487 id=487 data-nosnippet>487</a>    })<span class="question-mark">?</span>;
+<a href=#488 id=488 data-nosnippet>488</a>    <span class="comment">// the nearest ancestor that resolves, and the part below it that does not exist yet; the
+<a href=#489 id=489 data-nosnippet>489</a>    // filesystem's root always resolves, so the fallback is the path as named
+<a href=#490 id=490 data-nosnippet>490</a>    </span><span class="kw">let </span>(existing, <span class="kw-2">mut </span>resolved) = absolute
+<a href=#491 id=491 data-nosnippet>491</a>        .ancestors()
+<a href=#492 id=492 data-nosnippet>492</a>        .find_map(|a| a.canonicalize().ok().map(|c| (a, c)))
+<a href=#493 id=493 data-nosnippet>493</a>        .unwrap_or((absolute.as_path(), absolute.clone()));
+<a href=#494 id=494 data-nosnippet>494</a>    <span class="kw">for </span>name <span class="kw">in </span>absolute
+<a href=#495 id=495 data-nosnippet>495</a>        .strip_prefix(existing)
+<a href=#496 id=496 data-nosnippet>496</a>        .unwrap_or(Path::new(<span class="string">""</span>))
+<a href=#497 id=497 data-nosnippet>497</a>        .components()
+<a href=#498 id=498 data-nosnippet>498</a>    {
+<a href=#499 id=499 data-nosnippet>499</a>        resolved.push(name);
+<a href=#500 id=500 data-nosnippet>500</a>    }
+<a href=#501 id=501 data-nosnippet>501</a>    <span class="kw">let </span>root = root
+<a href=#502 id=502 data-nosnippet>502</a>        .canonicalize()
+<a href=#503 id=503 data-nosnippet>503</a>        .map_err(|e| SlugError::Failed(<span class="macro">format!</span>(<span class="string">"{} cannot be resolved: {e}"</span>, root.display())))<span class="question-mark">?</span>;
+<a href=#504 id=504 data-nosnippet>504</a>    <span class="kw">if </span>resolved.starts_with(<span class="kw-2">&amp;</span>root) {
+<a href=#505 id=505 data-nosnippet>505</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(SlugError::Refused(<span class="macro">format!</span>(
+<a href=#506 id=506 data-nosnippet>506</a>            <span class="string">"the out directory {} is inside the checkout {}; a slug is assembled outside the \
+<a href=#507 id=507 data-nosnippet>507</a>             repository and never in it"</span>,
+<a href=#508 id=508 data-nosnippet>508</a>            resolved.display(),
+<a href=#509 id=509 data-nosnippet>509</a>            root.display()
+<a href=#510 id=510 data-nosnippet>510</a>        )));
+<a href=#511 id=511 data-nosnippet>511</a>    }
+<a href=#512 id=512 data-nosnippet>512</a>    <span class="kw">if </span>resolved.exists() {
+<a href=#513 id=513 data-nosnippet>513</a>        <span class="kw">let </span><span class="kw-2">mut </span>entries = std::fs::read_dir(<span class="kw-2">&amp;</span>resolved).map_err(|e| {
+<a href=#514 id=514 data-nosnippet>514</a>            SlugError::Refused(<span class="macro">format!</span>(
+<a href=#515 id=515 data-nosnippet>515</a>                <span class="string">"the out directory {} is not a readable directory: {e}"</span>,
+<a href=#516 id=516 data-nosnippet>516</a>                resolved.display()
+<a href=#517 id=517 data-nosnippet>517</a>            ))
+<a href=#518 id=518 data-nosnippet>518</a>        })<span class="question-mark">?</span>;
+<a href=#519 id=519 data-nosnippet>519</a>        <span class="kw">if </span>entries.next().is_some() {
+<a href=#520 id=520 data-nosnippet>520</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(SlugError::Refused(<span class="macro">format!</span>(
+<a href=#521 id=521 data-nosnippet>521</a>                <span class="string">"the out directory {} is not empty; a slug holds what it was assembled from and \
+<a href=#522 id=522 data-nosnippet>522</a>                 nothing else"</span>,
+<a href=#523 id=523 data-nosnippet>523</a>                resolved.display()
+<a href=#524 id=524 data-nosnippet>524</a>            )));
+<a href=#525 id=525 data-nosnippet>525</a>        }
+<a href=#526 id=526 data-nosnippet>526</a>    }
+<a href=#527 id=527 data-nosnippet>527</a>    <span class="prelude-val">Ok</span>(resolved)
+<a href=#528 id=528 data-nosnippet>528</a>}
+<a href=#529 id=529 data-nosnippet>529</a>
+<a href=#530 id=530 data-nosnippet>530</a><span class="doccomment">/// One entry of `git ls-tree -r`.
+<a href=#531 id=531 data-nosnippet>531</a></span><span class="attr">#[derive(Debug, Clone)]
+<a href=#532 id=532 data-nosnippet>532</a></span><span class="kw">struct </span>Tracked {
+<a href=#533 id=533 data-nosnippet>533</a>    mode: String,
+<a href=#534 id=534 data-nosnippet>534</a>    kind: String,
+<a href=#535 id=535 data-nosnippet>535</a>    oid: String,
+<a href=#536 id=536 data-nosnippet>536</a>    path: String,
+<a href=#537 id=537 data-nosnippet>537</a>}
+<a href=#538 id=538 data-nosnippet>538</a>
+<a href=#539 id=539 data-nosnippet>539</a><span class="doccomment">/// Every file the commit tracks under the paths, recursively. No path is no file: an empty
+<a href=#540 id=540 data-nosnippet>540</a>/// pathspec would list the whole tree.
+<a href=#541 id=541 data-nosnippet>541</a></span><span class="kw">fn </span>ls_tree(root: <span class="kw-2">&amp;</span>Path, commit: <span class="kw-2">&amp;</span>str, paths: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str]) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;Tracked&gt;, SlugError&gt; {
+<a href=#542 id=542 data-nosnippet>542</a>    <span class="kw">if </span>paths.is_empty() {
+<a href=#543 id=543 data-nosnippet>543</a>        <span class="kw">return </span><span class="prelude-val">Ok</span>(Vec::new());
+<a href=#544 id=544 data-nosnippet>544</a>    }
+<a href=#545 id=545 data-nosnippet>545</a>    <span class="kw">let </span>out = <span class="kw">crate</span>::git::read_only(root)
+<a href=#546 id=546 data-nosnippet>546</a>        .args([<span class="string">"ls-tree"</span>, <span class="string">"-r"</span>, <span class="string">"-z"</span>, <span class="string">"--full-tree"</span>, commit, <span class="string">"--"</span>])
+<a href=#547 id=547 data-nosnippet>547</a>        .args(paths)
+<a href=#548 id=548 data-nosnippet>548</a>        .output()
+<a href=#549 id=549 data-nosnippet>549</a>        .map_err(|e| SlugError::Failed(<span class="macro">format!</span>(<span class="string">"cannot run git: {e}"</span>)))<span class="question-mark">?</span>;
+<a href=#550 id=550 data-nosnippet>550</a>    <span class="kw">if </span>!out.status.success() {
+<a href=#551 id=551 data-nosnippet>551</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(SlugError::Failed(<span class="macro">format!</span>(
+<a href=#552 id=552 data-nosnippet>552</a>            <span class="string">"git ls-tree {commit}: {}"</span>,
+<a href=#553 id=553 data-nosnippet>553</a>            String::from_utf8_lossy(<span class="kw-2">&amp;</span>out.stderr).trim()
+<a href=#554 id=554 data-nosnippet>554</a>        )));
+<a href=#555 id=555 data-nosnippet>555</a>    }
+<a href=#556 id=556 data-nosnippet>556</a>    parse_ls_tree(<span class="kw-2">&amp;</span>out.stdout)
+<a href=#557 id=557 data-nosnippet>557</a>}
+<a href=#558 id=558 data-nosnippet>558</a>
+<a href=#559 id=559 data-nosnippet>559</a><span class="doccomment">/// The entries of what `git ls-tree -r -z` printed.
+<a href=#560 id=560 data-nosnippet>560</a></span><span class="kw">fn </span>parse_ls_tree(stdout: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;Tracked&gt;, SlugError&gt; {
+<a href=#561 id=561 data-nosnippet>561</a>    <span class="kw">let </span><span class="kw-2">mut </span>tracked = Vec::new();
+<a href=#562 id=562 data-nosnippet>562</a>    <span class="kw">for </span>raw <span class="kw">in </span>stdout.split(|b| <span class="kw-2">*</span>b == <span class="number">0</span>).filter(|r| !r.is_empty()) {
+<a href=#563 id=563 data-nosnippet>563</a>        <span class="kw">let </span>line = std::str::from_utf8(raw).map_err(|<span class="kw">_</span>| {
+<a href=#564 id=564 data-nosnippet>564</a>            SlugError::Refused(<span class="macro">format!</span>(
+<a href=#565 id=565 data-nosnippet>565</a>                <span class="string">"a tracked path is not UTF-8: {}"</span>,
+<a href=#566 id=566 data-nosnippet>566</a>                String::from_utf8_lossy(raw)
+<a href=#567 id=567 data-nosnippet>567</a>            ))
+<a href=#568 id=568 data-nosnippet>568</a>        })<span class="question-mark">?</span>;
+<a href=#569 id=569 data-nosnippet>569</a>        <span class="kw">let </span>(meta, path) = line
+<a href=#570 id=570 data-nosnippet>570</a>            .split_once(<span class="string">'\t'</span>)
+<a href=#571 id=571 data-nosnippet>571</a>            .ok_or_else(|| SlugError::Failed(<span class="macro">format!</span>(<span class="string">"git ls-tree said `{line}`"</span>)))<span class="question-mark">?</span>;
+<a href=#572 id=572 data-nosnippet>572</a>        <span class="kw">let </span><span class="kw-2">mut </span>parts = meta.split(<span class="string">' '</span>);
+<a href=#573 id=573 data-nosnippet>573</a>        <span class="kw">let </span>(<span class="prelude-val">Some</span>(mode), <span class="prelude-val">Some</span>(kind), <span class="prelude-val">Some</span>(oid)) = (parts.next(), parts.next(), parts.next()) <span class="kw">else </span>{
+<a href=#574 id=574 data-nosnippet>574</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(SlugError::Failed(<span class="macro">format!</span>(<span class="string">"git ls-tree said `{line}`"</span>)));
+<a href=#575 id=575 data-nosnippet>575</a>        };
+<a href=#576 id=576 data-nosnippet>576</a>        tracked.push(Tracked {
+<a href=#577 id=577 data-nosnippet>577</a>            mode: mode.into(),
+<a href=#578 id=578 data-nosnippet>578</a>            kind: kind.into(),
+<a href=#579 id=579 data-nosnippet>579</a>            oid: oid.into(),
+<a href=#580 id=580 data-nosnippet>580</a>            path: path.into(),
+<a href=#581 id=581 data-nosnippet>581</a>        });
+<a href=#582 id=582 data-nosnippet>582</a>    }
+<a href=#583 id=583 data-nosnippet>583</a>    <span class="prelude-val">Ok</span>(tracked)
+<a href=#584 id=584 data-nosnippet>584</a>}
+<a href=#585 id=585 data-nosnippet>585</a>
+<a href=#586 id=586 data-nosnippet>586</a><span class="doccomment">/// One blob's bytes.
+<a href=#587 id=587 data-nosnippet>587</a></span><span class="kw">fn </span>blob(root: <span class="kw-2">&amp;</span>Path, oid: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;u8&gt;, SlugError&gt; {
+<a href=#588 id=588 data-nosnippet>588</a>    <span class="kw">let </span>out = <span class="kw">crate</span>::git::read_only(root)
+<a href=#589 id=589 data-nosnippet>589</a>        .args([<span class="string">"cat-file"</span>, <span class="string">"blob"</span>, oid])
+<a href=#590 id=590 data-nosnippet>590</a>        .output()
+<a href=#591 id=591 data-nosnippet>591</a>        .map_err(|e| SlugError::Failed(<span class="macro">format!</span>(<span class="string">"cannot run git: {e}"</span>)))<span class="question-mark">?</span>;
+<a href=#592 id=592 data-nosnippet>592</a>    <span class="kw">if </span>!out.status.success() {
+<a href=#593 id=593 data-nosnippet>593</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(SlugError::Failed(<span class="macro">format!</span>(
+<a href=#594 id=594 data-nosnippet>594</a>            <span class="string">"git cat-file blob {oid}: {}"</span>,
+<a href=#595 id=595 data-nosnippet>595</a>            String::from_utf8_lossy(<span class="kw-2">&amp;</span>out.stderr).trim()
+<a href=#596 id=596 data-nosnippet>596</a>        )));
+<a href=#597 id=597 data-nosnippet>597</a>    }
+<a href=#598 id=598 data-nosnippet>598</a>    <span class="prelude-val">Ok</span>(out.stdout)
+<a href=#599 id=599 data-nosnippet>599</a>}
+<a href=#600 id=600 data-nosnippet>600</a>
+<a href=#601 id=601 data-nosnippet>601</a><span class="doccomment">/// Write the plan: every blob streamed through one `git cat-file --batch`, every other file
+<a href=#602 id=602 data-nosnippet>602</a>/// from the bytes in hand. Answers how many files were written and their total size.
+<a href=#603 id=603 data-nosnippet>603</a></span><span class="kw">fn </span>write(root: <span class="kw-2">&amp;</span>Path, out: <span class="kw-2">&amp;</span>Path, plan: <span class="kw-2">&amp;</span>Plan) -&gt; <span class="prelude-ty">Result</span>&lt;(usize, u64), SlugError&gt; {
+<a href=#604 id=604 data-nosnippet>604</a>    <span class="kw">let </span>io = |what: <span class="kw-2">&amp;</span>Path, e: std::io::Error| {
+<a href=#605 id=605 data-nosnippet>605</a>        SlugError::Failed(<span class="macro">format!</span>(<span class="string">"{} cannot be written: {e}"</span>, what.display()))
+<a href=#606 id=606 data-nosnippet>606</a>    };
+<a href=#607 id=607 data-nosnippet>607</a>    std::fs::create_dir_all(out).map_err(|e| io(out, e))<span class="question-mark">?</span>;
+<a href=#608 id=608 data-nosnippet>608</a>    <span class="kw">let </span><span class="kw-2">mut </span>bytes = <span class="number">0u64</span>;
+<a href=#609 id=609 data-nosnippet>609</a>    <span class="kw">let </span>blobs: Vec&lt;(<span class="kw-2">&amp;</span>String, <span class="kw-2">&amp;</span>Planned, <span class="kw-2">&amp;</span>String)&gt; = plan
+<a href=#610 id=610 data-nosnippet>610</a>        .<span class="number">0
+<a href=#611 id=611 data-nosnippet>611</a>        </span>.iter()
+<a href=#612 id=612 data-nosnippet>612</a>        .filter_map(|(path, p)| <span class="kw">match </span><span class="kw-2">&amp;</span>p.content {
+<a href=#613 id=613 data-nosnippet>613</a>            Content::Blob(oid) =&gt; <span class="prelude-val">Some</span>((path, p, oid)),
+<a href=#614 id=614 data-nosnippet>614</a>            Content::Bytes(<span class="kw">_</span>) =&gt; <span class="prelude-val">None</span>,
+<a href=#615 id=615 data-nosnippet>615</a>        })
+<a href=#616 id=616 data-nosnippet>616</a>        .collect();
+<a href=#617 id=617 data-nosnippet>617</a>    <span class="kw">if </span>!blobs.is_empty() {
+<a href=#618 id=618 data-nosnippet>618</a>        <span class="kw">let </span>oids: Vec&lt;String&gt; = blobs.iter().map(|(<span class="kw">_</span>, <span class="kw">_</span>, oid)| (<span class="kw-2">*</span>oid).clone()).collect();
+<a href=#619 id=619 data-nosnippet>619</a>        <span class="kw">let </span><span class="kw-2">mut </span>child = <span class="kw">crate</span>::git::read_only(root)
+<a href=#620 id=620 data-nosnippet>620</a>            .args([<span class="string">"cat-file"</span>, <span class="string">"--batch"</span>])
+<a href=#621 id=621 data-nosnippet>621</a>            .stdin(Stdio::piped())
+<a href=#622 id=622 data-nosnippet>622</a>            .stdout(Stdio::piped())
+<a href=#623 id=623 data-nosnippet>623</a>            .stderr(Stdio::null())
+<a href=#624 id=624 data-nosnippet>624</a>            .spawn()
+<a href=#625 id=625 data-nosnippet>625</a>            .map_err(|e| SlugError::Failed(<span class="macro">format!</span>(<span class="string">"cannot run git: {e}"</span>)))<span class="question-mark">?</span>;
+<a href=#626 id=626 data-nosnippet>626</a>        <span class="kw">let </span><span class="kw-2">mut </span>stdin = child.stdin.take().expect(<span class="string">"piped stdin"</span>);
+<a href=#627 id=627 data-nosnippet>627</a>        <span class="comment">// the requests go in on a thread of their own, so a full pipe on either side cannot
+<a href=#628 id=628 data-nosnippet>628</a>        // hold the other: git answers while it is still being asked
+<a href=#629 id=629 data-nosnippet>629</a>        </span><span class="kw">let </span>asking = std::thread::spawn(<span class="kw">move </span>|| -&gt; std::io::Result&lt;()&gt; {
+<a href=#630 id=630 data-nosnippet>630</a>            <span class="kw">for </span>oid <span class="kw">in </span>oids {
+<a href=#631 id=631 data-nosnippet>631</a>                <span class="macro">writeln!</span>(stdin, <span class="string">"{oid}"</span>)<span class="question-mark">?</span>;
+<a href=#632 id=632 data-nosnippet>632</a>            }
+<a href=#633 id=633 data-nosnippet>633</a>            <span class="prelude-val">Ok</span>(())
+<a href=#634 id=634 data-nosnippet>634</a>        });
+<a href=#635 id=635 data-nosnippet>635</a>        <span class="kw">let </span><span class="kw-2">mut </span>reader = BufReader::new(child.stdout.take().expect(<span class="string">"piped stdout"</span>));
+<a href=#636 id=636 data-nosnippet>636</a>        <span class="kw">let </span>streamed = stream(<span class="kw-2">&amp;mut </span>reader, out, <span class="kw-2">&amp;</span>blobs);
+<a href=#637 id=637 data-nosnippet>637</a>        drop(reader);
+<a href=#638 id=638 data-nosnippet>638</a>        <span class="kw">if </span>streamed.is_err() {
+<a href=#639 id=639 data-nosnippet>639</a>            <span class="kw">let _ </span>= child.kill();
+<a href=#640 id=640 data-nosnippet>640</a>        }
+<a href=#641 id=641 data-nosnippet>641</a>        <span class="kw">let _ </span>= asking.join();
+<a href=#642 id=642 data-nosnippet>642</a>        <span class="kw">let _ </span>= child.wait();
+<a href=#643 id=643 data-nosnippet>643</a>        bytes += streamed<span class="question-mark">?</span>;
+<a href=#644 id=644 data-nosnippet>644</a>    }
+<a href=#645 id=645 data-nosnippet>645</a>    <span class="kw">for </span>(path, planned) <span class="kw">in </span><span class="kw-2">&amp;</span>plan.<span class="number">0 </span>{
+<a href=#646 id=646 data-nosnippet>646</a>        <span class="kw">if let </span>Content::Bytes(content) = <span class="kw-2">&amp;</span>planned.content {
+<a href=#647 id=647 data-nosnippet>647</a>            place(out, path, content, planned.mode)<span class="question-mark">?</span>;
+<a href=#648 id=648 data-nosnippet>648</a>            bytes += content.len() <span class="kw">as </span>u64;
+<a href=#649 id=649 data-nosnippet>649</a>        }
+<a href=#650 id=650 data-nosnippet>650</a>    }
+<a href=#651 id=651 data-nosnippet>651</a>    <span class="prelude-val">Ok</span>((plan.<span class="number">0</span>.len(), bytes))
+<a href=#652 id=652 data-nosnippet>652</a>}
+<a href=#653 id=653 data-nosnippet>653</a>
+<a href=#654 id=654 data-nosnippet>654</a><span class="doccomment">/// Read what `git cat-file --batch` answers for each planned blob, in the order they were
+<a href=#655 id=655 data-nosnippet>655</a>/// asked for, and place each. Answers the bytes placed.
+<a href=#656 id=656 data-nosnippet>656</a></span><span class="kw">fn </span>stream(
+<a href=#657 id=657 data-nosnippet>657</a>    reader: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>BufRead,
+<a href=#658 id=658 data-nosnippet>658</a>    out: <span class="kw-2">&amp;</span>Path,
+<a href=#659 id=659 data-nosnippet>659</a>    blobs: <span class="kw-2">&amp;</span>[(<span class="kw-2">&amp;</span>String, <span class="kw-2">&amp;</span>Planned, <span class="kw-2">&amp;</span>String)],
+<a href=#660 id=660 data-nosnippet>660</a>) -&gt; <span class="prelude-ty">Result</span>&lt;u64, SlugError&gt; {
+<a href=#661 id=661 data-nosnippet>661</a>    <span class="kw">let </span><span class="kw-2">mut </span>total = <span class="number">0u64</span>;
+<a href=#662 id=662 data-nosnippet>662</a>    <span class="kw">for </span>(path, planned, oid) <span class="kw">in </span>blobs {
+<a href=#663 id=663 data-nosnippet>663</a>        <span class="kw">let </span><span class="kw-2">mut </span>header = String::new();
+<a href=#664 id=664 data-nosnippet>664</a>        reader
+<a href=#665 id=665 data-nosnippet>665</a>            .read_line(<span class="kw-2">&amp;mut </span>header)
+<a href=#666 id=666 data-nosnippet>666</a>            .map_err(|e| SlugError::Failed(<span class="macro">format!</span>(<span class="string">"git cat-file --batch: {e}"</span>)))<span class="question-mark">?</span>;
+<a href=#667 id=667 data-nosnippet>667</a>        <span class="kw">let </span>fields: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = header.trim_end().split(<span class="string">' '</span>).collect();
+<a href=#668 id=668 data-nosnippet>668</a>        <span class="kw">let </span>size = <span class="kw">match </span>fields.as_slice() {
+<a href=#669 id=669 data-nosnippet>669</a>            [o, <span class="string">"blob"</span>, size] <span class="kw">if </span><span class="kw-2">*</span>o == oid.as_str() =&gt; size.parse::&lt;usize&gt;().ok(),
+<a href=#670 id=670 data-nosnippet>670</a>            <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
+<a href=#671 id=671 data-nosnippet>671</a>        }
+<a href=#672 id=672 data-nosnippet>672</a>        .ok_or_else(|| {
+<a href=#673 id=673 data-nosnippet>673</a>            SlugError::Failed(<span class="macro">format!</span>(
+<a href=#674 id=674 data-nosnippet>674</a>                <span class="string">"git cat-file --batch answered `{}` for {oid}"</span>,
+<a href=#675 id=675 data-nosnippet>675</a>                header.trim_end()
+<a href=#676 id=676 data-nosnippet>676</a>            ))
+<a href=#677 id=677 data-nosnippet>677</a>        })<span class="question-mark">?</span>;
+<a href=#678 id=678 data-nosnippet>678</a>        <span class="kw">let </span><span class="kw-2">mut </span>content = <span class="macro">vec!</span>[<span class="number">0u8</span>; size + <span class="number">1</span>];
+<a href=#679 id=679 data-nosnippet>679</a>        reader
+<a href=#680 id=680 data-nosnippet>680</a>            .read_exact(<span class="kw-2">&amp;mut </span>content)
+<a href=#681 id=681 data-nosnippet>681</a>            .map_err(|e| SlugError::Failed(<span class="macro">format!</span>(<span class="string">"git cat-file --batch: {e}"</span>)))<span class="question-mark">?</span>;
+<a href=#682 id=682 data-nosnippet>682</a>        content.truncate(size);
+<a href=#683 id=683 data-nosnippet>683</a>        place(out, path, <span class="kw-2">&amp;</span>content, planned.mode)<span class="question-mark">?</span>;
+<a href=#684 id=684 data-nosnippet>684</a>        total += size <span class="kw">as </span>u64;
+<a href=#685 id=685 data-nosnippet>685</a>    }
+<a href=#686 id=686 data-nosnippet>686</a>    <span class="prelude-val">Ok</span>(total)
+<a href=#687 id=687 data-nosnippet>687</a>}
+<a href=#688 id=688 data-nosnippet>688</a>
+<a href=#689 id=689 data-nosnippet>689</a><span class="doccomment">/// Write one file of the slug with its mode.
+<a href=#690 id=690 data-nosnippet>690</a></span><span class="kw">fn </span>place(out: <span class="kw-2">&amp;</span>Path, rel: <span class="kw-2">&amp;</span>str, content: <span class="kw-2">&amp;</span>[u8], mode: Mode) -&gt; <span class="prelude-ty">Result</span>&lt;(), SlugError&gt; {
+<a href=#691 id=691 data-nosnippet>691</a>    <span class="kw">let </span>path = out.join(rel);
+<a href=#692 id=692 data-nosnippet>692</a>    <span class="kw">let </span>io =
+<a href=#693 id=693 data-nosnippet>693</a>        |e: std::io::Error| SlugError::Failed(<span class="macro">format!</span>(<span class="string">"{} cannot be written: {e}"</span>, path.display()));
+<a href=#694 id=694 data-nosnippet>694</a>    <span class="comment">// `rel` is never empty (`Plan::add`), so the path always has a parent
+<a href=#695 id=695 data-nosnippet>695</a>    </span>std::fs::create_dir_all(path.parent().unwrap_or(out)).map_err(io)<span class="question-mark">?</span>;
+<a href=#696 id=696 data-nosnippet>696</a>    <span class="kw">match </span>mode {
+<a href=#697 id=697 data-nosnippet>697</a>        Mode::Link =&gt; link(content, <span class="kw-2">&amp;</span>path).map_err(io),
+<a href=#698 id=698 data-nosnippet>698</a>        Mode::File | Mode::Executable =&gt; {
+<a href=#699 id=699 data-nosnippet>699</a>            std::fs::write(<span class="kw-2">&amp;</span>path, content).map_err(io)<span class="question-mark">?</span>;
+<a href=#700 id=700 data-nosnippet>700</a>            permit(<span class="kw-2">&amp;</span>path, mode == Mode::Executable).map_err(io)
+<a href=#701 id=701 data-nosnippet>701</a>        }
+<a href=#702 id=702 data-nosnippet>702</a>    }
+<a href=#703 id=703 data-nosnippet>703</a>}
+<a href=#704 id=704 data-nosnippet>704</a>
+<a href=#705 id=705 data-nosnippet>705</a><span class="attr">#[cfg(unix)]
+<a href=#706 id=706 data-nosnippet>706</a></span><span class="kw">fn </span>link(target: <span class="kw-2">&amp;</span>[u8], path: <span class="kw-2">&amp;</span>Path) -&gt; std::io::Result&lt;()&gt; {
+<a href=#707 id=707 data-nosnippet>707</a>    <span class="kw">use </span>std::os::unix::ffi::OsStrExt;
+<a href=#708 id=708 data-nosnippet>708</a>    std::os::unix::fs::symlink(std::ffi::OsStr::from_bytes(target), path)
+<a href=#709 id=709 data-nosnippet>709</a>}
+<a href=#710 id=710 data-nosnippet>710</a>
+<a href=#711 id=711 data-nosnippet>711</a><span class="attr">#[cfg(not(unix))]
+<a href=#712 id=712 data-nosnippet>712</a></span><span class="kw">fn </span>link(<span class="kw">_</span>: <span class="kw-2">&amp;</span>[u8], path: <span class="kw-2">&amp;</span>Path) -&gt; std::io::Result&lt;()&gt; {
+<a href=#713 id=713 data-nosnippet>713</a>    <span class="prelude-val">Err</span>(std::io::Error::other(<span class="macro">format!</span>(
+<a href=#714 id=714 data-nosnippet>714</a>        <span class="string">"{} is a symbolic link, which this platform cannot write"</span>,
+<a href=#715 id=715 data-nosnippet>715</a>        path.display()
+<a href=#716 id=716 data-nosnippet>716</a>    )))
+<a href=#717 id=717 data-nosnippet>717</a>}
+<a href=#718 id=718 data-nosnippet>718</a>
+<a href=#719 id=719 data-nosnippet>719</a><span class="attr">#[cfg(unix)]
+<a href=#720 id=720 data-nosnippet>720</a></span><span class="kw">fn </span>permit(path: <span class="kw-2">&amp;</span>Path, executable: bool) -&gt; std::io::Result&lt;()&gt; {
+<a href=#721 id=721 data-nosnippet>721</a>    <span class="kw">use </span>std::os::unix::fs::PermissionsExt;
+<a href=#722 id=722 data-nosnippet>722</a>    <span class="kw">let </span>mode = <span class="kw">if </span>executable { <span class="number">0o755 </span>} <span class="kw">else </span>{ <span class="number">0o644 </span>};
+<a href=#723 id=723 data-nosnippet>723</a>    std::fs::set_permissions(path, std::fs::Permissions::from_mode(mode))
+<a href=#724 id=724 data-nosnippet>724</a>}
+<a href=#725 id=725 data-nosnippet>725</a>
+<a href=#726 id=726 data-nosnippet>726</a><span class="attr">#[cfg(not(unix))]
+<a href=#727 id=727 data-nosnippet>727</a></span><span class="kw">fn </span>permit(<span class="kw">_</span>: <span class="kw-2">&amp;</span>Path, <span class="kw">_</span>: bool) -&gt; std::io::Result&lt;()&gt; {
+<a href=#728 id=728 data-nosnippet>728</a>    <span class="prelude-val">Ok</span>(())
+<a href=#729 id=729 data-nosnippet>729</a>}
+<a href=#730 id=730 data-nosnippet>730</a>
+<a href=#731 id=731 data-nosnippet>731</a><span class="doccomment">/// What the tests of the slug, of `deploy.slug` and of `majordomus deploy` build their
+<a href=#732 id=732 data-nosnippet>732</a>/// repositories from: one deployment object's text, and the object with the provider files it
+<a href=#733 id=733 data-nosnippet>733</a>/// renders written and committed.
+<a href=#734 id=734 data-nosnippet>734</a></span><span class="attr">#[cfg(test)]
+<a href=#735 id=735 data-nosnippet>735</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>testing {
+<a href=#736 id=736 data-nosnippet>736</a>    <span class="kw">use </span>std::path::Path;
+<a href=#737 id=737 data-nosnippet>737</a>    <span class="kw">use </span>std::process::Command;
+<a href=#738 id=738 data-nosnippet>738</a>
+<a href=#739 id=739 data-nosnippet>739</a>    <span class="kw">use super</span>::{render, Deployment};
+<a href=#740 id=740 data-nosnippet>740</a>
+<a href=#741 id=741 data-nosnippet>741</a>    <span class="doccomment">/// A deployment object `id` with these build inputs, hosted on Gigalixir as `&lt;id&gt;-app`
+<a href=#742 id=742 data-nosnippet>742</a>    /// when `provider` is set.
+<a href=#743 id=743 data-nosnippet>743</a>    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>object_yaml(id: <span class="kw-2">&amp;</span>str, inputs: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str], provider: bool) -&gt; String {
+<a href=#744 id=744 data-nosnippet>744</a>        <span class="kw">let </span><span class="kw-2">mut </span>s = <span class="macro">format!</span>(
+<a href=#745 id=745 data-nosnippet>745</a>            <span class="string">"schema: deployment/v1\nkind: deployment\nid: {id}\ntitle: Hosted\n\
+<a href=#746 id=746 data-nosnippet>746</a>             application: {id}\nbuild:\n  package: majordomus-cli\n  binary: majordomus\n  \
+<a href=#747 id=747 data-nosnippet>747</a>             profile: release\n  inputs:\n"
+<a href=#748 id=748 data-nosnippet>748</a>        </span>);
+<a href=#749 id=749 data-nosnippet>749</a>        <span class="kw">for </span>i <span class="kw">in </span>inputs {
+<a href=#750 id=750 data-nosnippet>750</a>            s.push_str(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"    - {i}\n"</span>));
+<a href=#751 id=751 data-nosnippet>751</a>        }
+<a href=#752 id=752 data-nosnippet>752</a>        s.push_str(
+<a href=#753 id=753 data-nosnippet>753</a>            <span class="string">"listen:\n  port: 8080\n  interface: all\nhealth:\n  liveness: /api/v1/live\n  \
+<a href=#754 id=754 data-nosnippet>754</a>             readiness: /api/v1/ready\nresources:\n  cpu_kind: shared\n  cpus: 1\n  \
+<a href=#755 id=755 data-nosnippet>755</a>             memory_mb: 256\nmachines:\n  count: 1\n  min_running: 0\n  autostart: true\n  \
+<a href=#756 id=756 data-nosnippet>756</a>             autostop: true\nregion: fra\n"</span>,
+<a href=#757 id=757 data-nosnippet>757</a>        );
+<a href=#758 id=758 data-nosnippet>758</a>        <span class="kw">if </span>provider {
+<a href=#759 id=759 data-nosnippet>759</a>            s.push_str(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
+<a href=#760 id=760 data-nosnippet>760</a>                <span class="string">"provider:\n  name: gigalixir\n  app: {id}-app\n  stack: gigalixir-24\n  \
+<a href=#761 id=761 data-nosnippet>761</a>                 url: https://{id}-app.gigalixirapp.com\n"
+<a href=#762 id=762 data-nosnippet>762</a>            </span>));
+<a href=#763 id=763 data-nosnippet>763</a>        }
+<a href=#764 id=764 data-nosnippet>764</a>        s
+<a href=#765 id=765 data-nosnippet>765</a>    }
+<a href=#766 id=766 data-nosnippet>766</a>
+<a href=#767 id=767 data-nosnippet>767</a>    <span class="doccomment">/// Run git in `root`, asserting it succeeded, and answer what it printed.
+<a href=#768 id=768 data-nosnippet>768</a>    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>git(root: <span class="kw-2">&amp;</span>Path, args: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str]) -&gt; String {
+<a href=#769 id=769 data-nosnippet>769</a>        <span class="kw">let </span>out = Command::new(<span class="string">"git"</span>)
+<a href=#770 id=770 data-nosnippet>770</a>            .arg(<span class="string">"-C"</span>)
+<a href=#771 id=771 data-nosnippet>771</a>            .arg(root)
+<a href=#772 id=772 data-nosnippet>772</a>            .args(args)
+<a href=#773 id=773 data-nosnippet>773</a>            .output()
+<a href=#774 id=774 data-nosnippet>774</a>            .unwrap();
+<a href=#775 id=775 data-nosnippet>775</a>        <span class="macro">assert!</span>(out.status.success(), <span class="string">"git {args:?}: {out:?}"</span>);
+<a href=#776 id=776 data-nosnippet>776</a>        String::from_utf8(out.stdout).unwrap().trim().to_string()
+<a href=#777 id=777 data-nosnippet>777</a>    }
+<a href=#778 id=778 data-nosnippet>778</a>
+<a href=#779 id=779 data-nosnippet>779</a>    <span class="doccomment">/// Make `root` a repository a test can commit in.
+<a href=#780 id=780 data-nosnippet>780</a>    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>init(root: <span class="kw-2">&amp;</span>Path, extra: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str]) {
+<a href=#781 id=781 data-nosnippet>781</a>        <span class="kw">let </span><span class="kw-2">mut </span>args = <span class="macro">vec!</span>[<span class="string">"init"</span>, <span class="string">"-q"</span>];
+<a href=#782 id=782 data-nosnippet>782</a>        args.extend_from_slice(extra);
+<a href=#783 id=783 data-nosnippet>783</a>        git(root, <span class="kw-2">&amp;</span>args);
+<a href=#784 id=784 data-nosnippet>784</a>        git(root, <span class="kw-2">&amp;</span>[<span class="string">"config"</span>, <span class="string">"user.email"</span>, <span class="string">"t@example.com"</span>]);
+<a href=#785 id=785 data-nosnippet>785</a>        git(root, <span class="kw-2">&amp;</span>[<span class="string">"config"</span>, <span class="string">"user.name"</span>, <span class="string">"t"</span>]);
+<a href=#786 id=786 data-nosnippet>786</a>        git(root, <span class="kw-2">&amp;</span>[<span class="string">"config"</span>, <span class="string">"commit.gpgsign"</span>, <span class="string">"false"</span>]);
+<a href=#787 id=787 data-nosnippet>787</a>    }
+<a href=#788 id=788 data-nosnippet>788</a>
+<a href=#789 id=789 data-nosnippet>789</a>    <span class="doccomment">/// Write a file under `root`, creating its directories.
+<a href=#790 id=790 data-nosnippet>790</a>    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>write(root: <span class="kw-2">&amp;</span>Path, rel: <span class="kw-2">&amp;</span>str, content: <span class="kw-2">&amp;</span>[u8]) {
+<a href=#791 id=791 data-nosnippet>791</a>        <span class="kw">let </span>p = root.join(rel);
+<a href=#792 id=792 data-nosnippet>792</a>        std::fs::create_dir_all(p.parent().unwrap()).unwrap();
+<a href=#793 id=793 data-nosnippet>793</a>        std::fs::write(p, content).unwrap();
+<a href=#794 id=794 data-nosnippet>794</a>    }
+<a href=#795 id=795 data-nosnippet>795</a>
+<a href=#796 id=796 data-nosnippet>796</a>    <span class="doccomment">/// Write the object `text` at `file` and every provider file it renders.
+<a href=#797 id=797 data-nosnippet>797</a>    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>write_object(root: <span class="kw-2">&amp;</span>Path, file: <span class="kw-2">&amp;</span>str, text: <span class="kw-2">&amp;</span>str) {
+<a href=#798 id=798 data-nosnippet>798</a>        write(root, file, text.as_bytes());
+<a href=#799 id=799 data-nosnippet>799</a>        <span class="kw">let </span>map = <span class="kw">crate</span>::metadata::yaml::parse_mapping(text).unwrap();
+<a href=#800 id=800 data-nosnippet>800</a>        <span class="kw">let </span>d = Deployment::from_metadata(file, serde_json::Value::Object(map)).unwrap();
+<a href=#801 id=801 data-nosnippet>801</a>        <span class="kw">for </span>a <span class="kw">in </span>render::provider_artifacts(<span class="kw-2">&amp;</span>d, file) {
+<a href=#802 id=802 data-nosnippet>802</a>            write(root, <span class="kw-2">&amp;</span>a.path, a.content.as_bytes());
+<a href=#803 id=803 data-nosnippet>803</a>        }
+<a href=#804 id=804 data-nosnippet>804</a>    }
+<a href=#805 id=805 data-nosnippet>805</a>
+<a href=#806 id=806 data-nosnippet>806</a>    <span class="doccomment">/// Stage and commit everything.
+<a href=#807 id=807 data-nosnippet>807</a>    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>commit(root: <span class="kw-2">&amp;</span>Path, message: <span class="kw-2">&amp;</span>str) {
+<a href=#808 id=808 data-nosnippet>808</a>        git(root, <span class="kw-2">&amp;</span>[<span class="string">"add"</span>, <span class="string">"-A"</span>]);
+<a href=#809 id=809 data-nosnippet>809</a>        git(root, <span class="kw-2">&amp;</span>[<span class="string">"commit"</span>, <span class="string">"-qm"</span>, message]);
+<a href=#810 id=810 data-nosnippet>810</a>    }
+<a href=#811 id=811 data-nosnippet>811</a>
+<a href=#812 id=812 data-nosnippet>812</a>    <span class="doccomment">/// A synthetic layer that discovers deployments and declares `ids`, each hosted and
+<a href=#813 id=813 data-nosnippet>813</a>    /// shipping `docs`, with the provider files rendered, all committed.
+<a href=#814 id=814 data-nosnippet>814</a>    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>hosted_layer(ids: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str]) -&gt; <span class="kw">crate</span>::synthetic::SyntheticRepository {
+<a href=#815 id=815 data-nosnippet>815</a>        <span class="kw">let </span>repo = <span class="kw">crate</span>::synthetic::SyntheticRepository::small().unwrap();
+<a href=#816 id=816 data-nosnippet>816</a>        init(repo.root(), <span class="kw-2">&amp;</span>[]);
+<a href=#817 id=817 data-nosnippet>817</a>        <span class="kw">let </span>sources = repo.root().join(<span class="string">".ai/repo/knowledge/sources.yaml"</span>);
+<a href=#818 id=818 data-nosnippet>818</a>        <span class="kw">let </span><span class="kw-2">mut </span>text = std::fs::read_to_string(<span class="kw-2">&amp;</span>sources).unwrap();
+<a href=#819 id=819 data-nosnippet>819</a>        text.push_str(
+<a href=#820 id=820 data-nosnippet>820</a>            <span class="string">"  - id: deployment\n    kind: deployment\n    discovery: vcs\n    \
+<a href=#821 id=821 data-nosnippet>821</a>             pathspec: ':(glob).ai/repo/deployments/*.yaml'\n    required: false\n"</span>,
+<a href=#822 id=822 data-nosnippet>822</a>        );
+<a href=#823 id=823 data-nosnippet>823</a>        std::fs::write(<span class="kw-2">&amp;</span>sources, text).unwrap();
+<a href=#824 id=824 data-nosnippet>824</a>        <span class="kw">for </span>id <span class="kw">in </span>ids {
+<a href=#825 id=825 data-nosnippet>825</a>            <span class="kw">let </span>file = <span class="macro">format!</span>(<span class="string">".ai/repo/deployments/{id}.yaml"</span>);
+<a href=#826 id=826 data-nosnippet>826</a>            write_object(repo.root(), <span class="kw-2">&amp;</span>file, <span class="kw-2">&amp;</span>object_yaml(id, <span class="kw-2">&amp;</span>[<span class="string">"docs"</span>], <span class="bool-val">true</span>));
+<a href=#827 id=827 data-nosnippet>827</a>        }
+<a href=#828 id=828 data-nosnippet>828</a>        commit(repo.root(), <span class="string">"the layer"</span>);
+<a href=#829 id=829 data-nosnippet>829</a>        repo
+<a href=#830 id=830 data-nosnippet>830</a>    }
+<a href=#831 id=831 data-nosnippet>831</a>}
+<a href=#832 id=832 data-nosnippet>832</a>
+<a href=#833 id=833 data-nosnippet>833</a><span class="attr">#[cfg(test)]
+<a href=#834 id=834 data-nosnippet>834</a></span><span class="kw">mod </span>tests {
+<a href=#835 id=835 data-nosnippet>835</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#836 id=836 data-nosnippet>836</a>    <span class="kw">use </span>std::process::Command;
+<a href=#837 id=837 data-nosnippet>837</a>
+<a href=#838 id=838 data-nosnippet>838</a>    <span class="kw">const </span>OBJECT: <span class="kw-2">&amp;</span>str = <span class="string">".ai/repo/deployments/hosted.yaml"</span>;
+<a href=#839 id=839 data-nosnippet>839</a>
+<a href=#840 id=840 data-nosnippet>840</a>    <span class="kw">fn </span>yaml(inputs: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str], provider: bool) -&gt; String {
+<a href=#841 id=841 data-nosnippet>841</a>        testing::object_yaml(<span class="string">"hosted"</span>, inputs, provider)
+<a href=#842 id=842 data-nosnippet>842</a>    }
+<a href=#843 id=843 data-nosnippet>843</a>
+<a href=#844 id=844 data-nosnippet>844</a>    <span class="kw">struct </span>Fixture {
+<a href=#845 id=845 data-nosnippet>845</a>        repo: tempfile::TempDir,
+<a href=#846 id=846 data-nosnippet>846</a>        elsewhere: tempfile::TempDir,
+<a href=#847 id=847 data-nosnippet>847</a>    }
+<a href=#848 id=848 data-nosnippet>848</a>
+<a href=#849 id=849 data-nosnippet>849</a>    <span class="kw">impl </span>Fixture {
+<a href=#850 id=850 data-nosnippet>850</a>        <span class="kw">fn </span>git(<span class="kw-2">&amp;</span><span class="self">self</span>, args: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str]) {
+<a href=#851 id=851 data-nosnippet>851</a>            <span class="kw">let </span>out = Command::new(<span class="string">"git"</span>)
+<a href=#852 id=852 data-nosnippet>852</a>                .arg(<span class="string">"-C"</span>)
+<a href=#853 id=853 data-nosnippet>853</a>                .arg(<span class="self">self</span>.repo.path())
+<a href=#854 id=854 data-nosnippet>854</a>                .args(args)
+<a href=#855 id=855 data-nosnippet>855</a>                .output()
+<a href=#856 id=856 data-nosnippet>856</a>                .unwrap();
+<a href=#857 id=857 data-nosnippet>857</a>            <span class="macro">assert!</span>(out.status.success(), <span class="string">"git {args:?}: {out:?}"</span>);
+<a href=#858 id=858 data-nosnippet>858</a>        }
+<a href=#859 id=859 data-nosnippet>859</a>
+<a href=#860 id=860 data-nosnippet>860</a>        <span class="kw">fn </span>write(<span class="kw-2">&amp;</span><span class="self">self</span>, rel: <span class="kw-2">&amp;</span>str, content: <span class="kw-2">&amp;</span>str) {
+<a href=#861 id=861 data-nosnippet>861</a>            <span class="kw">let </span>p = <span class="self">self</span>.repo.path().join(rel);
+<a href=#862 id=862 data-nosnippet>862</a>            std::fs::create_dir_all(p.parent().unwrap()).unwrap();
+<a href=#863 id=863 data-nosnippet>863</a>            std::fs::write(p, content).unwrap();
+<a href=#864 id=864 data-nosnippet>864</a>        }
+<a href=#865 id=865 data-nosnippet>865</a>
+<a href=#866 id=866 data-nosnippet>866</a>        <span class="doccomment">/// The object and the provider files it renders, committed.
+<a href=#867 id=867 data-nosnippet>867</a>        </span><span class="kw">fn </span>object(<span class="kw-2">&amp;</span><span class="self">self</span>, inputs: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str], provider: bool) {
+<a href=#868 id=868 data-nosnippet>868</a>            <span class="kw">let </span>text = yaml(inputs, provider);
+<a href=#869 id=869 data-nosnippet>869</a>            <span class="self">self</span>.write(OBJECT, <span class="kw-2">&amp;</span>text);
+<a href=#870 id=870 data-nosnippet>870</a>            <span class="kw">let </span>map = <span class="kw">crate</span>::metadata::yaml::parse_mapping(<span class="kw-2">&amp;</span>text).unwrap();
+<a href=#871 id=871 data-nosnippet>871</a>            <span class="kw">let </span>d = Deployment::from_metadata(OBJECT, serde_json::Value::Object(map)).unwrap();
+<a href=#872 id=872 data-nosnippet>872</a>            <span class="kw">for </span>a <span class="kw">in </span>render::provider_artifacts(<span class="kw-2">&amp;</span>d, OBJECT) {
+<a href=#873 id=873 data-nosnippet>873</a>                <span class="self">self</span>.write(<span class="kw-2">&amp;</span>a.path, <span class="kw-2">&amp;</span>a.content);
+<a href=#874 id=874 data-nosnippet>874</a>            }
+<a href=#875 id=875 data-nosnippet>875</a>            <span class="self">self</span>.git(<span class="kw-2">&amp;</span>[<span class="string">"add"</span>, <span class="string">"-A"</span>]);
+<a href=#876 id=876 data-nosnippet>876</a>            <span class="self">self</span>.git(<span class="kw-2">&amp;</span>[<span class="string">"commit"</span>, <span class="string">"-qm"</span>, <span class="string">"the object"</span>]);
+<a href=#877 id=877 data-nosnippet>877</a>        }
+<a href=#878 id=878 data-nosnippet>878</a>
+<a href=#879 id=879 data-nosnippet>879</a>        <span class="kw">fn </span>new() -&gt; Fixture {
+<a href=#880 id=880 data-nosnippet>880</a>            <span class="kw">let </span>f = Fixture {
+<a href=#881 id=881 data-nosnippet>881</a>                repo: tempfile::tempdir().unwrap(),
+<a href=#882 id=882 data-nosnippet>882</a>                elsewhere: tempfile::tempdir().unwrap(),
+<a href=#883 id=883 data-nosnippet>883</a>            };
+<a href=#884 id=884 data-nosnippet>884</a>            f.git(<span class="kw-2">&amp;</span>[<span class="string">"init"</span>, <span class="string">"-q"</span>]);
+<a href=#885 id=885 data-nosnippet>885</a>            f.git(<span class="kw-2">&amp;</span>[<span class="string">"config"</span>, <span class="string">"user.email"</span>, <span class="string">"t@example.com"</span>]);
+<a href=#886 id=886 data-nosnippet>886</a>            f.git(<span class="kw-2">&amp;</span>[<span class="string">"config"</span>, <span class="string">"user.name"</span>, <span class="string">"t"</span>]);
+<a href=#887 id=887 data-nosnippet>887</a>            f.git(<span class="kw-2">&amp;</span>[<span class="string">"config"</span>, <span class="string">"commit.gpgsign"</span>, <span class="string">"false"</span>]);
+<a href=#888 id=888 data-nosnippet>888</a>            f.write(<span class="string">"share/a.txt"</span>, <span class="string">"share\n"</span>);
+<a href=#889 id=889 data-nosnippet>889</a>            f.write(<span class="string">".ai/repo/x.md"</span>, <span class="string">"layer\n"</span>);
+<a href=#890 id=890 data-nosnippet>890</a>            f.write(
+<a href=#891 id=891 data-nosnippet>891</a>                <span class="string">"apps/majordomus-cli/src/lib.rs"</span>,
+<a href=#892 id=892 data-nosnippet>892</a>                <span class="string">"// compiled, never shipped\n"</span>,
+<a href=#893 id=893 data-nosnippet>893</a>            );
+<a href=#894 id=894 data-nosnippet>894</a>            f.write(<span class="string">"README.md"</span>, <span class="string">"readme\n"</span>);
+<a href=#895 id=895 data-nosnippet>895</a>            f.write(<span class="string">"bin/tool"</span>, <span class="string">"#!/bin/sh\necho tool\n"</span>);
+<a href=#896 id=896 data-nosnippet>896</a>            <span class="attr">#[cfg(unix)]
+<a href=#897 id=897 data-nosnippet>897</a>            </span>{
+<a href=#898 id=898 data-nosnippet>898</a>                <span class="kw">use </span>std::os::unix::fs::PermissionsExt;
+<a href=#899 id=899 data-nosnippet>899</a>                <span class="kw">let </span>tool = f.repo.path().join(<span class="string">"bin/tool"</span>);
+<a href=#900 id=900 data-nosnippet>900</a>                std::fs::set_permissions(tool, std::fs::Permissions::from_mode(<span class="number">0o755</span>)).unwrap();
+<a href=#901 id=901 data-nosnippet>901</a>            }
+<a href=#902 id=902 data-nosnippet>902</a>            f.object(
+<a href=#903 id=903 data-nosnippet>903</a>                <span class="kw-2">&amp;</span>[<span class="string">"apps/majordomus-cli"</span>, <span class="string">"share"</span>, <span class="string">".ai"</span>, <span class="string">"README.md"</span>, <span class="string">"bin"</span>],
+<a href=#904 id=904 data-nosnippet>904</a>                <span class="bool-val">true</span>,
+<a href=#905 id=905 data-nosnippet>905</a>            );
+<a href=#906 id=906 data-nosnippet>906</a>            std::fs::write(f.elsewhere.path().join(<span class="string">"exe"</span>), <span class="string">b"\x7fELF fake"</span>).unwrap();
+<a href=#907 id=907 data-nosnippet>907</a>            f
+<a href=#908 id=908 data-nosnippet>908</a>        }
+<a href=#909 id=909 data-nosnippet>909</a>
+<a href=#910 id=910 data-nosnippet>910</a>        <span class="kw">fn </span>request&lt;<span class="lifetime">'a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>, out: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Path, exe: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Path) -&gt; Request&lt;<span class="lifetime">'a</span>&gt; {
+<a href=#911 id=911 data-nosnippet>911</a>            Request {
+<a href=#912 id=912 data-nosnippet>912</a>                root: <span class="self">self</span>.repo.path(),
+<a href=#913 id=913 data-nosnippet>913</a>                file: OBJECT,
+<a href=#914 id=914 data-nosnippet>914</a>                id: <span class="string">"hosted"</span>,
+<a href=#915 id=915 data-nosnippet>915</a>                commit: <span class="string">"HEAD"</span>,
+<a href=#916 id=916 data-nosnippet>916</a>                executable: exe,
+<a href=#917 id=917 data-nosnippet>917</a>                out,
+<a href=#918 id=918 data-nosnippet>918</a>            }
+<a href=#919 id=919 data-nosnippet>919</a>        }
+<a href=#920 id=920 data-nosnippet>920</a>    }
+<a href=#921 id=921 data-nosnippet>921</a>
+<a href=#922 id=922 data-nosnippet>922</a>    <span class="attr">#[cfg(unix)]
+<a href=#923 id=923 data-nosnippet>923</a>    </span><span class="kw">fn </span>mode_of(p: <span class="kw-2">&amp;</span>Path) -&gt; u32 {
+<a href=#924 id=924 data-nosnippet>924</a>        <span class="kw">use </span>std::os::unix::fs::PermissionsExt;
+<a href=#925 id=925 data-nosnippet>925</a>        std::fs::metadata(p).unwrap().permissions().mode() &amp; <span class="number">0o777
+<a href=#926 id=926 data-nosnippet>926</a>    </span>}
+<a href=#927 id=927 data-nosnippet>927</a>
+<a href=#928 id=928 data-nosnippet>928</a>    <span class="doccomment">/// The slug is the object's runtime inputs, the provider files at the root, the buildpack
+<a href=#929 id=929 data-nosnippet>929</a>    /// line, the executable and the record — and nothing else: not the package directory the
+<a href=#930 id=930 data-nosnippet>930</a>    /// executable was compiled from, not the object's own directory beyond what `.ai` holds.
+<a href=#931 id=931 data-nosnippet>931</a>    </span><span class="attr">#[test]
+<a href=#932 id=932 data-nosnippet>932</a>    </span><span class="kw">fn </span>a_slug_holds_the_inputs_the_provider_files_the_executable_and_nothing_else() {
+<a href=#933 id=933 data-nosnippet>933</a>        <span class="kw">let </span>f = Fixture::new();
+<a href=#934 id=934 data-nosnippet>934</a>        <span class="kw">let </span>out = f.elsewhere.path().join(<span class="string">"slug"</span>);
+<a href=#935 id=935 data-nosnippet>935</a>        <span class="kw">let </span>exe = f.elsewhere.path().join(<span class="string">"exe"</span>);
+<a href=#936 id=936 data-nosnippet>936</a>        <span class="kw">let </span>slug = assemble(<span class="kw-2">&amp;</span>f.request(<span class="kw-2">&amp;</span>out, <span class="kw-2">&amp;</span>exe)).unwrap();
+<a href=#937 id=937 data-nosnippet>937</a>        <span class="macro">assert_eq!</span>(
+<a href=#938 id=938 data-nosnippet>938</a>            slug.entries,
+<a href=#939 id=939 data-nosnippet>939</a>            [
+<a href=#940 id=940 data-nosnippet>940</a>                <span class="string">".ai"</span>,
+<a href=#941 id=941 data-nosnippet>941</a>                <span class="string">".buildpacks"</span>,
+<a href=#942 id=942 data-nosnippet>942</a>                <span class="string">".majordomus"</span>,
+<a href=#943 id=943 data-nosnippet>943</a>                <span class="string">"Procfile"</span>,
+<a href=#944 id=944 data-nosnippet>944</a>                <span class="string">"README.md"</span>,
+<a href=#945 id=945 data-nosnippet>945</a>                <span class="string">"bin"</span>,
+<a href=#946 id=946 data-nosnippet>946</a>                <span class="string">"share"
+<a href=#947 id=947 data-nosnippet>947</a>            </span>]
+<a href=#948 id=948 data-nosnippet>948</a>        );
+<a href=#949 id=949 data-nosnippet>949</a>        <span class="macro">assert!</span>(
+<a href=#950 id=950 data-nosnippet>950</a>            !out.join(<span class="string">"apps"</span>).exists(),
+<a href=#951 id=951 data-nosnippet>951</a>            <span class="string">"the package directory is not shipped"
+<a href=#952 id=952 data-nosnippet>952</a>        </span>);
+<a href=#953 id=953 data-nosnippet>953</a>        <span class="macro">assert!</span>(
+<a href=#954 id=954 data-nosnippet>954</a>            !out.join(<span class="string">"deploy"</span>).exists(),
+<a href=#955 id=955 data-nosnippet>955</a>            <span class="string">"provider files sit at the root"
+<a href=#956 id=956 data-nosnippet>956</a>        </span>);
+<a href=#957 id=957 data-nosnippet>957</a>        <span class="macro">assert_eq!</span>(
+<a href=#958 id=958 data-nosnippet>958</a>            std::fs::read_to_string(out.join(BUILDPACKS_FILE)).unwrap(),
+<a href=#959 id=959 data-nosnippet>959</a>            <span class="macro">format!</span>(<span class="string">"{}\n"</span>, render::INLINE_BUILDPACK)
+<a href=#960 id=960 data-nosnippet>960</a>        );
+<a href=#961 id=961 data-nosnippet>961</a>        <span class="macro">assert_eq!</span>(
+<a href=#962 id=962 data-nosnippet>962</a>            std::fs::read(out.join(<span class="string">".majordomus/bin/majordomus"</span>)).unwrap(),
+<a href=#963 id=963 data-nosnippet>963</a>            <span class="string">b"\x7fELF fake"
+<a href=#964 id=964 data-nosnippet>964</a>        </span>);
+<a href=#965 id=965 data-nosnippet>965</a>        <span class="kw">let </span>source: Source =
+<a href=#966 id=966 data-nosnippet>966</a>            serde_json::from_slice(<span class="kw-2">&amp;</span>std::fs::read(out.join(SOURCE_FILE)).unwrap()).unwrap();
+<a href=#967 id=967 data-nosnippet>967</a>        <span class="macro">assert_eq!</span>(source.commit.len(), <span class="number">40</span>);
+<a href=#968 id=968 data-nosnippet>968</a>        <span class="macro">assert_eq!</span>(source.commit, slug.commit);
+<a href=#969 id=969 data-nosnippet>969</a>        <span class="macro">assert_eq!</span>(source.provider, ProviderName::Gigalixir);
+<a href=#970 id=970 data-nosnippet>970</a>        <span class="macro">assert_eq!</span>(
+<a href=#971 id=971 data-nosnippet>971</a>            source.executable_sha256,
+<a href=#972 id=972 data-nosnippet>972</a>            <span class="kw">crate</span>::policy::sha256_bytes_hex(<span class="string">b"\x7fELF fake"</span>)
+<a href=#973 id=973 data-nosnippet>973</a>        );
+<a href=#974 id=974 data-nosnippet>974</a>        <span class="macro">assert_eq!</span>(slug.provider.app, <span class="string">"hosted-app"</span>);
+<a href=#975 id=975 data-nosnippet>975</a>        <span class="macro">assert_eq!</span>(slug.liveness, <span class="string">"/api/v1/live"</span>);
+<a href=#976 id=976 data-nosnippet>976</a>        <span class="macro">assert_eq!</span>(slug.files, <span class="number">12</span>);
+<a href=#977 id=977 data-nosnippet>977</a>        <span class="attr">#[cfg(unix)]
+<a href=#978 id=978 data-nosnippet>978</a>        </span>{
+<a href=#979 id=979 data-nosnippet>979</a>            <span class="kw">for </span>hook <span class="kw">in </span>[<span class="string">"bin/detect"</span>, <span class="string">"bin/compile"</span>, <span class="string">"bin/release"</span>] {
+<a href=#980 id=980 data-nosnippet>980</a>                <span class="macro">assert_eq!</span>(mode_of(<span class="kw-2">&amp;</span>out.join(hook)), <span class="number">0o755</span>, <span class="string">"{hook}"</span>);
+<a href=#981 id=981 data-nosnippet>981</a>            }
+<a href=#982 id=982 data-nosnippet>982</a>            <span class="macro">assert_eq!</span>(mode_of(<span class="kw-2">&amp;</span>out.join(<span class="string">".majordomus/bin/majordomus"</span>)), <span class="number">0o755</span>);
+<a href=#983 id=983 data-nosnippet>983</a>            <span class="macro">assert_eq!</span>(
+<a href=#984 id=984 data-nosnippet>984</a>                mode_of(<span class="kw-2">&amp;</span>out.join(<span class="string">"bin/tool"</span>)),
+<a href=#985 id=985 data-nosnippet>985</a>                <span class="number">0o755</span>,
+<a href=#986 id=986 data-nosnippet>986</a>                <span class="string">"a tracked mode is kept"
+<a href=#987 id=987 data-nosnippet>987</a>            </span>);
+<a href=#988 id=988 data-nosnippet>988</a>            <span class="macro">assert_eq!</span>(mode_of(<span class="kw-2">&amp;</span>out.join(<span class="string">"Procfile"</span>)), <span class="number">0o644</span>);
+<a href=#989 id=989 data-nosnippet>989</a>            <span class="macro">assert_eq!</span>(mode_of(<span class="kw-2">&amp;</span>out.join(<span class="string">"share/a.txt"</span>)), <span class="number">0o644</span>);
+<a href=#990 id=990 data-nosnippet>990</a>        }
+<a href=#991 id=991 data-nosnippet>991</a>    }
+<a href=#992 id=992 data-nosnippet>992</a>
+<a href=#993 id=993 data-nosnippet>993</a>    <span class="doccomment">/// Every file is read at the commit: an uncommitted edit never reaches the slug, and an
+<a href=#994 id=994 data-nosnippet>994</a>    /// older commit gives that commit's tree.
+<a href=#995 id=995 data-nosnippet>995</a>    </span><span class="attr">#[test]
+<a href=#996 id=996 data-nosnippet>996</a>    </span><span class="kw">fn </span>a_slug_is_read_at_its_commit_not_from_the_working_tree() {
+<a href=#997 id=997 data-nosnippet>997</a>        <span class="kw">let </span>f = Fixture::new();
+<a href=#998 id=998 data-nosnippet>998</a>        f.write(<span class="string">"share/a.txt"</span>, <span class="string">"edited, not committed\n"</span>);
+<a href=#999 id=999 data-nosnippet>999</a>        <span class="kw">let </span>exe = f.elsewhere.path().join(<span class="string">"exe"</span>);
+<a href=#1000 id=1000 data-nosnippet>1000</a>        <span class="kw">let </span>out = f.elsewhere.path().join(<span class="string">"one"</span>);
+<a href=#1001 id=1001 data-nosnippet>1001</a>        assemble(<span class="kw-2">&amp;</span>f.request(<span class="kw-2">&amp;</span>out, <span class="kw-2">&amp;</span>exe)).unwrap();
+<a href=#1002 id=1002 data-nosnippet>1002</a>        <span class="macro">assert_eq!</span>(
+<a href=#1003 id=1003 data-nosnippet>1003</a>            std::fs::read_to_string(out.join(<span class="string">"share/a.txt"</span>)).unwrap(),
+<a href=#1004 id=1004 data-nosnippet>1004</a>            <span class="string">"share\n"
+<a href=#1005 id=1005 data-nosnippet>1005</a>        </span>);
+<a href=#1006 id=1006 data-nosnippet>1006</a>
+<a href=#1007 id=1007 data-nosnippet>1007</a>        f.git(<span class="kw-2">&amp;</span>[<span class="string">"add"</span>, <span class="string">"-A"</span>]);
+<a href=#1008 id=1008 data-nosnippet>1008</a>        f.git(<span class="kw-2">&amp;</span>[<span class="string">"commit"</span>, <span class="string">"-qm"</span>, <span class="string">"two"</span>]);
+<a href=#1009 id=1009 data-nosnippet>1009</a>        <span class="kw">let </span>out = f.elsewhere.path().join(<span class="string">"two"</span>);
+<a href=#1010 id=1010 data-nosnippet>1010</a>        <span class="kw">let </span>req = Request {
+<a href=#1011 id=1011 data-nosnippet>1011</a>            commit: <span class="string">"HEAD~1"</span>,
+<a href=#1012 id=1012 data-nosnippet>1012</a>            ..f.request(<span class="kw-2">&amp;</span>out, <span class="kw-2">&amp;</span>exe)
+<a href=#1013 id=1013 data-nosnippet>1013</a>        };
+<a href=#1014 id=1014 data-nosnippet>1014</a>        <span class="kw">let </span>slug = assemble(<span class="kw-2">&amp;</span>req).unwrap();
+<a href=#1015 id=1015 data-nosnippet>1015</a>        <span class="macro">assert_eq!</span>(
+<a href=#1016 id=1016 data-nosnippet>1016</a>            std::fs::read_to_string(out.join(<span class="string">"share/a.txt"</span>)).unwrap(),
+<a href=#1017 id=1017 data-nosnippet>1017</a>            <span class="string">"share\n"
+<a href=#1018 id=1018 data-nosnippet>1018</a>        </span>);
+<a href=#1019 id=1019 data-nosnippet>1019</a>        <span class="macro">assert_ne!</span>(slug.commit, resolve(f.repo.path(), <span class="string">"HEAD"</span>).unwrap());
+<a href=#1020 id=1020 data-nosnippet>1020</a>    }
+<a href=#1021 id=1021 data-nosnippet>1021</a>
+<a href=#1022 id=1022 data-nosnippet>1022</a>    <span class="doccomment">/// The out directory is outside the checkout and empty, or nothing is written.
+<a href=#1023 id=1023 data-nosnippet>1023</a>    </span><span class="attr">#[test]
+<a href=#1024 id=1024 data-nosnippet>1024</a>    </span><span class="kw">fn </span>an_out_directory_inside_the_checkout_or_not_empty_is_refused() {
+<a href=#1025 id=1025 data-nosnippet>1025</a>        <span class="kw">let </span>f = Fixture::new();
+<a href=#1026 id=1026 data-nosnippet>1026</a>        <span class="kw">let </span>exe = f.elsewhere.path().join(<span class="string">"exe"</span>);
+<a href=#1027 id=1027 data-nosnippet>1027</a>        <span class="kw">for </span>inside <span class="kw">in </span>[f.repo.path().join(<span class="string">"slug"</span>), f.repo.path().to_path_buf()] {
+<a href=#1028 id=1028 data-nosnippet>1028</a>            <span class="kw">let </span>e = assemble(<span class="kw-2">&amp;</span>f.request(<span class="kw-2">&amp;</span>inside, <span class="kw-2">&amp;</span>exe)).unwrap_err();
+<a href=#1029 id=1029 data-nosnippet>1029</a>            <span class="macro">assert!</span>(
+<a href=#1030 id=1030 data-nosnippet>1030</a>                <span class="macro">matches!</span>(<span class="kw-2">&amp;</span>e, SlugError::Refused(m) <span class="kw">if </span>m.contains(<span class="string">"inside the checkout"</span>)),
+<a href=#1031 id=1031 data-nosnippet>1031</a>                <span class="string">"{e}"
+<a href=#1032 id=1032 data-nosnippet>1032</a>            </span>);
+<a href=#1033 id=1033 data-nosnippet>1033</a>        }
+<a href=#1034 id=1034 data-nosnippet>1034</a>        <span class="macro">assert!</span>(!f.repo.path().join(<span class="string">"slug"</span>).exists());
+<a href=#1035 id=1035 data-nosnippet>1035</a>
+<a href=#1036 id=1036 data-nosnippet>1036</a>        <span class="kw">let </span>full = f.elsewhere.path().join(<span class="string">"full"</span>);
+<a href=#1037 id=1037 data-nosnippet>1037</a>        std::fs::create_dir_all(<span class="kw-2">&amp;</span>full).unwrap();
+<a href=#1038 id=1038 data-nosnippet>1038</a>        std::fs::write(full.join(<span class="string">"x"</span>), <span class="string">"x"</span>).unwrap();
+<a href=#1039 id=1039 data-nosnippet>1039</a>        <span class="kw">let </span>e = assemble(<span class="kw-2">&amp;</span>f.request(<span class="kw-2">&amp;</span>full, <span class="kw-2">&amp;</span>exe)).unwrap_err();
+<a href=#1040 id=1040 data-nosnippet>1040</a>        <span class="macro">assert!</span>(
+<a href=#1041 id=1041 data-nosnippet>1041</a>            <span class="macro">matches!</span>(<span class="kw-2">&amp;</span>e, SlugError::Refused(m) <span class="kw">if </span>m.contains(<span class="string">"not empty"</span>)),
+<a href=#1042 id=1042 data-nosnippet>1042</a>            <span class="string">"{e}"
+<a href=#1043 id=1043 data-nosnippet>1043</a>        </span>);
+<a href=#1044 id=1044 data-nosnippet>1044</a>
+<a href=#1045 id=1045 data-nosnippet>1045</a>        <span class="kw">let </span>climbing = f.elsewhere.path().join(<span class="string">"a/../b"</span>);
+<a href=#1046 id=1046 data-nosnippet>1046</a>        <span class="kw">let </span>e = assemble(<span class="kw-2">&amp;</span>f.request(<span class="kw-2">&amp;</span>climbing, <span class="kw-2">&amp;</span>exe)).unwrap_err();
+<a href=#1047 id=1047 data-nosnippet>1047</a>        <span class="macro">assert!</span>(
+<a href=#1048 id=1048 data-nosnippet>1048</a>            <span class="macro">matches!</span>(<span class="kw-2">&amp;</span>e, SlugError::Refused(m) <span class="kw">if </span>m.contains(<span class="string">".."</span>)),
+<a href=#1049 id=1049 data-nosnippet>1049</a>            <span class="string">"{e}"
+<a href=#1050 id=1050 data-nosnippet>1050</a>        </span>);
+<a href=#1051 id=1051 data-nosnippet>1051</a>    }
+<a href=#1052 id=1052 data-nosnippet>1052</a>
+<a href=#1053 id=1053 data-nosnippet>1053</a>    <span class="doccomment">/// A deployment that names no provider has no slug.
+<a href=#1054 id=1054 data-nosnippet>1054</a>    </span><span class="attr">#[test]
+<a href=#1055 id=1055 data-nosnippet>1055</a>    </span><span class="kw">fn </span>a_deployment_without_a_provider_is_refused() {
+<a href=#1056 id=1056 data-nosnippet>1056</a>        <span class="kw">let </span>f = Fixture::new();
+<a href=#1057 id=1057 data-nosnippet>1057</a>        f.git(<span class="kw-2">&amp;</span>[<span class="string">"rm"</span>, <span class="string">"-rq"</span>, <span class="string">"deploy"</span>]);
+<a href=#1058 id=1058 data-nosnippet>1058</a>        f.object(<span class="kw-2">&amp;</span>[<span class="string">"share"</span>], <span class="bool-val">false</span>);
+<a href=#1059 id=1059 data-nosnippet>1059</a>        <span class="kw">let </span>exe = f.elsewhere.path().join(<span class="string">"exe"</span>);
+<a href=#1060 id=1060 data-nosnippet>1060</a>        <span class="kw">let </span>out = f.elsewhere.path().join(<span class="string">"slug"</span>);
+<a href=#1061 id=1061 data-nosnippet>1061</a>        <span class="kw">let </span>e = assemble(<span class="kw-2">&amp;</span>f.request(<span class="kw-2">&amp;</span>out, <span class="kw-2">&amp;</span>exe)).unwrap_err();
+<a href=#1062 id=1062 data-nosnippet>1062</a>        <span class="macro">assert!</span>(
+<a href=#1063 id=1063 data-nosnippet>1063</a>            <span class="macro">matches!</span>(<span class="kw-2">&amp;</span>e, SlugError::Refused(m) <span class="kw">if </span>m.contains(<span class="string">"names no provider"</span>)),
+<a href=#1064 id=1064 data-nosnippet>1064</a>            <span class="string">"{e}"
+<a href=#1065 id=1065 data-nosnippet>1065</a>        </span>);
+<a href=#1066 id=1066 data-nosnippet>1066</a>        <span class="macro">assert!</span>(!out.exists());
+<a href=#1067 id=1067 data-nosnippet>1067</a>    }
+<a href=#1068 id=1068 data-nosnippet>1068</a>
+<a href=#1069 id=1069 data-nosnippet>1069</a>    <span class="doccomment">/// A provider file the commit holds must be the one the object renders: a hand edit, or
+<a href=#1070 id=1070 data-nosnippet>1070</a>    /// an object changed without regenerating, is refused rather than shipped.
+<a href=#1071 id=1071 data-nosnippet>1071</a>    </span><span class="attr">#[test]
+<a href=#1072 id=1072 data-nosnippet>1072</a>    </span><span class="kw">fn </span>a_provider_file_the_object_does_not_render_is_refused() {
+<a href=#1073 id=1073 data-nosnippet>1073</a>        <span class="kw">let </span>f = Fixture::new();
+<a href=#1074 id=1074 data-nosnippet>1074</a>        f.write(<span class="string">"deploy/gigalixir/Procfile"</span>, <span class="string">"web: ./elsewhere\n"</span>);
+<a href=#1075 id=1075 data-nosnippet>1075</a>        f.git(<span class="kw-2">&amp;</span>[<span class="string">"commit"</span>, <span class="string">"-qam"</span>, <span class="string">"a hand edit"</span>]);
+<a href=#1076 id=1076 data-nosnippet>1076</a>        <span class="kw">let </span>exe = f.elsewhere.path().join(<span class="string">"exe"</span>);
+<a href=#1077 id=1077 data-nosnippet>1077</a>        <span class="kw">let </span>out = f.elsewhere.path().join(<span class="string">"slug"</span>);
+<a href=#1078 id=1078 data-nosnippet>1078</a>        <span class="kw">let </span>e = assemble(<span class="kw-2">&amp;</span>f.request(<span class="kw-2">&amp;</span>out, <span class="kw-2">&amp;</span>exe)).unwrap_err();
+<a href=#1079 id=1079 data-nosnippet>1079</a>        <span class="macro">assert!</span>(
+<a href=#1080 id=1080 data-nosnippet>1080</a>            <span class="macro">matches!</span>(<span class="kw-2">&amp;</span>e, SlugError::Refused(m) <span class="kw">if </span>m.contains(<span class="string">"is not what"</span>)),
+<a href=#1081 id=1081 data-nosnippet>1081</a>            <span class="string">"{e}"
+<a href=#1082 id=1082 data-nosnippet>1082</a>        </span>);
+<a href=#1083 id=1083 data-nosnippet>1083</a>    }
+<a href=#1084 id=1084 data-nosnippet>1084</a>
+<a href=#1085 id=1085 data-nosnippet>1085</a>    <span class="doccomment">/// A build input that would land where a provider file goes is a collision, refused.
+<a href=#1086 id=1086 data-nosnippet>1086</a>    </span><span class="attr">#[test]
+<a href=#1087 id=1087 data-nosnippet>1087</a>    </span><span class="kw">fn </span>a_provider_file_never_shadows_a_build_input() {
+<a href=#1088 id=1088 data-nosnippet>1088</a>        <span class="kw">let </span>f = Fixture::new();
+<a href=#1089 id=1089 data-nosnippet>1089</a>        f.write(<span class="string">"Procfile"</span>, <span class="string">"web: ./mine\n"</span>);
+<a href=#1090 id=1090 data-nosnippet>1090</a>        f.object(<span class="kw-2">&amp;</span>[<span class="string">"share"</span>, <span class="string">"Procfile"</span>], <span class="bool-val">true</span>);
+<a href=#1091 id=1091 data-nosnippet>1091</a>        <span class="kw">let </span>exe = f.elsewhere.path().join(<span class="string">"exe"</span>);
+<a href=#1092 id=1092 data-nosnippet>1092</a>        <span class="kw">let </span>out = f.elsewhere.path().join(<span class="string">"slug"</span>);
+<a href=#1093 id=1093 data-nosnippet>1093</a>        <span class="kw">let </span>e = assemble(<span class="kw-2">&amp;</span>f.request(<span class="kw-2">&amp;</span>out, <span class="kw-2">&amp;</span>exe)).unwrap_err();
+<a href=#1094 id=1094 data-nosnippet>1094</a>        <span class="macro">assert!</span>(
+<a href=#1095 id=1095 data-nosnippet>1095</a>            <span class="macro">matches!</span>(<span class="kw-2">&amp;</span>e, SlugError::Refused(m) <span class="kw">if </span>m.contains(<span class="string">"would both write `Procfile`"</span>)),
+<a href=#1096 id=1096 data-nosnippet>1096</a>            <span class="string">"{e}"
+<a href=#1097 id=1097 data-nosnippet>1097</a>        </span>);
+<a href=#1098 id=1098 data-nosnippet>1098</a>    }
+<a href=#1099 id=1099 data-nosnippet>1099</a>
+<a href=#1100 id=1100 data-nosnippet>1100</a>    <span class="doccomment">/// An input the commit does not track, a commit the clone does not have, and an
+<a href=#1101 id=1101 data-nosnippet>1101</a>    /// executable that is not there are each said, by name.
+<a href=#1102 id=1102 data-nosnippet>1102</a>    </span><span class="attr">#[test]
+<a href=#1103 id=1103 data-nosnippet>1103</a>    </span><span class="kw">fn </span>what_is_absent_is_named() {
+<a href=#1104 id=1104 data-nosnippet>1104</a>        <span class="kw">let </span>f = Fixture::new();
+<a href=#1105 id=1105 data-nosnippet>1105</a>        <span class="kw">let </span>exe = f.elsewhere.path().join(<span class="string">"exe"</span>);
+<a href=#1106 id=1106 data-nosnippet>1106</a>        <span class="kw">let </span>out = f.elsewhere.path().join(<span class="string">"slug"</span>);
+<a href=#1107 id=1107 data-nosnippet>1107</a>        <span class="kw">let </span>req = Request {
+<a href=#1108 id=1108 data-nosnippet>1108</a>            commit: <span class="kw-2">&amp;</span><span class="string">"0"</span>.repeat(<span class="number">40</span>),
+<a href=#1109 id=1109 data-nosnippet>1109</a>            ..f.request(<span class="kw-2">&amp;</span>out, <span class="kw-2">&amp;</span>exe)
+<a href=#1110 id=1110 data-nosnippet>1110</a>        };
+<a href=#1111 id=1111 data-nosnippet>1111</a>        <span class="macro">assert!</span>(<span class="macro">matches!</span>(assemble(<span class="kw-2">&amp;</span>req), <span class="prelude-val">Err</span>(SlugError::Missing(<span class="kw">_</span>))));
+<a href=#1112 id=1112 data-nosnippet>1112</a>        <span class="kw">let </span>missing = f.elsewhere.path().join(<span class="string">"absent"</span>);
+<a href=#1113 id=1113 data-nosnippet>1113</a>        <span class="macro">assert!</span>(<span class="macro">matches!</span>(
+<a href=#1114 id=1114 data-nosnippet>1114</a>            assemble(<span class="kw-2">&amp;</span>f.request(<span class="kw-2">&amp;</span>out, <span class="kw-2">&amp;</span>missing)),
+<a href=#1115 id=1115 data-nosnippet>1115</a>            <span class="prelude-val">Err</span>(SlugError::Missing(m)) <span class="kw">if </span>m.contains(<span class="string">"absent"</span>)
+<a href=#1116 id=1116 data-nosnippet>1116</a>        ));
+<a href=#1117 id=1117 data-nosnippet>1117</a>        f.object(<span class="kw-2">&amp;</span>[<span class="string">"share"</span>, <span class="string">"nowhere"</span>], <span class="bool-val">true</span>);
+<a href=#1118 id=1118 data-nosnippet>1118</a>        <span class="kw">let </span>e = assemble(<span class="kw-2">&amp;</span>f.request(<span class="kw-2">&amp;</span>out, <span class="kw-2">&amp;</span>exe)).unwrap_err();
+<a href=#1119 id=1119 data-nosnippet>1119</a>        <span class="macro">assert!</span>(
+<a href=#1120 id=1120 data-nosnippet>1120</a>            <span class="macro">matches!</span>(<span class="kw-2">&amp;</span>e, SlugError::Refused(m) <span class="kw">if </span>m.contains(<span class="string">"`nowhere`"</span>)),
+<a href=#1121 id=1121 data-nosnippet>1121</a>            <span class="string">"{e}"
+<a href=#1122 id=1122 data-nosnippet>1122</a>        </span>);
+<a href=#1123 id=1123 data-nosnippet>1123</a>    }
+<a href=#1124 id=1124 data-nosnippet>1124</a>
+<a href=#1125 id=1125 data-nosnippet>1125</a>    <span class="doccomment">/// An error reads as its message, whatever its class.
+<a href=#1126 id=1126 data-nosnippet>1126</a>    </span><span class="attr">#[test]
+<a href=#1127 id=1127 data-nosnippet>1127</a>    </span><span class="kw">fn </span>a_slug_error_reads_as_its_message() {
+<a href=#1128 id=1128 data-nosnippet>1128</a>        <span class="kw">for </span>e <span class="kw">in </span>[
+<a href=#1129 id=1129 data-nosnippet>1129</a>            SlugError::Refused(<span class="string">"r"</span>.into()),
+<a href=#1130 id=1130 data-nosnippet>1130</a>            SlugError::Missing(<span class="string">"m"</span>.into()),
+<a href=#1131 id=1131 data-nosnippet>1131</a>            SlugError::Failed(<span class="string">"f"</span>.into()),
+<a href=#1132 id=1132 data-nosnippet>1132</a>        ] {
+<a href=#1133 id=1133 data-nosnippet>1133</a>            <span class="kw">let </span>(SlugError::Refused(m) | SlugError::Missing(m) | SlugError::Failed(m)) = <span class="kw-2">&amp;</span>e;
+<a href=#1134 id=1134 data-nosnippet>1134</a>            <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>e.to_string(), m);
+<a href=#1135 id=1135 data-nosnippet>1135</a>        }
+<a href=#1136 id=1136 data-nosnippet>1136</a>    }
+<a href=#1137 id=1137 data-nosnippet>1137</a>
+<a href=#1138 id=1138 data-nosnippet>1138</a>    <span class="kw">fn </span>bytes(b: <span class="kw-2">&amp;</span>[u8]) -&gt; Content {
+<a href=#1139 id=1139 data-nosnippet>1139</a>        Content::Bytes(b.to_vec())
+<a href=#1140 id=1140 data-nosnippet>1140</a>    }
+<a href=#1141 id=1141 data-nosnippet>1141</a>
+<a href=#1142 id=1142 data-nosnippet>1142</a>    <span class="doccomment">/// A planned path is relative and stays inside the slug: an empty one, an absolute one
+<a href=#1143 id=1143 data-nosnippet>1143</a>    /// and one that climbs are failures of the assembler, never written.
+<a href=#1144 id=1144 data-nosnippet>1144</a>    </span><span class="attr">#[test]
+<a href=#1145 id=1145 data-nosnippet>1145</a>    </span><span class="kw">fn </span>a_deploy_plan_path_outside_the_slug_is_a_failure() {
+<a href=#1146 id=1146 data-nosnippet>1146</a>        <span class="kw">let </span><span class="kw-2">mut </span>plan = Plan::default();
+<a href=#1147 id=1147 data-nosnippet>1147</a>        <span class="kw">for </span>path <span class="kw">in </span>[<span class="string">""</span>, <span class="string">"/etc/passwd"</span>, <span class="string">"../x"</span>, <span class="string">"a/../../x"</span>] {
+<a href=#1148 id=1148 data-nosnippet>1148</a>            <span class="kw">let </span>e = plan.add(path, bytes(<span class="string">b"x"</span>), Mode::File, <span class="string">"t"</span>).unwrap_err();
+<a href=#1149 id=1149 data-nosnippet>1149</a>            <span class="macro">assert!</span>(
+<a href=#1150 id=1150 data-nosnippet>1150</a>                <span class="macro">matches!</span>(<span class="kw-2">&amp;</span>e, SlugError::Failed(m) <span class="kw">if </span>m.contains(<span class="string">"not a relative path"</span>)),
+<a href=#1151 id=1151 data-nosnippet>1151</a>                <span class="string">"{path}: {e}"
+<a href=#1152 id=1152 data-nosnippet>1152</a>            </span>);
+<a href=#1153 id=1153 data-nosnippet>1153</a>        }
+<a href=#1154 id=1154 data-nosnippet>1154</a>        <span class="macro">assert!</span>(plan.<span class="number">0</span>.is_empty());
+<a href=#1155 id=1155 data-nosnippet>1155</a>    }
+<a href=#1156 id=1156 data-nosnippet>1156</a>
+<a href=#1157 id=1157 data-nosnippet>1157</a>    <span class="doccomment">/// A file where another path needs a directory is refused before anything is written.
+<a href=#1158 id=1158 data-nosnippet>1158</a>    </span><span class="attr">#[test]
+<a href=#1159 id=1159 data-nosnippet>1159</a>    </span><span class="kw">fn </span>a_deploy_plan_with_a_file_where_a_directory_is_needed_is_refused() {
+<a href=#1160 id=1160 data-nosnippet>1160</a>        <span class="kw">let </span><span class="kw-2">mut </span>plan = Plan::default();
+<a href=#1161 id=1161 data-nosnippet>1161</a>        plan.add(<span class="string">"a"</span>, bytes(<span class="string">b"x"</span>), Mode::File, <span class="string">"the first"</span>).unwrap();
+<a href=#1162 id=1162 data-nosnippet>1162</a>        plan.add(<span class="string">"a/b/c"</span>, bytes(<span class="string">b"y"</span>), Mode::File, <span class="string">"the second"</span>)
+<a href=#1163 id=1163 data-nosnippet>1163</a>            .unwrap();
+<a href=#1164 id=1164 data-nosnippet>1164</a>        <span class="kw">let </span>e = plan.check_prefixes().unwrap_err();
+<a href=#1165 id=1165 data-nosnippet>1165</a>        <span class="macro">assert!</span>(
+<a href=#1166 id=1166 data-nosnippet>1166</a>            <span class="macro">matches!</span>(<span class="kw-2">&amp;</span>e, SlugError::Refused(m) <span class="kw">if </span>m.contains(<span class="string">"the first writes the file `a`"</span>)),
+<a href=#1167 id=1167 data-nosnippet>1167</a>            <span class="string">"{e}"
+<a href=#1168 id=1168 data-nosnippet>1168</a>        </span>);
+<a href=#1169 id=1169 data-nosnippet>1169</a>    }
+<a href=#1170 id=1170 data-nosnippet>1170</a>
+<a href=#1171 id=1171 data-nosnippet>1171</a>    <span class="doccomment">/// A build input that is a file where the slug keeps its own directory is refused.
+<a href=#1172 id=1172 data-nosnippet>1172</a>    </span><span class="attr">#[test]
+<a href=#1173 id=1173 data-nosnippet>1173</a>    </span><span class="kw">fn </span>a_build_input_where_the_slug_needs_a_directory_is_refused() {
+<a href=#1174 id=1174 data-nosnippet>1174</a>        <span class="kw">let </span>f = Fixture::new();
+<a href=#1175 id=1175 data-nosnippet>1175</a>        f.write(<span class="string">".majordomus"</span>, <span class="string">"a file\n"</span>);
+<a href=#1176 id=1176 data-nosnippet>1176</a>        f.object(<span class="kw-2">&amp;</span>[<span class="string">"share"</span>, <span class="string">".majordomus"</span>], <span class="bool-val">true</span>);
+<a href=#1177 id=1177 data-nosnippet>1177</a>        <span class="kw">let </span>exe = f.elsewhere.path().join(<span class="string">"exe"</span>);
+<a href=#1178 id=1178 data-nosnippet>1178</a>        <span class="kw">let </span>out = f.elsewhere.path().join(<span class="string">"slug"</span>);
+<a href=#1179 id=1179 data-nosnippet>1179</a>        <span class="kw">let </span>e = assemble(<span class="kw-2">&amp;</span>f.request(<span class="kw-2">&amp;</span>out, <span class="kw-2">&amp;</span>exe)).unwrap_err();
+<a href=#1180 id=1180 data-nosnippet>1180</a>        <span class="macro">assert!</span>(
+<a href=#1181 id=1181 data-nosnippet>1181</a>            <span class="macro">matches!</span>(<span class="kw-2">&amp;</span>e, SlugError::Refused(m) <span class="kw">if </span>m.contains(<span class="string">"needs a directory"</span>)),
+<a href=#1182 id=1182 data-nosnippet>1182</a>            <span class="string">"{e}"
+<a href=#1183 id=1183 data-nosnippet>1183</a>        </span>);
+<a href=#1184 id=1184 data-nosnippet>1184</a>        <span class="macro">assert!</span>(!out.exists());
+<a href=#1185 id=1185 data-nosnippet>1185</a>    }
+<a href=#1186 id=1186 data-nosnippet>1186</a>
+<a href=#1187 id=1187 data-nosnippet>1187</a>    <span class="doccomment">/// The buildpack line, the executable and the record are the slug's own: a build input
+<a href=#1188 id=1188 data-nosnippet>1188</a>    /// that would land on any of them is a collision, refused.
+<a href=#1189 id=1189 data-nosnippet>1189</a>    </span><span class="attr">#[test]
+<a href=#1190 id=1190 data-nosnippet>1190</a>    </span><span class="kw">fn </span>a_build_input_never_takes_the_place_of_the_slugs_own_files() {
+<a href=#1191 id=1191 data-nosnippet>1191</a>        <span class="kw">let </span>f = Fixture::new();
+<a href=#1192 id=1192 data-nosnippet>1192</a>        <span class="kw">let </span>exe = f.elsewhere.path().join(<span class="string">"exe"</span>);
+<a href=#1193 id=1193 data-nosnippet>1193</a>        <span class="kw">let </span>out = f.elsewhere.path().join(<span class="string">"slug"</span>);
+<a href=#1194 id=1194 data-nosnippet>1194</a>        <span class="kw">for </span>own <span class="kw">in </span>[BUILDPACKS_FILE, <span class="string">".majordomus/bin/majordomus"</span>, SOURCE_FILE] {
+<a href=#1195 id=1195 data-nosnippet>1195</a>            f.write(own, <span class="string">"mine\n"</span>);
+<a href=#1196 id=1196 data-nosnippet>1196</a>            f.object(<span class="kw-2">&amp;</span>[<span class="string">"share"</span>, own], <span class="bool-val">true</span>);
+<a href=#1197 id=1197 data-nosnippet>1197</a>            <span class="kw">let </span>e = assemble(<span class="kw-2">&amp;</span>f.request(<span class="kw-2">&amp;</span>out, <span class="kw-2">&amp;</span>exe)).unwrap_err();
+<a href=#1198 id=1198 data-nosnippet>1198</a>            <span class="macro">assert!</span>(
+<a href=#1199 id=1199 data-nosnippet>1199</a>                <span class="macro">matches!</span>(<span class="kw-2">&amp;</span>e, SlugError::Refused(m) <span class="kw">if </span>m.contains(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"would both write `{own}`"</span>))),
+<a href=#1200 id=1200 data-nosnippet>1200</a>                <span class="string">"{own}: {e}"
+<a href=#1201 id=1201 data-nosnippet>1201</a>            </span>);
+<a href=#1202 id=1202 data-nosnippet>1202</a>            f.git(<span class="kw-2">&amp;</span>[
+<a href=#1203 id=1203 data-nosnippet>1203</a>                <span class="string">"rm"</span>,
+<a href=#1204 id=1204 data-nosnippet>1204</a>                <span class="string">"-rqf"</span>,
+<a href=#1205 id=1205 data-nosnippet>1205</a>                <span class="string">"--ignore-unmatch"</span>,
+<a href=#1206 id=1206 data-nosnippet>1206</a>                <span class="string">".majordomus"</span>,
+<a href=#1207 id=1207 data-nosnippet>1207</a>                BUILDPACKS_FILE,
+<a href=#1208 id=1208 data-nosnippet>1208</a>            ]);
+<a href=#1209 id=1209 data-nosnippet>1209</a>        }
+<a href=#1210 id=1210 data-nosnippet>1210</a>        <span class="macro">assert!</span>(!out.exists());
+<a href=#1211 id=1211 data-nosnippet>1211</a>    }
+<a href=#1212 id=1212 data-nosnippet>1212</a>
+<a href=#1213 id=1213 data-nosnippet>1213</a>    <span class="doccomment">/// The object at the file must be the deployment the request names.
+<a href=#1214 id=1214 data-nosnippet>1214</a>    </span><span class="attr">#[test]
+<a href=#1215 id=1215 data-nosnippet>1215</a>    </span><span class="kw">fn </span>another_deployment_at_the_file_is_refused() {
+<a href=#1216 id=1216 data-nosnippet>1216</a>        <span class="kw">let </span>f = Fixture::new();
+<a href=#1217 id=1217 data-nosnippet>1217</a>        <span class="kw">let </span>exe = f.elsewhere.path().join(<span class="string">"exe"</span>);
+<a href=#1218 id=1218 data-nosnippet>1218</a>        <span class="kw">let </span>out = f.elsewhere.path().join(<span class="string">"slug"</span>);
+<a href=#1219 id=1219 data-nosnippet>1219</a>        <span class="kw">let </span>req = Request {
+<a href=#1220 id=1220 data-nosnippet>1220</a>            id: <span class="string">"other"</span>,
+<a href=#1221 id=1221 data-nosnippet>1221</a>            ..f.request(<span class="kw-2">&amp;</span>out, <span class="kw-2">&amp;</span>exe)
+<a href=#1222 id=1222 data-nosnippet>1222</a>        };
+<a href=#1223 id=1223 data-nosnippet>1223</a>        <span class="kw">let </span>e = assemble(<span class="kw-2">&amp;</span>req).unwrap_err();
+<a href=#1224 id=1224 data-nosnippet>1224</a>        <span class="macro">assert!</span>(
+<a href=#1225 id=1225 data-nosnippet>1225</a>            <span class="macro">matches!</span>(<span class="kw-2">&amp;</span>e, SlugError::Refused(m) <span class="kw">if </span>m.contains(<span class="string">"not `other`"</span>)),
+<a href=#1226 id=1226 data-nosnippet>1226</a>            <span class="string">"{e}"
+<a href=#1227 id=1227 data-nosnippet>1227</a>        </span>);
+<a href=#1228 id=1228 data-nosnippet>1228</a>    }
+<a href=#1229 id=1229 data-nosnippet>1229</a>
+<a href=#1230 id=1230 data-nosnippet>1230</a>    <span class="doccomment">/// An object file the commit does not hold is missing; one that is not UTF-8, not YAML
+<a href=#1231 id=1231 data-nosnippet>1231</a>    /// this executable reads, or not a deployment is refused.
+<a href=#1232 id=1232 data-nosnippet>1232</a>    </span><span class="attr">#[test]
+<a href=#1233 id=1233 data-nosnippet>1233</a>    </span><span class="kw">fn </span>an_object_the_commit_does_not_hold_or_cannot_read_is_named() {
+<a href=#1234 id=1234 data-nosnippet>1234</a>        <span class="kw">let </span>f = Fixture::new();
+<a href=#1235 id=1235 data-nosnippet>1235</a>        <span class="kw">let </span>exe = f.elsewhere.path().join(<span class="string">"exe"</span>);
+<a href=#1236 id=1236 data-nosnippet>1236</a>        <span class="kw">let </span>out = f.elsewhere.path().join(<span class="string">"slug"</span>);
+<a href=#1237 id=1237 data-nosnippet>1237</a>        <span class="kw">let </span>req = Request {
+<a href=#1238 id=1238 data-nosnippet>1238</a>            file: <span class="string">".ai/repo/deployments/absent.yaml"</span>,
+<a href=#1239 id=1239 data-nosnippet>1239</a>            ..f.request(<span class="kw-2">&amp;</span>out, <span class="kw-2">&amp;</span>exe)
+<a href=#1240 id=1240 data-nosnippet>1240</a>        };
+<a href=#1241 id=1241 data-nosnippet>1241</a>        <span class="macro">assert!</span>(<span class="macro">matches!</span>(assemble(<span class="kw-2">&amp;</span>req), <span class="prelude-val">Err</span>(SlugError::Missing(m)) <span class="kw">if </span>m.contains(<span class="string">"absent.yaml"</span>)),);
+<a href=#1242 id=1242 data-nosnippet>1242</a>
+<a href=#1243 id=1243 data-nosnippet>1243</a>        testing::write(f.repo.path(), <span class="string">"bad/latin1.yaml"</span>, <span class="string">b"id: \xff\xfe\n"</span>);
+<a href=#1244 id=1244 data-nosnippet>1244</a>        testing::write(f.repo.path(), <span class="string">"bad/tab.yaml"</span>, <span class="string">b"a:\tb\n"</span>);
+<a href=#1245 id=1245 data-nosnippet>1245</a>        testing::write(f.repo.path(), <span class="string">"bad/other.yaml"</span>, <span class="string">b"a: b\n"</span>);
+<a href=#1246 id=1246 data-nosnippet>1246</a>        f.git(<span class="kw-2">&amp;</span>[<span class="string">"add"</span>, <span class="string">"-A"</span>]);
+<a href=#1247 id=1247 data-nosnippet>1247</a>        f.git(<span class="kw-2">&amp;</span>[<span class="string">"commit"</span>, <span class="string">"-qm"</span>, <span class="string">"bad objects"</span>]);
+<a href=#1248 id=1248 data-nosnippet>1248</a>        <span class="kw">let </span>commit = resolve(f.repo.path(), <span class="string">"HEAD"</span>).unwrap();
+<a href=#1249 id=1249 data-nosnippet>1249</a>        <span class="kw">for </span>(file, said) <span class="kw">in </span>[
+<a href=#1250 id=1250 data-nosnippet>1250</a>            (<span class="string">"bad/latin1.yaml"</span>, <span class="string">"not UTF-8"</span>),
+<a href=#1251 id=1251 data-nosnippet>1251</a>            (<span class="string">"bad/tab.yaml"</span>, <span class="string">"tab character"</span>),
+<a href=#1252 id=1252 data-nosnippet>1252</a>            (<span class="string">"bad/other.yaml"</span>, <span class="string">"bad/other.yaml"</span>),
+<a href=#1253 id=1253 data-nosnippet>1253</a>        ] {
+<a href=#1254 id=1254 data-nosnippet>1254</a>            <span class="kw">let </span>e = object_at(f.repo.path(), <span class="kw-2">&amp;</span>commit, file).unwrap_err();
+<a href=#1255 id=1255 data-nosnippet>1255</a>            <span class="macro">assert!</span>(
+<a href=#1256 id=1256 data-nosnippet>1256</a>                <span class="macro">matches!</span>(<span class="kw-2">&amp;</span>e, SlugError::Refused(m) <span class="kw">if </span>m.contains(said)),
+<a href=#1257 id=1257 data-nosnippet>1257</a>                <span class="string">"{file}: {e}"
+<a href=#1258 id=1258 data-nosnippet>1258</a>            </span>);
+<a href=#1259 id=1259 data-nosnippet>1259</a>        }
+<a href=#1260 id=1260 data-nosnippet>1260</a>    }
+<a href=#1261 id=1261 data-nosnippet>1261</a>
+<a href=#1262 id=1262 data-nosnippet>1262</a>    <span class="doccomment">/// A symbolic link the commit tracks lands as a link, not as the file it names.
+<a href=#1263 id=1263 data-nosnippet>1263</a>    </span><span class="attr">#[cfg(unix)]
+<a href=#1264 id=1264 data-nosnippet>1264</a>    #[test]
+<a href=#1265 id=1265 data-nosnippet>1265</a>    </span><span class="kw">fn </span>a_tracked_link_lands_in_the_deploy_slug_as_a_link() {
+<a href=#1266 id=1266 data-nosnippet>1266</a>        <span class="kw">let </span>f = Fixture::new();
+<a href=#1267 id=1267 data-nosnippet>1267</a>        std::os::unix::fs::symlink(<span class="string">"a.txt"</span>, f.repo.path().join(<span class="string">"share/link"</span>)).unwrap();
+<a href=#1268 id=1268 data-nosnippet>1268</a>        f.git(<span class="kw-2">&amp;</span>[<span class="string">"add"</span>, <span class="string">"-A"</span>]);
+<a href=#1269 id=1269 data-nosnippet>1269</a>        f.git(<span class="kw-2">&amp;</span>[<span class="string">"commit"</span>, <span class="string">"-qm"</span>, <span class="string">"a link"</span>]);
+<a href=#1270 id=1270 data-nosnippet>1270</a>        <span class="kw">let </span>exe = f.elsewhere.path().join(<span class="string">"exe"</span>);
+<a href=#1271 id=1271 data-nosnippet>1271</a>        <span class="kw">let </span>out = f.elsewhere.path().join(<span class="string">"slug"</span>);
+<a href=#1272 id=1272 data-nosnippet>1272</a>        assemble(<span class="kw-2">&amp;</span>f.request(<span class="kw-2">&amp;</span>out, <span class="kw-2">&amp;</span>exe)).unwrap();
+<a href=#1273 id=1273 data-nosnippet>1273</a>        <span class="macro">assert_eq!</span>(
+<a href=#1274 id=1274 data-nosnippet>1274</a>            std::fs::read_link(out.join(<span class="string">"share/link"</span>)).unwrap(),
+<a href=#1275 id=1275 data-nosnippet>1275</a>            Path::new(<span class="string">"a.txt"</span>)
+<a href=#1276 id=1276 data-nosnippet>1276</a>        );
+<a href=#1277 id=1277 data-nosnippet>1277</a>    }
+<a href=#1278 id=1278 data-nosnippet>1278</a>
+<a href=#1279 id=1279 data-nosnippet>1279</a>    <span class="doccomment">/// A submodule among the inputs is another repository, never shipped.
+<a href=#1280 id=1280 data-nosnippet>1280</a>    </span><span class="attr">#[test]
+<a href=#1281 id=1281 data-nosnippet>1281</a>    </span><span class="kw">fn </span>a_submodule_among_the_inputs_is_refused() {
+<a href=#1282 id=1282 data-nosnippet>1282</a>        <span class="kw">let </span>f = Fixture::new();
+<a href=#1283 id=1283 data-nosnippet>1283</a>        <span class="kw">let </span>head = testing::git(f.repo.path(), <span class="kw-2">&amp;</span>[<span class="string">"rev-parse"</span>, <span class="string">"HEAD"</span>]);
+<a href=#1284 id=1284 data-nosnippet>1284</a>        f.git(<span class="kw-2">&amp;</span>[
+<a href=#1285 id=1285 data-nosnippet>1285</a>            <span class="string">"update-index"</span>,
+<a href=#1286 id=1286 data-nosnippet>1286</a>            <span class="string">"--add"</span>,
+<a href=#1287 id=1287 data-nosnippet>1287</a>            <span class="string">"--cacheinfo"</span>,
+<a href=#1288 id=1288 data-nosnippet>1288</a>            <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"160000,{head},share/sub"</span>),
+<a href=#1289 id=1289 data-nosnippet>1289</a>        ]);
+<a href=#1290 id=1290 data-nosnippet>1290</a>        f.git(<span class="kw-2">&amp;</span>[<span class="string">"commit"</span>, <span class="string">"-qm"</span>, <span class="string">"a submodule"</span>]);
+<a href=#1291 id=1291 data-nosnippet>1291</a>        <span class="kw">let </span>exe = f.elsewhere.path().join(<span class="string">"exe"</span>);
+<a href=#1292 id=1292 data-nosnippet>1292</a>        <span class="kw">let </span>out = f.elsewhere.path().join(<span class="string">"slug"</span>);
+<a href=#1293 id=1293 data-nosnippet>1293</a>        <span class="kw">let </span>e = assemble(<span class="kw-2">&amp;</span>f.request(<span class="kw-2">&amp;</span>out, <span class="kw-2">&amp;</span>exe)).unwrap_err();
+<a href=#1294 id=1294 data-nosnippet>1294</a>        <span class="macro">assert!</span>(
+<a href=#1295 id=1295 data-nosnippet>1295</a>            <span class="macro">matches!</span>(<span class="kw-2">&amp;</span>e, SlugError::Refused(m) <span class="kw">if </span>m.contains(<span class="string">"`share/sub` is a commit"</span>)),
+<a href=#1296 id=1296 data-nosnippet>1296</a>            <span class="string">"{e}"
+<a href=#1297 id=1297 data-nosnippet>1297</a>        </span>);
+<a href=#1298 id=1298 data-nosnippet>1298</a>    }
+<a href=#1299 id=1299 data-nosnippet>1299</a>
+<a href=#1300 id=1300 data-nosnippet>1300</a>    <span class="doccomment">/// git's plumbing can record a tree entry named `..`; a path through it would write
+<a href=#1301 id=1301 data-nosnippet>1301</a>    /// outside the slug, and is a failure rather than a file.
+<a href=#1302 id=1302 data-nosnippet>1302</a>    </span><span class="attr">#[test]
+<a href=#1303 id=1303 data-nosnippet>1303</a>    </span><span class="kw">fn </span>a_tracked_path_that_climbs_out_of_the_deploy_slug_is_a_failure() {
+<a href=#1304 id=1304 data-nosnippet>1304</a>        <span class="kw">let </span>f = Fixture::new();
+<a href=#1305 id=1305 data-nosnippet>1305</a>        <span class="kw">let </span>mktree = |text: <span class="kw-2">&amp;</span>str| -&gt; String {
+<a href=#1306 id=1306 data-nosnippet>1306</a>            <span class="kw">let </span><span class="kw-2">mut </span>child = Command::new(<span class="string">"git"</span>)
+<a href=#1307 id=1307 data-nosnippet>1307</a>                .arg(<span class="string">"-C"</span>)
+<a href=#1308 id=1308 data-nosnippet>1308</a>                .arg(f.repo.path())
+<a href=#1309 id=1309 data-nosnippet>1309</a>                .arg(<span class="string">"mktree"</span>)
+<a href=#1310 id=1310 data-nosnippet>1310</a>                .stdin(Stdio::piped())
+<a href=#1311 id=1311 data-nosnippet>1311</a>                .stdout(Stdio::piped())
+<a href=#1312 id=1312 data-nosnippet>1312</a>                .spawn()
+<a href=#1313 id=1313 data-nosnippet>1313</a>                .unwrap();
+<a href=#1314 id=1314 data-nosnippet>1314</a>            child
+<a href=#1315 id=1315 data-nosnippet>1315</a>                .stdin
+<a href=#1316 id=1316 data-nosnippet>1316</a>                .take()
+<a href=#1317 id=1317 data-nosnippet>1317</a>                .unwrap()
+<a href=#1318 id=1318 data-nosnippet>1318</a>                .write_all(text.as_bytes())
+<a href=#1319 id=1319 data-nosnippet>1319</a>                .unwrap();
+<a href=#1320 id=1320 data-nosnippet>1320</a>            <span class="kw">let </span>out = child.wait_with_output().unwrap();
+<a href=#1321 id=1321 data-nosnippet>1321</a>            <span class="macro">assert!</span>(out.status.success(), <span class="string">"{out:?}"</span>);
+<a href=#1322 id=1322 data-nosnippet>1322</a>            String::from_utf8(out.stdout).unwrap().trim().to_string()
+<a href=#1323 id=1323 data-nosnippet>1323</a>        };
+<a href=#1324 id=1324 data-nosnippet>1324</a>        <span class="kw">let </span>a = testing::git(f.repo.path(), <span class="kw-2">&amp;</span>[<span class="string">"rev-parse"</span>, <span class="string">"HEAD:share/a.txt"</span>]);
+<a href=#1325 id=1325 data-nosnippet>1325</a>        <span class="kw">let </span>inner = mktree(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"100644 blob {a}\tx\n"</span>));
+<a href=#1326 id=1326 data-nosnippet>1326</a>        <span class="kw">let </span>share = mktree(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
+<a href=#1327 id=1327 data-nosnippet>1327</a>            <span class="string">"040000 tree {inner}\t..\n100644 blob {a}\ta.txt\n"
+<a href=#1328 id=1328 data-nosnippet>1328</a>        </span>));
+<a href=#1329 id=1329 data-nosnippet>1329</a>        <span class="kw">let </span>root: String = testing::git(f.repo.path(), <span class="kw-2">&amp;</span>[<span class="string">"ls-tree"</span>, <span class="string">"HEAD"</span>])
+<a href=#1330 id=1330 data-nosnippet>1330</a>            .lines()
+<a href=#1331 id=1331 data-nosnippet>1331</a>            .map(|l| {
+<a href=#1332 id=1332 data-nosnippet>1332</a>                <span class="kw">if </span>l.ends_with(<span class="string">"\tshare"</span>) {
+<a href=#1333 id=1333 data-nosnippet>1333</a>                    <span class="macro">format!</span>(<span class="string">"040000 tree {share}\tshare\n"</span>)
+<a href=#1334 id=1334 data-nosnippet>1334</a>                } <span class="kw">else </span>{
+<a href=#1335 id=1335 data-nosnippet>1335</a>                    <span class="macro">format!</span>(<span class="string">"{l}\n"</span>)
+<a href=#1336 id=1336 data-nosnippet>1336</a>                }
+<a href=#1337 id=1337 data-nosnippet>1337</a>            })
+<a href=#1338 id=1338 data-nosnippet>1338</a>            .collect();
+<a href=#1339 id=1339 data-nosnippet>1339</a>        <span class="kw">let </span>tree = mktree(<span class="kw-2">&amp;</span>root);
+<a href=#1340 id=1340 data-nosnippet>1340</a>        <span class="kw">let </span>commit = testing::git(f.repo.path(), <span class="kw-2">&amp;</span>[<span class="string">"commit-tree"</span>, <span class="kw-2">&amp;</span>tree, <span class="string">"-m"</span>, <span class="string">"climbs"</span>]);
+<a href=#1341 id=1341 data-nosnippet>1341</a>        <span class="kw">let </span>exe = f.elsewhere.path().join(<span class="string">"exe"</span>);
+<a href=#1342 id=1342 data-nosnippet>1342</a>        <span class="kw">let </span>out = f.elsewhere.path().join(<span class="string">"slug"</span>);
+<a href=#1343 id=1343 data-nosnippet>1343</a>        <span class="kw">let </span>req = Request {
+<a href=#1344 id=1344 data-nosnippet>1344</a>            commit: <span class="kw-2">&amp;</span>commit,
+<a href=#1345 id=1345 data-nosnippet>1345</a>            ..f.request(<span class="kw-2">&amp;</span>out, <span class="kw-2">&amp;</span>exe)
+<a href=#1346 id=1346 data-nosnippet>1346</a>        };
+<a href=#1347 id=1347 data-nosnippet>1347</a>        <span class="kw">let </span>e = assemble(<span class="kw-2">&amp;</span>req).unwrap_err();
+<a href=#1348 id=1348 data-nosnippet>1348</a>        <span class="macro">assert!</span>(
+<a href=#1349 id=1349 data-nosnippet>1349</a>            <span class="macro">matches!</span>(<span class="kw-2">&amp;</span>e, SlugError::Failed(m) <span class="kw">if </span>m.contains(<span class="string">"`share/../x`"</span>)),
+<a href=#1350 id=1350 data-nosnippet>1350</a>            <span class="string">"{e}"
+<a href=#1351 id=1351 data-nosnippet>1351</a>        </span>);
+<a href=#1352 id=1352 data-nosnippet>1352</a>        <span class="macro">assert!</span>(!out.exists());
+<a href=#1353 id=1353 data-nosnippet>1353</a>    }
+<a href=#1354 id=1354 data-nosnippet>1354</a>
+<a href=#1355 id=1355 data-nosnippet>1355</a>    <span class="doccomment">/// A provider file the object renders and the commit does not hold is refused.
+<a href=#1356 id=1356 data-nosnippet>1356</a>    </span><span class="attr">#[test]
+<a href=#1357 id=1357 data-nosnippet>1357</a>    </span><span class="kw">fn </span>a_provider_file_the_commit_does_not_hold_is_refused() {
+<a href=#1358 id=1358 data-nosnippet>1358</a>        <span class="kw">let </span>f = Fixture::new();
+<a href=#1359 id=1359 data-nosnippet>1359</a>        f.git(<span class="kw-2">&amp;</span>[<span class="string">"rm"</span>, <span class="string">"-q"</span>, <span class="string">"deploy/gigalixir/Procfile"</span>]);
+<a href=#1360 id=1360 data-nosnippet>1360</a>        f.git(<span class="kw-2">&amp;</span>[<span class="string">"commit"</span>, <span class="string">"-qm"</span>, <span class="string">"no Procfile"</span>]);
+<a href=#1361 id=1361 data-nosnippet>1361</a>        <span class="kw">let </span>exe = f.elsewhere.path().join(<span class="string">"exe"</span>);
+<a href=#1362 id=1362 data-nosnippet>1362</a>        <span class="kw">let </span>out = f.elsewhere.path().join(<span class="string">"slug"</span>);
+<a href=#1363 id=1363 data-nosnippet>1363</a>        <span class="kw">let </span>e = assemble(<span class="kw-2">&amp;</span>f.request(<span class="kw-2">&amp;</span>out, <span class="kw-2">&amp;</span>exe)).unwrap_err();
+<a href=#1364 id=1364 data-nosnippet>1364</a>        <span class="macro">assert!</span>(
+<a href=#1365 id=1365 data-nosnippet>1365</a>            <span class="macro">matches!</span>(<span class="kw-2">&amp;</span>e, SlugError::Refused(m) <span class="kw">if </span>m.contains(<span class="string">"Procfile is not committed"</span>)),
+<a href=#1366 id=1366 data-nosnippet>1366</a>            <span class="string">"{e}"
+<a href=#1367 id=1367 data-nosnippet>1367</a>        </span>);
+<a href=#1368 id=1368 data-nosnippet>1368</a>    }
+<a href=#1369 id=1369 data-nosnippet>1369</a>
+<a href=#1370 id=1370 data-nosnippet>1370</a>    <span class="doccomment">/// An input git cannot list is git's failure, said with what git said.
+<a href=#1371 id=1371 data-nosnippet>1371</a>    </span><span class="attr">#[test]
+<a href=#1372 id=1372 data-nosnippet>1372</a>    </span><span class="kw">fn </span>an_input_git_cannot_list_is_a_failure() {
+<a href=#1373 id=1373 data-nosnippet>1373</a>        <span class="kw">let </span>f = Fixture::new();
+<a href=#1374 id=1374 data-nosnippet>1374</a>        f.object(<span class="kw-2">&amp;</span>[<span class="string">"share"</span>, <span class="string">"../elsewhere"</span>], <span class="bool-val">true</span>);
+<a href=#1375 id=1375 data-nosnippet>1375</a>        <span class="kw">let </span>exe = f.elsewhere.path().join(<span class="string">"exe"</span>);
+<a href=#1376 id=1376 data-nosnippet>1376</a>        <span class="kw">let </span>out = f.elsewhere.path().join(<span class="string">"slug"</span>);
+<a href=#1377 id=1377 data-nosnippet>1377</a>        <span class="kw">let </span>e = assemble(<span class="kw-2">&amp;</span>f.request(<span class="kw-2">&amp;</span>out, <span class="kw-2">&amp;</span>exe)).unwrap_err();
+<a href=#1378 id=1378 data-nosnippet>1378</a>        <span class="macro">assert!</span>(
+<a href=#1379 id=1379 data-nosnippet>1379</a>            <span class="macro">matches!</span>(<span class="kw-2">&amp;</span>e, SlugError::Failed(m) <span class="kw">if </span>m.contains(<span class="string">"git ls-tree"</span>)),
+<a href=#1380 id=1380 data-nosnippet>1380</a>            <span class="string">"{e}"
+<a href=#1381 id=1381 data-nosnippet>1381</a>        </span>);
+<a href=#1382 id=1382 data-nosnippet>1382</a>    }
+<a href=#1383 id=1383 data-nosnippet>1383</a>
+<a href=#1384 id=1384 data-nosnippet>1384</a>    <span class="doccomment">/// The loose object `rev` names, removed from the store.
+<a href=#1385 id=1385 data-nosnippet>1385</a>    </span><span class="kw">fn </span>lose(f: <span class="kw-2">&amp;</span>Fixture, rev: <span class="kw-2">&amp;</span>str) {
+<a href=#1386 id=1386 data-nosnippet>1386</a>        <span class="kw">let </span>oid = testing::git(f.repo.path(), <span class="kw-2">&amp;</span>[<span class="string">"rev-parse"</span>, rev]);
+<a href=#1387 id=1387 data-nosnippet>1387</a>        <span class="kw">let </span>path = f
+<a href=#1388 id=1388 data-nosnippet>1388</a>            .repo
+<a href=#1389 id=1389 data-nosnippet>1389</a>            .path()
+<a href=#1390 id=1390 data-nosnippet>1390</a>            .join(<span class="string">".git/objects"</span>)
+<a href=#1391 id=1391 data-nosnippet>1391</a>            .join(<span class="kw-2">&amp;</span>oid[..<span class="number">2</span>])
+<a href=#1392 id=1392 data-nosnippet>1392</a>            .join(<span class="kw-2">&amp;</span>oid[<span class="number">2</span>..]);
+<a href=#1393 id=1393 data-nosnippet>1393</a>        std::fs::remove_file(<span class="kw-2">&amp;</span>path).unwrap_or_else(|e| <span class="macro">panic!</span>(<span class="string">"{}: {e}"</span>, path.display()));
+<a href=#1394 id=1394 data-nosnippet>1394</a>    }
+<a href=#1395 id=1395 data-nosnippet>1395</a>
+<a href=#1396 id=1396 data-nosnippet>1396</a>    <span class="doccomment">/// A store that lost the provider's tree or one of its files is a failure, and no slug
+<a href=#1397 id=1397 data-nosnippet>1397</a>    /// is written from what remains.
+<a href=#1398 id=1398 data-nosnippet>1398</a>    </span><span class="attr">#[test]
+<a href=#1399 id=1399 data-nosnippet>1399</a>    </span><span class="kw">fn </span>a_damaged_object_store_is_a_failure_not_a_deploy_slug() {
+<a href=#1400 id=1400 data-nosnippet>1400</a>        <span class="kw">let </span>exe_of = |f: <span class="kw-2">&amp;</span>Fixture| f.elsewhere.path().join(<span class="string">"exe"</span>);
+<a href=#1401 id=1401 data-nosnippet>1401</a>        <span class="kw">for </span>lost <span class="kw">in </span>[
+<a href=#1402 id=1402 data-nosnippet>1402</a>            <span class="string">"HEAD:deploy"</span>,
+<a href=#1403 id=1403 data-nosnippet>1403</a>            <span class="string">"HEAD:deploy/gigalixir/Procfile"</span>,
+<a href=#1404 id=1404 data-nosnippet>1404</a>            <span class="string">"HEAD:share/a.txt"</span>,
+<a href=#1405 id=1405 data-nosnippet>1405</a>        ] {
+<a href=#1406 id=1406 data-nosnippet>1406</a>            <span class="kw">let </span>f = Fixture::new();
+<a href=#1407 id=1407 data-nosnippet>1407</a>            lose(<span class="kw-2">&amp;</span>f, lost);
+<a href=#1408 id=1408 data-nosnippet>1408</a>            <span class="kw">let </span>out = f.elsewhere.path().join(<span class="string">"slug"</span>);
+<a href=#1409 id=1409 data-nosnippet>1409</a>            <span class="kw">let </span>e = assemble(<span class="kw-2">&amp;</span>f.request(<span class="kw-2">&amp;</span>out, <span class="kw-2">&amp;</span>exe_of(<span class="kw-2">&amp;</span>f))).unwrap_err();
+<a href=#1410 id=1410 data-nosnippet>1410</a>            <span class="macro">assert!</span>(<span class="macro">matches!</span>(<span class="kw-2">&amp;</span>e, SlugError::Failed(<span class="kw">_</span>)), <span class="string">"{lost}: {e}"</span>);
+<a href=#1411 id=1411 data-nosnippet>1411</a>        }
+<a href=#1412 id=1412 data-nosnippet>1412</a>    }
+<a href=#1413 id=1413 data-nosnippet>1413</a>
+<a href=#1414 id=1414 data-nosnippet>1414</a>    <span class="doccomment">/// A repository of SHA-256 objects names its commits in 64 hex digits, recorded whole.
+<a href=#1415 id=1415 data-nosnippet>1415</a>    </span><span class="attr">#[test]
+<a href=#1416 id=1416 data-nosnippet>1416</a>    </span><span class="kw">fn </span>a_sha256_commit_resolves_in_full() {
+<a href=#1417 id=1417 data-nosnippet>1417</a>        <span class="kw">let </span>repo = tempfile::tempdir().unwrap();
+<a href=#1418 id=1418 data-nosnippet>1418</a>        testing::init(repo.path(), <span class="kw-2">&amp;</span>[<span class="string">"--object-format=sha256"</span>]);
+<a href=#1419 id=1419 data-nosnippet>1419</a>        testing::write(repo.path(), <span class="string">"a"</span>, <span class="string">b"a\n"</span>);
+<a href=#1420 id=1420 data-nosnippet>1420</a>        testing::commit(repo.path(), <span class="string">"one"</span>);
+<a href=#1421 id=1421 data-nosnippet>1421</a>        <span class="kw">let </span>sha = resolve(repo.path(), <span class="string">"HEAD"</span>).unwrap();
+<a href=#1422 id=1422 data-nosnippet>1422</a>        <span class="macro">assert_eq!</span>(sha.len(), <span class="number">64</span>);
+<a href=#1423 id=1423 data-nosnippet>1423</a>    }
+<a href=#1424 id=1424 data-nosnippet>1424</a>
+<a href=#1425 id=1425 data-nosnippet>1425</a>    <span class="doccomment">/// A git that cannot be started is a failure of every read, said as such.
+<a href=#1426 id=1426 data-nosnippet>1426</a>    </span><span class="attr">#[test]
+<a href=#1427 id=1427 data-nosnippet>1427</a>    </span><span class="kw">fn </span>a_git_that_cannot_start_fails_every_deploy_read() {
+<a href=#1428 id=1428 data-nosnippet>1428</a>        <span class="comment">// an argument holding NUL is refused by the process launcher before git runs
+<a href=#1429 id=1429 data-nosnippet>1429</a>        </span><span class="kw">let </span>root = Path::new(<span class="string">"no\0where"</span>);
+<a href=#1430 id=1430 data-nosnippet>1430</a>        <span class="kw">let </span>commit = <span class="string">"0"</span>.repeat(<span class="number">40</span>);
+<a href=#1431 id=1431 data-nosnippet>1431</a>        <span class="kw">let </span>started = |r: <span class="prelude-ty">Result</span>&lt;(), SlugError&gt;| {
+<a href=#1432 id=1432 data-nosnippet>1432</a>            <span class="macro">assert!</span>(
+<a href=#1433 id=1433 data-nosnippet>1433</a>                <span class="macro">matches!</span>(<span class="kw-2">&amp;</span>r, <span class="prelude-val">Err</span>(SlugError::Failed(m)) <span class="kw">if </span>m.contains(<span class="string">"cannot run git"</span>)),
+<a href=#1434 id=1434 data-nosnippet>1434</a>                <span class="string">"{r:?}"
+<a href=#1435 id=1435 data-nosnippet>1435</a>            </span>);
+<a href=#1436 id=1436 data-nosnippet>1436</a>        };
+<a href=#1437 id=1437 data-nosnippet>1437</a>        started(resolve(root, <span class="string">"HEAD"</span>).map(drop));
+<a href=#1438 id=1438 data-nosnippet>1438</a>        started(object_at(root, <span class="kw-2">&amp;</span>commit, OBJECT).map(drop));
+<a href=#1439 id=1439 data-nosnippet>1439</a>        started(ls_tree(root, <span class="kw-2">&amp;</span>commit, <span class="kw-2">&amp;</span>[<span class="string">"share"</span>]).map(drop));
+<a href=#1440 id=1440 data-nosnippet>1440</a>        started(blob(root, <span class="kw-2">&amp;</span>commit).map(drop));
+<a href=#1441 id=1441 data-nosnippet>1441</a>        <span class="kw">let </span>out = tempfile::tempdir().unwrap();
+<a href=#1442 id=1442 data-nosnippet>1442</a>        <span class="kw">let </span><span class="kw-2">mut </span>plan = Plan::default();
+<a href=#1443 id=1443 data-nosnippet>1443</a>        plan.add(<span class="string">"a"</span>, Content::Blob(commit.clone()), Mode::File, <span class="string">"t"</span>)
+<a href=#1444 id=1444 data-nosnippet>1444</a>            .unwrap();
+<a href=#1445 id=1445 data-nosnippet>1445</a>        started(write(root, out.path(), <span class="kw-2">&amp;</span>plan).map(drop));
+<a href=#1446 id=1446 data-nosnippet>1446</a>    }
+<a href=#1447 id=1447 data-nosnippet>1447</a>
+<a href=#1448 id=1448 data-nosnippet>1448</a>    <span class="doccomment">/// What the commit does not have is git's failure; no path asks for no file.
+<a href=#1449 id=1449 data-nosnippet>1449</a>    </span><span class="attr">#[test]
+<a href=#1450 id=1450 data-nosnippet>1450</a>    </span><span class="kw">fn </span>what_git_does_not_have_is_a_deploy_failure() {
+<a href=#1451 id=1451 data-nosnippet>1451</a>        <span class="kw">let </span>f = Fixture::new();
+<a href=#1452 id=1452 data-nosnippet>1452</a>        <span class="kw">let </span>absent = <span class="string">"0"</span>.repeat(<span class="number">40</span>);
+<a href=#1453 id=1453 data-nosnippet>1453</a>        <span class="macro">assert!</span>(<span class="macro">matches!</span>(
+<a href=#1454 id=1454 data-nosnippet>1454</a>            ls_tree(f.repo.path(), <span class="kw-2">&amp;</span>absent, <span class="kw-2">&amp;</span>[<span class="string">"share"</span>]),
+<a href=#1455 id=1455 data-nosnippet>1455</a>            <span class="prelude-val">Err</span>(SlugError::Failed(m)) <span class="kw">if </span>m.contains(<span class="string">"git ls-tree"</span>)
+<a href=#1456 id=1456 data-nosnippet>1456</a>        ));
+<a href=#1457 id=1457 data-nosnippet>1457</a>        <span class="macro">assert!</span>(ls_tree(f.repo.path(), <span class="string">"HEAD"</span>, <span class="kw-2">&amp;</span>[]).unwrap().is_empty());
+<a href=#1458 id=1458 data-nosnippet>1458</a>        <span class="macro">assert!</span>(<span class="macro">matches!</span>(
+<a href=#1459 id=1459 data-nosnippet>1459</a>            blob(f.repo.path(), <span class="kw-2">&amp;</span>absent),
+<a href=#1460 id=1460 data-nosnippet>1460</a>            <span class="prelude-val">Err</span>(SlugError::Failed(m)) <span class="kw">if </span>m.contains(<span class="string">"git cat-file blob"</span>)
+<a href=#1461 id=1461 data-nosnippet>1461</a>        ));
+<a href=#1462 id=1462 data-nosnippet>1462</a>    }
+<a href=#1463 id=1463 data-nosnippet>1463</a>
+<a href=#1464 id=1464 data-nosnippet>1464</a>    <span class="doccomment">/// `git ls-tree` output this assembler does not understand is never guessed at.
+<a href=#1465 id=1465 data-nosnippet>1465</a>    </span><span class="attr">#[test]
+<a href=#1466 id=1466 data-nosnippet>1466</a>    </span><span class="kw">fn </span>ls_tree_output_that_is_not_understood_is_never_guessed_at() {
+<a href=#1467 id=1467 data-nosnippet>1467</a>        <span class="kw">let </span>ok = parse_ls_tree(<span class="string">b"100644 blob abc\tshare/a.txt\0\0"</span>).unwrap();
+<a href=#1468 id=1468 data-nosnippet>1468</a>        <span class="macro">assert_eq!</span>(ok.len(), <span class="number">1</span>);
+<a href=#1469 id=1469 data-nosnippet>1469</a>        <span class="macro">assert_eq!</span>(
+<a href=#1470 id=1470 data-nosnippet>1470</a>            (ok[<span class="number">0</span>].mode.as_str(), ok[<span class="number">0</span>].kind.as_str(), ok[<span class="number">0</span>].oid.as_str()),
+<a href=#1471 id=1471 data-nosnippet>1471</a>            (<span class="string">"100644"</span>, <span class="string">"blob"</span>, <span class="string">"abc"</span>)
+<a href=#1472 id=1472 data-nosnippet>1472</a>        );
+<a href=#1473 id=1473 data-nosnippet>1473</a>        <span class="macro">assert_eq!</span>(ok[<span class="number">0</span>].path, <span class="string">"share/a.txt"</span>);
+<a href=#1474 id=1474 data-nosnippet>1474</a>        <span class="macro">assert!</span>(<span class="macro">matches!</span>(
+<a href=#1475 id=1475 data-nosnippet>1475</a>            parse_ls_tree(<span class="string">b"100644 blob abc\tshare/\xff\0"</span>),
+<a href=#1476 id=1476 data-nosnippet>1476</a>            <span class="prelude-val">Err</span>(SlugError::Refused(m)) <span class="kw">if </span>m.contains(<span class="string">"not UTF-8"</span>)
+<a href=#1477 id=1477 data-nosnippet>1477</a>        ));
+<a href=#1478 id=1478 data-nosnippet>1478</a>        <span class="kw">for </span>said <span class="kw">in </span>[<span class="kw-2">&amp;</span><span class="string">b"no tab here\0"</span>[..], <span class="string">b"100644 blob\tshare/a.txt\0"</span>] {
+<a href=#1479 id=1479 data-nosnippet>1479</a>            <span class="macro">assert!</span>(<span class="macro">matches!</span>(
+<a href=#1480 id=1480 data-nosnippet>1480</a>                parse_ls_tree(said),
+<a href=#1481 id=1481 data-nosnippet>1481</a>                <span class="prelude-val">Err</span>(SlugError::Failed(m)) <span class="kw">if </span>m.contains(<span class="string">"git ls-tree said"</span>)
+<a href=#1482 id=1482 data-nosnippet>1482</a>            ));
+<a href=#1483 id=1483 data-nosnippet>1483</a>        }
+<a href=#1484 id=1484 data-nosnippet>1484</a>    }
+<a href=#1485 id=1485 data-nosnippet>1485</a>
+<a href=#1486 id=1486 data-nosnippet>1486</a>    <span class="doccomment">/// The out directory is made absolute against the working directory and resolved
+<a href=#1487 id=1487 data-nosnippet>1487</a>    /// through its nearest existing ancestor; an empty name, an existing file and a root
+<a href=#1488 id=1488 data-nosnippet>1488</a>    /// that cannot be resolved are each refused or failed, and an empty directory is taken.
+<a href=#1489 id=1489 data-nosnippet>1489</a>    </span><span class="attr">#[test]
+<a href=#1490 id=1490 data-nosnippet>1490</a>    </span><span class="kw">fn </span>the_deploy_out_directory_is_resolved_and_checked() {
+<a href=#1491 id=1491 data-nosnippet>1491</a>        <span class="kw">let </span>f = Fixture::new();
+<a href=#1492 id=1492 data-nosnippet>1492</a>        <span class="kw">let </span>e = outside(f.repo.path(), Path::new(<span class="string">""</span>)).unwrap_err();
+<a href=#1493 id=1493 data-nosnippet>1493</a>        <span class="macro">assert!</span>(
+<a href=#1494 id=1494 data-nosnippet>1494</a>            <span class="macro">matches!</span>(<span class="kw-2">&amp;</span>e, SlugError::Refused(m) <span class="kw">if </span>m.contains(<span class="string">"cannot be made absolute"</span>)),
+<a href=#1495 id=1495 data-nosnippet>1495</a>            <span class="string">"{e}"
+<a href=#1496 id=1496 data-nosnippet>1496</a>        </span>);
+<a href=#1497 id=1497 data-nosnippet>1497</a>
+<a href=#1498 id=1498 data-nosnippet>1498</a>        <span class="kw">let </span>relative = Path::new(<span class="string">"no-such-slug-directory/below"</span>);
+<a href=#1499 id=1499 data-nosnippet>1499</a>        <span class="kw">let </span>resolved = outside(f.repo.path(), relative).unwrap();
+<a href=#1500 id=1500 data-nosnippet>1500</a>        <span class="macro">assert!</span>(resolved.is_absolute() &amp;&amp; resolved.ends_with(relative));
+<a href=#1501 id=1501 data-nosnippet>1501</a>        <span class="macro">assert!</span>(!resolved.exists());
+<a href=#1502 id=1502 data-nosnippet>1502</a>
+<a href=#1503 id=1503 data-nosnippet>1503</a>        <span class="kw">let </span>file = f.elsewhere.path().join(<span class="string">"exe"</span>);
+<a href=#1504 id=1504 data-nosnippet>1504</a>        <span class="kw">let </span>e = outside(f.repo.path(), <span class="kw-2">&amp;</span>file).unwrap_err();
+<a href=#1505 id=1505 data-nosnippet>1505</a>        <span class="macro">assert!</span>(
+<a href=#1506 id=1506 data-nosnippet>1506</a>            <span class="macro">matches!</span>(<span class="kw-2">&amp;</span>e, SlugError::Refused(m) <span class="kw">if </span>m.contains(<span class="string">"not a readable directory"</span>)),
+<a href=#1507 id=1507 data-nosnippet>1507</a>            <span class="string">"{e}"
+<a href=#1508 id=1508 data-nosnippet>1508</a>        </span>);
+<a href=#1509 id=1509 data-nosnippet>1509</a>
+<a href=#1510 id=1510 data-nosnippet>1510</a>        <span class="kw">let </span>empty = f.elsewhere.path().join(<span class="string">"empty"</span>);
+<a href=#1511 id=1511 data-nosnippet>1511</a>        std::fs::create_dir(<span class="kw-2">&amp;</span>empty).unwrap();
+<a href=#1512 id=1512 data-nosnippet>1512</a>        <span class="macro">assert_eq!</span>(
+<a href=#1513 id=1513 data-nosnippet>1513</a>            outside(f.repo.path(), <span class="kw-2">&amp;</span>empty).unwrap(),
+<a href=#1514 id=1514 data-nosnippet>1514</a>            empty.canonicalize().unwrap()
+<a href=#1515 id=1515 data-nosnippet>1515</a>        );
+<a href=#1516 id=1516 data-nosnippet>1516</a>
+<a href=#1517 id=1517 data-nosnippet>1517</a>        <span class="kw">let </span>e = outside(Path::new(<span class="string">"no\0where"</span>), <span class="kw-2">&amp;</span>empty).unwrap_err();
+<a href=#1518 id=1518 data-nosnippet>1518</a>        <span class="macro">assert!</span>(
+<a href=#1519 id=1519 data-nosnippet>1519</a>            <span class="macro">matches!</span>(<span class="kw-2">&amp;</span>e, SlugError::Failed(m) <span class="kw">if </span>m.contains(<span class="string">"cannot be resolved"</span>)),
+<a href=#1520 id=1520 data-nosnippet>1520</a>            <span class="string">"{e}"
+<a href=#1521 id=1521 data-nosnippet>1521</a>        </span>);
+<a href=#1522 id=1522 data-nosnippet>1522</a>    }
+<a href=#1523 id=1523 data-nosnippet>1523</a>
+<a href=#1524 id=1524 data-nosnippet>1524</a>    <span class="doccomment">/// An out directory that cannot be created fails the slug with what the filesystem said.
+<a href=#1525 id=1525 data-nosnippet>1525</a>    </span><span class="attr">#[test]
+<a href=#1526 id=1526 data-nosnippet>1526</a>    </span><span class="kw">fn </span>an_out_directory_below_a_file_fails_the_deploy_slug() {
+<a href=#1527 id=1527 data-nosnippet>1527</a>        <span class="kw">let </span>f = Fixture::new();
+<a href=#1528 id=1528 data-nosnippet>1528</a>        <span class="kw">let </span>exe = f.elsewhere.path().join(<span class="string">"exe"</span>);
+<a href=#1529 id=1529 data-nosnippet>1529</a>        <span class="kw">let </span>out = exe.join(<span class="string">"slug"</span>);
+<a href=#1530 id=1530 data-nosnippet>1530</a>        <span class="kw">let </span>e = assemble(<span class="kw-2">&amp;</span>f.request(<span class="kw-2">&amp;</span>out, <span class="kw-2">&amp;</span>exe)).unwrap_err();
+<a href=#1531 id=1531 data-nosnippet>1531</a>        <span class="macro">assert!</span>(
+<a href=#1532 id=1532 data-nosnippet>1532</a>            <span class="macro">matches!</span>(<span class="kw-2">&amp;</span>e, SlugError::Failed(m) <span class="kw">if </span>m.contains(<span class="string">"cannot be written"</span>)),
+<a href=#1533 id=1533 data-nosnippet>1533</a>            <span class="string">"{e}"
+<a href=#1534 id=1534 data-nosnippet>1534</a>        </span>);
+<a href=#1535 id=1535 data-nosnippet>1535</a>    }
+<a href=#1536 id=1536 data-nosnippet>1536</a>
+<a href=#1537 id=1537 data-nosnippet>1537</a>    <span class="doccomment">/// git is asked for every blob while it answers: a blob it does not have is a failure,
+<a href=#1538 id=1538 data-nosnippet>1538</a>    /// and the asking stops when git is stopped, however much was left to ask.
+<a href=#1539 id=1539 data-nosnippet>1539</a>    </span><span class="attr">#[test]
+<a href=#1540 id=1540 data-nosnippet>1540</a>    </span><span class="kw">fn </span>a_blob_git_does_not_answer_fails_the_deploy_write() {
+<a href=#1541 id=1541 data-nosnippet>1541</a>        <span class="kw">let </span>f = Fixture::new();
+<a href=#1542 id=1542 data-nosnippet>1542</a>        <span class="kw">let </span>out = f.elsewhere.path().join(<span class="string">"slug"</span>);
+<a href=#1543 id=1543 data-nosnippet>1543</a>        <span class="kw">let </span><span class="kw-2">mut </span>plan = Plan::default();
+<a href=#1544 id=1544 data-nosnippet>1544</a>        <span class="comment">// far more requests than a pipe holds, so the asking is still blocked when git stops
+<a href=#1545 id=1545 data-nosnippet>1545</a>        </span><span class="kw">for </span>n <span class="kw">in </span><span class="number">0</span>..<span class="number">20_000 </span>{
+<a href=#1546 id=1546 data-nosnippet>1546</a>            plan.add(
+<a href=#1547 id=1547 data-nosnippet>1547</a>                <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"f{n:05}"</span>),
+<a href=#1548 id=1548 data-nosnippet>1548</a>                Content::Blob(<span class="string">"0"</span>.repeat(<span class="number">40</span>)),
+<a href=#1549 id=1549 data-nosnippet>1549</a>                Mode::File,
+<a href=#1550 id=1550 data-nosnippet>1550</a>                <span class="string">"t"</span>,
+<a href=#1551 id=1551 data-nosnippet>1551</a>            )
+<a href=#1552 id=1552 data-nosnippet>1552</a>            .unwrap();
+<a href=#1553 id=1553 data-nosnippet>1553</a>        }
+<a href=#1554 id=1554 data-nosnippet>1554</a>        <span class="kw">let </span>e = write(f.repo.path(), <span class="kw-2">&amp;</span>out, <span class="kw-2">&amp;</span>plan).unwrap_err();
+<a href=#1555 id=1555 data-nosnippet>1555</a>        <span class="macro">assert!</span>(
+<a href=#1556 id=1556 data-nosnippet>1556</a>            <span class="macro">matches!</span>(<span class="kw-2">&amp;</span>e, SlugError::Failed(m) <span class="kw">if </span>m.contains(<span class="string">"answered"</span>)),
+<a href=#1557 id=1557 data-nosnippet>1557</a>            <span class="string">"{e}"
+<a href=#1558 id=1558 data-nosnippet>1558</a>        </span>);
+<a href=#1559 id=1559 data-nosnippet>1559</a>    }
+<a href=#1560 id=1560 data-nosnippet>1560</a>
+<a href=#1561 id=1561 data-nosnippet>1561</a>    <span class="doccomment">/// A slug of bytes alone asks git for nothing; a file where a directory is needed fails
+<a href=#1562 id=1562 data-nosnippet>1562</a>    /// the write, whether its bytes are in hand or streamed from git.
+<a href=#1563 id=1563 data-nosnippet>1563</a>    </span><span class="attr">#[test]
+<a href=#1564 id=1564 data-nosnippet>1564</a>    </span><span class="kw">fn </span>the_deploy_write_places_bytes_and_fails_where_a_path_cannot_be_written() {
+<a href=#1565 id=1565 data-nosnippet>1565</a>        <span class="kw">let </span>f = Fixture::new();
+<a href=#1566 id=1566 data-nosnippet>1566</a>        <span class="kw">let </span><span class="kw-2">mut </span>plan = Plan::default();
+<a href=#1567 id=1567 data-nosnippet>1567</a>        plan.add(<span class="string">"only"</span>, bytes(<span class="string">b"abc"</span>), Mode::File, <span class="string">"t"</span>).unwrap();
+<a href=#1568 id=1568 data-nosnippet>1568</a>        <span class="kw">let </span>out = f.elsewhere.path().join(<span class="string">"bytes"</span>);
+<a href=#1569 id=1569 data-nosnippet>1569</a>        <span class="macro">assert_eq!</span>(write(Path::new(<span class="string">"no\0where"</span>), <span class="kw-2">&amp;</span>out, <span class="kw-2">&amp;</span>plan).unwrap(), (<span class="number">1</span>, <span class="number">3</span>));
+<a href=#1570 id=1570 data-nosnippet>1570</a>        <span class="macro">assert_eq!</span>(std::fs::read(out.join(<span class="string">"only"</span>)).unwrap(), <span class="string">b"abc"</span>);
+<a href=#1571 id=1571 data-nosnippet>1571</a>
+<a href=#1572 id=1572 data-nosnippet>1572</a>        <span class="kw">let </span><span class="kw-2">mut </span>plan = Plan::default();
+<a href=#1573 id=1573 data-nosnippet>1573</a>        plan.add(<span class="string">"a"</span>, bytes(<span class="string">b"x"</span>), Mode::File, <span class="string">"t"</span>).unwrap();
+<a href=#1574 id=1574 data-nosnippet>1574</a>        plan.add(<span class="string">"a/b"</span>, bytes(<span class="string">b"y"</span>), Mode::File, <span class="string">"t"</span>).unwrap();
+<a href=#1575 id=1575 data-nosnippet>1575</a>        <span class="kw">let </span>e = write(f.repo.path(), <span class="kw-2">&amp;</span>f.elsewhere.path().join(<span class="string">"held"</span>), <span class="kw-2">&amp;</span>plan).unwrap_err();
+<a href=#1576 id=1576 data-nosnippet>1576</a>        <span class="macro">assert!</span>(
+<a href=#1577 id=1577 data-nosnippet>1577</a>            <span class="macro">matches!</span>(<span class="kw-2">&amp;</span>e, SlugError::Failed(m) <span class="kw">if </span>m.contains(<span class="string">"cannot be written"</span>)),
+<a href=#1578 id=1578 data-nosnippet>1578</a>            <span class="string">"{e}"
+<a href=#1579 id=1579 data-nosnippet>1579</a>        </span>);
+<a href=#1580 id=1580 data-nosnippet>1580</a>
+<a href=#1581 id=1581 data-nosnippet>1581</a>        <span class="kw">let </span>a = testing::git(f.repo.path(), <span class="kw-2">&amp;</span>[<span class="string">"rev-parse"</span>, <span class="string">"HEAD:share/a.txt"</span>]);
+<a href=#1582 id=1582 data-nosnippet>1582</a>        <span class="kw">let </span><span class="kw-2">mut </span>plan = Plan::default();
+<a href=#1583 id=1583 data-nosnippet>1583</a>        plan.add(<span class="string">"a"</span>, Content::Blob(a.clone()), Mode::File, <span class="string">"t"</span>)
+<a href=#1584 id=1584 data-nosnippet>1584</a>            .unwrap();
+<a href=#1585 id=1585 data-nosnippet>1585</a>        plan.add(<span class="string">"a/b"</span>, Content::Blob(a), Mode::File, <span class="string">"t"</span>).unwrap();
+<a href=#1586 id=1586 data-nosnippet>1586</a>        <span class="kw">let </span>e = write(f.repo.path(), <span class="kw-2">&amp;</span>f.elsewhere.path().join(<span class="string">"streamed"</span>), <span class="kw-2">&amp;</span>plan).unwrap_err();
+<a href=#1587 id=1587 data-nosnippet>1587</a>        <span class="macro">assert!</span>(
+<a href=#1588 id=1588 data-nosnippet>1588</a>            <span class="macro">matches!</span>(<span class="kw-2">&amp;</span>e, SlugError::Failed(m) <span class="kw">if </span>m.contains(<span class="string">"cannot be written"</span>)),
+<a href=#1589 id=1589 data-nosnippet>1589</a>            <span class="string">"{e}"
+<a href=#1590 id=1590 data-nosnippet>1590</a>        </span>);
+<a href=#1591 id=1591 data-nosnippet>1591</a>    }
+<a href=#1592 id=1592 data-nosnippet>1592</a>
+<a href=#1593 id=1593 data-nosnippet>1593</a>    <span class="doccomment">/// An answer that is not text, or shorter than the size it announced, is a failure.
+<a href=#1594 id=1594 data-nosnippet>1594</a>    </span><span class="attr">#[test]
+<a href=#1595 id=1595 data-nosnippet>1595</a>    </span><span class="kw">fn </span>a_truncated_or_garbled_answer_fails_the_deploy_stream() {
+<a href=#1596 id=1596 data-nosnippet>1596</a>        <span class="kw">let </span>out = tempfile::tempdir().unwrap();
+<a href=#1597 id=1597 data-nosnippet>1597</a>        <span class="kw">let </span>oid = <span class="string">"a"</span>.repeat(<span class="number">40</span>);
+<a href=#1598 id=1598 data-nosnippet>1598</a>        <span class="kw">let </span>path = <span class="string">"f"</span>.to_string();
+<a href=#1599 id=1599 data-nosnippet>1599</a>        <span class="kw">let </span>planned = Planned {
+<a href=#1600 id=1600 data-nosnippet>1600</a>            content: Content::Blob(oid.clone()),
+<a href=#1601 id=1601 data-nosnippet>1601</a>            mode: Mode::File,
+<a href=#1602 id=1602 data-nosnippet>1602</a>            origin: <span class="string">"t"</span>.into(),
+<a href=#1603 id=1603 data-nosnippet>1603</a>        };
+<a href=#1604 id=1604 data-nosnippet>1604</a>        <span class="kw">let </span>blobs = [(<span class="kw-2">&amp;</span>path, <span class="kw-2">&amp;</span>planned, <span class="kw-2">&amp;</span>oid)];
+<a href=#1605 id=1605 data-nosnippet>1605</a>        <span class="kw">for </span>answer <span class="kw">in </span>[
+<a href=#1606 id=1606 data-nosnippet>1606</a>            <span class="string">b"\xff\xfe\n"</span>.to_vec(),
+<a href=#1607 id=1607 data-nosnippet>1607</a>            <span class="macro">format!</span>(<span class="string">"{oid} blob 10\nabc"</span>).into_bytes(),
+<a href=#1608 id=1608 data-nosnippet>1608</a>            <span class="macro">format!</span>(<span class="string">"{oid} missing\n"</span>).into_bytes(),
+<a href=#1609 id=1609 data-nosnippet>1609</a>        ] {
+<a href=#1610 id=1610 data-nosnippet>1610</a>            <span class="kw">let </span><span class="kw-2">mut </span>reader = std::io::Cursor::new(answer);
+<a href=#1611 id=1611 data-nosnippet>1611</a>            <span class="kw">let </span>e = stream(<span class="kw-2">&amp;mut </span>reader, out.path(), <span class="kw-2">&amp;</span>blobs).unwrap_err();
+<a href=#1612 id=1612 data-nosnippet>1612</a>            <span class="macro">assert!</span>(
+<a href=#1613 id=1613 data-nosnippet>1613</a>                <span class="macro">matches!</span>(<span class="kw-2">&amp;</span>e, SlugError::Failed(m) <span class="kw">if </span>m.contains(<span class="string">"git cat-file --batch"</span>)),
+<a href=#1614 id=1614 data-nosnippet>1614</a>                <span class="string">"{e}"
+<a href=#1615 id=1615 data-nosnippet>1615</a>            </span>);
+<a href=#1616 id=1616 data-nosnippet>1616</a>        }
+<a href=#1617 id=1617 data-nosnippet>1617</a>        <span class="kw">let </span><span class="kw-2">mut </span>reader = std::io::Cursor::new(<span class="macro">format!</span>(<span class="string">"{oid} blob 3\nabc\n"</span>).into_bytes());
+<a href=#1618 id=1618 data-nosnippet>1618</a>        <span class="macro">assert_eq!</span>(stream(<span class="kw-2">&amp;mut </span>reader, out.path(), <span class="kw-2">&amp;</span>blobs).unwrap(), <span class="number">3</span>);
+<a href=#1619 id=1619 data-nosnippet>1619</a>        <span class="macro">assert_eq!</span>(std::fs::read(out.path().join(<span class="string">"f"</span>)).unwrap(), <span class="string">b"abc"</span>);
+<a href=#1620 id=1620 data-nosnippet>1620</a>    }
+<a href=#1621 id=1621 data-nosnippet>1621</a>
+<a href=#1622 id=1622 data-nosnippet>1622</a>    <span class="doccomment">/// A file of the slug that cannot be written is refused naming its path, and nothing is
+<a href=#1623 id=1623 data-nosnippet>1623</a>    /// placed beside what blocked it.
+<a href=#1624 id=1624 data-nosnippet>1624</a>    </span><span class="attr">#[test]
+<a href=#1625 id=1625 data-nosnippet>1625</a>    </span><span class="kw">fn </span>a_slug_file_that_cannot_be_placed_names_its_path() {
+<a href=#1626 id=1626 data-nosnippet>1626</a>        <span class="kw">let </span>dir = tempfile::tempdir().unwrap();
+<a href=#1627 id=1627 data-nosnippet>1627</a>        <span class="kw">let </span>blocker = dir.path().join(<span class="string">"a-file"</span>);
+<a href=#1628 id=1628 data-nosnippet>1628</a>        std::fs::write(<span class="kw-2">&amp;</span>blocker, <span class="string">b"x"</span>).unwrap();
+<a href=#1629 id=1629 data-nosnippet>1629</a>        <span class="kw">let </span>e = place(<span class="kw-2">&amp;</span>blocker, <span class="string">"sub/f"</span>, <span class="string">b"abc"</span>, Mode::File).unwrap_err();
+<a href=#1630 id=1630 data-nosnippet>1630</a>        <span class="macro">assert!</span>(
+<a href=#1631 id=1631 data-nosnippet>1631</a>            <span class="macro">matches!</span>(<span class="kw-2">&amp;</span>e, SlugError::Failed(m) <span class="kw">if </span>m.contains(<span class="string">"sub/f cannot be written"</span>)),
+<a href=#1632 id=1632 data-nosnippet>1632</a>            <span class="string">"{e}"
+<a href=#1633 id=1633 data-nosnippet>1633</a>        </span>);
+<a href=#1634 id=1634 data-nosnippet>1634</a>        std::fs::create_dir(dir.path().join(<span class="string">"a-directory"</span>)).unwrap();
+<a href=#1635 id=1635 data-nosnippet>1635</a>        <span class="kw">let </span>e = place(dir.path(), <span class="string">"a-directory"</span>, <span class="string">b"abc"</span>, Mode::File).unwrap_err();
+<a href=#1636 id=1636 data-nosnippet>1636</a>        <span class="macro">assert!</span>(
+<a href=#1637 id=1637 data-nosnippet>1637</a>            <span class="macro">matches!</span>(<span class="kw-2">&amp;</span>e, SlugError::Failed(m) <span class="kw">if </span>m.contains(<span class="string">"a-directory cannot be written"</span>)),
+<a href=#1638 id=1638 data-nosnippet>1638</a>            <span class="string">"{e}"
+<a href=#1639 id=1639 data-nosnippet>1639</a>        </span>);
+<a href=#1640 id=1640 data-nosnippet>1640</a>    }
+<a href=#1641 id=1641 data-nosnippet>1641</a>}
+</code></pre></div></section></main></body></html>

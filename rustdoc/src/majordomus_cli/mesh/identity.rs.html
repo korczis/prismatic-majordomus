@@ -191,312 +191,357 @@
 <a href=#191 id=191 data-nosnippet>191</a>        <span class="self">Self</span>::assemble(signing, file.display_name)
 <a href=#192 id=192 data-nosnippet>192</a>    }
 <a href=#193 id=193 data-nosnippet>193</a>
-<a href=#194 id=194 data-nosnippet>194</a>    <span class="doccomment">/// A throwaway identity that touches no disk: what the self-check and tests sign
-<a href=#195 id=195 data-nosnippet>195</a>    /// with. Never a node's real identity — nothing persists it.
-<a href=#196 id=196 data-nosnippet>196</a>    </span><span class="kw">pub fn </span>ephemeral() -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, MeshError&gt; {
-<a href=#197 id=197 data-nosnippet>197</a>        <span class="self">Self</span>::create()
-<a href=#198 id=198 data-nosnippet>198</a>    }
-<a href=#199 id=199 data-nosnippet>199</a>
-<a href=#200 id=200 data-nosnippet>200</a>    <span class="kw">fn </span>create() -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, MeshError&gt; {
-<a href=#201 id=201 data-nosnippet>201</a>        <span class="kw">let </span><span class="kw-2">mut </span>seed = [<span class="number">0u8</span>; <span class="number">32</span>];
-<a href=#202 id=202 data-nosnippet>202</a>        getrandom::getrandom(<span class="kw-2">&amp;mut </span>seed)
-<a href=#203 id=203 data-nosnippet>203</a>            .map_err(|e| MeshError::Identity(<span class="macro">format!</span>(<span class="string">"no OS entropy for a node key: {e}"</span>)))<span class="question-mark">?</span>;
-<a href=#204 id=204 data-nosnippet>204</a>        <span class="kw">let </span>signing = SigningKey::from_bytes(<span class="kw-2">&amp;</span>seed);
-<a href=#205 id=205 data-nosnippet>205</a>        <span class="self">Self</span>::assemble(signing, <span class="prelude-val">None</span>)
-<a href=#206 id=206 data-nosnippet>206</a>    }
-<a href=#207 id=207 data-nosnippet>207</a>
-<a href=#208 id=208 data-nosnippet>208</a>    <span class="kw">fn </span>assemble(signing: SigningKey, display_name: <span class="prelude-ty">Option</span>&lt;String&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, MeshError&gt; {
-<a href=#209 id=209 data-nosnippet>209</a>        <span class="kw">let </span>verifying = signing.verifying_key();
-<a href=#210 id=210 data-nosnippet>210</a>        <span class="kw">let </span>node_id = NodeId::of(<span class="kw-2">&amp;</span>verifying);
-<a href=#211 id=211 data-nosnippet>211</a>        <span class="kw">let </span>display_name =
-<a href=#212 id=212 data-nosnippet>212</a>            display_name.unwrap_or_else(|| node_id.as_str().chars().take(<span class="number">8</span>).collect());
-<a href=#213 id=213 data-nosnippet>213</a>        <span class="prelude-val">Ok</span>(NodeIdentity {
-<a href=#214 id=214 data-nosnippet>214</a>            public: PublicIdentity {
-<a href=#215 id=215 data-nosnippet>215</a>                node_id,
-<a href=#216 id=216 data-nosnippet>216</a>                public_key: hex(verifying.as_bytes()),
-<a href=#217 id=217 data-nosnippet>217</a>                display_name,
-<a href=#218 id=218 data-nosnippet>218</a>                instance_id: InstanceId::fresh()<span class="question-mark">?</span>,
-<a href=#219 id=219 data-nosnippet>219</a>            },
-<a href=#220 id=220 data-nosnippet>220</a>            signing,
-<a href=#221 id=221 data-nosnippet>221</a>        })
-<a href=#222 id=222 data-nosnippet>222</a>    }
-<a href=#223 id=223 data-nosnippet>223</a>
-<a href=#224 id=224 data-nosnippet>224</a>    <span class="kw">fn </span>persist(<span class="kw-2">&amp;</span><span class="self">self</span>, path: <span class="kw-2">&amp;</span>Path) -&gt; <span class="prelude-ty">Result</span>&lt;(), MeshError&gt; {
-<a href=#225 id=225 data-nosnippet>225</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(dir) = path.parent() {
-<a href=#226 id=226 data-nosnippet>226</a>            std::fs::create_dir_all(dir)
-<a href=#227 id=227 data-nosnippet>227</a>                .map_err(|e| MeshError::Identity(<span class="macro">format!</span>(<span class="string">"{}: {e}"</span>, dir.display())))<span class="question-mark">?</span>;
-<a href=#228 id=228 data-nosnippet>228</a>        }
-<a href=#229 id=229 data-nosnippet>229</a>        <span class="kw">let </span>file = IdentityFile {
-<a href=#230 id=230 data-nosnippet>230</a>            schema: SCHEMA.into(),
-<a href=#231 id=231 data-nosnippet>231</a>            secret_key: hex(<span class="kw-2">&amp;</span><span class="self">self</span>.signing.to_bytes()),
-<a href=#232 id=232 data-nosnippet>232</a>            display_name: <span class="prelude-val">Some</span>(<span class="self">self</span>.public.display_name.clone()),
-<a href=#233 id=233 data-nosnippet>233</a>            created_at: <span class="kw">crate</span>::peers::rfc3339(std::time::SystemTime::now()),
-<a href=#234 id=234 data-nosnippet>234</a>        };
-<a href=#235 id=235 data-nosnippet>235</a>        <span class="kw">let </span>text =
-<a href=#236 id=236 data-nosnippet>236</a>            serde_json::to_string_pretty(<span class="kw-2">&amp;</span>file).map_err(|e| MeshError::Identity(e.to_string()))<span class="question-mark">?</span>;
-<a href=#237 id=237 data-nosnippet>237</a>        write_private(path, <span class="kw-2">&amp;</span>text)
-<a href=#238 id=238 data-nosnippet>238</a>    }
-<a href=#239 id=239 data-nosnippet>239</a>
-<a href=#240 id=240 data-nosnippet>240</a>    <span class="doccomment">/// Sign a message with this node's key.
-<a href=#241 id=241 data-nosnippet>241</a>    </span><span class="kw">pub fn </span>sign(<span class="kw-2">&amp;</span><span class="self">self</span>, message: <span class="kw-2">&amp;</span>[u8]) -&gt; String {
-<a href=#242 id=242 data-nosnippet>242</a>        hex(<span class="kw-2">&amp;</span><span class="self">self</span>.signing.sign(message).to_bytes())
-<a href=#243 id=243 data-nosnippet>243</a>    }
-<a href=#244 id=244 data-nosnippet>244</a>}
-<a href=#245 id=245 data-nosnippet>245</a>
-<a href=#246 id=246 data-nosnippet>246</a><span class="doccomment">/// Verify `signature` (hex) over `message` against `public_key` (hex). False on any
-<a href=#247 id=247 data-nosnippet>247</a>/// malformed material: a verifier never panics on hostile input.
-<a href=#248 id=248 data-nosnippet>248</a>///
-<a href=#249 id=249 data-nosnippet>249</a>/// ```
-<a href=#250 id=250 data-nosnippet>250</a>/// use majordomus_cli::mesh::identity::verify;
-<a href=#251 id=251 data-nosnippet>251</a>/// assert!(!verify("zz", b"m", "zz"), "garbage material is false, not a panic");
-<a href=#252 id=252 data-nosnippet>252</a>/// ```
-<a href=#253 id=253 data-nosnippet>253</a></span><span class="kw">pub fn </span>verify(public_key: <span class="kw-2">&amp;</span>str, message: <span class="kw-2">&amp;</span>[u8], signature: <span class="kw-2">&amp;</span>str) -&gt; bool {
-<a href=#254 id=254 data-nosnippet>254</a>    <span class="kw">let </span><span class="prelude-val">Some</span>(key) = unhex(public_key).and_then(|b| &lt;[u8; <span class="number">32</span>]&gt;::try_from(b).ok()) <span class="kw">else </span>{
-<a href=#255 id=255 data-nosnippet>255</a>        <span class="kw">return </span><span class="bool-val">false</span>;
-<a href=#256 id=256 data-nosnippet>256</a>    };
-<a href=#257 id=257 data-nosnippet>257</a>    <span class="kw">let </span><span class="prelude-val">Ok</span>(key) = VerifyingKey::from_bytes(<span class="kw-2">&amp;</span>key) <span class="kw">else </span>{
-<a href=#258 id=258 data-nosnippet>258</a>        <span class="kw">return </span><span class="bool-val">false</span>;
-<a href=#259 id=259 data-nosnippet>259</a>    };
-<a href=#260 id=260 data-nosnippet>260</a>    <span class="kw">let </span><span class="prelude-val">Some</span>(sig) = unhex(signature).and_then(|b| &lt;[u8; <span class="number">64</span>]&gt;::try_from(b).ok()) <span class="kw">else </span>{
-<a href=#261 id=261 data-nosnippet>261</a>        <span class="kw">return </span><span class="bool-val">false</span>;
-<a href=#262 id=262 data-nosnippet>262</a>    };
-<a href=#263 id=263 data-nosnippet>263</a>    key.verify(message, <span class="kw-2">&amp;</span>Signature::from_bytes(<span class="kw-2">&amp;</span>sig)).is_ok()
-<a href=#264 id=264 data-nosnippet>264</a>}
+<a href=#194 id=194 data-nosnippet>194</a>    <span class="doccomment">/// The identity whose 32-byte secret seed is `seed_hex`, held in memory and written
+<a href=#195 id=195 data-nosnippet>195</a>    /// nowhere: how a hosted hub keeps one key across restarts on a platform whose disk is
+<a href=#196 id=196 data-nosnippet>196</a>    /// gone at every boot (ADR 0220 decision 2). `source` names where the seed came from —
+<a href=#197 id=197 data-nosnippet>197</a>    /// an environment variable's name, never its value — and every refusal says only that.
+<a href=#198 id=198 data-nosnippet>198</a>    ///
+<a href=#199 id=199 data-nosnippet>199</a>    /// ```
+<a href=#200 id=200 data-nosnippet>200</a>    /// use majordomus_cli::mesh::NodeIdentity;
+<a href=#201 id=201 data-nosnippet>201</a>    /// let seed = "11".repeat(32);
+<a href=#202 id=202 data-nosnippet>202</a>    /// let a = NodeIdentity::from_seed_hex(&amp;seed, "SEED").unwrap();
+<a href=#203 id=203 data-nosnippet>203</a>    /// let b = NodeIdentity::from_seed_hex(&amp;format!(" {seed}\n"), "SEED").unwrap();
+<a href=#204 id=204 data-nosnippet>204</a>    /// assert_eq!(a.public.node_id, b.public.node_id, "one seed, one node, every boot");
+<a href=#205 id=205 data-nosnippet>205</a>    /// let short = NodeIdentity::from_seed_hex("abcd", "SEED").err().unwrap().to_string();
+<a href=#206 id=206 data-nosnippet>206</a>    /// assert!(short.contains("SEED") &amp;&amp; !short.contains("abcd"), "{short}");
+<a href=#207 id=207 data-nosnippet>207</a>    /// assert!(NodeIdentity::from_seed_hex(&amp;"zz".repeat(32), "SEED").is_err());
+<a href=#208 id=208 data-nosnippet>208</a>    /// ```
+<a href=#209 id=209 data-nosnippet>209</a>    </span><span class="kw">pub fn </span>from_seed_hex(seed_hex: <span class="kw-2">&amp;</span>str, source: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, MeshError&gt; {
+<a href=#210 id=210 data-nosnippet>210</a>        <span class="kw">let </span>seed = unhex(seed_hex.trim())
+<a href=#211 id=211 data-nosnippet>211</a>            .ok_or_else(|| MeshError::Identity(<span class="macro">format!</span>(<span class="string">"{source}: the node seed is not hex"</span>)))<span class="question-mark">?</span>;
+<a href=#212 id=212 data-nosnippet>212</a>        <span class="kw">let </span>seed: [u8; <span class="number">32</span>] = seed.try_into().map_err(|<span class="kw">_</span>| {
+<a href=#213 id=213 data-nosnippet>213</a>            MeshError::Identity(<span class="macro">format!</span>(
+<a href=#214 id=214 data-nosnippet>214</a>                <span class="string">"{source}: the node seed is not 32 bytes (64 hex characters)"
+<a href=#215 id=215 data-nosnippet>215</a>            </span>))
+<a href=#216 id=216 data-nosnippet>216</a>        })<span class="question-mark">?</span>;
+<a href=#217 id=217 data-nosnippet>217</a>        <span class="self">Self</span>::assemble(SigningKey::from_bytes(<span class="kw-2">&amp;</span>seed), <span class="prelude-val">None</span>)
+<a href=#218 id=218 data-nosnippet>218</a>    }
+<a href=#219 id=219 data-nosnippet>219</a>
+<a href=#220 id=220 data-nosnippet>220</a>    <span class="doccomment">/// A throwaway identity that touches no disk: what the self-check and tests sign
+<a href=#221 id=221 data-nosnippet>221</a>    /// with. Never a node's real identity — nothing persists it.
+<a href=#222 id=222 data-nosnippet>222</a>    </span><span class="kw">pub fn </span>ephemeral() -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, MeshError&gt; {
+<a href=#223 id=223 data-nosnippet>223</a>        <span class="self">Self</span>::create()
+<a href=#224 id=224 data-nosnippet>224</a>    }
+<a href=#225 id=225 data-nosnippet>225</a>
+<a href=#226 id=226 data-nosnippet>226</a>    <span class="kw">fn </span>create() -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, MeshError&gt; {
+<a href=#227 id=227 data-nosnippet>227</a>        <span class="kw">let </span><span class="kw-2">mut </span>seed = [<span class="number">0u8</span>; <span class="number">32</span>];
+<a href=#228 id=228 data-nosnippet>228</a>        getrandom::getrandom(<span class="kw-2">&amp;mut </span>seed)
+<a href=#229 id=229 data-nosnippet>229</a>            .map_err(|e| MeshError::Identity(<span class="macro">format!</span>(<span class="string">"no OS entropy for a node key: {e}"</span>)))<span class="question-mark">?</span>;
+<a href=#230 id=230 data-nosnippet>230</a>        <span class="kw">let </span>signing = SigningKey::from_bytes(<span class="kw-2">&amp;</span>seed);
+<a href=#231 id=231 data-nosnippet>231</a>        <span class="self">Self</span>::assemble(signing, <span class="prelude-val">None</span>)
+<a href=#232 id=232 data-nosnippet>232</a>    }
+<a href=#233 id=233 data-nosnippet>233</a>
+<a href=#234 id=234 data-nosnippet>234</a>    <span class="kw">fn </span>assemble(signing: SigningKey, display_name: <span class="prelude-ty">Option</span>&lt;String&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, MeshError&gt; {
+<a href=#235 id=235 data-nosnippet>235</a>        <span class="kw">let </span>verifying = signing.verifying_key();
+<a href=#236 id=236 data-nosnippet>236</a>        <span class="kw">let </span>node_id = NodeId::of(<span class="kw-2">&amp;</span>verifying);
+<a href=#237 id=237 data-nosnippet>237</a>        <span class="kw">let </span>display_name =
+<a href=#238 id=238 data-nosnippet>238</a>            display_name.unwrap_or_else(|| node_id.as_str().chars().take(<span class="number">8</span>).collect());
+<a href=#239 id=239 data-nosnippet>239</a>        <span class="prelude-val">Ok</span>(NodeIdentity {
+<a href=#240 id=240 data-nosnippet>240</a>            public: PublicIdentity {
+<a href=#241 id=241 data-nosnippet>241</a>                node_id,
+<a href=#242 id=242 data-nosnippet>242</a>                public_key: hex(verifying.as_bytes()),
+<a href=#243 id=243 data-nosnippet>243</a>                display_name,
+<a href=#244 id=244 data-nosnippet>244</a>                instance_id: InstanceId::fresh()<span class="question-mark">?</span>,
+<a href=#245 id=245 data-nosnippet>245</a>            },
+<a href=#246 id=246 data-nosnippet>246</a>            signing,
+<a href=#247 id=247 data-nosnippet>247</a>        })
+<a href=#248 id=248 data-nosnippet>248</a>    }
+<a href=#249 id=249 data-nosnippet>249</a>
+<a href=#250 id=250 data-nosnippet>250</a>    <span class="kw">fn </span>persist(<span class="kw-2">&amp;</span><span class="self">self</span>, path: <span class="kw-2">&amp;</span>Path) -&gt; <span class="prelude-ty">Result</span>&lt;(), MeshError&gt; {
+<a href=#251 id=251 data-nosnippet>251</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(dir) = path.parent() {
+<a href=#252 id=252 data-nosnippet>252</a>            std::fs::create_dir_all(dir)
+<a href=#253 id=253 data-nosnippet>253</a>                .map_err(|e| MeshError::Identity(<span class="macro">format!</span>(<span class="string">"{}: {e}"</span>, dir.display())))<span class="question-mark">?</span>;
+<a href=#254 id=254 data-nosnippet>254</a>        }
+<a href=#255 id=255 data-nosnippet>255</a>        <span class="kw">let </span>file = IdentityFile {
+<a href=#256 id=256 data-nosnippet>256</a>            schema: SCHEMA.into(),
+<a href=#257 id=257 data-nosnippet>257</a>            secret_key: hex(<span class="kw-2">&amp;</span><span class="self">self</span>.signing.to_bytes()),
+<a href=#258 id=258 data-nosnippet>258</a>            display_name: <span class="prelude-val">Some</span>(<span class="self">self</span>.public.display_name.clone()),
+<a href=#259 id=259 data-nosnippet>259</a>            created_at: <span class="kw">crate</span>::peers::rfc3339(std::time::SystemTime::now()),
+<a href=#260 id=260 data-nosnippet>260</a>        };
+<a href=#261 id=261 data-nosnippet>261</a>        <span class="kw">let </span>text =
+<a href=#262 id=262 data-nosnippet>262</a>            serde_json::to_string_pretty(<span class="kw-2">&amp;</span>file).map_err(|e| MeshError::Identity(e.to_string()))<span class="question-mark">?</span>;
+<a href=#263 id=263 data-nosnippet>263</a>        write_private(path, <span class="kw-2">&amp;</span>text)
+<a href=#264 id=264 data-nosnippet>264</a>    }
 <a href=#265 id=265 data-nosnippet>265</a>
-<a href=#266 id=266 data-nosnippet>266</a><span class="doccomment">/// The node id a public key (hex) yields, when the key parses.
-<a href=#267 id=267 data-nosnippet>267</a></span><span class="kw">pub fn </span>node_id_of_key(public_key: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;NodeId&gt; {
-<a href=#268 id=268 data-nosnippet>268</a>    <span class="kw">let </span>key = unhex(public_key).and_then(|b| &lt;[u8; <span class="number">32</span>]&gt;::try_from(b).ok())<span class="question-mark">?</span>;
-<a href=#269 id=269 data-nosnippet>269</a>    <span class="kw">let </span>key = VerifyingKey::from_bytes(<span class="kw-2">&amp;</span>key).ok()<span class="question-mark">?</span>;
-<a href=#270 id=270 data-nosnippet>270</a>    <span class="prelude-val">Some</span>(NodeId::of(<span class="kw-2">&amp;</span>key))
-<a href=#271 id=271 data-nosnippet>271</a>}
-<a href=#272 id=272 data-nosnippet>272</a>
-<a href=#273 id=273 data-nosnippet>273</a><span class="kw">fn </span>hex(bytes: <span class="kw-2">&amp;</span>[u8]) -&gt; String {
-<a href=#274 id=274 data-nosnippet>274</a>    <span class="kw">let </span><span class="kw-2">mut </span>out = String::with_capacity(bytes.len() * <span class="number">2</span>);
-<a href=#275 id=275 data-nosnippet>275</a>    <span class="kw">for </span>byte <span class="kw">in </span>bytes {
-<a href=#276 id=276 data-nosnippet>276</a>        out.push_str(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{byte:02x}"</span>));
-<a href=#277 id=277 data-nosnippet>277</a>    }
-<a href=#278 id=278 data-nosnippet>278</a>    out
-<a href=#279 id=279 data-nosnippet>279</a>}
-<a href=#280 id=280 data-nosnippet>280</a>
-<a href=#281 id=281 data-nosnippet>281</a><span class="kw">fn </span>unhex(text: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;Vec&lt;u8&gt;&gt; {
-<a href=#282 id=282 data-nosnippet>282</a>    <span class="kw">if </span>text.len() % <span class="number">2 </span>!= <span class="number">0 </span>{
-<a href=#283 id=283 data-nosnippet>283</a>        <span class="kw">return </span><span class="prelude-val">None</span>;
-<a href=#284 id=284 data-nosnippet>284</a>    }
-<a href=#285 id=285 data-nosnippet>285</a>    (<span class="number">0</span>..text.len())
-<a href=#286 id=286 data-nosnippet>286</a>        .step_by(<span class="number">2</span>)
-<a href=#287 id=287 data-nosnippet>287</a>        .map(|i| u8::from_str_radix(text.get(i..i + <span class="number">2</span>)<span class="question-mark">?</span>, <span class="number">16</span>).ok())
-<a href=#288 id=288 data-nosnippet>288</a>        .collect()
-<a href=#289 id=289 data-nosnippet>289</a>}
-<a href=#290 id=290 data-nosnippet>290</a>
-<a href=#291 id=291 data-nosnippet>291</a><span class="doccomment">/// Give the identity at `path` a display label, keeping its key: the node id, and every
-<a href=#292 id=292 data-nosnippet>292</a>/// signature it ever made, are unchanged. The label is presentation — what a person reads
-<a href=#293 id=293 data-nosnippet>293</a>/// as `macbook-pro` in a list of devices — and is refused unless it is a short name of
-<a href=#294 id=294 data-nosnippet>294</a>/// letters, digits, `.`, `_` and `-`, because it is printed wherever this node is named.
-<a href=#295 id=295 data-nosnippet>295</a>///
-<a href=#296 id=296 data-nosnippet>296</a>/// ```
-<a href=#297 id=297 data-nosnippet>297</a>/// use majordomus_cli::mesh::identity::{relabel, NodeIdentity};
-<a href=#298 id=298 data-nosnippet>298</a>/// let dir = tempfile::tempdir().unwrap();
-<a href=#299 id=299 data-nosnippet>299</a>/// let path = dir.path().join("node.json");
-<a href=#300 id=300 data-nosnippet>300</a>/// let before = NodeIdentity::load_or_create(&amp;path).unwrap();
-<a href=#301 id=301 data-nosnippet>301</a>/// let after = relabel(&amp;path, "mac-mini").unwrap();
-<a href=#302 id=302 data-nosnippet>302</a>/// assert_eq!(after.public.display_name, "mac-mini");
-<a href=#303 id=303 data-nosnippet>303</a>/// assert_eq!(after.public.node_id, before.public.node_id, "the key is the identity");
-<a href=#304 id=304 data-nosnippet>304</a>/// assert!(relabel(&amp;path, "two words").is_err());
-<a href=#305 id=305 data-nosnippet>305</a>/// ```
-<a href=#306 id=306 data-nosnippet>306</a></span><span class="kw">pub fn </span>relabel(path: <span class="kw-2">&amp;</span>Path, label: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;NodeIdentity, MeshError&gt; {
-<a href=#307 id=307 data-nosnippet>307</a>    <span class="kw">let </span>valid = !label.is_empty()
-<a href=#308 id=308 data-nosnippet>308</a>        &amp;&amp; label.len() &lt;= <span class="number">64
-<a href=#309 id=309 data-nosnippet>309</a>        </span>&amp;&amp; label
-<a href=#310 id=310 data-nosnippet>310</a>            .chars()
-<a href=#311 id=311 data-nosnippet>311</a>            .all(|c| c.is_ascii_alphanumeric() || <span class="macro">matches!</span>(c, <span class="string">'.' </span>| <span class="string">'_' </span>| <span class="string">'-'</span>));
-<a href=#312 id=312 data-nosnippet>312</a>    <span class="kw">if </span>!valid {
-<a href=#313 id=313 data-nosnippet>313</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(MeshError::Identity(<span class="macro">format!</span>(
-<a href=#314 id=314 data-nosnippet>314</a>            <span class="string">"`{label}` is not a device label: 1 to 64 letters, digits, `.`, `_` or `-`"
-<a href=#315 id=315 data-nosnippet>315</a>        </span>)));
-<a href=#316 id=316 data-nosnippet>316</a>    }
-<a href=#317 id=317 data-nosnippet>317</a>    <span class="comment">// a file that is not an identity is refused here, before anything is written
-<a href=#318 id=318 data-nosnippet>318</a>    </span><span class="kw">let </span>identity = NodeIdentity::load_or_create(path)<span class="question-mark">?</span>;
-<a href=#319 id=319 data-nosnippet>319</a>    <span class="comment">// the moment the key was made stays what the file says it was
-<a href=#320 id=320 data-nosnippet>320</a>    </span><span class="kw">let </span>created_at = std::fs::read_to_string(path)
-<a href=#321 id=321 data-nosnippet>321</a>        .ok()
-<a href=#322 id=322 data-nosnippet>322</a>        .and_then(|text| serde_json::from_str::&lt;IdentityFile&gt;(<span class="kw-2">&amp;</span>text).ok())
-<a href=#323 id=323 data-nosnippet>323</a>        .map(|file| file.created_at)
-<a href=#324 id=324 data-nosnippet>324</a>        .unwrap_or_default();
-<a href=#325 id=325 data-nosnippet>325</a>    <span class="kw">let </span>file = IdentityFile {
-<a href=#326 id=326 data-nosnippet>326</a>        schema: SCHEMA.into(),
-<a href=#327 id=327 data-nosnippet>327</a>        secret_key: hex(<span class="kw-2">&amp;</span>identity.signing.to_bytes()),
-<a href=#328 id=328 data-nosnippet>328</a>        display_name: <span class="prelude-val">Some</span>(label.to_string()),
-<a href=#329 id=329 data-nosnippet>329</a>        created_at,
-<a href=#330 id=330 data-nosnippet>330</a>    };
-<a href=#331 id=331 data-nosnippet>331</a>    <span class="kw">let </span>text = serde_json::to_string_pretty(<span class="kw-2">&amp;</span>file).expect(<span class="string">"an identity file is plain data"</span>);
-<a href=#332 id=332 data-nosnippet>332</a>    write_private(path, <span class="kw-2">&amp;</span>text)<span class="question-mark">?</span>;
-<a href=#333 id=333 data-nosnippet>333</a>    NodeIdentity::load(path)
-<a href=#334 id=334 data-nosnippet>334</a>}
-<a href=#335 id=335 data-nosnippet>335</a>
-<a href=#336 id=336 data-nosnippet>336</a><span class="doccomment">/// Write `text` to `path` with owner-only permissions, atomically enough for one user's
-<a href=#337 id=337 data-nosnippet>337</a>/// state directory: a temp file beside the target, then a rename.
-<a href=#338 id=338 data-nosnippet>338</a>///
-<a href=#339 id=339 data-nosnippet>339</a>/// The temp file is created owner-only. It was once written at the umask's mode and narrowed
-<a href=#340 id=340 data-nosnippet>340</a>/// afterwards, with the narrowing's failure ignored, so a secret key stood readable by the
-<a href=#341 id=341 data-nosnippet>341</a>/// group for as long as the write took, and for good when the narrowing failed. A stale temp
-<a href=#342 id=342 data-nosnippet>342</a>/// file is removed first, because one that already exists keeps the mode it was created with.
-<a href=#343 id=343 data-nosnippet>343</a></span><span class="kw">fn </span>write_private(path: <span class="kw-2">&amp;</span>Path, text: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;(), MeshError&gt; {
-<a href=#344 id=344 data-nosnippet>344</a>    <span class="kw">use </span>std::io::Write;
-<a href=#345 id=345 data-nosnippet>345</a>    <span class="kw">let </span>tmp = path.with_extension(<span class="string">"tmp"</span>);
-<a href=#346 id=346 data-nosnippet>346</a>    <span class="kw">let </span>fail = |p: <span class="kw-2">&amp;</span>Path, e: std::io::Error| MeshError::Identity(<span class="macro">format!</span>(<span class="string">"{}: {e}"</span>, p.display()));
-<a href=#347 id=347 data-nosnippet>347</a>    <span class="kw">match </span>std::fs::remove_file(<span class="kw-2">&amp;</span>tmp) {
-<a href=#348 id=348 data-nosnippet>348</a>        <span class="prelude-val">Ok</span>(()) =&gt; {}
-<a href=#349 id=349 data-nosnippet>349</a>        <span class="prelude-val">Err</span>(e) <span class="kw">if </span>e.kind() == std::io::ErrorKind::NotFound =&gt; {}
-<a href=#350 id=350 data-nosnippet>350</a>        <span class="prelude-val">Err</span>(e) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(fail(<span class="kw-2">&amp;</span>tmp, e)),
-<a href=#351 id=351 data-nosnippet>351</a>    }
-<a href=#352 id=352 data-nosnippet>352</a>    <span class="kw">let </span><span class="kw-2">mut </span>open = std::fs::OpenOptions::new();
-<a href=#353 id=353 data-nosnippet>353</a>    open.write(<span class="bool-val">true</span>).create_new(<span class="bool-val">true</span>);
-<a href=#354 id=354 data-nosnippet>354</a>    <span class="attr">#[cfg(unix)]
-<a href=#355 id=355 data-nosnippet>355</a>    </span>{
-<a href=#356 id=356 data-nosnippet>356</a>        <span class="kw">use </span>std::os::unix::fs::OpenOptionsExt;
-<a href=#357 id=357 data-nosnippet>357</a>        open.mode(<span class="number">0o600</span>);
-<a href=#358 id=358 data-nosnippet>358</a>    }
-<a href=#359 id=359 data-nosnippet>359</a>    <span class="kw">let </span><span class="kw-2">mut </span>file = open.open(<span class="kw-2">&amp;</span>tmp).map_err(|e| fail(<span class="kw-2">&amp;</span>tmp, e))<span class="question-mark">?</span>;
-<a href=#360 id=360 data-nosnippet>360</a>    file.write_all(text.as_bytes())
-<a href=#361 id=361 data-nosnippet>361</a>        .and_then(|()| file.sync_all())
-<a href=#362 id=362 data-nosnippet>362</a>        .map_err(|e| fail(<span class="kw-2">&amp;</span>tmp, e))<span class="question-mark">?</span>;
-<a href=#363 id=363 data-nosnippet>363</a>    drop(file);
-<a href=#364 id=364 data-nosnippet>364</a>    std::fs::rename(<span class="kw-2">&amp;</span>tmp, path).map_err(|e| fail(path, e))
-<a href=#365 id=365 data-nosnippet>365</a>}
-<a href=#366 id=366 data-nosnippet>366</a>
-<a href=#367 id=367 data-nosnippet>367</a><span class="attr">#[cfg(test)]
-<a href=#368 id=368 data-nosnippet>368</a></span><span class="kw">mod </span>tests {
-<a href=#369 id=369 data-nosnippet>369</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
-<a href=#370 id=370 data-nosnippet>370</a>
-<a href=#371 id=371 data-nosnippet>371</a>    <span class="doccomment">/// A node key is owner-only from the moment it exists, whatever the umask, and a stale
-<a href=#372 id=372 data-nosnippet>372</a>    /// temp file left by an interrupted write does not lend it its mode.
-<a href=#373 id=373 data-nosnippet>373</a>    </span><span class="attr">#[cfg(unix)]
-<a href=#374 id=374 data-nosnippet>374</a>    #[test]
-<a href=#375 id=375 data-nosnippet>375</a>    </span><span class="kw">fn </span>a_node_key_is_never_readable_by_others() {
-<a href=#376 id=376 data-nosnippet>376</a>        <span class="kw">use </span>std::os::unix::fs::PermissionsExt;
-<a href=#377 id=377 data-nosnippet>377</a>        <span class="kw">let </span>dir = tempfile::tempdir().unwrap();
-<a href=#378 id=378 data-nosnippet>378</a>        <span class="kw">let </span>path = dir.path().join(<span class="string">"node.json"</span>);
-<a href=#379 id=379 data-nosnippet>379</a>        <span class="kw">let </span>tmp = path.with_extension(<span class="string">"tmp"</span>);
-<a href=#380 id=380 data-nosnippet>380</a>        std::fs::write(<span class="kw-2">&amp;</span>tmp, <span class="string">"stale"</span>).unwrap();
-<a href=#381 id=381 data-nosnippet>381</a>        std::fs::set_permissions(<span class="kw-2">&amp;</span>tmp, std::fs::Permissions::from_mode(<span class="number">0o644</span>)).unwrap();
-<a href=#382 id=382 data-nosnippet>382</a>        NodeIdentity::load_or_create(<span class="kw-2">&amp;</span>path).unwrap();
-<a href=#383 id=383 data-nosnippet>383</a>        <span class="kw">let </span>mode = std::fs::metadata(<span class="kw-2">&amp;</span>path).unwrap().permissions().mode() &amp; <span class="number">0o777</span>;
-<a href=#384 id=384 data-nosnippet>384</a>        <span class="macro">assert_eq!</span>(mode, <span class="number">0o600</span>, <span class="string">"the key file is {mode:o}"</span>);
-<a href=#385 id=385 data-nosnippet>385</a>        <span class="macro">assert!</span>(
-<a href=#386 id=386 data-nosnippet>386</a>            !tmp.exists(),
-<a href=#387 id=387 data-nosnippet>387</a>            <span class="string">"the temp file is renamed, not left beside the key"
-<a href=#388 id=388 data-nosnippet>388</a>        </span>);
-<a href=#389 id=389 data-nosnippet>389</a>        <span class="comment">// rewritten with a label, it stays owner-only
-<a href=#390 id=390 data-nosnippet>390</a>        </span>write_private(<span class="kw-2">&amp;</span>path, <span class="string">"{}"</span>).unwrap();
-<a href=#391 id=391 data-nosnippet>391</a>        <span class="kw">let </span>mode = std::fs::metadata(<span class="kw-2">&amp;</span>path).unwrap().permissions().mode() &amp; <span class="number">0o777</span>;
-<a href=#392 id=392 data-nosnippet>392</a>        <span class="macro">assert_eq!</span>(mode, <span class="number">0o600</span>, <span class="string">"the rewritten key file is {mode:o}"</span>);
-<a href=#393 id=393 data-nosnippet>393</a>    }
-<a href=#394 id=394 data-nosnippet>394</a>
-<a href=#395 id=395 data-nosnippet>395</a>    <span class="attr">#[test]
-<a href=#396 id=396 data-nosnippet>396</a>    </span><span class="kw">fn </span>a_label_is_a_short_name_and_changes_nothing_but_itself() {
-<a href=#397 id=397 data-nosnippet>397</a>        <span class="kw">let </span>dir = tempfile::tempdir().unwrap();
-<a href=#398 id=398 data-nosnippet>398</a>        <span class="kw">let </span>path = dir.path().join(<span class="string">"node.json"</span>);
-<a href=#399 id=399 data-nosnippet>399</a>        <span class="kw">let </span>before = NodeIdentity::load_or_create(<span class="kw-2">&amp;</span>path).unwrap();
-<a href=#400 id=400 data-nosnippet>400</a>        <span class="kw">let </span>created = |p: <span class="kw-2">&amp;</span>Path| {
-<a href=#401 id=401 data-nosnippet>401</a>            <span class="kw">let </span>text = std::fs::read_to_string(p).unwrap();
-<a href=#402 id=402 data-nosnippet>402</a>            serde_json::from_str::&lt;IdentityFile&gt;(<span class="kw-2">&amp;</span>text)
-<a href=#403 id=403 data-nosnippet>403</a>                .unwrap()
-<a href=#404 id=404 data-nosnippet>404</a>                .created_at
-<a href=#405 id=405 data-nosnippet>405</a>        };
-<a href=#406 id=406 data-nosnippet>406</a>        <span class="kw">let </span>made = created(<span class="kw-2">&amp;</span>path);
-<a href=#407 id=407 data-nosnippet>407</a>        <span class="kw">let </span>after = relabel(<span class="kw-2">&amp;</span>path, <span class="string">"mac-mini_2.local"</span>).unwrap();
-<a href=#408 id=408 data-nosnippet>408</a>        <span class="macro">assert_eq!</span>(after.public.display_name, <span class="string">"mac-mini_2.local"</span>);
-<a href=#409 id=409 data-nosnippet>409</a>        <span class="macro">assert_eq!</span>(after.public.public_key, before.public.public_key);
-<a href=#410 id=410 data-nosnippet>410</a>        <span class="macro">assert_eq!</span>(created(<span class="kw-2">&amp;</span>path), made, <span class="string">"the key is as old as it was"</span>);
-<a href=#411 id=411 data-nosnippet>411</a>
-<a href=#412 id=412 data-nosnippet>412</a>        <span class="kw">for </span>label <span class="kw">in </span>[<span class="string">""</span>, <span class="string">"two words"</span>, <span class="string">"semi;colon"</span>, <span class="kw-2">&amp;</span><span class="string">"x"</span>.repeat(<span class="number">65</span>)] {
-<a href=#413 id=413 data-nosnippet>413</a>            <span class="kw">let </span>err = relabel(<span class="kw-2">&amp;</span>path, label).unwrap_err().to_string();
-<a href=#414 id=414 data-nosnippet>414</a>            <span class="macro">assert!</span>(err.contains(<span class="string">"is not a device label"</span>), <span class="string">"{label}: {err}"</span>);
-<a href=#415 id=415 data-nosnippet>415</a>        }
-<a href=#416 id=416 data-nosnippet>416</a>        <span class="comment">// an absent identity is made, already labelled
-<a href=#417 id=417 data-nosnippet>417</a>        </span><span class="kw">let </span>fresh = dir.path().join(<span class="string">"deeper/node.json"</span>);
-<a href=#418 id=418 data-nosnippet>418</a>        <span class="macro">assert_eq!</span>(relabel(<span class="kw-2">&amp;</span>fresh, <span class="string">"new"</span>).unwrap().public.display_name, <span class="string">"new"</span>);
+<a href=#266 id=266 data-nosnippet>266</a>    <span class="doccomment">/// Sign a message with this node's key.
+<a href=#267 id=267 data-nosnippet>267</a>    </span><span class="kw">pub fn </span>sign(<span class="kw-2">&amp;</span><span class="self">self</span>, message: <span class="kw-2">&amp;</span>[u8]) -&gt; String {
+<a href=#268 id=268 data-nosnippet>268</a>        hex(<span class="kw-2">&amp;</span><span class="self">self</span>.signing.sign(message).to_bytes())
+<a href=#269 id=269 data-nosnippet>269</a>    }
+<a href=#270 id=270 data-nosnippet>270</a>}
+<a href=#271 id=271 data-nosnippet>271</a>
+<a href=#272 id=272 data-nosnippet>272</a><span class="doccomment">/// Verify `signature` (hex) over `message` against `public_key` (hex). False on any
+<a href=#273 id=273 data-nosnippet>273</a>/// malformed material: a verifier never panics on hostile input.
+<a href=#274 id=274 data-nosnippet>274</a>///
+<a href=#275 id=275 data-nosnippet>275</a>/// ```
+<a href=#276 id=276 data-nosnippet>276</a>/// use majordomus_cli::mesh::identity::verify;
+<a href=#277 id=277 data-nosnippet>277</a>/// assert!(!verify("zz", b"m", "zz"), "garbage material is false, not a panic");
+<a href=#278 id=278 data-nosnippet>278</a>/// ```
+<a href=#279 id=279 data-nosnippet>279</a></span><span class="kw">pub fn </span>verify(public_key: <span class="kw-2">&amp;</span>str, message: <span class="kw-2">&amp;</span>[u8], signature: <span class="kw-2">&amp;</span>str) -&gt; bool {
+<a href=#280 id=280 data-nosnippet>280</a>    <span class="kw">let </span><span class="prelude-val">Some</span>(key) = unhex(public_key).and_then(|b| &lt;[u8; <span class="number">32</span>]&gt;::try_from(b).ok()) <span class="kw">else </span>{
+<a href=#281 id=281 data-nosnippet>281</a>        <span class="kw">return </span><span class="bool-val">false</span>;
+<a href=#282 id=282 data-nosnippet>282</a>    };
+<a href=#283 id=283 data-nosnippet>283</a>    <span class="kw">let </span><span class="prelude-val">Ok</span>(key) = VerifyingKey::from_bytes(<span class="kw-2">&amp;</span>key) <span class="kw">else </span>{
+<a href=#284 id=284 data-nosnippet>284</a>        <span class="kw">return </span><span class="bool-val">false</span>;
+<a href=#285 id=285 data-nosnippet>285</a>    };
+<a href=#286 id=286 data-nosnippet>286</a>    <span class="kw">let </span><span class="prelude-val">Some</span>(sig) = unhex(signature).and_then(|b| &lt;[u8; <span class="number">64</span>]&gt;::try_from(b).ok()) <span class="kw">else </span>{
+<a href=#287 id=287 data-nosnippet>287</a>        <span class="kw">return </span><span class="bool-val">false</span>;
+<a href=#288 id=288 data-nosnippet>288</a>    };
+<a href=#289 id=289 data-nosnippet>289</a>    key.verify(message, <span class="kw-2">&amp;</span>Signature::from_bytes(<span class="kw-2">&amp;</span>sig)).is_ok()
+<a href=#290 id=290 data-nosnippet>290</a>}
+<a href=#291 id=291 data-nosnippet>291</a>
+<a href=#292 id=292 data-nosnippet>292</a><span class="doccomment">/// The node id a public key (hex) yields, when the key parses.
+<a href=#293 id=293 data-nosnippet>293</a></span><span class="kw">pub fn </span>node_id_of_key(public_key: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;NodeId&gt; {
+<a href=#294 id=294 data-nosnippet>294</a>    <span class="kw">let </span>key = unhex(public_key).and_then(|b| &lt;[u8; <span class="number">32</span>]&gt;::try_from(b).ok())<span class="question-mark">?</span>;
+<a href=#295 id=295 data-nosnippet>295</a>    <span class="kw">let </span>key = VerifyingKey::from_bytes(<span class="kw-2">&amp;</span>key).ok()<span class="question-mark">?</span>;
+<a href=#296 id=296 data-nosnippet>296</a>    <span class="prelude-val">Some</span>(NodeId::of(<span class="kw-2">&amp;</span>key))
+<a href=#297 id=297 data-nosnippet>297</a>}
+<a href=#298 id=298 data-nosnippet>298</a>
+<a href=#299 id=299 data-nosnippet>299</a><span class="kw">fn </span>hex(bytes: <span class="kw-2">&amp;</span>[u8]) -&gt; String {
+<a href=#300 id=300 data-nosnippet>300</a>    <span class="kw">let </span><span class="kw-2">mut </span>out = String::with_capacity(bytes.len() * <span class="number">2</span>);
+<a href=#301 id=301 data-nosnippet>301</a>    <span class="kw">for </span>byte <span class="kw">in </span>bytes {
+<a href=#302 id=302 data-nosnippet>302</a>        out.push_str(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{byte:02x}"</span>));
+<a href=#303 id=303 data-nosnippet>303</a>    }
+<a href=#304 id=304 data-nosnippet>304</a>    out
+<a href=#305 id=305 data-nosnippet>305</a>}
+<a href=#306 id=306 data-nosnippet>306</a>
+<a href=#307 id=307 data-nosnippet>307</a><span class="kw">fn </span>unhex(text: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;Vec&lt;u8&gt;&gt; {
+<a href=#308 id=308 data-nosnippet>308</a>    <span class="kw">if </span>text.len() % <span class="number">2 </span>!= <span class="number">0 </span>{
+<a href=#309 id=309 data-nosnippet>309</a>        <span class="kw">return </span><span class="prelude-val">None</span>;
+<a href=#310 id=310 data-nosnippet>310</a>    }
+<a href=#311 id=311 data-nosnippet>311</a>    (<span class="number">0</span>..text.len())
+<a href=#312 id=312 data-nosnippet>312</a>        .step_by(<span class="number">2</span>)
+<a href=#313 id=313 data-nosnippet>313</a>        .map(|i| u8::from_str_radix(text.get(i..i + <span class="number">2</span>)<span class="question-mark">?</span>, <span class="number">16</span>).ok())
+<a href=#314 id=314 data-nosnippet>314</a>        .collect()
+<a href=#315 id=315 data-nosnippet>315</a>}
+<a href=#316 id=316 data-nosnippet>316</a>
+<a href=#317 id=317 data-nosnippet>317</a><span class="doccomment">/// Give the identity at `path` a display label, keeping its key: the node id, and every
+<a href=#318 id=318 data-nosnippet>318</a>/// signature it ever made, are unchanged. The label is presentation — what a person reads
+<a href=#319 id=319 data-nosnippet>319</a>/// as `macbook-pro` in a list of devices — and is refused unless it is a short name of
+<a href=#320 id=320 data-nosnippet>320</a>/// letters, digits, `.`, `_` and `-`, because it is printed wherever this node is named.
+<a href=#321 id=321 data-nosnippet>321</a>///
+<a href=#322 id=322 data-nosnippet>322</a>/// ```
+<a href=#323 id=323 data-nosnippet>323</a>/// use majordomus_cli::mesh::identity::{relabel, NodeIdentity};
+<a href=#324 id=324 data-nosnippet>324</a>/// let dir = tempfile::tempdir().unwrap();
+<a href=#325 id=325 data-nosnippet>325</a>/// let path = dir.path().join("node.json");
+<a href=#326 id=326 data-nosnippet>326</a>/// let before = NodeIdentity::load_or_create(&amp;path).unwrap();
+<a href=#327 id=327 data-nosnippet>327</a>/// let after = relabel(&amp;path, "mac-mini").unwrap();
+<a href=#328 id=328 data-nosnippet>328</a>/// assert_eq!(after.public.display_name, "mac-mini");
+<a href=#329 id=329 data-nosnippet>329</a>/// assert_eq!(after.public.node_id, before.public.node_id, "the key is the identity");
+<a href=#330 id=330 data-nosnippet>330</a>/// assert!(relabel(&amp;path, "two words").is_err());
+<a href=#331 id=331 data-nosnippet>331</a>/// ```
+<a href=#332 id=332 data-nosnippet>332</a></span><span class="kw">pub fn </span>relabel(path: <span class="kw-2">&amp;</span>Path, label: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;NodeIdentity, MeshError&gt; {
+<a href=#333 id=333 data-nosnippet>333</a>    <span class="kw">let </span>valid = !label.is_empty()
+<a href=#334 id=334 data-nosnippet>334</a>        &amp;&amp; label.len() &lt;= <span class="number">64
+<a href=#335 id=335 data-nosnippet>335</a>        </span>&amp;&amp; label
+<a href=#336 id=336 data-nosnippet>336</a>            .chars()
+<a href=#337 id=337 data-nosnippet>337</a>            .all(|c| c.is_ascii_alphanumeric() || <span class="macro">matches!</span>(c, <span class="string">'.' </span>| <span class="string">'_' </span>| <span class="string">'-'</span>));
+<a href=#338 id=338 data-nosnippet>338</a>    <span class="kw">if </span>!valid {
+<a href=#339 id=339 data-nosnippet>339</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(MeshError::Identity(<span class="macro">format!</span>(
+<a href=#340 id=340 data-nosnippet>340</a>            <span class="string">"`{label}` is not a device label: 1 to 64 letters, digits, `.`, `_` or `-`"
+<a href=#341 id=341 data-nosnippet>341</a>        </span>)));
+<a href=#342 id=342 data-nosnippet>342</a>    }
+<a href=#343 id=343 data-nosnippet>343</a>    <span class="comment">// a file that is not an identity is refused here, before anything is written
+<a href=#344 id=344 data-nosnippet>344</a>    </span><span class="kw">let </span>identity = NodeIdentity::load_or_create(path)<span class="question-mark">?</span>;
+<a href=#345 id=345 data-nosnippet>345</a>    <span class="comment">// the moment the key was made stays what the file says it was
+<a href=#346 id=346 data-nosnippet>346</a>    </span><span class="kw">let </span>created_at = std::fs::read_to_string(path)
+<a href=#347 id=347 data-nosnippet>347</a>        .ok()
+<a href=#348 id=348 data-nosnippet>348</a>        .and_then(|text| serde_json::from_str::&lt;IdentityFile&gt;(<span class="kw-2">&amp;</span>text).ok())
+<a href=#349 id=349 data-nosnippet>349</a>        .map(|file| file.created_at)
+<a href=#350 id=350 data-nosnippet>350</a>        .unwrap_or_default();
+<a href=#351 id=351 data-nosnippet>351</a>    <span class="kw">let </span>file = IdentityFile {
+<a href=#352 id=352 data-nosnippet>352</a>        schema: SCHEMA.into(),
+<a href=#353 id=353 data-nosnippet>353</a>        secret_key: hex(<span class="kw-2">&amp;</span>identity.signing.to_bytes()),
+<a href=#354 id=354 data-nosnippet>354</a>        display_name: <span class="prelude-val">Some</span>(label.to_string()),
+<a href=#355 id=355 data-nosnippet>355</a>        created_at,
+<a href=#356 id=356 data-nosnippet>356</a>    };
+<a href=#357 id=357 data-nosnippet>357</a>    <span class="kw">let </span>text = serde_json::to_string_pretty(<span class="kw-2">&amp;</span>file).expect(<span class="string">"an identity file is plain data"</span>);
+<a href=#358 id=358 data-nosnippet>358</a>    write_private(path, <span class="kw-2">&amp;</span>text)<span class="question-mark">?</span>;
+<a href=#359 id=359 data-nosnippet>359</a>    NodeIdentity::load(path)
+<a href=#360 id=360 data-nosnippet>360</a>}
+<a href=#361 id=361 data-nosnippet>361</a>
+<a href=#362 id=362 data-nosnippet>362</a><span class="doccomment">/// Write `text` to `path` with owner-only permissions, atomically enough for one user's
+<a href=#363 id=363 data-nosnippet>363</a>/// state directory: a temp file beside the target, then a rename.
+<a href=#364 id=364 data-nosnippet>364</a>///
+<a href=#365 id=365 data-nosnippet>365</a>/// The temp file is created owner-only. It was once written at the umask's mode and narrowed
+<a href=#366 id=366 data-nosnippet>366</a>/// afterwards, with the narrowing's failure ignored, so a secret key stood readable by the
+<a href=#367 id=367 data-nosnippet>367</a>/// group for as long as the write took, and for good when the narrowing failed. A stale temp
+<a href=#368 id=368 data-nosnippet>368</a>/// file is removed first, because one that already exists keeps the mode it was created with.
+<a href=#369 id=369 data-nosnippet>369</a></span><span class="kw">fn </span>write_private(path: <span class="kw-2">&amp;</span>Path, text: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;(), MeshError&gt; {
+<a href=#370 id=370 data-nosnippet>370</a>    <span class="kw">use </span>std::io::Write;
+<a href=#371 id=371 data-nosnippet>371</a>    <span class="kw">let </span>tmp = path.with_extension(<span class="string">"tmp"</span>);
+<a href=#372 id=372 data-nosnippet>372</a>    <span class="kw">let </span>fail = |p: <span class="kw-2">&amp;</span>Path, e: std::io::Error| MeshError::Identity(<span class="macro">format!</span>(<span class="string">"{}: {e}"</span>, p.display()));
+<a href=#373 id=373 data-nosnippet>373</a>    <span class="kw">match </span>std::fs::remove_file(<span class="kw-2">&amp;</span>tmp) {
+<a href=#374 id=374 data-nosnippet>374</a>        <span class="prelude-val">Ok</span>(()) =&gt; {}
+<a href=#375 id=375 data-nosnippet>375</a>        <span class="prelude-val">Err</span>(e) <span class="kw">if </span>e.kind() == std::io::ErrorKind::NotFound =&gt; {}
+<a href=#376 id=376 data-nosnippet>376</a>        <span class="prelude-val">Err</span>(e) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(fail(<span class="kw-2">&amp;</span>tmp, e)),
+<a href=#377 id=377 data-nosnippet>377</a>    }
+<a href=#378 id=378 data-nosnippet>378</a>    <span class="kw">let </span><span class="kw-2">mut </span>open = std::fs::OpenOptions::new();
+<a href=#379 id=379 data-nosnippet>379</a>    open.write(<span class="bool-val">true</span>).create_new(<span class="bool-val">true</span>);
+<a href=#380 id=380 data-nosnippet>380</a>    <span class="attr">#[cfg(unix)]
+<a href=#381 id=381 data-nosnippet>381</a>    </span>{
+<a href=#382 id=382 data-nosnippet>382</a>        <span class="kw">use </span>std::os::unix::fs::OpenOptionsExt;
+<a href=#383 id=383 data-nosnippet>383</a>        open.mode(<span class="number">0o600</span>);
+<a href=#384 id=384 data-nosnippet>384</a>    }
+<a href=#385 id=385 data-nosnippet>385</a>    <span class="kw">let </span><span class="kw-2">mut </span>file = open.open(<span class="kw-2">&amp;</span>tmp).map_err(|e| fail(<span class="kw-2">&amp;</span>tmp, e))<span class="question-mark">?</span>;
+<a href=#386 id=386 data-nosnippet>386</a>    file.write_all(text.as_bytes())
+<a href=#387 id=387 data-nosnippet>387</a>        .and_then(|()| file.sync_all())
+<a href=#388 id=388 data-nosnippet>388</a>        .map_err(|e| fail(<span class="kw-2">&amp;</span>tmp, e))<span class="question-mark">?</span>;
+<a href=#389 id=389 data-nosnippet>389</a>    drop(file);
+<a href=#390 id=390 data-nosnippet>390</a>    std::fs::rename(<span class="kw-2">&amp;</span>tmp, path).map_err(|e| fail(path, e))
+<a href=#391 id=391 data-nosnippet>391</a>}
+<a href=#392 id=392 data-nosnippet>392</a>
+<a href=#393 id=393 data-nosnippet>393</a><span class="attr">#[cfg(test)]
+<a href=#394 id=394 data-nosnippet>394</a></span><span class="kw">mod </span>tests {
+<a href=#395 id=395 data-nosnippet>395</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#396 id=396 data-nosnippet>396</a>
+<a href=#397 id=397 data-nosnippet>397</a>    <span class="doccomment">/// A node key is owner-only from the moment it exists, whatever the umask, and a stale
+<a href=#398 id=398 data-nosnippet>398</a>    /// temp file left by an interrupted write does not lend it its mode.
+<a href=#399 id=399 data-nosnippet>399</a>    </span><span class="attr">#[cfg(unix)]
+<a href=#400 id=400 data-nosnippet>400</a>    #[test]
+<a href=#401 id=401 data-nosnippet>401</a>    </span><span class="kw">fn </span>a_node_key_is_never_readable_by_others() {
+<a href=#402 id=402 data-nosnippet>402</a>        <span class="kw">use </span>std::os::unix::fs::PermissionsExt;
+<a href=#403 id=403 data-nosnippet>403</a>        <span class="kw">let </span>dir = tempfile::tempdir().unwrap();
+<a href=#404 id=404 data-nosnippet>404</a>        <span class="kw">let </span>path = dir.path().join(<span class="string">"node.json"</span>);
+<a href=#405 id=405 data-nosnippet>405</a>        <span class="kw">let </span>tmp = path.with_extension(<span class="string">"tmp"</span>);
+<a href=#406 id=406 data-nosnippet>406</a>        std::fs::write(<span class="kw-2">&amp;</span>tmp, <span class="string">"stale"</span>).unwrap();
+<a href=#407 id=407 data-nosnippet>407</a>        std::fs::set_permissions(<span class="kw-2">&amp;</span>tmp, std::fs::Permissions::from_mode(<span class="number">0o644</span>)).unwrap();
+<a href=#408 id=408 data-nosnippet>408</a>        NodeIdentity::load_or_create(<span class="kw-2">&amp;</span>path).unwrap();
+<a href=#409 id=409 data-nosnippet>409</a>        <span class="kw">let </span>mode = std::fs::metadata(<span class="kw-2">&amp;</span>path).unwrap().permissions().mode() &amp; <span class="number">0o777</span>;
+<a href=#410 id=410 data-nosnippet>410</a>        <span class="macro">assert_eq!</span>(mode, <span class="number">0o600</span>, <span class="string">"the key file is {mode:o}"</span>);
+<a href=#411 id=411 data-nosnippet>411</a>        <span class="macro">assert!</span>(
+<a href=#412 id=412 data-nosnippet>412</a>            !tmp.exists(),
+<a href=#413 id=413 data-nosnippet>413</a>            <span class="string">"the temp file is renamed, not left beside the key"
+<a href=#414 id=414 data-nosnippet>414</a>        </span>);
+<a href=#415 id=415 data-nosnippet>415</a>        <span class="comment">// rewritten with a label, it stays owner-only
+<a href=#416 id=416 data-nosnippet>416</a>        </span>write_private(<span class="kw-2">&amp;</span>path, <span class="string">"{}"</span>).unwrap();
+<a href=#417 id=417 data-nosnippet>417</a>        <span class="kw">let </span>mode = std::fs::metadata(<span class="kw-2">&amp;</span>path).unwrap().permissions().mode() &amp; <span class="number">0o777</span>;
+<a href=#418 id=418 data-nosnippet>418</a>        <span class="macro">assert_eq!</span>(mode, <span class="number">0o600</span>, <span class="string">"the rewritten key file is {mode:o}"</span>);
 <a href=#419 id=419 data-nosnippet>419</a>    }
 <a href=#420 id=420 data-nosnippet>420</a>
 <a href=#421 id=421 data-nosnippet>421</a>    <span class="attr">#[test]
-<a href=#422 id=422 data-nosnippet>422</a>    </span><span class="kw">fn </span>a_file_that_is_not_an_identity_is_never_relabelled_into_one() {
+<a href=#422 id=422 data-nosnippet>422</a>    </span><span class="kw">fn </span>a_label_is_a_short_name_and_changes_nothing_but_itself() {
 <a href=#423 id=423 data-nosnippet>423</a>        <span class="kw">let </span>dir = tempfile::tempdir().unwrap();
 <a href=#424 id=424 data-nosnippet>424</a>        <span class="kw">let </span>path = dir.path().join(<span class="string">"node.json"</span>);
-<a href=#425 id=425 data-nosnippet>425</a>        std::fs::write(<span class="kw-2">&amp;</span>path, <span class="string">"not an identity"</span>).unwrap();
-<a href=#426 id=426 data-nosnippet>426</a>        <span class="macro">assert!</span>(relabel(<span class="kw-2">&amp;</span>path, <span class="string">"mac"</span>).is_err());
-<a href=#427 id=427 data-nosnippet>427</a>        <span class="macro">assert_eq!</span>(std::fs::read_to_string(<span class="kw-2">&amp;</span>path).unwrap(), <span class="string">"not an identity"</span>);
-<a href=#428 id=428 data-nosnippet>428</a>
-<a href=#429 id=429 data-nosnippet>429</a>        <span class="comment">// the label cannot be written: the temporary file's place is taken
-<a href=#430 id=430 data-nosnippet>430</a>        </span><span class="kw">let </span>path = dir.path().join(<span class="string">"other.json"</span>);
-<a href=#431 id=431 data-nosnippet>431</a>        NodeIdentity::load_or_create(<span class="kw-2">&amp;</span>path).unwrap();
-<a href=#432 id=432 data-nosnippet>432</a>        std::fs::create_dir(path.with_extension(<span class="string">"tmp"</span>)).unwrap();
-<a href=#433 id=433 data-nosnippet>433</a>        <span class="macro">assert!</span>(relabel(<span class="kw-2">&amp;</span>path, <span class="string">"mac"</span>).is_err());
-<a href=#434 id=434 data-nosnippet>434</a>    }
-<a href=#435 id=435 data-nosnippet>435</a>
-<a href=#436 id=436 data-nosnippet>436</a>    <span class="attr">#[test]
-<a href=#437 id=437 data-nosnippet>437</a>    </span><span class="kw">fn </span>an_identity_is_created_once_and_loaded_stable() {
-<a href=#438 id=438 data-nosnippet>438</a>        <span class="kw">let </span>dir = tempfile::tempdir().unwrap();
-<a href=#439 id=439 data-nosnippet>439</a>        <span class="kw">let </span>path = dir.path().join(<span class="string">"node.json"</span>);
-<a href=#440 id=440 data-nosnippet>440</a>        <span class="kw">let </span>first = NodeIdentity::load_or_create(<span class="kw-2">&amp;</span>path).unwrap();
-<a href=#441 id=441 data-nosnippet>441</a>        <span class="kw">let </span>second = NodeIdentity::load_or_create(<span class="kw-2">&amp;</span>path).unwrap();
-<a href=#442 id=442 data-nosnippet>442</a>        <span class="macro">assert_eq!</span>(
-<a href=#443 id=443 data-nosnippet>443</a>            first.public.node_id, second.public.node_id,
-<a href=#444 id=444 data-nosnippet>444</a>            <span class="string">"the node id survives a reload"
-<a href=#445 id=445 data-nosnippet>445</a>        </span>);
-<a href=#446 id=446 data-nosnippet>446</a>        <span class="macro">assert_ne!</span>(
-<a href=#447 id=447 data-nosnippet>447</a>            first.public.instance_id, second.public.instance_id,
-<a href=#448 id=448 data-nosnippet>448</a>            <span class="string">"every run is a new instance"
-<a href=#449 id=449 data-nosnippet>449</a>        </span>);
-<a href=#450 id=450 data-nosnippet>450</a>    }
-<a href=#451 id=451 data-nosnippet>451</a>
-<a href=#452 id=452 data-nosnippet>452</a>    <span class="attr">#[test]
-<a href=#453 id=453 data-nosnippet>453</a>    </span><span class="kw">fn </span>a_signature_verifies_and_a_tampered_message_does_not() {
-<a href=#454 id=454 data-nosnippet>454</a>        <span class="kw">let </span>dir = tempfile::tempdir().unwrap();
-<a href=#455 id=455 data-nosnippet>455</a>        <span class="kw">let </span>identity = NodeIdentity::load_or_create(<span class="kw-2">&amp;</span>dir.path().join(<span class="string">"node.json"</span>)).unwrap();
-<a href=#456 id=456 data-nosnippet>456</a>        <span class="kw">let </span>sig = identity.sign(<span class="string">b"hello mesh"</span>);
-<a href=#457 id=457 data-nosnippet>457</a>        <span class="macro">assert!</span>(verify(<span class="kw-2">&amp;</span>identity.public.public_key, <span class="string">b"hello mesh"</span>, <span class="kw-2">&amp;</span>sig));
-<a href=#458 id=458 data-nosnippet>458</a>        <span class="macro">assert!</span>(!verify(<span class="kw-2">&amp;</span>identity.public.public_key, <span class="string">b"hello mess"</span>, <span class="kw-2">&amp;</span>sig));
-<a href=#459 id=459 data-nosnippet>459</a>        <span class="macro">assert!</span>(
-<a href=#460 id=460 data-nosnippet>460</a>            !verify(<span class="string">"zz"</span>, <span class="string">b"hello mesh"</span>, <span class="kw-2">&amp;</span>sig),
-<a href=#461 id=461 data-nosnippet>461</a>            <span class="string">"malformed key material is false, not a panic"
-<a href=#462 id=462 data-nosnippet>462</a>        </span>);
-<a href=#463 id=463 data-nosnippet>463</a>        <span class="macro">assert!</span>(!verify(<span class="kw-2">&amp;</span>identity.public.public_key, <span class="string">b"hello mesh"</span>, <span class="string">"zz"</span>));
-<a href=#464 id=464 data-nosnippet>464</a>    }
-<a href=#465 id=465 data-nosnippet>465</a>
-<a href=#466 id=466 data-nosnippet>466</a>    <span class="attr">#[test]
-<a href=#467 id=467 data-nosnippet>467</a>    </span><span class="kw">fn </span>the_node_id_is_the_digest_of_the_key() {
-<a href=#468 id=468 data-nosnippet>468</a>        <span class="kw">let </span>dir = tempfile::tempdir().unwrap();
-<a href=#469 id=469 data-nosnippet>469</a>        <span class="kw">let </span>identity = NodeIdentity::load_or_create(<span class="kw-2">&amp;</span>dir.path().join(<span class="string">"node.json"</span>)).unwrap();
-<a href=#470 id=470 data-nosnippet>470</a>        <span class="macro">assert_eq!</span>(
-<a href=#471 id=471 data-nosnippet>471</a>            node_id_of_key(<span class="kw-2">&amp;</span>identity.public.public_key),
-<a href=#472 id=472 data-nosnippet>472</a>            <span class="prelude-val">Some</span>(identity.public.node_id.clone())
-<a href=#473 id=473 data-nosnippet>473</a>        );
-<a href=#474 id=474 data-nosnippet>474</a>        <span class="macro">assert_eq!</span>(identity.public.node_id.as_str().len(), <span class="number">32</span>);
-<a href=#475 id=475 data-nosnippet>475</a>    }
-<a href=#476 id=476 data-nosnippet>476</a>
-<a href=#477 id=477 data-nosnippet>477</a>    <span class="attr">#[test]
-<a href=#478 id=478 data-nosnippet>478</a>    </span><span class="kw">fn </span>a_malformed_identity_file_is_an_error_not_a_replacement() {
-<a href=#479 id=479 data-nosnippet>479</a>        <span class="kw">let </span>dir = tempfile::tempdir().unwrap();
-<a href=#480 id=480 data-nosnippet>480</a>        <span class="kw">let </span>path = dir.path().join(<span class="string">"node.json"</span>);
-<a href=#481 id=481 data-nosnippet>481</a>        std::fs::write(<span class="kw-2">&amp;</span>path, <span class="string">"not json"</span>).unwrap();
-<a href=#482 id=482 data-nosnippet>482</a>        <span class="macro">assert!</span>(NodeIdentity::load_or_create(<span class="kw-2">&amp;</span>path).is_err());
-<a href=#483 id=483 data-nosnippet>483</a>        <span class="macro">assert_eq!</span>(
-<a href=#484 id=484 data-nosnippet>484</a>            std::fs::read_to_string(<span class="kw-2">&amp;</span>path).unwrap(),
-<a href=#485 id=485 data-nosnippet>485</a>            <span class="string">"not json"</span>,
-<a href=#486 id=486 data-nosnippet>486</a>            <span class="string">"the file is untouched"
-<a href=#487 id=487 data-nosnippet>487</a>        </span>);
-<a href=#488 id=488 data-nosnippet>488</a>    }
-<a href=#489 id=489 data-nosnippet>489</a>
-<a href=#490 id=490 data-nosnippet>490</a>    <span class="attr">#[test]
-<a href=#491 id=491 data-nosnippet>491</a>    </span><span class="kw">fn </span>debug_shows_no_secret() {
-<a href=#492 id=492 data-nosnippet>492</a>        <span class="kw">let </span>dir = tempfile::tempdir().unwrap();
-<a href=#493 id=493 data-nosnippet>493</a>        <span class="kw">let </span>identity = NodeIdentity::load_or_create(<span class="kw-2">&amp;</span>dir.path().join(<span class="string">"node.json"</span>)).unwrap();
-<a href=#494 id=494 data-nosnippet>494</a>        <span class="kw">let </span>rendered = <span class="macro">format!</span>(<span class="string">"{identity:?}"</span>);
-<a href=#495 id=495 data-nosnippet>495</a>        <span class="kw">let </span>secret = hex(<span class="kw-2">&amp;</span>identity.signing.to_bytes());
-<a href=#496 id=496 data-nosnippet>496</a>        <span class="macro">assert!</span>(
-<a href=#497 id=497 data-nosnippet>497</a>            !rendered.contains(<span class="kw-2">&amp;</span>secret),
-<a href=#498 id=498 data-nosnippet>498</a>            <span class="string">"Debug must not leak the signing key"
-<a href=#499 id=499 data-nosnippet>499</a>        </span>);
-<a href=#500 id=500 data-nosnippet>500</a>    }
-<a href=#501 id=501 data-nosnippet>501</a>}
+<a href=#425 id=425 data-nosnippet>425</a>        <span class="kw">let </span>before = NodeIdentity::load_or_create(<span class="kw-2">&amp;</span>path).unwrap();
+<a href=#426 id=426 data-nosnippet>426</a>        <span class="kw">let </span>created = |p: <span class="kw-2">&amp;</span>Path| {
+<a href=#427 id=427 data-nosnippet>427</a>            <span class="kw">let </span>text = std::fs::read_to_string(p).unwrap();
+<a href=#428 id=428 data-nosnippet>428</a>            serde_json::from_str::&lt;IdentityFile&gt;(<span class="kw-2">&amp;</span>text)
+<a href=#429 id=429 data-nosnippet>429</a>                .unwrap()
+<a href=#430 id=430 data-nosnippet>430</a>                .created_at
+<a href=#431 id=431 data-nosnippet>431</a>        };
+<a href=#432 id=432 data-nosnippet>432</a>        <span class="kw">let </span>made = created(<span class="kw-2">&amp;</span>path);
+<a href=#433 id=433 data-nosnippet>433</a>        <span class="kw">let </span>after = relabel(<span class="kw-2">&amp;</span>path, <span class="string">"mac-mini_2.local"</span>).unwrap();
+<a href=#434 id=434 data-nosnippet>434</a>        <span class="macro">assert_eq!</span>(after.public.display_name, <span class="string">"mac-mini_2.local"</span>);
+<a href=#435 id=435 data-nosnippet>435</a>        <span class="macro">assert_eq!</span>(after.public.public_key, before.public.public_key);
+<a href=#436 id=436 data-nosnippet>436</a>        <span class="macro">assert_eq!</span>(created(<span class="kw-2">&amp;</span>path), made, <span class="string">"the key is as old as it was"</span>);
+<a href=#437 id=437 data-nosnippet>437</a>
+<a href=#438 id=438 data-nosnippet>438</a>        <span class="kw">for </span>label <span class="kw">in </span>[<span class="string">""</span>, <span class="string">"two words"</span>, <span class="string">"semi;colon"</span>, <span class="kw-2">&amp;</span><span class="string">"x"</span>.repeat(<span class="number">65</span>)] {
+<a href=#439 id=439 data-nosnippet>439</a>            <span class="kw">let </span>err = relabel(<span class="kw-2">&amp;</span>path, label).unwrap_err().to_string();
+<a href=#440 id=440 data-nosnippet>440</a>            <span class="macro">assert!</span>(err.contains(<span class="string">"is not a device label"</span>), <span class="string">"{label}: {err}"</span>);
+<a href=#441 id=441 data-nosnippet>441</a>        }
+<a href=#442 id=442 data-nosnippet>442</a>        <span class="comment">// an absent identity is made, already labelled
+<a href=#443 id=443 data-nosnippet>443</a>        </span><span class="kw">let </span>fresh = dir.path().join(<span class="string">"deeper/node.json"</span>);
+<a href=#444 id=444 data-nosnippet>444</a>        <span class="macro">assert_eq!</span>(relabel(<span class="kw-2">&amp;</span>fresh, <span class="string">"new"</span>).unwrap().public.display_name, <span class="string">"new"</span>);
+<a href=#445 id=445 data-nosnippet>445</a>    }
+<a href=#446 id=446 data-nosnippet>446</a>
+<a href=#447 id=447 data-nosnippet>447</a>    <span class="attr">#[test]
+<a href=#448 id=448 data-nosnippet>448</a>    </span><span class="kw">fn </span>a_file_that_is_not_an_identity_is_never_relabelled_into_one() {
+<a href=#449 id=449 data-nosnippet>449</a>        <span class="kw">let </span>dir = tempfile::tempdir().unwrap();
+<a href=#450 id=450 data-nosnippet>450</a>        <span class="kw">let </span>path = dir.path().join(<span class="string">"node.json"</span>);
+<a href=#451 id=451 data-nosnippet>451</a>        std::fs::write(<span class="kw-2">&amp;</span>path, <span class="string">"not an identity"</span>).unwrap();
+<a href=#452 id=452 data-nosnippet>452</a>        <span class="macro">assert!</span>(relabel(<span class="kw-2">&amp;</span>path, <span class="string">"mac"</span>).is_err());
+<a href=#453 id=453 data-nosnippet>453</a>        <span class="macro">assert_eq!</span>(std::fs::read_to_string(<span class="kw-2">&amp;</span>path).unwrap(), <span class="string">"not an identity"</span>);
+<a href=#454 id=454 data-nosnippet>454</a>
+<a href=#455 id=455 data-nosnippet>455</a>        <span class="comment">// the label cannot be written: the temporary file's place is taken
+<a href=#456 id=456 data-nosnippet>456</a>        </span><span class="kw">let </span>path = dir.path().join(<span class="string">"other.json"</span>);
+<a href=#457 id=457 data-nosnippet>457</a>        NodeIdentity::load_or_create(<span class="kw-2">&amp;</span>path).unwrap();
+<a href=#458 id=458 data-nosnippet>458</a>        std::fs::create_dir(path.with_extension(<span class="string">"tmp"</span>)).unwrap();
+<a href=#459 id=459 data-nosnippet>459</a>        <span class="macro">assert!</span>(relabel(<span class="kw-2">&amp;</span>path, <span class="string">"mac"</span>).is_err());
+<a href=#460 id=460 data-nosnippet>460</a>    }
+<a href=#461 id=461 data-nosnippet>461</a>
+<a href=#462 id=462 data-nosnippet>462</a>    <span class="attr">#[test]
+<a href=#463 id=463 data-nosnippet>463</a>    </span><span class="kw">fn </span>an_identity_is_created_once_and_loaded_stable() {
+<a href=#464 id=464 data-nosnippet>464</a>        <span class="kw">let </span>dir = tempfile::tempdir().unwrap();
+<a href=#465 id=465 data-nosnippet>465</a>        <span class="kw">let </span>path = dir.path().join(<span class="string">"node.json"</span>);
+<a href=#466 id=466 data-nosnippet>466</a>        <span class="kw">let </span>first = NodeIdentity::load_or_create(<span class="kw-2">&amp;</span>path).unwrap();
+<a href=#467 id=467 data-nosnippet>467</a>        <span class="kw">let </span>second = NodeIdentity::load_or_create(<span class="kw-2">&amp;</span>path).unwrap();
+<a href=#468 id=468 data-nosnippet>468</a>        <span class="macro">assert_eq!</span>(
+<a href=#469 id=469 data-nosnippet>469</a>            first.public.node_id, second.public.node_id,
+<a href=#470 id=470 data-nosnippet>470</a>            <span class="string">"the node id survives a reload"
+<a href=#471 id=471 data-nosnippet>471</a>        </span>);
+<a href=#472 id=472 data-nosnippet>472</a>        <span class="macro">assert_ne!</span>(
+<a href=#473 id=473 data-nosnippet>473</a>            first.public.instance_id, second.public.instance_id,
+<a href=#474 id=474 data-nosnippet>474</a>            <span class="string">"every run is a new instance"
+<a href=#475 id=475 data-nosnippet>475</a>        </span>);
+<a href=#476 id=476 data-nosnippet>476</a>    }
+<a href=#477 id=477 data-nosnippet>477</a>
+<a href=#478 id=478 data-nosnippet>478</a>    <span class="attr">#[test]
+<a href=#479 id=479 data-nosnippet>479</a>    </span><span class="kw">fn </span>a_signature_verifies_and_a_tampered_message_does_not() {
+<a href=#480 id=480 data-nosnippet>480</a>        <span class="kw">let </span>dir = tempfile::tempdir().unwrap();
+<a href=#481 id=481 data-nosnippet>481</a>        <span class="kw">let </span>identity = NodeIdentity::load_or_create(<span class="kw-2">&amp;</span>dir.path().join(<span class="string">"node.json"</span>)).unwrap();
+<a href=#482 id=482 data-nosnippet>482</a>        <span class="kw">let </span>sig = identity.sign(<span class="string">b"hello mesh"</span>);
+<a href=#483 id=483 data-nosnippet>483</a>        <span class="macro">assert!</span>(verify(<span class="kw-2">&amp;</span>identity.public.public_key, <span class="string">b"hello mesh"</span>, <span class="kw-2">&amp;</span>sig));
+<a href=#484 id=484 data-nosnippet>484</a>        <span class="macro">assert!</span>(!verify(<span class="kw-2">&amp;</span>identity.public.public_key, <span class="string">b"hello mess"</span>, <span class="kw-2">&amp;</span>sig));
+<a href=#485 id=485 data-nosnippet>485</a>        <span class="macro">assert!</span>(
+<a href=#486 id=486 data-nosnippet>486</a>            !verify(<span class="string">"zz"</span>, <span class="string">b"hello mesh"</span>, <span class="kw-2">&amp;</span>sig),
+<a href=#487 id=487 data-nosnippet>487</a>            <span class="string">"malformed key material is false, not a panic"
+<a href=#488 id=488 data-nosnippet>488</a>        </span>);
+<a href=#489 id=489 data-nosnippet>489</a>        <span class="macro">assert!</span>(!verify(<span class="kw-2">&amp;</span>identity.public.public_key, <span class="string">b"hello mesh"</span>, <span class="string">"zz"</span>));
+<a href=#490 id=490 data-nosnippet>490</a>    }
+<a href=#491 id=491 data-nosnippet>491</a>
+<a href=#492 id=492 data-nosnippet>492</a>    <span class="attr">#[test]
+<a href=#493 id=493 data-nosnippet>493</a>    </span><span class="kw">fn </span>the_node_id_is_the_digest_of_the_key() {
+<a href=#494 id=494 data-nosnippet>494</a>        <span class="kw">let </span>dir = tempfile::tempdir().unwrap();
+<a href=#495 id=495 data-nosnippet>495</a>        <span class="kw">let </span>identity = NodeIdentity::load_or_create(<span class="kw-2">&amp;</span>dir.path().join(<span class="string">"node.json"</span>)).unwrap();
+<a href=#496 id=496 data-nosnippet>496</a>        <span class="macro">assert_eq!</span>(
+<a href=#497 id=497 data-nosnippet>497</a>            node_id_of_key(<span class="kw-2">&amp;</span>identity.public.public_key),
+<a href=#498 id=498 data-nosnippet>498</a>            <span class="prelude-val">Some</span>(identity.public.node_id.clone())
+<a href=#499 id=499 data-nosnippet>499</a>        );
+<a href=#500 id=500 data-nosnippet>500</a>        <span class="macro">assert_eq!</span>(identity.public.node_id.as_str().len(), <span class="number">32</span>);
+<a href=#501 id=501 data-nosnippet>501</a>    }
+<a href=#502 id=502 data-nosnippet>502</a>
+<a href=#503 id=503 data-nosnippet>503</a>    <span class="attr">#[test]
+<a href=#504 id=504 data-nosnippet>504</a>    </span><span class="kw">fn </span>a_malformed_identity_file_is_an_error_not_a_replacement() {
+<a href=#505 id=505 data-nosnippet>505</a>        <span class="kw">let </span>dir = tempfile::tempdir().unwrap();
+<a href=#506 id=506 data-nosnippet>506</a>        <span class="kw">let </span>path = dir.path().join(<span class="string">"node.json"</span>);
+<a href=#507 id=507 data-nosnippet>507</a>        std::fs::write(<span class="kw-2">&amp;</span>path, <span class="string">"not json"</span>).unwrap();
+<a href=#508 id=508 data-nosnippet>508</a>        <span class="macro">assert!</span>(NodeIdentity::load_or_create(<span class="kw-2">&amp;</span>path).is_err());
+<a href=#509 id=509 data-nosnippet>509</a>        <span class="macro">assert_eq!</span>(
+<a href=#510 id=510 data-nosnippet>510</a>            std::fs::read_to_string(<span class="kw-2">&amp;</span>path).unwrap(),
+<a href=#511 id=511 data-nosnippet>511</a>            <span class="string">"not json"</span>,
+<a href=#512 id=512 data-nosnippet>512</a>            <span class="string">"the file is untouched"
+<a href=#513 id=513 data-nosnippet>513</a>        </span>);
+<a href=#514 id=514 data-nosnippet>514</a>    }
+<a href=#515 id=515 data-nosnippet>515</a>
+<a href=#516 id=516 data-nosnippet>516</a>    <span class="attr">#[test]
+<a href=#517 id=517 data-nosnippet>517</a>    </span><span class="kw">fn </span>debug_shows_no_secret() {
+<a href=#518 id=518 data-nosnippet>518</a>        <span class="kw">let </span>dir = tempfile::tempdir().unwrap();
+<a href=#519 id=519 data-nosnippet>519</a>        <span class="kw">let </span>identity = NodeIdentity::load_or_create(<span class="kw-2">&amp;</span>dir.path().join(<span class="string">"node.json"</span>)).unwrap();
+<a href=#520 id=520 data-nosnippet>520</a>        <span class="kw">let </span>rendered = <span class="macro">format!</span>(<span class="string">"{identity:?}"</span>);
+<a href=#521 id=521 data-nosnippet>521</a>        <span class="kw">let </span>secret = hex(<span class="kw-2">&amp;</span>identity.signing.to_bytes());
+<a href=#522 id=522 data-nosnippet>522</a>        <span class="macro">assert!</span>(
+<a href=#523 id=523 data-nosnippet>523</a>            !rendered.contains(<span class="kw-2">&amp;</span>secret),
+<a href=#524 id=524 data-nosnippet>524</a>            <span class="string">"Debug must not leak the signing key"
+<a href=#525 id=525 data-nosnippet>525</a>        </span>);
+<a href=#526 id=526 data-nosnippet>526</a>    }
+<a href=#527 id=527 data-nosnippet>527</a>
+<a href=#528 id=528 data-nosnippet>528</a>    <span class="doccomment">/// A hosted hub's key is its seed: one seed is one node at every boot, whatever space
+<a href=#529 id=529 data-nosnippet>529</a>    /// surrounds it, and a seed that is not 32 bytes of hex is refused naming where it came
+<a href=#530 id=530 data-nosnippet>530</a>    /// from and never what it was.
+<a href=#531 id=531 data-nosnippet>531</a>    </span><span class="attr">#[test]
+<a href=#532 id=532 data-nosnippet>532</a>    </span><span class="kw">fn </span>a_seed_is_one_node_and_a_bad_seed_names_only_its_source() {
+<a href=#533 id=533 data-nosnippet>533</a>        <span class="kw">let </span>seed = <span class="string">"11"</span>.repeat(<span class="number">32</span>);
+<a href=#534 id=534 data-nosnippet>534</a>        <span class="kw">let </span>a = NodeIdentity::from_seed_hex(<span class="kw-2">&amp;</span>seed, <span class="string">"SEED"</span>).unwrap();
+<a href=#535 id=535 data-nosnippet>535</a>        <span class="kw">let </span>b = NodeIdentity::from_seed_hex(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">" {seed}\n"</span>), <span class="string">"SEED"</span>).unwrap();
+<a href=#536 id=536 data-nosnippet>536</a>        <span class="macro">assert_eq!</span>(a.public.node_id, b.public.node_id);
+<a href=#537 id=537 data-nosnippet>537</a>        <span class="kw">for </span>bad <span class="kw">in </span>[<span class="string">"abcd"</span>.to_string(), <span class="string">"zz"</span>.repeat(<span class="number">32</span>)] {
+<a href=#538 id=538 data-nosnippet>538</a>            <span class="kw">let </span>e = NodeIdentity::from_seed_hex(<span class="kw-2">&amp;</span>bad, <span class="string">"SEED"</span>)
+<a href=#539 id=539 data-nosnippet>539</a>                .err()
+<a href=#540 id=540 data-nosnippet>540</a>                .unwrap()
+<a href=#541 id=541 data-nosnippet>541</a>                .to_string();
+<a href=#542 id=542 data-nosnippet>542</a>            <span class="macro">assert!</span>(e.starts_with(<span class="string">"SEED: "</span>) || e.contains(<span class="string">"SEED: "</span>), <span class="string">"{e}"</span>);
+<a href=#543 id=543 data-nosnippet>543</a>            <span class="macro">assert!</span>(!e.contains(<span class="kw-2">&amp;</span>bad), <span class="string">"{e}"</span>);
+<a href=#544 id=544 data-nosnippet>544</a>        }
+<a href=#545 id=545 data-nosnippet>545</a>    }
+<a href=#546 id=546 data-nosnippet>546</a>}
 </code></pre></div></section></main></body></html>

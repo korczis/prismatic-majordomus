@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=4bfda3373904e33234f7">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=47ff294a79b4f781e87a">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 <script>(function(){try{var K="mj-lang",L=["en","cs"],S="en",B="https://majordomus.dev",d=document.documentElement,k;try{k=localStorage.getItem(K)}catch(e){}
@@ -172,12 +172,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 </div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="min-w-0">
-  <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--ready relative" data-status="ready"><span aria-hidden="true">○</span>PŘIPRAVENO</span>
+  <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--done relative" data-status="done"><span aria-hidden="true">✓</span>HOTOVO</span>
 <span class="text-sm text-body">vlna 0 · p1 · profil implementation · bezpečné paralelně</span></p>
   <p class="mt-3 text-sm text-body">Součást <a href="https://majordomus.dev/cs/plan/test-evidence/" class="text-fg-brand underline">test-evidence — Každé ověřitelné tvrzení a widget se na každém povrchu převádí na testovací důkaz vázaný na revizi</a>.</p>
-  <div class="mt-6 rounded-base border border-default bg-neutral-primary-soft p-4">
-    <p class="text-sm text-body">Připraveno. Všechny závislosti jsou hotové, takže <code class="font-mono text-heading">majordomus plan start I2845</code> bude přijato.</p>
-  </div>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Cíl</h2>
   <p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">`scripts/pages evidence` reads the nearest evidence artifact whose manifest names no absent report. A nearer artifact that lacks a runner&#39;s report, such as one from a run cancelled midway, is passed over and named for what it lacks. An incomplete run stands in only when none of the nearest five is complete, and then says so.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Proč</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">On 2026-10-20 the master validate of 82ac259d0ae was cancelled to free the one-at-a-time pool for the v1.0.0-alpha.1 release PR. Its evidence artifact still uploaded, naming the suite and coverage reports as absent, and it was the nearest ancestor of the next master, 9a5a9b77520. Two Pages deploys (39438897759, 39451372815) read its ledger and refused \&quot;215 claim(s) would be published as not run, over the baseline of 0\&quot;. Every one of those claims existed at the ledger&#39;s commit and would have been proven by the suite that never ran, so I2853&#39;s newer-than-the-ledger rule could not excuse them. The site stayed on 82ac259d0ae until master&#39;s own validate recorded complete evidence about two hours later. Found by 3e.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Aktuální stav</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">pages evidence takes the single nearest ancestor&#39;s evidence artifact whatever its manifest says is absent, and copies its ledger for the UI snapshot.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Cílový stav</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">pages evidence downloads the nearest artifacts in order, five at most, and stops at the first whose manifest names no absent report. That run is the publication&#39;s evidence and the source of the ledger. Every nearer incomplete run is named with the reports it lacks. With several --from directories the same rule applies in the order given.</p>
@@ -203,17 +200,22 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 <ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li class="font-mono text-heading break-words">an_incomplete_run_is_not_the_publications_evidence_case</li></ul>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Důkazy</h2>
-  <p class="mt-2 text-sm text-body">Nic nezaznamenáno. Za každým tokenem výše musí stát příkaz nebo artefakt, než lze tento úkol dokončit; vyprávění se odmítá.</p>
+  <div class="mt-4 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[34rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-soft text-xs uppercase tracking-wide text-body-subtle"><tr><th scope="col" class="px-4 py-2">pokrývá</th><th scope="col" class="px-4 py-2">typ</th><th scope="col" class="px-4 py-2">command</th><th scope="col" class="px-4 py-2">výsledek</th><th scope="col" class="px-4 py-2">u commitu</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top"><td class="px-4 py-2 font-mono text-xs text-heading">an_incomplete_run_is_not_the_publications_evidence_case</td><td class="px-4 py-2 font-mono text-xs text-body">ci</td><td class="px-4 py-2 font-mono text-xs text-body break-words">validate run 39645593645 (attempt 2) at master 97391192dbb: suite-shard (1) job 119428809643 ran bash test/run.sh --no-skips; case 3245_an_incomplete_run_is_not_the_publications_evidence ok</td><td class="px-4 py-2 text-body">success</td><td class="px-4 py-2 font-mono text-xs text-body-subtle">9739119</td></tr></tbody>
+    </table>
+  </div>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Časová osa</h2>
   <dl class="mt-3 grid max-w-3xl grid-cols-1 gap-3 sm:grid-cols-3">
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">zahájeno</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">ověřeno</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">dokončeno</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">zahájeno</dt><dd class="mt-1 font-mono text-sm text-heading break-words">2026-10-21T19:23:52Z</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">ověřeno</dt><dd class="mt-1 font-mono text-sm text-heading break-words">2026-10-21T19:24:42Z</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">dokončeno</dt><dd class="mt-1 font-mono text-sm text-heading break-words">2026-10-21T19:28:04Z</dd></div>
   </dl>
   <p class="mt-3 max-w-3xl text-sm text-body">Tato tři pole, důkazy výše a stav závislostí jsou vše, z čeho se stav skládá. Neexistuje žádné pole stavu, které by s nimi mohlo být v rozporu.</p>
 
-  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/76c578596631b290f9291691b388f359fbce97ae/.ai/repo/project/issues/I2845.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/issues/I2845.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show I2845</code>.</p>
+  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/2034d4a3f0b2f00ee0260f291330788448556b3b/.ai/repo/project/issues/I2845.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/issues/I2845.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show I2845</code>.</p>
 </div>
 
 </div>
@@ -263,9 +265,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/76c578596631b290f9291691b388f359fbce97ae/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/76c578596631b290f9291691b388f359fbce97ae/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/76c578596631b290f9291691b388f359fbce97ae/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/2034d4a3f0b2f00ee0260f291330788448556b3b/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/2034d4a3f0b2f00ee0260f291330788448556b3b/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/2034d4a3f0b2f00ee0260f291330788448556b3b/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -273,7 +275,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v1.0.0-alpha.5 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/76c578596631b290f9291691b388f359fbce97ae" class="font-mono underline">76c5785</a> · inputs <span class="font-mono">7f334698bba8</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v1.0.0-alpha.6 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/2034d4a3f0b2f00ee0260f291330788448556b3b" class="font-mono underline">2034d4a</a> · inputs <span class="font-mono">fe44c414f551</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

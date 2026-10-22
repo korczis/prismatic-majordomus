@@ -1074,7 +1074,7 @@
 <a href=#1074 id=1074 data-nosnippet>1074</a>}
 <a href=#1075 id=1075 data-nosnippet>1075</a>
 <a href=#1076 id=1076 data-nosnippet>1076</a><span class="doccomment">/// Every version tag this repository carries, newest last.
-<a href=#1077 id=1077 data-nosnippet>1077</a></span><span class="kw">fn </span>tags(root: <span class="kw-2">&amp;</span>Path) -&gt; Vec&lt;String&gt; {
+<a href=#1077 id=1077 data-nosnippet>1077</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>tags(root: <span class="kw-2">&amp;</span>Path) -&gt; Vec&lt;String&gt; {
 <a href=#1078 id=1078 data-nosnippet>1078</a>    <span class="kw">let </span>out = std::process::Command::new(<span class="string">"git"</span>)
 <a href=#1079 id=1079 data-nosnippet>1079</a>        .current_dir(root)
 <a href=#1080 id=1080 data-nosnippet>1080</a>        .args([<span class="string">"tag"</span>, <span class="string">"--list"</span>, <span class="string">"v[0-9]*"</span>])
