@@ -3,9 +3,9 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the product features of this repository's layer, resolved against the registry, the index, the catalogue and the topology; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "1.0.0-alpha.5"
+    "version": "1.0.0-alpha.6"
   },
-  "fingerprint": "003e1b6ce3864587b1ce29f4cd46630233e643747ffebd4ab6dc7ac5e7a95062",
+  "fingerprint": "de99b9d71351e990e07fe02ad58a2d30dcdae4004c6f3989ff2bb4931f10ee9c",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -3229,7 +3229,7 @@
         "use_cases": 10,
         "rules": 15,
         "enforced_rules": 14,
-        "capabilities": 137,
+        "capabilities": 139,
         "moments": 38
       },
       "evidence": {
@@ -7460,7 +7460,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 158
+          "objects": 160
         },
         {
           "name": "knowledge",
@@ -7741,11 +7741,11 @@
       "counts": {
         "capabilities": 5,
         "mcp_tools": 5,
-        "mcp_resources": 570,
+        "mcp_resources": 572,
         "http_routes": 5,
         "cli_paths": 3,
         "commands": 6,
-        "objects": 567,
+        "objects": 569,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -9942,6 +9942,14 @@
               "route": "GET /api/v1/changelog"
             },
             {
+              "id": "release.currency",
+              "title": "Whether the trunk's landed work is released",
+              "kind": "query",
+              "stability": "implemented",
+              "tool": "majordomus_release_currency",
+              "route": "GET /api/v1/release/currency"
+            },
+            {
               "id": "release.next",
               "title": "The version a landing allocates, and why",
               "kind": "query",
@@ -10288,10 +10296,10 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 61,
-        "mcp_tools": 54,
+        "capabilities": 62,
+        "mcp_tools": 55,
         "mcp_resources": 9,
-        "http_routes": 58,
+        "http_routes": 59,
         "cli_paths": 19,
         "commands": 0,
         "objects": 1,
@@ -10483,6 +10491,14 @@
               "tool": "majordomus_changelog",
               "resource": "majordomus://changelog",
               "route": "GET /api/v1/changelog"
+            },
+            {
+              "id": "release.currency",
+              "title": "Whether the trunk's landed work is released",
+              "kind": "query",
+              "stability": "implemented",
+              "tool": "majordomus_release_currency",
+              "route": "GET /api/v1/release/currency"
             },
             {
               "id": "release.next",
@@ -11012,7 +11028,7 @@
         {
           "id": "deploy",
           "title": "Deployment",
-          "description": "The deployments this repository declares, read from the canonical objects the index holds, and whether they would work — decided against the capability registry this process built and the workspace it sits in. Every operation is a read: a deployment is changed by the trusted command line and by CI, never over HTTP and never by an MCP client.",
+          "description": "The deployments this repository declares, read from the canonical objects the index holds, and whether they would work — decided against the capability registry this process built and the workspace it sits in. Every operation over HTTP and MCP is a read; the one command, assembling the tree a provider receives, writes outside the checkout and is a command line only: a deployment is changed by the trusted command line and by CI, never over HTTP and never by an MCP client.",
           "stability": "behaviorally_verified",
           "source_path": "apps/majordomus-cli/src/capability/builtin/deploy.rs",
           "capabilities": [
@@ -11048,6 +11064,13 @@
               "stability": "behaviorally_verified",
               "tool": "majordomus_deployments_observed",
               "route": "GET /api/v1/deployments/observed"
+            },
+            {
+              "id": "deploy.slug",
+              "title": "Assemble the tree a provider receives",
+              "kind": "command",
+              "stability": "behaviorally_verified",
+              "cli": "majordomus deploy slug"
             }
           ]
         },
@@ -11679,11 +11702,11 @@
         "observatory"
       ],
       "counts": {
-        "capabilities": 100,
-        "mcp_tools": 92,
+        "capabilities": 102,
+        "mcp_tools": 93,
         "mcp_resources": 16,
-        "http_routes": 97,
-        "cli_paths": 43,
+        "http_routes": 98,
+        "cli_paths": 44,
         "commands": 0,
         "objects": 0,
         "rules": 3,
@@ -12610,6 +12633,14 @@
               "route": "GET /api/v1/changelog"
             },
             {
+              "id": "release.currency",
+              "title": "Whether the trunk's landed work is released",
+              "kind": "query",
+              "stability": "implemented",
+              "tool": "majordomus_release_currency",
+              "route": "GET /api/v1/release/currency"
+            },
+            {
               "id": "release.next",
               "title": "The version a landing allocates, and why",
               "kind": "query",
@@ -12827,10 +12858,10 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 9,
-        "mcp_tools": 9,
+        "capabilities": 10,
+        "mcp_tools": 10,
         "mcp_resources": 37,
-        "http_routes": 9,
+        "http_routes": 10,
         "cli_paths": 5,
         "commands": 4,
         "objects": 36,
@@ -13224,15 +13255,15 @@
       "kind_refs": [
         {
           "name": "milestone",
-          "objects": 100
+          "objects": 101
         },
         {
           "name": "issue",
-          "objects": 875
+          "objects": 891
         },
         {
           "name": "intent",
-          "objects": 33
+          "objects": 34
         },
         {
           "name": "gap",
@@ -13240,7 +13271,7 @@
         },
         {
           "name": "critique",
-          "objects": 29
+          "objects": 30
         }
       ],
       "rule_refs": [
@@ -13438,11 +13469,11 @@
       "counts": {
         "capabilities": 26,
         "mcp_tools": 26,
-        "mcp_resources": 1044,
+        "mcp_resources": 1063,
         "http_routes": 26,
         "cli_paths": 13,
         "commands": 1,
-        "objects": 1041,
+        "objects": 1060,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -15506,7 +15537,7 @@
       "title": "A deployment is one canonical object, and every artifact built from it is generated from it",
       "short_title": "Deployments",
       "headline": "The port, the routes and the build inputs of the executable's container image are stated once, and the image definition and its ignore file are projections that cannot drift from it.",
-      "summary": "One deployment object per deployment of the executable, validated against the registry this process built; the container image definition and its ignore file are generated from it and checked for drift.",
+      "summary": "One deployment object per deployment of the executable, validated against the registry this process built; the container image definition, its ignore file and the files of the provider it names are generated from it and checked for drift.",
       "status": "draft",
       "weight": 200,
       "featured": false,
@@ -15555,7 +15586,7 @@
         {
           "id": "deploy",
           "title": "Deployment",
-          "description": "The deployments this repository declares, read from the canonical objects the index holds, and whether they would work — decided against the capability registry this process built and the workspace it sits in. Every operation is a read: a deployment is changed by the trusted command line and by CI, never over HTTP and never by an MCP client.",
+          "description": "The deployments this repository declares, read from the canonical objects the index holds, and whether they would work — decided against the capability registry this process built and the workspace it sits in. Every operation over HTTP and MCP is a read; the one command, assembling the tree a provider receives, writes outside the checkout and is a command line only: a deployment is changed by the trusted command line and by CI, never over HTTP and never by an MCP client.",
           "stability": "behaviorally_verified",
           "source_path": "apps/majordomus-cli/src/capability/builtin/deploy.rs",
           "capabilities": [
@@ -15591,6 +15622,13 @@
               "stability": "behaviorally_verified",
               "tool": "majordomus_deployments_observed",
               "route": "GET /api/v1/deployments/observed"
+            },
+            {
+              "id": "deploy.slug",
+              "title": "Assemble the tree a provider receives",
+              "kind": "command",
+              "stability": "behaviorally_verified",
+              "cli": "majordomus deploy slug"
             }
           ]
         },
@@ -15632,11 +15670,11 @@
       "rule_refs": [
         {
           "id": "majordomus.deployment-contract",
-          "identity": "majordomus.deployment-contract@1",
+          "identity": "majordomus.deployment-contract@2",
           "title": "A deployment is described once, and every artifact built from it is generated from it",
           "class": "blocking",
           "enforced": true,
-          "path": ".ai/repo/rules/vendor/majordomus/rules/deployment-contract.v1.md"
+          "path": ".ai/repo/rules/vendor/majordomus/rules/deployment-contract.v2.md"
         }
       ],
       "doc_refs": [
@@ -15656,7 +15694,7 @@
       "claim_refs": [
         {
           "id": "deployment-contract-refuses-by-name",
-          "claim": "A deployment object that breaks its closed contract, whether by a key the contract does not have, another schema version, a missing field, an interface, port, machine count or health route that could not work, a value that reads as a credential or an identity two files claim, is refused by doctor with the reason named",
+          "claim": "A deployment object that breaks its closed contract, whether by a key the contract does not have, another schema version, a missing field, an interface, port, machine count or health route that could not work, a provider the contract does not know or a provider address that is not https, a value that reads as a credential or an identity two files claim, is refused by doctor with the reason named",
           "status": "guaranteed",
           "test": "test/cases/84_deployment_contract.sh"
         }
@@ -15667,11 +15705,11 @@
       "moments": [],
       "backlinks": [],
       "counts": {
-        "capabilities": 6,
+        "capabilities": 7,
         "mcp_tools": 6,
         "mcp_resources": 2,
         "http_routes": 6,
-        "cli_paths": 2,
+        "cli_paths": 3,
         "commands": 0,
         "objects": 1,
         "rules": 1,
@@ -17251,7 +17289,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (158)",
+        "title": "adr (160)",
         "features": [
           "knowledge"
         ]
@@ -17305,7 +17343,7 @@
       },
       {
         "id": "critique",
-        "title": "critique (29)",
+        "title": "critique (30)",
         "features": [
           "planning"
         ]
@@ -17354,14 +17392,14 @@
       },
       {
         "id": "intent",
-        "title": "intent (33)",
+        "title": "intent (34)",
         "features": [
           "planning"
         ]
       },
       {
         "id": "issue",
-        "title": "issue (875)",
+        "title": "issue (891)",
         "features": [
           "planning"
         ]
@@ -17382,7 +17420,7 @@
       },
       {
         "id": "milestone",
-        "title": "milestone (100)",
+        "title": "milestone (101)",
         "features": [
           "planning"
         ]
@@ -18396,19 +18434,19 @@
     }
   ],
   "telemetry": {
-    "capabilities": 3273,
-    "builtin": 210,
-    "declarative": 3063,
+    "capabilities": 3312,
+    "builtin": 212,
+    "declarative": 3100,
     "modules": 59,
-    "mcp_tools": 200,
-    "mcp_resources": 3118,
-    "http_routes": 205,
-    "cli_commands": 214,
+    "mcp_tools": 201,
+    "mcp_resources": 3155,
+    "http_routes": 206,
+    "cli_commands": 215,
     "shell_commands": 30,
     "kinds": 35,
-    "objects": 3063,
+    "objects": 3100,
     "by_kind": {
-      "adr": 158,
+      "adr": 160,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -18416,7 +18454,7 @@
       "claim": 250,
       "command": 31,
       "context": 40,
-      "critique": 29,
+      "critique": 30,
       "deployment": 1,
       "derive-offload": 1,
       "distribution-model": 1,
@@ -18425,11 +18463,11 @@
       "feature": 29,
       "gap": 4,
       "implementation": 52,
-      "intent": 33,
-      "issue": 875,
+      "intent": 34,
+      "issue": 891,
       "knowledge": 58,
       "mesh-declaration": 1,
-      "milestone": 100,
+      "milestone": 101,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -18440,7 +18478,7 @@
       "session": 91,
       "skill": 8,
       "taxonomy": 10,
-      "test": 588,
+      "test": 604,
       "use-case": 49,
       "workspace": 1
     },

@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.0.0-alpha.5 -->
+     Generator: majordomus-cli 1.0.0-alpha.6 -->
 # Benchmark targets and coverage
 
 Every externally callable operation is a benchmark target, derived from the registry: each executable capability directly and on every transport its exposure declares, with the cases its input type provides, plus the transports' own operations. Nothing below is listed by hand; `majordomus bench coverage` computes the same table live, `majordomus bench` times it, and `capabilities validate` fails when a requirement is missing.
@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 210 | 179 | 0 | 31 |
-| http | 205 | 179 | 0 | 26 |
-| mcp | 200 | 175 | 0 | 25 |
+| direct | 212 | 179 | 0 | 33 |
+| http | 206 | 179 | 0 | 27 |
+| mcp | 201 | 175 | 0 | 26 |
 | system | 14 | 14 | 0 | 0 |
-| total | 629 | 547 | 0 | 82 |
+| total | 633 | 547 | 0 | 86 |
 
 ## Capabilities
 
@@ -51,6 +51,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `deploy.get` | deploy | query | — | covered | covered | covered | `first-deployment` |
 | `deploy.list` | deploy | query | — | covered | covered | covered | `default` |
 | `deploy.observed` | deploy | query | — | covered | covered | covered | `default` |
+| `deploy.slug` | deploy | command | — | waived | — | — | — |
 | `design.contrast` | design | query | — | covered | covered | covered | `default` |
 | `design.explain` | design | query | — | covered | covered | covered | `role`, `state` |
 | `design.system` | design | query | — | covered | covered | covered | `default` |
@@ -195,6 +196,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `recover.orphans` | recover | command | — | covered | covered | covered | `check-twelve-hours`, `check-one-second` |
 | `release.analysis` | release | query | — | waived | waived | waived | — |
 | `release.changelog` | release | query | — | covered | covered | covered | `all`, `one-version` |
+| `release.currency` | release | query | — | waived | waived | waived | — |
 | `release.next` | release | query | — | waived | waived | waived | — |
 | `release.version` | release | query | process, 2 entries, per checkout state | covered | covered | covered | `default` |
 | `repository.info` | repository | query | process, 1 entries, per generation | covered | covered | covered | `default` |

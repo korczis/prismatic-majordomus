@@ -1,9 +1,9 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the generation plan itself, over every other target; regenerate with `majordomus generate`
-# Generator: majordomus-cli 1.0.0-alpha.5
+# Generator: majordomus-cli 1.0.0-alpha.6
 schema: majordomus/generated-artifacts/v1
 generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the generation plan itself, over every other target; regenerate with `majordomus generate`"
-generator: majordomus-cli 1.0.0-alpha.5
+generator: majordomus-cli 1.0.0-alpha.6
 documents:
   - id: allow/adr
     source: "the document schema `share/schemas/majordomus/adr/adr.v1.proto`"
@@ -119,6 +119,10 @@ documents:
       - text
   - id: allow/taxonomy
     source: "the JSON Schema `majordomus.taxonomy/v1` of the kind it validates"
+    formats:
+      - text
+  - id: allow/telemetry
+    source: "the JSON Schema `majordomus.telemetry/v1` of the kind it validates"
     formats:
       - text
   - id: allow/use-case
@@ -783,49 +787,49 @@ artifacts:
     format: markdown
     source: .ai/repo/skills/assess-before-deleting/SKILL.md
     bytes: 971
-    sha256: 75a7997036074c073a807904850a0efe2e636009fbfce89fe7e77d4dede46325
+    sha256: 52b4802d09121fdddeee9edd43cfb4cbdc24bc1ff54e55d685368f353ae608bc
   - path: .agents/skills/deploy-site/SKILL.md
     document: editors/skill
     format: markdown
     source: .ai/repo/skills/deploy-site/SKILL.md
     bytes: 872
-    sha256: 719bd29e9c3939aae9107f964f1eeac0f57058dd1df71657cc5378e0212ed0f2
+    sha256: 5e5b3085ce8f952550c72c960a5c73192034b8c6307f3e8c7c2f8e64b2c3a062
   - path: .agents/skills/evolve/SKILL.md
     document: editors/skill
     format: markdown
     source: .ai/repo/skills/evolve/SKILL.md
     bytes: 871
-    sha256: 28ccb21d3882b62576b61186191eade15543b2cf955d95069d70c8df0bb357b1
+    sha256: 55c9b8be16c34a696d978529d394179805c26464e7899c5a1c7e68f68ec9d25b
   - path: .agents/skills/implement/SKILL.md
     document: editors/skill
     format: markdown
     source: .ai/repo/skills/implement/SKILL.md
     bytes: 882
-    sha256: 6d3eaa161f825d1f782b22d9d681c0a9d939ba25dabfd863b962510036632b73
+    sha256: 567586f84cca4a980f0f53d6f9ac6a8afdd86bb0d914697ece27417f87aa168a
   - path: .agents/skills/pack-for-chatgpt/SKILL.md
     document: editors/skill
     format: markdown
     source: .ai/repo/skills/pack-for-chatgpt/SKILL.md
     bytes: 1007
-    sha256: a7c72058da935a17ab11474d9aa6b73f4bad3d20145503cb3a25f8aa06af2cba
+    sha256: 1978b9ce16b9be8ac46395a161fe65f44a54f7ef42686bbcbff0c55361a4c3be
   - path: .agents/skills/pack-for-review/SKILL.md
     document: editors/skill
     format: markdown
     source: .ai/repo/skills/pack-for-review/SKILL.md
     bytes: 982
-    sha256: e3e30c047715a8fab0081ac94c1bd8acf5e1c625a87f26d1e3cd624a284087fb
+    sha256: 4f85ef74c13eed6a325d7701c211200ddb40969d2635afc9a04fc4e5a8656ee1
   - path: .agents/skills/repo-review/SKILL.md
     document: editors/skill
     format: markdown
     source: .ai/repo/skills/repo-review/SKILL.md
     bytes: 859
-    sha256: fcbf71d01452d929243895a912b720cf1c45c6ef71bb7dfa613a75ab089281f0
+    sha256: cb2f7f23c5e4fe23fbfe48d8b7163d8753aeeb28c5ab130cf808336352b90380
   - path: .agents/skills/report-verification-state/SKILL.md
     document: editors/skill
     format: markdown
     source: .ai/repo/skills/report-verification-state/SKILL.md
     bytes: 1003
-    sha256: e47a87e18e9ac343e6b71b15e6619e661b88fb67fcfe2aa49269c5d3fbbe9d55
+    sha256: d5d845b35f014bca77d541fb67a3b1a4bdaa24881340736942493c77f68f2428
   - path: .bb/AGENTS.md
     document: providers/bb
     format: markdown
@@ -837,409 +841,409 @@ artifacts:
     format: markdown
     source: .ai/repo/skills/assess-before-deleting/SKILL.md
     bytes: 971
-    sha256: ecab8a76536389d61173f1bc9c3e2fcd28cf4fbc3d05ddc523944028114a1088
+    sha256: 29f54f79c059977190c334322a086bf3e4d31fd89fc64538596a33aff0dcd6ab
   - path: .claude/skills/deploy-site/SKILL.md
     document: editors/skill
     format: markdown
     source: .ai/repo/skills/deploy-site/SKILL.md
     bytes: 872
-    sha256: a3848e7d5980de7468f6761b501681aa995a53b4ddca9b3d8abc5b4d31d67e9f
+    sha256: 2b86fa853cbd22bb10f94f1e2e83484886b503d6be41eaf9b1cb8b075129da41
   - path: .claude/skills/evolve/SKILL.md
     document: editors/skill
     format: markdown
     source: .ai/repo/skills/evolve/SKILL.md
     bytes: 871
-    sha256: 3042b2745414739fdda63250f567861b38069e2ce77d7446d98b8fb49771756c
+    sha256: 0c64943ab1a929be4c344359693e95c0e40361ec8e7f4f48e873c652f6220adb
   - path: .claude/skills/implement/SKILL.md
     document: editors/skill
     format: markdown
     source: .ai/repo/skills/implement/SKILL.md
     bytes: 882
-    sha256: aedaed03bd112f5264b29de00838574eb3a09baff67f1a906244eb01b9fcb36d
+    sha256: b97036e63cf11d8a635ab7e7053f5d0db9392408cb4379547b93d1ed2a3c20d3
   - path: .claude/skills/intent/SKILL.md
     document: editors/command
     format: markdown
     source: apps/majordomus-cli/src/capability/builtin/intents.rs
     bytes: 1468
-    sha256: 6f1888849351a34f8b9f4b7dc23936ebf4cf74fee2f5b0afae69418f3e8ed620
+    sha256: 27eb0b9f784096a03bbcee9c869ac0e08917fbb9558380c96af971357e3fc269
   - path: .claude/skills/mj-artifacts/SKILL.md
     document: editors/domain
     format: markdown
     source: module:artifacts
     bytes: 1400
-    sha256: 3bff8a4d1bbb3b944d0440f4abb03ec81c69df3e181cff39b4f9ac68c12b168b
+    sha256: 584a9b9157fcb9e6867a39da9d7c4e29fcdda51358abb8e525358f4269ffc049
   - path: .claude/skills/mj-autonomy/SKILL.md
     document: editors/domain
     format: markdown
     source: module:autonomy
     bytes: 1962
-    sha256: 08bd1c6b79aeb6bb83c8b2fcd49f0bae6757c125ed946159ff56bbdf35f12d94
+    sha256: a5619da4add32587ee2bc119bbe8f26fc4e4e8625d4556293bb494dfa2db37f8
   - path: .claude/skills/mj-brief/SKILL.md
     document: editors/domain
     format: markdown
     source: module:brief
     bytes: 1364
-    sha256: 7cbd084c8fcb834b3857c11d133cc6a6877722ef11d3d0070de7b70df8eee64c
+    sha256: a0e8b8fff71978ea6a9f9ff086cf085151238b91de24ce0632b11a559d34b779
   - path: .claude/skills/mj-capabilities/SKILL.md
     document: editors/domain
     format: markdown
     source: module:capabilities
     bytes: 1758
-    sha256: 9a46bb65746b255dd21b9b86bb7d9e2811abff2eda82bf318c8885c372f5d094
+    sha256: f7d1e7e2b32d24a5980f2d94ae1458ef554205917de9449df8adab64420b527e
   - path: .claude/skills/mj-commands/SKILL.md
     document: editors/domain
     format: markdown
     source: module:commands
     bytes: 1606
-    sha256: 4d80c82b2a469f1914e8f20d6326bea8cf9a49a61f4cb62024ca8cc506e4bbec
+    sha256: f89e41c3d7d69349ff18700620e3a9dde48a4972d793a4b30cbf762f4c511542
   - path: .claude/skills/mj-commit/SKILL.md
     document: editors/domain
     format: markdown
     source: module:commit
     bytes: 1832
-    sha256: 23dada58bf092b47db9777a56f39c6a43e4c480654fc22a137ba85684aadf374
+    sha256: 13df080a73cda6de164c9d06df505464e24798630494b0abb1e9f7fd5cb709bc
   - path: .claude/skills/mj-continuity/SKILL.md
     document: editors/domain
     format: markdown
     source: module:continuity
     bytes: 2718
-    sha256: c3756233bae80fb26e8ae7a1d1edbeb92593de978d649998cad71fe6f5e1434e
+    sha256: 347b04f21722ec8f0b21a58f3c0099e28498e5fe1cbcba6f9a95c1e63f43305d
   - path: .claude/skills/mj-convergence/SKILL.md
     document: editors/domain
     format: markdown
     source: module:convergence
     bytes: 1459
-    sha256: 0b9236c1d7a21e7f15b2569e931ebc91f3fe74c05767d378c45a6efa14199c76
+    sha256: 32acca5a83e8661d931d073f91c62e5f47146e93aca600aebdb083b21ff43cd0
   - path: .claude/skills/mj-dashboard/SKILL.md
     document: editors/domain
     format: markdown
     source: module:dashboard
     bytes: 1441
-    sha256: 5bde7187ec6f5fd79cdc8ef3e58bcd1c55fa6c53fd875e75110bbd9ecfb92dd1
+    sha256: 7c3ed20dea5e7006f3ffee16b400f7328f93e3a019d7c49fff90830838d01238
   - path: .claude/skills/mj-delivery/SKILL.md
     document: editors/domain
     format: markdown
     source: module:delivery
     bytes: 1552
-    sha256: c197e57fadb4e485126ad095f9bc7daca7a91a89dc9258aab2e9622967461be4
+    sha256: 78a78166764c216d92e9d2a34cbe6b83ae923ec670f82139f9100a8249af44f7
   - path: .claude/skills/mj-deploy/SKILL.md
     document: editors/domain
     format: markdown
     source: module:deploy
     bytes: 1692
-    sha256: c987a193a5759eb7c15ebe02006e0fc95ca92e6f112029de35943f72602ef351
+    sha256: 8a587f5ea751557dedf0c614752c8626b08a2457579282835c60c28cd6c264c8
   - path: .claude/skills/mj-design/SKILL.md
     document: editors/domain
     format: markdown
     source: module:design
     bytes: 1730
-    sha256: f39c95d6e29dc2a7f79bb4c3d392525ce7d12c9bbcdc4ed32bcb5cbea21449a8
+    sha256: bcd69b46ddcf5fd164c6c3a4bf3eb217df3456b7771f7ec556f5f003d141c67c
   - path: .claude/skills/mj-devcontext/SKILL.md
     document: editors/domain
     format: markdown
     source: module:devcontext
     bytes: 1814
-    sha256: bf4e0bde85dd1a1a588fadfaa08a03b4ec1567d853e24f09cac574adf6e54008
+    sha256: 66a693c47afc1e221c0297e196f964b6fb947da7084dc57a03454bbd303086d6
   - path: .claude/skills/mj-devtask/SKILL.md
     document: editors/domain
     format: markdown
     source: module:devtask
     bytes: 1635
-    sha256: dd1153eb2c98026f80351d02e8c6a6e0af0a0c33caabcb57b872570df69ff391
+    sha256: 19d11ff47137306eca5bf1d607e4b69af693de4dbc609333d25d2391c2785135
   - path: .claude/skills/mj-directories/SKILL.md
     document: editors/domain
     format: markdown
     source: module:directories
     bytes: 1422
-    sha256: 45400421e0ef5db92f9d9ef81f50c557e1e5150cec2b169d1936953331075879
+    sha256: 34ab1442c622fe858255d93d1c0f470a9086b6ec8fb677c2365b9eb2e20bd5dd
   - path: .claude/skills/mj-distribution/SKILL.md
     document: editors/domain
     format: markdown
     source: module:distribution
     bytes: 2025
-    sha256: ccddc31fecd3cdad423de97f92dcc4b68a4c974169bdb8bc088202096c5d9fa6
+    sha256: 78768bb6c6632a3bacf35edfb83bac93386a6f4c97557866e75008204e41ca42
   - path: .claude/skills/mj-economics/SKILL.md
     document: editors/domain
     format: markdown
     source: module:economics
     bytes: 1886
-    sha256: 34edd1ffff6c2e532602b1521fbab52e0f0614c3ba7492eadb436d6ac9b4f0d6
+    sha256: b4dd896a956b0fcc6bcb842f171ecbc8a74ed37163a14eabcce20197896be80a
   - path: .claude/skills/mj-editors/SKILL.md
     document: editors/domain
     format: markdown
     source: module:editors
     bytes: 1386
-    sha256: f97a223d716d6bfa3fbbedf6d0ec7031e898b55c66a6dc925632f55f3e19202f
+    sha256: 9df8996f5572477ce6cafcd254d33db1258793afd0b96effa872e42902177b05
   - path: .claude/skills/mj-entity/SKILL.md
     document: editors/domain
     format: markdown
     source: module:entity
     bytes: 1566
-    sha256: 41168ee265a8afa7772c36f92c9c44f0fe7b354817d05de535f6419bf52c0a5b
+    sha256: e96fd1a595b54b543bbe862f13a1c103011dc62612219cd75c9ee96ad13441e4
   - path: .claude/skills/mj-environment/SKILL.md
     document: editors/domain
     format: markdown
     source: module:environment
     bytes: 1748
-    sha256: 403eee7dc69e59e4b1665f61ce76163003f921dab91795f3ca8fc21ef8645cfd
+    sha256: 6ebafc1865ee5a955a54a71d0d0a3c15d2955679cd4321c745bd3cee9bb63f90
   - path: .claude/skills/mj-episodes/SKILL.md
     document: editors/domain
     format: markdown
     source: module:episodes
     bytes: 1642
-    sha256: fec9b316f642e440a1af23355fa363b9b37d35d4d95fa7ed15aa582d8ff4fe7d
+    sha256: 645300f73a65d4658fcefda87323a1dfd25586b1fe6a68c45a26f12109a77386
   - path: .claude/skills/mj-evidence/SKILL.md
     document: editors/domain
     format: markdown
     source: module:evidence
     bytes: 1730
-    sha256: 2add5b759a01b7e8a8fe98518df3aa8c19af93480cb943c66ea1a7209229bec8
+    sha256: 3502919766b2c1e968c6e03d1b0e31ba2e724b6e181a4f4eb7490fb2800489c1
   - path: .claude/skills/mj-executions/SKILL.md
     document: editors/domain
     format: markdown
     source: module:executions
     bytes: 2284
-    sha256: c672ee94e0b505bf2d30ee0aa6df7f5dbd3983792beede1aabc0ad9204134dd8
+    sha256: a3a499befd593179ff8b3b067a3d266c60735f9bbd3fb60689fe6186017a02b3
   - path: .claude/skills/mj-gates/SKILL.md
     document: editors/domain
     format: markdown
     source: module:gates
     bytes: 1485
-    sha256: 03e8caeaaa09787e3c2a4bf59eb4b380d6c1a39cedae0945206c168ca51e79b9
+    sha256: 3fbf13b18a08c714d39fd3bf9caf374c75e49d3c1db0ebccaab88081e5d84f95
   - path: .claude/skills/mj-graph/SKILL.md
     document: editors/domain
     format: markdown
     source: module:graph
     bytes: 1423
-    sha256: 0be771c54327a932c94e3c82f316dba15801225a5592614569cffbdba2939d36
+    sha256: 394089b746df423c351606a6cc4719020da32be004987b79ae97f507485fd56f
   - path: .claude/skills/mj-guard/SKILL.md
     document: editors/domain
     format: markdown
     source: module:guard
     bytes: 1345
-    sha256: 920425420d62ca197023ba93f1ec92478a74c1a67e8a3e31e6c88e8a73feda0a
+    sha256: 066be17d058e35771fbcc782f441ff35d8a01d475f5989129019576b480a9ca4
   - path: .claude/skills/mj-health/SKILL.md
     document: editors/domain
     format: markdown
     source: module:health
     bytes: 1366
-    sha256: 6a4f6f38283eaa57cf71c1f64abf088b28ae8a6d2efef226fea09a7a7e9840bd
+    sha256: d47f8fdc938db34377f20dbf9d70acbf3eb0bd694f14640abb1d11ebb9d21a6b
   - path: .claude/skills/mj-integration/SKILL.md
     document: editors/domain
     format: markdown
     source: module:integration
     bytes: 2336
-    sha256: b1abc378727b6b14df76b851012acadc211e59ac46cfa4903dbbcdf2dd755ac1
+    sha256: 82ccf6e371e1d19bdf1d0cb3b80ddf98dd12d1636721aff0fbe40afc5d62b571
   - path: .claude/skills/mj-intent-realization/SKILL.md
     document: editors/domain
     format: markdown
     source: module:intent_realization
     bytes: 1740
-    sha256: 070f7b5dad364ba9dfc1e357867f8a52f4eae6394d76b014db8c377e873507f2
+    sha256: ae960b1de5108f467a5e9385f68b51004284d606323d4ee28f44d209bfd6386a
   - path: .claude/skills/mj-intents/SKILL.md
     document: editors/domain
     format: markdown
     source: module:intents
     bytes: 2524
-    sha256: 6f0e25eec1ddacb4138384d95c47f80a59599f648ee02c3b528b9be1b9080b36
+    sha256: 4ac071fa78180dcdc02faf389aef63761c038fa9f9731dea399e6b23b3557a6a
   - path: .claude/skills/mj-knowledge-base/SKILL.md
     document: editors/domain
     format: markdown
     source: module:knowledge_base
     bytes: 1800
-    sha256: 9e8df1f6e7db1f220cdc6aba4da749f31276c95be873c6b865331a9c58cf0463
+    sha256: d2898214529c12c2bfc0e9cfcbedc0471a2711ffb017a7973aa945762b7b4464
   - path: .claude/skills/mj-lifecycle/SKILL.md
     document: editors/domain
     format: markdown
     source: module:lifecycle
     bytes: 1985
-    sha256: b901ad2857e2d432737d68bcaaa52f7ecd8f2145675b2c5a57d3114134c4b9d7
+    sha256: 8abba5f0675d53540b99acd63546be50e55a00feee1e40e5e301129fd160aaee
   - path: .claude/skills/mj-mcp/SKILL.md
     document: editors/domain
     format: markdown
     source: module:mcp
     bytes: 1372
-    sha256: 2a2049c6a163a47f2d7505169ebe8baafc675033dc1b9a78608221f9a9c458e5
+    sha256: d38fb2bcb404720ce4b5dc447bb7613c495139843bc9798e8abe2a3d0b0d58f7
   - path: .claude/skills/mj-mesh/SKILL.md
     document: editors/domain
     format: markdown
     source: module:mesh
     bytes: 3596
-    sha256: 0c37cfad1531db34c4045fd3370e86f232a0dade34321923332abd77f45dbbc8
+    sha256: 475a8cef4f3106eb32e3a1cdf1546c97db01d89bd7d2ee16e1644a1877e5929a
   - path: .claude/skills/mj-models/SKILL.md
     document: editors/domain
     format: markdown
     source: module:models
     bytes: 1513
-    sha256: a7d04b8d51293c20ce7b50b2e1b63719dd8017eca7944704978a0a3ad8f3dd51
+    sha256: 640e3cae6cd2109645d8e3f8908788c9f3b71ad9f9a134ca24fd344f86141917
   - path: .claude/skills/mj-monitor/SKILL.md
     document: editors/domain
     format: markdown
     source: module:monitor
     bytes: 1392
-    sha256: d11df787019d7f3fcc8cf58b1ad6e7259713a47e24dbfb27b8c8cee2e75f563b
+    sha256: 602c8076817480246eaf5d2d0282026c70762dcde289954dfa3f52a06d648e57
   - path: .claude/skills/mj-objects/SKILL.md
     document: editors/domain
     format: markdown
     source: module:objects
     bytes: 1675
-    sha256: 86efa1dac9e8214badffb51478e7bfbc4df78694ed9f21be268f01495ff106d3
+    sha256: 95d7eb14c499b84ccfa6a42baee086a815138938bf401be9201634e5d854b150
   - path: .claude/skills/mj-obligations/SKILL.md
     document: editors/domain
     format: markdown
     source: module:obligations
     bytes: 1545
-    sha256: 91aeff413f4b284a3a74629345585bd15166a3233103f80c604a048afa0355d0
+    sha256: 994e98b066a1cfb4a0d7ccf2e7e98437fcdb71aba6109fb2d87fc600251d405d
   - path: .claude/skills/mj-observatory/SKILL.md
     document: editors/domain
     format: markdown
     source: module:observatory
     bytes: 1637
-    sha256: b31cc3f33dc94b469b1dabca5f891b66319f3ae29468bfa70787d520766b0b65
+    sha256: 77af0088149d129a075dd8396a84e5dd25b31b51ff5d21b223beac737f36ea2d
   - path: .claude/skills/mj-pack/SKILL.md
     document: editors/domain
     format: markdown
     source: module:pack
     bytes: 1505
-    sha256: 81ea17f543f7a211f2233c728397c8cedb5b6301f267feee3eac13e0e5f5bc03
+    sha256: f6db4fff608fe9dec472f57e807b186fab66e6e190c7acfe7fabb62d18a74898
   - path: .claude/skills/mj-peers/SKILL.md
     document: editors/domain
     format: markdown
     source: module:peers
     bytes: 1472
-    sha256: fd30fb1c146a484b2eeb6f854bf0d49f6131ba45f462265bd491a9fcef667736
+    sha256: 239c60a3658c866f96b2d077e13a7294ebd7d8fc82a478fc1df95d295b347ec9
   - path: .claude/skills/mj-perf/SKILL.md
     document: editors/domain
     format: markdown
     source: module:perf
     bytes: 1348
-    sha256: 093c6950bb531ce8a59e416c80045b52dba87f4db1d731d291e31ead57b07f13
+    sha256: e5642da19997c20f9a5d6a5242e1d51ccaac86f9711387cfb7e084b31fd86f79
   - path: .claude/skills/mj-plan/SKILL.md
     document: editors/domain
     format: markdown
     source: module:plan
     bytes: 2724
-    sha256: e61fa3a5f592cc72db44cc470c4479e274ae7156eb1f9a730f52eb0939e48c69
+    sha256: fb3fe2e2ab2d999127ceee1b3e434156fe468037640ba7866c4795fa52df51e0
   - path: .claude/skills/mj-product/SKILL.md
     document: editors/domain
     format: markdown
     source: module:product
     bytes: 2011
-    sha256: e09aa9de78e575f1d8692150b0eafd13e0863935eebc52c43b2690483c38fe18
+    sha256: e4dedfec86890d2e0a1c01e64a69b80f61a42f60a0634994abdf2da6460b076e
   - path: .claude/skills/mj-quality/SKILL.md
     document: editors/domain
     format: markdown
     source: module:quality
     bytes: 1545
-    sha256: 745786dfa184fe66cce3529bcf5d3706219d99e259d523356ad06b43116c77bf
+    sha256: 36ed9411a80e2d51250275b4b2f003f5571ebd05a9a5ed92ccd3aff6b23e5247
   - path: .claude/skills/mj-reasoning/SKILL.md
     document: editors/domain
     format: markdown
     source: module:reasoning
     bytes: 2250
-    sha256: e7a8931eec8c193df788ca43f2b46776e37e55c77a1d47f4a4c27730a1c6db3e
+    sha256: ae93f37582b49509a5940a9aedd471094990d09ccf4d1b301d0c28714f70a2fd
   - path: .claude/skills/mj-recover/SKILL.md
     document: editors/domain
     format: markdown
     source: module:recover
     bytes: 1509
-    sha256: cc40456a52f6324c8ebd98cf2db40ca9179f92b308cb5e7fa376594cb7ff4d43
+    sha256: ffc8bc0d9e7fcaa9c356e15d613e04d8fb65cd18f357826b404cbf18bad5d5dc
   - path: .claude/skills/mj-release/SKILL.md
     document: editors/domain
     format: markdown
     source: module:release
-    bytes: 1883
-    sha256: d8408385ad5d9966ecfea40e556a956c75a5d49b0b102306ed8d8ead0a5bc118
+    bytes: 2043
+    sha256: 41ac71bbf29e81b5f9674b2f28f0ec372aa7ea71b18fb516c93f43516ff7dcdd
   - path: .claude/skills/mj-repository/SKILL.md
     document: editors/domain
     format: markdown
     source: module:repository
     bytes: 1663
-    sha256: 205dde796b6a9811545b12cc4f1c58f8e3e4518dd3a76cef39a4461790c51461
+    sha256: d7592d17b192b4c429f6541a6e2f7b07f1d6a44bb74f0a86d2c488b5767a4590
   - path: .claude/skills/mj-rules/SKILL.md
     document: editors/domain
     format: markdown
     source: module:rules
     bytes: 1671
-    sha256: 450a73884d1e98cde3f1d7909c19e4bb51ef765db29274481e338145e72c8be3
+    sha256: 3965e4c1ed339a258d699b0b8101d58cfa06bd735fe6fde988aba5e13dfb3030
   - path: .claude/skills/mj-served/SKILL.md
     document: editors/domain
     format: markdown
     source: module:served
     bytes: 1425
-    sha256: 25d2a33cd900b1824109e92b784cfb330421b3942cb6b92afd0f5ac4373ef82a
+    sha256: 4db04c819da205db8cc49b128f253e03329334bf15bd643480ff3d5708fa55ae
   - path: .claude/skills/mj-server/SKILL.md
     document: editors/domain
     format: markdown
     source: module:server
     bytes: 1450
-    sha256: ac8d71df4d1d10a8b6d4338dbc513f60c9bb8856611cff7da579a6cda159602d
+    sha256: 3391414d918f4bd78d7011d0417ecaa84967b9ae6167247e9f20b3eb13f4aae9
   - path: .claude/skills/mj-session-domain/SKILL.md
     document: editors/domain
     format: markdown
     source: module:session_domain
     bytes: 1647
-    sha256: 83ba7a3191689829d98e577a51364c9f560fb0331e66ea60b566aec55c2a6f09
+    sha256: 06820ced8e863713e5149ed3ddb60fea793b4e02ef26bc358af906be0b54073c
   - path: .claude/skills/mj-shell/SKILL.md
     document: editors/domain
     format: markdown
     source: module:shell
     bytes: 1386
-    sha256: 3371d9e224237affbfdd842d99108e9d604bba0fa01bece2deec714a1de33ce2
+    sha256: 71fc4f77c2675954f1fbb58333d7ad418899f378a184068b918d013ad19f0c12
   - path: .claude/skills/mj-skills/SKILL.md
     document: editors/domain
     format: markdown
     source: module:skills
     bytes: 1761
-    sha256: bfd6b6f27f9727522422a1693501cf788cb12d6c1f1a51a5bdca70c39c2387ad
+    sha256: b3279d37f5e1aca20ff0e317eb49c1dbdb3f170e13540373f12ad8dbc0c86bcd
   - path: .claude/skills/mj-trace/SKILL.md
     document: editors/domain
     format: markdown
     source: module:trace
     bytes: 1637
-    sha256: e0dc6ce411ec8fe48a12bfb6a4458624e5ffdeb7b15dba85b52db68ac9b4304e
+    sha256: ffb35fc65a55a0f5df8fcc34e595840d33d04b96cc2f601b040c82502ecc1d9c
   - path: .claude/skills/mj-web/SKILL.md
     document: editors/domain
     format: markdown
     source: module:web
     bytes: 1363
-    sha256: a8e51e1e116c60ad42cadf16121eac91cacc15e64b79dceca115552fd4e35e8c
+    sha256: 6d4230b856f42d1c022c7911de8ccf4a35e94bbf06f30219b2480b0830cd7d8f
   - path: .claude/skills/mj-why/SKILL.md
     document: editors/domain
     format: markdown
     source: module:why
     bytes: 1922
-    sha256: d68fc613d9e6c36349930d9c165bde8e4830f93f8f4e6bc9ed20df0c3077fa5c
+    sha256: 1e3df4edcf9f42a087d996ac870e0a90450a6154e52179a12cba25f939a10ca8
   - path: .claude/skills/mj-worktree/SKILL.md
     document: editors/domain
     format: markdown
     source: module:worktree
     bytes: 2426
-    sha256: 864a8f44fb3c550aaea3f570797611336f307246f475ea96deacb638aee8ee69
+    sha256: b9b241352803b4d63f83c6f1562aeb298018a6d971961c02c26c29d7ff759981
   - path: .claude/skills/pack-for-chatgpt/SKILL.md
     document: editors/skill
     format: markdown
     source: .ai/repo/skills/pack-for-chatgpt/SKILL.md
     bytes: 1007
-    sha256: 984ec1f934021783102b37fd8e5791662525fcf36f4eae6396464655cf5c318d
+    sha256: f8c40a2876393e7dfc6cc91392f69319161937e2a62b6164e8a6c6f0b8cffaeb
   - path: .claude/skills/pack-for-review/SKILL.md
     document: editors/skill
     format: markdown
     source: .ai/repo/skills/pack-for-review/SKILL.md
     bytes: 982
-    sha256: df9a97b0d58410e46b76596f1c673b2155bc96f20776e17d2db586a815bc0f82
+    sha256: b6d28b771352f46ac2e17efcb3428349c51e5d4f3f8b1be11cd6def6062ed139
   - path: .claude/skills/repo-review/SKILL.md
     document: editors/skill
     format: markdown
     source: .ai/repo/skills/repo-review/SKILL.md
     bytes: 859
-    sha256: 110d4cf51a8b69ae322011df0c0cfd74809f357c25930cef70160b306f08a64a
+    sha256: 71da2104b02d68303cd2cf63627450fe62770743c7f806b1f184671e56c9dd54
   - path: .claude/skills/report-verification-state/SKILL.md
     document: editors/skill
     format: markdown
     source: .ai/repo/skills/report-verification-state/SKILL.md
     bytes: 1003
-    sha256: 94c7673747e209efc75127a73c2f137e8bc3988b18f22cb377b8d264e4f71e86
+    sha256: 1249fc4adc47e421c09b0ad7a18ea8f23d2c0182df47aa69af0945884c9a76d7
   - path: .dockerignore
     document: deployment
     format: text
@@ -1251,7 +1255,7 @@ artifacts:
     format: json
     source: "the recipes of the tracked justfile and .just/*.just"
     bytes: 5512
-    sha256: 4186c115f6b1fe413aa6c0252e56a6fd203fbee2c252c2a985a1a82787117749
+    sha256: d7932230ba868f66ea5a1261426bf42496565760831ad757b9330e1e0ca14b23
   - path: AGENTS.md
     document: providers/agents
     format: markdown
@@ -1275,37 +1279,61 @@ artifacts:
     format: text
     source: "share/design/brand/logo-mark.svg, the canonical mark"
     bytes: 911
-    sha256: 07a0fb7f77c12b3c3ca16ffb11a15d543c6d1f28236804612101f4bee8f4920a
+    sha256: d2ebe74220e5c13dabe9185de03c974b7b1b4bf25ed661cdc2de927299fa0e60
   - path: apps/majordomus-cli/src/design/tokens.yaml
     document: design-declaration
     format: yaml
     source: "share/design/tokens.yaml, the one declaration of the design"
     bytes: 21265
-    sha256: f103279bcb8bfe9b6ed4677ce4529fc150e6e00cdc7ca076419bab8ebf1427b0
+    sha256: fdb0c1d8203beb6853310d1dcec98f59783bcf9715a4f57bd5e5d7b56f20b81b
   - path: apps/majordomus-cli/src/ui/icons.toml
     document: ui-icons
     format: text
     source: "site/data/kit/icons.toml, the kit's icons"
     bytes: 9034
-    sha256: 52d16efe19cfa58a85ab596b31fc2453bf075591c277802d5ee83d864504bf2a
+    sha256: 0de305bee9f789dea5cd2c4fc9dadde5347362fed82ba98f0dc210a4e6f3d748
   - path: apps/majordomus-cli/src/web/tokens.css
     document: design-tokens
     format: text
     source: "share/design/tokens.yaml, the one declaration of the design"
     bytes: 9327
-    sha256: 8908fce8f36559631d211c3495300bf96bc85aa2cf0e5f44ce8a81614c2cd798
+    sha256: 87fe2e0ac38b70f6dbd8be1c9489a0f4bf9858e43bce1ca6e0ef5975157336df
   - path: deploy/Dockerfile
     document: deployment
     format: text
     source: .ai/repo/deployments/majordomus.yaml
     bytes: 4559
     sha256: cd3d9307ea0f86f03f0e1403abdaf105e95e81c60b4681cbb91a6c4c222902a2
+  - path: deploy/gigalixir/Procfile
+    document: deployment
+    format: text
+    source: .ai/repo/deployments/majordomus.yaml
+    bytes: 522
+    sha256: 5dbc7258766f2753a3c50475282f06da9933966d8d9477ef984be073a3ae433a
+  - path: deploy/gigalixir/bin/compile
+    document: deployment
+    format: text
+    source: .ai/repo/deployments/majordomus.yaml
+    bytes: 432
+    sha256: ec41143398e3794a00d1a8636cfaeaac3ec1339094d865c2f3918912473a35e8
+  - path: deploy/gigalixir/bin/detect
+    document: deployment
+    format: text
+    source: .ai/repo/deployments/majordomus.yaml
+    bytes: 345
+    sha256: 60601c82b8b7adb37df641edd1383318f261a80806add5b2fa54d1de170b716d
+  - path: deploy/gigalixir/bin/release
+    document: deployment
+    format: text
+    source: .ai/repo/deployments/majordomus.yaml
+    bytes: 354
+    sha256: 1a9af0500bbe3fc3a1d12a793f43777bb47395686679869fd3b87507492e3a73
   - path: docs/INSTALL.md
     document: install-guide
     format: markdown
     source: "share/install/INSTALL.md.in (the prose) and share/distribution.yaml (every platform, name and URL)"
     bytes: 15835
-    sha256: a518f2ecee681672acc0d2e2cacf59aae430549b2e3db2c0897128f0fc14082f
+    sha256: 9f4fe21aee6a3839be19596b11951d7405b2367314c7d489a359b07d4dc75d42
   - path: docs/generated/artifacts.json
     document: artifacts
     format: json
@@ -1328,87 +1356,87 @@ artifacts:
     format: json
     schema: majordomus/benchmark-matrix/v1
     source: the benchmark projection of the canonical capability registry
-    bytes: 59750
-    sha256: 04fce8c26c4faa344996395c4ce67ad04eacd9d7265261f23598844465419da2
+    bytes: 60158
+    sha256: f29813f46ec5a311a3cdc07199620e01bc447275e79b3023e7357f046e1e6cb2
   - path: docs/generated/benchmarks.md
     document: benchmarks
     format: markdown
     source: the benchmark projection of the canonical capability registry
-    bytes: 26232
-    sha256: ef18a3b414e9ea2e2fcbfb96c1564f59556218e6a76460121773b7e020395032
+    bytes: 26382
+    sha256: 6b3804e08d973b24e7158589b3afd49dd08a4a6d3fe323fc12cbf54a2ffe198a
   - path: docs/generated/benchmarks.yaml
     document: benchmarks
     format: yaml
     schema: majordomus/benchmark-matrix/v1
     source: the benchmark projection of the canonical capability registry
-    bytes: 41951
-    sha256: 2a7be032bbab0f7297a12a81d6d9f8f3301e3d5667aa0f2894c1252ecd4ec24c
+    bytes: 42231
+    sha256: 314bfedcc623cea2d3bbdec2044deb086bd2e9efafd490c7aa2045d6adbc591f
   - path: docs/generated/capabilities.md
     document: capabilities
     format: markdown
     source: the canonical Majordomus capability registry
-    bytes: 45494
-    sha256: 60fe7a8744b10e8d66701591f58a43c07c3e9df5d914b4d9798c1d4f14d6334b
+    bytes: 45800
+    sha256: 06a6ee889950954869f27787814ff8d1a17e0312c042834e05a2eba97062cd73
   - path: docs/generated/changelog.json
     document: changelog
     format: json
     schema: majordomus/changelog/v1
     source: "the layer's release records, the decisions dated in each release's window, and the commits in its range"
     bytes: 1414063
-    sha256: f54b0b0b5bfb8e0779a60ceca2863e5d2177a6000723200361e6c24e6a56d3fe
+    sha256: bf7ff94ae61158264eeb55a35737fca718a88d04073ef658542877c6b05c527f
   - path: docs/generated/changelog.md
     document: changelog
     format: markdown
     source: "the layer's release records, the decisions dated in each release's window, and the commits in its range"
     bytes: 300906
-    sha256: 975eb9597fe846fe7319db9cca733b5ca5deb520c8b346b841a188bfeddc7dc0
+    sha256: 198233696dffd7d9f397565cb4100d6bcc7c7b1c5117f5fb8115f57dc43b551a
   - path: docs/generated/changelog.yaml
     document: changelog
     format: yaml
     schema: majordomus/changelog/v1
     source: "the layer's release records, the decisions dated in each release's window, and the commits in its range"
     bytes: 1116451
-    sha256: daeea6516851cb0169f2b2e73364f1466f08cd64dcf300f2c85058e465dc26a6
+    sha256: 975b9c89af63cce823009861c52cb5260591dc810e197e09f0e58e91012b53b9
   - path: docs/generated/cli.json
     document: cli
     format: json
     schema: majordomus/cli/v1
     source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it
-    bytes: 1280022
-    sha256: 2613e59bbd2cbbd3be516e124873377e777f018baab590fbe870b4e9ee3f32b9
+    bytes: 1290968
+    sha256: cf952768062f3271141debf001023449d5ef75ab6b227af17a55b88a6a71b934
   - path: docs/generated/cli.md
     document: cli
     format: markdown
     source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it
-    bytes: 561187
-    sha256: 326d0654379b1b138533bcc5d37329323b91fdbea4ad49c8088570e940dcc6ed
+    bytes: 566100
+    sha256: 5a963838e7bf3084046c87b4472a798f8d12db85fb401cd1b0d3d515b6ab9388
   - path: docs/generated/cli.yaml
     document: cli
     format: yaml
     schema: majordomus/cli/v1
     source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it
-    bytes: 1002483
-    sha256: 1f5acf791239d0ca6d50edbc28692a42622c1331f41faa4fc804c0a103a2842f
+    bytes: 1011158
+    sha256: 4680a4e17681fb2b266fe97a1110d8ed3c12169d002b7a4b862c84263758b98a
   - path: docs/generated/design.json
     document: design
     format: json
     schema: majordomus/design-system/v1
     source: "share/design/tokens.yaml, the one declaration of the design"
     bytes: 155557
-    sha256: d4ba5653e5ced2084db8e080c50f083e4626eccf9f5d04121e1189fd0655b52a
+    sha256: 8bb897a87a57b74929b7acae555c2fe2a81213cc1190a58a74094b6932cfa5c1
   - path: docs/generated/design.md
     document: design
     format: markdown
     source: "share/design/tokens.yaml, the one declaration of the design"
     bytes: 11798
-    sha256: f7e7d5dab95638f76a4140c1ee04abc876ef23cf908bb00066e6b3893b64c879
+    sha256: 8c8eac06c361760f1a102a034a80806cd2f6ca53b7850bb3829e48a5480aea07
   - path: docs/generated/design.yaml
     document: design
     format: yaml
     schema: majordomus/design-system/v1
     source: "share/design/tokens.yaml, the one declaration of the design"
     bytes: 126215
-    sha256: a04fec92e7d558884efa4418ff7b39163fe74417cc1fba9e4d79943df8cd18d4
+    sha256: 4c8a23f0057479b0faeab1784c7a5d51a36103082868c5692d3317150abb777e
   - path: docs/generated/distribution-matrix.json
     document: distribution-matrix
     format: json
@@ -1421,778 +1449,784 @@ artifacts:
     schema: majordomus/economics-summary/v1
     source: the token-economics methodology and every benchmark run committed under .ai/repo/benchmarks/economics
     bytes: 50185
-    sha256: ba236dd3b169a7b9b6e87dcbb92bf1ce95614b1f777de98160936886a36edad1
+    sha256: 2520c4b91cccff18386e4b8e43a34a9f9380f86490ac89259881db00dadd4239
   - path: docs/generated/economics.md
     document: economics
     format: markdown
     source: the token-economics methodology and every benchmark run committed under .ai/repo/benchmarks/economics
     bytes: 15425
-    sha256: 45e5cae6fced6f4ed20c116e00d52bc9488543be5a03e38b93eeb6bbf87a0891
+    sha256: 39097c4b37ad3fa575797c2a4162415abf01593b1ff4af272fafc0da52aaaa0c
   - path: docs/generated/economics.yaml
     document: economics
     format: yaml
     schema: majordomus/economics-summary/v1
     source: the token-economics methodology and every benchmark run committed under .ai/repo/benchmarks/economics
     bytes: 41649
-    sha256: 310ca874db6138f3d44c01f0c41c0d8e448c043b2319fa3987381cce20629665
+    sha256: dec83f74c6a115c89703b7243dbd140b28861755945dd05e89ca119f847f7d87
   - path: docs/generated/graph.json
     document: graph
     format: json
     schema: majordomus/capability-graph/v1
     source: the composed graph of the registry and the index
-    bytes: 5205237
-    sha256: a3039e426fb4c78207f704b215ba45db752ac72ad9775c6ce08613d8c3124258
+    bytes: 5270562
+    sha256: e9a852c5818a1858fb0d326a1a00ed818571bdbcfa22fb7aac05cd467550df4a
   - path: docs/generated/graph.schema.json
     document: graph-schema
     format: json
     source: "the schema of the composed graph, generated from its types"
     bytes: 7632
-    sha256: 89a50d936f84b94ca4c90b6f477976755caa8fd576b3d89e88845356763869d4
+    sha256: 37d29841995d74d4f313ac2b9057f98cb01172559c1f1713d0768cda13da2dc7
   - path: docs/generated/modules/artifacts.md
     document: modules/artifacts
     format: markdown
     source: "the `artifacts` module of the canonical Majordomus capability registry"
     bytes: 1749
-    sha256: 3a2684473ee331eba6584575172d70959cc95aa0d6b9766c792650cfc58cd08b
+    sha256: 362e2d4e556b600615bfe8bc60fa7c35c476f80a67de832e49f5489a9a224b7c
   - path: docs/generated/modules/autonomy.md
     document: modules/autonomy
     format: markdown
     source: "the `autonomy` module of the canonical Majordomus capability registry"
     bytes: 5069
-    sha256: 3a28903006fc4f02a508e85bce88162a265bf23e49358b00b9682ef80aeade46
+    sha256: 789105da85338be462d4924ffb19bc0e7c88098406de675997f1f169c0ed12e6
   - path: docs/generated/modules/brief.md
     document: modules/brief
     format: markdown
     source: "the `brief` module of the canonical Majordomus capability registry"
     bytes: 2401
-    sha256: c47ac618aaf257b17bdaf07d2d124d221ccf01ceeeb7e717d308ecba268ae235
+    sha256: fd6b9dbab7a9ff926cf8bb77793bb13fffa8588a0efe775b78ac192af29da14f
   - path: docs/generated/modules/capabilities.md
     document: modules/capabilities
     format: markdown
     source: "the `capabilities` module of the canonical Majordomus capability registry"
     bytes: 3154
-    sha256: 1db740321bfe6ac3c01aec13818f90b1ca61f1e2a68d3cd2553bf3ea17e19f83
+    sha256: 584d6c3e3c3218d810bc4f36bed99e965712bd48cd0af9741212c68797b8a0aa
   - path: docs/generated/modules/commands.md
     document: modules/commands
     format: markdown
     source: "the `commands` module of the canonical Majordomus capability registry"
     bytes: 3430
-    sha256: 4063e63274b694004f779013ccb17f80bf86be233093db9e824b3555e156a28b
+    sha256: 90117719ab0c075b006189cf05de0d57a6a82d60660e56d9842594f4eb5096d7
   - path: docs/generated/modules/commit.md
     document: modules/commit
     format: markdown
     source: "the `commit` module of the canonical Majordomus capability registry"
     bytes: 4390
-    sha256: 99eafca6fa626dc3391ad68383d58df7ceab6ce030e0a257e6cdad468134e926
+    sha256: 5561d08222fa5a9722fe17a2289962192900960e24586b0d22ad7669bd08b472
   - path: docs/generated/modules/continuity.md
     document: modules/continuity
     format: markdown
     source: "the `continuity` module of the canonical Majordomus capability registry"
     bytes: 8937
-    sha256: f63506318e4d7ae948b9d664dfa924faa0f72c9c9444d54d4dfcdfea1705c1b3
+    sha256: 2d16d319286cca8d73ad773f678f87615abe3c802a41673e632391ca8ef06dca
   - path: docs/generated/modules/convergence.md
     document: modules/convergence
     format: markdown
     source: "the `convergence` module of the canonical Majordomus capability registry"
     bytes: 1807
-    sha256: c8dc16f5cccd450f01af701d7b0a712dc5cce94dab774b3584a711babd41499b
+    sha256: 257df04909f3622e2ff61df74f565426a8f817261572d58301d3ecb460a69158
   - path: docs/generated/modules/dashboard.md
     document: modules/dashboard
     format: markdown
     source: "the `dashboard` module of the canonical Majordomus capability registry"
     bytes: 1709
-    sha256: 2d26dbcb83e9af82c85f8086367e6f870305b12e463c8be53e0ebacc2d92078c
+    sha256: b3fe357169691a50e621962d7a3919c0ece0e9720eaacf542feee2a5c09f7a69
   - path: docs/generated/modules/delivery.md
     document: modules/delivery
     format: markdown
     source: "the `delivery` module of the canonical Majordomus capability registry"
     bytes: 2609
-    sha256: 2557e7909f88408deb7f93c12f7570c7ba6113fe245b9cc8d44ecee90a113db2
+    sha256: b95f055b4288c809a76a69e444de8ac71860ae7b37b0284c616cfe25d1d6313a
   - path: docs/generated/modules/deploy.md
     document: modules/deploy
     format: markdown
     source: "the `deploy` module of the canonical Majordomus capability registry"
-    bytes: 3624
-    sha256: 0b2957976997ca74cf173824cce227338756c64e3b882bb8c174d4a393dd449c
+    bytes: 5445
+    sha256: 031d36a7708eee645f6e2e877c84433317cdec2ce66168a82a25b37c708f342e
   - path: docs/generated/modules/design.md
     document: modules/design
     format: markdown
     source: "the `design` module of the canonical Majordomus capability registry"
     bytes: 4200
-    sha256: ae7328daef83f113040af7967eac5149bfa5a94e0598d9b1c50bcfb392957ab9
+    sha256: 6c1f977b2c88a3f78369f63fe436e47d781a3634d90e513ed1da9c68ed9c6c25
   - path: docs/generated/modules/devcontext.md
     document: modules/devcontext
     format: markdown
     source: "the `devcontext` module of the canonical Majordomus capability registry"
     bytes: 6528
-    sha256: 7836043e7fb3d2ca34754f804c9d307c066b340692a398d7aec045e767fe8966
+    sha256: 2ffce1652bd59ca649e233face55aa065d91ca703f7fe57ae4182af69031c858
   - path: docs/generated/modules/devtask.md
     document: modules/devtask
     format: markdown
     source: "the `devtask` module of the canonical Majordomus capability registry"
     bytes: 4477
-    sha256: ebd90b29e8e61381ad3e7296da035fdacf4f3d759fcb3b2b6761076cf6df821b
+    sha256: 8c396e7f66a39a4f0fbf181c0d09591d51a91a561876fd10d99415c1cdb17eb6
   - path: docs/generated/modules/directories.md
     document: modules/directories
     format: markdown
     source: "the `directories` module of the canonical Majordomus capability registry"
     bytes: 1661
-    sha256: 1c5d390c7ba3ec28c00e1c6c5982efc7ba4ec8ca3378f22606d8037765c72619
+    sha256: 7f28be2cef2d8196f1111920b382ecd8417ea005ade45588e7564d78ff40126f
   - path: docs/generated/modules/distribution.md
     document: modules/distribution
     format: markdown
     source: "the `distribution` module of the canonical Majordomus capability registry"
     bytes: 4573
-    sha256: 6d59d2f913549c579148a42633b78c9049cb2ed33df90fc02a741e80dcdbb721
+    sha256: 76b6b09d914cf0e5c2736e8f768f18f5a307e04f13ed7f33cb1cd258238cbfb7
   - path: docs/generated/modules/economics.md
     document: modules/economics
     format: markdown
     source: "the `economics` module of the canonical Majordomus capability registry"
     bytes: 4653
-    sha256: de374783729b793da47f3aff4707200117813fdb226b9460e83db438ca7118df
+    sha256: ea6d7685b0bf8331786cba2d781292e5816ea9df248e743bfe9121e22a21a044
   - path: docs/generated/modules/editors.md
     document: modules/editors
     format: markdown
     source: "the `editors` module of the canonical Majordomus capability registry"
     bytes: 1422
-    sha256: 4f8e48bc0f816ecc0163487bb7b34163c4007aaf6e62248782e5b4a10369d57a
+    sha256: 5631570fdc903b9177cdee6cba8958b7ccb7625be8d68376c880063578b28849
   - path: docs/generated/modules/entity.md
     document: modules/entity
     format: markdown
     source: "the `entity` module of the canonical Majordomus capability registry"
     bytes: 2460
-    sha256: 58d98f25b9c320158ba3ad05558477e389a07305a8ca98235f385a153a592004
+    sha256: c1e56b73063ffd7487f4559cb8025ddf19411292b1dcad673b2e8d84236c77e1
   - path: docs/generated/modules/environment.md
     document: modules/environment
     format: markdown
     source: "the `environment` module of the canonical Majordomus capability registry"
     bytes: 4159
-    sha256: 8bee4a563e187a43ab314b1e19b13b8e4e2311c4aeb803a85b85e28625c2e6ce
+    sha256: 34e4367d8befdc4b6b12fda1e74f56e45b631ebec48e92687e260db971e31037
   - path: docs/generated/modules/episodes.md
     document: modules/episodes
     format: markdown
     source: "the `episodes` module of the canonical Majordomus capability registry"
     bytes: 4364
-    sha256: 21c6365ed4e09446e58fc680ffe7ad77fd6ddb70ec871cfc682b46be9f7c6e04
+    sha256: f3e17cb19c6f9aaa4bfe9f469530c99e5ef5c9012d0ca2df53aefa4fc9eaee72
   - path: docs/generated/modules/evidence.md
     document: modules/evidence
     format: markdown
     source: "the `evidence` module of the canonical Majordomus capability registry"
     bytes: 9470
-    sha256: 53d928d93c9b558989c19cfdfe0fbcea4093724152024bb13eb5da3ecd96db12
+    sha256: 417b6e3cc6b28776231c5644440f802cd9bb5b5becc9f53e20b8eeb8271d7272
   - path: docs/generated/modules/executions.md
     document: modules/executions
     format: markdown
     source: "the `executions` module of the canonical Majordomus capability registry"
     bytes: 9758
-    sha256: 1b45a16191ba9fda81b81dc86ef52675dc5088a5998820e2f80dcbeb87ebc5fa
+    sha256: ec467a04d4c37a41daac66228a61737be660b601a41a8d5f20c3575178e888df
   - path: docs/generated/modules/gates.md
     document: modules/gates
     format: markdown
     source: "the `gates` module of the canonical Majordomus capability registry"
     bytes: 3267
-    sha256: 99c8130e112ee4b71a89901c8420d1788706ef7d0dd6f75a9730f57ad0733853
+    sha256: a98631911375804f81327a000ff51e909a1fea6bf2e3a10ed7881fadb5debf1b
   - path: docs/generated/modules/graph.md
     document: modules/graph
     format: markdown
     source: "the `graph` module of the canonical Majordomus capability registry"
     bytes: 1805
-    sha256: 3aa712194ddb741f03955100c800f3455a05acb8592443b66b6836da0bf96e9b
+    sha256: 431222db981c25c238864612f1c8deeff93e6bb4bf9ff35467b437895752e865
   - path: docs/generated/modules/guard.md
     document: modules/guard
     format: markdown
     source: "the `guard` module of the canonical Majordomus capability registry"
     bytes: 1681
-    sha256: 9b6a0d7914bb28b8a2a8ddfdffd7a23ee3a54392756de85bad47daa7952dd919
+    sha256: 12e4a51ecad50e7f0f454cbcaf0c69954490590cdf22fa7b1b03620b4a7258f5
   - path: docs/generated/modules/health.md
     document: modules/health
     format: markdown
     source: "the `health` module of the canonical Majordomus capability registry"
     bytes: 2541
-    sha256: 17198946a6202e1c2817182dabaa33ed541899c438a0321d192d043d2257b0ad
+    sha256: 1262e333b5f1e06a3427b99dc779a53a739e382aaf30b5cb6d2795b033c73c7b
   - path: docs/generated/modules/integration.md
     document: modules/integration
     format: markdown
     source: "the `integration` module of the canonical Majordomus capability registry"
     bytes: 9833
-    sha256: c1fb25b36379d4d08bc271a77f2fdf1643b63ea7fe526ed4cc015f9b9d41d221
+    sha256: d7d97aa3b1acb0b3011d219316b09bcb818167611437224dea55f6d66dce4e83
   - path: docs/generated/modules/intent_realization.md
     document: modules/intent_realization
     format: markdown
     source: "the `intent_realization` module of the canonical Majordomus capability registry"
     bytes: 3620
-    sha256: d5d2c1d51a282964a961b56d20c97a85ef1c0bfd0a9ef119a070171749b716ed
+    sha256: b4fe2d7f60c3bdf1649ce9214ca7430b73aba9e12d92bda16902d28a64b0f60c
   - path: docs/generated/modules/intents.md
     document: modules/intents
     format: markdown
     source: "the `intents` module of the canonical Majordomus capability registry"
     bytes: 9826
-    sha256: 8f58d6620f07e356c34988f9ca02d5f59b696e34bd5f696f184ad5ebba97a243
+    sha256: 7f83fc1b60ab361059a998aeb44a0f4cf5582094d7332084db1b13135f1f7a8c
   - path: docs/generated/modules/knowledge_base.md
     document: modules/knowledge_base
     format: markdown
     source: "the `knowledge_base` module of the canonical Majordomus capability registry"
     bytes: 4004
-    sha256: ddad32db948cd70454ddad2535e8c80e405015e8a16100eae03041e08882b384
+    sha256: 7d9bc3cceb8cd6bc212398dc23823526ae1a63682593f70d35a39301c25b0116
   - path: docs/generated/modules/lifecycle.md
     document: modules/lifecycle
     format: markdown
     source: "the `lifecycle` module of the canonical Majordomus capability registry"
     bytes: 4527
-    sha256: 258c47478a49fb35b7bd5022268fcbc1d31db67d728294db45888aa3bbd69e02
+    sha256: f996cea65cd2f69ddaff6df59215144a1bfb04ce5c2a9926eeac6e96ca2477a0
   - path: docs/generated/modules/mcp.md
     document: modules/mcp
     format: markdown
     source: "the `mcp` module of the canonical Majordomus capability registry"
     bytes: 2004
-    sha256: a117855c7d337e8a0dae518cf1ab033165abecb9e2ccbb3871a287a9e13bc9e1
+    sha256: f174edfcc3228af81021b7bdb9524a80453728947299ae56c8f9fa9983802c7e
   - path: docs/generated/modules/mesh.md
     document: modules/mesh
     format: markdown
     source: "the `mesh` module of the canonical Majordomus capability registry"
     bytes: 27235
-    sha256: 8b5534b0ae422898d586cbd0da838e222ccb9717a6ec62c36e5c6c8b9e783575
+    sha256: 13cefe46bf210e7af374af82da4d7d20ea01b6892548221bdb57738583515889
   - path: docs/generated/modules/models.md
     document: modules/models
     format: markdown
     source: "the `models` module of the canonical Majordomus capability registry"
     bytes: 2906
-    sha256: 255ae09703d3e2df368d18aedd67d1c25dcee8e73226804296975f128d7e9574
+    sha256: e2be48acbeb7fee89d1f1df9ea205411a63f527e227d55b19953cd03e6f284a9
   - path: docs/generated/modules/monitor.md
     document: modules/monitor
     format: markdown
     source: "the `monitor` module of the canonical Majordomus capability registry"
     bytes: 2418
-    sha256: 6208bf8127b8c2bf8cbd023b9562d24da4e9b0d05cc14baaec3ac480da05fc40
+    sha256: 48dffabb08c58f8a1e8562543e1d2561e431565a4a8e38eccfe44f9bf7c3b528
   - path: docs/generated/modules/objects.md
     document: modules/objects
     format: markdown
     source: "the `objects` module of the canonical Majordomus capability registry"
     bytes: 4075
-    sha256: 03047497d7d42280bb30f4d0a55607f84f50b54710d3ac3373b3d6354c9ccb07
+    sha256: aa460bd8cec4d45f2bc9ccebe954acad2ab24dfe295c046b292c53664b5c9580
   - path: docs/generated/modules/obligations.md
     document: modules/obligations
     format: markdown
     source: "the `obligations` module of the canonical Majordomus capability registry"
     bytes: 2618
-    sha256: 4cc0e06e72d492974745340d52e6d77dbf0d81611d0939401c2baa4658db1807
+    sha256: 7585e65bab3b0fef68e0db98038ba796b4dbf1bcf916d304a98f1bc9fb444a2a
   - path: docs/generated/modules/observatory.md
     document: modules/observatory
     format: markdown
     source: "the `observatory` module of the canonical Majordomus capability registry"
     bytes: 2889
-    sha256: beaceda7475ab6678c01c665c5bd0dbe322db9af8a2a9cd2cc088aa4bf169224
+    sha256: baa687d3576337a62583b6eda5dafda337fcb6765db295b6803ddefeb3501e51
   - path: docs/generated/modules/pack.md
     document: modules/pack
     format: markdown
     source: "the `pack` module of the canonical Majordomus capability registry"
     bytes: 2812
-    sha256: 6bf3bf8db98730f74d0fc867aebbb9cf44aa3c7ecc626ed8af223d21b0d0acbc
+    sha256: a51dd757582e6c2e167f33d9c592ef243b0c2b14d6b401c41c9760035702f492
   - path: docs/generated/modules/peers.md
     document: modules/peers
     format: markdown
     source: "the `peers` module of the canonical Majordomus capability registry"
     bytes: 3924
-    sha256: 84f483bd048e06a3deccbc5b982ca274381d769d4cc22c9d9534b0ccdaf14e4f
+    sha256: 57b60f630309fd1f969fd15bebf5dbd51274f2e73729a7a27c9afe972ff92215
   - path: docs/generated/modules/perf.md
     document: modules/perf
     format: markdown
     source: "the `perf` module of the canonical Majordomus capability registry"
     bytes: 1048
-    sha256: db29b6d310f476ce5eb208bbbe44447074de019f5734d25e49a57000a8b1c5e7
+    sha256: a6a35e06b97b7b1e4857b93c5d5539344890cb56aba7c147e36a28d3b775471b
   - path: docs/generated/modules/plan.md
     document: modules/plan
     format: markdown
     source: "the `plan` module of the canonical Majordomus capability registry"
     bytes: 16381
-    sha256: 58b0dab938411e53c56b86a4b37f3b2d801c888bebec70d16bfc58802c35308e
+    sha256: 88fea8547e4f7d74bc47c8ae65ea210f5a99062f1af1061499eda0e3aa26e8d0
   - path: docs/generated/modules/product.md
     document: modules/product
     format: markdown
     source: "the `product` module of the canonical Majordomus capability registry"
     bytes: 7237
-    sha256: bd05a7f62e403b1596c8abb0cf47ecd6004791bd208b09858eb8bd962ccba1d2
+    sha256: 535b4c30e1597a414fe29308ecde6cb07aa08eabdc519813bb61906c31e2ae0b
   - path: docs/generated/modules/quality.md
     document: modules/quality
     format: markdown
     source: "the `quality` module of the canonical Majordomus capability registry"
     bytes: 4324
-    sha256: 17298028672b52c3e60a165be1b97fb0f4762bc97a3f09ff9d78960ce2d02dd8
+    sha256: 94bfcf6e3e4b102cf8e16f95051af564412b8fce216c0d49cd94f8b568ba7243
   - path: docs/generated/modules/reasoning.md
     document: modules/reasoning
     format: markdown
     source: "the `reasoning` module of the canonical Majordomus capability registry"
     bytes: 6935
-    sha256: d215285ddb6aa058850986723b04b46d246b6abbe205c6af4b3fd6e5a6417fd7
+    sha256: 151d20b446c729c88caa9403742bee7381cb742a4b36b73aa3a89603f53b0f3f
   - path: docs/generated/modules/recover.md
     document: modules/recover
     format: markdown
     source: "the `recover` module of the canonical Majordomus capability registry"
     bytes: 2395
-    sha256: 82b0c0daad1d934c92903367a109611af531aa61b47e3b354d63cfc9b2b3a96c
+    sha256: a48452fdc88d982ef0517771d8f4c3e9c16f663cbd63859f578bd41c120ae185
   - path: docs/generated/modules/release.md
     document: modules/release
     format: markdown
     source: "the `release` module of the canonical Majordomus capability registry"
-    bytes: 6291
-    sha256: a8049f5db17de6d5b9558ec3a7914675509f3a08555884a6ff02be959fdadf06
+    bytes: 7977
+    sha256: dbf4278c22075db577a450cc4f468146e1e20db6c39e3fc59aeea8ae0b92f52a
   - path: docs/generated/modules/repository.md
     document: modules/repository
     format: markdown
     source: "the `repository` module of the canonical Majordomus capability registry"
     bytes: 2523
-    sha256: 900e28f5700b78a02fc335b0484d253de6637b9b39161b62ab2fc4df5246fadd
+    sha256: 56c65c6cce31bce7dc5c6477fdd069d1373c92be3e39ac2afa350060139fd951
   - path: docs/generated/modules/rules.md
     document: modules/rules
     format: markdown
     source: "the `rules` module of the canonical Majordomus capability registry"
     bytes: 5074
-    sha256: 10479b8c8a14a36d18882e9a8d7c571d4f046a5aa51f1a999800cf7de8bbd880
+    sha256: 9181b3269b60cf43d21c3aa1c43f7b36d3ef2d99ac71102f1975feeae2f3458e
   - path: docs/generated/modules/served.md
     document: modules/served
     format: markdown
     source: "the `served` module of the canonical Majordomus capability registry"
     bytes: 4355
-    sha256: c4778612245f5dcca9bfa497d13d4243ea5dba22cd8a75c73d37314fd47a33ee
+    sha256: b187e744359acaf58df23faffcd1d0654f2e3ec09ef067cb4638cfc88499783c
   - path: docs/generated/modules/server.md
     document: modules/server
     format: markdown
     source: "the `server` module of the canonical Majordomus capability registry"
     bytes: 2058
-    sha256: cef137cfb8dfc6d2b7783adcca2d208002977e599d1a7f294445aaa1462aab27
+    sha256: b2714d08bec80629300076272b7a8e8503ddd991436438385cdd1749507a2f62
   - path: docs/generated/modules/session_domain.md
     document: modules/session_domain
     format: markdown
     source: "the `session_domain` module of the canonical Majordomus capability registry"
     bytes: 2693
-    sha256: 47c92cd45e6acb246a146319e323bfc83085e07e72cc5e870225e07ea30a6f55
+    sha256: 282ece70c9293d588b261f60a3c5331cbd3b5c66462be1b9c90337d41353de41
   - path: docs/generated/modules/shell.md
     document: modules/shell
     format: markdown
     source: "the `shell` module of the canonical Majordomus capability registry"
     bytes: 1561
-    sha256: 190145dcc713e7012990e3994f6234978a8f543c56dd894579012c40840d04b7
+    sha256: f5a709d8fb6db8adc3b265f19c130ae20a6521cf9859328e72930eb773a659ba
   - path: docs/generated/modules/skills.md
     document: modules/skills
     format: markdown
     source: "the `skills` module of the canonical Majordomus capability registry"
     bytes: 3166
-    sha256: a8398adc46a1bb5fab481ce2d1bcdfb2fb926884cd4685bda27e1ab7e33d3d13
+    sha256: 40b641ed875442978bcd5e5af7c80d53eb886c4c6e0e101db3aede76364a5b91
   - path: docs/generated/modules/trace.md
     document: modules/trace
     format: markdown
     source: "the `trace` module of the canonical Majordomus capability registry"
     bytes: 4586
-    sha256: cd8ef5f3c3226a8c2090a1b8aeb42f4d89b2202f9fa6db8e28ebba626f7a1ee2
+    sha256: f828f732b71e568e66876066743db8d7a83f465adf2a5e25a60f369469d0b280
   - path: docs/generated/modules/web.md
     document: modules/web
     format: markdown
     source: "the `web` module of the canonical Majordomus capability registry"
     bytes: 1470
-    sha256: a28a7a31c5603cbfaa4b043e1ec6ca086c8be562caa50fafcd4c34b99ea46bb6
+    sha256: a19026d130ba37f1fb0b8b3973f69710452bd1131cbdde1bb8ec2128ce57afb2
   - path: docs/generated/modules/why.md
     document: modules/why
     format: markdown
     source: "the `why` module of the canonical Majordomus capability registry"
     bytes: 6129
-    sha256: b4e668536efd3e8b5e317faf008ef2b3dd6725d589159efbb9881762f02d1eb5
+    sha256: 976938410b23ddd9b543598b987544dfdc576abcd6beb5d5b96bbe3c71d6c625
   - path: docs/generated/modules/worktree.md
     document: modules/worktree
     format: markdown
     source: "the `worktree` module of the canonical Majordomus capability registry"
     bytes: 7976
-    sha256: 3a7a42f46758bcdd4ae9cd866c7e4a2a9f69e0e66632087db87249d3305501cb
+    sha256: 4bd2781db1e9e277cd2f7f35b616ac8ebef886c37918997c2de8a02fa008e0a4
   - path: docs/generated/openapi.json
     document: openapi
     format: json
     source: the canonical Majordomus capability registry
-    bytes: 2601670
-    sha256: b11f41c0fa71cfb2d18323e686c29a3e399dfe3fc040f793c2047fc921063ae2
+    bytes: 2618750
+    sha256: 999df55b4344273815fac25aa9ae26100167e84c6e27a8e13ab3586eaa86178e
   - path: docs/generated/openapi.yaml
     document: openapi
     format: yaml
     source: the canonical Majordomus capability registry
-    bytes: 2103206
-    sha256: 3c0023f7f19d7beee21d933b857bc1184e33e729f4786dac362db99504236efb
+    bytes: 2117403
+    sha256: b8f3cca33897f8a2dd65cdd02c5f7ac86d1b71b3083a00daefa933a12ed8a932
   - path: docs/generated/providers.json
     document: providers
     format: json
     schema: majordomus/providers/v1
     source: "the provider declarations the distribution ships (share/providers.yaml), the templates beside them, and this repository's policy"
     bytes: 9484
-    sha256: 9befe2895a19673dbfb177e43acf5f5dc059139bff3c044a24b703ad3c0f7382
+    sha256: 0e6b07481d2e752784027f115ba34416386652202985fa98b0dc3a5b3c4908b4
   - path: docs/generated/providers.md
     document: providers
     format: markdown
     source: "the provider declarations the distribution ships (share/providers.yaml), the templates beside them, and this repository's policy"
     bytes: 2577
-    sha256: 07a9b59f868d51c9922eefece18249c93791bada063074f683c08e906dac9764
+    sha256: 499ef7d58340c3babb7bf0ea378cddcfbb9681793652cbfdc5efbe36e77013d2
   - path: docs/generated/providers.yaml
     document: providers
     format: yaml
     schema: majordomus/providers/v1
     source: "the provider declarations the distribution ships (share/providers.yaml), the templates beside them, and this repository's policy"
     bytes: 8877
-    sha256: 13ec7d16d570bd94c14e2a54d744f5776e7ac0845abd4e2801dab6233d045f20
+    sha256: ad3790aa2b53116bb11390d88afcb21c13c6cde16579d175bb5aa5ddfb052716
   - path: docs/generated/registry.json
     document: registry
     format: json
     schema: majordomus/capability-registry/v1
     source: the canonical capability registry
-    bytes: 3884038
-    sha256: eb197f6f12230f4435664126dead6bff0dae81379c047232d9bd784b50a46726
+    bytes: 3922584
+    sha256: c0f84b3115e56ab15cd0885e06baa0127ad70ed0a2e3850608283f131dd46f0d
   - path: docs/generated/registry.yaml
     document: registry
     format: yaml
     schema: majordomus/capability-registry/v1
     source: the canonical capability registry
-    bytes: 3132757
-    sha256: f8e9dc36223e15c0472441a1f224ddd04e71d378a18abf0cf620f94f0059adc8
+    bytes: 3164655
+    sha256: 7a425d78b2a75742fb6311591f03a94ab622c45581b04c2b86f258ded65a9556
   - path: docs/generated/web.json
     document: web
     format: json
     schema: majordomus/web-topology/v1
     source: the resolved web topology of this repository
     bytes: 5562
-    sha256: 12c90e8af86294cdb38cb3902271b4a007c65ccbc6ce780781a4f10073de0366
+    sha256: 379661b5e57e3c8c80c65b88023323a4553e1b5d25e6488da6dd143ee9a7587c
   - path: docs/generated/web.yaml
     document: web
     format: yaml
     schema: majordomus/web-topology/v1
     source: the resolved web topology of this repository
     bytes: 4233
-    sha256: 4f56742c629b4c9bf1d5d88620807c1d1f7cb439c4d481458067b27caee1fe6a
+    sha256: 21b6fbccc16573aa376c6b133561ce803d25b82034ce51069fe943310faf44d3
   - path: share/allow/adr.txt
     document: allow/adr
     format: text
     source: "the document schema `share/schemas/majordomus/adr/adr.v1.proto`"
     bytes: 380
-    sha256: 21e79039c7fb82802fc93812c304acd4884a6e6ae8c86c0b3f92b85ded7e1f01
+    sha256: 4b6f70c1636d55c2e8884a6999394d3bd2531bf999caa91ccde4d5c5a4114a3a
   - path: share/allow/application.txt
     document: allow/application
     format: text
     source: "the document schema `share/schemas/majordomus/application/application.v1.proto`"
     bytes: 391
-    sha256: 9d642110aac792d2b7367da6d02f15b8219a0fda212964a34d7ed7124ec995d5
+    sha256: 3224d070523ad8c062cf549458271f1db67533836efdd9ea6e3732ae229d035e
   - path: share/allow/autonomy-declaration.txt
     document: allow/autonomy-declaration
     format: text
     source: "the JSON Schema `majordomus.autonomy-declaration/v1` of the kind it validates"
     bytes: 388
-    sha256: fbfc664db355ad34d225164571a6aa208eeb9f8b3963a49a46b3f579e08c2472
+    sha256: 41a2893861f5b1d40c0e39546bffdacb57ebbe649e55d30bee76d2497e7b6795
   - path: share/allow/context.txt
     document: allow/context
     format: text
     source: "the document schema `share/schemas/majordomus/context/context.v1.proto`"
     bytes: 454
-    sha256: 8044011c27f2efe6e12235e51f8c20dff6db91ce705aed4445cfc827b6171fa0
+    sha256: 1af7026f9e5a68c2341af033ef7b3148cbb8ecfc29bb564a67a4c890704b4974
   - path: share/allow/critique.txt
     document: allow/critique
     format: text
     source: "the JSON Schema `majordomus.critique/v1` of the kind it validates"
     bytes: 486
-    sha256: 3d5f29cd9601db5f9de6baf6e05f13150930c13e9d99a508d026ede106cf61c2
+    sha256: f94c9c551f2b9f87fe6e1d8c0491e1d7125bcc8e5e2c47ad18980c5ddacb2e59
   - path: share/allow/current.txt
     document: allow/current
     format: text
     source: "the JSON Schema `majordomus.current/v1` of the kind it validates"
     bytes: 474
-    sha256: dfcb838463e0d7a84a67807dd8646475c9fec142dc8c77cb8860997275874e4d
+    sha256: 3cb9143edc1710a660c193f9da2cf216406d17509c6419dc3b38ff092bc81e51
   - path: share/allow/deployment.txt
     document: allow/deployment
     format: text
     source: "the JSON Schema `majordomus.deployment/v1` of the kind it validates"
-    bytes: 880
-    sha256: 9fa0ea378a6162ac6080513a86d0a8d6fa6f84af34575a928a668c3a9c0f39ac
+    bytes: 947
+    sha256: 775b72c6c5a4ad0b2fa9174137df31d9cfe88afedf65d54477f77cf7ea3d62cc
   - path: share/allow/derive-offload.txt
     document: allow/derive-offload
     format: text
     source: "the JSON Schema `majordomus.derive-offload/v1` of the kind it validates"
     bytes: 620
-    sha256: ae23f59856fc094192e30bcb10b65354dd9347b1481f16a0293e200bee956817
+    sha256: 2f27e78043a2497d32bf9efcd9a01b74e191ad80a9f9c0e30c0b5b2da9e4d6f2
   - path: share/allow/distribution.txt
     document: allow/distribution
     format: text
     source: "the JSON Schema `majordomus.distribution/v1` of the kind it validates"
     bytes: 1004
-    sha256: b13969a1b182b700dd157cd53058342119ea48097cea199adf6b5563599fa360
+    sha256: 9a9841c6c93ea6061d14a85fe59da7cee43846714501d490a6c33864739846cf
   - path: share/allow/document.txt
     document: allow/document
     format: text
     source: "the JSON Schema `majordomus.document/v1` of the kind it validates"
     bytes: 281
-    sha256: e00ab165e2024077ab9b6045840cb4022e4361cc04b55a3766c34829696559ca
+    sha256: a1b3277e9eeb8ac2e1e1b0d2c4e25e88636a4112316125577780526f0a206cdb
   - path: share/allow/gap.txt
     document: allow/gap
     format: text
     source: "the JSON Schema `majordomus.gap/v1` of the kind it validates"
     bytes: 634
-    sha256: f25a26b7a842d65a3016a991d1a216c1ef7782da4cd24c6bdf11b61de6232f06
+    sha256: 509353807dc6297904a38fc1bd5fa702b00ea48c25b4960cdd780b77bdf9fe69
   - path: share/allow/intent.txt
     document: allow/intent
     format: text
     source: "the JSON Schema `majordomus.intent/v1` of the kind it validates"
     bytes: 493
-    sha256: 77a7d2308210ef985be561444de9c8f43661e1cb4161cc1381070b333ccc4a1b
+    sha256: e04145ae831a85f1bade2a7ae14171d9467c3e66e7548e8e1de0aa1773b10aec
   - path: share/allow/issue.txt
     document: allow/issue
     format: text
     source: "the JSON Schema `majordomus.issue/v1` of the kind it validates"
     bytes: 896
-    sha256: 215affd54aea4906496c32a9ace3bf01e96cd43f98f233b3505734e7818a0f06
+    sha256: 3fc0e3c7adffd89a50b02203e5aa2565aec734d41bf00fd725a3a8a031db76a3
   - path: share/allow/knowledge.txt
     document: allow/knowledge
     format: text
     source: "the document schema `share/schemas/majordomus/knowledge/knowledge.v1.proto`"
     bytes: 452
-    sha256: 7ce10ed3b98a838e51e390219d4f6ff0c4273ec7ad8fe49d26509d94af6647dd
+    sha256: c51a674f5a69eb5ebef2bdb60e79fbc0f9b52ae357470e1b2b64db3fe8282321
   - path: share/allow/manifest.txt
     document: allow/manifest
     format: text
     source: "the JSON Schema `majordomus.manifest/v1` of the kind it validates"
     bytes: 656
-    sha256: b2c2b41c56b0896ced5d63f04671713e9774f21b537c1e9533f771fe9b05eaa0
+    sha256: a7c47f5a869c188378525922dc3d5480fcb26df49d4cbbcc279bd592db4fee3e
   - path: share/allow/mesh-declaration.txt
     document: allow/mesh-declaration
     format: text
     source: "the JSON Schema `majordomus.mesh-declaration/v1` of the kind it validates"
     bytes: 694
-    sha256: c1d03320857c720fc38c0bf6f34b0dad1f3088d1d6595eb679578c8bd9da5a7f
+    sha256: f7c10d7fee417441239cc24fa8d59e405b87bc57e4696162f1031ca3134e7a63
   - path: share/allow/milestone.txt
     document: allow/milestone
     format: text
     source: "the JSON Schema `majordomus.milestone/v1` of the kind it validates"
     bytes: 757
-    sha256: 414d580e008325b85e33c6cd2a9bfefbcf84e92907c8d226e06447b007d3c136
+    sha256: 6762b4e6dfb053c4834fdc633864d7fdb94b9e34980aae0878e6661de021c91d
   - path: share/allow/policy.txt
     document: allow/policy
     format: text
     source: "the JSON Schema `majordomus.policy/v1` of the kind it validates"
     bytes: 2654
-    sha256: b9096d19144fce63cacfffb5e229217740e188dc381e47ecad57e411e404daf4
+    sha256: ebaaba8ee30b9c4d68d295a396198425f577d1b0888b0323a2cf36a640636d98
   - path: share/allow/profile.txt
     document: allow/profile
     format: text
     source: "the JSON Schema `majordomus.profile/v1` of the kind it validates"
     bytes: 749
-    sha256: 881a214c9f31b3987cb5c5480f89f7fa60b7d5c76ca85b8c248de110ee4c2f9b
+    sha256: 31219599eb1392a9c64c459e4c6fb265e2f29154895122cff4507f8369a63877
   - path: share/allow/project.txt
     document: allow/project
     format: text
     source: "the JSON Schema `majordomus.project/v1` of the kind it validates"
     bytes: 252
-    sha256: 93ec6561f62154495d165562d9ff9e49811417a46522bb26bb357e8abb2e2ff0
+    sha256: 04ce29db1d94387fa9a44a50e864d59d94b552e8a6fc03bcabfb13090597d5b9
   - path: share/allow/prompt.txt
     document: allow/prompt
     format: text
     source: "the document schema `share/schemas/majordomus/prompt/prompt.v1.proto`"
     bytes: 234
-    sha256: 2b76c1045f814dbbfaf2fa48a2ffd68c5a69943ae046b10cdd32b8db6ef9103d
+    sha256: 2c77ec19b59915e288c079eaf499cc6ee1fd66e52ebbabe13b7c087c8a9060e7
   - path: share/allow/release.txt
     document: allow/release
     format: text
     source: "the JSON Schema `majordomus.release/v1` of the kind it validates"
     bytes: 441
-    sha256: db9a2932d7d35926339cf174a260abd7b4065bd66ef98e0fa22b525fd25e0ac5
+    sha256: 572d49e63991d731b70487fcfd5c95b95dd55326ae13969d1b86d1c68aef7a17
   - path: share/allow/rule.txt
     document: allow/rule
     format: text
     source: "the document schema `share/schemas/majordomus/rule/rule.v1.proto`"
     bytes: 557
-    sha256: 60c606b3dd091b8c47d313dc7e2505d786dc081f39a9f60b27172319fec6b584
+    sha256: 57eddc525ddffe01418979340af2be6bc7b635019dd45304ad1e4e37ec41b339
   - path: share/allow/scope.txt
     document: allow/scope
     format: text
     source: "the JSON Schema `majordomus.scope/v1` of the kind it validates"
     bytes: 832
-    sha256: 40892b2487f41606e30aebaa09d076cd35d4a292b88dd9c9be59aa94377b1ef1
+    sha256: a04b460b630c6c7e3606a26855ad633201ac57f54a7751e0fa52fd2a4e4ad0da
   - path: share/allow/session-context.txt
     document: allow/session-context
     format: text
     source: "the JSON Schema `majordomus.session-context/v1` of the kind it validates"
     bytes: 334
-    sha256: 7a0efb438212cb1eda86ba50941b3d9da0fe145b10e72923fa09697cc32a3f4d
+    sha256: 5bb870a960de3f72b14d6a3a33846f469b04363af8ff0c4886067d9235b605c9
   - path: share/allow/session-record.txt
     document: allow/session-record
     format: text
     source: "the JSON Schema `majordomus.session-record/v1` of the kind it validates"
     bytes: 658
-    sha256: 0f105c94fe83183be387e0e5cf2e7c8f39ade7e625b522566a942503f4a30386
+    sha256: 9d18361520a12bfb2cd444bc00382c4e763d3e14170ff4a5a1648585f141f7ab
   - path: share/allow/session.txt
     document: allow/session
     format: text
     source: "the JSON Schema `majordomus.session/v1` of the kind it validates"
     bytes: 341
-    sha256: 9279977a8f8d29fca59ce857e06bf40a5a8aac6543db0c2892b60636084ff206
+    sha256: ac0e1783bbfd5c339f6320aa93f8e399f2432f40cff19311f66438462fe3f9da
   - path: share/allow/skill.txt
     document: allow/skill
     format: text
     source: "the document schema `share/schemas/majordomus/skill/skill.v1.proto`"
     bytes: 401
-    sha256: f7b296dc8d2a232b5a3b11dc6d160b889b56848d49c796a93646da5af5452e82
+    sha256: b854a196af57d0b3db1d20598c1d779820f1e05e1a60b2a2b081829a6bbe95f6
   - path: share/allow/taxonomy.txt
     document: allow/taxonomy
     format: text
     source: "the JSON Schema `majordomus.taxonomy/v1` of the kind it validates"
     bytes: 320
-    sha256: 6331a4a0ac73afb5e59e905ec3e2ec2db231aa3079a1e8c8c92e326dfb1f9ba1
+    sha256: a346bbc8e41b509e3698fb953ddbea306ded5139b50e00cba1c6c1524d3ad7cb
+  - path: share/allow/telemetry.txt
+    document: allow/telemetry
+    format: text
+    source: "the JSON Schema `majordomus.telemetry/v1` of the kind it validates"
+    bytes: 1089
+    sha256: 8b032e00555cd53b9144a9bb4091b837953ef3d4e4ee60c872cfa7e5972c2960
   - path: share/allow/use-case.txt
     document: allow/use-case
     format: text
     source: "the document schema `share/schemas/majordomus/use-case/use-case.v1.proto`"
     bytes: 554
-    sha256: d7f96dc4fe7e0bac1a3a44725d8f031492b0692cae80ca2912959004da5a5311
+    sha256: 5c08d7edd734ce65d3c029e37274eac7c690379f930acf900d98fab5bfae02ff
   - path: share/allow/workspace.txt
     document: allow/workspace
     format: text
     source: "the JSON Schema `majordomus.workspace/v1` of the kind it validates"
     bytes: 575
-    sha256: 33af6fa0d07696f4ff98a39a8701f7be66db3e3c0c4136e823c19b6b9b77710d
+    sha256: 816d660148fbff9ae20db1b9e3615b151e9191a4cc8c3a40e4fa7c10b6184b90
   - path: share/cockpit/favicon.svg
     document: design-mark
     format: text
     source: "share/design/brand/logo-mark.svg, the canonical mark"
     bytes: 911
-    sha256: 07a0fb7f77c12b3c3ca16ffb11a15d543c6d1f28236804612101f4bee8f4920a
+    sha256: d2ebe74220e5c13dabe9185de03c974b7b1b4bf25ed661cdc2de927299fa0e60
   - path: share/design/status.css
     document: design-status
     format: text
     source: "share/design/tokens.yaml, the one declaration of the design"
     bytes: 13334
-    sha256: 841fc2263abd6930a0dabca1c90b9bbdddf9b8dca36f724cec3270fefe41420f
+    sha256: df47e6fff62dec8a19736def446aa90b2487e1c750d4f62de0b396c0b10b3241
   - path: share/design/surface.css
     document: design-surface
     format: text
     source: "share/design/tokens.yaml, the one declaration of the design"
     bytes: 6069
-    sha256: 1ce731ac23576f41b0b303535108b7e6b7bb0b243a745bd17245dd43fe029c3a
+    sha256: 98e40ac45e8a371ecddb7f736129be57857d6d714fb8e50128da214e544d41be
   - path: share/design/theme.css
     document: design-theme
     format: text
     source: "share/design/tokens.yaml, the one declaration of the design"
     bytes: 2415
-    sha256: 102a20977b6268263f900dcbe06f7653128c3cc39a224f373a61ae78cd4538dd
+    sha256: 5f916c7ab0a0e10e8738069b07584479a50234cc48340822170f5abc946693f1
   - path: share/schemas/majordomus/adr/adr.v1.schema.json
     document: schemas/majordomus.adr/v1
     format: json
     source: "the document schema `share/schemas/majordomus/adr/adr.v1.proto`"
     bytes: 6114
-    sha256: 0238042629149921b59001baa5cd1fd549b9dfa71946d001da2718b06a7167e4
+    sha256: f40968186710c19a3ada5a9e6cd54df9ee5fcf3991de611a5af5f94d1ef03ad3
   - path: share/schemas/majordomus/application/application.v1.schema.json
     document: schemas/majordomus.application/v1
     format: json
     source: "the document schema `share/schemas/majordomus/application/application.v1.proto`"
     bytes: 3968
-    sha256: 2967f9243eb68f3048ca349c3445f156e0c0072d7ad0ff192839be432f27cd62
+    sha256: 0e0ad07a3eef7aebc384ffd5aa67ac4d08fba720c48bd93746e2f26ab69817a6
   - path: share/schemas/majordomus/capture/capture.v1.schema.json
     document: schemas/majordomus.capture/v1
     format: json
     source: "the document schema `share/schemas/majordomus/capture/capture.v1.proto`"
     bytes: 6782
-    sha256: 5da2fc79e8e2598773dfffae1306eecd1f632cd7cfa6e1c888f22d2fe56e1f72
+    sha256: aacac2ec8a6908f3e3b532d323573e8afdc99b1c1cb4d1a03eef830cc2265264
   - path: share/schemas/majordomus/context/context.v1.schema.json
     document: schemas/majordomus.context/v1
     format: json
     source: "the document schema `share/schemas/majordomus/context/context.v1.proto`"
     bytes: 6591
-    sha256: 40a4bed6f962a5908a681567e33acd0ea5e5dc1ae5337ad9789a36c234561346
+    sha256: ea90cfc453e7a73947c3e21c8ad6acdb209d9e5c8e2f03bde63f608ba4264988
   - path: share/schemas/majordomus/knowledge/knowledge.v1.schema.json
     document: schemas/majordomus.knowledge/v1
     format: json
     source: "the document schema `share/schemas/majordomus/knowledge/knowledge.v1.proto`"
     bytes: 7457
-    sha256: 059074704ad37bc20574e4b537dc5f7e92dabec29b73a48c1c6ebfb74ec25e81
+    sha256: b7ab40f1ff277396de2ec2705f8b956121236b95b8b07294eafc8ea7ad3dadfd
   - path: share/schemas/majordomus/prompt/prompt.v1.schema.json
     document: schemas/majordomus.prompt/v1
     format: json
     source: "the document schema `share/schemas/majordomus/prompt/prompt.v1.proto`"
     bytes: 2418
-    sha256: 7389ccf17b7d73a891360ee78a6b4fa0681c73348604b6346c29c3fd359c8817
+    sha256: 0846e859b18689409db9c46cb8deab5f259b5da6b0839361bcf4c60171709520
   - path: share/schemas/majordomus/rule/rule.v1.schema.json
     document: schemas/majordomus.rule/v1
     format: json
     source: "the document schema `share/schemas/majordomus/rule/rule.v1.proto`"
     bytes: 5793
-    sha256: 2063545a73cfa532b049eb9fa6f36d2aa8badde6504ea07c51558a684fe91d0d
+    sha256: d6ce010aa9e71c455044d52a23577ff37539accf544591003907815d9fc9e3e0
   - path: share/schemas/majordomus/skill/skill.v1.schema.json
     document: schemas/majordomus.skill/v1
     format: json
     source: "the document schema `share/schemas/majordomus/skill/skill.v1.proto`"
     bytes: 5195
-    sha256: 6ab7846582b219c38097caf836ce84ba4e0e572151385a1e92556b106940899f
+    sha256: 297b8e6fd5ae717994d2a3b0a935d86396adbea3c72273f7c5ba8c03f75aa06c
   - path: share/schemas/majordomus/use-case/use-case.v1.schema.json
     document: schemas/majordomus.use-case/v1
     format: json
     source: "the document schema `share/schemas/majordomus/use-case/use-case.v1.proto`"
     bytes: 11177
-    sha256: 73f45a163e2be38711ad5263fca28e2cc905041cbdda30b6aed40ae83186ab97
+    sha256: e5411eae0d5c8c94f1ceaba47153c0dd2ca29b15775e80a274357245a4fe8fe4
   - path: share/sections/adr.txt
     document: sections/adr
     format: text
     source: "the document schema `share/schemas/majordomus/adr/adr.v1.proto`"
     bytes: 327
-    sha256: b754a9ac3198635665c2340968fbee9bd5b97f02caf6a8167b52883d92b7714c
+    sha256: 3081f1056856519287c18889e5ac07fdadc03572487ea05e7fa65b8b64852469
   - path: share/sections/application.txt
     document: sections/application
     format: text
     source: "the document schema `share/schemas/majordomus/application/application.v1.proto`"
     bytes: 242
-    sha256: dc3ade59934cd93ecd934f818bf9ba34c4696f46b2ecaee66451d0863423ddb8
+    sha256: c3684c9e03113973997117cd17127dba6faef85a77fe71705b284da655c193d8
   - path: share/sections/context.txt
     document: sections/context
     format: text
     source: "the document schema `share/schemas/majordomus/context/context.v1.proto`"
     bytes: 305
-    sha256: 65bf11eb672e5b0259927acb545e3a5f3fb6bccac5940137d23b69b34c991d18
+    sha256: 6586a59cc267a943bb21c3726453a18a8702f5d8d731d9840dedac3ae487c2cd
   - path: share/sections/knowledge.txt
     document: sections/knowledge
     format: text
     source: "the document schema `share/schemas/majordomus/knowledge/knowledge.v1.proto`"
     bytes: 209
-    sha256: 0b7e36358bec2e172ea8b8259f4c9779b2ed54ad84b8ceaeb2888d1f1ef5266c
+    sha256: b665f8fac39a0aa798c53d2c9d34f728624dcf35b9a63aabf3d6ad8d5d67cd8b
   - path: share/sections/prompt.txt
     document: sections/prompt
     format: text
     source: "the document schema `share/schemas/majordomus/prompt/prompt.v1.proto`"
     bytes: 203
-    sha256: 951c08430e86f74f47a7998a37d673e9786156d16214c8fd7ff36392a963b1b5
+    sha256: be5b287d1d17876840cdf0d9e73aa9b13b8923b40b2c6027ae5809883612ef41
   - path: share/sections/rule.txt
     document: sections/rule
     format: text
     source: "the document schema `share/schemas/majordomus/rule/rule.v1.proto`"
     bytes: 343
-    sha256: 9e3770eb077156e3b783efad39ceeec428595dae56c5aaac72eb7095342560af
+    sha256: 2d30fe8306f9d00bc7cf29cbd4492167abb3e2ab1ef91e3ecbdccb6059a44f84
   - path: share/sections/skill.txt
     document: sections/skill
     format: text
     source: "the document schema `share/schemas/majordomus/skill/skill.v1.proto`"
     bytes: 289
-    sha256: 6cdd02afe542bb1957839b8b1a4bcda487a670d2eba0daff3c15852c598fb8ec
+    sha256: 44b213940a929bea930cd00f9b4b6eb1d4702d2cbabb6017671cbf411f3a5ee1
   - path: share/sections/use-case.txt
     document: sections/use-case
     format: text
     source: "the document schema `share/schemas/majordomus/use-case/use-case.v1.proto`"
     bytes: 297
-    sha256: 437bea86a17bd5f97391c90e21cf932176557032f055347d7d31938c5ed7c2c9
+    sha256: a714f4a0b7bd50847de4a4213d147d2d115beafc46af340ba3ff6a034c3a7285
   - path: share/ui/favicon.svg
     document: design-mark
     format: text
     source: "share/design/brand/logo-mark.svg, the canonical mark"
     bytes: 911
-    sha256: 07a0fb7f77c12b3c3ca16ffb11a15d543c6d1f28236804612101f4bee8f4920a
+    sha256: d2ebe74220e5c13dabe9185de03c974b7b1b4bf25ed661cdc2de927299fa0e60
   - path: share/version.txt
     document: version
     format: text
     source: "apps/majordomus-cli/Cargo.toml ([package] version), the one place the version is authored"
     bytes: 245
-    sha256: 43031bb22f4cdcd4bcf0310854bb2ac5e065ee5add4fbd72682cbd5be7b0ede5
+    sha256: 22aeea196cced12eca1d94436e3ea1966fe6f39cf15dbd8b73fc864e8135dd6e
   - path: site/data/registry/design.json
     document: site-design
     format: json
     schema: majordomus-site-design/v1
     source: "share/design/tokens.yaml, the one declaration of the design"
     bytes: 11594
-    sha256: 07a441d90a1d137806e3b6aa761e0c90b4ac464a8697ac36d841f557a44d7906
+    sha256: ff6803878515ab4625e0443db660ce9eb6cfbf0448df0149c710f401f1504e9a
   - path: site/data/registry/distribution.json
     document: site-distribution
     format: json
@@ -2204,59 +2238,59 @@ artifacts:
     format: json
     schema: majordomus-site-evidence-subjects/v1
     source: "the claims, rules, features, use cases, commands, documented command-line examples and builtin capabilities this repository declares, and the first coverage and negative headers of its test cases"
-    bytes: 826215
-    sha256: ff4c2b2ec0015360698679234a403aaba4d02e9896fa86c6814884f9c993ead9
+    bytes: 831696
+    sha256: 1efe58f8caa99e0c82d0763a27043721566a11b44969c43b882d1f36528ce7b5
   - path: site/data/registry/product-graph.json
     document: site-product-graph
     format: json
     source: "the features, what they are made of, and the interfaces that follow, as the derived `product` graph"
-    bytes: 111720
-    sha256: 0af98d1d45426cb0e19745af06fab33fa3340231509b698ebebeaf7d817ebafe
+    bytes: 111829
+    sha256: a09da8b675017617efc1aabfdc67c8b6708a6bc07078a2f2038057dc534e6606
   - path: site/data/registry/product.json
     document: site-product
     format: json
     schema: majordomus-site-product/v1
     source: "the product features of this repository's layer, resolved against the registry, the index, the catalogue and the topology"
-    bytes: 765962
-    sha256: b7f91a1c7c810cc89a48694c6419995d47171c8e90100c27e5bbb32360f691ba
+    bytes: 767819
+    sha256: be1284f16be2eb9febc5e1e622254e2cba16fad5d487894b3a88ee50c5db3883
   - path: site/data/registry/registry.json
     document: site-registry
     format: json
     schema: majordomus-site-registry/v2
     source: "the capability registry and the index of this repository's layer"
-    bytes: 7718670
-    sha256: d474b04a45e1ac1e28289abdf996ef995a316ef68128c6cf04be000ea4d2a629
+    bytes: 7799409
+    sha256: eb8c6e0f2538c23e81bed7757a30a5ec5e5745eca051d8eca4eeed685732d4b5
   - path: site/data/registry/why-graph.json
     document: site-why-graph
     format: json
     source: "the moments and what answers them, as the derived `why` graph"
     bytes: 180170
-    sha256: 9cc9860e82434d64727795b207a05589fc4c64830fbf5e435947ea00a86ea760
+    sha256: 300b30d3144ed604424a8f5fbdec79f2747df5373de0fbbd565e3c4fa1f7f6a5
   - path: site/data/registry/why.json
     document: site-why
     format: json
     schema: majordomus-site-why/v1
     source: "the operational moments, audiences and areas of this repository's layer"
     bytes: 349931
-    sha256: 19a78dd38e80a655eedf432282fa8ff4fbfee61eaa39e6a83ed07b9686a155a4
+    sha256: ade5e059bf55bb304d74da944e6a9e5aa9e0e0bfb844b7f6be236251fdb02db0
   - path: site/static/favicon.svg
     document: design-mark
     format: text
     source: "share/design/brand/logo-mark.svg, the canonical mark"
     bytes: 911
-    sha256: 07a0fb7f77c12b3c3ca16ffb11a15d543c6d1f28236804612101f4bee8f4920a
+    sha256: d2ebe74220e5c13dabe9185de03c974b7b1b4bf25ed661cdc2de927299fa0e60
   - path: site/static/images/logo-mark.svg
     document: design-mark
     format: text
     source: "share/design/brand/logo-mark.svg, the canonical mark"
     bytes: 911
-    sha256: 07a0fb7f77c12b3c3ca16ffb11a15d543c6d1f28236804612101f4bee8f4920a
+    sha256: d2ebe74220e5c13dabe9185de03c974b7b1b4bf25ed661cdc2de927299fa0e60
   - path: site/static/images/logo.svg
     document: design-logo
     format: text
     source: "share/design/brand/logo.svg, the canonical logo"
     bytes: 1066
-    sha256: 82a5a1209970c1460478e3951ede8d310664519eec7d10ad2761d15e00cdca06
+    sha256: 02a3c1c4cba348ead67d275bed5d1e0428575d0f16ef8d05e53753f91efb5f21
   - path: site/static/install.sh
     document: installer
     format: text

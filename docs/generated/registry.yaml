@@ -1,9 +1,9 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the canonical capability registry; regenerate with `majordomus generate`
-# Generator: majordomus-cli 1.0.0-alpha.5
+# Generator: majordomus-cli 1.0.0-alpha.6
 schema: majordomus/capability-registry/v1
 generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the canonical capability registry; regenerate with `majordomus generate`"
-generator: majordomus-cli 1.0.0-alpha.5
+generator: majordomus-cli 1.0.0-alpha.6
 modules:
   - id: artifacts
     title: Generated artifacts
@@ -67,10 +67,10 @@ modules:
     capabilities: 2
   - id: deploy
     title: Deployment
-    description: "The deployments this repository declares, read from the canonical objects the index holds, and whether they would work — decided against the capability registry this process built and the workspace it sits in. Every operation is a read: a deployment is changed by the trusted command line and by CI, never over HTTP and never by an MCP client."
+    description: "The deployments this repository declares, read from the canonical objects the index holds, and whether they would work — decided against the capability registry this process built and the workspace it sits in. Every operation over HTTP and MCP is a read; the one command, assembling the tree a provider receives, writes outside the checkout and is a command line only: a deployment is changed by the trusted command line and by CI, never over HTTP and never by an MCP client."
     stability: behaviorally_verified
     source: builtin
-    capabilities: 4
+    capabilities: 5
   - id: design
     title: Design system
     description: "The one declaration of how every surface of this tool looks — the semantic roles, the status vocabulary, the type scale, the theme contract — as this executable carries it: its fingerprint, its tokens, what any one of them means, and whether the colours it pairs are readable on one another. The stylesheets the site and the Cockpit load, the tokens the executable's own pages compile in, and the dataset the site's templates read are all projections of it; a page compares its `--mj-design` with this fingerprint to know whether it is wearing the design this executable was built with."
@@ -292,7 +292,7 @@ modules:
     description: "What this project has shipped and what it would ship next, derived rather than maintained: the changelog composes the layer's release records, the decisions dated inside each release's window and the conventional commits in its range; the version report reads the one place the version is authored and the projection the shell tool prints, and says what the public contract requires it to become — or that it cannot be measured, and so decides nothing — with what the commits since the last release imply beside it as evidence."
     stability: implemented
     source: builtin
-    capabilities: 4
+    capabilities: 5
   - id: repository
     title: Repository
     description: "The repository this process serves: its layer, its git state, the state of the index built from it, and its scope: what a worker reads of it and what it never reads."
@@ -1419,6 +1419,13 @@ capabilities:
           integration:
             "$ref": "#/$defs/BriefIntegrationSection"
             description: The integration queue.
+          release:
+            "$ref": "#/$defs/BriefReleaseSection"
+            description: "Whether the trunk's landed work is released. Absent from the answer of a server older\nthan this section, which leaves it unread rather than failing the whole brief."
+            default:
+              state: unread
+              landed: 0
+              summary: the server that composed this brief does not measure the release
           derive:
             "$ref": "#/$defs/BriefDeriveSection"
             description: The derive queue.
@@ -1652,6 +1659,45 @@ capabilities:
               - state
               - summary
             description: "The integration queue, as `majordomus prs brief` says it."
+          BriefReleaseSection:
+            type: object
+            properties:
+              state:
+                "$ref": "#/$defs/BriefSectionState"
+                description: "`read` when it was measured, `unread` when it could not be, with the summary saying why."
+              stance:
+                anyOf:
+                  - "$ref": "#/$defs/ReleaseCurrencyStance"
+                  - type: "null"
+                description: "Current, owed, overdue or unknown, when the capability answered."
+              landed:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Landed commits past the last release.
+                default: 0
+              summary:
+                type: string
+                description: The section in words.
+            required:
+              - state
+              - summary
+            description: "Whether the trunk's landed work is released, as `release.currency` says it (I3070)."
+          ReleaseCurrencyStance:
+            oneOf:
+              - type: string
+                const: current
+                description: Nothing has landed past the last release.
+              - type: string
+                const: owed
+                description: "Work has landed past it, and has waited less than `OVERDUE_AFTER`."
+              - type: string
+                const: overdue
+                description: "Work has landed past it, and has waited at least `OVERDUE_AFTER`."
+              - type: string
+                const: unknown
+                description: "It could not be measured: no trunk, no release, or a release this clone cannot read."
+            description: "Whether the trunk's landed work is released.\n\n```\nuse majordomus_cli::release::currency::{Stance, OVERDUE_AFTER};\nuse std::time::Duration;\nassert_eq!(Stance::of(0, OVERDUE_AFTER), Stance::Current, \"nothing landed, nothing owed\");\nassert_eq!(Stance::of(2, Duration::from_secs(60)), Stance::Owed);\nassert_eq!(Stance::of(2, OVERDUE_AFTER), Stance::Overdue);\nassert_eq!(Stance::Overdue.as_str(), \"overdue\");\n```"
           BriefDeriveSection:
             type: object
             properties:
@@ -2187,6 +2233,9 @@ capabilities:
               signed_input:
                 type: boolean
                 description: "Whether the input authenticates its caller.\n\nA handler whose input is a signed message, and which verifies the signature against\nthe trust policy before anything changes, admits its caller by that signature and not\nby the address the request came from. Only such a handler changes state for a caller\non another host; see `ExecutionPolicy::admits_remote`."
+              local_only:
+                type: boolean
+                description: "Whether only a caller on this machine may read it.\n\nA read that shows the mesh — its sessions, claims, handovers, nodes and journal — is\nnot the repository's to publish: a server reachable from another host would hand every\ntrusted node's working state to anyone who asked (ADR 0220 decision 4). Such a read\nanswers a loopback caller only; a node reads the mesh through its own server, which the\njournal already brings up to date. See `ExecutionPolicy::admits_remote`."
             required:
               - effect
               - cancellable
@@ -8672,6 +8721,12 @@ capabilities:
               resident_memory_mb: null
               blocking_check_ms: null
               request_p99_ms: null
+          provider:
+            anyOf:
+              - "$ref": "#/$defs/Provider"
+              - type: "null"
+            description: "The hosting provider that runs it, when one does; absent, nobody hosts it."
+            default: null
           created_at:
             type:
               - string
@@ -8911,6 +8966,34 @@ capabilities:
                 description: Longest accepted p99 for a served request.
                 default: null
             description: "The measured figures this deployment is held to. Each is written by the run that\nmeasured it; an absent one has not been measured yet and is not a licence."
+          Provider:
+            type: object
+            additionalProperties: false
+            properties:
+              name:
+                "$ref": "#/$defs/ProviderName"
+                description: Which provider.
+              app:
+                type: string
+                description: "The application's name at the provider."
+              stack:
+                type: string
+                description: "The provider's stack the application runs on (`gigalixir-24`)."
+              url:
+                type: string
+                description: "The public URL the deployment answers on; always `https://`."
+            required:
+              - name
+              - app
+              - stack
+              - url
+            description: "The hosting provider that runs the deployment, and the facts that are the provider's\nalone. Every file the provider reads is rendered from this block and the generic keys\n(see `render`); its credential is never one of these fields.\n\n```\nuse majordomus_cli::deploy::{Provider, ProviderName};\n\nlet p: Provider = serde_json::from_value(serde_json::json!({\n    \"name\": \"gigalixir\",\n    \"app\": \"prismatic-majordomus\",\n    \"stack\": \"gigalixir-24\",\n    \"url\": \"https://prismatic-majordomus.gigalixirapp.com\",\n}))\n.unwrap();\nassert_eq!(p.name, ProviderName::Gigalixir);\nassert_eq!(p.app, \"prismatic-majordomus\");\n\n// a key the provider block does not have is refused, a token above all\nassert!(serde_json::from_value::<Provider>(serde_json::json!({\n    \"name\": \"gigalixir\", \"app\": \"a-b-c\", \"stack\": \"gigalixir-24\",\n    \"url\": \"https://a-b-c.gigalixirapp.com\", \"api_key\": \"x\",\n}))\n.is_err());\n```"
+          ProviderName:
+            oneOf:
+              - type: string
+                const: gigalixir
+                description: "Gigalixir: a Heroku-compatible platform that runs a Procfile over a buildpack."
+            description: "A hosting provider the contract knows. A name outside this list is refused at parse time:\na provider whose files nothing renders would be a block nothing reads.\n\n```\nuse majordomus_cli::deploy::ProviderName;\n\nlet name: ProviderName = serde_json::from_value(serde_json::json!(\"gigalixir\")).unwrap();\nassert_eq!(name, ProviderName::Gigalixir);\nassert_eq!(name.as_str(), \"gigalixir\");\nassert!(serde_json::from_value::<ProviderName>(serde_json::json!(\"fly\")).is_err());\n```"
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::deploy
@@ -9034,6 +9117,12 @@ capabilities:
                   resident_memory_mb: null
                   blocking_check_ms: null
                   request_p99_ms: null
+              provider:
+                anyOf:
+                  - "$ref": "#/$defs/Provider"
+                  - type: "null"
+                description: "The hosting provider that runs it, when one does; absent, nobody hosts it."
+                default: null
               created_at:
                 type:
                   - string
@@ -9271,6 +9360,34 @@ capabilities:
                 description: Longest accepted p99 for a served request.
                 default: null
             description: "The measured figures this deployment is held to. Each is written by the run that\nmeasured it; an absent one has not been measured yet and is not a licence."
+          Provider:
+            type: object
+            additionalProperties: false
+            properties:
+              name:
+                "$ref": "#/$defs/ProviderName"
+                description: Which provider.
+              app:
+                type: string
+                description: "The application's name at the provider."
+              stack:
+                type: string
+                description: "The provider's stack the application runs on (`gigalixir-24`)."
+              url:
+                type: string
+                description: "The public URL the deployment answers on; always `https://`."
+            required:
+              - name
+              - app
+              - stack
+              - url
+            description: "The hosting provider that runs the deployment, and the facts that are the provider's\nalone. Every file the provider reads is rendered from this block and the generic keys\n(see `render`); its credential is never one of these fields.\n\n```\nuse majordomus_cli::deploy::{Provider, ProviderName};\n\nlet p: Provider = serde_json::from_value(serde_json::json!({\n    \"name\": \"gigalixir\",\n    \"app\": \"prismatic-majordomus\",\n    \"stack\": \"gigalixir-24\",\n    \"url\": \"https://prismatic-majordomus.gigalixirapp.com\",\n}))\n.unwrap();\nassert_eq!(p.name, ProviderName::Gigalixir);\nassert_eq!(p.app, \"prismatic-majordomus\");\n\n// a key the provider block does not have is refused, a token above all\nassert!(serde_json::from_value::<Provider>(serde_json::json!({\n    \"name\": \"gigalixir\", \"app\": \"a-b-c\", \"stack\": \"gigalixir-24\",\n    \"url\": \"https://a-b-c.gigalixirapp.com\", \"api_key\": \"x\",\n}))\n.is_err());\n```"
+          ProviderName:
+            oneOf:
+              - type: string
+                const: gigalixir
+                description: "Gigalixir: a Heroku-compatible platform that runs a Procfile over a buildpack."
+            description: "A hosting provider the contract knows. A name outside this list is refused at parse time:\na provider whose files nothing renders would be a block nothing reads.\n\n```\nuse majordomus_cli::deploy::ProviderName;\n\nlet name: ProviderName = serde_json::from_value(serde_json::json!(\"gigalixir\")).unwrap();\nassert_eq!(name, ProviderName::Gigalixir);\nassert_eq!(name.as_str(), \"gigalixir\");\nassert!(serde_json::from_value::<ProviderName>(serde_json::json!(\"fly\")).is_err());\n```"
           Refusal:
             type: object
             properties:
@@ -9520,6 +9637,149 @@ capabilities:
       effect: read
       cancellable: false
       concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/deploy.rs
+  - id: deploy.slug
+    module: deploy
+    kind: command
+    title: Assemble the tree a provider receives
+    description: "Writes, into a directory outside the checkout that is absent or empty, the tree the deployment's provider receives (ADR 0219): the object's build inputs except the package the executable is compiled from, read from git at one commit (HEAD unless named); the provider's generated files of that commit at the slug's root, each held to what the object renders and the hooks made executable; the provider's buildpack line; the executable built at that commit; and a record naming the deployment, the commit, the executable's digest and the provider. Refuses an out directory inside the checkout or not empty, a deployment that names no provider, a build input the commit does not track, a provider file the object does not render, and two files that would land on one path. Changes nothing in the repository and reaches no network; pushing the slug is the provider workflow's."
+    input:
+      name: SlugInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          deployment:
+            type:
+              - string
+              - "null"
+            description: "The deployment's `id`; when absent, the one deployment that names a provider."
+          commit:
+            type:
+              - string
+              - "null"
+            description: "The commit every file is read at, any revision git resolves; `HEAD` when absent."
+          executable:
+            type: string
+            description: The executable built at that commit.
+          out:
+            type: string
+            description: "The directory the slug is written into: outside the checkout, absent or empty."
+        required:
+          - executable
+          - out
+        description: "The input of `deploy.slug`: which deployment, at which commit, with which executable, and\nwhere the slug is written. Relative paths are read against the working directory."
+        title: SlugInput
+    output:
+      name: Slug
+      schema:
+        type: object
+        properties:
+          deployment:
+            type: string
+            description: "The deployment's `id`."
+          commit:
+            type: string
+            description: The full commit every file was read at.
+          out:
+            type: string
+            description: "The directory the slug was written into, absolute."
+          entries:
+            type: array
+            items:
+              type: string
+            description: "Every top-level entry of the slug, sorted: the whole of what a provider receives at\nits root."
+          files:
+            type: integer
+            format: uint
+            minimum: 0
+            description: How many files (and links) were written.
+          bytes:
+            type: integer
+            format: uint64
+            minimum: 0
+            description: Their total size in bytes.
+          executable:
+            type: string
+            description: "Where the executable sits, relative to the slug's root."
+          executable_sha256:
+            type: string
+            description: Its hex SHA-256.
+          buildpack:
+            type: string
+            description: "The buildpack line written to `BUILDPACKS_FILE`."
+          liveness:
+            type: string
+            description: "The route the deployment answers its commit on (`health.liveness`)."
+          provider:
+            "$ref": "#/$defs/Provider"
+            description: "The provider block of the object, as read at the commit."
+        required:
+          - deployment
+          - commit
+          - out
+          - entries
+          - files
+          - bytes
+          - executable
+          - executable_sha256
+          - buildpack
+          - liveness
+          - provider
+        description: "What was assembled: where, from what, and the provider facts a publisher needs to push\nit and to ask the deployment what it serves.\n\n```\nuse majordomus_cli::deploy::slug::Slug;\nlet json = r#\"{\"deployment\":\"majordomus\",\"commit\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\n  \"out\":\"/tmp/slug\",\"entries\":[\".buildpacks\",\"Procfile\"],\"files\":2,\"bytes\":10,\n  \"executable\":\".majordomus/bin/majordomus\",\"executable_sha256\":\"00\",\n  \"buildpack\":\"https://example.org/bp#0\",\"liveness\":\"/api/v1/live\",\n  \"provider\":{\"name\":\"gigalixir\",\"app\":\"a-b\",\"stack\":\"gigalixir-24\",\n              \"url\":\"https://a-b.gigalixirapp.com\"}}\"#;\nlet s: Slug = serde_json::from_str(json).unwrap();\nassert_eq!(s.provider.app, \"a-b\");\nassert_eq!(s.entries.len(), 2);\n```"
+        title: Slug
+        "$defs":
+          Provider:
+            type: object
+            additionalProperties: false
+            properties:
+              name:
+                "$ref": "#/$defs/ProviderName"
+                description: Which provider.
+              app:
+                type: string
+                description: "The application's name at the provider."
+              stack:
+                type: string
+                description: "The provider's stack the application runs on (`gigalixir-24`)."
+              url:
+                type: string
+                description: "The public URL the deployment answers on; always `https://`."
+            required:
+              - name
+              - app
+              - stack
+              - url
+            description: "The hosting provider that runs the deployment, and the facts that are the provider's\nalone. Every file the provider reads is rendered from this block and the generic keys\n(see `render`); its credential is never one of these fields.\n\n```\nuse majordomus_cli::deploy::{Provider, ProviderName};\n\nlet p: Provider = serde_json::from_value(serde_json::json!({\n    \"name\": \"gigalixir\",\n    \"app\": \"prismatic-majordomus\",\n    \"stack\": \"gigalixir-24\",\n    \"url\": \"https://prismatic-majordomus.gigalixirapp.com\",\n}))\n.unwrap();\nassert_eq!(p.name, ProviderName::Gigalixir);\nassert_eq!(p.app, \"prismatic-majordomus\");\n\n// a key the provider block does not have is refused, a token above all\nassert!(serde_json::from_value::<Provider>(serde_json::json!({\n    \"name\": \"gigalixir\", \"app\": \"a-b-c\", \"stack\": \"gigalixir-24\",\n    \"url\": \"https://a-b-c.gigalixirapp.com\", \"api_key\": \"x\",\n}))\n.is_err());\n```"
+          ProviderName:
+            oneOf:
+              - type: string
+                const: gigalixir
+                description: "Gigalixir: a Heroku-compatible platform that runs a Procfile over a buildpack."
+            description: "A hosting provider the contract knows. A name outside this list is refused at parse time:\na provider whose files nothing renders would be a block nothing reads.\n\n```\nuse majordomus_cli::deploy::ProviderName;\n\nlet name: ProviderName = serde_json::from_value(serde_json::json!(\"gigalixir\")).unwrap();\nassert_eq!(name, ProviderName::Gigalixir);\nassert_eq!(name.as_str(), \"gigalixir\");\nassert!(serde_json::from_value::<ProviderName>(serde_json::json!(\"fly\")).is_err());\n```"
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::deploy
+    exposure:
+      cli:
+        path:
+          - deploy
+          - slug
+    availability: runtime
+    visibility: developer
+    stability: behaviorally_verified
+    tags:
+      - deployment
+      - delivery
+    benchmark:
+      policy: waived
+      reason: destructive
+    cache:
+      policy: disabled
+    execution:
+      effect: process_state
+      cancellable: false
+      concurrency: serial
     source_path: apps/majordomus-cli/src/capability/builtin/deploy.rs
   - id: design.contrast
     module: design
@@ -20175,6 +20435,7 @@ capabilities:
       effect: read
       cancellable: true
       concurrency: unrestricted
+      local_only: true
     source_path: apps/majordomus-cli/src/capability/builtin/executions.rs
   - id: executions.events
     module: executions
@@ -20620,6 +20881,7 @@ capabilities:
       effect: read
       cancellable: false
       concurrency: unrestricted
+      local_only: true
     source_path: apps/majordomus-cli/src/capability/builtin/executions.rs
   - id: executions.get
     module: executions
@@ -21004,6 +21266,7 @@ capabilities:
       effect: read
       cancellable: false
       concurrency: unrestricted
+      local_only: true
     source_path: apps/majordomus-cli/src/capability/builtin/executions.rs
   - id: executions.list
     module: executions
@@ -21465,6 +21728,7 @@ capabilities:
       effect: read
       cancellable: false
       concurrency: unrestricted
+      local_only: true
     source_path: apps/majordomus-cli/src/capability/builtin/executions.rs
   - id: executions.protocol
     module: executions
@@ -33481,6 +33745,7 @@ capabilities:
       effect: read
       cancellable: false
       concurrency: unrestricted
+      local_only: true
     source_path: apps/majordomus-cli/src/capability/builtin/mesh.rs
   - id: mesh.doctor
     module: mesh
@@ -33567,6 +33832,7 @@ capabilities:
       effect: read
       cancellable: false
       concurrency: unrestricted
+      local_only: true
     source_path: apps/majordomus-cli/src/capability/builtin/mesh.rs
   - id: mesh.events
     module: mesh
@@ -33706,6 +33972,7 @@ capabilities:
       effect: read
       cancellable: false
       concurrency: unrestricted
+      local_only: true
     source_path: apps/majordomus-cli/src/capability/builtin/mesh.rs
   - id: mesh.firewall
     module: mesh
@@ -33977,6 +34244,7 @@ capabilities:
       effect: read
       cancellable: false
       concurrency: unrestricted
+      local_only: true
     source_path: apps/majordomus-cli/src/capability/builtin/mesh.rs
   - id: mesh.firewall.apply
     module: mesh
@@ -35184,6 +35452,7 @@ capabilities:
       effect: read
       cancellable: false
       concurrency: unrestricted
+      local_only: true
     source_path: apps/majordomus-cli/src/capability/builtin/mesh.rs
   - id: mesh.peer
     module: mesh
@@ -35834,6 +36103,7 @@ capabilities:
       effect: read
       cancellable: false
       concurrency: unrestricted
+      local_only: true
     source_path: apps/majordomus-cli/src/capability/builtin/mesh.rs
   - id: mesh.peers
     module: mesh
@@ -36612,6 +36882,7 @@ capabilities:
       effect: read
       cancellable: false
       concurrency: unrestricted
+      local_only: true
     source_path: apps/majordomus-cli/src/capability/builtin/mesh.rs
   - id: mesh.register
     module: mesh
@@ -38256,6 +38527,7 @@ capabilities:
       effect: read
       cancellable: false
       concurrency: unrestricted
+      local_only: true
     source_path: apps/majordomus-cli/src/capability/builtin/mesh.rs
   - id: mesh.status
     module: mesh
@@ -38287,6 +38559,11 @@ capabilities:
               - "$ref": "#/$defs/PublicIdentity"
               - type: "null"
             description: "This node, when the mesh has an identity."
+          advertised:
+            type: array
+            items:
+              type: string
+            description: "The endpoints this node advertises: what a peer dials to reach it. The bound\ninterface's addresses, or the one public URL a hosted hub is started with (ADR 0220)."
           trust_policy:
             type:
               - string
@@ -38512,6 +38789,7 @@ capabilities:
       effect: read
       cancellable: false
       concurrency: unrestricted
+      local_only: true
     source_path: apps/majordomus-cli/src/capability/builtin/mesh.rs
   - id: mesh.verify
     module: mesh
@@ -39218,6 +39496,7 @@ capabilities:
       effect: read
       cancellable: false
       concurrency: unrestricted
+      local_only: true
     source_path: apps/majordomus-cli/src/capability/builtin/monitor.rs
   - id: objects.get
     module: objects
@@ -41532,6 +41811,7 @@ capabilities:
       effect: read
       cancellable: false
       concurrency: unrestricted
+      local_only: true
     source_path: apps/majordomus-cli/src/capability/builtin/peers.rs
   - id: perf.counters
     module: perf
@@ -51892,6 +52172,272 @@ capabilities:
       - changelog
     benchmark:
       policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/release.rs
+  - id: release.currency
+    module: release
+    kind: query
+    title: "Whether the trunk's landed work is released"
+    description: "How much landed work the trunk holds past the last release, since when, and at which version, measured when asked (I3070). The last release is the newer of the release the layer records and the newest version tag the trunk contains: a tag is pushed before its record lands. Landed work is every commit of the trunk past it except merges and release commits. A landing is a commit of the trunk's first-parent history, and the work has waited since the oldest landing that brought anything but release commits. The stance is current when nothing has landed past the release, owed when work has, and overdue once it has waited longer than six hours. The version the public contract requires is decided by the version selection release.version makes, but only from a recorded release and only in a checkout at the trunk; otherwise the answer says which it is not. Ask with next false to leave the version out, as the brief and doctor do. It reads git and the clock, so it is never committed into derived data."
+    input:
+      name: ReleaseCurrencyInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          next:
+            type:
+              - boolean
+              - "null"
+            description: "Whether to decide the version the public contract requires for the landed work, which\nreads the last release's registry: yes when absent. The brief and doctor say no."
+        description: "The input of `release.currency`: whether to decide the version as well.\n\n```\nuse majordomus_cli::capability::builtin::release::CurrencyInput;\n// the version is decided unless the caller says it does not need it\nassert!(CurrencyInput::default().next());\nassert!(!CurrencyInput { next: Some(false) }.next());\n```"
+        title: ReleaseCurrencyInput
+    output:
+      name: ReleaseCurrency
+      schema:
+        type: object
+        properties:
+          stance:
+            "$ref": "#/$defs/ReleaseCurrencyStance"
+            description: Whether the landed work is released.
+          summary:
+            type: string
+            description: "The answer in one sentence: the brief's and doctor's line."
+          trunk:
+            type:
+              - string
+              - "null"
+            description: "The remote-tracking ref of the trunk it was measured on (`origin/master`)."
+          release:
+            anyOf:
+              - "$ref": "#/$defs/ReleaseCurrencyRelease"
+              - type: "null"
+            description: The last release.
+          landed:
+            type: integer
+            format: uint
+            minimum: 0
+            description: "Landed commits past the last release, merges and release commits left out."
+          landings:
+            type: integer
+            format: uint
+            minimum: 0
+            description: "The landings of the trunk's first-parent history that brought them."
+          oldest_landing:
+            type:
+              - string
+              - "null"
+            description: "When the oldest of those landings landed, RFC 3339, dated as `landed_at`\nsays."
+          landed_at:
+            anyOf:
+              - "$ref": "#/$defs/ReleaseCurrencyLandedAt"
+              - type: "null"
+            description: "How `oldest_landing` was dated: when this clone saw it arrive\non the trunk, or its commit time as an upper bound on the wait."
+          waited_seconds:
+            type:
+              - integer
+              - "null"
+            format: uint64
+            minimum: 0
+            description: "How long the work has waited since then, in seconds."
+          overdue_after_seconds:
+            type: integer
+            format: uint64
+            minimum: 0
+            description: "How long it may wait before it is overdue (`OVERDUE_AFTER`)."
+          next:
+            type:
+              - string
+              - "null"
+            description: "The version the public contract requires for the landed work (ADR 0051), when it was\ndecided."
+          next_unmeasured:
+            type:
+              - string
+              - "null"
+            description: "Why that version was not decided, when it was asked for and could not be."
+          changes:
+            type: array
+            items:
+              "$ref": "#/$defs/ReleaseChange"
+            description: "The landed changes, newest first, at most `LISTED`."
+        required:
+          - stance
+          - summary
+          - landed
+          - landings
+          - overdue_after_seconds
+        description: "The answer of `release.currency`: whether the trunk's landed work is released.\n\n```\nuse majordomus_cli::release::currency::{measure, Currency, Stance};\nlet nowhere = tempfile::tempdir().unwrap();\nlet answer: Currency = measure(nowhere.path(), &[], std::time::SystemTime::now());\n// a directory with no trunk is not measured, and says why\nassert_eq!(answer.stance, Stance::Unknown);\nassert!(answer.summary.contains(\"trunk\"), \"{}\", answer.summary);\n```"
+        title: ReleaseCurrency
+        "$defs":
+          ReleaseCurrencyStance:
+            oneOf:
+              - type: string
+                const: current
+                description: Nothing has landed past the last release.
+              - type: string
+                const: owed
+                description: "Work has landed past it, and has waited less than `OVERDUE_AFTER`."
+              - type: string
+                const: overdue
+                description: "Work has landed past it, and has waited at least `OVERDUE_AFTER`."
+              - type: string
+                const: unknown
+                description: "It could not be measured: no trunk, no release, or a release this clone cannot read."
+            description: "Whether the trunk's landed work is released.\n\n```\nuse majordomus_cli::release::currency::{Stance, OVERDUE_AFTER};\nuse std::time::Duration;\nassert_eq!(Stance::of(0, OVERDUE_AFTER), Stance::Current, \"nothing landed, nothing owed\");\nassert_eq!(Stance::of(2, Duration::from_secs(60)), Stance::Owed);\nassert_eq!(Stance::of(2, OVERDUE_AFTER), Stance::Overdue);\nassert_eq!(Stance::Overdue.as_str(), \"overdue\");\n```"
+          ReleaseCurrencyRelease:
+            type: object
+            properties:
+              version:
+                type: string
+                description: "`0.30.1`."
+              reference:
+                type: string
+                description: "`v0.30.1`: the release as a reader recognises it."
+              at:
+                type: string
+                description: "What the trunk is measured from: the commit its record names, else its tag."
+              recorded:
+                type: boolean
+                description: Whether the layer holds a record for it yet.
+            required:
+              - version
+              - reference
+              - at
+              - recorded
+            description: "The release the trunk is measured from.\n\n```\nuse majordomus_cli::release::currency::Released;\nlet tagged = Released {\n    version: \"0.30.1\".into(),\n    reference: \"v0.30.1\".into(),\n    at: \"v0.30.1\".into(),\n    recorded: false,\n};\n// a tag pushed before its record landed is read at the tag itself\nassert_eq!(tagged.at, tagged.reference);\n```"
+          ReleaseCurrencyLandedAt:
+            oneOf:
+              - type: string
+                const: reflog
+                description: "When this clone's remote-tracking trunk first held it, from that ref's reflog. A landing\nis seen no earlier than it lands, so the wait counted from here is a lower bound, and it\nis the one date that can make the stance overdue."
+              - type: string
+                const: commit
+                description: "Its commit time, where the reflog does not show it arrive: a commit lands no earlier than\nit is made, so the wait counted from here is an upper bound, and it never makes the\nstance overdue by itself."
+            description: "How the oldest landing was dated, and so which way its wait may be wrong (the plan\ncritique of 2026-10-19: a top lands by a fast-forward push hours after its commits).\n\n```\nuse majordomus_cli::release::currency::LandedAt;\nassert_eq!(serde_json::to_value(LandedAt::Reflog).unwrap(), \"reflog\");\nassert_eq!(serde_json::to_value(LandedAt::Commit).unwrap(), \"commit\");\n```"
+          ReleaseChange:
+            type: object
+            properties:
+              kind:
+                "$ref": "#/$defs/ReleaseChangeKind"
+                description: What it did.
+              scope:
+                type:
+                  - string
+                  - "null"
+                description: "The area it did it in, when the subject named one: `commands`, `ci`, `site`."
+              subject:
+                type: string
+                description: "The subject, without the type and scope that prefixed it."
+              breaking:
+                type: boolean
+                description: "Whether the commit marked itself breaking, with `!` or a `BREAKING CHANGE:` trailer."
+              commit:
+                type: string
+                description: The abbreviated commit.
+              url:
+                type:
+                  - string
+                  - "null"
+                description: "Where that commit can be read, when the repository's own URL is known. Derived from\n`about::REPOSITORY`, never written beside each entry."
+              references:
+                type: array
+                items:
+                  "$ref": "#/$defs/ReleaseReference"
+                description: "The records of the layer this commit names — issues, milestones — resolved against\nwhat the layer actually holds."
+            required:
+              - kind
+              - subject
+              - breaking
+              - commit
+            description: "One change, from one commit."
+          ReleaseChangeKind:
+            oneOf:
+              - type: string
+                const: feat
+                description: A capability a person did not have before.
+              - type: string
+                const: fix
+                description: Behaviour that was wrong and is not any more.
+              - type: string
+                const: perf
+                description: "Performance, with the behaviour unchanged."
+              - type: string
+                const: refactor
+                description: "Structure, with the behaviour unchanged."
+              - type: string
+                const: docs
+                description: Documentation.
+              - type: string
+                const: test
+                description: Tests.
+              - type: string
+                const: chore
+                description: "The build, the pipeline, the tooling."
+              - type: string
+                const: ci
+                description: Continuous integration.
+              - type: string
+                const: style
+                description: "Formatting, with the behaviour unchanged."
+              - type: string
+                const: build
+                description: The build system or its dependencies.
+              - type: string
+                const: revert
+                description: A change that undoes another.
+              - type: string
+                const: merge
+                description: "An integration: one line of work brought into another.\n\nNot in the conventional-commit specification, and in this repository's history 38\ntimes and counting, because integration here is a deliberate act with a subject\nsomebody writes — `merge: bring origin/master into feature/x` — and not the sentence\n`git merge` composes. Declaring it is what lets the validator hold those subjects to\nthe same width and the same references as every other commit, instead of either\nrefusing a convention this project practises or exempting it from being checked at\nall. The changelog never renders it: `commits::in_range` reads the log with\n`--no-merges`, so a merge commit is not a release entry however its subject is\nspelled."
+              - type: string
+                const: other
+                description: A commit whose subject does not parse as a conventional commit.
+            description: "What a conventional commit says it did.\n\nThe set is the one the repository's own commit convention uses; a commit whose subject\ndoes not parse is `ChangeKind::Other` and still appears, because a changelog that\nsilently drops what it cannot classify is a changelog that lies by omission."
+          ReleaseReference:
+            type: object
+            properties:
+              kind:
+                type: string
+                description: "`issue` or `milestone`."
+              id:
+                type: string
+                description: "`I1305`, `M000`."
+              title:
+                type: string
+                description: "What it is, from the record itself."
+              route:
+                type:
+                  - string
+                  - "null"
+                description: "Where it is published on this site, when it has a page."
+            required:
+              - kind
+              - id
+              - title
+            description: "A record of the layer that a commit names in its own text.\n\nInferred, never declared beside the commit: an issue id or a milestone id appearing in a\nsubject or a body is a reference, and the layer already holds the object it refers to. A\nreference to something the layer does not have is not carried — a link to a record that\ndoes not exist is worse than no link, because the reader cannot tell until they follow it.\n\n```\nuse majordomus_cli::release::model::Reference;\nlet r = Reference {\n    kind: \"issue\".into(),\n    id: \"I1305\".into(),\n    title: \"An observed contract has a fingerprint\".into(),\n    route: Some(\"/plan/i1305/\".into()),\n};\nlet json = serde_json::to_value(&r).unwrap();\nassert_eq!(json[\"id\"], \"I1305\");\nassert_eq!(json[\"route\"], \"/plan/i1305/\");\n// a reference the site has no page for carries no route rather than an invented one\nlet bare = Reference { route: None, ..r };\nassert!(serde_json::to_value(&bare).unwrap().get(\"route\").is_none());\n```"
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::release
+    exposure:
+      mcp:
+        tool: majordomus_release_currency
+      http:
+        method: GET
+        path: /api/v1/release/currency
+    availability: runtime
+    visibility: public
+    stability: implemented
+    tags:
+      - release
+      - version
+      - delivery
+    benchmark:
+      policy: waived
+      reason: published_history
     cache:
       policy: disabled
     execution:
