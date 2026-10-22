@@ -115,6 +115,21 @@ mj_kdisc_collect() {
   return 0
 }
 
+# The kinds a projection holds: one C row per source class the scope admits, whether or not
+# the class found a file in this checkout. A projection is decided by what its classes
+# declare, so a checkout that holds no handover yet still projects the kind (knowledge.awk
+# reads these rows to decide which kinds an edge may reach).
+mj_knowledge_projected_kinds() {
+  local want_scope="$1" i=0 n
+  n="$(mj_ksrc_count)"
+  while [ "$i" -lt "$n" ]; do
+    case "$want_scope" in
+      all|"$(mj_ksrc "$i" scope)") printf 'C\t%s\n' "$(mj_ksrc "$i" kind)" ;;
+    esac
+    i=$((i + 1))
+  done
+}
+
 # One row per tracked file matching a pathspec. Read NUL-delimited, because a pathname may
 # contain a space, a newline or a non-ASCII character, and the historical way to lose one
 # is to let the shell split on whitespace.
@@ -612,11 +627,13 @@ mj_knowledge_nodes() {
     # reported, never a failure, because work in progress is reported and not blocked.
     [ -z "$MJ_KDISC_GONE" ] || printf '%s' "$MJ_KDISC_GONE" | LC_ALL=C sort -u | awk 'NF {
       printf "X\tWARN\tsource_missing\t%s\tis a tracked source the working tree no longer holds; no node was extracted from it\n", $0 }'
+    mj_knowledge_projected_kinds "$scope"
     mj_knowledge_rows "$disc"
   } > "$rows"
   rm -f "$refused"
   mj_phase_end knowledge:rows "$t0"; t0="$(mj_phase_begin knowledge:extract)"
-  awk -f "$MJ_LIB_DIR/knowledge.awk" "$rows" | LC_ALL=C sort
+  # the projection decides which kinds an edge may reach (knowledge.awk session_edge)
+  awk -v projection="$scope" -f "$MJ_LIB_DIR/knowledge.awk" "$rows" | LC_ALL=C sort
   mj_phase_end knowledge:extract "$t0"
   rm -f "$disc" "$rows"
 }

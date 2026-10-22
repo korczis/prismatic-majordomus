@@ -5,6 +5,7 @@
 # is, and what kind it carries; nothing downstream re-derives any of the three.
 #
 # input (tab separated, in discovery order):
+#   C  <kind>                                   a kind the projection holds (one per class)
 #   S  <class> <scope> <kind> <hash> <path>     one discovered source
 #   F  <path> <flat-key> <value>                a flattened key of a structured source
 #   D  <path> <title>                           the first level-one heading of a document
@@ -84,6 +85,9 @@ $1 == "X" { print; next }
 $1 == "S" { n = ++nsrc
             scls[n] = $2; sscope[n] = $3; skind[n] = $4; shash[n] = $5; spath[n] = $6
             next }
+# A kind this projection holds, declared by a source class whether or not it found a file
+# here; a projection carries no edge to a kind it does not hold (see session_edge).
+$1 == "C" { projected[$2] = 1; next }
 $1 == "F" { key = $3; val = $4
             # a value may itself contain tabs; rejoin everything past field 4
             for (i = 5; i <= NF; i++) val = val "\t" $i
@@ -127,6 +131,7 @@ END {
         else if (k == "adr")      edges_adr(i)
         else if (k == "knowledge") edges_knowledge(i)
         else if (k == "feature")  edges_feature(i)
+        else if (k == "session")  edges_session(i)
     }
     report_edges()
 }
@@ -163,13 +168,58 @@ function knowledge_edge(from, ref, type, prov,   t, tgt) {
     external_next = 0
 }
 
+# A closed session -> what its episode named. The record's front matter lists, field by
+# field, the tasks, issues, milestones, handovers, checkpoints, decisions and questions of the
+# episode, and each becomes one `references` edge whose provenance is the record and the
+# field. That is what answers which sessions touched an issue, which decisions an episode
+# recorded and which handover continued it. Nothing below the front matter is read, so no
+# body text reaches the graph, and nothing is inferred about why a session touched a thing
+# (I0813).
+function edges_session(si,   p, id, from, n, v) {
+    p = spath[si]
+    id = f(p, "session_id"); if (id == "") return
+    from = node_id("session", id)
+    for (n = 0; (v = f(p, "issues." n)) != ""; n++)      session_edge(from, "issue", v, p ":issues." n, 0)
+    for (n = 0; (v = f(p, "milestones." n)) != ""; n++)  session_edge(from, "milestone", v, p ":milestones." n, 0)
+    for (n = 0; (v = f(p, "tasks." n)) != ""; n++)       session_edge(from, "task", v, p ":tasks." n, 1)
+    for (n = 0; (v = f(p, "handovers." n)) != ""; n++)   session_edge(from, "handover", basename_noext(v), p ":handovers." n, 1)
+    for (n = 0; (v = f(p, "checkpoints." n)) != ""; n++) session_edge(from, "checkpoint", basename_noext(v), p ":checkpoints." n, 1)
+    for (n = 0; (v = f(p, "decisions." n)) != ""; n++)   session_edge(from, "decision", v, p ":decisions." n, 1)
+    for (n = 0; (v = f(p, "questions." n)) != ""; n++)   session_edge(from, "question", v, p ":questions." n, 1)
+}
+
+# A projection carries no edge to a kind it does not project. A tracked session is shared
+# (ADR 0014), while the handovers, checkpoints, tasks and ledger entries it names are
+# operational records under a checkout's state directory: in the shared projection those
+# kinds were never discovered, so their edges are left out rather than published as
+# references to objects the projection withholds. Which kinds a projection holds is what its
+# sources declared, so the scope field decides and no list here repeats it. A task is no node
+# kind at all; it is projected wherever operational records are.
+#
+# `local` marks a target that lives in one checkout's state (or the ledger): another clone
+# legitimately lacks it, so the edge is external and never reported as dangling. An issue or
+# a milestone is a node of this graph, and a reference to one that does not exist still is.
+function session_edge(from, kind, key, prov, local,   ok) {
+    ok = (kind in projected) || (kind == "task" && projection != "shared")
+    if (!ok) return
+    external_next = local
+    add_edge(from, node_id(kind, key), "references", prov)
+    external_next = 0
+}
+
 # ---------------------------------------------------------------- one node per file
 # The common case: the file is the object. Its identity is the id it declares, or its path
 # when it declares none; its title is the title it declares, or the document's own first
 # heading, or nothing at all. Nothing is invented from the filename to fill a gap — an
 # untitled node is an untitled node, and a reader can see that.
-function extract_one(i, k,   p, id, title) {
+function extract_one(i, k,   p, id, title, w) {
     p = spath[i]
+    # A checkpoint is not a node of its own. It is the most numerous record a checkout writes
+    # (one per compaction and per checkpoint call) and each says little alone, so one node per
+    # file would let it outnumber everything the graph exists to relate. The session that
+    # wrote it names it, and that reference is the checkpoint's place in the graph (I0813).
+    # It stays a discovered source: `knowledge sources` and search still find the file.
+    if (k == "checkpoint") return
     id = ""
     if      (k == "milestone" || k == "issue" || k == "rule") id = f(p, "id")
     else if (k == "adr" || k == "skill" || k == "use-case" || k == "application") id = f(p, "id")
@@ -193,6 +243,12 @@ function extract_one(i, k,   p, id, title) {
     # a document and a taxonomy carry no identity of their own: the file is the object,
     # and its first heading, or the comment the file opens with, is what a reader sees
     else if (k == "document" || k == "context") title = h1[p]
+    # a session names its window and its outcome, from the fields that state them and never
+    # from the body below the front matter
+    if (k == "session") {
+        w = f(p, "started_at") ".." f(p, "closed_at")
+        if (w != "..") title = title " [" w (f(p, "outcome") != "" ? ", " f(p, "outcome") : "") "]"
+    }
 
     if (id == "") id = p
     emit(node_id(k, id), k, sscope[i], p, shash[i], title)
