@@ -81,6 +81,16 @@ for g in $gate_ids; do
   # `network` says the gate reaches beyond this machine; like on-demand, true or absent
   net="$(mj_yget "$FLAT" "gates.$i.network")"
   [ -z "$net" ] || [ "$net" = true ] || { echo "ci-plan: gate $g: network is true or absent, not $net" >&2; bad=1; }
+  # `subsumed-by` names one other gate that exists: a gate is not subsumed by itself, and the
+  # gate that subsumes it is not itself subsumed (a chain would drop a gate for a gate the plan
+  # then drops, and nothing would run the cases)
+  sub="$(mj_yget "$FLAT" "gates.$i.subsumed-by")"
+  if [ -n "$sub" ]; then
+    [ "$sub" != "$g" ] || { echo "ci-plan: gate $g is subsumed by itself" >&2; bad=1; }
+    printf '%s\n' "$gate_ids" | grep -x "$sub" >/dev/null || { echo "ci-plan: gate $g is subsumed by a gate that does not exist: $sub" >&2; bad=1; }
+    j="$(awk -F= -v g="$sub" '$1 ~ /^gates\.[0-9]+\.id$/ && $2 == g { split($1, a, "."); print a[2]; exit }' "$FLAT")"
+    [ -z "$j" ] || [ -z "$(mj_yget "$FLAT" "gates.$j.subsumed-by")" ] || { echo "ci-plan: gate $g is subsumed by $sub, which is itself subsumed; a chain is not a relation the planner applies" >&2; bad=1; }
+  fi
   for ref in $(mj_ylist "$FLAT" "gates.$i.implies") $(mj_ylist "$FLAT" "gates.$i.requires"); do
     printf '%s\n' "$gate_ids" | grep -x "$ref" >/dev/null || { echo "ci-plan: gate $g refers to a gate that does not exist: $ref" >&2; bad=1; }
   done
@@ -338,7 +348,25 @@ done
 if [ "$ONDEMAND" = 0 ] && [ -n "$ondemand_ids" ]; then
   kept=""; for g in $selected; do on_demand "$g" || kept="$kept $g"; done; selected="$kept"
 fi
-selected="${selected# }"
+# ... and a gate whose subsuming gate is in the plan is not planned beside it. This is the last
+# step of the selection, after the closure above, so a subsuming gate that was only implied or
+# required still counts; the reason replaces the one that selected the gate, because the plan
+# must say why a gate is absent, not why it once was present.
+kept=""
+for g in $selected; do
+  i="$(awk -F= -v g="$g" '$1 ~ /^gates\.[0-9]+\.id$/ && $2 == g { split($1, a, "."); print a[2]; exit }' "$FLAT")"
+  sub="$(mj_yget "$FLAT" "gates.$i.subsumed-by")"
+  if [ -n "$sub" ]; then
+    case " $selected " in
+      *" $sub "*)
+        why_of="$(printf '%s\n' "$why_of" | awk -F'\t' -v g="$g" '$1 != g')
+$g	subsumed by $sub: the planned $sub runs every case this gate runs, so planning it too would run them twice"
+        continue ;;
+    esac
+  fi
+  kept="$kept $g"
+done
+selected="${kept# }"
 
 # ---------------------------------------------------------------- the output
 # what a gate the plan left out is told: under a shape it was the shape that left it out, and
