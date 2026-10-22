@@ -31,6 +31,7 @@ pub mod devcontext;
 pub mod devtask;
 pub mod diagram;
 pub mod discovery;
+pub mod disk;
 pub(crate) mod distribution;
 pub mod economics;
 pub(crate) mod editors;
