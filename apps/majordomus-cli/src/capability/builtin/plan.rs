@@ -43,8 +43,8 @@ use crate::capability::model::{
 };
 use crate::capability::module::ModuleDescriptor;
 use crate::plan::{
-    Plan, PlanCounts, PlanFinding, PlanIssue, PlanMilestone, PlanProject, PlanVocabulary, PlanWave,
-    Transition, TransitionError,
+    Plan, PlanCounts, PlanFinding, PlanHeaderUnknown, PlanIssue, PlanMilestone, PlanVocabulary,
+    PlanWave, Transition, TransitionError,
 };
 use crate::{capability, module};
 
@@ -206,11 +206,53 @@ pub struct PlanMilestoneProgress {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+/// The plan's header as a report carries it: what `project.yaml` declares when it was read,
+/// and why not when it was not.
+///
+/// A field the file was never asked for is absent, not empty: an empty string reads as
+/// "the file declares nothing", and a layer whose sources name no `project` class has a
+/// file nobody read. `unknown` then says what was measured and what to declare.
+pub struct PlanHeader {
+    /// The project's name, from `project.yaml`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+    /// The repository it belongs to, `owner/name`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub repository: Option<String>,
+    /// The branch the plan is executed on.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub default_branch: Option<String>,
+    /// The milestone a worker is executing now; derived from the milestones and issues, so
+    /// it is answered whether or not the header was read.
+    pub active_milestone: String,
+    /// Why the three declared fields are absent, when the header was not read.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub unknown: Option<PlanHeaderUnknown>,
+}
+
+impl PlanHeader {
+    /// The header of `plan`, built from `index`: the declared fields when an object carries
+    /// them, the reason from [`crate::plan::header_unknown`] when none does.
+    fn of(plan: &Plan, index: &crate::index::Index) -> PlanHeader {
+        let unknown = crate::plan::header_unknown(index);
+        let declared = |v: &String| unknown.is_none().then(|| v.clone());
+        PlanHeader {
+            name: declared(&plan.project.name),
+            repository: declared(&plan.project.repository),
+            default_branch: declared(&plan.project.default_branch),
+            active_milestone: plan.project.active_milestone.clone(),
+            unknown,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 /// Where the plan stands: every milestone's progress, the milestone being executed, and the
 /// one issue to take next.
 pub struct PlanStatusReport {
-    /// The plan's header, with the active milestone derived.
-    pub project: PlanProject,
+    /// The plan's header, with the active milestone derived; unknown, with the reason, when
+    /// `project.yaml` was not read.
+    pub project: PlanHeader,
     /// The declared status vocabularies.
     pub statuses: PlanVocabulary,
     /// Every milestone, in id order.
@@ -351,7 +393,7 @@ fn plan_status(
             })
             .collect(),
         next_ready: plan.next_ready(only).cloned(),
-        project: plan.project.clone(),
+        project: PlanHeader::of(&plan, &ctx.index),
         statuses: plan.statuses.clone(),
         counts,
     })
@@ -1091,5 +1133,71 @@ mod tests {
                  milestone's gate"
             )
         );
+    }
+
+    /// The header is reported as `project.yaml` declares it when a source class names the
+    /// file, and as unknown — with the file, the missing class and the declaration that
+    /// reads it — when none does. Never as three empty strings: those would say the file
+    /// declares nothing, about a file nobody read (I2599).
+    #[test]
+    fn the_header_is_what_project_yaml_declares_or_unknown_with_the_reason() {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a repository");
+        let project = repo.root().join(".ai/repo/project");
+        std::fs::create_dir_all(&project).unwrap();
+
+        // no file and no class: unknown, and the remedy is both
+        let status = plan_status(&repo.context().unwrap(), PlanMilestoneFilter::default()).unwrap();
+        let unknown = status.project.unknown.expect("no header was read");
+        assert!(!unknown.file_present);
+        assert_eq!(unknown.missing_source_class.as_deref(), Some("project"));
+
+        // the file is there and no class names it: the layer of an adopter whose sources
+        // were written before the skeleton declared the class
+        std::fs::write(
+            project.join("project.yaml"),
+            "schema_version: 1\nname: P\nrepository: o/r\ndefault_branch: master\n",
+        )
+        .unwrap();
+        let status = plan_status(&repo.context().unwrap(), PlanMilestoneFilter::default()).unwrap();
+        assert!(status.project.name.is_none());
+        assert!(status.project.repository.is_none());
+        assert!(status.project.default_branch.is_none());
+        let unknown = status
+            .project
+            .unknown
+            .clone()
+            .expect("the header was not read");
+        assert_eq!(unknown.file, ".ai/repo/project/project.yaml");
+        assert!(unknown.file_present);
+        assert_eq!(unknown.missing_source_class.as_deref(), Some("project"));
+        assert!(
+            unknown.reason.contains("no source class"),
+            "{}",
+            unknown.reason
+        );
+        assert!(
+            unknown.remedy.contains("kind: project"),
+            "{}",
+            unknown.remedy
+        );
+        let json = serde_json::to_value(&status.project).unwrap();
+        assert!(
+            json.get("name").is_none(),
+            "an unread field is absent: {json}"
+        );
+
+        // the class is declared: the three fields, and nothing unknown
+        let sources = repo.root().join(".ai/repo/knowledge/sources.yaml");
+        let mut text = std::fs::read_to_string(&sources).unwrap();
+        text.push_str(
+            "  - id: project\n    kind: project\n    discovery: vcs\n    \
+             pathspec: ':(glob).ai/repo/project/project.yaml'\n    required: false\n",
+        );
+        std::fs::write(&sources, text).unwrap();
+        let status = plan_status(&repo.context().unwrap(), PlanMilestoneFilter::default()).unwrap();
+        assert_eq!(status.project.name.as_deref(), Some("P"));
+        assert_eq!(status.project.repository.as_deref(), Some("o/r"));
+        assert_eq!(status.project.default_branch.as_deref(), Some("master"));
+        assert!(status.project.unknown.is_none());
     }
 }

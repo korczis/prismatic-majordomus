@@ -48,6 +48,10 @@ pub struct DevTaskModel<'a> {
     pub sessions: Vec<SessionRef>,
     /// The repository the external projection targets, as `project.yaml` declares it.
     pub repository: Option<&'a str>,
+    /// Why the plan's header was not read, when it was not: what
+    /// [`crate::plan::header_unknown`] measured. `None` when the header was read, and for a
+    /// model composed without an index, where nothing was measured.
+    pub header_unknown: Option<&'a crate::plan::PlanHeaderUnknown>,
 }
 
 /// The canonical record: where it is, and what it says.
@@ -423,7 +427,7 @@ impl DevTask {
 
         let position = Self::position(model.plan, derived, milestone);
         let execution = Self::execution(model.trace, &model.sessions);
-        let synchronisation = Self::synchronisation(model.repository);
+        let synchronisation = Self::synchronisation(model.repository, model.header_unknown);
         let readiness = Self::readiness(
             model.plan,
             derived,
@@ -581,7 +585,10 @@ impl DevTask {
         }
     }
 
-    fn synchronisation(repository: Option<&str>) -> DevTaskSynchronisation {
+    fn synchronisation(
+        repository: Option<&str>,
+        header_unknown: Option<&crate::plan::PlanHeaderUnknown>,
+    ) -> DevTaskSynchronisation {
         let network = format!(
             "a live GitHub state; this executable makes no network call, so only \
              `{PROJECTION_ADAPTER} --check` can answer it"
@@ -590,17 +597,20 @@ impl DevTask {
             adapter: PROJECTION_ADAPTER.to_string(),
             repository: repository.map_or_else(
                 || {
-                    // Deliberately not "project.yaml names no repository". In this
-                    // repository the file does name one and the header is empty anyway:
-                    // `.ai/repo/knowledge/sources.yaml` declares a source class for
-                    // `project/milestones/*.yaml` and one for `project/issues/*.yaml` and
-                    // none for `project/project.yaml`, so the `project` kind has no objects
-                    // and `Plan::project` is blank for every reader of it. Saying the file
-                    // is silent would be this module inventing a fact about a file it did
-                    // not read, which is the whole thing it exists not to do.
+                    // Never "project.yaml names no repository" on its own authority. The
+                    // header is an object only when a source class of kind `project` names
+                    // the file, and a layer whose sources predate that class has a file
+                    // that names a repository and a header that is blank (I2599). So the
+                    // reason is the one that was measured when one was, and otherwise only
+                    // what this module can see: the header it was handed carries none.
+                    // Saying the file is silent would be this module inventing a fact about
+                    // a file it did not read, which is the whole thing it exists not to do.
                     AttestedText::unknown(
                         "plan.model#project.repository",
-                        "the derived plan's header carries no repository",
+                        header_unknown.map_or_else(
+                            || "the derived plan's header carries no repository".to_string(),
+                            |u| format!("{}; {}", u.reason, u.remedy),
+                        ),
                     )
                 },
                 |r| AttestedText::explicit(r, ".ai/repo/project/project.yaml#repository"),
@@ -947,6 +957,7 @@ mod tests {
             trace: None,
             sessions: Vec::new(),
             repository: Some("owner/fixture"),
+            header_unknown: None,
         };
         let t = DevTask::build(&model, "I9999");
         assert!(!t.declared);
@@ -981,6 +992,7 @@ mod tests {
             trace: None,
             sessions: Vec::new(),
             repository: None,
+            header_unknown: None,
         };
         let t = DevTask::build(&model, "I0001");
         assert_eq!(t.declaration.title.provenance, FieldProvenance::Explicit);
@@ -1018,6 +1030,7 @@ mod tests {
             trace: None,
             sessions: Vec::new(),
             repository: None,
+            header_unknown: None,
         };
         let t = DevTask::build(&model, "I0001");
         assert_eq!(t.position.status.text(), "ACTIVE");
@@ -1045,6 +1058,7 @@ mod tests {
             trace: None,
             sessions: Vec::new(),
             repository: None,
+            header_unknown: None,
         };
         let t = DevTask::build(&model, "I0001");
         assert!(!t.execution.git_consulted);
@@ -1085,6 +1099,7 @@ mod tests {
                 },
             ],
             repository: None,
+            header_unknown: None,
         };
         let t = DevTask::build(&model, "I0001");
         // the record that declared the issue is a canonical link
@@ -1119,6 +1134,7 @@ mod tests {
             trace: None,
             sessions: Vec::new(),
             repository: Some("owner/fixture"),
+            header_unknown: None,
         };
         let t = DevTask::build(&model, "I0001");
         assert!(!t.synchronisation.writable);
@@ -1162,6 +1178,7 @@ mod tests {
             trace: None,
             sessions: Vec::new(),
             repository: None,
+            header_unknown: None,
         };
         let t = DevTask::build(&model, "I0001");
         assert_eq!(t.readiness.state, TaskReadiness::CompletionBlocked);
@@ -1195,6 +1212,7 @@ mod tests {
             trace: None,
             sessions: Vec::new(),
             repository: None,
+            header_unknown: None,
         };
         let t = DevTask::build(&model, "I0001");
         assert_eq!(t.readiness.state, TaskReadiness::Waiting);
@@ -1225,6 +1243,7 @@ mod tests {
             trace: None,
             sessions: Vec::new(),
             repository: None,
+            header_unknown: None,
         };
         let t = DevTask::build(&model, "I0001");
         assert!(t.declared);
