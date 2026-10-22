@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.6"
   },
   "registry": {
-    "fingerprint": "ef38b11d9bedf033ec3dd3b0585bce92890f9c1a9822a48566de22c9bafebc3d",
+    "fingerprint": "8d7a2857b5cf233b8377c2e5fc65ea1964874b40bf4da86ea2fdd81ec50fc072",
     "summary": {
-      "total": 3313,
+      "total": 3323,
       "builtin": 208,
-      "declarative": 3105,
+      "declarative": 3115,
       "by_kind": {
         "command": 32,
         "query": 176,
-        "resource": 3105
+        "resource": 3115
       },
       "by_stability": {
         "behaviorally_verified": 143,
         "experimental": 55,
-        "implemented": 3115
+        "implemented": 3125
       },
       "mcp_tools": 197,
-      "mcp_resources": 3160,
+      "mcp_resources": 3170,
       "http_routes": 202,
       "cli_commands": 112,
       "modules": 92,
@@ -85598,7 +85598,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 160,
+        "capabilities": 161,
         "capability_ids": []
       },
       {
@@ -86173,7 +86173,7 @@
         "title": "intent",
         "description": "Declarative objects of kind 'intent' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 35,
+        "capabilities": 36,
         "capability_ids": []
       },
       {
@@ -86222,7 +86222,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 898,
+        "capabilities": 905,
         "capability_ids": []
       },
       {
@@ -86338,7 +86338,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 102,
+        "capabilities": 103,
         "capability_ids": []
       },
       {
@@ -86889,7 +86889,7 @@
     ]
   },
   "index": {
-    "fingerprint": "d7ce52574acf5ecf8311df861d65953b14a168f9491ed5cd0e1c095a980f2228",
+    "fingerprint": "df230d5a842cf38c839f50c4690b4cc154fe84a3bdd82d2710cc7d22dd7cb64f",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -86912,7 +86912,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 160,
+      "adr": 161,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -86928,11 +86928,11 @@
       "feature": 29,
       "gap": 4,
       "implementation": 52,
-      "intent": 35,
-      "issue": 898,
+      "intent": 36,
+      "issue": 905,
       "knowledge": 58,
       "mesh-declaration": 1,
-      "milestone": 102,
+      "milestone": 103,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -89541,6 +89541,22 @@
           "mesh-runtime",
           "deployment",
           "security"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0222",
+        "kind": "adr",
+        "identity": "adr-0222",
+        "title": "An execution started for an issue is durable and idempotent, an interrupted one is recovered as interrupted, and an unknown outcome is never retried",
+        "description": "An execution started for an issue is durable and idempotent, an interrupted one is recovered as interrupted, and an unknown outcome is never retried",
+        "path": ".ai/repo/adrs/0222-an-issue-execution-is-durable-idempotent-and-never-replayed-blind.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 6277,
+        "tags": [
+          "execution",
+          "ui",
+          "mesh-runtime"
         ]
       },
       {
@@ -94181,7 +94197,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 795321
+        "bytes": 798055
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -97756,6 +97772,17 @@
         "section": "project",
         "source_class": "intent",
         "bytes": 2254
+      },
+      {
+        "uri": "majordomus://intent/an-issue-is-implemented-from-one-click",
+        "kind": "intent",
+        "identity": "an-issue-is-implemented-from-one-click",
+        "title": "From /ui the owner clicks Implement on a ready issue, and a durable execution works it in its own worktree under a scope claim, followed live across a browser close and a server restart, until it ends with a testable result and its evidence",
+        "description": "Running `majordomus serve` and opening /ui/idd, the owner picks a real issue and clicks its one primary move. For a ready issue that move is Implement. It starts a durable, idempotent execution of the shared executor. The execution claims the issue's scope, creates its worktree and hands the work to an available worker adapter. The owner can close the browser and restart the server. On return they see the same execution, either continuing or recovered as interrupted, never re-run blind. It ends with a testable result whose evidence is recorded.",
+        "path": ".ai/repo/project/intents/an-issue-is-implemented-from-one-click.yaml",
+        "section": "project",
+        "source_class": "intent",
+        "bytes": 4506
       },
       {
         "uri": "majordomus://intent/campaigns-are-provenance-the-plan-reads",
@@ -107889,6 +107916,83 @@
         "bytes": 1924
       },
       {
+        "uri": "majordomus://issue/I3980",
+        "kind": "issue",
+        "identity": "I3980",
+        "title": "An execution is journaled to disk and recovered on start: one it was running comes back failed with code interrupted at its cursor, a reported one is re-attached, none is re-run",
+        "description": "Append every execution record and event to a journal under .ai/local/state/executions/ before it is acknowledged, fold it back when the server starts, and recover an execution this server was running when it stopped as Failed with the error code interrupted naming its last sequence (the vocabulary abandon_silent already uses), and one another process reports as reported so that its next report continues it under the same id and cursor; never re-run. The WebSocket cursor (http/events.rs) replays from the journal across the restart.",
+        "path": ".ai/repo/project/issues/I3980.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2683
+      },
+      {
+        "uri": "majordomus://issue/I3981",
+        "kind": "issue",
+        "identity": "I3981",
+        "title": "executions.start takes an idempotency key: the same key and input answer the first execution, the same key with another input is refused",
+        "description": "Add an optional idempotency_key to the input of executions.start (declared in the capability, so every projection carries it after majordomus generate); keep the key on the journaled record (I3980); a repeated start answers the existing execution's view, a conflicting one is refused naming it; share/cockpit/executions.js and moves.js send a key per click.",
+        "path": ".ai/repo/project/issues/I3981.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2013
+      },
+      {
+        "uri": "majordomus://issue/I3982",
+        "kind": "issue",
+        "identity": "I3982",
+        "title": "A worker adapter declared beside its provider runs it headless in the execution's worktree and streams its progress as the execution's events",
+        "description": "Declare a worker adapter per provider in share/providers.yaml (Claude Code headless first, reusing the stream-json driving of economics/runner.rs; Codex and Gemini declared, optional) and a fixture adapter for tests; an adapter is given the execution id, the worktree, the compiled context (devcontext) and the issue's objective, and its output is folded into ExecutionEvent progress and log events through the report path store.rs already has for majordomus run; an execution with no available adapter stays Queued with the reason as an event.",
+        "path": ".ai/repo/project/issues/I3982.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2416
+      },
+      {
+        "uri": "majordomus://issue/I3983",
+        "kind": "issue",
+        "identity": "I3983",
+        "title": "issue.implement judges readiness, claims the issue's scope as the execution's lease, creates its worktree and hands it to a worker, each a step of one execution",
+        "description": "Declare the capability issue.implement (capability! under capability/builtin, then majordomus generate) whose steps are: readiness (devtask.issue readiness; refuse with its reason), lease (an exclusive mesh.claim of the issue's scope held by the execution's session; refuse naming the claim it meets; released at the terminal state, expiring with the heartbeat), worktree (majordomus worktree create for the issue's branch), dispatch (I3982's adapter). Started only as an execution.",
+        "path": ".ai/repo/project/issues/I3983.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2447
+      },
+      {
+        "uri": "majordomus://issue/I3984",
+        "kind": "issue",
+        "identity": "I3984",
+        "title": "/ui/idd offers each issue the one primary move its state admits: Implement, Open execution, Verify, Deliver or View blockers",
+        "description": "Replace the primary button of /ui/idd (ui/idd.rs:519-600, today Start/Verify/Mark done through plan.transition) with the one move the issue's derived state admits: READY starts issue.implement as an execution through the existing move start path (share/cockpit/moves.js, with I3981's key); ACTIVE links its live execution; VERIFY starts the verification; DONE offers Deliver (an execution of the delivery policy, a stub refusing until P2 says otherwise); BLOCKED lists the blockers. The executor's refusal is shown verbatim; the snapshot shows state and a link to the live server, never the control.",
+        "path": ".ai/repo/project/issues/I3984.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2104
+      },
+      {
+        "uri": "majordomus://issue/I3985",
+        "kind": "issue",
+        "identity": "I3985",
+        "title": "A browser case clicks Implement, closes the page, restarts the server and finds the same execution ending with its evidence, and the refusals hold",
+        "description": "Add test/cases/3982_one_click_implement_survives_a_restart.sh on the pattern of 3220 (Playwright, fixture repository): serve; open /ui/idd; click Implement on a ready fixture issue with the fixture worker adapter (never a provider); see the execution live; close the page; restart the server; reopen and find the same execution id continuing, or failed with code interrupted at its cursor; let it end Succeeded with the issue's evidence recorded. Negative: a not-ready issue is refused with its reason; a held scope is refused naming the claim; with no adapter the execution stays queued with its reason; a double click yields one execution.",
+        "path": ".ai/repo/project/issues/I3985.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1943
+      },
+      {
+        "uri": "majordomus://issue/I3986",
+        "kind": "issue",
+        "identity": "I3986",
+        "title": "An implement execution ends by running the issue's validation in its worktree and recording the evidence, so done means verified and never delivered",
+        "description": "Add a final step verify to issue.implement: after the worker exits successfully, run the issue's declared validation commands in the execution's worktree, record the result through majordomus evidence record against the issue's evidence_required, and end Succeeded only when every required piece of evidence is recorded and passing, otherwise Failed naming the missing or failing piece; the execution's view says done (verified) and never delivered.",
+        "path": ".ai/repo/project/issues/I3986.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1955
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -109519,6 +109623,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 2133
+      },
+      {
+        "uri": "majordomus://milestone/one-click-implement",
+        "kind": "milestone",
+        "identity": "one-click-implement",
+        "title": "One click on a ready issue starts a durable execution that works it, followed live across a browser close and a server restart",
+        "description": "I3980 to I3986 close the P0 vertical slice, local click-to-execute, under ADR 0222 and the intent an-issue-is-implemented-from-one-click.",
+        "path": ".ai/repo/project/milestones/one-click-implement.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 2824
       },
       {
         "uri": "majordomus://milestone/operation-convergence",
@@ -120642,7 +120757,7 @@
       "identity": [
         "id"
       ],
-      "objects": 160
+      "objects": 161
     },
     {
       "name": "application",
@@ -120795,7 +120910,7 @@
       "identity": [
         "id"
       ],
-      "objects": 35
+      "objects": 36
     },
     {
       "name": "issue",
@@ -120805,7 +120920,7 @@
       "identity": [
         "id"
       ],
-      "objects": 898
+      "objects": 905
     },
     {
       "name": "knowledge",
@@ -120835,7 +120950,7 @@
       "identity": [
         "id"
       ],
-      "objects": 102
+      "objects": 103
     },
     {
       "name": "moment",

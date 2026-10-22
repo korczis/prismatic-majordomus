@@ -1,0 +1,43 @@
+id: an-issue-is-implemented-from-one-click
+title: "From /ui the owner clicks Implement on a ready issue, and a durable execution works it in its own worktree under a scope claim, followed live across a browser close and a server restart, until it ends with a testable result and its evidence"
+statement: "Running `majordomus serve` and opening /ui/idd, the owner picks a real issue and clicks its one primary move. For a ready issue that move is Implement. It starts a durable, idempotent execution of the shared executor. The execution claims the issue's scope, creates its worktree and hands the work to an available worker adapter. The owner can close the browser and restart the server. On return they see the same execution, either continuing or recovered as interrupted, never re-run blind. It ends with a testable result whose evidence is recorded."
+invariants:
+  - "A click starts an execution of the shared executor; the UI never decides whether work may run (ADR 0135, ADR 0222)"
+  - "One execution model: no second scheduler, no parallel orchestrator, no ui_tasks.json"
+  - "An unknown outcome of a mutation is never a reason to repeat it"
+  - "A worker is an optional adapter; no provider is required"
+  - "Done and delivered are different states and no surface shows one as the other"
+non_goals:
+  - "Remote execution on another mesh node (P1: mesh click-to-execute)"
+  - "Click-to-deliver: PR, CI, merge, release and deploy driven from the UI (P2)"
+  - "Running anything from the published site"
+  - "A new screen family"
+milestones:
+  - "one-click-implement"
+satisfaction:
+  - id: an-execution-survives-a-restart
+    criterion: "An execution's record and events are journaled under .ai/local/state/executions/ and folded back on start; one this server was running when it stopped is recovered failed with the code interrupted at its cursor, one another process reports is re-attached when that process reports again, and none is re-run (planned proof: apps/majordomus-cli/tests/execution_journal.rs (to be written by I3980))"
+    evidence: command
+    ref: "majordomus intent explain an-issue-is-implemented-from-one-click"
+  - id: a-start-is-idempotent
+    criterion: "executions.start with an idempotency key answers the first execution for the same key and input, and refuses the same key with another input, naming the execution (planned proof: apps/majordomus-cli/tests/execution_idempotency.rs (to be written by I3981))"
+    evidence: command
+    ref: "majordomus intent explain an-issue-is-implemented-from-one-click"
+  - id: an-issue-is-implemented-by-one-capability
+    criterion: "issue.implement refuses an issue that is not ready or whose scope another live exclusive claim holds, naming the reason; otherwise it claims the scope as the execution's lease, creates the issue's worktree and hands the work to a worker adapter, each a step of the execution (planned proof: apps/majordomus-cli/tests/issue_implement.rs (to be written by I3983))"
+    evidence: command
+    ref: "majordomus intent explain an-issue-is-implemented-from-one-click"
+  - id: a-worker-reports-into-the-execution
+    criterion: "A declared worker adapter runs its provider headless in the execution's worktree and streams its progress as the execution's events; with no adapter available the execution stays queued and says why (planned proof: apps/majordomus-cli/tests/worker_adapter.rs (to be written by I3982))"
+    evidence: command
+    ref: "majordomus intent explain an-issue-is-implemented-from-one-click"
+  - id: the-issue-offers-one-move
+    criterion: "/ui/idd offers each issue the one primary move its state admits (READY Implement, ACTIVE Open execution, VERIFY Verify, DONE Deliver, BLOCKED View blockers) through the shared start path, with the executor's refusal verbatim (planned proof: test/cases/3982 (to be written by I3985))"
+    evidence: command
+    ref: "majordomus intent explain an-issue-is-implemented-from-one-click"
+  - id: the-loop-is-walked-across-a-restart
+    criterion: "A browser case clicks Implement on a fixture issue with a fixture worker, closes the page, restarts the server, reopens it and finds the same execution continued or recovered, ending with its evidence; and the negative cases (not ready, scope held, no worker) are refused or queued with their reason (planned proof: test/cases/3982 (to be written by I3985))"
+    evidence: command
+    ref: "majordomus intent explain an-issue-is-implemented-from-one-click"
+created_at: 2026-10-23
+updated_at: 2026-10-23

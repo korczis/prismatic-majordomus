@@ -1,0 +1,34 @@
+id: I3982
+milestone: one-click-implement
+title: "A worker adapter declared beside its provider runs it headless in the execution's worktree and streams its progress as the execution's events"
+slug: a-worker-reports-into-the-execution
+priority: p0
+profile: implementation
+objective: "Declare a worker adapter per provider in share/providers.yaml (Claude Code headless first, reusing the stream-json driving of economics/runner.rs; Codex and Gemini declared, optional) and a fixture adapter for tests; an adapter is given the execution id, the worktree, the compiled context (devcontext) and the issue's objective, and its output is folded into ExecutionEvent progress and log events through the report path store.rs already has for majordomus run; an execution with no available adapter stays Queued with the reason as an event."
+why: "ADR 0222 decision 5: a worker is an adapter, never a requirement; nothing in the execution path spawns a worker today."
+current_state: "Only economics/runner.rs spawns a harness (benchmarks); no adapter declaration; ExecutionStore::report serves majordomus run only."
+desired_state: "An adapter is chosen from declarations, its process's progress is the execution's event stream, its exit is the step's outcome, and the absence of any adapter is a visible queued reason."
+scope:
+  - "apps/majordomus-cli/src/worker"
+  - "apps/majordomus-cli/src/economics/runner.rs"
+  - "apps/majordomus-cli/src/execution"
+  - "share/providers.yaml"
+  - "apps/majordomus-cli/tests/worker_adapter.rs"
+non_scope:
+  - "Choosing a worker on another machine (P1)"
+  - "Token budgeting policy beyond reporting the cost the adapter reads"
+depends_on:
+  - "I3980"
+serves:
+  - "an-issue-is-implemented-from-one-click#a-worker-reports-into-the-execution"
+acceptance_criteria:
+  - "The fixture adapter's lines arrive as the execution's events in order, with dense sequence numbers"
+  - "An adapter whose binary is absent is reported unavailable; with none available the execution stays Queued with that reason"
+  - "The adapter runs with the worktree as its working directory and never in the primary checkout"
+  - "The Claude Code adapter is declared, not required: tests never call a provider"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test worker_adapter"
+evidence_required:
+  - "apps/majordomus-cli/tests/worker_adapter.rs"
+created_at: 2026-10-23
+updated_at: 2026-10-23
