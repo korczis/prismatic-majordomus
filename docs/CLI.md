@@ -441,6 +441,13 @@ a repository-wide fallback. Prints its git-state label and its body. No candidat
 normal outcome and exits `0` with `No relevant handover.` `--path` prints the path
 alone, for scripting; `--no-task` resolves without an active task.
 
+For a record whose task named what it serves, the resolution also prints one `Intent:` line,
+comparing the two pins the record carries with the binding as it reads now: `unchanged`,
+`evidence_moved` (a served criterion changed evidence state), `plan_changed` (the intent, a
+link or its critique was edited), `unknown` (no pin, or the binding could not be read), or
+`none` for a task that started under an exemption. The model is
+[Binding](PLANNING.md#binding-a-task-names-what-it-serves).
+
 ## `majordomus context`
 
 What does whoever works next need to know? Read-only. Assembles durable state into one
@@ -457,6 +464,7 @@ weakest evidence about the present.
 | `GIT` | git | always |
 | `TASK` | `state/current.yaml` | a task is active and the profile's `context.task` is not `false` |
 | `PROFILE` | `profiles/<name>.yaml` | the task names a profile that exists |
+| `INTENT` | `majordomus-cli intent binding`, asked on this read | the task named an issue, an intent or an exemption at `start`; a binding that cannot be read prints `standing unknown` and what was named, never nothing |
 | `CONTEXT DOCUMENTS` | `.ai/**/README.md` (the context contract) | a task is active; the effective chain is listed for each of its scope paths |
 | `OPEN QUESTIONS` | `state/open-questions.md` | any unresolved entry names this task |
 | `DECISIONS` | `state/decisions.md` | `context.decisions: true` (this task) or `context.architecture_notes: true` (the repository) |
@@ -474,7 +482,8 @@ fields state rather than documentation.
 **Budget.** `context.builder_budget_lines` in the policy, or `--budget-lines`. When the
 assembled text exceeds it, sections are dropped in a fixed order — history, files,
 decisions, then the bodies of the checkpoint and the handover, which degrade to a pointer
-rather than disappearing. Git, task, profile and blockers are never dropped. Every drop is
+rather than disappearing. Git, task, profile and blockers are never dropped, and the intent
+section is shortened — its gap conditions go first — and never dropped whole. Every drop is
 named under `EXCLUDED` with its reason, so an under-filled context is debugged from the
 exclusion list instead of guessed at. Exit `10` if what cannot be dropped is already over
 budget.

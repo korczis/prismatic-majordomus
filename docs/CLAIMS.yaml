@@ -902,7 +902,7 @@ claims:
     test: test/cases/386_a_plan_is_held_to_its_intent.sh
     status: guaranteed
     responsibility: plan
-    note: The refusal is `majordomus intent validate` and the intent-check gate, after the start. `plan start` itself succeeds; refusing the start is intent-refused-at-plan-start, which is planned. Majordomus writes neither record. A worker observes and criticises, and the repository refuses what does not hold together.
+    note: The refusal is `majordomus intent validate` and the intent-check gate, after the start. Whether the start itself is refused is the policy's choice, and that half is intent-refused-at-plan-start. Majordomus writes neither record. A worker observes and criticises, and the repository refuses what does not hold together.
 
   - id: intent-realization-held-to-evidence
     claim: The work realising an intent is joined across sessions, providers and handovers, and an intent whose milestones are all closed while a criterion's evidence fails is refused naming that criterion

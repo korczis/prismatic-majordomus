@@ -243,6 +243,7 @@ model.
 
 ```console
 $ majordomus-cli intent list
+$ majordomus-cli intent show <id>
 $ majordomus-cli intent validate
 $ majordomus-cli intent coverage
 $ majordomus-cli intent preflight --issue <id>
