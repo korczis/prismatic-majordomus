@@ -436,13 +436,26 @@ impl Bridge {
         // what the client said it was working on is said again, to whoever serves now —
         // every claim it holds, because restoring one of several is still a loss
         for arguments in self.announcements.values().cloned().collect::<Vec<_>>() {
-            let replay = json!({
-                "jsonrpc": "2.0",
-                "id": "majordomus-bridge-announce",
-                "method": "tools/call",
-                "params": { "name": crate::capability::builtin::peers::ANNOUNCE_TOOL, "arguments": arguments },
-            });
-            match self.send(&replay) {
+            let replay = |arguments: &Value| {
+                json!({
+                    "jsonrpc": "2.0",
+                    "id": "majordomus-bridge-announce",
+                    "method": "tools/call",
+                    "params": { "name": crate::capability::builtin::peers::ANNOUNCE_TOOL, "arguments": arguments },
+                })
+            };
+            let mut sent = self.send(&replay(&arguments));
+            // A server older than made_at refuses the field it does not know (the input
+            // denies unknown fields), and the claim would not be replayed at all: said again
+            // without it, it is at least on the board, dated now as it was before (I3609).
+            if matches!(&sent, Ok(Sent::Answer(Some(a))) if refused(a)) {
+                let mut plain = arguments.clone();
+                if let Some(fields) = plain.as_object_mut() {
+                    fields.remove("made_at");
+                }
+                sent = self.send(&replay(&plain));
+            }
+            match sent {
                 Ok(Sent::Answer(_)) => {
                     tracing::info!(url = %self.url, "the client's announcement was replayed to the server it is now attached to")
                 }
@@ -560,6 +573,11 @@ enum Sent {
 /// the announce tool, and the answer is a result rather than an error. A batch is not
 /// looked into; a bridge that carried one announcement in a batch replays nothing, which
 /// is what a bridge did for every announcement before this.
+/// Whether an answer is a refusal: a JSON-RPC error, or a tool result marked as an error.
+fn refused(answer: &Value) -> bool {
+    answer.get("error").is_some() || answer["result"]["isError"] == true
+}
+
 fn announcement_in(message: &Value, answer: Option<&Value>) -> Option<Value> {
     if message.get("method")?.as_str()? != "tools/call" {
         return None;
@@ -568,16 +586,22 @@ fn announcement_in(message: &Value, answer: Option<&Value>) -> Option<Value> {
     if params.get("name")?.as_str()? != crate::capability::builtin::peers::ANNOUNCE_TOOL {
         return None;
     }
-    let answer = answer?;
-    if answer.get("error").is_some() || answer["result"]["isError"] == true {
+    if refused(answer?) {
         return None;
     }
-    Some(
-        params
-            .get("arguments")
-            .cloned()
-            .unwrap_or_else(|| json!({})),
-    )
+    let mut arguments = params
+        .get("arguments")
+        .cloned()
+        .unwrap_or_else(|| json!({}));
+    // When the claim was made goes with it, so that a replay says it again at its own time:
+    // stamped by the board on every replay, a claim superseded hours ago read as the newest
+    // on the board (2026-10-20, I3609). A replay already carries it and keeps it.
+    if let Some(fields) = arguments.as_object_mut() {
+        fields
+            .entry("made_at")
+            .or_insert_with(|| json!(crate::peers::rfc3339(std::time::SystemTime::now())));
+    }
+    Some(arguments)
 }
 
 fn first_initialize_params(message: &Value) -> Value {
@@ -640,6 +664,41 @@ mod tests {
             held,
             vec!["the unnamed claim", "the guard, narrowed", "the cockpit"],
             "three claims, in name order, and the repeated name updated rather than appended"
+        );
+    }
+
+    /// A remembered announcement carries when it was first made, and a replay of it keeps
+    /// that time rather than taking a new one, so the board it is replayed onto dates the
+    /// claim as old as it is (I3609).
+    #[test]
+    fn a_remembered_announcement_keeps_when_it_was_made() {
+        let accepted = json!({ "result": { "isError": false } });
+        let fresh = json!({
+            "method": "tools/call",
+            "params": {
+                "name": crate::capability::builtin::peers::ANNOUNCE_TOOL,
+                "arguments": { "intent": "new work", "scope": [] },
+            },
+        });
+        let made = announcement_in(&fresh, Some(&accepted)).expect("accepted");
+        let stamped = made["made_at"]
+            .as_str()
+            .expect("a fresh announcement is stamped");
+        assert!(
+            crate::peers::parse_rfc3339(stamped).is_some(),
+            "made_at is RFC 3339: {stamped}"
+        );
+        let replay = json!({
+            "method": "tools/call",
+            "params": {
+                "name": crate::capability::builtin::peers::ANNOUNCE_TOOL,
+                "arguments": { "intent": "old work", "scope": [], "made_at": "2026-10-20T09:37:11Z" },
+            },
+        });
+        let again = announcement_in(&replay, Some(&accepted)).expect("accepted");
+        assert_eq!(
+            again["made_at"], "2026-10-20T09:37:11Z",
+            "a replay keeps the time the claim was made"
         );
     }
 

@@ -36,6 +36,10 @@ spoke most recently and the rest of the scope silently stops being claimed. Name
 claim and it stands beside the others; announce under that name again and it is
 updated. Leave it out and this is the peer's one unnamed claim, which is what a
 single session announcing about itself wants. |
+| `made_at` | string or null | no | When this claim was first made, RFC 3339 UTC, for a claim said again rather than
+made now. The MCP bridge sends it when it replays a client's claims after a
+re-attach, so that the board keeps the claim as old as it is. A time that does not
+parse or lies in the future is replaced by now. Leave it out for a new claim. |
 
 Output: `Announced`.
 

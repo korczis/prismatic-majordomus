@@ -346,6 +346,11 @@ struct Slot {
     /// announcing under a name a peer already used must replace that claim and not append
     /// a second one — idempotence is the map, not a search.
     claims: BTreeMap<String, Announcement>,
+    /// The board's announce counter at each claim's last announce, by the same key. Two
+    /// claims announced within one second carry the same `at`, and a replay after a
+    /// re-attach restores several at once; this is what tells which was said last, so
+    /// that a tie is never broken by the claim's name.
+    announced: BTreeMap<String, u64>,
 }
 
 impl Slot {
@@ -354,9 +359,13 @@ impl Slot {
         self.claims.values().cloned().collect()
     }
 
-    /// The most recently made claim, which is what a one-line reader wants.
+    /// The most recently made claim, which is what a one-line reader wants: the latest
+    /// `at`, and among equal times the one announced last.
     fn latest(&self) -> Option<Announcement> {
-        self.claims.values().max_by(|a, b| a.at.cmp(&b.at)).cloned()
+        self.claims
+            .iter()
+            .max_by_key(|(key, a)| (a.at.as_str(), self.announced.get(*key).copied()))
+            .map(|(_, a)| a.clone())
     }
 }
 
@@ -370,6 +379,9 @@ const RETAINED: usize = 32;
 #[derive(Default)]
 pub struct PeerBoard {
     next: AtomicU64,
+    /// Every announce this board accepted, counted: the order [`Slot::latest`] falls back
+    /// on when two claims carry one time.
+    announces: AtomicU64,
     slots: Mutex<BTreeMap<u64, Slot>>,
 }
 
@@ -409,6 +421,7 @@ impl PeerBoard {
                 last_seen: Instant::now(),
                 departed: false,
                 claims: BTreeMap::new(),
+                announced: BTreeMap::new(),
             },
         );
         PeerId::new(seq)
@@ -483,6 +496,47 @@ impl PeerBoard {
         intent: &str,
         scope: Vec<String>,
     ) -> Option<Announced> {
+        self.announce_claim_made(id, claim, intent, scope, None)
+    }
+
+    /// The same, for a claim made earlier than now: `made` is when it was first
+    /// announced, RFC 3339, and the board keeps it as the claim's `at` instead of stamping
+    /// the moment it hears it again. This is how a claim the MCP bridge replays after a
+    /// re-attach stays as old as it is: stamped anew, work superseded hours ago reads as
+    /// the newest on the board. A `made` that does not parse or lies in the future is not a
+    /// time this board can vouch for, and is replaced by now.
+    ///
+    /// ```
+    /// use majordomus_cli::peers::{PeerBoard, Transport};
+    /// let board = PeerBoard::new();
+    /// let p = board.attach(Transport::Http);
+    /// let made = "2026-10-20T09:37:11Z";
+    /// let back = board
+    ///     .announce_claim_made(&p, Some("old"), "superseded work", vec![], Some(made))
+    ///     .unwrap();
+    /// assert_eq!(back.peer.claims[0].at, made, "a replayed claim keeps its time");
+    /// let future = board
+    ///     .announce_claim_made(&p, Some("old"), "superseded work", vec![], Some("2999-01-01T00:00:00Z"))
+    ///     .unwrap();
+    /// assert_ne!(future.peer.claims[0].at, "2999-01-01T00:00:00Z", "a future time is not kept");
+    /// ```
+    pub fn announce_claim_made(
+        &self,
+        id: &PeerId,
+        claim: Option<&str>,
+        intent: &str,
+        scope: Vec<String>,
+        made: Option<&str>,
+    ) -> Option<Announced> {
+        let now = SystemTime::now();
+        let at = made
+            .filter(|m| {
+                parse_rfc3339(m).is_some_and(|secs| {
+                    secs <= now.duration_since(UNIX_EPOCH).map_or(0, |d| d.as_secs())
+                })
+            })
+            .map_or_else(|| rfc3339(now), str::to_string);
+        let order = self.announces.fetch_add(1, Ordering::SeqCst) + 1;
         let mut slots = self.lock();
         if !slots.contains_key(&id.seq()) {
             return None;
@@ -509,9 +563,10 @@ impl PeerBoard {
                 name: (!key.is_empty()).then(|| key.clone()),
                 intent: intent.to_string(),
                 scope,
-                at: rfc3339(SystemTime::now()),
+                at,
             },
         );
+        s.announced.insert(key, order);
         Some(Announced {
             peer: peer(id.seq(), s),
             overlaps,
@@ -1296,5 +1351,75 @@ mod tests {
         let line = board.summary();
         assert!(line.contains("the whole mandate"), "{line}");
         assert!(line.contains("worker-a: the guard"), "{line}");
+    }
+
+    /// I3609, as it was seen on 2026-10-20: a re-attach replayed ten claims, every one
+    /// stamped with the moment of the replay, and the announce that followed answered with
+    /// the claim whose name sorts last. A replayed claim keeps the time it was made, and a
+    /// peer's announcement is the one it said last, whatever the claims are called.
+    #[test]
+    fn a_replayed_claim_keeps_its_time_and_the_last_said_is_the_announcement() {
+        let board = PeerBoard::new();
+        let peer = board.attach(Transport::Http);
+        // the replay, in name order, each at its own time
+        board.announce_claim_made(
+            &peer,
+            Some("site-probe-split"),
+            "merging master",
+            vec![],
+            Some("2026-10-20T09:37:11Z"),
+        );
+        board.announce_claim_made(
+            &peer,
+            Some("ui-trains"),
+            "ready locally",
+            vec![],
+            Some("2026-10-20T10:50:09Z"),
+        );
+        let listed = board.list();
+        assert_eq!(listed[0].claims[0].at, "2026-10-20T09:37:11Z");
+        assert_eq!(listed[0].claims[1].at, "2026-10-20T10:50:09Z");
+        // a new claim, made now, named so that it sorts before both
+        let answer = board
+            .announce_claim(&peer, Some("mesh-session-findings"), "new work", vec![])
+            .unwrap();
+        assert_eq!(
+            answer
+                .peer
+                .announcement
+                .as_ref()
+                .and_then(|a| a.name.as_deref()),
+            Some("mesh-session-findings"),
+            "the announce answers with the claim it made, not the last name"
+        );
+
+        // equal times: the one said last is the announcement, not the one that sorts last
+        let tied = PeerBoard::new();
+        let p = tied.attach(Transport::Http);
+        let same = Some("2026-10-20T20:35:43Z");
+        tied.announce_claim_made(&p, Some("zeta"), "said first", vec![], same);
+        let answer = tied
+            .announce_claim_made(&p, Some("alpha"), "said last", vec![], same)
+            .unwrap();
+        assert_eq!(
+            answer.peer.announcement.as_ref().map(|a| a.intent.as_str()),
+            Some("said last")
+        );
+    }
+
+    /// A time the board cannot vouch for is not kept: one that does not parse, and one in
+    /// the future, are both replaced by the time the board heard the claim.
+    #[test]
+    fn a_made_time_that_is_not_a_past_time_is_replaced_by_now() {
+        let board = PeerBoard::new();
+        let peer = board.attach(Transport::Http);
+        for made in ["yesterday", "2999-01-01T00:00:00Z"] {
+            let answer = board
+                .announce_claim_made(&peer, Some("c"), "work", vec![], Some(made))
+                .unwrap();
+            let at = &answer.peer.claims[0].at;
+            assert_ne!(at, made);
+            assert!(parse_rfc3339(at).is_some(), "{at}");
+        }
     }
 }

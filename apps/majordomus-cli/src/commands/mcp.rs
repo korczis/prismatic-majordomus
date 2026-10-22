@@ -286,11 +286,13 @@ impl Session {
                                     .unwrap_or_default();
                                 let claim =
                                     a["claim"].as_str().map(str::trim).filter(|c| !c.is_empty());
-                                local.server.surface().context().peers.announce_claim(
+                                // carried at the time it was made, not the takeover's (I3609)
+                                local.server.surface().context().peers.announce_claim_made(
                                     &local.peer,
                                     claim,
                                     intent,
                                     scope,
+                                    a["made_at"].as_str(),
                                 );
                             }
                             if !announcements.is_empty() {

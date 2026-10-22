@@ -293,6 +293,12 @@ pub struct AnnounceInput {
     /// single session announcing about itself wants.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub claim: Option<String>,
+    /// When this claim was first made, RFC 3339 UTC, for a claim said again rather than
+    /// made now. The MCP bridge sends it when it replays a client's claims after a
+    /// re-attach, so that the board keeps the claim as old as it is. A time that does not
+    /// parse or lies in the future is replaced by now. Leave it out for a new claim.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub made_at: Option<String>,
 }
 
 impl BenchmarkCases for AnnounceInput {
@@ -303,6 +309,7 @@ impl BenchmarkCases for AnnounceInput {
                 intent: "benchmark: announcing".into(),
                 scope: vec!["apps/majordomus-cli".into()],
                 claim: None,
+                made_at: None,
             },
         )]
     }
@@ -331,7 +338,13 @@ fn peers_announce(ctx: &Context, input: AnnounceInput) -> Result<Announced, Capa
         .map(str::trim)
         .filter(|c| !c.is_empty());
     ctx.peers
-        .announce_claim(caller, claim, input.intent.trim(), scope)
+        .announce_claim_made(
+            caller,
+            claim,
+            input.intent.trim(),
+            scope,
+            input.made_at.as_deref().map(str::trim),
+        )
         .ok_or_else(|| CapabilityError::Internal(format!("peer {caller} is not attached")))
 }
 

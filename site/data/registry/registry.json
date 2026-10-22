@@ -6,7 +6,7 @@
     "version": "1.0.0-alpha.1"
   },
   "registry": {
-    "fingerprint": "e9ec56f7ab16bbef8bfa492164289f99f59a1674c8eac92f270119ee244308fa",
+    "fingerprint": "0436189581a31c20e7e045815471144d8189d984d3947dc6d81f8399d3727571",
     "summary": {
       "total": 3158,
       "builtin": 206,
@@ -56408,6 +56408,13 @@
                   "null"
                 ],
                 "description": "Which of this peer's claims this is, when the peer holds more than one.\n\nOne MCP session is not always one piece of work — a client that fans work out to\nsubagents shares its session with all of them — and without a name every\nannouncement replaces the last, so the board ends up describing whichever worker\nspoke most recently and the rest of the scope silently stops being claimed. Name a\nclaim and it stands beside the others; announce under that name again and it is\nupdated. Leave it out and this is the peer's one unnamed claim, which is what a\nsingle session announcing about itself wants."
+              },
+              "made_at": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "When this claim was first made, RFC 3339 UTC, for a claim said again rather than\nmade now. The MCP bridge sends it when it replays a client's claims after a\nre-attach, so that the board keeps the claim as old as it is. A time that does not\nparse or lies in the future is replaced by now. Leave it out for a new claim."
               }
             },
             "required": [

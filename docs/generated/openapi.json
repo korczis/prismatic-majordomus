@@ -21030,6 +21030,13 @@
               "null"
             ],
             "description": "Which of this peer's claims this is, when the peer holds more than one.\n\nOne MCP session is not always one piece of work — a client that fans work out to\nsubagents shares its session with all of them — and without a name every\nannouncement replaces the last, so the board ends up describing whichever worker\nspoke most recently and the rest of the scope silently stops being claimed. Name a\nclaim and it stands beside the others; announce under that name again and it is\nupdated. Leave it out and this is the peer's one unnamed claim, which is what a\nsingle session announcing about itself wants."
+          },
+          "made_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "When this claim was first made, RFC 3339 UTC, for a claim said again rather than\nmade now. The MCP bridge sends it when it replays a client's claims after a\nre-attach, so that the board keeps the claim as old as it is. A time that does not\nparse or lies in the future is replaced by now. Leave it out for a new claim."
           }
         },
         "required": [
