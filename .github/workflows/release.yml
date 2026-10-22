@@ -87,7 +87,9 @@ jobs:
         name: the build matrix, generated from the model
         run: |
           matrix="$(jq -c '{include: .include}' docs/generated/distribution-matrix.json)"
-          smoke="$(jq -c '{include: [.include[] | select(.native)]}' docs/generated/distribution-matrix.json)"
+          # every target something can run: native builds where they were built, cross builds
+          # on the smoke runner the model names for them (macos-x86_64, built on Apple silicon)
+          smoke="$(jq -c '{include: [.include[] | select(.smoke)]}' docs/generated/distribution-matrix.json)"
           {
             echo "matrix=$matrix"
             echo "smoke=$smoke"
@@ -523,7 +525,7 @@ jobs:
   # names the installer does not expect.
   smoke:
     needs: [plan, publish]
-    runs-on: ${{ matrix.runner }}
+    runs-on: ${{ matrix.smoke_runner }}
     timeout-minutes: 20
     strategy:
       fail-fast: false

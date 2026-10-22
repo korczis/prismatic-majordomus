@@ -102,6 +102,69 @@ fn every_published_target_names_a_runner_and_every_other_names_a_reason() {
     }
 }
 
+#[test]
+fn every_published_target_is_smoked_on_a_runner_that_can_run_it() {
+    let model = real_model();
+    for t in model.published() {
+        let build = t.build.as_ref().expect("a published target declares a build");
+        assert!(
+            build.smoke_runner().is_some(),
+            "{} is published and nothing installs and runs it after publication",
+            t.id
+        );
+        if !build.native {
+            assert!(
+                build.smoke_runner.as_deref().is_some_and(|r| r != build.runner),
+                "{} is cross-built on {} and names no other runner to smoke it on",
+                t.id,
+                build.runner
+            );
+        }
+    }
+}
+
+#[test]
+fn a_cross_build_is_smoked_where_it_names_and_a_native_one_where_it_was_built() {
+    let native = Build {
+        runner: "macos-15".into(),
+        packages: vec![],
+        native: true,
+        smoke_runner: None,
+    };
+    assert_eq!(native.smoke_runner(), Some("macos-15"));
+    let cross = Build {
+        runner: "macos-15".into(),
+        packages: vec![],
+        native: false,
+        smoke_runner: Some("macos-15-intel".into()),
+    };
+    assert_eq!(cross.smoke_runner(), Some("macos-15-intel"));
+    let unrun = Build {
+        runner: "ubuntu-24.04".into(),
+        packages: vec![],
+        native: false,
+        smoke_runner: None,
+    };
+    assert_eq!(unrun.smoke_runner(), None, "a build nothing can run is not smoked");
+
+    let matrix = super::render::matrix(&real_model());
+    let entries = matrix["include"].as_array().expect("an include list");
+    for e in entries {
+        let can_run = e["native"].as_bool() == Some(true) || e["smoke_runner"] != e["runner"];
+        assert_eq!(
+            e["smoke"].as_bool(),
+            Some(can_run),
+            "the matrix entry {} says smoke without a runner that can run it",
+            e["id"]
+        );
+        assert!(
+            e["smoke_runner"].as_str().is_some_and(|r| !r.is_empty()),
+            "{} has no smoke runner",
+            e["id"]
+        );
+    }
+}
+
 fn minimal() -> String {
     let model = real_model();
     let path = repo_root().join("share").join(FILE);

@@ -241,6 +241,24 @@ pub struct Build {
     /// where it was produced rather than only inspected.
     #[serde(default)]
     pub native: bool,
+    /// The runner the published archive is installed and run on after publication, when it is
+    /// not the one that built it: an archive cross-built on a faster runner is still smoke-tested
+    /// on a machine of its own architecture. Absent, smoke runs where the build ran, and only
+    /// when that runner is `native`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub smoke_runner: Option<String>,
+}
+
+impl Build {
+    /// The runner the release's smoke installs this target on, or `None` when nothing can run
+    /// it: a native build is smoked where it was built, a cross build where it names.
+    pub fn smoke_runner(&self) -> Option<&str> {
+        match (&self.smoke_runner, self.native) {
+            (Some(runner), _) => Some(runner.as_str()),
+            (None, true) => Some(self.runner.as_str()),
+            (None, false) => None,
+        }
+    }
 }
 
 /// One target: a platform the project has an opinion about.

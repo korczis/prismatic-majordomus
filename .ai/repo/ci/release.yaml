@@ -23,8 +23,12 @@ trigger:
 # tree where it has not.
 matrix:
   source: docs/generated/distribution-matrix.json
-  # the entries whose runner can execute what it built are the ones smoke-tested in place
+  # the entries whose runner can execute what it built are verified by running them in place
   native_field: native
+  # the entries something can run are smoke-tested after publication, on `smoke_runner`: the
+  # build runner for a native build, the runner the model names for a cross build
+  smoke_field: smoke
+  smoke_runner_field: smoke_runner
 
 # ---------------------------------------------------------------- the phases, in order
 # Each `runs` is the command a person can run too. A phase that needs elevated permission

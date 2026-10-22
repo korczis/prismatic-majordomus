@@ -44,6 +44,8 @@ pub fn matrix(model: &Model) -> Value {
                 "runner": build.runner,
                 "packages": build.packages.join(" "),
                 "native": build.native,
+                "smoke": build.smoke_runner().is_some(),
+                "smoke_runner": build.smoke_runner().unwrap_or(&build.runner),
                 "artifact": t.artifact_name(&model.project, &model.archive, TAG_PLACEHOLDER),
                 "root": t.archive_root(&model.project, TAG_PLACEHOLDER),
             })

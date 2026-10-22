@@ -69,14 +69,20 @@ targets:
       runner: macos-15
       native: true
 
+  # Built on Apple silicon, smoke-tested on Intel. v0.26.0's package step for this target took
+  # 24 minutes on macos-15-intel and was the release's critical path; the arm64 runner builds
+  # aarch64 in about half of that, and rustc targets x86_64 from it without an emulator. Not
+  # native: the arm64 image carries no Rosetta, so the archive cannot be run where it is built,
+  # and the run that proves it reports its own version is the smoke on an Intel runner.
   - id: macos-x86_64
     os: macos
     arch: x86_64
     rust_target: x86_64-apple-darwin
     status: supported
     build:
-      runner: macos-15-intel
-      native: true
+      runner: macos-15
+      native: false
+      smoke_runner: macos-15-intel
 
   - id: linux-x86_64-gnu
     os: linux

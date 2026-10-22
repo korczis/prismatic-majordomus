@@ -29,7 +29,7 @@ grep -q "$source_file" "$WF" \
   grep -qF -- "$triple" "$WF" && { echo "    the workflow names the target $triple"; exit 1; }
   :
 done
-runners="$(sed -n 's/.*"runner": "\([^"]*\)".*/\1/p' "$ROOT/$source_file" | LC_ALL=C sort -u)"
+runners="$(sed -n 's/.*"\(smoke_\)\{0,1\}runner": "\([^"]*\)".*/\2/p' "$ROOT/$source_file" | LC_ALL=C sort -u)"
 for runner in $runners; do
   case "$runner" in
     ubuntu-24.04) continue ;;   # the coordination jobs run there too; it is not a target's runner
@@ -38,6 +38,14 @@ for runner in $runners; do
 done
 grep -q 'runs-on: ${{ matrix.runner }}' "$WF" \
   || { echo "    no job takes its runner from the matrix"; exit 1; }
+# a cross build (macos-x86_64 on Apple silicon) is smoke-tested where the model says it can run,
+# so smoke reads its own runner and selects the entries something can run, not only native ones
+awk '/^  smoke:/{p=1; next} /^  [a-z0-9_-]+:[ \t]*$/{p=0} p' "$WF" | grep -qF 'runs-on: ${{ matrix.smoke_runner }}' \
+  || { echo "    the smoke job does not take its runner from the matrix's smoke_runner"; exit 1; }
+grep -qF "select(.smoke)" "$WF" \
+  || { echo "    the smoke matrix is not the entries the model says something can run"; exit 1; }
+jq -e '[.include[] | select(.smoke and (.smoke_runner | length) == 0)] | length == 0' "$ROOT/$source_file" >/dev/null \
+  || { echo "    a matrix entry is smoked with no runner to smoke it on"; exit 1; }
 
 # --- no artifact name and no installation URL is written in the workflow ------------------
 first="$("$MJB" distribution --repo "$ROOT" targets 2>/dev/null | awk 'NR>1 && $3=="supported"{print $1; exit}')"
