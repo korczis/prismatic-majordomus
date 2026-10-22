@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.6"
   },
   "registry": {
-    "fingerprint": "ef38b11d9bedf033ec3dd3b0585bce92890f9c1a9822a48566de22c9bafebc3d",
+    "fingerprint": "87697043782ca057ddc029f8c9059cb39adf15bb9ff5eceb0d391f59d1da85bb",
     "summary": {
-      "total": 3313,
+      "total": 3326,
       "builtin": 208,
-      "declarative": 3105,
+      "declarative": 3118,
       "by_kind": {
         "command": 32,
         "query": 176,
-        "resource": 3105
+        "resource": 3118
       },
       "by_stability": {
         "behaviorally_verified": 143,
         "experimental": 55,
-        "implemented": 3115
+        "implemented": 3128
       },
       "mcp_tools": 197,
-      "mcp_resources": 3160,
+      "mcp_resources": 3173,
       "http_routes": 202,
       "cli_commands": 112,
       "modules": 92,
@@ -85772,7 +85772,7 @@
         "title": "critique",
         "description": "Declarative objects of kind 'critique' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 31,
+        "capabilities": 32,
         "capability_ids": []
       },
       {
@@ -86173,7 +86173,7 @@
         "title": "intent",
         "description": "Declarative objects of kind 'intent' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 35,
+        "capabilities": 36,
         "capability_ids": []
       },
       {
@@ -86222,7 +86222,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 898,
+        "capabilities": 908,
         "capability_ids": []
       },
       {
@@ -86338,7 +86338,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 102,
+        "capabilities": 103,
         "capability_ids": []
       },
       {
@@ -86889,7 +86889,7 @@
     ]
   },
   "index": {
-    "fingerprint": "d7ce52574acf5ecf8311df861d65953b14a168f9491ed5cd0e1c095a980f2228",
+    "fingerprint": "6563211ad570040bbbf6ec6a08df43dd9d46f647ba3999bc37d72cd70f468484",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -86919,7 +86919,7 @@
       "claim": 250,
       "command": 31,
       "context": 39,
-      "critique": 31,
+      "critique": 32,
       "deployment": 1,
       "derive-offload": 1,
       "distribution-model": 1,
@@ -86928,11 +86928,11 @@
       "feature": 29,
       "gap": 4,
       "implementation": 52,
-      "intent": 35,
-      "issue": 898,
+      "intent": 36,
+      "issue": 908,
       "knowledge": 58,
       "mesh-declaration": 1,
-      "milestone": 102,
+      "milestone": 103,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -93296,6 +93296,17 @@
         "bytes": 8343
       },
       {
+        "uri": "majordomus://critique/merging-and-referencing-are-enforced",
+        "kind": "critique",
+        "identity": "merging-and-referencing-are-enforced",
+        "title": "merging-and-referencing-are-enforced",
+        "description": "355a0cee79a",
+        "path": ".ai/repo/project/critiques/merging-and-referencing-are-enforced.yaml",
+        "section": "project",
+        "source_class": "critique",
+        "bytes": 12168
+      },
+      {
         "uri": "majordomus://critique/nothing-in-the-mesh-waits-on-something-dead",
         "kind": "critique",
         "identity": "nothing-in-the-mesh-waits-on-something-dead",
@@ -94181,7 +94192,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 795321
+        "bytes": 812304
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -97866,6 +97877,17 @@
         "section": "project",
         "source_class": "intent",
         "bytes": 4072
+      },
+      {
+        "uri": "majordomus://intent/merging-and-referencing-are-enforced",
+        "kind": "intent",
+        "identity": "merging-and-referencing-are-enforced",
+        "title": "Merging and referencing are enforced: every pull request carries its metadata, every reference resolves, every number is taken once",
+        "description": "On 2026-10-22 the owner asked for better doctrines and tooling for merging and for referencing, learned from prismatic-platform: every pull request carries its metadata, kept current automatically and offloaded to GitHub. Today a pull request carries only what its author typed; work sitting in an open pull request is offered again as the next issue; a milestone dependency holds issues that need nothing from it, and nothing says which; a record can be named before it reaches master; issue ids have no allocator while ADR and case numbers have two separate ones; a GitHub issue can be created by hand and adopted by its title; a commit need not name the issue it serves; and the landing duties of a train member are prose. Each of these becomes a projection from the records, a typed command or a gate.",
+        "path": ".ai/repo/project/intents/merging-and-referencing-are-enforced.yaml",
+        "section": "project",
+        "source_class": "intent",
+        "bytes": 6444
       },
       {
         "uri": "majordomus://intent/nothing-in-the-mesh-waits-on-something-dead",
@@ -107889,6 +107911,116 @@
         "bytes": 1924
       },
       {
+        "uri": "majordomus://issue/I3970",
+        "kind": "issue",
+        "identity": "I3970",
+        "title": "Every pull request carries its metadata, projected from the trunk's records: labels, milestone, assignee and Refs links, never a closing keyword",
+        "description": "A pull request's metadata is a projection of the trunk's records, applied by scripts/github-sync --prs locally and by a separate workflow file (not github.yml) on pull_request_target opened, edited, synchronize and labeled, which checks out the base branch only, never the head, and holds pull-requests: write and issues: read with GITHUB_TOKEN, in a concurrency group per pull request. The rule the-projection-is-applied-at-landing moves to version 2 and .ai/repo/ci/github.yaml's forbidden list is amended: the issue projection still never runs for a pull request, while the pull request projection writes only the pull request's own labels, milestone, assignee and managed region, read from the trunk; case 1097 holds the new workflow to its model. The issues a pull request serves are the ones its title and head branch name, resolved by the executable through delivery's named_by (plan/delivery.rs:428-450, wrapping issues_named in ui/prs.rs:174) exposed as a typed subcommand github-sync calls, never a second shell pattern. It projects: a type label from the conventional type of its title, from the commit types I3979 declares (feat, fix, perf, refactor, docs, test, chore, ci, style, build); an area label from the commit scope only when the scope is declared there; the highest priority label of the served issues; train for an integration/train-* head; records when every changed path is under .ai/repo/project; hold and collision:accepted stay a person's. The milestone is the GitHub milestone github-sync already projects for the served issue's milestone; the author is assignee when none is set; a managed region between majordomus:begin and majordomus:end markers lists Refs #<n> for each served issue that has a GitHub issue, and the record id in plain text, with no priority or milestone, for one whose record exists only in the head. GitHub issue numbers come from a record-to-number map the trunk run of github.yml publishes, so a pull request event makes a bounded number of API calls and never lists every issue. No projected text carries a closing keyword (close, fix or resolve followed by an issue number). A second run changes nothing; a region whose hash no longer matches what was written is left alone and reported; a pull request whose token cannot write is reported and passes. Starts after train 4 lands its github-sync listing rewrite (the I3920 record, on chore/landing-survives-any-session), which then becomes a dependency.",
+        "path": ".ai/repo/project/issues/I3970.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 6716
+      },
+      {
+        "uri": "majordomus://issue/I3971",
+        "kind": "issue",
+        "identity": "I3971",
+        "title": "Work in an open pull request or under a live branch claim is reported taken and is never the next issue",
+        "description": "The one next-issue function I3754 builds (plan.rs ranking, then delivery at the trunk) gains a second, observed pass: a READY candidate whose delivery stage is pr_open (plan/delivery.rs, from the recorded forge observation) or branch with a live claim on the mesh board (read from mesh/state.rs) is passed over as taken and listed with the pull request or claim that put it there and the time of that observation. Taken is a readiness refinement inside READY (devtask/readiness.rs TaskReadiness::Taken), neither a seventh canonical status nor TaskReadiness::Review, which already means VERIFY (readiness.rs:25-27): ISSUE_STATUSES and lib/project.awk stay byte-equal, and readiness.rs's note that no record field can distinguish such a word is amended to say that delivery, an observation, now does. plan next, plan ready and plan.status's next_ready answer the same. The shell's plan next (mj_pj_next_ready, lib/plan.sh:230, 262, 337) cannot read the forge cache or the board, so it asks the executable for the observed pass, and when the executable is absent answers the stamps-only pick labelled as such. plan next --at <rev> keeps I3754's answer that depends on the commit alone.",
+        "path": ".ai/repo/project/issues/I3971.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4105
+      },
+      {
+        "uri": "majordomus://issue/I3972",
+        "kind": "issue",
+        "identity": "I3972",
+        "title": "plan validate names every issue held only by its milestone gate, and an issue may declare it needs nothing from the milestone's dependencies",
+        "description": "The milestone gate (plan.rs:1110-1130) holds every issue of a milestone whose depends_on is not DONE, whatever the issue itself needs. Make it explainable and narrowable: plan validate emits a warning held_only_by_milestone naming every BLOCKED issue whose own depends_on are all DONE and whose blocked_by holds only milestone:<id> entries, with the milestone that holds it; and an issue may declare milestone_gate: own (schema issue.v1, default all), which keeps it out of the gate so it is held only by its own depends_on. The opt-out reaches every consequence of the gate in both engines: the issue-level premature_execution check (plan.rs:1118-1135, project.awk:311) skips an opted-out issue, and the milestone-level milestone_premature check (plan.rs:1080-1086, project.awk:287) does not fail a blocked milestone whose only ACTIVE, VERIFY or DONE issues are opted out; such a milestone keeps the derived status BLOCKED, with the opted-out work reported beside it. Both engines, plan.rs and lib/project.awk, derive the same, held equal by case 99_plan_capabilities. A milestone keeps ordering the roadmap exactly as now. I3757 rewrites the same gate code to name what holds a milestone and lands first.",
+        "path": ".ai/repo/project/issues/I3972.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3763
+      },
+      {
+        "uri": "majordomus://issue/I3973",
+        "kind": "issue",
+        "identity": "I3973",
+        "title": "A record is referenced only once it is on master: a pull request naming an unlanded id is refused, and convergence reports stranded records",
+        "description": "A gate in the structure job (wired in .github/workflows/validate.yml and declared in .ai/repo/ci/gates.yaml) reads the record ids that a pull request ADDS, in the added lines of its diff hunks over records, documents and its commit messages, and refuses one that resolves neither on the base branch nor in the pull request's own tree, naming the file, line and id and the unmerged branch that holds it if any. The id grammars it judges are issue ids (I followed by four or more digits), ADR numbers written as ADR followed by four digits, and rule ids written as project. followed by a rule name; a line the pull request did not add is never judged, so the 62 ids master's records and docs already name without a record at 355a0cee79a stay where they are and are reported once as a baseline count that may not grow. The commit-msg judge already refuses an id the working tree's layer lacks (commit/verdict.rs UnresolvedReference, policy reference_unresolved: error), but the working tree may hold records another branch brought in. convergence (apps/majordomus-cli/src/convergence) adds a holding kind: a record id named on master that resolves only on an unmerged branch is reported as stranded, with that branch.",
+        "path": ".ai/repo/project/issues/I3973.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4152
+      },
+      {
+        "uri": "majordomus://issue/I3974",
+        "kind": "issue",
+        "identity": "I3974",
+        "title": "One allocator surveys every number (issue ids, ADR numbers, case numbers), and two branches adding one number under different names are refused",
+        "description": "The survey lib/adr.sh (mj_adr_claims) and scripts/case-numbers each implement for one identifier (this tree, the sibling worktrees, every ref, the peer board) is shared by both and extended to a third kind, issue ids, inside the existing units rather than a new one: majordomus adr next keeps its output, scripts/case-numbers next keeps its output, and a kind argument (issue, adr, case) makes either answer for any kind from the one survey. The board source is defined with its producer and its parser in the same unit: next --reserve announces a named claim id:<kind>:<number> on the peer board, and the survey reads exactly those claim names; no free-text announcement is parsed. The collision gate (scripts/ci/collision-gate) gains the number check: a pull request adding an issue id, ADR number or case number that another unmerged branch adds under a different file name is refused (exit 11) naming that branch; the same path with different content is already refused by path. The first step diagnoses why adr check, which doctor runs in pre-commit and case 271 holds, did not stop ADR 0168 being taken twice, and records the cause in this issue before the code changes.",
+        "path": ".ai/repo/project/issues/I3974.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4221
+      },
+      {
+        "uri": "majordomus://issue/I3975",
+        "kind": "issue",
+        "identity": "I3975",
+        "title": "GitHub issues are created only by github-sync: an agent's raw create is refused, an issue nobody projected is reported on GitHub, and an unmarked issue is never adopted",
+        "description": "Three guards around the one writer of GitHub issues. First, on the agent side: the provider hooks the repository projects (.claude/settings.json and .claude/hooks for Claude Code, and the matching hook of every provider template under .ai/repo/providers that supports one) refuse a shell command that creates a GitHub issue by hand (gh issue create, or gh api with a POST to an issues endpoint), naming scripts/github-sync as the way; a person in a terminal is not judged. Second, on GitHub, since a client hook covers only the clients that have one: a workflow on issues opened labels and reports, never closes or deletes, any issue that carries no record marker and was not opened by github-actions[bot], so an issue nobody projected is visible within one run whoever opened it. Third, github-sync stops adopting an unmarked issue by its title prefix (remote_issue_line, github-sync:374-380): the first step measures how many unmarked issues github-sync --check still adopts; if none, the title fallback is deleted, otherwise the cutoff is the last adopted issue number, recorded in the adapter, and an unmarked issue above it is reported as a stranger and never adopted. The short-listing refusal is the I3920 record's (train 4) and is not repeated here; this issue starts after train 4 lands and I3970 has changed github-sync.",
+        "path": ".ai/repo/project/issues/I3975.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4512
+      },
+      {
+        "uri": "majordomus://issue/I3976",
+        "kind": "issue",
+        "identity": "I3976",
+        "title": "Every commit names the issue it serves, outside narrow machine-verifiable exemptions, with the earlier history as a baseline",
+        "description": "commit.validate gains two rules with policy levels in .ai/repo/policy.yaml's commit block. issue_required (error): a commit whose subject or trailers name no issue record id (I followed by digits, resolved as UnresolvedReference already resolves ids) is refused by the commit-msg hook and by scripts/ci/commit-policy. closing_keyword (error): a message carrying a closing keyword (close, fix or resolve, in any inflection, followed by an issue number) is refused, because it closes the GitHub issue ahead of its record. The rule applies to commits after a recorded boundary commit (the commit that turns it on, kept in .ai/repo/commit-policy-baseline.txt beside today's count), so the 4494 earlier subjects of origin/master that name no issue are outside it and the existing count baseline is unchanged; every commit a branch adds after the boundary must pass outright. The exemptions are decided from the commit and the repository, never from a word a person types, and are checked against every commit shape this repository makes: a git-generated subject (Merge, fixup!, squash!, amend!), a revert of a merge, the root commit, and a commit with two or more parents (the train merges written as merge: train ...). Commits the tools write (the train composer of I3915 and I3978 writing fix(top) and chore(top) subjects, the release record step writing chore(release)) are changed to name the issues they carry or the release issue, so they need no exemption. The hook falls back to the installed release when the executable is not built (I3831), so the rule refuses at commit time once a release carries it and in CI from the commit that turns it on.",
+        "path": ".ai/repo/project/issues/I3976.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4811
+      },
+      {
+        "uri": "majordomus://issue/I3977",
+        "kind": "issue",
+        "identity": "I3977",
+        "title": "Every page a deployment serves names only versions of the release model, checked after the deploy",
+        "description": "I3449 makes every built surface read one release model and gates the built site and the snapshots. This issue carries the same judgement to what is served: after a deploy, the served-surface check (apps/majordomus-cli/src/served.rs, the capability majordomus served) fetches every page the deployment declares, extracts each version string with its role label, and compares them with the release model of the commit the deployment says it serves; a page naming another version, or a version without its role, is reported with the URL and the string, and the deploy check fails. The extractor is one Rust function: when I3449 lands its gate as shell in scripts/site-check, this issue moves the extraction into a library function in served.rs that the site gate calls through the executable, with a library test holding both on one fixture. It sits under this milestone because the owner listed it in this order: a version on a page is a reference to a release, and it must resolve to the model as a record id must resolve on master.",
+        "path": ".ai/repo/project/issues/I3977.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3221
+      },
+      {
+        "uri": "majordomus://issue/I3978",
+        "kind": "issue",
+        "identity": "I3978",
+        "title": "Each train member is judged on its merged tree, and a fix member joins only with a test and its changed-code coverage",
+        "description": "The landing duties docs/INTEGRATION.md states as a table (merge master into the branch, commit, derive, then run the whole structure job, the library tests and the cases the change touches on that merged tree, naming the commit each ran on; search the tests for what reads the change) become a typed check the train composer of I3915 (commands/prs.rs) runs per member before the member joins a train: it merges the member onto the train head, runs the structure job, the library tests and the cases the change touches, and records each verdict with the merged commit. The cases a change touches are chosen by a selector this issue adds to the executable: every case whose covers header names a capability or command the change touches, and every case that names a changed path or the identifier of a changed record, the rule docs/INTEGRATION.md states as prose. A member whose head is a fix (conventional type fix) joins only when its diff carries a test and scripts/rust-coverage --changed <train head> reports its changed lines covered. A member that fails is left out of the train and reported with the failing step; nothing is forced in.",
+        "path": ".ai/repo/project/issues/I3978.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3494
+      },
+      {
+        "uri": "majordomus://issue/I3979",
+        "kind": "issue",
+        "identity": "I3979",
+        "title": "Every label, branch prefix and commit type is declared once, projected to GitHub, described in CONTRIBUTING and checked",
+        "description": "One tracked declaration under .ai/repo/ci (beside github.yaml) names every label with its colour, description and actor (projected from records, set by the pull request projection, or set by a person: hold, collision:accepted, ci:yielded), the area labels allowed from commit scopes, and the branch prefixes (feature, fix, docs, chore, refactor, integration/train). It does not become a second source of what already has one: the commit types stay declared in release/model.rs:23-43 and the hold label names in integration/classify.rs LABEL_POLICY (classify.rs:110-118), and a library test holds the declaration equal to both, so a type or hold label added in one place and not the other fails. github-sync creates and updates every declared label (today it creates only labels labels_of emits and never updates one); CONTRIBUTING.md gains a section generated from the declaration and from those two sources between majordomus markers; and a check refuses a label named by code, a workflow or a projection that is not declared, and reports a declared label missing on GitHub.",
+        "path": ".ai/repo/project/issues/I3979.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3950
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -109486,6 +109618,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 4834
+      },
+      {
+        "uri": "majordomus://milestone/merging-and-referencing-are-enforced",
+        "kind": "milestone",
+        "identity": "merging-and-referencing-are-enforced",
+        "title": "Merging and referencing are enforced: every pull request carries its metadata, every reference resolves, every number is taken once",
+        "description": "Merging and referencing are projections, typed commands and gates: every pull request carries its metadata from the records, every reference resolves on master, every number is taken once.",
+        "path": ".ai/repo/project/milestones/merging-and-referencing-are-enforced.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 3736
       },
       {
         "uri": "majordomus://milestone/mesh-connectivity",
@@ -120712,7 +120855,7 @@
       "identity": [
         "intent"
       ],
-      "objects": 31
+      "objects": 32
     },
     {
       "name": "deployment",
@@ -120795,7 +120938,7 @@
       "identity": [
         "id"
       ],
-      "objects": 35
+      "objects": 36
     },
     {
       "name": "issue",
@@ -120805,7 +120948,7 @@
       "identity": [
         "id"
       ],
-      "objects": 898
+      "objects": 908
     },
     {
       "name": "knowledge",
@@ -120835,7 +120978,7 @@
       "identity": [
         "id"
       ],
-      "objects": 102
+      "objects": 103
     },
     {
       "name": "moment",

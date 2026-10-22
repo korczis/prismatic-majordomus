@@ -1,0 +1,35 @@
+id: I3977
+milestone: merging-and-referencing-are-enforced
+title: "Every page a deployment serves names only versions of the release model, checked after the deploy"
+slug: one-version-on-every-served-page
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "I3449 makes every built surface read one release model and gates the built site and the snapshots. This issue carries the same judgement to what is served: after a deploy, the served-surface check (apps/majordomus-cli/src/served.rs, the capability majordomus served) fetches every page the deployment declares, extracts each version string with its role label, and compares them with the release model of the commit the deployment says it serves; a page naming another version, or a version without its role, is reported with the URL and the string, and the deploy check fails. The extractor is one Rust function: when I3449 lands its gate as shell in scripts/site-check, this issue moves the extraction into a library function in served.rs that the site gate calls through the executable, with a library test holding both on one fixture. It sits under this milestone because the owner listed it in this order: a version on a page is a reference to a release, and it must resolve to the model as a record id must resolve on master."
+why: "On 2026-10-22 an outside reviewer read three versions on the published homepage (navbar v0.30.2, product block v1.0.0-alpha.4, footer v1.0.0-alpha.6); I3449 records it. A built-site gate cannot see a page served from a stale cache, an older deployment or a host that did not take the new build, which is the case the reviewer actually saw."
+current_state: "Verified at 355a0cee79a: I3449 (READY, p0, milestone truthful-plan-surfaces) plans the release model and the built-site gate; served.rs observes which commit each deployment serves (case 3110_a_served_surface_names_its_checkout) but reads no version on a page."
+desired_state: "After every deploy each served page's versions agree with the release model of the served commit, or the deploy check names the page and the string."
+scope:
+  - "apps/majordomus-cli/src/served.rs"
+  - "scripts/pages"
+  - "scripts/site-check"
+  - "test/cases/3110_a_served_surface_names_its_checkout.sh"
+  - ".ai/repo/project/issues/I3977.yaml"
+non_scope:
+  - "The release model and the built-site gate, which are I3449's"
+acceptance_criteria:
+  - "A fixture deployment serving a page whose footer names a version the model does not hold is refused naming the URL and the string (case a_served_page_with_a_foreign_version_is_refused)"
+  - "A page naming the offered release and the newer pre-release, each with its role, passes"
+  - "A library test runs the one extractor on a fixture page and the site gate yields the same versions for it"
+validation:
+  - "bin/majordomus plan validate"
+  - "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- served::"
+  - "env -u MAJORDOMUS_SHARE bash test/run.sh 3110_a_served_surface_names_its_checkout"
+evidence_required:
+  - "one_version_everywhere"
+depends_on:
+  - "I3449"
+serves:
+  - "merging-and-referencing-are-enforced#one-version-everywhere"
+created_at: 2026-10-22
+updated_at: 2026-10-22
