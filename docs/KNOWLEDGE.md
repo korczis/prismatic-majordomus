@@ -37,6 +37,24 @@ that keeps `project.never-store-transcripts` applies to its title, its descripti
 body. An ADR, a rule and a document are sources of their own: a record relates to them and
 never restates them. `SCHEMAS.md` has the file format with an example.
 
+**A commit reference has one grammar.** `commit:<name>` names a commit by 4 to 64 lower-case
+hexadecimal digits: the full object name, or an abbreviation of it. It resolves when git peels
+the name to exactly one commit of this history. A branch, a tag name or `HEAD` is not a commit
+name, because it moves and a record that cites it cites something else tomorrow. Every writer
+and every checker of both programs reads a reference this way:
+
+| Who | What it does with `commit:<name>` |
+|---|---|
+| `adr propose --from` | writes the full name whatever abbreviation was given; refuses a name that is not a commit name, is ambiguous, or names no commit, saying which |
+| `knowledge observe --evidence` | writes the full name when the name resolves; refuses a name that is not a commit name or is ambiguous; keeps a well-formed name this clone does not hold as given, because evidence on a ledger line need not resolve here |
+| `knowledge derive` | writes the full name of each evidence commit that resolves, and leaves the others on the ledger line |
+| `adr check` | the shape only, without asking git, so a shallow clone judges alike |
+| `knowledge check` and the executable's `knowledge record` | resolve the name; an unambiguous abbreviation passes exactly as the full name does, and a failure says whether the name is not a commit name, is ambiguous, or names no commit of this history |
+
+A record written before this rule with an unambiguous abbreviation needs no edit. An
+abbreviation can become ambiguous as a history grows, which is why the writers store the full
+name.
+
 `curated/` and `candidates/` hold records, one status apart. `curated/` is what this repository chose to
 write about itself, `status: verified`. `candidates/` is what the tool derived and nobody has
 reviewed, `status: candidate`; it is tracked, for the reason every closed session record is

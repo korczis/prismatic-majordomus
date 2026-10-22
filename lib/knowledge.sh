@@ -178,10 +178,21 @@ mj_knowledge_observe_cmd() {
   mj_is_multiline "$statement$subject" && mj_die "$MJ_EX_USAGE" "knowledge observe: the statement and the subject must be single-line"
   printf '%s\n' "$statement" | grep -Eq "$MJ_KNOWLEDGE_TRANSCRIPT" \
     && mj_die "$MJ_EX_USAGE" "knowledge observe: the statement opens like a turn of a conversation; an observation is an assertion, never a transcript"
+  local full
   while IFS= read -r ref; do
     [ -n "$ref" ] || continue
     printf '%s' "$ref" | grep -Eq '^(file|test|commit|issue|claim):[^[:space:]]+$' \
       || mj_die "$MJ_EX_USAGE" "knowledge observe: evidence '$ref' is not a reference (file:|test:|commit:|issue:|claim: followed by what it names)"
+    # A commit is named by the one grammar (mj_commit_names_resolve): the full name is what
+    # is written when the name resolves, and a name that is no commit name or is ambiguous
+    # is refused. A well-formed name this clone does not hold is kept as given: evidence on
+    # a ledger line need not resolve here, and the deriver leaves it out of the record.
+    case "$ref" in commit:*)
+      if full="$(mj_commit_name_full "${ref#commit:}")"; then ref="commit:$full"
+      elif [ "$full" != missing ]; then
+        mj_die "$MJ_EX_USAGE" "knowledge observe: evidence '$ref' $(mj_commit_name_reason "$full")"
+      fi ;;
+    esac
     ev_json="$ev_json${ev_json:+,}\"$(mj_json_esc "$ref")\""
   done <<EOF_EV
 $evidence
@@ -889,7 +900,7 @@ mj_knowledge_yq() { printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g'; }
 # the exact key order the section's README documents. Prints the record id.
 mj_knowledge_compose() {
   local sid="$1" row="$2" refs="$3" out="$4"
-  local kind task ts canon title desc class epi tag rest evrefs id about="" route="" ref
+  local kind task ts canon title desc class epi tag rest evrefs id about="" route="" ref full
   IFS="$MJ_TAB" read -r kind task ts canon title desc class epi tag rest evrefs <<EOF
 $row
 EOF
@@ -921,7 +932,7 @@ EOF
     if [ "$kind" = observation ] && [ "${evrefs:--}" != - ]; then
       for ref in $evrefs; do
         case "$ref" in
-          commit:*) mj_git cat-file -e "${ref#commit:}^{commit}" 2>/dev/null && printf '    - %s\n' "$ref" ;;
+          commit:*) if full="$(mj_commit_name_full "${ref#commit:}")"; then printf '    - commit:%s\n' "$full"; fi ;;
           file:*|test:*) mj_git ls-files --error-unmatch -- "${ref#*:}" >/dev/null 2>&1 && printf '    - %s\n' "$ref" ;;
         esac
       done
@@ -1447,11 +1458,15 @@ mj_knowledge_check_files() {
   sed -n 's/^R\t//p' "$tmp/shape" > "$tmp/refs"
   if [ -s "$tmp/refs" ]; then
     cut -f2 "$tmp/refs" | LC_ALL=C sort -u | mj_knowledge_resolve_refs > "$tmp/resolved"
-    awk -F'\t' 'FILENAME == res { st[$1] = $2; next }
+    awk -F'\t' -v malformed="$(mj_commit_name_reason malformed)" -v ambiguous="$(mj_commit_name_reason ambiguous)" \
+        -v absent="$(mj_commit_name_reason missing)" 'FILENAME == res { st[$1] = $2; next }
       { r = st[$2]
         if (r == "ok") next
         if (r == "refused") printf "%s\treference\t%s names `%s`, and `none` is not an identity: a decision recorded outside a task names the episode only\n", $1, $3, $2
         else if (r == "unknown") printf "%s\treference\t%s names `%s`, whose kind nothing in this layer resolves\n", $1, $3, $2
+        else if (r == "malformed") printf "%s\treference\t%s names `%s`, which %s\n", $1, $3, $2, malformed
+        else if (r == "ambiguous") printf "%s\treference\t%s names `%s`, which %s\n", $1, $3, $2, ambiguous
+        else if ($2 ~ /^commit:/) printf "%s\treference\t%s names `%s`, which %s\n", $1, $3, $2, absent
         else printf "%s\treference\t%s names `%s`, which resolves to nothing: not a record, not a ledger object, not a commit, not a tracked file\n", $1, $3, $2 }' \
       res="$tmp/resolved" "$tmp/resolved" "$tmp/refs" >> "$tmp/findings"
   fi
@@ -1460,10 +1475,12 @@ mj_knowledge_check_files() {
   return 0
 }
 
-# Distinct typed references on stdin, one per line; prints `ref<TAB>ok|missing|refused|unknown`.
-# The batches: one pass over the ledger for every episode and task named, one
-# `git cat-file --batch-check` for every commit, one listing of ids for the rules, the
-# decisions and the project model; a file is a stat.
+# Distinct typed references on stdin, one per line; prints
+# `ref<TAB>ok|missing|refused|unknown|malformed|ambiguous`, the last two for a commit only.
+# The batches: one pass over the ledger for every episode and task named, two git processes
+# for every commit together (mj_commit_names_resolve, the one grammar of a commit reference:
+# an unambiguous abbreviation resolves as the full name does), one listing of ids for the
+# rules, the decisions and the project model; a file is a stat.
 mj_knowledge_resolve_refs() {
   local tmp led; tmp="$(mktemp -d "${TMPDIR:-/tmp}/mj.krr.XXXXXX")"; led="$(mj_knowledge_ledger)"
   LC_ALL=C sort -u > "$tmp/refs"
@@ -1483,8 +1500,9 @@ mj_knowledge_resolve_refs() {
   fi
   if grep -q '^commit:' "$tmp/refs"; then
     mj_count knowledge_resolve_git
-    sed -n 's/^commit://p' "$tmp/refs" | mj_git cat-file --batch-check 2>/dev/null \
-      | awk '$2 != "missing" && NF >= 3 { print "commit\t" $1 }' >> "$tmp/have"
+    sed -n 's/^commit://p' "$tmp/refs" | mj_commit_names_resolve \
+      | awk -F'\t' '{ if ($2 == "malformed" || $2 == "ambiguous") print "commit-" $2 "\t" $1
+                      else if ($2 != "missing") print "commit\t" $1 }' >> "$tmp/have"
   fi
   if grep -Eq '^(rule|adr):' "$tmp/refs"; then
     grep -rh --include='*.md' '^id: ' "$MJ_RULES_DIR" 2>/dev/null | sed 's/^id: */rule\t/' >> "$tmp/have"
@@ -1499,7 +1517,11 @@ mj_knowledge_resolve_refs() {
     case "$kind" in
       file|test) [ -e "$MJ_ROOT/$ident" ] && st=ok ;;
       knowledge) { [ -f "$cdir/$ident.md" ] || [ -f "$kdir/$ident.md" ]; } && st=ok ;;
-      session|commit|rule|adr|issue) grep -Fxq "$kind$MJ_TAB$ident" "$tmp/have" && st=ok ;;
+      session|rule|adr|issue) grep -Fxq "$kind$MJ_TAB$ident" "$tmp/have" && st=ok ;;
+      commit) if grep -Fxq "commit$MJ_TAB$ident" "$tmp/have"; then st=ok
+              elif grep -Fxq "commit-malformed$MJ_TAB$ident" "$tmp/have"; then st=malformed
+              elif grep -Fxq "commit-ambiguous$MJ_TAB$ident" "$tmp/have"; then st=ambiguous
+              fi ;;
       task|decision) if [ "$ident" = none ]; then st=refused; else grep -Fxq "task$MJ_TAB$ident" "$tmp/have" && st=ok; fi ;;
       *) st=unknown ;;
     esac
