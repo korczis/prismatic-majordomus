@@ -26,7 +26,7 @@ use std::collections::BTreeMap;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use super::drain::IntegrationEvent;
+use super::drain::{IntegrationAction, IntegrationEvent};
 use crate::peers::parse_rfc3339;
 
 /// The integrator's throughput over a window of the trail.
@@ -71,14 +71,14 @@ enum Kind {
 }
 
 fn kind_of(e: &IntegrationEvent) -> Kind {
-    match e.action.as_str() {
-        super::wait::BECAME_ACTIONABLE => Kind::BecameActionable,
-        "selected" | "refresh_selected" => Kind::Selected,
-        "refreshed" => Kind::Refreshed,
-        "merge_succeeded" => Kind::MergeSucceeded,
-        "merge_failed" => Kind::MergeFailed,
-        "verification_failed" => Kind::VerificationFailed,
-        "stale_decision" => Kind::StaleDecision,
+    match &e.action {
+        IntegrationAction::BecameActionable => Kind::BecameActionable,
+        IntegrationAction::Selected | IntegrationAction::RefreshSelected => Kind::Selected,
+        IntegrationAction::Refreshed => Kind::Refreshed,
+        IntegrationAction::MergeSucceeded => Kind::MergeSucceeded,
+        IntegrationAction::MergeFailed => Kind::MergeFailed,
+        IntegrationAction::VerificationFailed => Kind::VerificationFailed,
+        IntegrationAction::StaleDecision => Kind::StaleDecision,
         _ => Kind::Other,
     }
 }
@@ -192,19 +192,16 @@ mod tests {
     const T0: u64 = 1_790_000_000;
     const DAY: u64 = 86_400;
 
+    /// An event by its wire word, the way the trail stores it: the word is parsed into the
+    /// typed action, so a renamed variant fails here rather than silently counting nothing.
     fn ev(at: u64, action: &str, pr: Option<u64>) -> IntegrationEvent {
+        let action: IntegrationAction = serde_json::from_value(serde_json::json!(action))
+            .unwrap_or_else(|e| panic!("'{action}' is not an integration action: {e}"));
         IntegrationEvent {
             at: rfc3339(UNIX_EPOCH + Duration::from_secs(at)),
             actor: "test".into(),
-            action: action.into(),
             pr,
-            master_before: None,
-            head_sha: None,
-            master_after: None,
-            reasons: vec![],
-            detail: String::new(),
-            passed_over: vec![],
-            head_after: None,
+            ..IntegrationEvent::of(action)
         }
     }
 

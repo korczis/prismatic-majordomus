@@ -169,13 +169,47 @@ repository's own setting decides that.
 - One executor per base branch: `drain` and `cleanup --apply` hold an exclusive lease at
   `<git-common-dir>/majordomus/locks/integration-<base>.lock`, with the holder recorded. A
   lease untouched for 30 minutes is reclaimed. Observers never take it.
-- Every act is appended to `.ai/local/state/integration/events.jsonl`: `selected`,
-  `stale_decision`, `merge_attempted`, `merge_succeeded`, `merge_failed`,
-  `verification_failed`, `refresh_selected`, `refreshed` (with the head it pushed),
-  `refresh_failed`,
-  `closed_superseded`, `idle`, and the two transitions of a wait, `became_actionable` and
-  `left_actionable`.
-- A dry run observes and decides, and changes and records nothing.
+- Every act is appended to the audit trail before it happens. The trail is one file per
+  repository, `<git-common-dir>/majordomus/integration/events.jsonl`, beside the lease, so
+  every worktree writes the same trail and `prs events`, `prs brief`, `prs status`, the
+  `integration.*` capabilities and the Cockpit read it from any of them. The last queue's
+  summary (`summary.json`) sits beside it. The observation and the relation cache stay in
+  the checkout, under `.ai/local/state/integration/`.
+- The trail is written first. A merge is asked of the forge only after `merge_attempted` is
+  on the trail, a refresh is pushed only after `refresh_attempted`, and a pull request is
+  closed only after `close_attempted`. When that line cannot be written, the act is not
+  taken: the step reports `trail_unwritable`, the drain stops, and `prs drain` exits 12. A
+  lease the trail cannot record is given back and refused. Any other write the trail
+  refuses ends the run with the error rather than continuing unrecorded.
+- The events, each a typed `action` on one JSON line:
+
+  | Event | When |
+  |---|---|
+  | `lease_acquired`, `lease_released` | the executor takes and gives back the base branch's lease |
+  | `continuous_started`, `continuous_stopped` | a continuous drain starts, and stops with its reason |
+  | `observed` | `prs refresh`, or an executor step, observed the forge |
+  | `became_actionable`, `left_actionable` | the two transitions a wait is folded from |
+  | `selected` | the first ready pull request is chosen, with those passed over |
+  | `refresh_selected` | the first refreshable one is chosen, with its evidence |
+  | `stale_decision` | master or the head moved between the decision and the act |
+  | `merge_attempted` | before the merge, with its evidence |
+  | `merge_succeeded`, `merge_failed`, `verification_failed` | after it |
+  | `refresh_attempted` | before master is merged into the branch and pushed |
+  | `refreshed` (with the head it pushed), `refresh_failed` | after it |
+  | `close_attempted` | before a superseded pull request is closed |
+  | `closed_superseded` (with its evidence), `close_failed` | after it |
+  | `idle` | nothing was ready |
+
+  An event may also carry `evidence` (the assessment's, on the four acts named above),
+  `class` (why it failed, once classified) and `merge_commit`. Each is left out when empty,
+  and a line written before they existed reads with them empty.
+- A checkout that kept its own trail under `.ai/local/state/integration/events.jsonl` has
+  it appended to the repository's trail the first time the trail is read while the
+  repository has none. The marker `events.moved-from` beside the trail keeps that from
+  happening twice. Old trails of other worktrees are left in place, because appending one
+  after another would fold their lines out of order.
+- A dry run observes and decides and changes nothing. It records only what it observed
+  (`observed`).
 - A refused merge and a stale decision are specific to the candidate: the next step
   re-plans. A verification failure stops the drain.
 - Transient failures of the forge are asked again (`crate::integration::retry`): a timeout,
@@ -193,8 +227,8 @@ repository's own setting decides that.
 | `majordomus prs` / `prs status` | no | the ranked queue; exit 10 when the observation is stale or absent |
 | `majordomus prs plan` | no | the next merge, the next refresh, and the other lanes |
 | `majordomus prs explain <n>` | no | one pull request's evidence and rank |
-| `majordomus prs events` | no | the audit trail |
-| `majordomus prs brief` | no | one line for a briefing: the last queue built here, the lease, the last merge; nothing where the forge was never observed |
+| `majordomus prs events` | no | the repository's audit trail, the same from every worktree |
+| `majordomus prs brief` | no | one line for a briefing: the last queue built in the repository, the lease, the last merge; nothing in a checkout that never observed the forge |
 | `majordomus prs refresh` | yes | observe the forge and fetch every open head |
 | `majordomus prs drain [--max N] [--dry-run] [--refresh]` | yes | integrate, one merge at a time |
 | `majordomus prs drain --continuous [--interval S] [--max N] [--refresh]` | yes | drain, wait, drain again until stopped |

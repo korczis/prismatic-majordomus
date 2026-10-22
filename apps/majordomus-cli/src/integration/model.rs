@@ -404,7 +404,7 @@ pub struct PassedOver {
     /// The pull request chosen instead.
     pub for_pr: u64,
     /// What it was chosen for (`selected` to merge, `refresh_selected` to bring master in).
-    pub action: String,
+    pub action: super::drain::IntegrationAction,
 }
 
 /// Shared authored paths with one other open pull request.
