@@ -15,14 +15,14 @@ use std::sync::{Condvar, Mutex, PoisonError};
 use std::time::Duration;
 
 /// A generation that only moves forward, and that a thread can wait on.
-pub struct Generation {
+pub(crate) struct Generation {
     n: Mutex<u64>,
     moved: Condvar,
 }
 
 impl Generation {
     /// A generation at zero.
-    pub const fn new() -> Self {
+    pub(crate) const fn new() -> Self {
         Self {
             n: Mutex::new(0),
             moved: Condvar::new(),
@@ -30,31 +30,20 @@ impl Generation {
     }
 
     /// Something changed: move on and wake every waiter.
-    pub fn advance(&self) {
+    pub(crate) fn advance(&self) {
         let mut n = self.n.lock().unwrap_or_else(PoisonError::into_inner);
         *n += 1;
         self.moved.notify_all();
     }
 
     /// Where it stands now.
-    pub fn current(&self) -> u64 {
+    pub(crate) fn current(&self) -> u64 {
         *self.n.lock().unwrap_or_else(PoisonError::into_inner)
     }
 
     /// Wait until it is past `seen`, or `timeout` passes, and say where it stands. A
     /// generation already past `seen` answers at once.
-    ///
-    /// ```
-    /// use std::time::Duration;
-    /// use majordomus_cli::change::Generation;
-    ///
-    /// let g = Generation::new();
-    /// assert_eq!(g.wait_past(0, Duration::from_millis(10)), 0, "nothing moved: the timeout");
-    /// g.advance();
-    /// g.advance();
-    /// assert_eq!(g.wait_past(0, Duration::from_secs(5)), 2, "two changes, one wake");
-    /// ```
-    pub fn wait_past(&self, seen: u64, timeout: Duration) -> u64 {
+    pub(crate) fn wait_past(&self, seen: u64, timeout: Duration) -> u64 {
         let n = self.n.lock().unwrap_or_else(PoisonError::into_inner);
         let (n, _) = self
             .moved
@@ -72,14 +61,14 @@ impl Default for Generation {
 
 /// The blackboard's generation: advanced by every change of a board of this process and of
 /// its mesh journal.
-pub static BLACKBOARD: Generation = Generation::new();
+pub(crate) static BLACKBOARD: Generation = Generation::new();
 
 /// The generation a capability's answer follows beyond the repository, when it has one: the
 /// blackboard's for `blackboard.snapshot`, none for any other. A reading of such a source
 /// taken before the generation moved is not current (`capability::readings`), so a screen
 /// read after a change frame never shows the blackboard from before the change as if it were
 /// now.
-pub fn generation_of(capability: &str) -> Option<u64> {
+pub(crate) fn generation_of(capability: &str) -> Option<u64> {
     (capability == "blackboard.snapshot").then(|| BLACKBOARD.current())
 }
 
@@ -107,6 +96,25 @@ mod tests {
         assert!(
             waited < Duration::from_secs(5),
             "woken by the change: {waited:?}"
+        );
+    }
+
+    /// A generation already past what the waiter saw answers at once, two changes wake it
+    /// once, and a generation that did not move answers when the timeout passes.
+    #[test]
+    fn a_waiter_is_answered_by_the_generation_or_by_its_timeout() {
+        let g = Generation::new();
+        assert_eq!(
+            g.wait_past(0, Duration::from_millis(10)),
+            0,
+            "nothing moved: the timeout"
+        );
+        g.advance();
+        g.advance();
+        assert_eq!(
+            g.wait_past(0, Duration::from_secs(5)),
+            2,
+            "two changes, one wake"
         );
     }
 

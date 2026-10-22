@@ -328,7 +328,7 @@ fn admit(req: &Request) -> Result<String, Response> {
 
 /// Decide what a request that follows the blackboard means (`follow=blackboard`,
 /// [`super::follow`]): `None` when it follows something else, which [`accept`] answers.
-pub fn accept_follow(
+pub(crate) fn accept_follow(
     ctx: &Arc<crate::capability::Context>,
     req: &Request,
 ) -> Option<Result<Accepted, Response>> {

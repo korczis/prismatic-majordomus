@@ -71,11 +71,11 @@ use super::events::{Scope, StreamMessage, HEARTBEAT, LOOK};
 use super::ws;
 
 /// How long a follower waits for a change before it reads the blackboard anyway.
-pub const REFRESH: Duration = Duration::from_secs(30);
+pub(crate) const REFRESH: Duration = Duration::from_secs(30);
 
 /// How long a change is left to settle before the blackboard is read: a burst of ingested
 /// events is read once.
-pub const SETTLE: Duration = Duration::from_millis(150);
+pub(crate) const SETTLE: Duration = Duration::from_millis(150);
 
 /// The most pages of signals a resumed connection is replayed before it is told to resync.
 const MAX_PAGES: usize = 10;
@@ -91,7 +91,7 @@ const SIGNALS: &str = "monitor.stream";
 /// What caused a `blackboard.*` frame.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
-pub enum Trigger {
+pub(crate) enum Trigger {
     /// The connection opened.
     Connect,
     /// The board or the journal changed and said so.
@@ -134,28 +134,28 @@ enum Frame<'a> {
 
 /// The query a connection asked: how wide, and where it resumes.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
-pub struct Follow {
+pub(crate) struct Follow {
     /// `repository` or `this`, as the capability takes it.
-    pub checkouts: Option<String>,
+    pub(crate) checkouts: Option<String>,
     /// The cursor the client last read.
-    pub after: Option<String>,
+    pub(crate) after: Option<String>,
     /// The epoch of the server that issued it.
-    pub epoch: Option<String>,
+    pub(crate) epoch: Option<String>,
     /// The reader whose signals are marked, as `monitor.stream` takes `for`.
-    pub reader: Option<String>,
+    pub(crate) reader: Option<String>,
     /// The monitor sources the signals come from, as `monitor.stream` takes them.
-    pub sources: Option<String>,
+    pub(crate) sources: Option<String>,
     /// What the connection is written.
-    pub frames: Frames,
+    pub(crate) frames: Frames,
 }
 
 /// What a connection is written: the snapshot, the signals, or both.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct Frames {
+pub(crate) struct Frames {
     /// `blackboard.snapshot` frames.
-    pub snapshot: bool,
+    pub(crate) snapshot: bool,
     /// `blackboard.signals` frames.
-    pub signals: bool,
+    pub(crate) signals: bool,
 }
 
 impl Default for Frames {
@@ -174,7 +174,7 @@ const DEFAULT_SOURCES: &str = "mesh,executor";
 impl Follow {
     /// The query of a request that follows the blackboard: `None` when it follows something
     /// else, a refusal when it names what this channel does not take.
-    pub fn parse(query: &[(String, String)]) -> Option<Result<Follow, String>> {
+    pub(crate) fn parse(query: &[(String, String)]) -> Option<Result<Follow, String>> {
         if !query
             .iter()
             .any(|(k, v)| k == "follow" && v == "blackboard")
@@ -236,7 +236,7 @@ fn frames(list: &str) -> Option<Frames> {
 
 /// What this server process's cursors are good for: its mesh stream, which names the
 /// process instance, or the process itself when the mesh is not running.
-pub fn epoch(ctx: &Context) -> String {
+pub(crate) fn epoch(ctx: &Context) -> String {
     ctx.mesh
         .cooperation()
         .map(|c| c.journal().own_stream().as_str().to_string())
@@ -312,7 +312,7 @@ fn substance(snapshot: &Value) -> Value {
 }
 
 /// A follower of the blackboard on one connection.
-pub struct Follower {
+pub(crate) struct Follower {
     ctx: Arc<Context>,
     follow: Follow,
     /// The route of `blackboard.snapshot`, which a withheld snapshot names.
@@ -330,7 +330,7 @@ pub struct Follower {
 
 impl Follower {
     /// A follower of `follow`, reading through `ctx`'s registry.
-    pub fn new(ctx: Arc<Context>, follow: Follow) -> Self {
+    pub(crate) fn new(ctx: Arc<Context>, follow: Follow) -> Self {
         let route = ctx
             .registry
             .get(SNAPSHOT)
@@ -481,7 +481,11 @@ impl Follower {
     }
 
     /// Serve the connection until the client hangs up or a write fails.
-    pub fn run(self, mut socket: Box<dyn std::io::Write + Send>, hung_up: &dyn Fn() -> bool) {
+    pub(crate) fn run(
+        self,
+        mut socket: Box<dyn std::io::Write + Send>,
+        hung_up: &dyn Fn() -> bool,
+    ) {
         let epoch = epoch(&self.ctx);
         let mut generation = self.changes.current();
         let ready = StreamMessage::Ready {
