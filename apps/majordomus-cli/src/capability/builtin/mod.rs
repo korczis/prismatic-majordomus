@@ -338,6 +338,8 @@ mod tests {
                 "executions.start",
                 // writes one new intent record, never a stage (ADR 0144)
                 "intents.propose",
+                // lists this machine's key in the mesh declaration's trust.allow (I2412)
+                "mesh.enrol",
                 "plan.transition",
                 "reasoning.record",
                 "recover.orphans"
