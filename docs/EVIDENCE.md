@@ -440,6 +440,57 @@ than ignored: the crate's own unit-test binary (`Running unittests src/lib.rs`),
 doctests (`Doc-tests <crate>`), a binary outside `tests/`, and a `test result:` line with no
 `Running` line before it, which is never credited to the previous binary.
 
+### Every line is read, or listed
+
+Each runner the recorder reads has one adapter
+([`src/evidence/adapters.rs`](../apps/majordomus-cli/src/evidence/adapters.rs)), and the web
+report's test page (`majordomus web report tests`) reads the same adapters, so the recorded
+evidence and the page cannot read one run two ways. There are two runners:
+
+| runner | what is read | per-test results |
+|---|---|---|
+| `test/run.sh` | the TSV report, and what the runner printed when `--run suite` kept it | the case itself, with its phase; its log, the lines printed before its verdict, is the execution's `detail` |
+| `cargo test` (libtest) | the output: `Running`, `running N tests`, `test <name> ... <word>`, the `---- <name> stdout ----` blocks and `test result:` | each `test` line, with its captured output, its ignore reason or its slow-test note as the case's `detail`; a binary that did not pass carries its result line as its `detail` |
+
+Every line an adapter is given is either read into a case result or listed, one by one, in
+the run record's `dropped_lines`, with its stream (`report` or `output`), its number, its
+text and why: a blank line between the parts of a run, cargo's own build and summary lines,
+the suite runner's totals, a verdict for a case the report has no row for, output no
+verdict followed. The run record's `lines` counts, per runner and stream, the lines held and
+the lines read, so `read` plus the listed lines is the whole stream. The unit tests and the
+doctests, which no claim can name, are listed in `dropped` with every test they ran.
+
+The ledger keeps one line's worth per test: of an execution's cases, only the ones that did
+not pass, by name and outcome, and no output and no `detail`. A green row is what it always
+was, and the ledger's version did not change. Everything else stays in the run record.
+
+### A local run, kept locally
+
+`evidence record --run suite` runs the repository's suite itself and records it as a local
+run. It runs `bash test/run.sh` (every case, or the ones named with `--case`) with its report
+written outside the checkout, echoing what the runner prints to standard error as it prints
+it; stamps the checkout the run left, naming that report, as `evidence stamp` would; and
+records the report and the runner's output into the local ledger. It takes no report, no
+measurement, no other origin and not the tracked ledger: each is refused, and so is a
+`--case` without `--run suite` and a runner that exits with anything but 0 or 1, which states
+nothing about the cases.
+
+<!-- majordomus:unrun it runs this repository's whole suite, or a case of it, which no documentation check repeats; case 515 and tests/evidence_local_runs.rs run it against a fixture whose runner is this repository's test/run.sh -->
+```sh
+majordomus evidence record --run suite
+majordomus evidence record --run suite --case 07_scope --case 08_other
+```
+
+Every recording into the local ledger is a local run, `--run suite` among them, and is kept
+in the **local run index**, `.ai/local/evidence/runs/` (ADR 0087, decision 2): one
+`run-<id>.json` per run, inside the ignored local layer, named in the answer's `local_run`
+(`local run` in the text). The index is bounded: it keeps the newest **50** run records
+(`LOCAL_RUNS_BOUND`) and drops the oldest when a run past that is appended. A file under the
+directory that the index did not write, a CI artifact copied there to read, is never counted
+or dropped. A recording into the tracked ledger never reaches the index, and the index never
+reaches the tracked ledger: a local run changes no tracked file and moves no verdict.
+`evidence coverage` reads the directory by default.
+
 ### In CI
 
 Half the wiring is already there. The `suite` job of
@@ -476,14 +527,16 @@ every surface is derived from it ([`CAPABILITIES.md`](CAPABILITIES.md)).
 | `evidence.stamp` | `majordomus evidence stamp` | — | — |
 | `evidence.subject` | `majordomus evidence subject <key>` | `GET /api/v1/evidence/subject` | tool `majordomus_evidence_subject` |
 | `evidence.coverage` | `majordomus evidence coverage` | `GET /api/v1/evidence/coverage` | tool `majordomus_evidence_coverage` |
+| `evidence.runs` | `majordomus evidence runs` | `GET /api/v1/evidence/runs` | tool `majordomus_evidence_runs` |
+| `evidence.run` | `majordomus evidence run <id>` | `GET /api/v1/evidence/run` | tool `majordomus_evidence_run` |
 | `evidence.publish` | `majordomus evidence publish` | — | — |
 
-These eight are subcommands of the Rust executable, and `majordomus` is the one program an
+These ten are subcommands of the Rust executable, and `majordomus` is the one program an
 installed tool puts on `PATH`. The shell tool has a command of the same name, which records
 what a task owes (`majordomus evidence --covers <token>`, `--gate <id>`;
 [`CLI.md`](CLI.md#majordomus-evidence)) and takes options only. So a word in the first
 position is never the shell tool's: the launcher hands `show`, `claim`, `proves`, `record`,
-`stamp`, `subject`, `coverage` and `publish` to the executable with every argument unchanged, the global `--repo` included
+`stamp`, `subject`, `coverage`, `runs`, `run` and `publish` to the executable with every argument unchanged, the global `--repo` included
 on either side of the command, and the exit code is then the executable's. Which words
 those are is read from the executable's own declaration, never listed in the launcher, and
 `majordomus evidence --help` prints both halves. Through 0.22.0 the word reached the
@@ -639,7 +692,9 @@ advisory findings. It is the capability `evidence.subject`, so the command line,
 give the same document for the same key. It reads the working tree by default and, with
 `--presented <rev>`, the checked-out commit as committed, from the ledger that commit holds
 exactly as `evidence show --presented` reads it, so a subject never reads greener than the
-claims it is made of.
+claims it is made of. Beside the verdict it lists the supplementary run records it read
+(`supplementary`), which can only weaken it: see
+[Supplementary records only weaken](#supplementary-records-only-weaken).
 
 A key the index does not hold is a not-found, never an empty verdict: the command line exits
 `13`, HTTP answers `404` and MCP a tool error, each naming the key and where the keys are
@@ -658,7 +713,7 @@ majordomus evidence subject rule:project.canonical-order --presented HEAD
 `evidence record --run-record <file>` writes, or the `run_record` of a CI evidence artifact's
 `record.json`; a coverage record is inside one when the recording was given a coverage
 summary. By default the records are read from `.ai/local/evidence/runs/`, the local run
-directory of ADR 0087 decision 2, which nothing writes yet but `--run-record`; `--from` names
+directory of ADR 0087 decision 2, which every local recording appends to; `--from` names
 a run record, or a directory whose `*.json` files are read as run records, inside the
 checkout. A source outside the checkout is refused, because a network client must not choose
 a file outside the repository for this executable to read; copy a downloaded CI artifact
@@ -678,9 +733,66 @@ majordomus evidence coverage
 majordomus evidence coverage --from .ai/local/ci-evidence --format json
 ```
 
-The run index itself, `evidence runs` and `evidence run <id>`, and reading supplementary
-records into a subject's verdict through the monotone rule wait for the local run index
-(I1957).
+### The recorded runs
+
+`evidence runs` lists the run records of the local run index, `.ai/local/evidence/runs/`,
+newest first: each with its `id`, the `file` it was read from, its `origin`, the `commit` it
+ran at, the `working_tree` its reports measured, when it was recorded, the ledger it went
+into, the `outcome` it stands for, its `totals` by outcome and runner, and how many per-test
+results (`cases`), dropped entries, dropped lines and unknown tests it holds. The outcome is
+the weakest over its executions, in the order error, timeout, fail, skip, pass, so a run
+with one failure is a failing run and a run that skipped what it did not fail is not a pass;
+it is `null` for a run that recorded nothing. `evidence run <id>` shows one run, named by
+that id or by its file: its summary exactly as `evidence runs` lists it, every per-test
+result its executions carry with the test each belongs to, and the record itself, with its
+executions, its measured provenance, what was absent or dropped and every line no case
+result holds (`dropped_lines`), with why.
+
+Both read the local run index by default and, with `--from`, a run record or a directory of
+them inside the checkout, exactly as `evidence coverage` does; a file that is not a run
+record is listed under `unread` with the reason. They show records and decide nothing (ADR
+0087, decision 3). Each is a capability, so the command line, `GET /api/v1/evidence/runs`,
+`GET /api/v1/evidence/run?id=<id>` and the MCP tools `majordomus_evidence_runs` and
+`majordomus_evidence_run` give the same document. An id no record holds is a not-found, never
+an empty run: the command line exits `13`, HTTP answers `404` and MCP a tool error, each
+naming the id and where the runs are listed. Two recordings in one second share an id; such
+an id is refused, naming the files, and either file names its run.
+
+<!-- majordomus:unrun it reads this checkout's local run index, which only a local recording writes; the examples `evidence runs --format json` and `evidence run no-such-run`, case 509 and tests/evidence.rs run both commands over runs the real recorder wrote -->
+```sh
+majordomus evidence runs
+majordomus evidence run local:0123456789ab:20261022T120000Z --format json
+majordomus evidence runs --from .ai/local/ci-evidence
+```
+
+### Supplementary records only weaken
+
+A verdict is the tracked ledger's. A run record is a supplementary record (ADR 0087, decision
+2): `evidence subject` reads the local run index, or the source `--from` names inside the
+checkout, and lists every record it read beside the verdict under `supplementary`, newest
+first, each with the tests it weakened. It applies them only through the monotone rule, the
+one function the site's publication applies as well
+([`supplementary::weaken_naming`](../apps/majordomus-cli/src/evidence/supplementary.rs)): a
+record that ran a route's test and failed, timed out or errored, on a clean tree, at a commit
+that contains the route's evidence and that the presented revision contains (HEAD for the
+working tree), caps a `proven` or `inputs_unchanged` route at `stale`. The route's detail
+names the newest such record, and `supplementary.weakened` lists each weakening with its test,
+the state before and after, and every record that made it. The weakened route moves the
+subject's verdict and the verdict of every subject made of it.
+
+The rule only weakens. A passing or skipped record raises nothing: a `failing` claim stays
+`failing` beside any number of passing local runs, and a newer passing run does not undo
+an older failing one, because a supplementary record withholds `proven` and never grants it.
+The cap is `stale`, never `failing`, because a supplementary record never decides a
+verdict. A record measured on a dirty tree, from another history or from before the
+evidence weakens nothing. Since the local runs are ignored files that change outside the
+process, an answer by subject is never kept between calls.
+
+<!-- majordomus:unrun it names this repository's subjects and reads its local run index, which the command-line examples' fixture does not hold; case 509 and tests/evidence.rs::supplementary_only_weakens run the same command over local runs the real recorder wrote -->
+```sh
+majordomus evidence subject claim:evidence-both-directions
+majordomus evidence subject feature:evidence --from .ai/local/ci-evidence --format json
+```
 
 ### The site's publication
 

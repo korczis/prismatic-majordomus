@@ -9,7 +9,7 @@
 //! counters and the validation every other caller passes through.
 //!
 //! What *is* written here is the areas: Overview, Capabilities, Commands, Executions,
-//! Objects, Directories, Graphs, Continuity, Plan, Worktrees, Integration, Trains, Health, Quality,
+//! Objects, Directories, Graphs, Continuity, Plan, Worktrees, Integration, Trains, Health, Coverage, Quality,
 //! Artifacts, Design, API. Those are concepts rather than
 //! entities, they change when the Cockpit's own shape changes, and deriving them from
 //! anything would be deriving them from a list of exactly themselves.
@@ -74,6 +74,8 @@ pub enum Area {
     Economics,
     /// The health report.
     Health,
+    /// The coverage matrix: what supports each executable capability (I1011).
+    Coverage,
     /// What the crate's own public surface is held to.
     Quality,
     /// What the generator writes.
@@ -234,6 +236,12 @@ pub fn areas() -> &'static [AreaInfo] {
             label: "Health",
             href: "/cockpit/health",
             area: Area::Health,
+        },
+        AreaInfo {
+            id: "coverage",
+            label: "Coverage",
+            href: "/cockpit/coverage",
+            area: Area::Coverage,
         },
         AreaInfo {
             id: "quality",

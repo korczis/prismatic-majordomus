@@ -1,0 +1,27 @@
+id: I3868
+milestone: a-claim-stands-only-on-its-evidence
+title: "ADR 0218 says the sitemap is not translated, and case 3590 holds the sitemap to the Czech copies"
+slug: the-languages-decision-says-what-the-sitemap-holds
+priority: p3
+profile: implementation
+parallel_safe: true
+objective: "ADR 0218's consequences say that search, the sitemap and the JavaScript strings of the site are not yet translated, because they are outside the pages the pass reads. The pass now lists every copy in site/public/sitemap.xml with its hreflang alternates, test/cases/3590_the_site_is_derived_in_every_language.sh asserts both, and the live sitemap of majordomus.dev on 2026-10-22 carried them. Amend the decision so that its consequences name what the pass still leaves untranslated, without the sitemap."
+why: "On 2026-10-22 a fact-check of the article on the site's languages (I3867) against ADR 0218 found it. A reader who follows the article to the decision meets a limitation the site no longer has."
+current_state: "The consequence is in the tree at master 76c57859663, beside an amendment of 2026-10-21 that does not touch it."
+desired_state: "ADR 0218 states the sitemap as covered and names only what the pass still leaves out, in an amendment that says what changed it."
+scope:
+  - ".ai/repo/project/issues/I3868.yaml"
+  - ".ai/repo/adrs/0218-every-language-of-the-site-is-derived-from-the-english-build-and-a-translation-memory.md"
+non_scope:
+  - "Translating search or the scripts' strings"
+depends_on: []
+acceptance_criteria:
+  - "No consequence of ADR 0218 says the sitemap is untranslated while case 3590 holds it to the copies"
+validation:
+  - "majordomus plan validate"
+  - "majordomus adr check"
+evidence_required: []
+serves:
+  - "a-claim-stands-only-on-its-evidence#public-text-true"
+created_at: 2026-10-22
+updated_at: 2026-10-22

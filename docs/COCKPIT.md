@@ -68,6 +68,7 @@ pages still render, say so, and remain fully usable.
 | `/cockpit/plan/milestones/<id>` | one milestone as a graph of work: its outcome, every issue with its readiness and wave, the partitions, the critical blockers, what may run at the same time, and every finding | `devtask.milestone` |
 | `/cockpit/plan/issues/<id>` | one issue as a task: its intent, acceptance criteria and scope, its readiness and what blocks it, its branches and sessions, the external issue it synchronises with, every value with where it came from — and the moves `plan.transition` makes, each started as an execution and each with the command that makes it | `devtask.issue`, `plan.transition`, `executions.start`, `executions.get` |
 | `/cockpit/health` | one check per dimension, each with the engine that decided it and the command that reproduces it | `health.report` |
+| `/cockpit/coverage` | the coverage matrix: every executable capability against exposed, documented, tested, enforced and benchmarked, each cell with its artifacts or the gap, and the gaps first | `health.coverage` |
 | `/cockpit/quality` | the crate's own public surface as the rules hold it, every number and finding from one execution | `quality.report` |
 | `/cockpit/artifacts` | what the generator writes: every document with the encodings it is committed in, every file with its contract and its state against the working tree | `artifacts.list` |
 | `/cockpit/release` | what the public contract did since the last release, and the smallest version it allows | `release.analysis` |

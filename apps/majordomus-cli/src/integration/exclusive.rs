@@ -81,6 +81,64 @@ impl Mesh for ServerMesh {
     }
 }
 
+/// Say on the mesh what a run did, once (I2874): one notice, through the shared server
+/// that serves `root`. The answer is a line for the command's own output, sent with its key
+/// or not sent with why; a notice that is not sent never fails the work it reports, which
+/// is already done.
+pub fn notify(root: &Path, session: &str, subject: &str, text: &str, bytes: Option<u64>) -> String {
+    match server_of(root) {
+        Some(server) => notify_through(&server, session, subject, text, bytes),
+        None => "notice not sent: no shared server answers for this checkout".into(),
+    }
+}
+
+/// [`notify`] through `mesh`.
+pub fn notify_through(
+    mesh: &dyn Mesh,
+    session: &str,
+    subject: &str,
+    text: &str,
+    bytes: Option<u64>,
+) -> String {
+    let mut body = json!({ "session": session, "subject": subject, "text": text });
+    if let Some(b) = bytes {
+        body["bytes"] = json!(b);
+    }
+    match mesh.ask("POST", "/api/v1/mesh/notices", Some(body)) {
+        Ok((200, answer)) => format!(
+            "notice sent: {}",
+            answer["key"].as_str().unwrap_or("(no key)")
+        ),
+        Ok((status, answer)) => format!(
+            "notice not sent ({status}): {}",
+            answer["error"]["message"]
+                .as_str()
+                .unwrap_or("no reason given")
+        ),
+        Err(e) => format!("notice not sent: {e}"),
+    }
+}
+
+/// One run as a notice's text: how many, the first few names, and how many more, well
+/// under the bound a notice carries (`journal::NOTICE_TEXT_MAX`).
+pub fn run_summary(verb: &str, names: &[String]) -> String {
+    const SHOWN: usize = 5;
+    let mut text = format!(
+        "{} {verb}: {}",
+        names.len(),
+        names
+            .iter()
+            .take(SHOWN)
+            .cloned()
+            .collect::<Vec<_>>()
+            .join(", ")
+    );
+    if names.len() > SHOWN {
+        text.push_str(&format!(" +{} more", names.len() - SHOWN));
+    }
+    text.chars().take(900).collect()
+}
+
 /// This checkout's shared server, when one is ready to answer for it.
 pub fn server_of(root: &Path) -> Option<ServerMesh> {
     use crate::capability::builtin::server::{local_half, standing_at, ServerStanding};
@@ -363,6 +421,58 @@ mod tests {
             }
             answers.remove(0)
         }
+    }
+
+    #[test]
+    fn a_run_is_summed_up_in_a_line_with_the_first_names() {
+        assert_eq!(
+            run_summary("removed", &["a".into(), "b".into()]),
+            "2 removed: a, b"
+        );
+        let many: Vec<String> = (0..9).map(|n| format!("feature/x{n}")).collect();
+        let line = run_summary("removed", &many);
+        assert!(
+            line.starts_with("9 removed: feature/x0,") && line.ends_with("+4 more"),
+            "{line}"
+        );
+        let long: Vec<String> = (0..5).map(|n| format!("{n}{}", "y".repeat(400))).collect();
+        assert!(run_summary("removed", &long).chars().count() <= 900);
+    }
+
+    #[test]
+    fn a_notice_is_one_post_and_its_refusal_is_said_not_raised() {
+        let mesh = Scripted::new(vec![
+            Ok((200, json!({ "key": "stream/7" }))),
+            refused("rate_bound: session worktree-cleanup published a notice 3 s ago"),
+            Err("connection refused".into()),
+        ]);
+        assert_eq!(
+            notify_through(
+                &mesh,
+                "worktree-cleanup",
+                "worktree-cleanup",
+                "2 removed: a, b",
+                None
+            ),
+            "notice sent: stream/7"
+        );
+        let asked = mesh.asked();
+        assert_eq!(
+            (asked[0].0.as_str(), asked[0].1.as_str()),
+            ("POST", "/api/v1/mesh/notices")
+        );
+        assert_eq!(asked[0].2.as_ref().unwrap()["subject"], "worktree-cleanup");
+        assert!(asked[0].2.as_ref().unwrap().get("bytes").is_none());
+        let second = notify_through(&mesh, "s", "disk-prune", "x", Some(1024));
+        assert!(
+            second.starts_with("notice not sent (422): rate_bound"),
+            "{second}"
+        );
+        assert_eq!(mesh.asked()[1].2.as_ref().unwrap()["bytes"], 1024);
+        assert_eq!(
+            notify_through(&mesh, "s", "disk-prune", "x", None),
+            "notice not sent: connection refused"
+        );
     }
 
     fn refused(message: &str) -> Result<(u16, Value), String> {

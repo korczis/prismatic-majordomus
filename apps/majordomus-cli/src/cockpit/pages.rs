@@ -6128,6 +6128,133 @@ pub fn quality(ctx: &Context) -> Page {
     .trail(vec![("Cockpit", Some("/cockpit")), ("Quality", None)])
 }
 
+// ------------------------------------------------------------------------ coverage
+
+/// The coverage matrix (I1011): every executable capability against what supports it —
+/// exposed, documented, tested, enforced, benchmarked — as one execution of
+/// `health.coverage` answers it. A cell is a word and what stands behind it: the artifacts
+/// it resolved to, or the gap and which end of a relation failed. Which cells are required
+/// is the repository's `coverage:` policy; nothing on this page decides it.
+pub fn coverage(ctx: &Context) -> Page {
+    use crate::capability_coverage::{CapabilityCoverage, CoverageCellState};
+    const ASKED: &str = "health.coverage";
+    let m: CapabilityCoverage = match ask(ctx, ASKED, json!({})) {
+        Ok(m) => m,
+        Err(e) => return failed(Area::Coverage, "Coverage", e),
+    };
+    let state = |s: CoverageCellState| -> (&'static str, &'static str) {
+        match s {
+            CoverageCellState::Resolved => ("ok", "resolved"),
+            CoverageCellState::Waived => ("warn", "waived"),
+            CoverageCellState::Absent => ("", "absent"),
+            CoverageCellState::Gap => ("fail", "gap"),
+            CoverageCellState::NotApplicable => ("", "not applicable"),
+        }
+    };
+
+    let mut statistics = el("div")
+        .class("mj-stats")
+        .child(super::view::asked_statistic(
+            m.gaps.to_string(),
+            "gaps",
+            ASKED,
+            "gaps",
+        ));
+    for column in &m.columns {
+        let word = column.as_str();
+        let resolved = m.tallies.get(word).map(|t| t.resolved).unwrap_or_default();
+        statistics = statistics.child(super::view::asked_statistic(
+            format!("{resolved} / {}", m.rows.len()),
+            word,
+            ASKED,
+            &format!("tallies.{word}.resolved"),
+        ));
+    }
+
+    let capability_cell =
+        |id: &str| id_cell(format!("/cockpit/capabilities/{}", percent_encode(id)), id);
+    let gaps: Vec<El> = m
+        .rows
+        .iter()
+        .flat_map(|r| {
+            r.cells
+                .iter()
+                .filter(|c| c.state == CoverageCellState::Gap)
+                .map(move |c| {
+                    row(vec![
+                        capability_cell(&r.capability),
+                        cell(mono(c.column.as_str())),
+                        text_cell(if c.required { "required" } else { "dangling" }),
+                        text_cell(c.gap.clone().unwrap_or_default()),
+                    ])
+                })
+        })
+        .collect();
+    let gaps_card = card(
+        "Gaps",
+        if gaps.is_empty() {
+            nothing("Every required cell resolves, and no relation dangles.")
+        } else {
+            table(
+                &["Capability", "Column", "Why a gap", "What is missing"],
+                gaps,
+            )
+        },
+    );
+
+    let mut headers: Vec<&str> = vec!["Capability", "Stability"];
+    headers.extend(m.columns.iter().map(|c| c.as_str()));
+    let rows: Vec<El> = m
+        .rows
+        .iter()
+        .map(|r| {
+            let mut cells = vec![capability_cell(&r.capability), cell(mono(&r.stability))];
+            cells.extend(r.cells.iter().map(|c| {
+                let (status, word) = state(c.state);
+                let label = if c.required {
+                    format!("{word} *")
+                } else {
+                    word.to_string()
+                };
+                let detail = if c.artifacts.is_empty() {
+                    c.gap.clone().unwrap_or_default()
+                } else {
+                    c.artifacts.join(", ")
+                };
+                let mark = if status.is_empty() {
+                    tag(label)
+                } else {
+                    badge(status, label)
+                };
+                cell(el("span").attr("title", detail).child(mark))
+            }));
+            row(cells)
+        })
+        .collect();
+    let matrix = card(
+        "Every executable capability",
+        el("div")
+            .child(el("p").class("mj-note").text(
+                "A starred cell is required by the repository's coverage policy. Hover a cell for the artifacts it resolved to, or for what is missing.",
+            ))
+            .child(table(&headers, rows)),
+    );
+
+    let findings: Vec<El> = m.findings.iter().map(|f| alert("warn", f)).collect();
+    Page::new(
+        Area::Coverage,
+        "Coverage",
+        el("div")
+            .class("mj-grid")
+            .child(statistics)
+            .children(findings)
+            .child(gaps_card)
+            .child(matrix),
+    )
+    .subtitle("What supports each executable capability, cell by cell: the same matrix `GET /api/v1/health/coverage` and the MCP tool majordomus_coverage answer.")
+    .trail(vec![("Cockpit", Some("/cockpit")), ("Coverage", None)])
+}
+
 // ------------------------------------------------------------------------ commands
 
 /// Every command this repository offers, from whichever program offers it.

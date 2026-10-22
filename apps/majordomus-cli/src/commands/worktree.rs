@@ -726,11 +726,26 @@ fn reclaim(
         }
     }
 
+    // One notice per run, and only when the run removed something on a declared mesh
+    // (I2874, I3832): every machine then sees what was removed here, and a refusal to send
+    // it is said and never fails a cleanup that is already done.
+    let primary = svc.identity().primary_worktree().path.clone();
+    let notice =
+        (!removed.is_empty() && crate::guard::mesh_declared_enabled(&primary)).then(|| {
+            crate::integration::exclusive::notify(
+                &primary,
+                "worktree-cleanup",
+                "worktree-cleanup",
+                &crate::integration::exclusive::run_summary("removed", &removed),
+                None,
+            )
+        });
     match format {
         OutputFormat::Json => json(
             out,
             &serde_json::json!({
                 "removed": removed,
+                "notice": notice,
                 "refused": refused
                     .iter()
                     .map(|(n, r)| serde_json::json!({ "branch": n, "reason": r }))
@@ -752,6 +767,9 @@ fn reclaim(
                     refused.len()
                 ),
             )?;
+            if let Some(n) = &notice {
+                w(out, n.clone())?;
+            }
         }
     }
     Ok(0)

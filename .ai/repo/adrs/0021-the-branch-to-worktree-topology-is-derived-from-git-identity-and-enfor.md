@@ -174,3 +174,23 @@ worktrees, eleven of them dirty, were migrated by the executable in under ten se
 every fingerprint equal; the exceptions were the sixteen ephemeral scratch checkouts, the
 agent worktree inside the primary checkout, and one checkout outside every convention that
 was left to the operator.
+
+## Amendment, 2026-10-22: the reclaim became a command, and the count names its remainder (I3083)
+
+Two statements above no longer describe the repository. This amendment records what changed
+rather than rewriting them.
+
+The consequences say that `worktree cleanup` deletes nothing and that nothing in the topology
+reclaims anything. Since commit `1b6a7f5c360` of 2026-09-30, `majordomus worktree cleanup
+--remove` removes the worktrees the listing names. It reads each one again immediately before
+it goes, and it refuses a branch ahead of its remote, a worktree with a process inside,
+uncommitted work, and a reading it could not take. Branches are still never deleted. The
+manual is the Reclaiming section of `docs/WORKTREES.md`, and the proof is
+`test/cases/611_the_reclaim_refuses_what_it_cannot_prove.sh`. What the decision refuses is
+unchanged: a worktree is removed only when the command can show, at that moment, that
+nothing in it would be lost.
+
+The context counts fifty-three registered worktrees in four shapes, and the shapes it lists
+account for fifty: thirty-two flat siblings, sixteen under session scratch directories, one
+under `.claude/worktrees/` and one at `prismatic-majordomus-wt`. This record does not place
+the other three, and nothing in the repository now can.
