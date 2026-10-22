@@ -1,0 +1,41 @@
+id: I2369
+milestone: delivery-is-proved-end-to-end
+title: "One rehearsal interrupts a derive, advances the head, corrupts a digest and aborts a deployment in a consumer repository, and each fails closed and recovers"
+slug: failure-rehearsal-fails-closed
+priority: p3
+profile: implementation
+parallel_safe: true
+serves:
+  - "delivery-is-explained-by-evidence#proved-in-a-consumer"
+objective: "Add one case under test/cases/ that, from the installed artifact in a repository outside this checkout, injects in turn an interrupted derive, a master that advances under a run, a release archive whose digest does not match its record, and a deployment that never serves the landed commit, asserts that each ends in a refusal naming its recovery, applies the recovery, and asserts that the tracked tree and the refs equal those of a run in which nothing failed."
+why: "Convergence pack 06 issue 06.3. Each failure is proved alone and in this repository's layout: a derive serialised and seeing what the commit will (test/cases/1018_one_derive_at_a_time_and_no_orphans.sh, 1020_a_derive_sees_what_the_commit_will.sh), the incremental derive held equal under interruption (I2345), a release refused on a failed, running or unreadable verdict (test/cases/362_a_release_follows_the_ci_verdict.sh), an archive refused on its checksum before anything is installed (site/static/install.sh:481, called at :750), a decision taken on an observation the forge has moved past refused as stale (integration/mod.rs:460), a site serving another commit judged stale (test/cases/384_a_deployment_is_evidence.sh), and a release tried against a wrong digest, a repeated tag and an unacknowledged deployment (I2358). No rehearsal runs them one after the other in a consumer, and none checks that the recovery leaves canonical state as a clean run would. macOS runs nightly or on request because runners are scarce (.ai/repo/ci/gates.yaml:617-621), so the rehearsal says on which platform it ran."
+current_state: "Every failure has its own proof in this checkout; nothing shows them failing closed and recovering together from the installed tool."
+desired_state: "The case runs the four injections in one consumer repository from the installed artifact; each ends with exit 10 or 12 and a line naming the recovery, never with a partial write reported as success; after each recovery the tracked tree and the refs are byte for byte those of the clean run; the case prints the platform it ran on, and the macOS gate runs it where a runner is available."
+scope:
+  - "test/cases/"
+  - "test/lib.sh"
+  - "docs/DISTRIBUTION.md"
+  - "docs/INTEGRATION.md"
+non_scope:
+  - "Not the derive's interruption invariant itself: I2345; not the release's adversarial cases: I2358. This case reuses their injections and adds the sequence, the consumer and the recovery check"
+  - "Not a disappearing peer: dispatch against a crash, a replay and no provider is I2340"
+  - "Not a failed test or a stale pull request as injections: the settle and repair cases of I2325, I2328 and I2332 hold those"
+  - "Not making the macOS gate run per commit: it stays on demand, and the case reports the platform it ran on"
+  - "Not a real deployment aborted: the deployment is a local HTTP server stopped before it serves the landed commit, and the case says so"
+depends_on:
+  - "I2344"
+  - "I2358"
+acceptance_criteria:
+  - "An interrupted derive leaves no partial generation, and the next derive writes byte for byte what a clean derive writes"
+  - "A master advanced under a run makes the next merge decision refused as stale, and nothing is merged onto the old master"
+  - "An archive whose digest differs from its record is refused before anything is installed, and the previously installed version still answers"
+  - "A deployment that never serves the landed commit ends the landing undecided or stale, never landed, and naming the recovery"
+  - "After each recovery the tracked tree and every ref equal those of the same steps run with no injection, and the case prints the platform it ran on"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "rehearsal_fails_closed"
+  - "recovery_equals_clean_run"
+created_at: 2026-10-10
+updated_at: 2026-10-10

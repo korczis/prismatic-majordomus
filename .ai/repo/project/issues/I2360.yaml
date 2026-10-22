@@ -1,0 +1,50 @@
+id: I2360
+milestone: the-release-chain-is-one-capability
+title: "The chain verifies the installed version and the served site itself, and a failed verification is a typed end"
+slug: chain-verifies-install-and-site
+priority: p2
+profile: implementation
+parallel_safe: false
+serves:
+  - "delivery-is-explained-by-evidence#release-is-one-capability"
+objective: "Add the verification steps of `release.land` (apps/majordomus-cli/src/release/land.rs): once the record is on master it runs `scripts/pages verify --smoke` for the record's merge commit, records `served observe` for it, runs `scripts/ci/install-check` for the landed tag in a home of its own, and asks the installed tool for its Cockpit on loopback. Each failure ends the landing with its own typed verdict."
+why: "Autopilot pack 06 issue 5 (publish a version only once checks prove it, verify the deployed version and health) and convergence pack 06 issue 06.5 (verify the installed artifact and the UI). The pieces exist and no one act calls them. release.yml builds nothing unless the tagged commit's `ci` passed (line 76); its smoke job installs the published release and compares the version (line 467), swallows the launcher check (`majordomus-mcp --help ... || true`, line 468) and fails by design until the record is on master, after which a person re-runs it. `scripts/pages verify` and the latest.json probe are run by hand (docs/DISTRIBUTION.md:200-202). `scripts/ci/install-check` proves the six steps of the advertised install against the live site, launcher included, and is an on-demand gate (`installer-live`, .ai/repo/ci/gates.yaml:600) because half its matrix is a macOS runner, so a broken install is found the next night. `served.observe` (capability/builtin/served.rs:392) records what a deployment serves and nothing asks it after a release. No step verifies that the installed tool serves its Cockpit. A landing that ends at a green pipeline has not shown that a reader of the README gets the release."
+current_state: "Whether a published release is installed and served as published is known when a person runs three commands after the pipeline, or the next night when the on-demand gate runs."
+desired_state: "The last steps of a landing are its own verification: the served site names the record's commit and its smoke routes answer, that observation is recorded, the advertised installer installs the landed tag, the installed tool reports that version, its launcher runs and its Cockpit answers. A failure ends the landing with a verdict naming which of them failed and the section of docs/DISTRIBUTION.md that recovers from it; the release is never reported as landed and never withdrawn by the command."
+scope:
+  - "apps/majordomus-cli/src/release/land.rs"
+  - "apps/majordomus-cli/src/capability/builtin/release.rs"
+  - "apps/majordomus-cli/tests/release_land.rs"
+  - "test/cases/"
+  - "docs/DISTRIBUTION.md"
+  - "docs/CLAIMS.yaml"
+  - "docs/claims"
+  - "docs/generated"
+  - "site/data"
+non_scope:
+  - "Not .github/workflows/release.yml: the swallowed launcher check at line 468 is the pipeline's and I2302 owns that file's fix; this issue verifies from outside"
+  - "Not withdrawing or rolling back a release: a published release is immutable and withdrawing one is an edit to its record (docs/DISTRIBUTION.md, Recovering from a bad release); the command names that section and stops"
+  - "Not completion's four answers (merged, published, deployed, healthy): that is I2357; this issue records the observations those answers read"
+  - "Not a wrong digest, a repeated tag or an unacknowledged deployment as adversarial cases of the release path: those are I2358"
+  - "Not provenance: the attestation and the installer's check of it are I2165 and PR #874, landed"
+  - "Not the rollout to machines (#900) and not a deployment other than the published site"
+  - "Not making `installer-live` a gate of every commit: it stays on demand"
+depends_on:
+  - "I2299"
+acceptance_criteria:
+  - "Against a local release fixture served over HTTP, a landing ends as landed only after the site verification, the recorded observation, the install check and the Cockpit probe each passed, and the trail holds one event for each"
+  - "A site that serves another commit, a smoke route whose marker is missing, an installer that installs another version, a launcher that does not run and a Cockpit that does not answer each end the landing with a distinct typed verdict, exit 10, naming the remedy"
+  - "A site or an installer that cannot be reached ends the landing as undecided, exit 12, and is counted neither as a pass nor as a failure of the release"
+  - "The install runs in a home and a prefix of its own, and the test asserts that no server the probe started is still listening when the command returns"
+  - "`--dry-run` names the verification steps and reaches no network"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test release_land"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 97_install_gate 384_a_deployment_is_evidence"
+  - "scripts/derive-check"
+evidence_required:
+  - "landing_verifies_install_and_site_test"
+  - "verification_failure_is_typed"
+  - "no_orphan_server_after_the_probe"
+created_at: 2026-10-10
+updated_at: 2026-10-10

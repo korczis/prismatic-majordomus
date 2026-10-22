@@ -1,0 +1,43 @@
+id: I2346
+milestone: derive-does-bounded-work
+title: "Derive has a budget per scenario, set from samples and judged with their noise"
+slug: derive-has-a-measured-budget
+priority: p2
+profile: implementation
+parallel_safe: false
+serves:
+  - "delivery-is-explained-by-evidence#budgets-are-measured"
+objective: "Add `.ai/repo/benchmarks/derive/policy.yaml` in the shape of `.ai/repo/benchmarks/rust/policy.yaml`: per scenario - a derive with nothing changed, one canonical input changed, the executable's sources changed, a build into an empty target directory - relative thresholds on the median and the p95 against the platform's derive baseline, a minimum sample count for each, and an absolute floor in seconds under which a difference is noise. `scripts/derive --benchmark --check` takes samples of a scenario, compares them with I2311's baseline under that policy, exits 10 naming the stage whose share moved, and exits 12 when it cannot measure. `doctor` reports the newest derive record of the checkout against the policy as INFO or WARN without changing its exit code."
+why: "Autopilot pack 05 issue 5 and convergence pack 02 issue 02.5 ask for per-scenario budgets and ratchets judged with portable, noise-aware logic, and a regression explained by stage. No budget exists for a derive (gap file on A05.5). The budgets that exist show both ways to get it wrong. The suite's absolute budgets have been raised to follow runner load (`.ai/repo/ci/suite.yaml`: `cases_seconds: 56000`, `slowest_case_seconds: 3890`), and an absolute wall-clock budget failed #831, a pull request that did not touch the case that went 18 s over, at a rerun cost of about 86 minutes. Wall time on the shared Mac moved from 185 s to 2135 s for one derive in one evening (I1409). The relative form that works is in the repository: `.ai/repo/benchmarks/rust/policy.yaml` declares p50 0.25, p95 0.30 and p99 0.50 with minimum samples and a 1000 microsecond floor, and `scripts/pages report` names the over-budget phase (scripts/pages:395, its `blame`). docs/PERFORMANCE.md:103-137 sets budgets from the p90 with headroom, never from a median, and reports a whole-command budget in doctor as INFO or WARN. Rule project.performance-evidence asks that a threshold be set after a run and named with it."
+current_state: "A derive has no budget, no threshold and no check; `doctor` says nothing about derive time."
+desired_state: "The derive policy names each scenario's thresholds with the samples they were set from; `scripts/derive --benchmark --check --scenario <s>` passes, refuses with the moved stage named, or says it could not measure; doctor's line reads the newest derive record; a threshold changes only in a commit that names the samples behind it."
+scope:
+  - ".ai/repo/benchmarks/derive/policy.yaml"
+  - ".ai/repo/benchmarks/derive"
+  - "scripts/derive"
+  - "lib/doctor.sh"
+  - "docs/PERFORMANCE.md"
+  - "test/cases/1056_derive_has_a_measured_budget.sh"
+non_scope:
+  - "Not a CI gate on derive time: runner time is not the shared Mac's, no Linux derive baseline exists until one is benchmarked, and the gate model's runner rules (.ai/repo/ci/gates.yaml) are milestone ci-critical-path's to change"
+  - "Not the budget of the required check or of a suite case: milestone ci-critical-path and I2115"
+  - "Not a target duration: every threshold is relative to a recorded baseline, and the outcome is non-regression"
+  - "Not making the derive faster: I2343 and I2344"
+  - "Not the publication's budgets in `.ai/repo/ci/pages.yaml`, which stay as they are"
+depends_on:
+  - "I2311"
+acceptance_criteria:
+  - "Case 1056 over stand-in samples: a scenario within its thresholds passes; a median over its threshold and above the floor exits 10 naming the stage whose share grew; a difference under the floor passes"
+  - "A scenario with fewer samples than its minimum is not judged on the p95 and the output says so"
+  - "With no baseline for the platform the check exits 12 and says which baseline is missing"
+  - "`doctor` reports the newest derive record against the policy as INFO or WARN and its exit code is the same with and without the record"
+  - "Every threshold in the policy names the samples, platform and date it was set from"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 1056_derive_has_a_measured_budget"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 1018_one_derive_at_a_time_and_no_orphans"
+evidence_required:
+  - "derive_budget_policy"
+  - "regression_names_the_stage_case"
+created_at: 2026-10-10
+updated_at: 2026-10-10

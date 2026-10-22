@@ -1,0 +1,49 @@
+id: I2329
+milestone: the-queue-settles
+title: "A settling drain closes what cleanup proves redundant, when the profile allows it"
+slug: a-settling-drain-closes-the-redundant
+priority: p2
+profile: implementation
+parallel_safe: false
+serves:
+  - "a-drain-settles-unattended#the-queue-settles"
+objective: "Let `prs drain --until-settled` run the existing `cleanup` act (apps/majordomus-cli/src/integration/drain.rs:2279) on the pull requests `cleanup_plan` (drain.rs:2327) marks `would_close`, when the authority profile grants closing, and report every pull request it closed with the reason that decided it. Without the grant it closes nothing and reports each as blocked on `prs cleanup --apply`."
+why: "Autopilot pack 04 issue 5 and convergence pack issue 03.1. A queue cannot settle while pull requests whose work is on master stay open, and the drain never closes: `prs cleanup --apply` is a separate command (apps/majordomus-cli/src/cli.rs:3113) a person runs. The evidence rule is already the right one and is kept: `cleanup_action` (drain.rs:2306) closes only `redundant` and `superseded`, and leaves `possibly_redundant` and `obsolete` for a person; a closure is observed again first, decided on the same master and head, recorded before the forge hears of it, and refused if the head moved (drain.rs:2338-2343, :2066-2072). Age, shared paths and a similar title are never evidence (docs/INTEGRATION.md:160). The separation is deliberate: `.ai/repo/ci/queue.yaml` says the scheduled job never runs `prs cleanup --apply`, because an automation that took that power quietly would delete a decision somebody made on purpose. So closing inside a drain is tied to a grant of the authority profile of I2315, and is unchanged without it. The census the convergence pack asks for is a run of existing commands (51 open at 17:32Z on 2026-10-10) and needs no code."
+current_state: "A drain merges and refreshes and never closes. A redundant or superseded pull request stays open until a person runs `prs cleanup --apply`, and a settling drain can only report it."
+desired_state: "Under a profile that grants closing, a settling drain closes each `would_close` pull request by the same act and with the same comment as `prs cleanup --apply`, under the lease it already holds, and its report lists them under closed. `possibly_redundant` and `obsolete` are never closed by a drain and are reported blocked for a person."
+scope:
+  - "apps/majordomus-cli/src/integration/drain.rs"
+  - "apps/majordomus-cli/src/integration/tests.rs"
+  - "apps/majordomus-cli/src/commands/prs.rs"
+  - "apps/majordomus-cli/tests/integration_settle.rs"
+  - "apps/majordomus-cli/tests/integration_cleanup_read.rs"
+  - "docs/INTEGRATION.md"
+  - "docs/CLAIMS.yaml"
+  - "docs/claims"
+non_scope:
+  - "Not closing on weaker evidence: `possibly_redundant`, `obsolete`, an old pull request or one with a similar title is never closed here (owner decision D3, docs/INTEGRATION.md:159)."
+  - "Not deleting a branch: merged branches left on origin are reported by `left_branches` (drain.rs:2477) and never deleted."
+  - "Not integrating several stale pull requests into a smaller one: that is ADR 0114 `prs compose`, proposed on origin/feature/a-batch-is-composed-and-names-its-members; composing by hand is what its batch check is meant to refuse."
+  - "Not the scheduled workflow: `.ai/repo/ci/queue.yaml` still never runs `prs cleanup --apply`, and case 350 still asserts it."
+  - "Not the authority profile or its grant for closing: I2315."
+  - "Not `prs cleanup` itself: the command, its dry run and its `--apply` behave as before."
+depends_on:
+  - "I2325"
+  - "I2315"
+acceptance_criteria:
+  - "Under a profile that grants closing, a settling drain closes a `redundant` and a `superseded` pull request after a second observation at the same master and head, records the attempt before the forge is asked, and lists both under closed with the deciding reason"
+  - "With no profile, or one without the grant, the drain closes nothing and reports each such pull request as blocked with the next action `prs cleanup --apply`"
+  - "A `possibly_redundant` or `obsolete` pull request is never closed by a drain under any profile"
+  - "A pull request whose head moved between the decision and the closure is not closed, and the report says its head moved"
+  - "`prs cleanup` and `prs cleanup --apply` print and do what they did before this change"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test integration_settle"
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test integration_cleanup_read"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 350_the_queue_measures_itself"
+evidence_required:
+  - "settle_closes_under_grant_test"
+  - "no_grant_closes_nothing_test"
+  - "weak_evidence_never_closes_test"
+created_at: 2026-10-10
+updated_at: 2026-10-10

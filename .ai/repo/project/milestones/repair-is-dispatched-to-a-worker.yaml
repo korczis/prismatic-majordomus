@@ -1,0 +1,66 @@
+id: repair-is-dispatched-to-a-worker
+title: "Work a run cannot do itself is handed to a worker it is allowed to start, on this machine first, and nowhere on discovery alone"
+slug: repair-is-dispatched-to-a-worker
+order: 324
+priority: p2
+problem: "A pull request the executor cannot merge or refresh ends at a person: the repair lane is `A person must change the branch` (apps/majordomus-cli/src/integration/model.rs:475, docs/INTEGRATION.md:458), `prs repair` refuses an authored conflict by decision (apps/majordomus-cli/src/integration/repair.rs:321), and nothing under src/integration starts a task, a worker or a claim. The pieces a dispatch needs exist and nothing composes them. The only Rust code that runs a coding harness is the economics runner (`harness_args`, apps/majordomus-cli/src/economics/runner.rs:589): headless Claude Code with `--permission-mode bypassPermissions`, in a throwaway fixture workspace with user settings shut out, which is acceptable there and not in a live worktree. The advisors under scripts/lib/advisors are read-only reviewers. A mesh claim already names its issue (`ClaimAcquired`, apps/majordomus-cli/src/mesh/journal.rs:485) and overlapping exclusive claims are refused on every runtime (apps/majordomus-cli/src/mesh/state.rs:815), but nothing maps a repair to a holder. `devcontext.compile` (apps/majordomus-cli/src/capability/builtin/devcontext.rs:151) and the handover records exist, and a published handover is picked up only by a session a person starts. On the authorization side there is nothing: no delegation record, no token, no advertisement of accepted work; mesh trust `gains no execution rights anywhere in this codebase` (apps/majordomus-cli/src/mesh/trust.rs:6), docs/MESH.md:27 says the mesh is not a remote execution facility, and rule project.mesh-is-observation-not-authority says whoever adds remote operations brings their own authorization decision."
+outcome: "A repair the queue recorded is run by one worker the authority profile allows: in the canonical worktree of the pull request's branch, under an exclusive claim naming the issue, started from the compiled context of that issue, with the permissions the profile gives and never `bypassPermissions`. A worker that asks for something is answered from the profile or ends with a recorded open question; one that dies is replaced from its handover, to a bound. Its result is a plain push to the pull request's branch and reaches master only through the queue. All of that works on one machine with the mesh off. Running work for another runtime is a separate, recorded decision: a delegation with an expiry that the receiving runtime verifies, decided apart from trust; a runtime accepts work only when it says so, and discovery, trust, a replay or an expired delegation run nothing."
+current_state: "No dispatch exists on master. The mesh journal has eight event kinds (journal.rs:553) and its links carry `sessions`, `claims`, `handovers` and `reviews` (apps/majordomus-cli/src/mesh/link.rs:63). ADR 0126 on pull request #860 (a caller beyond loopback changes nothing it cannot authenticate) is unlanded and limits signed input to `process_state` commands. Milestone work-is-coordinated (I2141-I2144, on origin/chore/the-owner-packs-are-planned, not on master) lists a second task database, queue or assignment table and turning a received peer message into shell execution as non-scope. docs/CONCEPTS.md:133 refuses a registry or catalogue of workers."
+desired_state: "Under a profile that grants it, a settling drain starts a worker for a recorded repair and the trail holds the dispatch before the process starts and its end after. The headless invocation is one implementation the economics runner and the dispatch both call, declared per provider in share/providers.yaml. Assignment is an exclusive mesh claim naming the issue, or the integration lease alone when the mesh is off. A proposed ADR decides the delegation and docs/CONCEPTS.md gains the word; a second ADR decides where the worker's invocation lives. With no profile, no delegation or no provider, nothing is started and the repair is reported blocked with that reason."
+scope:
+  - "apps/majordomus-cli/src/integration"
+  - "apps/majordomus-cli/src/economics"
+  - "apps/majordomus-cli/src/mesh"
+  - "apps/majordomus-cli/src/devcontext"
+  - "apps/majordomus-cli/src/worktree"
+  - "apps/majordomus-cli/tests"
+  - "share/providers.yaml"
+  - ".ai/repo/adrs"
+  - "docs/INTEGRATION.md"
+  - "docs/MESH.md"
+  - "docs/CONCEPTS.md"
+  - "docs/CLAIMS.yaml"
+  - "docs/claims"
+  - "docs/generated"
+  - "site/content"
+  - "site/data"
+non_scope:
+  - "Not a registry, catalogue or table of workers, and no agent, persona, role or tier: rule project.no-new-nouns and docs/CONCEPTS.md:133. The provider declaration share/providers.yaml is the only table extended."
+  - "Not a second task database, queue or assignment table: non-scope of milestone work-is-coordinated (I2141-I2144, session 1b's). Assignment is the exclusive mesh claim naming the issue, which exists (journal.rs:485)."
+  - "Not claim expiry for a dead worker in general, the shared ids of a handover across stores, or the claim that never returns after expiry: I2143, I2144 and I2138 (runtime pack, origin/chore/the-owner-packs-are-planned)."
+  - "Not the briefing every session gets at start: ADR 0128 / I2285-I2292 (session 1b's, origin/feature/the-mesh-briefs-every-session)."
+  - "Not authenticating a caller beyond loopback: ADR 0126 / pull request #860. I2339 starts after it lands and builds on its `admits_remote`."
+  - "Not the authority profile itself, or what it may grant: I2315 and I2316 of milestone an-unattended-run-has-declared-authority."
+  - "Not growing a task's scope: I2317. A worker that needs a path outside its scope ends with an open question here."
+  - "Not rolling a release out to other machines over ssh: `fleet.rollout` of pull request #900."
+  - "Not validating a worker's result on a path of its own: the pull-request queue is the validator (`prs drain`), under every safeguard of ADR 0101."
+  - "Not an orchestration lifecycle: ADR 0042 on origin/feature/orchestration-is-an-execution is unlanded. A dispatched worker has its task record, its claim and its trail lines, and no state store of its own."
+acceptance_criteria:
+  - "Under a granting profile a recorded repair is run by one worker in the canonical worktree of its branch, under an exclusive claim naming the issue, and its push reaches master only through the queue"
+  - "The argument vector of a dispatched worker never carries `bypassPermissions`, and a profile cannot ask for it"
+  - "With no profile, no provider on the machine or no granted permission, nothing is started and the repair is reported blocked with that reason"
+  - "With the mesh off the local path dispatches, claims and recovers exactly as with it on"
+  - "A request from another runtime runs nothing without a delegation the receiving runtime verified: discovery alone, trust alone, a replayed request and an expired delegation each run nothing"
+  - "A crashed worker's hold ends, its uncommitted edits are left in its worktree, and a replacement starts from its handover without a person typing, to a declared bound"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test worker_dispatch"
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test mesh_delegation"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 130_mesh"
+  - "scripts/derive-check"
+evidence_required:
+  - "local_dispatch_proved"
+  - "delegation_decision_recorded"
+  - "delegation_refusals_proved"
+  - "dispatch_recovery_proved"
+depends_on:
+  - "an-unattended-run-has-declared-authority"
+  - "a-drain-is-a-durable-run"
+risks:
+  - "The one working headless invocation uses `bypassPermissions` in a disposable fixture. Copying it into a live worktree would hand a worker every permission on a shared machine with 127 registered worktrees and other sessions live in them."
+  - "Dispatching the repair lane reverses a documented decision (the lane is a person's) and overlaps session p5's `needs_repair` mandate and another session's `origin/repair/*` lane. It is tied to a profile grant, announced on the board, and unchanged without the grant."
+  - "docs/MESH.md:27 and the claim mesh-observation-not-authority say nothing a peer sends runs anything. I2339 changes that sentence; until its ADR is accepted by a person no test may fix the wire shape, and I2164 prices every journal or link change by the version gate."
+  - "A handover has three ids across the local, mesh and continuity stores until I2144 lands, so rehydration here reads the local store of the same worktree and branch only."
+  - "A worker started in a worktree another session is using would destroy uncommitted work. A worktree that exists and is dirty, or whose scope another session claims, is never entered."
+created_at: 2026-10-10
+updated_at: 2026-10-10

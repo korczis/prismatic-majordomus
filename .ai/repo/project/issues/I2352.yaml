@@ -1,0 +1,43 @@
+id: I2352
+milestone: delivery-is-explained-by-evidence
+title: "The tracked ledger is written whole or not at all, and two writers lose nothing"
+slug: the-ledger-is-written-whole
+priority: p1
+profile: implementation
+parallel_safe: false
+serves:
+  - "delivery-is-explained-by-evidence#telemetry-survives-the-process"
+objective: "Write the tests first: two processes recording into one ledger at once, and a recorder killed during its write. Then make `Ledger::save_to` (apps/majordomus-cli/src/evidence/ledger.rs) write a temporary file in the ledger's directory and rename it over the ledger, and hold one exclusive lock across the load, the merge and the save in apps/majordomus-cli/src/evidence/record.rs."
+why: "Convergence pack 01 issue 01.4. `save_to` ends in `std::fs::write` on the ledger's own path (evidence/ledger.rs:417), which truncates before it writes: a process killed in between leaves a file that `parse_named` refuses as not a ledger (ledger.rs:207-210), and every reader of evidence fails with it. The recorder loads, merges and saves with nothing held between the three steps (evidence/record.rs:971-979), so of two recordings that overlap, the second save drops the rows of the first. A search for a lock or a rename in evidence/ledger.rs, evidence/record.rs and ledger.rs finds neither, and no test drives two writers, so this may be a defect on master and not only a missing proof. Both remedies have a precedent in the crate: session/ledger.rs:757 takes an exclusive flock for its append, and lease.rs:1101 and bench/results.rs:201 replace a file by rename. The same function writes the local ledger .ai/local/evidence/ledger.json (ledger.rs:505), so one change covers both."
+current_state: "The tracked and the local evidence ledger are each one JSON file rewritten in place by a read, a merge and a write with no lock. Whether two recorders lose rows, and what a killed recorder leaves, is untested."
+desired_state: "A recording either replaces the ledger with one that holds its rows and every row that was there, or leaves the file as it was. A second recorder waits for the first within a bound and then merges into what the first wrote. The pull request carries the red output of the two tests against master, or says that they passed there and that the guarantee was confirmed rather than repaired."
+scope:
+  - "apps/majordomus-cli/src/evidence/ledger.rs"
+  - "apps/majordomus-cli/src/evidence/record.rs"
+  - "apps/majordomus-cli/tests/evidence_telemetry.rs"
+  - "docs/EVIDENCE.md"
+  - "docs/CLAIMS.yaml"
+  - "docs/claims"
+non_scope:
+  - "Changing what a merge keeps: a recording still replaces the row of each test it names and touches no other (ledger.rs:333-344)"
+  - "The append-only stores (.ai/local/state/ledger.jsonl, the integration trail, the served observations): a lost line found there is filed as a finding against its writer and not fixed here"
+  - "A lock across machines: another checkout's tracked ledger is another file, and git merges the two"
+  - "The ledger's version and its migration: I2353"
+  - "A tamper-proof ledger: docs/EVIDENCE.md says it is not one and does not pretend to be"
+depends_on: []
+acceptance_criteria:
+  - "Two processes recording disjoint reports into one ledger at the same time leave every row of both, over repeated rounds; the test fails on the first lost row"
+  - "A recorder killed after it began writing leaves the ledger byte-identical to what it was, and the next load reads it"
+  - "A recorder that cannot take the lock within its bound exits non-zero naming the lock and writes nothing; it never proceeds without the lock"
+  - "After a successful, a refused and a killed recording, no temporary file remains that the next recording does not remove, and `git status` shows only the ledger changed"
+  - "Two recordings that name the same test leave the row of the one that took the lock last, and docs/EVIDENCE.md says so"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test evidence_telemetry"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 124_evidence"
+evidence_required:
+  - "concurrent_recorders_test"
+  - "killed_recorder_leaves_the_ledger_test"
+  - "red_or_green_output_against_master"
+created_at: 2026-10-10
+updated_at: 2026-10-10

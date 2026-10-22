@@ -1,0 +1,56 @@
+id: I2326
+milestone: the-queue-settles
+title: "The refresh pipeline is as deep as the queue policy declares, built as the train ADR 0129 describes"
+slug: the-train-is-built-to-depth
+priority: p1
+profile: implementation
+parallel_safe: false
+serves:
+  - "a-drain-settles-unattended#the-queue-settles"
+objective: "Have `refresh_step` (apps/majordomus-cli/src/integration/drain.rs:1282) build the train: while the pipeline holds a refreshed head whose required check is pending, bring the next `needs_refresh` candidate up to date on that head instead of on master, write `Stacked on #k` into its body, and record the stacking on the trail before the push, up to the depth `.ai/repo/ci/queue.yaml` declares at the observed master commit. An absent depth is depth one, which is today's behaviour."
+why: "Autopilot pack 04 issue 3 asks for conflict-independent repairs to run in parallel. The pipeline is one deep by design (drain.rs:1272: merging the first refreshed head puts the second behind again and wastes its run), so one pull request lands per run of the required check. Measured on 2026-10-10: 25 of 51 open pull requests are `needs_refresh`; a first-attempt successful `validate` run took p50 5423 s and p95 8290 s of wall clock (n=32); the trail holds 15 verified merges since 2026-10-04 and 0 of 3 refreshes succeeded. This issue is the follow-up ADR 0129 names in its decision 7 and I2298 names in its non_scope: the executor refreshing the next candidate onto the top link's head, to a depth declared in `.ai/repo/ci/queue.yaml`, with the stacking recorded on the trail and the declaration written by the executor. I2298 and ADR 0129 are session p5's, unlanded, on branch feature/the-refresh-pipeline-is-a-train; this issue starts only after they land and restates nothing of them. ADR 0114 `prs compose` (proposed, origin/feature/a-batch-is-composed-and-names-its-members, no pull request) is a different mechanism, one batch pull request naming its members, and is not duplicated here: a train keeps every link its own pull request with its own verdict."
+current_state: "`refresh_step` refreshes the first `needs_refresh` pull request onto master and returns `AwaitingChecks` while that head's check is pending; nothing else is refreshed meanwhile. One session builds the train by hand over eleven `refs/prep/*` heads. Nothing in the executor reads `.ai/repo/ci/queue.yaml`, which the scheduled workflow and case 350 read."
+desired_state: "With a depth n declared on master, up to n refreshed heads are judged at once, each stacked on the one below and held by the dependency gate until that one lands; when it lands the upper link is `carries_master` (I2298) and merges on the verdict it has. The trail names every link, the head it was stacked on and the line written to its body."
+scope:
+  - "apps/majordomus-cli/src/integration/drain.rs"
+  - "apps/majordomus-cli/src/integration/forge.rs"
+  - "apps/majordomus-cli/src/integration/mod.rs"
+  - "apps/majordomus-cli/src/integration/tests.rs"
+  - "apps/majordomus-cli/tests/integration_executor.rs"
+  - "apps/majordomus-cli/tests/integration_settle.rs"
+  - ".ai/repo/ci/queue.yaml"
+  - "test/cases/350_the_queue_measures_itself.sh"
+  - "test/cases"
+  - "docs/INTEGRATION.md"
+  - "docs/CLAIMS.yaml"
+  - "docs/claims"
+  - "docs/generated"
+  - "site/content"
+  - "site/data"
+non_scope:
+  - "Not the `carries_master` relation, the freshness gate that passes it, `prs repair` having nothing to repair on it, or the relation cache's vocabulary version: that is I2298 / ADR 0129, session p5's. This issue is not started before it is on master."
+  - "Not composing members into one batch pull request, and no batch check: ADR 0114 `prs compose`."
+  - "Not parallel merges into the base: merges stay one at a time under the lease, each after a second observation (drain.rs:978)."
+  - "Not unstacking a link whose lower link was closed without a merge: its head holds the closed pull request's commits, so it stays `blocked` with `dependency_closed_unmerged` for a person, as ADR 0129 decision 5 says."
+  - "Not the scheduled workflow: the depth is a new key of `.ai/repo/ci/queue.yaml` the executor reads, and the `report` command there stays `prs refresh && prs status`."
+  - "Not the run a push to master starts after every merge (521 job-minutes): ADR 0129 leaves it undecided."
+  - "Not rebase or a forced push: a link is brought up to date by a merge commit with the derived driver and pushed as a plain fast-forward of the observed head (drain.rs:2200-2218)."
+depends_on: []
+acceptance_criteria:
+  - "With no depth declared, or depth 1, the executor refreshes one pull request onto master and waits, and every existing executor test passes unchanged"
+  - "With depth n and link k's check pending, the next candidate in rank order that shares no authored path, version bump or release with the links below it (`OverlapKind`, apps/majordomus-cli/src/integration/model.rs:1275) is merged onto link k's head, its body gains `Stacked on #k`, and one trail event naming both pull requests and both heads is written before the push"
+  - "When the lower link lands, the upper link merges on the verdict its head has with no refresh between, in the in-process forge and through the command line against the scripted forge"
+  - "The depth is read from `.ai/repo/ci/queue.yaml` at the observed master commit: a different value in the working tree or in a pull request's head changes nothing"
+  - "A link whose required check failed, whose head its author moved, or whose merge onto the head below conflicts on an authored path is refused as a link: nothing is stacked above it, no push is forced, and a skipped candidate is refreshed onto master once the pipeline is empty"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib integration::"
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test integration_executor"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 350_the_queue_measures_itself 850_integration_drains_cycle_by_cycle"
+  - "scripts/derive-check"
+evidence_required:
+  - "train_depth_read_from_master_test"
+  - "stacked_links_land_without_refresh_case"
+  - "red_link_stops_the_train_test"
+created_at: 2026-10-10
+updated_at: 2026-10-10

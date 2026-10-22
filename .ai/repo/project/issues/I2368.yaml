@@ -1,0 +1,44 @@
+id: I2368
+milestone: delivery-is-proved-end-to-end
+title: "The same run is demonstrated from the installed artifact in a clean repository"
+slug: run-from-installed-artifact
+priority: p2
+profile: implementation
+parallel_safe: true
+serves:
+  - "delivery-is-explained-by-evidence#proved-in-a-consumer"
+objective: "Add test/cases/1058_a_task_runs_from_the_installed_artifact.sh, which installs the tool from a local release fixture served over HTTP with the published installer, as test/cases/97_install_gate.sh does, into a home of its own, and in a fresh repository outside this checkout runs the success and the out-of-budget scenarios of case 1052 against a scripted forge, then finishes one task there, refused once for missing evidence, and asks the explain query of I2349 for it, asserting that no path of this checkout appears in anything that ran or was written."
+why: "Convergence pack 06 issue 06.2 and the consumer half of autopilot pack 06 issue 3. What proves the tool in another repository is an install, a version check and `majordomus init` in an empty repository (.github/workflows/release.yml:458-476, whose launcher check is swallowed at :468), the same six steps against the live site (scripts/ci/install-check), and the installed layout against another repository (test/cases/15b_an_installed_tool_runs_what_its_bootstrap_names.sh, 744_an_installed_tool_finds_its_own_executable.sh). Every suite case runs in a fresh `git init` (test/run.sh:103-109) but drives this checkout's executable and share. A whole task from the installed artifact in a foreign repository is I2255 (pending; prompt tmp/owner-packs/prompts/I2255.md: init, start, an out-of-scope edit refused, repair, finish, from an installed layout built as case 15b builds it); an installed binary serving a foreign repository in CI is I2162 (one unlanded commit); and the lifecycle with no optional subsystem started is I2267. None of them runs the unattended run or the explain query from the artifact, and none asserts that nothing of this checkout was read. The OSCILLA audit found defects no test here sees because every test runs this repository's layout."
+current_state: "The installed artifact is proved to install, report its version and initialise a repository; nothing it does after that is run from it outside this checkout."
+desired_state: "Case 1058 installs a released archive through the installer, unsets MAJORDOMUS_BIN, MAJORDOMUS_SHARE and MAJORDOMUS_ROOT, and in a repository with no relation to this checkout runs a settling run that ends satisfied and one that ends out of budget, then explains the finished task with every link sourced or marked unknown; a search of the outputs, the trail and the files written for this checkout's absolute path finds nothing. It stays inside the per-case budget of .ai/repo/ci/suite.yaml."
+scope:
+  - "test/cases/1058_a_task_runs_from_the_installed_artifact.sh"
+  - "test/lib.sh"
+  - "docs/ADOPTION.md"
+  - "docs/CLAIMS.yaml"
+  - "docs/claims"
+  - "docs/generated"
+  - "site/data"
+non_scope:
+  - "Not the task journey from an installed layout (init, start, stray, refused, repair, finish): that is I2255; where it has landed, this case calls its helper rather than a second one"
+  - "Not an installed binary serving a foreign repository over the shared server in CI: I2162, and not the offline rerun: I2267"
+  - "Not reducing what init writes: I2254"
+  - "Not the real forge: the consumer's forge is scripted, and the case says so"
+  - "Not raising the suite budget: a case over it is split or trimmed"
+depends_on:
+  - "I2367"
+  - "I2349"
+acceptance_criteria:
+  - "The installed tool reports the fixture release's version, and MAJORDOMUS_BIN, MAJORDOMUS_SHARE and MAJORDOMUS_ROOT are unset for everything the case runs"
+  - "In the clean repository the settling run ends satisfied and the budgeted one ends out of budget, each read from the consumer's own trail"
+  - "The task the case explains had its first finish refused for missing evidence and its second accepted, and the explain query answers every link of it with a source or as unknown, never as a pass without evidence"
+  - "A search of the case's outputs, the consumer's trail and every file it wrote for this checkout's absolute path finds nothing, and the case fails when a planted reference to it is found"
+  - "The case fails rather than skips when curl or the installer is missing"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 1058_a_task_runs_from_the_installed_artifact"
+evidence_required:
+  - "consumer_run_from_installed_artifact"
+  - "no_checkout_path_in_consumer"
+created_at: 2026-10-10
+updated_at: 2026-10-10

@@ -1,0 +1,51 @@
+id: I2353
+milestone: delivery-is-explained-by-evidence
+title: "A ledger of an older version is migrated without inventing what it did not record"
+slug: an-older-ledger-is-migrated
+priority: p2
+profile: implementation
+parallel_safe: false
+serves:
+  - "delivery-is-explained-by-evidence#telemetry-survives-the-process"
+objective: "Replace the evidence ledger's all-or-nothing version check with a one-directional rule in apps/majordomus-cli/src/evidence/ledger.rs: an older declared version is upgraded in memory by one typed step per version, and a newer one is refused as today. Declare an `evidence migrate` command beside `evidence.record` that rewrites the tracked ledger at the current version through the writer of I2352, and make a recording refuse to rewrite a ledger whose rows carry a field this executable does not know."
+why: "Convergence pack 01 issue 01.5. `parse_named` refuses every version but LEDGER_VERSION, an older one as much as a newer one (apps/majordomus-cli/src/evidence/ledger.rs:105,211), and there is no migration. Version 1 has been the only shape since the first recording (commit a65a21951e, 2026-09-11); the one change since, the optional `run` on a row, was made readable by a default so that the version did not have to move (evidence/mod.rs:613). Two things make the next change unsafe as the code stands. `ledger_at` reads the ledger as an older commit held it (evidence/freshness.rs:352), so the first move of the version leaves the evidence of every earlier commit unreadable unless the reader upgrades it. And neither the ledger nor its rows refuse an unknown field (only the types of evidence/provenance.rs do), so an older executable that records into a ledger a newer one wrote drops, in its whole-file rewrite, every field it does not know. The audit's risk stands: historic rows carry whole seconds and no provenance, so an upgrade has to keep absence as absence. No shell reader of the ledger's rows was found to delete: the one shell reference is a whole-file copy at scripts/ci/evidence-collect:161-162."
+current_state: "One version, one refusal for any other, no upgrade step and no command. An additive field survives only as long as no older executable rewrites the file."
+desired_state: "A reader given an older version answers in the current shape and marks every field the older row lacked as absent. `evidence migrate` rewrites the tracked file once, atomically, and says how many rows it carried over and that it added no value. A recording by an executable that does not know a field of the ledger is refused, naming the field. Where no change of this milestone moves the version, the upgrade step is proved against a fixture ledger of an older declared version, and the pull request says that no tracked ledger was rewritten."
+scope:
+  - "apps/majordomus-cli/src/evidence/ledger.rs"
+  - "apps/majordomus-cli/src/evidence/record.rs"
+  - "apps/majordomus-cli/src/evidence/freshness.rs"
+  - "apps/majordomus-cli/src/capability/builtin/evidence.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/src/commands/evidence.rs"
+  - "apps/majordomus-cli/tests/evidence_telemetry.rs"
+  - "docs/EVIDENCE.md"
+  - "docs/CLAIMS.yaml"
+  - "docs/claims"
+  - "docs/generated"
+  - "site/data"
+non_scope:
+  - "Moving LEDGER_VERSION for its own sake: the version moves only with a change of shape that another issue needs"
+  - "Computing a value for a field an older row did not carry (a duration finer than its whole seconds, a provenance stamp, a run): it is written as absent"
+  - "Migrating .ai/local/state/ledger.jsonl or the closed-session records: neither declares a version this issue changes"
+  - "Rewriting the ledger of an older commit: `ledger_at` upgrades in memory and writes nothing"
+  - "Deleting a shell reader: none parses the ledger's rows"
+depends_on:
+  - "I2352"
+acceptance_criteria:
+  - "A fixture ledger of an older declared version loads in the current shape with every field it lacked absent, and a test fails if any such field holds a value"
+  - "A ledger that declares a newer version than the executable reads is refused with today's message, and nothing is written"
+  - "A recording into a ledger whose rows carry a field the executable does not know is refused naming the field, and the file is byte-identical afterwards"
+  - "`evidence migrate` on a current ledger changes nothing and exits 0; on an older one it writes the current version once, and a second run changes nothing"
+  - "`ledger_at` an older commit answers through the same upgrade and leaves the working tree untouched"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test evidence_telemetry"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 124_evidence 502_evidence_is_judged_at_the_presented_revision"
+  - "scripts/derive-check"
+evidence_required:
+  - "older_ledger_upgraded_without_values_test"
+  - "newer_ledger_refused_test"
+  - "unknown_field_not_erased_test"
+created_at: 2026-10-10
+updated_at: 2026-10-10

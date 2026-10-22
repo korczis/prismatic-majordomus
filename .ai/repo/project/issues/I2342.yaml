@@ -1,0 +1,42 @@
+id: I2342
+milestone: derive-does-bounded-work
+title: "The executable's generation is staged and published whole, like the site's"
+slug: generation-is-staged-and-published
+priority: p1
+profile: implementation
+parallel_safe: false
+serves:
+  - "delivery-is-explained-by-evidence#incremental-equals-full"
+objective: "Change `generate::write` (apps/majordomus-cli/src/generate.rs:2351) from writing each artifact in place to the transaction `scripts/generate-site-data` already uses: compose and write every artifact of the plan into a staging location beside its destination, publish by rename only when all of them were written, leave a file whose bytes are unchanged untouched, and on any failure before publication leave every destination as it was."
+why: "Convergence pack 02 issue 02.3 asks for atomic publish with no partial generation. Stage B has it: it writes into `.mj-stage.XXXXXX` beside its destination, removed by a trap (scripts/generate-site-data:56), and publishes by rename per directory with the previous generation restored on failure (scripts/generate-site-data:2505-2538), proved by test/cases/12b_site_data_transactional.sh. Stages A and C do not: `write` creates each directory and calls `std::fs::write` artifact by artifact (generate.rs:2351-2362), so an I/O error, a full disk or a stopped derive part way through leaves some of 178 artifacts new and the rest old, and the next `generate --check` reports a tree no derive produced. The machine lock stops a derive's whole process tree on TERM, INT or HUP (lib/machine_lock.sh), which is exactly when a half-written stage A is left behind. It also rewrites every unchanged file, so every derive touches every artifact's modification time, which is what an incremental derive (I2343, I2344) has to be able to avoid. The gap file on A05.2 names this as the precondition for any split of the derive."
+current_state: "`generate` writes artifacts one by one in place and rewrites the unchanged ones; a failure part way leaves a mixed tree."
+desired_state: "`generate` writes nothing under the root until every artifact of the plan is staged; it then renames each changed artifact into place and reports the paths it changed; an artifact whose bytes are equal to the file on disk is not written; a failure before publication removes the staging and leaves the root byte for byte as it was. The staging is ignored by git, like `.mj-stage.*`."
+scope:
+  - "apps/majordomus-cli/src/generate.rs"
+  - "apps/majordomus-cli/src/commands/generate.rs"
+  - "apps/majordomus-cli/tests/generate_check.rs"
+  - ".gitignore"
+  - "docs/GITHUB_PAGES_ARCHITECTURE.md"
+  - "docs/CLI.md"
+non_scope:
+  - "Not making a whole derive transactional across stages A to D: a derive stopped between stages leaves the stages it finished, which `scripts/derive-check` reports and a rerun repairs; the interruption scenario of the equivalence case is I2345"
+  - "Not changing which artifacts are generated, their bytes or the plan: `plan()` (generate.rs:654) is untouched"
+  - "Not stage B's transaction, which exists"
+  - "Not the lock, its traps or its reaping: lib/machine_lock.sh is untouched"
+depends_on: []
+acceptance_criteria:
+  - "A write that fails after some artifacts were staged leaves every destination file byte for byte as it was and no staging directory behind, shown by a test that injects the failure"
+  - "A second `generate` on a tree it just generated writes no file, and the modification time of every artifact is unchanged"
+  - "`generate` reports the paths it changed, and on a tree where one input moved it reports only the artifacts whose bytes moved"
+  - "`generate --check` and `scripts/derive-check` give the same verdicts as before over the committed tree"
+  - "`git status` shows no staging path after a generation that succeeded or failed"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test generate_check"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 12b_site_data_transactional"
+  - "scripts/derive-check"
+evidence_required:
+  - "generation_publishes_whole_case"
+  - "unchanged_artifact_not_rewritten"
+created_at: 2026-10-10
+updated_at: 2026-10-10

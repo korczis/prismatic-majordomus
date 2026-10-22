@@ -1,0 +1,57 @@
+id: the-delivery-baseline-is-recorded
+title: "What delivery costs today is a tracked record, measured by the tool, and every later comparison reads it"
+slug: the-delivery-baseline-is-recorded
+order: 320
+priority: p1
+problem: "What a change costs to deliver is known from one audit's working files and from commit messages, and none of it is tracked. The audit of 2026-10-10 at master 4dfd1856d2 measured: of the 120 newest runs of the required workflow (2026-10-08T03:28Z to 2026-10-10T15:21Z) 116 completed as 39 success, 48 failure and 29 cancelled, the first-attempt successes took p50 5423 s and p95 8290 s of wall time (n=32), and 9 runs needed a second attempt; the last 150 merged pull requests (2026-09-26 to 2026-10-10) took p50 17.8 h and p95 98.2 h from opening to merge; 51 pull requests were open with 0 ready, 25 `needs_refresh` and 10 `needs_repair`; `prs refresh` took 246 s of wall time for those 51; the executor's trail since 2026-10-04 held 15 verified merges and 0 of 3 refreshes that succeeded. The instruments that would keep such figures exist and stop short. `scripts/ci-baseline` wrote `.ai/repo/ci/baseline.json` once, on 2026-09-05, and `.ai/repo/ci/README.md` says nothing reads it. `scripts/derive:60-63` prints stage seconds to stderr and nothing keeps them, so every derive time on record is one sample from a commit message with no stage split, no load and no build state (699 s at f1a892ebc6, 302 s at 2b782e1280, 185 s to 2135 s in one evening in I1409). `integration/metrics.rs:34-57` folds medians from the trail, with no percentile and no count of what a person had to do. Nothing in `integration/forge.rs`, `relation.rs` or `classify.rs` times an observation. docs/INTEGRATION_ROLLOUT.md stops at the dry run of 2026-10-06 while the trail it defers to is a file in one clone's git directory. Both owner packs of 2026-10-10 ask for the baseline before any redesign (autopilot pack 00 issue 4, convergence pack 00 issue 00.3 and 06 issue 06.4), and without it no later milestone can say that anything became faster."
+outcome: "The figures of 2026-10-10 are one tracked record under `.ai/repo/benchmarks/delivery/`, written by `scripts/ci-baseline` from named sources, each figure with its sample size, its window and where it was measured, and `unknown` with the reason where nothing was. A derive leaves its stage timings with the host, the load and the build state, and a benchmark turns samples of them into a platform baseline. An observation and a refresh leave what they cost on the integration trail, and a failed refresh leaves the line that failed. The throughput fold reports the ninety-fifth percentile with its sample count and how often a person had to act. The rollout record says what stages 2 to 4 are on the trail. Milestones derive-does-bounded-work and delivery-is-proved-end-to-end compare against these records and against nothing else."
+current_state: "No delivery figure of 2026-10-10 is in the tracked tree. `.ai/repo/benchmarks/` holds a baseline for the publication (`pages/baseline.macos-arm64.json`) and one for the executable's commands (`rust/`, finished 2026-09-05 at version 0.1.0), and none for a derive, for the required check or for the queue."
+desired_state: "A reader runs one command and gets the delivery record re-measured in the shape of the tracked one; a derive, an observation and a refresh each leave what they cost where that record reads it; and a figure nobody measured reads `unknown`."
+scope:
+  - "scripts/ci-baseline"
+  - "scripts/derive"
+  - ".ai/repo/benchmarks"
+  - "apps/majordomus-cli/src/integration"
+  - "apps/majordomus-cli/src/perf.rs"
+  - "apps/majordomus-cli/src/capability/builtin/integration.rs"
+  - "apps/majordomus-cli/src/cockpit/pages.rs"
+  - "apps/majordomus-cli/tests"
+  - ".ai/repo/adrs/0101-pull-requests-are-integrated-one-at-a-time-against-the-current-master.md"
+  - "docs/INTEGRATION_ROLLOUT.md"
+  - "docs/INTEGRATION.md"
+  - "docs/PERFORMANCE.md"
+  - "docs/CI.md"
+  - "test/cases"
+  - "test/fixtures"
+non_scope:
+  - "Making anything faster: this milestone measures, and milestone derive-does-bounded-work changes the derive"
+  - "A budget or a gate on a baseline figure: a baseline is an observation and a budget a decision (.ai/repo/benchmarks/pages/README.md); the derive budget is I2346"
+  - "The warm, partial and cold baseline of change-to-verdict and merge-to-verified-deploy on GitHub: the first acceptance criterion of milestone ci-critical-path, unlanded on origin/rescue/d1/chore/the-ci-critical-path-is-planned"
+  - "The telemetry of one task or one provider execution: milestone execution-telemetry (I0301 to I0305) and I2351"
+  - "Putting a merge the executor did not make on the trail (#901 was merged with --admin on 2026-10-10 and the trail has no line for it): I2356"
+  - "The published comparison against these records: I2370"
+  - "A version in the relation cache's key: I2298 / ADR 0129, session p5's"
+acceptance_criteria:
+  - "The delivery record of 2026-10-10 is tracked, and `scripts/ci-baseline --delivery --table` reproduces its summary figures from the rows it carries"
+  - "Every figure of the record names its sample size, its window, its source and the machine or runner it was measured on, and a figure that was not measured is `unknown` with the reason, never zero"
+  - "A derive leaves a record of its stage seconds with the host, the platform, the load and the build state, and the derive baseline of a platform is written by the benchmark from such samples"
+  - "The `observed` line of the trail carries what the observation cost, a refresh or a repair carries the seconds of each step, and a failed one names the step and the line that reported the failure"
+  - "The throughput fold reports a ninety-fifth percentile with its sample count beside each median and counts the interventions the trail names"
+  - "docs/INTEGRATION_ROLLOUT.md says what stages 2 to 4 are on the trail and claims no continuous drain"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 1053_the_delivery_baseline_is_a_record"
+  - "cargo test --test integration_trail"
+  - "scripts/derive-check"
+evidence_required:
+  - "delivery_baseline_tracked"
+  - "derive_and_trail_timings_recorded"
+  - "throughput_percentiles_folded"
+depends_on: []
+risks:
+  - "Wall time on the shared machine moves several-fold with load (185 s to 2135 s for one derive in one evening, I1409), so a figure without its load and its platform will be read as a property of the code. Every sample carries both, and no comparison is made across platforms or loads."
+  - "Every derive figure recorded before this milestone is a single sample from a commit message. The first real baseline is not comparable with them and is not presented as an improvement or a regression against them."
+  - "The trail is one clone's file. Figures folded from it describe the executor that ran in that clone, and a record that does not say which machine wrote it will be read as the repository's."
+  - "A benchmark of the derive holds the machine lock for every sample. It is run on purpose with its sample count stated, never from a hook or a routine gate."
+created_at: 2026-10-10
+updated_at: 2026-10-10

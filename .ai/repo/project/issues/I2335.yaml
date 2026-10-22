@@ -1,0 +1,67 @@
+id: I2335
+milestone: repair-is-dispatched-to-a-worker
+title: "A worker adapter runs one issue in its own worktree under the profile's permissions, on this machine"
+slug: a-worker-runs-one-repair-locally
+priority: p2
+profile: deep-work
+parallel_safe: false
+serves:
+  - "a-drain-settles-unattended#repair-is-dispatched"
+objective: "Lift the one headless harness invocation out of apps/majordomus-cli/src/economics/runner.rs (`harness_args` :589, `session` :658, `spawn_group` :364, `wait_bounded` :378, and the transcript reader `read_stream`, apps/majordomus-cli/src/economics/usage.rs:348) into one module, apps/majordomus-cli/src/harness.rs, that the economics runner then calls. Add apps/majordomus-cli/src/integration/dispatch.rs: for one open `repair_requested` (I2327) it creates or enters the canonical worktree of the pull request's branch, starts the task there with `majordomus start --issue --scope`, runs the provider headless with the permissions the authority profile gives, and records the dispatch on the trail before the process starts and its end after. The headless invocation of each provider is declared on its entry in share/providers.yaml."
+why: "Autopilot pack 03 issue 4. No adapter runs a worker on a real issue in a real worktree. The economics runner is the only Rust code that runs a coding harness, and it does so in a throwaway fixture workspace with user settings shut out and `--permission-mode bypassPermissions` (runner.rs:589-611): acceptable in a disposable directory, and never in a live worktree on a machine with 127 registered worktrees and other sessions working in them. The advisors (scripts/lib/advisors/driver.mjs, codex-exec.mjs with `-s read-only`) are read-only reviewers. The parts exist: one session in its own process group under a wall-clock limit with the harness path a parameter so a test replays a stand-in (`RunOptions`, runner.rs:103); availability from presence on PATH and recorded outcomes, where an empty result is an ordinary answer (apps/majordomus-cli/src/reasoning/availability.rs:1); the canonical worktree of a branch (`create`, apps/majordomus-cli/src/worktree/service.rs:831). Rule project.no-new-nouns and docs/CONCEPTS.md:133 refuse a registry or catalogue of workers, so the only table extended is the provider declaration, which already cites its evidence per cell (ADR 0103). ADR 0042 on origin/feature/orchestration-is-an-execution is unlanded and would put orchestration state in src/execution; an execution does not outlive its process (docs/EXECUTIONS.md:59), so a dispatched worker's state here is its task record, its claim and its trail lines, and an ADR with status `proposed` records that choice."
+current_state: "A recorded repair waits for a person or a session a person starts. One headless invocation exists, private to the economics runner, with every permission bypassed in a fixture."
+desired_state: "Under a profile that grants dispatch, a settling drain starts one worker per recorded repair, up to the number the profile allows: in the branch's canonical worktree, with the task started and bound to the issue, a permission set limited to the task's scope and the tools the profile names, a wall-clock limit and a budget. Its result is a plain fast-forward push to the pull request's branch; the queue's next observation is what judges it. The economics runner calls the same invocation with its own, unchanged, fixture mode."
+scope:
+  - "apps/majordomus-cli/src/harness.rs"
+  - "apps/majordomus-cli/src/economics/runner.rs"
+  - "apps/majordomus-cli/src/economics/usage.rs"
+  - "apps/majordomus-cli/src/integration/dispatch.rs"
+  - "apps/majordomus-cli/src/integration/drain.rs"
+  - "apps/majordomus-cli/src/integration/mod.rs"
+  - "apps/majordomus-cli/src/lib.rs"
+  - "apps/majordomus-cli/tests/worker_dispatch.rs"
+  - "apps/majordomus-cli/tests/economics.rs"
+  - "share/providers.yaml"
+  - ".ai/repo/adrs"
+  - "docs/INTEGRATION.md"
+  - "docs/ECONOMICS.md"
+  - "docs/CONCEPTS.md"
+  - "docs/CLAIMS.yaml"
+  - "docs/claims"
+  - "docs/generated"
+  - "site/content"
+  - "site/data"
+non_scope:
+  - "Not `bypassPermissions` outside the economics fixture: a dispatched worker's argument vector never carries it, and the profile has no value that produces it."
+  - "Not a registry, catalogue or table of workers, and no worker identity beyond the session and the task record: rule project.no-new-nouns."
+  - "Not the claim that holds a repair for one worker: I2337. Not answering a worker that stops to ask: I2336. Not the context it starts from or its replacement: I2338."
+  - "Not another machine: I2339. Everything here runs with the mesh off."
+  - "Not the authority profile, its schema or its grants: I2315. Not growing the task's scope: I2317."
+  - "Not a path to master of its own: the worker pushes to the pull request's branch and the executor merges it under every gate of ADR 0101, or does not."
+  - "Not entering a worktree somebody is using: a canonical worktree that exists and is dirty, holds an active task, or is under another session's claim is left alone and the repair is reported blocked with that reason."
+  - "Not the provider hooks that refuse an out-of-scope edit before it is written: I2250 to I2252 (owner packs, origin/chore/the-owner-packs-are-planned). Where they have landed the worker runs under them."
+  - "Not Codex or Gemini as workers: the declaration has a cell for each provider, and only Claude Code's is filled and proved here."
+depends_on:
+  - "I2315"
+  - "I2327"
+acceptance_criteria:
+  - "With a stand-in harness and a granting profile, one recorded repair leads to: the canonical worktree of its branch, a task started there naming the issue and the request's scope, one harness process in its own process group, a trail line before it starts and one after it ends, and a fast-forward push the next observation sees"
+  - "The argument vector of every dispatched worker is asserted to hold no `bypassPermissions`, and a profile or a provider entry that would produce it is refused before any process starts"
+  - "With no authority profile, with one that does not grant dispatch, or with no provider executable on PATH, no process starts, no worktree is created, and the repair is reported blocked with `no_authority` or `no_provider`"
+  - "A canonical worktree that exists and is dirty or holds an active task is not entered and not modified, and the repair is reported blocked naming it"
+  - "A worker that exceeds its wall-clock limit is killed with its whole process group and recorded as timed out, and its worktree is left as it is"
+  - "The economics runner's invocation digest and its tests are unchanged after the lift"
+  - "A dispatched worker takes no settings, hooks or permissions from the pull-request head or its worktree: the harness starts with the project and local setting sources shut out and only the permissions the trunk profile names, and a test plants a permissive settings file and a hook on the head and shows neither is used"
+  - "A worker never merges and never pushes to the base branch: it pushes only to its task's branch, the executor alone merges through the queue, and a worker run after which the base branch moved by anything but the executor, or whose transcript invoked a merge or --admin, is recorded fatal and stops the run"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test worker_dispatch"
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test economics"
+  - "scripts/derive-check"
+evidence_required:
+  - "local_dispatch_test"
+  - "no_bypass_permissions_asserted"
+  - "no_authority_no_process_test"
+  - "invocation_decision_recorded"
+created_at: 2026-10-10
+updated_at: 2026-10-10

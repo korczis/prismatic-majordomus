@@ -1,0 +1,52 @@
+id: I2325
+milestone: the-queue-settles
+title: "A drain asked to settle ends on a settle predicate, with every open pull request explained"
+slug: a-drain-ends-settled
+priority: p1
+profile: implementation
+parallel_safe: false
+serves:
+  - "a-drain-settles-unattended#the-queue-settles"
+objective: "Add one pure settle predicate over an `IntegrationQueue` and the trail to apps/majordomus-cli/src/integration/drain.rs, and a drain mode `prs drain --until-settled` beside `continuous()` (drain.rs:1626) that cycles until the predicate holds and then prints a typed report: every pull request of its observation under merged, closed or blocked, each with its reason codes and the steps already tried on it."
+why: "Autopilot pack 04 issue 5. `prs drain --continuous` (apps/majordomus-cli/src/cli.rs:3102) stops only on a signal, an unverified merge, an unwritable trail or three consecutive outages (drain.rs:1609, :1626) and never on a finished queue; `DrainReport` and `ContinuousReport` end in a free-text `stopped` (drain.rs:1429, :1576); `ends_drain` (drain.rs:1527) says why one drain ended, not whether anything is left to do. Every assessment already carries typed reasons, gates and a next action (apps/majordomus-cli/src/integration/model.rs:1147) and `QueueTallies` counts by disposition and lane (apps/majordomus-cli/src/integration/mod.rs:275), so the explanation is a fold over what exists. Measured on 2026-10-10 at 17:32Z: 51 open, 0 ready, 25 `needs_refresh`, 10 `needs_repair`, 7 `waiting_for_dependency`, 1 `conflicting`, 8 draft, `next_merge` null; a drain started then ends `Idle` and says nothing about the 51. No continuous run was ever started in this checkout, and no issue of I2126-I2281 covers a settle."
+current_state: "A continuous drain runs until stopped and reports cycles, merges and one sentence. Nothing decides that a queue is settled, and a drain that found nothing ready is indistinguishable from one that could not read the forge unless a person reads the sentence."
+desired_state: "`prs drain --until-settled` holds the lease, cycles as `--continuous` does, and ends by itself when no pull request is ready, none can be refreshed, none has a required check pending on a head the executor is waiting for, and no act is unfinished on the trail. Its report names every pull request of the first observation once. `prs status` answers the same predicate from the recorded observation without acting."
+scope:
+  - "apps/majordomus-cli/src/integration/drain.rs"
+  - "apps/majordomus-cli/src/integration/mod.rs"
+  - "apps/majordomus-cli/src/integration/tests.rs"
+  - "apps/majordomus-cli/src/commands/prs.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/src/capability/builtin/integration.rs"
+  - "apps/majordomus-cli/tests/integration_settle.rs"
+  - "docs/INTEGRATION.md"
+  - "docs/CLAIMS.yaml"
+  - "docs/claims"
+  - "docs/generated"
+  - "site/content"
+  - "site/data"
+non_scope:
+  - "Not a run with an identity, a budget and five typed ends: I2320 and I2321. This issue gives the predicate their `satisfied` and `blocked` read; the cycle bound here is the existing `ContinuousOptions.cycles` (drain.rs:1590)."
+  - "Not detaching the drain from its terminal: I2323."
+  - "Not closing anything: I2329. Until it lands a redundant pull request is reported blocked with the next action `prs cleanup --apply`."
+  - "Not recording a repair or starting a worker: I2327 and I2335. A pull request in the repair lane is reported blocked with its reasons."
+  - "Not the scheduled workflow: `.ai/repo/ci/queue.yaml` keeps `prs refresh && prs status` and case 350 keeps asserting it."
+  - "Not a second account of the queue: the report is derived from the observation and the trail on every read and stored nowhere else."
+depends_on: []
+acceptance_criteria:
+  - "With every pull request merged or unable to move without a person, `prs drain --until-settled` ends by itself with exit 0 and its report lists each pull request of the first observation exactly once under merged, closed or blocked, with the reason codes of its last assessment and the trail events of the steps tried on it"
+  - "While a pull request is ready, can be refreshed, or has a required check pending on a head the executor pushed, the predicate is false and the drain goes on to the next cycle"
+  - "An observation that is stale, could not be read or was cut at the forge's list limit is never settled: the drain ends naming what was not read, with a non-zero exit, and reports no pull request as explained"
+  - "The mode is refused before the lease is taken while the trail holds fewer than five verified merges since the last unverified one, exactly as `--continuous` is, and an unverified merge ends it and holds every later drain"
+  - "The JSON form of `prs status` and the `integration.queue` capability carry the same settled value and the same per-pull-request explanation the drain printed, computed by the one predicate"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test integration_settle"
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib integration::"
+  - "scripts/derive-check"
+evidence_required:
+  - "settle_predicate_test"
+  - "unread_queue_never_settles_test"
+  - "settle_report_projected"
+created_at: 2026-10-10
+updated_at: 2026-10-10

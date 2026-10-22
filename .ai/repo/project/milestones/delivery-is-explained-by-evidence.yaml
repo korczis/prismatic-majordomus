@@ -1,0 +1,54 @@
+id: delivery-is-explained-by-evidence
+title: "One question about a finished task is answered from intent to deployment out of the evidence the repository already keeps"
+slug: delivery-is-explained-by-evidence
+order: 326
+priority: p2
+problem: "A finished task cannot be explained from one place. Four partial joins exist and none spans intent to deployment: `intent_realization.explain` (apps/majordomus-cli/src/intent_realization.rs:969) joins an intent, its criteria, coverage, issues, work units, episodes and handovers and holds no commit, pull request, CI run, release or deployment; `trace.issue` and `trace.commit` (apps/majordomus-cli/src/capability/builtin/trace.rs:253,269) give issue, branches, commits and milestone, on MCP and HTTP only; `gates.completion` (capability/builtin/gates.rs:486) answers for the active task of one checkout; `delivery.feature` (capability/builtin/delivery.rs:114) answers per feature and computes three of its six dimensions as a constant unknown (delivery/mod.rs:471-473). The evidence itself is kept under four identities that no record joins: a test id with a commit and a source digest (evidence/mod.rs:589), an evidence run id (evidence/run.rs:228), an ExecutionId (execution/model.rs:357), and the task and session ids of the ledger envelope (ledger.rs:10). An execution's duration is lost when its process ends (execution/mod.rs:30), CPU time is recorded nowhere, the tracked ledger is one JSON file rewritten whole with no lock and no rename (evidence/ledger.rs:417, evidence/record.rs:971-979), and a ledger of any version but 1 is refused with no migration (evidence/ledger.rs:211). Convergence pack 01, read against master 4dfd1856d2."
+outcome: "One read capability explains a finished task from the intent and criterion it served to its commits and pull request, the tests recorded at that revision, the release that contains it and the observed deployment, each link naming the store it was read from and each unrecorded link saying unknown with its reason. What identifies an operation is a join over the task id, the session id, the ExecutionId and the evidence run id, decided in an ADR, and no fifth identifier exists. A finished execution leaves its duration, outcome and attempt in the ledger after its process ends, with what no source measured recorded as absent. The tracked ledger is replaced by rename under a lock, and its reader upgrades an older version without adding a value the older row did not carry."
+current_state: "At master 4dfd1856d2 the stores are: tracked, .ai/repo/evidence/ledger.json (the latest execution per test, version 1), .ai/repo/releases/<tag>.yaml, the closed-session records under .ai/repo/sessions and .ai/repo/ci/suite-durations.tsv; local to a checkout, .ai/local/evidence/ledger.json, .ai/local/state/ledger.jsonl, .ai/local/state/served/observations.jsonl and the integration trail; and executions in memory only. Every duration kept is wall time. Each store has its own reader and its own identifier."
+desired_state: "`majordomus delivery explain <issue or task>`, and the same capability over MCP and HTTP, answer for a task finished last week as for one finished today. A reader follows any one identifier to the other three. An execution that ran before a restart is still listed with its duration. Two recordings at once keep every row, and an executable reads the ledger its predecessor wrote."
+scope:
+  - "apps/majordomus-cli/src/delivery"
+  - "apps/majordomus-cli/src/evidence"
+  - "apps/majordomus-cli/src/execution"
+  - "apps/majordomus-cli/src/ledger.rs"
+  - "apps/majordomus-cli/src/capability/builtin"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/src/commands"
+  - "apps/majordomus-cli/tests"
+  - "share/events.yaml"
+  - ".ai/repo/adrs"
+  - "docs"
+  - "site/data"
+non_scope:
+  - "A tracing service, a task database or an evidence store beside the ledgers, the trail and the release records: the intent's non-goals and rule project.no-new-nouns refuse them"
+  - "Computing delivery's required_tests_current and test_evidence_published dimensions: that is I1960 of milestone test-evidence, whose scope names apps/majordomus-cli/src/delivery/mod.rs"
+  - "A Cockpit page for evidence, completion or delivery: milestone surfaces-project-one-delivery-state; the `ui` command is I2231"
+  - "Provider-reported consumption of a session, tokens and cost: milestone execution-telemetry, I0301-I0305"
+  - "Estimating CPU time or any other figure no source reports"
+  - "Stage timings, cache decisions and input manifests of a derive: I2311 and I2341"
+  - "Deciding a finish: the explanation reads, and check, finish and the done invariant are unchanged"
+acceptance_criteria:
+  - "One capability, declared once and projected to MCP, HTTP and the command line, returns for a finished task its intent and criterion, its commits and pull request, the tests at that revision, the release and the deployment, each with its source; proven by apps/majordomus-cli/tests/delivery_explanation.rs"
+  - "A link with no recorded evidence reads `unknown` with its reason, and no fixture from which evidence was removed reads as passed"
+  - "Any one of a task id, a session id, an ExecutionId and an evidence run id resolves to the others wherever an edge was recorded, and no identifier of a new form exists"
+  - "An execution finished before a restart is read after it with its duration, outcome and attempt, and its CPU time reads absent; proven by apps/majordomus-cli/tests/evidence_telemetry.rs"
+  - "Two concurrent recordings keep every row, a killed recording leaves the previous ledger, and an older ledger is read without a value it did not record"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test delivery_explanation"
+  - "cargo test --test evidence_telemetry"
+  - "scripts/derive-check"
+evidence_required:
+  - "task_explained_from_intent_to_deployment"
+  - "identity_is_a_join"
+  - "telemetry_survives_the_process"
+  - "ledger_written_whole"
+depends_on: []
+risks:
+  - "The shell validator and the Rust reader already select different files for the same obligation (apps/majordomus-cli/src/capability/builtin/obligations.rs:33-45), so a record threaded through both can change what finish accepts; the explanation reads and never decides a finish."
+  - "A concurrent-writer test of the tracked ledger may expose a defect on master rather than confirm a guarantee; the fix then lands with the test, and the pull request says which of the two it was."
+  - "The first change of the ledger's version makes every earlier executable refuse it (evidence/ledger.rs:211), and `ledger_at` reads the ledger of older commits (evidence/freshness.rs:352): the upgrade rule has to land before any issue moves the version."
+  - "The local ledger and the served observations are local to a machine, so a task finished elsewhere is explained from the tracked records only and its local links read unknown."
+created_at: 2026-10-10
+updated_at: 2026-10-10

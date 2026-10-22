@@ -1,0 +1,52 @@
+id: I2350
+milestone: delivery-is-explained-by-evidence
+title: "What identifies one operation is a join of the task, the session, the execution and the evidence run"
+slug: operation-identity-is-a-join
+priority: p2
+profile: deep-work
+parallel_safe: true
+serves:
+  - "delivery-is-explained-by-evidence#one-query-explains-a-task"
+objective: "Decide, in an ADR with status proposed, that one operation is identified by a join over the four identifiers the repository already mints: the task id and the session id of the ledger envelope, the ExecutionId of the execution plane and the evidence run id. Add the two missing edges as optional fields (an evidence run record names the session and the task it was recorded under; an execution names the session that asked for it) and one resolver in apps/majordomus-cli/src/evidence that follows the join from any one of the four."
+why: "Convergence pack 01 issue 01.1. No record joins the four. An evidence run is `local:<commit12>:<ts>` or `ci:<provider>:<id>:<attempt>` (apps/majordomus-cli/src/evidence/run.rs:228,341); an execution carries its ExecutionId, an actor, a repository and a correlation_id that is its own id again (execution/model.rs:357,408); the ledger envelope carries `session` and the payload `task_id` (ledger.rs:10; share/events.yaml:25-52). The only key they share today is the commit. The audit's risk for this item is that a new operation identity becomes a fourth scheme beside the test id, the ExecutionId and the task id, and the intent's second invariant refuses exactly that. A row of the tracked ledger needs no new field to reach its run: a run's id is made of its origin, its commit and the instant every one of its rows carries as `at`."
+current_state: "Four identifiers, each minted and read by its own subsystem. A run record names no task and no session, an execution names no session, and nothing resolves one identifier from another."
+desired_state: "The ADR says which parts of the join are computed, which are optional, which are local to a checkout and which may be redacted, and docs/CONCEPTS.md gains the word `operation` as the name of the join and not of a record. A run record and an execution carry the references that were known when they were written. The resolver returns the neighbours of an identifier, each with the store it came from, or `unknown` with the reason."
+scope:
+  - ".ai/repo/adrs"
+  - "docs/CONCEPTS.md"
+  - "docs/EVIDENCE.md"
+  - "docs/EXECUTIONS.md"
+  - "apps/majordomus-cli/src/evidence/run.rs"
+  - "apps/majordomus-cli/src/evidence/record.rs"
+  - "apps/majordomus-cli/src/evidence/mod.rs"
+  - "apps/majordomus-cli/src/evidence/operation.rs"
+  - "apps/majordomus-cli/src/execution/model.rs"
+  - "apps/majordomus-cli/src/execution/store.rs"
+  - "apps/majordomus-cli/src/execution/engine.rs"
+  - "apps/majordomus-cli/tests/delivery_explanation.rs"
+  - "docs/generated"
+  - "site/data"
+non_scope:
+  - "A new identifier, a new store or an index file of the join: the join is computed from the four stores on every read (rule project.derived-once)"
+  - "Dependency keys, environment identity and output digests of a derive: I2341 puts a derived artifact's inputs in the manifest the tool already writes"
+  - "Persisting an execution beyond its process: I2351"
+  - "Changing the version of the tracked ledger or of the run record: both new fields are optional and read as absent from every earlier record"
+  - "Accepting the ADR: acceptance is the owner's act"
+depends_on: []
+acceptance_criteria:
+  - "From a fixture holding one task, its session, one execution and one evidence run, the resolver returns the other three for each of the four identifiers, each with the store it was read from"
+  - "An identifier with no recorded edge returns that neighbour as `unknown` with the reason; a test that deletes the edge fails if a neighbour is still returned"
+  - "A run record and an execution serialised before this change deserialise unchanged and resolve with the new references absent"
+  - "Every identifier the join returns parses as one of the four existing forms, and a test fails on an identifier of any other form"
+  - "The join serialises to identical bytes twice and carries no absolute path, credential or prompt text; a secret seeded into an execution's input does not appear in it"
+validation:
+  - "bin/majordomus plan validate"
+  - "bin/majordomus adr check"
+  - "cargo test --test delivery_explanation"
+  - "scripts/derive-check"
+evidence_required:
+  - "operation_join_adr_proposed"
+  - "join_resolves_from_each_identifier_test"
+  - "no_new_identifier_test"
+created_at: 2026-10-10
+updated_at: 2026-10-10

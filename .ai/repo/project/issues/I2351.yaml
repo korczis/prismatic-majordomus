@@ -1,0 +1,51 @@
+id: I2351
+milestone: delivery-is-explained-by-evidence
+title: "An execution's duration, outcome and retries survive its process as evidence"
+slug: execution-facts-survive-the-process
+priority: p2
+profile: implementation
+parallel_safe: true
+serves:
+  - "delivery-is-explained-by-evidence#telemetry-survives-the-process"
+objective: "Append one line per finished execution to the ledger through apps/majordomus-cli/src/ledger.rs, under an event declared in share/events.yaml, carrying the ExecutionId, the capability, the final state, the instants it was accepted, started and finished, the duration the engine measured, its attempt number and the references of I2350. Have the executions reader answer from those lines for an execution the process no longer holds."
+why: "Convergence pack 01 issue 01.2. An execution's `duration_ms` and its instants exist in memory only (apps/majordomus-cli/src/execution/model.rs:376), the store is bounded, and execution/mod.rs:30 says no execution outlives the process that accepted it. The other durations the repository keeps are wall time as well: whole seconds on a test row (evidence/mod.rs:599), `duration_ms` of an economics run (economics/model.rs:687), the rows scripts/ci/timed appends. CPU time is recorded nowhere: a search for cpu and rusage over evidence, execution, economics, perf.rs and capability/executor.rs finds nothing. Milestone execution-telemetry (I0301-I0305) states the rule this issue keeps: a figure no source reports is recorded as an absence with its reason and is never estimated. The ledger already has a Rust writer for this purpose, a command capability recording what it did (ledger.rs:1-12), and a declared vocabulary that refuses a name it does not register."
+current_state: "A finished execution is readable until the server restarts or newer ones displace it. Afterwards nothing says that it ran, how long it took or how it ended."
+desired_state: "After a restart the executions reader lists a finished execution from its ledger line, marked as recorded rather than live, with its state and duration. A second run of the same capability with the same input under the same task is a second line whose attempt is 2, and the failed first line stays failed. CPU time is absent on every line with the reason that nothing measured it."
+scope:
+  - "apps/majordomus-cli/src/execution"
+  - "apps/majordomus-cli/src/ledger.rs"
+  - "apps/majordomus-cli/src/capability/builtin/executions.rs"
+  - "share/events.yaml"
+  - "apps/majordomus-cli/tests/evidence_telemetry.rs"
+  - "docs/EXECUTIONS.md"
+  - "docs/EVIDENCE.md"
+  - "docs/CLAIMS.yaml"
+  - "docs/claims"
+  - "docs/generated"
+  - "site/data"
+non_scope:
+  - "A durable queue, a retry or a resume of an execution: the plane is not a job system (execution/mod.rs:30); this issue records what ran and re-runs nothing"
+  - "A second store or a second event channel: the line goes to .ai/local/state/ledger.jsonl through the one Rust writer, and the WebSocket at /events is unchanged"
+  - "Measuring CPU time: it stays an explicit absence until a measured source exists, as milestone execution-telemetry requires"
+  - "Provider-reported tokens and cost of a session: I0301-I0305"
+  - "Stage timings and cache decisions of a derive: I2311"
+  - "Writing execution lines into the tracked ledger .ai/repo/evidence/ledger.json: that file holds test evidence, and these lines are local to the checkout"
+depends_on:
+  - "I2350"
+acceptance_criteria:
+  - "An execution finished in one server process is read by a new process with its id, capability, final state, instants and duration; proven by apps/majordomus-cli/tests/evidence_telemetry.rs"
+  - "A failed and a cancelled execution are recorded as failed and cancelled, and a later success of the same call is a second line with attempt 2 that leaves the first line unchanged"
+  - "Every line records CPU time as absent with a reason, and no surface prints a number for it"
+  - "The writer refuses an event name that share/events.yaml does not declare, and the test asserts the refusal"
+  - "The line carries a digest of the redacted input and no input value; a credential seeded into the input is absent from the ledger"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test evidence_telemetry"
+  - "cargo test --test executions"
+  - "scripts/derive-check"
+evidence_required:
+  - "execution_read_after_restart_test"
+  - "absence_recorded_not_estimated_test"
+  - "failed_attempt_stays_failed_test"
+created_at: 2026-10-10
+updated_at: 2026-10-10

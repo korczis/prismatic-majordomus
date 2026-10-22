@@ -1,0 +1,47 @@
+id: I2348
+milestone: derive-does-bounded-work
+title: "A suite case declares what it reads, and a change selects the cases that read it"
+slug: a-case-declares-what-it-reads
+priority: p2
+profile: implementation
+parallel_safe: false
+serves:
+  - "delivery-is-explained-by-evidence#skips-are-recorded"
+objective: "Let a case under `test/cases/` declare the paths it reads in a `# majordomus-reads:` header, beside the headers `test/run.sh` already reads (`majordomus-exclusive`, `majordomus-timeout`, `majordomus-skip-runs-in`), and verify every declaration: on every full plan the Linux suite runs each declaring case under a file-read trace and fails the declaration of a case that read a tracked path its header does not name. `scripts/ci-plan` leaves a case out of an affected plan only when its declaration was verified by the last full run at the planned base, and lists each case left out with the reason and I2347's input hash over its reads; a case without a verified declaration, every case in a full plan, and every case when a changed path is unclassified, run as today."
+why: "Autopilot pack 05 issue 3 asks for an affected closure, and convergence pack 04 issue 04.1 for conservative selection with a full fallback when impact cannot be proved. The closure stops at path classes: 22 of the 28 classes of `.ai/repo/ci/gates.yaml` select the whole `shell-suite`, and no case declares what it reads; the unlanded milestone ci-critical-path measured 0 of 409 on 2026-10-08. So a change to a document selects every case, and the suite is the required check's long pole: 51011 case-seconds over 407 cases in run 37760481991, sharded wall of 68-85 minutes per slowest shard on the #881 branch (the recorded timings of the derive-performance gap audit), and a first-attempt green validate run p50 5423 s and p95 8290 s (n=32) on 2026-10-10. Milestone ci-critical-path and I2115 cut case 95 and lower its budget; neither selects cases by what they read. The risk is the one the gap file on A05.3 names: a declaration too narrow reads as green, not as noise. Hence every rule here widens rather than narrows: a case that declares nothing always runs, implicit reads that every case has (its own file, test/lib.sh, test/run.sh, bin/, lib/) are added to every declaration, and the full plan of every master push and of the schedule runs every case."
+current_state: "`shell-suite` is one gate that runs every case of `test/cases/` whenever it is selected. No case header names what the case reads."
+desired_state: "`plan.json` names the cases a pull request's change selects and the ones it leaves out with why; `test/run.sh` runs that list and `--verify-report` still proves a full run left nothing out; a case without a declaration is never left out."
+scope:
+  - "test/run.sh"
+  - "test/lib.sh"
+  - "scripts/ci-plan"
+  - "scripts/ci/run-plan"
+  - ".github/workflows/validate.yml"
+  - "docs/CI.md"
+  - "test/cases/94_ci_plan.sh"
+  - "docs/claims/suite-parallel.md"
+non_scope:
+  - "Not adding the header to the cases: each case gains its declaration in a change of its own, reviewed against what the case reads; this issue ships the mechanism with at most the cases its own proof needs"
+  - "Not the sharding of the suite or `.ai/repo/ci/suite-durations.tsv`: the branch origin/fix/the-suite-is-dealt-from-measured-seconds (#881) and milestone ci-critical-path"
+  - "Not cutting case 95 or any case's cost: I2115"
+  - "Not narrowing a path class or removing a gate from a plan: the gate set a change selects is unchanged; only the cases inside `shell-suite` are chosen"
+  - "Not skipping a case on a master push, on the schedule, under `ci:full` or for an unclassified path"
+depends_on:
+  - "I2347"
+acceptance_criteria:
+  - "Over listed paths that match only one case's declared reads, the affected plan lists that case, every case without a declaration and no other, and records each case left out with its reason and input hash"
+  - "A change to a file under lib/ or bin/, to test/lib.sh or to test/run.sh selects every case"
+  - "A full plan and a plan with an unclassified path list every case, and `test/run.sh --verify-report` passes on the full run"
+  - "A case whose header names a path that matches no tracked file is refused by `scripts/ci-plan --check`"
+  - "The required verdict stays red when a listed case fails, and a case left out never counts as passed"
+  - "A case whose traced reads on a full run include a tracked path its header does not name fails that run naming the case and the path, and it is not left out of any affected plan until a later full run verifies it"
+  - "A case is left out of an affected plan only with a verification from the last full run at the planned base; with no such run every case is selected"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 94_ci_plan"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 417_the_suite_finishes_inside_its_bound"
+evidence_required:
+  - "case_selection_by_reads_case"
+  - "undeclared_case_always_runs"
+created_at: 2026-10-10
+updated_at: 2026-10-10

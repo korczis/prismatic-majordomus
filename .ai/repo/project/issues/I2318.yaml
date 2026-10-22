@@ -1,0 +1,48 @@
+id: I2318
+milestone: an-unattended-run-has-declared-authority
+title: "A repair names the issue and the criterion it serves, or the exemption it runs under, and a repair no issue covers is handed a drafted one"
+slug: a-repair-names-what-it-serves
+priority: p2
+profile: implementation
+parallel_safe: true
+serves:
+  - "a-drain-settles-unattended#repair-is-dispatched"
+objective: "In apps/majordomus-cli/src/integration (repair.rs and the drain's refresh step) resolve every repair to the issue its pull request's head branch names, the milestone that issue declares and the criteria it `serves`, and write them on the trail event of the act; where no issue resolves, write the declared `integration` exemption with its reason. For a pull request that needs authored repair and resolves to no issue, have `integration.explain` carry a read-only draft of the issue, so that the worker who takes the repair writes the record and starts it through `plan.transition`."
+why: "Autopilot pack 01 issue 3. Nothing binds a `prs repair` or an executor refresh to the plan. The only link is derived and the act does not use it: an assessment carries the `issue` its head branch names and the `milestone` of that issue (apps/majordomus-cli/src/integration/model.rs:1134-1142), and a task that lands other tasks' work may start under the `integration` exemption with a reason (.ai/repo/policy.yaml:43-55, asked once at lib/start.sh:103-128). The trail event (`IntegrationEvent`, apps/majordomus-cli/src/integration/drain.rs:584) names the pull request and the head, and nothing the work is for. Measured on 2026-10-10: the queue held 10 pull requests needing repair, and the trail since 2026-10-04 holds 5 repairs and 0 of 3 refreshes succeeded. The repairs that will be handed to workers (I2327, I2335) have to say what they serve before a worker can start under `intent.binding`. Creating plan records is the constrained half. `plan.transition` is the plan's only writer, asserted at apps/majordomus-cli/src/capability/builtin/plan.rs:999, and it stamps an existing issue; it creates none. An issue id is taken on the peer board by whoever starts the work, which an executor cannot do for someone else. And an issue written for every repair would grow the plan and the GitHub projection backlog, whose ceiling may only fall (.ai/repo/ci/github-drift-baseline.txt: missing 192, adopt 19). So the executor resolves and records, and what it cannot resolve it drafts without writing: the draft has no id, and a second plan writer is not added. Drafting work for a criterion nothing serves is I2218 (owner packs wave 1, not on master), and its draft shape is the one to reuse."
+current_state: "A repair's trail line names a pull request and a head. What the repaired work serves is recoverable only from the branch name, and a repair with no issue is bound to nothing."
+desired_state: "Every `repaired`, `repair_refused`, `refreshed` and `refresh_failed` line on the trail carries the issue, the milestone and the criteria the pull request serves, or the exemption class and the reason it ran under, and `integration.explain` shows the same. A pull request that needs authored repair and resolves to no issue comes with one draft, keyed by the pull request so that asking again returns the same draft, under a milestone that exists; given an id by the worker that takes it, the draft passes `plan validate`."
+scope:
+  - "apps/majordomus-cli/src/integration/repair.rs"
+  - "apps/majordomus-cli/src/integration/model.rs"
+  - "apps/majordomus-cli/src/integration/drain.rs"
+  - "apps/majordomus-cli/src/capability/builtin/integration.rs"
+  - "apps/majordomus-cli/tests/worker_dispatch.rs"
+  - "apps/majordomus-cli/tests/integration_repair.rs"
+  - "docs/INTEGRATION.md"
+  - "docs/PLANNING.md"
+non_scope:
+  - "Not a second plan, queue or list of repairs: the binding is fields on the trail event and on the assessment, and a draft becomes an ordinary issue file only when a worker writes it"
+  - "Not a second writer of the plan: nothing here creates or stamps an issue record, and the assertion at apps/majordomus-cli/src/capability/builtin/plan.rs:999 stays as it is"
+  - "Not deriving drafts from uncovered criteria: that is I2218 (`intents.draft_plan`, owner packs wave 1, not on master)"
+  - "Not turning a pull request that needs repair into a task, nor starting a worker on it: I2327 and I2335"
+  - "Not allocating an issue id: the worker that takes the draft announces the number on the peer board"
+  - "Not raising the GitHub projection ceiling for drafted work: .ai/repo/ci/github-drift-baseline.txt may only fall"
+  - "Not requiring a binding of every task in this repository: I2202 (owner packs, not on master) turns `intent.binding` to required"
+depends_on: []
+acceptance_criteria:
+  - "A `prs repair --apply` or an executor refresh of a pull request whose head branch names an issue writes that issue, its milestone and its `serves` entries on the trail event of the act, and `integration.explain` shows the same binding"
+  - "A repair of a pull request that names no issue records the `integration` exemption and its reason; where the policy declares no such exemption the repair is refused with exit 10 under `intent.binding: required` and recorded as unbound under `advisory`"
+  - "An issue id the branch names and the plan does not hold is reported as unresolved, never recorded as a binding"
+  - "For a pull request that conflicts on an authored path and resolves to no issue, `integration.explain` carries a draft with no id under an existing milestone; asking twice returns the same bytes, and the draft given an id passes `plan validate`"
+  - "A trail written before this change reads without error, and its repairs fold as unbound, not as bound to nothing"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test worker_dispatch"
+  - "cargo test --test integration_repair"
+  - "scripts/derive-check"
+evidence_required:
+  - "repair_binding_on_trail_test"
+  - "unbound_repair_refused_test"
+  - "repair_draft_is_stable_test"
+created_at: 2026-10-10
+updated_at: 2026-10-10

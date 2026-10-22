@@ -1,0 +1,63 @@
+id: I2315
+milestone: an-unattended-run-has-declared-authority
+title: "An authority profile in the policy, read from the trunk, declares what an unattended run may push, merge, close, release and deploy, and an absent profile changes nothing"
+slug: authority-profile-read-from-trunk
+priority: p1
+profile: deep-work
+parallel_safe: false
+serves:
+  - "a-drain-settles-unattended#authority-is-declared"
+objective: "Add an `authority` section to the policy (share/schemas/majordomus/policy/policy.v1.schema.json, typed in apps/majordomus-cli/src/policy.rs) that declares what an unattended run may do: push to a pull-request head, refresh, record a repair as a task, dispatch a worker, merge, close, tag, publish and deploy to named targets, within declared budgets and concurrency and until an expiry. Add one reader in apps/majordomus-cli/src/integration that takes the section from the base branch at the commit the forge reports, show it through `integration.queue`, and make the gate of `prs drain --continuous` its first consumer."
+why: "Autopilot pack 01 issue 4, and the per-run authorization of issue 1. No authority record exists. The policy schema's top-level keys are closed with no authority key; a crate search for authority, delegation and unattended finds no such record; `ActorKind` is documented as 'Not an authorisation decision' on a server that 'authenticates nobody' (apps/majordomus-cli/src/execution/model.rs:301); and `needs_confirmation` only says an effect is not a read (apps/majordomus-cli/src/capability/model.rs:585). What decides today is the lease, GitHub's protection and one compiled constant, `ROLLOUT_MERGES_BEFORE_CONTINUOUS = 5` (apps/majordomus-cli/src/integration/drain.rs:1232), asked at apps/majordomus-cli/src/commands/prs.rs:345 before the lease is touched. That count is a process restriction the owner set in ADR 0101 section 13, stated by rule project.integration-follows-the-current-master (version 3), and a profile is where it is declared. The audit's risk is the design constraint: a profile kept in the repository is editable by the worker it constrains, so read from the head or the working tree it is self-granted authority. `ForgeObservation.base_sha` (apps/majordomus-cli/src/integration/forge.rs:49) is the base commit as the forge reported it, and a blob read at that commit is content-addressed, so the local object store can serve the bytes without the worker being able to choose them. The same reasoning makes a pull request that changes the section one the run must not merge for itself. The word needs a decision as well: `profile` already names the bundle under .ai/repo/profiles (docs/CONCEPTS.md:9). Measured on 2026-10-10: the protection required `ci` with strict off and administrators not enforced, and #901 was merged with `--admin` before its check concluded, with no line on the executor's trail. Authority exercised outside any record is the current state."
+current_state: "What an unattended act may do is whatever the session that runs it was allowed locally. `prs drain --continuous` is refused until the trail holds five verified merges since the last unverified one, a number compiled into the executable. No record says what a run may do, and no trail line says under what authority an act was taken."
+desired_state: "The trunk's policy may carry an `authority` section with closed keys. The executor reads it at the observed base commit, `prs status` shows it with that commit, and an act taken under it names that commit on the trail. A profile declares the count of verified merges continuous mode needs; without a profile the count is five and every command behaves as at master 4dfd1856d2. A profile that is expired, unreadable or carries an unknown key is no authority at all, and a pull request whose merge would change the section is held for a person."
+scope:
+  - "share/schemas/majordomus/policy/policy.v1.schema.json"
+  - "share/allow/policy.txt"
+  - "apps/majordomus-cli/src/policy.rs"
+  - "apps/majordomus-cli/src/integration/authority.rs"
+  - "apps/majordomus-cli/src/integration/mod.rs"
+  - "apps/majordomus-cli/src/integration/drain.rs"
+  - "apps/majordomus-cli/src/integration/classify.rs"
+  - "apps/majordomus-cli/src/commands/prs.rs"
+  - "apps/majordomus-cli/src/capability/builtin/integration.rs"
+  - "apps/majordomus-cli/tests/authority_profile.rs"
+  - "apps/majordomus-cli/tests/integration_rollout.rs"
+  - ".ai/repo/adrs"
+  - ".ai/repo/rules/project"
+  - "docs/CONCEPTS.md"
+  - "docs/INTEGRATION.md"
+  - "docs/CLAIMS.yaml"
+  - "docs/claims"
+non_scope:
+  - "Not a key for a safety invariant: nothing in the section reaches the hold after an unverified merge (`halted_by`, drain.rs:1211, owner decision D7, lifted only by a person's `prs drain --resume-after-failure`), `--admin`, a merge over a required check that has not passed on the current head, or a head without master. The schema has no key for them and gains none here"
+  - "Not reading the profile from the pull-request head, the working tree, .ai/local or a local branch ref"
+  - "Not adding the section to share/skeleton/policy.yaml or to this repository's .ai/repo/policy.yaml: a repository declares authority by a person's pull request, and this issue ships none"
+  - "Not typing rules as invariant, process or heuristic, nor tying each key to a process rule: I2316"
+  - "Not scope amendment inside the profile: I2317. Not the run that names the profile and spends its budgets: I2320 and I2321"
+  - "Not making release or deployment consult the profile: the release chain is I2299; this issue declares the keys and the reader"
+  - "Not permission for another machine to run work: I2334; a mesh identity gives no authority (apps/majordomus-cli/src/mesh/trust.rs:6-8)"
+  - "Not the trust-boundary ADR of acceptance: I2236 (owner packs wave 2, not on master)"
+  - "Not client permission settings: the projection of preauthorized ssh access is branch origin/chore/ssh-permissions-are-shared"
+depends_on: []
+acceptance_criteria:
+  - "In a repository whose trunk policy has no `authority` section, `prs drain`, `prs drain --continuous`, `prs repair` and `prs cleanup` refuse, act and write the trail exactly as at master 4dfd1856d2, and `prs status` says no authority is declared"
+  - "A profile present at the observed base commit is shown by `integration.queue` with that commit, and the count it declares decides `continuous_refused` in place of the compiled five"
+  - "The same section edited on a pull-request head, in the working tree, or on a local ref the forge does not report changes no decision: the test moves each in turn and the answer stays the trunk's"
+  - "A profile that is past its expiry, does not parse, or carries a key the closed schema does not define is refused whole and reported as no authority, never as a wider one"
+  - "A pull request whose merge would change the `authority` section is not merged by an executor acting under a profile, and the queue names the reason"
+  - "The decision is an ADR with status `proposed`, and docs/CONCEPTS.md says what the authority profile is and how it differs from the task profile under .ai/repo/profiles"
+  - "A pull request that changes any path deciding a run's authority or its required check — the policy and its schema, the authority reader, .ai/repo/rules, the vendored rule package, the provider settings and hooks under .claude, .codex and .gemini, .githooks, .github/workflows and .ai/repo/ci — is held and never merged or tagged by a run acting under a profile, and the queue names the path; the list is one declaration the test reads"
+  - "A profile may raise the count of verified merges before continuous mode and never lower it below the five of ADR 0101 section 13; a lower or absent value is the compiled five, and changing that floor is an owner's decision recorded by ADR, not a profile key"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test authority_profile"
+  - "cargo test --test integration_rollout"
+  - "scripts/derive-check"
+evidence_required:
+  - "authority_read_at_base_commit_test"
+  - "absent_profile_unchanged_test"
+  - "head_edit_changes_nothing_test"
+  - "proposed_adr"
+created_at: 2026-10-10
+updated_at: 2026-10-10

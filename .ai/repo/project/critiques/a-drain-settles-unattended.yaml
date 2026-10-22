@@ -1,0 +1,140 @@
+intent: a-drain-settles-unattended
+reviewed_at: 4dfd1856d2
+reviewed_by: "claude-code subagent (general-purpose, fresh context) dispatched by session b24c5456 with the records, the packs and the audits and none of the author's reasoning; same model and operator session as the author, so independent of the authoring context and not of its blind spots"
+findings:
+  - id: authority-boundary-can-be-widened-through-the-queue
+    class: regression_risk
+    subject: I2315
+    finding: "I2315 holds back only a pull request whose merge changes the policy section `authority`, but what decides authority also lives in the policy schema, the reader integration/authority.rs, the rule kinds I2316 makes decisive (.ai/repo/rules/project front matter), the vendored package of I2319, the tracked .claude/settings.json and .claude/hooks, and .github/workflows/validate.yml that computes `ci`. A run acting under a profile may merge any of those (and I2359 may then tag it), so it can widen its own authority or weaken its own required check with no person, against invariant 3 and the gap risk that a profile editable by the worker is self-granted authority."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2315
+      because: "I2315 now holds every pull request that changes a path deciding authority or the required check (policy and schema, authority reader, rules, vendored package, provider settings and hooks, .githooks, workflows, .ai/repo/ci), declared once and tested."
+  - id: worker-runs-under-the-head-settings-and-admin-credentials
+    class: regression_risk
+    subject: I2335
+    finding: "The dispatched worker runs the harness in the pull request branch worktree; harness_args passes `--setting-sources project,local` (economics/runner.rs:589-601), so the head-controlled tracked .claude/settings.json and .claude/hooks set its permissions and execute code, and it runs with the operator git and gh credentials while master protection has enforce_admins false (audit-20261010/protection.json). Nothing stops a worker from pushing to master, force-pushing or merging with --admin; the acceptance only asserts that `bypassPermissions` is absent, so invariant 1 (no --admin) and invariant 3 (authority never from the head) hold for the executor and not for its workers."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2335
+      because: "I2335 now shuts the head's project and local settings and hooks out of the harness, takes permissions from the trunk profile only, lets a worker push only its task branch, and records a run fatal when the base moved by anything but the executor or a merge or --admin was invoked."
+  - id: rollout-count-is-delegable-with-no-floor
+    class: regression_risk
+    subject: I2315
+    finding: "I2315 desired_state lets a profile declare the count of verified merges that unlocks continuous mode, with no lower bound (zero is valid), and I2316 records that count as a process; yet I2314 non_scope says ADR 0101 section 13 is unchanged, and the gap risk says the five-verified-merges gate is a safeguard to keep. An ADR left `proposed` by the same issue is not the owner decision that loosening ADR 0101 needs; a floor or keeping the count non-delegable is missing."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2315
+      because: "I2315 now lets a profile only raise the count above the five of ADR 0101 section 13; the floor changes only by an owner's ADR."
+  - id: permitted-skip-changes-behaviour-without-a-profile
+    class: regression_risk
+    subject: I2330
+    finding: "classify.rs:203 makes a skip a pass only for a context in `skipped_permitted`, empty in production (integration/mod.rs:340). I2330 fills that list from the gate model on master with no authority profile involved, so in a repository whose protection requires per-job contexts the executor merges on a required check that did not pass where it refused before. That breaks invariant 1 (required check passed), invariant 6 (no profile drains exactly as before) and the first acceptance criterion of I2315."
+    blocking: true
+    resolution:
+      state: rejected
+      because: "I2330 is withdrawn: the only required check is the `ci` aggregator (protection observed 2026-10-10), which already judges each gate's skip against the plan (scripts/ci/verdict:56-65); a skipped `ci` must never pass, so nothing is left for skipped_permitted to carry."
+  - id: scope-amendment-rests-on-a-contract-with-no-record
+    class: unproven_assumption
+    subject: I2317
+    finding: "I2317 appends amendments to the tracked acceptance contract that I2237 plans, but I2237 has no record on any ref: it is a placeholder prompt in the gitignored tmp/owner-packs/prompts whose text says the coordinator renumbers it into I2200-I2399, the range this plan allocates from. depends_on names I2114 and I2315 only, and the gap risk says building on current.yaml legitimises bypass F01, so criterion scope-is-amended-not-bypassed has no buildable path as written."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2317
+      because: "I2317 now says I2237 has no record and makes recording I2237's tracked contract its first commit, under I2237's id taken on the board, when no record is on master; current.yaml is never built on."
+  - id: command-evidence-can-never-settle-a-criterion
+    class: delivery_verification
+    subject: "a-drain-settles-unattended#authority-is-declared"
+    finding: "All ten criteria use `evidence: command`, which intent.rs:1135-1139 resolves to NotDerivable without looking at the ref, and verdict() turns any NotDerivable into unknown: the intent can never read satisfied, and a ref naming a test that is never written is never reported. Every ref is a cargo test binary or a suite case, which `evidence: test` (crate:<binary>, suite:<case>) resolves and the ledger settles."
+    blocking: true
+    resolution:
+      state: rejected
+      because: "A `test` ref must name a test already in the tree or the validator fails it (apps/majordomus-cli/src/intent.rs:1101-1112, unresolved_evidence_ref), and every test these criteria name is written by the issue that serves the criterion; so each criterion names the command that will prove it until then, and the issue that adds the test switches its criterion to `evidence: test` in the same pull request."
+  - id: evidence-refs-pass-vacuously-or-are-shared
+    class: delivery_verification
+    subject: "a-drain-settles-unattended#settles-on-a-large-queue"
+    finding: "The ref `cargo test --lib integration::tests::settles` is a name filter, and cargo exits 0 when no test matches, so it passes today with zero tests; I2332 non_scope also says the criterion file is tests/integration_settle.rs, which contradicts the ref. a-run-is-durable and a-run-ends-typed share `--test integration_run`, and the-queue-settles shares `--test integration_settle` with tests I2328, I2329 and I2330 add, so one passing binary proves several criteria at once."
+    blocking: false
+    resolution:
+      state: open
+  - id: phase-attempt-and-fencing-are-delivered-by-no-issue
+    class: insufficient_work
+    subject: "a-drain-settles-unattended#a-run-is-durable"
+    finding: "The criterion asks for a phase and an attempt count folded from the trail; I2320 folds identity, base, outcome, start, acts and end and I2321 adds budget and authority, and no issue adds phase, attempt, cursor or progress watermark (autopilot pack 02 issue 1). Pack 02 issue 2 asks to detect a dead owner by heartbeat or fencing token, not time alone; I2322 non_scope refuses a heartbeat and I2337 refuses a fencing token, and no record says the requirement was dropped."
+    blocking: false
+    resolution:
+      state: open
+  - id: demonstration-misses-dependencies-and-the-owner-act
+    class: delivery_verification
+    subject: I2367
+    finding: "I2367 depends on I2325, I2321 and I2335 but not I2322 (resume after a kill) or I2323 (detach), though its crash scenario needs resume. Its live run against this repository needs an authority profile on this trunk, which I2315 leaves to an owner pull request no issue or dependency records, and five verified merges after the last verification_failed. The five outcomes run only against a scripted forge, so case 1052 does not prove the criterion's recorded unattended run in this repository, and the unavailable-peer fallback of autopilot pack 06 issue 3 is dropped."
+    blocking: false
+    resolution:
+      state: open
+  - id: refresh-failure-and-check-rerun-have-no-owner
+    class: insufficient_work
+    subject: the-queue-settles
+    finding: "The trail holds 0 successful refreshes of 3, and I2331 names the cause (the commit hook doctor budget) while I2312 only records the failing line; no issue fixes it, so with 25 needs_refresh the settling run in this repository ends blocked. I2328 non_scope says no issue plans rerunning a cancelled required check (29 of the 120 runs measured were cancelled), and I2330 says review requests are never written, so those pull requests wait for a person, against the zero-manual-prompt target of the autopilot README and pack 04 issue 4."
+    blocking: false
+    resolution:
+      state: open
+  - id: hard-prerequisites-live-only-in-prose
+    class: regression_risk
+    subject: I2326
+    finding: "Prerequisites are written in non_scope and absent from depends_on: I2326 on I2298 (branch only), I2317 on I2237 (no record), I2339 on pull request #860 and on a person accepting the ADR of I2334, and I2340 on I2143, whose claim expiry its own acceptance asserts for an unreachable receiver. plan next reads depends_on, so it offers these issues as ready while the work they stand on is unlanded or held by other sessions."
+    blocking: false
+    resolution:
+      state: open
+  - id: parallel-safe-flags-contradict-the-milestone
+    class: regression_risk
+    subject: I2318
+    finding: "I2318, I2323 and I2324 are parallel_safe true although their scopes hold integration/drain.rs, model.rs, commands/prs.rs, cli.rs, capability/builtin/integration.rs and dashboard.rs, shared with fifteen to twenty-five other issues of both intents and with I2298, I2296, #828 and #859; milestone the-queue-settles says these issues are marked not parallel-safe for exactly that reason."
+    blocking: false
+    resolution:
+      state: open
+  - id: issue-scopes-omit-their-projections
+    class: surface_missing
+    subject: I2322
+    finding: "I2315, I2316, I2317, I2318, I2320, I2321, I2322, I2323, I2324, I2329 and I2331 change capabilities, CLI flags or schemas whose projections are written under docs/generated and site/data, and none lists them in its scope; finish judges the task scope and the admission of derive projections (I2114) is not landed, so each would be refused at finish or widened by hand."
+    blocking: false
+    resolution:
+      state: open
+  - id: worker-grant-and-board-access-are-assumed
+    class: unproven_assumption
+    subject: I2336
+    finding: "I2336 assumes a run can grant a denied tool call to a running headless session and let it continue; the harness is a one-shot stream-json invocation and the issue names no permission-prompt mechanism that would carry such a grant. I2318 expects the worker that takes a drafted issue to announce its id on the peer board, while harness_args passes --strict-mcp-config with an empty MCP config, so a worker has no board; and autopilot pack 01 issue 3 asks to create or link the issue through plan transitions, which ends here at a read-only draft no issue turns into a record."
+    blocking: false
+    resolution:
+      state: open
+  - id: settling-mode-runs-with-no-declared-authority
+    class: regression_risk
+    subject: "a-drain-settles-unattended#authority-is-declared"
+    finding: "The criterion says that with no profile nothing unattended runs, while invariant 6 keeps the profile-less continuous drain and I2325 gates `--until-settled` only on the five verified merges, never on a profile; I2321 refuses a run with no profile but leaves a drain without a run unchanged. The plan ships a new unattended merging loop that needs no declared authority, and the intent contradicts itself on whether it may."
+    blocking: false
+    resolution:
+      state: open
+  - id: train-pushes-unmerged-commits-without-a-grant
+    class: regression_risk
+    subject: I2326
+    finding: "The train merges link k (unmerged, another author) into link k+1 and pushes it to that author branch with no authority-profile grant, and the depth is read from .ai/repo/ci/queue.yaml, a second place that declares what an unattended run may do beside the profile. Autopilot pack 04 issue 2 requires delegated permission before updating an unowned branch, and ADR 0129 decision 5 already leaves a closed lower link blocking its upper link for a person."
+    blocking: false
+    resolution:
+      state: open
+  - id: covered-elsewhere-claims-name-unrecorded-work
+    class: missed_requirement
+    subject: an-unattended-run-has-declared-authority
+    finding: "non_scope hands the trust-boundary ADR, the tracked scope contract, its evaluator and the CI gate to I2236, I2237, I2238 and I2239, none of which has a record on any ref; they are placeholder prompts in a gitignored directory whose ids the coordinator may renumber. The autopilot README asks to confirm authority through user-established local config, and the plan replaces that with a trunk read without an accepted decision; I2315 only proposes one."
+    blocking: false
+    resolution:
+      state: open
+  - id: gap-work-list-is-incomplete
+    class: delivery_verification
+    subject: I2331
+    finding: "The gap record lists 26 work items, while I2331 and I2333 also serve a-drain-settles-unattended#the-queue-settles and appear in no work entry, so the gap does not account for work the plan carries."
+    blocking: false
+    resolution:
+      state: open

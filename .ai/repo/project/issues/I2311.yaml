@@ -1,0 +1,50 @@
+id: I2311
+milestone: the-delivery-baseline-is-recorded
+title: "A derive records its stage timings with the host, the load and whether the build was cold"
+slug: a-derive-records-its-stage-timings
+priority: p1
+profile: implementation
+parallel_safe: true
+serves:
+  - "delivery-is-explained-by-evidence#baseline-is-recorded"
+objective: "Have `scripts/derive` write one record per run under `.ai/local/` of its checkout - the seconds of the lock wait, of the build and of each stage A to D it reached, the host, the platform, the cores, the load average at start and at end, the build state, the commit, the branch and the exit status - and add `scripts/derive --benchmark`, which takes samples the way `scripts/pages benchmark` does (scripts/pages:322) and writes `.ai/repo/benchmarks/derive/baseline.<platform>.json`. `scripts/ci-baseline --delivery` then reads that baseline into the delivery record's derive section."
+why: "Autopilot pack 05 issue 1 and convergence pack 02 issue 02.5. The only derive timing today is `step` and `step_done` in scripts/derive:60-63 and the total at :186: whole seconds on stderr, kept by nothing. Stage B has 37 `gen:*` phases that report only under `MJ_TIMING=1` (lib/common.sh:439), and no run records them either. So every derive time the repository can cite is one sample from a commit message: 699 s on Linux with the build included (f1a892ebc6), over an hour for the same derive on the shared Mac at load 25 (the same commit, no number), 302 s on a second MacBook (2b782e1280), 831 s under the shared lock (7f896c52ec), and 185 s, 1125 s and 2135 s for three derives of one branch in one evening at load 152 on 18 cores (I1409, current_state). None says how the time divides between the lock wait, the build and the four stages, whether the build was cold, or what else the machine was doing, and I1409 already warns that no absolute timing taken that day is a property of any command. The audit of 2026-10-10 found no stage split, no cold or warm split, no time for a derive with nothing changed and no percentile anywhere. Without this record I2346 has nothing to set a budget from and I2370 nothing to compare."
+current_state: "A derive prints `==> derive: <stage>: Ns` per stage and a total, and forgets them. `.ai/repo/benchmarks/` has no directory for the derive."
+desired_state: "Every derive that ends, in success or failure, leaves a record with its provenance under `.ai/local/`; `scripts/derive --benchmark -n <N>` runs N derives under the machine lock, prints min, median, p90 and max per stage with the provenance of the samples, and with `--write-baseline` writes the platform's baseline; the delivery record's derive section is read from it and is `unknown` on a platform that has none."
+scope:
+  - "scripts/derive"
+  - "scripts/ci-baseline"
+  - ".ai/repo/benchmarks/README.md"
+  - ".ai/repo/benchmarks/derive"
+  - ".ai/repo/benchmarks/delivery/baseline.json"
+  - "docs/PERFORMANCE.md"
+  - "docs/GITHUB_PAGES_ARCHITECTURE.md"
+  - "test/cases/1053_the_delivery_baseline_is_a_record.sh"
+  - "test/cases"
+non_scope:
+  - "Not changing lib/machine_lock.sh or when the lock is taken: the wait is timed around `mj_lock_acquire` in scripts/derive, and every sample of the benchmark runs under the lock (rule project.one-derive-at-a-time, PR #855)"
+  - "Not a budget, a threshold or a gate on these figures: I2346"
+  - "Not making any stage cheaper or skipping one: milestone derive-does-bounded-work"
+  - "Not the phase timers of lib/common.sh as the stage clock: scripts/derive:56-59 says why they are a different instrument; the record may carry stage B's phase split when `MJ_TIMING` is set and reports it as that instrument's"
+  - "Not a baseline for a platform nobody measured on: a Linux baseline is written where a Linux derive is benchmarked, and is absent until then"
+  - "Not the cost of the required check or of a suite case: milestone ci-critical-path and I2115"
+depends_on:
+  - "I2310"
+acceptance_criteria:
+  - "A derive that ends leaves one record with the seconds of the lock wait, of the build and of each stage it reached, the host, the platform, the cores, the load at start and end, the commit, the branch and the exit status; a stage it did not reach is absent from the record, not zero"
+  - "The build state of the record is one of skipped (`MAJORDOMUS_BIN` was given), unchanged, rebuilt or built into an empty target directory, decided from what the build step did"
+  - "`scripts/derive --benchmark -n <N>` takes N samples under the machine lock and `--write-baseline` writes `.ai/repo/benchmarks/derive/baseline.<platform>.json` with the sample count, the scenario and the provenance; a sample that fails ends the benchmark with nothing written and names the stage"
+  - "The stderr lines `==> derive: <stage>: Ns` and the exit codes of scripts/derive are unchanged, and case 1018 passes unmodified"
+  - "Case 1053 holds that the delivery record's derive section equals the platform's derive baseline and reads `unknown` where there is none"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 1018_one_derive_at_a_time_and_no_orphans"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 1053_the_delivery_baseline_is_a_record"
+  - "scripts/derive-check"
+evidence_required:
+  - "derive_run_record_case"
+  - "derive_baseline_written_by_the_benchmark"
+  - "lock_behaviour_unchanged"
+created_at: 2026-10-10
+updated_at: 2026-10-10

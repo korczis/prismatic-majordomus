@@ -1,0 +1,45 @@
+id: I2365
+milestone: surfaces-project-one-delivery-state
+title: "One fixture asserts the same ids, order and status on the command line, HTTP, MCP and the Cockpit"
+slug: one-fixture-four-surfaces
+priority: p2
+profile: implementation
+parallel_safe: false
+serves:
+  - "delivery-is-explained-by-evidence#surfaces-agree"
+objective: "Extend apps/majordomus-cli/tests/surface_contract.rs, started by I2362, with one fixture repository holding a recorded queue observation, a trail with a run, a release record and a served observation, and assert that the queue, the required verdict, the run and the proof of the last release have the same ids, order and status in the command line's JSON, over HTTP, over MCP and in the Cockpit's markup."
+why: "Convergence pack 05 issue 05.5: shared fixtures assert canonical ids, order and status across the command line, the API, MCP and the UI, and a capability added late reaches every surface. What exists holds the surfaces to the registry, not to each other on a delivery fact: every declared projection exists and none is an orphan, and a canonical change reaches every projection (tests/projections.rs:26 and :239); a capability the repository adds reaches every Cockpit surface (tests/cockpit.rs:115); the command line is compared with the declared exposures in both directions (capability/closure.rs:19). One case shows one thing identical through five interfaces, and it is an execution (test/cases/100_execution_plane.sh:1-12). I2150 (runtime pack, session 1b, not on master) extends the transport parity property to POST routes, the command line's JSON and the coordination reads; it does not compare the Cockpit, the order of a list or the status words of a delivery fact. The command line is declared twice by design (capability/closure.rs:7-9), so the fixture reads a capability with no dedicated command through `majordomus run <capability-id>`."
+current_state: "Each surface is proved to project the registry; no test asks whether the four show the queue, the verdict, a run and the last release with the same ids in the same order with the same status."
+desired_state: "One fixture and one test drive the four surfaces over the same served process and repository and compare, for each delivery fact, the ids, their order and the status word; a surface that renders its own order, drops an entry or words a status differently fails the test naming the surface and the fact. A capability added to the fixture's registry appears on all four with no edit to the test. docs/SURFACES.md names the test as the proof of the claim."
+scope:
+  - "apps/majordomus-cli/tests/surface_contract.rs"
+  - "apps/majordomus-cli/tests/common/mod.rs"
+  - "docs/SURFACES.md"
+  - "docs/CLAIMS.yaml"
+  - "docs/claims"
+  - "docs/generated"
+  - "site/data"
+non_scope:
+  - "Not the parity of every capability across the command line, HTTP and MCP: that is I2150 (runtime pack, session 1b), whose harness this test reuses where it has landed instead of building a second"
+  - "Not the browser checks at phone widths, the drawer and keyboard access: scripts/cockpit-probe and branch feature/cockpit-mobile-navigation"
+  - "Not the age of each fact: I2362 asserts it in the same file"
+  - "Not a client-side list of what to compare: the facts are read from the capabilities the dashboard declares"
+  - "Not a change to any surface's rendering: a disagreement found is fixed in the surface that disagrees, in its own pull request if it is not small"
+depends_on:
+  - "I2361"
+  - "I2362"
+  - "I2324"
+acceptance_criteria:
+  - "For the queue, the verdict, the run and the last release's proof, the test reads the same ids in the same order with the same status from the command line, HTTP, MCP and the Cockpit"
+  - "A renderer changed to reverse the queue's order, to drop one pull request or to word one status differently makes the test fail naming that surface and that fact"
+  - "A capability added to the fixture's registry is found on all four surfaces with no edit to the test"
+  - "The test starts no network client and leaves no server running when it ends"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test surface_contract"
+  - "scripts/derive-check"
+evidence_required:
+  - "surface_contract_test"
+  - "divergent_surface_fails_test"
+created_at: 2026-10-10
+updated_at: 2026-10-10

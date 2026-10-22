@@ -1,0 +1,48 @@
+id: I2371
+milestone: delivery-is-proved-end-to-end
+title: "The operator guide and the claims say what an unattended run does, once it exists, and how to turn it off"
+slug: operator-guide-and-claims
+priority: p2
+profile: implementation
+parallel_safe: true
+serves:
+  - "a-drain-settles-unattended#demonstrated-unattended"
+objective: "Write the unattended-run section of docs/INTEGRATION.md from the commands that exist once I2367 has shown them working: starting a settling run, reading and following it, stopping and resuming it, the authority profile that permits it and how removing it turns every unattended act off, the release grant `release land` reads, and troubleshooting filled from the failures case 1052 and the recorded rollout stage hit. Add a claim to docs/CLAIMS.yaml for each behaviour the guide states, each naming the test that proves it."
+why: "Autopilot pack 06 issues 4 and 5 and convergence pack 06 issue 06.5. docs/INTEGRATION.md documents commands, continuous mode, rollout and safety (:680, :719, :731, :552) for what exists today; `prs drain --until-settled`, a resident run's status and resume are not on master (rg for until-settled finds nothing), so writing the guide first would publish claims about commands that do not exist. The pack requires that risky mutations stay behind an explicit autonomous profile, that `prs drain` keeps its meaning without one, and that a version is published only once checks prove it; those are the behaviours of I2315, I2321, I2325, I2335 and I2359, and this issue states them only after case 1052 and the rollout record of I2367 exist. Every capability sentence on the site is rendered from docs/CLAIMS.yaml, a guaranteed claim names a test that names it back (scripts/ci/claim-proof-check), and the OpenAPI document, the MCP tools and the Cockpit are generated from the capabilities, so nothing here is written into a generated file."
+current_state: "The guide describes bounded and continuous drains; nothing documents an unattended run, its authority or how to stop one, because none exists yet."
+desired_state: "docs/INTEGRATION.md has a section on unattended runs whose every command is run by a scenario or marked with the reason it cannot run here; it says how to turn unattended work off (remove the profile, stop the run) and that a repository with no profile drains exactly as before; troubleshooting lists only failures that were hit, each with the trail line that shows it. docs/CLAIMS.yaml carries one claim per stated behaviour with its test, and docs/CONCEPTS.md defines the words the run model added."
+scope:
+  - "docs/INTEGRATION.md"
+  - "docs/INTEGRATION_ROLLOUT.md"
+  - "docs/DISTRIBUTION.md"
+  - "docs/CONCEPTS.md"
+  - "docs/CLAIMS.yaml"
+  - "docs/claims"
+  - "site/data"
+  - "site/content"
+  - "docs/generated"
+non_scope:
+  - "Not a command, a capability or a flag: if the guide needs one that does not exist, the guide does not mention it"
+  - "Not generated references: the OpenAPI document, the MCP tool list, the command reference and the Cockpit are derived by `majordomus generate` and `scripts/derive`"
+  - "Not the claims about the intent loop (I2214), the planned claim `ci-verdict-is-required` and what GitHub's protection leaves open (I2241)"
+  - "Not the release workflow an agent follows: that is I2281, which names `release land` once it exists"
+  - "Not troubleshooting for a failure no run has hit"
+depends_on:
+  - "I2367"
+  - "I2359"
+acceptance_criteria:
+  - "Every command the new section shows is run by a scenario or marked with the reason it cannot run here, and scripts/ci/doc-command-check accepts the document"
+  - "Every behaviour the section states is a claim in docs/CLAIMS.yaml naming a test, and scripts/ci/claim-proof-check passes; a claim naming a missing test is refused"
+  - "The section states that removing the authority profile stops every unattended act and that `prs drain` without a profile behaves as before, and both claims name a test that proves them"
+  - "Each troubleshooting entry cites the trail line or case output in which the failure was observed"
+validation:
+  - "bin/majordomus plan validate"
+  - "scripts/ci/claim-proof-check"
+  - "scripts/ci/doc-command-check"
+  - "scripts/derive-check"
+evidence_required:
+  - "guide_commands_proved"
+  - "claims_with_tests"
+  - "turn_off_is_documented_and_tested"
+created_at: 2026-10-10
+updated_at: 2026-10-10

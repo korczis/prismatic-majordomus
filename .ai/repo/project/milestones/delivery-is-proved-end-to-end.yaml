@@ -1,0 +1,65 @@
+id: delivery-is-proved-end-to-end
+title: "The whole path is shown working here and in a repository that is not this one, with what it cost beside what it cost before"
+slug: delivery-is-proved-end-to-end
+order: 330
+priority: p2
+problem: "Each link of delivery is evidenced separately and in a different store: the release record under .ai/repo/releases/, the task ledger and the served observations in the checkout's local state, the executor's trail under the git directory. No one recorded slice leads from an intent to the observation of its deployment, and a slice run today would record manual steps as the norm, because the last three releases needed session-local shell at each hand step. The executor's trail since 2026-10-04 holds 15 verified merges, 5 repairs, 0 of 3 refreshes that succeeded and 1 failed verification, and no continuous run was ever started in this checkout; a stop for no progress or for an exhausted budget cannot be shown because no code has either (rg for no.progress, budget_exhaust and circuit over apps/majordomus-cli/src/integration: nothing). What proves the tool in another repository is an install, a version check and `majordomus init` in an empty repository (.github/workflows/release.yml:458-476, scripts/ci/install-check, test/cases/85_installer.sh, 744 and 15b); a whole task from the installed artifact is planned as I2255 and is not on master. No rehearsal injects an interrupted derive, an advanced head, a wrong release digest and an aborted deployment in one repository. And nothing can yet be compared: integration/metrics.rs folds medians only, while on 2026-10-10 a first-attempt success of the required check took p50 5423 s and p95 8290 s (n=32 of the 120 newest runs, of which 39 succeeded, 48 failed and 29 were cancelled) and a pull request took p50 17.8 h and p95 98.2 h from opening to merge (the last 150 merged)."
+outcome: "One slice of this repository's own work is recorded from its intent to the observed deployment and explained by one query, with no step typed outside the tool's commands. One unattended run is demonstrated here through a success, a repaired conflict, a restart after a crash, a stop for no progress and a stop for an exhausted budget, each with its trail and its timings, and the same run is repeated from the installed artifact in a repository that is not this one. One rehearsal shows the failures that matter failing closed and recovering. The comparison against the baseline of 2026-10-10 is published from the tracked records with the sample size of every figure and unknown where a side was not measured. The operator guide and the claims are written after the run exists and say how to turn it off."
+current_state: "The path is argued from separate proofs; nothing shows it whole, nothing shows it in a consumer, and no figure of today can be compared with a later one."
+desired_state: "A reader follows one recorded slice and one recorded run end to end, reruns both from a release in a clean repository, and reads what delivery costs beside what it cost on 2026-10-10."
+scope:
+  - "test/cases"
+  - "test/lib.sh"
+  - "docs/DOGFOODING.md"
+  - "docs/INTEGRATION.md"
+  - "docs/INTEGRATION_ROLLOUT.md"
+  - "docs/ADOPTION.md"
+  - "docs/DISTRIBUTION.md"
+  - "docs/PERFORMANCE.md"
+  - "docs/CONCEPTS.md"
+  - "docs/CLAIMS.yaml"
+  - "docs/claims"
+  - "apps/majordomus-cli/src/economics/stats.rs"
+  - "apps/majordomus-cli/src/integration/metrics.rs"
+  - "apps/majordomus-cli/src/capability/builtin"
+  - "apps/majordomus-cli/src/generate.rs"
+  - "site"
+  - "docs/generated"
+non_scope:
+  - "New infrastructure: this milestone adds demonstrations, a comparison and documents over what the milestones before it built"
+  - "The task journey from an installed layout (I2255), an installed binary serving a foreign repository in CI (I2162) and the offline rerun (I2267)"
+  - "The intent loop carried to a re-satisfied intent (I2213) and the pilot report from the product intent to CI receipts (I2263)"
+  - "The done invariant and completion as one policy: I2301 (session 95) and PR #821"
+  - "An invented improvement: a figure with one side unmeasured is unknown, and no duration is promised for CI or for a release"
+  - "A forced public deployment or an irreversible step for the sake of a demonstration; a step that is substituted is labelled simulated"
+acceptance_criteria:
+  - "The explain query for the recorded slice returns its intent, issue, commits, pull request, tests and release, each with its source, and a case fails when one of them answers unknown"
+  - "A recorded run shows a success, a repaired conflict, a restart after a crash, a stop for no progress and a stop for an exhausted budget, each ending with the typed verdict the run model declares"
+  - "From the installed artifact in a clean repository the same run and one explained task pass with no path of this repository in what ran"
+  - "An interrupted derive, an advanced head, a corrupted digest and an aborted deployment each end in a refusal that names the recovery, and the recovery leaves the tracked tree as a clean run would"
+  - "The published comparison reads the tracked baseline, states the sample size of every figure and marks as unknown what was not measured on both sides"
+  - "Every claim the guide makes about an unattended run names a test that passes, and a claim whose command does not exist is refused"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 1052_an_unattended_run_is_demonstrated 1058_a_task_runs_from_the_installed_artifact 1059_the_comparison_reads_the_baseline"
+  - "scripts/ci/claim-proof-check"
+  - "scripts/derive-check"
+evidence_required:
+  - "recorded_slice_explained"
+  - "unattended_run_demonstrated"
+  - "consumer_run_from_installed_artifact"
+  - "comparison_with_sample_sizes"
+depends_on:
+  - "the-queue-settles"
+  - "a-drain-is-a-durable-run"
+  - "the-release-chain-is-one-capability"
+  - "delivery-is-explained-by-evidence"
+risks:
+  - "Budget and no-progress stops belong to the run model (I2320 to I2322); nothing here can be demonstrated before it lands, and a demonstration written first would narrate what does not exist."
+  - "Writing the operator guide before the run exists would publish claims about commands that are not there; the guide and the claims are the last issue."
+  - "A median with no sample is None by design (integration/metrics.rs:21); a small sample is published as small, never as a trend."
+  - "macOS gates run nightly or on request because runners are scarce (.ai/repo/ci/gates.yaml:617), so a rehearsal on both platforms cannot be required per commit; a platform it did not run on is reported as not run."
+  - "The staged rollout gate folds the local trail (integration/drain.rs:1232), so a fresh consumer checkout starts from no verified merge and the demonstration must earn or declare its stage."
+  - "The served observations are checkout-local, so the deployment step of the recorded slice is answered only in the checkout that observed it; elsewhere it is unknown and must be said to be."
+created_at: 2026-10-10
+updated_at: 2026-10-10

@@ -1,0 +1,45 @@
+id: I2347
+milestone: derive-does-bounded-work
+title: "A gate that was not run leaves a record bound to the inputs that excused it"
+slug: a-skipped-gate-names-its-inputs
+priority: p2
+profile: implementation
+parallel_safe: true
+serves:
+  - "delivery-is-explained-by-evidence#skips-are-recorded"
+objective: "Bind every gate of a CI plan to the inputs it was decided over. `scripts/ci-plan` writes, for each gate of `plan.json`, the hash of the tracked files that would select it at the planned head, computed by `mj_gate_inputs_hash` of lib/gates.sh, and the command that reproduces the plan; `scripts/ci/verdict` shows the hash beside each `skipped (reason)`; `scripts/ci/evidence-collect` carries the plan into the run's evidence manifest, so a skip is kept with the commit it was decided for, as ADR 0068 keeps every other piece of CI evidence."
+why: "Autopilot pack 05 issue 3 asks for proof of skipped irrelevant work bound to the inputs, and that stale verification is never reused; convergence pack 04 issue 04.1 for conservative, reproducible selection whose diagnostics name the reason and the command that reproduces it. A skip today is a line of `plan.json` with `selected` and a `reason` (scripts/ci-plan:230-250), uploaded as the artifact `ci-plan` for 14 days (.github/workflows/validate.yml:151-153) and rendered in a step summary by scripts/ci/verdict; it is bound to no digest, so in two weeks nobody can show what a skip was decided over. The binding exists locally and is unused in CI: `mj_gate_inputs_hash` (lib/gates.sh:97-106) hashes the files that select a gate, and the gates module binds a task's gate runs to that hash and reports `stale` or `exempt` (apps/majordomus-cli/src/gates/mod.rs:1-37, judge.rs). The model already has three readers held equal by cases 94 and 131 (ci-plan, gates/model.rs, lib/gates.sh, per the gap file on C04.1), so the hash comes from the shell reader that exists and the plan job keeps needing only shell and jq. The evidence artifact is kept 90 days (validate.yml:640) against the plan's 14."
+current_state: "`plan.json` names each gate with `selected` and a `reason`; nothing binds a skip to an input digest; the plan is not part of the run's evidence."
+desired_state: "Each gate of `plan.json` carries `inputs_hash` and the plan carries `reproduce`; the verdict table shows the hash of a skipped gate; the evidence manifest holds the plan; a local `exempt` and a CI skip over the same files carry the same hash."
+scope:
+  - "scripts/ci-plan"
+  - "scripts/ci/verdict"
+  - "scripts/ci/evidence-collect"
+  - "lib/gates.sh"
+  - "docs/CI.md"
+  - "docs/EVIDENCE.md"
+  - "test/cases/94_ci_plan.sh"
+  - "test/cases/131_completion_gates.sh"
+non_scope:
+  - "Not reusing a verdict from another run, keyed by this hash or by anything else: the gap file on A05.3 warns that a reused verdict keyed too narrowly reads as green, and no issue plans reuse"
+  - "Not narrowing what a path class selects: I2348 selects suite cases, and the classes of `.ai/repo/ci/gates.yaml` stay as they are"
+  - "Not the acceptance gate over a pull request's contract or the bypass cases: I2238, I2239 and I2240 (owner packs wave 2, pending)"
+  - "Not a fourth reader of the gate model: the hash is `mj_gate_inputs_hash`, and the Rust reader stays held equal to it by case 131"
+  - "Not the critical path or the budgets of the required check: milestone ci-critical-path"
+depends_on: []
+acceptance_criteria:
+  - "Every gate of a plan carries the hash of its inputs at the planned head, and a gate whose classes match no changed path is recorded as skipped with that hash"
+  - "Changing one file a skipped gate's classes name changes that gate's hash and no other unselected gate's hash"
+  - "The plan's `reproduce` command, run on the same base and head, prints the same selection and the same hashes"
+  - "The verdict stays red for a selected gate whose job did not succeed, whatever any recorded hash says"
+  - "Case 131 shows the hash of a local `exempt` gate equal to the hash `scripts/ci-plan` records for it over the same tree"
+  - "The plan job still runs without a built executable"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 94_ci_plan"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 131_completion_gates"
+evidence_required:
+  - "skip_bound_to_inputs_case"
+  - "local_and_ci_hash_equal"
+created_at: 2026-10-10
+updated_at: 2026-10-10

@@ -1,0 +1,48 @@
+id: I2334
+milestone: repair-is-dispatched-to-a-worker
+title: "Permission to run work is a delegation decided apart from mesh trust, with an expiry and a record"
+slug: a-delegation-is-decided-and-recorded
+priority: p2
+profile: deep-work
+parallel_safe: true
+serves:
+  - "a-drain-settles-unattended#dispatch-needs-a-delegation"
+objective: "Record, as an ADR with status `proposed`, the authorization decision the mesh rule asks of whoever adds remote operations: what a delegation is, who may give one, what it names (the delegating and the receiving runtime, the repository, the classes of work, an expiry, an id), where it lives and how it is revoked. Implement only its record type and one pure verification function under apps/majordomus-cli/src/mesh, with every refusal typed, and no transport: nothing is sent, received or run by this issue."
+why: "Autopilot pack 03 issue 1. The observation side of the mesh exists and is enforced; the authorization side does not exist at all. `mesh/trust.rs` says `even a Trusted node gains no execution rights anywhere in this codebase` (apps/majordomus-cli/src/mesh/trust.rs:6, `evaluate` at :92, default `deny_unknown`). docs/MESH.md:27 says the mesh is not `a remote execution facility (nothing a peer sends runs anything)`. Blocking rule project.mesh-is-observation-not-authority says no discovery event alone grants trust, authorization or execution, and its rationale that whoever adds remote operations later must bring their own authorization decision rather than inheriting one from discovery (.ai/repo/rules/project/mesh-is-observation-not-authority.v1.md). This issue is that decision and nothing more. A search of the crate for delegation, bearer or capability token finds only the redactor; the lease `token` of the server and of the integration lease are ownership markers. The nearest decision is unlanded: ADR 0126 on pull request #860 (`ExecutionPolicy::admits_remote`, `signed_input`) limits signed input to `process_state` commands because `a signature proves who sent a message, not that its sender may change tracked files here`. A delegation is exactly the grant that sentence says a signature is not, so it is decided apart from trust and from the signature, and it rests on the authority profile of I2315, which is read from the base branch."
+current_state: "No delegation record, token or verification exists. Trust labels a node as ours and grants nothing; a signed link proves who is speaking. Nothing says who may ask this runtime to run work, for what, or until when."
+desired_state: "A proposed ADR states the delegation and the alternatives it rejected, and docs/CONCEPTS.md gains the word `delegation`. A function verifies one delegation against the clock, the repository, the receiving runtime, the class of work asked and the authority profile, and returns the grant or one typed refusal. docs/MESH.md still says truthfully that nothing a peer sends runs anything, because nothing does yet."
+scope:
+  - ".ai/repo/adrs"
+  - "apps/majordomus-cli/src/mesh"
+  - "apps/majordomus-cli/tests/mesh_delegation.rs"
+  - "docs/CONCEPTS.md"
+  - "docs/MESH.md"
+  - "docs/claims/mesh-observation-not-authority.md"
+  - "docs/CLAIMS.yaml"
+non_scope:
+  - "Not sending, receiving or running anything: the advertisement of accepted work and the request over a link are I2339, which depends on this issue and on ADR 0126 / pull request #860 landing."
+  - "Not a ninth journal event kind, a new link feature or any wire change: `KNOWN_KINDS` (apps/majordomus-cli/src/mesh/journal.rs:553) and `FEATURES` (apps/majordomus-cli/src/mesh/link.rs:63) are untouched here, and I2164 prices such a change by the version gate."
+  - "Not changing rule project.mesh-is-observation-not-authority or what trust means: a trusted node with no delegation is granted nothing, before and after."
+  - "Not the authority profile, its schema or which grants exist: I2315 and I2316. Who may delegate what is read from that profile."
+  - "Not authenticating a caller beyond loopback: ADR 0126 / pull request #860."
+  - "Not accepting the ADR: a person does that, and the status written here is `proposed`."
+  - "Not the local path: I2335 to I2338 need no delegation, because the run and the worker are one runtime."
+depends_on:
+  - "I2315"
+acceptance_criteria:
+  - "The verification accepts a delegation that is unexpired, names this repository and this runtime, covers the class of work asked, and was given by a key the authority profile allows to delegate that class"
+  - "It refuses, each with its own typed reason: an expired delegation, another repository, another runtime, a class not delegated, an altered record, and a giver the mesh trusts but the profile does not name"
+  - "With no authority profile every delegation is refused, and no mesh command, link or journal behaves differently from before"
+  - "A trusted node presenting no delegation is granted nothing, and the tests of claim mesh-observation-not-authority pass unchanged"
+  - "The ADR is `proposed`, names where a delegation lives and how it ends before its expiry, and docs/CONCEPTS.md defines `delegation` in one row"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test mesh_delegation"
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test mesh"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 130_mesh 28_no_hardcoded_values"
+evidence_required:
+  - "delegation_decision_recorded"
+  - "delegation_verification_test"
+  - "trust_alone_grants_nothing_test"
+created_at: 2026-10-10
+updated_at: 2026-10-10

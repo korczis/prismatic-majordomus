@@ -1,0 +1,263 @@
+intent: delivery-is-explained-by-evidence
+observed_at: 4dfd1856d2
+recorded_by: "claude-code (session b24c5456, planning worktree; six read-only audit agents over master 4dfd1856d2)"
+recorded_at: 2026-10-10
+observations:
+  - id: derive-runs-every-stage
+    statement: scripts/derive runs stages A, B, C and D in sequence on every call with no skip and no cache, and prints whole seconds per stage to stderr without writing them, the host or the load to any record
+    source: file:scripts/derive
+  - id: validate-runs-as-measured
+    statement: Of the 120 newest validate runs on 2026-10-10, 116 had completed (39 success, 48 failure, 29 cancelled), 9 had needed a second attempt, and the 32 first-attempt successes took 5423 s at the median and 8290 s at the ninety-fifth percentile
+    source: command:gh run list --workflow validate.yml --limit 120
+  - id: open-to-merge-as-measured
+    statement: The 150 pull requests merged between 2026-09-26 and 2026-10-10 took 17.8 h from opening to merge at the median and 98.2 h at the ninety-fifth percentile
+    source: command:gh pr list --state merged --limit 150
+  - id: throughput-is-medians
+    statement: integration/metrics.rs folds merges per day and the medians of actionable-to-merged, CI rounds per merge and cycle from the trail, and holds no ninety-fifth percentile and no count of the times a person had to act
+    source: file:apps/majordomus-cli/src/integration/metrics.rs
+  - id: delivery-evidence-is-a-constant-unknown
+    statement: The delivery report answers its three evidence dimensions with a constant unknown whose stated reason is that the evidence model lands with pull request 577, and no file under src/delivery reads a ledger
+    source: file:apps/majordomus-cli/src/delivery/mod.rs
+  - id: execution-duration-is-in-memory
+    statement: An execution carries its created, started and finished times and a duration in milliseconds, and docs/EXECUTIONS.md states that it does not outlive the process that accepted it
+    source: file:apps/majordomus-cli/src/execution/model.rs
+  - id: ledger-reads-one-version
+    statement: The evidence ledger reads version 1 and refuses any other, and saving it is one write of the whole file with no lock and no rename
+    source: file:apps/majordomus-cli/src/evidence/ledger.rs
+  - id: manifest-lists-outputs-only
+    statement: The manifest docs/generated/artifacts.json gives every generated artifact its path, format, a prose source, its size and its sha256, and names no input of any artifact as data
+    source: file:apps/majordomus-cli/src/generate.rs
+  - id: one-fingerprint-for-every-input
+    statement: scripts/generate-site-data hashes its whole canonical input list into the one source_hash it writes to source.json, and that single value is what the fast currency check compares
+    source: file:scripts/generate-site-data
+  - id: budgets-name-no-derive
+    statement: .ai/repo/ci/suite.yaml budgets the summed and the slowest case seconds and .ai/repo/ci/pages.yaml the warm and cold publication, and neither file sets a budget for a derive
+    source: file:.ai/repo/ci/suite.yaml
+  - id: a-skip-leaves-a-fourteen-day-artifact
+    statement: Which gates a run skipped and why is in plan.json, which the workflow uploads as the artifact ci-plan with a retention of 14 days, and in the run's step summary
+    source: file:.github/workflows/validate.yml
+  - id: verdict-is-red-on-a-skipped-gate
+    statement: scripts/ci/verdict is red when planning did not succeed, the plan selected nothing, or the job of a selected gate reported anything but success, and it is decided from the plan and the needs context of one run without reading a commit id
+    source: file:scripts/ci/verdict
+  - id: protection-as-measured
+    statement: On 2026-10-10 the protection of master required the status check ci from app 15368, with strict false, enforce_admins false and no required review
+    source: command:gh api repos/korczis/prismatic-majordomus/branches/master/protection
+  - id: a-foreign-merge-leaves-no-line
+    statement: Pull request 901 was merged on 2026-10-10 at 17:25Z, and the integration trail read seven minutes later holds no event that names it
+    source: command:majordomus prs events
+  - id: done-asks-four-questions
+    statement: gates/done.rs asks integrated, published, deployed and deployment-verified as separate questions, and share/obligations.yaml establishes target and pages while it marks deploy and verify as established by none
+    source: file:share/obligations.yaml
+  - id: release-is-six-hand-steps
+    statement: docs/DISTRIBUTION.md gives a release as six numbered steps a person runs in a shell, from release bump and the tag to merging the record and confirming the site
+    source: file:docs/DISTRIBUTION.md
+  - id: overview-asks-no-delivery
+    statement: dashboard.overview states that it asks no delivery report, release analysis or evidence judgement, a test refuses those sources for it, and no card carries when its fact was observed
+    source: file:apps/majordomus-cli/src/capability/builtin/dashboard.rs
+  - id: event-channel-carries-executions
+    statement: The WebSocket at /events subscribes to the execution store alone and reports what this process's executions are doing, and carries no event of the integration trail
+    source: file:apps/majordomus-cli/src/http/events.rs
+  - id: one-execution-on-five-surfaces
+    statement: Case 100 proves that one execution reads identically over HTTP, the WebSocket, the snapshot, the Cockpit page and the command line, and its subject is an execution, not the queue, a verdict or a release
+    source: test:test/cases/100_execution_plane.sh
+  - id: release-smoke-stops-at-init
+    statement: The smoke job of the release workflow installs the published release, checks the version it reports and runs majordomus init in an empty repository, and ends there without starting or finishing a task
+    source: file:.github/workflows/release.yml
+conditions:
+  - criterion: baseline-is-recorded
+    state: missing
+    because: the figures of 2026-10-10 were taken by hand from the forge and the trail, a derive's timings reach no file, and no tracked record or command re-measures any of them
+    observations: [derive-runs-every-stage, validate-runs-as-measured, open-to-merge-as-measured, throughput-is-medians]
+  - criterion: one-query-explains-a-task
+    state: missing
+    because: the one report that spans delivery answers its evidence dimensions with a constant unknown, so no query joins a task to its tests, its release and its deployment
+    observations: [delivery-evidence-is-a-constant-unknown]
+  - criterion: telemetry-survives-the-process
+    state: missing
+    because: an execution's duration ends with its process, and the ledger is rewritten whole with no lock and refuses an older version instead of migrating it
+    observations: [execution-duration-is-in-memory, ledger-reads-one-version]
+  - criterion: derive-does-no-work-on-no-change
+    state: missing
+    because: every derive runs all four stages whatever moved, and nothing records what the last one read
+    observations: [derive-runs-every-stage]
+  - criterion: incremental-equals-full
+    state: missing
+    because: no artifact names its inputs and the only key is one fingerprint over every input, so nothing incremental exists to hold equal to the full derive
+    observations: [manifest-lists-outputs-only, one-fingerprint-for-every-input]
+  - criterion: budgets-are-measured
+    state: missing
+    because: the suite and the publication have budgets and a derive has none, so nothing judges a derive that grew
+    observations: [budgets-name-no-derive, derive-runs-every-stage]
+  - criterion: skips-are-recorded
+    state: missing
+    because: a gate that was not run leaves only an artifact that expires after fourteen days and is bound to no input
+    observations: [a-skip-leaves-a-fourteen-day-artifact]
+  - criterion: verdict-cannot-be-bypassed
+    state: missing
+    because: the verdict is red for a skipped or cancelled selected job, and it is bound to no head, the protection measured leaves a stale base and an administrator open, and a merge made outside the executor left no line
+    observations: [verdict-is-red-on-a-skipped-gate, protection-as-measured, a-foreign-merge-leaves-no-line]
+  - criterion: completion-has-four-answers
+    state: missing
+    because: the four questions are asked apart, and two of them, deployed and verified, are established by nothing
+    observations: [done-asks-four-questions]
+  - criterion: release-is-one-capability
+    state: missing
+    because: a release is a written procedure of six steps typed by a person, with no trail, no dry run and no typed end
+    observations: [release-is-six-hand-steps]
+  - criterion: surfaces-agree
+    state: missing
+    because: the cross-surface proof that exists is of one execution, and the overview asks no delivery source at all
+    observations: [one-execution-on-five-surfaces, overview-asks-no-delivery]
+  - criterion: facts-carry-their-age
+    state: missing
+    because: no card says when its fact was observed, and the one live channel carries executions only
+    observations: [overview-asks-no-delivery, event-channel-carries-executions]
+  - criterion: proved-in-a-consumer
+    state: missing
+    because: what runs from the installed artifact in another repository ends at init, with no task started, refused, finished or explained
+    observations: [release-smoke-stops-at-init]
+  - criterion: comparison-is-published
+    state: missing
+    because: there is no tracked baseline to compare against, and the throughput the trail folds has medians only
+    observations: [throughput-is-medians, validate-runs-as-measured, open-to-merge-as-measured]
+risks:
+  - The machine-wide derive lock protects machine load, not a shared destination, so splitting it by key without a concurrency bound recreates the contention pull request 855 fixed
+  - Pull request 821 and I2301 both rewrite gates/done.rs and gates/mod.rs, so whichever lands second must be re-ported
+  - Every existing derive number is a single sample taken under unknown or extreme load, so the first real baseline is not comparable with them and must not be read as a regression or an improvement
+  - I1409 records that generated content is machine-dependent, so a cache keyed only on file digests would serve bytes a clean derive on another host would not produce
+  - A new operation identity would be a fourth scheme beside the test id, the execution id and the task id unless it is defined as a join over them
+  - With strict off and administrators not enforced, a merge through the forge can land on a verdict computed against an older master
+  - Tagging by hand is a recorded decision of version.yml, so automating it reverses a decision rather than filling a gap
+work:
+  - id: delivery-baseline
+    title: The delivery baseline of 2026-10-10 is a tracked record a command re-measures
+    serves: [baseline-is-recorded]
+    issue: I2310
+  - id: derive-stage-timings
+    title: A derive records its stage timings with the host, the load and whether the build was cold
+    serves: [baseline-is-recorded]
+    issue: I2311
+  - id: refresh-timings
+    title: A refresh leaves its timings on the trail, and a failed one leaves the line that failed
+    serves: [baseline-is-recorded]
+    issue: I2312
+  - id: throughput-percentile-and-interventions
+    title: Throughput says the ninety-fifth percentile and how often a person had to act
+    serves: [baseline-is-recorded]
+    issue: I2313
+  - id: artifact-inputs
+    title: Every derived artifact names the inputs it is made from, in the manifest the tool already writes
+    serves: [incremental-equals-full]
+    issue: I2341
+  - id: staged-generation
+    title: The executable's generation is staged and published whole, like the site's
+    serves: [incremental-equals-full]
+    issue: I2342
+  - id: no-change-derive
+    title: A derive whose inputs did not move generates nothing and says so
+    serves: [derive-does-no-work-on-no-change]
+    issue: I2343
+  - id: incremental-derive
+    title: A changed input regenerates what reads it and nothing else, byte for byte what a full derive writes
+    serves: [incremental-equals-full]
+    issue: I2344
+  - id: incremental-full-equivalence
+    title: Incremental and full derive are held equal under reordering, renames, interruption and a poisoned cache
+    serves: [incremental-equals-full]
+    issue: I2345
+  - id: derive-budget
+    title: Derive has a budget per scenario, set from samples and judged with their noise
+    serves: [budgets-are-measured]
+    issue: I2346
+  - id: skipped-gate-record
+    title: A gate that was not run leaves a record bound to the inputs that excused it
+    serves: [skips-are-recorded]
+    issue: I2347
+  - id: case-inputs-and-selection
+    title: A suite case declares what it reads, and a change selects the cases that read it
+    serves: [skips-are-recorded]
+    issue: I2348
+  - id: delivery-explanation-query
+    title: One query explains a finished task from its intent to its commits, tests, release and deployment, and says unknown where nothing was recorded
+    serves: [one-query-explains-a-task]
+    issue: I2349
+  - id: operation-identity-join
+    title: What identifies one operation is a join of the task, the session, the execution and the evidence run
+    serves: [one-query-explains-a-task]
+    issue: I2350
+  - id: execution-telemetry-evidence
+    title: An execution's duration, outcome and retries survive its process as evidence
+    serves: [telemetry-survives-the-process]
+    issue: I2351
+  - id: ledger-atomic-write
+    title: The tracked ledger is written whole or not at all, and two writers lose nothing
+    serves: [telemetry-survives-the-process]
+    issue: I2352
+  - id: ledger-migration
+    title: A ledger of an older version is migrated without inventing what it did not record
+    serves: [telemetry-survives-the-process]
+    issue: I2353
+  - id: verdict-adversarial-and-protection
+    title: The one required status is tried against failed, skipped and cancelled jobs and a stale head, and doctor says what GitHub's protection leaves open
+    serves: [verdict-cannot-be-bypassed]
+    issue: I2355
+  - id: foreign-merge-on-the-trail
+    title: A merge the executor did not make is on the trail as foreign, with whether its required check had passed
+    serves: [verdict-cannot-be-bypassed]
+    issue: I2356
+  - id: completion-four-answers
+    title: Completion answers merged, published, deployed and healthy as four questions, each from its own evidence
+    serves: [completion-has-four-answers]
+    issue: I2357
+  - id: release-adversarial
+    title: A release is tried against a wrong digest, a repeated tag and a deployment nobody acknowledged
+    serves: [verdict-cannot-be-bypassed]
+    issue: I2358
+  - id: release-chain
+    title: The release chain is one typed capability with a trail and a dry run
+    serves: [release-is-one-capability]
+    issue: I2299
+  - id: release-per-delivery-boundary
+    title: A release happens once per delivery boundary the policy declares, and a change that owes no version tags nothing
+    serves: [release-is-one-capability]
+    issue: I2359
+  - id: chain-verifies-install-and-site
+    title: The chain verifies the installed version and the served site itself, and a failed verification is a typed end
+    serves: [release-is-one-capability]
+    issue: I2360
+  - id: overview-answers-delivery
+    title: "The overview answers delivery: the queue, the verdict, the run and the proof of the last release"
+    serves: [surfaces-agree]
+    issue: I2361
+  - id: facts-say-their-age
+    title: Every fact a surface shows says how old it is, and an old green is not shown as a current one
+    serves: [facts-carry-their-age]
+    issue: I2362
+  - id: trail-on-the-event-channel
+    title: The one event channel carries the integration trail beside executions
+    serves: [facts-carry-their-age]
+    issue: I2363
+  - id: command-dry-run-and-key
+    title: A command capability declares its dry run and the key that makes repeating it harmless
+    serves: [surfaces-agree]
+    issue: I2364
+  - id: cross-surface-fixture
+    title: One fixture asserts the same ids, order and status on the command line, HTTP, MCP and the Cockpit
+    serves: [surfaces-agree]
+    issue: I2365
+  - id: recorded-slice
+    title: One recorded slice leads from an intent to the observation of its deployment, in this repository
+    serves: [one-query-explains-a-task]
+    issue: I2366
+  - id: consumer-demonstration
+    title: The same run is demonstrated from the installed artifact in a clean repository
+    serves: [proved-in-a-consumer]
+    issue: I2368
+  - id: failure-rehearsal
+    title: One rehearsal interrupts a derive, advances the head, corrupts a digest and aborts a deployment, and each fails closed
+    serves: [proved-in-a-consumer]
+    issue: I2369
+  - id: published-comparison
+    title: The comparison against the baseline of 2026-10-10 is published with its sample sizes and its exceptions
+    serves: [comparison-is-published]
+    issue: I2370

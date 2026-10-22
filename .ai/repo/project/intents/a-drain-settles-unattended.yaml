@@ -1,0 +1,73 @@
+id: a-drain-settles-unattended
+title: One authorized drain settles the queue of open pull requests without a person typing between its steps
+statement: "A person who has declared what an unattended run may do starts one drain and leaves. The run brings master into the pull requests that lack it, hands the ones that need repair to a worker it is allowed to start, merges each one whose required check passed on a head that holds master, closes what is proved redundant where it was allowed to, and ends by itself with one of five typed verdicts and an explanation of every pull request it did not land. It survives the terminal, the session and the process that started it, it never takes an authority it was not given, and where no authority was declared every command behaves as it did before."
+invariants:
+  - A merge into the base branch is one at a time, by merge commit, under the integration lease, on a head that contains the current master and whose required check passed; no run passes `--admin` and no authority profile can grant it
+  - An unverified merge holds every drain until a person resumes it; a run never acknowledges that failure for itself
+  - What a run may do is read from the base branch as the forge serves it, never from the head, the working tree or the session that asks
+  - Mesh discovery and mesh trust grant nothing; work reaches another machine only under a delegation that machine verified
+  - A run is a fold over the integration trail and stores no second account of what the trail says; its state is derived on every read
+  - A repository that declares no authority profile drains exactly as before
+milestones:
+  - an-unattended-run-has-declared-authority
+  - a-drain-is-a-durable-run
+  - the-queue-settles
+  - repair-is-dispatched-to-a-worker
+  - delivery-is-proved-end-to-end
+satisfaction:
+  - id: authority-is-declared
+    criterion: What an unattended run may push, merge, close, release and deploy, within which budgets, is a typed record of the policy read from the base branch; an action outside it is refused naming the missing grant, and with no profile nothing unattended runs
+    evidence: command
+    ref: cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test authority_profile
+  - id: scope-is-amended-not-bypassed
+    criterion: A task whose work outgrows its scope records an amendment tied to what the task serves; inside the delegated envelope it is accepted and the overlap and the gates are recomputed, outside it the task is refused and the refusal names the boundary crossed
+    evidence: command
+    ref: bash test/run.sh 1050_a_scope_is_amended_inside_its_authority
+  - id: a-run-is-durable
+    criterion: A run has an identity, a phase, an attempt count and a budget folded from the trail; a second start of the same run is the same run, a killed run is resumed without repeating a merge, and one run leads a base at a time
+    evidence: command
+    ref: cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test integration_run
+  - id: a-run-ends-typed
+    criterion: A run ends satisfied, blocked, out of budget, cancelled or fatal and in no other way; the same failure repeated to its bound, an exhausted budget or a cycle that moved nothing ends it, and independent pull requests are still tried before it does
+    evidence: command
+    ref: cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test integration_run
+  - id: a-run-is-resident
+    criterion: A run started detached outlives its terminal, is read, followed, stopped and resumed by its identity from any checkout of the repository, and following it reads the trail and holds no state of its own
+    evidence: command
+    ref: bash test/run.sh 1051_a_run_outlives_its_terminal
+  - id: the-queue-settles
+    criterion: A drain asked to settle ends only when every open pull request in its scope is merged, closed under the policy, or reported blocked with the reason and the automatic steps already tried; a red check that says nothing about the content is not counted as a repair
+    evidence: command
+    ref: cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test integration_settle
+  - id: repair-is-dispatched
+    criterion: A pull request that needs repair becomes a task naming the issue it serves and what failed, one worker holds it by an exclusive claim, runs in its own worktree under the permissions the profile gives, and its result reaches master only through the queue
+    evidence: command
+    ref: cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test worker_dispatch
+  - id: dispatch-needs-a-delegation
+    criterion: Work is run for another runtime only under a delegation with an expiry that the receiving runtime verified; discovery, trust, a replayed message or an expired delegation each run nothing, and with no other machine the run proceeds locally
+    evidence: command
+    ref: cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test mesh_delegation
+  - id: settles-on-a-large-queue
+    criterion: The executor settles simulated queues of twenty and of fifty pull requests through conflicts, a moving base, failing checks, a crashed worker, a forced push, a rate limit and a timed-out status, merging each pull request at most once
+    evidence: command
+    ref: cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib integration::tests::settles
+  - id: demonstrated-unattended
+    criterion: A recorded unattended run in this repository shows a success, a repaired conflict, a restart after a crash, a stop for no progress and a stop for an exhausted budget, each with its trail and its timings
+    evidence: command
+    ref: bash test/run.sh 1052_an_unattended_run_is_demonstrated
+governance:
+  - adr:adr-0101
+  - adr:adr-0067
+  - rule:project.integration-follows-the-current-master
+  - rule:project.mesh-is-observation-not-authority
+  - rule:project.mesh-cooperation-is-authenticated
+  - rule:project.no-new-nouns
+  - rule:project.derived-once
+non_goals:
+  - A second orchestrator, queue, task database or registry of workers beside the integration engine, the plan and the mesh
+  - Rebase or squash as a way to bring master in; the merge commit is a decision of ADR 0101
+  - Changing GitHub's branch protection, or merging past it
+  - Accepting an ADR, promoting knowledge or resuming after an unverified merge without a person
+  - Running anything on a machine because it was discovered or is trusted
+created_at: 2026-10-10
+updated_at: 2026-10-10

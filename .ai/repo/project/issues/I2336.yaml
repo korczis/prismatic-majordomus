@@ -1,0 +1,44 @@
+id: I2336
+milestone: repair-is-dispatched-to-a-worker
+title: "A worker that stops to ask is answered by the profile or recorded as a blocker, never left waiting"
+slug: a-waiting-worker-is-answered
+priority: p2
+profile: implementation
+parallel_safe: false
+serves:
+  - "a-drain-settles-unattended#repair-is-dispatched"
+objective: "Extend the transcript reader (`read_stream`, apps/majordomus-cli/src/economics/usage.rs:348) to recognise the two ways a headless worker asks for a person: a tool call its permission set denied, and a session that ended on a question with its task still active. In apps/majordomus-cli/src/integration/dispatch.rs, answer the first from the authority profile when the profile grants what was asked inside the task's scope, and otherwise end the worker, record an open question on its task and report the repair blocked on approval."
+why: "Autopilot pack 03 issue 4: detect prompts for human confirmation and route them through delegated authority, or mark an external approval blocker. Nothing does. The reader takes `ended`, `is_error`, turns and usage from the stream and has no notion of a denied permission or a question (usage.rs:327-348). A headless worker that waits for an answer nobody will type holds its worktree, its claim and one of the run's worker slots until the wall-clock limit kills it (`wait_bounded`, apps/majordomus-cli/src/economics/runner.rs:378), and the run then knows only that it timed out. The repository already has the record for something unresolved: an open question, which names the active task and refuses `finish --outcome completed` (docs/CONCEPTS.md; written by `majordomus question`, lib/question.sh). The intent's statement is that the run never takes an authority it was not given, so an answer comes from the profile of I2315 or from nobody."
+current_state: "A worker that asks is indistinguishable from one that is slow. It ends when its time limit does, as a timeout, and what it asked is in a transcript nobody reads."
+desired_state: "A denied tool call the profile grants for the task's scope is granted for that worker and recorded on the trail with the grant that allowed it. Anything else ends the worker's process group at once, writes an open question naming the task and the exact request, sets the task's outcome to `blocked`, and puts the pull request in the settle report as blocked on approval with that text."
+scope:
+  - "apps/majordomus-cli/src/economics/usage.rs"
+  - "apps/majordomus-cli/src/harness.rs"
+  - "apps/majordomus-cli/src/integration/dispatch.rs"
+  - "apps/majordomus-cli/src/integration/drain.rs"
+  - "apps/majordomus-cli/tests/worker_dispatch.rs"
+  - "docs/INTEGRATION.md"
+non_scope:
+  - "Not widening the task's scope to satisfy a request: a path outside the scope is an amendment, which is I2317. Here it ends as an open question."
+  - "Not an answer typed by the run on the worker's behalf to a question about the work itself: only a permission the profile names is granted; a question of substance is a blocker."
+  - "Not accepting an ADR, promoting knowledge or resuming after an unverified merge: those stay a person's under every profile."
+  - "Not the provider hook that refuses an out-of-scope edit before it is written: I2251 and I2252."
+  - "Not a notification to a person: the open question and the settle report are where it is read. A channel is not planned here."
+  - "Not the worker's replacement after a blocker: a blocked repair is not retried until its question is closed."
+depends_on:
+  - "I2335"
+acceptance_criteria:
+  - "A stand-in worker whose transcript shows a denied tool call that the profile grants inside the task's scope continues under that grant, and the trail names the grant and the tool"
+  - "A stand-in worker whose request the profile does not grant is ended with its process group when the request is read and before its wall-clock limit, an open question naming the task and the request exists, the task's outcome is `blocked`, and the settle report lists the pull request as blocked on approval with the request's text"
+  - "Nothing the ungranted request asked for was done: the worktree holds no change made after the request"
+  - "A worker that ends on a question with its task still active is recorded the same way, and never as completed"
+  - "A worker is started with no terminal attached to its input, so a prompt can never wait on a keyboard"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test worker_dispatch"
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test economics"
+evidence_required:
+  - "granted_request_continues_test"
+  - "ungranted_request_becomes_open_question_test"
+created_at: 2026-10-10
+updated_at: 2026-10-10

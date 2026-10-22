@@ -1,0 +1,51 @@
+id: I2362
+milestone: surfaces-project-one-delivery-state
+title: "Every fact a surface shows says how old it is, and an old green is not shown as a current one"
+slug: facts-carry-their-age
+priority: p2
+profile: implementation
+parallel_safe: false
+serves:
+  - "delivery-is-explained-by-evidence#facts-carry-their-age"
+objective: "Carry the observation of each card's source on the card in apps/majordomus-cli/src/capability/builtin/dashboard.rs, using the existing `AnswerObservation` (index.rs:65) and its stale bound, and make the card's status `unknown` with the reason `stale` when the source's observation is past its bound; render it through the existing `view::as_of` (cockpit/view.rs:518-542) on the Overview and the Integration page. Start tests/surface_contract.rs with the assertions that the age and the stale verdict read the same over the command line, HTTP, MCP and the Cockpit."
+why: "Convergence pack 05 issues 05.4 and 05.1: every visible fact has its source, age and provenance, absent data is never labelled healthy, and an old green is never shown as current success. A dashboard card names its source and carries no moment (DashboardCard, dashboard.rs:162-181; rg for age and observed_at in dashboard.rs finds no field). The queue's observation has `observed_at` and a bound of 3600 s past which the queue is called stale (integration/mod.rs:1068-1070), the cleanup plan reports `branches_age_seconds` (capability/builtin/integration.rs:73), the served standing re-judges recorded observations, and the Cockpit already renders an observation with its age and a stale badge (cockpit/view.rs:518-542); none of that reaches a card, so a queue observed yesterday reads on the Overview like one observed now. I2149 (runtime pack, session 1b, branch chore/the-runtime-pack-is-planned, not on master) carries `observed_at`, `source` and `stale` on every capability output that reports state, enforced over the registry; this issue is the delta that answer leaves: a card's own age taken from its source, and a stale source never judged `ok`."
+current_state: "A card says where its value came from and not when; a stale source with a passing value shows `ok`."
+desired_state: "Every card and every delivery fact of I2361 carries the observation its source answered with; a card whose source is past its bound is `unknown` with reason `stale` on all four surfaces, and one whose source carries no time says so instead of passing. The bound is the source's own, never one the dashboard invents. If I2149 has landed, its field is the one read; no second observation type is added."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/dashboard.rs"
+  - "apps/majordomus-cli/src/index.rs"
+  - "apps/majordomus-cli/src/cockpit/view.rs"
+  - "apps/majordomus-cli/src/cockpit/pages.rs"
+  - "apps/majordomus-cli/tests/dashboard.rs"
+  - "apps/majordomus-cli/tests/surface_contract.rs"
+  - "docs/COCKPIT.md"
+  - "docs/SURFACES.md"
+  - "docs/CLAIMS.yaml"
+  - "docs/claims"
+  - "docs/generated"
+  - "site/data"
+non_scope:
+  - "Not `observed_at` on every capability output and the registry-wide test of it, and not the server's distance from HEAD: those are I2149 (runtime pack, session 1b)"
+  - "Not pushing a fresher fact to an open page: that is I2363"
+  - "Not a threshold of the dashboard's own: a bound comes from the source that declares it (integration/mod.rs:1070 for the queue), and a source with none is reported as having none"
+  - "Not the shared fixture across the four surfaces for ids and order: that is I2365, which extends the test file this issue starts"
+  - "Not re-observing on read: no capability reaches the network to make a card fresh"
+depends_on:
+  - "I2361"
+acceptance_criteria:
+  - "Every card of `dashboard overview` carries the observed time its source answered with, or says its source carries none"
+  - "A queue observation older than its 3600 s bound makes the queue and verdict cards `unknown` with reason `stale`, although the values it holds would pass"
+  - "tests/surface_contract.rs reads the same observed time and the same stale verdict from the command line's JSON, HTTP, MCP and the Cockpit's Overview markup"
+  - "A card whose source answers with no time is never `ok` on the strength of its value alone"
+  - "No new observation type is declared: the card's field is `AnswerObservation` or the field I2149 adds"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test dashboard"
+  - "cargo test --test surface_contract"
+  - "scripts/derive-check"
+evidence_required:
+  - "age_on_every_surface"
+  - "stale_is_never_ok_test"
+  - "claim_with_test"
+created_at: 2026-10-10
+updated_at: 2026-10-10

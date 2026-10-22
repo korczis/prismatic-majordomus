@@ -1,0 +1,68 @@
+id: derive-does-bounded-work
+title: "A derive does the work its changed inputs ask for and no more, and what it produces is what a full derive would"
+slug: derive-does-bounded-work
+order: 325
+priority: p1
+problem: "Every derive regenerates every derived artifact. `scripts/derive` runs stage A (`majordomus generate`), stage B (`scripts/generate-site-data`), stage C (`majordomus generate` again) and stage D (`scripts/gitattributes`) in sequence (scripts/derive:152-185) with no skip at any stage: `generate::write` rewrites each artifact in place whether or not it changed (apps/majordomus-cli/src/generate.rs:2351-2362), and stage B rebuilds its whole output and runs every use-case scenario (scripts/generate-site-data:1084). The only cheap question is freshness: one fingerprint over the whole input list (scripts/generate-site-data:176, lib/common.sh:49), so any canonical change invalidates everything; 37b825efec changed a TSV and one case, and `artifacts.*`, `source.json`, `registry.json`, `PLAN_STATUS.md` and `PAGES_STATUS.md` all moved. Which artifact reads which input is prose: the manifest names 178 artifacts with an output hash and a sentence for a source (generate.rs:1803-1830), and the derivation graph is script order and a diagram (docs/GITHUB_PAGES_ARCHITECTURE.md:126-181). The cost lands on every branch and every refresh: 699 s on Linux with the build (f1a892ebc6), over an hour on the shared Mac at load 25, and 185 s, 1125 s and 2135 s for three derives of one branch in one evening (I1409); the integrator's refresh act runs a full derive per pull request (apps/majordomus-cli/src/integration/drain.rs:2150). The machine lock of PR #855 (lib/machine_lock.sh) keeps that cost to one derive at a time, which is right and makes every derive wait for every other. No incremental path exists to prove equal to the full one, and rule project.cache-is-invisible records that no cache exists and sets the conditions for adding one."
+outcome: "Every derived artifact names the inputs it is made from, in the declarations that already exist: the manifest the executable writes for stages A and C, and the site generator's own input list, refined per section, for stage B. The executable's generation is staged and published whole, as the site's already is. A derive whose inputs did not move runs no stage and says so; a derive after one canonical change regenerates what reads that change and writes, byte for byte, the tree a full derive writes. The equivalence is a case that reorders inputs, renames one, interrupts a derive and poisons the record, and the full derive stays the authority: `scripts/derive-check` is unchanged and a bypass switch runs everything. Derive has a budget per scenario, set from the samples of milestone the-delivery-baseline-is-recorded and judged with their noise. A CI gate that was not run leaves a record bound to the inputs that excused it, and a suite case that declares what it reads is selected only by a change to it."
+current_state: "No per-artifact input is data, no derive skips anything, stage A and C write in place, no derive budget exists, and a CI skip is a 14-day `ci-plan` artifact bound to no input digest. 22 of the gate model's 28 path classes select the whole shell suite, and no suite case declares what it reads."
+desired_state: "A person who edits one rule runs `scripts/derive` and sees which artifacts were regenerated and why, and `scripts/derive-check` agrees with the result; a second derive says nothing changed; a CI run's skip of a gate names the inputs whose hash excused it."
+scope:
+  - "scripts/derive"
+  - "scripts/derive-check"
+  - "scripts/generate-site-data"
+  - "scripts/gitattributes"
+  - "scripts/ci-plan"
+  - "scripts/ci"
+  - "lib/common.sh"
+  - "lib/gates.sh"
+  - "lib/doctor.sh"
+  - "apps/majordomus-cli/src/generate.rs"
+  - "apps/majordomus-cli/src/commands/generate.rs"
+  - "apps/majordomus-cli/src/capability/builtin/artifacts.rs"
+  - "apps/majordomus-cli/src/gates"
+  - "apps/majordomus-cli/tests"
+  - "share/schemas/generated"
+  - ".ai/repo/benchmarks"
+  - ".ai/repo/ci"
+  - ".ai/repo/rules/project"
+  - ".ai/repo/adrs"
+  - "test/run.sh"
+  - "test/cases"
+  - "docs"
+non_scope:
+  - "Removing or narrowing the machine-wide derive lock: rule project.one-derive-at-a-time and PR #855 stay; every derive, incremental or not, takes the lock, and the gap file on A05.2 records that splitting it by key without a bound recreates the load-57 contention the lock fixed"
+  - "Running independent generators in parallel inside one derive: not planned until I2311's records show which stage dominates and at what load"
+  - "Re-deriving in the Pages build instead of refusing a stale tree: refused for reasons milestone derived-data-integrity records"
+  - "What the site's input fingerprint covers and where the staleness refusal runs: milestone derived-data-integrity, I1409"
+  - "Cutting case 95 or the suite's sharding: I2115 on origin/rescue/d1/chore/the-ci-critical-path-is-planned and the branch origin/fix/the-suite-is-dealt-from-measured-seconds"
+  - "The warm, partial and cold baseline of the required check and its sub-minute target: milestone ci-critical-path"
+  - "Reusing a CI verdict across runs: a skip is recorded and bound here, and no verdict is carried from one run to another"
+  - "A cache shared between worktrees, machines or CI runs: a derive record lives under the checkout's own `.ai/local/` and is never tracked (rule project.cache-is-invisible)"
+acceptance_criteria:
+  - "Every artifact of the manifest and every output of stage B names its inputs as data, and a generator that reads an undeclared tracked input is refused by a case"
+  - "A derive with nothing changed runs no stage, says so, and leaves the tree byte for byte as it was; a missing or corrupt record causes a full derive"
+  - "After one canonical change a derive regenerates only what reads it, and the tree equals what a full derive writes from the same inputs under reordered inputs, a rename, an interruption and a poisoned record"
+  - "Every derive still takes the machine lock, and case 1018 passes unchanged"
+  - "Derive has a budget per scenario set from recorded samples, and a regression names the stage that moved"
+  - "A gate a CI run did not run is recorded with the hash of the inputs that would have selected it, and a suite case that declares its reads is left out only by a plan that names why"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 1054_a_derive_with_nothing_changed_generates_nothing"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 1055_an_incremental_derive_equals_a_full_one"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 1056_derive_has_a_measured_budget"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 1018_one_derive_at_a_time_and_no_orphans"
+  - "scripts/derive-check"
+evidence_required:
+  - "inputs_declared_per_artifact"
+  - "noop_derive_generates_nothing"
+  - "incremental_equals_full"
+  - "derive_budget_measured"
+depends_on: []
+risks:
+  - "Narrowing what a change regenerates is silent in the dangerous direction: an undeclared input makes an artifact stale while the derive reports success. The full derive stays the authority, every incremental path carries a bypass, and the equivalence case is the gate, not a review."
+  - "Generated content depends on the machine (a `%h` abbreviation against the local object store, a shallow history, the environment, per I1409), so a record keyed on file digests alone would serve bytes a clean derive elsewhere does not write. Non-file inputs - git history, the executable's generation, the use-case scenarios run, the declared environment - are part of every key."
+  - "The equivalence proof costs full generations, and case 95 already shows what a case that regenerates repeatedly costs on a runner; the driver's logic is proved over stand-in generators as case 400 does, and the real generators are run as few times as the proof needs."
+  - "A skip of a derive is a mutating command reading recorded state, which rule project.cache-is-invisible version 1 forbids; the rule is amended by its own new version under an ADR before any derive skips, or nothing skips."
+created_at: 2026-10-10
+updated_at: 2026-10-10

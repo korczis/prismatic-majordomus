@@ -1,0 +1,60 @@
+id: the-release-chain-is-one-capability
+title: "A release is landed by one typed command that keeps a trail, where three were landed by hand with a different step failing each time"
+slug: the-release-chain-is-one-capability
+order: 328
+priority: p1
+problem: "A release of this repository is eleven steps (docs/DISTRIBUTION.md:175-202 and .github/workflows/release.yml), and the ones between the automated jobs are typed by a session: merging on a green `ci`, `scripts/ci/release-verdict --commit` before the tag, the tag itself (a person's decision by design, .github/workflows/version.yml:20-24), merging the record pull request, `scripts/pages verify` with the latest.json probe, and the re-run of the smoke job, which fails by design until the record is on master. The executor session that allocated I2299 on the mesh recorded that three releases were landed with session-local shell and that each hand step failed once. The record pull request sat with no check after v0.15.0 and v0.16.0 until somebody closed and reopened it (release.yml:325-336). At v0.20.0 the publish job stopped at `git add -A -- . ':(exclude)dist'` (release.yml:272) because `/dist/` is ignored since #855 (.gitignore:17): six archives, SHA256SUMS and the attestations were published and no record was proposed, so the record was written by hand as #901 and merged with `--admin` at 17:25:00Z on the owner's word before its `ci` concluded, with no line on the executor's trail. Twelve tags were cut between 2026-10-03 (v0.12.0) and 2026-10-10 (v0.20.0), so this is a daily act. Nothing records which step a landing reached; the release path pays a full derive and `scripts/derive-check` for each record (699 s, 672 s and 302 s were release-day derives) and keeps no timing per step; and no step verifies the installed tool beyond the smoke job, which swallows the launcher check (release.yml:468)."
+outcome: "`majordomus release land` is one capability, declared once in apps/majordomus-cli/src/capability/builtin/release.rs. It walks a version that is on master from the verdict of its merge commit to a served site and an installed tool, writes every step to the integration trail before it acts, changes nothing in a dry run, resumes from the trail, and ends with one typed verdict that names the step and the remedy. It reuses `scripts/ci/release-verdict`, `majordomus prs drain` and `scripts/pages verify` and carries no reading of its own. The tag stays a decision: the command stops before it and prints the tag command, and tags by itself only where the policy's authority profile grants a release. A release happens once per delivery boundary the policy declares, a change that owes no version tags nothing, and the wall time of each step is on the trail, so a later budget is set from measurements and none is promised."
+current_state: "release.rs declares three reads (the changelog, the version, the analysis); every act of a release is a shell command a session types from a document, and a landing that stops halfway is found by whoever looks next."
+desired_state: "A session, or a run with the authority to do so, lands a release with one command and reads from the trail where it stands; a failed step is a typed end, and the procedure in docs/DISTRIBUTION.md names the command instead of the steps."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/release.rs"
+  - "apps/majordomus-cli/src/release"
+  - "apps/majordomus-cli/src/integration"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/src/commands/release.rs"
+  - "apps/majordomus-cli/tests/release_land.rs"
+  - "share/commands.yaml"
+  - ".ai/repo/ci/release.yaml"
+  - ".ai/repo/ci/version.yaml"
+  - ".ai/repo/adrs"
+  - "docs/DISTRIBUTION.md"
+  - "docs/RELEASE.md"
+  - "docs/CONCEPTS.md"
+  - "docs/CLAIMS.yaml"
+  - "docs/claims"
+  - "SECURITY.md"
+  - "test/cases"
+  - "docs/generated"
+  - "site/data"
+non_scope:
+  - "Changing .github/workflows/release.yml or version.yml: the pipeline stays what a tag sets in motion, and its staging defect at line 272 is I2302"
+  - "`release.status`, the in-flight state of scripts/ci/release-check and the written release workflow: those are I2279, I2280 and I2281 (owner packs wave 1)"
+  - "The pre-push verdict for a release tag (I2294) and the executor reopening a record pull request (I2296), both on unlanded branches"
+  - "The Pages gate against a deployment in flight (I2297, unowned) and the rollout to machines (branch feature/the-fleet-is-rolled-out, #900)"
+  - "A promised duration for the pipeline: the 60 s figure is a reported and not enforced publication objective (.ai/repo/ci/pages.yaml:177)"
+  - "`--admin`, a rebase, a squash or a forced push anywhere in the chain, and any exposure of the command over MCP or HTTP"
+acceptance_criteria:
+  - "One command lands a version that is on master: verdict, tag or stop, pipeline, record pull request, Pages, latest.json and smoke, in the order .ai/repo/ci/release.yaml declares"
+  - "Every step is on the integration trail before it acts, a second invocation resumes from the trail and repeats no step recorded as done, and a dry run writes nothing and pushes nothing"
+  - "Without an authority profile that grants a release the command stops before the tag and names the tag command; with one it tags the judged commit from a clean tree"
+  - "A change that owes no version by `release analyze` ends the command with a typed nothing-owed verdict, and no tag, release or record follows"
+  - "A failed or unreadable verdict, a record that was not proposed, a site that does not serve the record and an installed version that differs each end the command with a typed verdict naming the step, and none is reported as landed"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test release_land"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 87_release_pipeline 362_a_release_follows_the_ci_verdict"
+  - "scripts/derive-check"
+evidence_required:
+  - "release_land_test"
+  - "landing_trail_of_one_release"
+  - "dry_run_moves_nothing"
+  - "tag_stops_without_authority"
+depends_on: []
+risks:
+  - "Automating the tag would reverse a recorded decision (.github/workflows/version.yml:20-24) instead of filling a gap. The tag is taken only under a declared grant, and the behaviour without it is today's."
+  - "The next tag repeats the v0.20.0 publish failure unless I2302 lands first; the capability must report that state and never write the record in the pipeline's place."
+  - "Three open integration branches (#828, #859 and I2296) edit integration/drain.rs, where the trail's vocabulary lives; new events collide with them until they land."
+  - "`release.status` (I2279) reads the same stages. If both land with a stage list each, the list has two owners; whichever lands second reads the other's."
+created_at: 2026-10-10
+updated_at: 2026-10-10

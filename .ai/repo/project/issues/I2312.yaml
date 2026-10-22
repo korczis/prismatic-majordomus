@@ -1,0 +1,50 @@
+id: I2312
+milestone: the-delivery-baseline-is-recorded
+title: "An observation and a refresh leave their timings on the trail, and a failed refresh leaves the line that failed"
+slug: refresh-timings-reach-the-trail
+priority: p1
+profile: implementation
+parallel_safe: false
+serves:
+  - "delivery-is-explained-by-evidence#baseline-is-recorded"
+objective: "Record what the integrator's two expensive acts cost, on the trail it already writes. The `observed` event of `integration::refresh` (mod.rs:1235) gains the seconds of the forge read and of the fetch and the number of forge calls, counted at the one `gh` call site (forge.rs:383). The events of a refresh and of a repair (`refreshed`, `refresh_failed`, `repaired`, `repair_refused`) gain the seconds of the merge, the derive, the commit and the push, and a failed one names the step that failed and carries the line of that step's output that reported the failure. The relation and classification pass of a status read is timed as phases of `apps/majordomus-cli/src/perf.rs`, since a read writes nothing to the trail."
+why: "Convergence pack 03 issue 03.2. Nothing in the integration module measures itself: no `Instant` in forge.rs, relation.rs or classify.rs, and the `observed` line says only how many pull requests were open (mod.rs:1239-1250). The audit of 2026-10-10 timed `prs refresh` from outside: 246 s of wall time, 70 s user and 104 s system, for 51 open pull requests, one sample, with no way to say how it divides between the forge's answers and the fetch. A refresh is the executor's dearest act, a merge of master followed by a full `scripts/derive` (drain.rs:2150), and the trail gives its duration only as the gap between two timestamps. When it fails the trail keeps the last three lines of the step's stderr, in reverse (drain.rs:2157-2166 for the derive, :2178-2187 for the commit), and those are often not the line that failed: the two refreshes refused on 2026-10-10 (#873 at 07:46Z, #859 at 08:07Z) read `the merge commit was refused: doctor: 1 failure(s) | INFO budget doctor ... 93444 ms of 100000 ms | INFO reasoning ...`, the finding that failed is not on the trail, and both were classed `policy_violation`. The repair refused on 2026-10-09 (#825) kept three `mktemp` lines of a use-case run. Of 3 refreshes the trail holds, 0 succeeded, and nobody can say from it what a successful one costs. I2313 folds these timings into the throughput; I2331 and I2326 change the same function for other reasons."
+current_state: "`IntegrationEvent` (drain.rs:583) has no duration and no step. A failure's `detail` is a prefix and the tail of one stream; the class is decided from those words (`FailureClass::of_refresh_failure`, drain.rs:564)."
+desired_state: "An `observed` line carries the seconds of the forge read, the seconds of the fetch and the forge calls made; a refresh or repair line carries the seconds of each step it reached; a failed one carries the step's name and the first line its output marks as a failure, with the last line beside it, bounded in length and passed through `public_text` like every detail. The new fields are optional and skipped when empty, so a trail written before reads back unchanged."
+scope:
+  - "apps/majordomus-cli/src/integration/drain.rs"
+  - "apps/majordomus-cli/src/integration/repair.rs"
+  - "apps/majordomus-cli/src/integration/mod.rs"
+  - "apps/majordomus-cli/src/integration/forge.rs"
+  - "apps/majordomus-cli/src/integration/tests.rs"
+  - "apps/majordomus-cli/src/perf.rs"
+  - "apps/majordomus-cli/tests/integration_refresh_trail.rs"
+  - "apps/majordomus-cli/tests/integration_repair.rs"
+  - "docs/INTEGRATION.md"
+  - "docs/generated"
+non_scope:
+  - "Not a version of the driver or of the vocabulary in the relation cache's key (mod.rs:205-219): that is I2298 / ADR 0129, session p5's, and it edits the same struct"
+  - "Not reordering or batching the forge reads readiness-first: nothing shows where the 246 s go until this lands, and no issue plans it before the figures exist"
+  - "Not re-deciding the failure class from the step: `FailureClass::of_refresh_failure` still reads the words; no issue plans that change, and the step recorded here is what it would read"
+  - "Not a new action word, a second trail or an event channel: the fields are added to `IntegrationEvent`, and the one channel that carries the trail to a surface is I2363"
+  - "Not the percentiles or the delivery record: I2313 folds these timings and writes them into the record of I2310"
+  - "Not removing the scratch worktree an interrupted refresh leaves: I2331"
+  - "Not writing the trail from a status read or a dry run: both still write nothing (docs/INTEGRATION_ROLLOUT.md:5-7)"
+depends_on: []
+acceptance_criteria:
+  - "After `prs refresh` against the scripted forge the `observed` line carries the seconds of the forge read and of the fetch and the number of forge calls, and that number equals the calls the scripted forge logged"
+  - "A refresh or a repair that succeeds carries the seconds of the merge, the derive, the commit and the push, and one that fails carries only the steps it reached"
+  - "A refresh whose commit hook fails with a `FAIL` finding followed by informational lines records the step `commit` and the `FAIL` line, where the tail alone would have recorded only the informational ones"
+  - "A failure whose output marks no line as a failure records the last three lines as today, and a credential in a remote address is still removed from what is recorded"
+  - "A trail written by the previous release reads back with every event equal, and `prs status` and a dry run still append nothing to the trail"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test integration_refresh_trail"
+  - "cargo test --test integration_repair"
+  - "scripts/derive-check"
+evidence_required:
+  - "observation_cost_on_the_trail"
+  - "refresh_steps_timed"
+  - "failing_line_recorded_case"
+created_at: 2026-10-10
+updated_at: 2026-10-10

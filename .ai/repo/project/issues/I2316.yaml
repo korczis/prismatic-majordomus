@@ -1,0 +1,56 @@
+id: I2316
+milestone: an-unattended-run-has-declared-authority
+title: "A restriction declares whether it is an invariant, a process or a heuristic, an undeclared one is never delegable, and only a process can be delegated"
+slug: restrictions-declare-their-kind
+priority: p1
+profile: implementation
+parallel_safe: false
+serves:
+  - "a-drain-settles-unattended#authority-is-declared"
+objective: "Add a restriction kind (`invariant`, `process` or `heuristic`) to the rule front matter through share/schemas/majordomus/rule/rule.v1.proto, read it in apps/majordomus-cli/src/rules beside `Class` without defaulting, and show it in `rules.report` and `rules.show`. Record the kind of each of the twenty restrictions the audit of 2026-10-10 classified on the project rule that states it, and hold every key of the policy's `authority` section (I2315) to a rule declared `process`."
+why: "Autopilot pack 01 issue 1 and pack 00 issue 3. The typed notions today are the class, `blocking` or `advisory` (apps/majordomus-cli/src/rules/mod.rs:113, routed at lib/doctrine.sh:160-163), and the `x-majordomus` block (share/allow/rule.txt: validator, category, policy_key, exit_code, enforced_by, claims, tests, reviewed_because). No field says whether a restriction protects the trunk, orders the work or expresses a preference, so a delegation has nothing to be checked against. The audit classified twenty restrictions by hand: 6 safety invariants, 12 process, 2 heuristic; 9 to keep, 11 to change, none to remove. That table is this issue's input, and it lives in no record. Four facts shape the field. Composition is additive and .ai/repo/rules/README.md:78 says there is no override mechanism, so the kind must not become one: it says what the authority profile may relax and weakens no rule. The 59 vendored rules are pinned by hash (.ai/repo/rules/vendor/majordomus/manifest.yaml), so they cannot be typed here without a package version, which is I2319; an absent kind therefore reads as undeclared and not delegable. A kind is per rule, and project.integration-follows-the-current-master (version 3) states both the refusal of `--admin` and the staged rollout count, so it has to be split before either half can be typed. And the table calls the five-verified-merges gate (apps/majordomus-cli/src/integration/drain.rs:1232) a heuristic while saying it belongs in declared authority: it refuses a command (apps/majordomus-cli/src/commands/prs.rs:345) and I2315 lets a profile declare it, so it is recorded as a process, and the checkpoint cadence, which refuses nothing (vendored rule checkpoint-freshness, exit code 0), stays the heuristic."
+current_state: "106 project rules (96 blocking, 10 advisory) and 59 vendored rules carry a class and no kind. Which restrictions are safety invariants is known from an audit table and from the prose of ADR 0101."
+desired_state: "`majordomus rules` shows each rule's kind, or that it declares none, with the tallies. The project rules behind the audited restrictions declare theirs, and the rule that forbids `--admin`, a merge without a passed required check and a head without master, and holds every drain after an unverified merge, is an invariant on its own. Every key of the `authority` section names the rule whose restriction it relaxes, and a key whose rule is an invariant, a heuristic or undeclared fails a test."
+scope:
+  - "share/schemas/majordomus/rule/rule.v1.proto"
+  - "share/schemas/majordomus/rule/rule.v1.schema.json"
+  - "share/allow/rule.txt"
+  - "share/schemas/majordomus/policy/policy.v1.schema.json"
+  - "apps/majordomus-cli/src/rules"
+  - "apps/majordomus-cli/src/capability/builtin/rules.rs"
+  - "lib/rules.sh"
+  - ".ai/repo/rules/project"
+  - ".ai/repo/rules/README.md"
+  - "apps/majordomus-cli/tests/authority_profile.rs"
+  - "apps/majordomus-cli/tests/rules.rs"
+  - "docs/DOCTRINE.md"
+  - "docs/CONCEPTS.md"
+  - "docs/CLAIMS.yaml"
+  - "docs/claims"
+non_scope:
+  - "Not typing the 59 vendored rules: the package is pinned by hash and its next version is I2319; until then a vendored rule reads as undeclared and is not delegable"
+  - "Not an override of a rule: composition stays additive (.ai/repo/rules/README.md:78), and the kind decides only what the authority profile of I2315 may relax"
+  - "Not a classification kept in a table, a document or a baseline beside the rules: the kind is front matter, and a restriction no rule states is given to the rule that owns its gate or listed in the pull request"
+  - "Not classifying every project rule: a rule that declares no kind stays undeclared, is counted, and is never delegable; no ratchet baseline is added"
+  - "Not changing what any restriction does: the conversions are I2317 for scope and I2319 for the rest"
+  - "Not the graph from a rule to the hook or job that enforces it: I2249 (origin/chore/the-owner-packs-are-planned)"
+depends_on:
+  - "I2315"
+acceptance_criteria:
+  - "`rules.report` gives each rule's kind or `undeclared` and the tallies by kind, and `rules.show` gives one rule's"
+  - "A rule whose front matter carries a kind outside the three is refused by the rule schema and by `majordomus doctor`"
+  - "Each of the twenty audited restrictions resolves to a project or a vendored rule; the project ones declare the kind the audit gave, with the verified-merge count recorded as a process and the reason written in the rule, and the pull request lists any restriction no rule states"
+  - "The refusal of `--admin`, of an unpassed required check and of a head without master, and the hold after an unverified merge, sit in a rule declared `invariant` that states no process clause; the staged rollout is a rule declared `process`, and every test the old rule named is named by one of the two"
+  - "A test reads the `authority` section of the policy schema and fails when a key names no rule, a rule that does not exist, or a rule not declared `process`; a fixture key naming the invariant rule fails it"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test authority_profile"
+  - "cargo test --test rules"
+  - "scripts/ci/rule-proof-check"
+  - "scripts/derive-check"
+evidence_required:
+  - "rule_kind_in_report"
+  - "invariant_key_refused_test"
+  - "audited_restrictions_typed"
+created_at: 2026-10-10
+updated_at: 2026-10-10

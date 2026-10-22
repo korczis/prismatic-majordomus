@@ -1,0 +1,43 @@
+id: I2376
+milestone: the-site-says-what-ships
+title: "The first screen says the outcome, who it serves and what it does not do, and the narrative names the five pains with what answers each"
+slug: first-screen-says-what-it-does
+priority: p2
+profile: implementation
+parallel_safe: true
+serves:
+  - "the-site-says-what-ships#first-screen-is-understood"
+objective: "Refine the hero copy in site/data/marketing.toml to the outcome and the audience, render on the first screen the README's `What this is not` items that site/data/generated/readme.json already carries, and extend site/data/homepage.toml and homepage-check so the recognise section names five pains: the three product domains it shows today, and stale pull requests and slow release, each with the README limitation that says what is not yet built until a stable domain answers it."
+why: "Living-site V3 pack items RDV3-04-01, RDV3-04-02, RDV3-04-06 and RDV3-05-02. The hero is marketing.toml:6-9 (`AI coding agents do the work.` / `Your repository decides whether it is done.`), close to the owner's suggested line `Keep AI development moving, with the repository deciding what is done`, which is to be refined to what is implemented; there is no line saying who it serves. What it does not do is a link to /limitations/ (index.html:258 and :343), although generate-site-data:477-488 already derives the README's `What this is not` and `Limitations` sections into readme.json. homepage.toml:26 selects three domain problems, context, coordination and completion, of the six domains under .ai/repo/features/domains; the pack's other two pains, stale pull requests and slow release, have no domain and no feature file (no feature describes the pull-request executor or the release chain), so the page cannot show them, and naming them as answered would be the unsupported promise I2375 refuses. Platforms, privacy and security exist only behind /docs/install/. The site acceptance specification asks for promise and limitations in one screen and pains linked to actual capabilities."
+current_state: "The first screen states what the tool does and links what it does not; the narrative names three pains, each through a domain."
+desired_state: "The first screen carries the outcome, the audience, the install command, the recorded refusal it already shows, and what the tool does not do rendered from readme.json; the recognise section names five pains, each linked to a stable domain or shown with the README limitation that says it is not answered; homepage-check fails a pain that has neither; the copy stays inside the marketing.toml and manifesto.toml budgets and passes the promises check of I2375."
+scope:
+  - "site/data/marketing.toml"
+  - "site/data/homepage.toml"
+  - "site/templates/index.html"
+  - "scripts/ci/homepage-check"
+  - "README.md"
+  - "test/cases/333_homepage_narrative.sh"
+  - "docs/PRODUCT.md"
+non_scope:
+  - "Not a new product domain or feature for the pull-request executor or the release chain: a domain lists only stable features, and those capabilities are planned work (I2299, I2320 to I2325 of this plan)"
+  - "Not the walkthrough from intent to merge and release: I2377"
+  - "Not the phone navigation menu: I2100 and draft PR #858"
+  - "Not screenshots of the Cockpit, the API or MCP: an image that is not derived goes stale with no gate, and the recorded runs replace mockups"
+  - "Not new hand-written prose outside marketing.toml and manifesto.toml, and no number in either (scripts/site-check:63-79)"
+depends_on:
+  - "I2375"
+acceptance_criteria:
+  - "The rendered hero carries the outcome, the audience, the install command from distribution.json and at least one item of the README's `What this is not`, each found by its data attribute in case 333"
+  - "The recognise section renders five pains, and each one links a domain the product map shows or renders the README limitation it names"
+  - "A pain declared in homepage.toml with neither a shown domain nor a limitation the README carries fails homepage-check naming it"
+  - "marketing.toml stays within sixty lines with no number, and the copy passes the promises check of I2375"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 333_homepage_narrative"
+  - "scripts/derive-check"
+evidence_required:
+  - "first_screen_markers_case"
+  - "five_pains_rendered"
+created_at: 2026-10-10
+updated_at: 2026-10-10

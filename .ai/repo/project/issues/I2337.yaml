@@ -1,0 +1,49 @@
+id: I2337
+milestone: repair-is-dispatched-to-a-worker
+title: "A ready repair is held by one worker through an exclusive claim naming its issue, and a dead worker's hold expires"
+slug: one-worker-holds-a-repair
+priority: p2
+profile: implementation
+parallel_safe: false
+serves:
+  - "a-drain-settles-unattended#repair-is-dispatched"
+objective: "Before apps/majordomus-cli/src/integration/dispatch.rs starts a worker, take an exclusive mesh claim on the repair's scope naming its issue, through the path the executor already uses for its own claim (`claim`, apps/majordomus-cli/src/integration/exclusive.rs:188), and release it when the worker ends. Extend `reconcile` (apps/majordomus-cli/src/integration/drain.rs:1124) so that a dispatch recorded on the trail with no end, whose process is gone, is ended and its claim released before anything else is decided."
+why: "Autopilot pack 03 issue 2 asks for assignment, a per-issue lease with fencing, an idempotency key and cancellation. Most of it exists and must not be built again. A claim already names its issue (`ClaimAcquired` with `issue`, apps/majordomus-cli/src/mesh/journal.rs:485); overlapping exclusive claims are refused up front and concurrent ones resolved the same way on every runtime (`admission_conflicts`, apps/majordomus-cli/src/mesh/state.rs:815); a dead stream's claims expire; `mesh.claim` and `mesh.release` are capabilities (apps/majordomus-cli/src/mesh/cooperation.rs:3300, :3373). The executor's own claim shows the shape: a mesh that is not running is no refusal, the lease still guards the clone, and another session's live claim is a refusal naming its key, its session and its intent (exclusive.rs:184-188). What is missing is only the mapping: nothing takes a claim for a repair, so two runs, or a run and a person's session, can repair one pull request at once. Milestone work-is-coordinated (I2141-I2144, session 1b's, on origin/chore/the-owner-packs-are-planned) lists a second task database, queue or assignment table as non-scope; assignment here is therefore the claim itself and no other record. The peer board is in memory and enforces nothing (apps/majordomus-cli/src/peers.rs:16), so it is not the hold."
+current_state: "A recorded repair has no holder. The integration lease lets one executor lead a base, and nothing stops a second worker, on this machine or another, from changing the same branch."
+desired_state: "One repair of one head has at most one worker: the claim's refusal names who holds it and the repair is reported as held by that session, not blocked. The idempotency key is the pull request and the head of the request, so a second dispatch for the same head is the same dispatch. The fence is git's: the worker's push is a fast-forward of the head the request was decided on, or it is refused. With the mesh off the integration lease and the trail are the hold."
+scope:
+  - "apps/majordomus-cli/src/integration/dispatch.rs"
+  - "apps/majordomus-cli/src/integration/exclusive.rs"
+  - "apps/majordomus-cli/src/integration/drain.rs"
+  - "apps/majordomus-cli/src/integration/tests.rs"
+  - "apps/majordomus-cli/tests/worker_dispatch.rs"
+  - "apps/majordomus-cli/tests/integration_across_machines.rs"
+  - "docs/INTEGRATION.md"
+  - "docs/MESH.md"
+non_scope:
+  - "Not an assignment or acceptance event, a ninth journal kind, an assignment table or a scheduler of its own: the claim is the assignment, and the order of repairs is the queue's rank."
+  - "Not a fencing token presented to the forge: the guards are the fast-forward push of the observed head and `--match-head-commit` on the merge, both existing."
+  - "Not the declared time after which a task or a claim whose worker is gone ends or is listed as orphaned: I2143. Not validating the issue a claim names against the plan, or the shared ids: I2144. Not a claim that returns after expiry: I2138. All three are on origin/chore/the-owner-packs-are-planned and not on master."
+  - "Not cancelling another session's claim: a repair somebody holds is reported as held and passed over."
+  - "Not the pre-push hook judging an exclusive claim: I2142."
+  - "Not another machine's worker: I2339. The cross-machine test here is only that a claim taken for a repair on one runtime refuses the same repair on another."
+depends_on:
+  - "I2335"
+acceptance_criteria:
+  - "Dispatching a repair takes an exclusive claim on its scope naming its issue before the worker starts, and releases it when the worker ends, however it ends"
+  - "A repair whose scope a live exclusive claim of another session covers is not dispatched: the refusal names that claim's key, session and intent, and the run goes on to the next repair"
+  - "Two repairs whose authored paths overlap are not dispatched at the same time, and two that do not overlap are, up to the number of workers the profile allows"
+  - "A dispatch on the trail with no end and no live process is ended by the next drain's reconciliation, its claim is released, and the repair can be dispatched again; the dead worker's uncommitted files are still in its worktree"
+  - "A second dispatch for the same pull request and head starts no second worker"
+  - "With the mesh off, every criterion above holds on one machine with the integration lease as the only hold"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test worker_dispatch"
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test integration_across_machines"
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib integration::"
+evidence_required:
+  - "repair_claim_is_exclusive_test"
+  - "dead_worker_hold_ends_test"
+  - "dispatch_without_mesh_test"
+created_at: 2026-10-10
+updated_at: 2026-10-10

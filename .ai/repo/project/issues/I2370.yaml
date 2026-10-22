@@ -1,0 +1,50 @@
+id: I2370
+milestone: delivery-is-proved-end-to-end
+title: "The comparison against the baseline of 2026-10-10 is published with its sample sizes and its exceptions"
+slug: comparison-against-the-baseline
+priority: p2
+profile: implementation
+parallel_safe: true
+serves:
+  - "delivery-is-explained-by-evidence#comparison-is-published"
+objective: "Extend the command I2310 adds to re-measure the delivery baseline with a comparison: it reads the tracked baseline of 2026-10-10 and a current measurement taken the same way, and renders each figure's median and ninety-fifth percentile on both sides with its sample size, its machine, its window and whether the two are comparable, into a generated document under docs/generated and the site's data through the existing derive. Add test/cases/1059_the_comparison_reads_the_baseline.sh."
+why: "Convergence pack 06 issue 06.4: publish median and p95 feedback latency, no-op work eliminated, the derive critical path, CI latency, eligible pull-request dwell, manual interventions, accepted outcomes and regressions, with environment, sample size, confidence and exceptions, and invent no 60 s CI or 5-minute release. What exists is medians only (integration/metrics.rs:1-21, where a median with no sample is None and never zero), a p95 with bootstrap intervals for economics runs only (economics/stats.rs:97), a Pages SLO report against a tracked baseline (scripts/pages report), and measured seconds per suite case (.ai/repo/ci/suite-durations.tsv). The figures of 2026-10-10 in the plan skeleton: a first-attempt success of the required check took p50 5423 s and p95 8290 s (n=32 of the 120 newest runs, 39 succeeded, 48 failed, 29 were cancelled, 9 needed a second attempt); a pull request took p50 17.8 h and p95 98.2 h from opening to merge (the last 150 merged; since 10-04, n=64, p50 13.6 h and p95 99.9 h); `prs refresh` took 246 s for 51 pull requests on the shared Mac; full derives took 699 s, 672 s and 302 s on three different machines. The release record v0.20.0 was merged with `--admin` before its `ci` concluded and has no line on the executor's trail, which makes it an exception any dwell or intervention figure must name. I2310 records the baseline, I2313 adds the p95 and the count of times a person acted, and I2346 sets derive budgets from samples; this issue is the published comparison that reads them, which is why it comes last."
+current_state: "No figure of 2026-10-10 can be set beside a later one: the medians are not percentiles, the samples are not named, and nothing renders a comparison."
+desired_state: "A generated document states, per figure, both sides' median and ninety-fifth percentile, the sample size of each, the machine and the window, and `not comparable` when the machine class, the sample definition or the window differs; a figure measured on one side only is `unknown` on the other; the named exceptions (the `--admin` merge of #901, release-day derives on other machines) are listed with the figures they touch. A single sample is never read as a trend, and no figure is a target. Percentiles come from economics/stats.rs, not a second implementation."
+scope:
+  - "apps/majordomus-cli/src/economics/stats.rs"
+  - "apps/majordomus-cli/src/integration/metrics.rs"
+  - "apps/majordomus-cli/src/generate.rs"
+  - "test/cases/1059_the_comparison_reads_the_baseline.sh"
+  - "docs/PERFORMANCE.md"
+  - "docs/generated"
+  - "site/data"
+  - "site/content"
+  - "docs/CLAIMS.yaml"
+  - "docs/claims"
+non_scope:
+  - "Not recording the baseline, the derive stage timings or the refresh timings: I2310, I2311 and I2312"
+  - "Not the p95 of throughput and the count of manual interventions as measurements: I2313"
+  - "Not a budget or a non-regression gate: derive budgets are I2346 and the suite's are .ai/repo/ci/suite.yaml; this issue publishes and gates nothing"
+  - "Not a claim of improvement in prose, a number typed into a document (rule project.no-counts-in-prose) or a promised duration for CI or a release"
+  - "Not a second percentile implementation or a second store of measurements"
+depends_on:
+  - "I2310"
+  - "I2313"
+  - "I2346"
+acceptance_criteria:
+  - "Case 1059 builds the comparison from a fixture baseline and a fixture measurement and finds every figure with its median, its ninety-fifth percentile and the sample size of both sides"
+  - "A figure absent from either side is rendered `unknown`, and one measured on another machine class or another window is rendered `not comparable`, never as a change"
+  - "A side with one sample shows no percentile and no direction of change"
+  - "The generated document and the site's data are byte-identical over two runs from the same records, and `scripts/derive-check` refuses an edit by hand"
+  - "No figure of the document appears as a literal in any hand-written document or site template"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 1059_the_comparison_reads_the_baseline"
+  - "scripts/derive-check"
+evidence_required:
+  - "comparison_with_sample_sizes"
+  - "unknown_and_not_comparable_rendered"
+  - "generated_not_typed"
+created_at: 2026-10-10
+updated_at: 2026-10-10

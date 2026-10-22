@@ -1,0 +1,48 @@
+id: I2340
+milestone: repair-is-dispatched-to-a-worker
+title: "Dispatch is tried against a crash, a replay, an expired delegation, a divergent result and no provider"
+slug: dispatch-is-tried-against-its-failures
+priority: p3
+profile: implementation
+parallel_safe: false
+serves:
+  - "a-drain-settles-unattended#dispatch-needs-a-delegation"
+objective: "Add to apps/majordomus-cli/tests/mesh_delegation.rs and apps/majordomus-cli/tests/worker_dispatch.rs one test for each way a dispatch can go wrong that no existing test covers: a request delivered twice, a request replayed after its repair finished, a delegation that expires between the request and the start, a receiver whose checkout does not hold the request's head, a worker that returns a head that does not descend from the one it was given, two workers returning different results for one request, a worker that dies with edits uncommitted, a receiver that becomes unreachable after accepting, and a machine with no provider. Each asserts what ran, how many times, and what reached the pull request's branch."
+why: "Autopilot pack 03 issue 5. The audit found crash, duplicate, replay, untrusted node, unreachable node and stale source already tested where they can occur today: the journal applies a duplicate once and counts it (apps/majordomus-cli/src/mesh/journal.rs:14), a replayed hello is refused (apps/majordomus-cli/src/mesh/link.rs:10), a resume is planned against its source first (apps/majordomus-cli/src/continuity/mod.rs:5), and the executor never merges without the required checks on the current head (apps/majordomus-cli/src/integration/drain.rs:13). Expired delegation, divergent result, partial output and no provider have no test because, before I2334 to I2339, there was no dispatch and no delegation to test. Validation of what a worker produced is not a new path: it is the pull-request queue, so the tests assert that a bad result is refused by git or left for the queue's gates and never reaches master another way. These tests are written after the delegation's ADR and its wire shape exist, so that a test does not fix a wire shape a decision has not made."
+current_state: "The mesh, the handover transfer and the executor each have their failure tests. The dispatch path of this milestone has the tests of its own issues and none that try it as a whole against a hostile or failing peer."
+desired_state: "For every failure listed, a test names the one outcome allowed: nothing ran, or it ran once, or the result was refused and the pull request's branch is the head it was. A request applied twice starts one worker. A dead worker's uncommitted edits are still in its worktree."
+scope:
+  - "apps/majordomus-cli/tests/mesh_delegation.rs"
+  - "apps/majordomus-cli/tests/worker_dispatch.rs"
+  - "apps/majordomus-cli/src/integration/dispatch.rs"
+  - "apps/majordomus-cli/src/mesh"
+  - "docs/MESH.md"
+  - "docs/CLAIMS.yaml"
+  - "docs/claims"
+non_scope:
+  - "Not the failures already tested for claims, handovers, links and the executor (apps/majordomus-cli/tests/mesh_cooperation.rs, continuity_transfer.rs, integration_across_machines.rs, lease_lost.rs): they are not repeated."
+  - "Not a validator for a worker's patch: the queue is the validator, and the executor's gates (ADR 0101) are not relaxed for a dispatched result."
+  - "Not journal convergence, compaction or the claim that returns after expiry: I2137 to I2140 and I2138 (runtime pack, origin/chore/the-owner-packs-are-planned)."
+  - "Not an untrusted or unknown node in general: I2132 to I2135 and I2261. Here it appears only as a giver of a delegation, which I2334 already refuses."
+  - "Not new behaviour: a failure this issue finds unhandled is fixed in the module that owns it, in this pull request when it is a few lines and as a named follow-up otherwise."
+  - "Not the recorded unattended demonstration in this repository: that is the criterion `demonstrated-unattended` and its case."
+depends_on:
+  - "I2339"
+acceptance_criteria:
+  - "A request delivered twice, and one replayed after its repair finished, start one worker and zero workers respectively, and the second answer says it was a duplicate"
+  - "A delegation that expires before the worker starts runs nothing, and one that expires while the worker runs lets no further request through; both leave a typed refusal on the trail"
+  - "A worker whose returned head does not descend from the head it was given, and the second of two workers answering one request, have their push refused by git, and the pull request's branch is unchanged"
+  - "A worker that dies with edits uncommitted pushes nothing, its hold ends, and its worktree still holds the edits byte for byte"
+  - "A receiver that does not hold the request's head refuses with a stale-source refusal until it has fetched, and one that becomes unreachable after accepting has its claim expire so that the repair can be dispatched elsewhere"
+  - "With no provider on the machine and no accepting runtime, no process starts and the repair is reported blocked with `no_provider`"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test mesh_delegation"
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test worker_dispatch"
+evidence_required:
+  - "replay_and_duplicate_run_once_test"
+  - "expired_delegation_runs_nothing_test"
+  - "divergent_result_refused_test"
+  - "no_provider_blocks_test"
+created_at: 2026-10-10
+updated_at: 2026-10-10

@@ -1,0 +1,46 @@
+id: I2333
+milestone: the-queue-settles
+title: "A patch present on two worktree branches is found, and overlapping worktrees lose no edit"
+slug: duplicate-patches-across-worktrees-are-found
+priority: p3
+profile: implementation
+parallel_safe: true
+serves:
+  - "a-drain-settles-unattended#the-queue-settles"
+objective: "Extend the read capability `worktree.status` (apps/majordomus-cli/src/capability/builtin/worktree.rs:183) to name, for each pair of worktree branches not yet on master, the commits that are the same patch on both, using the patch comparison the integration relation already makes (`git cherry`, apps/majordomus-cli/src/integration/relation.rs:123-139). Add one case that takes two real worktrees editing the same authored file and the same derived file through the queue and shows that no edit is dropped."
+why: "Convergence pack issue 03.4. Duplicate patches are detected only for an open pull request's head against master (`PatchIdsUpstream`, apps/majordomus-cli/src/integration/model.rs:248); two worktree branches that carry the same commit, neither on master, are found by nobody until both are pull requests and one conflicts. 127 worktrees are registered on this machine and several sessions work in them at once; CLAUDE.md records that two workers built the same subsystem in one afternoon because neither looked first. The overlap of scopes is modelled (`overlap`, apps/majordomus-cli/src/plan.rs:657; `OverlapKind`, model.rs:1275) and the lease and trail are shared by every worktree (`common_dir`, apps/majordomus-cli/src/integration/drain.rs:98), but no test shows what happens to two overlapping edits: the existing proofs are the lease races. The pack also asks that output conflicts be told apart from source conflicts, which `ChangeShape` already does (authored and derived paths separately, model.rs:1194); the case asserts it on real worktrees."
+current_state: "`worktree.topology`, `worktree.status`, `worktree.inspect` and `worktree.migration_plan` read where worktrees are and whether they belong there. None compares the patches of two worktree branches. No case drives two overlapping worktrees through the queue."
+desired_state: "`worktree.status` lists, per worktree branch, the other worktree branches that carry one or more of its commits as an equal patch, with the commit ids on both sides. A case proves that of two worktrees editing one authored file the second is `conflicting` naming that file and is never merged over the first, and that of two changing only the same derived file both land with the derived driver, every authored edit of both present on master."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/worktree.rs"
+  - "apps/majordomus-cli/src/worktree"
+  - "apps/majordomus-cli/src/integration/relation.rs"
+  - "apps/majordomus-cli/tests/worktree.rs"
+  - "test/cases"
+  - "docs/WORKTREES.md"
+  - "docs/generated"
+  - "site/content"
+  - "site/data"
+non_scope:
+  - "Not identifying stale worktrees or giving each a disposition: pull request #882 (feature/every-worktree-has-a-disposition, ADR 0127)."
+  - "Not modifying, moving or removing any worktree: the capability reads, and `worktree migrate` stays the only command that moves one."
+  - "Not refusing a push or a start on an overlapping claim: I2142 and I1995, and the milestone work-is-coordinated (session 1b's, origin/chore/the-owner-packs-are-planned)."
+  - "Not a new store of who works where: the comparison is asked of git on the branches that exist, on every read."
+  - "Not the plan-wave conflict model: `overlap` and the `scope_conflict` finding are used as they are."
+  - "Not merged commits or a branch whose head carries a merge of its own: `git cherry` skips merges, and such a branch is reported as not comparable, never as clean."
+depends_on: []
+acceptance_criteria:
+  - "Two worktree branches that each carry the same change as different commits are each listed with the other and with both commit ids; a branch with no shared patch lists none"
+  - "A branch git cannot compare (a merge commit of its own in the range, a missing object) is reported as not comparable with the reason, and never as free of duplicates"
+  - "The case with two worktrees editing one authored file ends with the first merged, the second `conflicting` naming the file, and the second worktree's files unchanged on disk"
+  - "The case with two worktrees changing only the same derived file ends with both merged and every authored edit of both on master"
+  - "Reading the capability changes no worktree, branch, index or ref, in the worktree it is asked from or any other"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test worktree"
+  - "scripts/derive-check"
+evidence_required:
+  - "duplicate_patch_across_worktrees_test"
+  - "overlapping_worktrees_lose_no_edit_case"
+created_at: 2026-10-10
+updated_at: 2026-10-10

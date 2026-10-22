@@ -1,0 +1,44 @@
+id: I2332
+milestone: the-queue-settles
+title: "The executor settles simulated queues of twenty and of fifty pull requests through every forge event the packs name, merging each at most once"
+slug: the-executor-settles-fifty-pull-requests
+priority: p1
+profile: implementation
+parallel_safe: false
+serves:
+  - "a-drain-settles-unattended#settles-on-a-large-queue"
+objective: "Extend the in-process forge `World` (apps/majordomus-cli/src/integration/tests.rs:122) and its `Meanwhile` events (tests.rs:106) with the events it lacks, build two fixed, seeded queues of twenty and of fifty pull requests on it, and drive the settling drain of I2325 over both, asserting inside the forge that no pull request merges twice and that every merge is of a head that held the master of that moment with its required check passed."
+why: "Autopilot pack 04 issue 6 (fixtures for 20+ pull requests) and convergence pack issue 03.5 (a 50+ mock census). The executor is tested on small queues only: the largest fixed executor fixture is 6 pull requests (tests.rs:1901), the proptest `arb_world` generates at most 11 (tests.rs:1464), the threads racing for the lease do so over 3, and the 500-pull-request observation (apps/majordomus-cli/src/integration/mod.rs:2113) checks one diagnostic with relation `unknown` and no drain. The live queue is 51 open on 2026-10-10. Some events exist only as words: a rate limit is classified by `retry.rs` (apps/majordomus-cli/src/integration/retry.rs:54) and never scripted together with the others; a status that never reports is bounded by `REFRESHED_HEAD_REPORTS_WITHIN` (apps/majordomus-cli/src/integration/drain.rs:58) and has no large scenario. The in-process forge is the place: the shell forge (apps/majordomus-cli/tests/integration_executor.rs:58, cases 720 and 850) builds real branches and runs derive, and case 850 with 5 pull requests already declares an 1800 s timeout."
+current_state: "`World` scripts master generations, refusals, lost answers, foreign merges, outages and trail sabotage, and `Meanwhile` moves a head, closes, labels, reviews, arms auto-merge and fails an observation. No executor scenario holds twenty pull requests, and none combines a rate limit, a status that never reports, a rewritten head and an executor killed between an attempt and its end."
+desired_state: "Two named scenarios, twenty and fifty pull requests, each a fixed seed, hold between them: authored conflicts, a base that moves between observation and act, a review that goes stale, failing and cancelled checks, a status that never reports, a head rewritten to a commit that does not descend from the observed one, two pull requests changing one file, a rate limit and a lost network during an observation, a fork head, a long-lived branch far behind, already-merged and superseded pull requests, a second executor contending for the lease, an executor killed between `merge_attempted` and its end, and a base whose protection is read, unprotected and unreadable. Each ends on the settle predicate with every pull request explained."
+scope:
+  - "apps/majordomus-cli/src/integration/tests.rs"
+  - "apps/majordomus-cli/src/integration/drain.rs"
+  - "apps/majordomus-cli/src/integration/tests.rs"
+  - "docs/INTEGRATION.md"
+non_scope:
+  - "Not twenty or fifty real branches against the scripted `gh` shell: that forge stays for what only real merge commits and the derived driver can show. `World` is private to the crate's unit tests today (`mod tests`, mod.rs:55) and the criterion's file is apps/majordomus-cli/tests/integration_settle.rs, which sees only the public `Integrator` trait (drain.rs:902); the issue decides how that file reaches the forge and says so, and does not answer it by building real branches."
+  - "Not a worker that crashes while repairing: I2337 and I2340. The crash here is the executor's own, and a refresh that died after its push."
+  - "Not the before and after figures of time to integrate, throughput and how often a person acted: I2313, and the rollout record is I2314."
+  - "Not a first real merge for the sake of a measurement: zero pull requests were ready on 2026-10-10, and forcing one would pass the gates by hand."
+  - "Not the train: its scenarios are I2326's."
+  - "Not changing the proptest bound of `arb_world`: the generated worlds stay small and the two large ones are fixed."
+depends_on:
+  - "I2325"
+acceptance_criteria:
+  - "The twenty and the fifty scenario each end on the settle predicate, with every pull request of the first observation explained as merged, closed or blocked"
+  - "The forge refuses, and the test fails, if any pull request is merged twice, or merged on a head that lacked the master of that moment or whose required check had not passed on that head"
+  - "An executor killed between `merge_attempted` and its end is followed by one that verifies that merge and does not ask for it again, and two executors started at once take one lease"
+  - "Replaying the trail of either scenario gives the same merges in the same order as the forge recorded"
+  - "Each event the scenario lists is asserted to have occurred at least once in the run, so a scenario that stops exercising one fails"
+  - "Both scenarios are deterministic: the same seed gives the same trail on every run"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib integration::"
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib integration::tests::settles"
+evidence_required:
+  - "twenty_pull_requests_settle_test"
+  - "fifty_pull_requests_settle_test"
+  - "no_double_merge_asserted"
+created_at: 2026-10-10
+updated_at: 2026-10-10

@@ -1,0 +1,46 @@
+id: I2366
+milestone: delivery-is-proved-end-to-end
+title: "One recorded slice leads from an intent to the observation of its deployment, in this repository"
+slug: one-recorded-slice-end-to-end
+priority: p2
+profile: implementation
+parallel_safe: true
+serves:
+  - "delivery-is-explained-by-evidence#one-query-explains-a-task"
+objective: "Carry one small, real change of this repository through the lifecycle with the tool's own commands only, from an intent criterion through its issue, task, pull request, merge, the release `release land` carries it in and the deployment observation of that release, record the deployment observation on the issue's own evidence list, and add a case that asks the explain query of I2349 for that issue at the committed tree and fails when a link answers unknown."
+why: "Convergence pack 06 issue 06.1. Each link of the path is evidenced separately and in a different store: the release record (.ai/repo/releases/v0.20.0.yaml), the task ledger (.ai/local/state/ledger.jsonl), the served observations (.ai/local/state/served/observations.jsonl, served.rs:52), the trail under the git directory, and test/cases/384_a_deployment_is_evidence.sh proves the deployment link alone. No one recorded slice joins them, and a slice run before the release chain was a command would record session-local shell as the norm: the last three releases needed it at every hand step. The served observations are checkout-local, so a deployment proved in one checkout is unknown in every other; the issue record's evidence list (type, url, commit, recorded_at in share/schemas/majordomus/issue/issue.v1.schema.json) is the tracked place the observation can be kept. The explain query is I2349's and the release command is I2299's; this issue is the run of both on real work and the case that holds it."
+current_state: "The path from an intent to a served deployment is argued from separate proofs; no record of this repository walks it once."
+desired_state: "One issue of this repository, taken on the peer board when the work starts, carries a tracked evidence entry of type deployment naming the served commit and the URL; the explain query answers its intent, criterion, commits, pull request, tests, release and deployment, each with its source; a case runs the query at the committed tree and fails on any unknown link; docs/DOGFOODING.md names the slice by its record ids and states no measured value in prose. A step substituted for an irreversible one is labelled simulated in the record."
+scope:
+  - "test/cases/"
+  - "docs/DOGFOODING.md"
+  - ".ai/repo/project/issues"
+  - "docs/CLAIMS.yaml"
+  - "docs/claims"
+  - "docs/generated"
+  - "site/data"
+non_scope:
+  - "Not the explain query itself: that is I2349"
+  - "Not the release command: that is I2299; a slice landed before it exists is not this issue"
+  - "Not the intent loop carried to a reopened and re-satisfied intent: that is I2213 (owner packs wave 2), and not the pilot report from the product intent to CI receipts: that is I2263"
+  - "Not making the served observations tracked: the slice keeps its one observation on its issue's evidence, and the store stays checkout-local"
+  - "Not a public deployment forced for the sake of the slice: it is the next release this repository would cut anyway"
+  - "Not the challenge's recorded run (I1600): that is a use case's transcript, not a delivered change"
+depends_on:
+  - "I2349"
+  - "I2299"
+acceptance_criteria:
+  - "The case asks the explain query for the slice's issue at the committed tree and reads its intent, criterion, commits, pull request, tests, release and deployment, each with a source"
+  - "The case fails when any of those links answers unknown, and a fixture copy of the issue with its deployment evidence removed makes it fail on that link"
+  - "The slice's release was landed by `majordomus release land` and its trail holds every step of that landing"
+  - "docs/DOGFOODING.md names the slice by record ids, and scripts/ci/doc-command-check accepts every command it shows"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+  - "scripts/ci/doc-command-check"
+  - "scripts/derive-check"
+evidence_required:
+  - "recorded_slice_explained"
+  - "missing_link_fails_case"
+created_at: 2026-10-10
+updated_at: 2026-10-10

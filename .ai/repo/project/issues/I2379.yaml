@@ -1,0 +1,40 @@
+id: I2379
+milestone: the-site-says-what-ships
+title: "A rendering budget joins the weight budget, measured in the browser the site sweep already starts, on every site change"
+slug: rendering-budget-beside-weight
+priority: p2
+profile: implementation
+parallel_safe: true
+serves:
+  - "the-site-says-what-ships#page-holds-its-budgets"
+objective: "Measure the homepage's largest contentful paint and cumulative layout shift, or the equivalent the existing browser tooling can read, in the browser site-probe already starts, declare their budgets in the `[budget]` table of site/data/homepage.toml beside the byte budgets, set from recorded measurements, and fail the site-probe gate when a measurement exceeds its budget."
+why: "Living-site V3 pack item RDV3-05-06. site/data/homepage.toml:28-35 budgets only the bytes the homepage makes a visitor download, 340000 for scripts and stylesheets and 8000 for inline JSON, and scripts/ci/homepage-check:458-462 reports the measured weight on every build; the HTML itself is unbudgeted because its size follows the recorded runs. No LCP, CLS, rendering cost or Lighthouse-like measurement exists anywhere in scripts/. homepage.toml:29-31 already states the rule this follows: a figure is measured, never aspired to, and raising a budget is a reviewed change to that file. Browser measurements need a browser and follow the sweep's convention: site-probe reports SKIP without Chrome (scripts/site-probe:4) and exits 12 when an input is missing (:61, :70). The site-probe gate is selected on changes that can move the site (gates.yaml:506-510)."
+current_state: "The homepage is budgeted by bytes; how long it takes to render and how much it shifts are not measured."
+desired_state: "site-probe reports the homepage's measured rendering figures on every run beside the weight homepage-check reports, homepage.toml declares a budget for each, set from at least three recorded runs on the CI runner and cited in the pull request, and a measurement over its budget fails the gate naming the figure, the measurement and the budget."
+scope:
+  - "scripts/site-probe"
+  - "site/data/homepage.toml"
+  - "scripts/ci/homepage-check"
+  - "test/cases/97_site_probe_attribution.sh"
+  - "test/cases/333_homepage_narrative.sh"
+  - "docs/GITHUB_PAGES_PERFORMANCE.md"
+non_scope:
+  - "Not a Lighthouse dependency, a third-party performance service or a new browser sweep"
+  - "Not a budget on HTML size: the HTML carries recorded runs, which are evidence (homepage.toml:31-32)"
+  - "Not the page build's time budget: scripts/pages benchmark and report already hold it (.ai/repo/ci/pages.yaml)"
+  - "Not the widths and reduced motion: I2378"
+depends_on: []
+acceptance_criteria:
+  - "A site-probe run prints each rendering figure of the homepage with its budget and passes when every figure is within it"
+  - "A fixture homepage made to shift its layout after load, or a budget lowered below the measurement, fails the gate naming the figure, the measurement and the budget"
+  - "A homepage.toml without a rendering budget fails the check as an undeclared budget, as a missing byte budget does today"
+  - "Without a browser the measurement reports SKIP and is not counted as within budget"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 97_site_probe_attribution"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 333_homepage_narrative"
+evidence_required:
+  - "rendering_budget_measured"
+  - "budget_breach_case"
+created_at: 2026-10-10
+updated_at: 2026-10-10

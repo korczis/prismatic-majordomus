@@ -1,0 +1,53 @@
+id: I2356
+milestone: the-verdict-cannot-be-bypassed
+title: "A merge the executor did not make is on the trail as foreign, with whether its required check had passed"
+slug: foreign-merges-are-on-the-trail
+priority: p1
+profile: implementation
+parallel_safe: false
+serves:
+  - "delivery-is-explained-by-evidence#verdict-cannot-be-bypassed"
+objective: "When an observation finds master moved by a commit that no `merge_succeeded` line of the trail names, record one line for it in the integration trail (apps/majordomus-cli/src/integration/drain.rs, one new action of `IntegrationAction`) with the commit, the pull request the forge's merged list joins to it, who the forge says merged it, and the state of the base's required checks on the merged head at the instant of the merge."
+why: "Convergence pack 04 issue 04.2 and the audit half of pack 03 issue 03.3. On 2026-10-10 at 17:25:00Z pull request #901 (release/record-v0.20.0, opened at 17:23:51Z) was merged with --admin on the owner's word before its required check had concluded. The trail at .git/majordomus/integration/events.jsonl has no line that names it: the `observed` line of 17:32:03Z carries master 4dfd1856d2 in `master_before` (apps/majordomus-cli/src/integration/mod.rs:1234-1252) and nothing earlier says how master got there, because the trail records the executor's own acts. The executor notices a foreign merge in one place only, between its decision and its own merge, as `unexpected_master` (drain.rs:1887; integration/tests.rs:5627). What the line needs is already read: an observation lists the merged pull requests with head and `mergedAt` (forge.rs:135) and the base's required checks with their apps (forge.rs:65), and master's first-parent line is in git. Since 2026-10-04 the trail holds 15 `merge_succeeded` lines; how many merges reached master beside them is recorded nowhere."
+current_state: "A merge made by a person, by an administrator or with the forge's own button moves master and leaves the trail silent, so `prs events` and the Integration page show a history with holes."
+desired_state: "Every commit on master's first-parent line since the trail began is either the `merge_commit` of a `merge_succeeded` line or a foreign line. A foreign line says `passed`, `failed`, `not_concluded` or `unread` for the required checks of the merged head, judged at the instant of the merge, and is written once however many checkouts observe it."
+scope:
+  - "apps/majordomus-cli/src/integration/drain.rs"
+  - "apps/majordomus-cli/src/integration/forge.rs"
+  - "apps/majordomus-cli/src/integration/mod.rs"
+  - "apps/majordomus-cli/src/integration/tests.rs"
+  - "apps/majordomus-cli/src/capability/builtin/integration.rs"
+  - "apps/majordomus-cli/src/cockpit/pages.rs"
+  - "apps/majordomus-cli/tests/integration_trail.rs"
+  - "test/cases"
+  - "docs/INTEGRATION.md"
+  - "docs/CLAIMS.yaml"
+  - "docs/claims"
+  - "docs/generated"
+  - "site/data"
+non_scope:
+  - "Refusing, reverting or holding anything because of a foreign merge: it is recorded and shown, and the hold after the executor's own unverified merge (ADR 0101, decision D7) is unchanged"
+  - "Merging with --admin, or reading it as permitted: the executor never does (drain.rs:1954), and this issue changes no merge"
+  - "Backfilling merges older than the trail's first line"
+  - "Counting how often a person had to act: I2313 reads these lines for the throughput record"
+  - "A second trail or event channel: one more action in the one trail, read by `prs events`, `integration.events` and the Integration page as every other line is"
+  - "Changing GitHub's settings so that an administrator cannot merge: the owner's act, reported by I2355"
+depends_on: []
+acceptance_criteria:
+  - "In the simulated forge, a pull request merged outside the executor between two observations produces one foreign line naming the pull request, the merge commit and the head; a second observation, and one from another checkout, add none"
+  - "The line says `passed` when the required check concluded success on the merged head before the merge, `not_concluded` when it had not concluded, `failed` when it concluded otherwise, and `unread` when the forge could not be asked; `unread` is never written as `passed`"
+  - "A commit pushed to master with no pull request is a foreign line with no pull request and the checks as read on that commit"
+  - "The executor's own merges produce no foreign line, including one whose answer was lost and which was verified afterwards"
+  - "A trail written before this change reads back unchanged, and a trail holding an action this executable does not know still yields its other lines"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test integration_trail"
+  - "cargo test --lib integration"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 720_integration_follows_the_current_master <the case this issue adds>"
+  - "scripts/derive-check"
+evidence_required:
+  - "foreign_merge_recorded_test"
+  - "unread_check_is_not_passed_test"
+  - "trail_reads_across_versions_test"
+created_at: 2026-10-10
+updated_at: 2026-10-10

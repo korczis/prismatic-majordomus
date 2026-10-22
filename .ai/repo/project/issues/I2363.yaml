@@ -1,0 +1,51 @@
+id: I2363
+milestone: surfaces-project-one-delivery-state
+title: "The one event channel carries the integration trail beside executions"
+slug: one-channel-carries-the-trail
+priority: p2
+profile: implementation
+parallel_safe: true
+serves:
+  - "delivery-is-explained-by-evidence#facts-carry-their-age"
+objective: "Extend the WebSocket at `/events` (apps/majordomus-cli/src/http/events.rs) with a second subscription target, `/events?trail=integration&after=<cursor>`, that replays and then follows the repository's integration trail (integration/mod.rs:85-86) with the cursor, heartbeat, connection limit and lag-then-resync the channel already has; and let the Cockpit's Integration page subscribe through the one client, share/cockpit/socket.js, instead of waiting for a reload."
+why: "Convergence pack 05 issue 05.4: reuse the existing event delivery, explain freshness, never show an old green as current. The server has one live channel, a hand-written WebSocket at `/events` (http/events.rs:45, http/ws.rs) that carries execution events only, with cursor replay, a 20 s heartbeat, at most 64 connections and `stream.lagged` when a subscriber falls behind (http/events.rs:48-55; execution/store.rs:44). Its protocol was written so a variant can be added without a version change: a client ignores a `type` it does not recognise (http/events.rs:22-25). Its one client is socket.js (backoff 500 ms to 30 s, live, reconnecting and offline states), used only by executions.js. Everything else reaches a page by reload or by polling (share/cockpit/worktrees.js:62, share/cockpit/activity.js), and the integration trail, which a `prs drain` in another process appends to, reaches the Integration page only when the page is loaded again. A second push channel beside `/events`, or server-sent events (none exist: rg for text/event-stream and EventSource finds nothing), would be the parallel mechanism the pack and rule project.interfaces-are-projections forbid."
+current_state: "`/events` follows executions of this process; a merge, a refresh or a repair recorded on the trail by another process appears on a page only after a reload."
+desired_state: "One channel, one client: `/events` with `trail=integration` writes `stream.ready`, replays the trail lines after the cursor, then each line appended by any process, each as one frame with a `type` the protocol declares and the trail's own event as `data`; a reconnect with the last cursor gets exactly the gap; a subscriber too far behind is told to resynchronise. The Integration page shows live, reconnecting or offline as executions do, and refetches `integration.queue` when a trail event arrives. How the server notices a line another process appended is decided in the issue without a new thread per connection beyond the one the channel already runs, and docs/EXECUTIONS.md describes the target beside the execution targets."
+scope:
+  - "apps/majordomus-cli/src/http/events.rs"
+  - "apps/majordomus-cli/src/http/ws.rs"
+  - "apps/majordomus-cli/src/integration/mod.rs"
+  - "apps/majordomus-cli/src/cockpit/pages.rs"
+  - "share/cockpit/socket.js"
+  - "share/cockpit/integration.js"
+  - "apps/majordomus-cli/tests/executions.rs"
+  - "test/cases/100_execution_plane.sh"
+  - "docs/EXECUTIONS.md"
+  - "docs/COCKPIT.md"
+  - "docs/INTEGRATION.md"
+  - "docs/generated"
+non_scope:
+  - "Not a second WebSocket, a server-sent events endpoint, a long-poll route or a scheduler in the browser"
+  - "Not the mesh, the plan or the worktrees over the channel: the trail is the one stream this milestone needs, and another target is added the same way when a page needs it"
+  - "Not a copy of the trail in memory as a second account of it: the file stays the record and the cursor addresses it"
+  - "Not the age of a card: that is I2362"
+  - "Not a run's projection: I2324 reads the same trail, and its page subscribes here once it exists"
+  - "No write over the channel: the server never reads what a client sends (http/events.rs:27-29)"
+depends_on: []
+acceptance_criteria:
+  - "A line appended to the trail by another process reaches a connection subscribed with `trail=integration` as one frame carrying that event, within one heartbeat"
+  - "A reconnect with the last cursor receives exactly the lines after it, none twice and none missing"
+  - "A subscriber that does not read is told `stream.lagged` and the writer is never held up by it"
+  - "A client that knows only execution frames ignores the trail frames, and an execution subscription receives no trail frame"
+  - "The 65th connection is refused with a reason, counting trail and execution subscriptions together"
+  - "The Integration page in a browser test moves to the new state after a trail line is appended, with no reload"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test executions"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 100_execution_plane"
+evidence_required:
+  - "trail_over_the_one_channel"
+  - "cursor_gap_replayed_exactly"
+  - "page_moves_without_reload"
+created_at: 2026-10-10
+updated_at: 2026-10-10

@@ -1,0 +1,42 @@
+id: I2377
+milestone: the-site-says-what-ships
+title: "The walkthrough shows a pull request going from intent to merge and release, replayed from a recorded run"
+slug: walkthrough-from-intent-to-release
+priority: p3
+profile: implementation
+parallel_safe: true
+serves:
+  - "the-site-says-what-ships#first-screen-is-understood"
+objective: "Add a use case under .ai/repo/use-cases that carries one change from an intent criterion through its issue, task, pull request, merge and release with the tool's own commands, executed by scripts/generate-site-data like every recorded run, and replay its steps in the homepage's how section with the existing replay partial beside the single-task lifecycle."
+why: "Living-site V3 pack item RDV3-04-05. The homepage walks through the single-task lifecycle from the generated terminal.json (index.html:146-167) and steps through the challenge run with the replay partial (index.html:183-192); the steps come from executing a use case while the site is generated (generate-site-data:1006-1117), and generate-site-data:1330-1332 refuses a challenge that leans on a claim that is not guaranteed. The pack's 30-second flow, intent to agent or mesh to evidence to merge and release, has no recorded run, and a hand-drawn diagram would break the rule that recorded runs replace mockups. Such a run cannot be recorded yet: its release step needs the release chain as one command (I2299), and the first recorded slice from an intent to its deployment in this repository is I2366, which depends on it. This issue waits on I2366 and replays a run of the same shape."
+current_state: "The walkthrough covers one task; nothing on the site shows a pull request reaching a merge and a release."
+desired_state: "The how section replays a recorded run from an intent criterion to a merged pull request and the release that carries it, every step the stdout of a command the generator executed, redacted only for the machine and the clock, and the generator refuses the walkthrough when a step it relies on leans on a claim that is not guaranteed."
+scope:
+  - ".ai/repo/use-cases"
+  - "scripts/generate-site-data"
+  - "site/templates/index.html"
+  - "site/templates/partials"
+  - "site/data/generated"
+  - "test/cases/333_homepage_narrative.sh"
+  - "docs/PRODUCT.md"
+non_scope:
+  - "Not the recorded slice of this repository's own delivery: I2366"
+  - "Not the unattended run and its demonstration: I2367"
+  - "Not a diagram runtime on the homepage: homepage-check refuses one with no diagram and the weight budget holds"
+  - "Not a mesh between machines in the recorded run: the run stays on one machine with a scripted forge and a local bare origin, as the executor's cases do"
+depends_on:
+  - "I2366"
+acceptance_criteria:
+  - "The use case runs during site generation and its recorded steps include the task's finish, the pull request's merge and the release record, each with its command"
+  - "The how section renders every step of that run from site/data/generated and no step written in a template"
+  - "A step whose command fails during generation fails generate-site-data naming the use case and the step, and the site is not built"
+  - "A walkthrough that leans on a claim that is not guaranteed is refused, as the challenge is today"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 333_homepage_narrative"
+  - "scripts/derive-check"
+evidence_required:
+  - "recorded_walkthrough"
+  - "failed_step_refused"
+created_at: 2026-10-10
+updated_at: 2026-10-10

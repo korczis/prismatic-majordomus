@@ -1,0 +1,56 @@
+id: I2317
+milestone: an-unattended-run-has-declared-authority
+title: "A task's scope grows by a recorded amendment inside what the authority profile delegates and is refused outside it"
+slug: scope-amended-inside-declared-authority
+priority: p2
+profile: implementation
+parallel_safe: true
+serves:
+  - "a-drain-settles-unattended#scope-is-amended-not-bypassed"
+objective: "Extend the scope widening I2114 plans so that an amendment is an appended entry on the task's tracked acceptance contract (the record I2237 plans): the paths added, the issue and criterion the task serves, the reason and the evidence of impact. In lib/check.sh and lib/finish.sh accept an amendment without a person when the trunk's authority profile (I2315) delegates it, recompute the overlap with other worktrees and the selected gates for the new scope, and refuse an amendment that crosses a boundary the profile does not delegate."
+why: "Autopilot pack 01 issue 2. A scope is fixed at start: `--scope` is required (lib/start.sh:55), it is written once into .ai/local/state/current.yaml (lib/start.sh:133-147), and `start` refuses while a task is active (lib/start.sh:71). `mj_validate_scope` (lib/check.sh:142-198) refuses a file outside it on `check` and on a completed finish, and its own comment (lib/check.sh:166-173) names the only moves a too-narrow scope leaves: an outcome that is not completed, or editing current.yaml by hand. That file is git-ignored (.gitignore:67), which is the known bypass F01: a scope widened there is invisible in the pull request. Closing the task and starting another also works, and resets what is judged, because the validator measures from the new task's head (lib/check.sh:179). Three parts of the remedy are owned elsewhere and are not rebuilt here. I2114 (on master, not started) gives a task one command to widen its scope. I2237 (owner packs wave 2, not on master) makes the accepted scope a tracked record on the branch and refuses a current.yaml that disagrees with it. I2238 gives one evaluator for that record. What nobody owns is the approval: an amendment inside declared authority accepted without a person, and one outside it refused where today it is hand-edited. This issue builds on I2237's tracked contract and never on current.yaml, so it cannot start before I2237 is on master. The vendored rule majordomus.scope-integrity keeps its statement: an amendment changes what the task claimed, never the judgement that work outside the claim is not accepted. The word `envelope`, which the pack uses for the delegated bound, already names a closed session record (docs/CONCEPTS.md:15) and is not used for this."
+current_state: "A scope cannot change. The exits are a finish that is not completed, a new task, or a hand edit of a git-ignored file that no gate sees. Overlap with another worktree's scope is reported once, at start (lib/start.sh:171-184). I2237, the tracked contract this builds on, exists only as a prompt under tmp/owner-packs/pending and has no record on any ref."
+desired_state: "A worker whose task needs more paths records an amendment on the tracked contract, naming what it serves and why. Inside what the trunk's profile delegates it is accepted: `check` judges the amended scope, the overlap report and the gate selection are recomputed, and `finish` names the amendment and the base commit of the profile that permitted it. An amendment the profile does not delegate is not applied and `check` exits 10 naming the boundary. With no profile on the trunk nothing is accepted automatically and widening behaves as I2114 and I2237 leave it."
+scope:
+  - "lib/check.sh"
+  - "lib/finish.sh"
+  - "lib/start.sh"
+  - "share/schemas/majordomus"
+  - "share/allow"
+  - "apps/majordomus-cli/src/integration/authority.rs"
+  - "apps/majordomus-cli/src/capability/builtin/scope.rs"
+  - "docs/CLI.md"
+  - "docs/CLAIMS.yaml"
+  - "docs/claims"
+  - "test/cases/1050_a_scope_is_amended_inside_its_authority.sh"
+  - "test/cases/04_start_check.sh"
+non_scope:
+  - "Not the tracked contract itself, nor refusing a current.yaml that disagrees with it: that is I2237 (owner packs wave 2, not on master), and this issue waits for it"
+  - "Not built on .ai/local/state/current.yaml: an amendment written only there is the bypass F01 and stays refused"
+  - "Not the evaluator CI runs, nor the CI gate: I2238 and I2239"
+  - "Not the widening command, nor the admission of a derive's projections: I2114"
+  - "Not editing another issue's record or an earlier amendment: entries are appended, and an acceptance once recorded is never rewritten"
+  - "Not refusing an edit before it is written: the provider hooks are I2251 and I2252 (owner packs, not on master)"
+  - "Not an exclusive claim across machines at check: I2142 (origin/chore/the-runtime-pack-is-planned)"
+  - "Not a change to the vendored rule majordomus.scope-integrity: its statement holds for an amended claim"
+depends_on:
+  - "I2315"
+  - "I2114"
+acceptance_criteria:
+  - "An amendment adds paths to the tracked contract as one appended entry naming the task, the issue or criterion it serves, the reason and who or what accepted it, and the change shows in `git diff <base>..HEAD`"
+  - "With a trunk profile that delegates the added paths, `check` judges the amended scope and `finish` names the amendment and the base commit of the profile, and no person is asked"
+  - "An amendment that adds a path the profile does not delegate (the policy, the rules, the hooks, the workflows, the contract itself, a deployment or release record, a path outside the repository) is not applied: `check` exits 10 naming the boundary, and the ledger holds the refusal"
+  - "With no profile on the trunk, or with the same profile present only on the task's own branch, nothing is accepted automatically"
+  - "Adding the same paths to current.yaml by hand still exits 10, and an earlier amendment entry that was edited is refused"
+  - "After an accepted amendment the overlap with other worktrees' active scopes and the selection of gates are recomputed for the new scope and reported"
+  - "If no record of I2237 is on master when this issue starts, its worker takes I2237 on the board and records the tracked contract I2237 describes first, in its own commit; nothing here builds on the git-ignored current.yaml"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 04_start_check 1050_a_scope_is_amended_inside_its_authority"
+  - "scripts/derive-check"
+evidence_required:
+  - "amendment_inside_authority_case"
+  - "amendment_outside_refused_case"
+  - "hand_edit_still_refused_case"
+created_at: 2026-10-10
+updated_at: 2026-10-10

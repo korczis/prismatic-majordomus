@@ -1,0 +1,54 @@
+id: I2341
+milestone: derive-does-bounded-work
+title: "Every derived artifact names the inputs it is made from, in the manifest the tool already writes"
+slug: every-artifact-names-its-inputs
+priority: p1
+profile: deep-work
+parallel_safe: false
+serves:
+  - "delivery-is-explained-by-evidence#incremental-equals-full"
+objective: "Turn the prose `source` of each generated artifact into data. `Artifact` (apps/majordomus-cli/src/generate.rs:303) gains its inputs - repository pathspecs, and the non-file inputs it reads by name (the git history of a range, the executable's generation, the use-case scenarios run, a declared environment variable) - set where each target composes its artifacts, and `manifest_document` (generate.rs:1803) writes them into `docs/generated/artifacts.json` under its schema. Stage B's sections in `scripts/generate-site-data` each declare the inputs they read and the outputs they publish, and the whole-list `INPUTS` (scripts/generate-site-data:109-161) becomes the union of those declarations, so the list stays one declaration. `artifacts.list` answers both halves: which inputs an artifact reads, and which artifacts read an input."
+why: "Convergence pack 02 issue 02.1 and autopilot pack 05 issue 2. Nothing can regenerate only what a change affects until the repository knows what reads what, and today it does not: the manifest lists 178 artifacts with a format, an output sha256 and a one-line prose source such as `the canonical Majordomus capability registry` (generate.rs:1803-1830); stage B has one input list hashed whole (scripts/generate-site-data:176) and 37 phases that regenerate everything; the edges are script order and a diagram (scripts/derive:6-23, docs/GITHUB_PAGES_ARCHITECTURE.md:126-181). Hidden inputs are known and undeclared: the changelog reads git history, stage B runs every use-case scenario (scripts/generate-site-data:1084), generation reads MAJORDOMUS_SHARE, and I1409 records content that depends on the local object store. The gap file on C02.1 warns that a graph beside the Target enum, the manifest and the INPUTS list would be a fourth declaration of the same fact; so the inputs go into the two declarations that exist. Rules project.derived-once and project.no-new-nouns bind it."
+current_state: "An artifact's inputs are a sentence in the manifest and a comment in the generator. Stage B's inputs are one list for all of its outputs. Nothing refuses a generator that reads a file no declaration names."
+desired_state: "Every manifest entry carries `inputs`, every stage B section declares its inputs and outputs, the union of the sections equals `generate-site-data --inputs`, and `artifacts.list` returns inputs per artifact and artifacts per input. `generate --check` refuses an artifact with no declared input, and a case refuses a generator that reads a tracked file outside its declaration."
+scope:
+  - "apps/majordomus-cli/src/generate.rs"
+  - "apps/majordomus-cli/src/capability/builtin/artifacts.rs"
+  - "apps/majordomus-cli/tests/generate_check.rs"
+  - "apps/majordomus-cli/tests/generated_documents.rs"
+  - "share/schemas/generated/generated-artifacts.schema.json"
+  - "scripts/generate-site-data"
+  - "scripts/gitattributes"
+  - "docs/GITHUB_PAGES_ARCHITECTURE.md"
+  - "docs/CAPABILITIES.md"
+  - "docs/generated"
+  - "site/data"
+  - "test/cases/400_derivation_is_one_graph.sh"
+  - "test/cases/51_derived_artifacts_committed.sh"
+non_scope:
+  - "Not acting on the inputs: a derive still regenerates everything; skipping is I2343 and regenerating a subset is I2344"
+  - "Not a second graph, a new registry or a node kind of `graph.get`: the inputs live in the manifest and in the site generator's sections, and every other reader derives from them"
+  - "Not changing what the site's fingerprint covers or how `scripts/pages current` decides freshness: milestone derived-data-integrity, I1409"
+  - "Not changing the bytes of any artifact other than the manifest itself: every other projection is byte for byte as before"
+  - "Not the merge policy's rules: scripts/gitattributes reads the publish declarations it reads today, now from the sections"
+depends_on: []
+acceptance_criteria:
+  - "Every entry of `docs/generated/artifacts.json` other than the manifest's own carries at least one input, and `generate --check` exits 10 naming a target that produces an artifact with none"
+  - "The union of stage B's section declarations equals the output of `scripts/generate-site-data --inputs`, and a section that publishes an output no declaration names fails a case"
+  - "The changelog, the use-case data and every artifact whose bytes depend on git history or the executable's generation name that non-file input"
+  - "A fixture generator that reads a tracked file it does not declare is refused by the case, which names the file and the artifact"
+  - "`artifacts.list` returns the inputs of a named artifact and the artifacts that read a named input, over HTTP and MCP alike"
+  - "Every projection other than the manifest is byte for byte unchanged by this change, shown by `scripts/derive-check` on the tree before and after"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test generate_check"
+  - "cargo test --test generated_documents"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 400_derivation_is_one_graph"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 51_derived_artifacts_committed"
+  - "scripts/derive-check"
+evidence_required:
+  - "manifest_names_inputs"
+  - "undeclared_input_refused_case"
+  - "projections_unchanged"
+created_at: 2026-10-10
+updated_at: 2026-10-10

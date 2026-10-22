@@ -1,0 +1,140 @@
+intent: delivery-is-explained-by-evidence
+reviewed_at: 4dfd1856d2
+reviewed_by: "claude-code subagent (general-purpose, fresh context) dispatched by session b24c5456 with the records, the packs and the audits and none of the author's reasoning; same model and operator session as the author, so independent of the authoring context and not of its blind spots"
+findings:
+  - id: command-evidence-can-never-settle-a-criterion
+    class: delivery_verification
+    subject: "delivery-is-explained-by-evidence#one-query-explains-a-task"
+    finding: "All fourteen criteria use `evidence: command`, which intent.rs:1135-1139 resolves to NotDerivable without reading the ref, and verdict() turns any NotDerivable into unknown: an intent about evidence can never be read satisfied by evidence, and a ref naming a test nobody writes is never reported. Every ref is a cargo test binary or a suite case, which `evidence: test` (crate:<binary>, suite:<case>) resolves and the ledger settles."
+    blocking: true
+    resolution:
+      state: rejected
+      because: "A `test` ref must name a test already in the tree or the validator fails it (apps/majordomus-cli/src/intent.rs:1101-1112, unresolved_evidence_ref), and every test these criteria name is written by the issue that serves the criterion; so each criterion names the command that will prove it until then, and the issue that adds the test switches its criterion to `evidence: test` in the same pull request."
+  - id: case-selection-trusts-self-declared-reads
+    class: regression_risk
+    subject: I2348
+    finding: "A case is left out of an affected plan on its own `# majordomus-reads:` header, and the only check is that header paths match tracked files; nothing proves a case reads no more than it declares (I2341 refuses an undeclared read for generators, I2348 has no counterpart). An under-declared header skips a case whose behaviour changed while `ci` stays green, against convergence pack 04.1 (conservative selection, full fallback when impact cannot be proven) and the intent statement that the verdict holds against a skipped job."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2348
+      because: "I2348 now verifies every declaration by a file-read trace on each full Linux run and leaves a case out of an affected plan only with a verification from the last full run at the planned base."
+  - id: skip-criterion-ref-is-already-green
+    class: delivery_verification
+    subject: "delivery-is-explained-by-evidence#skips-are-recorded"
+    finding: "The ref `bash test/run.sh 94_ci_plan` names a case that exists and passes at 4dfd1856d2, so it cannot tell the plan before from the plan after; surfaces-agree and facts-carry-their-age share `--test surface_contract`, which I2362 starts and I2365 extends, so the first assertion to land answers both criteria."
+    blocking: false
+    resolution:
+      state: open
+  - id: derive-redesign-is-not-ordered-after-its-baseline
+    class: regression_risk
+    subject: derive-does-bounded-work
+    finding: "Both packs ask for the baseline before any redesign (convergence 00, autopilot 00 issue 4), yet derive-does-bounded-work has depends_on [] and I2343 and I2344 depend only on I2341 and I2342, not on I2311; I2310 records the derive as unknown. A no-op or incremental derive can land before any derive sample exists, leaving I2370 no before side for the figure the packs care most about."
+    blocking: false
+    resolution:
+      state: open
+  - id: baseline-provenance-is-an-untracked-capture
+    class: delivery_verification
+    subject: I2310
+    finding: "The record of 2026-10-10 is written from the audit capture, which lives under /tmp/ of the primary checkout, ignored by .gitignore:9, and is outside I2310 scope; the tracked figures then cite rows no other reader can check. Convergence 00.3 and autopilot 05 issue 1 also ask for CPU, IO, memory, cache hits and output churn over no-op, one-rule, Rust and docs-only scenarios, while I2311 records wall seconds only and no scenario set is part of the baseline."
+    blocking: false
+    resolution:
+      state: open
+  - id: no-regression-gate-is-planned
+    class: insufficient_work
+    subject: I2346
+    finding: "Autopilot 05 issue 5, convergence 02.5 and 06.4 ask for budgets in the existing CI policy and a gate on bounded non-regression; I2346 is a manual `scripts/derive --benchmark --check` plus a doctor INFO or WARN that never changes the exit code, and I2370 gates nothing, so criterion budgets-are-measured is met by a judgement no routine run makes."
+    blocking: false
+    resolution:
+      state: open
+  - id: explain-adds-a-fifth-partial-join
+    class: unnecessary_work
+    subject: I2349
+    finding: "The milestone lists four partial joins (intent_realization.explain, trace.issue and trace.commit, gates.completion, delivery.feature); I2349 adds a fifth capability beside delivery.feature and retires or folds none of them, against the operating contract of the packs (improve what exists and remove the competing implementation) and rule project.interfaces-are-projections."
+    blocking: false
+    resolution:
+      state: open
+  - id: slice-deployment-source-is-not-the-query-source
+    class: unproven_assumption
+    subject: I2366
+    finding: "I2366 records the deployment observation on the issue evidence list so its case passes outside the observing checkout, but I2349 reads deployment from the served observations under .ai/local of one checkout and its acceptance names no issue-evidence source. Either the case fails in CI on an unknown deployment, or the issue record becomes a second source of deployment truth beside served.observe."
+    blocking: false
+    resolution:
+      state: open
+  - id: covered-elsewhere-claims-name-unrecorded-work
+    class: missed_requirement
+    subject: the-verdict-cannot-be-bypassed
+    finding: "non_scope hands the correction of docs/CI.md:308 and :349-350 (which say master has no required check, false per audit-20261010/protection.json) to I2241, the CI acceptance gate and bypass cases to I2239 and I2240, and the verifier catalogue and CI receipt to I2245-I2247; none has a record on any ref, only placeholder prompts in gitignored tmp/, and I2302 and I2297 have no record either. The false document stays, and the bypass attempts of convergence 04.5 have no owner."
+    blocking: false
+    resolution:
+      state: open
+  - id: statement-promises-what-the-plan-only-reports
+    class: missed_requirement
+    subject: "delivery-is-explained-by-evidence#verdict-cannot-be-bypassed"
+    finding: "The statement says the required verdict holds against an administrator, while the non-goals exclude changing GitHub settings and I2355 only reports that enforce_admins is false. I2356 records a foreign merge with `not_concluded`, as #901 was, and no issue of either intent stops a run from merging onto a master whose own `ci` never concluded."
+    blocking: false
+    resolution:
+      state: open
+  - id: completion-issue-collides-with-the-done-invariant-work
+    class: regression_risk
+    subject: I2357
+    finding: "I2357 scope is all of apps/majordomus-cli/src/gates plus share/completion.yaml and its depends_on is empty, while the milestone says it starts only after #821 and I2301 land; session 95 holds gates/done.rs, gates/mod.rs and gates/closing.rs for I2301 on the board, and plan next offers I2357 as ready now."
+    blocking: false
+    resolution:
+      state: open
+  - id: comparison-derives-from-an-unnamed-measurement
+    class: unproven_assumption
+    subject: I2370
+    finding: "I2370 writes docs/generated and site data through the derive from the tracked baseline and a current measurement taken the same way (gh calls), but does not say the current measurement is a tracked record or that I2341 declares it as an input; a derive that reads an untracked or network-sourced measurement breaks derive-check on any other machine and rule project.derived-once."
+    blocking: false
+    resolution:
+      state: open
+  - id: operation-identity-is-narrower-than-the-pack
+    class: missed_requirement
+    subject: I2350
+    finding: "Convergence 01.1 asks the operation identity to carry HEAD, worktree, exact inputs and hashes, generator or capability version, environment identity and output digests; I2350 joins four ids and adds two edges and routes only the derive part to I2341, so executions and evidence runs gain none of the rest. The adversarial list of 01.4 (duplicate and reordered events, clock skew, corrupted payload) appears in none of I2351-I2353."
+    blocking: false
+    resolution:
+      state: open
+  - id: input-declarations-are-unenforced-on-real-generators
+    class: unproven_assumption
+    subject: I2343
+    finding: "The skip of I2343 and the selection of I2344 trust the declarations of I2341, whose only refusal of an undeclared read is over a fixture generator, and I2345 mutates declarations over stand-in generators. A real generator that reads an undeclared input (git history, environment, the machine dependence I1409 records) makes a derive report that nothing changed while the tree is stale; only a later full derive-check would notice."
+    blocking: false
+    resolution:
+      state: open
+  - id: high-level-ui-and-derive-facts-have-no-owner
+    class: missed_requirement
+    subject: surfaces-project-one-delivery-state
+    finding: "Convergence 05.3 `majordomus ui` is handed to I2231, which is gated on I2131 whose record may decide against the command; the 05.1 facts for the derive critical path, cache hits and the running worker are deferred until a cheap source holds them, although I2311 and I2343 write checkout-local records. The 05 acceptance, diagnosing a slow delivery from the same evidence on every surface, then lacks the derive half."
+    blocking: false
+    resolution:
+      state: open
+  - id: consumer-proof-and-rehearsal-are-partial
+    class: missed_requirement
+    subject: I2369
+    finding: "Convergence 06.3 lists a failed test, a stale pull request and a disappearing peer among the injected failures, and I2369 drops all three, pointing at cases that run in this repository rather than in the consumer; I2368 runs only two of the five unattended scenarios from the installed artifact, where autopilot 06 issue 3 asks for the full set on both self and consumer."
+    blocking: false
+    resolution:
+      state: open
+  - id: parallel-safe-flags-ignore-shared-files
+    class: regression_risk
+    subject: I2350
+    finding: "I2350 and I2351 are both parallel_safe true while both edit execution/engine.rs, model.rs and store.rs; I2363 is parallel_safe true and shares integration/mod.rs with twelve issues and cockpit/pages.rs with five; I2364 is parallel_safe true and touches capability/builtin files of at least twenty other issues."
+    blocking: false
+    resolution:
+      state: open
+  - id: tag-authority-depends-on-an-unclosed-boundary
+    class: regression_risk
+    subject: I2359
+    finding: "I2359 pushes a release tag under a grant read from the trunk policy, whose boundary a run can widen by merging the schema, the reader or the rule kinds (see the critique of a-drain-settles-unattended); it depends on I2299 and I2315 and not on I2294 (the pre-push verdict for a tag, unlanded), and every landing reaches a record step that fails until the release.yml:272 defect has an owner, which I2302 has on no ref."
+    blocking: false
+    resolution:
+      state: open
+  - id: gap-work-list-is-incomplete
+    class: delivery_verification
+    subject: I2314
+    finding: "I2314 serves delivery-is-explained-by-evidence#baseline-is-recorded and appears in no work entry of the gap, and I2364 is bound to surfaces-agree although its acceptance (dry-run and idempotency declarations) asserts nothing about the ids, order or status of the four delivery facts that criterion names."
+    blocking: false
+    resolution:
+      state: open

@@ -1,0 +1,38 @@
+id: I2372
+milestone: the-site-says-what-ships
+title: "The latest release is derived once, and the navbar reads the derivation the hero and latest.json read"
+slug: one-derivation-of-the-latest-release
+priority: p1
+profile: implementation
+parallel_safe: true
+serves:
+  - "the-site-says-what-ships#one-release-identity"
+objective: "Replace the `ls|sort` of release filenames in scripts/generate-site-data with the `latest` that `majordomus generate site` writes into site/data/registry/distribution.json from `Releases::latest_stable`, so project.json `release`, the navbar badge and the Cockpit screens read the derivation the hero badge, the trust card and releases/latest.json already read; extend case 352 and the version check of scripts/site-check to hold them equal."
+why: "Living-site V3 pack item RDV3-06-02 (and the missing half of RDV3-07-03). The navbar badge reads project.release, which scripts/generate-site-data:281-282 takes as the highest `v*.yaml` filename under .ai/repo/releases by `ls|sort`, with no channel and no yanked filter (navbar.html:37-38; also kit-page.html:149 and :186, screens/cockpit.html:22, screens/features.html:124). The hero badge (index.html:49), the trust card (index.html:306) and releases/latest.json read `Releases::latest_stable` (distribution/release.rs:311), the highest record that is stable and not yanked (release.rs:115-116), through render.rs:88. The two agree on master only because all twenty records are channel stable. scripts/site-check:1257-1260 refuses a shown version with no /releases/v<version>.json and never compares it with the version latest.json names, so a higher prerelease or yanked record that is served would pass. The comment at generate-site-data:277-280 already says the release is meant to be what /releases/latest.json reads."
+current_state: "Two derivations of the latest release: filenames for the navbar and the Cockpit screens, latest_stable for the hero, the trust card and latest.json."
+desired_state: "project.json `release` is the version of distribution.json `latest`, empty when there is none; no script lists release filenames to choose a version; case 352 and site-check refuse a shown version that differs from the version /releases/latest.json names."
+scope:
+  - "scripts/generate-site-data"
+  - "scripts/site-check"
+  - "test/cases/352_the_version_the_site_shows_is_one_you_can_get.sh"
+  - "docs/DISTRIBUTION.md"
+non_scope:
+  - "Not the footer's `Generated from v<source_version>` (footer.html:42): that is the authored tree version, shown as build provenance, and stays"
+  - "Not the live check that the deployed page serves that version: I2373"
+  - "Not when the record pull request merges and the badge moves (release.yml:302): that is the release chain, I2299 and I2360"
+  - "Not a second release reader in shell: the derivation stays in distribution/release.rs"
+depends_on: []
+acceptance_criteria:
+  - "scripts/generate-site-data reads the release from site/data/registry/distribution.json `latest` and contains no listing of .ai/repo/releases filenames"
+  - "In case 352, a fixture layer whose highest record is a prerelease and one whose highest record is yanked each yield the same version in project.json, the navbar, the hero badge, the trust card and releases/latest.json, the highest stable unyanked one"
+  - "A built site whose project.json `release` differs from the version /releases/latest.json names fails scripts/site-check with both values"
+  - "A layer with no stable record renders no navbar badge and the trust card says unknown, never the tree's version"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 352_the_version_the_site_shows_is_one_you_can_get"
+  - "scripts/derive-check"
+evidence_required:
+  - "one_release_derivation"
+  - "prerelease_and_yanked_mutation_case"
+created_at: 2026-10-10
+updated_at: 2026-10-10

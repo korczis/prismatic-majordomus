@@ -1,0 +1,42 @@
+id: I2373
+milestone: the-site-says-what-ships
+title: "A deploy is verified to serve the version latest.json names, and a mismatch fails the verification naming both"
+slug: deploy-serves-its-version
+priority: p1
+profile: implementation
+parallel_safe: true
+serves:
+  - "the-site-says-what-ships#deploy-serves-its-version"
+objective: "Render the shown release as a data attribute on the navbar and hero badges, add a version entry to `deploy.smoke` in .ai/repo/ci/pages.yaml, and extend `scripts/pages verify --smoke` to compare that attribute on the served page with the `version` of the served /releases/latest.json, beside the commit it already compares with /build.json; prove the comparison offline in case 104_published_site."
+why: "Living-site V3 pack items RDV3-06-05 and RDV3-07-05. `scripts/pages verify --smoke` (scripts/pages:42, :479-530) polls until /build.json names the expected commit and then fetches each `deploy.smoke` route for its marker; .github/workflows/pages.yml:409 runs it after every deploy. The smoke entries of .ai/repo/ci/pages.yaml:85-93 are the challenge replay, the call to action and /guarantees/, and none carries a version, so docs/DISTRIBUTION.md:196-201 asks a person to confirm releases/latest.json with curl after a record lands. Measured from gh-pages history: v0.19.1 was published at 01:46Z and deploys kept showing v0.19.0 until about 10:03Z; v0.20.0 was published at 16:46Z and deploy 8b161f19ab still showed v0.19.1. The markers are data attributes rendered for exactly this, never a sentence (pages.yaml:80-84), so the version entry follows the same contract. The release chain's own verification after a landing is I2360 of this plan, which runs `scripts/pages verify --smoke` and so reuses this check rather than adding a prober of its own."
+current_state: "A deploy is verified for its commit and four markers; whether the served badges name the version latest.json names is checked by hand."
+desired_state: "After every deploy, `scripts/pages verify --smoke` fails when the version a served badge carries differs from the version the served /releases/latest.json names, or when either is absent, naming the route, both values and the commit; docs/DISTRIBUTION.md drops the manual curl step for that check."
+scope:
+  - "scripts/pages"
+  - ".ai/repo/ci/pages.yaml"
+  - "site/templates/partials/navbar.html"
+  - "site/templates/index.html"
+  - "test/cases/104_published_site.sh"
+  - "docs/DISTRIBUTION.md"
+  - "docs/GITHUB_PAGES_ARCHITECTURE.md"
+non_scope:
+  - "Not the release chain's verification after a landing (install check, served observation, Cockpit probe): I2360, which calls this check"
+  - "Not deriving the version once: I2372; this check compares whatever the served page shows with latest.json and so also catches a regression of I2372"
+  - "Not a path-selected pull-request gate: the pages-live gate stays at-finish and scheduled (.ai/repo/ci/gates.yaml:589-591), so unrelated work is not blocked by the network"
+  - "Not a new prober, poller or health endpoint: the check is one more smoke entry read by the existing verify loop"
+  - "Not the deployed/healthy distinction of completion: I2357"
+depends_on: []
+acceptance_criteria:
+  - "Against fixture pages on disk, a served page whose badge names the version latest.json names and whose build.json names the commit passes, with no network"
+  - "A badge naming another version fails verification with exit 10, naming the route, the shown version, the version latest.json names and the commit"
+  - "A page with no version attribute, or a latest.json with no version, fails as a missing marker, never as a pass"
+  - "A site that cannot be reached ends verification undecided with exit 12, as verify does today, and is not counted as a mismatch"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 104_published_site"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 97_pages_fast_path"
+evidence_required:
+  - "deploy_version_verified"
+  - "version_mismatch_case"
+created_at: 2026-10-10
+updated_at: 2026-10-10

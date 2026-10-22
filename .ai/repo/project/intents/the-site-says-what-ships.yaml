@@ -1,0 +1,47 @@
+id: the-site-says-what-ships
+title: The public site says what ships, at the version a visitor can install, and changes with every delivery that warrants it
+statement: "A visitor understands in the first screen what Majordomus does, for whom, and what it does not do, installs it with one command, and sees what changed since the site was last deployed. Every version the site shows is the version the installer resolves, read from one derivation of the release records; no sentence of hand-written copy promises a capability its claims do not support; the page holds its accessibility, motion, width and weight budgets on every deploy; and a deploy is verified to serve the version and the commit it was built from."
+invariants:
+  - The latest release is derived once, from the release records, and every surface that shows a version reads that derivation; git HEAD is build provenance and never the latest release
+  - A capability is shown as shipped only when its feature is stable and its claim is supported by evidence
+  - Every figure and inventory on the site is derived; prose is bounded and checked against the claims
+  - Site checks extend the existing gates; no second browser sweep, card inventory or design system is added
+milestones:
+  - the-site-says-what-ships
+satisfaction:
+  - id: one-release-identity
+    criterion: The navbar badge, the hero badge, the trust card and releases/latest.json read one derivation of the latest stable release, and a prerelease or yanked record cannot make two of them disagree
+    evidence: command
+    ref: bash test/run.sh 352_the_version_the_site_shows_is_one_you_can_get
+  - id: deploy-serves-its-version
+    criterion: After every deploy the served page is checked to show the version latest.json names and the commit build.json names, and a mismatch fails the deploy verification naming both
+    evidence: command
+    ref: bash test/run.sh 104_published_site
+  - id: change-since-deploy-is-shown
+    criterion: The site shows what changed between the previously deployed commit and the current one, grouped by capability and claim, delivered apart from upcoming, composed from release analysis and never from a moving HEAD inside committed data
+    evidence: command
+    ref: bash test/run.sh 1060_the_site_shows_what_changed_since_it_was_deployed
+  - id: prose-promises-nothing-unsupported
+    criterion: Hand-written copy that names a capability is checked against docs/CLAIMS.yaml and a sentence that promises a planned or unsupported capability fails the site check
+    evidence: command
+    ref: bash test/run.sh 333_homepage_narrative
+  - id: first-screen-is-understood
+    criterion: The first screen states the outcome, who it serves and what it does not do, with the install command and a recorded proof, and the narrative names the five pains with the capability that answers each or the limitation that says it does not
+    evidence: command
+    ref: bash test/run.sh 333_homepage_narrative
+  - id: page-holds-its-budgets
+    criterion: The site is probed at 320, 375, 390, 768, 1024, 1280 and 1600 pixels, with reduced motion and the keyboard, and a measured rendering budget joins the weight budget, each judged on every change that can move the site
+    evidence: command
+    ref: bash test/run.sh 09_site_mobile_first
+governance:
+  - adr:adr-0029
+  - adr:adr-0051
+  - rule:project.derived-once
+  - rule:project.interfaces-are-projections
+non_goals:
+  - A new site application, framework or design system beside site/, share/design/tokens.yaml and the existing gates
+  - Fictitious uptime, hand-authored feature counts or copy that presents a planned capability as shipped
+  - The phone navigation of the mobile-first milestone (I2096-I2103), which keeps its own issues
+  - Deleting another session's branches without its owner's word
+created_at: 2026-10-10
+updated_at: 2026-10-10

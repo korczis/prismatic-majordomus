@@ -1,0 +1,59 @@
+id: I2339
+milestone: repair-is-dispatched-to-a-worker
+title: "A runtime says which work it accepts, and work reaches another machine only under a delegation it verified"
+slug: work-reaches-a-runtime-by-delegation
+priority: p3
+profile: deep-work
+parallel_safe: false
+serves:
+  - "a-drain-settles-unattended#dispatch-needs-a-delegation"
+objective: "Let a runtime declare, in its mesh declaration and on its `RuntimeCard` (apps/majordomus-cli/src/mesh/link.rs:247), that it accepts repair work and within which limits; default: none. Let a run whose own machine has no free worker ask such a runtime to take one recorded repair, by a link message that names the repository, the pull request, the head and a delegation, and never a command. The receiving runtime verifies the delegation (I2334), derives the repair from its own observation of the queue, takes the claim (I2337) and runs its own local path (I2335)."
+why: "Autopilot pack 03 issues 1 and 2. docs/MESH.md:27 says the mesh is not a remote execution facility, and that is true: the journal has eight event kinds, session, claim, handover and review each opened and closed (apps/majordomus-cli/src/mesh/journal.rs:553), the links carry `sessions`, `claims`, `handovers` and `reviews` (link.rs:63), and a mesh review addressed to a runtime is answered by a person or a session there. Rule project.mesh-is-observation-not-authority requires whoever adds a remote operation to bring an authorization decision: I2334 is that decision and this issue is the first operation under it. It also rests on ADR 0126 (pull request #860, unlanded), which decides that a caller beyond loopback changes nothing it cannot authenticate and keeps signed input to `process_state` commands; this issue starts after it lands and adds no way around it. Milestone work-is-coordinated lists `turning a received peer message into shell execution` as non-scope, so the message here selects work the receiver derives and checks itself and carries nothing to execute. The measured need is modest: one shared Mac refreshed 51 pull requests in 246 s of wall clock, 104 s of it system time, with several sessions on the machine at once."
+current_state: "A runtime cannot say it accepts work and cannot be asked to do any. A trusted peer is one whose sessions, claims, handovers and reviews are shown."
+desired_state: "A runtime that opted in advertises the classes of work it accepts and how many workers it will run. A run with a verified delegation for that runtime can hand it one repair; the receiver refuses anything its own queue does not show, anything outside the delegation and anything past its limits, each with a typed refusal on the link. docs/MESH.md and the claim mesh-observation-not-authority say what now runs, under what, and that discovery and trust still run nothing."
+scope:
+  - "apps/majordomus-cli/src/mesh/link.rs"
+  - "apps/majordomus-cli/src/mesh/config.rs"
+  - "apps/majordomus-cli/src/mesh/cooperation.rs"
+  - "apps/majordomus-cli/src/mesh/journal.rs"
+  - "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+  - "apps/majordomus-cli/src/integration/dispatch.rs"
+  - "apps/majordomus-cli/tests/mesh_delegation.rs"
+  - "share/schemas/majordomus/mesh-declaration"
+  - ".ai/repo/mesh/majordomus.yaml"
+  - "docs/MESH.md"
+  - "docs/claims/mesh-observation-not-authority.md"
+  - "docs/CLAIMS.yaml"
+  - "docs/generated"
+  - "site/content"
+  - "site/data"
+non_scope:
+  - "Not a command, a script or a patch sent over a link: the message names work, and the receiver derives what to do from its own checkout and its own observation."
+  - "Not running anything on discovery, on trust, or for a runtime that did not opt in: rule project.mesh-is-observation-not-authority is unchanged."
+  - "Not authenticating the caller: ADR 0126 / pull request #860. This issue is not started before it is on master."
+  - "Not the delegation's decision or its verification: I2334. Not the claim: I2337. Not the worker: I2335."
+  - "Not the local path's dependence on any of this: with the mesh off, or with no runtime accepting, the run dispatches locally as before."
+  - "Not rolling a release out to machines over ssh: `fleet.rollout` of pull request #900."
+  - "Not a registry of workers or of accepting runtimes: what a runtime accepts is on its own card, read from the one mesh registry like every other fact about it."
+  - "Not the price of a wire change: a new link feature or journal kind goes through the version gate I2164 plans, and the ADR of I2334 is accepted by a person before this issue fixes any wire shape."
+depends_on:
+  - "I2334"
+  - "I2337"
+acceptance_criteria:
+  - "A runtime whose declaration does not opt in advertises no accepted work and refuses every request with a typed refusal, and that is the default"
+  - "A request with a delegation the receiver verifies, for a repair the receiver's own queue shows at the same head, is run by the receiver's local path under its own claim, and the result is a push the sender's next observation sees"
+  - "A request with no delegation, one for another runtime, one past the receiver's declared limit, and one for a pull request or head the receiver's queue does not show each run nothing and are refused by name"
+  - "A peer that lacks the link feature is told so with `FeatureUnsupported`, and the sender falls back to its local path"
+  - "With the mesh off the run behaves exactly as under I2335, and the tests of claim mesh-observation-not-authority still pass with its page restating what runs and under what"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test mesh_delegation"
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test mesh_cooperation"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 130_mesh 494_the_mesh_is_declared_and_held"
+  - "scripts/derive-check"
+evidence_required:
+  - "opt_in_advertisement_test"
+  - "delegated_repair_runs_remotely_test"
+  - "undelegated_request_runs_nothing_test"
+created_at: 2026-10-10
+updated_at: 2026-10-10

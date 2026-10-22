@@ -1,0 +1,64 @@
+id: the-queue-settles
+title: "A drain asked to settle ends with every pull request merged, closed under policy or explained as blocked, and never reports all done by silence"
+slug: the-queue-settles
+order: 323
+priority: p1
+problem: "The integration engine of ADR 0101 merges one pull request at a time and stops; it has no notion of a queue that is finished. `prs drain --continuous` (apps/majordomus-cli/src/cli.rs:3102) ends only on a signal, an unverified merge, an unwritable trail or three consecutive outages (apps/majordomus-cli/src/integration/drain.rs:1626, CONTINUOUS_TRANSIENT_LIMIT at :1609), and what it says at the end is a free-text `stopped` (drain.rs:1576). Measured on 2026-10-10 at master 4dfd1856d2, 17:32Z: 51 open pull requests, 0 ready, 25 `needs_refresh`, 10 `needs_repair`, 7 `waiting_for_dependency`, 1 `conflicting`, 8 draft, `next_merge` null. The trail since 2026-10-04 holds 15 `merge_succeeded`, 5 `repaired`, 0 of 3 refreshes succeeded and 1 `verification_failed`, and no continuous run was ever started in this checkout. Four things keep that queue from moving without a person. The refresh pipeline is one deep by design (drain.rs:1272), so one pull request lands per run of the required check, and a first-attempt successful `validate` run took p50 5423 s and p95 8290 s of wall clock (n=32). Every red required check is `needs_repair` with the next action `the author fixes the failing required check` (apps/majordomus-cli/src/integration/classify.rs:1533), although session p5 measured the same day that at least eight of eleven such pull requests were not the author's to fix. The repair lane is documented as `A person must change the branch` (apps/majordomus-cli/src/integration/model.rs:475, docs/INTEGRATION.md:458) and nothing under src/integration calls the plan, a task or the mesh. And the drain never closes: `prs cleanup --apply` is a separate command, and `skipped_permitted` is an empty list in production (apps/majordomus-cli/src/integration/mod.rs:340). Beside these, the largest executor fixture holds 6 pull requests and the generated ones at most 11 (apps/majordomus-cli/src/integration/tests.rs:1901, :1464), and a refresh that was interrupted left a scratch worktree at `.git/majordomus/integration/pr-880` that nothing removes."
+outcome: "A drain asked to settle ends by itself on one predicate, decided from the queue and the trail: every pull request it observed is merged, closed under the policy, or reported blocked with its reasons and the automatic steps already tried on it. An observation that is stale, unreadable or cut at the forge's limit never counts as settled. The executor builds the stacked train of ADR 0129 to the depth the queue policy declares on master, so several refreshed heads are judged in one run of the required check. A red check is read for what it says about the content: a cancelled run and a failure inside a release window are not repairs, and a content failure is a repair that is recorded with what failed so that a task can start from it. Closing what cleanup proves redundant, and recording a repair for a worker, happen only where the authority profile of milestone an-unattended-run-has-declared-authority grants them; with no profile every command behaves as it does today. The executor is proved on simulated queues of twenty and of fifty pull requests, and every safeguard of ADR 0101 stands: one merge at a time, by merge commit, under the lease, on a head that holds the current master and whose required check passed, never `--admin`, and an unverified merge holds every drain until a person resumes it."
+current_state: "Sixteen dispositions map onto five lanes (model.rs:441); `repair::decide` acts only on relation `behind` and refuses an authored conflict with exit 10 (apps/majordomus-cli/src/integration/repair.rs:321). `prs drain --continuous` is gated on five verified merges since the last unverified one (drain.rs:1232, :1249) and never ends on its own. The drain reports `steps`, `merged` and a free-text `stopped`. Cleanup, repair and refresh are three commands a person composes. ADR 0129 and its issue I2298 (the `carries_master` relation and the train) are session p5's, unlanded, on branch feature/the-refresh-pipeline-is-a-train; ADR 0114 `prs compose` is proposed on origin/feature/a-batch-is-composed-and-names-its-members with no pull request."
+desired_state: "`prs drain --until-settled` runs under the same lease and the same rollout gate as `--continuous`, ends on the settle predicate, and prints one explanation per pull request it observed. `prs status` answers the same predicate offline from the recorded observation. With a depth declared in `.ai/repo/ci/queue.yaml` on master, the executor stacks refreshed heads and writes the `Stacked on #k` line itself. A cancelled or release-window failure of the required check is not in the repair lane; a content failure is, and under a granting profile it is recorded on the trail as a repair with its issue, its scope and what failed. A permitted skip is derived from the gate model at the observed master commit. Taking the lease removes the executor's own leftover scratch worktrees. Duplicate patches across worktree branches are a read, and nothing modifies a worktree by default."
+scope:
+  - "apps/majordomus-cli/src/integration"
+  - "apps/majordomus-cli/src/commands/prs.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/src/capability/builtin/integration.rs"
+  - "apps/majordomus-cli/src/capability/builtin/worktree.rs"
+  - "apps/majordomus-cli/src/worktree"
+  - "apps/majordomus-cli/tests"
+  - ".ai/repo/ci/queue.yaml"
+  - "docs/INTEGRATION.md"
+  - "docs/WORKTREES.md"
+  - "docs/CLAIMS.yaml"
+  - "docs/claims"
+  - "docs/generated"
+  - "site/content"
+  - "site/data"
+  - "test/cases"
+non_scope:
+  - "Not the `carries_master` relation, the freshness gate that passes it or the relation cache's vocabulary version: that is I2298 / ADR 0129, session p5's, unlanded on feature/the-refresh-pipeline-is-a-train. I2326 starts only after it lands."
+  - "Not composing several pull requests into one batch pull request: that is ADR 0114 `prs compose`, proposed on origin/feature/a-batch-is-composed-and-names-its-members."
+  - "Not rebase or squash, and no choice of merge method: the merge commit is a decision of ADR 0101 (mod.rs:326-337, docs/INTEGRATION.md:174), because the derived-file driver resolves merges."
+  - "Not the run's identity, its budget or its five typed ends: milestone a-drain-is-a-durable-run (I2320-I2324). This milestone gives the predicate those ends read."
+  - "Not starting a worker, its permissions or its claim: milestone repair-is-dispatched-to-a-worker (I2334-I2340)."
+  - "Not the scheduled workflow: `.ai/repo/ci/queue.yaml` keeps running `prs refresh && prs status` and never a drain or `cleanup --apply`, as case 350 asserts."
+  - "Not reopening a record pull request no run was started for: I2296 on origin/fix/the-executor-reopens-a-record-pull-request."
+  - "Not the disposition of stale worktrees: pull request #882 (feature/every-worktree-has-a-disposition, ADR 0127)."
+  - "Not timing the refresh, the percentile throughput or the rollout record of stages two to four: I2312, I2313 and I2314 of milestone the-delivery-baseline-is-recorded."
+  - "Not acknowledging an unverified merge for itself, and never `--admin`: owner decision D7 and ADR 0101 stand under every profile."
+acceptance_criteria:
+  - "A drain asked to settle ends by itself only when every pull request of its observation is merged, closed under the policy or reported blocked with its reason codes and the trail events of the steps tried on it"
+  - "A stale, unreadable or truncated observation is never settled: the drain ends saying what could not be read, with a non-zero exit"
+  - "With a declared depth, two stacked pull requests land in two steps with no refresh between and one run of the required check each; with no depth declared the pipeline is one deep as before"
+  - "A cancelled required check and one that failed inside a release window are not in the repair lane, and neither ever makes a pull request ready"
+  - "With no authority profile the settling drain closes nothing and records no repair, and `prs cleanup`, `prs repair` and `prs drain` behave as before"
+  - "Simulated queues of twenty and of fifty pull requests settle with each pull request merged at most once and every merge on a head that held the master of that moment with its required check passed"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib integration::"
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test integration_settle"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 350_the_queue_measures_itself 720_integration_follows_the_current_master 850_integration_drains_cycle_by_cycle"
+  - "scripts/derive-check"
+evidence_required:
+  - "settle_predicate_proved"
+  - "train_built_to_declared_depth"
+  - "red_check_classified"
+  - "large_queue_settled"
+depends_on: []
+risks:
+  - "A settle loop that composes refresh, cleanup and repair in one command removes the separate approvals `.ai/repo/ci/queue.yaml` and case 350 keep on purpose. Closing and recording a repair are therefore tied to a grant of the authority profile, and the scheduled workflow is not changed."
+  - "Pull requests #828 and #859 and the unlanded branches of I2296 and I2298 all edit drain.rs, forge.rs or tests.rs. Work here collides with them until they land; the issues are marked not parallel-safe for that reason."
+  - "Session p5 holds an owner mandate to automate the refresh of `needs_refresh` pull requests and to triage `needs_repair`, and another session runs a hand train over `refs/prep/*`. Each issue here is announced on the peer board before it is started."
+  - "The release-window class of I2328 rests on five failures read from run logs on 2026-10-10. If the window cannot be decided from git and the run's own times, that class is dropped and said so, rather than guessed from a title or an age."
+  - "A link of a train whose lower link is closed without a merge holds that pull request's commits and stays blocked for a person (ADR 0129 decision 5); a deep train makes one such closure cost more."
+created_at: 2026-10-10
+updated_at: 2026-10-10

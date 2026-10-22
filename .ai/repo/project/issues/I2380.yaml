@@ -1,0 +1,54 @@
+id: I2380
+milestone: the-site-says-what-ships
+title: "What the homepage no longer renders is no longer declared: the featured field and the stale summaries go"
+slug: retire-what-the-homepage-dropped
+priority: p2
+profile: implementation
+parallel_safe: true
+serves:
+  - "the-site-says-what-ships#one-release-identity"
+objective: "Retire the feature field `featured`, whose only stated meaning is a homepage placement the page no longer renders: remove the generator's demand for three featured features, the `on the homepage: featured` label of feature.html, the `--featured` filter of `product list`, the featured status in graph.rs, the featured_draft validation of product.rs, the field from share/schemas/majordomus/feature/feature.v1.schema.json, from the site's projected fields and from the feature files; and correct the site-probe gate summary in .ai/repo/ci/gates.yaml and the header of scripts/site-probe, which both say three widths."
+why: "Living-site V3 pack item RDV3-08-05. scripts/generate-site-data:895 still refuses a layer with fewer than three featured non-draft features because the homepage would have no chapters, and site/templates/feature.html:56-57 tells a reader a featured feature is on the homepage; site/templates/index.html renders no feature chapters and none by that field. The same meaning is repeated in cli.rs:4178 (`--featured` narrows to the features the homepage shows), product.rs:1913-1921 (a feature that is not stable may not be featured because the homepage shows stable features only), graph.rs:1911-1912, site.rs:990 and the feature schema, whose description of `featured` is `True when the homepage shows the feature as one of its chapters`, and the field is set in the feature files under .ai/repo/features. .ai/repo/ci/gates.yaml:510 summarises site-probe as every route at three widths, and scripts/site-probe:40 says the three widths are three iframes, while share/design/tokens.yaml:489 declares five. Removing `product list --featured` is a public-surface movement, so the pull request carries the version movement `release analyze` names. Not in this issue: deleting branches. The gap file lists remote branches with no change outside master: feature/landing-page, feature/the-homepage-shows-what-is-live, fix/the-site-names-the-version-you-can-get, fix/the-audited-pages-pass-their-audit with no commit outside 4dfd1856d2, and feature/design-system with one merge of master and no patch of its own (git cherry is empty); and rescue/landing-closure-local and rescue/offremote-landing-closure, which share their tip subject with feature/landing-closure, a branch about pull-request landing rather than the landing page. Each is a candidate whose deletion is the owner's act, or the act of the session that owns it."
+current_state: "A feature field, a command filter, a validation message and a page label all say a feature is on the homepage, and the homepage shows no feature by that field; a gate summary names three widths where five are declared."
+desired_state: "No script, template, command description, validation message or feature file declares a homepage placement the homepage does not render; generate-site-data no longer refuses a layer with fewer than three featured features; the site-probe summary and the header of scripts/site-probe say it measures every width share/design/tokens.yaml declares, without a count."
+scope:
+  - "scripts/generate-site-data"
+  - "site/templates/feature.html"
+  - "apps/majordomus-cli/src/product.rs"
+  - "apps/majordomus-cli/src/commands/product.rs"
+  - "apps/majordomus-cli/src/capability/builtin/product.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/src/graph.rs"
+  - "apps/majordomus-cli/src/site.rs"
+  - "apps/majordomus-cli/tests/product.rs"
+  - "apps/majordomus-cli/tests/common/mod.rs"
+  - ".ai/repo/features"
+  - "share/schemas/majordomus/feature/feature.v1.schema.json"
+  - ".ai/repo/ci/gates.yaml"
+  - "scripts/site-probe"
+  - "docs/PRODUCT.md"
+  - "docs/generated"
+  - "site/data/generated"
+  - "site/data/registry"
+non_scope:
+  - "Not the `featured` field of the Why catalogue's moments, which partials/why-cards.html still renders on the homepage"
+  - "Not deleting any branch: the owner, or the session that owns each one, decides"
+  - "Not the duplicate derivation of the latest release at generate-site-data:281: I2372"
+  - "Not the obsolete ui-implementation pack under tmp/owner-packs, which is untracked working material"
+  - "Not adding widths or reduced motion to the sweeps: I2378"
+depends_on: []
+acceptance_criteria:
+  - "No file under scripts/, site/templates/, apps/majordomus-cli/src/ or .ai/repo/features/ reads or sets a feature's `featured`, and `rg` over them for the phrase on the homepage beside featured finds nothing"
+  - "A feature file that still sets `featured` is refused by the feature schema as an unknown key"
+  - "generate-site-data succeeds over a layer whose features set no `featured`, and `product list --featured` exits 2 as an unknown option"
+  - "Neither the site-probe gate summary nor the header of scripts/site-probe names a count of widths"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test product"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 333_homepage_narrative"
+  - "scripts/derive-check"
+evidence_required:
+  - "featured_retired"
+  - "unknown_key_refused"
+created_at: 2026-10-10
+updated_at: 2026-10-10

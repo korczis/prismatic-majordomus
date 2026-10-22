@@ -1,0 +1,38 @@
+id: I2375
+milestone: the-site-says-what-ships
+title: "Hand-written copy that names a capability is checked against its claim, and a promise the claims do not support fails the site check"
+slug: prose-is-checked-against-claims
+priority: p1
+profile: implementation
+parallel_safe: true
+serves:
+  - "the-site-says-what-ships#prose-promises-nothing-unsupported"
+objective: "Add a `promises` check to scripts/ci/homepage-check over site/data/marketing.toml and site/data/manifesto.toml: site/data/homepage.toml declares each capability word the hand-written files may use only with a claim (for example unattended, autonomous, self-healing, automatic merge or release) and the docs/CLAIMS.yaml id that permits it, and the check fails a word whose claim is absent, not guaranteed or not supported by evidence, and any name of a feature the product model does not call stable; extend case 333 with the mutations."
+why: "Living-site V3 pack item RDV3-07-02. What is checked today: homepage-check:155-162 fails a homepage link to a feature that is not stable, homepage-check:371 keeps the success tone for claims a recorded run supports, generate-site-data:394 requires a guaranteed claim to name a test, and scripts/site-check:63-65 and :73-79 hold marketing.toml to sixty lines and manifesto.toml to two hundred and forty, with no digits and no counts spelled in words. No check reads docs/CLAIMS.yaml against the sentences of either file, whose own header (marketing.toml:1-4) says it carries no capability claims: a sentence saying an unattended run settles the queue would pass every gate today, while the unattended drain is planned work (I2320 to I2325 of this plan). The site acceptance specification of the pack forbids unverifiable autonomy copy until evidence supports it. The gap file's risk is duplicating claim-proof-check; this check reads the claims' status and evidence verdict and proves nothing itself."
+current_state: "Hand-written copy is held to a line budget and a ban on numbers; whether a sentence promises a capability the claims do not support is not checked."
+desired_state: "homepage-check reports, per declared word, the claim that permits it and its status, and fails with the file, the line, the word and the claim when the claim is absent, planned, advisory or unsupported; the name of a draft or deprecated feature in either file fails the same way; case 333 holds each half by mutation."
+scope:
+  - "scripts/ci/homepage-check"
+  - "site/data/homepage.toml"
+  - "test/cases/333_homepage_narrative.sh"
+  - "docs/PRODUCT.md"
+non_scope:
+  - "Not proving claims: claim-proof-check and `majordomus evidence show` decide a claim's test and evidence, and this check only reads their verdict"
+  - "Not judging whether a sentence is in the conditional or what it means: the check decides the words it declares and the feature names the model gives, and says so"
+  - "Not rewriting the copy: I2376"
+  - "Not public pages for deprecated features, which carry their status badge (feature.html:52): they are honest about their status and stay"
+  - "Not other hand-written pages such as docs/: the site's two hand-written data files only"
+depends_on: []
+acceptance_criteria:
+  - "Case 333 adds a sentence using a declared word whose claim is planned to a fixture marketing.toml, and homepage-check fails naming the file, the line, the word and the claim"
+  - "The same word with its claim guaranteed and supported by a recorded run passes, and with the claim guaranteed but unsupported it fails"
+  - "A declared word mapped to a claim id docs/CLAIMS.yaml does not hold fails the check as a broken declaration"
+  - "The name of a feature whose status is draft or deprecated in manifesto.toml fails, and the clean tree passes"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 333_homepage_narrative"
+evidence_required:
+  - "prose_checked_against_claims"
+  - "promise_mutation_case"
+created_at: 2026-10-10
+updated_at: 2026-10-10

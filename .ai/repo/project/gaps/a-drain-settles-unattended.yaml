@@ -1,0 +1,215 @@
+intent: a-drain-settles-unattended
+observed_at: 4dfd1856d2
+recorded_by: "claude-code (session b24c5456, planning worktree; six read-only audit agents over master 4dfd1856d2)"
+recorded_at: 2026-10-10
+observations:
+  - id: no-authority-record
+    statement: .ai/repo/policy.yaml declares nothing an unattended run may push, merge, close, release or deploy; the words authority and unattended do not occur in it
+    source: file:.ai/repo/policy.yaml
+  - id: continuous-gate-is-a-constant
+    statement: Continuous mode is unlocked by ROLLOUT_MERGES_BEFORE_CONTINUOUS = 5, a compiled constant compared with the verified merges on the trail, and by nothing a policy declares
+    source: file:apps/majordomus-cli/src/integration/drain.rs
+  - id: rules-have-two-classes
+    statement: A rule's typed class is blocking, advisory or unknown; no field says whether a restriction is an invariant, a process or a heuristic
+    source: file:apps/majordomus-cli/src/rules/mod.rs
+  - id: scope-is-written-once
+    statement: start writes the scope once into the git-ignored .ai/local/state/current.yaml, and the scope validator's own comment says a worker whose scope proved too narrow has no move except editing that file by hand
+    source: file:lib/check.sh
+  - id: a-run-has-no-identity
+    statement: An event of the integration trail carries its time, actor, action, pull request, masters, head, reasons and evidence and no run id, phase, attempt, budget or schema version; the only identity a running drain has is the lease holder's pid, host, base and start
+    source: file:apps/majordomus-cli/src/integration/drain.rs
+  - id: interrupted-merge-is-verified
+    statement: Under one exclusive lease per base, reconcile verifies a merge the trail says was asked for and never asks for it again, and an unverified merge halts every drain until failure_acknowledged is recorded
+    source: file:apps/majordomus-cli/src/integration/drain.rs
+  - id: stopped-is-free-text
+    statement: DrainReport and ContinuousReport say why they stopped in a free-text string, and no closed set of ends exists
+    source: file:apps/majordomus-cli/src/integration/drain.rs
+  - id: continuous-never-settles
+    statement: A continuous drain runs until it is stopped, a cycle bound is reached, a merge could not be verified or the repository cannot be read; nothing ends it on a settled queue, and the words budget and no_progress occur nowhere under src/integration
+    source: file:apps/majordomus-cli/src/integration/drain.rs
+  - id: a-drain-is-a-foreground-process
+    statement: prs drain takes --max, --dry-run, --refresh, --continuous, --interval and --resume-after-failure; it has no flag to detach or to settle, and it is stopped by a signal to the process in the terminal
+    source: file:apps/majordomus-cli/src/cli.rs
+  - id: an-execution-dies-with-its-process
+    statement: docs/EXECUTIONS.md states that an execution does not outlive the process that accepted it and that there is no durable queue, retry, schedule or execution that survives a restart
+    source: file:docs/EXECUTIONS.md
+  - id: cleanup-is-its-own-command
+    statement: A redundant or superseded pull request is closed by prs cleanup --apply alone; no drain calls cleanup, and possibly_redundant and obsolete are left for a person
+    source: file:apps/majordomus-cli/src/integration/drain.rs
+  - id: refresh-is-one-deep
+    statement: refresh_step brings master into one pull request and refreshes no other while the required check of the head it pushed is pending
+    source: file:apps/majordomus-cli/src/integration/drain.rs
+  - id: repair-lane-ends-at-a-person
+    statement: lane() puts needs_repair and conflicting into the repair lane, which the model documents as a person must change the branch
+    source: file:apps/majordomus-cli/src/integration/model.rs
+  - id: repair-names-no-task
+    statement: link_issues infers a pull request's issue and milestone from its head branch name and says neither decides a disposition or a rank; no file under src/integration creates a task or moves an issue
+    source: file:apps/majordomus-cli/src/integration/mod.rs
+  - id: the-harness-runs-in-a-fixture
+    statement: The economics runner starts headless Claude Code with bypassPermissions in a throwaway workspace copied from a fixture, and no other file under src names that permission mode
+    source: file:apps/majordomus-cli/src/economics/runner.rs
+  - id: trust-grants-no-execution
+    statement: mesh/trust.rs states that even a trusted node gains no execution rights anywhere in the codebase, and no file under src/mesh names a delegation
+    source: file:apps/majordomus-cli/src/mesh/trust.rs
+  - id: a-claim-assigns-nothing
+    statement: A mesh claim carries its session, scope, mode and optionally the issue it is for; the journal's vocabulary is sessions, claims, handovers and reviews, with no event that assigns work to a runtime or accepts it
+    source: file:apps/majordomus-cli/src/mesh/journal.rs
+  - id: largest-simulated-queue
+    statement: The worlds the executor's property tests generate hold at most eleven open pull requests
+    source: file:apps/majordomus-cli/src/integration/tests.rs
+  - id: queue-as-measured
+    statement: On 2026-10-10 at 17:32Z prs status counted 51 open pull requests with none ready and no next merge (25 needs_refresh, 10 needs_repair, 7 waiting_for_dependency, 1 conflicting, 8 draft), under a policy whose list of permitted skips was empty
+    source: command:majordomus prs status
+  - id: trail-as-measured
+    statement: On 2026-10-10 the trail of the primary checkout, begun on 2026-10-04, held 15 merge_succeeded, 5 repaired, 3 refresh_failed of 3 refreshes attempted, 1 verification_failed and no continuous_started
+    source: command:majordomus prs events
+conditions:
+  - criterion: authority-is-declared
+    state: missing
+    because: what an unattended run may do is one compiled constant and GitHub's own rules, with no typed record to read, to refuse by or to be absent
+    observations: [no-authority-record, continuous-gate-is-a-constant, rules-have-two-classes]
+  - criterion: scope-is-amended-not-bypassed
+    state: missing
+    because: a scope is written once into an untracked file, and widening it is a hand edit nothing records, bounds or recomputes from
+    observations: [scope-is-written-once]
+  - criterion: a-run-is-durable
+    state: missing
+    because: the lease and the verification of an interrupted merge exist, and there is no run to name, to count the attempts of or to resume
+    observations: [a-run-has-no-identity, interrupted-merge-is-verified]
+  - criterion: a-run-ends-typed
+    state: missing
+    because: a drain's end is a sentence, and neither a budget nor a cycle that moved nothing can end one
+    observations: [stopped-is-free-text, continuous-never-settles]
+  - criterion: a-run-is-resident
+    state: missing
+    because: a drain lives in the terminal that started it, and the one place that could host it loses every execution with its process
+    observations: [a-drain-is-a-foreground-process, an-execution-dies-with-its-process]
+  - criterion: the-queue-settles
+    state: missing
+    because: no predicate says the queue is settled, closing is a separate command, the refresh is one deep, and the queue measured held 51 open pull requests with none ready
+    observations: [continuous-never-settles, cleanup-is-its-own-command, refresh-is-one-deep, queue-as-measured]
+  - criterion: repair-is-dispatched
+    state: missing
+    because: the repair lane ends at a person, a repair names no task, and the only harness invocation runs in a disposable fixture with every permission bypassed
+    observations: [repair-lane-ends-at-a-person, repair-names-no-task, the-harness-runs-in-a-fixture, a-claim-assigns-nothing]
+  - criterion: dispatch-needs-a-delegation
+    state: missing
+    because: the refusing half holds, since trust and discovery run nothing, and there is no delegation to issue, verify or let expire
+    observations: [trust-grants-no-execution, a-claim-assigns-nothing]
+  - criterion: settles-on-a-large-queue
+    state: missing
+    because: the largest generated world is eleven pull requests, and no scenario drives the executor through twenty or fifty
+    observations: [largest-simulated-queue]
+  - criterion: demonstrated-unattended
+    state: missing
+    because: no continuous run was ever started in this repository, and the stops for no progress and for an exhausted budget do not exist to be shown
+    observations: [trail-as-measured, continuous-never-settles]
+risks:
+  - A profile kept in the repository is editable by the worker it constrains, so unless it is read from the trunk or signed by the owner it is self-granted authority
+  - Dispatching the repair lane automatically reverses a documented decision that repair is a person's and that an authored conflict is refused, and it collides with another session's active needs_repair mandate
+  - An unattended mode that acknowledges a verification failure for itself would silently loosen owner decision D7 and the five-verified-merges gate, which the pack says to keep
+  - A run record stored beside the trail becomes a second account of what the trail already says, and a new noun must pass the blocking rule project.no-new-nouns and enter docs/CONCEPTS.md
+  - A settle loop that composes cleanup --apply and refresh into one unattended command removes the separate approvals that queue.yaml and case 350 deliberately keep
+  - Building scope amendment on the git-ignored current.yaml legitimises the known bypass; it has to land on the tracked contract I2237 plans or CI cannot see it
+  - The one working harness invocation uses bypassPermissions, acceptable in a disposable fixture and not in a live checkout, and project.no-new-nouns refuses a registry or catalogue of workers
+work:
+  - id: authority-profile
+    title: An authority profile in the policy declares what an unattended run may push, merge, close, release and deploy, and an absent profile changes nothing
+    serves: [authority-is-declared]
+    issue: I2315
+  - id: restriction-classes
+    title: Every restriction says whether it is an invariant, a process or a heuristic, and only a process can be delegated
+    serves: [authority-is-declared]
+    issue: I2316
+  - id: scope-amendment
+    title: A task's scope grows by a recorded amendment inside the delegated envelope and is refused outside it
+    serves: [scope-is-amended-not-bypassed]
+    issue: I2317
+  - id: repair-resolves-its-issue
+    title: A repair resolves to the issue and the criterion it serves, or drafts them through the plan's own transitions
+    serves: [repair-is-dispatched]
+    issue: I2318
+  - id: person-gates-converted
+    title: Each rule that asks for a person where a proof suffices is converted with its case and its migration
+    serves: [authority-is-declared]
+    issue: I2319
+  - id: run-model
+    title: "A run is decided and named: a fold over the integration trail, with a versioned event and a place in the vocabulary"
+    serves: [a-run-is-durable]
+    issue: I2320
+  - id: run-ends-typed
+    title: A run ends satisfied, blocked, out of budget, cancelled or fatal, and a budget or no progress ends it
+    serves: [a-run-ends-typed]
+    issue: I2321
+  - id: run-lifecycle
+    title: Starting, reading, stopping and resuming a run are idempotent, and one run leads a base
+    serves: [a-run-is-durable]
+    issue: I2322
+  - id: run-outlives-its-terminal
+    title: A run outlives the terminal that started it, and following it reads the trail
+    serves: [a-run-is-resident]
+    issue: I2323
+  - id: run-on-every-surface
+    title: A run, its blockers and its next action read the same on every surface, and stopping one asks first
+    serves: [a-run-is-resident]
+    issue: I2324
+  - id: settle-predicate
+    title: A drain asked to settle ends on a settle predicate, with every open pull request explained
+    serves: [the-queue-settles]
+    issue: I2325
+  - id: refresh-train-depth
+    title: The refresh pipeline is as deep as the queue policy declares, built as the train ADR 0129 describes
+    serves: [the-queue-settles]
+    issue: I2326
+  - id: repair-becomes-a-task
+    title: A pull request that needs repair becomes a task carrying what failed, instead of ending at a person
+    serves: [repair-is-dispatched]
+    issue: I2327
+  - id: red-check-is-read
+    title: A red required check is read as cancelled, as failed inside a release window, or as failed on content, and only the last is a repair
+    serves: [the-queue-settles]
+    issue: I2328
+  - id: settle-closes-redundant
+    title: A settling drain closes what cleanup proves redundant, when the profile allows it
+    serves: [the-queue-settles]
+    issue: I2329
+  - id: large-queue-simulation
+    title: The executor is proved on queues of twenty and of fifty pull requests with every event the forge can throw
+    serves: [settles-on-a-large-queue]
+    issue: I2332
+  - id: delegation-record
+    title: Permission to run work is a delegation decided apart from mesh trust, with an expiry and a record
+    serves: [dispatch-needs-a-delegation]
+    issue: I2334
+  - id: worker-adapter
+    title: A worker adapter runs one issue in its own worktree under the profile's permissions, on this machine
+    serves: [repair-is-dispatched]
+    issue: I2335
+  - id: worker-question-answered
+    title: A worker that stops to ask is answered by the profile or recorded as a blocker, never left waiting
+    serves: [repair-is-dispatched]
+    issue: I2336
+  - id: repair-claim
+    title: A ready repair is held by one worker through an exclusive claim naming its issue, and a dead worker's hold expires
+    serves: [repair-is-dispatched]
+    issue: I2337
+  - id: worker-context-and-handover
+    title: A worker starts from the compiled context of its issue, and its handover starts its replacement
+    serves: [repair-is-dispatched]
+    issue: I2338
+  - id: runtime-accepts-work
+    title: A runtime says which work it accepts, and work reaches another machine only under a delegation it verified
+    serves: [dispatch-needs-a-delegation]
+    issue: I2339
+  - id: dispatch-adversarial
+    title: Dispatch is tried against a crash, a replay, an expired delegation, a divergent result and no provider
+    serves: [dispatch-needs-a-delegation]
+    issue: I2340
+  - id: unattended-demonstration
+    title: "An unattended run is demonstrated here: a success, a repaired conflict, a crash, no progress and an exhausted budget"
+    serves: [demonstrated-unattended]
+    issue: I2367
+  - id: operator-guide-and-claims
+    title: The operator guide and the claims say what an unattended run does, once it exists, and how to turn it off
+    serves: [demonstrated-unattended]
+    issue: I2371

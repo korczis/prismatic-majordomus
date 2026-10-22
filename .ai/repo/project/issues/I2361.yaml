@@ -1,0 +1,47 @@
+id: I2361
+milestone: surfaces-project-one-delivery-state
+title: "The overview answers delivery: the queue, the required verdict and the proof of the last release, each from the source that holds it"
+slug: overview-answers-delivery
+priority: p2
+profile: implementation
+parallel_safe: false
+serves:
+  - "delivery-is-explained-by-evidence#surfaces-agree"
+objective: "Add delivery cards to the declared list of apps/majordomus-cli/src/capability/builtin/dashboard.rs: the queue by disposition and the next merge from `integration.queue`, the required check of master and of the open heads from the same observation, and the last release's record and served standing from `distribution.releases` and `served.show`. Where the observation `prs refresh` records (integration/forge.rs) does not carry the base commit's required check, it gains it."
+why: "Convergence pack 05 issue 05.1. The Overview answers four questions with twelve cards (dashboard.rs:472-617): health, version, last release, pending bump, blocked issues, worktrees, next issue, open blockers and peer overlaps. None says why delivery is slow or stuck: on 2026-10-10 at 17:32Z the queue held 51 open pull requests with none ready (25 needed refresh, 10 repair, 7 waited for a dependency), and the required check on the open heads was 14 failed, 2 passed and 35 absent. That answer lives in `integration.queue` (capability/builtin/integration.rs:254), which renders the last recorded observation and never reaches the network (SECURITY.md:53-60), and in `served.show` (capability/builtin/served.rs:410), which re-judges recorded deployment observations; both are cheap in the sense of the Overview's cost rule (dashboard.rs:31-33: no delivery report, no release analysis, no evidence judgement). The forge observation carries the base's required checks by name and each head's checks (integration/forge.rs:49-80) and not the verdict of the base commit itself, which `scripts/ci/release-verdict` asks GitHub for at release time. The Cockpit's Integration page already reads the queue (cockpit/pages.rs:5183) and the Overview reads the dashboard (cockpit/pages.rs:377), so a card reaches every surface by construction."
+current_state: "The Overview shows the last release's version and nothing about the queue, the verdict or whether the release is served; delivery is diagnosed from `prs status` or the Integration page."
+desired_state: "The Overview has delivery cards, each naming its capability, input and pointer and read by the existing measures (dashboard.rs:62-110), with the source's own verdict as its status: `fail` for a failed required check of master or a release that is not served, `warn` for a queue with nothing ready and work waiting, `unknown` when the observation is absent or cannot be read. The cards appear on the command line, MCP, HTTP and the Cockpit's Overview with no edit outside dashboard.rs, apart from the base-commit field of the observation."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/dashboard.rs"
+  - "apps/majordomus-cli/src/integration/forge.rs"
+  - "apps/majordomus-cli/src/integration/model.rs"
+  - "apps/majordomus-cli/tests/dashboard.rs"
+  - "test/cases/534_the_overview_answers_four_questions.sh"
+  - "docs/COCKPIT.md"
+  - "docs/INTEGRATION.md"
+  - "docs/generated"
+  - "site/data"
+non_scope:
+  - "Not the run's card: a run and its next action are projected on every surface by I2324, which adds its card to this list once the run capability exists"
+  - "Not the age of each card or the stale verdict: that is I2362"
+  - "Not a card for the derive critical path or for cache hits: their measurements are I2311 and the derive milestone, and a card is added when a cheap source holds them"
+  - "Not a delivery report, a release analysis or an evidence judgement asked by the Overview, and no number computed in a card (dashboard.rs:12-23)"
+  - "Not the intents on the Overview (I2234) and not `majordomus ui` (I2231, gated on I2131 and I2153)"
+  - "Not a new forge read: the base commit's check is read in the same `prs refresh` that already reads every head's checks, and no capability reaches the network"
+depends_on: []
+acceptance_criteria:
+  - "`dashboard overview` on a fixture with a recorded observation shows the queue by disposition, the next merge, the required check of master and of the open heads, and the last release's record and served standing, and tests/dashboard.rs reads each value back from its source by its pointer"
+  - "Each source is asked once per answer, and no card's source is a delivery report, a release analysis or an evidence judgement"
+  - "With no recorded observation the queue and verdict cards are `unknown` naming `majordomus prs refresh`, and with no served observation the release proof card is `unknown`, never `ok`"
+  - "A failed required check on master and a last release whose record commit is not contained in the served build each make their card `fail`"
+  - "An observation recorded before this change, without the base commit's check, still reads, and its verdict card says unknown"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test dashboard"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 534_the_overview_answers_four_questions"
+  - "scripts/derive-check"
+evidence_required:
+  - "delivery_cards_read_from_sources"
+  - "unknown_without_observation_test"
+created_at: 2026-10-10
+updated_at: 2026-10-10

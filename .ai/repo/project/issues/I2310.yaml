@@ -1,0 +1,48 @@
+id: I2310
+milestone: the-delivery-baseline-is-recorded
+title: "The delivery baseline of 2026-10-10 is a tracked record a command re-measures"
+slug: delivery-baseline-is-a-tracked-record
+priority: p1
+profile: implementation
+parallel_safe: true
+serves:
+  - "delivery-is-explained-by-evidence#baseline-is-recorded"
+objective: "Extend `scripts/ci-baseline`, the recorder that already writes what GitHub observed of recent runs, with a `--delivery` mode that writes `.ai/repo/benchmarks/delivery/baseline.json`: the required check's conclusions, attempts and wall time, the time from opening a pull request to its merge, the open queue by disposition and by age, the executor's trail by act, and the branch protection as read. The GitHub half is read through the `gh` calls the script already makes; the queue and the trail are read from `integration.queue` and `integration.events` and folded nowhere else. The record of 2026-10-10 is written by that command from the audit's capture, not typed."
+why: "Autopilot pack 00 issue 4 and convergence pack 00 issue 00.3 ask for a measured baseline before any redesign, and convergence pack 06 issue 06.4 for a comparison against it. The audit of 2026-10-10 at master 4dfd1856d2 (session b2) took the measurements, and they exist only in its untracked capture: validate-runs.json, gh-merged.json, gh-prs.json, protection.json, prs-status.json, prs-events.json and observed-at.txt under tmp/owner-packs/audit-20261010 of the primary checkout, observed 2026-10-10T17:29:46Z. Measured there: the 120 newest runs of validate, 2026-10-08T03:28Z to 2026-10-10T15:21Z, 116 completed as 39 success, 48 failure and 29 cancelled, first-attempt success wall p50 5423 s and p95 8290 s (n=32), 9 runs with a second attempt; the last 150 merged pull requests, 2026-09-26 to 2026-10-10, open-to-merge p50 17.8 h and p95 98.2 h, and p50 13.6 h, p95 99.9 h for the 64 since 2026-10-04; 51 open pull requests at 17:32Z with 0 ready, 25 needs_refresh, 10 needs_repair, 7 waiting_for_dependency, 1 conflicting and 8 draft, median age 0.6 days, p95 2.3 days, oldest 27.9 days (#292), the required check on their heads 14 failure, 2 success and 35 absent; `prs refresh` 246 s of wall time (70 s user, 104 s system) for the 51, one sample on the shared Mac; the trail since 2026-10-04 with 15 merge_succeeded, 5 repaired, 3 refresh_failed and 1 verification_failed; protection of master: required status check `ci`, strict false, no required review, enforce_admins false. The recorder exists and is out of use: `scripts/ci-baseline:1-6` writes `.ai/repo/ci/baseline.json` per run, job and step from the GitHub API, was last run on 2026-09-05, and `.ai/repo/ci/README.md` says nothing reads its file. `.ai/repo/benchmarks/README.md` sets the convention this follows: one directory per measured surface, and a baseline written by the command that measures it, never edited by hand. Rule project.performance-evidence asks the same of any later claim of speed."
+current_state: "The figures are in an untracked directory and in the plan records that quote them. `scripts/ci-baseline` records runs, jobs and steps only: it reads no pull request, no protection and nothing of the integration queue or trail, computes no percentile, and has one output shape."
+desired_state: "`.ai/repo/benchmarks/delivery/baseline.json` holds the record of 2026-10-10 with the rows its figures are computed from, written by `scripts/ci-baseline --delivery --from <capture>`; `scripts/ci-baseline --delivery` re-measures the same shape from the forge and from `integration.queue` and `integration.events`; every figure carries its sample size, its window, its source and the machine or runner; the derive by stage and the duration of a successful refresh read `unknown` with the reason until I2311 and I2313 give them a source."
+scope:
+  - "scripts/ci-baseline"
+  - ".ai/repo/benchmarks/README.md"
+  - ".ai/repo/benchmarks/delivery/README.md"
+  - ".ai/repo/benchmarks/delivery/baseline.json"
+  - "docs/PERFORMANCE.md"
+  - "docs/CI.md"
+  - "test/cases/1053_the_delivery_baseline_is_a_record.sh"
+  - "test/fixtures/delivery-baseline"
+non_scope:
+  - "Not the stage timings of a derive: I2311 makes that source exist, and this record says `unknown` for it until then; no derive figure from a commit message is entered as a measurement"
+  - "Not the percentiles of the trail, the duration of a refresh or the count of interventions: I2312 records the timings and I2313 folds them in integration/metrics.rs"
+  - "Not the warm, partial and cold baseline of change-to-verdict and merge-to-verified-deploy on GitHub: the first acceptance criterion of milestone ci-critical-path, unlanded on origin/rescue/d1/chore/the-ci-critical-path-is-planned"
+  - "Not a budget or a gate on any figure: a baseline is an observation (.ai/repo/benchmarks/pages/README.md); the derive budget is I2346"
+  - "Not rewriting `.ai/repo/ci/baseline.json`: it stays the record of what CI cost before the gate model (.ai/repo/ci/README.md)"
+  - "Not a second fold of the trail in shell: the queue's tallies and the throughput are what `integration.queue` answers"
+  - "Not the published comparison against this record: I2370"
+  - "Not changing a GitHub setting: the protection is recorded as read, and what it leaves open is I2355's report"
+depends_on: []
+acceptance_criteria:
+  - "`scripts/ci-baseline --delivery --from <capture>` over the fixture capture of case 1053 writes a record whose every figure carries its sample size, its window, its source and the machine or runner it was measured on"
+  - "`scripts/ci-baseline --delivery --table` reproduces every summary figure of the tracked record from the rows the record carries, and the case fails when a figure is edited without its rows"
+  - "A source the capture lacks is recorded as `unknown` with the reason, and no figure for it is zero or absent"
+  - "With the forge unreadable and no capture given the command exits 12 and leaves the tracked record byte for byte as it was"
+  - "The record of 2026-10-10 states the derive by stage as `unknown` and marks the 246 s of `prs refresh` as one sample"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 1053_the_delivery_baseline_is_a_record"
+  - "scripts/derive-check"
+evidence_required:
+  - "delivery_baseline_record"
+  - "baseline_recorder_case"
+  - "unknown_is_not_zero_case"
+created_at: 2026-10-10
+updated_at: 2026-10-10

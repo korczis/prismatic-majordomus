@@ -1,0 +1,55 @@
+id: the-verdict-cannot-be-bypassed
+title: "The required verdict holds against a skipped job, a stale head and an administrator, and completion says how far a change actually got"
+slug: the-verdict-cannot-be-bypassed
+order: 327
+priority: p1
+problem: "Measured on 2026-10-10 through the GitHub API, `master` is protected: the status check `ci` is required (app 15368), `strict` is false, no review is required, `enforce_admins` is false and there is no ruleset. The repository's own documents still say the opposite: docs/CI.md:308 and :349-350 say master has no required check and that the API answers 404, the comment above the `ci` job says the verdict is not one the merge obeys (.github/workflows/validate.yml:1016-1018), and claim `ci-verdict-is-required` (docs/CLAIMS.yaml:1195) is `planned` on the measurement of 2026-09-11. Inside the repository the verdict fails closed (scripts/ci/verdict:33-35,56-65) and the executor never merges with --admin, over a required check that has not passed or onto a head without master (rule project.integration-follows-the-current-master). Both hold only for what passes through them. With `strict` off, a verdict computed against an older master stands at the forge; with administrators unbound, a merge can pass the check by. On 2026-10-10 at 17:25:00Z pull request #901 was merged with --admin on the owner's word, 69 seconds after it was opened and before its `ci` had concluded, and the executor's trail has no line for it, because the trail records the executor's own acts only. After a merge, whether a change is merged, published, deployed and healthy are separate questions of the done invariant (apps/majordomus-cli/src/gates/done.rs:172-190) that `check` only reports; `deploy` and `verify` are established by nothing (share/obligations.yaml:97-125), and the release record is an input to none of them. A release's digest is compared with bytes by the installer alone, and scripts/release-record replaces an existing record without saying so (scripts/release-record:110). Convergence pack 04 and autopilot pack 06 issue 2, read against master 4dfd1856d2."
+outcome: "What the forge's protection leaves open is read from a dated observation and said by doctor and by the queue, and the claim states what was measured. A merge the executor did not make is on the trail as foreign, with whether its required check had passed on the merged head. Completion answers merged, published, deployed and healthy separately, with the release record as evidence of published. A release is tried against a wrong digest, a repeated tag and a deployment nobody observed, and each is refused or reported and never passed."
+current_state: "Protection exists and is weaker than the rule the executor keeps for itself. Nothing in the repository reports the difference, an administrator's merge leaves no line in the trail, and the definition of done as one policy is on the unlanded pull request #821."
+desired_state: "A reader of `majordomus doctor`, of `prs status` or of the claim's page learns that `ci` is required, that it is not strict and that administrators are not bound, with the date it was observed. A reader of the trail sees every commit that reached master, the executor's or not. A reader of the completion report sees four answers and the evidence of each. Changing GitHub's settings stays the owner's act and is named as the remedy."
+scope:
+  - "test/cases"
+  - "scripts/ci"
+  - "scripts/release-record"
+  - "scripts/release-verify"
+  - "lib/doctor.sh"
+  - "apps/majordomus-cli/src/integration"
+  - "apps/majordomus-cli/src/gates"
+  - "apps/majordomus-cli/src/capability/builtin"
+  - "apps/majordomus-cli/tests"
+  - "share/obligations.yaml"
+  - "docs"
+  - "site/data"
+non_scope:
+  - "Changing GitHub's settings (strict, enforce_admins, a ruleset): the owner's act; this milestone reports what they leave open"
+  - "The CI acceptance gate, the bypass cases of acceptance and the dated protection observation with the correction of docs/CI.md: I2239, I2240 and I2241 of the earlier owner packs (pending under tmp/owner-packs)"
+  - "Relaxing any rule of the executor: never --admin, never over a required check that has not passed, never a head without master, and an unverified merge holds every drain"
+  - "Completion as one policy with derived stages and `completed` earned: pull request #821; the measured closing questions: I2301, session 95; the verifier catalogue and the CI receipt: I2245-I2247"
+  - "The release chain as one capability: I2299; a release tag only from a judged commit: I2294; the staging defect at release.yml:272: I2302"
+  - "Holding a drain because of a foreign merge: it is recorded and shown, and whether it holds anything is the owner's decision"
+acceptance_criteria:
+  - "One case drives the verdict and the executor through a failed, a skipped, a cancelled and an absent selected job and a check on another head, and each is red or not ready; proven by the case this milestone adds under test/cases"
+  - "doctor and the queue name what the protection leaves open from an observation with its date, and say not observed where there is none; no surface says protected on an answer that was not read"
+  - "A merge the executor did not make is one line of the trail with its pull request, its merge commit and the state of its required check, and a state that could not be read is recorded as unread"
+  - "Merged, published, deployed and healthy are answered separately, each from its own evidence; proven by apps/majordomus-cli/tests/completion_delivery.rs"
+  - "A release record is not replaced by one with other digests, and a release with no observed deployment reads not deployed"
+  - "Claim `ci-verdict-is-required` states the protection as it was measured, with the date"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 94_ci_plan 720_integration_follows_the_current_master 857_required_checks_are_authoritative"
+  - "cargo test --test integration_trail"
+  - "cargo test --test completion_delivery"
+  - "scripts/derive-check"
+evidence_required:
+  - "verdict_bypass_case"
+  - "protection_gap_reported"
+  - "foreign_merge_on_the_trail"
+  - "four_answers_independent"
+depends_on: []
+risks:
+  - "Three open integration branches (pull requests #828 and #859, and I2296) edit integration/drain.rs, forge.rs or tests.rs; I2355 and I2356 collide with them until they land."
+  - "Pull request #821 and I2301 both rewrite gates/done.rs and gates/mod.rs; I2357 starts after both are on master and is re-read against what they left."
+  - "The protection endpoint needs administrator rights, so CI's own token cannot take the observation; a checkout that never observed says not observed, and that must never read as protected."
+  - "A bypass case written before the CI acceptance gate (I2239) exists can only assert the hole; this milestone's case covers the verdict and the executor, not acceptance."
+created_at: 2026-10-10
+updated_at: 2026-10-10

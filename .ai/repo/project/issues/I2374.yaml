@@ -1,0 +1,53 @@
+id: I2374
+milestone: the-site-says-what-ships
+title: "The site shows what changed since its previously deployed commit, computed at build time and delivered apart from upcoming"
+slug: change-since-the-last-deploy
+priority: p1
+profile: implementation
+parallel_safe: true
+serves:
+  - "the-site-says-what-ships#change-since-deploy-is-shown"
+objective: "Give scripts/site-build the previously deployed commit as an input, have it ask `release.analysis` with `since` set to that commit and the changelog composition of the same range, and write the result to a git-ignored build-time file beside site/data/build.json; render it on the changelog page as a section of movements grouped by capability and claim, each labelled released with its tag or not yet released, and link it from the homepage trust strip. Add test/cases/1060_the_site_shows_what_changed_since_it_was_deployed.sh."
+why: "Living-site V3 pack items RDV3-04-04, RDV3-07-01 and RDV3-00-04. `release.analysis` already accepts any ref as `since` (capability/builtin/release.rs:89, commands/release.rs:235) and reports public-surface movements; scripts/ci/version-matches-surface:19 wraps it. `compose` includes an unreleased section for live readers and `compose_published` stops at the last release (release/changelog.rs:69 and :85), and site/templates/changelog.html:94 can render an unreleased section that the site data never carries. The deployed source commit is known twice: scripts/site-build:121 writes it into build.json, and scripts/site-deploy:120 names it in every gh-pages commit (measured: 4ac7ebdbe3 `deploy: site from 4dfd185`). Nothing composes previously deployed commit to built commit into capability and claim movements. The design answers the risk in the gap file: composing from HEAD inside committed data makes every commit stale, which is why compose_published exists (changelog.rs:72-84). The delta is therefore never committed; it is computed when the site is built for a deploy, from the commit the deploy replaces to the commit being built, and written where .gitignore already keeps per-deployment data (site/data/build.json and site/data/evidence.json, .gitignore:41-47), so a commit changes no committed byte of it."
+current_state: "The published changelog ends at the last release, and no page says what changed between the deployment a visitor last saw and this one."
+desired_state: "A deploy renders the capability, claim and documentation movements from the previously deployed commit to the built one, each marked released (with its tag) or not yet released, while planned claims stay in the homepage's planned block; a build with no previous commit, or one that is not an ancestor, says the delta is unknown and lists nothing; `scripts/generate-site-data --check` and derive-check are unaffected by it."
+scope:
+  - "scripts/site-build"
+  - "scripts/site-deploy"
+  - ".github/workflows/pages.yml"
+  - "scripts/site-check"
+  - "apps/majordomus-cli/src/release/changelog.rs"
+  - "apps/majordomus-cli/src/capability/builtin/release.rs"
+  - "site/templates/changelog.html"
+  - "site/templates/index.html"
+  - ".gitignore"
+  - "test/cases/1060_the_site_shows_what_changed_since_it_was_deployed.sh"
+  - "docs/RELEASE.md"
+  - "docs/GITHUB_PAGES_ARCHITECTURE.md"
+  - "docs/CLAIMS.yaml"
+  - "docs/claims"
+  - "docs/generated"
+  - "site/data/generated"
+non_scope:
+  - "Not a second differ: the movements come from `release.analysis` and the changelog composition, and a commit-range walk of its own is the defect to avoid"
+  - "Not changing compose_published or docs/generated/changelog.*: the committed changelog keeps ending at the last release"
+  - "Not the published comparison against the delivery baseline: I2370"
+  - "Not regrouping every past release's notes by feature: this issue groups the delta since the previous deployment only"
+  - "Not a new homepage section: a section is added only by declaring it in site/data/homepage.toml `order`, which homepage-check then holds, and this issue adds a link from the trust strip"
+depends_on: []
+acceptance_criteria:
+  - "Case 1060 builds a fixture repository with two deployed commits and a capability, a claim and a document moved between them, and finds each movement on the rendered changelog page with its group"
+  - "A movement inside a release record's range is labelled released with that tag; one after the newest record is labelled not yet released; a planned claim is not listed as a movement"
+  - "With no previous commit, or one that is not an ancestor of the built commit, the page says the delta is unknown and lists no movement"
+  - "No tracked file changes when the site is built twice from the same commit with two different previous commits, and scripts/site-check refuses the build-time file if it is tracked"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 1060_the_site_shows_what_changed_since_it_was_deployed"
+  - "cargo test --lib release::changelog"
+  - "scripts/derive-check"
+evidence_required:
+  - "delta_since_deploy_rendered"
+  - "unknown_baseline_case"
+  - "delta_never_committed"
+created_at: 2026-10-10
+updated_at: 2026-10-10

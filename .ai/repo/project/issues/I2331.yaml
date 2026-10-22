@@ -1,0 +1,40 @@
+id: I2331
+milestone: the-queue-settles
+title: "An interrupted refresh leaves no scratch worktree behind"
+slug: no-scratch-worktree-is-left
+priority: p3
+profile: implementation
+parallel_safe: false
+serves:
+  - "a-drain-settles-unattended#the-queue-settles"
+objective: "When a drain or `prs repair --apply` takes the integration lease, remove the executor's own leftover scratch worktrees under the common git directory (`majordomus/integration/pr-<n>`, built by `refresh_branch`, apps/majordomus-cli/src/integration/drain.rs:2080), prune their registration, and record the removal on the trail. A read reports a leftover and removes nothing."
+why: "Convergence pack issue 03.3. The audit found the drain's recovery complete (one merge at a time, `reconcile` at drain.rs:1124, `halted_by` at :1211) with one leftover: `refresh_branch` removes a scratch worktree left by an interrupted act only when the same pull request is refreshed again (drain.rs:2094) and removes its own only when the act returns (drain.rs:2233). A refresh that is killed leaves the tree, and a pull request that then merges or closes is never refreshed again. Observed on 2026-10-10 in the primary checkout: `.git/majordomus/integration/pr-880`, a full checkout dated 13:09, while #880 merged at 18:25. Of the trail's three `refresh_failed` lines, two failed on the commit hook's doctor budget and one in a clone without the derived driver. The leftover is a registered worktree with a detached head (71c3284e1e), one of the 127 `git worktree list` shows on this machine."
+current_state: "A scratch worktree of an interrupted refresh stays under the common git directory until the same pull request is refreshed again, which may be never. Nothing reports it."
+desired_state: "Taking the lease for a base removes every `pr-<digits>` scratch worktree of a pull request that targets that base or is no longer open, and `git worktree list` no longer names it. `prs status` and `prs brief` name a leftover when one exists. Nothing outside `majordomus/integration` in the common git directory is ever removed."
+scope:
+  - "apps/majordomus-cli/src/integration/drain.rs"
+  - "apps/majordomus-cli/src/integration/mod.rs"
+  - "apps/majordomus-cli/src/commands/prs.rs"
+  - "apps/majordomus-cli/tests/integration_executor.rs"
+  - "docs/INTEGRATION.md"
+non_scope:
+  - "Not a person's or a session's worktree: stale linked worktrees and their dispositions are pull request #882 (feature/every-worktree-has-a-disposition, ADR 0127). Only the executor's own scratch directories are touched."
+  - "Not the trail, the lease file or `summary.json` in the same directory."
+  - "Not the drain's recovery of an interrupted merge: `reconcile` exists and is unchanged."
+  - "Not rebase or any bounded-rebase mode the convergence pack mentions: absent by decision of ADR 0101."
+  - "Not the cause of the failed refreshes (the commit hook's doctor budget): I2312 records the failing line of a refresh."
+depends_on: []
+acceptance_criteria:
+  - "A refresh killed after `git worktree add` leaves `pr-<n>`; the next drain or `prs repair --apply` that takes the lease for that base removes it, writes one trail line naming it, and `git worktree list` no longer shows it"
+  - "`prs status`, `prs brief` and `prs drain --dry-run` report the leftover and leave it in place, and the dry-run proof (`prove_dry_run`, apps/majordomus-cli/src/integration/proof.rs:400) still finds that nothing moved"
+  - "A directory under `majordomus/integration` that is not `pr-<digits>`, and a `pr-<n>` path that resolves outside the common git directory, are refused and left as they are"
+  - "A scratch worktree of an open pull request on another base is left for that base's executor"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test integration_executor"
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test integration_dry_run_proof"
+evidence_required:
+  - "leftover_scratch_removed_under_lease_test"
+  - "read_removes_nothing_test"
+created_at: 2026-10-10
+updated_at: 2026-10-10

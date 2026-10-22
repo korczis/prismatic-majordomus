@@ -1,0 +1,54 @@
+id: I2327
+milestone: the-queue-settles
+title: "A pull request that needs repair becomes a task carrying what failed, instead of ending at a person"
+slug: a-repair-becomes-a-task
+priority: p1
+profile: implementation
+parallel_safe: false
+serves:
+  - "a-drain-settles-unattended#repair-is-dispatched"
+objective: "Derive, in apps/majordomus-cli/src/integration, what a repair of one pull request needs: the issue its branch names (`link_issues`, mod.rs:1078), the scope (the authored paths of its `ChangeShape`, model.rs:1194), the head it was decided on, and what failed (the required check context, or the conflicting authored paths). Show it on `integration.explain` for every pull request in the repair lane, and, under an authority profile that grants it, have a settling drain record it on the trail as `repair_requested` before anything acts on it. The record holds exactly what `majordomus start --issue <id> --scope <paths>` takes."
+why: "Autopilot pack 04 issue 1 asks that a fixable pull request become a canonical task with a worker. Today the lanes are ready, waiting, repair, cleanup and held (apps/majordomus-cli/src/integration/model.rs:469), the repair lane is documented as `A person must change the branch` (model.rs:475) and `The repair lane is a person's` (docs/INTEGRATION.md:458), and nothing under src/integration calls the plan, a task or the mesh. The next action of a `needs_repair` pull request is one sentence, `the author fixes the failing required check` (apps/majordomus-cli/src/integration/classify.rs:1533), which names neither the check nor the issue. `prs repair` refuses an authored conflict by decision (`AuthoredConflict`, exit 10, apps/majordomus-cli/src/integration/repair.rs:321), and that stays. Measured at 17:32Z on 2026-10-10: 10 `needs_repair` and 1 `conflicting` of 51 open, each waiting for a person to read a run log. Turning a repair into a task reverses a documented decision, so it is allowed only under the authority profile of I2315; without that grant the lane, its words and every command are unchanged. A checkout holds one active task (lib/start.sh:4), so the executor does not start the task in its own checkout: the worker of I2335 starts it in the worktree it works in, from this record."
+current_state: "A pull request in the repair lane carries reason codes and a one-sentence next action. Nothing records that a repair is wanted, what failed or which issue it serves, and the trail has no word for it."
+desired_state: "`integration.explain` and `prs explain` give, for a pull request in the repair lane, the issue, the scope, the head and what failed, with no authority needed to read it. Under a granting profile a settling drain appends one `repair_requested` line per pull request and head, and a second request for the same head is the same request. `integration.queue` lists the open ones. A person reads the same record a worker would start from."
+scope:
+  - "apps/majordomus-cli/src/integration/model.rs"
+  - "apps/majordomus-cli/src/integration/drain.rs"
+  - "apps/majordomus-cli/src/integration/mod.rs"
+  - "apps/majordomus-cli/src/integration/tests.rs"
+  - "apps/majordomus-cli/src/commands/prs.rs"
+  - "apps/majordomus-cli/src/capability/builtin/integration.rs"
+  - "apps/majordomus-cli/tests/worker_dispatch.rs"
+  - "docs/INTEGRATION.md"
+  - "docs/generated"
+  - "site/content"
+  - "site/data"
+non_scope:
+  - "Not starting the task or a worker, its worktree, its permissions or its claim: I2335 and I2337."
+  - "Not `prs repair`: it still acts only on relation `behind` and still refuses an authored conflict, a fork head, an armed auto-merge, another base and an unknown relation (repair.rs:284-335)."
+  - "Not a repair for a cancelled check or a failure inside a release window: I2328 takes those out of the lane, and this issue depends on it."
+  - "Not a repair for a candidate the executor itself holds back (`executor_merge_refused`, `executor_refresh_failed`): a new head or a new master clears those."
+  - "Not resolving a pull request whose branch names no issue to an issue and a criterion, or drafting them: I2318. Here such a request says that it names none."
+  - "Not a second task store or queue: the request is one action word on the integration trail, and an open request is a fold over the trail (a request with no later merge, close or new head of that pull request)."
+  - "Not the fork head: a pull request behind master from a fork stays the author's, because the executor cannot push to it."
+depends_on:
+  - "I2328"
+  - "I2315"
+acceptance_criteria:
+  - "For a `needs_repair` pull request, `integration.explain` names the failing required check context, the head, the issue its branch names or that it names none, and the authored paths as scope; for a `conflicting` one it names the conflicting authored paths"
+  - "Under a profile that grants it, a settling drain writes one `repair_requested` trail line per pull request and head before anything else acts on it, and observing the same head again writes none"
+  - "With no authority profile, or one that does not grant it, the drain writes no `repair_requested` line, the lane reads `A person must change the branch`, and `prs status`, `prs repair` and `prs drain` print what they printed before"
+  - "A pull request whose red check is cancelled or inside a release window, one held back by the executor, and one from a fork get no request"
+  - "A new head, a merge or a close of the pull request ends its open request in the fold, with no line rewritten"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib integration::"
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test worker_dispatch"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 911_repair_decides_and_moves_nothing"
+  - "scripts/derive-check"
+evidence_required:
+  - "repair_request_derived_test"
+  - "no_profile_no_request_test"
+  - "repair_refusals_unchanged_case"
+created_at: 2026-10-10
+updated_at: 2026-10-10

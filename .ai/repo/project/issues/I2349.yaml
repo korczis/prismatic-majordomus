@@ -1,0 +1,50 @@
+id: I2349
+milestone: delivery-is-explained-by-evidence
+title: "One query explains a finished task from its intent to its commits, tests, release and deployment, and says unknown where nothing was recorded"
+slug: one-query-explains-a-finished-task
+priority: p2
+profile: implementation
+parallel_safe: true
+serves:
+  - "delivery-is-explained-by-evidence#one-query-explains-a-task"
+objective: "Declare one read capability in apps/majordomus-cli/src/capability/builtin/delivery.rs, beside `delivery.feature`, that takes an issue id, a task id or a commit and returns the chain: intent and criterion, task and session, commits and pull request, tests recorded at that revision, release, deployment. It composes the readers that exist (intent_realization, worktree::trace, the evidence ledger at a commit, the release records, the served observations) through the join of I2350, and holds no store of its own."
+why: "Convergence pack 01 issue 01.3 and the pack's acceptance sentence. Four partial joins exist and none spans intent to deployment. `intent_realization.explain` (apps/majordomus-cli/src/intent_realization.rs:969) holds no commit, pull request, CI run, release or deployment. `trace.issue` and `trace.commit` (capability/builtin/trace.rs:253,269) stop at commits and the milestone, are on MCP and HTTP only (`cli: None`, trace.rs:262,278) and reach pull requests only through scripts/traceability with gh. `gates.completion` (capability/builtin/gates.rs:486) answers for the active task of this checkout, not a finished one. `delivery.feature` (capability/builtin/delivery.rs:114) is keyed by feature. What is missing is the join keyed by task or issue, and every link it needs is already recorded: the issue's `serves`, the `task.finished` line and the closed-session record, the merge commit on master's first-parent line and the `merge_succeeded` line of the integration trail, the ledger as a commit held it (`ledger_at`, evidence/freshness.rs:352), the `commit` of .ai/repo/releases/<tag>.yaml judged by `contains` (delivery/revision.rs:255), and the served observations judged by containment (served.rs)."
+current_state: "A reader who wants to know what became of a finished task asks four capabilities, reads two files and joins the answers by hand."
+desired_state: "`majordomus delivery explain <issue or task>`, the MCP tool and the HTTP route return one document. Each link is `recorded`, with its source and the identifier it was joined on, or `unknown`, with the reason and the command that would record it; a link that only another machine recorded says so."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/delivery.rs"
+  - "apps/majordomus-cli/src/delivery"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/src/commands/delivery.rs"
+  - "apps/majordomus-cli/tests/delivery_explanation.rs"
+  - "docs/DELIVERY.md"
+  - "docs/CLAIMS.yaml"
+  - "docs/claims"
+  - "docs/generated"
+  - "site/data"
+non_scope:
+  - "A network call: the pull request is read from the merge commit and the integration trail, and one only the forge knows reads `unknown`; scripts/traceability stays the reader that asks GitHub"
+  - "Deciding anything: the explanation is a read, and finish, check and the done invariant are unchanged (the shell validator and the Rust reader already differ on which files an obligation selects, capability/builtin/obligations.rs:33-45)"
+  - "A Cockpit page: I2361 puts delivery on the overview, and until then the generic capability explorer reaches this capability"
+  - "Delivery's test dimensions per feature: I1960 of milestone test-evidence"
+  - "Whether the task may be called complete: pull request #821 and I2357"
+  - "A stored explanation or an index of tasks: the answer is computed on every call (rule project.derived-once)"
+depends_on:
+  - "I2350"
+acceptance_criteria:
+  - "For a fixture task with an intent, two commits, a merge, a ledger row at the merge commit, a release record that contains it and a served observation, the capability returns every link as recorded with its source; proven by apps/majordomus-cli/tests/delivery_explanation.rs"
+  - "Removing any one piece of evidence from the fixture turns exactly that link to `unknown` with a reason and leaves the others as they were; no removal makes a link read as passed"
+  - "An id that neither the plan nor the ledger knows is answered as not found, never as an empty explanation"
+  - "A release record whose commit does not contain the task's commits is not named as its release, and a served observation that does not contain them is not named as its deployment"
+  - "The command line, the MCP tool and the HTTP route return the same document for the same input, from the one declaration"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test delivery_explanation"
+  - "cargo test --test projections"
+  - "scripts/derive-check"
+evidence_required:
+  - "finished_task_explained_test"
+  - "missing_evidence_reads_unknown_test"
+  - "surfaces_return_one_document_test"
+created_at: 2026-10-10
+updated_at: 2026-10-10

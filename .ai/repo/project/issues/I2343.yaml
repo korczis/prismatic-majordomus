@@ -1,0 +1,57 @@
+id: I2343
+milestone: derive-does-bounded-work
+title: "A derive whose inputs did not move generates nothing and says so"
+slug: a-noop-derive-generates-nothing
+priority: p1
+profile: deep-work
+parallel_safe: false
+serves:
+  - "delivery-is-explained-by-evidence#derive-does-no-work-on-no-change"
+objective: "Give `scripts/derive` a derive record under the checkout's `.ai/local/cache/derive/`: after a derive that succeeded, the key - one content hash over every input I2341 declares, file and non-file, and the executable's generation - and the hash of every output it wrote. A later derive computes the key under the machine lock after the build; when it equals the record and every recorded output on disk still has its recorded hash, it runs no stage, prints that nothing changed and since which derive, and writes I2311's run record with the scenario `unchanged`. `MAJORDOMUS_DERIVE_FULL=1` ignores the record. The decision is recorded as an ADR with status `proposed`, rule project.cache-is-invisible gains a version that states when a mutating command may skip on a record, and docs/CONCEPTS.md gains the word."
+why: "Convergence pack 02 issue 02.2. A derive with nothing to do costs the same as one after a change, because no stage asks whether it has work (scripts/derive:152-185): no time for such a derive has ever been recorded (gap file on A05.1, `Not found: a no-op derive time`), and every derive figure on record, 151 s to 2135 s, includes regenerating 178 artifacts and the whole site data set. The cheap question already exists for one stage and proves the approach: `scripts/pages current` compares the recorded input hash with the tree's in a median of 173 ms (.ai/repo/benchmarks/pages/baseline.macos-arm64.json) and runs in every pre-commit (.githooks/pre-commit:12), against about 43 s for one stage B pass. Rule project.cache-is-invisible version 1 sets the conditions any cache meets - a content-hash key, a switch that turns it off, a case proving byte-identical output, a home under `.ai/local/` - and also says a mutating command never reads a cache for the state it mutates, which a derive skip is. So the skip is admitted only by amending the rule: the skip trusts no recorded output, it reads each one back from the tree and compares its hash. I1409 records that generated content depends on the machine (`%h` against the local object store, a shallow history, the environment), which is why the key carries the non-file inputs and the record is never shared between checkouts. Single-flight stays: the decision is taken under the lock of PR #855, like every derive."
+current_state: "Every derive builds and runs stages A to D. No derive state is kept between runs. Rule project.cache-is-invisible version 1 states that no cache exists."
+desired_state: "A second `scripts/derive` on an unchanged tree runs no stage, says `nothing changed since <commit> at <time>; no stage ran`, and leaves the tree byte for byte as it was. A missing, unreadable or mismatched record, an edited derived file or `MAJORDOMUS_DERIVE_FULL=1` makes it a full derive, and it says which. The record is under `.ai/local/`, untracked, read by `scripts/derive` alone. ADR, rule version and concept say the same."
+scope:
+  - "scripts/derive"
+  - "lib/common.sh"
+  - "apps/majordomus-cli/src/generate.rs"
+  - "apps/majordomus-cli/src/commands/generate.rs"
+  - ".ai/repo/rules/project/cache-is-invisible.v1.md"
+  - ".ai/repo/rules/project"
+  - ".ai/repo/adrs"
+  - "docs/CONCEPTS.md"
+  - "docs/CLI.md"
+  - "docs/GITHUB_PAGES_ARCHITECTURE.md"
+  - "docs/PERFORMANCE.md"
+  - "test/cases/1054_a_derive_with_nothing_changed_generates_nothing.sh"
+  - "test/cases/400_derivation_is_one_graph.sh"
+non_scope:
+  - "Not regenerating a subset after a change: I2344; here a derive either runs no stage or runs all of them"
+  - "Not answering without the lock: the key is computed and the skip decided under the machine lock, so a derive that skips still waits its turn (rule project.one-derive-at-a-time, PR #855); a read-only freshness answer exists already as `scripts/pages current`"
+  - "Not `scripts/derive-check`: the full check never reads the record"
+  - "Not a record shared between worktrees, machines or CI: each checkout keeps its own under its own `.ai/local/`"
+  - "Not the integrator's refresh act, which derives a merge result that by construction has moved inputs"
+  - "Not skipping the build: cargo's own incrementality decides it, and the key carries the executable's generation"
+depends_on:
+  - "I2341"
+  - "I2342"
+  - "I2311"
+acceptance_criteria:
+  - "Case 1054: a derive over a fixture followed by a second derive runs no stage the second time, prints that nothing changed and since which derive, and leaves every tracked and derived file byte for byte as it was"
+  - "Removing the record, corrupting it, or editing one derived file by hand makes the next derive a full one, and the derive names which of the three it found"
+  - "Changing one declared input, a declared non-file input or the executable's generation makes the next derive a full one"
+  - "With `MAJORDOMUS_DERIVE_FULL=1` every stage runs whatever the record says, and its output equals a derive without the record"
+  - "The skip happens only after the lock is taken, and case 1018 passes unchanged"
+  - "The new version of rule project.cache-is-invisible names the case that decides it, and the record is never tracked"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 1054_a_derive_with_nothing_changed_generates_nothing"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 1018_one_derive_at_a_time_and_no_orphans"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 400_derivation_is_one_graph"
+  - "scripts/derive-check"
+evidence_required:
+  - "noop_derive_case"
+  - "record_invalidated_case"
+  - "cache_rule_amended_under_adr"
+created_at: 2026-10-10
+updated_at: 2026-10-10

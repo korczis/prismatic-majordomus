@@ -1,0 +1,47 @@
+id: I2313
+milestone: the-delivery-baseline-is-recorded
+title: "Throughput says the ninety-fifth percentile and how often a person had to act"
+slug: throughput-says-p95-and-interventions
+priority: p1
+profile: implementation
+parallel_safe: false
+serves:
+  - "delivery-is-explained-by-evidence#baseline-is-recorded"
+objective: "Extend `IntegrationThroughput` and its fold in `apps/majordomus-cli/src/integration/metrics.rs`: beside each median, the ninety-fifth percentile and the number of samples both were taken from, for actionable-to-merged, selection-to-outcome and, from I2312's step timings, the duration of a refresh; and a count of interventions, each kind the trail names - a drain started by hand rather than by a continuous one, a repair a person named, a failure a person acknowledged. `integration.queue`, the Cockpit's throughput card (cockpit/pages.rs:5182) and the delivery record of I2310 read the extended fold and compute nothing of their own."
+why: "Convergence pack 03 issue 03.5 asks for time-to-integrate, throughput and intervention frequency before and after, pack 06 issue 06.4 for p95 latency and PR dwell against a baseline, and autopilot pack 00 issue 4 for p50 and p95 delivery time. The fold has medians only: `IntegrationThroughput` (metrics.rs:34-57) carries `median_actionable_to_merged_secs`, `ci_rounds_per_merge` and `median_cycle_secs`, no percentile, no sample count and no intervention count. A median without its sample count cannot be compared: in the seven-day window the capability uses (THROUGHPUT_WINDOW_DAYS, capability/builtin/integration.rs:107) the trail of 2026-10-10 held 15 verified merges, and a median of a handful reads like one of hundreds. A p95 is what shows the tail the audit measured outside the trail: open-to-merge p50 17.8 h against p95 98.2 h over 150 merged pull requests. Interventions are on the trail and uncounted: of 25 `lease_acquired` lines since 2026-10-04 none followed a `continuous_started`, so every drain in this checkout was started by hand; 7 `repair_selected` lines are repairs a person named (drain.rs:443-445 documents the word so); 1 `failure_acknowledged` is a person releasing the drain after the unverified merge of #822. economics/stats.rs:97 already computes a p95 for economics runs; the fold uses the same rule of an observed value, the way metrics.rs:88-99 takes a median, rather than a second statistics module."
+current_state: "The throughput fold reports three medians, three failure counts and merges per day over seven days; a median with nothing measured is `None` (metrics.rs:20-21). Nothing counts what a person did."
+desired_state: "Each median has a p95 and a sample count beside it, each `None` with a count of 0 when nothing was measured; interventions are counted by kind with their total; the card shows the count beside each figure; the delivery record's queue section is read from this fold."
+scope:
+  - "apps/majordomus-cli/src/integration/metrics.rs"
+  - "apps/majordomus-cli/src/capability/builtin/integration.rs"
+  - "apps/majordomus-cli/src/cockpit/pages.rs"
+  - "apps/majordomus-cli/tests/integration_trail.rs"
+  - "scripts/ci-baseline"
+  - ".ai/repo/benchmarks/delivery/baseline.json"
+  - "docs/INTEGRATION.md"
+  - "docs/generated"
+non_scope:
+  - "Not a merge the executor did not make, such as #901 merged with --admin on 2026-10-10: it is not on the trail, so it is not counted here; putting it there is I2356, and once it is there it is one more kind this fold counts"
+  - "Not a stored metric, a cache or a second fold in shell: the figures stay a fold over the trail (metrics.rs:1-7), and scripts/ci-baseline reads them through `integration.queue`"
+  - "Not the published comparison of these figures with the baseline: I2370"
+  - "Not a target or a budget on any of them: the outcome is measurement"
+  - "Not the time a check takes to report on a pushed head: the trail does not record when a verdict arrived, and the required check's wall time is I2310's from the forge"
+depends_on:
+  - "I2312"
+  - "I2310"
+acceptance_criteria:
+  - "Over a trail fixture with a known set of merges the fold returns each median and p95 as values observed in the trail, with the sample count they were taken from"
+  - "A window with no merge returns `None` for every median and p95 and 0 for every count, never 0 seconds"
+  - "Interventions are counted by kind - drains started by hand, repairs a person named, failures acknowledged - and a drain started inside a continuous one is not counted"
+  - "The refresh duration percentiles come from I2312's step timings, and a trail written before them yields `None` for those and unchanged values for the rest"
+  - "`integration.queue` over HTTP and MCP and the Cockpit card show the same figures for one fixture trail"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test integration_trail"
+  - "cargo test --test cockpit"
+  - "scripts/derive-check"
+evidence_required:
+  - "throughput_percentiles_with_counts"
+  - "interventions_counted_case"
+created_at: 2026-10-10
+updated_at: 2026-10-10

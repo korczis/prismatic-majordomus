@@ -1,0 +1,47 @@
+id: I2378
+milestone: the-site-says-what-ships
+title: "The site is probed at 375 and 768 pixels and with reduced motion, by the sweeps that already run"
+slug: more-widths-and-reduced-motion
+priority: p2
+profile: implementation
+parallel_safe: true
+serves:
+  - "the-site-says-what-ships#page-holds-its-budgets"
+objective: "Add 375 and 768 to `viewports` in share/design/tokens.yaml, which site-probe and ui-audit already read, and add a reduced-motion pass to scripts/lib/ui-audit.mjs that emulates prefers-reduced-motion and finds every element still animating or transitioning; measure the wall time of the site and ui jobs before and after."
+why: "Living-site V3 pack items RDV3-05-05 and RDV3-08-04. share/design/tokens.yaml:489 declares `viewports: [320, 390, 1024, 1280, 1600]` and says no probe holds a list of its own (:486-488); scripts/site-probe:74 reads them from the generated dataset, and ui-audit reads the same set at every width the theme implies (gates.yaml:536-540). The pack's minimum checks name 320, 375, 768 and 1280, and the intent's criterion names 320, 375, 390, 768, 1024, 1280 and 1600. No script under scripts/ emulates reduced motion: site-probe measures overflow, the menu, the dropdowns, the theme toggle and the diagrams, interaction-probe drives the controls, and site/graph.js:15 and the templates' `motion-reduce:` classes honour the preference without any check that they do. The gap file's note that cockpit-probe tests reduced motion is not borne out: no probe file names it. The risk is a fourth browser sweep; this extends the two that exist. The design module refuses viewports that are not ascending and once (design/mod.rs:742-746)."
+current_state: "Five widths are probed, neither 375 nor 768, and nothing checks that the site stops moving when a visitor asks for reduced motion."
+desired_state: "site-probe and ui-audit measure every route at seven widths read from tokens.yaml, ui-audit reports every element that animates or transitions under emulated reduced motion as a finding naming the route, the width and the element, and the wall time of both jobs before and after is recorded in the pull request."
+scope:
+  - "share/design/tokens.yaml"
+  - "apps/majordomus-cli/src/design/tokens.yaml"
+  - "scripts/lib/ui-audit.mjs"
+  - "scripts/ui"
+  - "test/cases/09_site_mobile_first.sh"
+  - "test/cases/85_ui_conformance.sh"
+  - "docs/UI.md"
+  - "docs/DESIGN_SYSTEM.md"
+  - "docs/generated"
+  - "site/data/generated"
+non_scope:
+  - "Not the phone menu's height, Escape closing it or WebKit: I2097, I2100 and I2102 of the mobile-first milestone, draft PR #858 on feature/cockpit-mobile-navigation"
+  - "Not a fourth browser sweep, a Lighthouse run or a second list of widths in any script"
+  - "Not keyboard navigation, which interaction-probe already drives"
+  - "Not the summary of the site-probe gate in .ai/repo/ci/gates.yaml or the header of scripts/site-probe, which both count three widths: I2380"
+  - "Not the rendering budget: I2379"
+depends_on: []
+acceptance_criteria:
+  - "The design dataset carries 320, 375, 390, 768, 1024, 1280 and 1600, and ui-audit reports a finding at 375 and at 768 when a fixture page overflows only at those widths"
+  - "A fixture page with an animation that ignores prefers-reduced-motion yields a ui-audit finding naming the route, the width and the element, and the same page with `motion-reduce:` honoured yields none"
+  - "With no browser the reduced-motion pass reports SKIP as site-probe does, and with a missing input it exits 12 as scripts/ui does; neither is reported as passed"
+  - "No script under scripts/ holds a width literal for the sweep"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 09_site_mobile_first"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 85_ui_conformance"
+  - "scripts/derive-check"
+evidence_required:
+  - "seven_widths_probed"
+  - "reduced_motion_finding_case"
+  - "sweep_wall_time_measured"
+created_at: 2026-10-10
+updated_at: 2026-10-10

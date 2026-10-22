@@ -1,0 +1,54 @@
+id: I2328
+milestone: the-queue-settles
+title: "A red required check is read as cancelled, as failed inside a release window, or as failed on content, and only the last is a repair"
+slug: a-red-check-is-read
+priority: p1
+profile: implementation
+parallel_safe: false
+serves:
+  - "a-drain-settles-unattended#the-queue-settles"
+objective: "Carry the conclusion and the times of a failed required check run from apps/majordomus-cli/src/integration/forge.rs into the observation, and have apps/majordomus-cli/src/integration/classify.rs read a red required check three ways: cancelled, failed while master stood inside a release window, or failed on content. Only the last puts a pull request in the repair lane; the other two get their own reason code and a next action that is a new run, never the author."
+why: "Autopilot pack 04 issues 1 and 4. `check_state` (forge.rs:424) folds every conclusion that is not success, skipped or neutral into `Failed`, and `CheckRunState::Failed` is documented as `failure, timed out, cancelled, action required` (apps/majordomus-cli/src/integration/model.rs:182). The gate `NoFailingCheck` then answers `needs_repair` with reason `required_check_failed` and the next action `the author fixes the failing required check` (classify.rs:1528-1533). Measured on 2026-10-10 by session p5: of eleven `needs_repair` pull requests at least eight were not the author's to fix. Three had a cancelled run (#824, #825, #826). Five failed only inside the v0.19.1 release window, on case 103_release_projection (#863, #864, #868, #870, #872). At 17:32Z the queue held 10 `needs_repair`, every one with `required_check_failed` and that same next action, and every one also behind master, so a refresh would have given each a new head and a new run. In the 120 newest `validate` runs, 29 of 116 completed ones were cancelled. A queue that sends a cancelled run to its author never settles, and a repair lane that is two thirds noise cannot be dispatched to a worker."
+current_state: "A required check that was cancelled, timed out or failed reads `failed`, and the pull request is `needs_repair` for its author whatever the run said about the change. The observation keeps the folded state and drops the conclusion."
+desired_state: "The observation carries each required check run's conclusion and completion time. A cancelled run reads `required_check_cancelled`. A run that failed while the observed master's first-parent history stood between the commit that declared a version and the commit that added that version's record under `.ai/repo/releases` reads `required_check_failed_in_release_window`. Neither is in the repair lane: behind master, the pull request is `needs_refresh`, because the refresh gives it a new run; on a head that holds master, its next action names the rerun. Everything else that is red is `needs_repair` as today. None of the three is ever a pass."
+scope:
+  - "apps/majordomus-cli/src/integration/forge.rs"
+  - "apps/majordomus-cli/src/integration/model.rs"
+  - "apps/majordomus-cli/src/integration/classify.rs"
+  - "apps/majordomus-cli/src/integration/mod.rs"
+  - "apps/majordomus-cli/src/integration/tests.rs"
+  - "apps/majordomus-cli/tests/integration_settle.rs"
+  - "apps/majordomus-cli/tests/integration_executor.rs"
+  - "docs/INTEGRATION.md"
+  - "docs/CLAIMS.yaml"
+  - "docs/claims"
+  - "docs/generated"
+  - "site/content"
+  - "site/data"
+non_scope:
+  - "Not the executor asking the forge to run a cancelled check again on a head that already holds master: that is a new write to the forge which only a grant of the authority profile (I2315) could permit, and no issue plans it yet. Here such a pull request is reported with the rerun as its next action, and the settle report of I2325 lists it as blocked on it."
+  - "Not the candidates the executor itself holds back (`executor_merge_refused`, `executor_refresh_failed`, apps/majordomus-cli/src/integration/mod.rs:746): they clear when the head or master moves and are already not the author's."
+  - "Not reading job logs to name the failing case: the class is decided from the run's conclusion, its times and git, or it is not decided. The window as written here (a version declared on master, its release record not yet added) is first confirmed against the five runs of 2026-10-10; if git and the run's times cannot decide it, the class is dropped, those failures read as content failures, and the pull request says so."
+  - "Not reopening a record pull request no run was started for: I2296."
+  - "Not a dispatched `ci` run the forge does not take as the verdict: I2282 (pull request #873)."
+  - "Not recording the repair for a worker: I2327, which depends on this issue."
+depends_on: []
+acceptance_criteria:
+  - "A pull request whose only red required check run was cancelled carries `required_check_cancelled`, is not in the repair lane, and its next action is a new run: `needs_refresh` when it is behind master, a named rerun when its head holds master"
+  - "A required check that failed inside a release window of the observed master, on a pull request that is behind master, is `needs_refresh` with `required_check_failed_in_release_window`; the same failure completed outside any window is `needs_repair`"
+  - "A check that failed on content is `needs_repair` with `required_check_failed` exactly as before, and a second failure of the new run after a cancelled or in-window one is `needs_repair`"
+  - "Neither new reading makes a pull request `ready` or passes the required-checks gate: with only a cancelled or in-window run on its head, a pull request that holds master is never selected for a merge"
+  - "A recorded observation and a trail written before this change still read, with the conclusion absent and the old reading kept"
+  - "A repository with no releases section has no window, and its red checks read as cancelled or content only"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib integration::"
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test integration_settle"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 857_required_checks_are_authoritative 925_a_bound_check_is_only_its_apps_run"
+  - "scripts/derive-check"
+evidence_required:
+  - "cancelled_check_is_not_a_repair_test"
+  - "release_window_failure_is_not_a_repair_test"
+  - "red_check_never_passes_test"
+created_at: 2026-10-10
+updated_at: 2026-10-10

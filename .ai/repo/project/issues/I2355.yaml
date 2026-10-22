@@ -1,0 +1,56 @@
+id: I2355
+milestone: the-verdict-cannot-be-bypassed
+title: "The one required status is tried against failed, skipped and cancelled jobs and a stale head, and doctor says what GitHub's protection leaves open"
+slug: what-protection-leaves-open-is-said
+priority: p1
+profile: implementation
+parallel_safe: false
+serves:
+  - "delivery-is-explained-by-evidence#verdict-cannot-be-bypassed"
+objective: "Add the case that tries the required verdict: scripts/ci/verdict against a failed, a skipped, a cancelled and an absent selected job and an unreadable plan, and the executor against a `ci` success on another head and on a head without master. Record whether the protection binds administrators on the observation the executor already stores, beside `up_to_date_required` (apps/majordomus-cli/src/integration/forge.rs:75); have `majordomus doctor` and `prs status` name what the protection leaves open from that observation, with its date; and rewrite claim `ci-verdict-is-required` to what was measured."
+why: "Convergence pack 04 issues 04.2 and 04.5. Measured on 2026-10-10 at 17:29:46Z through the GitHub API (tmp/owner-packs/audit-20261010/protection.json): master requires the status check `ci` (app 15368), `strict` false, no required review, `enforce_admins` false, force pushes and deletions refused, no ruleset. Claim `ci-verdict-is-required` (docs/CLAIMS.yaml:1195) is `planned` and its note still cites the 404 of 2026-09-11, and the comment above the `ci` job says the verdict is not one the merge obeys (.github/workflows/validate.yml:1016-1018). The pieces exist: the `ci` job needs every gate's job and always runs (validate.yml:1019-1021); scripts/ci/verdict:33-35,56-65 is red on a failed plan, an empty selection and any selected gate whose job is not `success`; test/cases/94_ci_plan.sh:177-195 drives a failure, a cancellation, a selected skip, a failed plan and an empty selection; the executor reads the protection and the rulesets (forge.rs:1495), `strict` included (forge.rs:698), and `prs status` and the Cockpit show it (docs/INTEGRATION.md:658-661). What nothing does: drive an absent job or an unreadable plan through the verdict (case 94 fills every job it does not name in as skipped, lines 163-166); read `enforce_admins`; report the gap where a person looks without asking for the queue; state it in the claim. Three pending issues of the earlier owner packs hold the rest and are not repeated: I2239 the CI acceptance gate, I2240 the bypass cases of acceptance, I2241 the dated observation command and the correction of docs/CI.md:308,349."
+current_state: "The verdict is proved red for five conditions and not for an absent job or a malformed plan. The executor's observation says whether the base must be up to date and not whether administrators are bound. doctor says nothing about the forge, and the claim describes a repository with no protection."
+desired_state: "One case holds every way a required verdict could be read as green when it is not. The stored observation carries `enforce_admins` as it carries `strict`, and unread where it could not be read. doctor prints one line from that observation, with its age, naming each open setting and that closing it is the owner's act, or `not observed`; it makes no network call and its exit code does not change. The claim says what is required, what is left open and when that was measured, and stays `planned`, because an administrator can still merge while the verdict is red."
+scope:
+  - "test/cases"
+  - "scripts/ci/verdict"
+  - "apps/majordomus-cli/src/integration/forge.rs"
+  - "apps/majordomus-cli/src/integration/mod.rs"
+  - "apps/majordomus-cli/src/integration/classify.rs"
+  - "apps/majordomus-cli/src/integration/tests.rs"
+  - "apps/majordomus-cli/src/commands/prs.rs"
+  - "apps/majordomus-cli/src/cockpit/pages.rs"
+  - "lib/doctor.sh"
+  - ".github/workflows/validate.yml"
+  - "docs/INTEGRATION.md"
+  - "docs/CLAIMS.yaml"
+  - "docs/claims"
+  - "docs/generated"
+  - "site/data"
+non_scope:
+  - "Changing GitHub's settings: turning on `strict` or `enforce_admins` is the owner's act (ADR 0101, decision D8), named by doctor as the remedy and never applied"
+  - "A second reader of the protection endpoint: the dated observation command is I2241 (pending); this issue extends the observation the executor already takes and stores"
+  - "The CI acceptance gate and the bypass cases of acceptance (--no-verify, core.hooksPath, a hand-widened scope, a vacuous verifier): I2239 and I2240"
+  - "Correcting docs/CI.md:308 and :349-350: I2241. In validate.yml only the comment at :1016-1018 changes"
+  - "Proving again what cases 94, 720 and 857 hold: the new case adds the conditions they do not drive"
+  - "Failing doctor, a commit or a drain because the protection is weak: it is a warning, and it decides no disposition"
+depends_on: []
+acceptance_criteria:
+  - "A selected gate whose job is absent from the needs context, and a plan or a needs file that is not JSON, each make scripts/ci/verdict exit non-zero naming the cause"
+  - "A pull request whose `ci` succeeded on a head other than its current one, or whose head does not contain master, is not `ready`, and its reason code says which"
+  - "From an observation with `strict` false and `enforce_admins` false, doctor and `prs status` each name both settings as open with the observation's date; with both true they name none"
+  - "With no stored observation, or one whose protection could not be read, doctor says not observed and no surface says protected; the case fails if an unread answer prints as an empty set of open settings"
+  - "doctor's line is read from stored state: the case runs it with `gh` absent from PATH and no network"
+  - "Claim `ci-verdict-is-required` names the required check, the two open settings and the date of the measurement, and its status is `planned`"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 94_ci_plan 857_required_checks_are_authoritative <the case this issue adds>"
+  - "cargo test --lib integration"
+  - "scripts/ci/claim-proof-check --strict"
+  - "scripts/derive-check"
+evidence_required:
+  - "verdict_bypass_case"
+  - "protection_gap_reported_case"
+  - "claim_states_the_measurement"
+created_at: 2026-10-10
+updated_at: 2026-10-10

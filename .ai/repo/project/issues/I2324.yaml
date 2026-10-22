@@ -1,0 +1,49 @@
+id: I2324
+milestone: a-drain-is-a-durable-run
+title: "A run, its blockers and its next action read the same on every surface, and no surface stops one without asking first"
+slug: a-run-reads-the-same-everywhere
+priority: p2
+profile: implementation
+parallel_safe: true
+serves:
+  - "a-drain-settles-unattended#a-run-is-resident"
+objective: "Extend the run status capability of I2322 in apps/majordomus-cli/src/capability/builtin/integration.rs with the run's unresolved blockers and its next action, folded from the trail and the queue. Render it on /cockpit/integration (apps/majordomus-cli/src/cockpit/pages.rs:5243), in `prs brief` and as a card of `dashboard.overview`, each read from that one capability, and show where the stop and resume commands are instead of a control."
+why: "Autopilot pack 02 issue 5. No surface shows a run, a checkpoint of it, an unresolved blocker or a run-level next action. What exists is per pull request or per lease. `integration.queue` carries the lease as an observer reads it, the last merge and throughput (apps/majordomus-cli/src/capability/builtin/integration.rs:254). `integration.events` carries the whole trail (integration.rs:286). /cockpit/integration renders both. `prs brief` gives the last queue, the lease holder and the last merge in one line (apps/majordomus-cli/src/commands/prs.rs:619-622). `next_action` exists per assessment (apps/majordomus-cli/src/integration/model.rs:1152). `dashboard.overview` (apps/majordomus-cli/src/capability/builtin/dashboard.rs:726) answers four questions from cards that each name their source capability and pointer. Rule project.interfaces-are-projections makes the run view a capability every surface projects, not a model kept on the Cockpit side. The audit names the risk of a control: a mutating Cockpit control must pass I2153 (the Cockpit asks before it runs a capability that changes the repository) and ADR 0126 on PR #860 (nothing beyond loopback writes), or a phone becomes an unauthenticated writer. Neither has landed, so this issue shows the state and the command and builds no control. Measured on 2026-10-10: the queue held 51 open pull requests and no next merge, and the reason was readable only by asking `prs status` per lane."
+current_state: "A person sees the lease holder and the last merge; whether a drain is running, why it is stuck and what would move it is reconstructed from the trail by hand."
+desired_state: "The command line, MCP, HTTP and the Cockpit return the same run, the same blockers (each a pull request with its disposition, or a run-level hold such as an unacknowledged verification failure) and the same next action, from one capability, with the time the fold was read. The Cockpit page and the overview card show the stop and resume commands as text; no page, route or tool stops or resumes a run."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/integration.rs"
+  - "apps/majordomus-cli/src/capability/builtin/dashboard.rs"
+  - "apps/majordomus-cli/src/integration/run.rs"
+  - "apps/majordomus-cli/src/cockpit/pages.rs"
+  - "apps/majordomus-cli/src/commands/prs.rs"
+  - "apps/majordomus-cli/tests/integration_run.rs"
+  - "apps/majordomus-cli/tests/cockpit.rs"
+  - "apps/majordomus-cli/tests/dashboard.rs"
+  - "docs/INTEGRATION.md"
+  - "docs/COCKPIT.md"
+  - "docs/MCP.md"
+non_scope:
+  - "Not a stop, resume or start control on the Cockpit, over HTTP or over MCP: it waits for I2153 (the Cockpit asks before it runs a capability that changes the repository, origin/chore/the-runtime-pack-is-planned) and ADR 0126 on PR #860 (a caller beyond loopback changes nothing it cannot authenticate)"
+  - "Not a run model kept in the Cockpit or the overview: both read the capability (rule project.interfaces-are-projections)"
+  - "Not the delivery overview of the queue, the verdict and the last release: I2361; not the age of every fact on every surface: I2362"
+  - "Not the event channel carrying the trail: I2363"
+  - "Not the Cockpit's sessions, tasks and runtimes view: I2155 (origin/chore/the-runtime-pack-is-planned)"
+depends_on:
+  - "I2322"
+acceptance_criteria:
+  - "One fixture trail and queue give the same run identity, end, blockers and next action through the command line, MCP, HTTP and the Cockpit page, compared field by field"
+  - "A run held by an unacknowledged verification failure shows that hold as its first blocker and `prs drain --resume-after-failure` as a person's next action on every surface"
+  - "With no run on the trail, every surface says no run has started, and the overview card is `unknown` when the capability cannot answer, never `ok`"
+  - "No HTTP route, MCP tool or Cockpit form stops, resumes or starts a run, and a test over the registry fails when one is added"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test integration_run"
+  - "cargo test --test cockpit"
+  - "cargo test --test dashboard"
+  - "scripts/derive-check"
+evidence_required:
+  - "surfaces_agree_on_run_test"
+  - "no_remote_run_control_test"
+created_at: 2026-10-10
+updated_at: 2026-10-10

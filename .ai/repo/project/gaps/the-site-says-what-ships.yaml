@@ -1,0 +1,115 @@
+intent: the-site-says-what-ships
+observed_at: 4dfd1856d2
+recorded_by: "claude-code (session b24c5456, planning worktree; read-only site audit over master 4dfd1856d2)"
+recorded_at: 2026-10-10
+observations:
+  - id: release-read-from-filenames
+    statement: "project.release, which the navbar badge renders, is the highest v*.yaml filename under .ai/repo/releases chosen by ls and sort, with no channel and no yanked filter"
+    source: file:scripts/generate-site-data
+  - id: latest-stable-feeds-the-installer
+    statement: "latest_stable takes the highest record that is stable and not yanked, and it is what distribution.json, the hero badge, the trust card and releases/latest.json read"
+    source: file:apps/majordomus-cli/src/distribution/release.rs
+  - id: shown-version-only-served
+    statement: "site-check refuses a shown version that has no /releases/v<version>.json and never compares it with the version /releases/latest.json names"
+    source: file:scripts/site-check
+  - id: smoke-names-no-version
+    statement: "deploy.smoke declares four route and marker pairs, the challenge replay, the call to action and the guarantees link, and none of them carries a version"
+    source: file:.ai/repo/ci/pages.yaml
+  - id: published-changelog-stops-at-the-release
+    statement: "compose_published leaves out the unreleased section because a committed file cannot describe the commit it is in; compose keeps it for live readers only"
+    source: file:apps/majordomus-cli/src/release/changelog.rs
+  - id: analysis-reads-any-ref
+    statement: "release.analysis takes an optional since ref and reports the public-surface movements from it"
+    source: file:apps/majordomus-cli/src/capability/builtin/release.rs
+  - id: deploy-names-its-source
+    statement: "Every gh-pages commit message names the source commit it was built from, and build.json carries the same commit"
+    source: file:scripts/site-deploy
+  - id: prose-held-to-numbers-only
+    statement: "marketing.toml is held to sixty lines and manifesto.toml to two hundred and forty, with no digits and no counts in words; no check reads docs/CLAIMS.yaml against either"
+    source: file:scripts/site-check
+  - id: honesty-reads-links
+    statement: "The honesty check fails a homepage link to a feature that is not stable and reads no sentence of the copy"
+    source: file:scripts/ci/homepage-check
+  - id: three-pains-shown
+    statement: "The homepage shows the problems of three product domains, context, coordination and completion; no domain or feature answers stale pull requests or slow release"
+    source: file:site/data/homepage.toml
+  - id: limitations-only-linked
+    statement: "What it does not do is a link to /limitations/, and the walkthrough replays the single-task lifecycle from terminal.json and the challenge run"
+    source: file:site/templates/index.html
+  - id: five-widths-declared
+    statement: "The viewports every browser sweep reads are 320, 390, 1024, 1280 and 1600, with no 375 and no 768"
+    source: file:share/design/tokens.yaml
+  - id: no-reduced-motion-probe
+    statement: "site-probe measures overflow, the menu, the dropdowns, the theme toggle and the diagrams and never emulates prefers-reduced-motion, and no other script under scripts/ does"
+    source: file:scripts/site-probe
+  - id: only-bytes-budgeted
+    statement: "The homepage budget is the bytes of its scripts, stylesheets and inline JSON; nothing measures rendering time or layout shift"
+    source: file:site/data/homepage.toml
+conditions:
+  - criterion: one-release-identity
+    state: missing
+    because: the navbar reads a second derivation of the latest release that a prerelease or yanked record would move away from the one the hero, the trust card and latest.json read, and no check compares them
+    observations: [release-read-from-filenames, latest-stable-feeds-the-installer, shown-version-only-served]
+  - criterion: deploy-serves-its-version
+    state: missing
+    because: a deploy is verified to serve its commit and four markers, and whether the served badge names the version latest.json names is confirmed by hand
+    observations: [smoke-names-no-version, deploy-names-its-source]
+  - criterion: change-since-deploy-is-shown
+    state: missing
+    because: the published changelog ends at the last release by design, and nothing feeds the deployed commit into the analysis that could say what moved since
+    observations: [published-changelog-stops-at-the-release, analysis-reads-any-ref, deploy-names-its-source]
+  - criterion: prose-promises-nothing-unsupported
+    state: missing
+    because: the copy is checked for its length and its numbers and the homepage for its links, never a sentence against the claims
+    observations: [prose-held-to-numbers-only, honesty-reads-links]
+  - criterion: first-screen-is-understood
+    state: missing
+    because: the first screen links its limitations rather than showing them, the narrative names three of the five pains, and the walkthrough stops at one task
+    observations: [three-pains-shown, limitations-only-linked]
+  - criterion: page-holds-its-budgets
+    state: missing
+    because: two of the seven widths are not probed, reduced motion is not probed at all, and the only budget is weight
+    observations: [five-widths-declared, no-reduced-motion-probe, only-bytes-budgeted]
+risks:
+  - Composing the delta since the last deploy from HEAD inside committed data makes every commit stale, the defect compose_published exists to remove; it is computed at build time into git-ignored build data, as build.json is
+  - A first deployment, or a previously deployed commit that is not an ancestor, has no defined delta, and showing history from the root would present old work as new
+  - A prose check that matches words over-refuses or is evaded by a synonym, and it must read the claims' verdict rather than become a second claim-proof-check
+  - Two more widths and a reduced-motion pass lengthen browser jobs that have already outgrown their bounds once, and a fourth sweep would duplicate site-probe and ui-audit
+  - The pains without a domain tempt copy that presents planned delivery work as shipped, and the fully merged site branches tempt a deletion that is the owner's act
+work:
+  - id: one-release-derivation
+    title: The latest release is derived once, and the navbar reads the derivation the hero and latest.json read
+    serves: [one-release-identity]
+    issue: I2372
+  - id: deploy-version-verified
+    title: A deploy is verified to serve the version latest.json names, and a mismatch fails the verification naming both
+    serves: [deploy-serves-its-version]
+    issue: I2373
+  - id: delta-since-deploy
+    title: The site shows what changed since its previously deployed commit, computed at build time and delivered apart from upcoming
+    serves: [change-since-deploy-is-shown]
+    issue: I2374
+  - id: prose-against-claims
+    title: Hand-written copy that names a capability is checked against its claim, and a promise the claims do not support fails the site check
+    serves: [prose-promises-nothing-unsupported]
+    issue: I2375
+  - id: first-screen-and-pains
+    title: The first screen says the outcome, who it serves and what it does not do, and the narrative names the five pains with what answers each
+    serves: [first-screen-is-understood]
+    issue: I2376
+  - id: recorded-walkthrough
+    title: The walkthrough shows a pull request going from intent to merge and release, replayed from a recorded run
+    serves: [first-screen-is-understood]
+    issue: I2377
+  - id: widths-and-reduced-motion
+    title: The site is probed at 375 and 768 pixels and with reduced motion, by the sweeps that already run
+    serves: [page-holds-its-budgets]
+    issue: I2378
+  - id: rendering-budget
+    title: A rendering budget joins the weight budget, measured in the browser the site sweep already starts, on every site change
+    serves: [page-holds-its-budgets]
+    issue: I2379
+  - id: retire-featured
+    title: "What the homepage no longer renders is no longer declared: the featured field and the stale summaries go"
+    serves: [one-release-identity]
+    issue: I2380

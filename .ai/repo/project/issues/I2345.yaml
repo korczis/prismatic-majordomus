@@ -1,0 +1,41 @@
+id: I2345
+milestone: derive-does-bounded-work
+title: "Incremental and full derive are held equal under reordering, renames, interruption and a poisoned cache"
+slug: incremental-and-full-held-equal
+priority: p1
+profile: implementation
+parallel_safe: false
+serves:
+  - "delivery-is-explained-by-evidence#incremental-equals-full"
+objective: "Extend case 1055 with the scenarios convergence pack 02 issue 02.4 names, each ending in the same assertion - the tree an incremental derive leaves equals the tree a clean full derive writes from the same inputs, and `scripts/derive-check` passes on it: inputs declared in another order, an input added, removed and renamed, a generator that fails, a derive stopped by TERM between stages and mid-stage, a derive record that is corrupt or names hashes of another tree, an input with CRLF line endings, and two worktrees deriving in turn. The derive driver is exercised over stand-in generators the way case 400 does; the real generators run in as few scenarios as the assertion needs."
+why: "Convergence pack 02 issue 02.4: an incremental pass must imply the full validation for the same inputs, and the repository has no proof of it because it has no incremental path. The fast check that exists proves only that stage B's input list is unchanged (scripts/pages:107, run by .githooks/pre-commit:12), and the full check costs a full generation (scripts/derive-check; core-check 698-714 s on a runner per the gap file on C02.4). Each scenario is a way an incremental derive goes wrong silently. A reordered input list must not change a key (the reason `LC_ALL=C` is set at scripts/generate-site-data:137-145). A renamed input must invalidate both names. A derive stopped by the lock's traps (lib/machine_lock.sh) must leave either its old record or none, never a record of outputs it did not finish. A record from another tree must be detected by reading the outputs back, which is the condition I2343 puts into rule project.cache-is-invisible. Two worktrees share one machine lock and must not share a record. The gap file warns that an equivalence suite calling the full check per scenario repeats the cost problem of case 95 (2068-3530 s on runners, I2115)."
+current_state: "Case 1055 holds one scenario, one changed input (I2344). Case 400 proves the stage order, idempotence and the check's report over stand-ins; case 12b proves stage B's transaction; nothing proves an incremental derive equal to a full one under adversity."
+desired_state: "Case 1055 runs every scenario above and fails naming the scenario and the first differing file when an incremental derive's tree differs from the full one's; a stopped derive leaves no record of an unfinished run and the next derive is full; a record from another tree is never trusted."
+scope:
+  - "test/cases/1055_an_incremental_derive_equals_a_full_one.sh"
+  - "test/lib.sh"
+  - "scripts/derive"
+  - "docs/GITHUB_PAGES_ARCHITECTURE.md"
+non_scope:
+  - "Not new behaviour of the derive beyond what a failing scenario shows is wrong: a defect a scenario finds is fixed in scripts/derive in the same change, and anything larger becomes its own issue"
+  - "Not a property test of every generator's determinism on another machine: the cross-machine dependence I1409 records is milestone derived-data-integrity's"
+  - "Not the cost of the suite as a whole or the sharding: milestone ci-critical-path"
+  - "Not the one-derive-at-a-time behaviour itself, which case 1018 proves; this case only runs derives in turn"
+depends_on:
+  - "I2344"
+acceptance_criteria:
+  - "Each scenario ends with the incremental tree equal byte for byte to a clean full derive of the same inputs, and the case fails naming the scenario and the first differing file otherwise"
+  - "A mutation that drops one input from a declaration makes the case fail, and the failure names the artifact that went stale"
+  - "A derive stopped by TERM between stages and mid-stage leaves no record of the stopped run, and the next derive is a full one"
+  - "A record whose output hashes belong to another tree is not trusted, and the derive that finds it runs every stage"
+  - "A record written in one worktree is never read by a derive in another"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 1055_an_incremental_derive_equals_a_full_one"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 400_derivation_is_one_graph"
+  - "scripts/derive-check"
+evidence_required:
+  - "equivalence_under_adversity_case"
+  - "dropped_input_mutation_killed"
+created_at: 2026-10-10
+updated_at: 2026-10-10

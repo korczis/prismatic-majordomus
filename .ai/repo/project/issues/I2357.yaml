@@ -1,0 +1,51 @@
+id: I2357
+milestone: the-verdict-cannot-be-bypassed
+title: "Completion reads the release record, and merged, published, deployed and healthy are four answers none of which is inferred from another"
+slug: completion-reads-the-release-record
+priority: p2
+profile: implementation
+parallel_safe: false
+serves:
+  - "delivery-is-explained-by-evidence#completion-has-four-answers"
+objective: "Add the release record as a source of the completion policy: a question answered from .ai/repo/releases/<tag>.yaml by containment (the record's commit contains the change, judged by `contains`, apps/majordomus-cli/src/delivery/revision.rs:255) and exempt where the version analysis says the change owes no release. Group the answers merged, published, deployed and healthy in the completion report, each with the evidence it was read from, and prove in apps/majordomus-cli/tests/completion_delivery.rs that none is inferred from another."
+why: "Convergence pack 04 issue 04.3 and autopilot pack 06 issue 2, which asks that release evidence reach the finish decision. Most of both is owned elsewhere and is not repeated here. Pull request #821 (origin/feature/completion-is-one-policy-and-completed-is-earned) makes completion one policy, share/completion.yaml with eleven stages, derives the stage and makes `completed` earned. I2301 (session 95, feature/the-closing-question-is-measured) adds the measured closing questions to gates/done.rs. Pending I2245-I2247 pin the verifier and add the CI receipt. What none of them holds is release evidence. On master the four are separate questions that `check` only reports (apps/majordomus-cli/src/gates/done.rs:172-190): `integrated` from obligation `target`, `published` from `pages`, and `deployed` and `deployment-verified` from `deploy` and `verify`, which nothing establishes (share/obligations.yaml:97-125). The sources #821 declares are obligations, gates, the change set, `release:impact`, the task and the session; `release:impact` asks whether the declared version moved far enough, and no source asks whether a published release contains the change. A release record states the commit it was built from and the digest of every archive (.ai/repo/releases/v0.20.0.yaml), and no finish decision reads one."
+current_state: "`published` means that the site serves the commit. Whether a release carries the change is answered by nobody, so a change that owes a version can be reported as far as deployed without one. That each of the four is answered from its own evidence is not tested. share/completion.yaml exists only on pull request #821, and this issue starts once #821 and I2301 are on master."
+desired_state: "The completion report answers for the task's head: merged, from the trunk containing it; published, from the site serving it and, where the change owes a version, from a release record whose commit contains it; deployed, from an observation of what the deployment serves; healthy, from a live check made after that observation. Each names its evidence. An answer nobody recorded is queued or unknown, and one the change does not owe is exempt."
+scope:
+  - "apps/majordomus-cli/src/gates"
+  - "apps/majordomus-cli/src/capability/builtin/gates.rs"
+  - "apps/majordomus-cli/src/delivery/revision.rs"
+  - "share/obligations.yaml"
+  - "share/completion.yaml"
+  - "apps/majordomus-cli/tests/completion_delivery.rs"
+  - "docs/CLI.md"
+  - "docs/CLAIMS.yaml"
+  - "docs/claims"
+  - "docs/generated"
+  - "site/data"
+non_scope:
+  - "Completion as one policy, the derived stage and `completed` earned: pull request #821"
+  - "The measured closing questions (no new debt, nothing accumulated, the backlog not grown): I2301, session 95"
+  - "The verifier catalogue, the retained verification output and the CI receipt: I2245, I2246 and I2247"
+  - "Establishing the application's deployment: the one deployment object is `declared` (.ai/repo/deployments/majordomus.yaml:9), there is no host to ask, and `deploy` stays unestablished for it"
+  - "Judging a deployment criterion of an intent from observations: I2221"
+  - "Which stage a release is at and what to run next: I2279; landing a release: I2299"
+  - "A second reader of release records for a finished task: I2349's query uses the same containment"
+  - "Tagging or publishing anything: this issue reads records"
+depends_on: []
+acceptance_criteria:
+  - "For a change that owes a version, published is unanswered until a release record whose commit contains the change exists, and names that record's tag once it does"
+  - "A release record whose commit does not contain the change, or one that names no artifact digest, does not answer published; the test fails if it does"
+  - "For a change the version analysis says owes no release, the release half of published is exempt with that reason"
+  - "In fixtures that hold exactly one of the four pieces of evidence, exactly one of merged, published, deployed and healthy passes: a merge alone does not answer published, a release record alone does not answer deployed, an observation alone does not answer healthy"
+  - "A release record or an observation that cannot be read leaves its answer unknown and is named; it is read neither as absent nor as passed"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test completion_delivery"
+  - "scripts/derive-check"
+evidence_required:
+  - "release_record_answers_published_test"
+  - "four_answers_independent_test"
+  - "unreadable_evidence_is_unknown_test"
+created_at: 2026-10-10
+updated_at: 2026-10-10

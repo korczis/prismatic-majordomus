@@ -1,0 +1,44 @@
+id: I2338
+milestone: repair-is-dispatched-to-a-worker
+title: "A worker starts from the compiled context of its issue, and its handover starts its replacement"
+slug: a-worker-starts-from-compiled-context
+priority: p2
+profile: implementation
+parallel_safe: false
+serves:
+  - "a-drain-settles-unattended#repair-is-dispatched"
+objective: "In apps/majordomus-cli/src/integration/dispatch.rs, build the prompt a dispatched worker starts from out of what exists: the output of `devcontext.compile` for the repair's issue (apps/majordomus-cli/src/capability/builtin/devcontext.rs:151), the repair request of I2327, and, when the previous worker of the same task left one, the handover the existing record resolution finds for that worktree and branch. When a worker ends with its task unfinished, start its replacement in the same worktree from that handover, to a declared number of attempts."
+why: "Autopilot pack 03 issue 3. Every piece exists and nothing composes them at dispatch. `devcontext.compile` returns the objects bearing on an issue, milestone, intent or set of paths, with reasons, exclusions and a budget. A handover is written when a worker stops, is asked for before the context window fills (ADR 0123, policy keys `handover_on_end` and `handover_on_fill`, .ai/repo/policy.yaml:111-112, `checkpoint_on_compact` at :108), and is resolved by `handover --resolve` for the same worktree and branch and never repository-wide (docs/CONCEPTS.md, record resolution). But a handover is picked up only by a session a person starts: the pack's words are that the replacement must be rehydrated without the user typing proceed. Without this glue the worker of I2335 starts from a prompt somebody wrote by hand, which is a second brief beside the compiled one, and a worker that ran out of context loses its work to the next one."
+current_state: "A dispatched worker has no defined starting context. A worker that stops leaves a handover in its worktree that nothing reads until a person opens a session there."
+desired_state: "The prompt of attempt one is the compiled context of the issue plus what failed, within the compile budget, with its exclusions named. A worker that ends unfinished is followed by one started in the same worktree whose prompt carries the handover it left, or, when it left none, the compiled context and git's state with a line saying no handover was found. The trail counts the attempts, and after the declared bound no further worker starts and the repair is reported blocked."
+scope:
+  - "apps/majordomus-cli/src/integration/dispatch.rs"
+  - "apps/majordomus-cli/src/integration/drain.rs"
+  - "apps/majordomus-cli/src/devcontext"
+  - "apps/majordomus-cli/tests/worker_dispatch.rs"
+  - "docs/INTEGRATION.md"
+  - "docs/CONTEXT.md"
+non_scope:
+  - "Not a new context compiler, brief or handover format: `devcontext.compile`, the handover record and its resolution are used as they are."
+  - "Not a handover from another machine or another store: a handover has three ids across the local, mesh and continuity stores until I2144 lands, so only the local record of the same worktree and branch is read. Rehydrating across machines belongs with I2339 and I2144."
+  - "Not the briefing every session gets from the mesh at start: ADR 0128 / I2285-I2292 (session 1b's)."
+  - "Not asking the worker for a handover before its window fills: ADR 0123 and the provider mod share/mods/claude-code/majordomus-handover do that, and the worker runs under them."
+  - "Not the run's budget or the bound on a repeated failure at run level: I2321. The bound here is the attempts of one repair."
+  - "Not carrying what a task was bound to in a continuity record: I2201."
+depends_on:
+  - "I2335"
+acceptance_criteria:
+  - "The prompt handed to the harness for attempt one equals what `devcontext.compile` returns for the issue, followed by the request's failing check or conflicting paths; a test compares the two and no second hand-written brief exists in the crate"
+  - "A stand-in worker that writes a handover and exits with its task unfinished is followed, with nobody typing, by a second worker in the same worktree whose prompt contains that handover, and the trail records attempt two"
+  - "A worker that exits unfinished and left no handover is followed by one started from the compiled context and git's state, and the trail says no handover was found"
+  - "After the declared number of attempts no worker starts, the claim is released, and the repair is reported blocked naming the attempts and how each ended"
+  - "A handover of another branch or another worktree is never put in a worker's prompt"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test worker_dispatch"
+evidence_required:
+  - "prompt_is_compiled_context_test"
+  - "replacement_starts_from_handover_test"
+  - "attempt_bound_ends_repair_test"
+created_at: 2026-10-10
+updated_at: 2026-10-10

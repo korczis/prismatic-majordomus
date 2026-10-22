@@ -1,0 +1,62 @@
+id: an-unattended-run-has-declared-authority
+title: "What an unattended run may do is declared in the policy, and nothing it was not given is taken from trust, a session's settings or silence"
+slug: an-unattended-run-has-declared-authority
+order: 321
+priority: p1
+problem: "Nothing in this repository says what a run with no person watching may do. The policy schema's top-level keys are closed and carry no authority key (share/schemas/majordomus/policy/policy.v1.schema.json), and the crate holds no authority or delegation record. What stands in for one is scattered: a client's local settings, the integration lease, one compiled constant (`ROLLOUT_MERGES_BEFORE_CONTINUOUS = 5`, apps/majordomus-cli/src/integration/drain.rs:1232), the owner decisions D5, D7, D8 and D11 of ADR 0101, and GitHub's protection, which on 2026-10-10 required the `ci` check with strict off, no reviews and administrators not enforced. The 165 rules (106 project, of them 96 blocking and 10 advisory, and 59 vendored) carry a class, `blocking` or `advisory`, and nothing that says whether a restriction is a safety invariant, a process or a heuristic. .ai/repo/rules/README.md:78 says there is no override mechanism, while overrides exist as an environment variable, two labels, ratchet baselines and one flag. A task's scope is fixed at start (lib/start.sh:55), and lib/check.sh:166-173 names the only moves a too-narrow scope leaves: a finish that is not completed, or editing the git-ignored current.yaml by hand. A repair is tied to the plan only through the branch name of its pull request (apps/majordomus-cli/src/integration/model.rs:1134-1142). The cost is measured: at 17:32Z on 2026-10-10 the queue held 51 open pull requests, none ready and 10 needing repair; no continuous drain had ever started in this checkout; and #901 was merged with `--admin` on the owner's word before its check concluded, with no line for it on the executor's trail. Autopilot pack 01 and issue 3 of pack 00."
+outcome: "An unattended run acts only on authority a tracked record gives it. The policy gains an authority profile that says what such a run may push, refresh, merge, close, tag, publish and deploy, within which budgets and until when. It is read from the trunk, at the commit the forge reports for the base branch, never from the head or the working tree that asks, so a worker cannot widen what constrains it. Each restriction declares whether it is an invariant, a process or a heuristic, and only a process can be delegated: the hold after an unverified merge, the refusal of `--admin`, a merge only on a passed required check of a head that contains master, and a release only from a judged commit stay refusals no profile reaches. A scope grows by a recorded amendment on the tracked contract, a repair names the issue and the criterion it serves, and each converted rule ships with its case and its migration. A repository that declares no profile behaves exactly as it does today."
+current_state: "No authority record exists. `prs drain --continuous` is gated by a compiled count; the scheduled queue workflow observes and never drains, on purpose (.ai/repo/ci/queue.yaml:16-21); a scope cannot be amended; a rule has a class and no kind. The audit of 2026-10-10 classified twenty restrictions by hand (6 safety invariants, 12 process, 2 heuristic; 9 to keep, 11 to change, none to remove) in a table no record holds."
+desired_state: "A worker reads from one capability what an unattended run is allowed here and at which trunk commit that was declared. A profile edited on a pull-request head changes nothing until a person has merged it. Asking for an act the profile does not give is a refusal with exit 10 and a trail line; asking with no profile declared is today's behaviour, unchanged."
+scope:
+  - "share/schemas/majordomus/policy"
+  - "share/schemas/majordomus/rule"
+  - "share/allow"
+  - "share/standard/majordomus"
+  - ".ai/repo/rules"
+  - ".ai/repo/adrs"
+  - "apps/majordomus-cli/src/policy.rs"
+  - "apps/majordomus-cli/src/rules"
+  - "apps/majordomus-cli/src/integration"
+  - "apps/majordomus-cli/src/capability/builtin"
+  - "apps/majordomus-cli/tests"
+  - "lib"
+  - "docs"
+  - "test/cases"
+non_scope:
+  - "Delegating a safety invariant: the hold after an unverified merge until a person runs `prs drain --resume-after-failure` (owner decision D7), `--admin`, a merge over a required check that has not passed on the current head, a head without master, and a release from a commit whose `ci` did not conclude success are refused under every profile"
+  - "The tracked scope contract and its evaluator: I2237 and I2238 (owner packs wave 2, not on master); CI evaluating it is I2239"
+  - "The trust boundaries of acceptance as an ADR: I2236 (owner packs wave 2, not on master)"
+  - "The graph from a rule to the hook or job that enforces it: I2249 (origin/chore/the-owner-packs-are-planned)"
+  - "Permission for another machine to run work: milestone repair-is-dispatched-to-a-worker (I2334, I2339); mesh trust stays observation (rule project.mesh-is-observation-not-authority)"
+  - "The run that consumes the profile: milestone a-drain-is-a-durable-run"
+  - "A per-rule override: composition stays additive and no project record weakens a vendored rule (.ai/repo/rules/README.md:78)"
+  - "Projecting client permissions for ssh keys: branch origin/chore/ssh-permissions-are-shared"
+  - "Adding a profile to this repository's own policy: that is the owner's pull request, and the demonstration that uses it is I2367"
+acceptance_criteria:
+  - "The authority an unattended run has is one tracked record, read at the base commit the forge reports, and one capability shows it with the commit it was read from"
+  - "A profile changed on a pull-request head, in a working tree or on a local ref changes no decision, and a test proves each"
+  - "With no profile declared, every command of `prs` refuses, acts and writes its trail as it does at master 4dfd1856d2"
+  - "No key of the profile reaches a restriction that is not declared a process, and a test fails when one does"
+  - "An amendment of a task's scope outside what the profile delegates is refused with exit 10 and leaves the tracked contract unchanged"
+  - "Each converted rule lands with a case that fails on the old behaviour and a package version an adopter takes with one command"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test authority_profile"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the cases this milestone adds>"
+  - "scripts/ci/rule-proof-check"
+  - "scripts/derive-check"
+evidence_required:
+  - "authority_read_from_trunk"
+  - "absent_profile_unchanged"
+  - "invariant_not_delegable"
+  - "scope_amendment_case"
+depends_on: []
+risks:
+  - "A profile kept in the repository is editable by the worker it constrains. Reading it from the trunk closes the edit; a pull request that changes it must then never be merged by the run it would widen, or the run grants itself authority through its own queue."
+  - "A kind on rules meets the hash-pinned vendored package (59 rules, .ai/repo/rules/vendor/majordomus/manifest.yaml): typing a vendored rule is a package version every adopter takes, so an absent kind has to read as not delegable."
+  - "I2317 waits on work this plan does not hold: the tracked scope contract (I2237) is pending. Built on current.yaml instead, it would legitimise the known bypass F01."
+  - "The words collide with the vocabulary: `profile` already names the bundle under .ai/repo/profiles and `envelope` a closed session record (docs/CONCEPTS.md:9 and :15). The ADR of I2315 settles the word, or one word names two things."
+  - "A rule can mix kinds: project.integration-follows-the-current-master (version 3) states the refusal of `--admin` and the staged rollout count in one rule. A kind per rule forces the split, and the split moves the tests the rule names."
+  - "Drafting an issue for every repair would grow the plan and the GitHub projection backlog, whose ceiling may only fall (.ai/repo/ci/github-drift-baseline.txt: missing 192, adopt 19)."
+created_at: 2026-10-10
+updated_at: 2026-10-10

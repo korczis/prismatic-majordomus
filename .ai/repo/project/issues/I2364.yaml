@@ -1,0 +1,53 @@
+id: I2364
+milestone: surfaces-project-one-delivery-state
+title: "A command capability declares its dry run and the key that makes repeating it harmless"
+slug: command-declares-dry-run-and-key
+priority: p2
+profile: implementation
+parallel_safe: true
+serves:
+  - "delivery-is-explained-by-evidence#surfaces-agree"
+objective: "Give `ExecutionPolicy` (apps/majordomus-cli/src/capability/model.rs) two optional declarations a command capability may make in its `capability!` (capability/handler.rs:485): the input field that asks for a dry run, and the input field whose value makes a repeated call harmless. Derive the `idempotent` hint from the second instead of from the effect alone, render both in the MCP annotations, OpenAPI and the Cockpit's runner, and prove each declaration with one property over the registry."
+why: "Convergence pack 05 issue 05.2: a mutating action offers a dry run where meaningful, a scope preview, an idempotency key, evidence and failure reporting, through the same declaration on every surface. A capability declares its effect (read, process state, repository mutation; capability/model.rs:442), from which `needs_confirmation` (model.rs:585) and the hints (model.rs:614-637) are classified; a repository mutation is announced as destructive and never idempotent because no handler has declared otherwise (model.rs:590-600). A dry run is a flag of the clap tree on `prs drain`, `served observe`, `release bump` and others (cli.rs:1397, :2317, :3098) and a proof for one capability only, `integration.prove_dry_run` (capability/builtin/integration.rs:318). Nothing tells a client which input of a command is its dry run or which repeat is harmless, so the Cockpit's runner, generated from the input schema (tests/cockpit.rs:247), cannot offer either. Only six capabilities may write the repository (continuity.publish, continuity.resume, continuity.sync, plan.transition, reasoning.record and recover.orphans; capability/builtin/mod.rs:319-326), and that list is meant to grow one deliberate line at a time."
+current_state: "A command capability says what it changes and nothing about a dry run or a harmless repeat; every writer is announced as not repeatable whatever its handler does."
+desired_state: "A command capability may declare `dry_run` and `idempotency_key`, each naming a field of its input schema; the registry refuses a declaration naming a field the schema lacks; the `idempotent` hint is true for a writer only when it declares a key; MCP, OpenAPI and the runner read the declarations from the model and state none of their own. A registry property executes every capability that declares a dry run on a fixture and finds the tracked tree, the refs and the checkout state unchanged, and every capability that declares a key twice with the same key and finds the second call changed nothing. The existing writers declare what their handlers do, with the property as the proof, and the list of writers does not change."
+scope:
+  - "apps/majordomus-cli/src/capability/model.rs"
+  - "apps/majordomus-cli/src/capability/handler.rs"
+  - "apps/majordomus-cli/src/capability/registry.rs"
+  - "apps/majordomus-cli/src/capability/builtin"
+  - "apps/majordomus-cli/src/mcp"
+  - "apps/majordomus-cli/src/http/openapi.rs"
+  - "share/cockpit/runner.js"
+  - "apps/majordomus-cli/tests/properties.rs"
+  - "apps/majordomus-cli/tests/cockpit.rs"
+  - "docs/CAPABILITIES.md"
+  - "docs/SURFACES.md"
+  - "docs/generated"
+  - "site/data"
+non_scope:
+  - "Not a seventh writer: no capability is reclassified to a repository mutation and the test at capability/builtin/mod.rs:304-327 keeps its six entries"
+  - "Not exposing `prs drain`, `prs repair --apply`, `release bump`, `evidence record` or `served observe` over MCP or HTTP"
+  - "Not the Cockpit's confirmation before a writer runs: that is I2153 (runtime pack); the runner here only offers the dry run a capability declares"
+  - "Not a scope preview of what a command would touch: a dry run's own output is the preview, and a generic one is not invented"
+  - "Not a store of used keys: a key is harmless because the handler reconciles against the state it would write, which the property proves"
+  - "Not the command line: its clap flags stay declared in cli.rs, and capability::closure keeps comparing them"
+depends_on: []
+acceptance_criteria:
+  - "A capability whose `dry_run` or `idempotency_key` names a field its input schema lacks is refused when the registry is built"
+  - "The MCP annotations, the OpenAPI document and the runner form of a capability show the declared dry run and key, and a test fails when a projection states either on its own"
+  - "Executing each capability that declares a dry run with it set leaves the tracked tree, every ref and the checkout's local state as they were"
+  - "Calling each capability that declares a key twice with the same input leaves the repository as the first call left it, and a writer that declares no key is announced as not idempotent"
+  - "The list of capabilities whose effect is a repository mutation is unchanged"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test properties"
+  - "cargo test --test cockpit"
+  - "cargo test --test projections"
+  - "scripts/derive-check"
+evidence_required:
+  - "dry_run_declared_and_proved"
+  - "repeat_with_key_is_harmless_test"
+  - "writers_list_unchanged"
+created_at: 2026-10-10
+updated_at: 2026-10-10

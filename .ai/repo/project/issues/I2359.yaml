@@ -1,0 +1,58 @@
+id: I2359
+milestone: the-release-chain-is-one-capability
+title: "A release happens once per delivery boundary the policy declares, and a change that owes no version tags nothing"
+slug: release-per-declared-delivery-boundary
+priority: p2
+profile: implementation
+parallel_safe: false
+serves:
+  - "delivery-is-explained-by-evidence#release-is-one-capability"
+objective: "Declare the delivery boundary in .ai/repo/ci/release.yaml beside the trigger it already models, and make `release.land` (apps/majordomus-cli/src/release/land.rs) read it: a release is owed when the version on master is above the newest release record and its merge commit passed `ci`, and never otherwise. Under an authority profile that grants a release (I2315) the command creates and pushes the tag at that boundary; without one it stops before the tag as I2299 left it. The wall time of each step is kept on the trail."
+why: "Autopilot pack 05 issue 4 and the release half of pack 06 issue 1. The owner's standing words are `bump version often and deploy` and `tag each version`. Whether a version is owed is already judged: `release analyze` compares the public contract with the last release, the workflow proposes the bump as a pull request and may not tag (.ai/repo/ci/version.yaml:1-10 and its `forbidden` list at :50), and a release is triggered by a `v*` tag and nothing else (.ai/repo/ci/release.yaml:16-18). What is declared nowhere is when a version that reached master becomes a release: twelve tags were cut by hand between 2026-10-03 and 2026-10-10, each on a session's judgement. Tagging by hand is a recorded decision (.github/workflows/version.yml:20-24) and this issue does not reverse it: the tag is taken by the tool only where the authority profile of I2315 grants a release, and without that profile the command behaves as before. The pack's 60 s for the pipeline is neither a boundary nor a promise this repository can make: it is the reported and not enforced end-to-end publication figure (.ai/repo/ci/pages.yaml:177), whose larger half is GitHub's queue. No timing per phase of a release is recorded, and the release path pays a full derive and `scripts/derive-check` for each record: 699 s, 672 s and 302 s were release-day derives on three machines. Whether a release with nothing owed or a redundant site rebuild ever happens was not measured in the audit of 2026-10-10."
+current_state: "The policy says what a tag sets in motion and who may propose a bump; when a merged version is tagged is decided by whoever is landing, and no record says how long each step of a release took."
+desired_state: "release.yaml declares the boundary and test/cases/87_release_pipeline.sh holds the workflow to it. `release land` with no version owed ends with a typed nothing-owed verdict and tags nothing; with a version owed it tags only under a declared release grant. Every step event on the trail carries its wall seconds, so the bottleneck of a release is read from records and a budget, if one is ever set, is set from samples. The boundary is decided in an ADR with status `proposed` and docs/CONCEPTS.md gains the word."
+scope:
+  - ".ai/repo/ci/release.yaml"
+  - ".ai/repo/ci/version.yaml"
+  - "apps/majordomus-cli/src/release/land.rs"
+  - "apps/majordomus-cli/src/capability/builtin/release.rs"
+  - "apps/majordomus-cli/tests/release_land.rs"
+  - "test/cases/87_release_pipeline.sh"
+  - ".ai/repo/adrs"
+  - "docs/CONCEPTS.md"
+  - "docs/DISTRIBUTION.md"
+  - "docs/RELEASE.md"
+  - "docs/CLAIMS.yaml"
+  - "docs/claims"
+  - "docs/generated"
+  - "site/data"
+non_scope:
+  - "Not deciding whether a version is owed: `release analyze` is the judge (ADR 0051, rule project.the-version-is-measured), and no version is raised for the sake of a release"
+  - "Not the authority profile: that is I2315; this issue reads its release grant and defines none, and no session setting or environment variable substitutes for it"
+  - "Not tagging from .github/workflows/version.yml: the workflow still proposes and never tags"
+  - "Not a budget or a promised duration for the release or for CI: the 60 s figure stays a reported publication figure (.ai/repo/ci/pages.yaml:177), and budgets for derive are I2346"
+  - "Not the cost of the derive a release pays: a derive that does bounded work is milestone derive-does-bounded-work (I2341 to I2345)"
+  - "Not the pre-push verdict for a tag (I2294) and not the rollout to machines (#900)"
+  - "Not the attestation or the checksum: both stay as .github/workflows/release.yml:216-227 has them"
+depends_on:
+  - "I2299"
+  - "I2315"
+acceptance_criteria:
+  - "With the declared version equal to the newest release record's, `release land` ends with a typed nothing-owed verdict, and no tag, GitHub release, record or Pages dispatch follows"
+  - "With a version owed and no authority profile granting a release, the command stops before the tag exactly as before this issue, and the trail says the grant is absent"
+  - "With a profile that grants a release, the command tags the judged merge commit from a clean tree and pushes the tag once; a second run finds the tag and creates none"
+  - "A dirty tree, a commit whose `ci` did not pass or cannot be read, and a tag that already names another commit are each refused before anything is pushed"
+  - "Every step event of a landing carries its wall seconds, and no gate fails on them"
+  - "test/cases/87_release_pipeline.sh passes with the boundary declared and fails when the workflow and the model disagree about it"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test release_land"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 87_release_pipeline"
+  - "scripts/derive-check"
+evidence_required:
+  - "nothing_owed_tags_nothing_test"
+  - "tag_only_under_a_declared_grant_test"
+  - "step_timings_on_the_trail"
+  - "adr_proposed"
+created_at: 2026-10-10
+updated_at: 2026-10-10

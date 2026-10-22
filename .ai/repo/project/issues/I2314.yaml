@@ -1,0 +1,47 @@
+id: I2314
+milestone: the-delivery-baseline-is-recorded
+title: "The rollout record says stages two to four as the trail holds them, and ADR 0101 names the dispositions the code has"
+slug: rollout-record-follows-the-trail
+priority: p2
+profile: implementation
+parallel_safe: false
+serves:
+  - "delivery-is-explained-by-evidence#baseline-is-recorded"
+objective: "Make the rollout's state readable and its documents true. `integration.queue` gains the rollout record it is gated on - the verified merges since the last unverified one, the number `ROLLOUT_MERGES_BEFORE_CONTINUOUS` asks for, and whether a continuous drain may start - computed by `verified_merges_since_failure` and `continuous_refused` (drain.rs:1232-1260) and shown by `prs status`. docs/INTEGRATION_ROLLOUT.md records stages 2 to 4 as the trail holds them and points at that field for the current state. ADR 0101 §3 lists `obsolete` and names the dispositions without a count, and a test holds its list and the table of docs/INTEGRATION.md equal to `PullRequestDisposition::ALL`."
+why: "Convergence pack 03 issue 03.5 asks for the measured rollout; autopilot pack 04 issue 1 for the exact lane semantics. docs/INTEGRATION_ROLLOUT.md:7-8 says stages 2 and 3 are recorded on the trail itself, and stops at stage 1, the dry run of 2026-10-06 against 16 pull requests. The trail is a file under one clone's git directory (docs/INTEGRATION.md:581-583), and no read surface reports the rollout: the record is computed only when `prs drain --continuous` is refused (commands/prs.rs:343-345). The trail of this checkout, read at 2026-10-10T17:32Z: 15 verified merges since 2026-10-07T02:07Z, each in a drain of its own that merged one pull request; one unverified merge, #822 on 2026-10-08T14:06Z (a `cannot lock ref` of the fetch after the merge), acknowledged at 17:18Z; 8 verified merges since it, so the gate of five is open; no `continuous_started` line, so stage 4 was never taken. Whether stage 3 was asked for cannot be read: the trail records no drain's `--max`. ADR 0101 §3 (.ai/repo/adrs/0101-pull-requests-are-integrated-one-at-a-time-against-the-current-master.md:116-121) says fifteen dispositions and lists fifteen; the code has sixteen (`PullRequestDisposition::ALL`, model.rs:394, with `obsolete`, owner decision D3), and docs/INTEGRATION.md:156-161 documents `obsolete`. The ADR says a surface derives the list rather than copying it, and its own copy is the one that drifted; rule project.no-counts-in-prose forbids the count."
+current_state: "The rollout's state is known to the refusal of a continuous drain and to nothing else. INTEGRATION_ROLLOUT.md records stage 1 only. ADR 0101 §3 lists fifteen dispositions under the word `Fifteen`."
+desired_state: "`integration.queue` over every surface, and the header of `prs status`, carry the rollout record with the same numbers `prs drain --continuous` decides on. INTEGRATION_ROLLOUT.md has a dated section for stages 2 to 4 that states what the trail of this checkout held, says that a drain's bound is not recorded, claims no continuous drain, and names the field that answers now. ADR 0101 §3 lists every disposition, `obsolete` in its lane, with no count, and a test fails when the ADR, the table or the code lacks a word the others have."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/integration.rs"
+  - "apps/majordomus-cli/src/commands/prs.rs"
+  - "apps/majordomus-cli/tests/integration_rollout.rs"
+  - "apps/majordomus-cli/tests/integration_dispositions_documented.rs"
+  - ".ai/repo/adrs/0101-pull-requests-are-integrated-one-at-a-time-against-the-current-master.md"
+  - "docs/INTEGRATION_ROLLOUT.md"
+  - "docs/INTEGRATION.md"
+  - "docs/generated"
+non_scope:
+  - "Not starting a drain, a merge or a continuous run to complete a stage for the record: zero pull requests were ready at 17:32Z, and a merge forced for a measurement would bypass the gates the rollout is about"
+  - "Not changing `ROLLOUT_MERGES_BEFORE_CONTINUOUS` or what the gate counts: ADR 0101 §13 is unchanged"
+  - "Not recording a drain's bound on the trail: a versioned run event is I2320's, and until it lands the record says the bound is not on the trail"
+  - "Not a fixable lane or a task created from the repair lane: I2327 and I2328; the lane semantics stay as model.rs:441-466 and docs/INTEGRATION.md:48 state them"
+  - "Not a merge the executor did not make: #901 (merged with --admin at 17:25Z) is absent from the trail and is I2356's"
+  - "Not changing the status of ADR 0101 from `proposed`: accepting it is the owner's act"
+depends_on: []
+acceptance_criteria:
+  - "`integration.queue` returns the verified merges since the last unverified one, the number required and whether a continuous drain may start, and a trail fixture on which `prs drain --continuous` is refused reads not unlocked with the same count the refusal prints"
+  - "A trail whose last unverified merge was acknowledged still counts only the verified merges after it"
+  - "A test fails when ADR 0101 §3, the dispositions table of docs/INTEGRATION.md or `PullRequestDisposition::ALL` names a disposition the other two do not"
+  - "docs/INTEGRATION_ROLLOUT.md has a dated section for stages 2 to 4 naming the trail it was read from, and no sentence of it says a continuous drain was run"
+  - "ADR 0101 carries no count of dispositions"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test integration_rollout"
+  - "cargo test --test integration_dispositions_documented"
+  - "scripts/derive-check"
+evidence_required:
+  - "rollout_record_on_the_queue"
+  - "dispositions_held_equal_case"
+  - "rollout_stages_recorded"
+created_at: 2026-10-10
+updated_at: 2026-10-10

@@ -1,0 +1,44 @@
+id: I2358
+milestone: the-verdict-cannot-be-bypassed
+title: "A release is tried against a wrong digest, a repeated tag and a deployment nobody acknowledged"
+slug: a-release-is-tried-adversarially
+priority: p2
+profile: implementation
+parallel_safe: true
+serves:
+  - "delivery-is-explained-by-evidence#verdict-cannot-be-bypassed"
+objective: "Write one case that builds a local release with scripts/release-fixture and tries it three ways: an archive whose bytes no longer hash to the digest its record states, a second record for a tag that already has one, and a release whose deployment was started and never observed. Fix, in the script that owns the step, whatever the case finds open; the hole known before it is written is that scripts/release-record replaces an existing record."
+why: "Convergence pack 04 issues 04.4 and 04.5 and pack 06 issue 06.3. What exists is reused and not rebuilt: archives are checksummed and attested (.github/workflows/release.yml:216,227; pull request #874, I2165); the installer refuses a wrong digest and leaves the working installation (share/install/install.sh.in:452; test/cases/85_installer.sh:86-91) and says whether it verified provenance or the checksum only (85_installer.sh:281-339); a release is held to the tagged commit's verdict (scripts/ci/release-verdict; test/cases/362_a_release_follows_the_ci_verdict.sh); and a deployment is judged from outside by containment (apps/majordomus-cli/src/served.rs; test/cases/384_a_deployment_is_evidence.sh). Three things are not tried. A digest is compared with bytes by the installer alone: nothing on the release side compares a landed record with the bytes a release serves, except scripts/ci/install-check against the live site, on demand (.ai/repo/ci/gates.yaml:600). scripts/release-record writes its output with a plain redirect (scripts/release-record:110), so a second run for a tag replaces the record, digests included; the workflow's own rerun adopts the published bytes (release.yml:199-204), and no test holds either. And the publish job starts the Pages deployment by dispatch (release.yml:373) while nothing in the pipeline observes the result: confirming it is a step done by hand (docs/DISTRIBUTION.md:200-202). The audit lists a lost deployment acknowledgement, a repeated release and a wrong digest among the cases no test covers."
+current_state: "Each guard of a release has a case for its ordinary failure. A rewritten record, a served archive that differs from its record on the release side, and a deployment nobody looked at have none."
+desired_state: "The case shows three refusals. An archive that does not match its record is refused before anything is installed, and scripts/release-verify, given the record, says which digest disagrees. A record for a tag that has one is refused unless it states the same digests. A release with no observation of its commit reads as not deployed wherever it is reported, with the command that would observe it."
+scope:
+  - "test/cases"
+  - "scripts/release-record"
+  - "scripts/release-verify"
+  - "scripts/release-fixture"
+  - "docs/DISTRIBUTION.md"
+  - "docs/CLAIMS.yaml"
+  - "docs/claims"
+non_scope:
+  - "Signing, or any guarantee stronger than the code gives: without an authenticated gh the installer verifies the checksum only and says so (I2165), and the case asserts that sentence, not a signature"
+  - "Moving the publish step's shell out of release.yml, or chaining the release: I2299; verifying the installed version and the served site inside the chain: I2360"
+  - "A release tag only from a judged commit: I2294; the staging defect at release.yml:272: I2302; telling a record in flight from a lost one: I2280"
+  - "The rehearsal that also interrupts a derive and advances the head: I2369, which depends on this issue"
+  - "Requiring macOS on every commit: the macOS gates run on demand, and the case says which platform it ran on"
+  - "Publishing, tagging or contacting the live site: every step runs against the local fixture over HTTP, as cases 85 and 97 do"
+depends_on: []
+acceptance_criteria:
+  - "With an archive altered after its record was written, the installer installs nothing and leaves the previous installation working, and scripts/release-verify given the record exits 10 naming the target and both digests"
+  - "scripts/release-record for a tag whose record exists exits 10 when any digest differs and leaves the record byte-identical; with identical digests it exits 0 and changes nothing"
+  - "With a release record present and no observation that contains its commit, the deployment reads not observed and the command exits non-zero; no output says deployed or served"
+  - "Removing any one of the three refusals makes the case fail; the three mutations and their red output are recorded in the pull request"
+  - "The case fails, and does not skip, when curl, a digest tool or the executable is absent"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 85_installer 87_release_pipeline 384_a_deployment_is_evidence <the case this issue adds>"
+evidence_required:
+  - "release_adversarial_case"
+  - "record_not_replaced_case"
+  - "mutation_output_recorded"
+created_at: 2026-10-10
+updated_at: 2026-10-10

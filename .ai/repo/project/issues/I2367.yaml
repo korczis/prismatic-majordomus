@@ -1,0 +1,47 @@
+id: I2367
+milestone: delivery-is-proved-end-to-end
+title: "An unattended run is demonstrated here: a success, a repaired conflict, a crash, no progress and an exhausted budget"
+slug: unattended-run-demonstrated-here
+priority: p2
+profile: implementation
+parallel_safe: true
+serves:
+  - "a-drain-settles-unattended#demonstrated-unattended"
+objective: "Add test/cases/1052_an_unattended_run_is_demonstrated.sh, which drives a settling run under a declared authority profile against a scripted forge and a local bare origin, as test/cases/912_repair_acts_under_the_lease_and_the_trail.sh does, through five scenarios and asserts each typed end on the trail with its timings; then take one settling run against this repository with the released executable and record it as the next stage of docs/INTEGRATION_ROLLOUT.md."
+why: "Autopilot pack 06 issue 3 and the run half of issue 1. On 2026-10-10 the executor's trail since 2026-10-04 held 15 verified merges, 5 repairs, 0 of 3 refreshes that succeeded and 1 failed verification, and no continuous run was ever started in this checkout. A stop for no progress or for an exhausted budget cannot be shown today because no code has either (rg for no.progress, budget_exhaust and circuit over apps/majordomus-cli/src/integration finds nothing); they belong to the run model of I2320 to I2322, the typed ends of I2321, the settle predicate of I2325 and the worker adapter of I2335, which is why this issue comes last. Bounded retries (integration/retry.rs), the starving mark (integration/wait.rs:22), the repair under the lease (case 912) and the rollout gate of five verified merges (integration/drain.rs:1232) exist, and docs/INTEGRATION_ROLLOUT.md records stage 1, the dry run of 2026-10-06. The failures cannot be provoked against the real forge without harm, so the case runs them against a scripted one and labels them simulated, while the real run is recorded as it happened."
+current_state: "The executor is proved step by step in tests; no run has been shown to settle unattended, to recover from a crash or to stop by itself."
+desired_state: "Case 1052 shows, each on its own trail: a run that merges a ready pull request and ends satisfied; one that hands a conflicting pull request to a worker, merges its repair and ends satisfied; one whose process is killed mid-cycle and that resumes without repeating a merge; one that ends for no progress after a cycle that moved nothing; and one that ends out of budget. Each end is the typed verdict I2321 declares and each scenario prints its wall seconds. docs/INTEGRATION_ROLLOUT.md records one settling run against this repository with the executable and version it used, the commands, the exit codes and the trail lines it wrote."
+scope:
+  - "test/cases/1052_an_unattended_run_is_demonstrated.sh"
+  - "test/lib.sh"
+  - "docs/INTEGRATION_ROLLOUT.md"
+  - "docs/INTEGRATION.md"
+non_scope:
+  - "Not the run model, its budget, its typed ends, the settle predicate or the worker adapter: those are I2320 to I2322, I2321, I2325 and I2335"
+  - "Not an unavailable peer and the fallback to this machine: dispatch against no provider is tried by I2340"
+  - "Not the large simulated queues of twenty and fifty pull requests: I2332"
+  - "Not the same run from the installed artifact in a clean repository: I2368"
+  - "Not acknowledging an unverified merge on the run's behalf: an unverified merge still holds every drain until a person resumes it"
+  - "Not the operator guide and the claims: I2371 writes them from what this run shows"
+depends_on:
+  - "I2325"
+  - "I2321"
+  - "I2335"
+  - "I2322"
+  - "I2323"
+acceptance_criteria:
+  - "Case 1052 ends each of its five scenarios with the typed verdict the run model declares for it, read from the trail, and prints each scenario's wall seconds"
+  - "In the crash scenario the resumed run merges no pull request twice, and the trail shows the same run identity before and after the kill"
+  - "In the no-progress and out-of-budget scenarios the run ends by itself, the lease is released, and every open pull request has a reason on the trail"
+  - "The case fails when the authority profile is removed from the fixture's policy and a run still merges"
+  - "docs/INTEGRATION_ROLLOUT.md records one run against this repository with its executable, version, commands, exit codes and trail lines, and scripts/ci/doc-command-check accepts it"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 1052_an_unattended_run_is_demonstrated"
+  - "scripts/ci/doc-command-check"
+evidence_required:
+  - "unattended_run_demonstrated"
+  - "crash_resume_merges_once"
+  - "rollout_stage_recorded"
+created_at: 2026-10-10
+updated_at: 2026-10-10

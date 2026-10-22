@@ -1,0 +1,55 @@
+id: I2319
+milestone: an-unattended-run-has-declared-authority
+title: "Each rule that asks for a person where a proof suffices is converted with its case and its migration"
+slug: converted-rules-ship-with-migration
+priority: p2
+profile: implementation
+parallel_safe: false
+serves:
+  - "a-drain-settles-unattended#authority-is-declared"
+objective: "Publish the next version of the standard rule package (share/standard/majordomus, vendored here under .ai/repo/rules/vendor/majordomus) so that it declares the kind of each vendored restriction and converts the one audited restriction that asks for a person where a proof suffices and has no other owner: an unresolved question refuses a completed finish of the task that asked it and of the tasks that continue it, not of every task on the branch (`mj_validate_blockers`, lib/check.sh:231-263, rule majordomus.blocker-resolution). Change the rule text, the validator, the case and the package manifest together, and prove that `majordomus rules vendor update` carries an adopter across."
+why: "Autopilot pack 01 issue 5. No rule is typed as a manual-acknowledgement gate, so the conversion list is the audit's table of twenty restrictions, of which 11 are marked change. Ten of the eleven have an owner or ask no person. Scope amendment is I2317, on I2237. The verified-merge count is I2315. The queue workflow that observes and never drains (.ai/repo/ci/queue.yaml:16-21) stays as it is, because the unattended merge is a run on a machine that has the derived driver (I2323, I2325), not a scheduled job with a read-only token. Agent permission prompts are answered from the profile in I2336 and asked by the Cockpit in I2153. The doctor on every commit, the derive check at commit and the one derive per machine are cost, which milestone derive-does-bounded-work measures and reduces; the push hook is I2142 and I2294; the tag without its record is I2280; the projection gate is I2300. One is left. `mj_validate_blockers` refuses a completed finish for every unresolved question on the branch, 'not only one this task opened' (lib/check.sh:241-244). That was chosen on purpose, so that a handover does not walk past a question, and its cost is that one question on a shared branch stops every task there until a person answers. Which task a question belongs to is provable from the record; that proof is what replaces the person for the tasks that never asked. The second half is the migration nobody owns. The 59 vendored rules are pinned by hash (.ai/repo/rules/vendor/majordomus/manifest.yaml: `version: 1`, `source_revision: 0.6.0`), I2316 leaves them undeclared, and a changed majordomus.blocker-resolution is a package version every adopter takes. `rules vendor status`, `diff` and `update` exist (lib/rules.sh:458-460), doctor reports a different shipped package without applying it (lib/doctor.sh:803), and test/cases/67_rule_dag.sh proves a hand edit is refused and a forced update replaces it. The package has never had a second version (lib/rules.sh:354 writes `version: 1`), so nothing has yet shown an adopter crossing one."
+current_state: "The standard package is version 1 and declares no kind. One unresolved question on a branch refuses a completed finish of every task on it, whoever asked."
+desired_state: "The package's next version declares a kind on each of its 59 rules: scope-integrity is an invariant, checkpoint-freshness a heuristic, blocker-resolution a process. Its new blocker-resolution binds a question to the task that asked it and to the tasks that resume that task by handover. A repository still vendoring version 1 is judged by version 1's statement until it runs `majordomus rules vendor update`, and doctor names the newer package and that command."
+scope:
+  - "share/standard/majordomus"
+  - ".ai/repo/rules/vendor/majordomus"
+  - "lib/check.sh"
+  - "lib/question.sh"
+  - "lib/rules.sh"
+  - "lib/doctor.sh"
+  - "apps/majordomus-cli/tests/authority_profile.rs"
+  - "docs/DOCTRINE.md"
+  - "docs/ADOPTION.md"
+  - "docs/CLAIMS.yaml"
+  - "docs/claims"
+  - "test/cases"
+non_scope:
+  - "Not the scope amendment (I2317, on I2237) and not the verified-merge count (I2315)"
+  - "Not a scheduled workflow that drains: .ai/repo/ci/queue.yaml:16-21 keeps a read-only token on purpose, and the unattended merge is the run of I2323 and I2325"
+  - "Not agent permission prompts or the confirmation of a mutating capability: I2336 answers a worker from the profile, and I2153 makes the Cockpit ask"
+  - "Not the cost of doctor on every commit, of the derive check at commit or of one derive per machine: milestone derive-does-bounded-work. Not the push hook: I2142 and I2294"
+  - "Not the restrictions the audit keeps: ADR acceptance and knowledge promotion stay a person's act, a real path collision stays a person's label, and the hold after an unverified merge stays an invariant"
+  - "Not weakening a vendored rule from a project record, and not a hand edit under .ai/repo/rules/vendor: the package changes only by `rules vendor update`"
+  - "Not answering a question for a person: a question still blocks the task it was asked about, and an unreadable entry still blocks everything (lib/check.sh:228-240)"
+depends_on:
+  - "I2316"
+acceptance_criteria:
+  - "Every rule of the standard package declares a kind, `majordomus rules` shows it for the vendored set, and the manifest's version and hashes match the files (`rules vendor status` exits 0)"
+  - "A task finishes completed while a question that another, unrelated task asked on the same branch is unresolved; the task that asked it, and a task that resumed it through a handover, are still refused with exit 10"
+  - "The case fails when the validator is put back to refusing on any unresolved question, and fails when a resumed task is let past its predecessor's question"
+  - "A fixture repository vendoring version 1 is judged by version 1's statement under the new tool, doctor names the newer package, and one `majordomus rules vendor update` moves it to the new behaviour and leaves a `rules.vendored` ledger line"
+  - "A hand-edited vendored rule is still refused by the update without `--force`: test/cases/67_rule_dag.sh passes unchanged"
+  - "A test reads the vendored kinds and fails if a key of the `authority` section names a vendored rule that is not a process"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 67_rule_dag <the case this issue adds>"
+  - "cargo test --test authority_profile"
+  - "scripts/ci/rule-proof-check"
+  - "scripts/derive-check"
+evidence_required:
+  - "vendored_kinds_declared"
+  - "question_binds_its_task_case"
+  - "adopter_crosses_package_version_case"
+created_at: 2026-10-10
+updated_at: 2026-10-10

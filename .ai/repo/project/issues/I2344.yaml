@@ -1,0 +1,52 @@
+id: I2344
+milestone: derive-does-bounded-work
+title: "A changed input regenerates what reads it and nothing else, byte for byte what a full derive writes"
+slug: a-change-regenerates-only-its-readers
+priority: p1
+profile: deep-work
+parallel_safe: false
+serves:
+  - "delivery-is-explained-by-evidence#incremental-equals-full"
+objective: "When the derive record of I2343 exists and the key moved, have `scripts/derive` compute the changed inputs from the record and the tree, select from I2341's declarations the targets of `majordomus generate` and the sections of `scripts/generate-site-data` that read them, transitively through the artifacts stage B and stage C read, and run only those: `generate` over the selected targets with the manifest still indexing every artifact, and the site generator over the selected sections with the other outputs carried into its staging unchanged before the publish it already does. Stage D runs as before. The derive prints which artifacts it regenerated and the input that selected each."
+why: "Convergence pack 02 issue 02.3 and autopilot pack 05 issue 2. One canonical change regenerates the whole world today: `scripts/derive` runs every stage over everything (scripts/derive:152-185), so a rule edit pays for the capability reference, the OpenAPI document, every allow-list, every site page and every use-case scenario. Commit 37b825efec changed a TSV and one case; besides the files those changes reach, `artifacts.*`, `source.json`, `registry.json`, `PLAN_STATUS.md` and `PAGES_STATUS.md` were restamped. The integrator pays the same on every refresh, a full derive per pull request (apps/majordomus-cli/src/integration/drain.rs:2150), and the 3 refreshes the trail holds since 2026-10-04 all failed, two of them in the commit hook that runs after it. The narrower entry points that exist are not a derive: `majordomus generate <target>` regenerates a target subset with no knowledge of what changed, `just site-data` is stage B alone, and `--no-scenarios` is for fixtures (gap file on C02.3). With I2341's inputs, I2342's staged publication and I2343's record the selection is decidable; the full derive stays the authority and the equivalence is a case."
+current_state: "A derive regenerates every artifact whatever changed, or, after I2343, none."
+desired_state: "After a change to one canonical input, `scripts/derive` runs the generators of the artifacts that read it, directly or through another artifact, writes a tree equal byte for byte to the tree a full derive writes from the same inputs, and lists what it regenerated and why. An input that no declaration names, a change to the executable's generation or a record it cannot read makes it a full derive, and it says which."
+scope:
+  - "scripts/derive"
+  - "scripts/generate-site-data"
+  - "apps/majordomus-cli/src/generate.rs"
+  - "apps/majordomus-cli/src/commands/generate.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/tests/generate_check.rs"
+  - "docs/GITHUB_PAGES_ARCHITECTURE.md"
+  - "docs/CLI.md"
+  - "docs/generated"
+  - "test/cases/1055_an_incremental_derive_equals_a_full_one.sh"
+non_scope:
+  - "Not the adversarial scenarios - reordered inputs, renames, interruption, a poisoned record, line endings, two worktrees: I2345 adds them to case 1055"
+  - "Not running selected generators in parallel: one derive still runs its stages in sequence under the machine lock (rule project.one-derive-at-a-time)"
+  - "Not changing `scripts/derive-check`, which still regenerates everything into a temporary place and compares"
+  - "Not a narrower site fingerprint: `source.json` still records the hash of the whole input list, which is how `scripts/pages current` decides freshness (milestone derived-data-integrity)"
+  - "Not the integrator's refresh act choosing an incremental derive: it calls `scripts/derive` and inherits whatever it does"
+depends_on:
+  - "I2341"
+  - "I2342"
+  - "I2343"
+  - "I2311"
+acceptance_criteria:
+  - "In case 1055, after one input that a single section reads changes, the derive runs that section and the artifacts that read its output, names each with the input that selected it, and the tree equals a clean full derive of the same inputs byte for byte"
+  - "A change to an input no declaration names makes the derive a full one and the derive says so"
+  - "A change to the executable's generation makes the derive a full one"
+  - "The manifest after an incremental derive lists every artifact, with the hashes a full derive records"
+  - "`scripts/derive-check` passes on every tree an incremental derive in the case writes"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 1055_an_incremental_derive_equals_a_full_one"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 1054_a_derive_with_nothing_changed_generates_nothing"
+  - "cargo test --test generate_check"
+  - "scripts/derive-check"
+evidence_required:
+  - "incremental_equals_full_case"
+  - "regenerated_set_named"
+created_at: 2026-10-10
+updated_at: 2026-10-10

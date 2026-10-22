@@ -1,0 +1,48 @@
+id: I2323
+milestone: a-drain-is-a-durable-run
+title: "A run outlives the terminal that started it, and following it reads the trail"
+slug: a-run-outlives-its-terminal
+priority: p1
+profile: implementation
+parallel_safe: true
+serves:
+  - "a-drain-settles-unattended#a-run-is-resident"
+objective: "Let the ensure verb of I2322 start the run detached: in its own process group, with stdin closed, its descriptors closed and a log beside the integration lease, by reusing the detach that `spawn_server` performs (apps/majordomus-cli/src/commands/serve.rs:699-762) through one shared helper rather than a copy. Add a follow verb that prints the run's events from the trail as they are appended and writes nothing."
+why: "Autopilot pack 02 issue 4. `prs drain --continuous` is foreground only and holds the lease for the whole run (apps/majordomus-cli/src/integration/drain.rs:1626; flags at apps/majordomus-cli/src/cli.rs:3104, with no detach flag), so an overnight drain is a terminal left open. The only detach in the crate is the shared server's: own process group, stdin null, a log beside the lease (serve.rs:699-762). The file's header says 'There is no daemon mode either way: whoever started the process owns it' (serve.rs:10-11). Hosting the run inside the shared server is ruled out: that server stops when idle and is superseded on upgrade (PR #883, #887), so a drain living in it would die with it, and an execution 'does not outlive the process that accepted it' (docs/EXECUTIONS.md:59). No launchd or systemd unit is tracked on master; PR #900 (ADR 0121) adds units for the mesh hub only, and docs/MESH.md:484-485 says a service installer is owed. Following a run today means polling `integration.events`; the WebSocket of apps/majordomus-cli/src/http/events.rs carries executions only. The run must survive its terminal, and a reboot or a kill must cost a resume and never a second leader, which the lease and the resume of I2322 already give. Measured on 2026-10-10: no continuous drain has ever started in this checkout."
+current_state: "Closing the terminal of a continuous drain ends it. Following a drain means rereading the whole trail."
+desired_state: "A run started detached returns its identity and the path of its log at once, and keeps running with no terminal attached. Its process is the leader the lease names. `follow` prints the run's events as they are appended and its end when it comes, then exits; interrupting `follow` leaves the run running. A detached run that is killed, or lost to a reboot, is continued by the next ensure or resume under the same identity."
+scope:
+  - "apps/majordomus-cli/src/commands/serve.rs"
+  - "apps/majordomus-cli/src/commands/prs.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/src/integration/run.rs"
+  - "apps/majordomus-cli/src/integration/drain.rs"
+  - "apps/majordomus-cli/tests/serve_lifecycle.rs"
+  - "test/cases/1051_a_run_outlives_its_terminal.sh"
+  - "docs/INTEGRATION.md"
+  - "docs/CLI.md"
+non_scope:
+  - "Not hosting the run in the shared server or as an execution"
+  - "Not a launchd or systemd unit, and not starting a run at boot or at session start: PR #900 (ADR 0121) covers the hub's units, and a unit for a run is a decision of its own"
+  - "Not the event channel carrying the trail to the browser: I2363"
+  - "Not a second copy of the detach code: the helper is shared with `spawn_server`"
+  - "Not a stop control on a surface: I2324, which waits for I2153 and ADR 0126"
+depends_on:
+  - "I2322"
+acceptance_criteria:
+  - "A run started detached from a shell that then exits is still the lease holder afterwards, and its events keep arriving on the trail"
+  - "`follow` prints the run's events in trail order and its end, then exits 0; interrupting it leaves the run and the trail untouched, and it writes no line"
+  - "A detached run killed with SIGKILL is continued by the next ensure under the same identity after reconciliation, and no second run is started"
+  - "A detach that cannot start its process returns exit 12 with the log path, records no run start, and leaves no lease held"
+  - "`spawn_server` and the run's detach call one helper, and the shared server's lifecycle tests pass unchanged"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 1051_a_run_outlives_its_terminal"
+  - "cargo test --test serve_lifecycle"
+  - "scripts/derive-check"
+evidence_required:
+  - "run_outlives_terminal_case"
+  - "follow_writes_nothing_test"
+  - "killed_run_resumed_case"
+created_at: 2026-10-10
+updated_at: 2026-10-10

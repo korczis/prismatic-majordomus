@@ -1,0 +1,61 @@
+id: I2299
+milestone: the-release-chain-is-one-capability
+title: "The release chain is one typed capability with a trail and a dry run"
+slug: release-chain-is-one-capability
+priority: p1
+profile: implementation
+parallel_safe: false
+serves:
+  - "delivery-is-explained-by-evidence#release-is-one-capability"
+objective: "Declare `release.land` with `capability!` in apps/majordomus-cli/src/capability/builtin/release.rs, a command of the trusted command line as `served.observe` is (`majordomus release land <version> [--dry-run]`, no MCP or HTTP exposure), with its steps in a new apps/majordomus-cli/src/release/land.rs. It takes a version that is on master through the verdict, the tag, the pipeline, the record pull request, Pages, latest.json and the smoke re-run, reusing `scripts/ci/release-verdict`, `majordomus prs drain` and `scripts/pages verify`; it writes each step to the integration trail before it acts and resumes from that trail."
+why: "Autopilot pack 06 issue 1, the shipping half of convergence pack 06 issue 06.5 and the release half of autopilot pack 05 issue 4. The number was allocated on the mesh by the executor session (cd) as wanted and unowned, with this note: three releases were landed with session-local shell (wait for master's ci, the verdict, a tag from a clean tree, reopen the record pull request, drain it, the Pages verification, latest.json, the smoke re-run) and each hand step failed once. Of the eleven steps of a release the ones between the automated jobs are by hand: the merge on a green `ci`, `scripts/ci/release-verdict --commit` before the tag, the tag (deliberately, .github/workflows/version.yml:20-24), the merge of the record pull request, which sat with no check after v0.15.0 and v0.16.0 (.github/workflows/release.yml:325-336), and `scripts/pages verify` with the latest.json probe and the smoke re-run (docs/DISTRIBUTION.md:200-202). At v0.20.0 the publish job stopped at `git add -A -- . ':(exclude)dist'` (release.yml:272) because `/dist/` is ignored since #855 (.gitignore:17): archives, SHA256SUMS and attestations were published, no record was proposed, and the record was written by hand as #901 and merged with `--admin` before its `ci` concluded, with no line on the executor's trail. release.rs declares three reads and no act (capability/builtin/release.rs:107), and `served.observe` (capability/builtin/served.rs:392) is the precedent for a command capability that reaches the network from the command line only."
+current_state: "A release is landed by a session typing the steps of docs/DISTRIBUTION.md:175-202; nothing records which step a landing reached, and a step that fails leaves the release half published until somebody looks."
+desired_state: "`majordomus release land` reads the stage order from .ai/repo/ci/release.yaml, appends each step as a versioned event to the repository's one integration trail (integration/mod.rs:85-86, the vocabulary at integration/drain.rs:396) before it acts, ends with one typed verdict naming the step and the remedy, and run again resumes after the last step the trail records as done. With `--dry-run` it prints the steps and what each would run and moves nothing. It stops before the tag and prints the tag command; a tag that exists and names the judged commit is how it goes on. The events and the name of the act are decided in an ADR with status `proposed`, docs/CONCEPTS.md gains the word, and SECURITY.md names the command among those that reach the forge."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/release.rs"
+  - "apps/majordomus-cli/src/release/land.rs"
+  - "apps/majordomus-cli/src/release/mod.rs"
+  - "apps/majordomus-cli/src/integration/drain.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/src/commands/release.rs"
+  - "apps/majordomus-cli/tests/release_land.rs"
+  - "share/commands.yaml"
+  - ".ai/repo/adrs"
+  - "docs/CONCEPTS.md"
+  - "docs/DISTRIBUTION.md"
+  - "docs/RELEASE.md"
+  - "SECURITY.md"
+  - "docs/CLAIMS.yaml"
+  - "docs/claims"
+  - "docs/generated"
+  - "site/data"
+non_scope:
+  - "Not creating the tag: in this issue the tag step checks that the tree is clean and at the judged commit, prints the command and stops. Tagging under the authority profile of I2315 is I2359"
+  - "Not the read-only stage report `release.status` and its `release refresh` observation: that is I2279 (owner packs wave 1, not on master); where it has landed this command reads its stages and adds no list of its own"
+  - "Not the in-flight state of scripts/ci/release-check (I2280) and not the written release workflow an agent follows (I2281), which will name this command"
+  - "Not the pre-push verdict for a release tag: that is I2294, on branch fix/a-release-tag-leaves-only-from-a-judged-commit"
+  - "Not reopening a record pull request that got no check: that is I2296, on branch fix/the-executor-reopens-a-record-pull-request; until it lands this command reports the pull request as blocked with that reason"
+  - "Not the staging defect at .github/workflows/release.yml:272: that is I2302; this command reports a record that was not proposed and never writes the record in the pipeline's place"
+  - "Not the Pages gate against a deployment in flight (I2297, unowned) and not the rollout to machines (branch feature/the-fleet-is-rolled-out, #900)"
+  - "Not the chain's own check of the installed tool: here it calls `scripts/pages verify`, probes latest.json and asks for the smoke re-run; installing and observing by itself is I2360"
+  - "No `--admin`, no rebase, no squash, no forced push, no second trail file, and no MCP or HTTP exposure of the command"
+depends_on: []
+acceptance_criteria:
+  - "`majordomus release land` on a fixture with a scripted forge takes a version from the verdict of its merge commit to the smoke re-run, and the trail holds one event per step, each written before the step acted"
+  - "`--dry-run` leaves the trail, the refs, the remote and the forge as they were, and prints every step with the command it would run"
+  - "A second invocation after an interrupted one resumes after the last step recorded as done and repeats no merge and no dispatch"
+  - "With no tag for the version the command ends with a typed verdict that names the tag command and creates no tag; a tag that names another commit than the judged one is refused"
+  - "A verdict that failed or cannot be read, a record pull request that was not proposed or has no check, and a site that does not serve the record each end the command with a distinct typed verdict, exit 10 or 12, and never as landed"
+  - "The record pull request is merged only by `prs drain` on a passed required check, and no step of the command passes `--admin`"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test release_land"
+  - "cargo test --test projections"
+  - "scripts/derive-check"
+evidence_required:
+  - "release_land_test"
+  - "dry_run_moves_nothing"
+  - "landing_resumes_from_the_trail"
+  - "adr_proposed"
+created_at: 2026-10-10
+updated_at: 2026-10-10

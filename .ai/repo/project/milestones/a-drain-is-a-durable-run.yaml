@@ -1,0 +1,58 @@
+id: a-drain-is-a-durable-run
+title: "A drain that is asked to settle is a run with an identity, a budget and a typed end, folded from the trail it already writes"
+slug: a-drain-is-a-durable-run
+order: 322
+priority: p1
+problem: "A drain has no identity beyond the process that holds the lease. `prs drain --continuous` is a foreground loop (`continuous`, apps/majordomus-cli/src/integration/drain.rs:1626) bracketed on the trail by `continuous_started` and `continuous_stopped`. Who it is is the `LeaseHolder` record (pid, host, base, since: drain.rs:82); why it ended is a free-text `stopped` string (drain.rs:1436 and :1581); stopping it is a signal to a pid (drain.rs:1746). It has no desired outcome, no reference to the authority it acts under, no deadline, no budget, no progress watermark and no blockers, and its events carry no schema version. It cannot be started through the capability registry, because `prs drain` is a command of the CLI and not a capability (apps/majordomus-cli/src/commands/prs.rs:339-440), and it cannot be hosted as an execution, because an execution 'does not outlive the process that accepted it' (docs/EXECUTIONS.md:59). The only detach in the crate is the shared server's (apps/majordomus-cli/src/commands/serve.rs:699-762), and that server stops when idle. So an overnight drain is a terminal somebody left open. Measured on 2026-10-10: this clone's trail (154 KB) has no `continuous_started` line at all, and since 2026-10-04 it records 15 verified merges, 5 repairs, 0 of 3 refreshes succeeded and 1 verification failure, each started by a session. Autopilot pack 02."
+outcome: "A drain asked to work unattended is a run: an identity, the base it leads, the authority profile it acts under, a budget and a typed end. The run is a fold over the integration trail the executor already writes before every act, in the common git directory every worktree shares; nothing is stored beside the trail that the trail does not say. Starting, reading, stopping and resuming it are idempotent, one run leads a base, and a run that crashed is continued, never duplicated. It ends satisfied, blocked, out of budget, cancelled or fatal, and never by silence. It outlives its terminal, and the command line, MCP, HTTP and the Cockpit read the same run from the same capability."
+current_state: "Continuous mode exists, is foreground only, and has never run in this checkout. The trail's events carry no version and no run. No surface shows a run, its blockers or its next action, and a drain that stops says why in a sentence written for a person."
+desired_state: "A person starts a run, closes the terminal, and later reads from any surface which run leads the base, under which profile, what it did, what blocks it and how it ended. Killing it and starting again continues the same run after verifying any merge left without an end. A run with no authority declared on the trunk is refused, and a drain started without a run behaves as it does today."
+scope:
+  - "apps/majordomus-cli/src/integration"
+  - "apps/majordomus-cli/src/commands/prs.rs"
+  - "apps/majordomus-cli/src/commands/serve.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/src/capability/builtin/integration.rs"
+  - "apps/majordomus-cli/src/cockpit/pages.rs"
+  - "apps/majordomus-cli/tests"
+  - ".ai/repo/adrs"
+  - "docs"
+  - "test/cases"
+non_scope:
+  - "A second account of a run: no run file, table or store beside the trail, and no run state in apps/majordomus-cli/src/execution, whose store is in memory by declared design"
+  - "A registry or catalogue of workers, and handing work to one: milestone repair-is-dispatched-to-a-worker; docs/CONCEPTS.md:133 stands"
+  - "What a settling drain does to the queue (the settle predicate, closing, repair): milestone the-queue-settles"
+  - "Acknowledging an unverified merge: a run never writes `failure_acknowledged`; a person runs `prs drain --resume-after-failure` (owner decision D7)"
+  - "A stop or resume control on the Cockpit, over HTTP or over MCP: it waits for I2153 (the Cockpit asks before it runs a capability that changes the repository) and for ADR 0126 on PR #860"
+  - "A launchd or systemd unit: PR #900 (ADR 0121) adds units for the mesh hub only"
+  - "Hosting the run inside the shared server, which stops when idle and is superseded on upgrade"
+  - "Landing ADR 0042, which lives on origin/feature/orchestration-is-an-execution: the choice between its home (src/execution) and the trail is recorded once, by I2320"
+acceptance_criteria:
+  - "A run is recoverable from the trail alone: folding the same lines twice gives the same run, and lines written before the event gained a version still parse"
+  - "Two starts on one base yield one run, and a start after a crash continues that run after verifying a merge left without an end"
+  - "Every ended run carries one of satisfied, blocked, out_of_budget, cancelled or fatal on the trail, and a run whose queue did not move for the declared bound ends blocked with its blockers named"
+  - "A run started from a terminal is still running after the terminal is closed, and following it reads the trail and writes nothing"
+  - "The run, its blockers and its next action are the same on the command line, MCP, HTTP and the Cockpit, from one capability"
+  - "A verification failure ends the run and holds every later run until a person acknowledges it; no profile and no budget lifts the hold"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test integration_run"
+  - "cargo test --test integration_rollout"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the cases this milestone adds>"
+  - "scripts/derive-check"
+evidence_required:
+  - "run_folded_from_trail"
+  - "one_leader_per_base"
+  - "typed_end_on_trail"
+  - "run_outlives_terminal_case"
+depends_on:
+  - "an-unattended-run-has-declared-authority"
+risks:
+  - "A run record kept beside the trail becomes a second account of what the trail already says. The model has to be a fold, or the two drift."
+  - "The word is taken twice already: `majordomus run` starts an execution (apps/majordomus-cli/src/capability/builtin/executions.rs:600) and `economics.runs` lists economics runs (apps/majordomus-cli/src/capability/builtin/economics.rs:177). Rule project.no-new-nouns is blocking, so the ADR settles the word before any code uses it."
+  - "Unlanded ADR 0042 says orchestration state extends src/execution. Two homes decided on two branches would be two lifecycles."
+  - "A second resident process argues against 'whoever started the process owns it' (apps/majordomus-cli/src/commands/serve.rs:10-11). It has to be justified in a decision, not assumed."
+  - "A killed executor leaves its mesh claim held until this checkout runs an executor again (apps/majordomus-cli/src/integration/exclusive.rs:15-18), so another machine learns of a dead leader from the next local start, not from a heartbeat."
+  - "An unattended mode that acknowledged a verification failure by itself would loosen owner decision D7 without anyone deciding to."
+created_at: 2026-10-10
+updated_at: 2026-10-10

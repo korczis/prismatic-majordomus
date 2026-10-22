@@ -1,0 +1,95 @@
+id: delivery-is-explained-by-evidence
+title: A delivered change is explained from its intent to its deployment by evidence the repository keeps, and what delivery costs is measured, bounded and compared
+statement: "A reader asks one question about a finished task and is answered from the intent it served to its commits, its tests, the release that carried it and the deployment that serves it, with every step that left no evidence marked unknown. What delivery costs — a derive, a run of the required check, the time a pull request waits — is a tracked measurement with its sample and its machine, a derive does the work its changed inputs ask for and no more, the required verdict holds against a skipped job, a stale head and an administrator, a release is landed by one command that keeps a trail, and the same facts read the same on every surface with their age. The whole path is shown working in this repository and in one that is not."
+invariants:
+  - Evidence that was not recorded is unknown, never a pass and never estimated
+  - What identifies an operation is a join of the identities that exist — task, session, execution, evidence run — and no new scheme
+  - An incremental derive writes byte for byte what a full derive writes from the same inputs, and the full derive stays the authority
+  - A cache is invisible - keyed by content, bypassable, proved byte-identical and kept out of the tracked tree
+  - Every surface is a projection of one canonical state; a page, a tool or a command holds no model of its own
+  - A measurement names its sample size, its machine and its date, and a comparison never reads a single sample as a trend
+milestones:
+  - the-delivery-baseline-is-recorded
+  - derive-does-bounded-work
+  - delivery-is-explained-by-evidence
+  - the-verdict-cannot-be-bypassed
+  - the-release-chain-is-one-capability
+  - surfaces-project-one-delivery-state
+  - delivery-is-proved-end-to-end
+satisfaction:
+  - id: baseline-is-recorded
+    criterion: The cost of delivery on 2026-10-10 — the wall time of the required check, the time from opening a pull request to its merge, the queue by disposition, the time of a refresh and of a derive by stage — is a tracked record a command re-measures, each figure with its sample size and where it was measured
+    evidence: command
+    ref: bash test/run.sh 1053_the_delivery_baseline_is_a_record
+  - id: one-query-explains-a-task
+    criterion: One query for a finished task returns the intent and criterion it served, its commits and pull request, the tests recorded at that revision, the release that contains it and the observed deployment, each with its source, and says unknown for a step with no evidence
+    evidence: command
+    ref: cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test delivery_explanation
+  - id: telemetry-survives-the-process
+    criterion: The duration, outcome and retries of an execution are evidence after its process ends; the tracked ledger is written whole or not at all under two writers, and a ledger of an older version is migrated without inventing a measurement
+    evidence: command
+    ref: cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test evidence_telemetry
+  - id: derive-does-no-work-on-no-change
+    criterion: A derive whose inputs did not move since the last one generates nothing, says so, and leaves the tree byte for byte as it was; a missing or corrupt cache is recomputed
+    evidence: command
+    ref: bash test/run.sh 1054_a_derive_with_nothing_changed_generates_nothing
+  - id: incremental-equals-full
+    criterion: After one canonical input changes, the derive regenerates the artifacts that read it and no other, and the tree equals what a clean full derive writes, under reordered inputs, a rename, an interruption and a poisoned cache
+    evidence: command
+    ref: bash test/run.sh 1055_an_incremental_derive_equals_a_full_one
+  - id: budgets-are-measured
+    criterion: Derive and the required check have budgets per scenario set from recorded samples and judged with their noise, and a regression names the stage that moved
+    evidence: command
+    ref: bash test/run.sh 1056_derive_has_a_measured_budget
+  - id: skips-are-recorded
+    criterion: A gate or a suite case that a plan did not run leaves a record bound to the hash of the inputs that excused it, kept with the run's evidence, and a case whose reads moved is run
+    evidence: command
+    ref: bash test/run.sh 94_ci_plan
+  - id: verdict-cannot-be-bypassed
+    criterion: The one required status is red for a failed, skipped or cancelled selected job and for a verdict on another head; what GitHub's protection leaves open is reported from a dated observation; and a merge the executor did not make is on the trail with whether its required check had passed
+    evidence: command
+    ref: bash test/run.sh 1057_the_required_verdict_is_not_bypassed
+  - id: completion-has-four-answers
+    criterion: Whether a change is merged, published, deployed and healthy are four answers, each from its own evidence, and none of them is inferred from another
+    evidence: command
+    ref: cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test completion_delivery
+  - id: release-is-one-capability
+    criterion: One command lands a release from a judged commit to a verified site and installed version, records every step on a trail before it acts, changes nothing in a dry run, stops before the tag where it was not given that authority, and ends typed where a step fails
+    evidence: command
+    ref: cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test release_land
+  - id: surfaces-agree
+    criterion: The queue, the required verdict, a run and the proof of the last release read with the same ids, order and status on the command line, over HTTP, over MCP and in the Cockpit, from one fixture
+    evidence: command
+    ref: cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test surface_contract
+  - id: facts-carry-their-age
+    criterion: Every fact a surface shows carries when it was observed, and an observation older than its bound is shown as stale and never as a current pass
+    evidence: command
+    ref: cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test surface_contract
+  - id: proved-in-a-consumer
+    criterion: From the installed artifact, in a repository that is not this one, a task is started, refused for missing evidence, finished, and explained by the same query, with no path of this repository in what ran
+    evidence: command
+    ref: bash test/run.sh 1058_a_task_runs_from_the_installed_artifact
+  - id: comparison-is-published
+    criterion: The published comparison against the baseline of 2026-10-10 reads the tracked records, states the sample size of every figure and marks as unknown whatever was not measured on both sides
+    evidence: command
+    ref: bash test/run.sh 1059_the_comparison_reads_the_baseline
+governance:
+  - adr:adr-0004
+  - adr:adr-0029
+  - adr:adr-0030
+  - adr:adr-0033
+  - adr:adr-0087
+  - adr:adr-0101
+  - rule:project.derived-once
+  - rule:project.cache-is-invisible
+  - rule:project.one-derive-at-a-time
+  - rule:project.performance-evidence
+  - rule:project.interfaces-are-projections
+non_goals:
+  - A tracing service, a task database or an evidence store beside the ledger, the trail and the release records
+  - A promised duration for the pipeline; budgets follow measurements
+  - Removing the machine-wide lock that keeps one derive running at a time
+  - The high-level `ui` command, which is planned with the Cockpit control centre
+  - Changing GitHub's settings; what they leave open is reported, and closing it is the owner's act
+created_at: 2026-10-10
+updated_at: 2026-10-10

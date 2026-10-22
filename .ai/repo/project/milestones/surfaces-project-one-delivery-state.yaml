@@ -1,0 +1,66 @@
+id: surfaces-project-one-delivery-state
+title: "A slow or stuck delivery is diagnosed from the same facts on the command line, over MCP, over HTTP and in the browser, each with its age"
+slug: surfaces-project-one-delivery-state
+order: 329
+priority: p2
+problem: "One declaration reaches MCP, HTTP, OpenAPI and the Cockpit's explorer, runner, navigation and palette by construction (capability/closure.rs:3-7; tests/projections.rs:26 and :239; tests/cockpit.rs:115), so the surfaces do not disagree about what exists. They do not yet answer the question a person has when delivery is slow or stuck. The Overview's twelve cards (capability/builtin/dashboard.rs:472-617) say nothing about the pull-request queue, the required verdict, a run or whether the last release is served, and its cost rule (dashboard.rs:31-33) forbids asking an expensive source for them. A card carries no moment of its own (dashboard.rs:162-181), so a queue observed hours ago reads like one observed now: on 2026-10-10 at 17:32Z the queue held 51 open pull requests with none ready, and the required check on their heads was 14 failed, 2 passed and 35 absent. The one live channel, the WebSocket at `/events` (http/events.rs:45), carries executions only; the integration trail, the plan and the mesh reach a page by reload or by polling (share/cockpit/worktrees.js:62). A command capability declares its effect and nothing about a dry run or about what makes a repeat harmless (capability/model.rs:442 and :614-637), and no fixture asserts that one delivery fact has the same id, order and status on all four surfaces. The command `majordomus ui` does not exist: the only `Ui` variant is `web report ui` (cli.rs:2801)."
+outcome: "The Overview answers delivery from the cheap sources that already hold it: the queue's last observation, the required verdict that observation carries, and the record and the served standing of the last release; a run gains its card when the run model projects it. Every fact carries the observation of its own source, and one older than that source's bound is shown as stale and never as a pass. The one channel at `/events` carries the integration trail beside executions, with the same cursor and resync, and no second push channel exists. A command capability declares whether it has a dry run and which input makes a repeat harmless, and the hints every projection renders follow from that. One fixture holds the four surfaces to the same ids, order and status."
+current_state: "Delivery is diagnosed by running `majordomus prs status` in a terminal and reading the Integration page after a reload; the Overview, MCP and HTTP answer four other questions, and a card does not say how old its fact is."
+desired_state: "A person or an agent asks any surface why delivery is stuck and reads the same facts with their age, and a page that shows the queue moves when the trail does."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin"
+  - "apps/majordomus-cli/src/capability/model.rs"
+  - "apps/majordomus-cli/src/capability/handler.rs"
+  - "apps/majordomus-cli/src/http/events.rs"
+  - "apps/majordomus-cli/src/http/ws.rs"
+  - "apps/majordomus-cli/src/http/openapi.rs"
+  - "apps/majordomus-cli/src/cockpit"
+  - "apps/majordomus-cli/src/mcp"
+  - "apps/majordomus-cli/src/integration/mod.rs"
+  - "share/cockpit"
+  - "apps/majordomus-cli/tests"
+  - "test/cases"
+  - ".ai/repo/adrs"
+  - "docs/COCKPIT.md"
+  - "docs/EXECUTIONS.md"
+  - "docs/SURFACES.md"
+  - "docs/CAPABILITIES.md"
+  - "docs/CLAIMS.yaml"
+  - "docs/claims"
+  - "docs/generated"
+  - "site/data"
+non_scope:
+  - "`majordomus ui`: that is I2231, gated on I2131 and I2153, and I2131's record may decide against the command"
+  - "The Cockpit's areas, the intents on the Overview and the intent page on a phone: I2232, I2234 and I2225"
+  - "`observed_at` on every capability that reports state and parity of every capability across the command line, HTTP and MCP: I2149 and I2150 (runtime pack, session 1b)"
+  - "A second push channel, server-sent events or a client-side scheduler beside the one WebSocket"
+  - "A delivery report, a release analysis or an evidence judgement asked by the Overview: its sources stay the cheap ones (dashboard.rs:31-33)"
+  - "Exposing `prs drain`, `prs repair` or `release bump` over MCP or HTTP: the list of capabilities that write the repository grows one deliberate line at a time (capability/builtin/mod.rs:319-326)"
+  - "The phone drawer and its tests: branch feature/cockpit-mobile-navigation"
+acceptance_criteria:
+  - "The Overview shows the queue by disposition, the required verdict and the proof of the last release, each card naming the capability, the input and the pointer it read, and each source asked once"
+  - "Every card and every delivery answer carries the observation of its own source; one older than that source's bound is reported stale on all four surfaces and never as ok"
+  - "A line appended to the integration trail reaches a subscribed page over `/events`, a reconnect replays the gap by cursor, and a subscriber too far behind is told to resynchronise"
+  - "A command capability with no declared key is announced as not repeatable on every surface, and one that declares a dry run is proved to move nothing by it"
+  - "One fixture asserts equal ids, order and status for the queue, the verdict, a run and the release proof on the command line, HTTP, MCP and the Cockpit, and a surface made to differ fails it by name"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test surface_contract"
+  - "cargo test --test dashboard"
+  - "cargo test --test executions"
+  - "scripts/derive-check"
+evidence_required:
+  - "delivery_cards_read_from_sources"
+  - "age_on_every_surface"
+  - "trail_over_the_one_channel"
+  - "surface_contract_test"
+depends_on:
+  - "delivery-is-explained-by-evidence"
+risks:
+  - "Adding a delivery or release analysis to the Overview breaks its cost rule; a fact with no cheap source is left out and said to be, never computed in the card."
+  - "Projecting a run before the typed run model exists would make the Cockpit page the model; the run card waits for the capability that folds the trail (I2324)."
+  - "The command line is declared twice by design (capability/closure.rs:7-9), so a capability added late reaches it only after an edit of cli.rs; the fixture reads the generic `majordomus run` path where no dedicated command exists."
+  - "I2149 and I2150 are on an unlanded branch and touch the same answers and the same parity test; whichever lands second builds on the other's shape, and a second observation type or a second parity harness is the defect to avoid."
+  - "I2231 may be decided against by I2131; nothing here may assume the `ui` command exists."
+created_at: 2026-10-10
+updated_at: 2026-10-10

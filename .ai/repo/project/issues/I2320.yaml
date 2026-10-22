@@ -1,0 +1,51 @@
+id: I2320
+milestone: a-drain-is-a-durable-run
+title: "A run is decided and named: a fold over the integration trail, with a versioned event and a place in the vocabulary"
+slug: a-run-folds-the-trail
+priority: p1
+profile: deep-work
+parallel_safe: false
+serves:
+  - "a-drain-settles-unattended#a-run-is-durable"
+objective: "Record as one proposed ADR where a run lives, choosing between the integration trail (apps/majordomus-cli/src/integration) and src/execution, which unlanded ADR 0042 names, and what the word is. Then give `IntegrationEvent` (apps/majordomus-cli/src/integration/drain.rs:584) a schema version and an optional run identity written on every event of a continuous drain, and add a pure fold in apps/majordomus-cli/src/integration/run.rs that rebuilds each run from the trail: its identity, base, desired outcome, start, the acts it took and its end."
+why: "Autopilot pack 02 issue 1. A running drain's only identity is the lease holder record (pid, host, base, since: drain.rs:82); a run is an untyped pair of `continuous_started` and `continuous_stopped` lines (drain.rs:396, the closed `IntegrationAction` vocabulary), and why it ended is a free-text string (`DrainReport.stopped`, drain.rs:1436; `ContinuousReport.stopped`, drain.rs:1581). No run identity, desired outcome, authority reference, deadline, progress watermark or blocker exists anywhere, and the event carries no schema version, so the trail cannot be migrated by version. The integration module is the natural home, as the audit found. It already owns the one-executor lease (flock, token, renew at drain.rs:273, the cross-machine claim of apps/majordomus-cli/src/integration/exclusive.rs:188). It already writes an append-only trail before every act (`record`, drain.rs:664), in the common git directory every worktree shares (`COMMON_STATE_DIR`, apps/majordomus-cli/src/integration/mod.rs:79). It reconciles a merge left without an end (`reconcile`, drain.rs:1124), and its projections exist (`integration.queue`, `integration.events`, /cockpit/integration, `prs brief`). src/execution keeps its state in memory and says an execution 'does not outlive the process that accepted it' (docs/EXECUTIONS.md:59), and an episode is deliberately not a task. But ADR 0042, on the unlanded origin/feature/orchestration-is-an-execution, says orchestration state extends src/execution with no second lifecycle. Two homes decided on two branches would be two lifecycles, so the choice is one ADR that names 0042 and says what it supersedes or leaves. The word is a new noun under the blocking rule project.no-new-nouns, and docs/CONCEPTS.md is the whole vocabulary. `run` is taken twice already: `majordomus run` starts an execution (apps/majordomus-cli/src/capability/builtin/executions.rs:600) and `economics.runs` lists economics runs. Measured on 2026-10-10: this clone's trail (154 KB) holds no `continuous_started` line, so the first run will also be the fold's first input."
+current_state: "A continuous drain leaves a start line, its acts and a stop line with a sentence, and nothing groups them. Trail lines carry no version, and no record decides where orchestration state lives."
+desired_state: "A proposed ADR says that a run is a fold over the integration trail and not a record beside it, chooses the word, and settles ADR 0042's claim. docs/CONCEPTS.md defines the word and says how it differs from an execution and a task. Every event a continuous drain writes carries the run identity, every new event carries the schema version, and `integration::run::runs(events)` returns the same runs from the same lines every time."
+scope:
+  - "apps/majordomus-cli/src/integration/run.rs"
+  - "apps/majordomus-cli/src/integration/drain.rs"
+  - "apps/majordomus-cli/src/integration/mod.rs"
+  - "apps/majordomus-cli/src/capability/builtin/integration.rs"
+  - "apps/majordomus-cli/tests/integration_run.rs"
+  - "apps/majordomus-cli/tests/integration_trail.rs"
+  - ".ai/repo/adrs"
+  - "docs/CONCEPTS.md"
+  - "docs/INTEGRATION.md"
+non_scope:
+  - "Not a run file, table or store beside the trail, and no run state in apps/majordomus-cli/src/execution: the fold is the only account"
+  - "Not landing ADR 0042 or rewriting src/execution: the ADR here records the choice and how it relates to 0042 on origin/feature/orchestration-is-an-execution"
+  - "Not the typed end, the budget or the no-progress bound: I2321"
+  - "Not the verbs that start, stop and resume a run, nor one leader per base: I2322"
+  - "Not detaching from the terminal: I2323. Not new surfaces: I2324"
+  - "Not the authority reference a run acts under: the field is added by I2321 from the profile I2315 declares"
+  - "Not the event channel carrying the trail: I2363"
+  - "Not taking an ADR number before the issue starts: whoever starts it announces the number on the peer board"
+depends_on: []
+acceptance_criteria:
+  - "The ADR exists with status `proposed`, names ADR 0042 and says which home it chose and why, and docs/CONCEPTS.md defines the chosen word in one row that distinguishes it from an execution and a task"
+  - "A continuous drain writes the same run identity on its start line, on every event between, and on its stop line; a bounded drain writes none and behaves as before"
+  - "`runs(events)` over a recorded trail returns each run with its identity, base, start, acts and end, and folding the same lines twice, or with a duplicated line, gives the same result"
+  - "A trail written by 0.20.0, with no version and no run identity, parses unchanged and folds a `continuous_started`/`continuous_stopped` pair into a run with a derived identity; a line with a schema version newer than the reader knows is reported, never silently dropped"
+  - "A run whose start has no stop folds as unended, not as ended, and `integration.events` returns the new fields"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test integration_run"
+  - "cargo test --test integration_trail"
+  - "scripts/derive-check"
+evidence_required:
+  - "proposed_adr"
+  - "concepts_entry"
+  - "run_fold_replay_test"
+  - "old_trail_parses_test"
+created_at: 2026-10-10
+updated_at: 2026-10-10
