@@ -405,9 +405,18 @@ else
   gh api --paginate "repos/$REPO/milestones?state=all" \
     --jq '.[] | [(.number|tostring), .title, .state] | @tsv' > "$REMOTE_MS" 2>/dev/null \
     || unreadable milestones
-  gh api --paginate "repos/$REPO/issues?state=all&per_page=100" \
-    --jq '.[] | select(has("pull_request")|not) | [(.number|tostring), .title, .state, (.body // "" | @base64), (.milestone.title // ""), ((.body // "") | [scan("majordomus:record ([A-Za-z0-9_.-]+)")] | if length > 0 then .[0][0] else "" end)] | @tsv' \
+  # gh issue list pages through GraphQL to the end. `gh api --paginate` over the REST issues
+  # endpoint stopped after four pages of issues and pull requests mixed (gh 2.98, 2026-10-22),
+  # so most issues read as missing and an --apply created 487 duplicates (I3920). A listing
+  # shorter than the repository's own count is therefore unreadable, never a set of absences.
+  gh issue list --repo "$REPO" --state all --limit 1000000 \
+    --json number,title,state,body,milestone \
+    --jq '.[] | [(.number|tostring), .title, (.state|ascii_downcase), (.body // "" | @base64), (.milestone.title // ""), ((.body // "") | [scan("majordomus:record ([A-Za-z0-9_.-]+)")] | if length > 0 then .[0][0] else "" end)] | @tsv' \
     > "$REMOTE_IS" 2>/dev/null || unreadable issues
+  want_issues="$(gh api graphql -f owner="${REPO%%/*}" -f name="${REPO#*/}" \
+    -f query='query($owner:String!,$name:String!){repository(owner:$owner,name:$name){issues{totalCount}}}' \
+    --jq '.data.repository.issues.totalCount' 2>/dev/null)" || unreadable issues
+  [ "$(wc -l < "$REMOTE_IS" | tr -d ' ')" -ge "${want_issues:-1}" ] || unreadable issues
 fi
 
 # One resolution for every question about a remote issue. A record is found by the identity

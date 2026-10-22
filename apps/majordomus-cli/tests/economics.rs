@@ -2283,20 +2283,22 @@ fn test_task_economics_command_fails_outside_a_repository_and_on_a_closed_output
     assert!(out.is_empty(), "{out}");
 
     let f = Fixture::new();
-    let (reader, writer) = std::io::pipe().unwrap();
-    drop(reader);
-    let status = common::majordomus()
-        .args(["economics", "tasks", "--format", "json"])
-        .current_dir(f.root())
-        .env("MAJORDOMUS_SHARE", common::dist_share())
-        .stdin(Stdio::null())
-        .stdout(writer)
-        .stderr(Stdio::null())
-        .status()
-        .unwrap();
-    assert_eq!(
-        status.code(),
-        Some(13),
-        "a broken pipe is a transport error"
-    );
+    for format in ["json", "text"] {
+        let (reader, writer) = std::io::pipe().unwrap();
+        drop(reader);
+        let status = common::majordomus()
+            .args(["economics", "tasks", "--format", format])
+            .current_dir(f.root())
+            .env("MAJORDOMUS_SHARE", common::dist_share())
+            .stdin(Stdio::null())
+            .stdout(writer)
+            .stderr(Stdio::null())
+            .status()
+            .unwrap();
+        assert_eq!(
+            status.code(),
+            Some(13),
+            "a broken pipe is a transport error ({format})"
+        );
+    }
 }

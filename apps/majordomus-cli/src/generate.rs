@@ -3756,7 +3756,10 @@ mod tests {
         // a declaration that names no kind refuses the target rather than plan an empty one
         std::fs::write(repo.root().join(crate::entity::PUBLICATION), "# no kind\n").unwrap();
         let app = crate::app::App::load(&args).unwrap();
-        assert!(plan(&app, &[Target::Entities]).is_err(), "a declaration of no kind");
+        assert!(
+            plan(&app, &[Target::Entities]).is_err(),
+            "a declaration of no kind"
+        );
 
         std::fs::remove_file(repo.root().join(crate::entity::PUBLICATION)).unwrap();
         let app = crate::app::App::load(&args).unwrap();
