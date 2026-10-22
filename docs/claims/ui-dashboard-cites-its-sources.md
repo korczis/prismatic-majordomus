@@ -19,9 +19,9 @@ The dashboard (`apps/majordomus-cli/src/ui/dashboard.rs`) declares the sources i
 It asks them through the one executor that serves MCP and HTTP, all at once, and renders
 each answer with a source line naming the capability and linking
 `/cockpit/capabilities/<id>`. A source that fails reads "not answered", never zero
-(`project.ui-derived-state`). The queue is left out of the first paint. A
-`data-panel-src="/ui/panels/pull-requests"` placeholder is filled by the UI's one script, and
-a reader without JavaScript gets it as a link.
+(`project.ui-derived-state`). The queue is left out of the first paint. Its place holds a
+`data-panel-src` placeholder naming the panel's route, `/ui/panels/pull-requests`, which the
+UI's one script fills, and a reader without JavaScript gets it as a link.
 
 `apps/majordomus-cli/tests/ui_surface.rs` proves the claim over a real socket against a
 disposable repository. `the_dashboard_is_served_at_ui_under_the_cockpits_policy` asks for
