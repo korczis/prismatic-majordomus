@@ -166,8 +166,8 @@ pub use provenance::{
     EvidenceToolchainSource, StampRequest,
 };
 pub use record::{
-    parse_crate_binaries, read_crate_output, record, CrateBinary, CrateRead, RecordOutcome,
-    RecordRequest,
+    parse_crate_binaries, read_crate_output, record, record_verification, CrateBinary, CrateRead,
+    RecordOutcome, RecordRequest, Verification,
 };
 pub use run::{
     run_id, weaken_by_records, weakened_by_records, EvidenceAbsent, EvidenceDropped,
@@ -179,6 +179,11 @@ pub use run::{
 /// The repository has exactly two that a claim may name today. A third would be a variant
 /// here and a branch in [`TestId::of`]; a claim naming something neither runner produces is
 /// reported as [`ProofState::Unrunnable`] rather than silently counted as covered.
+///
+/// [`Runner::Verify`] is not a test runner a claim names: it is the run of a verification the
+/// repository's profile declares, recorded in the same ledger so that a command criterion is
+/// judged from the same receipts as a test (`verify:<name>`, I3395). No path names one, so
+/// [`TestId::of`] never yields it and [`TestId::named`] refuses it.
 ///
 /// ```
 /// use majordomus_cli::evidence::{Runner, TestId};
@@ -209,6 +214,9 @@ pub enum Runner {
     Suite,
     /// An integration test binary under `apps/majordomus-cli/tests/`, run by `cargo test`.
     Crate,
+    /// A verification the effective profile declares under `verification.commands`, run by
+    /// [`record_verification`] and keyed `verify:<name>`.
+    Verify,
 }
 
 impl Runner {
@@ -223,11 +231,13 @@ impl Runner {
     /// assert_eq!(Runner::Suite.prefix(), "suite");
     /// assert_eq!(Runner::Crate.prefix(), "crate");
     /// assert_ne!(Runner::Suite.prefix(), Runner::Crate.prefix());
+    /// assert_eq!(Runner::Verify.prefix(), "verify");
     /// ```
     pub fn prefix(self) -> &'static str {
         match self {
             Runner::Suite => "suite",
             Runner::Crate => "crate",
+            Runner::Verify => "verify",
         }
     }
 }
@@ -474,9 +484,17 @@ impl TestId {
     /// assert!(TestId::named(Runner::Suite, "").is_none());
     /// assert!(TestId::named(Runner::Crate, "a/b").is_none());
     /// assert!(TestId::named(Runner::Suite, ".hidden").is_none());
+    /// // a verification is not a test: it is named `verify:<name>` and resolved against the
+    /// // profile that declares it, never through a test id
+    /// assert!(TestId::named(Runner::Verify, "pytest").is_none());
     /// ```
     pub fn named(runner: Runner, name: &str) -> Option<TestId> {
-        if name.is_empty() || name.contains('/') || name.contains('\\') || name.starts_with('.') {
+        if runner == Runner::Verify
+            || name.is_empty()
+            || name.contains('/')
+            || name.contains('\\')
+            || name.starts_with('.')
+        {
             return None;
         }
         Some(TestId {
@@ -502,6 +520,9 @@ impl TestId {
         match self.runner {
             Runner::Suite => format!("test/cases/{}.sh", self.name),
             Runner::Crate => format!("apps/majordomus-cli/tests/{}.rs", self.name),
+            // never a validated id (`TestId::named` refuses it): the layer that declares a
+            // verification, at its default home; a recorded run carries the exact file
+            Runner::Verify => VERIFICATION_LAYER.to_string(),
         }
     }
 
@@ -526,9 +547,20 @@ impl TestId {
         match self.runner {
             Runner::Suite => format!("bash test/run.sh {}", self.name),
             Runner::Crate => format!("cargo test --test {}", self.name),
+            // never a validated id: the declared command is the profile's, and a recorded
+            // run carries it in `Execution::command`; this names where to read it
+            Runner::Verify => format!(
+                "the command {VERIFICATION_LAYER}/<profile>.yaml declares as \
+                 verification.commands.{}",
+                self.name
+            ),
         }
     }
 }
+
+/// Where a repository's profiles live by default, and so where a verification is declared:
+/// `verification.commands.<name>` of a profile under it.
+pub const VERIFICATION_LAYER: &str = ".ai/repo/profiles";
 
 /// One recorded run of one test: the whole of what this repository durably remembers about
 /// it.

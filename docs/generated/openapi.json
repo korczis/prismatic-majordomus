@@ -34460,9 +34460,14 @@
             "type": "string",
             "const": "crate",
             "description": "An integration test binary under `apps/majordomus-cli/tests/`, run by `cargo test`."
+          },
+          {
+            "type": "string",
+            "const": "verify",
+            "description": "A verification the effective profile declares under `verification.commands`, run by\n`record_verification` and keyed `verify:<name>`."
           }
         ],
-        "description": "Which runner produced a result, and therefore how the test is named and re-run.\n\nThe repository has exactly two that a claim may name today. A third would be a variant\nhere and a branch in `TestId::of`; a claim naming something neither runner produces is\nreported as `ProofState::Unrunnable` rather than silently counted as covered.\n\n```\nuse majordomus_cli::evidence::{Runner, TestId};\n\n// which runner owns a test is read off where the test lives, never declared\nassert_eq!(TestId::of(\"test/cases/07_scope.sh\").unwrap().runner, Runner::Suite);\nassert_eq!(\n    TestId::of(\"apps/majordomus-cli/tests/why.rs\").unwrap().runner,\n    Runner::Crate\n);\n// and a path under neither directory belongs to no runner at all\nassert!(TestId::of(\"test/lib.sh\").is_none());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Runner;\nassert_eq!(Runner::Suite.prefix(), \"suite\");\nassert_eq!(Runner::Crate.prefix(), \"crate\");\n```"
+        "description": "Which runner produced a result, and therefore how the test is named and re-run.\n\nThe repository has exactly two that a claim may name today. A third would be a variant\nhere and a branch in `TestId::of`; a claim naming something neither runner produces is\nreported as `ProofState::Unrunnable` rather than silently counted as covered.\n\n`Runner::Verify` is not a test runner a claim names: it is the run of a verification the\nrepository's profile declares, recorded in the same ledger so that a command criterion is\njudged from the same receipts as a test (`verify:<name>`, I3395). No path names one, so\n`TestId::of` never yields it and `TestId::named` refuses it.\n\n```\nuse majordomus_cli::evidence::{Runner, TestId};\n\n// which runner owns a test is read off where the test lives, never declared\nassert_eq!(TestId::of(\"test/cases/07_scope.sh\").unwrap().runner, Runner::Suite);\nassert_eq!(\n    TestId::of(\"apps/majordomus-cli/tests/why.rs\").unwrap().runner,\n    Runner::Crate\n);\n// and a path under neither directory belongs to no runner at all\nassert!(TestId::of(\"test/lib.sh\").is_none());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Runner;\nassert_eq!(Runner::Suite.prefix(), \"suite\");\nassert_eq!(Runner::Crate.prefix(), \"crate\");\n```"
       },
       "EvidenceSource": {
         "oneOf": [
@@ -39769,7 +39774,7 @@
           {
             "type": "string",
             "const": "not_derivable",
-            "description": "The reference resolves, and this kind of evidence (`command`, `deployment`) is not\nderivable from the ledger, so it never meets a criterion by itself."
+            "description": "The reference resolves, and this kind of evidence (`command` other than\n`verify:<name>`, `deployment`) is not derivable from the ledger, so it never meets a\ncriterion by itself."
           },
           {
             "type": "string",
@@ -40731,12 +40736,12 @@
           {
             "type": "string",
             "const": "unsatisfied",
-            "description": "A criterion the ledger or the claim join can settle (`test`, `claim`) is not met."
+            "description": "A criterion the ledger or the claim join can settle (`test`, `claim`, a `command` that\ncites `verify:<name>`) is not met."
           },
           {
             "type": "string",
             "const": "unknown",
-            "description": "Every unmet criterion is of a kind the ledger cannot yet settle (`command`,\n`deployment`), or the intent declares no criterion: the evidence cannot answer."
+            "description": "Every unmet criterion is of a kind the ledger cannot yet settle (`command` other than\n`verify:<name>`, `deployment`), or the intent declares no criterion: the evidence\ncannot answer."
           }
         ],
         "description": "What the evidence alone says about an intent, as a word: derived from its criteria and\nnever from the plan, so it can read `satisfied` while a milestone is still open (ADR 0107).\n\n```\nuse majordomus_cli::intent::IntentVerdictState;\nlet word = serde_json::to_string(&IntentVerdictState::Unsatisfied).unwrap();\nassert_eq!(word, \"\\\"unsatisfied\\\"\");\nassert_eq!(IntentVerdictState::Satisfied.as_str(), \"satisfied\");\n```"

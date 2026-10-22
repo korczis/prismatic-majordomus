@@ -49,7 +49,7 @@ use serde_json::Value;
 
 use crate::evidence::{
     self, compare, freshness, Comparison, EvidenceReport, Ledger, Presented, ProofState, Recorded,
-    TestId, TreeState,
+    Runner, TestId, TreeState, Verification,
 };
 use crate::index::Index;
 use crate::intent_plan::{coverage, IntentCoverage, IntentOutline};
@@ -163,8 +163,9 @@ pub enum IntentEvidenceState {
     /// The reference resolves and no run counts for it: none was recorded, the latest run
     /// declined to run (a skip), or the claim names no test a runner drives.
     NotRun,
-    /// The reference resolves, and this kind of evidence (`command`, `deployment`) is not
-    /// derivable from the ledger, so it never meets a criterion by itself.
+    /// The reference resolves, and this kind of evidence (`command` other than
+    /// `verify:<name>`, `deployment`) is not derivable from the ledger, so it never meets a
+    /// criterion by itself.
     NotDerivable,
     /// The reference is empty or names nothing this repository holds.
     Unresolved,
@@ -234,10 +235,12 @@ impl IntentEvidenceState {
 pub enum IntentVerdictState {
     /// Every criterion has current evidence.
     Satisfied,
-    /// A criterion the ledger or the claim join can settle (`test`, `claim`) is not met.
+    /// A criterion the ledger or the claim join can settle (`test`, `claim`, a `command` that
+    /// cites `verify:<name>`) is not met.
     Unsatisfied,
-    /// Every unmet criterion is of a kind the ledger cannot yet settle (`command`,
-    /// `deployment`), or the intent declares no criterion: the evidence cannot answer.
+    /// Every unmet criterion is of a kind the ledger cannot yet settle (`command` other than
+    /// `verify:<name>`, `deployment`), or the intent declares no criterion: the evidence
+    /// cannot answer.
     Unknown,
 }
 
@@ -338,7 +341,17 @@ pub fn verdict(criteria: &[IntentCriterion]) -> IntentVerdict {
         IntentVerdictState::Unknown
     } else if reasons.is_empty() {
         IntentVerdictState::Satisfied
-    } else if reasons.iter().any(|r| ledger_settles(&r.evidence)) {
+    } else if reasons.iter().any(|r| {
+        // a criterion the ledger judged (a `verify:` command among them) settles the
+        // verdict whatever its kind; one that resolves to nothing derivable does not
+        ledger_settles(&r.evidence)
+            || matches!(
+                r.state,
+                IntentEvidenceState::Stale
+                    | IntentEvidenceState::Failing
+                    | IntentEvidenceState::NotRun
+            )
+    }) {
         IntentVerdictState::Unsatisfied
     } else {
         IntentVerdictState::Unknown
@@ -628,6 +641,24 @@ pub trait EvidenceLookup {
     /// # }
     /// ```
     fn file(&self, path: &str) -> bool;
+    /// A `verify:<name>` reference: the verification the effective profile declares under
+    /// that name, with what its latest recorded run says at the working tree; or why the name
+    /// resolves to nothing, naming it. A lookup that knows no profile resolves none, which is
+    /// a refusal and never a criterion that merely has not run.
+    ///
+    /// ```
+    /// use majordomus_cli::intent::EvidenceLookup;
+    /// # fn demo(ev: &dyn EvidenceLookup) {
+    /// if let Err(why) = ev.verification("no-such-check") {
+    ///     assert!(why.contains("no-such-check"), "a refusal names what it refused");
+    /// }
+    /// # }
+    /// ```
+    fn verification(&self, name: &str) -> Result<(Verification, TestStanding), String> {
+        Err(format!(
+            "`verify:{name}` cannot be resolved: this evidence knows no profile to declare it"
+        ))
+    }
 }
 
 /// The evidence of a real repository: its ledger, its claim matrix joined to that ledger,
@@ -816,6 +847,51 @@ impl EvidenceLookup for RepositoryEvidence<'_> {
 
     fn file(&self, path: &str) -> bool {
         !path.contains("..") && self.root().join(path).exists()
+    }
+
+    fn verification(&self, name: &str) -> Result<(Verification, TestStanding), String> {
+        let declared = Verification::declared(self.index, name)?;
+        let Some(e) = self.ledger.latest(&declared.key()) else {
+            let standing = TestStanding {
+                present: true,
+                state: IntentEvidenceState::NotRun,
+                proof: Some(ProofState::NotRun),
+            };
+            return Ok((declared, standing));
+        };
+        // a run of another command is not a run of this verification: the declaration
+        // changed since, and what ran then is not what the profile asks for now
+        if e.runner != Runner::Verify || e.command.trim() != declared.command {
+            let standing = TestStanding {
+                present: true,
+                state: IntentEvidenceState::Stale,
+                proof: Some(ProofState::Stale),
+            };
+            return Ok((declared, standing));
+        }
+        let moved = e.outcome.proves() && e.digest_matches(self.root()) == Some(false);
+        let mut comparison = self.comparison(&e.commit);
+        comparison
+            .changed
+            .iter_mut()
+            .for_each(|changed| changed.retain(|p| !within(p, PLAN_RECORDS)));
+        // a verification names no code under test: it is the repository's own check of the
+        // whole tree, so its pass is current only at the tree it ran on (the truth table's
+        // row 14), the ledger and the plan's own records aside
+        let judgement = freshness(
+            Recorded::Ran(e),
+            None,
+            &declared.source,
+            moved,
+            Some(&comparison),
+            Presented::WorkingTree.tree(),
+        );
+        let standing = TestStanding {
+            present: true,
+            state: IntentEvidenceState::judged(judgement.state, TreeState::parse(&e.working_tree)),
+            proof: Some(judgement.state),
+        };
+        Ok((declared, standing))
     }
 }
 
@@ -1132,11 +1208,23 @@ fn criterion_of(
                     )
                 }
             }
-            // `command`: the schema admits nothing else
-            _ => {
-                reproduce = Some(r.to_string());
-                IntentEvidenceState::NotDerivable
-            }
+            // `command`: the schema admits nothing else. A `verify:<name>` command names a
+            // verification the effective profile declares, and is judged from its recorded
+            // runs; any other command is not derivable yet
+            _ => match r.strip_prefix("verify:") {
+                Some(name) => match ev.verification(name) {
+                    Err(why) => unresolved(findings, why),
+                    Ok((declared, standing)) => {
+                        reproduce = Some(declared.command);
+                        proof = standing.proof;
+                        standing.state
+                    }
+                },
+                None => {
+                    reproduce = Some(r.to_string());
+                    IntentEvidenceState::NotDerivable
+                }
+            },
         }
     };
     IntentCriterion {

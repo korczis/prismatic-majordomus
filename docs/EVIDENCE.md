@@ -300,6 +300,18 @@ its own file is not that code, so it is judged as a route that names no inputs (
 pass is current only while nothing but the ledger has changed since the run, and a change to
 the code under test, with the test file byte-identical, makes it `stale`.
 
+A repository whose tests are not where this tool keeps its own (`test/cases/`, a crate's
+`tests/`) cites its own check instead: the effective profile (the policy's `profiles.default`)
+declares it under `verification.commands.<name>`, and a criterion names it as
+`evidence: command`, `ref: verify:<name>`. A name the effective profile does not declare is
+`unresolved`, with a finding naming it. A run of it is recorded in the same ledger, keyed
+`verify:<name>` with the runner `verify`, the declaring profile file as its source and the
+declared command as its command, so no second store holds command receipts. It names no code
+under test (the whole tree is its input, row 14): its pass is current only at the tree it ran
+on, the ledger and the plan's own records aside, and a run of a command other than the one
+declared now is `stale`. The library records one with `evidence::record_verification`; the
+command line's `majordomus evidence record --verify <name>` is not built yet (I3395).
+
 Counting `inputs_unchanged` as met does not make the two strongest states one tick. `met` is
 the intent's own question, and every intent criterion carries `proof`, the verdict behind it:
 the terminal prints `current (proven)` or `current (inputs_unchanged)`, and the Cockpit's badge

@@ -945,11 +945,13 @@ pub fn record(root: &Path, req: &RecordRequest) -> Result<RecordOutcome> {
         if outcome.proves() {
             passed += 1;
         }
-        let producer = match id.runner {
-            Runner::Suite => P::Suite,
-            Runner::Crate => P::Crate,
+        // a report names only suite cases and crate binaries; a verification is recorded by
+        // `record_verification`, which measures its own tree
+        let tree = match id.runner {
+            Runner::Suite => tree_of(P::Suite),
+            Runner::Crate => tree_of(P::Crate),
+            Runner::Verify => TreeState::Unknown,
         };
-        let tree = tree_of(producer);
         let source = id.source();
         let digest = digest_ran(root, &commit, &source, tree);
         executions.push(Execution {
@@ -1069,6 +1071,198 @@ fn write_run_record(out: &Path, run_record: &EvidenceRunRecord) -> std::io::Resu
     let mut text = serde_json::to_string_pretty(run_record).unwrap_or_default();
     text.push('\n');
     std::fs::write(out, text)
+}
+
+// ---------------------------------------------------------------- a declared verification
+
+/// A verification the repository's effective profile declares: the command
+/// `verification.commands.<name>` of the profile the policy names as `profiles.default`, with
+/// the file that declares it.
+///
+/// It is the repository's own check, named once, so that an intent criterion in a repository
+/// whose tests are not where this tool keeps its own (`test/cases/`, a crate's `tests/`) can
+/// still cite one: `evidence: command`, `ref: verify:<name>` (I3395).
+///
+/// ```
+/// use majordomus_cli::evidence::Verification;
+/// let v = Verification {
+///     name: "unit".into(),
+///     profile: "implementation".into(),
+///     source: ".ai/repo/profiles/implementation.yaml".into(),
+///     command: "sh tests/run.sh".into(),
+/// };
+/// assert_eq!(v.key(), "verify:unit");
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Verification {
+    /// The name a criterion cites after `verify:`.
+    pub name: String,
+    /// The profile that declares it: the policy's default.
+    pub profile: String,
+    /// The repository-relative file that declares it.
+    pub source: String,
+    /// The command, run by `sh -c` at the repository root.
+    pub command: String,
+}
+
+impl Verification {
+    /// The ledger's key for this verification's runs: `verify:<name>`.
+    ///
+    /// ```
+    /// # use majordomus_cli::evidence::Verification;
+    /// # let v = Verification { name: "lint".into(), profile: "p".into(),
+    /// #     source: "s".into(), command: "true".into() };
+    /// assert_eq!(v.key(), "verify:lint");
+    /// ```
+    pub fn key(&self) -> String {
+        format!("{}:{}", Runner::Verify.prefix(), self.name)
+    }
+
+    /// The verification `name` the effective profile of an indexed repository declares, or
+    /// why there is none, naming the name, the profile and where it would be declared.
+    ///
+    /// The effective profile is the policy's `profiles.default`. A name that is not declared
+    /// there is refused even when another profile declares it: a criterion is judged against
+    /// one declaration, not against whichever profile happens to carry the name.
+    ///
+    /// ```
+    /// use majordomus_cli::evidence::Verification;
+    /// use majordomus_cli::synthetic::SyntheticRepository;
+    /// let repo = SyntheticRepository::small().unwrap();
+    /// let index = repo.index().unwrap();
+    /// let refused = Verification::declared(&index, "no-such-check").unwrap_err();
+    /// assert!(refused.contains("no-such-check"), "{refused}");
+    /// ```
+    pub fn declared(
+        index: &crate::index::Index,
+        name: &str,
+    ) -> std::result::Result<Verification, String> {
+        let name = name.trim();
+        if name.is_empty() {
+            return Err("`verify:` names no verification".to_string());
+        }
+        let default = index
+            .objects
+            .iter()
+            .find(|o| o.kind == "policy")
+            .and_then(|o| o.metadata.get("profiles"))
+            .and_then(|p| p.get("default"))
+            .and_then(serde_json::Value::as_str)
+            .map(str::to_string)
+            .ok_or_else(|| {
+                format!(
+                    "`verify:{name}` cannot be resolved: the policy names no `profiles.default`, \
+                     so there is no effective profile to declare it"
+                )
+            })?;
+        let profile = index
+            .objects
+            .iter()
+            .find(|o| {
+                o.kind == "profile"
+                    && (o.identity == default
+                        || o.metadata.get("name").and_then(serde_json::Value::as_str)
+                            == Some(default.as_str()))
+            })
+            .ok_or_else(|| {
+                format!(
+                    "`verify:{name}` cannot be resolved: the effective profile `{default}` is not \
+                     in the repository"
+                )
+            })?;
+        let command = profile
+            .metadata
+            .get("verification")
+            .and_then(|v| v.get("commands"))
+            .and_then(|c| c.get(name))
+            .and_then(serde_json::Value::as_str)
+            .map(str::trim)
+            .filter(|c| !c.is_empty())
+            .ok_or_else(|| {
+                format!(
+                    "`verify:{name}` names no verification the effective profile `{default}` \
+                     declares: add `verification.commands.{name}` to {}",
+                    profile.provenance.path
+                )
+            })?;
+        Ok(Verification {
+            name: name.to_string(),
+            profile: default,
+            source: profile.provenance.path.clone(),
+            command: command.to_string(),
+        })
+    }
+}
+
+/// Run a declared verification at the repository root and record the run in the tracked
+/// ledger: its exit as the outcome (0 passes, any other exit fails, a command that could not
+/// be started errors), its duration, the commit and the tree it ran on, the digest of the
+/// file that declares it, the time and the origin. Returns the execution it recorded.
+///
+/// The tree is measured before and after the run, with the ledger ignored, and the weaker of
+/// the two is recorded: a command that dirtied the checkout did not run on its commit, so
+/// its pass is never `proven`. The command's own output goes to this process's stdout and
+/// stderr; the ledger keeps only what a reader needs to decide whether to believe the run.
+///
+/// It records, it does not decide: whether the run is current evidence for a criterion is
+/// the judgement [`crate::intent`] makes at the presented tree.
+///
+/// ```no_run
+/// use majordomus_cli::evidence::{record_verification, Origin, Verification};
+/// # fn demo(root: &std::path::Path, v: &Verification) {
+/// let e = record_verification(root, v, Origin::Local).unwrap();
+/// assert_eq!(e.test, v.key());
+/// # }
+/// ```
+pub fn record_verification(root: &Path, v: &Verification, origin: Origin) -> Result<Execution> {
+    let commit = match crate::git::inspect(root) {
+        crate::git::GitState::Available(i) => i.head,
+        crate::git::GitState::Unavailable { .. } => None,
+    }
+    .and_then(|h| CommitId::parse(&h).ok())
+    .ok_or_else(|| {
+        refused(
+            "this is not a git work tree with a commit, so a verification recorded here would \
+             carry no provenance and prove nothing",
+        )
+    })?
+    .as_str()
+    .to_string();
+    let measure = || TreeState::parse(&crate::git::working_tree_ignoring(root, &[LEDGER_PATH]));
+    let before = measure();
+    let digest = digest_ran(root, &commit, &v.source, before);
+    let started = std::time::Instant::now();
+    let status = std::process::Command::new("sh")
+        .arg("-c")
+        .arg(&v.command)
+        .current_dir(root)
+        .stdin(std::process::Stdio::null())
+        .status();
+    let seconds = started.elapsed().as_secs();
+    let outcome = match status {
+        Ok(s) if s.success() => Outcome::Pass,
+        Ok(_) => Outcome::Fail,
+        Err(_) => Outcome::Error,
+    };
+    let tree = before.weaker(measure());
+    let execution = Execution {
+        test: v.key(),
+        runner: Runner::Verify,
+        source: v.source.clone(),
+        outcome,
+        seconds,
+        commit,
+        working_tree: tree.as_str().into(),
+        digest,
+        at: now_rfc3339(),
+        origin,
+        command: v.command.clone(),
+        run: None,
+    };
+    let mut ledger = Ledger::load_from(root, LedgerTarget::Repo)?;
+    ledger.merge([execution.clone()]);
+    ledger.save_to(root, LedgerTarget::Repo)?;
+    Ok(execution)
 }
 
 #[cfg(test)]

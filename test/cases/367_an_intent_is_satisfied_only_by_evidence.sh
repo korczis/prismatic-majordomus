@@ -156,6 +156,72 @@ same "the verdict over stale evidence" "unsatisfied" "$(verdict)"
 record fail
 same "a failing run" "failing" "$(state)"
 
+# --- a repository whose tests are its own: pytest-style files under tests/, outside
+#     test/cases/, run by a command the effective profile declares. A criterion cites that
+#     command as `verify:<name>`: unresolved, naming it, until the profile declares it; then
+#     current only by a recorded passing run of exactly that command at this tree (I3395)
+mkdir -p tests src
+printf "def test_the_app_says_ok():\n    assert open('src/app.txt').read().strip() == 'ok'\n" \
+  > tests/test_app.py
+printf '#!/bin/sh\ngrep -q "def test_" tests/test_app.py && [ "$(cat src/app.txt)" = ok ]\n' \
+  > tests/run.sh
+echo ok > src/app.txt
+cat > .ai/repo/project/intents/own-tests.yaml <<'YAML'
+id: own-tests
+title: The repository's own tests pass
+statement: "The repository's own tests pass at the tree it presents."
+invariants:
+  - The probe stays a valid repository
+milestones:
+  - probe
+satisfaction:
+  - id: own-tests-pass
+    criterion: The tests under tests/ pass
+    evidence: command
+    ref: verify:unit
+YAML
+git add -A >/dev/null && git commit -qm "a criterion over the repository's own tests"
+own() { "$RB" intent show own-tests --format json | jq -r "$1"; }
+same "an undeclared verification" "unresolved" "$(own '.satisfaction[0].state')"
+expect_exit 10 "$RB" intent validate
+expect_grep 'FAIL unresolved_evidence_ref  own-tests: .*verify:unit.*verification\.commands\.unit'
+
+profile=.ai/repo/profiles/implementation.yaml
+awk '{ print } /^  decision_record_required:/ { print "  commands:"; print "    unit: sh tests/run.sh" }' \
+  "$profile" > "$M/profile.yaml"
+cp "$M/profile.yaml" "$profile"
+git add -A >/dev/null && git commit -qm "the profile declares the repository's own check"
+expect_exit 0 "$RB" intent validate
+same "a declared verification never run" "not_run" "$(own '.satisfaction[0].state')"
+same "the command that produces it again" "sh tests/run.sh" "$(own '.satisfaction[0].reproduce')"
+
+verify_run() { # <outcome> [<command>]
+  local digest commit
+  digest="sha256:$(sha256_of_file "$profile")"
+  commit="$(git rev-parse HEAD)"
+  jq -n --arg d "$digest" --arg c "$commit" --arg o "$1" --arg cmd "${2:-sh tests/run.sh}" \
+    --arg s "$profile" '{version: 1, executions: [{
+      test: "verify:unit", runner: "verify", source: $s,
+      outcome: $o, seconds: 1, commit: $c, working_tree: "clean", digest: $d,
+      at: "2026-10-19T00:00:00Z", origin: "local", command: $cmd}]}' \
+    > .ai/repo/evidence/ledger.json
+  git add -A >/dev/null && git commit -qm "record verify:unit $1"
+}
+verify_run pass
+same "a passing run at this tree" "current" "$(own '.satisfaction[0].state')"
+same "the verdict of a current verification" "satisfied" "$(own '.verdict.state')"
+verify_run pass "sh tests/other.sh"
+same "a passing run of another command" "stale" "$(own '.satisfaction[0].state')"
+verify_run pass
+echo broken > src/app.txt
+git add -A >/dev/null && git commit -qm "the app changes after the run"
+same "a passing run at another tree" "stale" "$(own '.satisfaction[0].state')"
+same "the verdict over a run of another tree" "unsatisfied" "$(own '.verdict.state')"
+verify_run fail
+same "a failing run" "failing" "$(own '.satisfaction[0].state')"
+rm .ai/repo/project/intents/own-tests.yaml
+git add -A >/dev/null && git commit -qm "the probe alone again"
+
 # --- a link that resolves to nothing is refused, named, with a non-zero exit
 sed 's#test/cases/01_probe.sh#test/cases/404_absent.sh#' .ai/repo/project/intents/probe.yaml > "$T/probe.yaml"
 cp "$T/probe.yaml" .ai/repo/project/intents/probe.yaml

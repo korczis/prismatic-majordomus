@@ -8,7 +8,10 @@ use std::io::Write;
 use std::process::Stdio;
 
 use common::{run_in, Fixture, Served};
-use majordomus_cli::evidence::{digest_of, Execution, Ledger, Origin, Outcome, Runner, TestId};
+use majordomus_cli::evidence::{
+    digest_of, record_verification, Execution, Ledger, Origin, Outcome, Runner, TestId,
+    Verification,
+};
 use serde_json::{json, Value};
 
 /// One MCP tool call over stdio; the structured content of its answer.
@@ -502,6 +505,177 @@ fn a_test_that_names_no_code_under_test_is_current_only_at_the_commit_it_ran_on(
         judged(&f),
         is("stale", false, "stale"),
         "a change it names nothing against"
+    );
+}
+
+/// The fixture as a repository whose tests are not where this tool keeps its own: pytest-style
+/// files under `tests/`, run by a command its profile declares, and an intent whose one
+/// criterion cites that command by name.
+fn foreign_repository(commands: &str) -> Fixture {
+    let f = Fixture::new();
+    f.write(
+        "tests/test_app.py",
+        "def test_the_app_says_ok():\n    assert open('src/app.txt').read().strip() == 'ok'\n",
+    );
+    f.write(
+        "tests/run.sh",
+        "#!/bin/sh\n# runs tests/test_*.py without a Python toolchain: each asserts src/app.txt\n\
+         grep -q 'def test_' tests/test_app.py && [ \"$(cat src/app.txt)\" = ok ]\n",
+    );
+    f.write("src/app.txt", "ok\n");
+    f.write(
+        ".ai/repo/profiles/implementation.yaml",
+        &format!("{}{commands}", common::PROFILE),
+    );
+    f.write(
+        ".ai/repo/project/intents/fixture-intent.yaml",
+        &common::INTENT.replace(
+            "    evidence: test\n    ref: test/cases/00_x.sh\n",
+            "    evidence: command\n    ref: verify:unit\n",
+        ),
+    );
+    f.commit("a repository whose tests are its own");
+    f
+}
+
+/// A `verify:<name>` criterion in a repository whose tests live outside `test/cases/`: refused
+/// naming the verification while the effective profile does not declare it; not run once it
+/// does; current, with the verdict satisfied, after a recorded passing run at the tree; stale
+/// after the tree changes; failing after a failing run; and current again once repaired.
+#[test]
+fn test_verify_criterion_in_foreign_repository() {
+    // (state, met, proof) of the one criterion, and the verdict's state
+    let judged = |f: &Fixture| -> (String, bool, String, String) {
+        let (code, v) = cli_json(f, &["intent", "show", "fixture-intent"]);
+        assert_eq!(code, 0, "{v:#}");
+        let c = &v["satisfaction"][0];
+        assert_eq!(c["ref"], "verify:unit");
+        (
+            c["state"].as_str().unwrap().to_string(),
+            c["met"] == true,
+            c["proof"].as_str().unwrap_or("absent").to_string(),
+            v["verdict"]["state"].as_str().unwrap().to_string(),
+        )
+    };
+    let is = |state: &str, met: bool, proof: &str, verdict: &str| {
+        (
+            state.to_string(),
+            met,
+            proof.to_string(),
+            verdict.to_string(),
+        )
+    };
+
+    // an undeclared name is unresolved, and the finding names it: another verification the
+    // profile declares does not stand in for it
+    let f = foreign_repository("verification:\n  commands:\n    lint: \"true\"\n");
+    assert_eq!(judged(&f), is("unresolved", false, "absent", "unknown"));
+    let (code, out, _) = run_in(&f.root(), &["intent", "validate"], "");
+    assert_eq!(code, 10, "an unresolved reference is a finding:\n{out}");
+    for fragment in [
+        "unresolved_evidence_ref",
+        "verify:unit",
+        "verification.commands.unit",
+    ] {
+        assert!(out.contains(fragment), "missing {fragment}:\n{out}");
+    }
+
+    // declared: it resolves, and nothing recorded is not a pass
+    let f = foreign_repository("verification:\n  commands:\n    unit: sh tests/run.sh\n");
+    let (code, out, _) = run_in(&f.root(), &["intent", "validate"], "");
+    assert_eq!(code, 0, "a declared verification resolves:\n{out}");
+    assert_eq!(
+        judged(&f),
+        is("not_run", false, "not_run", "unsatisfied"),
+        "declared, never run"
+    );
+    let (_, v) = cli_json(&f, &["intent", "show", "fixture-intent"]);
+    assert_eq!(
+        v["satisfaction"][0]["reproduce"], "sh tests/run.sh",
+        "the criterion names the command that produces its evidence again"
+    );
+
+    let app = common::load_app(&f);
+    let unit = Verification::declared(app.index(), "unit").unwrap();
+    assert_eq!(unit.command, "sh tests/run.sh");
+    assert_eq!(unit.source, ".ai/repo/profiles/implementation.yaml");
+    let record = |f: &Fixture| -> Execution {
+        let e = record_verification(&f.root(), &unit, Origin::Local).unwrap();
+        f.commit("record a verification run");
+        e
+    };
+
+    // a recorded passing run at this tree makes it current, and the one criterion satisfies
+    // the verdict
+    let e = record(&f);
+    assert_eq!(
+        (
+            e.test.as_str(),
+            e.runner,
+            e.outcome,
+            e.working_tree.as_str()
+        ),
+        ("verify:unit", Runner::Verify, Outcome::Pass, "clean")
+    );
+    assert_eq!(e.command, "sh tests/run.sh");
+    assert_eq!(
+        e.commit.len(),
+        40,
+        "the run carries the full commit it ran at"
+    );
+    assert_eq!(
+        judged(&f),
+        is("current", true, "proven", "satisfied"),
+        "a pass at this tree"
+    );
+
+    // the tree changes after the pass: it was a pass of another tree, uncommitted or not
+    f.write("src/app.txt", "broken\n");
+    assert_eq!(
+        judged(&f),
+        is("stale", false, "stale", "unsatisfied"),
+        "an uncommitted change"
+    );
+    f.commit("the app breaks");
+    assert_eq!(
+        judged(&f),
+        is("stale", false, "stale", "unsatisfied"),
+        "a committed change"
+    );
+
+    // a failing run at this tree does not meet it either
+    let e = record(&f);
+    assert_eq!(e.outcome, Outcome::Fail);
+    assert_eq!(
+        judged(&f),
+        is("failing", false, "failing", "unsatisfied"),
+        "a failing run"
+    );
+
+    // repaired and run again: current
+    f.write("src/app.txt", "ok\n");
+    f.commit("the app is repaired");
+    assert_eq!(record(&f).outcome, Outcome::Pass);
+    assert_eq!(
+        judged(&f),
+        is("current", true, "proven", "satisfied"),
+        "repaired"
+    );
+
+    // the declaration changes: the recorded run is of a command the profile no longer asks
+    // for, so it is not this verification's evidence
+    f.write(
+        ".ai/repo/profiles/implementation.yaml",
+        &format!(
+            "{}verification:\n  commands:\n    unit: sh tests/run.sh --strict\n",
+            common::PROFILE
+        ),
+    );
+    f.commit("the verification's command changes");
+    assert_eq!(
+        judged(&f),
+        is("stale", false, "stale", "unsatisfied"),
+        "a run of another command"
     );
 }
 

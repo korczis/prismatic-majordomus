@@ -106,7 +106,7 @@
           "minLength": 1
         },
         "evidence": {
-          "description": "What decides it. `test` and `claim` are derived from the evidence ledger; `command` and `deployment` resolve but are not derivable yet, so a criterion of either kind is never counted as met.",
+          "description": "What decides it. `test` and `claim` are derived from the evidence ledger, and so is a `command` whose ref is `verify:<name>`; any other `command`, and `deployment`, resolve but are not derivable yet, so such a criterion is never counted as met.",
           "enum": [
             "test",
             "claim",
@@ -115,7 +115,7 @@
           ]
         },
         "ref": {
-          "description": "For `test`, the path of a case or integration test or its `suite:`/`crate:` identity; for `claim`, a claim id of docs/CLAIMS.yaml; for `command`, the command; for `deployment`, a deployment id.",
+          "description": "For `test`, the path of a case or integration test or its `suite:`/`crate:` identity; for `claim`, a claim id of docs/CLAIMS.yaml; for `command`, the command, or `verify:<name>` naming a verification the effective profile declares under `verification.commands`; for `deployment`, a deployment id.",
           "type": "string"
         }
       }

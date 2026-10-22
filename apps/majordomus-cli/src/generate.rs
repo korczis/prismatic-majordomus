@@ -2144,12 +2144,14 @@ pub fn allow_artifacts(
 /// let schema = json!({ "type": "object", "properties": {
 ///     "id": { "type": "string" },
 ///     "tags": { "type": "array", "items": { "type": "string" } },
-///     "x-majordomus": { "type": "object", "properties": { "tests": { "type": "array", "items": { "type": "string" } } } }
+///     "x-majordomus": { "type": "object", "properties": { "tests": { "type": "array", "items": { "type": "string" } } } },
+///     "commands": { "type": "object", "additionalProperties": { "type": "string" } }
 /// } });
 /// assert_eq!(allow_lines(&schema), [
 ///     "^id$",
 ///     "^tags(\\.[0-9]+)?$",
 ///     "^x-majordomus\\.tests(\\.[0-9]+)?$",
+///     "^commands(\\.[^.]+)?$",
 /// ]);
 /// ```
 pub fn allow_lines(schema: &Value) -> Vec<String> {
@@ -2206,6 +2208,13 @@ fn walk_allow(root: &Value, node: &Value, prefix: &str, out: &mut Vec<String>) {
             } else {
                 out.push(format!("^{path}(\\.[0-9]+)?$"));
             }
+        } else if prop
+            .get("additionalProperties")
+            .is_some_and(Value::is_object)
+        {
+            // a map whose keys the data names (`verification.commands.<name>`): each entry
+            // flattens to one segment under the map, and the map alone is the empty one
+            out.push(format!("^{path}(\\.[^.]+)?$"));
         } else {
             out.push(format!("^{path}$"));
         }

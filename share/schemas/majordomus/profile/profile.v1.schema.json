@@ -146,6 +146,17 @@
         },
         "decision_record_required": {
           "type": "boolean"
+        },
+        "commands": {
+          "description": "The repository's own named checks: each key is a verification name an intent criterion cites as `evidence: command`, `ref: verify:<name>`, and each value the command that runs it at the repository root. A recorded passing run of it at the current tree makes that criterion current. Only the effective profile's (the policy's `profiles.default`) are resolved.",
+          "type": "object",
+          "propertyNames": {
+            "pattern": "^[a-z0-9][a-z0-9_-]*$"
+          },
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1
+          }
         }
       }
     },
