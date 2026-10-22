@@ -172,6 +172,19 @@ change frame never shows the blackboard from before it. Its state line says live
 reconnecting or closed, and while the channel is not live the UI's minute refresh reads it
 instead. The UI's published snapshot withholds it (`docs/MAJORDOMUS_UI.md`).
 
+`/cockpit/peers` renders the same answer, asked as the channel's followers ask it (every
+checkout, no signals). It shows every worker with where it was found, whether it is here, its
+client, its intent and its claims, then the claims that meet, what waits, the typed relations,
+every source and every checkout's board. It follows the same `frames=snapshot` channel through
+`share/cockpit/peers.js` and the one client. Every snapshot frame reads the page again from its
+own address, a connection's first one too, and the part the page marks `data-mj-peers` is
+replaced by the same part of that reading. One reading runs at a time, and a frame that arrives
+while the page is hidden is read once the page is shown. Each reading asks the capability
+again, so a reading made after a change frame is never from before it. The state line says
+live, reconnecting or offline, and says so when the last reading failed. The page does not
+poll: while its channel is not live it is the reading it last made. The Cockpit's published
+snapshot carries no script, so there the page is the reading it was rendered from.
+
 ## On the published site
 
 The published site is files, read once at the commit it was built from, and it follows no
@@ -192,9 +205,9 @@ one to each other and finds nothing on the page that is live or says it is.
 
 These are planned in milestone `peer-blackboard` and are not built:
 
-- the `/cockpit` peer screen that renders the snapshot frames, and the home page's panel
-  (I2998);
-- its public-safe published snapshot, and with it `/ui/peers` on the published site (I2984);
+- the home page's panel;
+- the blackboard's public-safe published snapshot, and with it `/ui/peers` on the published
+  site (I2984);
 - acting from `/ui/peers` on what waits: answering a review, taking a handover, releasing
   one's own claim, each through its capability and shown only when the blackboard shows it
   (I2999).
