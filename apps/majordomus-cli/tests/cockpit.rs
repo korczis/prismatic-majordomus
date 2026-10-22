@@ -16,9 +16,9 @@ use common::{Fixture, Served};
 /// selects something is a page whose failure nobody sees, and each of these is one arm of
 /// the same match.
 ///
-/// The plain routes are not listed here. They come from `cockpit::STATIC_ROUTES`, the list
-/// the dispatcher is written beside, so a route added there is swept the moment it exists
-/// and a sweep cannot quietly fall behind the Cockpit. This list used to name thirteen of
+/// The plain routes are not listed here. They come from `cockpit::static_routes()`, derived
+/// from the navigation and held to the dispatcher, so a route added there is swept the
+/// moment it exists and a sweep cannot quietly fall behind the Cockpit. This list used to name thirteen of
 /// the twenty-one plain routes; `/cockpit/commands`, `/cockpit/executions`, `/cockpit/mesh`,
 /// `/cockpit/models`, `/cockpit/quality`, `/cockpit/release`, `/cockpit/design` and
 /// `/cockpit/object` were served and swept by nothing.
@@ -58,7 +58,7 @@ const QUERY_PAGES: &[&str] = &[
 /// Every page this file sweeps: each plain route the dispatcher answers, from the list it is
 /// written beside, then the query-string arms above.
 fn pages() -> Vec<String> {
-    majordomus_cli::cockpit::STATIC_ROUTES
+    majordomus_cli::cockpit::static_routes()
         .iter()
         .map(|(path, _)| (*path).to_string())
         .chain(QUERY_PAGES.iter().map(|p| (*p).to_string()))

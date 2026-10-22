@@ -407,7 +407,7 @@ fn relink_into(
 /// page with the path it meant: those paths are what a reader of the UI will follow first,
 /// so they are read before the bound can leave them out. No list of them is kept anywhere.
 pub fn cockpit_seeds(root: &Path) -> Vec<String> {
-    let mut seeds: Vec<String> = crate::cockpit::STATIC_ROUTES
+    let mut seeds: Vec<String> = crate::cockpit::static_routes()
         .iter()
         .map(|(path, _)| path.to_string())
         .filter(|path| COCKPIT.page_file(path).is_some())
