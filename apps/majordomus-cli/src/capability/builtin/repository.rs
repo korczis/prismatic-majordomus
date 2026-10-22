@@ -77,7 +77,7 @@ pub fn module() -> ModuleDescriptor {
                 description: "The repository root, layer sections, git state, discovery mode, kinds present, every diagnostic, and the capability registry counted.",
                 input: Empty,
                 output: RepositoryReport,
-                stability: Stability::BehaviorallyVerified,
+                stability: Stability::Implemented,
                 exposure: Exposure {
                     mcp: Some(McpExposure {
                         tool: Some("majordomus_repository".into()),
@@ -114,7 +114,7 @@ pub fn module() -> ModuleDescriptor {
                 description: "Whether a repository-relative path is in or out of the scope, the reason when it is out, and the pattern or limit that decided; an existing file is judged by name, then size, then content.",
                 input: ClassifyInput,
                 output: Classification,
-                stability: Stability::BehaviorallyVerified,
+                stability: Stability::Implemented,
                 // No CLI exposure: `majordomus scope <PATHS>` is one command that answers
                 // with this capability when it is given paths and with `repository.scope`
                 // when it is not, and clap has no `scope classify` subcommand for anybody

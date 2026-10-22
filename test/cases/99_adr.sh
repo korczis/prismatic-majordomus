@@ -203,6 +203,7 @@ probe "a supersedes target that does not exist" 'which is not a decision here' m
 supersedes:\
   - adr-0777/'
 probe "a body section removed" 'missing or empty in section' mutate 's/^## Consequences$/## Aftermath/'
+probe "a heading that numbers another decision" 'numbers decision 7, but the identity is adr-0001' mutate 's/^# 1\. /# 7. /'
 probe "no front matter at all" 'no front matter' sed -i.bak '1,10d' "$adr1"
 
 # an extracted record may not claim to have been accepted: this is the check that stops a

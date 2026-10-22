@@ -62,7 +62,7 @@ related:
   - test:apps/majordomus-cli/tests/knowledge_base.rs
 ---
 
-# 58. Knowledge is derived at the episode boundary, from the ledger and git, and a person promotes it
+# 91. Knowledge is derived at the episode boundary, from the ledger and git, and a person promotes it
 
 ## Context
 

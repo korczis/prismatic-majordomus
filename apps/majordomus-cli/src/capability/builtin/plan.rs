@@ -538,7 +538,7 @@ pub fn module() -> ModuleDescriptor {
                 description: "Every milestone and issue with its derived status, wave, rank, both directions of its graph and its counts; the execution waves; both dependency graphs as edges; every validation finding; and the plan's header with the active milestone derived. The one value every other capability of this module answers out of. Derived on every call: a transition writes a lifecycle marker into a record between two calls, and a plan answered from a snapshot would send two workers to one issue.",
                 input: Empty,
                 output: Plan,
-                stability: Stability::BehaviorallyVerified,
+                stability: Stability::Implemented,
                 exposure: Exposure {
                     mcp: Some(McpExposure {
                         tool: Some("majordomus_plan".into()),
@@ -557,7 +557,7 @@ pub fn module() -> ModuleDescriptor {
                 description: "Every milestone with its derived status and its issues counted by status, the milestone a worker is executing now, the next ready issue in full, and the plan's own totals. The counts are keyed by the declared vocabulary, which travels with the answer, so a status added to the engine appears here without anything being edited.",
                 input: PlanMilestoneFilter,
                 output: PlanStatusReport,
-                stability: Stability::BehaviorallyVerified,
+                stability: Stability::Implemented,
                 exposure: Exposure {
                     mcp: mcp("majordomus_plan_status"),
                     http: get("/api/v1/plan/status"),
@@ -573,7 +573,7 @@ pub fn module() -> ModuleDescriptor {
                 description: "One record per issue with its derived status, its wave, the dependencies it declares, the ones that are not DONE (plus `milestone:<id>` when the gate holds the whole outcome back), the issues that depend on it, the paths it touches and its evidence tally. Filtering by `status: READY` is the ready set and by `status: BLOCKED` the blocked set; nothing here is a separate derivation.",
                 input: PlanIssueFilter,
                 output: PlanIssueList,
-                stability: Stability::BehaviorallyVerified,
+                stability: Stability::Implemented,
                 exposure: Exposure {
                     mcp: mcp("majordomus_plan_issues"),
                     http: get("/api/v1/plan/issues"),
@@ -589,7 +589,7 @@ pub fn module() -> ModuleDescriptor {
                 description: "The topological layering of the issue graph: an issue enters a wave only once every dependency has left it, so its wave is one past the longest path to it. Sharing a wave is a necessary condition for running two issues at once, not a sufficient one — overlapping scope serialises them, and every such overlap is reported beside the waves rather than left for two workers to discover in a merge conflict.",
                 input: PlanMilestoneFilter,
                 output: PlanWaveReport,
-                stability: Stability::BehaviorallyVerified,
+                stability: Stability::Implemented,
                 exposure: Exposure {
                     mcp: mcp("majordomus_plan_waves"),
                     http: get("/api/v1/plan/waves"),
@@ -605,7 +605,7 @@ pub fn module() -> ModuleDescriptor {
                 description: "The lowest-wave READY issue of the active milestone, highest priority first, then id. The active milestone can have nothing ready while another one does — one waiting on its own acceptance evidence, for instance — so the search widens to the whole plan rather than answering `none` and sending a worker away from work that is genuinely executable. This is what an agent asks before it starts.",
                 input: PlanMilestoneFilter,
                 output: PlanNextIssue,
-                stability: Stability::BehaviorallyVerified,
+                stability: Stability::Implemented,
                 exposure: Exposure {
                     mcp: mcp("majordomus_plan_next"),
                     http: get("/api/v1/plan/next"),
@@ -621,7 +621,7 @@ pub fn module() -> ModuleDescriptor {
                 description: "The milestone graph laid out by rank, with `order` breaking ties inside a rank only, and the first unblocked unfinished milestone as `now` and the one after it as `next`. Nothing in the sequence is authored: a milestone whose prerequisites are not real cannot be nominated, which is what makes `each step is gated by the previous one being real` an invariant rather than a sentence.",
                 input: Empty,
                 output: PlanRoadmap,
-                stability: Stability::BehaviorallyVerified,
+                stability: Stability::Implemented,
                 exposure: Exposure {
                     mcp: mcp("majordomus_plan_roadmap"),
                     http: get("/api/v1/plan/roadmap"),
@@ -637,7 +637,7 @@ pub fn module() -> ModuleDescriptor {
                 description: "Every finding the derivation produced, in the order it produced them: a dependency on something that is not an issue, a cycle, an issue executing ahead of its dependencies or of its milestone's gate, an issue with no acceptance criteria, evidence missing under a completion date, a lifecycle stamp its transition did not write (no seal of its plan_* event beside it), a milestone whose graph contradicts itself, two issues of one wave sharing a path. A failure means the model is invalid; a warning means it is legal and worth reading.",
                 input: Empty,
                 output: PlanValidation,
-                stability: Stability::BehaviorallyVerified,
+                stability: Stability::Implemented,
                 exposure: Exposure {
                     mcp: mcp("majordomus_plan_validate"),
                     http: get("/api/v1/plan/validate"),
@@ -653,7 +653,7 @@ pub fn module() -> ModuleDescriptor {
                 description: "A milestone with its issues in full, or an issue with the issues it waits on in full. The record's own prose stays where it has always been — `majordomus://issue/<id>` returns the file — and this answers what the file cannot say about itself: what its status is, where it sits in the graph, and what is between it and being executable.",
                 input: PlanRecordInput,
                 output: PlanRecord,
-                stability: Stability::BehaviorallyVerified,
+                stability: Stability::Implemented,
                 exposure: Exposure {
                     mcp: mcp("majordomus_plan_record"),
                     http: get("/api/v1/plan/record"),
@@ -670,7 +670,7 @@ pub fn module() -> ModuleDescriptor {
                 description: "Record that execution of an issue began (`start`), that implementation is complete with evidence outstanding (`verify`), or that it is finished (`done`). One field of the issue's own record is stamped, the seal of its event is written beside it, and the event is appended to the ledger; a stamp without that seal moves no status. The move is refused when the model says it is illegal — an issue that is not READY cannot start, one that was never ACTIVE cannot be verified, and one that was never started, whose dependencies are unfinished or whose required evidence is absent cannot be done — and the refusal names what is in the way. The status that comes back is derived from the record afterwards, not announced by the move: a `done` whose evidence is missing leaves the issue in VERIFY and says so.",
                 input: PlanTransitionInput,
                 output: PlanTransitionResult,
-                stability: Stability::BehaviorallyVerified,
+                stability: Stability::Implemented,
                 exposure: Exposure {
                     mcp: mcp("majordomus_plan_transition"),
                     http: post("/api/v1/plan/transition"),

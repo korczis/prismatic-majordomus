@@ -84,7 +84,7 @@ pub fn module() -> ModuleDescriptor {
                 description: "Every graph this executable derives: its id, what it shows, and what it is derived from.",
                 input: Empty,
                 output: GraphList,
-                stability: Stability::BehaviorallyVerified,
+                stability: Stability::Implemented,
                 exposure: Exposure {
                     mcp: Some(McpExposure {
                         tool: Some("majordomus_graphs".into()),
@@ -102,7 +102,7 @@ pub fn module() -> ModuleDescriptor {
                 description: "One graph by id: its nodes and edges with the vocabularies that say what each kind means, the file every node was derived from, and whether the result is acyclic. Deterministic for a given tree and executable.",
                 input: GraphInput,
                 output: Graph,
-                stability: Stability::BehaviorallyVerified,
+                stability: Stability::Implemented,
                 exposure: Exposure {
                     mcp: mcp("majordomus_graph"),
                     http: get("/api/v1/graph"),

@@ -2720,9 +2720,9 @@ pub struct EvidenceArgs {
     pub repo: RepoArgs,
 
     #[command(subcommand)]
-    /// `show`, `claim`, `proves`, `record` or `stamp`. Required: the group runs nothing of its own,
-    /// so that every runnable path here is one a capability declares
-    /// rather than one classified command-line-only in `cli::local`.
+    /// `show`, `claim`, `proves`, `record`, `stamp`, `subject`, `coverage` or `publish`. Required: the
+    /// group runs nothing of its own, so that every runnable path here is one a capability
+    /// declares rather than one classified command-line-only in `cli::local`.
     pub command: EvidenceCommand,
 
     #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
@@ -2731,14 +2731,16 @@ pub struct EvidenceArgs {
 }
 
 #[derive(Debug, Subcommand)]
-/// The subcommands of `majordomus evidence`: the whole matrix, one claim, one test, and
-/// the recorder.
+/// The subcommands of `majordomus evidence`: the whole matrix, one claim, one test, any
+/// subject, the coverage the run records carry, the recorder, and the site's publication.
 ///
-/// `show`, `claim` and `proves` are the command line of `evidence.report`,
-/// `evidence.claim` and `evidence.test`; `record` is the command line of
+/// `show`, `claim`, `proves`, `subject` and `coverage` are the command line of
+/// `evidence.report`, `evidence.claim`, `evidence.test`, `evidence.subject` and
+/// `evidence.coverage`; `record` is the command line of
 /// `evidence.record`, which is a command line and nothing else because it writes a tracked
 /// file and this server is read-only; `stamp` is the command line of `evidence.stamp`, a
-/// read offered only here because it reads a path its caller names. The capability is
+/// read offered only here because it reads a path its caller names; `publish` is the command
+/// line of `evidence.publish`, which writes a file outside the checkout. The capability is
 /// `evidence.test` and the command is
 /// `proves` — `test` is a word the fish completion adapter refuses, so the command line
 /// spells the relation with the verb rather than renaming the identity.
@@ -2766,6 +2768,28 @@ pub struct EvidenceArgs {
 ///     EvidenceCommand::Proves { id } if id == "crate:why"
 /// ));
 /// assert!(Cli::try_parse_from(["majordomus", "evidence", "test", "crate:why"]).is_err());
+///
+/// // any subject of the index, by its key; and the coverage the run records carry
+/// assert!(matches!(
+///     parse(&["majordomus", "evidence", "subject", "feature:evidence", "--presented", "HEAD"]),
+///     EvidenceCommand::Subject { key, presented: Some(p), .. }
+///         if key == "feature:evidence" && p == "HEAD"
+/// ));
+/// assert!(matches!(
+///     parse(&["majordomus", "evidence", "coverage", "--presented-tree", "dirty"]),
+///     EvidenceCommand::Coverage { from: None, presented_tree: Some(t) } if t == "dirty"
+/// ));
+///
+/// // the site's publication names the commit it presents and where it goes
+/// assert!(matches!(
+///     parse(&[
+///         "majordomus", "evidence", "publish", "--presented", "HEAD", "--from", "ci",
+///         "--run", "concluded", "--out", "/tmp/p",
+///     ]),
+///     EvidenceCommand::Publish { presented, run: Some(r), from: Some(_), .. }
+///         if presented == "HEAD" && r == "concluded"
+/// ));
+/// assert!(Cli::try_parse_from(["majordomus", "evidence", "publish", "--out", "/tmp/p"]).is_err());
 ///
 /// // recording reads a report a runner already wrote; it runs no test
 /// assert!(matches!(
@@ -2807,18 +2831,7 @@ pub enum EvidenceCommand {
         #[arg(long, value_name = "REV")]
         presented: Option<String>,
         /// What you know about the presented commit's tree (clean, dirty, unknown); it can only weaken the measured state
-        #[arg(
-            long,
-            value_name = "TREE",
-            value_parser = clap::builder::PossibleValuesParser::new([
-                clap::builder::PossibleValue::new("clean")
-                    .help("Nothing you know of: the measured state stands"),
-                clap::builder::PossibleValue::new("dirty")
-                    .help("The build did not come from the commit as committed; nothing reads as proven"),
-                clap::builder::PossibleValue::new("unknown")
-                    .help("You cannot say whether it did; nothing reads as proven"),
-            ])
-        )]
+        #[arg(long, value_name = "TREE", value_parser = presented_trees())]
         presented_tree: Option<String>,
     },
     /// One claim: its proof state, the execution behind it, and how to reproduce it
@@ -2871,6 +2884,94 @@ pub enum EvidenceCommand {
         #[arg(long)]
         out: Option<PathBuf>,
     },
+    /// One subject of the evidence index: its verdict, its routes and its members
+    Subject {
+        /// `<kind>:<id>`: claim:<id>, rule:<id>, feature:<id>, command:<words>, capability:<id>, mcp:<tool> or use_case:<id>
+        key: String,
+        /// Judge at the checked-out commit as committed (HEAD, or any name of it), from the ledger that commit holds, instead of at the working tree
+        #[arg(long, value_name = "REV")]
+        presented: Option<String>,
+        /// What you know about the presented commit's tree (clean, dirty, unknown); it can only weaken the measured state
+        #[arg(long, value_name = "TREE", value_parser = presented_trees())]
+        presented_tree: Option<String>,
+    },
+    /// The coverage the run records carry, each current only for its own commit on a clean tree
+    Coverage {
+        /// A run record, or a directory of them such as a CI evidence artifact, inside the repository (default: .ai/local/evidence/runs)
+        #[arg(long, value_name = "PATH")]
+        from: Option<PathBuf>,
+        /// What you know about the checked-out commit's tree (clean, dirty, unknown); it can only weaken the measured state
+        #[arg(long, value_name = "TREE", value_parser = presented_trees())]
+        presented_tree: Option<String>,
+    },
+    /// Write the site's evidence publication of the checked-out commit, outside the checkout
+    Publish {
+        /// The commit published (build.json.commit): the checked-out commit, HEAD or any name of it
+        #[arg(long, value_name = "REV")]
+        presented: String,
+        /// What you know about the presented commit's tree (build.json.dirty); it can only weaken the measured state
+        #[arg(long, value_name = "TREE", value_parser = presented_trees())]
+        presented_tree: Option<String>,
+        /// A run record, or a directory of them: the CI evidence artifact of the commit or of its nearest ancestor
+        #[arg(long, value_name = "PATH")]
+        from: Option<PathBuf>,
+        /// What became of the presented commit's CI run
+        #[arg(long, value_name = "RUN", value_parser = ci_runs())]
+        run: Option<String>,
+        /// The directory the publication is written into, outside the checkout
+        #[arg(long, value_name = "DIR")]
+        out: PathBuf,
+    },
+}
+
+/// The words `evidence publish --run` accepts, each with what it means: what the publisher
+/// observed of the presented commit's CI run, which no file of the checkout holds.
+///
+/// ```
+/// use majordomus_cli::cli::ci_runs;
+/// use clap::builder::TypedValueParser;
+///
+/// let words: Vec<String> = ci_runs()
+///     .possible_values()
+///     .unwrap()
+///     .map(|v| v.get_name().to_string())
+///     .collect();
+/// assert_eq!(words, ["pending", "concluded", "absent"]);
+/// ```
+pub fn ci_runs() -> clap::builder::PossibleValuesParser {
+    clap::builder::PossibleValuesParser::new([
+        clap::builder::PossibleValue::new("pending")
+            .help("It has not concluded; without its run record the publication is pending"),
+        clap::builder::PossibleValue::new("concluded")
+            .help("It concluded; without its run record the publication is unknown"),
+        clap::builder::PossibleValue::new("absent")
+            .help("No CI run of the commit is found; without a record the publication is unknown"),
+    ])
+}
+
+/// The words `--presented-tree` accepts, each with what it means: one declaration for every
+/// evidence command that judges a presented commit, so that the three cannot drift apart.
+///
+/// ```
+/// use majordomus_cli::cli::presented_trees;
+/// use clap::builder::TypedValueParser;
+///
+/// let words: Vec<String> = presented_trees()
+///     .possible_values()
+///     .unwrap()
+///     .map(|v| v.get_name().to_string())
+///     .collect();
+/// assert_eq!(words, ["clean", "dirty", "unknown"]);
+/// ```
+pub fn presented_trees() -> clap::builder::PossibleValuesParser {
+    clap::builder::PossibleValuesParser::new([
+        clap::builder::PossibleValue::new("clean")
+            .help("Nothing you know of: the measured state stands"),
+        clap::builder::PossibleValue::new("dirty")
+            .help("The build did not come from the commit as committed; nothing reads as proven"),
+        clap::builder::PossibleValue::new("unknown")
+            .help("You cannot say whether it did; nothing reads as proven"),
+    ])
 }
 
 #[derive(Debug, Args)]
@@ -5605,6 +5706,49 @@ pub const EXAMPLES: &[CommandExamples] = &[
             title: "Something that names no test",
             description: "A test is named by its identity (`suite:<case>`, `crate:<binary>`) or by the path a claim writes down, and the two resolve to the same thing. An argument that is neither is refused with the spellings it could have been, rather than answered with a test that proves nothing.",
             argv: &["evidence", "proves", "not-a-test"],
+            setup: &[],
+            expect: Expect::ExitCode(13),
+        }],
+    },
+    CommandExamples {
+        command: "evidence subject",
+        examples: &[
+            ExampleDoc {
+                id: "evidence-subject-rule-json",
+                title: "What proves a rule, as one document",
+                description: "The same answer `GET /api/v1/evidence/subject` and the MCP tool `majordomus_evidence_subject` return for any subject of the index — here a rule: its verdict over its own routes and its members' own verdicts, the totals by state beside it, each route with the execution behind it, the paths no runner drives listed as mechanisms, and the advisory findings about the subject.",
+                argv: &["evidence", "subject", "rule:project.alpha", "--format", "json"],
+                setup: &[],
+                expect: Expect::Json(&["/subject", "/verdict", "/totals", "/routes", "/members"]),
+            },
+            ExampleDoc {
+                id: "evidence-subject-unknown",
+                title: "A subject the index does not hold",
+                description: "A key the subject index does not hold is a not-found, with where the keys are listed, rather than an empty verdict: `this feature has no evidence` read off a typo is the answer this command must never give.",
+                argv: &["evidence", "subject", "feature:no-such-feature"],
+                setup: &[],
+                expect: Expect::ExitCode(13),
+            },
+        ],
+    },
+    CommandExamples {
+        command: "evidence coverage",
+        examples: &[ExampleDoc {
+            id: "evidence-coverage-json",
+            title: "The coverage the run records carry",
+            description: "Every coverage record of the local run directory, each with its own commit and tree and its state against the checked-out commit: current only for its own commit, measured on a clean tree, with the checkout clean as well. Nothing has written a run record in a fresh repository, so the answer names the directory it read and says it is not there.",
+            argv: &["evidence", "coverage", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/presented/commit", "/source", "/present", "/records"]),
+        }],
+    },
+    CommandExamples {
+        command: "evidence publish",
+        examples: &[ExampleDoc {
+            id: "evidence-publish-inside-the-checkout",
+            title: "A publication is never written into the checkout",
+            description: "The publication is written outside the checkout, so that publishing changes nothing in the repository: an --out inside it is refused with exit 13 and nothing is written. Given a directory outside it, `--presented <commit> --presented-tree <build.json.dirty> --from <the CI evidence artifact> --run <pending|concluded|absent> --out <dir>` writes evidence-publication.json: every claim judged from the ledger that commit holds, weakened and never strengthened by the run records read, one state from ADR 0087's publication table, only the allow-listed fields, and every text through the one redactor.",
+            argv: &["evidence", "publish", "--presented", "HEAD", "--out", "."],
             setup: &[],
             expect: Expect::ExitCode(13),
         }],

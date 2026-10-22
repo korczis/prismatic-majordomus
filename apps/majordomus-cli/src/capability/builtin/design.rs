@@ -293,7 +293,7 @@ pub fn module() -> ModuleDescriptor {
                 description: "What the design is: the fingerprint every stylesheet carries, the identity, the type stacks, the theme contract with the pre-paint statement every surface runs, the audit widths, how many tokens of each kind, and every generated file the declaration is projected into.",
                 input: Empty,
                 output: DesignReport,
-                stability: Stability::BehaviorallyVerified,
+                stability: Stability::Implemented,
                 exposure: Exposure {
                     mcp: Some(McpExposure {
                         tool: Some("majordomus_design".into()),
@@ -311,7 +311,7 @@ pub fn module() -> ModuleDescriptor {
                 description: "Every token of the design, explained: roles with their light and dark values, statuses with their text, ground and border and the state words filed under them, the type scale, the layout values, the theme contract, the palette. Narrow it to one kind.",
                 input: TokensInput,
                 output: TokenList,
-                stability: Stability::BehaviorallyVerified,
+                stability: Stability::Implemented,
                 exposure: Exposure {
                     mcp: mcp("majordomus_design_tokens"),
                     http: get("/api/v1/design/tokens"),
@@ -326,7 +326,7 @@ pub fn module() -> ModuleDescriptor {
                 description: "One token by name or by the custom property it becomes: what it is for, what it resolves to in each theme, which Flowbite names are synonyms of it, which state words it colours, and which generated files it reaches.",
                 input: ExplainTokenInput,
                 output: Token,
-                stability: Stability::BehaviorallyVerified,
+                stability: Stability::Implemented,
                 exposure: Exposure {
                     mcp: mcp("majordomus_design_explain"),
                     http: get("/api/v1/design/explain"),
@@ -341,7 +341,7 @@ pub fn module() -> ModuleDescriptor {
                 description: "Every foreground the design puts on a ground, in both themes, measured against WCAG 2.1 AA: the pair, the palette entries behind it, the ratio and the threshold. The pairs are not a list — they are derived from the declaration, which files each status's text with its own ground, and from the primitives that consume it, where a rule that sets a colour and a background states a pair and a rule that sets only a colour states a foreground that lands on every ground a container sets. A pair below the threshold is a finding that names the role, the ground, the theme, the measured ratio and the required one.",
                 input: Empty,
                 output: ContrastReport,
-                stability: Stability::BehaviorallyVerified,
+                stability: Stability::Implemented,
                 exposure: Exposure {
                     mcp: mcp("majordomus_design_contrast"),
                     http: get("/api/v1/design/contrast"),

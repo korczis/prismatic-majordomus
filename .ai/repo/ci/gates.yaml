@@ -301,7 +301,7 @@ gates:
   - id: rule-proof
     job: structure
     runs: scripts/ci/rule-proof-check
-    summary: every blocking rule names what proves it and every proof is in the tree; a blocking rule that names none is new debt, a named case that was renamed or deleted fails outright, and the verdict names the population it is not about (claims are the claim-proof gate)
+    summary: every rule, of either class, names what proves it or why nothing executable can, and every proof is in the tree; a rule that names none is new debt, a named case that was renamed or deleted fails outright, and the verdict names the population it is not about (claims are the claim-proof gate)
 
   # The commit policy over the history (rule project.conventional-commits). Needs the
   # executable, because the judge is the executable's — the gate chooses a range and

@@ -443,6 +443,18 @@ older than the kind does, and notices are folded on their own (`state::fold_noti
 runtimes of different ages that hold the same events print the same digest. The link card's
 `features` lists `notices` on a runtime that reads them.
 
+**A runtime that is seen and not linked.** Discovery and linking are two layers, and a runtime
+the registry lists as present and trusted can hold no link here. `mesh nodes`, `mesh peers`
+and `/api/v1/mesh/cooperation` list every such runtime under `unlinked`, with one reason:
+`not_dialed` (a dial target no dial has ended for yet), `awaiting_their_dial` (the lower runtime
+key dials, and has not), `unreachable` (the last dial reached no endpoint, with what it met),
+`refused` (the last hello was refused, with the code and the rule), `expired` (a link existed
+and nothing arrived within the expiry), `other_repository`, `no_endpoint` or `over_dial_cap`.
+`mesh doctor` reports the list as its `links` finding, and a review request aimed at such a
+runtime is refused `not_linked:` with the same sentence, naming the runtime and the node,
+instead of `not_found` (I3835). The list is read from the registry and the link table at each
+call, so a runtime that links stops being listed without a restart.
+
 **Tombstones.** A dropped stream leaves a tombstone: the sequence it reached, advertised as its
 mark so that a peer still holding the stream does not send it again, and the beat it was last
 heard at. A late copy of what was held, or an event the stream wrote after it was compacted,

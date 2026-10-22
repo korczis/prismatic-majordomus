@@ -12,7 +12,7 @@ provenance:
   origin: authored
 ---
 
-# 15. Distribution is one model, and every surface that ships the tool is a projection of it
+# 19. Distribution is one model, and every surface that ships the tool is a projection of it
 
 ## Context
 

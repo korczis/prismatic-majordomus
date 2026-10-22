@@ -481,7 +481,7 @@ pub fn module() -> ModuleDescriptor {
                 description: "Every validation gate this repository declares — the job that runs it, the command it runs, what it proves, whether every plan selects it and whether its runner can be had on demand at all — with the path classes that decide which change selects which gate, and, derived from those classes, the pathspecs each gate's evidence is taken over.",
                 input: Empty,
                 output: GateModelReport,
-                stability: Stability::BehaviorallyVerified,
+                stability: Stability::Implemented,
                 exposure: Exposure {
                     mcp: Some(McpExposure {
                         tool: Some("majordomus_gates".into()),
@@ -500,7 +500,7 @@ pub fn module() -> ModuleDescriptor {
                 description: "The active task's own change set — from the commit it started at to the working tree, uncommitted files included — put through the CI model: which gates it selects and why, what each one last reported and over which files, which verdicts have gone stale because the tree moved underneath them, which required gates have never reported at all, and which obligations the change implies whether or not the task declared them. `finishable` is false only when a required gate is known to be failing, stale or blocked by one that is; absence of a verdict is reported as unverified rather than silently accepted.",
                 input: CompletionInput,
                 output: Completion,
-                stability: Stability::BehaviorallyVerified,
+                stability: Stability::Implemented,
                 exposure: Exposure {
                     mcp: Some(McpExposure {
                         tool: Some("majordomus_completion".into()),

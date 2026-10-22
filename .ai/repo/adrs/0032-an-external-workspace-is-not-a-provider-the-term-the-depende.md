@@ -20,7 +20,7 @@ provenance:
     - file:scripts/lib/ui-audit.mjs
 ---
 
-# 25. An external workspace is not a provider: the term, the dependency posture, and where synced content lives
+# 32. An external workspace is not a provider: the term, the dependency posture, and where synced content lives
 
 ## Context
 
