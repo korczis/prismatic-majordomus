@@ -120,6 +120,15 @@ pub struct TaskEconomicsRecord {
     pub accepted: TaskEconomicsField,
 }
 
+/// Tasks in the order they started, then by id: an RFC 3339 start orders as text, and a task
+/// with no recorded start, whose label is empty, comes first. The order is the type's, so
+/// every surface that lists tasks reads them in the same sequence.
+impl crate::order::Ordered for TaskEconomicsRecord {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::plain(self.started_at.as_deref().unwrap_or(""), &self.task_id)
+    }
+}
+
 /// Whether a task has finished.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -365,11 +374,7 @@ pub fn fold(sources: Vec<TaskEconomicsSource>, q: &TaskEconomicsQuery) -> TaskEc
             r
         })
         .collect();
-    tasks.sort_by(|a, b| {
-        a.started_at
-            .cmp(&b.started_at)
-            .then_with(|| a.task_id.cmp(&b.task_id))
-    });
+    crate::order::canonical(&mut tasks);
     TaskEconomicsList {
         count: tasks.len(),
         window: q.clone(),
@@ -391,7 +396,8 @@ pub fn read_checkout(dir: &Path, checkout: &str) -> Option<TaskEconomicsSource> 
                 .collect()
         })
         .unwrap_or_default();
-    archives.sort();
+    // oldest first: an archive's name carries its rotation stamp, which natural order reads
+    crate::order::canonical_strings(&mut archives);
     let mut source = TaskEconomicsSource {
         checkout: checkout.to_string(),
         ..Default::default()
