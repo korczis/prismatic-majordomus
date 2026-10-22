@@ -456,6 +456,18 @@ once. The id is the provider's own, so anything holding the provider's payload n
 same session. With no ready server, or a mesh that does not run, nothing is opened and the
 event is unaffected.
 
+A client that crashes or is killed never fires its end event, and its session would stay
+active, with every exclusive claim under it blocking, for as long as its runtime beats
+(I3810). So the start event opens the session with `--client-pid auto`: the executable walks
+up from itself past shells and Majordomus' launchers to the client that ran the hook, and the
+session carries that process's pid and start time (`client_pid`, `client_started`). About once
+a minute the runtime holding the session asks its own machine's process table whether that
+process still exists with that start time, and closes the session once when it does not — a pid
+the system has given to another process does not count as the client. Nothing is compared
+across machines: the process, the table and the clock are all the holding runtime's. A session
+opened without a client process (`mesh session open` by hand, a claim's implicit session) is
+left as before.
+
 A task is on the mesh while it works (I2288). `majordomus start` claims the task's scope as
 an advisory claim of the mesh session `task-<id>`, with the task's title as its intent and its
 issue, and keeps the claim's key on the task record as `mesh_claim`; `finish` closes that
