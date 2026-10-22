@@ -18,7 +18,7 @@ use serde_json::Value;
 use crate::cockpit::html::{el, El};
 
 use super::source::Answer;
-use super::view::{list, meter, nothing, panel, state, table, text, unanswered};
+use super::view::{list, milestone_meter, nothing, panel, state, table, text, unanswered};
 
 /// A plan milestone id: letters, digits, `-` and `_`, as the plan's own ids are (`M004`,
 /// `development-runtime`), and nothing a link could carry anything else in.
@@ -306,13 +306,7 @@ pub fn inspector(roadmap: &Answer, issues: &Answer, id: &str) -> El {
                 .child(
                     el("dl")
                         .class("mj-ui-facts")
-                        .child(fact(
-                            "Done",
-                            meter(
-                                count("DONE"),
-                                m.pointer("/counts/total").and_then(Value::as_u64),
-                            ),
-                        ))
+                        .child(fact("Done", milestone_meter(&m)))
                         .child(fact("Ready now", chips(&ready, issue_href)))
                         .child(fact(
                             "Blocked",
@@ -395,7 +389,7 @@ mod tests {
                   "depends_on": [], "blocked_by": [], "dependents": ["M004"], "issues": [] },
                 { "id": "M004", "status": "ACTIVE", "order": 4, "priority": "p0", "title": "the one",
                   "depends_on": ["M003"], "blocked_by": [], "dependents": [],
-                  "counts": { "total": 4, "by_status": { "DONE": 1, "READY": 1, "BLOCKED": 2 } },
+                  "counts": { "total": 4, "required": 4, "by_status": { "DONE": 1, "READY": 1, "BLOCKED": 2 } },
                   "issues": ["I0001", "I0002", "I0003", "I0004"] }
             ]}),
         );
@@ -490,7 +484,7 @@ mod tests {
             serde_json::json!({ "milestones": [
                 { "id": "M009", "status": "DONE", "priority": "p2", "title": "done already",
                   "depends_on": [], "blocked_by": [], "dependents": [],
-                  "counts": { "total": 1, "by_status": { "DONE": 1 } }, "issues": ["I0009"] }
+                  "counts": { "total": 1, "required": 1, "by_status": { "DONE": 1 } }, "issues": ["I0009"] }
             ]}),
         );
         let issues = answer(
@@ -529,6 +523,35 @@ mod tests {
         assert!(
             html.contains("1 of 4"),
             "the meter says how many are done: {html}"
+        );
+    }
+
+    /// The inspector's meter is done out of required: the cancelled issues of a milestone are
+    /// not work it still owes (I3440).
+    #[test]
+    fn the_inspectors_meter_counts_what_the_milestone_requires() {
+        let (_, issues) = plan();
+        let roadmap = answer(
+            "plan.roadmap",
+            serde_json::json!({ "milestones": [
+                { "id": "M004", "status": "ACTIVE", "title": "the one", "depends_on": [],
+                  "blocked_by": [], "dependents": [], "issues": [],
+                  "counts": { "total": 32, "required": 23,
+                              "by_status": { "DONE": 4, "CANCELLED": 9, "READY": 19 } } },
+                { "id": "M005", "status": "DONE", "title": "empty", "depends_on": [],
+                  "blocked_by": [], "dependents": [], "issues": [],
+                  "counts": { "total": 0, "required": 0, "by_status": { "DONE": 0 } } }
+            ]}),
+        );
+        let html = inspector(&roadmap, &issues, "M004").render();
+        assert!(
+            html.contains("4 of 23") && !html.contains("4 of 32"),
+            "{html}"
+        );
+        let empty = inspector(&roadmap, &issues, "M005").render();
+        assert!(
+            empty.contains("no issues") && !empty.contains("0 of 0"),
+            "{empty}"
         );
     }
 

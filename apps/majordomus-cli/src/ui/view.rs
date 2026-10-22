@@ -505,6 +505,23 @@ pub fn meter(done: Option<u64>, total: Option<u64>) -> El {
     }
 }
 
+/// A milestone's issues done out of the issues it requires, read from its `counts`.
+///
+/// The denominator is `counts.required`, the total less the cancelled issues: the one the
+/// milestone's own status derivation and the published `/roadmap/` use, so a cancelled
+/// issue is never drawn as work still owed (I3440). A milestone that holds no issue reads
+/// "no issues", and one whose every issue is cancelled reads "no issue required"; neither
+/// draws a bar, because an empty bar would picture work nobody owes.
+pub fn milestone_meter(m: &Value) -> El {
+    let count = |pointer: &str| m.pointer(pointer).and_then(Value::as_u64);
+    let words = |said: &str| el("span").class("mj-ui-meter-text").text(said);
+    match (count("/counts/total"), count("/counts/required")) {
+        (Some(0), _) => words("no issues"),
+        (Some(_), Some(0)) => words("no issue required"),
+        (_, required) => meter(count("/counts/by_status/DONE"), required),
+    }
+}
+
 // ---------------------------------------------------------------- graphs
 
 /// A node of a relationship graph: an entity the source named, its label, the tone its
@@ -820,6 +837,53 @@ mod tests {
             "a meter never overflows: {full}"
         );
         assert!(meter(None, Some(4)).render().contains("unknown"));
+    }
+
+    /// A milestone's meter counts the issues it requires, not the ones cancelled out of it;
+    /// a milestone of no issue, or of none required, says so and draws no bar.
+    #[test]
+    fn milestone_meter_counts_required() {
+        let milestone = |total: u64, required: u64, done: u64| {
+            milestone_meter(&serde_json::json!({ "counts": {
+                "total": total, "required": required,
+                "by_status": { "DONE": done, "CANCELLED": total - required },
+            }}))
+            .render()
+        };
+        let cancelled = milestone(32, 23, 4);
+        assert!(
+            cancelled.contains("4 of 23") && !cancelled.contains("of 32"),
+            "{cancelled}"
+        );
+        assert!(cancelled.contains("width:17%"), "{cancelled}");
+        let empty = milestone(0, 0, 0);
+        assert!(
+            empty.contains("no issues")
+                && !empty.contains("0 of 0")
+                && !empty.contains("mj-ui-meter-track"),
+            "{empty}"
+        );
+        let gone = milestone(3, 0, 0);
+        assert!(
+            gone.contains("no issue required")
+                && !gone.contains("0 of")
+                && !gone.contains("mj-ui-meter-track"),
+            "{gone}"
+        );
+        let whole = milestone(4, 4, 1);
+        assert!(
+            whole.contains("1 of 4") && whole.contains("width:25%"),
+            "{whole}"
+        );
+        // a source that does not say what is required is unknown, never guessed from the total
+        let silent = milestone_meter(&serde_json::json!({ "counts": {
+            "total": 4, "by_status": { "DONE": 1 },
+        }}))
+        .render();
+        assert!(
+            silent.contains("unknown") && !silent.contains("of 4"),
+            "{silent}"
+        );
     }
 
     /// A graph draws only the nodes that take part in an edge between known nodes, and an

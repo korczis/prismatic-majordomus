@@ -192,7 +192,7 @@ pub const SCENES: &[Scene] = &[
         label: "Intent Nebula",
         character: Character::Semantic,
         requires: &[ROADMAP],
-        meaning: "A cluster is a milestone of the plan; its filled arc is the share of its issues that are done, and a line joins a milestone to one it depends on.",
+        meaning: "A cluster is a milestone of the plan; its filled arc is the share of the issues it requires that are done, and a line joins a milestone to one it depends on.",
         href: super::roadmap::ROUTE,
         dwell_seconds: 40,
     },
@@ -291,7 +291,7 @@ pub const SCENES: &[Scene] = &[
         label: "Milestone Ladder",
         character: Character::Semantic,
         requires: &[ROADMAP],
-        meaning: "A rung is one milestone of the plan; its bar is as long as its issues are many and is split by their recorded status. The number beside it is the share that is done.",
+        meaning: "A rung is one milestone of the plan; its bar is as long as the issues it requires are many and is split by their recorded status. The number beside it is the share that is done.",
         href: super::roadmap::ROUTE,
         dwell_seconds: 40,
     },
@@ -483,6 +483,20 @@ fn word(value: &Value, key: &str) -> String {
         .to_string()
 }
 
+/// A milestone's issues counted by status, less the cancelled ones: the statuses of the
+/// issues it requires, which sum to `counts.required` (I3440).
+fn required_by_status(milestone: &Value) -> Value {
+    match milestone.pointer("/counts/by_status") {
+        Some(Value::Object(by)) => Value::Object(
+            by.iter()
+                .filter(|(status, _)| status.as_str() != "CANCELLED")
+                .map(|(status, n)| (status.clone(), n.clone()))
+                .collect(),
+        ),
+        _ => Value::Null,
+    }
+}
+
 /// A source that says it is not running here: its own reason, or the plain fact.
 /// Whether every source the scene requires answered, and one of them answered that no mesh
 /// runs in this process: the one case a recording may stand in for.
@@ -633,7 +647,10 @@ fn model(id: &str, answers: &Answers, sources: &[SourceStanding]) -> Result<Valu
                         "label": word(m, "title"),
                         "status": word(m, "status"),
                         "done": m.pointer("/counts/by_status/DONE").and_then(Value::as_u64),
-                        "total": m.pointer("/counts/total").and_then(Value::as_u64),
+                        // the ring is DONE out of `total`, so `total` is what the milestone
+                        // requires: its cancelled issues are not work it owes (I3440)
+                        "total": m.pointer("/counts/required").and_then(Value::as_u64),
+                        "issues": m.pointer("/counts/total").and_then(Value::as_u64),
                         "depends_on": items(m, "/depends_on"),
                         "href": format!("{}?milestone={id}", super::roadmap::ROUTE),
                     })
@@ -880,8 +897,11 @@ fn model(id: &str, answers: &Answers, sources: &[SourceStanding]) -> Result<Valu
                     "id": word(m, "id"),
                     "title": word(m, "title"),
                     "status": word(m, "status"),
-                    "total": m.pointer("/counts/total").and_then(Value::as_u64),
-                    "by_status": m.pointer("/counts/by_status"),
+                    // a rung is the issues the milestone requires and its share DONE out of
+                    // them; the cancelled ones are counted beside it, not drawn as work (I3440)
+                    "total": m.pointer("/counts/required").and_then(Value::as_u64),
+                    "by_status": required_by_status(m),
+                    "cancelled": m.pointer("/counts/by_status/CANCELLED").and_then(Value::as_u64),
                 })).collect::<Vec<_>>(),
             }))
         }
@@ -1223,6 +1243,40 @@ mod tests {
         assert_eq!(p, project_from(&answers, "2026-10-14T00:00:00Z".into()));
     }
 
+    /// A milestone's node and rung are DONE out of the issues it requires: the cancelled ones
+    /// are counted beside it and never drawn as work it owes (I3440).
+    #[test]
+    fn the_milestone_scenes_count_what_each_milestone_requires() {
+        let answers = all(&[(
+            ROADMAP,
+            Ok(serde_json::json!({"milestones": [
+                {"id": "M1", "title": "one", "status": "ACTIVE",
+                 "counts": {"total": 32, "required": 23,
+                            "by_status": {"DONE": 4, "CANCELLED": 9, "READY": 19}}},
+                {"id": "M2", "title": "two", "status": "DONE",
+                 "counts": {"total": 0, "required": 0, "by_status": {"DONE": 0}}},
+            ]})),
+        )]);
+        let p = project_from(&answers, "2026-10-19T00:00:00Z".into());
+        let nebula = scene(&p, "intents");
+        assert_eq!(nebula.model["milestones"][0]["done"], 4);
+        assert_eq!(nebula.model["milestones"][0]["total"], 23);
+        assert_eq!(nebula.model["milestones"][0]["issues"], 32);
+        assert_eq!(nebula.model["milestones"][1]["total"], 0);
+        let ladder = scene(&p, "ladder");
+        let rung = &ladder.model["milestones"][0];
+        assert_eq!(rung["total"], 23);
+        assert_eq!(rung["cancelled"], 9);
+        assert!(rung["by_status"].get("CANCELLED").is_none(), "{rung}");
+        let drawn: u64 = rung["by_status"]
+            .as_object()
+            .expect("by_status")
+            .values()
+            .filter_map(Value::as_u64)
+            .sum();
+        assert_eq!(drawn, 23, "a rung's segments are the issues it requires");
+    }
+
     /// The scenes of ADR 0160 draw counts the sources reported and nothing they did not: the
     /// proof lattice's cells are the rules, its states are tallied from them, a claim ledger
     /// groups claims rather than drawing each, and a source with nothing in it is a scene that
@@ -1288,7 +1342,7 @@ mod tests {
                 ROADMAP,
                 Ok(serde_json::json!({"milestones": [
                     {"id": "M1", "title": "one", "status": "DONE",
-                     "counts": {"total": 4, "by_status": {"DONE": 4}}},
+                     "counts": {"total": 4, "required": 4, "by_status": {"DONE": 4}}},
                 ]})),
             ),
             (

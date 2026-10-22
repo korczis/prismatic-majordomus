@@ -17,9 +17,9 @@ use crate::cockpit::view::word_badge;
 use super::shell::View;
 use super::source::{ask, ask_all, Answer, Availability, Source};
 use super::view::{
-    counts, day, donut, hero, kpi, kpi_count, kpi_not_observed, kpi_state, kpi_to, list, meter,
-    more, not_observed, nothing, panel_to, shown, state, strip, table, text, timeline, unanswered,
-    value, wide,
+    counts, day, donut, hero, kpi, kpi_count, kpi_not_observed, kpi_state, kpi_to, list,
+    milestone_meter, more, not_observed, nothing, panel_to, shown, state, strip, table, text,
+    timeline, unanswered, value, wide,
 };
 
 /// The route of the pull-request queue panel.
@@ -120,7 +120,7 @@ pub fn pull_requests_panel(ctx: &Context, query: &[(String, String)]) -> View {
 }
 
 /// The milestones still open, in the plan's own order, each with the issues it has done
-/// out of those it holds.
+/// out of those it requires.
 pub fn plan_panel(roadmap: &Answer, plan: &Answer) -> El {
     let body = unanswered(roadmap).unwrap_or_else(|| {
         let open: Vec<Value> = list(roadmap, "/milestones")
@@ -169,10 +169,9 @@ pub fn plan_panel(roadmap: &Answer, plan: &Answer) -> El {
     )
 }
 
-/// One milestone as a table row: its id and title, its state and its issues done.
+/// One milestone as a table row: its id and title, its state and its issues done out of
+/// those it requires ([`milestone_meter`]).
 pub fn milestone_row(m: &Value) -> El {
-    let total = m.pointer("/counts/total").and_then(Value::as_u64);
-    let done = m.pointer("/counts/by_status/DONE").and_then(Value::as_u64);
     let id = text(m, "id");
     el("tr")
         .attr("id", format!("milestone-{id}"))
@@ -186,7 +185,7 @@ pub fn milestone_row(m: &Value) -> El {
             ),
         )
         .child(el("td").child(state(m, "status")))
-        .child(el("td").class("mj-ui-cell-meter").child(meter(done, total)))
+        .child(el("td").class("mj-ui-cell-meter").child(milestone_meter(m)))
 }
 
 /// The issues of the plan by their status, as `plan.status` counts them.

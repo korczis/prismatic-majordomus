@@ -198,3 +198,131 @@ fn the_cockpit_overview_carries_every_card_and_asks_first() {
         assert!(item.contains(capability), "{id} does not name {capability}");
     }
 }
+
+/// An issue of `milestone`, written as the fixture's own issue is, with `extra` appended.
+fn issue_of(id: &str, milestone: &str, extra: &str) -> String {
+    format!(
+        "{}{extra}",
+        common::ISSUE
+            .replace("id: I0001", &format!("id: {id}"))
+            .replace(
+                "milestone: fixture-milestone",
+                &format!("milestone: {milestone}")
+            )
+            .replace("slug: issue-I0001", &format!("slug: issue-{id}"))
+    )
+}
+
+/// A milestone record in the plan's order at `order`.
+fn milestone_of(id: &str, order: u32) -> String {
+    format!(
+        "id: {id}\ntitle: The {id} milestone\nslug: {id}\norder: {order}\npriority: p1\n\
+         problem: \"A problem.\"\noutcome: \"An outcome.\"\nacceptance_criteria:\n  - It is \
+         reached\nvalidation:\n  - \"true\"\nevidence_required:\n  - proof\n"
+    )
+}
+
+/// The cells of one milestone's row on a page: from its `id` to the end of the row.
+fn row<'a>(page: &'a str, milestone: &str) -> &'a str {
+    let at = page
+        .find(&format!("id=\"milestone-{milestone}\""))
+        .unwrap_or_else(|| panic!("no row of {milestone}: {page}"));
+    &page[at..at + page[at..].find("</tr>").expect("a closed row")]
+}
+
+/// Every milestone meter of the Overview, the Roadmap and the milestone inspector is DONE out
+/// of `counts.required`, the denominator `plan.roadmap` derives the milestone's status from;
+/// a milestone of no issue says so, and one of only cancelled issues requires none (I3440).
+#[test]
+fn milestone_meter_counts_required() {
+    let f = Fixture::new();
+    // a done stamp counts only when sealed by its transition, as `plan done` writes it
+    let at = "2026-10-19T00:00:00Z";
+    let seal = majordomus_cli::plan::seal(majordomus_cli::plan::Transition::Done, "I0101", at);
+    let done = format!(
+        "completed_at: {at}\ncompleted_event: \"{seal}\"\nevidence:\n  - covers: proof\n    \
+         type: test\n    command: \"true\"\n    result: \"ok\"\n    commit: abc\n    \
+         recorded_at: {at}\n"
+    );
+    let cancelled = "cancelled: true\n";
+    f.write(
+        ".ai/repo/project/milestones/m-mixed.yaml",
+        &milestone_of("m-mixed", 1),
+    );
+    f.write(
+        ".ai/repo/project/milestones/m-empty.yaml",
+        &milestone_of("m-empty", 2),
+    );
+    f.write(
+        ".ai/repo/project/milestones/m-dropped.yaml",
+        &milestone_of("m-dropped", 3),
+    );
+    for (id, milestone, extra) in [
+        ("I0101", "m-mixed", done.as_str()),
+        ("I0102", "m-mixed", cancelled),
+        ("I0103", "m-mixed", cancelled),
+        ("I0104", "m-mixed", ""),
+        ("I0105", "m-mixed", ""),
+        ("I0106", "m-dropped", cancelled),
+        ("I0107", "m-dropped", cancelled),
+    ] {
+        f.write(
+            &format!(".ai/repo/project/issues/{id}.yaml"),
+            &issue_of(id, milestone, extra),
+        );
+    }
+    f.commit("plan: a milestone with cancelled work, one empty, one all cancelled");
+    let mut s = Served::start(&f.root(), &[]);
+
+    let (status, roadmap) = s.get("/api/v1/plan/roadmap");
+    assert_eq!(status, 200, "{roadmap}");
+    let counts = |id: &str| {
+        roadmap["milestones"]
+            .as_array()
+            .and_then(|all| all.iter().find(|m| m["id"] == id))
+            .map(|m| m["counts"].clone())
+            .unwrap_or_else(|| panic!("plan.roadmap has no {id}: {roadmap}"))
+    };
+    let mixed = counts("m-mixed");
+    assert_eq!(mixed["total"], 5, "{mixed}");
+    assert_eq!(mixed["required"], 3, "{mixed}");
+    assert_eq!(mixed["by_status"]["DONE"], 1, "{mixed}");
+    assert_eq!(counts("m-empty")["total"], 0);
+    assert_eq!(counts("m-dropped")["required"], 0);
+
+    let (_, _, overview) = s.request("GET", "/ui", None);
+    let (_, _, screen) = s.request("GET", "/ui/roadmap", None);
+    let (_, _, inspector) = s.request("GET", "/ui/roadmap?milestone=m-mixed", None);
+    s.stop();
+
+    for (surface, page) in [("Overview", &overview), ("Roadmap", &screen)] {
+        let mixed = row(page, "m-mixed");
+        assert!(
+            mixed.contains("1 of 3") && !mixed.contains("1 of 5"),
+            "{surface}: {mixed}"
+        );
+        let empty = row(page, "m-empty");
+        assert!(
+            empty.contains("no issues")
+                && !empty.contains("0 of 0")
+                && !empty.contains("mj-ui-meter-track"),
+            "{surface}: {empty}"
+        );
+        let dropped = row(page, "m-dropped");
+        assert!(
+            dropped.contains("no issue required")
+                && !dropped.contains("0 of")
+                && !dropped.contains("mj-ui-meter-track"),
+            "{surface}: {dropped}"
+        );
+        let whole = row(page, "fixture-milestone");
+        assert!(whole.contains("0 of 1"), "{surface}: {whole}");
+    }
+    let at = inspector
+        .find("id=\"milestone\"")
+        .expect("the inspector is drawn");
+    assert!(
+        inspector[at..].contains("1 of 3") && !inspector[at..].contains("1 of 5"),
+        "{inspector}"
+    );
+}
