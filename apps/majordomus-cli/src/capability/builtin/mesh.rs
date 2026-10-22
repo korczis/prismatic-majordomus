@@ -28,7 +28,9 @@ use crate::mesh::cooperation::{
     Written,
 };
 use crate::mesh::firewall::{FirewallApplyReport, FirewallReport};
-use crate::mesh::journal::{ClaimMode, MeshEvent, SessionInfo, StreamId, StreamLiveness};
+use crate::mesh::journal::{
+    ClaimMode, Cursor, CursorError, MeshEvent, SessionInfo, StreamId, StreamLiveness,
+};
 use crate::mesh::link::{LinkReply, RefusalCode, Signed, HELLO_PATH, SYNC_PATH};
 use crate::mesh::page::{self, ClaimBrief, Query, Summary, View};
 use crate::mesh::rendezvous::REGISTER_PATH;
@@ -797,9 +799,17 @@ fn mesh_state(ctx: &Context, query: Query) -> Result<MeshStateAnswer, Capability
 #[serde(deny_unknown_fields)]
 /// The input of `mesh.events`.
 pub struct MeshEventsInput {
-    /// Only events whose Lamport stamp is above this.
+    /// Only events whose Lamport stamp is above this: a walk by stamp, which never returns
+    /// an event a partitioned runtime stamped at or below it and delivered later. Prefer
+    /// `cursor`, which returns those too.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub after: Option<u64>,
+    /// The `cursor` the previous page answered: the next page is what this run of the
+    /// runtime applied after it, every event exactly once across the whole walk, a late one
+    /// from a healed partition included (I2733). A cursor another run issued is refused as
+    /// `stale_cursor`. Without `cursor` and `after` the walk starts at the beginning.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cursor: Option<String>,
     /// At most this many (default 100, at most 1000).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub limit: Option<u64>,
@@ -817,6 +827,7 @@ impl BenchmarkCases for MeshEventsInput {
             "default",
             MeshEventsInput {
                 after: None,
+                cursor: None,
                 limit: Some(100),
                 newest: None,
             },
@@ -831,10 +842,14 @@ pub struct EventList {
     pub active: bool,
     /// How many events this answer carries.
     pub count: usize,
-    /// The `after` of the next page: the stamp of the last event this page carries, or the
-    /// `after` that was asked when it carries none. A page never ends inside a run of equal
-    /// stamps, so resuming after it misses nothing (I2140).
+    /// The `after` of the next page of a walk by stamp: the stamp of the last event this
+    /// page carries, or the `after` that was asked when it carries none. A page never ends
+    /// inside a run of equal stamps (I2140).
     pub lamport: u64,
+    /// The `cursor` of the next page: pass it back as `cursor` and the walk resumes exactly
+    /// after what this page returned (I2733). Absent from an answer to a walk by `after`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cursor: Option<String>,
     /// The events, in Lamport order.
     pub events: Vec<MeshEvent>,
 }
@@ -845,25 +860,49 @@ fn mesh_events(ctx: &Context, input: MeshEventsInput) -> Result<EventList, Capab
             active: false,
             count: 0,
             lamport: 0,
+            cursor: None,
             events: Vec::new(),
         });
     };
     let limit = input.limit.unwrap_or(100).clamp(1, 1000) as usize;
+    if input.after.is_some() && input.cursor.is_some() {
+        return Err(CapabilityError::InvalidInput(
+            "after and cursor are two different walks: pass one of them".into(),
+        ));
+    }
     let after = input.after.unwrap_or(0);
-    let events = if input.newest == Some(true) {
+    let (events, cursor) = if input.newest == Some(true) {
         // the whole tail above `after`, in order, and then its end: the journal is in memory
         // and bounded by its own retention, so this is a walk and not a second index
+        let head = c.journal().head_cursor();
         let mut all = c.journal().events_after(after, usize::MAX);
         let from = all.len().saturating_sub(limit);
         all.drain(..from);
-        all
+        (all, Some(head))
+    } else if input.after.is_some() {
+        (c.journal().events_after(after, limit), None)
     } else {
-        c.journal().events_after(after, limit)
+        let from = match &input.cursor {
+            Some(text) => Some(
+                text.parse::<Cursor>()
+                    .map_err(|e| CapabilityError::InvalidInput(e.to_string()))?,
+            ),
+            None => None,
+        };
+        let (events, next) =
+            c.journal()
+                .events_since(from.as_ref(), limit)
+                .map_err(|e| match e {
+                    CursorError::Stale { .. } => CapabilityError::Refused(e.to_string()),
+                    CursorError::Malformed(_) => CapabilityError::InvalidInput(e.to_string()),
+                })?;
+        (events, Some(next))
     };
     Ok(EventList {
         active: true,
         count: events.len(),
         lamport: events.last().map_or(after, |e| e.lamport),
+        cursor: cursor.map(|c| c.to_string()),
         events,
     })
 }
@@ -1584,7 +1623,7 @@ pub fn module() -> ModuleDescriptor {
             capability! {
                 id: "mesh.events",
                 title: "The cooperation journal",
-                description: "The journal's events above a Lamport stamp, in Lamport order, at most a page: each with its stream, sequence, stamp, repository, signing key, kind and body. The answer's lamport is the next page's `after`.",
+                description: "The journal's events a page at a time, in Lamport order: each with its stream, sequence, stamp, repository, signing key, kind and body. The answer's cursor is the next page's `cursor`, and a walk resumed from each one returns every event exactly once, a partitioned runtime's late event included; `after` still walks by Lamport stamp.",
                 input: MeshEventsInput,
                 output: EventList,
                 stability: Stability::Experimental,
