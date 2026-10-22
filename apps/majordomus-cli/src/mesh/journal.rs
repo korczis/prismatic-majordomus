@@ -4023,6 +4023,52 @@ mod tests {
         assert_eq!(page[0].stream, b.own);
     }
 
+    /// Pull every event `from` holds that `into` lacks, as one sync round does.
+    fn synced(into: &Journal, from: &Journal) {
+        into.merge_marks(&from.marks(), &|_| true, Duration::from_secs(30));
+        into.ingest(&from.missing_for(&into.marks(), usize::MAX), &accept_all);
+    }
+
+    #[test]
+    fn paging_while_events_arrive_returns_every_event_exactly_once() {
+        // two runtimes that wrote concurrently, so the journal opens on a tie
+        let reader = journal("0000000000000001");
+        for runtime in ["0000000000000002", "0000000000000003"] {
+            let writer = journal(runtime);
+            opened(&writer, "s1");
+            opened(&writer, "s2");
+            synced(&reader, &writer);
+        }
+        // a runtime that hears everything and keeps writing while the reader pages
+        let late = journal("0000000000000004");
+        let mut read = Vec::new();
+        let mut after = 0;
+        for round in 0.. {
+            let page = reader.events_after(after, 1);
+            assert_eq!(
+                reader.events_after(after, 1),
+                page,
+                "the cursor is stable: asking again with it answers the same page"
+            );
+            let Some(last) = page.last() else { break };
+            after = last.lamport;
+            read.extend(page);
+            if round < 3 {
+                // between pages: one event of the reader's own and one heard from a peer
+                opened(&reader, &format!("own-{round}"));
+                synced(&late, &reader);
+                opened(&late, &format!("late-{round}"));
+                synced(&reader, &late);
+            }
+        }
+        let all = reader.events_after(0, usize::MAX);
+        assert_eq!(all.len(), 4 + 3 + 3, "the fixture appended between pages");
+        assert_eq!(
+            read, all,
+            "every event once, in causal order, though the journal grew while it was paged"
+        );
+    }
+
     #[test]
     fn an_append_after_a_torn_tail_starts_a_line_of_its_own() {
         let dir = tempfile::tempdir().unwrap();
