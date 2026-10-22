@@ -64,7 +64,7 @@ expensive way this measurement can be wrong. `majordomus prs` uses the exit code
 | pull requests | `majordomus prs status` | `majordomus prs drain --refresh` |
 | worktrees, branches | `majordomus worktree` | `majordomus worktree` cleanup, by hand for dirty ones |
 | abandoned servers | `scripts/reap-orphans` | `scripts/reap-orphans --kill` |
-| build output on disk | `scripts/reap-orphans --targets` | `scripts/reap-orphans --reclaim` |
+| build output on disk | `scripts/reap-orphans --targets` | `scripts/reap-orphans --reclaim`; under the floor, a build asks for it itself |
 | the whole gate | `scripts/ci/backlog-check` | `scripts/ci/backlog-check --remote` |
 
 ### `majordomus prs`
@@ -161,6 +161,56 @@ to *start* a build below **5120MB** free, and the three paths that start one —
 `MAJORDOMUS_MIN_FREE_MB=0` lifts it. A bound whose own input cannot be measured says so and
 lets the build run — the deliberate opposite of the sweep, because refusing every build on a
 machine whose `df` is unreadable stops all work to prevent a hypothetical.
+
+### Under the floor: the order changes, and the build asks
+
+On 2026-10-13 the four conditions were not enough. Five sessions built at once behind a
+landing queue; the volume fell from 36GiB to 20GiB free in fourteen minutes and to 13GiB an
+hour later; builds were stopped by hand at the floor twice. Asked at that moment, the reaper
+found 4.3GB reclaimable out of roughly 110GB of build output, because everything else
+belonged to worktrees whose branches had **not landed yet** — parked, nobody in them, and
+each as regenerable as a landed one's.
+
+`scripts/reap-orphans --reclaim --until-free <size>` is that case. While the volume has that
+much free it reclaims nothing and says so. Below it, merged and idle stop being conditions
+and become the **order**:
+
+| Turn | Whose build output | Why it is safe to take |
+|---|---|---|
+| first | landed, nobody in it, nothing uncommitted | what a quiet day reclaims |
+| then | not landed, nobody in it, nothing uncommitted | the branch and the tree are untouched; it rebuilds |
+| last | nobody in it, with uncommitted files | the files stay; only build output goes |
+
+Within a turn the largest goes first, and the sweep stops at the first candidate it does not
+need, so a parked worktree keeps its build whenever a landed one was enough. Nothing else
+moves: never a worktree, never the primary checkout or the one the sweep runs from, never a
+worktree a process names or stands in, never a directory the worktree does not own or cargo
+did not mark, and nothing at all when liveness, `origin/master` or the free space itself
+cannot be read.
+
+The bound asks before it refuses. `mj_rust_space_check` used to print the command that would
+have made room and leave a person to type it; a build that finds the disk under its floor
+now runs the reaper, measures again, starts when there is room and refuses as before when
+there is not. `MAJORDOMUS_RECLAIM_UNDER_FLOOR` says how far it may go:
+
+| Value | What a build under its floor asks for |
+|---|---|
+| `landed` (default) | what `--reclaim` takes on a quiet day: the four conditions, unchanged |
+| `unattended` | build output nobody is using, in the order above, until twice the floor is free |
+| `off` | nothing: it refuses, as it did before |
+
+The default is the one the rules already grant. `project.accumulation-is-measured` gives the
+reaper the build output of landed worktrees and nothing else, and
+`project.reclaim-only-what-you-own` says disk pressure is reported, not resolved by taking
+somebody else's tools: a parked worktree's executable is an instrument its owner's commit
+hook needs. So the order above is taken only by whoever was told to take it — a person
+running `--until-free`, or a machine whose owner set `unattended` — and never by a build
+acting for one session against the others.
+
+The reaper's table goes to the standard error of the build that asked, so the session reads
+what was taken and from whom. A test case never asks on the machine's behalf:
+`test/lib.sh` sets `off` for every case, and `test/cases/276_disk_is_bounded.sh` proves the
+asking over a fixture with a recorder in the reaper's place.
 
 ### The derived trees that were never declared
 

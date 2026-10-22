@@ -81,6 +81,26 @@
 #   scripts/reap-orphans --kill       end the abandoned servers (TERM, then KILL after --grace)
 #   scripts/reap-orphans --reclaim    remove the build output of landed, unattended worktrees
 #   scripts/reap-orphans --min-age 2h only consider servers older than two hours
+#   scripts/reap-orphans --reclaim --until-free 20g
+#                                     the disk is under its floor: reclaim build output,
+#                                     landed or not, until that much is free again
+#
+# UNDER THE FLOOR. The four conditions above are the ones a quiet machine can afford, and
+# on 2026-10-13 they were not enough: the volume fell from 36GiB to 20GiB free in fourteen
+# minutes while five sessions built at once, the sweep found 4.3GB reclaimable out of the
+# 110GB of build output on the machine, and builds were stopped by hand at the floor twice.
+# Everything else was held by worktrees whose branches had not landed yet — parked behind a
+# landing queue, nobody in them, each as regenerable as a landed one's.
+#
+# `--until-free SIZE` is that case and no other. While the volume has SIZE free it reclaims
+# nothing and says so. Below it, merged and idle stop being conditions and become the
+# ORDER: build output of landed, clean worktrees first, then of clean worktrees that have
+# not landed, then of worktrees with uncommitted files (the files stay; only build output
+# goes), the largest first within each, and it stops at the first candidate it does not
+# need. What does not move is everything that makes a false positive cost a rebuild and
+# nothing else: never a worktree, never the primary checkout or the one this runs from,
+# never a worktree a process names or stands in, never a directory this worktree does not
+# own or cargo did not mark.
 #
 # `--kill` and `--reclaim` are separate on purpose: the two subjects are consented to
 # separately, so that a caller already running `--kill` does not one day start deleting a
@@ -134,6 +154,24 @@ as_seconds() {
   esac
 }
 
+# "20g", "20480m", "4096k" -> KiB; nothing at all for anything else, never a guessed number
+as_kb() {
+  case "$1" in
+    *[!0-9kmgKMG]*|'') return 0 ;;
+  esac
+  case "$1" in
+    *[gG]) mj_ak_n="${1%[gG]}"; mj_ak_f=1048576 ;;
+    *[mM]) mj_ak_n="${1%[mM]}"; mj_ak_f=1024 ;;
+    *[kK]) mj_ak_n="${1%[kK]}"; mj_ak_f=1 ;;
+    *)     return 0 ;;
+  esac
+  case "$mj_ak_n" in ''|*[!0-9]*) return 0 ;; esac
+  echo $(( mj_ak_n * mj_ak_f ))
+}
+
+# The free space a run under the floor reclaims up to, in KiB; 0 when no goal was given.
+UNTIL_KB=0
+
 subject=0
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -143,7 +181,12 @@ while [ $# -gt 0 ]; do
     --targets) [ "$subject" = 1 ] || DO_SERVERS=0; DO_TARGETS=1; subject=1; shift ;;
     --min-age) [ $# -ge 2 ] || die "--min-age needs a value"; MIN_AGE="$(as_seconds "$2")"; shift 2 ;;
     --grace)   [ $# -ge 2 ] || die "--grace needs a value"; GRACE="$(as_seconds "$2")"; shift 2 ;;
-    -h|--help) sed -n '2,84p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    --until-free) [ $# -ge 2 ] || die "--until-free needs a size (20g, 20480m)"
+               UNTIL_KB="$(as_kb "$2")"
+               [ -n "$UNTIL_KB" ] && [ "$UNTIL_KB" -gt 0 ] \
+                 || die "--until-free $2 is not a size: a number with k, m or g"
+               shift 2 ;;
+    -h|--help) sed -n '2,103p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) die "unknown option $1" ;;
   esac
 done
@@ -163,6 +206,12 @@ fi
   || die "--kill is consent for servers, but --targets restricts this run to build output"
 [ "$RECLAIM" -eq 0 ] || [ "$DO_TARGETS" -eq 1 ] \
   || die "--reclaim is consent for build output, but --servers restricts this run to servers"
+# A goal is about build output and selects it the way a consent does.
+if [ "$UNTIL_KB" -gt 0 ]; then
+  [ "$subject" -eq 1 ] || [ "$KILL" -eq 1 ] || { DO_SERVERS=0; DO_TARGETS=1; }
+  [ "$DO_TARGETS" -eq 1 ] \
+    || die "--until-free is a goal for build output, but --servers restricts this run to servers"
+fi
 
 command -v lsof >/dev/null 2>&1 || die "lsof is needed to tell an attached server from an abandoned one"
 
@@ -283,7 +332,7 @@ EOF
 
 # -------------------------------------------------------------------------- build output
 
-SNAP_PS=""; SNAP_CWD=""
+SNAP_PS=""; SNAP_CWD=""; PLAN=""
 
 # What one subject can say about itself when the run stopped. Three answers and no fourth:
 # it was not asked for, it was examined, or it was never reached — and "never reached" is the
@@ -298,6 +347,7 @@ subject_state() { # selected reached noun
 cleanup() {
   mj_rc=$?
   [ -z "$SNAP_PS" ] || rm -f "$SNAP_PS" "$SNAP_CWD"
+  [ -z "$PLAN" ] || rm -f "$PLAN"
   # A clean finish reports itself below; `--help` and a usage error are not sweeps at all.
   if [ "$FINISHED" -eq 0 ] && [ "$mj_rc" -ne 0 ]; then
     echo
@@ -397,6 +447,64 @@ worktrees() {
   '
 }
 
+# The candidates of a run under the floor, taken in order: landed before not landed before
+# uncommitted, the largest first within each, until the goal is met. A report counts what it
+# would free against the goal, so it stops where the run with consent would stop. Each
+# candidate is measured again immediately before it is removed, as the sweep above does.
+#
+# reap_under_the_floor <free KiB when the sweep began>
+reap_under_the_floor() {
+  local have="$1" plan_tier plan_size plan_wt plan_why target st
+  while IFS="$(printf '\t')" read -r plan_tier plan_size plan_wt plan_why; do
+    [ -n "${plan_wt:-}" ] || continue
+    target="$plan_wt/$TARGET_REL"
+    if [ "$RECLAIM" -eq 1 ]; then
+      have="$(free_kb "$ROOT")"
+      case "$have" in
+        ''|*[!0-9]*) die "free space stopped being measurable mid-sweep: nothing further is reclaimed" ;;
+      esac
+    fi
+    if [ "$have" -ge "$UNTIL_KB" ]; then
+      row "$plan_wt" "$(human "$plan_size")" "keep — the goal was met before its turn"
+      tgt_kept=$((tgt_kept + 1)); continue
+    fi
+
+    tgt_found=$((tgt_found + 1))
+    if [ "$RECLAIM" -eq 0 ]; then
+      row "$plan_wt" "$(human "$plan_size")" "would reclaim — $plan_why"
+      tgt_freed=$((tgt_freed + plan_size)); have=$((have + plan_size))
+      continue
+    fi
+
+    liveness_snapshot || die "liveness stopped being measurable mid-sweep: nothing further is reclaimed"
+    if live_in "$plan_wt"; then
+      row "$plan_wt" "$(human "$plan_size")" "skip — somebody started working in it since the scan"
+      tgt_kept=$((tgt_kept + 1)); tgt_found=$((tgt_found - 1)); continue
+    fi
+    if [ "$plan_tier" -lt 2 ]; then
+      st="$(git --no-optional-locks -C "$plan_wt" status --porcelain 2>/dev/null || true)"
+      if [ -n "$st" ]; then
+        row "$plan_wt" "$(human "$plan_size")" "skip — it stopped being clean since the scan"
+        tgt_kept=$((tgt_kept + 1)); tgt_found=$((tgt_found - 1)); continue
+      fi
+    fi
+    if [ -L "$target" ] || [ ! -d "$target" ]; then
+      row "$plan_wt" "$(human "$plan_size")" "skip — its build directory changed since the scan"
+      tgt_kept=$((tgt_kept + 1)); tgt_found=$((tgt_found - 1)); continue
+    fi
+
+    if rm -rf "$target"; then
+      row "$plan_wt" "$(human "$plan_size")" "reclaimed — $plan_why"
+      tgt_reclaimed=$((tgt_reclaimed + 1)); tgt_freed=$((tgt_freed + plan_size))
+    else
+      row "$plan_wt" "$(human "$plan_size")" "FAILED to remove"
+      unreadable=$((unreadable + 1)); tgt_found=$((tgt_found - 1))
+    fi
+  done <<EOF
+$(sort -t "$(printf '\t')" -k1,1n -k2,2nr "$PLAN")
+EOF
+}
+
 reap_targets() {
   git -C "$ROOT" rev-parse --git-dir >/dev/null 2>&1 \
     || die "$ROOT is not a git repository: no worktree can be classified, so nothing is reclaimed"
@@ -431,6 +539,24 @@ reap_targets() {
     || die "the primary checkout could not be identified, and it is excluded by name rather than by predicate: nothing is reclaimed"
   self_wt="$(git -C "$ROOT" rev-parse --show-toplevel 2>/dev/null || true)"
 
+  # Under the floor or not. A goal that cannot be compared with a measurement is refused:
+  # widening what may be reclaimed on a free space nobody read is the defect
+  # project.destructive-sweeps-fail-closed names.
+  local pressure=0 free_now="" unmerged dirty tier why
+  if [ "$UNTIL_KB" -gt 0 ]; then
+    free_now="$(free_kb "$ROOT")"
+    case "$free_now" in
+      ''|*[!0-9]*) die "free space on the volume of $ROOT could not be measured: a goal that cannot be checked reclaims nothing" ;;
+    esac
+    if [ "$free_now" -ge "$UNTIL_KB" ]; then
+      echo "reap-orphans: build output — $(human "$free_now") free, the goal is $(human "$UNTIL_KB"): the disk is not under its floor, nothing is reclaimed"
+      return 0
+    fi
+    pressure=1
+    PLAN="$(mktemp "${TMPDIR:-/tmp}/mj-reap-plan.XXXXXX")" || die "no file to order the candidates in: nothing is reclaimed"
+    echo "reap-orphans: build output — $(human "$free_now") free, the goal is $(human "$UNTIL_KB"): under the floor, so landed and idle decide the order and no longer who is a candidate"
+  fi
+
   printf '%-58s %8s  %s\n' WORKTREE SIZE STATE
 
   while IFS="$(printf '\t')" read -r wt tip; do
@@ -451,17 +577,26 @@ reap_targets() {
       unreadable=$((unreadable + 1)); continue
     fi
 
+    unmerged=0; dirty=0
     rc=0; git -C "$ROOT" merge-base --is-ancestor "$tip" "$base" >/dev/null 2>&1 || rc=$?
     case "$rc" in
       0) : ;;
-      1) row "$wt" "$(human "$size")" "keep — ${tip:0:9} is not an ancestor of origin/master"
-         tgt_kept=$((tgt_kept + 1)); continue ;;
+      1) if [ "$pressure" -eq 1 ]; then
+           unmerged=1
+         else
+           row "$wt" "$(human "$size")" "keep — ${tip:0:9} is not an ancestor of origin/master"
+           tgt_kept=$((tgt_kept + 1)); continue
+         fi ;;
       *) row "$wt" "$(human "$size")" "skip — merged-ness could not be decided (git exit $rc)"
          unreadable=$((unreadable + 1)); continue ;;
     esac
 
     if live_in "$wt"; then
-      row "$wt" "$(human "$size")" "keep — merged, but somebody is working in it"
+      if [ "$unmerged" -eq 1 ]; then
+        row "$wt" "$(human "$size")" "keep — somebody is working in it"
+      else
+        row "$wt" "$(human "$size")" "keep — merged, but somebody is working in it"
+      fi
       tgt_kept=$((tgt_kept + 1)); continue
     fi
 
@@ -475,8 +610,11 @@ reap_targets() {
       unreadable=$((unreadable + 1)); continue
     fi
     if [ -n "$st" ]; then
-      row "$wt" "$(human "$size")" "keep — $(printf '%s\n' "$st" | grep -c .) uncommitted or untracked file(s)"
-      tgt_kept=$((tgt_kept + 1)); continue
+      dirty="$(printf '%s\n' "$st" | grep -c .)"
+      if [ "$pressure" -eq 0 ]; then
+        row "$wt" "$(human "$size")" "keep — $dirty uncommitted or untracked file(s)"
+        tgt_kept=$((tgt_kept + 1)); continue
+      fi
     fi
 
     if [ -L "$target" ] || ! mj_rust_owns "$wt" "$target"; then
@@ -486,6 +624,20 @@ reap_targets() {
     if ! is_cargo_target "$target"; then
       row "$wt" "$(human "$size")" "skip — carries no mark of cargo's: not provably a build directory"
       unreadable=$((unreadable + 1)); continue
+    fi
+
+    # Under the floor a candidate is not acted on where it is met: the sweep first learns
+    # every candidate, then takes them in the order that costs the least, and stops.
+    if [ "$pressure" -eq 1 ]; then
+      if [ "$dirty" -gt 0 ]; then
+        tier=2; why="nobody in it; its $dirty uncommitted file(s) stay, only build output goes"
+      elif [ "$unmerged" -eq 1 ]; then
+        tier=1; why="not landed, nobody in it, nothing uncommitted"
+      else
+        tier=0; why="merged, nobody in it, nothing uncommitted"
+      fi
+      printf '%s\t%s\t%s\t%s\n' "$tier" "$size" "$wt" "$why" >> "$PLAN"
+      continue
     fi
 
     tgt_found=$((tgt_found + 1))
@@ -518,6 +670,9 @@ reap_targets() {
   done <<EOF
 $(worktrees)
 EOF
+
+  [ "$pressure" -eq 0 ] || reap_under_the_floor "$free_now"
+  # the shared intermediates below have a bound of their own, which a goal does not move
 
   # The intermediates every worktree shares. .cargo/config.toml names one build directory
   # for the dependencies of all of them (ADR 0139), so it belongs to no worktree: the

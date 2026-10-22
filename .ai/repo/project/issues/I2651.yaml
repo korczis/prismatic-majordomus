@@ -1,0 +1,36 @@
+id: I2651
+milestone: development-runtime
+title: "A build under its floor asks the reaper before it refuses, and a named goal may take unlanded build output"
+slug: build-output-is-reclaimed-when-the-disk-is-under-its-floor
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Make the disk floor act instead of only refusing: a build that finds the volume under its floor runs the reaper for the build output the rules already give it and measures again; and give the reaper a goal, taken only when asked for by name, under which landed and clean decide the order of candidates instead of who is one."
+why: "On 2026-10-13 five sessions built at once behind a landing queue; the volume fell from 36GiB to 20GiB free in fourteen minutes and to 13GiB within the hour, and builds were stopped by hand at the floor twice. The refusal printed the command that would have made room and nobody typed it; asked, the reaper found 4.3GB reclaimable out of about 110GB of build output, because the rest belonged to unlanded worktrees nobody was in. The owner asked for the clean-up to be automatic."
+current_state: "mj_rust_space_check refuses a build under the floor and names scripts/reap-orphans for a person to run. The reaper reclaims only build output of worktrees that are merged, unattended and clean. Nothing runs it."
+desired_state: "mj_rust_space_check runs scripts/reap-orphans --targets --reclaim when the disk is under the floor, measures again, starts the build when there is room and refuses as before when there is not; MAJORDOMUS_RECLAIM_UNDER_FLOOR is landed (default), unattended or off, and test/lib.sh sets off so no case reclaims on the machine's behalf. scripts/reap-orphans gains --until-free <size>: nothing is reclaimed while that much is free; below it the candidates are taken landed and clean first, then clean and not landed, then with uncommitted files, largest first, stopping at the first one not needed; liveness, ownership, cargo's mark, the excluded checkouts and the whole-sweep refusals are unchanged. ADR 0157 records that the goal goes beyond point 5 of project.accumulation-is-measured and is never a default."
+scope:
+  - "scripts/reap-orphans"
+  - "lib/rust_bin.sh"
+  - "test/lib.sh"
+  - "test/cases/276_disk_is_bounded.sh"
+  - "docs/BACKLOG.md"
+  - ".ai/repo/adrs/0157-a-build-under-its-floor-asks-the-reaper-and-a-named-goal-may-take-unlanded-build-output.md"
+  - ".ai/repo/project/issues/I2651.yaml"
+depends_on: []
+acceptance_criteria:
+  - "a build under its floor asks the reaper for the landed set by default, starts when the second measurement has room and refuses otherwise"
+  - "off asks nothing, and a value that is none of the three asks nothing and says so"
+  - "no test case can cause build output of the real checkout to be reclaimed"
+  - "with the goal met nothing is reclaimed; under it the order is landed, not landed, uncommitted, and the sweep stops at the first candidate it does not need"
+  - "under the goal a worktree a process names or stands in, a build directory the worktree does not own and one cargo did not mark are refused as before, and no worktree, commit or uncommitted file is removed"
+  - "a free space that cannot be read reclaims nothing"
+validation:
+  - "bash test/run.sh 276_disk_is_bounded"
+  - "bash test/run.sh 131_backlog_hygiene"
+  - "bash test/run.sh 318_a_partial_sweep_says_so"
+  - "scripts/ci/shell-lint"
+evidence_required:
+  - "case_276_under_the_floor"
+created_at: 2026-10-13
+updated_at: 2026-10-13

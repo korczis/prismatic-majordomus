@@ -298,6 +298,23 @@ mj_rust_bin_missing() {
 #
 #   MAJORDOMUS_MIN_FREE_MB   free MiB below which a build refuses to start (default 5120);
 #                            0 disables the bound entirely.
+#   MAJORDOMUS_RECLAIM_UNDER_FLOOR
+#                            what a build under the floor does before it refuses:
+#                            `landed` (default) reclaims what `scripts/reap-orphans
+#                            --reclaim` reclaims, the build output of landed worktrees
+#                            nobody is in (project.accumulation-is-measured, point 5);
+#                            `unattended` goes further, to worktrees that have not landed,
+#                            until twice the floor is free, and is never the default: that
+#                            is somebody else's build, and the rule gives it to nobody who
+#                            was not told to take it; `off` reclaims nothing.
+#
+# A refusal that names the command which would have made room, and leaves a person to type
+# it, was the state of this floor until 2026-10-13: that day builds were stopped at the floor
+# twice within an hour while the reaper, asked by hand, had build output to give back. So a
+# build that finds the disk under its floor now asks the reaper first and measures again.
+# What the reaper may take is its own decision and is not widened here: build output only,
+# never a worktree, never one a process names or stands in (scripts/reap-orphans). By default
+# it is asked for exactly what a person typing the printed command would have got.
 #
 # The default is measured, not chosen. On 2026-09-12 a full `cargo build --locked` of
 # apps/majordomus-cli into an empty target/, with a warm sccache, wrote 2,566,652 KiB —
@@ -349,6 +366,16 @@ mj_rust_space_check() {
   fi
   [ "$mj_sc_free" -lt "$mj_sc_floor" ] || return 0
 
+  if mj_rust_reclaim_under_floor "$mj_sc_root" "$mj_sc_floor"; then
+    mj_sc_again="$(mj_free_mb "$mj_sc_target" || true)"
+    if [ -n "$mj_sc_again" ] && [ "$mj_sc_again" -ge "$mj_sc_floor" ]; then
+      printf 'majordomus: %sMB was free, under the floor of %sMB; build output nobody was using was reclaimed and %sMB is free: %s starts\n' \
+        "$mj_sc_free" "$mj_sc_floor" "$mj_sc_again" "$mj_sc_what" >&2
+      return 0
+    fi
+    [ -z "$mj_sc_again" ] || mj_sc_free="$mj_sc_again"
+  fi
+
   {
     printf 'majordomus: refusing to start %s: %sMB free, floor %sMB.\n' \
       "$mj_sc_what" "$mj_sc_free" "$mj_sc_floor"
@@ -362,6 +389,34 @@ mj_rust_space_check() {
     printf '  To override:           MAJORDOMUS_MIN_FREE_MB=0\n'
   } >&2
   return 1
+}
+
+# mj_rust_reclaim_under_floor <repository-root> <floor MiB>
+#
+# The reaper, asked on behalf of a build that found the disk under its floor. True (0) when
+# it ran to its own summary, whatever it reclaimed; false when it was not asked (the setting
+# says off, or this tree has no reaper) or did not finish. Its table goes to stderr, so the
+# session that started the build reads what was taken and from whom. It never decides what
+# is reclaimable: it passes the goal and the consent, and the reaper measures.
+mj_rust_reclaim_under_floor() {
+  mj_ru_root="$1"
+  mj_ru_floor="$2"
+  mj_ru_reaper="$mj_ru_root/scripts/reap-orphans"
+  [ -x "$mj_ru_reaper" ] || return 1
+  case "${MAJORDOMUS_RECLAIM_UNDER_FLOOR:-landed}" in
+    off) return 1 ;;
+    landed)
+      printf 'majordomus: under the floor: asking scripts/reap-orphans for the build output of landed, unattended worktrees\n' >&2
+      MJ_ROOT="$mj_ru_root" "$mj_ru_reaper" --targets --reclaim >&2 ;;
+    unattended)
+      printf 'majordomus: under the floor: asking scripts/reap-orphans for build output nobody is using, until %sMB is free\n' \
+        "$((mj_ru_floor * 2))" >&2
+      MJ_ROOT="$mj_ru_root" "$mj_ru_reaper" --targets --reclaim --until-free "$((mj_ru_floor * 2))m" >&2 ;;
+    *)
+      printf 'majordomus: MAJORDOMUS_RECLAIM_UNDER_FLOOR=%s is not off, landed or unattended: nothing is reclaimed\n' \
+        "$MAJORDOMUS_RECLAIM_UNDER_FLOOR" >&2
+      return 1 ;;
+  esac
 }
 
 # The reasoning report of the open task (ADR 0098), as `majordomus reasoning status

@@ -93,6 +93,12 @@ expect_exit() {
     return 1
   fi
 }
+# A case measures the machine and never acts on it. A build that finds the disk under its
+# floor asks the reaper for build output (lib/rust_bin.sh), and a case that sets an
+# artificial floor over the real checkout would otherwise have real build output reclaimed
+# on its behalf. A case that proves the asking sets this itself, over a fixture.
+export MAJORDOMUS_RECLAIM_UNDER_FLOOR=off
+
 expect_file() {
   [ -f "$1" ] || { printf '    expected the file %s, which the run did not produce\n' "$1"; return 1; }
 }
