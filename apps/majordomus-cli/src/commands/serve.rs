@@ -73,14 +73,19 @@ pub fn run(args: ServeArgs) -> Result<u8> {
             idle,
             wait,
             format,
-        }) => ensure(
-            &repo,
-            *port,
-            *idle,
-            Duration::from_secs(*wait),
-            *format,
-            &layer,
-        ),
+        }) => {
+            // the declared server timings, the idle life among them, read before the lease
+            // is judged; `--idle` given here overrides the declaration (I2701)
+            let _ = crate::policy::LoadedPolicy::load(&repo);
+            ensure(
+                &repo,
+                port.unwrap_or_else(|| crate::cli::checkout_port(repo.root())),
+                idle.unwrap_or_else(|| lease::timings().idle.as_secs()),
+                Duration::from_secs(*wait),
+                *format,
+                &layer,
+            )
+        }
         Some(ServeCommand::Stop { wait }) => stop(&repo, Duration::from_secs(*wait)),
     }
 }
@@ -123,7 +128,9 @@ fn serve(args: &ServeArgs, repo: &Repository) -> Result<u8> {
                 std::path::Path::new(&app.context.index.repository.root),
             )
             .0,
-            args.port,
+            // the port this checkout asks for on every start, unless one was given (I2702)
+            args.port
+                .unwrap_or_else(|| crate::cli::checkout_port(repo.root())),
         ),
     };
     // The server outlives many commits. It follows the repository rather than freezing
@@ -141,6 +148,10 @@ fn serve(args: &ServeArgs, repo: &Repository) -> Result<u8> {
         declared.as_ref().map(|(file, _)| file.as_str()),
         lease,
         Some(app.share.dir()),
+        &crate::shared::MeshHosting {
+            node_seed_env: args.node_seed_env.clone(),
+            advertise: args.advertise.clone(),
+        },
     )?;
     // this loop answers a stop signal itself, so that the process ends by its own return
     shared.take_stop_requests();
@@ -322,6 +333,16 @@ fn render_status(out: &mut impl Write, s: &Value, checkouts: Checkouts) -> Resul
             out,
             "repository not a git repository: this checkout alone".into(),
         )?,
+    }
+    if let Some(t) = s.get("trunk") {
+        w(
+            out,
+            format!(
+                "trunk      {}: {}",
+                t["standing"].as_str().unwrap_or("?"),
+                t["message"].as_str().unwrap_or("-")
+            ),
+        )?;
     }
     w(
         out,
@@ -846,7 +867,7 @@ fn server_command(exe: &Path, root: &Path, port: u16, idle: u64, layer: &[OsStri
 /// Standard input, output and error are redirected here, and for a long time that looked
 /// like enough. It is not: `Command` only replaces those three, and **every other descriptor
 /// the parent had open is inherited by the child**, which then holds it for its whole life —
-/// fifteen minutes, by `DEFAULT_IDLE_SECONDS`.
+/// fifteen minutes, by `DEFAULT_IDLE_SECONDS`, or the declared `server.idle_seconds`.
 ///
 /// direnv is where that stops being theoretical. It hands the file it evaluates an extra
 /// descriptor of its own (fd 6 here), and it does not return until that pipe closes. On
@@ -1176,6 +1197,69 @@ mod tests {
         }
     }
 
+    /// `serve status` names the served tree's distance from the remote trunk when the
+    /// answer carries one, under the repository line, and adds no line when it does not.
+    #[test]
+    fn serve_status_names_the_trunk_distance_the_answer_carries() {
+        let answer = json!({
+            "standing": "ready",
+            "desired": { "host": "127.0.0.1", "port": 8741, "version": "0" },
+            "git": { "id": "r1" },
+            "trunk": { "standing": "stale", "message": "this checkout is 779 commit(s) behind" },
+            "servers": [],
+        });
+        let render = |s: &Value| {
+            let mut out = Vec::new();
+            render_status(&mut out, s, Checkouts::This).expect("rendered");
+            String::from_utf8(out).expect("text")
+        };
+        let text = render(&answer);
+        assert!(
+            text.contains(
+                "repository r1\ntrunk      stale: this checkout is 779 commit(s) behind\nservers:"
+            ),
+            "{text}"
+        );
+        let mut without = answer.clone();
+        without.as_object_mut().unwrap().remove("trunk");
+        assert!(!render(&without).contains("trunk "), "{}", render(&without));
+
+        /// Takes `lines` whole lines, then refuses every write: a reader that went away.
+        struct Closing {
+            lines: usize,
+            seen: usize,
+        }
+        impl Write for Closing {
+            fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+                if self.seen >= self.lines {
+                    return Err(std::io::ErrorKind::BrokenPipe.into());
+                }
+                self.seen += buf.iter().filter(|b| **b == b'\n').count();
+                Ok(buf.len())
+            }
+            fn flush(&mut self) -> std::io::Result<()> {
+                Ok(())
+            }
+        }
+        // a write refused at any line, the trunk's among them, is a transport error
+        let total = text.lines().count();
+        for lines in 0..total {
+            let mut out = Closing { lines, seen: 0 };
+            assert!(
+                matches!(
+                    render_status(&mut out, &answer, Checkouts::This),
+                    Err(Error::Transport(_))
+                ),
+                "a write refused after {lines} line(s) was not a transport error"
+            );
+        }
+        let mut out = Closing {
+            lines: total,
+            seen: 0,
+        };
+        assert!(render_status(&mut out, &answer, Checkouts::This).is_ok());
+    }
+
     /// A small layer in a temporary directory: what `Repository::discover` needs.
     fn layer_only() -> (crate::synthetic::SyntheticRepository, PathBuf) {
         let fixture = crate::synthetic::SyntheticRepository::small().unwrap();
@@ -1221,6 +1305,48 @@ mod tests {
         assert!(
             !lease::lease_path(&repo).exists(),
             "no server was started, so no lease was written"
+        );
+    }
+
+    /// With no `--port`, the server binds the port this checkout derives. The host is an
+    /// address no machine owns (TEST-NET-1), so the bind is refused and the refusal names
+    /// the address that was tried; the lease the election took is released on the way out.
+    #[test]
+    fn serve_without_a_port_binds_the_port_the_checkout_derives() {
+        use clap::Parser;
+        let (_dir, root) = layer_only();
+        // the share is named, not looked up: a test binary under a shared build directory has
+        // no share beside it, and the environment's MAJORDOMUS_SHARE is not this tree's
+        let share = crate::synthetic::crate_share();
+        let cli = crate::cli::Cli::try_parse_from([
+            "majordomus",
+            "serve",
+            "--repo",
+            root.to_str().unwrap(),
+            "--share",
+            share.to_str().unwrap(),
+            "--discovery",
+            "filesystem",
+            "--host",
+            "192.0.2.1",
+        ])
+        .unwrap();
+        let crate::cli::Command::Serve(args) = cli.command else {
+            panic!("not the serve command")
+        };
+        assert_eq!(args.port, None);
+        let port = crate::cli::checkout_port(&root);
+        let err = run(args).expect_err("an address no machine owns cannot be bound");
+        match err {
+            Error::Http { reason } => {
+                assert!(reason.contains(&format!("192.0.2.1:{port}")), "{reason}")
+            }
+            other => panic!("{other:?}"),
+        }
+        let repo = Repository::discover(&root).unwrap();
+        assert!(
+            !lease::lease_path(&repo).exists(),
+            "the lease of a server that never bound is released"
         );
     }
 

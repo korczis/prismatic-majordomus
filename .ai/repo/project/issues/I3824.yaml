@@ -1,0 +1,42 @@
+id: I3824
+milestone: ci-critical-path
+title: "The cooperation rule says a worker lands its own green head, and every bootstrap says the same"
+slug: the-relaxed-cooperation-is-recorded
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Rule project.the-cooperation-model-is-the-owners-word moves to version 2 with the owner's relaxation of 2026-10-20: a worker lands its own green pull request through the guarded lander's queue, pinned exactly as a top is pinned; at most five builders on one machine and none below 35 GiB free; cleanup that loses nothing is done without asking and announced; the Claude Code permission rules stay the owner's to write. ADR 0167 carries a dated amendment, the three provider templates carry the new bootstrap paragraph, every document that linked version 1 links version 2, and case 3824 holds the bootstrap to the rule."
+why: "At about 23:13 UTC on 2026-10-20 the owner wrote to sessions d3 and 0c: 'hlavne prosim tebe reflektuj zmekceni pravidel, vse updatuj, vsem dej vedet, updatni nataveni', and chose every relaxation offered. The seats read it on the board as claim owner-relaxation-10-21. Version 1 of the rule and the bootstrap every session reads still said a worker hands its head over and never merges, so every new session would have been told the opposite of the owner's word."
+current_state: "Measured on master 573df967bb5: the rule is version 1 and its worker row ends 'hands the green head to the landing seat, never merges'; CLAUDE.md, AGENTS.md and GEMINI.md say a worker 'hands its green head to the landing seat and never merges'; docs/INTEGRATION.md, docs/MESH.md, docs/RELEASE.md, docs/MAJORDOMUS_UI.md, ADR 0167, apps/majordomus-cli/src/ui/mesh.rs and case 3150 link the version 1 file."
+desired_state: "The rule file is the-cooperation-model-is-the-owners-word.v2.md at version 2 with clauses 6 (a worker lands its own green head), 7 (five builders, 35 GiB) and 8 (cleanup without asking, announced); the provider templates and the files generated from them say a worker lands its own green head through the guarded queue; no tracked file outside the generated history links version 1; case 3824 fails when a bootstrap says 'never merges' or disagrees with the rule."
+scope:
+  - ".ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md"
+  - ".ai/repo/adrs/0167-work-moves-through-seats-on-the-mesh-and-lands-in-combined-tops.md"
+  - ".ai/repo/providers"
+  - "CLAUDE.md"
+  - "AGENTS.md"
+  - "GEMINI.md"
+  - "docs/INTEGRATION.md"
+  - "docs/MESH.md"
+  - "docs/RELEASE.md"
+  - "docs/MAJORDOMUS_UI.md"
+  - "apps/majordomus-cli/src/ui/mesh.rs"
+  - "test/cases/3150_the_cooperation_model_is_one_record.sh"
+  - "test/cases/3824_the_bootstrap_says_what_the_cooperation_rule_says.sh"
+  - ".ai/repo/project/issues/I3824.yaml"
+  - ".ai/repo/project/issues/I3825.yaml"
+acceptance_criteria:
+  - "The rule is version 2, cites the owner's words of 2026-10-20 with their time, and states clauses 6, 7 and 8"
+  - "Every provider template and every bootstrap generated from it says a worker lands its own green head through the guarded lander's queue, names five builders and 35 GiB, and none says 'never merges'"
+  - "No tracked source file links the version 1 rule file"
+  - "Case 3824 fails on a bootstrap that says 'never merges', on templates that disagree with each other, and on a bootstrap that does not name the rule"
+validation:
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3824_the_bootstrap_says_what_the_cooperation_rule_says"
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3150_the_cooperation_model_is_one_record"
+evidence_required:
+  - "bootstrap_agrees_with_rule"
+  - "never_merges_is_refused"
+depends_on: []
+serves: []
+created_at: 2026-10-21
+updated_at: 2026-10-21

@@ -1,7 +1,7 @@
 +++
 title = "The site offers the release that was published, on every surface at once"
 description = "The site offers the release that was published, on every surface at once"
-weight = 168
+weight = 176
 [extra]
 kind = "rule"
 slug = "project-the-site-offers-the-release-it-published-1"

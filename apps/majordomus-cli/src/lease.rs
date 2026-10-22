@@ -30,6 +30,7 @@ use serde_json::Value;
 
 use crate::error::{Error, Result};
 use crate::mcp::bridge;
+use crate::release::version::Version;
 use crate::repository::Repository;
 
 /// The lease file, relative to the checkout-local half (`.ai/local/`).
@@ -71,6 +72,12 @@ pub const JOIN_TIMEOUT: Duration = Duration::from_secs(20);
 /// that would let a handful of slow sockets outlast a [`BUSY_GRACE`] contest many times over.
 pub const READ_DEADLINE: Duration = Duration::from_secs(30);
 
+/// How long a server started for a checkout no client owns — by `serve ensure` or by a shell
+/// entering the checkout — outlives its last peer before it stops by itself:
+/// [`crate::cli::DEFAULT_IDLE_SECONDS`]. `serve --idle` on a command line overrides whatever
+/// is declared (I2701).
+pub const IDLE: Duration = Duration::from_secs(crate::cli::DEFAULT_IDLE_SECONDS);
+
 /// The timings above are the defaults. What a process actually judges a lease contest by is
 /// declared in `.ai/repo/policy.yaml`'s `server:` block and read once, here.
 ///
@@ -86,7 +93,7 @@ pub const READ_DEADLINE: Duration = Duration::from_secs(30);
 ///
 /// ```
 /// use majordomus_cli::lease::{
-///     Timings, BIND_GRACE, BUSY_GRACE, JOIN_TIMEOUT, PROBE_TIMEOUT, READ_DEADLINE,
+///     Timings, BIND_GRACE, BUSY_GRACE, IDLE, JOIN_TIMEOUT, PROBE_TIMEOUT, READ_DEADLINE,
 /// };
 /// // the defaults are the compiled constants, one for one
 /// let t = Timings::default();
@@ -95,6 +102,7 @@ pub const READ_DEADLINE: Duration = Duration::from_secs(30);
 /// assert_eq!(t.join_timeout, JOIN_TIMEOUT);
 /// assert_eq!(t.busy_grace, BUSY_GRACE);
 /// assert_eq!(t.read_deadline, READ_DEADLINE);
+/// assert_eq!(t.idle, IDLE);
 /// // a busy owner is given up on before the election that waits on it gives up itself
 /// assert!(t.busy_grace < t.join_timeout);
 /// ```
@@ -110,6 +118,8 @@ pub struct Timings {
     pub busy_grace: Duration,
     /// `server.read_deadline_seconds:`
     pub read_deadline: Duration,
+    /// `server.idle_seconds:`
+    pub idle: Duration,
 }
 
 impl Default for Timings {
@@ -120,6 +130,7 @@ impl Default for Timings {
             join_timeout: JOIN_TIMEOUT,
             busy_grace: BUSY_GRACE,
             read_deadline: READ_DEADLINE,
+            idle: IDLE,
         }
     }
 }
@@ -165,6 +176,10 @@ impl Timings {
     /// assert_ne!(t.probe_timeout, Timings::default().probe_timeout);
     /// // the keys it says nothing about are untouched
     /// assert_eq!(t.bind_grace, Timings::default().bind_grace);
+    ///
+    /// // the idle timeout is declared beside the others (I2701)
+    /// let declared = ServerPolicy { idle_seconds: Some(3), ..ServerPolicy::default() };
+    /// assert_eq!(Timings::from_policy(&declared).idle, Duration::from_secs(3));
     /// ```
     pub fn from_policy(policy: &crate::policy::ServerPolicy) -> Self {
         let d = Self::default();
@@ -189,6 +204,10 @@ impl Timings {
                 .read_deadline_seconds
                 .map(Duration::from_secs)
                 .unwrap_or(d.read_deadline),
+            idle: policy
+                .idle_seconds
+                .map(Duration::from_secs)
+                .unwrap_or(d.idle),
         }
     }
 }
@@ -713,12 +732,35 @@ fn stale_reason(me: &ExecutableIdentity) -> Option<String> {
 /// to a debug build — makes no claim either way and is left alone, so two legitimate
 /// binaries never fight over the lease.
 fn superseded(doc: &LeaseDocument) -> Option<String> {
+    executable_identity().and_then(|me| superseded_by(doc, &me, crate::VERSION))
+}
+
+/// The judgement [`superseded`] makes, over the identity and version it is handed.
+///
+/// A file replaced at the lease's path says the server runs code no longer on disk, not that
+/// this process runs newer code: a build of an older tree written to the same path is a
+/// replacement too. So a server whose lease records a newer version than `my_version` is
+/// never taken over on that ground (I3097): this process is the older one, and attaching to
+/// the newer server is the verdict [`version_verdict`] already gives everywhere else.
+fn superseded_by(
+    doc: &LeaseDocument,
+    mine: &ExecutableIdentity,
+    my_version: &str,
+) -> Option<String> {
     let recorded = doc.executable.as_ref()?;
-    let mine = executable_identity()?;
     if recorded.path != mine.path {
         return None;
     }
     if recorded.mtime == mine.mtime && recorded.size == mine.size {
+        return None;
+    }
+    if version_verdict(doc.version.as_deref(), my_version) == VersionVerdict::ServerNewer {
+        tracing::warn!(
+            server = doc.version.as_deref().unwrap_or_default(),
+            mine = my_version,
+            "the server's executable was replaced, but the server runs a newer version than this \
+             executable; attaching to it rather than taking it over"
+        );
         return None;
     }
     Some(format!(
@@ -754,12 +796,18 @@ pub enum VersionVerdict {
     /// No version published: a server from before leases carried one. Reported as outdated,
     /// never taken over on that ground alone.
     Unpublished,
-    /// Two versions that do not order as releases (a pre-release, a local build tag):
-    /// reported as different, never acted on.
+    /// Two versions that do not order as releases — one is not a semantic version (a local
+    /// build tag), or the two differ only in build metadata: reported as different, never
+    /// acted on.
     Unordered,
 }
 
 /// Decide how `served`, the version in a lease, stands to `mine`.
+///
+/// Ordered by [`Version`], the crate's one reading of a version, so a server is older or
+/// newer by exactly the semantic-version precedence the release writer and the stable
+/// pointer use (ADR 0004): a pre-release sits below its own final and above every earlier
+/// release. A leading `v` is a tag's spelling and is read past.
 ///
 /// ```
 /// use majordomus_cli::lease::{version_verdict, VersionVerdict};
@@ -768,19 +816,14 @@ pub enum VersionVerdict {
 /// assert_eq!(version_verdict(Some("0.9.10"), "0.10.0"), VersionVerdict::ServerOlder);
 /// assert_eq!(version_verdict(Some("1.0.0"), "0.20.0"), VersionVerdict::ServerNewer);
 /// assert_eq!(version_verdict(None, "0.20.0"), VersionVerdict::Unpublished);
-/// // a pre-release is not ordered against its release: different, and left alone
-/// assert_eq!(version_verdict(Some("0.20.0-rc.1"), "0.20.0"), VersionVerdict::Unordered);
+/// // a pre-release orders by precedence: below its own final, above an earlier release
+/// assert_eq!(version_verdict(Some("0.20.0-rc.1"), "0.20.0"), VersionVerdict::ServerOlder);
+/// assert_eq!(version_verdict(Some("1.0.0-alpha.1"), "0.29.0"), VersionVerdict::ServerNewer);
+/// // what is not a semantic version orders nothing
+/// assert_eq!(version_verdict(Some("dev"), "0.20.0"), VersionVerdict::Unordered);
 /// ```
 pub fn version_verdict(served: Option<&str>, mine: &str) -> VersionVerdict {
-    fn release(v: &str) -> Option<(u64, u64, u64)> {
-        let (major, rest) = v.trim_start_matches('v').split_once('.')?;
-        let (minor, patch) = rest.split_once('.')?;
-        Some((
-            major.parse().ok()?,
-            minor.parse().ok()?,
-            patch.parse().ok()?,
-        ))
-    }
+    let release = |v: &str| Version::parse(v.strip_prefix('v').unwrap_or(v));
     let Some(served) = served else {
         return VersionVerdict::Unpublished;
     };
@@ -1731,6 +1774,72 @@ mod tests {
         );
     }
 
+    /// A lease whose server was started from `exe` as it was then, at `version`.
+    fn lease_from(exe: &ExecutableIdentity, version: &str) -> LeaseDocument {
+        LeaseDocument {
+            schema: SCHEMA.into(),
+            pid: 1,
+            token: "t".into(),
+            root: "/r".into(),
+            url: Some("http://127.0.0.1:1".into()),
+            started_at: "2026-10-20T22:25:31Z".into(),
+            executable: Some(exe.clone()),
+            version: Some(version.into()),
+        }
+    }
+
+    #[test]
+    fn older_replacement_attaches() {
+        // 2026-10-20 22:27:58Z: a 1.0.0-alpha.1 server lost its lease to 0.30.2, because a
+        // build of an older tree had rewritten the file the server was started from
+        let dir = tempfile::tempdir().unwrap();
+        let exe = dir.path().join("majordomus");
+        fs::write(&exe, b"the newer code the server loaded").unwrap();
+        let lease = lease_from(&identity_of(&exe), "1.0.0-alpha.1");
+        fs::write(&exe, b"an older tree's build, written over the same path").unwrap();
+        // under a subscriber, so the warning that names both versions is written, not skipped
+        let subscriber = tracing_subscriber::fmt()
+            .with_max_level(tracing::Level::WARN)
+            .with_writer(std::io::sink)
+            .finish();
+        tracing::subscriber::with_default(subscriber, || {
+            assert_eq!(superseded_by(&lease, &identity_of(&exe), "0.30.2"), None);
+        });
+    }
+
+    #[test]
+    fn a_lease_of_this_process_as_it_runs_is_not_superseded() {
+        // the judgement over the executable this process was started from: unchanged, it
+        // takes nothing over; a lease naming another path makes no claim either way
+        let me = executable_identity().expect("a test binary knows where it is");
+        assert_eq!(superseded(&lease_from(&me, crate::VERSION)), None);
+        let dir = tempfile::tempdir().unwrap();
+        let other = dir.path().join("majordomus");
+        fs::write(&other, b"another build at another path").unwrap();
+        assert_eq!(
+            superseded(&lease_from(&identity_of(&other), crate::VERSION)),
+            None
+        );
+    }
+
+    #[test]
+    fn newer_replacement_takes_over() {
+        let dir = tempfile::tempdir().unwrap();
+        let exe = dir.path().join("majordomus");
+        fs::write(&exe, b"the code the server loaded").unwrap();
+        let pinned = identity_of(&exe);
+        fs::write(&exe, b"a rebuild of the same or a newer tree").unwrap();
+        let mine = identity_of(&exe);
+        for (served, version) in [
+            ("1.0.0-alpha.1", "1.0.0-alpha.1"),
+            ("0.30.2", "1.0.0-alpha.1"),
+        ] {
+            let reason = superseded_by(&lease_from(&pinned, served), &mine, version)
+                .unwrap_or_else(|| panic!("{version} replacing a {served} server takes it over"));
+            assert!(reason.contains("has been replaced since"), "{reason}");
+        }
+    }
+
     #[test]
     fn this_process_is_not_serving_replaced_code() {
         assert!(started_as().is_some(), "a test binary knows where it is");
@@ -1995,11 +2104,21 @@ mod tests {
 
     /// A take-over that finds the lock held by another change makes no change: the lease is
     /// left for the next reading, which judges whatever the other change left there.
-    /// Every version that is not exactly three numbers is unordered against a release, and
+    /// Every version that is not a semantic version is unordered against a release, and
     /// three numbers are ordered as numbers.
     #[test]
     fn a_version_is_ordered_only_when_it_is_three_numbers() {
-        for served in ["1", "1.2", "x.1.2", "1.x.2", "1.2.x", "1.2.3.4", "1..3"] {
+        for served in [
+            "1",
+            "1.2",
+            "x.1.2",
+            "1.x.2",
+            "1.2.x",
+            "1.2.3.4",
+            "1..3",
+            "1.0.0-alpha..1",
+            "1.0.0-alpha.01",
+        ] {
             assert_eq!(
                 version_verdict(Some(served), "0.20.0"),
                 VersionVerdict::Unordered,
@@ -2013,6 +2132,48 @@ mod tests {
         assert_eq!(
             version_verdict(Some("0.21.0"), "0.20.0"),
             VersionVerdict::ServerNewer
+        );
+    }
+
+    /// A server at a pre-release is ordered by semantic-version precedence, the one order
+    /// `release::version::Version` defines: above every earlier release, below a later
+    /// pre-release and below its own final — never left unordered.
+    #[test]
+    fn a_prerelease_server_is_ordered_by_precedence() {
+        let alpha = Some("1.0.0-alpha.1");
+        assert_eq!(
+            version_verdict(alpha, "0.29.0"),
+            VersionVerdict::ServerNewer
+        );
+        assert_eq!(
+            version_verdict(alpha, "1.0.0-alpha.2"),
+            VersionVerdict::ServerOlder
+        );
+        assert_eq!(version_verdict(alpha, "1.0.0"), VersionVerdict::ServerOlder);
+        assert_eq!(
+            version_verdict(alpha, "1.0.0-alpha.1"),
+            VersionVerdict::Same
+        );
+        assert_eq!(
+            version_verdict(Some("1.0.0-alpha.10"), "1.0.0-alpha.2"),
+            VersionVerdict::ServerNewer,
+            "numeric identifiers order as numbers"
+        );
+        assert_eq!(
+            version_verdict(Some("v1.0.0-alpha.1"), "0.29.0"),
+            VersionVerdict::ServerNewer,
+            "a tag's v is read past"
+        );
+        // what does not parse stays unordered, either side
+        assert_eq!(
+            version_verdict(Some("1.0.0-alpha.01"), "1.0.0"),
+            VersionVerdict::Unordered
+        );
+        assert_eq!(version_verdict(alpha, "dev"), VersionVerdict::Unordered);
+        // equal precedence, different text: different, never acted on
+        assert_eq!(
+            version_verdict(Some("1.0.0+a"), "1.0.0+b"),
+            VersionVerdict::Unordered
         );
     }
 

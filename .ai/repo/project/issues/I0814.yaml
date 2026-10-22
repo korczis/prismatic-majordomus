@@ -29,10 +29,24 @@ acceptance_criteria:
   - A stale index makes the section report staleness rather than silently omit itself
   - The existing context case still passes unchanged
 validation:
-  - bash test/run.sh 72_context_knowledge
+  - bash test/run.sh 3073_context_knowledge_slice
   - bash test/run.sh 23_context
 evidence_required:
   - context_bounded
 risk: "The budget is already close to full on a rich task. If the knowledge section is added without measuring, it will be the section that always gets dropped, which is a feature nobody receives."
 created_at: 2026-09-04
-updated_at: 2026-09-04
+updated_at: 2026-10-16T08:10:32Z
+started_at: 2026-10-16T08:10:20Z
+started_event: sha256:1d6be7a27ac16bf4bbcca5ba2b607629f0ca59b07cfbf5565b96391871907b2d
+verified_at: 2026-10-16T08:10:24Z
+verified_event: sha256:9cd8aa7611c79a02336c88925ee1d5e0ea47bb77e0761c92907e6c4e467b48b7
+completed_at: 2026-10-16T08:10:32Z
+completed_event: sha256:57bae03fc40ea674fcaf1d683cd67152c1ec6675f3569e2e72870463da7f95e2
+evidence:
+  - covers: context_bounded
+    type: test
+    command: "test/run.sh 3073_context_knowledge_slice 23_context"
+    result: "2 ok on feature/context-knowledge-pointers over master d116266803 (2026-10-16): the KNOWLEDGE POINTERS section lists, in tier order and nothing else, the issue, its depends_on issues, its milestone, the claims that milestone declares and the nodes its scope names (a look-alike document, an undeclared claim, another milestone's issue are not selected); knowledge_max_items cuts it and counts the rest, never above context.max_list_items; context.knowledge false or unset is named under EXCLUDED with the toggle; under a tight budget it is dropped before git, task, profile and open questions and the drop names majordomus knowledge related; an issue record that left the version-control index or is gone prints a stale line and the section stays; context writes nothing. 23_context passes unchanged. In this repository the section adds 5 lines of a 300-line budget and ~1.7 s (only the issue, its dependencies, milestones, claims and scope paths are compiled)."
+    artifact: "test/cases/3073_context_knowledge_slice.sh"
+    commit: 44ad51ed4f07bc261c934f17955d73f842df420a
+    recorded_at: 2026-10-16T08:10:29Z
