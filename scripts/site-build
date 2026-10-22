@@ -112,7 +112,14 @@ release_offered() {
       else null end
     | if . == null then null
       else . + {record: ($r.version // null), published: ($q.version // null),
-                published_from: (if $from == "" then null else $from end)} end' > "$dir/release.json" \
+                published_from: (if $from == "" then null else $from end)}
+        # the newest pre-release, beside the offered release and never instead of it, only
+        # while it is ahead of it: compared on the version core, so 1.0.0 passes 1.0.0-alpha.5
+        | ($d[0].prerelease // null) as $n
+        | . + {prerelease: (if $n != null and (($n.version | ver) > (.version | ver))
+                            then {version: $n.version, tag: $n.tag, published_at: $n.published_at,
+                                  notes_url: $n.notes_url, url: $n.url}
+                            else null end)} end' > "$dir/release.json" \
     || { echo "site-build: the release this site offers could not be derived" >&2; exit 13; }
   if [ "$(jq -r '.source // empty' "$dir/release.json")" = published ]; then
     cp "$dir/published.json" "$dir/latest.json"

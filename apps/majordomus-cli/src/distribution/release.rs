@@ -330,6 +330,19 @@ impl Releases {
         self.releases.iter().find(|r| r.is_stable_candidate())
     }
 
+    /// The newest pre-release, while no stable release has passed it: what a reader who wants
+    /// what comes next pins with `--version`, and never what an unpinned installation gets.
+    /// `None` once a final release outranks every pre-release, and for a version no reader
+    /// can order, because "newer than the stable release" is then a claim nothing supports.
+    /// Derived, never authored.
+    pub fn latest_prerelease(&self) -> Option<&Release> {
+        self.releases
+            .iter()
+            .filter(|r| !r.yanked)
+            .take_while(|r| !r.is_stable_candidate())
+            .find(|r| Version::parse(&r.version).is_some())
+    }
+
     /// A release by tag; `None` when no record carries it.
     ///
     /// Test support, and compiled only for tests: this module's own suite names one record
