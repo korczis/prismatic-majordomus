@@ -2068,6 +2068,8 @@ pub enum EconomicsCommand {
     Runs(EconomicsRunsArgs),
     /// Refuse an unsupported savings claim: quantities next to the economics vocabulary in hand-written prose, and bound claims whose evidence does not stand
     Check(EconomicsCheckArgs),
+    /// Each task's wall time, refusals and episodes, from every checkout's ledger; the fields nothing observes yet are named as not observed
+    Tasks(EconomicsTasksArgs),
     /// Run a deterministic suite (no model is called) and record its measurement
     Measure(EconomicsMeasureArgs),
     /// Run a live suite: real harness sessions with and without Majordomus, recorded as raw usage and gate verdicts. Spends provider usage
@@ -2200,6 +2202,38 @@ pub struct EconomicsRunsArgs {
     /// Only this variant
     #[arg(long)]
     pub variant: Option<String>,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus economics tasks`. Both bounds are optional and filter by each task's
+/// `task.started` time; a task outside the window is not answered, and a ledger is read in full
+/// whatever the window.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, EconomicsCommand};
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "economics", "tasks", "--since", "2026-10-19T00:00:00Z",
+/// ])
+/// .unwrap();
+/// let Command::Economics(e) = cli.command else { panic!() };
+/// let EconomicsCommand::Tasks(t) = e.command else { panic!() };
+/// assert_eq!(t.since.as_deref(), Some("2026-10-19T00:00:00Z"));
+/// assert!(t.until.is_none());
+/// ```
+pub struct EconomicsTasksArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+    /// Output shape
+    pub format: OutputFormat,
+    /// Only tasks started at or after this time (YYYY-MM-DDTHH:MM:SSZ)
+    #[arg(long)]
+    pub since: Option<String>,
+    /// Only tasks started before this time (YYYY-MM-DDTHH:MM:SSZ)
+    #[arg(long)]
+    pub until: Option<String>,
 }
 
 #[derive(Debug, Args)]
@@ -7089,6 +7123,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["economics", "runs", "--format", "json"],
             setup: &[],
             expect: Expect::Json(&["/count", "/runs"]),
+        }],
+    },
+    CommandExamples {
+        command: "economics tasks",
+        examples: &[ExampleDoc {
+            id: "economics-tasks-json",
+            title: "Each task's wall time and episodes",
+            description: "One record per task from every checkout's ledger, with the fields nothing observes yet named as not observed. A repository with no ledger answers no task and lists its checkout as not read.",
+            argv: &["economics", "tasks", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/count", "/tasks", "/ledgers", "/unread"]),
         }],
     },
     CommandExamples {

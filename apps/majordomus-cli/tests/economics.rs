@@ -1416,3 +1416,238 @@ fn the_summary_does_not_depend_on_the_order_runs_are_found_in() {
     assert_eq!(sa.metrics, sb.metrics);
     assert_eq!(sa.verdict, sb.verdict);
 }
+
+// ---------------------------------------------------------------- each task's delivery economics (I3376)
+
+/// One ledger line, as `mj_ledger_append` writes it.
+fn ledger_line(ts: &str, event: &str, session: &str, task: &str, extra: &str) -> String {
+    format!(
+        r#"{{"ts":"{ts}","event":"{event}","head":"0000000","branch":"work","by":"tester","session":"{session}","task_id":"{task}"{extra}}}"#
+    )
+}
+
+fn ledger(lines: &[String]) -> String {
+    lines.join("\n") + "\n"
+}
+
+/// Started, refused twice and finished: the wall time runs from the start to the finish and
+/// both refusals are counted; lines carried by two sessions are two episodes. A task with no
+/// finish reads open. Every record carries the four fields nothing observes yet, each with its
+/// reason; the window filters by start. The command line, MCP and HTTP answer the same reading.
+#[test]
+fn test_task_economics_per_task() {
+    use majordomus_cli::economics::tasks::{self, TaskEconomicsQuery, TaskEconomicsState};
+    let f = Fixture::new();
+    f.write(
+        ".ai/local/state/ledger.jsonl",
+        &ledger(&[
+            ledger_line(
+                "2026-10-21T10:00:00Z",
+                "task.started",
+                "s-1",
+                "t-done",
+                r#","issue":"I3376","intent":"proof""#,
+            ),
+            ledger_line(
+                "2026-10-21T10:10:00Z",
+                "task.refused",
+                "s-1",
+                "t-done",
+                r#","outcome":"completed","unmet":1"#,
+            ),
+            ledger_line(
+                "2026-10-21T10:20:00Z",
+                "task.refused",
+                "s-2",
+                "t-done",
+                r#","outcome":"completed","unmet":2"#,
+            ),
+            ledger_line(
+                "2026-10-21T11:00:00Z",
+                "task.finished",
+                "s-2",
+                "t-done",
+                r#","outcome":"completed""#,
+            ),
+            ledger_line("2026-10-21T12:00:00Z", "task.started", "s-3", "t-open", ""),
+            "not a ledger line".to_string(),
+        ]),
+    );
+    let list = tasks::tasks(&f.root(), &TaskEconomicsQuery::default());
+    assert_eq!(list.count, 2, "{list:#?}");
+    assert_eq!(list.tasks.len(), list.count);
+    let done = &list.tasks[0];
+    assert_eq!(done.task_id, "t-done");
+    assert_eq!(done.state, TaskEconomicsState::Finished);
+    assert_eq!(done.outcome, "completed");
+    assert_eq!(done.wall_seconds, Some(3600), "start to finish");
+    assert_eq!(done.refusals, 2);
+    assert_eq!(done.issue.as_deref(), Some("I3376"));
+    assert_eq!(done.intent.as_deref(), Some("proof"));
+    let sessions: Vec<&str> = done.episodes.iter().map(|e| e.session.as_str()).collect();
+    assert_eq!(
+        sessions,
+        ["s-1", "s-2"],
+        "two session stamps are two episodes"
+    );
+    assert_eq!(
+        (
+            done.episodes[1].first_at.as_str(),
+            done.episodes[1].last_at.as_str()
+        ),
+        ("2026-10-21T10:20:00Z", "2026-10-21T11:00:00Z")
+    );
+    let open = &list.tasks[1];
+    assert_eq!(open.task_id, "t-open");
+    assert_eq!(
+        open.state,
+        TaskEconomicsState::Open,
+        "no finish reads open, never finished"
+    );
+    assert_eq!(open.wall_seconds, None);
+    for t in &list.tasks {
+        for (name, field) in [
+            ("interventions", &t.interventions),
+            ("ci_reruns", &t.ci_reruns),
+            ("spend", &t.spend),
+            ("accepted", &t.accepted),
+        ] {
+            let v = serde_json::to_value(field).unwrap();
+            assert_eq!(v["status"], "not_observed", "{} {name}", t.task_id);
+            assert!(
+                v["reason"].as_str().is_some_and(|r| r.contains('I')),
+                "{} {name} names no supplier: {v}",
+                t.task_id
+            );
+        }
+    }
+    assert_eq!(list.ledgers.len(), 1);
+    assert_eq!((list.ledgers[0].lines, list.ledgers[0].skipped), (5, 1));
+
+    // the window filters by task.started
+    let late = tasks::tasks(
+        &f.root(),
+        &TaskEconomicsQuery {
+            since: Some("2026-10-21T11:30:00Z".into()),
+            until: None,
+        },
+    );
+    let ids: Vec<&str> = late.tasks.iter().map(|t| t.task_id.as_str()).collect();
+    assert_eq!(ids, ["t-open"]);
+
+    // one reading on every surface
+    let library = serde_json::to_value(&list).unwrap();
+    let (code, out, err) = run_in(&f.root(), &["economics", "tasks", "--format", "json"], "");
+    assert_eq!(code, 0, "{err}");
+    let cli: Value = serde_json::from_str(&out).unwrap();
+    assert_eq!(cli, library, "the command line");
+    let mcp = mcp_call(&f, "majordomus_economics_tasks", json!({}));
+    assert_eq!(mcp, library, "MCP");
+    let mut served = Served::start(&f.root(), &[]);
+    let (status, http) = served.get("/api/v1/economics/tasks");
+    assert_eq!(status, 200);
+    assert_eq!(http, library, "HTTP");
+    served.stop();
+}
+
+/// The ledgers of every checkout are read, a rotated archive included, and a task met in
+/// several of them is one record; a checkout with no ledger is listed as not read.
+#[test]
+fn test_task_economics_reads_every_checkout() {
+    use majordomus_cli::economics::tasks::{self, TaskEconomicsQuery};
+    let f = Fixture::new();
+    // the root checkout: an archive a rotation left, then the live ledger
+    f.write(
+        ".ai/local/state/ledger.20261020T000000Z.jsonl.archived",
+        &ledger(&[ledger_line(
+            "2026-10-20T09:00:00Z",
+            "task.started",
+            "s-1",
+            "t-archived",
+            "",
+        )]),
+    );
+    f.write(
+        ".ai/local/state/ledger.jsonl",
+        &ledger(&[
+            ledger_line(
+                "2026-10-20T10:00:00Z",
+                "task.finished",
+                "s-1",
+                "t-archived",
+                r#","outcome":"completed""#,
+            ),
+            ledger_line("2026-10-21T08:00:00Z", "task.started", "s-1", "t-root", ""),
+        ]),
+    );
+    // a second checkout with a ledger of its own, and a third with none
+    let second = f.parent().join("repo-wt").join("second");
+    let third = f.parent().join("repo-wt").join("third");
+    f.git(&[
+        "worktree",
+        "add",
+        "-q",
+        "-b",
+        "second",
+        second.to_str().unwrap(),
+    ]);
+    f.git(&[
+        "worktree",
+        "add",
+        "-q",
+        "-b",
+        "third",
+        third.to_str().unwrap(),
+    ]);
+    std::fs::create_dir_all(second.join(".ai/local/state")).unwrap();
+    std::fs::write(
+        second.join(".ai/local/state/ledger.jsonl"),
+        ledger(&[
+            ledger_line(
+                "2026-10-21T09:00:00Z",
+                "task.started",
+                "s-9",
+                "t-second",
+                "",
+            ),
+            ledger_line(
+                "2026-10-21T09:30:00Z",
+                "task.finished",
+                "s-9",
+                "t-second",
+                r#","outcome":"completed""#,
+            ),
+        ]),
+    )
+    .unwrap();
+
+    let list = tasks::tasks(&f.root(), &TaskEconomicsQuery::default());
+    let ids: Vec<&str> = list.tasks.iter().map(|t| t.task_id.as_str()).collect();
+    assert_eq!(ids, ["t-archived", "t-root", "t-second"], "{list:#?}");
+    assert_eq!(list.count, 3, "one record per distinct task id");
+    let archived = &list.tasks[0];
+    assert_eq!(
+        archived.wall_seconds,
+        Some(3600),
+        "the start in the archive, the finish in the live ledger"
+    );
+    let second_task = &list.tasks[2];
+    assert!(
+        second_task.checkout.ends_with("second"),
+        "{}",
+        second_task.checkout
+    );
+    let paths: Vec<&str> = list.ledgers.iter().map(|l| l.path.as_str()).collect();
+    assert!(
+        paths.contains(&".ai/local/state/ledger.20261020T000000Z.jsonl.archived"),
+        "{paths:?}"
+    );
+    assert_eq!(
+        list.ledgers.len(),
+        3,
+        "the archive, the root ledger and the second checkout's"
+    );
+    assert_eq!(list.unread.len(), 1, "{:?}", list.unread);
+    assert!(list.unread[0].checkout.ends_with("third"));
+    assert!(list.unread[0].reason.contains("no ledger"));
+}
