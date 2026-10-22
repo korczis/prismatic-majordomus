@@ -34,6 +34,7 @@
 //! `checkouts: this`, which enumerates nothing, probes nothing and reads one board out of
 //! memory.
 
+use std::collections::BTreeMap;
 use std::path::PathBuf;
 
 use schemars::JsonSchema;
@@ -70,6 +71,31 @@ pub struct PeerListInput {
     /// Which checkouts the board covers. Absent means `repository`; `this` is the checkout the call reached and nothing else, and it is what a sibling server is asked so that a gather can never ask back.
     #[serde(default)]
     pub checkouts: Checkouts,
+    /// How many of the covered checkouts are listed in `boards`. Absent means `summary`: every checkout with a server, a worker, or a board that could not be read, the rest counted in `omitted`; `full` lists every one.
+    #[serde(default)]
+    pub view: PeerListView,
+}
+
+/// How many of the covered checkouts `peers.list` lists one by one — the same two words, and
+/// the same default, as the mesh's own `view` (`mesh::page::View`), for the same reason.
+///
+/// On 2026-10-22 this repository registered 625 checkouts, 601 of them with no server and
+/// nobody attached, and the default answer was 168 kB: past what an MCP client shows, so
+/// the read every worker is told to make before it starts went through a saved file. A
+/// checkout with no server holds no board (`ServerStanding::Absent`, or a `Stale` lease that
+/// names a process that is gone), so listing it says only that it exists; the summary counts
+/// those by standing and lists every other. The evidence is
+/// `the_summary_counts_only_checkouts_that_hold_no_board` below.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum PeerListView {
+    /// This checkout, every checkout with a worker attached or a server standing, and every
+    /// board that could not be read; the checkouts with no server and nobody attached are
+    /// counted in `omitted` by standing.
+    #[default]
+    Summary,
+    /// Every covered checkout, one entry each.
+    Full,
 }
 
 impl BenchmarkCases for PeerListInput {
@@ -80,9 +106,20 @@ impl BenchmarkCases for PeerListInput {
             "default",
             PeerListInput {
                 checkouts: Checkouts::This,
+                view: PeerListView::Summary,
             },
         )]
     }
+}
+
+/// Whether the summary lists `board` rather than counting it: this checkout, any board with a
+/// worker or a reason it was not read, and any checkout whose server stands. What is left is a
+/// checkout with no server and nobody attached, which holds no board at all.
+fn listed_in_summary(board: &BoardView) -> bool {
+    board.checkout.this_checkout
+        || board.attached > 0
+        || board.reason.is_some()
+        || !matches!(board.standing, ServerStanding::Absent | ServerStanding::Stale)
 }
 
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
@@ -128,8 +165,17 @@ pub struct PeerList {
     /// an entry here is looking at two workers about to do the same work.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub overlaps: Vec<Overlap>,
-    /// One entry per checkout the answer covers, reached or not.
+    /// How many checkouts the answer covers, listed in `boards` or counted in `omitted` — a
+    /// count, where the input `checkouts` is a choice of which to cover.
+    pub covered: usize,
+    /// One entry per checkout the answer lists, reached or not: every covered checkout under
+    /// `view: full`; under the default summary, every one but those `omitted` counts. A board
+    /// that could not be read is always listed.
     pub boards: Vec<BoardView>,
+    /// The covered checkouts the summary does not list, counted by standing (`absent`,
+    /// `stale`): no server, nobody attached, no board. Empty under `view: full`.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub omitted: BTreeMap<String, usize>,
     /// Whether every board the answer covers was read. `false` when a checkout's server
     /// could not be asked, and `BoardView::reason` says which and why — so that "nobody
     /// else is here" is never reported when the truth is "I could not ask".
@@ -255,14 +301,35 @@ fn peers_list(ctx: &Context, input: PeerListInput) -> Result<PeerList, Capabilit
         }));
     }
 
+    let covered = boards.len();
+    let omitted = match input.view {
+        PeerListView::Full => BTreeMap::new(),
+        PeerListView::Summary => summarise(&mut boards),
+    };
+
     Ok(PeerList {
         count: peers.iter().filter(|p| p.attached).count(),
         caller: ctx.caller.clone(),
         overlaps: overlaps_among(&peers),
         peers,
+        covered,
         boards,
+        omitted,
         complete,
     })
+}
+
+/// Keep the boards the summary lists and count the rest by standing.
+fn summarise(boards: &mut Vec<BoardView>) -> BTreeMap<String, usize> {
+    let mut omitted: BTreeMap<String, usize> = BTreeMap::new();
+    boards.retain(|b| {
+        let listed = listed_in_summary(b);
+        if !listed {
+            *omitted.entry(b.standing.as_str().to_string()).or_default() += 1;
+        }
+        listed
+    });
+    omitted
 }
 
 // ---------------------------------------------------------------- peers.announce
@@ -346,7 +413,7 @@ pub fn module() -> ModuleDescriptor {
             capability! {
                 id: "peers.list",
                 title: "List peers",
-                description: "Every worker of this repository: id, the client's own name and version from its initialize, transport, when it attached, when it was last seen, what it announced, and which checkout it is attached to. A server serves one checkout, so the board of a repository worked on through linked worktrees is gathered: this checkout's board out of memory, every other checkout's from the server its lease names, asked for its own board alone. 'boards' says which checkouts were covered and 'complete' whether every one of them could be read, so a short board is never mistaken for an empty repository. 'checkouts: this' reads one board and enumerates, probes and asks nothing else. In-memory on every server; gone with the processes.",
+                description: "Every worker of this repository: id, the client's own name and version from its initialize, transport, when it attached, when it was last seen, what it announced, and which checkout it is attached to. A server serves one checkout, so the board of a repository worked on through linked worktrees is gathered: this checkout's board out of memory, every other checkout's from the server its lease names, asked for its own board alone. 'covered' says how many checkouts were covered, 'boards' lists each one with a server, a worker or a board that could not be read (the rest counted in 'omitted'; 'view: full' lists every one), and 'complete' whether every board could be read, so a short board is never mistaken for an empty repository. 'checkouts: this' reads one board and enumerates, probes and asks nothing else. In-memory on every server; gone with the processes.",
                 input: PeerListInput,
                 output: PeerList,
                 stability: Stability::BehaviorallyVerified,
@@ -388,6 +455,55 @@ mod tests {
         let narrow: PeerListInput =
             serde_json::from_str(r#"{"checkouts":"this"}"#).expect("the narrow word");
         assert_eq!(narrow.checkouts, Checkouts::This);
+        assert_eq!(asked_nothing.view, PeerListView::Summary, "the summary is the default");
+        let full: PeerListInput = serde_json::from_str(r#"{"view":"full"}"#).expect("full");
+        assert_eq!(full.view, PeerListView::Full);
+        assert!(serde_json::from_str::<PeerListInput>(r#"{"view":"everything"}"#).is_err());
+    }
+
+    /// The summary counts exactly the checkouts that hold no board — no server, nobody
+    /// attached, nothing unread — and lists every other: this checkout even when it is
+    /// absent, a live server with nobody on it, an attached worker, and above all a board
+    /// that could not be read, because dropping that one is how "nobody else is here" gets
+    /// reported when the truth is "I could not ask".
+    #[test]
+    fn the_summary_counts_only_checkouts_that_hold_no_board() {
+        use super::*;
+        let board = |n: &str, this: bool, standing, attached, reason: Option<&str>| BoardView {
+            checkout: PeerCheckout {
+                id: n.into(),
+                worktree: PathBuf::from(format!("/r-wt/{n}")),
+                branch: Some(n.into()),
+                this_checkout: this,
+            },
+            standing,
+            url: None,
+            attached,
+            reason: reason.map(Into::into),
+        };
+        let mut boards = vec![
+            board("here", true, ServerStanding::Absent, 0, None),
+            board("idle-a", false, ServerStanding::Absent, 0, None),
+            board("idle-b", false, ServerStanding::Absent, 0, None),
+            board("gone", false, ServerStanding::Stale, 0, None),
+            board("serving", false, ServerStanding::Ready, 0, None),
+            board("old", false, ServerStanding::Outdated, 2, None),
+            board("binding", false, ServerStanding::Starting, 0, Some("starting")),
+        ];
+        let omitted = summarise(&mut boards);
+        let listed: Vec<&str> = boards.iter().map(|b| b.checkout.id.as_str()).collect();
+        assert_eq!(listed, ["here", "serving", "old", "binding"]);
+        assert_eq!(omitted.get("absent"), Some(&2));
+        assert_eq!(omitted.get("stale"), Some(&1));
+        assert_eq!(
+            listed.len() + omitted.values().sum::<usize>(),
+            7,
+            "every covered checkout is listed or counted, never neither"
+        );
+        // a board that could not be read is listed whatever its standing says
+        let mut unread = vec![board("x", false, ServerStanding::Absent, 0, Some("no answer"))];
+        assert!(summarise(&mut unread).is_empty());
+        assert_eq!(unread.len(), 1);
     }
 
     use super::*;
