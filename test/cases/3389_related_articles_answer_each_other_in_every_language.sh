@@ -146,8 +146,7 @@ expect_grep '^OK   articles .*; [0-9]+ related link\(s\) are answered back'
 
 # ---------------------------------------------------------------- the built section
 if ! command -v zola >/dev/null 2>&1 || ! command -v python3 >/dev/null 2>&1; then
-  echo "    zola or python3 is absent: the Related section was judged by its sources alone"
-  exit 0
+  skip "zola or python3 is absent: the Related section was judged by its sources alone"
 fi
 S="$PWD/site-copy"
 rm -rf "$S"; mkdir -p "$S/site"

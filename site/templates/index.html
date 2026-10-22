@@ -205,7 +205,7 @@
           <span class="mt-3 text-xl font-bold leading-snug tracking-tight text-heading">{{ d.problem }}</span>
         </a>
         <p class="mt-4 border-t border-default pt-4 text-sm text-body" data-node-features="problem:{{ d.id }}">
-          {%- for f in dfs %}{% if not loop.first %}, {% endif %}<a href="{{ base }}{{ f.route }}" data-feature="{{ f.id }}" class="font-medium text-heading hover:underline">{{ f.short_title }}</a> <span class="text-body-subtle">{{ f.evidence.claims.guaranteed }}</span>{% endfor %}
+          {%- for f in dfs %}{% if not loop.first %}, {% endif %}<a href="{{ base }}{{ f.route }}" data-feature="{{ f.id }}" class="font-medium text-heading hover:underline">{{ f.short_title }}</a> <span class="text-body-subtle">{{ f.evidence.claims.guaranteed | default(value=0) }}</span>{% endfor %}
           <span class="block text-xs text-body-subtle">{{ m.recognise.guaranteed }}</span></p>
       </li>
       {%- endif %}{% endfor %}
@@ -343,14 +343,16 @@
     {#- one declaration, every surface: the one shown without JavaScript is derived — the first,
         in the registry's own order, that reaches all three — and the picker fetches the
         published slice (graphs/surfaces.json) instead of carrying the registry: the page ships
-        only the option it shows, and the others are drawn from the slice once it is loaded. -#}
+        only the option it shows, and the others are drawn from the slice, fetched once the page
+        has loaded, so the list is whole by the time a reader opens it. -#}
     {%- set reg = load_data(path="data/registry/registry.json") -%}
     {%- set exe = load_data(path="data/generated/executable.json") -%}
     {%- set everywhere = [c for c in reg.registry.builtin if c.exposure.cli and c.exposure.http and c.exposure.mcp] -%}
     {%- if everywhere %}{% set shown = everywhere[0] %}{% else %}{% set shown = reg.registry.builtin[0] %}{% endif -%}
     {%- set shown_e = [e for e in exe.capabilities if e.id == shown.id][0] -%}
     <div class="min-w-0 rounded-xl border border-default bg-neutral-primary-soft p-5" data-surfaces
-         x-data="{ list: null, cap: null, async load() { if (!this.list) { const r = await fetch('{{ get_url(path="graphs/surfaces.json") }}'); this.list = await r.json(); } }, async choose(id) { await this.load(); this.cap = this.list.find((c) => c.id === id) || null; } }">
+         x-data="{ list: null, cap: null, async load() { if (!this.list) { const r = await fetch('{{ get_url(path="graphs/surfaces.json") }}'); this.list = await r.json(); } }, async choose(id) { await this.load(); this.cap = this.list.find((c) => c.id === id) || null; } }"
+         x-init="document.readyState === 'complete' ? load() : window.addEventListener('load', () => load(), { once: true })">
       <h3 class="text-base font-semibold tracking-tight text-heading">{{ m.surfaces.engineers }}</h3>
       <label class="mt-3 block text-xs text-body">capability
         <select data-surface-picker x-on:focus="load()" x-on:change="choose($event.target.value)" class="mt-1 block w-full max-w-md rounded-base border border-default bg-neutral-primary px-2 py-1 font-mono text-sm text-heading">
