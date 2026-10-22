@@ -1,5 +1,8 @@
 #!/bin/sh
 # install once: git config core.hooksPath .githooks
+# A hook never starts a cold build of the executable: when it is missing, bin/majordomus-cli
+# asks the installed release instead (I3831). Every check below runs and refuses as before.
+MAJORDOMUS_HOOK=1; export MAJORDOMUS_HOOK
 #
 # The commit policy, at the one moment the whole of its evidence exists: the message has
 # been written and the files are staged, so a `fix` with no test among them can be noticed

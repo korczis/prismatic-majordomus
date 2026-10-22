@@ -34,4 +34,25 @@ evidence_required:
   - "plan_validate"
   - "intent_validate"
 created_at: 2026-10-18
-updated_at: 2026-10-18
+updated_at: 2026-10-21T16:42:05Z
+started_at: 2026-10-21T16:40:59Z
+started_event: sha256:88c5de7a5e2692d8390996b3b4d42cd4aa11867f24a7559b57a0ec755fd51484
+verified_at: 2026-10-21T16:41:32Z
+verified_event: sha256:e86c4761d725de81f3271b10eaffed7a17e657370f38b5912ca855ac483d44a3
+completed_at: 2026-10-21T16:42:05Z
+completed_event: sha256:cd7f21a868a0cff989c758a6808cfbf27a77a86942055c6864dbd51f40a17e28
+evidence:
+  - covers: plan_validate
+    type: ci
+    command: "gh run view --job 119164001459 --log (validate run 39565286918, job structure, runs majordomus plan validate)"
+    result: "plan validate: 100 milestone(s), 802 issue(s), 0 failure(s) on master 905159df7cc in structure of validate run 39565286918 (conclusion success), the run 9c tagged v1.0.0-alpha.2 on; the promotion landed in the alpha.1 top (596cd5ebb74). Coverage ledger: .ai/repo/knowledge/curated/the-chatgpt-project-was-promoted.md, all 297 conversations accounted for; 199 issues, 35 milestones, 37 ADRs and 44 knowledge records cite chatgpt-majordomus:<alias>#<n>. Gap left open: the ledger names promoted records per conversation and groups already-recorded, superseded and open-question in one bucket rather than naming each disposition."
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39565286918/job/119164001459"
+    commit: 905159df7cc24f65c0455a16fc9ccbad37845571
+    recorded_at: 2026-10-21T16:40:06Z
+  - covers: intent_validate
+    type: test
+    command: "bin/majordomus intent validate (with adr check and knowledge check), on a detached checkout of master 905159df7cc, executable 1.0.0-alpha.2 built from it"
+    result: "intent validate: 33 intent(s), 0 failure(s): valid; adr check: 0 identities added, measured against origin/master and every other ref; knowledge check: 50 record(s), 0 failing; plan validate: 0 failure(s). Run 2026-10-21 by e7."
+    artifact: "905159df7cc24f65c0455a16fc9ccbad37845571"
+    commit: 905159df7cc24f65c0455a16fc9ccbad37845571
+    recorded_at: 2026-10-21T16:40:20Z
