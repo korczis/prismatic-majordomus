@@ -1882,6 +1882,23 @@
       "tool": "majordomus_mcp"
     },
     {
+      "api_anchor": "/docs/api/mesh/#op-mesh-build_cache-key",
+      "claims": [],
+      "cli": "majordomus mesh build-cache key",
+      "id": "mesh.build_cache.key",
+      "kind": "query",
+      "module": "mesh",
+      "module_route": "/registry/modules/mesh/",
+      "resource": null,
+      "route": "/registry/capabilities/mesh-build-cache-key/",
+      "slug": "mesh-build-cache-key",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "tests": [],
+      "title": "What every dependency install and build directory is cached under",
+      "tool": "majordomus_mesh_build_cache_key"
+    },
+    {
       "api_anchor": "/docs/api/mesh/#op-mesh-claim",
       "claims": [],
       "cli": null,
@@ -4343,7 +4360,7 @@
     ]
   },
   "counts": {
-    "capabilities": 208,
+    "capabilities": 209,
     "claims": 93,
     "modules": 58
   },
@@ -5242,6 +5259,11 @@
     },
     {
       "capabilities": [
+        {
+          "id": "mesh.build_cache.key",
+          "route": "/registry/capabilities/mesh-build-cache-key/",
+          "slug": "mesh-build-cache-key"
+        },
         {
           "id": "mesh.claim",
           "route": "/registry/capabilities/mesh-claim/",

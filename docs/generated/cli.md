@@ -175,6 +175,8 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus mesh review request`](#majordomus-mesh-review-request) | `/docs/cli/mesh/review/request/` | Ask for a review of a branch, commit or pull request |
 | [`majordomus mesh review answer`](#majordomus-mesh-review-answer) | `/docs/cli/mesh/review/answer/` | Answer a review request |
 | [`majordomus mesh review withdraw`](#majordomus-mesh-review-withdraw) | `/docs/cli/mesh/review/withdraw/` | Withdraw a review request this runtime asked for, with its result |
+| [`majordomus mesh build-cache`](#majordomus-mesh-build-cache) | `/docs/cli/mesh/build-cache/` | The mesh build cache: what each dependency install and build directory is cached under |
+| [`majordomus mesh build-cache key`](#majordomus-mesh-build-cache-key) | `/docs/cli/mesh/build-cache/key/` | Every lockfile the repository tracks, with the key its install or build directory is cached under: schema version, platform, toolchain and input digest |
 | [`majordomus monitor`](#majordomus-monitor) | `/docs/cli/monitor/` | Everything that happens around this repository, followed in one stream: mesh sessions, claims, handovers and reviews on every linked machine, the executor's merges and failures, and GitHub's pull requests and runs, with what is addressed to you marked |
 | [`majordomus models`](#majordomus-models) | `/docs/cli/models/` | The model catalogue the distribution declares, and the explainable routing over it: vendors, canonical model references, typed capabilities, and which model a stated need selects — with why, for every candidate |
 | [`majordomus models list`](#majordomus-models-list) | `/docs/cli/models/list/` | Every declared vendor and model, optionally narrowed; the order is the declaration's, which is routing's preference order |
@@ -4379,7 +4381,7 @@ Examples:
 
 The mesh: the nodes this repository's running server has discovered on the network, this machine's node identity, and the self-check that proves the prerequisites on this machine alone
 
-Subcommands: [`majordomus mesh status`](#majordomus-mesh-status), [`majordomus mesh nodes`](#majordomus-mesh-nodes), [`majordomus mesh identity`](#majordomus-mesh-identity), [`majordomus mesh doctor`](#majordomus-mesh-doctor), [`majordomus mesh firewall`](#majordomus-mesh-firewall), [`majordomus mesh peers`](#majordomus-mesh-peers), [`majordomus mesh peer`](#majordomus-mesh-peer), [`majordomus mesh state`](#majordomus-mesh-state), [`majordomus mesh events`](#majordomus-mesh-events), [`majordomus mesh verify`](#majordomus-mesh-verify), [`majordomus mesh claim`](#majordomus-mesh-claim), [`majordomus mesh release`](#majordomus-mesh-release), [`majordomus mesh session`](#majordomus-mesh-session), [`majordomus mesh handover`](#majordomus-mesh-handover), [`majordomus mesh review`](#majordomus-mesh-review).
+Subcommands: [`majordomus mesh status`](#majordomus-mesh-status), [`majordomus mesh nodes`](#majordomus-mesh-nodes), [`majordomus mesh identity`](#majordomus-mesh-identity), [`majordomus mesh doctor`](#majordomus-mesh-doctor), [`majordomus mesh firewall`](#majordomus-mesh-firewall), [`majordomus mesh peers`](#majordomus-mesh-peers), [`majordomus mesh peer`](#majordomus-mesh-peer), [`majordomus mesh state`](#majordomus-mesh-state), [`majordomus mesh events`](#majordomus-mesh-events), [`majordomus mesh verify`](#majordomus-mesh-verify), [`majordomus mesh claim`](#majordomus-mesh-claim), [`majordomus mesh release`](#majordomus-mesh-release), [`majordomus mesh session`](#majordomus-mesh-session), [`majordomus mesh handover`](#majordomus-mesh-handover), [`majordomus mesh review`](#majordomus-mesh-review), [`majordomus mesh build-cache`](#majordomus-mesh-build-cache).
 
 ```text
 majordomus mesh <COMMAND>
@@ -5035,6 +5037,47 @@ Examples:
   ```
 
   Verified: exits 10.
+
+<a id="majordomus-mesh-build-cache"></a>
+## `majordomus mesh build-cache`
+
+The mesh build cache: what each dependency install and build directory is cached under
+
+Subcommands: [`majordomus mesh build-cache key`](#majordomus-mesh-build-cache-key).
+
+```text
+majordomus mesh build-cache <COMMAND>
+```
+
+Arguments: none.
+
+<a id="majordomus-mesh-build-cache-key"></a>
+## `majordomus mesh build-cache key`
+
+Every lockfile the repository tracks, with the key its install or build directory is cached under: schema version, platform, toolchain and input digest
+
+```text
+majordomus mesh build-cache key [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--kind` | `cargo-build-dir` \| `mix-deps` \| `npm-modules` | — | Only this kind — `cargo-build-dir`: The cargo build directory of a workspace: the dependencies compiled on the way, without incremental state. Restored only into a directory that is cold; `mix-deps`: The `deps/` directory `mix deps.get` fills; `npm-modules`: The `node_modules/` directory `npm ci` fills |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | `text` for a person, `json` for a machine; both render the same answer — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **What each lockfile's install is cached under** — Every lockfile the repository tracks becomes a cacheable thing with a key: a schema version, the platform, the toolchain as its executables state it, and the digest of its inputs. `--kind` narrows it to one kind; a repository with no lockfile of that kind says nothing here is cacheable, and a kind whose toolchain is absent says why it has no key.
+
+  ```console
+  $ majordomus mesh build-cache key --kind mix-deps
+  ```
+
+  Verified: exits 0; prints platform.
 
 <a id="majordomus-monitor"></a>
 ## `majordomus monitor`

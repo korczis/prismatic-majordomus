@@ -559,6 +559,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:mesh.build_cache.key",
+      "path": "/evidence/capabilities/mesh-build-cache-key/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:mesh.claim",
       "path": "/evidence/capabilities/mesh-claim/"
     },
@@ -2874,6 +2879,11 @@
     },
     {
       "kind": "command",
+      "subject": "command:mesh build-cache key",
+      "path": "/evidence/commands/mesh-build-cache-key/"
+    },
+    {
+      "kind": "command",
       "subject": "command:mesh claim",
       "path": "/evidence/commands/mesh-claim/"
     },
@@ -5127,6 +5137,25 @@
       "programs": [],
       "members": [],
       "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:mesh.build_cache.key": {
+      "kind": "capability",
+      "id": "mesh.build_cache.key",
+      "page": "/evidence/capabilities/mesh-build-cache-key/",
+      "programs": [],
+      "members": [
+        "command:mesh build-cache key"
+      ],
+      "routes": [
+        {
+          "via": "behaviour",
+          "test": "suite:3950_a_cache_key_is_a_derived_triplet",
+          "path": "test/cases/3950_a_cache_key_is_a_derived_triplet.sh",
+          "category": "e2e"
+        }
+      ],
       "mechanisms": [],
       "findings": []
     },
@@ -15574,6 +15603,25 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:mesh build-cache key": {
+      "kind": "command",
+      "id": "mesh build-cache key",
+      "page": "/evidence/commands/mesh-build-cache-key/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:mesh claim": {
       "kind": "command",
       "id": "mesh claim",
@@ -20747,6 +20795,18 @@
       "programs": [],
       "members": [
         "capability:mesh.status"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_mesh_build_cache_key": {
+      "kind": "mcp",
+      "id": "majordomus_mesh_build_cache_key",
+      "alias_of": "capability:mesh.build_cache.key",
+      "programs": [],
+      "members": [
+        "capability:mesh.build_cache.key"
       ],
       "routes": [],
       "mechanisms": [],

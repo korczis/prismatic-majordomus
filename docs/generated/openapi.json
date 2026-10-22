@@ -9653,6 +9653,110 @@
         }
       }
     },
+    "/api/v1/mesh/build-cache/key": {
+      "get": {
+        "operationId": "mesh.build_cache.key",
+        "summary": "What every dependency install and build directory is cached under",
+        "description": "Every lockfile the repository tracks — Cargo.lock, mix.lock, package-lock.json — as the thing it makes cacheable (a cargo build directory, mix dependencies, npm node_modules), each with its key: a schema version, the platform (the toolchain's own host triple, or `any` for platform-independent source), the toolchain as its executables state it, and the digest of every input and environment variable that changes what the install leaves. Where the entry is restored to is a separate field, so two checkouts with one lockfile share one entry. A kind whose toolchain is absent says why and has no key (ADR 0157, I3950).",
+        "tags": [
+          "mesh"
+        ],
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Kind"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "description": "Only this kind; every kind the repository has when absent.",
+            "examples": {
+              "cargo": {
+                "value": "cargo-build-dir"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "What every dependency install and build directory is cached under: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BuildCacheKeyReport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "mesh.build_cache.key",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "experimental",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::mesh"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "waived",
+          "reason": "external_dependency"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-effect": "read",
+        "x-majordomus-mcp": {
+          "tool": "majordomus_mesh_build_cache_key"
+        },
+        "x-majordomus-cli": "mesh build-cache key"
+      }
+    },
     "/api/v1/mesh/claims": {
       "post": {
         "operationId": "mesh.claim",
@@ -23245,6 +23349,89 @@
           "inputs"
         ],
         "description": "What is shipped and what it is built from."
+      },
+      "BuildCacheKeyReport": {
+        "type": "object",
+        "properties": {
+          "platform": {
+            "type": "string",
+            "description": "This machine's platform triple."
+          },
+          "kinds": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BuildCacheKindKey"
+            },
+            "description": "One entry per lockfile the repository tracks, by kind then directory."
+          }
+        },
+        "required": [
+          "platform",
+          "kinds"
+        ],
+        "description": "Every cached thing a repository has, as `cache.key` answers it.\n\n```\nuse majordomus_cli::mesh::build_cache::key::KeyReport;\nlet r = KeyReport { platform: \"x86_64-unknown-linux-gnu\".into(), kinds: vec![] };\nassert!(r.kinds.is_empty());\n```"
+      },
+      "BuildCacheKindKey": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/Kind",
+            "description": "What is cached."
+          },
+          "dir": {
+            "type": "string",
+            "description": "The directory holding the lockfile, relative to the repository root (`.` for the root)."
+          },
+          "location": {
+            "type": "string",
+            "description": "Where the entry is restored to: relative to the repository, or `~/`-relative when it\nlies under the home directory (a shared cargo build directory)."
+          },
+          "platform": {
+            "type": "string",
+            "description": "The platform triple the entry is built for."
+          },
+          "toolchain": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The toolchain as its executables state it; absent when they could not be asked."
+          },
+          "inputs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The files hashed into the digest, relative to the repository root."
+          },
+          "digest": {
+            "type": "string",
+            "description": "The first 32 hex digits of the SHA-256 over the inputs and the declared environment."
+          },
+          "key": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`v1/<kind>/<platform>/<toolchain>/<digest>`; absent when the toolchain is."
+          },
+          "unavailable": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Why there is no key, when there is none."
+          }
+        },
+        "required": [
+          "kind",
+          "dir",
+          "location",
+          "platform",
+          "inputs",
+          "digest"
+        ],
+        "description": "One cached thing of a repository, with its key or the reason it has none.\n\n```\nuse majordomus_cli::mesh::build_cache::key::{Kind, KindKey};\nlet k = KindKey {\n    kind: Kind::NpmModules,\n    dir: \"site\".into(),\n    location: \"site/node_modules\".into(),\n    platform: \"aarch64-apple-darwin\".into(),\n    toolchain: Some(\"node-24.8.0-npm-11\".into()),\n    inputs: vec![\"site/package-lock.json\".into()],\n    digest: \"0\".repeat(32),\n    key: Some(format!(\"v1/npm-modules/aarch64-apple-darwin/node-24.8.0-npm-11/{}\", \"0\".repeat(32))),\n    unavailable: None,\n};\nassert!(k.key.unwrap().starts_with(\"v1/npm-modules/\"));\n```"
       },
       "BuildIdentity": {
         "type": "object",
@@ -41566,6 +41753,26 @@
           "reason"
         ],
         "description": "The judgement of one served identity against one expected commit, with its reason. The\nreason travels with the verdict so that every surface can say *why* without re-deriving\nit.\n\n```\nuse majordomus_cli::served::{judge, Fetched, Judgement, ServedVerdict};\nlet j: Judgement = judge(&Err(Fetched::Unreachable(\"timeout\".into())), &\"a\".repeat(40), &fake());\nassert_eq!(j.verdict, ServedVerdict::Unreachable);\nassert!(j.reason.contains(\"timeout\"));\n# use majordomus_cli::served::Ancestry;\n# struct N; impl Ancestry for N {\n#     fn has(&self, _: &str) -> Option<bool> { Some(true) }\n#     fn contains(&self, _: &str, _: &str) -> Option<bool> { Some(true) }\n# }\n# fn fake() -> impl Ancestry { N }\n```"
+      },
+      "Kind": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "cargo-build-dir",
+            "description": "The cargo build directory of a workspace: the dependencies compiled on the way, without\nincremental state. Restored only into a directory that is cold."
+          },
+          {
+            "type": "string",
+            "const": "mix-deps",
+            "description": "The `deps/` directory `mix deps.get` fills."
+          },
+          {
+            "type": "string",
+            "const": "npm-modules",
+            "description": "The `node_modules/` directory `npm ci` fills."
+          }
+        ],
+        "description": "What is cached: the thing a lockfile makes reusable, named by the directory an install or\na build fills. The word is part of every key, so two kinds never share an entry.\n\n```\nuse majordomus_cli::mesh::build_cache::key::Kind;\nassert_eq!(Kind::NpmModules.as_str(), \"npm-modules\");\nassert_eq!(Kind::parse(\"mix-deps\"), Some(Kind::MixDeps));\n```"
       },
       "KindCount": {
         "type": "object",

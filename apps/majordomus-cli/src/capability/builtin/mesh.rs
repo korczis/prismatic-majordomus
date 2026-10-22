@@ -172,6 +172,39 @@ fn firewall_report(ctx: &Context, input: &FirewallInput) -> FirewallReport {
     crate::mesh::firewall::report(config.as_ref(), &local, input.port)
 }
 
+#[derive(Debug, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+/// The input of `mesh.build_cache.key`.
+pub struct BuildCacheKeyInput {
+    /// Only this kind; every kind the repository has when absent.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub kind: Option<crate::mesh::build_cache::key::Kind>,
+}
+
+impl BenchmarkCases for BuildCacheKeyInput {
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        vec![
+            NamedCase::new("every-kind", BuildCacheKeyInput { kind: None }),
+            NamedCase::new(
+                "cargo",
+                BuildCacheKeyInput {
+                    kind: Some(crate::mesh::build_cache::key::Kind::CargoBuildDir),
+                },
+            ),
+        ]
+    }
+}
+
+fn mesh_build_cache_key(
+    ctx: &Context,
+    input: BuildCacheKeyInput,
+) -> Result<crate::mesh::build_cache::key::KeyReport, CapabilityError> {
+    Ok(crate::mesh::build_cache::key::report(
+        std::path::Path::new(&ctx.index.repository.root),
+        input.kind,
+    ))
+}
+
 fn mesh_firewall(ctx: &Context, input: FirewallInput) -> Result<FirewallReport, CapabilityError> {
     Ok(firewall_report(ctx, &input))
 }
@@ -1379,6 +1412,23 @@ pub fn module() -> ModuleDescriptor {
             }
             // the mesh's working state, not the repository's: a loopback caller only (ADR 0220)
             .reads_only_locally(),
+            capability! {
+                id: "mesh.build_cache.key",
+                title: "What every dependency install and build directory is cached under",
+                description: "Every lockfile the repository tracks — Cargo.lock, mix.lock, package-lock.json — as the thing it makes cacheable (a cargo build directory, mix dependencies, npm node_modules), each with its key: a schema version, the platform (the toolchain's own host triple, or `any` for platform-independent source), the toolchain as its executables state it, and the digest of every input and environment variable that changes what the install leaves. Where the entry is restored to is a separate field, so two checkouts with one lockfile share one entry. A kind whose toolchain is absent says why and has no key (ADR 0157, I3950).",
+                input: BuildCacheKeyInput,
+                output: crate::mesh::build_cache::key::KeyReport,
+                stability: Stability::Experimental,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_mesh_build_cache_key"),
+                    http: get("/api/v1/mesh/build-cache/key"),
+                    cli: Some(CliExposure { path: vec!["mesh".into(), "build-cache".into(), "key".into()] }),
+                },
+                tags: ["mesh", "build", "cache"],
+                cache: CachePolicy::Disabled,
+                benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::ExternalDependency },
+                handler: mesh_build_cache_key,
+            },
             capability! {
                 id: "mesh.firewall",
                 title: "The host firewall, as the mesh needs it",

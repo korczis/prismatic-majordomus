@@ -750,6 +750,71 @@ pub enum MeshCommand {
     Handover(MeshHandoverArgs),
     /// Ask the mesh for a review, or answer a request
     Review(MeshReviewArgs),
+    /// The mesh build cache: what each dependency install and build directory is cached under
+    BuildCache(MeshBuildCacheArgs),
+}
+
+#[derive(Debug, Args)]
+/// `mesh build-cache`: the shared build cache of ADR 0157 as this repository and machine
+/// see it. `key` names what every lockfile the repository tracks is cached under.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshBuildCacheArgs, MeshBuildCacheCommand, MeshCommand};
+/// use majordomus_cli::mesh::build_cache::key::Kind;
+///
+/// let cli = Cli::try_parse_from(["majordomus", "mesh", "build-cache", "key", "--kind", "npm-modules"]).unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::BuildCache(cache) = mesh.command else { panic!("expected `build-cache`") };
+/// let cache: MeshBuildCacheArgs = cache;
+/// let MeshBuildCacheCommand::Key(key) = cache.command;
+/// assert_eq!(key.kind, Some(Kind::NpmModules));
+/// ```
+pub struct MeshBuildCacheArgs {
+    #[command(subcommand)]
+    /// What to ask of the build cache.
+    pub command: MeshBuildCacheCommand,
+}
+
+#[derive(Debug, Subcommand)]
+/// The `mesh build-cache` subcommands: each reads this repository and this machine, and none
+/// of them writes anything; `key` names what every tracked lockfile is cached under.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshBuildCacheCommand, MeshCommand};
+///
+/// let cli = Cli::try_parse_from(["majordomus", "mesh", "build-cache", "key"]).unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::BuildCache(cache) = mesh.command else { panic!("expected `build-cache`") };
+/// assert!(matches!(cache.command, MeshBuildCacheCommand::Key(_)));
+/// ```
+pub enum MeshBuildCacheCommand {
+    /// Every lockfile the repository tracks, with the key its install or build directory is cached under: schema version, platform, toolchain and input digest
+    Key(MeshBuildCacheKeyArgs),
+}
+
+#[derive(Debug, Args)]
+/// `mesh build-cache key`: one kind with `--kind`, every kind without it.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshBuildCacheCommand, MeshBuildCacheKeyArgs, MeshCommand};
+///
+/// let cli = Cli::try_parse_from(["majordomus", "mesh", "build-cache", "key", "--format", "json"]).unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::BuildCache(cache) = mesh.command else { panic!("expected `build-cache`") };
+/// let MeshBuildCacheCommand::Key(key) = cache.command;
+/// let key: MeshBuildCacheKeyArgs = key;
+/// assert_eq!(key.kind, None);
+/// ```
+pub struct MeshBuildCacheKeyArgs {
+    #[arg(long, value_enum)]
+    /// Only this kind
+    pub kind: Option<crate::mesh::build_cache::key::Kind>,
+    #[command(flatten)]
+    /// Where the repository is and how to answer.
+    pub query: MeshQueryArgs,
 }
 
 #[derive(Debug, Args)]
@@ -7351,6 +7416,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["mesh", "identity"],
             setup: &[],
             expect: Expect::StdoutContains(&["present"]),
+        }],
+    },
+    CommandExamples {
+        command: "mesh build-cache key",
+        examples: &[ExampleDoc {
+            id: "mesh-build-cache-key",
+            title: "What each lockfile's install is cached under",
+            description: "Every lockfile the repository tracks becomes a cacheable thing with a key: a schema version, the platform, the toolchain as its executables state it, and the digest of its inputs. `--kind` narrows it to one kind; a repository with no lockfile of that kind says nothing here is cacheable, and a kind whose toolchain is absent says why it has no key.",
+            argv: &["mesh", "build-cache", "key", "--kind", "mix-deps"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["platform"]),
         }],
     },
     CommandExamples {

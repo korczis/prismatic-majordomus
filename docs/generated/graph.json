@@ -997,6 +997,15 @@
         "status": "query"
       },
       {
+        "id": "capability:mesh.build_cache.key",
+        "kind": "capability",
+        "label": "mesh.build_cache.key",
+        "summary": "What every dependency install and build directory is cached under",
+        "route": "/cockpit/capabilities/mesh.build_cache.key",
+        "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:mesh.claim",
         "kind": "capability",
         "label": "mesh.claim",
@@ -15890,6 +15899,18 @@
         }
       },
       {
+        "id": "majordomus://critique/a-build-reuses-what-the-mesh-already-built",
+        "kind": "critique",
+        "label": "a-build-reuses-what-the-mesh-already-built",
+        "summary": "a-build-reuses-what-the-mesh-already-built",
+        "route": "/cockpit/objects/critique/a-build-reuses-what-the-mesh-already-built",
+        "source": ".ai/repo/project/critiques/a-build-reuses-what-the-mesh-already-built.yaml",
+        "facts": {
+          "intent": "a-build-reuses-what-the-mesh-already-built",
+          "reviewed_at": "2034d4a3f0b"
+        }
+      },
+      {
         "id": "majordomus://critique/a-change-is-judged-in-minutes",
         "kind": "critique",
         "label": "a-change-is-judged-in-minutes",
@@ -21508,6 +21529,37 @@
             "A second store beside campaigns/, or a second duplicate detector beside I3254"
           ],
           "updated_at": "2026-10-19"
+        }
+      },
+      {
+        "id": "majordomus://intent/a-build-reuses-what-the-mesh-already-built",
+        "kind": "intent",
+        "label": "a-build-reuses-what-the-mesh-already-built",
+        "summary": "A build reuses what any node of its platform already built or fetched, and is exactly as correct when nothing can be reused",
+        "route": "/cockpit/objects/intent/a-build-reuses-what-the-mesh-already-built",
+        "source": ".ai/repo/project/intents/a-build-reuses-what-the-mesh-already-built.yaml",
+        "facts": {
+          "created_at": "2026-10-22",
+          "invariants": [
+            "A miss, a down store, a slow store, a refused credential or a corrupt entry costs time, never correctness (rule project.cache-is-invisible); the build then runs exactly as it did without the cache",
+            "A cold, a warm and a bypassed run leave the same result, and MAJORDOMUS_BUILD_CACHE=off bypasses every level (rule project.cache-is-invisible)",
+            "The key is derived from what the repository and the machine already say (lockfiles, toolchain executables, host triple, the environment that changes the output); nothing in a key is typed by hand",
+            "A store is used only when a trusted node offers it in a signed, expiring record (ADR 0157 decision 2); presence on a port is never trust",
+            "An archive is restored only after its content digest matches the one recorded when it was saved, and only inside its target directory",
+            "No credential, private address or secret appears in git, .ai, an answer, a log line, a process environment, a page or a document (ADR 0157 decision 7)",
+            "Every store and every local level is bounded by declared policy and measured by a command (rule project.accumulation-is-measured); a restore passes the same free-space floor as a build"
+          ],
+          "milestones": [
+            "builds-reuse-the-mesh-cache"
+          ],
+          "non_goals": [
+            "Distributed compilation (sccache-dist, icecream)",
+            "Mandatory mesh discovery on the derive critical path",
+            "A hit across platforms: a triple shares only with itself, except where the cached thing is platform-independent source",
+            "Writing a user's ~/.cargo/config.toml or shell profile",
+            "Reaching the store from GitHub's runners, which already cache through actions/cache"
+          ],
+          "updated_at": "2026-10-22"
         }
       },
       {
@@ -63565,6 +63617,254 @@
         }
       },
       {
+        "id": "majordomus://issue/I3950",
+        "kind": "issue",
+        "label": "I3950",
+        "summary": "A cache key is a versioned triplet of platform, toolchain and inputs, derived from the host and the repository",
+        "route": "/cockpit/objects/issue/i3950",
+        "source": ".ai/repo/project/issues/I3950.yaml",
+        "facts": {
+          "created_at": "2026-10-22",
+          "current_state": "Measured on master 2034d4a3f0b on 2026-10-22: no key derivation, no S3 client and no dependency cache exist in the crate; I2670 (#1118) holds the offer model and the pure selection only.",
+          "depends_on": [
+            "I2670"
+          ],
+          "evidence_required": [
+            "key_derivation_case"
+          ],
+          "milestone": "builds-reuse-the-mesh-cache",
+          "non_scope": [
+            "Talking to a store",
+            "Restoring or saving anything"
+          ],
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh/build_cache.rs",
+            "apps/majordomus-cli/src/mesh/build_cache/",
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/commands/mesh.rs",
+            "docs/generated",
+            "site/content/docs",
+            "site/data",
+            ".ai/repo/project/intents/a-build-reuses-what-the-mesh-already-built.yaml",
+            "test/cases/3950_a_cache_key_is_a_derived_triplet.sh"
+          ],
+          "serves": [
+            "a-build-reuses-what-the-mesh-already-built#key-is-a-derived-triplet"
+          ],
+          "slug": "a-cache-key-is-a-derived-triplet",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=2 bash test/run.sh 3950_a_cache_key_is_a_derived_triplet"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3951",
+        "kind": "issue",
+        "label": "I3951",
+        "summary": "The mesh store is spoken natively: signed S3 requests, bounded in time, with the credential read from a private file and never answered",
+        "route": "/cockpit/objects/issue/i3951",
+        "source": ".ai/repo/project/issues/I3951.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The signature and HMAC reproduce the AWS SigV4 GET Object example and RFC 4231 byte for byte",
+            "A credential file readable by its group or others is refused, with the cause named and no value",
+            "Every network call has a bound; a store that does not answer within it is unknown, never down",
+            "A refused credential, a full store and a body cut short are distinct errors, and a cut body leaves no file"
+          ],
+          "created_at": "2026-10-22",
+          "current_state": "Measured on master 2034d4a3f0b on 2026-10-22: no key derivation, no S3 client and no dependency cache exist in the crate; I2670 (#1118) holds the offer model and the pure selection only.",
+          "depends_on": [
+            "I2670"
+          ],
+          "desired_state": "The crate can probe, read and write a store with no dependency added, and no answer, log line, error or child environment carries the secret.",
+          "evidence_required": [
+            "sigv4_vectors",
+            "store_failure_paths_case"
+          ],
+          "milestone": "builds-reuse-the-mesh-cache",
+          "non_scope": [
+            "Multipart upload: an object larger than one PUT is not saved, and says so",
+            "Choosing a store (I2671, I2672) and provisioning one (I2674)"
+          ],
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh/build_cache.rs",
+            "apps/majordomus-cli/src/mesh/build_cache/",
+            ".ai/repo/project/intents/a-build-reuses-what-the-mesh-already-built.yaml",
+            "test/cases/3951_the_mesh_store_is_spoken_natively.sh"
+          ],
+          "serves": [
+            "a-build-reuses-what-the-mesh-already-built#store-absent-is-only-a-miss",
+            "a-build-reuses-what-the-mesh-already-built#nothing-secret-nothing-unbounded"
+          ],
+          "slug": "the-mesh-store-is-spoken-natively",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=2 bash test/run.sh 3951_the_mesh_store_is_spoken_natively"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3952",
+        "kind": "issue",
+        "label": "I3952",
+        "summary": "A dependency install is restored before and saved after, verified by its digest, local level first and a trusted store second",
+        "route": "/cockpit/objects/issue/i3952",
+        "source": ".ai/repo/project/issues/I3952.yaml",
+        "facts": {
+          "created_at": "2026-10-22",
+          "current_state": "Measured on master 2034d4a3f0b on 2026-10-22: no key derivation, no S3 client and no dependency cache exist in the crate; I2670 (#1118) holds the offer model and the pure selection only.",
+          "depends_on": [
+            "I3950",
+            "I3951",
+            "I2671"
+          ],
+          "evidence_required": [
+            "restore_save_case",
+            "equivalence_case"
+          ],
+          "milestone": "builds-reuse-the-mesh-cache",
+          "non_scope": [
+            "Caching a workspace's own incremental compilation"
+          ],
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh/build_cache.rs",
+            "apps/majordomus-cli/src/mesh/build_cache/",
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/commands/mesh.rs",
+            "docs/generated",
+            "site/content/docs",
+            "site/data",
+            "scripts/reap-orphans",
+            ".ai/repo/policy.yaml",
+            "share/schemas/majordomus/policy",
+            "share/skeleton/policy.yaml",
+            ".ai/repo/rules/project/cache-is-invisible.v1.md",
+            "docs/CLI.md",
+            ".ai/repo/project/intents/a-build-reuses-what-the-mesh-already-built.yaml",
+            "test/cases/3952_a_dependency_install_is_restored_and_saved.sh"
+          ],
+          "serves": [
+            "a-build-reuses-what-the-mesh-already-built#a-second-node-reuses",
+            "a-build-reuses-what-the-mesh-already-built#store-absent-is-only-a-miss",
+            "a-build-reuses-what-the-mesh-already-built#nothing-secret-nothing-unbounded"
+          ],
+          "slug": "a-dependency-install-is-restored-before-and-saved-after",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=2 bash test/run.sh 3952_a_dependency_install_is_restored_and_saved"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3953",
+        "kind": "issue",
+        "label": "I3953",
+        "summary": "Every local build path of the repository goes through the cache, and a gate refuses a new bypass",
+        "route": "/cockpit/objects/issue/i3953",
+        "source": ".ai/repo/project/issues/I3953.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "With the store healthy when the sccache server starts, the server has it as its second level; with it down the build is local-only and succeeds",
+            "The store is probed only when a server is started, never per compilation",
+            "The gate fails on a fixture script that calls npm ci or cargo build around the choke point, and passes one that declares why",
+            "A cold node with no majordomus yet builds as before, and the cache joins once the executable exists"
+          ],
+          "created_at": "2026-10-22",
+          "current_state": "Measured on master 2034d4a3f0b on 2026-10-22: no key derivation, no S3 client and no dependency cache exist in the crate; I2670 (#1118) holds the offer model and the pure selection only.",
+          "depends_on": [
+            "I3952",
+            "I2673"
+          ],
+          "evidence_required": [
+            "build_paths_case",
+            "bypass_refused_case"
+          ],
+          "milestone": "builds-reuse-the-mesh-cache",
+          "non_scope": [
+            "Editing a user's cargo config or shell profile",
+            "GitHub Actions jobs"
+          ],
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "lib/rust_bin.sh",
+            "scripts/derive",
+            "scripts/site-build",
+            "scripts/ci/build-cache-check",
+            "apps/majordomus-cli/src/environment/",
+            ".ai/repo/rules/project/",
+            ".ai/repo/project/intents/a-build-reuses-what-the-mesh-already-built.yaml",
+            "test/cases/3953_every_build_path_goes_through_the_cache.sh",
+            "docs/BUILD_CACHE.md"
+          ],
+          "serves": [
+            "a-build-reuses-what-the-mesh-already-built#every-build-path-goes-through-it",
+            "a-build-reuses-what-the-mesh-already-built#store-absent-is-only-a-miss"
+          ],
+          "slug": "every-build-path-goes-through-the-cache",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=2 bash test/run.sh 3953_every_build_path_goes_through_the_cache"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3955",
+        "kind": "issue",
+        "label": "I3955",
+        "summary": "Whether an archived cargo build directory is reused on a second node is measured before anything restores one",
+        "route": "/cockpit/objects/issue/i3955",
+        "source": ".ai/repo/project/issues/I3955.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Node B's checkout and registry are its own (new mtimes), and only the build directory travels",
+            "The result is recorded whichever way it falls; a reuse below the cost of the transfer decides against the kind"
+          ],
+          "created_at": "2026-10-22",
+          "depends_on": [],
+          "evidence_required": [
+            "build_dir_reuse_measured"
+          ],
+          "milestone": "builds-reuse-the-mesh-cache",
+          "non_scope": [
+            "Building the restore itself"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/adrs/0157-the-mesh-offers-a-shared-build-cache.md",
+            ".ai/repo/project/intents/a-build-reuses-what-the-mesh-already-built.yaml",
+            "docs/BUILD_CACHE.md"
+          ],
+          "serves": [
+            "a-build-reuses-what-the-mesh-already-built#reuse-is-measured-on-real-nodes"
+          ],
+          "slug": "a-build-directory-archive-is-measured-before-it-is-built",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -66319,6 +66619,52 @@
             "bin/majordomus-cli capabilities validate",
             "bin/majordomus-cli generate --check",
             "bash test/run.sh 383_a_scripted_capability_runs"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/builds-reuse-the-mesh-cache",
+        "kind": "milestone",
+        "label": "builds-reuse-the-mesh-cache",
+        "summary": "Builds reuse the mesh cache: compiled Rust, the cargo build directory, mix deps and npm packages, keyed by platform, toolchain and inputs",
+        "route": "/cockpit/objects/milestone/builds-reuse-the-mesh-cache",
+        "source": ".ai/repo/project/milestones/builds-reuse-the-mesh-cache.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every criterion of intent a-build-reuses-what-the-mesh-already-built has its proof in the tree"
+          ],
+          "created_at": "2026-10-22",
+          "depends_on": [
+            "development-runtime"
+          ],
+          "desired_state": "majordomus mesh build-cache key|status|ensure|env on every surface, the store found through a trusted node's signed offer, the local build paths routed through it, and a second node's reuse measured.",
+          "evidence_required": [],
+          "non_scope": [
+            "Distributed compilation",
+            "Public exposure of the store",
+            "A second provider beside the first"
+          ],
+          "order": 181,
+          "priority": "p0",
+          "scope": [
+            "apps/majordomus-cli/src/mesh/build_cache.rs",
+            "apps/majordomus-cli/src/mesh/build_cache",
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/commands/mesh.rs",
+            "lib/rust_bin.sh",
+            "scripts/reap-orphans",
+            "scripts/ci/build-cache-check",
+            ".ai/repo/adrs/0157-the-mesh-offers-a-shared-build-cache.md",
+            ".ai/repo/policy.yaml",
+            "docs/BUILD_CACHE.md",
+            "docs/CLI.md"
+          ],
+          "slug": "builds-reuse-the-mesh-cache",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "majordomus plan validate",
+            "majordomus intent validate"
           ]
         }
       },
@@ -86089,6 +86435,13 @@
         "source": "test/cases/391_skills_are_proven_capabilities.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3950_a_cache_key_is_a_derived_triplet.sh",
+        "kind": "test",
+        "label": "test/cases/3950_a_cache_key_is_a_derived_triplet.sh",
+        "route": "/cockpit/objects/test/test-cases-3950-a-cache-key-is-a-derived-triplet-sh",
+        "source": "test/cases/3950_a_cache_key_is_a_derived_triplet.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/400_derivation_is_one_graph.sh",
         "kind": "test",
         "label": "test/cases/400_derivation_is_one_graph.sh",
@@ -92060,6 +92413,26 @@
       },
       {
         "source": "capability:mcp.projection",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.build_cache.key",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.build_cache.key",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.build_cache.key",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.build_cache.key",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -106974,6 +107347,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://critique/a-build-reuses-what-the-mesh-already-built",
+        "target": "kind:critique",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://critique/a-change-is-judged-in-minutes",
         "target": "kind:critique",
         "kind": "is_a"
@@ -109340,6 +109718,11 @@
       },
       {
         "source": "majordomus://intent/a-brief-is-reconciled-into-the-plan",
+        "target": "kind:intent",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://intent/a-build-reuses-what-the-mesh-already-built",
         "target": "kind:intent",
         "kind": "is_a"
       },
@@ -122424,6 +122807,91 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3950",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3950",
+        "target": "majordomus://issue/I2670",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3950",
+        "target": "majordomus://milestone/builds-reuse-the-mesh-cache",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3951",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3951",
+        "target": "majordomus://issue/I2670",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3951",
+        "target": "majordomus://milestone/builds-reuse-the-mesh-cache",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3952",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3952",
+        "target": "majordomus://issue/I2671",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3952",
+        "target": "majordomus://issue/I3950",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3952",
+        "target": "majordomus://issue/I3951",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3952",
+        "target": "majordomus://milestone/builds-reuse-the-mesh-cache",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3953",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3953",
+        "target": "majordomus://issue/I2673",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3953",
+        "target": "majordomus://issue/I3952",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3953",
+        "target": "majordomus://milestone/builds-reuse-the-mesh-cache",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3955",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3955",
+        "target": "majordomus://milestone/builds-reuse-the-mesh-cache",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -122947,6 +123415,16 @@
         "source": "majordomus://milestone/automation",
         "target": "kind:milestone",
         "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/builds-reuse-the-mesh-cache",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/builds-reuse-the-mesh-cache",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "depends_on"
       },
       {
         "source": "majordomus://milestone/campaigns-are-read-as-provenance",
@@ -128534,6 +129012,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3950_a_cache_key_is_a_derived_triplet.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/400_derivation_is_one_graph.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -133115,6 +133598,11 @@
       },
       {
         "source": "module:mesh",
+        "target": "capability:mesh.build_cache.key",
+        "kind": "composes"
+      },
+      {
+        "source": "module:mesh",
         "target": "capability:mesh.claim",
         "kind": "composes"
       },
@@ -133640,8 +134128,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3754,
-      "edges": 8679,
+      "nodes": 3764,
+      "edges": 8706,
       "acyclic": false,
       "truncated": false
     }
