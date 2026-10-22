@@ -262,6 +262,7 @@
     "schema-BriefPeersSection": "docs/api/brief/",
     "schema-BriefSectionState": "docs/api/brief/",
     "schema-BriefSessionSection": "docs/api/brief/",
+    "schema-BrowserSource": "docs/api/product/",
     "schema-Budget": "docs/api/devcontext/",
     "schema-Budgets": "docs/api/deploy/",
     "schema-Build": "docs/api/deploy/",
@@ -1268,7 +1269,7 @@
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
     "operations": 201,
-    "schemas": 1005,
+    "schemas": 1006,
     "tags": 58
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1298,7 +1299,7 @@
     "description": "The API reference, rendered from this document.",
     "url": "https://majordomus.dev/docs/api/"
   },
-  "generated_by": "majordomus-cli 1.0.0-alpha.1",
+  "generated_by": "majordomus-cli 1.0.0-alpha.5",
   "generator": "scripts/generate-site-data (scripts/lib/openapi-site.jq)",
   "info": {
     "contact_name": "Majordomus",
@@ -1307,7 +1308,7 @@
     "license": "MIT",
     "summary": "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.",
     "title": "Majordomus",
-    "version": "1.0.0-alpha.1"
+    "version": "1.0.0-alpha.5"
   },
   "infrastructure": [
     {
@@ -1626,6 +1627,7 @@
     "BriefPeersSection": "brief",
     "BriefSectionState": "brief",
     "BriefSessionSection": "brief",
+    "BrowserSource": "product",
     "Budget": "devcontext",
     "Budgets": "deploy",
     "Build": "deploy",
@@ -5716,6 +5718,29 @@
         "SessionBrief"
       ],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "Whether one provider's client drives a browser in the same session as this repository's\nMCP server.\n\nA bridge is the one way a single session both works on a page and reads and changes the\nlive mesh (`docs/MCP.md`, \"Claude in the browser\"). It is a vendor capability like the two\nabove, so it is declared with its citation; whether *this machine* has the bridge is a\ndifferent fact, which preflight reads from the machine and never from here. A browser\nagent of the vendor's own — a side panel that reaches only the vendor's cloud — is not a\nbridge: nothing it does arrives in a session that holds this repository's server.\n\n```\nuse majordomus_cli::share::BrowserSource;\nassert_eq!(serde_json::from_str::<BrowserSource>(\"\\\"bridge\\\"\").unwrap(), BrowserSource::Bridge);\nassert!(serde_json::from_str::<BrowserSource>(\"\\\"extension\\\"\").is_err(), \"one word for it\");\nassert_eq!(BrowserSource::default(), BrowserSource::None, \"undeclared reads as none\");\nassert_eq!(BrowserSource::Bridge.as_str(), \"bridge\");\n```",
+      "home": "product",
+      "is_enum": true,
+      "name": "BrowserSource",
+      "properties": [],
+      "type": "\"bridge\" | \"none\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "ProviderOffers"
+      ],
+      "values": [
+        {
+          "description": "The client drives a browser through a vendor extension whose tools arrive in the same\nsession as this repository's MCP server.",
+          "value": "bridge"
+        },
+        {
+          "description": "It does not, or not in a session that holds this repository's server.",
+          "value": "none"
+        }
+      ],
       "variants": []
     },
     {
@@ -40772,6 +40797,36 @@
           "refs": [],
           "required": true,
           "type": "string"
+        },
+        {
+          "description": "Whether the client drives a browser beside this repository's server. Absent in a\nvalue written before the axis existed, and read as `none` there.",
+          "name": "browser",
+          "refs": [
+            "BrowserSource"
+          ],
+          "required": false,
+          "type": "BrowserSource"
+        },
+        {
+          "description": "Where `browser` was verified, on the same terms as `episode_evidence`.",
+          "name": "browser_evidence",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "The native messaging host a bridge registers with the browser, which is how a\nmachine is seen to have it. Declared for a `bridge` only.",
+          "name": "browser_host",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "What a person does, once, to install the bridge on a machine, in the vendor's terms.\nDeclared for a `bridge` only.",
+          "name": "browser_setup",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
         }
       ],
       "type": "object",

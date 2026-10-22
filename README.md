@@ -4,7 +4,7 @@
 
 # Prismatic Majordomus
 
-**A lightweight supervisory control layer for AI-assisted work.**
+**Your AI agents say the work is done. Majordomus makes them prove it.**
 
 [Website](https://majordomus.dev) ·
 **[The challenge: watch it refuse an agent](https://majordomus.dev/challenge/)** ·

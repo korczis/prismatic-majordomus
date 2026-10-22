@@ -730,16 +730,6 @@
       "external": false
     },
     {
-      "id": ".ai/local/cache",
-      "kind": "artifact",
-      "label": "local/cache",
-      "command": null,
-      "summary": null,
-      "read_only": null,
-      "route": null,
-      "external": false
-    },
-    {
       "id": ".ai/repo/knowledge/sources.yaml",
       "kind": "artifact",
       "label": "repo/knowledge/sources.yaml",
@@ -903,6 +893,16 @@
       "id": ".ai/local/evidence/use-cases",
       "kind": "artifact",
       "label": "local/evidence/use-cases",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
+      "id": ".ai/local/cache/use-cases",
+      "kind": "artifact",
+      "label": "local/cache/use-cases",
       "command": null,
       "summary": null,
       "read_only": null,
@@ -1883,11 +1883,6 @@
     },
     {
       "source": "lib/init.sh",
-      "target": ".ai/local/cache",
-      "kind": "uses"
-    },
-    {
-      "source": "lib/init.sh",
       "target": ".ai/local/session-contexts",
       "kind": "uses"
     },
@@ -1994,11 +1989,6 @@
     {
       "source": "lib/knowledge.sh",
       "target": ".ai/repo/policy.yaml",
-      "kind": "uses"
-    },
-    {
-      "source": "lib/migrate.sh",
-      "target": ".ai/local/cache",
       "kind": "uses"
     },
     {
@@ -2314,6 +2304,11 @@
     {
       "source": "lib/update.sh",
       "target": ".ai/local/prompts",
+      "kind": "writes"
+    },
+    {
+      "source": "lib/usecase.sh",
+      "target": ".ai/local/cache/use-cases",
       "kind": "writes"
     },
     {

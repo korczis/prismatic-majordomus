@@ -11,7 +11,7 @@ tags:
   - mesh
   - release
 related:
-  - file:.ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v1.md
+  - file:.ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md
   - file:.ai/repo/adrs/0101-pull-requests-are-integrated-one-at-a-time-against-the-current-master.md
   - file:.ai/repo/adrs/0129-a-train-of-pull-requests-lands-in-one-run-of-the-required-check.md
   - file:.ai/repo/adrs/0155-an-expedited-landing-is-the-owners-word.md
@@ -146,3 +146,16 @@ detected and brought current.
   the claim is already the fact, so the UI reads the claim.
 - **Force-push stale branches.** It is fast for the session that does it and destroys work
   another session pushed in the meantime; a merge of master costs one commit.
+
+## Amendment, 2026-10-20: a worker lands its own green head
+
+At about 23:13 UTC on 2026-10-20 the owner relaxed the model: "hlavne prosim tebe reflektuj
+zmekceni pravidel, vse updatuj, vsem dej vedet" ("above all, reflect the relaxation of the
+rules, update everything, let everyone know"), choosing every relaxation offered (build and disk
+limits, landing and merge, the sessions' permissions, coordination formalities). The seats read
+it as: a worker lands its own green pull request through the guarded lander's queue, pinned
+exactly as a top is pinned; at most five builders on one machine and none below 35 GiB free;
+cleanup that loses nothing is done without asking and announced; ids, paths and seats are still
+claimed first. Rule `project.the-cooperation-model-is-the-owners-word` version 2 records it
+(I3824); the landing seat keeps combined tops for heads that must ship together. What may reach
+master is unchanged: a head whose `ci` succeeded and which contains the current master.

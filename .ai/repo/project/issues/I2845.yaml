@@ -1,0 +1,29 @@
+id: I2845
+milestone: test-evidence
+title: "a run cancelled midway is not the publication's evidence while a complete one is near"
+slug: an-incomplete-run-is-not-the-publications-evidence
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "`scripts/pages evidence` reads the nearest evidence artifact whose manifest names no absent report. A nearer artifact that lacks a runner's report, such as one from a run cancelled midway, is passed over and named for what it lacks. An incomplete run stands in only when none of the nearest five is complete, and then says so."
+why: "On 2026-10-20 the master validate of 82ac259d0ae was cancelled to free the one-at-a-time pool for the v1.0.0-alpha.1 release PR. Its evidence artifact still uploaded, naming the suite and coverage reports as absent, and it was the nearest ancestor of the next master, 9a5a9b77520. Two Pages deploys (39438897759, 39451372815) read its ledger and refused \"215 claim(s) would be published as not run, over the baseline of 0\". Every one of those claims existed at the ledger's commit and would have been proven by the suite that never ran, so I2853's newer-than-the-ledger rule could not excuse them. The site stayed on 82ac259d0ae until master's own validate recorded complete evidence about two hours later. Found by 3e."
+current_state: "pages evidence takes the single nearest ancestor's evidence artifact whatever its manifest says is absent, and copies its ledger for the UI snapshot."
+desired_state: "pages evidence downloads the nearest artifacts in order, five at most, and stops at the first whose manifest names no absent report. That run is the publication's evidence and the source of the ledger. Every nearer incomplete run is named with the reports it lacks. With several --from directories the same rule applies in the order given."
+scope:
+  - "scripts/pages"
+  - "test/cases/3245_an_incomplete_run_is_not_the_publications_evidence.sh"
+non_scope:
+  - "Not cancelling a master validate: a coordination rule for the release seat, recorded in its memory, not in the publisher."
+  - "Treating a run with failed executions as incomplete: a failed run has every report, and evidence already reads it as stale."
+depends_on: []
+acceptance_criteria:
+  - "With a nearer incomplete artifact and a complete one listed, the complete one is downloaded and read, and the incomplete one is named"
+  - "A lone incomplete run stands in and says what it lacks"
+  - "A lone complete run is read as before, with no word about a choice"
+validation:
+  - "bin/majordomus plan validate"
+  - "bash test/run.sh 3245_an_incomplete_run_is_not_the_publications_evidence 3242_a_claim_newer_than_the_ledger_is_not_yet_recorded 3178_the_published_ui_reads_the_evidence_ci_recorded"
+evidence_required:
+  - "an_incomplete_run_is_not_the_publications_evidence_case"
+created_at: 2026-10-20
+updated_at: 2026-10-20

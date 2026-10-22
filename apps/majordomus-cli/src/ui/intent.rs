@@ -96,7 +96,7 @@ pub fn inspector_closing_to(intents: &Answer, issues: &Answer, id: &str, close: 
             // the records the intent's prose may name: every issue of the plan and every
             // milestone the intent names that the plan resolves; an id links only to those (I3000)
             let known = super::prose::Known {
-                issues: list(issues, "/issues")
+                issues: super::view::items(issues, "/issues")
                     .iter()
                     .map(|x| text(x, "id"))
                     .collect(),
@@ -106,9 +106,10 @@ pub fn inspector_closing_to(intents: &Answer, issues: &Answer, id: &str, close: 
                     .map(|m| text(m, "id"))
                     .collect(),
             };
-            let serving: Vec<Value> = list(issues, "/issues")
-                .into_iter()
+            let serving: Vec<Value> = super::view::items(issues, "/issues")
+                .iter()
                 .filter(|x| strings(x, "serves").iter().any(|s| intent_of(s) == id))
+                .cloned()
                 .collect();
             let criteria = i
                 .get("satisfaction")

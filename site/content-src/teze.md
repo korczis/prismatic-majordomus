@@ -4,6 +4,7 @@ description = "Proč Majordomus není další AI agent: modely se stanou zaměni
 template = "page.html"
 [extra]
 lang = "cs"
+related = ["dokumentace-kterou-lze-odmitnout/", "vlozene-zadani-se-stava-planem/", "vsechno-v-jednom-proudu/", "kresla-ne-jmena/", "napsano-jednou-odvozeno-vsude/", "session-skonci-prace-ne/"]
 [extra.translations]
 en = "the-bet-on-a-layer/"
 +++

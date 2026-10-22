@@ -1,0 +1,52 @@
+id: I3098
+milestone: development-runtime
+title: "Waiting derives take the machine's derive lock in the order they arrived"
+slug: derives-take-the-lock-in-arrival-order
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Give lib/machine_lock.sh a queue: a waiting derive writes a ticket (arrival time, pid, branch) under <home>/.derive.queue, the lock goes to the oldest ticket whose pid is alive, a ticket whose pid is gone is reaped, and the priority marker still overrides the order; the waiting line names the position (\"2nd of 4, behind <branch>\") and the brief's derive row shows the queue."
+why: "On 2026-10-20 three derives of one session waited 40 to 150 minutes on the lock while derives that started later took it: the lock is a directory every waiter polls with mkdir every 15 s, so the next holder is whichever poll lands first after the holder leaves. Sessions asked the release seat to hand-edit .derive.priority to get a turn, which is the agreement the lock was written to replace."
+current_state: "machine_lock.sh takes <home>/.derive.lock by mkdir and polls every MAJORDOMUS_DERIVE_POLL seconds; there is no ticket, so arrival order is not kept, and the waiting line names only the holder."
+desired_state: "Waiters are served in arrival order unless the priority marker names a branch; each waiting line and `majordomus brief` say the position and who is ahead."
+scope:
+  - "lib/machine_lock.sh"
+  - "scripts/derive"
+  - "test/cases"
+  - ".ai/repo/project/issues/I3098.yaml"
+non_scope:
+  - "The offload queue on other machines (I2398)"
+depends_on: []
+acceptance_criteria:
+  - "Two waiters that arrive in order A then B take the lock A then B, whichever polls first"
+  - "A ticket whose pid has died is reaped and does not hold the queue"
+  - "The priority marker still serves its branch first"
+  - "The waiting line names the position and the branch ahead"
+validation:
+  - "env -u MAJORDOMUS_SHARE bash test/run.sh 1018"
+evidence_required:
+  - "arrival_order_is_kept"
+  - "dead_ticket_is_reaped"
+created_at: 2026-10-21
+updated_at: 2026-10-21T17:48:29Z
+started_at: 2026-10-21T00:49:21Z
+started_event: sha256:6767c4077e2ce969e6c7f5a87d2de160194fd36f911016e7a1c0381470110fe4
+verified_at: 2026-10-21T00:50:10Z
+verified_event: sha256:6062da34b87f794b073e01abe51577300ee38e5f683953bfcfff8b80a6495336
+completed_at: 2026-10-21T17:48:29Z
+completed_event: sha256:6e996de7bff533b73a5336493e463605152d22f2c1e5ebd8840bf82647b38c6b
+evidence:
+  - covers: arrival_order_is_kept
+    type: ci
+    command: "bash test/run.sh 1018_one_derive_at_a_time_and_no_orphans"
+    result: "passed in train 2 validate 39634495999 (97391192dbb, landed on master), suite job"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39634495999"
+    commit: 97391192dbbc85ee34b1f35d9ddec55ba61832d3
+    recorded_at: 2026-10-21T17:47:59Z
+  - covers: dead_ticket_is_reaped
+    type: ci
+    command: "bash test/run.sh 1018_one_derive_at_a_time_and_no_orphans"
+    result: "passed in train 2 validate 39634495999 (97391192dbb, landed on master), suite job"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39634495999"
+    commit: 97391192dbbc85ee34b1f35d9ddec55ba61832d3
+    recorded_at: 2026-10-21T17:48:08Z

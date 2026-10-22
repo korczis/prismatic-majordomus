@@ -1,0 +1,35 @@
+id: "I3770"
+milestone: "the-mesh-works-out-of-the-box"
+title: "A server that lost its checkout lease answers every mesh read by naming the server that holds it, never with an empty mesh"
+slug: "a-server-without-the-lease-points-to-the-holder"
+priority: "p1"
+profile: "implementation"
+parallel_safe: true
+objective: "Make a shared server that has retired from the mesh because another process took its checkout lease answer mesh.status, mesh.state, mesh.cooperation and mesh.peers, and every refusal of a cooperation write, with the lease holder it can read: that holder's pid and URL, the time this server lost the lease, and the remedy (reconnect the client, or read the mesh through the holder). A client attached to such a server can then tell 'this server is retired' from 'nobody is working'."
+why: "Found on 2026-10-20 by the mesh audit while the campaign's coordinator read the mesh: the coordinator's own MCP tools majordomus_mesh_state and majordomus_mesh_cooperation answered active false with 'not active: the server no longer holds its checkout lease', while the live mesh held 38 sessions and 166 claims served by the lease holder. A worker attached to an orphaned server sees an empty mesh and can conclude that nobody holds a scope it is about to build. The milestone promises that sessions cooperate from the first turn; an attached session that cannot see its peers does not."
+current_state: "Verified on origin/master 91c0b5d5658. apps/majordomus-cli/src/shared.rs:261-273 notices the lease file no longer carries this server's token, records crate::lease::lost(), stops the mesh and calls mesh.decline with the fixed text 'the server no longer holds its checkout lease'; the LeaseDocument it has just read (apps/majordomus-cli/src/lease.rs:315-332, with pid and url) is not kept. apps/majordomus-cli/src/mesh/manager.rs:344-350 decline stores only that reason, and status at :562-590 answers active false with it, so every mesh read projects the same sentence. apps/majordomus-cli/src/capability/builtin/mesh.rs:246-256 cooperation refuses writes as not_active with that reason alone. The health report already says a lost lease outranks the standing (apps/majordomus-cli/src/capability/builtin/health.rs:647-655) but names no holder either. apps/majordomus-cli/tests/mesh_lease_retirement.rs:94 proves the retired server keeps its attached client and leaves the mesh; nothing asserts what that client is told. docs/MESH.md has no paragraph on a retired server."
+desired_state: "When a server retires on a lost lease, the mesh status carries a holder object (pid, url, started_at, read from the lease at answer time so a later takeover is followed) and lost_at; the reason names the holder's URL and says to reconnect or read the mesh there. mesh.peers, mesh.state and mesh.cooperation answer through the same status, and the not_active refusal of a claim or release names the holder too. When the lease file is unreadable the answer says so instead of naming nobody. docs/MESH.md states what a retired server answers."
+scope:
+  - "apps/majordomus-cli/src/shared.rs"
+  - "apps/majordomus-cli/src/mesh/manager.rs"
+  - "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+  - "apps/majordomus-cli/tests/mesh_lease_retirement.rs"
+  - "docs/MESH.md"
+  - "test/cases/3743_a_retired_server_names_the_lease_holder.sh"
+  - ".ai/repo/project/issues/I3770.yaml"
+non_scope:
+  - "Moving the attached client to the holder automatically"
+  - "Stopping either server, or deciding which of two servers of one checkout should hold the lease"
+  - "The health report's own wording beyond adding the holder"
+acceptance_criteria:
+  - "Two fixture servers of one checkout, the second taking the lease: the first answers mesh.state and mesh.cooperation with active false, a holder whose url is the second server's, and lost_at"
+  - "A claim through the retired server is refused as not_active and the refusal names the holder's url"
+  - "Negative: a server that never had the mesh (declaration disabled, or a command-line process) answers without any holder field, so a holder is never invented"
+  - "Negative: with the lease file removed after the takeover, the retired server says the holder cannot be read, and does not report an empty mesh as active"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test mesh_lease_retirement"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 3743_a_retired_server_names_the_lease_holder 130_mesh"
+  - "majordomus plan validate"
+evidence_required:
+  - "test_a_server_without_the_lease_points_to_the_holder"
+depends_on: []
