@@ -752,9 +752,12 @@ jobs:
       # One instrumented run, one export, two verdicts read from it: the measurement exists
       # once (docs/COVERAGE.md) and neither gate re-instruments. This step holds nothing —
       # --report measures and exits 0 — so a floor failure cannot hide the differential's
-      # answer, and the differential's cannot hide the floor's.
+      # answer, and the differential's cannot hide the floor's. The same run writes the two
+      # exports (--lcov, --cobertura) from the tallies it prints, test code already excluded,
+      # so what the trackers below receive is this measurement and not a second one
+      # (docs/COVERAGE.md, "Exports"); no step instruments again.
       - id: measure
-        run: ../../scripts/rust-coverage --report --export ../../coverage.json
+        run: ../../scripts/rust-coverage --report --export ../../coverage.json --lcov ../../coverage.lcov --cobertura ../../coverage.cobertura.xml
       - id: differential
         if: needs.plan.outputs.coverage_differential == 'true'
         env:
@@ -777,8 +780,44 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ci-metrics-coverage
-          path: coverage.json
+          path: |
+            coverage.json
+            coverage.lcov
+            coverage.cobertura.xml
           retention-days: 14
+      # The measurement was kept nowhere: the export above is a fourteen-day artifact, so no
+      # trend over time could be read from it. The same measurement, as LCOV, goes to the two
+      # trackers that graph it. It is one counter (scripts/rust-coverage wrote the file; a
+      # tracker only stores and plots it), and an upload gates nothing: each step runs only
+      # when the repository has that tracker's secret, and neither a missing secret nor a
+      # tracker that is down can turn the job red. The owner adds COVERALLS_REPO_TOKEN and
+      # CODECOV_TOKEN to switch them on. Whether each secret exists is asked by one step and
+      # handed on as a yes or no, so that no token sits in the job's environment, where every
+      # test and every action of the job could read it; each token reaches only its upload.
+      - id: trackers
+        if: ${{ !cancelled() }}
+        env:
+          HAS_COVERALLS: ${{ secrets.COVERALLS_REPO_TOKEN != '' }}
+          HAS_CODECOV: ${{ secrets.CODECOV_TOKEN != '' }}
+        run: printf 'coveralls=%s\ncodecov=%s\n' "$HAS_COVERALLS" "$HAS_CODECOV" >> "$GITHUB_OUTPUT"
+      - name: coverage to Coveralls
+        if: ${{ !cancelled() && steps.trackers.outputs.coveralls == 'true' && hashFiles('coverage.lcov') != '' }}
+        continue-on-error: true
+        uses: coverallsapp/github-action@v2
+        env:
+          COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+        with:
+          file: coverage.lcov
+          format: lcov
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: coverage to Codecov
+        if: ${{ !cancelled() && steps.trackers.outputs.codecov == 'true' && hashFiles('coverage.lcov') != '' }}
+        continue-on-error: true
+        uses: codecov/codecov-action@v5
+        with:
+          files: coverage.lcov
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
       - if: always()
         uses: actions/upload-artifact@v4
         with:

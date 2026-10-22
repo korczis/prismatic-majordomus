@@ -1,0 +1,34 @@
+id: I3933
+milestone: measurements-are-tracked-over-time
+title: Every master run's coverage and CI cost join a derived series that the site and the Cockpit draw
+slug: coverage-and-ci-cost-are-a-series
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Keep one row per master run of the coverage totals (lines, functions, regions per crate) and the CI cost (each job's queued and run minutes, each gate's verdict) as a derived series published with the site's data, and draw it as trend graphs on the site and in the Cockpit."
+why: "Nothing kept either quantity past 14 days, so a slow regression — a job that grows a minute a week, a crate whose coverage drifts down within the floor, a gate whose pass rate falls — is seen only by a person reading runs. On 2026-10-22 the suite's deal record was 12 days stale and cost tens of minutes per run before anyone measured it."
+current_state: "ci-timings reads the open pull requests' latest forge observation; coverage.json and the CI metrics artifacts expire after 14 days."
+desired_state: "The pages publication of a master run appends that run's coverage summary and CI metrics to a series read from its own artifacts, the series is derived data with an input hash like the site's other data, and a coverage and a CI-cost page draw it, the same figures as the gate and ci-timings."
+scope:
+  - .github/workflows/validate.yml
+  - scripts/generate-site-data
+  - site/templates
+  - apps/majordomus-cli/src/ui
+  - test/cases
+  - .ai/repo/project/issues/I3933.yaml
+non_scope:
+  - A store outside the repository's own publication
+  - The homepage's proof figure (I3916, I3917)
+depends_on:
+  - I3932
+acceptance_criteria:
+  - A master run's coverage totals and CI cost are in the series with no command run by a person
+  - The series' figures equal the gate's and ci-timings' for the same run, shown by a case
+  - The site and the Cockpit draw the series
+validation:
+  - bin/majordomus plan validate
+evidence_required:
+  - suite
+risk: "Derived data must not read refs (it reads the run's own artifacts), and the pages path is shared with the homepage work; coordinate with its owner before touching scripts/pages."
+created_at: 2026-10-22
+updated_at: 2026-10-22

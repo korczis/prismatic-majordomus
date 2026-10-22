@@ -1,0 +1,28 @@
+id: I3934
+milestone: measurements-are-tracked-over-time
+title: A CI run is emitted as an OpenTelemetry trace when an endpoint is configured, and nothing is sent when none is
+slug: a-ci-run-is-an-opentelemetry-trace
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "When the repository configures OTEL_EXPORTER_OTLP_ENDPOINT (and its headers) as secrets, a completed validate run is exported as one trace, a span per job and per step with its queued and run time and conclusion, to that endpoint; with no endpoint the step is skipped."
+why: "Queueing across overlapping runs cost up to 774 summed job-minutes on one master run (39784979979) and nothing measured it continuously; a trace per run lets the owner's own observability stack chart queue time, critical path and failure rates, and alert on them."
+current_state: "No OpenTelemetry anywhere in the repository; CI cost is read on demand from the forge."
+desired_state: "A workflow that runs on validate's completion exports the run's jobs and steps as spans over OTLP when the endpoint secret exists, skipped otherwise, never affecting a verdict; docs say which secrets the owner sets."
+scope:
+  - .github/workflows
+  - docs
+  - .ai/repo/project/issues/I3934.yaml
+non_scope:
+  - Sending anything without the owner's endpoint configured
+depends_on: []
+acceptance_criteria:
+  - With the endpoint set, a run's jobs and steps arrive as spans with their timings and conclusions
+  - With no endpoint, the export is skipped and no run's verdict changes
+validation:
+  - actionlint .github/workflows
+evidence_required:
+  - suite
+risk: "A third-party export action must be pinned by digest; the endpoint's headers are secrets and never printed."
+created_at: 2026-10-22
+updated_at: 2026-10-22
