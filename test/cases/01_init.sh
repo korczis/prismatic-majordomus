@@ -18,6 +18,10 @@ done
 [ -d .ai/local/state/handovers ] && [ -d .ai/repo/rules/project ] && [ -d .ai/repo/project ]
 grep -q '^schema: ai-repository/v1$' .ai/manifest.yaml
 [ ! -e .majordomus ] || { echo "    init created .majordomus/, which is only ever a tool installation"; exit 1; }
+# the mesh is declared, enabled and closed: nobody is listed until a machine is enrolled
+[ -f .ai/repo/mesh/mesh.yaml ] && [ -f .ai/repo/mesh/README.md ] || { echo "    init seeded no mesh declaration"; exit 1; }
+grep -q '^enabled: true$' .ai/repo/mesh/mesh.yaml && grep -q '^  policy: deny_unknown$' .ai/repo/mesh/mesh.yaml \
+  && grep -q '^  allow: \[\]$' .ai/repo/mesh/mesh.yaml || { echo "    the seeded mesh is not enabled, deny_unknown and closed:"; cat .ai/repo/mesh/mesh.yaml; exit 1; }
 [ ! -e .envrc ] || { echo "    init touched .envrc"; exit 1; }
 
 # --- the vendored baseline is the distribution's package, byte for byte, with its manifest
