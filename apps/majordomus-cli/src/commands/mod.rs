@@ -41,6 +41,7 @@ pub(crate) mod dashboard;
 pub(crate) mod delivery;
 pub(crate) mod devcontext;
 pub(crate) mod devtask;
+pub(crate) mod disk;
 pub(crate) mod distribution;
 pub(crate) mod economics;
 pub(crate) mod entity;
@@ -117,6 +118,7 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Economics(args) => economics::run(args),
         Command::Entity(args) => entity::run(args),
         Command::Shell(args) => shell::run(args),
+        Command::Disk(args) => disk::run(args),
         Command::Pack(args) => pack::run(args),
         Command::Dashboard(args) => dashboard::run(args),
         Command::Brief(args) => brief::run(args),

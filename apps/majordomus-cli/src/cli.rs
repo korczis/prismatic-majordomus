@@ -113,6 +113,8 @@ pub enum Command {
     Entity(EntityArgs),
     /// The repository's shell automation against the tracked migration inventory: every shell unit declared with an exemption, and every exemption naming a unit the tree still has
     Shell(ShellArgs),
+    /// What this machine can give back, reclaimed by name: the build directories nobody is using, each removed only while every cargo lock in it is held (I3833)
+    Disk(DiskArgs),
     /// The tracked tree as token-bounded text shards for a language model's file search: plan what a profile carries and leaves out, build it under tmp/packs/, and verify a written pack against its manifest; never a binary, a worktree, a link or build output
     Pack(PackArgs),
     /// The Dashboard Suite: each page a projection of the capabilities that hold its facts, every card carrying its source capability, the JSON pointer its value was read from, the Cockpit page with the evidence and the command that acts on it
@@ -427,6 +429,55 @@ pub enum ShellCommand {
         /// Rewrite .ai/repo/automation/inventory.jsonl with its records in canonical order, then check
         #[arg(long)]
         canonical: bool,
+    },
+}
+
+#[derive(Debug, Args)]
+/// `majordomus disk`. The output shape is global, so it reads the way a person writes it.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, DiskCommand};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "disk", "prune"]).unwrap();
+/// let Command::Disk(args) = cli.command else { panic!("not the disk command") };
+/// // a check unless --apply is said, and the idle bound is named
+/// let DiskCommand::Prune { apply, idle_minutes, .. } = args.command;
+/// assert!(!apply);
+/// assert_eq!(idle_minutes, 30);
+/// ```
+pub struct DiskArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `prune`. Required: the group runs nothing of its own.
+    pub command: DiskCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus disk`: `prune` reports, and with `--apply` removes, the
+/// build directories nobody is using, under their locks.
+pub enum DiskCommand {
+    /// Report the build directories nobody is using, and with --apply remove them, each only while every cargo lock in it is held; exit 0 whatever is kept
+    Prune {
+        /// Remove what the report finds removable; without it, nothing is removed
+        #[arg(long)]
+        apply: bool,
+        /// A directory is a candidate only when nothing in it changed for this many minutes
+        #[arg(long, default_value_t = 30)]
+        idle_minutes: u64,
+        /// A further build directory to consider (an llvm-cov-target, say); repeatable
+        #[arg(long = "extra", value_name = "DIR")]
+        extra: Vec<String>,
+        /// Also prune the container runtime's unused build cache and dangling images, and trim a colima VM; never volumes, containers or tagged images, and a stopped runtime is not started
+        #[arg(long)]
+        containers: bool,
     },
 }
 
