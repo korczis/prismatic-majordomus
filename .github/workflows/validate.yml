@@ -461,14 +461,25 @@ jobs:
         run: scripts/ci/summary --job suite --report suite.tsv
       # What the run cost, against what .ai/repo/ci/suite.yaml says it may cost: the whole
       # suite's case-seconds and its slowest case, never a shard's share of them.
+      # It also names the cases the deal's record lacks or under-weighs, and writes the record
+      # this run measured as its own artifact, so refreshing it is a download, not a re-measure.
       - name: the suite finishes inside its bound
         if: always()
-        run: scripts/ci/suite-budget --report suite.tsv
+        run: scripts/ci/suite-budget --report suite.tsv --write-durations suite-durations.tsv
       - if: always()
         uses: actions/upload-artifact@v4
         with:
           name: ci-metrics-suite
           path: suite.tsv
+          retention-days: 14
+      # Its own artifact, not a ci-metrics-* one: scripts/ci/metrics folds every TSV of those
+      # into ci-metrics.tsv, and the record's two columns are not a metrics row.
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-suite-durations
+          path: suite-durations.tsv
+          if-no-files-found: ignore
           retention-days: 14
       - name: every shard passed
         id: shards
