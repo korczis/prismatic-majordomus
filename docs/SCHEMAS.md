@@ -607,10 +607,11 @@ record keeps who handed it.
 **This section is ahead of its writer, and says so.** The contract is defined
 (`share/schemas/majordomus/telemetry/telemetry.v1.schema.json`, kind `telemetry` in
 `share/kinds.yaml`, allow-list `share/allow/telemetry.txt`) and a record that breaks it is
-refused wherever a `telemetry` document is validated, but no command writes one yet. The
-command that attaches reported facts to the active task is issue I0302 of the
-`execution-telemetry` milestone; until it lands, the directory does not exist and nothing
-reads it. It is the one format in this document described before something produces it,
+refused wherever a `telemetry` document is validated, but nothing writes one yet. The
+writer is the usage receiver of issue I3288 (`every-sessions-usage-is-observed`), which takes
+a provider's usage from its official seam (ADR 0213, `offers.usage` in `share/providers.yaml`)
+rather than from a command a worker hands numbers to; I0302, which planned that command,
+was cancelled for it. Until I3288 lands, the directory does not exist and nothing reads it. It is the one format in this document described before something produces it,
 because every later statement about what a task consumed rests on this shape and it had to
 be fixed first.
 
