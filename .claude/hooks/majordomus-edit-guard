@@ -1,15 +1,20 @@
 #!/bin/sh
-# The PreToolUse hook for the tools that write a file (Edit, Write, MultiEdit, NotebookEdit):
-# it hands the payload to `majordomus-cli guard hook --provider claude-code`, which judges
-# whether a claim covers the path — the active task's scope, or a live mesh claim of this
-# session — in the checkout the file belongs to (I2735, session.edits_require_claim).
+# The PreToolUse hook for the tools that write a file
+# (Edit, Write, MultiEdit, NotebookEdit): it hands the payload to
+# `majordomus-cli guard hook --provider claude-code`, which judges whether a claim covers
+# the path in the checkout the file belongs to (I2735), and refuses it or reports it as
+# the policy says (session.edit_guard, I3322). Written by `majordomus capture install`.
 #
 # The executable is asked directly, never built here: a hook is not the place to start a
-# compiler, and this one runs before every edit. Exactly one code is passed on — 2, the
-# refusal, whose stderr the provider shows the model. Everything else the command can exit
-# for, a missing executable included, lets the tool run.
+# compiler, and this one runs before every edit. Exactly one code is passed on: 2, the
+# refusal. Everything else the command can exit for, a missing executable included, lets
+# the tool run, and what it writes to stdout reaches the provider as it is.
 root=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd) || exit 0
-[ -x "$root/bin/majordomus-cli" ] || exit 0
-MAJORDOMUS_NO_BUILD=1 "$root/bin/majordomus-cli" guard hook --provider claude-code
+for cli in "$root/bin/majordomus-cli" "$root/.majordomus/bin/majordomus-cli"; do
+  [ -x "$cli" ] && break
+  cli=
+done
+[ -n "$cli" ] || cli=$(command -v majordomus-cli) || exit 0
+MAJORDOMUS_NO_BUILD=1 "$cli" guard hook --provider claude-code
 [ "$?" -eq 2 ] && exit 2
 exit 0

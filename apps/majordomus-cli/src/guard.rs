@@ -372,6 +372,26 @@ pub fn edits_require_claim(root: &Path) -> Result<bool, String> {
         .map_err(|e| e.to_string())
 }
 
+/// `session.edit_guard` of the repository at `root`: whether an edit no claim covers is
+/// refused or reported (I3322). A policy that cannot be read is [`judge_facts`]'s
+/// "undecided" already, which lets the edit through, so the mode it would have named does
+/// not matter there and the default stands in.
+///
+/// ```
+/// use majordomus_cli::guard::edit_guard_mode;
+/// use majordomus_cli::policy::EditGuardMode;
+///
+/// let dir = tempfile::tempdir().unwrap();
+/// assert_eq!(edit_guard_mode(dir.path()), EditGuardMode::Refuse, "no policy, the default");
+/// ```
+pub fn edit_guard_mode(root: &Path) -> crate::policy::EditGuardMode {
+    crate::repository::Repository::open(root)
+        .ok()
+        .and_then(|r| crate::policy::LoadedPolicy::load(&r).ok())
+        .map(|p| p.policy.session.edit_guard)
+        .unwrap_or_default()
+}
+
 /// The active task of the checkout at `root`: its id and scope, while its outcome is active.
 ///
 /// ```

@@ -133,6 +133,11 @@
           "type": "boolean",
           "description": "Refuse a provider's tool that writes a file of the checkout unless a claim covers it: the active task's scope, or a live mesh claim of the writing session. Judged by `majordomus guard hook`, which the provider's pre-tool hook runs; only on a repository whose mesh is declared enabled, and what cannot be read is let through. Absent means off: it refuses edits, and a repository that never asked for that must not find its workers stopped by an upgrade (I2735)."
         },
+        "edit_guard": {
+          "type": "string",
+          "enum": ["refuse", "advisory"],
+          "description": "What the edit guard does with an edit no claim covers while edits_require_claim is on: `refuse` it (the provider's refusal), or report it as `advisory`, telling the model the reason and the remedy and letting the edit through, noted for doctor's claim-coverage report. Absent means refuse, so a repository that turned the claim on before this key existed keeps what it asked for (I3322)."
+        },
         "brief_interval_minutes": {
           "type": "integer",
           "minimum": 1,

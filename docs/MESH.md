@@ -464,23 +464,41 @@ claims. Local state, a path outside the checkout, a repository with no enabled m
 server that does not answer are let through. The same judgement is `guard.edit` over MCP and
 HTTP.
 
-The hook is not wired yet, and until it is, the policy's `edits_require_claim` refuses nothing in
-Claude Code (I3010). `majordomus capture install` writes the UserPromptSubmit, SessionStart,
-SessionEnd and PreCompact entries of `.claude/settings.json`, and no PreToolUse entry; the hook
-script and `guard.edit` exist, but no edit reaches them. Wiring it (advisory first), and then
-refusing an unclaimed edit, are the generated-plugin work that follows the alpha. Until then a
-person who wants the guard wires it by hand: add this entry under `"hooks"` in
-`.claude/settings.json` (shared with everyone who works in the checkout) or in
-`.claude/settings.local.json` (this machine only), and start a new Claude Code session, which
-reads its hooks when it starts:
+`majordomus capture install` wires the hook (I3322). It writes the guard's shim,
+`.claude/hooks/majordomus-edit-guard`, and, in a configuration it writes itself, the entry that
+calls it before every tool that writes a file:
 
 ```json
 "PreToolUse": [ { "matcher": "Edit|Write|MultiEdit|NotebookEdit",
   "hooks": [ { "type": "command", "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/majordomus-edit-guard" } ] } ]
 ```
 
-The hook asks `bin/majordomus-cli` and never builds it: where that executable is absent, every
-edit is let through.
+A `.claude/settings.json` that already exists is not the tool's to rewrite: `capture install`
+names the entries it lacks, this one included, and leaves the file as it is. Add the entry
+yourself to `.claude/settings.json` (shared with everyone who works in the checkout) or
+`.claude/settings.local.json` (this machine only), and start a new Claude Code session, which
+reads its hooks when it starts. `majordomus capture status` and doctor report a configuration
+that does not wire the guard, and a shim that differs from the one `capture install` writes.
+
+What the guard does with an edit nothing covers is `session.edit_guard` in the policy:
+
+- `refuse`, the default, exits 2: Claude Code does not run the tool and shows the model the
+  reason and the remedy.
+- `advisory` exits 0 with the same words as Claude Code's `additionalContext`. The model reads
+  them beside the tool's result, the edit goes ahead, and the answer carries no permission
+  decision, so the person's permission prompts are the ones they would be without the hook.
+  Each such edit is noted in `.ai/local/state/guard/unclaimed.jsonl`, and doctor's claim
+  coverage lists every session that edited without a claim in the last 24 hours.
+
+A repository that wires the guard for the first time declares `advisory`, and turns refusal on
+(I3323) once that report names nobody. The hook asks the executable directly and never builds
+it, and where none is installed every edit is let through. An edit costs one call of
+`majordomus-cli guard hook`, which reads no index and asks the server only for an edit no task
+scope covers.
+
+To unwire the guard, remove the `PreToolUse` entry above from the settings file that carries
+it and start a new session; `session.edits_require_claim: false` keeps it wired but lets every
+edit through.
 
 What a session shares is metadata — intent, issue, task, milestone, branch, head, dirtiness,
 a context revision identifier. Context bodies are not replicated; a handover is the

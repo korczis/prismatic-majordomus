@@ -352,6 +352,22 @@ pub struct SessionPolicy {
     /// find its workers stopped by an upgrade.
     #[serde(default)]
     pub edits_require_claim: bool,
+    /// `session.edit_guard:` — what the guard does with an edit no claim covers while
+    /// `edits_require_claim` is on: `refuse` it, the provider's refusal, or report it as
+    /// `advisory` and let it through (I3322). Refusal is the default, so a repository that
+    /// turned the claim on before this key existed keeps what it asked for; a repository
+    /// wiring the guard for the first time declares `advisory` until its live peers edit
+    /// under claims, which is when I3323 turns refusal on.
+    ///
+    /// ```
+    /// use majordomus_cli::policy::{EditGuardMode, SessionPolicy};
+    /// assert_eq!(SessionPolicy::default().edit_guard, EditGuardMode::Refuse);
+    /// let advisory: SessionPolicy =
+    ///     serde_json::from_str(r#"{"edit_guard": "advisory"}"#).expect("a session block");
+    /// assert_eq!(advisory.edit_guard, EditGuardMode::Advisory);
+    /// ```
+    #[serde(default)]
+    pub edit_guard: EditGuardMode,
     /// `session.stranded_after:` — how long an open episode may be silent before its client
     /// is taken to be gone (`90s`, `30m`, `12h`). `majordomus recover` reads it to judge an
     /// episode stranded, and `worktree.uncommitted` reads the same value twice over: an
@@ -375,6 +391,17 @@ pub struct SessionPolicy {
     pub stranded_after: Option<String>,
 }
 
+/// What the edit guard does with an edit no claim covers (`session.edit_guard`, I3322).
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum EditGuardMode {
+    /// Refuse it: the provider's pre-tool hook exits with its refusal code.
+    #[default]
+    Refuse,
+    /// Report it to the model and let it through, noting it for the claim-coverage report.
+    Advisory,
+}
+
 /// A scalar read as the text it was written as: the subset reader hands `12h` over as a
 /// string and `3600` as a number, and both are the same kind of value to a duration.
 fn scalar_text<'de, D: serde::Deserializer<'de>>(
@@ -396,6 +423,7 @@ impl Default for SessionPolicy {
             knowledge_on_compact: true,
             brief_interval_minutes: None,
             edits_require_claim: false,
+            edit_guard: EditGuardMode::default(),
             stranded_after: None,
         }
     }

@@ -80,6 +80,7 @@ mj_cmd_doctor() {
   mj_doctrine_dispatch doctor
   mj_report_environment
   mj_report_reasoning
+  mj_report_claim_coverage
   mj_report_budget doctor "$t_start"
   mj_finish_doctor
 }
@@ -736,6 +737,31 @@ EOF
     [ -n "$f" ] && mj_info clone "uncommitted" "$f"
   done <<EOF
 $(printf '%s' "$out" | jq -r '.findings[]')
+EOF
+  return 0
+}
+
+# The claim-coverage report (I3322): every session whose edits an advisory edit guard let
+# through with no claim covering them in the last 24 hours, from the notes the guard keeps
+# (`majordomus guard hook`, session.edit_guard: advisory). It reports and never fails:
+# refusing those edits is I3323's, once this report has nobody left to name.
+mj_report_claim_coverage() {
+  local log="$MJ_ROOT/.ai/local/state/guard/unclaimed.jsonl" since rows s n last
+  [ -f "$log" ] || { mj_ok guard "claim coverage" "no edit without a claim has been noted in this checkout"; return 0; }
+  mj_has jq || { mj_info guard "claim coverage" "jq is absent, so the edits without a claim the guard noted are not summarised: $(mj_rel "$log")"; return 0; }
+  since="$(date -u -v-1d +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -d '1 day ago' +%Y-%m-%dT%H:%M:%SZ)"
+  rows="$(jq -r --arg since "$since" 'select(.at >= $since) | [.session, .path] | @tsv' "$log" 2>/dev/null \
+    | awk -F'\t' '{ n[$1]++; last[$1] = $2 } END { for (s in n) printf "%s\t%d\t%s\n", s, n[s], last[s] }' | LC_ALL=C sort)"
+  if [ -z "$rows" ]; then
+    mj_ok guard "claim coverage" "no edit without a claim in the last 24 h"
+    return 0
+  fi
+  while IFS="$(printf '\t')" read -r s n last; do
+    [ -n "$s" ] || continue
+    mj_info guard "$s" "$n edit(s) no claim covered in the last 24 h, the latest of $last; let through, as session.edit_guard is advisory" \
+      "majordomus start --scope <paths>, or majordomus mesh claim <path> --session $s --advisory"
+  done <<EOF
+$rows
 EOF
   return 0
 }

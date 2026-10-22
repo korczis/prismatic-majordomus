@@ -140,6 +140,8 @@ session:
   brief_interval_minutes: 20             # how often a session reports on itself unasked
   edits_require_claim: true              # refuse an edit no claim covers: the active task's
                                          # scope or a live mesh claim of the session (I2735)
+  edit_guard: advisory                   # report an unclaimed edit and let it through, until
+                                         # the live peers edit under claims (I3322, then I3323)
   knowledge_on_end: true                 # the evidence the episode produced is about to stop
                                          # being reachable; derive what it says as the
                                          # episode closes, on every close path

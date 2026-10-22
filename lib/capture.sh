@@ -297,6 +297,24 @@ MJ_CAPTURE_LIFECYCLE='claude-code .claude/settings.json SessionStart SessionEnd 
 MJ_CAPTURE_MODS='claude-code majordomus-handover .claude/skills/majordomus-handover session.handover_on_fill
 claude-code majordomus-brief .claude/skills/majordomus-brief session.brief_on_interval'
 
+# The edit guard (I2735, wired by I3322): the provider's pre-tool hook, asked before every
+# tool that writes a file, which runs `majordomus guard hook`. One line per provider: the
+# provider, its configuration, the event, the matcher naming the tools that write a file,
+# and the shim. It is a table of its own because its event takes a matcher and its shim is
+# not the session shim: it answers in the provider's refusal code, and what the policy does
+# with an unclaimed edit (refuse or report, session.edit_guard) is the command's to decide.
+MJ_CAPTURE_GUARD='claude-code .claude/settings.json PreToolUse Edit|Write|MultiEdit|NotebookEdit .claude/hooks/majordomus-edit-guard'
+
+mj_guard_adapter() { printf '%s\n' "$MJ_CAPTURE_GUARD" | awk -v p="$1" '$1 == p { print; f = 1 } END { exit !f }'; }
+mj_guard_field()   { mj_guard_adapter "$1" 2>/dev/null | awk -v n="$2" '{ print $n }'; }
+
+# The matcher a provider's configuration gives `event`: the guard's tools for its event, and
+# nothing for every other event, which fires every time.
+mj_capture_matcher() {
+  [ "$(mj_guard_field "$1" 3)" = "$2" ] && { mj_guard_field "$1" 4; return 0; }
+  printf ''
+}
+
 # ---------------------------------------------------------------- the connection episode
 # A provider whose declared episode source is `connection` has no adapter line above and
 # must not need one: it fires no event, so there is no vendor payload shape to version
@@ -2098,6 +2116,20 @@ mj_lifecycle_state() {
     [ -f "$MJ_ROOT/$rel" ] || { printf 'named\t%s names %s, which does not exist\n' "$(mj_lifecycle_field "$p" 2)" "$rel"; return 0; }
     [ -x "$MJ_ROOT/$rel" ] || { printf 'named\t%s is not executable, so the provider cannot run it\n' "$rel"; return 0; }
   done
+  # The edit guard is wired by the same install and read by the same doctor (I3322): its event
+  # must be in the configuration naming its shim, and the shim must be the one this tool
+  # writes. A guard this tool did not write is somebody's own and is not judged by its text.
+  if mj_guard_adapter "$p" >/dev/null 2>&1; then
+    rel="$(mj_guard_field "$p" 5)"
+    { grep -qF "\"$(mj_guard_field "$p" 3)\"" "$cfg" && grep -qF "$rel" "$cfg"; } || {
+      printf 'unconfigured\t%s does not wire the edit guard: no %s hook names %s (run: majordomus capture install)\n' \
+        "$(mj_lifecycle_field "$p" 2)" "$(mj_guard_field "$p" 3)" "$rel"; return 0; }
+    [ -x "$MJ_ROOT/$rel" ] || { printf 'named\t%s is missing or not executable, so the provider cannot run the edit guard\n' "$rel"; return 0; }
+    if grep -qF 'Written by `majordomus capture install`' "$MJ_ROOT/$rel" \
+      && [ "$(cat "$MJ_ROOT/$rel")" != "$(mj_capture_guard_body "$p")" ]; then
+      printf 'named\t%s differs from what capture install writes: it was edited by hand (run: majordomus capture install)\n' "$rel"; return 0
+    fi
+  fi
   local shims; shims="$(for one in $(mj_lifecycle_kinds); do mj_lifecycle_shim_rel "$p" "$one"; done | paste -sd, - | sed 's/,/, /g')"
   if mj_lifecycle_selftest "$p"; then printf 'verified\t%s are wired, and a synthetic payload through the end shim reached the command\n' "$shims"
   else printf 'wired\t%s are in place but a synthetic payload through the end shim did not reach the command\n' "$shims"; fi
@@ -2193,6 +2225,10 @@ mj_capture_install_one() {
         "capture session --provider $p --event $one" "$(mj_lifecycle_latency "$one")"
     done
   fi
+  if mj_guard_adapter "$p" >/dev/null 2>&1; then
+    mj_capture_install_shim "$p" "$(mj_guard_field "$p" 5)" "$(mj_guard_field "$p" 3)" "guard hook --provider $p" inline \
+      "$(mj_capture_guard_body "$p")"
+  fi
   mj_capture_install_mods "$p"
 
   if [ ! -f "$cfg" ]; then
@@ -2215,7 +2251,7 @@ mj_capture_install_one() {
   mj_err "capture install: $(mj_capture_field "$p" 2) exists and does not name $(printf '%s' "$missing" | wc -w | tr -d ' ') of the hooks; it is not this tool's to rewrite. Add to its \"hooks\" object:"
   for one in $missing; do
     event="${one%%=*}"; rel="${one#*=}"
-    mj_err "  \"$event\": [ { \"matcher\": \"\", \"hooks\": [ { \"type\": \"command\", \"command\": \"\${CLAUDE_PROJECT_DIR}/$rel\" } ] } ]"
+    mj_err "  \"$event\": [ { \"matcher\": \"$(mj_capture_matcher "$p" "$event")\", \"hooks\": [ { \"type\": \"command\", \"command\": \"\${CLAUDE_PROJECT_DIR}/$rel\" } ] } ]"
   done
   return "$MJ_EX_REFUSED"
 }
@@ -2226,10 +2262,13 @@ mj_capture_install_one() {
 mj_capture_events() {
   local p="$1" one
   printf '%s=%s\n' "$(mj_capture_field "$p" 3)" "$(mj_capture_shim_rel "$p")"
-  mj_lifecycle_adapter "$p" >/dev/null 2>&1 || return 0
-  for one in $(mj_lifecycle_kinds); do
-    printf '%s=%s\n' "$(mj_lifecycle_event "$p" "$one")" "$(mj_lifecycle_shim_rel "$p" "$one")"
-  done
+  if mj_lifecycle_adapter "$p" >/dev/null 2>&1; then
+    for one in $(mj_lifecycle_kinds); do
+      printf '%s=%s\n' "$(mj_lifecycle_event "$p" "$one")" "$(mj_lifecycle_shim_rel "$p" "$one")"
+    done
+  fi
+  mj_guard_adapter "$p" >/dev/null 2>&1 || return 0
+  printf '%s=%s\n' "$(mj_guard_field "$p" 3)" "$(mj_guard_field "$p" 5)"
 }
 
 # One shim: the provider runs it, it finds the repository from its own location, and it
@@ -2253,9 +2292,9 @@ mj_capture_events() {
 # the tool on the person's critical path, which on UserPromptSubmit is paid before the model
 # is handed a single word of the prompt.
 mj_capture_install_shim() {
-  local p="$1" rel="$2" event="$3" args="$4" latency="${5:-inline}" shim body
+  local p="$1" rel="$2" event="$3" args="$4" latency="${5:-inline}" shim body="${6:-}"
   shim="$MJ_ROOT/$rel"
-  body="$(mj_capture_shim_body "$event" "$args" "$latency")"
+  [ -n "$body" ] || body="$(mj_capture_shim_body "$event" "$args" "$latency")"
   # A shim this tool did not write is not this tool's to rewrite. One it did write is
   # regenerated when its shape has changed, so that a repository installed before this tool
   # knew an event could be asynchronous is repaired by the same command that installed it.
@@ -2387,16 +2426,46 @@ mj_capture_shim_body() {
   }
 }
 
+# The text of the edit guard's shim. Unlike a session shim it passes one code on: 2, the
+# refusal, whose stderr the provider shows the model. Everything else the command exits
+# with is 0, and its stdout reaches the provider untouched: that is how an advisory guard's
+# note (session.edit_guard: advisory) is read as Claude Code's additionalContext. The
+# executable is asked directly and never built: a hook that runs before every edit is not
+# the place to start a compiler, and one with no executable lets every edit through.
+mj_capture_guard_body() {
+  { printf '#!/bin/sh\n'
+    printf '# The %s hook for the tools that write a file\n' "$(mj_guard_field "$1" 3)"
+    printf '# (%s): it hands the payload to\n' "$(mj_guard_field "$1" 4 | sed 's/|/, /g')"
+    printf '# `majordomus-cli guard hook --provider %s`, which judges whether a claim covers\n' "$1"
+    printf '# the path in the checkout the file belongs to (I2735), and refuses it or reports it as\n'
+    printf '# the policy says (session.edit_guard, I3322). Written by `majordomus capture install`.\n#\n'
+    printf '# The executable is asked directly, never built here: a hook is not the place to start a\n'
+    printf '# compiler, and this one runs before every edit. Exactly one code is passed on: 2, the\n'
+    printf '# refusal. Everything else the command can exit for, a missing executable included, lets\n'
+    printf '# the tool run, and what it writes to stdout reaches the provider as it is.\n'
+    printf 'root=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd) || exit 0\n'
+    printf 'for cli in "$root/bin/majordomus-cli" "$root/.majordomus/bin/majordomus-cli"; do\n'
+    printf '  [ -x "$cli" ] && break\n'
+    printf '  cli=\n'
+    printf 'done\n'
+    printf '[ -n "$cli" ] || cli=$(command -v majordomus-cli) || exit 0\n'
+    printf 'MAJORDOMUS_NO_BUILD=1 "$cli" guard hook --provider %s\n' "$1"
+    printf '[ "$?" -eq 2 ] && exit 2\n'
+    printf 'exit 0\n'
+  }
+}
+
 # The configuration this tool writes when there is none: every event it has a shim for, in
-# one hooks object. The event takes no matcher and fires every time, but the shape is the
-# one every event uses — a group, then the handlers inside it.
+# one hooks object. Every event but the guard's takes no matcher and fires every time; the
+# guard's names the tools that write a file. The shape is the one every event uses — a
+# group, then the handlers inside it.
 mj_capture_config() {
   local p="$1" one event rel first=1
   printf '{\n  "hooks": {\n'
   for one in $(mj_capture_events "$p"); do
     event="${one%%=*}"; rel="${one#*=}"
     [ "$first" = 1 ] || printf ',\n'; first=0
-    printf '    "%s": [\n      {\n        "matcher": "",\n        "hooks": [\n' "$event"
+    printf '    "%s": [\n      {\n        "matcher": "%s",\n        "hooks": [\n' "$event" "$(mj_capture_matcher "$p" "$event")"
     printf '          {\n            "type": "command",\n            "command": "${CLAUDE_PROJECT_DIR}/%s"\n          }\n' "$rel"
     printf '        ]\n      }\n    ]'
   done
