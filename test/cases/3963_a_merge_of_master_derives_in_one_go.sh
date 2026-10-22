@@ -33,7 +33,7 @@ cat > "$STUB/majordomus" <<'EOF'
 set -eu
 [ "${1:-}" = generate ] || exit 0
 repo="$3"; mkdir -p "$repo/docs/generated"
-git -C "$repo" log --format=%s | sort > "$repo/docs/generated/history.txt"
+git -C "$repo" log --format=%s | LC_ALL=C sort > "$repo/docs/generated/history.txt"
 EOF
 # the site generator: the commit it observes (MJ_DERIVE_OBSERVE when an ancestor, else HEAD,
 # as scripts/generate-site-data decides) and the hash of the canonical inputs
