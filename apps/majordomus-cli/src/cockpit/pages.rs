@@ -8564,4 +8564,78 @@ mod titled_tests {
         let alone: domain::Status = serde_json::from_value(value).unwrap();
         assert!(machines_card(&alone).render().contains("no remote"));
     }
+
+    /// The overview's kinds are the kinds the layer holds (I1010): a kind with no object has
+    /// no row, the same kind gains one when its first objects appear with no change to this
+    /// page, and every row counts what the index counts.
+    #[test]
+    fn the_overview_lists_the_kinds_with_members_and_counts_them() {
+        let share = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../share");
+        let read = |prompts: usize| {
+            let repo = crate::synthetic::SyntheticRepository::new(crate::synthetic::Shape {
+                prompts,
+                ..Default::default()
+            })
+            .expect("a synthetic repository");
+            let ctx = repo.context().expect("a context");
+            let kinds: Vec<(String, usize)> = ctx
+                .index
+                .kinds()
+                .into_iter()
+                .map(|(k, n)| (k.to_string(), n))
+                .collect();
+            let cockpit = crate::cockpit::Cockpit::new(
+                std::sync::Arc::clone(&ctx),
+                "0.0.0-test",
+                Some(&share),
+            );
+            let answer = cockpit.handle(&crate::http::router::Request::parse_target(
+                "GET",
+                "/cockpit",
+                Vec::new(),
+            ));
+            let html = answer.body.text().into_owned();
+            let start = html.find("What the layer holds").expect("the kinds card");
+            let card = &html[start..];
+            let card = &card[..card.find("Diagnostics").unwrap_or(card.len())];
+            let rows: Vec<String> = card
+                .split("<tr")
+                .skip(1)
+                .filter(|r| !r.contains("<th"))
+                .map(str::to_string)
+                .collect();
+            (kinds, rows)
+        };
+        let row_of = |rows: &[String], kind: &str| -> Option<String> {
+            let named = format!(">{kind}</code>");
+            rows.iter().find(|r| r.contains(&named)).cloned()
+        };
+
+        let (kinds, rows) = read(0);
+        assert!(
+            !kinds.iter().any(|(k, _)| k == "prompt"),
+            "the fixture holds no prompt"
+        );
+        assert_eq!(
+            row_of(&rows, "prompt"),
+            None,
+            "a kind with no member has no row"
+        );
+        assert_eq!(rows.len(), kinds.len(), "one row per kind held, no other");
+
+        let (kinds, rows) = read(2);
+        assert!(kinds.contains(&("prompt".to_string(), 2)));
+        assert_eq!(rows.len(), kinds.len(), "one row per kind held, no other");
+        for (kind, count) in &kinds {
+            let row = row_of(&rows, kind).unwrap_or_else(|| panic!("no row for {kind}"));
+            assert!(
+                row.contains(&format!(">{count}<")),
+                "{kind}'s row does not count {count}: {row}"
+            );
+            assert!(
+                row.contains(&format!("href=\"{}\"", crate::entity::kind_route(kind))),
+                "{kind}'s row does not lead to its listing: {row}"
+            );
+        }
+    }
 }
