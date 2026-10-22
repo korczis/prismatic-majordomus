@@ -44,7 +44,7 @@ use crate::capability::handler::{CapabilityError, Context};
 use crate::capability::model::{CapabilityKind, Exposure, Stability};
 use crate::capability::module::ModuleDescriptor;
 use crate::lease;
-use crate::peers::{overlaps_among, Announced, Overlap, Peer, PeerCheckout, PeerId};
+use crate::peers::{claims_meet, overlaps_among, Announced, Overlap, Peer, PeerCheckout, PeerId};
 use crate::repository;
 use crate::{capability, module};
 
@@ -331,6 +331,422 @@ fn peers_announce(ctx: &Context, input: AnnounceInput) -> Result<Announced, Capa
         .ok_or_else(|| CapabilityError::Internal(format!("peer {caller} is not attached")))
 }
 
+// ---------------------------------------------------------------- peers.board
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+/// One worker on the board: a peer of one checkout's server, named so that two boards'
+/// `p1` are two workers.
+pub struct BoardWorker {
+    /// `<checkout id>/<peer id>`: the worker's key in this answer. A position on a board is
+    /// handed out again after a reconnect, so the key identifies a worker in this answer and
+    /// not across time; the checkout is the durable half.
+    pub key: String,
+    /// Its id on its own board.
+    pub peer: PeerId,
+    /// The client's own name, from its initialize.
+    pub client: String,
+    /// The client's own version.
+    pub version: String,
+    /// The worktree its server serves.
+    pub worktree: PathBuf,
+    /// The branch that worktree has checked out; absent when its head is detached.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub branch: Option<String>,
+    /// Whether that is the checkout this answer was asked of.
+    pub this_checkout: bool,
+    /// Whether it is attached. A worker that announced something and went away is kept,
+    /// with `false`, because its claim is still what somebody said they were doing.
+    pub attached: bool,
+    /// When it attached, RFC 3339, UTC.
+    pub connected_at: String,
+    /// Seconds since its server last heard from it.
+    pub last_seen_seconds_ago: u64,
+    /// How many claims it holds. Zero is a worker that attached and said nothing.
+    pub claims: usize,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+/// One claim on the board: every claim of every worker, not only each worker's latest.
+pub struct BoardClaim {
+    /// `<worker key>#<name>`, the name empty for a worker's unnamed claim.
+    pub key: String,
+    /// The worker that holds it.
+    pub worker: String,
+    /// What the worker called it; absent for its unnamed claim.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+    /// What it is for, in the worker's words.
+    pub intent: String,
+    /// The paths it names.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub scope: Vec<String>,
+    /// When it was announced, RFC 3339, UTC.
+    pub at: String,
+    /// Whether its worker is attached.
+    pub attached: bool,
+    /// The claims of other workers whose scope meets this one's, by key.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub collides: Vec<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+/// One path somebody named, and who named it.
+pub struct BoardPath {
+    /// The path, as it was written, without a trailing slash.
+    pub path: String,
+    /// The claims that name exactly this path, by key.
+    pub claims: Vec<String>,
+    /// The workers behind them, each once, by key.
+    pub workers: Vec<String>,
+    /// Whether two different workers hold it: either both named it, or one named it and
+    /// another named a path above or below it.
+    pub contested: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+/// One pair of paths two claims meet on.
+pub struct BoardMeeting {
+    /// The path the first claim names.
+    pub first: String,
+    /// The path the second claim names.
+    pub second: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+/// Two claims of two different workers whose scope meets: both sides named, each pair once.
+pub struct BoardCollision {
+    /// The claim announced earlier, by key.
+    pub first: String,
+    /// The claim announced later, by key.
+    pub second: String,
+    /// Whether both workers are attached. A collision with a worker that left is with what
+    /// it said, not with what it is doing.
+    pub live: bool,
+    /// Where they meet.
+    pub paths: Vec<BoardMeeting>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+/// One exclusive claim the mesh holds: the kind a second claimant is refused by, where a
+/// board claim only tells.
+pub struct BoardExclusive {
+    /// The claim's key on the mesh.
+    pub key: String,
+    /// The runtime that holds it.
+    pub runtime: String,
+    /// The session that holds it.
+    pub session: String,
+    /// The paths it excludes others from.
+    pub scope: Vec<String>,
+    /// What it is for, when the claimant said.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub intent: Option<String>,
+    /// The issue it is for, when the claimant said.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub issue: Option<String>,
+    /// The board claims whose scope meets it, by key: work somebody announced under a path
+    /// another session holds exclusively.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub meets: Vec<String>,
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+/// The board in numbers. Every one is the length of a list in the same answer.
+pub struct BoardCounts {
+    /// Workers, attached or not.
+    pub workers: usize,
+    /// Workers that are attached.
+    pub attached: usize,
+    /// Workers that left and whose claims are kept.
+    pub departed: usize,
+    /// Attached workers that announced nothing.
+    pub silent: usize,
+    /// Claims.
+    pub claims: usize,
+    /// Distinct paths named.
+    pub paths: usize,
+    /// Paths two workers hold.
+    pub contested: usize,
+    /// Pairs of claims that meet.
+    pub collisions: usize,
+    /// Exclusive claims the mesh holds.
+    pub exclusive: usize,
+    /// Checkouts the answer covers.
+    pub checkouts: usize,
+    /// Checkouts whose board could not be read.
+    pub unread: usize,
+}
+
+#[derive(Debug, Serialize, Deserialize, JsonSchema)]
+/// The answer of `peers.board`: the board, whole, and everything that follows from it.
+///
+/// Nothing in it is stored. The workers and their claims are `peers.list`'s; the paths, the
+/// collisions and the counts are derived from them on every read; the exclusive claims are
+/// the mesh's own state, read as it is. A reader of `peers.list` could compute all of it,
+/// and three surfaces each computed a different part: this is the one place it is said.
+pub struct Board {
+    /// Whether every board the answer covers was read. `false` means a checkout could not
+    /// be asked, `checkouts` says which and why, and every list here is at best a part.
+    pub complete: bool,
+    /// The board in numbers.
+    pub counts: BoardCounts,
+    /// Every worker, attached first, then by checkout and by id.
+    pub workers: Vec<BoardWorker>,
+    /// Every claim of every worker, newest first.
+    pub claims: Vec<BoardClaim>,
+    /// Every path named, contested first, then by path.
+    pub paths: Vec<BoardPath>,
+    /// Every pair of claims that meet, live first.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub collisions: Vec<BoardCollision>,
+    /// Whether the mesh is active in this checkout. When it is not, `exclusive` is empty
+    /// because nothing can hold an exclusive claim, and `mesh_reason` says why.
+    pub mesh: bool,
+    /// Why the mesh is not active, when it is not.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub mesh_reason: Option<String>,
+    /// The exclusive claims the mesh holds now.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub exclusive: Vec<BoardExclusive>,
+    /// One entry per checkout the answer covers, reached or not.
+    pub checkouts: Vec<BoardView>,
+}
+
+/// A worker's key: its checkout and its position there.
+fn worker_key(peer: &Peer) -> String {
+    let checkout = peer.checkout.as_ref().map_or("", |c| c.id.as_str());
+    format!("{checkout}/{}", peer.id)
+}
+
+/// A path as the board compares it: trimmed, without a trailing slash.
+fn named(path: &str) -> String {
+    path.trim().trim_end_matches('/').to_string()
+}
+
+/// The board, derived from a listing and the exclusive claims held now.
+///
+/// Pure: the same listing and the same claims give the same board, in the same order. The
+/// order of every list is stated on its field and decided here, by the keys the lists
+/// themselves carry, so that two reads of an unchanged board are the same bytes.
+pub(crate) fn board_from(
+    list: PeerList,
+    mesh: bool,
+    mesh_reason: Option<String>,
+    held: Vec<BoardExclusive>,
+) -> Board {
+    let mut workers: Vec<BoardWorker> = Vec::with_capacity(list.peers.len());
+    let mut claims: Vec<BoardClaim> = Vec::new();
+    for peer in &list.peers {
+        let key = worker_key(peer);
+        let checkout = peer.checkout.as_ref();
+        workers.push(BoardWorker {
+            key: key.clone(),
+            peer: peer.id.clone(),
+            client: peer.client.name.clone(),
+            version: peer.client.version.clone(),
+            worktree: checkout.map(|c| c.worktree.clone()).unwrap_or_default(),
+            branch: checkout.and_then(|c| c.branch.clone()),
+            this_checkout: checkout.is_some_and(|c| c.this_checkout),
+            attached: peer.attached,
+            connected_at: peer.connected_at.clone(),
+            last_seen_seconds_ago: peer.last_seen_seconds_ago,
+            claims: peer.claims.len(),
+        });
+        for claim in &peer.claims {
+            claims.push(BoardClaim {
+                key: format!("{key}#{}", claim.name.as_deref().unwrap_or("")),
+                worker: key.clone(),
+                name: claim.name.clone(),
+                intent: claim.intent.clone(),
+                scope: claim.scope.iter().map(|p| named(p)).collect(),
+                at: claim.at.clone(),
+                attached: peer.attached,
+                collides: Vec::new(),
+            });
+        }
+    }
+
+    // every pair of claims of two different workers, each pair once, the earlier first
+    let mut order: Vec<usize> = (0..claims.len()).collect();
+    order.sort_by(|a, b| {
+        (claims[*a].at.as_str(), claims[*a].key.as_str())
+            .cmp(&(claims[*b].at.as_str(), claims[*b].key.as_str()))
+    });
+    let mut collisions: Vec<BoardCollision> = Vec::new();
+    for (n, later) in order.iter().enumerate() {
+        for earlier in order.iter().take(n) {
+            let (first, second) = (&claims[*earlier], &claims[*later]);
+            if first.worker == second.worker {
+                continue;
+            }
+            let mut paths: Vec<BoardMeeting> = Vec::new();
+            for a in &first.scope {
+                for b in &second.scope {
+                    if claims_meet(a, b) {
+                        paths.push(BoardMeeting {
+                            first: a.clone(),
+                            second: b.clone(),
+                        });
+                    }
+                }
+            }
+            if !paths.is_empty() {
+                collisions.push(BoardCollision {
+                    first: first.key.clone(),
+                    second: second.key.clone(),
+                    live: first.attached && second.attached,
+                    paths,
+                });
+            }
+        }
+    }
+    collisions.sort_by(|a, b| {
+        (!a.live, a.first.as_str(), a.second.as_str()).cmp(&(
+            !b.live,
+            b.first.as_str(),
+            b.second.as_str(),
+        ))
+    });
+    for collision in &collisions {
+        for (mine, theirs) in [
+            (&collision.first, &collision.second),
+            (&collision.second, &collision.first),
+        ] {
+            if let Some(claim) = claims.iter_mut().find(|c| &c.key == mine) {
+                if !claim.collides.contains(theirs) {
+                    claim.collides.push(theirs.clone());
+                }
+            }
+        }
+    }
+    for claim in &mut claims {
+        crate::order::canonical_strings(&mut claim.collides);
+    }
+
+    // every path named, with who named it; contested when a second worker holds it, by the
+    // same path or by one above or below it
+    let mut by_path: std::collections::BTreeMap<String, (Vec<String>, Vec<String>)> =
+        std::collections::BTreeMap::new();
+    for claim in &claims {
+        for path in &claim.scope {
+            if path.is_empty() {
+                continue;
+            }
+            let entry = by_path.entry(path.clone()).or_default();
+            if !entry.0.contains(&claim.key) {
+                entry.0.push(claim.key.clone());
+            }
+            if !entry.1.contains(&claim.worker) {
+                entry.1.push(claim.worker.clone());
+            }
+        }
+    }
+    let mut paths: Vec<BoardPath> = by_path
+        .into_iter()
+        .map(|(path, (mut holding, mut held_by))| {
+            let contested = held_by.len() > 1
+                || collisions.iter().any(|c| {
+                    c.paths
+                        .iter()
+                        .any(|meeting| meeting.first == path || meeting.second == path)
+                });
+            crate::order::canonical_strings(&mut holding);
+            crate::order::canonical_strings(&mut held_by);
+            BoardPath {
+                path,
+                claims: holding,
+                workers: held_by,
+                contested,
+            }
+        })
+        .collect();
+    paths.sort_by(|a, b| (!a.contested, a.path.as_str()).cmp(&(!b.contested, b.path.as_str())));
+
+    // the exclusive claims, each with the board claims announced under it
+    let mut exclusive = held;
+    for claim in &mut exclusive {
+        let mut meets: Vec<String> = claims
+            .iter()
+            .filter(|c| {
+                c.scope
+                    .iter()
+                    .any(|mine| claim.scope.iter().any(|theirs| claims_meet(mine, theirs)))
+            })
+            .map(|c| c.key.clone())
+            .collect();
+        crate::order::canonical_strings(&mut meets);
+        claim.meets = meets;
+    }
+    exclusive.sort_by(|a, b| a.key.cmp(&b.key));
+
+    workers.sort_by(|a, b| {
+        (!a.attached, a.worktree.as_path(), a.peer.as_str()).cmp(&(
+            !b.attached,
+            b.worktree.as_path(),
+            b.peer.as_str(),
+        ))
+    });
+    claims.sort_by(|a, b| (b.at.as_str(), a.key.as_str()).cmp(&(a.at.as_str(), b.key.as_str())));
+
+    let counts = BoardCounts {
+        workers: workers.len(),
+        attached: workers.iter().filter(|w| w.attached).count(),
+        departed: workers.iter().filter(|w| !w.attached).count(),
+        silent: workers
+            .iter()
+            .filter(|w| w.attached && w.claims == 0)
+            .count(),
+        claims: claims.len(),
+        paths: paths.len(),
+        contested: paths.iter().filter(|p| p.contested).count(),
+        collisions: collisions.len(),
+        exclusive: exclusive.len(),
+        checkouts: list.boards.len(),
+        unread: list.boards.iter().filter(|b| b.reason.is_some()).count(),
+    };
+    Board {
+        complete: list.complete,
+        counts,
+        workers,
+        claims,
+        paths,
+        collisions,
+        mesh,
+        mesh_reason,
+        exclusive,
+        checkouts: list.boards,
+    }
+}
+
+fn peers_board(ctx: &Context, input: PeerListInput) -> Result<Board, CapabilityError> {
+    let list = peers_list(ctx, input)?;
+    let (mesh, mesh_reason, held) = match ctx.mesh.cooperation() {
+        None => (false, ctx.mesh.cooperation_status().reason, Vec::new()),
+        Some(cooperation) => {
+            let held = cooperation
+                .state()
+                .claims
+                .into_iter()
+                .filter(|claim| {
+                    claim.mode == crate::mesh::journal::ClaimMode::Exclusive
+                        && matches!(claim.state, crate::mesh::state::ClaimState::Held)
+                })
+                .map(|claim| BoardExclusive {
+                    key: claim.key,
+                    runtime: claim.runtime,
+                    session: claim.session,
+                    scope: claim.scope,
+                    intent: claim.intent,
+                    issue: claim.issue,
+                    meets: Vec::new(),
+                })
+                .collect();
+            (true, None, held)
+        }
+    };
+    Ok(board_from(list, mesh, mesh_reason, held))
+}
+
 /// The module.
 pub fn module() -> ModuleDescriptor {
     module! {
@@ -349,6 +765,17 @@ pub fn module() -> ModuleDescriptor {
                 exposure: Exposure { mcp: mcp("majordomus_peers"), http: get("/api/v1/peers"), cli: None },
                 tags: ["peers", "coordination"],
                 handler: peers_list,
+            },
+            capability! {
+                id: "peers.board",
+                title: "The board, whole",
+                description: "The board of this repository with everything that follows from it, derived on every read and stored nowhere: every worker of every checkout with where it works and whether it is still attached; every claim of every worker, not only each worker's latest, newest first; every path somebody named with who named it and whether two workers hold it; every pair of claims that meet, with both sides named; the exclusive claims the mesh holds now, each with the board claims announced under it; and the checkouts whose board could not be read. 'complete' is false when one could not, so a short board is never mistaken for an empty repository. 'checkouts: this' reads one board and asks nothing else.",
+                input: PeerListInput,
+                output: Board,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure { mcp: mcp("majordomus_board"), http: get("/api/v1/peers/board"), cli: None },
+                tags: ["peers", "coordination"],
+                handler: peers_board,
             },
             capability! {
                 id: "peers.announce",
@@ -397,6 +824,7 @@ mod tests {
         assert_eq!(m.id.as_str(), "peers");
         let expected: &[(&str, &str, &str)] = &[
             ("peers.list", "majordomus_peers", "/api/v1/peers"),
+            ("peers.board", "majordomus_board", "/api/v1/peers/board"),
             (
                 "peers.announce",
                 "majordomus_announce",
@@ -426,5 +854,241 @@ mod tests {
                 "{id} lost or renamed its HTTP route"
             );
         }
+    }
+    fn checkout(id: &str, worktree: &str, branch: &str, this: bool) -> serde_json::Value {
+        serde_json::json!({ "id": id, "worktree": worktree, "branch": branch, "this_checkout": this })
+    }
+
+    fn worker(
+        id: &str,
+        attached: bool,
+        at: serde_json::Value,
+        claims: &[(&str, &str, &[&str], &str)],
+    ) -> Peer {
+        let claims: Vec<serde_json::Value> = claims
+            .iter()
+            .map(|(name, intent, scope, when)| {
+                let mut claim = serde_json::json!({ "intent": intent, "scope": scope, "at": when });
+                if !name.is_empty() {
+                    claim["name"] = serde_json::json!(name);
+                }
+                claim
+            })
+            .collect();
+        serde_json::from_value(serde_json::json!({
+            "id": id,
+            "client": { "name": "unit", "version": "1" },
+            "transport": "http",
+            "connected_at": "2026-10-13T10:00:00Z",
+            "last_seen_seconds_ago": 3,
+            "attached": attached,
+            "claims": claims,
+            "checkout": at,
+        }))
+        .expect("a peer as the board serialises it")
+    }
+
+    fn listing(peers: Vec<Peer>, boards: Vec<BoardView>, complete: bool) -> PeerList {
+        PeerList {
+            count: peers.iter().filter(|p| p.attached).count(),
+            caller: None,
+            overlaps: overlaps_among(&peers),
+            peers,
+            boards,
+            complete,
+        }
+    }
+
+    /// Every claim of every worker is on the board, not only each worker's latest; two
+    /// boards' `p1` are two workers; and a pair of claims that meet names both sides, once.
+    #[test]
+    fn the_board_holds_every_claim_and_names_both_sides_of_a_collision() {
+        let a = checkout("aaa", "/r", "master", true);
+        let b = checkout("bbb", "/r-wt/x", "feature/x", false);
+        let board = board_from(
+            listing(
+                vec![
+                    worker(
+                        "p1",
+                        true,
+                        a.clone(),
+                        &[
+                            (
+                                "ui",
+                                "the screen",
+                                &["src/ui", "docs/UI.md"],
+                                "2026-10-13T10:01:00Z",
+                            ),
+                            ("plan", "the plan", &["plan/"], "2026-10-13T10:05:00Z"),
+                        ],
+                    ),
+                    worker(
+                        "p1",
+                        true,
+                        b.clone(),
+                        &[(
+                            "",
+                            "one file of it",
+                            &["src/ui/mesh.rs"],
+                            "2026-10-13T10:03:00Z",
+                        )],
+                    ),
+                    worker("p2", true, a, &[]),
+                ],
+                Vec::new(),
+                true,
+            ),
+            false,
+            Some("the mesh is off".into()),
+            Vec::new(),
+        );
+        assert_eq!(board.counts.workers, 3);
+        assert_eq!(board.counts.silent, 1, "p2 attached and said nothing");
+        assert_eq!(
+            board.counts.claims, 3,
+            "both of the first worker's claims are there"
+        );
+        let keys: Vec<&str> = board.claims.iter().map(|c| c.key.as_str()).collect();
+        assert_eq!(
+            keys,
+            ["aaa/p1#plan", "bbb/p1#", "aaa/p1#ui"],
+            "newest first, and two boards' p1 are two workers"
+        );
+        assert_eq!(board.collisions.len(), 1);
+        let pair = &board.collisions[0];
+        assert_eq!(
+            (pair.first.as_str(), pair.second.as_str()),
+            ("aaa/p1#ui", "bbb/p1#")
+        );
+        assert!(pair.live);
+        assert_eq!(
+            pair.paths,
+            [BoardMeeting {
+                first: "src/ui".into(),
+                second: "src/ui/mesh.rs".into()
+            }]
+        );
+        let ui = board.claims.iter().find(|c| c.key == "aaa/p1#ui").unwrap();
+        assert_eq!(ui.collides, ["bbb/p1#"]);
+        let contested: Vec<&str> = board
+            .paths
+            .iter()
+            .filter(|p| p.contested)
+            .map(|p| p.path.as_str())
+            .collect();
+        assert_eq!(
+            contested,
+            ["src/ui", "src/ui/mesh.rs"],
+            "both ends of the meeting"
+        );
+        assert_eq!(board.paths[0].path, "src/ui", "contested paths come first");
+        assert!(board.paths.iter().any(|p| p.path == "plan" && !p.contested));
+        assert!(!board.mesh);
+        assert_eq!(board.mesh_reason.as_deref(), Some("the mesh is off"));
+    }
+
+    /// A worker never collides with itself, a collision with a worker that left is kept and
+    /// marked, and an exclusive claim names the board claims announced under it.
+    #[test]
+    fn a_departed_worker_and_an_exclusive_claim_are_shown_for_what_they_are() {
+        let a = checkout("aaa", "/r", "master", true);
+        let board = board_from(
+            listing(
+                vec![
+                    worker(
+                        "p1",
+                        false,
+                        a.clone(),
+                        &[("", "left with this", &["site"], "2026-10-13T09:00:00Z")],
+                    ),
+                    worker(
+                        "p2",
+                        true,
+                        a,
+                        &[
+                            ("one", "the site", &["site/data"], "2026-10-13T10:00:00Z"),
+                            ("two", "the same site", &["site"], "2026-10-13T10:01:00Z"),
+                        ],
+                    ),
+                ],
+                Vec::new(),
+                true,
+            ),
+            true,
+            None,
+            vec![BoardExclusive {
+                key: "s/c-1".into(),
+                runtime: "r".into(),
+                session: "landing".into(),
+                scope: vec!["site/data/nav.toml".into()],
+                intent: Some("landing".into()),
+                issue: None,
+                meets: Vec::new(),
+            }],
+        );
+        assert_eq!(board.counts.departed, 1);
+        assert_eq!(
+            board.collisions.len(),
+            2,
+            "p2's two claims each meet p1's, never each other"
+        );
+        assert!(board
+            .collisions
+            .iter()
+            .all(|c| !c.live && c.first == "aaa/p1#"));
+        assert_eq!(
+            board.workers[0].peer.as_str(),
+            "p2",
+            "attached workers come first"
+        );
+        assert_eq!(board.counts.exclusive, 1);
+        assert_eq!(
+            board.exclusive[0].meets,
+            ["aaa/p1#", "aaa/p2#one", "aaa/p2#two"],
+            "every board claim announced under the exclusive path"
+        );
+    }
+
+    /// A board that could not be read is counted and the answer says it is not whole; the
+    /// same listing gives the same board, byte for byte.
+    #[test]
+    fn an_unread_board_is_counted_and_the_derivation_is_stable() {
+        let unread = || BoardView {
+            checkout: serde_json::from_value(checkout("ccc", "/r-wt/y", "fix/y", false)).unwrap(),
+            standing: ServerStanding::Starting,
+            url: None,
+            attached: 0,
+            reason: Some("its server is starting".into()),
+        };
+        let build = || {
+            board_from(
+                listing(
+                    vec![worker(
+                        "p1",
+                        true,
+                        checkout("aaa", "/r", "master", true),
+                        &[("", "x", &["a/", "a/"], "2026-10-13T10:00:00Z")],
+                    )],
+                    vec![unread()],
+                    false,
+                ),
+                false,
+                None,
+                Vec::new(),
+            )
+        };
+        let board = build();
+        assert!(!board.complete);
+        assert_eq!((board.counts.checkouts, board.counts.unread), (1, 1));
+        assert_eq!(
+            board.paths.len(),
+            1,
+            "a path named twice by one claim is one path"
+        );
+        assert_eq!(board.paths[0].path, "a", "without its trailing slash");
+        assert_eq!(
+            serde_json::to_string(&board).unwrap(),
+            serde_json::to_string(&build()).unwrap()
+        );
     }
 }
