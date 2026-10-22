@@ -503,6 +503,15 @@ gates:
   # crate takes jsonschema with default-features = false precisely so that nothing resolves
   # over the network, and turning those features on would add an HTTP client and a TLS stack
   # without adding a line to the list. File reads only, so it runs with the structure checks.
+  # The portable core (ADR 0170) is one implementation run in two places: the host and a
+  # browser's wasm32. This gate proves both answer the shared fixture: the crate's own tests
+  # on the host, then the wasm32 module built and executed by node through the C ABI a
+  # browser Worker calls. A module that only compiles proves nothing about what it computes.
+  - id: portable-core
+    job: structure
+    runs: rustup target add wasm32-unknown-unknown >/dev/null 2>&1; cargo test --quiet --manifest-path apps/majordomus-core/Cargo.toml --target-dir apps/majordomus-core/target && cargo build --quiet --release --target wasm32-unknown-unknown --manifest-path apps/majordomus-core/Cargo.toml --target-dir apps/majordomus-core/target && node apps/majordomus-core/tests/wasm-parity.mjs apps/majordomus-core/target/wasm32-unknown-unknown/release/majordomus_core.wasm apps/majordomus-core/fixtures/canonical-digest.v1.json
+    summary: the portable core answers the shared canonical-digest fixture on the host and, built for wasm32 and executed, in the module a browser loads (ADR 0170)
+
   - id: crate-boundary
     job: structure
     runs: scripts/ci/crate-boundary
@@ -945,8 +954,8 @@ classes:
   # that selects the rustdoc gate; the composite action that runs the producer in CI
   # (.github/actions/rustdoc) is under the `ci` class above, which plans everything.
   - id: rust
-    paths: [apps/majordomus-cli/**, scripts/ci/rust-command-check, scripts/ci/projection-check, scripts/ci/crate-boundary, scripts/rust-check, scripts/rust-coverage, scripts/ci/coverage-differential, scripts/rust-coverage-threshold, scripts/session-coverage-threshold, scripts/session-coverage-domain, .ai/repo/rust-quality-baseline.txt, .ai/repo/benchmarks/rust/**]
-    gates: [rust-check, rust-command, generation-converges, rust-quality, projection-closure, rust-coverage, coverage-differential, rust-bench, command-graph, shell-suite, macos, cockpit-probe, worktree-topology, providers-data, order-check, entry-converges, mesh-check, mesh-lab, crate-boundary, version-surface, release-check, rustdoc]
+    paths: [apps/majordomus-cli/**, apps/majordomus-core/**, scripts/ci/rust-command-check, scripts/ci/projection-check, scripts/ci/crate-boundary, scripts/rust-check, scripts/rust-coverage, scripts/ci/coverage-differential, scripts/rust-coverage-threshold, scripts/session-coverage-threshold, scripts/session-coverage-domain, .ai/repo/rust-quality-baseline.txt, .ai/repo/benchmarks/rust/**]
+    gates: [rust-check, rust-command, generation-converges, rust-quality, projection-closure, rust-coverage, coverage-differential, rust-bench, command-graph, shell-suite, macos, cockpit-probe, worktree-topology, providers-data, order-check, entry-converges, mesh-check, mesh-lab, crate-boundary, portable-core, version-surface, release-check, rustdoc]
 
   # the mesh: its declaration objects, their schema, the gate that holds the subsystem
   # to ADR 0050 and ADR 0067, the network lab that accepts it, and the architecture document

@@ -23229,6 +23229,14 @@
             },
             "description": "The repository-relative paths the build context carries, and the only ones."
           },
+          "crates": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The path dependencies the package compiles against (`apps/majordomus-core`): in the\nbuild context and in the builder's dependency stage, never in the runtime image,\nsince the running process reads none of them. Absent means the package has none.",
+            "default": []
+          },
           "site": {
             "type": [
               "string",

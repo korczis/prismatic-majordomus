@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.6"
   },
   "registry": {
-    "fingerprint": "ef38b11d9bedf033ec3dd3b0585bce92890f9c1a9822a48566de22c9bafebc3d",
+    "fingerprint": "1f4b60f7b9885bf7c05128bbb2e4b08a841ca8760403d7093517b34687aadc05",
     "summary": {
-      "total": 3313,
+      "total": 3319,
       "builtin": 208,
-      "declarative": 3105,
+      "declarative": 3111,
       "by_kind": {
         "command": 32,
         "query": 176,
-        "resource": 3105
+        "resource": 3111
       },
       "by_stability": {
         "behaviorally_verified": 143,
         "experimental": 55,
-        "implemented": 3115
+        "implemented": 3121
       },
       "mcp_tools": 197,
-      "mcp_resources": 3160,
+      "mcp_resources": 3166,
       "http_routes": 202,
       "cli_commands": 112,
       "modules": 92,
@@ -11070,6 +11070,14 @@
                     },
                     "description": "The repository-relative paths the build context carries, and the only ones."
                   },
+                  "crates": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The path dependencies the package compiles against (`apps/majordomus-core`): in the\nbuild context and in the builder's dependency stage, never in the runtime image,\nsince the running process reads none of them. Absent means the package has none.",
+                    "default": []
+                  },
                   "site": {
                     "type": [
                       "string",
@@ -11645,6 +11653,14 @@
                       "type": "string"
                     },
                     "description": "The repository-relative paths the build context carries, and the only ones."
+                  },
+                  "crates": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The path dependencies the package compiles against (`apps/majordomus-core`): in the\nbuild context and in the builder's dependency stage, never in the runtime image,\nsince the running process reads none of them. Absent means the package has none.",
+                    "default": []
                   },
                   "site": {
                     "type": [
@@ -85598,7 +85614,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 160,
+        "capabilities": 161,
         "capability_ids": []
       },
       {
@@ -85772,7 +85788,7 @@
         "title": "critique",
         "description": "Declarative objects of kind 'critique' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 31,
+        "capabilities": 32,
         "capability_ids": []
       },
       {
@@ -86077,7 +86093,7 @@
         "title": "gap",
         "description": "Declarative objects of kind 'gap' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 4,
+        "capabilities": 5,
         "capability_ids": []
       },
       {
@@ -86173,7 +86189,7 @@
         "title": "intent",
         "description": "Declarative objects of kind 'intent' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 35,
+        "capabilities": 36,
         "capability_ids": []
       },
       {
@@ -86222,7 +86238,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 898,
+        "capabilities": 899,
         "capability_ids": []
       },
       {
@@ -86338,7 +86354,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 102,
+        "capabilities": 103,
         "capability_ids": []
       },
       {
@@ -86889,7 +86905,7 @@
     ]
   },
   "index": {
-    "fingerprint": "d7ce52574acf5ecf8311df861d65953b14a168f9491ed5cd0e1c095a980f2228",
+    "fingerprint": "16b92b7c315d453476bb7b036f2ee262dd826971b9fa7ce5f6f2b7c1bb0c8ac6",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -86912,27 +86928,27 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 160,
+      "adr": 161,
       "application": 5,
       "area": 9,
       "audience": 8,
       "claim": 250,
       "command": 31,
       "context": 39,
-      "critique": 31,
+      "critique": 32,
       "deployment": 1,
       "derive-offload": 1,
       "distribution-model": 1,
       "document": 350,
       "domain": 6,
       "feature": 29,
-      "gap": 4,
+      "gap": 5,
       "implementation": 52,
-      "intent": 35,
-      "issue": 898,
+      "intent": 36,
+      "issue": 899,
       "knowledge": 58,
       "mesh-declaration": 1,
-      "milestone": 102,
+      "milestone": 103,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -88889,6 +88905,23 @@
           "two-folder",
           "ownership",
           "footprint"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0170",
+        "kind": "adr",
+        "identity": "adr-0170",
+        "title": "A browser computes with the portable core, and the server verifies by recomputing",
+        "description": "A browser computes with the portable core, and the server verifies by recomputing",
+        "path": ".ai/repo/adrs/0170-a-browser-computes-and-the-server-verifies-by-recomputing.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 5918,
+        "tags": [
+          "mesh",
+          "security",
+          "wasm",
+          "architecture"
         ]
       },
       {
@@ -93087,6 +93120,17 @@
         "bytes": 34275
       },
       {
+        "uri": "majordomus://critique/a-browser-computes-what-the-server-verifies",
+        "kind": "critique",
+        "identity": "a-browser-computes-what-the-server-verifies",
+        "title": "a-browser-computes-what-the-server-verifies",
+        "description": "d116266803",
+        "path": ".ai/repo/project/critiques/a-browser-computes-what-the-server-verifies.yaml",
+        "section": "project",
+        "source_class": "critique",
+        "bytes": 1856
+      },
+      {
         "uri": "majordomus://critique/a-change-is-judged-in-minutes",
         "kind": "critique",
         "identity": "a-change-is-judged-in-minutes",
@@ -93425,7 +93469,7 @@
         "path": ".ai/repo/deployments/majordomus.yaml",
         "section": "deployments",
         "source_class": "deployment",
-        "bytes": 3965
+        "bytes": 4147
       },
       {
         "uri": "majordomus://derive-offload/derive",
@@ -94181,7 +94225,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 795321
+        "bytes": 799691
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -97166,6 +97210,17 @@
         ]
       },
       {
+        "uri": "majordomus://gap/a-browser-computes-what-the-server-verifies",
+        "kind": "gap",
+        "identity": "a-browser-computes-what-the-server-verifies",
+        "title": "a-browser-computes-what-the-server-verifies",
+        "description": "d116266803",
+        "path": ".ai/repo/project/gaps/a-browser-computes-what-the-server-verifies.yaml",
+        "section": "project",
+        "source_class": "gap",
+        "bytes": 1376
+      },
+      {
         "uri": "majordomus://gap/a-session-leaves-what-it-observed",
         "kind": "gap",
         "identity": "a-session-leaves-what-it-observed",
@@ -97635,6 +97690,17 @@
         "section": "project",
         "source_class": "intent",
         "bytes": 7528
+      },
+      {
+        "uri": "majordomus://intent/a-browser-computes-what-the-server-verifies",
+        "kind": "intent",
+        "identity": "a-browser-computes-what-the-server-verifies",
+        "title": "A browser computes for a project with the same code the server runs, and nothing it returns is trusted until the server has recomputed it",
+        "description": "A person who opens a Majordomus-powered page can lend their browser's computing to the project: the browser runs, as WebAssembly, the very functions the server runs natively, and every result it returns is checked by the server computing the same function on the same input — so that a browser can help without ever being trusted, holding a secret, or joining the mesh as a peer.",
+        "path": ".ai/repo/project/intents/a-browser-computes-what-the-server-verifies.yaml",
+        "section": "project",
+        "source_class": "intent",
+        "bytes": 1774
       },
       {
         "uri": "majordomus://intent/a-change-is-judged-in-minutes",
@@ -102871,6 +102937,17 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 2662
+      },
+      {
+        "uri": "majordomus://issue/I2784",
+        "kind": "issue",
+        "identity": "I2784",
+        "title": "One portable core runs on the host and as wasm32, and one executed fixture holds both",
+        "description": "Create apps/majordomus-core holding canonical JSON, SHA-256 and the canonical digest, depending only on serde_json and sha2 with the executable's features, exporting a three-function C ABI on wasm32; make the executable's two canonical-JSON writers call it; record a fixture of inputs, canonical bytes and independently computed digests; prove the host crate, the executable and the executed wasm32 module against it in a structure gate; and make the core part of the executable's generation.",
+        "path": ".ai/repo/project/issues/I2784.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2502
       },
       {
         "uri": "majordomus://issue/I2786",
@@ -109145,6 +109222,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 3262
+      },
+      {
+        "uri": "majordomus://milestone/browser-compute",
+        "kind": "milestone",
+        "identity": "browser-compute",
+        "title": "A browser computes for the project with the server's own code, and the server verifies every result",
+        "description": "One portable core runs on the host and as wasm32 in a browser, held by one executed fixture; the server verifies a browser's result by recomputing it; recording browser results, enrollment and community compute follow only once the owner decides how a remote browser is authenticated and narrowly granted a task (ADR 0170).",
+        "path": ".ai/repo/project/milestones/browser-compute.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 2664
       },
       {
         "uri": "majordomus://milestone/campaigns-are-read-as-provenance",
@@ -120642,7 +120730,7 @@
       "identity": [
         "id"
       ],
-      "objects": 160
+      "objects": 161
     },
     {
       "name": "application",
@@ -120712,7 +120800,7 @@
       "identity": [
         "intent"
       ],
-      "objects": 31
+      "objects": 32
     },
     {
       "name": "deployment",
@@ -120778,7 +120866,7 @@
       "identity": [
         "intent"
       ],
-      "objects": 4
+      "objects": 5
     },
     {
       "name": "implementation",
@@ -120795,7 +120883,7 @@
       "identity": [
         "id"
       ],
-      "objects": 35
+      "objects": 36
     },
     {
       "name": "issue",
@@ -120805,7 +120893,7 @@
       "identity": [
         "id"
       ],
-      "objects": 898
+      "objects": 899
     },
     {
       "name": "knowledge",
@@ -120835,7 +120923,7 @@
       "identity": [
         "id"
       ],
-      "objects": 102
+      "objects": 103
     },
     {
       "name": "moment",
