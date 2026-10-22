@@ -13,6 +13,11 @@
 #                                   check 13h alone, over one built /roadmap/ page and the data it
 #                                   was built from (BUILD_JSON defaults to DATA_DIR/../build.json):
 #                                   the scan a case runs on a fixture. Exit 0, 10 findings, 12 missing.
+#   scripts/site-check --nav PUBLIC_DIR CONFIG_TOML
+#                                   check 13d alone, over a built public directory: every
+#                                   navigation and hero link of its homepage resolves, and a link
+#                                   with a #fragment names an element its page carries (I3008).
+#                                   The scan a case runs on a fixture. Exit 0, 10 findings, 12 missing.
 #   scripts/site-check --prose-figures <dir>
 #                                   check 19 alone, over every *.md and *.toml under <dir>, with
 #                                   no built site: the scan a case runs on a fixture. Exit 0 when
@@ -88,11 +93,46 @@ roadmap_complete() { # page data-dir build-json
   [ "$rbad" = 0 ] || return 1
   echo "OK   roadmap      /roadmap/ draws all $(printf '%s\n' "$ms" | grep -c .) milestone(s) of plan.json in the graph's order, every issue under its milestone, observed at ${seen:0:11}"
 }
+# 13d as a function, so a case can hold it on a fixture (--nav) and the full run calls the same
+# rule: every navigation and hero link of the homepage resolves, and a link with a fragment
+# names an element its page carries (I3008). Reports through the caller's ok and bad.
+nav_resolves() { # public-dir config-toml
+  local pub="$1" config="$2" snap_roots nav_snap href frag t page fre
+  snap_roots="$(jq -r '.snapshots[]? | .mount' "$pub/build.json" 2>/dev/null | sed 's#/*$##' || true)"
+  nav_snap=0
+  # The query is cut up to the fragment, never past it: /roadmap/?mode=1#delivery is still judged.
+  for href in $(awk '{ print } /id="hero"/ { h = 1 } h && /<\/section>/ { exit }' "$pub/index.html" | grep -oE 'href="[^"]*"' | sed -E "s#href=\"$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$config" | sed 's#/$##')##; s#\"##g; s#[?][^#]*##" | grep -E '^/' | LC_ALL=C sort -u); do
+    # a fragment names an element of the page, not a file: the page must exist and carry that id
+    frag=""; case "$href" in *'#'*) frag="${href#*#}"; href="${href%%#*}" ;; esac
+    t="$pub$href"
+    if [ -f "$t/index.html" ] || [ -f "$t" ]; then
+      if [ -n "$frag" ]; then
+        page="$t"; [ -f "$t/index.html" ] && page="$t/index.html"
+        # an id attribute equal to the fragment, quoted either way or not at all (I3008): a
+        # data-id is not an id, and the fragment is matched literally, so #a.b is not axb
+        fre="$(printf '%s' "$frag" | sed 's#[][\.*^$+?(){}|/]#\\&#g')"
+        grep -qE "(^|[[:space:]])id=(\"$fre\"|'$fre'|$fre([[:space:]>/]|\$))" "$page" \
+          || bad nav "navigation/hero link $href#$frag names an element its page does not carry"
+      fi
+      continue
+    fi
+    if [ -n "$snap_roots" ] && printf '%s\n' "$snap_roots" | grep -qxF -- "${href%/}"; then nav_snap=$((nav_snap + 1)); continue; fi
+    bad nav "navigation/hero link $href does not resolve"
+  done
+  ok nav "every navigation link on the homepage resolves ($nav_snap of them the root of a snapshot the publication holds and this build does not compose)"
+}
 if [ "${1:-}" = --roadmap ]; then
   [ $# -ge 3 ] || { echo "site-check: --roadmap PAGE DATA_DIR [BUILD_JSON]" >&2; exit 2; }
   [ -f "$2" ] && [ -f "$3/plan.json" ] && [ -f "$3/roadmap.json" ] \
     || { echo "site-check: --roadmap needs a built page and a data directory with plan.json and roadmap.json" >&2; exit 12; }
   roadmap_complete "$2" "$3" "${4:-$(dirname "$3")/build.json}" && exit 0
+  exit 10
+fi
+if [ "${1:-}" = --nav ]; then
+  [ -f "${2:-}/index.html" ] && [ -f "${3:-}" ] || { echo "site-check: --nav needs a built public directory with index.html and a config.toml" >&2; exit 12; }
+  fails=0; ok() { printf 'OK   %-12s %s\n' "$1" "$2"; }; bad() { printf 'FAIL %-12s %s\n' "$1" "$2"; fails=$((fails + 1)); }
+  nav_resolves "$2" "$3"
+  [ "$fails" = 0 ] && exit 0
   exit 10
 fi
 if [ "${1:-}" = --prose-figures ]; then
@@ -1033,23 +1073,7 @@ ok tiles "every profile, claim, status, responsibility, command, doctrine, use c
 # decided by that declaration when the snapshot is not in this tree: the deploy places it after
 # this check and refuses a site without it, and section 13m holds the list to the publication
 # model. Anything deeper than the root must be a file here like every other link.
-snap_roots="$(jq -r '.snapshots[]? | .mount' "$PUB/build.json" 2>/dev/null | sed 's#/*$##' || true)"
-nav_snap=0
-for href in $(awk '{ print } /id="hero"/ { h = 1 } h && /<\/section>/ { exit }' "$PUB/index.html" | grep -oE 'href="[^"]*"' | sed -E "s#href=\"$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$SITE/config.toml" | sed 's#/$##')##; s#\"##g; s#[?].*\$##" | grep -E '^/' | LC_ALL=C sort -u); do
-  # a fragment names an element of the page, not a file: the page must exist and carry that id
-  frag=""; case "$href" in *'#'*) frag="${href#*#}"; href="${href%%#*}" ;; esac
-  t="$PUB$href"
-  if [ -f "$t/index.html" ] || [ -f "$t" ]; then
-    if [ -n "$frag" ]; then
-      page="$t"; [ -f "$t/index.html" ] && page="$t/index.html"
-      grep -qE "id=\"?$frag\"?[ >]" "$page" || bad nav "navigation/hero link $href#$frag names an element its page does not carry"
-    fi
-    continue
-  fi
-  if [ -n "$snap_roots" ] && printf '%s\n' "$snap_roots" | grep -qxF -- "${href%/}"; then nav_snap=$((nav_snap + 1)); continue; fi
-  bad nav "navigation/hero link $href does not resolve"
-done
-ok nav "every navigation link on the homepage resolves ($nav_snap of them the root of a snapshot the publication holds and this build does not compose)"
+nav_resolves "$PUB" "$SITE/config.toml"
 # 13e. and the other direction: every section the site publishes is reachable from the menu.
 #
 # The half that was missing. Check 13d proves nav -> page, so a menu entry can never point at
