@@ -293,7 +293,7 @@ awk '/^shapes:/{s=1} s && /^    gates: /{print "    gates: [release-check, no-su
 grep -q 'no-such-gate' shape-gate.yaml || { echo "    the shape mutation did not take"; exit 1; }
 expect_exit 10 "$PLAN" --model shape-gate.yaml --check
 expect_grep 'shape release-record names a gate that does not exist: no-such-gate'
-awk '/^shapes:/{s=1} s && /^    records: /{s=0; next} {print}' "$MODEL" > shape-norec.yaml
+awk '/^shapes:/{s=1} /^classes:/{s=0} s && /^    records: /{next} {print}' "$MODEL" > shape-norec.yaml
 grep -q '^    records: ' shape-norec.yaml && { echo "    the records mutation did not take"; exit 1; }
 expect_exit 10 "$PLAN" --model shape-norec.yaml --check
 expect_grep 'shape release-record names no record pattern'
@@ -309,6 +309,56 @@ expect_grep 'others must be derived'
 # planner it is about, and the script exempts it by name.
 expect_exit 0 "$ROOT/scripts/ci/release-record-cases-check"
 expect_grep 'case\(s\) name the release record, each run by release-record-cases'
+
+# --- the plan-record shape (I2662): a plan record and its projections plan the always gates
+#     and the shape's own, never the union. The change is #1151's (I0806 recorded done), path
+#     for path; with one Rust file, or one authored document, it is planned exactly as today.
+cat > rec1151.txt <<'L'
+.ai/repo/project/issues/I0806.yaml
+docs/PAGES_STATUS.md
+docs/PLAN_STATUS.md
+docs/generated/artifacts.json
+docs/generated/artifacts.md
+docs/generated/artifacts.yaml
+docs/generated/graph.json
+site/content/docs/pages-status.md
+site/data/generated/plan.json
+site/data/generated/roadmap.json
+site/data/generated/source.json
+site/data/registry/registry.json
+L
+p="$(rplan < rec1151.txt)"
+[ "$(printf '%s' "$p" | jq -r '.shape.id // ""')" = plan-record ] || { printf '%s' "$p" | jq -r .reason; echo "    #1151's change is not of the plan-record shape"; exit 1; }
+[ "$(printf '%s' "$p" | jq -r '.shape.derived')" = 11 ] || { echo "    the shape did not count #1151's 11 derived files: $(printf '%s' "$p" | jq -c .shape)"; exit 1; }
+s="$(printf '%s' "$p" | jq -r '.selected | join(" ")')"
+pr_gates="$(awk '/^  - id: plan-record$/{f=1} f && /^    gates: /{sub(/^    gates: \[/, ""); sub(/\]$/, ""); gsub(/, /, " "); print; exit}' "$MODEL")"
+[ -n "$pr_gates" ] || { echo "    the model's plan-record shape names no gate"; exit 1; }
+for g in $always $pr_gates; do has "$s" "$g" || { echo "    the plan-record plan lacks $g: $s"; exit 1; }; done
+for g in $s; do has "$always_w $pr_gates" "$g" || { echo "    the plan-record plan selected $g, which neither runs always nor belongs to the shape"; exit 1; }; done
+for g in shell-suite site-probe ui-audit interaction-probe rust-check; do lacks "$s" "$g" || { echo "    the plan-record plan selected $g: $s"; exit 1; }; done
+u="$(as_today < rec1151.txt)"; has "$u" shell-suite || { echo "    the mutation is vacuous: without the shape #1151 did not plan the suite: $u"; exit 1; }
+for extra in apps/majordomus-cli/src/plan.rs docs/DESIGN.md; do
+  { cat rec1151.txt; echo "$extra"; } > plus.txt
+  p="$(rplan < plus.txt)"
+  [ "$(printf '%s' "$p" | jq -r '.shape')" = null ] || { echo "    #1151 plus $extra was narrowed by a shape"; exit 1; }
+  s="$(printf '%s' "$p" | jq -r '.selected | join(" ")')"
+  [ "$s" = "$(as_today < plus.txt)" ] || { echo "    #1151 plus $extra is not planned as without the shape"; exit 1; }
+  has "$s" shell-suite || { echo "    #1151 plus $extra did not plan the suite: $s"; exit 1; }
+done
+{ cat rec1151.txt; echo apps/majordomus-cli/src/plan.rs; } > plus.txt
+has "$(rplan < plus.txt | jq -r '.selected | join(" ")')" rust-check || { echo "    a record with a Rust file did not plan rust-check"; exit 1; }
+
+# the cases the plan-record shape keeps: every case that names a plan record path or
+# PLAN_STATUS, or runs a `plan` subcommand, is in plan-record-cases, and every case that gate
+# names exists. This case names those paths as fixtures and is left out of the grep.
+runs="$(awk '/^  - id: plan-record-cases$/{f=1} f && /^    runs: /{sub(/^    runs: /, ""); print; exit}' "$MODEL")"
+case "$runs" in *'test/run.sh --no-skips '*) ;; *) echo "    plan-record-cases does not run named cases with --no-skips: $runs"; exit 1 ;; esac
+named=" ${runs#*--no-skips } "
+want="$(grep -l -E '\.ai/repo/project/(issues|milestones)|PLAN_STATUS|majordomus"? plan |mj_plan|"\$MJ" plan |\bplan (validate|status|show|done|evidence|list|next|waves|ready|blocked|roadmap|verify|start|body|graph|rgraph)\b' "$ROOT"/test/cases/*.sh \
+  | sed 's#.*/##; s#\.sh$##' | grep -vx 94_ci_plan)"
+[ -n "$want" ] || { echo "    no case names a plan record; the assertion is vacuous"; exit 1; }
+for c in $want; do has "$named" "$c" || { echo "    $c reads the plan and plan-record-cases does not run it"; exit 1; }; done
+for c in $named; do [ -f "$ROOT/test/cases/$c.sh" ] || { echo "    plan-record-cases names $c, which is not a case"; exit 1; }; done
 
 # --- the verdict: green only when every selected gate's job succeeded; red on a failure, a
 #     cancellation, a selected gate whose job was skipped, a failed plan, or an empty selection
@@ -327,34 +377,34 @@ needs() {
 # what the jobs' uploads carry, one file per job.
 mkdir -p receipts/structure
 jq -r '.gates[] | select(.selected) | "\(.id)\tsuccess\t\(.job)/fixture"' plan.json > receipts/structure/receipts.tsv
-needs "plan=success,structure=success,suite=success,rust=success,coverage=skipped,bench=skipped,site=success,ui=success,macos=skipped" > n.json
+needs "plan=success,structure=success,suite=success,rust=success,coverage=skipped,bench=skipped,site=success,site-probe=success,ui=success,macos=skipped" > n.json
 expect_exit 0 "$VERDICT" --plan plan.json --needs n.json --receipts receipts --summary summary.md
 grep -q '^## ci: green' summary.md || { cat summary.md; echo "    a green verdict did not say so"; exit 1; }
 grep -q '| rust-coverage | coverage | skipped' summary.md || { echo "    the summary does not show the skipped gate"; exit 1; }
-needs "plan=success,structure=success,suite=failure,rust=success,coverage=skipped,bench=skipped,site=success,ui=success,macos=skipped" > n.json
+needs "plan=success,structure=success,suite=failure,rust=success,coverage=skipped,bench=skipped,site=success,site-probe=success,ui=success,macos=skipped" > n.json
 expect_exit 1 "$VERDICT" --plan plan.json --needs n.json --receipts receipts --summary summary.md
 expect_grep 'gate shell-suite was selected and its job suite reported failure'
-needs "plan=success,structure=success,suite=success,rust=cancelled,coverage=skipped,bench=skipped,site=success,ui=success,macos=skipped" > n.json
+needs "plan=success,structure=success,suite=success,rust=cancelled,coverage=skipped,bench=skipped,site=success,site-probe=success,ui=success,macos=skipped" > n.json
 expect_exit 1 "$VERDICT" --plan plan.json --needs n.json --receipts receipts --summary summary.md
-needs "plan=success,structure=success,suite=success,rust=success,coverage=skipped,bench=skipped,site=skipped,ui=skipped,macos=skipped" > n.json
+needs "plan=success,structure=success,suite=success,rust=success,coverage=skipped,bench=skipped,site=skipped,site-probe=skipped,ui=skipped,macos=skipped" > n.json
 expect_exit 1 "$VERDICT" --plan plan.json --needs n.json --receipts receipts --summary summary.md
 expect_grep 'gate site-build was selected and its job site reported skipped'
-needs "plan=failure,structure=skipped,suite=skipped,rust=skipped,coverage=skipped,bench=skipped,site=skipped,ui=skipped,macos=skipped" > n.json
+needs "plan=failure,structure=skipped,suite=skipped,rust=skipped,coverage=skipped,bench=skipped,site=skipped,site-probe=skipped,ui=skipped,macos=skipped" > n.json
 expect_exit 1 "$VERDICT" --plan plan.json --needs n.json --receipts receipts --summary summary.md
 expect_grep 'planning did not succeed'
 # a job that ran for another gate and failed is a failure even for the gate that did not plan it
-needs "plan=success,structure=success,suite=success,rust=success,coverage=failure,bench=skipped,site=success,ui=success,macos=skipped" > n.json
+needs "plan=success,structure=success,suite=success,rust=success,coverage=failure,bench=skipped,site=success,site-probe=success,ui=success,macos=skipped" > n.json
 expect_exit 1 "$VERDICT" --plan plan.json --needs n.json --receipts receipts --summary summary.md
 # --- receipts: a job's `success` says no step failed, not that the gate's step ran. A
 #     selected gate whose job succeeded is red without a receipt, and red when any of its
 #     receipts is not `success` — a step its condition skipped, a step cancelled, a failure
 #     a `continue-on-error` swallowed. A gate the plan left out needs none.
-needs "plan=success,structure=success,suite=success,rust=success,coverage=skipped,bench=skipped,site=success,ui=success,macos=skipped" > n.json
+needs "plan=success,structure=success,suite=success,rust=success,coverage=skipped,bench=skipped,site=success,site-probe=success,ui=success,macos=skipped" > n.json
 cp receipts/structure/receipts.tsv all.tsv
 grep -v '^site-probe	' all.tsv > receipts/structure/receipts.tsv
 expect_exit 1 "$VERDICT" --plan plan.json --needs n.json --receipts receipts --summary summary.md
-expect_grep 'gate site-probe was selected and its job site succeeded, but no step left a receipt for it'
-grep -q '| site-probe | site | .* | success, \*\*no receipt\*\* |' summary.md || { cat summary.md; echo "    the summary does not show the gate without a receipt"; exit 1; }
+expect_grep 'gate site-probe was selected and its job site-probe succeeded, but no step left a receipt for it'
+grep -q '| site-probe | site-probe | .* | success, \*\*no receipt\*\* |' summary.md || { cat summary.md; echo "    the summary does not show the gate without a receipt"; exit 1; }
 for outcome in skipped cancelled failure ''; do
   cp all.tsv receipts/structure/receipts.tsv
   # a second job's receipts beside the first: every *.tsv beneath the directory is read
@@ -393,7 +443,7 @@ MJ_CI_RECEIPTS="$T/rp.tsv" "$ROOT/scripts/ci/run-plan" --plan "$T/rp.json" --job
 
 # an empty selection cannot pass
 jq '.gates |= map(.selected = false) | .selected = []' plan.json > empty.json
-needs "plan=success,structure=skipped,suite=skipped,rust=skipped,coverage=skipped,bench=skipped,site=skipped,ui=skipped,macos=skipped" > n.json
+needs "plan=success,structure=skipped,suite=skipped,rust=skipped,coverage=skipped,bench=skipped,site=skipped,site-probe=skipped,ui=skipped,macos=skipped" > n.json
 expect_exit 1 "$VERDICT" --plan empty.json --needs n.json --receipts receipts --summary summary.md
 expect_grep 'selected no gate'
 

@@ -1,7 +1,7 @@
 +++
 title = "The handbook is built from the tree it describes, and a chapter names what it rests on"
 description = "The handbook is built from the tree it describes, and a chapter names what it rests on"
-weight = 162
+weight = 169
 [extra]
 kind = "rule"
 slug = "project-the-handbook-is-built-from-the-tree-1"

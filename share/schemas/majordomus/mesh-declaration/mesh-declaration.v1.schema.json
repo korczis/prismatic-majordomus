@@ -61,13 +61,13 @@
       }
     },
     "rendezvous": {
-      "description": "Other Majordomus servers to register with, for segments multicast cannot cross. Plain HTTP: a private network or an overlay is assumed.",
+      "description": "Other Majordomus servers to register with, for segments multicast cannot cross. https:// is reached over TLS; http:// only at loopback, private, link-local or overlay addresses (ADR 0220).",
       "type": "object",
       "additionalProperties": false,
       "properties": {
         "endpoints": {
           "type": "array",
-          "items": { "type": "string", "pattern": "^http://" }
+          "items": { "type": "string", "minLength": 1, "description": "https://host[:port] or http://host:port; the scheme and the address are judged by the declaration check (mesh/config.rs), which names what it refuses." }
         },
         "interval_seconds": { "type": "integer", "minimum": 1 }
       }
@@ -104,7 +104,7 @@
         "seeds": {
           "description": "Endpoints to dial whether or not discovery heard them.",
           "type": "array",
-          "items": { "type": "string", "pattern": "^http://[^/]+:[0-9]+$" }
+          "items": { "type": "string", "minLength": 1, "description": "https://host[:port] or http://host:port; judged by the declaration check (mesh/config.rs), which names what it refuses." }
         },
         "repository": {
           "description": "The repository's mesh identity, declared instead of derived from its root commits (a shallow clone needs it).",

@@ -71,6 +71,7 @@ pub mod peers;
 pub mod perf;
 pub mod plan;
 pub mod policy;
+pub(crate) mod process;
 pub mod product;
 pub mod proto;
 pub mod providers;

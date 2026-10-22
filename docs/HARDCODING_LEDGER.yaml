@@ -590,5 +590,6 @@ findings:
     recommended: MOVE_TO_CANONICAL_DATA
     target: one declared positioning record the README, the homepage and project.json read
     priority: 2
-    status: open
+    status: fixed
+    resolved_by: "I3134: the owner chose the hero wording on 2026-10-20; site/data/marketing.toml [hero] title and subtitle are the one declaration, scripts/generate-site-data reads project.json's tagline from it (every page title and og:description), README.md's bold line says it, and homepage-check's sentence check fails a README that says it in other words."
     reproduce: "grep -n '^title\\|^subtitle' site/data/marketing.toml | head -2; grep -n 'AI coding agents do the work\\|^\\*\\*A lightweight' README.md; grep -n 'TAGLINE=' scripts/generate-site-data"

@@ -1,0 +1,41 @@
+id: I3403
+milestone: a-paste-is-decomposed-by-a-skill
+title: "The Cockpit runner, the execution form and the intent workspace show an answer that names a skill as one link to that skill, proven in the existing browser case"
+slug: a-refusal-links-to-its-skill
+priority: p2
+profile: implementation
+objective: "In share/cockpit/runner.js (show) and share/cockpit/executions.js (report), when an unsuccessful answer's message names majordomus://skill/<id>, append after the text a link to /ui/skills#skill-<id>; the message stays textContent and the link is built with createElement, never innerHTML. Change the no-intent hint at apps/majordomus-cli/src/ui/idd.rs:292 to say that a one-paragraph statement is proposed and a longer paste is decomposed by the skill, with a link to the same anchor. Extend the existing browser case test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh with a step that submits a two-paragraph statement to /cockpit/capabilities/intents.propose and checks the link."
+why: "Under T6 of the owner's report of 2026-10-19, a new user starts from the UI as often as from a terminal, and a refusal shown as raw text is the internal archaeology T6 asks to remove. The owner's 2026-10-19 order covers every path a paste can take. On master the UI path to intents.propose is the Cockpit runner, whose form carries data-mj-start (cockpit/pages.rs:1240) and so may run through executions.js as well as runner.js. No server-side test executes either script, so the only honest proof is a browser case, and the plan allows no new case number. The /ui/idd propose form of I2807 is not on master and inherits the same answer."
+current_state: "share/cockpit/runner.js:126-161 prints the status badge, a line and JSON.stringify of the body as text. share/cockpit/executions.js:85-97 renders 'code: message' as textContent. apps/majordomus-cli/tests/cockpit.rs:251-273 checks only server-rendered HTML. test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh is the browser case of the ui job that walks the Cockpit (it opens /cockpit/plan/issues/I0001 at line 291). apps/majordomus-cli/src/ui/idd.rs:292 says only 'Propose one with `majordomus intent propose`, or the intents.propose capability', and its unit test no_intent_says_how_to_propose_one is at idd.rs:1161. /ui/skills anchors every workflow skill as id=\"skill-<id>\" (apps/majordomus-cli/src/ui/skills.rs:152-170)."
+desired_state: "A person who pastes into the Cockpit sees that nothing was written and one link to the procedure that continues the work, whichever button ran the call."
+scope:
+  - "share/cockpit/runner.js"
+  - "share/cockpit/executions.js"
+  - "apps/majordomus-cli/src/ui/idd.rs"
+  - "apps/majordomus-cli/tests/ui_idd.rs"
+  - "test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh"
+non_scope:
+  - "A new route or screen"
+  - "Running the skill from the UI"
+  - "The I2807 form itself, which is not on master"
+  - "Any change to the capability's answer"
+  - "A new test/cases file"
+depends_on:
+  - "I3400"
+  - "I3401"
+serves:
+  - "a-brief-is-reconciled-into-the-plan#a-refused-paste-leads-to-the-skill"
+acceptance_criteria:
+  - "Precondition: majordomus intent preflight for this issue passes from a branch of master that holds I3400 and I3401"
+  - "In case 3220, a two-paragraph statement submitted to /cockpit/capabilities/intents.propose renders an anchor whose href is /ui/skills#skill-decompose-a-brief, and the case's existing steps still pass"
+  - "The scripts render no anchor for a message naming no skill, and render a message holding markup literally; both are asserted by the same browser step through a second submission"
+  - "The /ui/idd page with no intent names the skill and links to /ui/skills#skill-decompose-a-brief, and no_intent_says_how_to_propose_one still finds 'intent propose'"
+  - "Case 3220 passes in the ui job on the pull request's head, and ten consecutive local runs with a browser are green"
+validation:
+  - "bash test/run.sh 3220_the_idd_loop_is_walked_in_a_browser"
+  - "cargo test -p majordomus-cli --lib ui::idd"
+  - "cargo test -p majordomus-cli --test ui_idd"
+evidence_required:
+  - "test_a_refusal_naming_a_skill_links_to_it"
+created_at: 2026-10-19
+updated_at: 2026-10-19

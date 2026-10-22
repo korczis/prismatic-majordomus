@@ -1,7 +1,7 @@
 +++
 title = "Verification integrity"
 description = "Verification integrity"
-weight = 59
+weight = 60
 [extra]
 kind = "rule"
 slug = "majordomus-verification-integrity-1"

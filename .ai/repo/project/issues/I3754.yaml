@@ -1,0 +1,50 @@
+# campaign.md D2 names no milestone for N6; truthful-plan-surfaces (ACTIVE) owns plan.next and plan.roadmap's truth
+# sequence: depends on I2749, because without it a planning commit that names an issue would make plan.next pass over real work
+# case name: 3727_ stands for the case number allocated with the id
+id: "I3754"
+milestone: "truthful-plan-surfaces"
+title: "plan.next never names an issue whose delivery is merged or released, and plan.roadmap names that issue with its drift"
+slug: "plan-next-never-names-delivered-work"
+priority: "p0"
+profile: "implementation"
+parallel_safe: false
+objective: "Every answer that names the next issue (plan.next, plan.status's next_ready, plan.transition's next_ready and the shell's plan next) comes from one function: the plan.rs ranking of READY issues, each candidate then set against plan.delivery read from the trunk's history and release records only, and a candidate at stage merged, released or deployed passed over and listed with its stage, its proving commit and the remedy (record it with plan start, verify and done). plan.roadmap lists, under each open milestone, the issues of that milestone the history shows delivered while their status is not DONE, so the milestone named as now is read together with its drift."
+why: "On origin/master 9a5a9b77520 (2026-10-20) plan next answered I0702, whose ADR merged in e59b86b66c9 and was released in v0.28.0; its record was never stamped, so plan roadmap named M002 as now and /plan/ showed I0702 as the next ready issue. The one answer a worker asks for before starting was false, and nothing in the derivation reads delivery. Recording I0702 settles this instance only; the next merge left unrecorded repeats it."
+current_state: "Verified on origin/master 91c0b5d5658. apps/majordomus-cli/src/plan.rs:562-574 (next_ready, ready_ranked) ranks READY issues by wave, priority and id from the stamps alone. apps/majordomus-cli/src/capability/builtin/plan.rs:422-445 (plan_next) returns that pick unchanged, :358 (plan_status) and :1241 (plan_transition) repeat it, and the plan.next declaration at :602-617 has no command-line exposure (:612) and caches by index generation (:615). The shell is a second copy: lib/plan.sh:336-350 (mj_plan_next) and lib/project.sh:259-274 (mj_pj_next_ready, mj_pj_ready_ranked) read model.tsv only, and lib/plan.sh:230 and :262 print the same pick in plan status, while lib/plan.sh:66-71 already hands delivery and drift to the executable. Delivery is inferred by apps/majordomus-cli/src/plan/delivery.rs:860 (infer), which already reads the history alone when given a commit. test/cases/99_plan_capabilities.sh:83-86 compares the shell's and the executable's next issue."
+desired_state: "One function in the capability module picks the next issue: the plan.rs ranking first, then delivery at the trunk head from its history and release records only (no branch, forge or deployment source, so the answer is a function of that commit), skipping every candidate at stage merged, released or deployed. plan.next's output gains passed_over (issue, stage, commit, remedy) and the trunk commit it read; plan.status and plan.transition take next_ready from the same function; plan.next gains the command-line path plan next, and lib/plan.sh hands next to the executable the way it hands delivery and drift, its plan status lines printing the delegated answer. plan.roadmap gains, per open milestone, the delivered issues whose status is open. The cache key includes the trunk commit, so a merge changes the answer without a restart. When the history cannot be read, the answer says delivery was unread and returns the stamp ranking, never silently. plan.rs next_ready and lib/project.awk stay pure, so statuses and waves still agree field for field in case 99."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/plan.rs"
+  - "apps/majordomus-cli/src/plan/delivery.rs"
+  - "lib/plan.sh"
+  - "test/cases/99_plan_capabilities.sh"
+  - "test/cases/3727_plan_next_never_names_delivered_work.sh"
+  - "docs/PLANNING.md"
+  - "docs/generated"
+  - "site/data/generated"
+  - "site/data/registry"
+  - ".claude/skills/mj-plan/SKILL.md"
+  - ".ai/repo/project/issues/I3754.yaml"
+non_scope:
+  - "Writing any stamp from inference: a merge is not acceptance (ADR 0166)"
+  - "Recording I0702 or any other unrecorded issue; that is the record sweep"
+  - "Changing the readiness derivation in plan.rs or lib/project.awk; statuses stay a function of the records"
+  - "Live sources (branches, the forge observation, the published site) in the next answer"
+  - "Which commits count as delivery; I2749 owns that rule"
+  - "Which milestones are now and next; I3439 derives them once, and the delivered-issue list this issue adds to plan.roadmap names no now or next of its own"
+acceptance_criteria:
+  - "A fixture whose highest-ranked READY issue is named by a merge on the trunk gets the next-ranked READY issue from plan.next, and passed_over names the first with stage merged and its merge commit"
+  - "Negative: a READY issue named only by a branch or an open pull request is still handed out; only merged, released or deployed passes an issue over"
+  - "Negative: a fixture with no delivered issue gets exactly the pick plan.rs ranks, and case 99's next comparison still agrees on its fixture"
+  - "plan next on the command line, the MCP tool majordomus_plan_next, plan.status and plan.transition name the same issue for the same trunk commit"
+  - "A merge that lands after a first answer changes the next answer of the same server without a restart"
+  - "With a history that cannot be read, the answer names delivery as unread and returns the stamp ranking"
+  - "plan.roadmap lists, under the milestone it holds open, each issue the history shows delivered while it is not DONE"
+validation:
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3727_plan_next_never_names_delivered_work 99_plan_capabilities"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib capability::builtin::plan"
+  - "majordomus plan validate"
+evidence_required:
+  - "plan_next_passes_over_delivered_work"
+  - "plan_next_hands_out_branch_only_work"
+depends_on:
+  - "I2749"

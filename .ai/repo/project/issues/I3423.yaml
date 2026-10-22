@@ -1,0 +1,33 @@
+id: I3423
+milestone: an-inference-names-its-source-and-budget
+title: "docs/REASONING.md maps the pack's routing levels onto the existing plan outcomes and modes, and a test fails when an outcome is missing from that mapping"
+slug: routing-levels-are-the-existing-outcomes
+priority: p2
+profile: implementation
+objective: "Document the pack's four routing levels (deterministic, cheap local, reasoning peer, multi-peer critique) in docs/REASONING.md as a mapping onto the existing PlanOutcome values and modes, and name the level that has no producer today. Add a unit test in policy.rs that fails when a PlanOutcome variant is absent from the mapping table. Add no field, no setting and no noun."
+why: "The owner's 2026-10-19 Cognitive Fabric pack declares routing tiers and asks for existing modes to be enriched, not replaced (campaigns/prismatic-way-cognitive-fabric-prompt-pack/contracts/ECONOMICS.md). Rule project.no-new-nouns forbids a new tier vocabulary, so the mapping is documentation of the existing outcomes, enforced by a test."
+current_state: "PlanOutcome (apps/majordomus-cli/src/reasoning/policy.rs:182-205) distinguishes deciding locally, reusing and consulting. models.route picks the first declared model (apps/majordomus-cli/src/models/mod.rs:241-244), and local vendors declare no model (share/models.yaml:15). .ai/repo/rules/project/no-new-nouns.v1.md forbids new tiers."
+desired_state: "A reader of docs/REASONING.md finds where each pack level lands. A new PlanOutcome variant without a row fails the test."
+scope:
+  - "docs/REASONING.md"
+  - "apps/majordomus-cli/src/reasoning/policy.rs"
+non_scope:
+  - "A tier field on the plan"
+  - "Running any local model"
+  - "A new mode or settings tree"
+depends_on:
+  - "I3419"
+serves:
+  - "a-change-reconciles-what-it-affects#deterministic-work-calls-no-model"
+acceptance_criteria:
+  - "The mapping names every PlanOutcome variant and the mode in which each occurs"
+  - "The unit test fails when a variant is added without a row (shown once by a local mutation, then reverted)"
+  - "The mapping states that the cheap local level has no producer until the local-inference work lands"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib reasoning::policy"
+  - "bash test/run.sh 730_reasoning_works_with_no_advisor"
+  - "majordomus reasoning check"
+evidence_required:
+  - "every_plan_outcome_is_mapped"
+created_at: 2026-10-19
+updated_at: 2026-10-19

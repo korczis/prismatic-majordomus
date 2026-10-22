@@ -124,8 +124,9 @@ pub fn declaration_source(resolved: &super::root::Resolved) -> Option<DoctorChec
 }
 
 /// The `journal` check: whether the cooperation journal's file holds what the journal
-/// holds. A failed append keeps the event in memory and in replication and loses it from this
-/// machine's disk; an unreadable line is one the last reload could not use.
+/// holds. A failed append keeps the event in memory and in replication, loses it from this
+/// machine's disk and is not acknowledged as durable; an unreadable line is one the last
+/// reload could not use; unread bytes lie beyond the reload bound.
 ///
 /// ```
 /// use majordomus_cli::mesh::doctor::journal_check;
@@ -134,13 +135,16 @@ pub fn declaration_source(resolved: &super::root::Resolved) -> Option<DoctorChec
 /// let lost = JournalTallies { write_failures: 2, ..Default::default() };
 /// let check = journal_check(&lost);
 /// assert!(!check.ok && check.detail.contains("2 event(s)"));
+/// let beyond = JournalTallies { unread_bytes: 4096, ..Default::default() };
+/// let check = journal_check(&beyond);
+/// assert!(!check.ok && check.detail.contains("4096 byte(s)"));
 /// ```
 pub fn journal_check(tallies: &super::journal::JournalTallies) -> DoctorCheck {
-    if tallies.write_failures == 0 && tallies.unreadable == 0 {
+    if tallies.write_failures == 0 && tallies.unreadable == 0 && tallies.unread_bytes == 0 {
         return DoctorCheck::pass(
             "journal",
             format!(
-                "{} event(s) held, every append synced to disk, no unreadable line on reload",
+                "{} event(s) held, every append synced to disk, the file reloaded whole with no unreadable line",
                 tallies.events
             ),
         );
@@ -148,11 +152,71 @@ pub fn journal_check(tallies: &super::journal::JournalTallies) -> DoctorCheck {
     DoctorCheck::fail(
         "journal",
         format!(
-            "{} event(s) did not reach the journal file; {} line(s) of it did not read on reload",
-            tallies.write_failures, tallies.unreadable
+            "{} event(s) did not reach the journal file and were not acknowledged as durable; {} line(s) of it did not read on reload; {} byte(s) of it lie beyond the {}-byte reload bound and were left on disk unread",
+            tallies.write_failures,
+            tallies.unreadable,
+            tallies.unread_bytes,
+            super::journal::MAX_RELOAD_BYTES
         ),
-        "an event that is not on disk is lost to this machine when the runtime restarts, unless a peer still holds it",
-        "free disk space or fix the permissions of the mesh state directory; a torn line is left as one unreadable line, and the events after it read",
+        "an event that is not on disk is lost to this machine when the runtime restarts, unless a peer still holds it; the events beyond the reload bound are not held, so this runtime neither folds nor relays them",
+        "free disk space or fix the permissions of the mesh state directory; a torn line is left as one unreadable line, and the events after it read; a journal beyond the bound was not written by this executable's compaction — move it aside and let the peers refill it",
+    )
+}
+
+/// The `transport` check: how each declared rendezvous endpoint and seed would be reached —
+/// over TLS (`https://`), or in cleartext to an address that is loopback, private or an
+/// overlay's — and every one the client refuses to dial, because it would carry the mesh in
+/// cleartext across a public network (ADR 0220). Nothing is dialed; an http host name is
+/// resolved, and one that does not resolve here is reported and judged again at every dial.
+///
+/// ```
+/// use majordomus_cli::mesh::doctor::transport_check;
+/// use majordomus_cli::mesh::MeshConfig;
+/// let declare = |endpoints: serde_json::Value| -> MeshConfig {
+///     serde_json::from_value(serde_json::json!({ "schema": "mesh/v1", "kind": "mesh-declaration",
+///         "id": "x", "rendezvous": { "endpoints": endpoints } })).unwrap()
+/// };
+/// let held = transport_check(&declare(serde_json::json!(["https://hub.example", "http://10.0.0.2:8791"])));
+/// assert!(held.ok && held.detail.starts_with("1 endpoint(s) over TLS, 1 in cleartext"), "{}", held.detail);
+/// let refused = transport_check(&declare(serde_json::json!(["http://203.0.113.5:8791"])));
+/// assert!(!refused.ok && refused.detail.contains("203.0.113.5 is a public address"));
+/// ```
+pub fn transport_check(config: &MeshConfig) -> DoctorCheck {
+    use crate::mcp::bridge::{transport, Transport};
+    let (mut tls, mut cleartext) = (0usize, 0usize);
+    let (mut refused, mut unresolved) = (Vec::new(), Vec::new());
+    for endpoint in config
+        .rendezvous
+        .endpoints
+        .iter()
+        .chain(&config.cooperation.seeds)
+    {
+        match transport(endpoint) {
+            Ok(Transport::Tls) => tls += 1,
+            Ok(Transport::Cleartext) => cleartext += 1,
+            Err(e) if e.kind() == std::io::ErrorKind::PermissionDenied => {
+                refused.push(e.to_string())
+            }
+            Err(e) => unresolved.push(format!("{endpoint}: {e}")),
+        }
+    }
+    if refused.is_empty() {
+        let mut detail = format!(
+            "{tls} endpoint(s) over TLS, {cleartext} in cleartext to loopback, private or overlay addresses"
+        );
+        if !unresolved.is_empty() {
+            detail.push_str(&format!(
+                "; not resolved here, judged again at every dial: {}",
+                unresolved.join("; ")
+            ));
+        }
+        return DoctorCheck::pass("transport", detail);
+    }
+    DoctorCheck::fail(
+        "transport",
+        refused.join("; "),
+        "the client refuses to dial these: no registration and no link is sent to them, so they neither discover nor cooperate with this node",
+        "serve the hub over TLS and declare it as https://, or reach it at a private or overlay address (a tailnet)",
     )
 }
 
@@ -249,6 +313,12 @@ pub fn doctor_at(
                 config.cooperation.seeds.len()
             ),
         )),
+    }
+
+    // The transport: how each declared hub and seed would be reached, and which the client
+    // refuses to dial.
+    if let Some(Ok(config)) = &declaration {
+        checks.push(transport_check(config));
     }
 
     // The identity: where it lives, and whether what is there loads.
@@ -980,5 +1050,69 @@ mod tests {
             "{}",
             runtime.detail
         );
+    }
+
+    #[test]
+    fn the_transport_check_counts_tls_and_private_cleartext_and_refuses_public_cleartext() {
+        let declare = |endpoints: serde_json::Value, seeds: serde_json::Value| -> MeshConfig {
+            serde_json::from_value(serde_json::json!({
+                "schema": "mesh/v1", "kind": "mesh-declaration", "id": "x",
+                "rendezvous": { "endpoints": endpoints }, "cooperation": { "seeds": seeds }
+            }))
+            .unwrap()
+        };
+        let none = transport_check(&declare(serde_json::json!([]), serde_json::json!([])));
+        assert!(none.ok);
+        assert_eq!(
+            none.detail,
+            "0 endpoint(s) over TLS, 0 in cleartext to loopback, private or overlay addresses"
+        );
+        let held = transport_check(&declare(
+            serde_json::json!(["https://hub.example", "http://100.92.246.32:8791"]),
+            serde_json::json!(["http://127.0.0.1:8742", "http://bad..name:8742"]),
+        ));
+        assert!(held.ok, "{}", held.detail);
+        assert!(
+            held.detail
+                .starts_with("1 endpoint(s) over TLS, 2 in cleartext"),
+            "{}",
+            held.detail
+        );
+        assert!(
+            held.detail
+                .contains("not resolved here, judged again at every dial: http://bad..name:8742"),
+            "{}",
+            held.detail
+        );
+        let refused = transport_check(&declare(
+            serde_json::json!(["http://192.168.1.2:8791", "http://203.0.113.5:8791"]),
+            serde_json::json!(["http://198.51.100.7:8742"]),
+        ));
+        assert!(!refused.ok);
+        assert!(
+            refused
+                .detail
+                .contains("http://203.0.113.5:8791 was not dialed"),
+            "{}",
+            refused.detail
+        );
+        assert!(
+            refused.detail.contains("198.51.100.7 is a public address"),
+            "{}",
+            refused.detail
+        );
+        assert!(
+            !refused.detail.contains("192.168.1.2"),
+            "{}",
+            refused.detail
+        );
+        assert!(refused.remediation.unwrap().contains("https://"));
+        // and the self-check carries it, right after the declaration it judges
+        let report = doctor(Some(Ok(declare(
+            serde_json::json!(["http://203.0.113.5:8791"]),
+            serde_json::json!([]),
+        ))));
+        assert_eq!(report.checks[1].check, "transport");
+        assert!(!report.ok);
     }
 }

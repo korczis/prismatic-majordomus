@@ -178,19 +178,22 @@ impl Session {
         let app = App::load(&args.repo)?;
         let live = Arc::new(Live::watching(args.repo.clone(), app.context.clone()));
         let ctx = live.current();
-        let (http_host, _) = crate::cli::checkout_http_host(
-            args.http_host.as_deref(),
-            std::path::Path::new(&app.context.index.repository.root),
-        );
+        let root = std::path::Path::new(&app.context.index.repository.root);
+        let (http_host, _) = crate::cli::checkout_http_host(args.http_host.as_deref(), root);
+        // the port this checkout asks for on every start, unless one was given (I2702)
+        let http_port = args
+            .http_port
+            .unwrap_or_else(|| crate::cli::checkout_port(root));
         let shared = SharedServer::start(
             Arc::clone(&live),
             crate::VERSION,
             &http_host,
-            args.http_port,
+            http_port,
             true,
             None,
             lease,
             Some(app.share.dir()),
+            &crate::shared::MeshHosting::default(),
         )?;
         let peer = ctx.peers.attach(PeerTransport::Stdio);
         let mut server = Server::new(Surface::new(live).for_peer(peer.clone()), crate::VERSION)

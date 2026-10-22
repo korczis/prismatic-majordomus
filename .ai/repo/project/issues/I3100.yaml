@@ -1,0 +1,58 @@
+id: I3100
+milestone: external-workspaces
+title: "What the ChatGPT project decided is promoted into the layer, each record naming the conversation and message it came from"
+slug: chatgpt-project-is-promoted
+priority: p1
+profile: deep-work
+parallel_safe: false
+objective: "Read every conversation of the declared workspace chatgpt-majordomus once, extract what the owner ordered, decided and learned, verify each candidate against master and the peer board, and promote what is not yet recorded as intents, milestones, issues, proposed ADRs and curated knowledge, each record citing its sources as chatgpt-majordomus:<conversation>#<message> so it drills back to its root; raw content stays in the git-ignored workspace store."
+why: "On 2026-10-18 the owner asked that every conversation of the ChatGPT Project Majordomus (297 of them, 2026-09-06 to 2026-10-18) be assembled into .ai/ so the work they decided can be run the IDD way from the UI. Until now nothing read the project: its decisions were carried into the repository only when a session happened to paste one, and one such paste sits untracked as an intent whose statement is a raw ChatGPT answer."
+current_state: "The workspace is declared (I1301); no capability or command reads it; promoted records exist only where sessions copied text by hand."
+desired_state: "Each decision, intent, work item and lesson of the project is accounted for once: promoted with its sources, found already recorded (with the record it maps to), superseded, left as an open question, or dropped as off-topic. The promoted records validate (plan, intent, adr and knowledge checks) and appear on /ui/idd, /ui/roadmap and the ADR and knowledge pages with no other edit."
+scope:
+  - ".ai/repo/project/intents"
+  - ".ai/repo/project/milestones"
+  - ".ai/repo/project/issues"
+  - ".ai/repo/project/critiques"
+  - ".ai/repo/adrs"
+  - ".ai/repo/knowledge/curated"
+non_scope:
+  - "Raw conversation content in any tracked file"
+  - "The sync command, store layout and read capability of I1303-I1308"
+  - "Accepting an ADR: the records are proposed and the owner accepts them"
+acceptance_criteria:
+  - "Every conversation of the project is accounted for in a coverage ledger: promoted, already recorded, superseded, open question or off-topic"
+  - "Every promoted record names at least one source conversation and message"
+  - "majordomus plan validate, majordomus intent validate, majordomus adr check and majordomus knowledge check pass on the branch"
+  - "No tracked file carries raw conversation text, a credential or third-party personal data"
+validation:
+  - "majordomus plan validate"
+  - "majordomus intent validate"
+  - "majordomus adr check"
+  - "majordomus knowledge check"
+evidence_required:
+  - "plan_validate"
+  - "intent_validate"
+created_at: 2026-10-18
+updated_at: 2026-10-21T16:42:05Z
+started_at: 2026-10-21T16:40:59Z
+started_event: sha256:88c5de7a5e2692d8390996b3b4d42cd4aa11867f24a7559b57a0ec755fd51484
+verified_at: 2026-10-21T16:41:32Z
+verified_event: sha256:e86c4761d725de81f3271b10eaffed7a17e657370f38b5912ca855ac483d44a3
+completed_at: 2026-10-21T16:42:05Z
+completed_event: sha256:cd7f21a868a0cff989c758a6808cfbf27a77a86942055c6864dbd51f40a17e28
+evidence:
+  - covers: plan_validate
+    type: ci
+    command: "gh run view --job 119164001459 --log (validate run 39565286918, job structure, runs majordomus plan validate)"
+    result: "plan validate: 100 milestone(s), 802 issue(s), 0 failure(s) on master 905159df7cc in structure of validate run 39565286918 (conclusion success), the run 9c tagged v1.0.0-alpha.2 on; the promotion landed in the alpha.1 top (596cd5ebb74). Coverage ledger: .ai/repo/knowledge/curated/the-chatgpt-project-was-promoted.md, all 297 conversations accounted for; 199 issues, 35 milestones, 37 ADRs and 44 knowledge records cite chatgpt-majordomus:<alias>#<n>. Gap left open: the ledger names promoted records per conversation and groups already-recorded, superseded and open-question in one bucket rather than naming each disposition."
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39565286918/job/119164001459"
+    commit: 905159df7cc24f65c0455a16fc9ccbad37845571
+    recorded_at: 2026-10-21T16:40:06Z
+  - covers: intent_validate
+    type: test
+    command: "bin/majordomus intent validate (with adr check and knowledge check), on a detached checkout of master 905159df7cc, executable 1.0.0-alpha.2 built from it"
+    result: "intent validate: 33 intent(s), 0 failure(s): valid; adr check: 0 identities added, measured against origin/master and every other ref; knowledge check: 50 record(s), 0 failing; plan validate: 0 failure(s). Run 2026-10-21 by e7."
+    artifact: "905159df7cc24f65c0455a16fc9ccbad37845571"
+    commit: 905159df7cc24f65c0455a16fc9ccbad37845571
+    recorded_at: 2026-10-21T16:40:20Z

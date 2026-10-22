@@ -1,7 +1,7 @@
 +++
 title = "Work lands often and small, and what is published is master and only master"
 description = "Work lands often and small, and what is published is master and only master"
-weight = 117
+weight = 122
 [extra]
 kind = "rule"
 slug = "project-land-and-publish-1"
@@ -28,6 +28,10 @@ rather than argued:
   hand. A previous integration here went from thirty-three conflicts to zero the same way.
 - **The driver is per clone.** A worktree that never ran `just derive-merge-driver` fights
   those same files locally too, which is why they appeared to fight everyone.
+- **The toolchain is per machine.** A derive builds the executable, so a clone with no pinned
+  Rust toolchain refuses every `prs repair --apply` after the merge, naming `cargo` and nothing
+  else. `majordomus doctor` checks it (`derive-toolchain`); install it with rustup before
+  repairing or deriving there.
 - **A batch costs more than its conflicts.** Every conflicted merge needs a full `just
   derive` before the pre-commit hook accepts it, and any source fix made after that derive
   invalidates it. One session ran three derives for one merge.
@@ -83,6 +87,13 @@ rather than argued:
    between the merge and the public catches it.
 8. **A merge that changes the public contract carries its version.** Landing without the
    bump is why the published site named a version three releases behind the code.
+9. **What landed is released, and how long it has waited is measured.** The owner's order of
+   2026-10-19 is a new measured version (ADR 0051) after every session and milestone.
+   `release.currency` (I3070) answers how many landed commits the trunk holds past the last
+   release, since when, and at which version. The brief, doctor and `/ui/delivery` read that
+   one answer. Current is the trunk released. Owed is work the release seat still has to
+   release. Overdue is work that has waited longer than six hours. A tag counts as soon as it
+   is pushed, before its record lands, so releasing is never reported as owed.
 
 ## Failure behaviour
 
@@ -127,6 +138,13 @@ refusal from the gate and watching it fail.
 The live half is not simulated: a case standing up an HTTP server would be testing its own
 fixture, and one reaching the real site would fail whenever the network did. `--offline` is
 the seam, and the case asserts the seam announces itself rather than skipping silently.
+
+`test/cases/3470_the_release_follows_the_work.sh` holds clause 9. It builds a clone of a bare
+origin with a recorded release and a fix landed after it, and expects:
+- `release.currency` says owed and, with the clock past the threshold, overdue;
+- doctor warns;
+- the brief has a release line;
+- a tag pushed past the record makes the trunk current.
 
 `test/cases/97_pages_fast_path.sh` holds the publication path itself, including its
 concurrency: the `pages-` group serialises the runs and nothing cancels the deploy in flight

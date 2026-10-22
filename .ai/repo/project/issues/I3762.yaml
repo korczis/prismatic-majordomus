@@ -1,0 +1,42 @@
+# campaign.md D16 names no milestone for N15; truthful-plan-surfaces (ACTIVE) scopes plan.rs, lib/project.awk and the plan's validation
+# sequence: setting parallel_safe on the records that lack it is the separate Wave 2 records step; this record only makes the gap visible
+# case name: 3735_ stands for the case number allocated with the id
+id: "I3762"
+milestone: "truthful-plan-surfaces"
+title: "plan validate warns on an open issue that declares no parallel_safe"
+slug: "plan-validate-warns-on-a-missing-parallel-safe"
+priority: "p1"
+profile: "implementation"
+parallel_safe: false
+objective: "Both engines emit a WARN finding no_parallel_safe for every issue that is neither DONE nor CANCELLED and has no parallel_safe key, immediately after no_evidence_required in derivation order, with a message that says the wave planner and devtask read the missing key as true; the default itself is unchanged, and the fixture helper used by the cases writes the key so existing fixtures stay quiet."
+why: "The plan inventory of 2026-10-20 found 286 of 799 issue records without parallel_safe, 68 of them READY, all created on or after 2026-10-18. A missing key reads as true, so waves and devtask's parallel groups placed issues as safe that nobody had judged, and the campaign had to hold its third wave until each record was set by hand. Nothing reported the gap."
+current_state: "Verified on origin/master 91c0b5d5658. share/schemas/majordomus/issue/issue.v1.schema.json:10-22 does not require parallel_safe and :42-44 types it as a boolean. apps/majordomus-cli/src/plan.rs:782-788 warns no_evidence_required and nothing checks parallel_safe; :1243 turns a missing value into true. lib/project.awk:123 and :377 do the same. apps/majordomus-cli/src/devtask/graph.rs:361-368 groups issues to run together by that value. test/lib.sh:266-280 (pj_issue) writes fixture issues without the key. test/cases/99_plan_capabilities.sh:88-97 compares both engines' findings code for code, and :186-189 asserts the fixture produces the codes it names."
+desired_state: "plan.rs and lib/project.awk each warn no_parallel_safe, subject the issue id, for an open issue without the key, in the same position and with the same message; plan.validate's declaration lists the finding; pj_issue in test/lib.sh writes parallel_safe: true; case 99's fixture adds one issue without the key and names no_parallel_safe among the codes it must produce. The derivation's default and the schema's optional key are unchanged."
+scope:
+  - "apps/majordomus-cli/src/plan.rs"
+  - "lib/project.awk"
+  - "apps/majordomus-cli/src/capability/builtin/plan.rs"
+  - "test/lib.sh"
+  - "test/cases/99_plan_capabilities.sh"
+  - "test/cases/3735_plan_validate_warns_on_a_missing_parallel_safe.sh"
+  - "docs/PLAN_STATUS.md"
+  - "docs/generated"
+  - "site/data/generated"
+  - ".ai/repo/project/issues/I3762.yaml"
+non_scope:
+  - "Setting parallel_safe on the records that lack it (a records step of the campaign)"
+  - "Making parallel_safe required by the schema, or changing the default a missing key reads as"
+  - "Finding the generator that stopped writing the key"
+acceptance_criteria:
+  - "An open issue without parallel_safe produces exactly one no_parallel_safe warning in plan validate, from both engines, and plan validate still exits 0"
+  - "Negative: an issue with parallel_safe true or false, a DONE issue and a CANCELLED issue without the key produce no no_parallel_safe warning"
+  - "Negative: the derived parallel_safe of an issue without the key is still true in plan.issues and in the shell's model"
+  - "case 99's fixture produces no_parallel_safe and both engines agree on its findings and counts"
+validation:
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3735_plan_validate_warns_on_a_missing_parallel_safe 99_plan_capabilities"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib plan::tests"
+  - "majordomus plan validate"
+evidence_required:
+  - "missing_parallel_safe_is_warned"
+  - "decided_parallel_safe_is_not_warned"
+depends_on: []

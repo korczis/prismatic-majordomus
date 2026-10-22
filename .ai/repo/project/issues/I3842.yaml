@@ -1,0 +1,35 @@
+id: I3842
+milestone: an-authorised-node-connects-from-anywhere
+title: "A caller on another host never sees this process's executions, live or recorded"
+slug: a-remote-caller-never-sees-the-executions
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Refuse the /events WebSocket upgrade to a caller beyond loopback, declare executions.list, executions.get, executions.events and executions.demonstrate local-only, and add /cockpit/executions to the pages that answer this machine alone, so that a hosted hub shows an anonymous caller the repository and liveness and nothing of what runs in it. ADR 0220 decision 4."
+why: "I3826 refused the mesh's reads to a remote caller, but an execution of one of them that a local worker starts through executions.start still streamed over /events and was listed by executions.list to anyone who could reach the server; on a hosted hub that is every visitor. The gap was observed as a knowledge defect on 2026-10-21 when I3826 was verified."
+current_state: "Router::websocket refuses only a rebound browser page; the executions read capabilities admit every remote caller (ADR 0126); /cockpit/executions answers anyone."
+desired_state: "A remote caller is answered 403 by the live channel's upgrade, by every executions read and by /cockpit/executions; this machine follows, lists and reads its executions as before; case 3861 and the router's unit tests prove both halves."
+scope:
+  - "apps/majordomus-cli/src/http/router.rs"
+  - "apps/majordomus-cli/src/capability/builtin/executions.rs"
+  - "test/cases/3861_a_remote_caller_never_sees_the_executions.sh"
+  - "docs/MESH.md"
+  - ".ai/repo/project/issues/I3842.yaml"
+non_scope:
+  - "apps/majordomus-cli/src/http/events.rs: what the channel carries is unchanged; who may open it is decided before it is opened"
+  - "An authenticated remote reader of executions (ADR 0204's signed-in Cockpit), which is a later slice"
+acceptance_criteria:
+  - "The /events upgrade from a caller beyond loopback is refused with 403 and opens for this machine"
+  - "executions.list, executions.get, executions.events and executions.demonstrate answer a remote caller 403 and this machine as before"
+  - "/cockpit/executions and its subpaths answer a remote caller 403"
+validation:
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3861_a_remote_caller_never_sees_the_executions"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib http::router"
+evidence_required:
+  - "case_a_remote_caller_never_sees_the_executions"
+depends_on:
+  - "I3826"
+serves:
+  - "an-authorised-node-connects-from-anywhere#relay-when-no-direct-path"
+created_at: 2026-10-21
+updated_at: 2026-10-21

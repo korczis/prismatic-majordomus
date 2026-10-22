@@ -39,6 +39,7 @@ pub(crate) mod continuity;
 pub(crate) mod convergence;
 pub(crate) mod dashboard;
 pub(crate) mod delivery;
+pub(crate) mod deploy;
 pub(crate) mod devcontext;
 pub(crate) mod devtask;
 pub(crate) mod distribution;
@@ -57,6 +58,7 @@ pub(crate) mod models;
 pub(crate) mod monitor;
 pub(crate) mod offload;
 pub(crate) mod pack;
+pub(crate) mod plan;
 pub(crate) mod product;
 pub(crate) mod prs;
 pub(crate) mod quality;
@@ -109,9 +111,11 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Reasoning(args) => reasoning::run(args),
         Command::Evidence(args) => evidence::run(args),
         Command::Served(args) => served::run(args),
+        Command::Deploy(args) => deploy::run(args),
         Command::Rules(args) => rules::run(args),
         Command::Intent(args) => intent::run(args),
         Command::Delivery(args) => delivery::run(args),
+        Command::Plan(args) => plan::run(args),
         Command::Economics(args) => economics::run(args),
         Command::Entity(args) => entity::run(args),
         Command::Shell(args) => shell::run(args),

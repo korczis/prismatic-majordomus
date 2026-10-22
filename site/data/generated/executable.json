@@ -494,6 +494,23 @@
       "tool": "majordomus_deployments_observed"
     },
     {
+      "api_anchor": null,
+      "claims": [],
+      "cli": "majordomus deploy slug",
+      "id": "deploy.slug",
+      "kind": "command",
+      "module": "deploy",
+      "module_route": "/registry/modules/deploy/",
+      "resource": null,
+      "route": "/registry/capabilities/deploy-slug/",
+      "slug": "deploy-slug",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/deploy.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/deploy.rs",
+      "tests": [],
+      "title": "Assemble the tree a provider receives",
+      "tool": null
+    },
+    {
       "api_anchor": "/docs/api/design/#op-design-contrast",
       "claims": [],
       "cli": null,
@@ -2619,6 +2636,57 @@
       "tool": "majordomus_perf"
     },
     {
+      "api_anchor": "/docs/api/plan/#op-plan-delivery",
+      "claims": [],
+      "cli": "majordomus plan delivery",
+      "id": "plan.delivery",
+      "kind": "query",
+      "module": "plan",
+      "module_route": "/registry/modules/plan/",
+      "resource": null,
+      "route": "/registry/capabilities/plan-delivery/",
+      "slug": "plan-delivery",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/plan.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/plan.rs",
+      "tests": [],
+      "title": "How far each issue's work has travelled",
+      "tool": "majordomus_plan_delivery"
+    },
+    {
+      "api_anchor": "/docs/api/plan/#op-plan-drift",
+      "claims": [],
+      "cli": "majordomus plan drift",
+      "id": "plan.drift",
+      "kind": "query",
+      "module": "plan",
+      "module_route": "/registry/modules/plan/",
+      "resource": null,
+      "route": "/registry/capabilities/plan-drift/",
+      "slug": "plan-drift",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/plan.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/plan.rs",
+      "tests": [],
+      "title": "Where the plan's stamps contradict the delivered work",
+      "tool": "majordomus_plan_drift"
+    },
+    {
+      "api_anchor": "/docs/api/plan/#op-plan-flight",
+      "claims": [],
+      "cli": null,
+      "id": "plan.flight",
+      "kind": "query",
+      "module": "plan",
+      "module_route": "/registry/modules/plan/",
+      "resource": null,
+      "route": "/registry/capabilities/plan-flight/",
+      "slug": "plan-flight",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/plan.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/plan.rs",
+      "tests": [],
+      "title": "Where the work is now",
+      "tool": "majordomus_plan_flight"
+    },
+    {
       "api_anchor": "/docs/api/plan/#op-plan-issues",
       "claims": [],
       "cli": null,
@@ -3059,6 +3127,23 @@
       "tests": [],
       "title": "The changelog",
       "tool": "majordomus_changelog"
+    },
+    {
+      "api_anchor": "/docs/api/release/#op-release-currency",
+      "claims": [],
+      "cli": null,
+      "id": "release.currency",
+      "kind": "query",
+      "module": "release",
+      "module_route": "/registry/modules/release/",
+      "resource": null,
+      "route": "/registry/capabilities/release-currency/",
+      "slug": "release-currency",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/release.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/release.rs",
+      "tests": [],
+      "title": "Whether the trunk's landed work is released",
+      "tool": "majordomus_release_currency"
     },
     {
       "api_anchor": "/docs/api/release/#op-release-next",
@@ -3603,6 +3688,23 @@
       "tests": [],
       "title": "The whole topology",
       "tool": "majordomus_worktrees"
+    },
+    {
+      "api_anchor": "/docs/api/worktree/#op-worktree-trunk",
+      "claims": [],
+      "cli": "majordomus worktree trunk",
+      "id": "worktree.trunk",
+      "kind": "query",
+      "module": "worktree",
+      "module_route": "/registry/modules/worktree/",
+      "resource": null,
+      "route": "/registry/capabilities/worktree-trunk/",
+      "slug": "worktree-trunk",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/worktree.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/worktree.rs",
+      "tests": [],
+      "title": "How far a checkout is from the remote trunk",
+      "tool": "majordomus_worktree_trunk"
     },
     {
       "api_anchor": "/docs/api/worktree/#op-worktree-uncommitted",
@@ -4258,11 +4360,11 @@
     ]
   },
   "counts": {
-    "capabilities": 203,
+    "capabilities": 209,
     "claims": 93,
     "modules": 59
   },
-  "generator": "majordomus-cli 0.27.0",
+  "generator": "majordomus-cli 1.0.0-alpha.6",
   "modules": [
     {
       "capabilities": [
@@ -4520,6 +4622,11 @@
           "id": "deploy.observed",
           "route": "/registry/capabilities/deploy-observed/",
           "slug": "deploy-observed"
+        },
+        {
+          "id": "deploy.slug",
+          "route": "/registry/capabilities/deploy-slug/",
+          "slug": "deploy-slug"
         }
       ],
       "claims": [],
@@ -5481,6 +5588,21 @@
     {
       "capabilities": [
         {
+          "id": "plan.delivery",
+          "route": "/registry/capabilities/plan-delivery/",
+          "slug": "plan-delivery"
+        },
+        {
+          "id": "plan.drift",
+          "route": "/registry/capabilities/plan-drift/",
+          "slug": "plan-drift"
+        },
+        {
+          "id": "plan.flight",
+          "route": "/registry/capabilities/plan-flight/",
+          "slug": "plan-flight"
+        },
+        {
           "id": "plan.issues",
           "route": "/registry/capabilities/plan-issues/",
           "slug": "plan-issues"
@@ -5664,6 +5786,11 @@
           "id": "release.changelog",
           "route": "/registry/capabilities/release-changelog/",
           "slug": "release-changelog"
+        },
+        {
+          "id": "release.currency",
+          "route": "/registry/capabilities/release-currency/",
+          "slug": "release-currency"
         },
         {
           "id": "release.next",
@@ -5945,6 +6072,11 @@
           "id": "worktree.topology",
           "route": "/registry/capabilities/worktree-topology/",
           "slug": "worktree-topology"
+        },
+        {
+          "id": "worktree.trunk",
+          "route": "/registry/capabilities/worktree-trunk/",
+          "slug": "worktree-trunk"
         },
         {
           "id": "worktree.uncommitted",

@@ -238,6 +238,25 @@ check: 1 action(s) would be taken and nothing was written (run: majordomus recov
 Is the supervisory layer real here? Read-only. Blocking by design: intended to run
 from a pre-commit hook and from CI.
 
+**It checks governance only** — the policy, the profiles, the wiring of every declared
+enforcement, the projections, the records and their retention. It reads nothing of the
+checkout's server, its lease or the mesh, so a clean report says nothing about whether the
+server answering for this checkout is current (I2707). The runtime is read by:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| Question | Where it is read |
+| --- | --- |
+| Is the server answering for this checkout current, or stale? | `majordomus serve status` |
+| Is the mesh healthy here: identity, trust, link, runtime, journal? | `majordomus mesh doctor` |
+| What does the server report about itself, the mesh included? | `GET /api/v1/health` (`health.report`) |
+| Can this process answer: lease held, executable current? | `GET /api/v1/ready` (`health.ready`) |
+
+</div>
+
+
+`majordomus doctor --help` prints the same before its usage.
+
 **Checks, in order:**
 
 1. `policy.yaml` parses; `version` supported; no unknown keys at any level.
@@ -496,6 +515,7 @@ weakest evidence about the present.
 | `LATEST CHECKPOINT` | `state/checkpoints/` | a checkpoint resolves for this task |
 | `LATEST COMPATIBLE HANDOVER` | `state/handovers/` | a handover resolves for this worktree and branch |
 | knowledge candidates | `.ai/repo/knowledge/candidates/` | in the derived briefing, after the open questions and before the handover: the candidates awaiting review whose episode was on this branch, count and ids, bounded; unattributed ones on their own line; absence printed rather than omitted |
+| `KNOWLEDGE POINTERS` | the knowledge graph (`majordomus knowledge`), compiled on this read | `context.knowledge: true` and the task names an issue: see below |
 | `FILES TOUCHED IN SCOPE` | git | `context.relevant_files: true` |
 | `RECENT HISTORY` | `state/ledger.jsonl` | `context.recent_history_depth` is above zero |
 | `PROMPT` | `prompts/<name>.md` | `--prompt <name>` was given |
@@ -513,6 +533,27 @@ rather than disappearing. Git, task, profile and blockers are never dropped. Eve
 named under `EXCLUDED` with its reason, so an under-filled context is debugged from the
 exclusion list instead of guessed at. Exit `10` if what cannot be dropped is already over
 budget.
+
+**Knowledge pointers.** A bounded slice of the knowledge graph, not the graph: one line per
+pointer — the relation that selected it, the kind, the id, the source path and the title.
+Selection follows only edges a file states, in this order, each tier in byte order of the
+id: the issue the task was started for, the issues it `depends_on`, its milestone, the
+claims that milestone declares, and every node whose source is a path the task or the issue
+names in its `scope`. Nothing is searched and nothing is scored — a document whose words
+match the issue's but that nothing references is not selected. The list stops at the
+profile's `context.knowledge_max_items` (the policy's `context.max_list_items` when unset,
+and never above it), and a last line counts the rest with `majordomus knowledge related
+issue:<id>`, which prints them. The section is absent, and named under `EXCLUDED` with the
+reason, when the profile does not set `context.knowledge: true`, and when the task names no
+issue under a policy whose `intent.binding` is not `off`; with no task, or with binding off
+and no issue, it is simply absent. Only the kinds and paths the selection can reach are compiled,
+so it costs about two seconds on a plan of four hundred issues rather than the eight a whole
+compile takes; it is a few lines of a 300-line budget. When the issue the task names is not
+a node — its record left the version-control index, or is gone — the section prints a
+`stale` line saying which and why, and still lists what the graph does hold. Under a tight
+budget it is dropped with the derived listings, after files and before the context
+documents, and so long before git, the task, the profile and the open questions, which are
+never dropped; the drop names the command that prints the pointers.
 
 **`--for <provider>`** wraps the same body with a header naming the provider and its
 always-loaded file. The body does not change: the canonical context is provider-neutral,
@@ -850,7 +891,7 @@ about and refuses nothing. `queued` is reported by
 name, never accepted as a pass and never refused: a verdict that never arrived and a verdict
 that said pass are different facts, and on 2026-09-10 this repository's trunk carried three
 branch-breaking defects overnight because they looked identical
-(`majordomus.never-reported-is-not-green`).
+(`project.never-reported-is-not-green`).
 
 The whole judgement — every gate, the plan that selected it, which obligations the change
 implies, and the twenty-two questions of the done invariant with the source that answered

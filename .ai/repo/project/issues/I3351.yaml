@@ -1,0 +1,38 @@
+id: I3351
+milestone: the-proof-tests-are-registered-before-they-run
+title: "A proof plan is a validated record in which each protocol is frozen by its own digest, so registering one test never stales another's records"
+slug: a-proof-plan-is-a-validated-record
+priority: p0
+profile: implementation
+objective: "Add apps/majordomus-cli/src/economics/proof.rs, declared from mod.rs, which loads and validates .ai/repo/benchmarks/proof-plan.yaml (schema proof-plan/v1): tests with id, title, question, settles (docs/CLAIMS.yaml ids), dimension (accepted_results, wall_time, human_interventions, ci_reruns, spend, recovery, onboarding), value_words, instrument (built, or planned with the issue ids that build it) and an optional protocol. A protocol has version, registered_at, changes and a decision of one of three kinds: paired (names an economics suite and the digest of that suite's registration block), trials (record fields with their classes, min_trials, min_successes, all_must_pass) or window (period, admitted work, a bound per field on its not-observed share). Each protocol carries registered_digest over its own canonical form, computed by one public digest function the suite registration also uses. The validator refuses a digest mismatch, an unknown dimension or decision kind, a duplicate id, a claim CLAIMS.yaml lacks, a paired protocol whose suite or registration digest does not resolve, and a version without a changes entry. Expose counts_toward(record, test): a record counts only when it carries its test's protocol digest and postdates registered_at. The plan file is a freshness input of no suite."
+why: "The owner's report of 2026-10-19 asks that T1 to T6 be decided by measurement, and T2 that the split be fixed in advance. A protocol written after its records can be fitted to them, so the plan must be a record a gate refuses loose. The critique of this plan showed that putting one shared plan file into every suite's freshness inputs would stale the T2 corpus whenever T4 or T5 registered later, so each protocol is frozen by its own digest and records carry it. A paired protocol references the suite's own registration block, so pre-registration exists once."
+current_state: "apps/majordomus-cli/src/economics/mod.rs:43-49 declares claims, context, model, report, runner, stats and usage. methodology.yaml:64-73 holds hypotheses whose status model.rs:311 says a person sets. suites/pilot.yaml lists its freshness_inputs, which bind every run of the suite to all of them."
+desired_state: "economics::proof::load(root) returns the validated plan or its findings, fail-closed; an absent file reads as no plan, never an empty valid plan; every public item has a rustdoc example."
+scope:
+  - "apps/majordomus-cli/src/economics"
+  - "apps/majordomus-cli/src/economics/mod.rs"
+  - "apps/majordomus-cli/tests/economics.rs"
+  - "docs/ECONOMICS.md"
+non_scope:
+  - "Writing the six tests (I3352)"
+  - "The trial record type (I3353)"
+  - "Computing a status (I3354)"
+  - "Any new statistics"
+  - "Changing methodology version 1"
+serves:
+  - "the-product-proves-it-pays#plan-is-registered-before-runs"
+acceptance_criteria:
+  - "A fixture plan with all three decision kinds validates, and each refusal in the objective has its own fixture and finding text"
+  - "Changing one field of a registered protocol without updating registered_digest is refused, naming the test and both digests"
+  - "Registering a second test's protocol leaves counts_toward unchanged for every record of the first, proven by a fixture"
+  - "An absent plan yields a 'no proof plan is registered' finding"
+  - "Every new public item has a rustdoc example that runs"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test economics"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --doc economics::proof"
+  - "cargo fmt --manifest-path apps/majordomus-cli/Cargo.toml --check"
+evidence_required:
+  - "test_proof_plan_validated"
+  - "test_protocol_digest_is_per_test"
+created_at: 2026-10-19
+updated_at: 2026-10-19

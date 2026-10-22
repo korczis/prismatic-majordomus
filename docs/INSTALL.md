@@ -2,7 +2,7 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/install/INSTALL.md.in (the prose) and share/distribution.yaml (every platform, name and URL);
      regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.27.0 -->
+     Generator: majordomus-cli 1.0.0-alpha.6 -->
 
 ## Quick install
 
@@ -15,6 +15,12 @@ Then, in the repository you want supervised:
 ```bash
 majordomus init
 ```
+
+`init` adds what the layer needs and leaves what the repository already has alone. The one
+exception is a `README.md` that does not mention `AGENTS.md`: `init` appends a short
+paragraph naming it, because `doctor` fails a README that cannot lead a reader to the
+agent bootstrap. `init` lists the paragraph with everything else it created. It creates
+no README where there is none, and a personal layer leaves the project's README alone.
 
 ## Install and initialise in one command
 
@@ -129,10 +135,10 @@ MAJORDOMUS_INSTALL_DIR="$HOME/bin" curl -fsSL https://majordomus.dev/install.sh 
 ## Pinning a version
 
 ```bash
-curl -fsSL https://majordomus.dev/install.sh | sh -s -- --version v0.27.0
+curl -fsSL https://majordomus.dev/install.sh | sh -s -- --version v0.30.2
 ```
 
-A pinned installation resolves `https://majordomus.dev/releases/v0.27.0.json`, which names the exact artifact and its
+A pinned installation resolves `https://majordomus.dev/releases/v0.30.2.json`, which names the exact artifact and its
 sha256 digest, and therefore installs the same bytes every time. An unpinned
 installation resolves `https://majordomus.dev/releases/latest.json`, which is the latest stable release and moves
 forward as releases are published. Use the pinned form in CI.
@@ -140,7 +146,7 @@ forward as releases are published. Use the pinned form in CI.
 ## Using it in CI
 
 ```bash
-curl -fsSL https://majordomus.dev/install.sh | sh -s -- --version v0.27.0
+curl -fsSL https://majordomus.dev/install.sh | sh -s -- --version v0.30.2
 export PATH="$HOME/.local/bin:$PATH"
 majordomus --version
 ```
@@ -174,7 +180,15 @@ the tool's, and no command of this project deletes them.
 
 | Release | Published | Channel | Artifacts | Metadata |
 |---|---|---|---|---|
-| `v0.27.0` (latest) | 2026-10-16 | stable | 6 | [`v0.27.0.json`](https://majordomus.dev/releases/v0.27.0.json) |
+| `v1.0.0-alpha.4` | 2026-10-21 | prerelease | 6 | [`v1.0.0-alpha.4.json`](https://majordomus.dev/releases/v1.0.0-alpha.4.json) |
+| `v1.0.0-alpha.2` | 2026-10-21 | prerelease | 6 | [`v1.0.0-alpha.2.json`](https://majordomus.dev/releases/v1.0.0-alpha.2.json) |
+| `v1.0.0-alpha.1` | 2026-10-20 | prerelease | 6 | [`v1.0.0-alpha.1.json`](https://majordomus.dev/releases/v1.0.0-alpha.1.json) |
+| `v0.30.2` (latest) | 2026-10-19 | stable | 6 | [`v0.30.2.json`](https://majordomus.dev/releases/v0.30.2.json) |
+| `v0.30.1` | 2026-10-19 | stable | 6 | [`v0.30.1.json`](https://majordomus.dev/releases/v0.30.1.json) |
+| `v0.30.0` | 2026-10-18 | stable | 6 | [`v0.30.0.json`](https://majordomus.dev/releases/v0.30.0.json) |
+| `v0.29.0` | 2026-10-17 | stable | 6 | [`v0.29.0.json`](https://majordomus.dev/releases/v0.29.0.json) |
+| `v0.28.0` | 2026-10-17 | stable | 6 | [`v0.28.0.json`](https://majordomus.dev/releases/v0.28.0.json) |
+| `v0.27.0` | 2026-10-16 | stable | 6 | [`v0.27.0.json`](https://majordomus.dev/releases/v0.27.0.json) |
 | `v0.26.0` | 2026-10-14 | stable | 6 | [`v0.26.0.json`](https://majordomus.dev/releases/v0.26.0.json) |
 | `v0.25.0` | 2026-10-14 | stable | 6 | [`v0.25.0.json`](https://majordomus.dev/releases/v0.25.0.json) |
 | `v0.24.1` | 2026-10-14 | stable | 6 | [`v0.24.1.json`](https://majordomus.dev/releases/v0.24.1.json) |
@@ -204,8 +218,10 @@ the tool's, and no command of this project deletes them.
 
 
 Each release publishes one archive per supported target plus a `SHA256SUMS` file, and
-its metadata is served as JSON beside the installer. The installer reads that JSON and never
-GitHub's API or HTML, so a change in GitHub's pages cannot break an installation.
+its metadata is served as JSON beside the installer. The installer resolves a release from
+that JSON, never from GitHub's API or HTML, so a change in GitHub's pages cannot break an
+installation. The one call to GitHub it can make is the optional provenance check below,
+through the GitHub CLI.
 
 ## Security model
 
@@ -232,7 +248,8 @@ What is protected, and how:
 What remains trusted: GitHub Pages serving the metadata, GitHub Releases serving the
 artifacts, and the release pipeline that produced both. Checksums bind the artifact to the
 metadata; they do not, on their own, prove who wrote the metadata. That is what provenance
-is for: every release archive is attested by the release workflow, and where the GitHub CLI
+is for: every release archive since v0.20.0 is attested by the release workflow (earlier ones
+carry their checksums only), and where the GitHub CLI
 is installed and signed in the installer asks it whether this archive was built by this
 repository's workflow. The closing report says which it verified — `provenance (…) and
 checksum`, or `checksum only` with the reason. `MAJORDOMUS_REQUIRE_PROVENANCE=1` installs
@@ -287,7 +304,7 @@ For contributors, not for installation. The repository's own tooling is document
 `CONTRIBUTING.md`:
 
 ```bash
-git clone https://github.com/korczis/prismatic-majordomus
+git clone https://github.com/korczis/prismatic-majordomus majordomus
 cd majordomus
 cargo build --release --manifest-path apps/majordomus-cli/Cargo.toml
 ```

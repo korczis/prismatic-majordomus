@@ -1,0 +1,42 @@
+id: the-owner-directs-work-from-the-ui
+title: The owner directs the repository's development from the UI, from an intent to the move that starts its next issue
+statement: "A person opens one screen of the UI, picks an intent, and reads what serves it — its milestones, their issues, the waves the dependencies allow, the graph of what waits for what, which issue is ready, active or blocked and why — and reaches from there the move that starts, verifies or finishes an issue and the evidence that proves it, without pasting a prompt into a terminal to find out where the work stands."
+invariants:
+  - The workspace is a projection of intents.list, plan.roadmap, plan.issues and plan.waves; it stores nothing and decides no status, wave or readiness of its own
+  - A new intent, milestone or issue appears in the workspace with no registration anywhere but its own record
+  - A move is made by plan.transition as an execution on the server, which refuses an illegal move and names why; the screen never edits a record
+  - A reading that is not of the repository as it is now says so on the panel it fed
+non_goals:
+  - A second planning engine, wave allocator or status vocabulary in the UI
+  - Mutation from the published site, which serves no runtime
+milestones:
+  - idd-workspace
+  - idd-reads-at-a-glance
+satisfaction:
+  - id: workspace-is-derived
+    criterion: /ui/idd shows a chosen intent's milestones, issues, waves and dependency graph read only from the plan's capabilities, an issue added to the plan appears there with no other edit, and an intent it does not know is refused by name
+    evidence: test
+    ref: apps/majordomus-cli/tests/ui_idd.rs
+  - id: next-move-is-reachable
+    criterion: Every issue the workspace lists leads to its move panel on the same screen, where plan.transition is started as an execution through the form the Cockpit's issue page renders, the screen read again shows the status the record now derives, and a move the plan does not allow, or a request from another origin, is refused by the server with its reason
+    evidence: test
+    ref: apps/majordomus-cli/tests/ui_idd_moves.rs
+  - id: the-workspace-follows-moves
+    criterion: The workspace follows the executions its server runs over the one live channel the page names, a move that ends there is followed by the screen read again with the status the record now derives, the line beside the read time says what that channel is doing, and no other screen claims to follow it
+    evidence: test
+    ref: apps/majordomus-cli/tests/ui_idd_live.rs
+  - id: the-workspace-shows-why-and-what-moved
+    criterion: The workspace shows, for the open intent, why it stands where it stands — each unmet criterion with its evidence state, the command that reproduces it and the issues serving it, the work realising the intent and its drift — asked on its own route so the screen's first paint does not wait for it, and every move this server made on the intent's issues, newest first, each leading to its execution
+    evidence: test
+    ref: apps/majordomus-cli/tests/ui_idd_evidence.rs
+  - id: the-loop-is-walked-end-to-end
+    criterion: In a real browser on one commit, a test intent is picked in the workspace, its issues and their dependency are read, an issue is started from its move form, its work is tested by a real check recorded as evidence, it is verified from another tab while the first shows it without navigating, it is done, and its standing is explained and its evidence reproduced
+    evidence: test
+    ref: test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh
+  - id: the-workspace-reads-at-a-glance
+    criterion: The workspace reads in the order a person asks, every id and chip on it is a link, its headline numbers are the chosen intent's, its record texts render as prose, it offers one primary action, and the ui audit of /ui/idd finds nothing at any width with the bare-issue-id and raw-markdown rules on
+    evidence: test
+    ref: test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh
+governance:
+  - rule:project.work-serves-a-declared-intent
+  - rule:project.derived-once
