@@ -8,7 +8,10 @@
 #      run permits it;
 #   2. while the evidence supports fewer claims than are declared, the generated guarantees
 #      index, docs/SITE_CLAIMS.md and the site's data say a test is "to prove" a claim, never
-#      that it "proves" one, and the homepage copy says no "proven".
+#      that it "proves" one, and the homepage copy says no "proven";
+#   3. homepage.toml [promises] declares each word of delivered value the proof scorecard's
+#      tests would settle once, with no claim permitting it (I3350), so removing one, or
+#      naming a claim for it, is a red case and not a silent widening of what the copy may say.
 . "$ROOT/test/lib.sh"
 command -v jq >/dev/null 2>&1 || skip "no jq"
 DECL="$ROOT/site/data/homepage.toml"
@@ -47,4 +50,15 @@ if [ "$supported" -lt "$declared" ]; then
   done
   [ "$bad" = 0 ] || exit 1
 fi
+
+# ------------------------------------------------------- 3. the value words wait for a claim
+for word in 'faster' 'cheaper' 'fewer interventions' 'less human effort' 'less effort' \
+  'fewer reruns' 'saves time' 'more reliable' 'speeds up' 'speed-up' 'recovers without loss' \
+  'pays for itself'; do
+  n="$(printf '%s\n' "$promises" | grep -cFx "\"$word\" = \"\"" || true)"
+  [ "$n" = 1 ] || {
+    echo "    homepage.toml [promises] declares \"$word\" = \"\" $n time(s), not once"
+    exit 1
+  }
+done
 exit 0
