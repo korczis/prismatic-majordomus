@@ -1,0 +1,33 @@
+id: I3915
+milestone: landing-survives-any-session
+title: "A combined top is composed by a typed command from members declared in a tracked train manifest"
+slug: a-train-is-composed-by-a-command
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "majordomus prs compose builds a combined top from a tracked train manifest under .ai/repo/integration/trains/ that lists its members (a branch head or a source patch, with its seat, its issue and its order constraints) and its base. It composes them in order on a scratch index, names each member that does not apply, and only then runs one derive and opens or updates the train pull request. Two machines composing the same manifest produce the same member list and the same tree before the derive; the derived output is the derive's, which ADR 0101 does not hold deterministic per tree."
+why: "Trains 3a, 3b and 4 were composed by shell scripts under ~/.cache/mj-e7 and ~/.cache/mj-a3; when the seats holding them died on 2026-10-22 the next seat had to reconstruct the order from a ledger, and each train needed two or three fix commits for reds the composition could have found."
+current_state: "train.rs reads stacked pull requests and refs/prep only; prs compose was planned in ADR 0167 and never landed; train member order lives in session caches."
+desired_state: "A seat composes a train with one command from its manifest; another seat on another machine composes the same pre-derive tree from the same manifest."
+scope:
+  - "apps/majordomus-cli/src/integration/train.rs"
+  - "apps/majordomus-cli/src/commands/prs.rs"
+  - ".ai/repo/integration/trains"
+  - "apps/majordomus-cli/tests/integration_drain.rs"
+  - "docs/INTEGRATION.md"
+  - ".ai/repo/project/issues/I3915.yaml"
+acceptance_criteria:
+  - "compose applies the manifest's members in order on a scratch index and names each member that does not apply"
+  - "Two compositions of one manifest give the same member list and the same pre-derive tree (case a_train_manifest_composes_one_tree)"
+  - "No member order is read from a session cache"
+validation:
+  - "bin/majordomus plan validate"
+  - "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- integration::train"
+evidence_required:
+  - "trains_are_composed"
+depends_on:
+  - "I3910"
+serves:
+  - "landing-survives-any-session#trains-are-composed"
+created_at: 2026-10-22
+updated_at: 2026-10-22

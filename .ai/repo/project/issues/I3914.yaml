@@ -1,0 +1,33 @@
+id: I3914
+milestone: landing-survives-any-session
+title: "A standing approval is one owner-attributed record in the repository, each machine reports whether it carries it, and only the owner writes it"
+slug: a-standing-approval-is-declared-once
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "The owner's standing approvals are declared as dated, owner-attributed records under .ai/repo/autonomy, each with the owner's words and its bounds. majordomus autonomy status reports per machine which declared approval its Claude Code settings carry and which they lack. autonomy apply writes the missing ones into the user settings with $defaults kept first, and refuses to run inside an agent session (CLAUDECODE set, or no terminal) and without an interactive confirmation, so no session writes its own permissions through the binary. The two rules that disagree about who writes an approval are reconciled into one. Built on I2790's autonomy reading, which is on branch feature/the-autonomy-a-session-has-is-measured (#1311) and must land first."
+why: "On 2026-10-22 every landing attempt from a session was refused as Merge Without Review and every attempt to add the owner's approval was refused as Self-Modification; the approvals the owner had granted lived in one machine's settings only, and Claude Code ignores autoMode in a committed project settings file."
+current_state: "Rule a-standing-approval-is-written-where-permissions-are-read v1 says the worker writes ~/.claude/settings.json; rule the-cooperation-model-is-the-owners-word v2:107-110 says a session hands the owner the text; I2790 is not on master and its non_scope forbids writing settings."
+desired_state: "One rule says the owner writes an approval; the repository lists every standing approval; status names the missing ones per machine; apply, run interactively by the owner, adds them and changes nothing else, and refuses inside a session."
+scope:
+  - ".ai/repo/autonomy"
+  - "apps/majordomus-cli/src/autonomy"
+  - ".ai/repo/rules/project/a-standing-approval-is-written-where-permissions-are-read.v2.md"
+  - "docs/AUTONOMY.md"
+  - ".ai/repo/project/issues/I3914.yaml"
+acceptance_criteria:
+  - "Each declared approval names its date, the owner's words and its bounds"
+  - "status lists, per settings layer, the declared approvals present and missing (case a_missing_approval_is_reported_per_machine)"
+  - "apply writes only missing approvals, keeps $defaults first, is idempotent, and refuses inside an agent session or without confirmation"
+  - "Exactly one rule states who writes an approval, and it is the owner"
+validation:
+  - "bin/majordomus plan validate"
+  - "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- autonomy::"
+evidence_required:
+  - "approvals_are_declared"
+depends_on:
+  - "I3910"
+serves:
+  - "landing-survives-any-session#approvals-are-declared"
+created_at: 2026-10-22
+updated_at: 2026-10-22

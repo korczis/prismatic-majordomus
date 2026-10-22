@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.6"
   },
   "registry": {
-    "fingerprint": "88dad26b6264527f9aa79e5d4a83fcd69629be1b5a78ac5a1fca127fed014dcf",
+    "fingerprint": "0706e0b424f71cd6fa1099d513f7a509662960a316f75c6c90b9c1ea011419da",
     "summary": {
-      "total": 3300,
+      "total": 3309,
       "builtin": 208,
-      "declarative": 3092,
+      "declarative": 3101,
       "by_kind": {
         "command": 32,
         "query": 176,
-        "resource": 3092
+        "resource": 3101
       },
       "by_stability": {
         "behaviorally_verified": 143,
         "experimental": 55,
-        "implemented": 3102
+        "implemented": 3111
       },
       "mcp_tools": 197,
-      "mcp_resources": 3147,
+      "mcp_resources": 3156,
       "http_routes": 202,
       "cli_commands": 112,
       "modules": 92,
@@ -85772,7 +85772,7 @@
         "title": "critique",
         "description": "Declarative objects of kind 'critique' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 30,
+        "capabilities": 31,
         "capability_ids": []
       },
       {
@@ -86173,7 +86173,7 @@
         "title": "intent",
         "description": "Declarative objects of kind 'intent' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 34,
+        "capabilities": 35,
         "capability_ids": []
       },
       {
@@ -86222,7 +86222,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 888,
+        "capabilities": 894,
         "capability_ids": []
       },
       {
@@ -86338,7 +86338,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 101,
+        "capabilities": 102,
         "capability_ids": []
       },
       {
@@ -86889,7 +86889,7 @@
     ]
   },
   "index": {
-    "fingerprint": "6abcd36d1e222ec184c9dc96e87d39540e0ebc8bb109643f1e14fa72c4f7c11c",
+    "fingerprint": "e9d18236df79ce1fbcbec43943c21409863e6e5fb24ab46ee77c8e2f037f32d0",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -86919,7 +86919,7 @@
       "claim": 250,
       "command": 31,
       "context": 39,
-      "critique": 30,
+      "critique": 31,
       "deployment": 1,
       "derive-offload": 1,
       "distribution-model": 1,
@@ -86928,11 +86928,11 @@
       "feature": 29,
       "gap": 4,
       "implementation": 52,
-      "intent": 34,
-      "issue": 888,
+      "intent": 35,
+      "issue": 894,
       "knowledge": 58,
       "mesh-declaration": 1,
-      "milestone": 101,
+      "milestone": 102,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -93285,6 +93285,17 @@
         "bytes": 2928
       },
       {
+        "uri": "majordomus://critique/landing-survives-any-session",
+        "kind": "critique",
+        "identity": "landing-survives-any-session",
+        "title": "landing-survives-any-session",
+        "description": "2034d4a3f0b",
+        "path": ".ai/repo/project/critiques/landing-survives-any-session.yaml",
+        "section": "project",
+        "source_class": "critique",
+        "bytes": 8343
+      },
+      {
         "uri": "majordomus://critique/nothing-in-the-mesh-waits-on-something-dead",
         "kind": "critique",
         "identity": "nothing-in-the-mesh-waits-on-something-dead",
@@ -94170,7 +94181,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 769573
+        "bytes": 777106
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -97844,6 +97855,17 @@
         "section": "project",
         "source_class": "intent",
         "bytes": 2325
+      },
+      {
+        "uri": "majordomus://intent/landing-survives-any-session",
+        "kind": "intent",
+        "identity": "landing-survives-any-session",
+        "title": "Landing green work survives any session, any restart and any machine",
+        "description": "Landing green work on master never waits on a person or on one session staying alive. On 2026-10-22 a restart of one machine ended every session there, and with them the landing seat, the release seat and the loop that landed green trains; nothing took over, the queue sat unread for hours, and the owner had to fast-forward master by hand. The owner asked for it to be as robust as possible and as autonomous as possible, for every instance on the mesh, solved systemically: one typed executor lands every green head, its state lives on origin, a seat a dead holder left is taken over, the executor survives a restart, the owner's standing approvals are declared once, and trains are composed by a command.",
+        "path": ".ai/repo/project/intents/landing-survives-any-session.yaml",
+        "section": "project",
+        "source_class": "intent",
+        "bytes": 4072
       },
       {
         "uri": "majordomus://intent/nothing-in-the-mesh-waits-on-something-dead",
@@ -107757,6 +107779,72 @@
         "bytes": 2703
       },
       {
+        "uri": "majordomus://issue/I3910",
+        "kind": "issue",
+        "identity": "I3910",
+        "title": "The integration executor fast-forwards master to every green head, a combined top included, and nothing else lands",
+        "description": "majordomus prs drain is the one way work reaches master, and it lands by a non-forced fast-forward of master to the head its checks judged green, never by a merge commit: the owner decided on 2026-10-22 (answering how the autonomous lander moves master) that landing is a fast-forward, because only a fast-forward is a compare-and-swap the forge enforces with protection strict: false. A combined top (an integration/train-* pull request whose head contains master and whose ci is success on that head) is landed like any pull request; one a train carries is held by the label hold until the train lands, and is then classified Redundant (the forge marks it merged); the drain closes nothing. The drain does not land while master's own ci is red unless the head is the red's named carrier (I2709). Rule the-cooperation-model-is-the-owners-word moves to version 3 naming prs drain as the guarded lander, with no --admin and no queue file, and ADR 0167 carries a dated amendment saying the same.",
+        "path": ".ai/repo/project/issues/I3910.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4332
+      },
+      {
+        "uri": "majordomus://issue/I3911",
+        "kind": "issue",
+        "identity": "I3911",
+        "title": "The executor reads its audit trail, its halt and its lease from origin, so any clone continues it and a stale holder is refused",
+        "description": "The integration audit trail, the halt left by an unverified landing and the executor lease move from one clone (.git/majordomus/integration/events.jsonl, an flock under the common git dir) to a ref on origin, appended by non-forced pushes. The lease names its holder, its host and its expiry, and the holder renews it with a non-forced push immediately before every landing, so a holder that slept past its expiry and wakes after another clone took over is refused before it lands. The --continuous gate counts verified landings from that ref, so a takeover machine is admitted with the same record and stopped by the same halt.",
+        "path": ".ai/repo/project/issues/I3911.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2955
+      },
+      {
+        "uri": "majordomus://issue/I3912",
+        "kind": "issue",
+        "identity": "I3912",
+        "title": "A seat whose holder stopped beating is reported vacant and offered to live sessions by capability",
+        "description": "A claim on a seat scope (the landing seat, the release seat) whose stream stopped beating is reported as a vacant seat by mesh.state and by majordomus monitor within one expiry, with the evidence I3182 classifies it on: a missing heartbeat is reported as such and is not declared a dead worker. The vacancy is offered by capability to live sessions through I3198's fenced offer; a session that accepts holds the seat under a new fencing epoch (I3174) and consumes the newest handover published for that seat. A runtime never takes a seat by itself: only a session that can do the seat's work accepts it.",
+        "path": ".ai/repo/project/issues/I3912.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2875
+      },
+      {
+        "uri": "majordomus://issue/I3913",
+        "kind": "issue",
+        "identity": "I3913",
+        "title": "The executor runs as a user service outside every agent session, restarted after a crash and never after a halt",
+        "description": "majordomus prs service install, run by the owner, writes a user service (launchd on macOS, systemd --user on Linux) through the one unit writer I2722 owns, running prs drain --continuous for this checkout; prs service status and uninstall manage it. The unit restarts the executor after an exit that is a crash or an outage, and never after a halt (an unverified landing) or a refusal, which keeps the halt of ADR 0101 D7 and the outage bound (CONTINUOUS_TRANSIENT_LIMIT, drain.rs:1886) in force. It logs under the local half and is never written without the owner running the command.",
+        "path": ".ai/repo/project/issues/I3913.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2635
+      },
+      {
+        "uri": "majordomus://issue/I3914",
+        "kind": "issue",
+        "identity": "I3914",
+        "title": "A standing approval is one owner-attributed record in the repository, each machine reports whether it carries it, and only the owner writes it",
+        "description": "The owner's standing approvals are declared as dated, owner-attributed records under .ai/repo/autonomy, each with the owner's words and its bounds. majordomus autonomy status reports per machine which declared approval its Claude Code settings carry and which they lack. autonomy apply writes the missing ones into the user settings with $defaults kept first, and refuses to run inside an agent session (CLAUDECODE set, or no terminal) and without an interactive confirmation, so no session writes its own permissions through the binary. The two rules that disagree about who writes an approval are reconciled into one. Built on I2790's autonomy reading, which is on branch feature/the-autonomy-a-session-has-is-measured (#1311) and must land first.",
+        "path": ".ai/repo/project/issues/I3914.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2949
+      },
+      {
+        "uri": "majordomus://issue/I3915",
+        "kind": "issue",
+        "identity": "I3915",
+        "title": "A combined top is composed by a typed command from members declared in a tracked train manifest",
+        "description": "majordomus prs compose builds a combined top from a tracked train manifest under .ai/repo/integration/trains/ that lists its members (a branch head or a source patch, with its seat, its issue and its order constraints) and its base. It composes them in order on a scratch index, names each member that does not apply, and only then runs one derive and opens or updates the train pull request. Two machines composing the same manifest produce the same member list and the same tree before the derive; the derived output is the derive's, which ADR 0101 does not hold deterministic per tree.",
+        "path": ".ai/repo/project/issues/I3915.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2409
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -109332,6 +109420,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 4043
+      },
+      {
+        "uri": "majordomus://milestone/landing-survives-any-session",
+        "kind": "milestone",
+        "identity": "landing-survives-any-session",
+        "title": "Landing green work survives any session, any restart and any machine",
+        "description": "Landing green work on master never waits on a person or on one session staying alive.",
+        "path": ".ai/repo/project/milestones/landing-survives-any-session.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 2761
       },
       {
         "uri": "majordomus://milestone/mcp-transports-are-reliable",
@@ -120569,7 +120668,7 @@
       "identity": [
         "intent"
       ],
-      "objects": 30
+      "objects": 31
     },
     {
       "name": "deployment",
@@ -120652,7 +120751,7 @@
       "identity": [
         "id"
       ],
-      "objects": 34
+      "objects": 35
     },
     {
       "name": "issue",
@@ -120662,7 +120761,7 @@
       "identity": [
         "id"
       ],
-      "objects": 888
+      "objects": 894
     },
     {
       "name": "knowledge",
@@ -120692,7 +120791,7 @@
       "identity": [
         "id"
       ],
-      "objects": 101
+      "objects": 102
     },
     {
       "name": "moment",

@@ -1,0 +1,37 @@
+id: I3910
+milestone: landing-survives-any-session
+title: "The integration executor fast-forwards master to every green head, a combined top included, and nothing else lands"
+slug: the-executor-lands-every-green-head
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "majordomus prs drain is the one way work reaches master, and it lands by a non-forced fast-forward of master to the head its checks judged green, never by a merge commit: the owner decided on 2026-10-22 (answering how the autonomous lander moves master) that landing is a fast-forward, because only a fast-forward is a compare-and-swap the forge enforces with protection strict: false. A combined top (an integration/train-* pull request whose head contains master and whose ci is success on that head) is landed like any pull request; one a train carries is held by the label hold until the train lands, and is then classified Redundant (the forge marks it merged); the drain closes nothing. The drain does not land while master's own ci is red unless the head is the red's named carrier (I2709). Rule the-cooperation-model-is-the-owners-word moves to version 3 naming prs drain as the guarded lander, with no --admin and no queue file, and ADR 0167 carries a dated amendment saying the same."
+why: "On 2026-10-22 the guarded lander was a 60 s loop inside session e7; a machine restart ended it, #1838 sat green and unlanded for hours, and the owner fast-forwarded master by hand. The executor already gates on the exact head and verifies, but has merged nothing since 2026-10-11 (#908). A review of this plan found that its landing (gh pr merge --merge --match-head-commit, drain.rs:2236-2244) pins the head and not master, so two executors could each land a merge, the second with a tree nobody judged; only the master^2 check after the fact catches it (drain.rs:2160-2170)."
+current_state: "Measured on master 2034d4a3f0b at 2026-10-22T14:00Z: prs drain --dry-run answers idle, nothing is ready, 13 pull requests need master brought in first (#1755 #1233 #1238 #1757 #1118 #1301 #1841 #1413 #1754 #1197 #1207 #1839 #1099); #1840 (train 4) is waiting_for_checks. The label policy hold has existed since 2026-10-04 (classify.rs:114), but the label was missing from the repository until 2026-10-22. Rule v2:74 and ADR 0167:110-111 allow --admin --merge, rule v2:92 fast-forwards, ADR 0167:135 speaks of merge-commit parents: no record decides the landing mode."
+desired_state: "A drain lands a green train by a fast-forward and verifies that master equals the decided head; a master that moved refuses the push and the drain decides again; rule v3 and ADR 0167 name prs drain, the fast-forward and no --admin."
+scope:
+  - "apps/majordomus-cli/src/integration/drain.rs"
+  - "apps/majordomus-cli/src/integration/classify.rs"
+  - "apps/majordomus-cli/src/integration/train.rs"
+  - "apps/majordomus-cli/tests/integration_drain.rs"
+  - ".ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v3.md"
+  - ".ai/repo/adrs/0167-work-moves-through-seats-on-the-mesh-and-lands-in-combined-tops.md"
+  - "docs/INTEGRATION.md"
+  - ".ai/repo/project/issues/I3910.yaml"
+acceptance_criteria:
+  - "A train pull request green on its head and containing master is ready, and a drain fast-forwards master to that head and verifies master equals it (case a_green_train_is_fast_forwarded_and_verified)"
+  - "A fast-forward refused because master moved is not an unverified landing: the drain observes again and decides from the new master"
+  - "A pull request labelled hold is never landed; one a landed train contains is classified Redundant, and the drain closes nothing"
+  - "While master's required check is red the drain lands only the red's named carrier (I2709)"
+  - "Rule v3 and ADR 0167 name prs drain as the lander and the fast-forward as its act; no document, rule or script names --admin or a queue file as a way to land"
+validation:
+  - "bin/majordomus plan validate"
+  - "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- integration::"
+  - "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test integration_drain"
+evidence_required:
+  - "one_executor"
+depends_on: []
+serves:
+  - "landing-survives-any-session#one-executor"
+created_at: 2026-10-22
+updated_at: 2026-10-22
