@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.6"
   },
   "registry": {
-    "fingerprint": "ef38b11d9bedf033ec3dd3b0585bce92890f9c1a9822a48566de22c9bafebc3d",
+    "fingerprint": "c3d0d9e42531a24cc918aac8fa3571d90fca17110a8da431439b76136fce1bcc",
     "summary": {
-      "total": 3313,
+      "total": 3315,
       "builtin": 208,
-      "declarative": 3105,
+      "declarative": 3107,
       "by_kind": {
         "command": 32,
         "query": 176,
-        "resource": 3105
+        "resource": 3107
       },
       "by_stability": {
         "behaviorally_verified": 143,
         "experimental": 55,
-        "implemented": 3115
+        "implemented": 3117
       },
       "mcp_tools": 197,
-      "mcp_resources": 3160,
+      "mcp_resources": 3162,
       "http_routes": 202,
       "cli_commands": 112,
       "modules": 92,
@@ -86222,7 +86222,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 898,
+        "capabilities": 900,
         "capability_ids": []
       },
       {
@@ -86889,7 +86889,7 @@
     ]
   },
   "index": {
-    "fingerprint": "d7ce52574acf5ecf8311df861d65953b14a168f9491ed5cd0e1c095a980f2228",
+    "fingerprint": "ceb8ace25adba35af5689d80779160a51e8edca247ebd5d7cf8a1b1517451d8a",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -86929,7 +86929,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 35,
-      "issue": 898,
+      "issue": 900,
       "knowledge": 58,
       "mesh-declaration": 1,
       "milestone": 102,
@@ -94181,7 +94181,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 795321
+        "bytes": 795748
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -107779,6 +107779,28 @@
         "bytes": 2703
       },
       {
+        "uri": "majordomus://issue/I3902",
+        "kind": "issue",
+        "identity": "I3902",
+        "title": "A hung Pages build is replaced by a declared bound, and the right tree is rebuilt, never redeployed",
+        "description": "GitHub's own Pages build that stays `building` or `queued` longer than deploy.build_hung_after (.ai/repo/ci/pages.yaml) is hung: `scripts/pages rebuild` replaces it and says why, a younger one is waited on with its own exit (13), and the scheduled publisher hands a build in flight of the right tree to the rebuild instead of redeploying an identical tree.",
+        "path": ".ai/repo/project/issues/I3902.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2840
+      },
+      {
+        "uri": "majordomus://issue/I3903",
+        "kind": "issue",
+        "identity": "I3903",
+        "title": "A stuck or superseded CI run is found and stopped by a declared bound, by a typed capability on a schedule",
+        "description": "A typed forge capability beside apps/majordomus-cli/src/integration/forge.rs lists the repository's in-flight GitHub Actions runs. It cancels three kinds: a run queued longer than its declared bound, a run in progress past its workflow's bound, and a pull-request run whose head is no longer its branch's head. Each cancellation is recorded with its reason in the integration audit trail. It runs on a schedule, the way queue.yml runs `majordomus prs`, and absorbs the cancel logic scripts/ci/release-path carries in shell.",
+        "path": ".ai/repo/project/issues/I3903.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2425
+      },
+      {
         "uri": "majordomus://issue/I3910",
         "kind": "issue",
         "identity": "I3910",
@@ -118848,7 +118870,7 @@
         "identity": "test/cases/625_a_rebuild_is_asked_only_when_it_helps.sh",
         "path": "test/cases/625_a_rebuild_is_asked_only_when_it_helps.sh",
         "source_class": "case",
-        "bytes": 10579
+        "bytes": 12880
       },
       {
         "uri": "majordomus://test/test/cases/62_session_divergence.sh",
@@ -120805,7 +120827,7 @@
       "identity": [
         "id"
       ],
-      "objects": 898
+      "objects": 900
     },
     {
       "name": "knowledge",

@@ -219,21 +219,36 @@ jobs:
         # deploy repairs — a push deploy that failed before publishing over a build that had
         # errored too — and asking to rebuild it would republish the stale site and skip the
         # deploy, every thirty minutes. test/cases/625 runs this step against both trees.
+        #
+        # A build of the right tree that is still `building` or `queued` is handed to the
+        # rebuild too (I3902): `scripts/pages rebuild` replaces it once it is older than
+        # deploy.build_hung_after and otherwise waits on it (exit 13). Before this, a hung
+        # build of the right tree chose `deploy`: forty minutes of rustdoc, UI and Cockpit
+        # snapshots to push an identical tree, every thirty minutes.
         run: |
           state="$(scripts/pages built --porcelain 2>/dev/null | cut -f1)"
           published="$(git show origin/gh-pages:build.json 2>/dev/null | sed -n 's/^  "commit": *"\([0-9a-f]*\)".*/\1/p')"
           head="$(git rev-parse HEAD)"
-          if [ "$state" = errored ] && [ "$published" = "$head" ]; then remedy=rebuild; else remedy=deploy; fi
+          case "$state" in errored|building|queued) right_tree_build=1 ;; *) right_tree_build=0 ;; esac
+          if [ "$right_tree_build" = 1 ] && [ "$published" = "$head" ]; then remedy=rebuild; else remedy=deploy; fi
           echo "remedy=$remedy" >> "$GITHUB_OUTPUT"
           echo "the publication is owed; gh-pages carries ${published:-no readable commit} for $head and GitHub's build of it is ${state:-unreadable}, so the remedy is $remedy"
           printf '\ngh-pages carries %s for %s; GitHub'"'"'s build of it is %s, so the remedy is **%s**.\n' "${published:-no readable commit}" "$head" "${state:-unreadable}" "$remedy" >> "$GITHUB_STEP_SUMMARY"
 
-      # the remedy for a build that errored on a tree that is already right
+      # the remedy for a build that errored or hung on a tree that is already right; a build
+      # that is in flight and not hung yet (13) is waited on, and the next schedule asks again
       - id: ask-rebuild
         if: steps.remedy.outputs.remedy == 'rebuild'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: scripts/pages rebuild
+        run: |
+          rc=0
+          scripts/pages rebuild || rc=$?
+          case "$rc" in
+            0)  ;;
+            13) echo "::notice title=Pages build in flight::GitHub's build of the right tree is still in flight and not hung yet; the next schedule asks again" ;;
+            *)  exit "$rc" ;;
+          esac
 
   # The crate's Rust API reference, as the published surface `rustdoc` (ADR 0086). A job of its
   # own so that the deploy job keeps no Rust toolchain; its build cache is setup-rust's, which

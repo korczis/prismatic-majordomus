@@ -63597,6 +63597,93 @@
         }
       },
       {
+        "id": "majordomus://issue/I3902",
+        "kind": "issue",
+        "label": "I3902",
+        "summary": "A hung Pages build is replaced by a declared bound, and the right tree is rebuilt, never redeployed",
+        "route": "/cockpit/objects/issue/i3902",
+        "source": ".ai/repo/project/issues/I3902.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A build of this commit in flight past deploy.build_hung_after is replaced, and the output says it was hung",
+            "A hung build of another commit is replaced as well; a young build of either is waited on with exit 13 and no request",
+            "A build whose start time cannot be read is never taken for an old one",
+            "The scheduled remedy hands an errored or in-flight build of the trunk's own tree to the rebuild, and deploys only a stale tree"
+          ],
+          "created_at": "2026-10-22",
+          "current_state": "A hung GitHub Pages build blocks publication until it ends on its own; nothing replaces it.",
+          "depends_on": [],
+          "desired_state": "A build in flight past its declared bound is replaced within one schedule; a right tree is never redeployed to get past its own build; every refusal says which of not-yet, unreadable or refused it is.",
+          "evidence_required": [
+            "case_625"
+          ],
+          "milestone": "the-runtime-supervises-itself",
+          "non_scope": [
+            "Stuck or stale GitHub Actions runs: I3903.",
+            "Serving the site from a Pages artifact instead of the gh-pages branch, which would remove GitHub's second build: an ADR first, because gh-pages is also the evidence store (ADR 0087)."
+          ],
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/ci/pages.yaml",
+            "scripts/pages",
+            ".github/workflows/pages.yml",
+            "test/cases/625_a_rebuild_is_asked_only_when_it_helps.sh",
+            ".ai/repo/project/issues/I3902.yaml",
+            ".ai/repo/project/issues/I3903.yaml"
+          ],
+          "slug": "a-deploy-is-done-when-the-site-serves-it",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "bash test/run.sh 625_a_rebuild_is_asked_only_when_it_helps"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3903",
+        "kind": "issue",
+        "label": "I3903",
+        "summary": "A stuck or superseded CI run is found and stopped by a declared bound, by a typed capability on a schedule",
+        "route": "/cockpit/objects/issue/i3903",
+        "source": ".ai/repo/project/issues/I3903.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A queued or in-progress run past its declared bound is cancelled once, with its reason recorded",
+            "A pull-request run whose head moved is cancelled; a run of master, a release, a tag or a deploy never is for that reason",
+            "A dry run decides without acting, and the decision is the same"
+          ],
+          "created_at": "2026-10-22",
+          "current_state": "Stuck and superseded runs hold runners until GitHub's six-hour limit or a person cancels them.",
+          "depends_on": [
+            "I3902"
+          ],
+          "evidence_required": [
+            "supervise_unit_tests"
+          ],
+          "milestone": "the-runtime-supervises-itself",
+          "non_scope": [
+            "Hung Pages builds: I3902."
+          ],
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/integration",
+            "apps/majordomus-cli/src/capability/builtin",
+            ".ai/repo/ci",
+            ".github/workflows",
+            "scripts/ci/release-path",
+            "docs/CI.md"
+          ],
+          "slug": "a-stuck-run-is-stopped-by-its-bound",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "cargo test --lib integration"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I3910",
         "kind": "issue",
         "label": "I3910",
@@ -122932,6 +123019,31 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3902",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3902",
+        "target": "majordomus://milestone/the-runtime-supervises-itself",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3903",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3903",
+        "target": "majordomus://issue/I3902",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3903",
+        "target": "majordomus://milestone/the-runtime-supervises-itself",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I3910",
         "target": "kind:issue",
         "kind": "is_a"
@@ -134293,8 +134405,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3767,
-      "edges": 8710,
+      "nodes": 3769,
+      "edges": 8715,
       "acyclic": false,
       "truncated": false
     }
