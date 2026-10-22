@@ -6,7 +6,7 @@ template = "page.html"
 lang = "cs"
 translated_from = "many-machines-one-journal/"
 source_digest = "1b199fc725a783a1a9a6d70735ed621ebfc5e0fe7ed4832113c3ff70d80121f1"
-related = ["kresla-ne-jmena/", "zabrano-driv-nez-se-stavi/", "session-skonci-prace-ne/"]
+related = ["kresla-ne-jmena/", "zabrano-driv-nez-se-stavi/", "session-skonci-prace-ne/", "pochybnost-rozhodne-experiment/"]
 [extra.translations]
 en = "many-machines-one-journal/"
 +++

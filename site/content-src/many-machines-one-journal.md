@@ -4,7 +4,7 @@ description = "A peer board lives in one process's memory, so a session on anoth
 template = "page.html"
 [extra]
 lang = "en"
-related = ["seats-not-names/", "claimed-before-it-is-built/", "a-session-ends-the-work-does-not/"]
+related = ["seats-not-names/", "claimed-before-it-is-built/", "a-session-ends-the-work-does-not/", "a-doubt-is-settled-by-an-experiment/"]
 [extra.translations]
 cs = "mnoho-stroju-jeden-denik/"
 +++
