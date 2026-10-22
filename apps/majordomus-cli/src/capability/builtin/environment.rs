@@ -251,7 +251,7 @@ pub fn module() -> ModuleDescriptor {
                 description: "One snapshot of this checkout: project identity, repository identity, version control, declared toolchains, what the layer holds counted per kind, the workflows the runner describes, the provider projections against the policy that renders them, and the local services with the address a running server published. Every value carries where it came from.",
                 input: EnvironmentInput,
                 output: RepositoryEnvironment,
-                stability: Stability::BehaviorallyVerified,
+                stability: Stability::Implemented,
                 exposure: Exposure {
                     mcp: Some(McpExposure {
                         tool: Some("majordomus_environment".into()),
@@ -284,7 +284,7 @@ pub fn module() -> ModuleDescriptor {
                 description: "The provenance of the snapshot: for each field, what decided it — a compile-time constant, a file, a command, or the cache — which resolver read it, and how far it can be trusted. Narrow it to one field, or to a prefix, by name.",
                 input: ExplainInput,
                 output: EnvironmentProvenance,
-                stability: Stability::BehaviorallyVerified,
+                stability: Stability::Implemented,
                 exposure: Exposure {
                     mcp: mcp("majordomus_environment_explain"),
                     http: get("/api/v1/environment/explain"),
@@ -299,7 +299,7 @@ pub fn module() -> ModuleDescriptor {
                 description: "One verdict per claim about this checkout — git; the episode, its briefing, the task and the handover; the policy, the rule corpus and the ADRs; the shared server and the MCP, API and Cockpit surfaces it serves; the peer board; recorded test runs, rule enforcement, provider projections, generated documentation and the deployment — each `verified`, `active`, `fresh`, `stale`, `degraded`, `unavailable`, `failed`, `unknown` or `not_applicable`, with the evidence it rests on. A verdict that asserts something is in force cannot be produced without evidence. The same value the command line prints and the entry banner summarises.",
                 input: PreflightInput,
                 output: Preflight,
-                stability: Stability::BehaviorallyVerified,
+                stability: Stability::Implemented,
                 exposure: Exposure {
                     mcp: Some(McpExposure {
                         tool: Some("majordomus_preflight".into()),

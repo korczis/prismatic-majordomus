@@ -28,7 +28,7 @@ pub fn module() -> ModuleDescriptor {
                 description: "The counters of this process: repository scans, index and registry builds, schema generations, projection builds, executions, handler invocations, cache hits, misses and evictions, and the phase timings, as they stand now.",
                 input: Empty,
                 output: CounterSnapshot,
-                stability: Stability::BehaviorallyVerified,
+                stability: Stability::Implemented,
                 exposure: Exposure { mcp: mcp("majordomus_perf"), http: get("/api/v1/perf"), cli: None },
                 tags: ["performance", "introspection"],
                 handler: perf_counters,

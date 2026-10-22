@@ -88,11 +88,12 @@ pages still render, say so, and remain fully usable.
 | `/cockpit/assets/<file>` | the stylesheet, the scripts, the vendored libraries | `share/cockpit/` |
 
 This table is checked against the dispatcher, not kept beside it. Every plain route
-`cockpit::STATIC_ROUTES` names has a row here, and no row names a plain route the dispatcher
-does not answer; `cockpit::tests::the_documented_route_table_is_the_dispatchers` fails the
-build otherwise. Editing a row's description is free. Adding or removing a route starts in
-`STATIC_ROUTES` beside the dispatcher's `match`, and the navigation area it belongs to in
-`nav::areas()` is checked by `every_area_has_a_route_and_every_route_its_area`.
+`cockpit::static_routes()` names has a row here, and no row names a plain route the
+dispatcher does not answer; `cockpit::tests::the_documented_route_table_is_the_dispatchers`
+fails the build otherwise. Editing a row's description is free. The routes are derived from
+the navigation: adding an area to `nav::areas()` adds its route, a page no area names is
+added to `PAGES_WITHOUT_AN_AREA` beside the dispatcher's `match`, and
+`every_plain_arm_of_the_dispatcher_is_a_static_route` holds the `match` to both.
 
 Every route is a deep link: the filters are query parameters, a refresh loses nothing, and
 a page can be sent to somebody.

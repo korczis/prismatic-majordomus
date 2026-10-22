@@ -255,7 +255,7 @@ pub fn module() -> ModuleDescriptor {
                 description: "One issue with the branches that name it — local, and remote-tracking where only the remote still has the branch — and, for each, the commits it holds that the trunk did not: measured against the trunk while the branch is open, and against the first parent of the merge commit that brought it in once it is merged. A branch that reached the trunk without a merge commit of its own says so and claims nothing, because its commits cannot be told from the trunk's. The milestone comes from the canonical issue record, which is the one edge here that git does not hold, and `declared` says whether the project model has this id at all — a repository with no plan still gets the branches, and a typo still cannot read as work nobody did.",
                 input: TraceIssueInput,
                 output: IssueTrace,
-                stability: Stability::BehaviorallyVerified,
+                stability: Stability::Implemented,
                 exposure: Exposure {
                     mcp: mcp("majordomus_trace_issue"),
                     http: get("/api/v1/trace/issue"),
@@ -271,7 +271,7 @@ pub fn module() -> ModuleDescriptor {
                 description: "One commit with the issue and milestone it served, or the fact that none can be found. Attributed when exactly one issue's branches hold it, ambiguous when branches naming two issues do, and unattributed when no branch naming an issue holds it at all — which is either work committed without an execution contract or a branch deleted after its merge, and the answer says so rather than guessing between them.",
                 input: TraceCommitInput,
                 output: CommitAttribution,
-                stability: Stability::BehaviorallyVerified,
+                stability: Stability::Implemented,
                 exposure: Exposure {
                     mcp: mcp("majordomus_trace_commit"),
                     http: get("/api/v1/trace/commit"),
@@ -287,7 +287,7 @@ pub fn module() -> ModuleDescriptor {
                 description: "Every issue at least one branch names with its branches and commits, every declared issue no branch names, and the newest stretch of the trunk with each commit attributed to the issue whose branches hold it or reported as unattributed. The tallies count both sides, so the proportion of the trunk that no execution contract accounts for is a number rather than an impression. Read from git on every call: the history changes outside this process.",
                 input: TraceReportInput,
                 output: TraceReport,
-                stability: Stability::BehaviorallyVerified,
+                stability: Stability::Implemented,
                 exposure: Exposure {
                     mcp: Some(crate::capability::model::McpExposure {
                         tool: Some("majordomus_traceability".into()),

@@ -4423,6 +4423,8 @@ pub enum GenerateTarget {
     Deployment,
     /// docs/generated/graph.json and its schema: the composed graph as data
     Graph,
+    /// docs/generated/entities.json: the site's entity projection of the composed graph
+    Entities,
     /// The design system's projections, from share/design/tokens.yaml: the stylesheets
     /// both Tailwind builds import, the tokens and the declaration compiled into the crate,
     /// every copy of the brand, site/data/registry/design.json and docs/generated/design.*

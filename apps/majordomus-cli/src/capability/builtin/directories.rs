@@ -591,7 +591,7 @@ pub fn module() -> ModuleDescriptor {
                 description: "Every directory of the layer the index knows, with the contract it declares, whether it owes one and which contract decided, and — for a named path, or when asked for everywhere — the effective chain composed from the root down, least specific first.",
                 input: DirectoriesInput,
                 output: DirectoryReport,
-                stability: Stability::BehaviorallyVerified,
+                stability: Stability::Implemented,
                 exposure: Exposure {
                     mcp: Some(McpExposure {
                         tool: Some("majordomus_directories".into()),

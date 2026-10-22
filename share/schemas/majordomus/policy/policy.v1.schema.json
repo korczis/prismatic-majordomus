@@ -248,6 +248,60 @@
         }
       }
     },
+    "coverage": {
+      "type": "object",
+      "description": "The evidence the coverage matrix (health.coverage, I1011) holds each executable capability to. A capability requires the columns of every rule whose kind and stability match it; a column no rule requires is reported and is never a gap. Absent requires nothing.",
+      "additionalProperties": false,
+      "properties": {
+        "require": {
+          "type": "array",
+          "description": "The rules, in order. Each adds its columns to every capability it matches.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "columns"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "query",
+                  "command"
+                ],
+                "description": "The capability kind the rule applies to; absent is every kind."
+              },
+              "stability": {
+                "type": "string",
+                "enum": [
+                  "implemented",
+                  "behaviorally_verified",
+                  "experimental",
+                  "planned",
+                  "unsupported"
+                ],
+                "description": "The stability the rule applies to; absent is every stability."
+              },
+              "columns": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "exposed",
+                    "documented",
+                    "tested",
+                    "enforced",
+                    "benchmarked"
+                  ]
+                },
+                "description": "The columns a matching capability must resolve."
+              }
+            }
+          }
+        }
+      }
+    },
     "enforcement": {
       "type": "array",
       "items": {

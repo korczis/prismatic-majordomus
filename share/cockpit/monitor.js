@@ -16,6 +16,16 @@ const INTERVAL_MS = 5000;
 /** The most rows the live list keeps; older ones fall off the bottom. */
 const MAX_ROWS = 500;
 
+/** The longest the page stays quiet after failures in a row before it asks again. */
+const MAX_QUIET_MS = 300_000;
+
+/** How long to stay quiet after `failures` failures in a row: the interval, doubled for each
+ * failure past the first, up to MAX_QUIET_MS. */
+function quietAfter(failures) {
+  if (failures <= 0) return 0;
+  return Math.min(INTERVAL_MS * 2 ** (failures - 1), MAX_QUIET_MS);
+}
+
 const frame = document.querySelector('[data-mj-monitor]');
 if (frame) {
   follow(frame);
@@ -95,17 +105,35 @@ function follow(frame) {
   const note = frame.querySelector('[data-mj-monitor-note]');
   let polling = 0;
   let busy = false;
+  // failures in a row, and the earliest moment the next sample may go out: a server that
+  // does not answer is asked less and less often, never once every interval (I1017)
+  let failures = 0;
+  let notBefore = 0;
+
+  const failed = () => {
+    failures += 1;
+    notBefore = Date.now() + quietAfter(failures);
+    if (note) note.textContent = 'The stream could not be read; the list shows the last answer.';
+  };
 
   async function sample() {
-    if (busy) return;
+    if (busy || Date.now() < notBefore) return;
     busy = true;
     try {
       const url = cursor ? `${source}&after=${encodeURIComponent(cursor)}` : source;
-      const answer = await api(url);
-      if (!answer.ok || !answer.body) {
-        if (note) note.textContent = 'The stream could not be read; the list shows the last answer.';
+      let answer;
+      try {
+        answer = await api(url);
+      } catch (e) {
+        failed(); // the network refused before any answer: fetch rejects, it does not return
         return;
       }
+      if (!answer.ok || !answer.body) {
+        failed();
+        return;
+      }
+      failures = 0;
+      notBefore = 0;
       const page = answer.body;
       const signals = page.signals || [];
       if (signals.length) {

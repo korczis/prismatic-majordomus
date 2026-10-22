@@ -17,6 +17,7 @@ pub(crate) mod automation;
 pub mod bench;
 pub mod build_identity;
 pub mod capability;
+pub mod capability_coverage;
 pub mod cli;
 pub mod cockpit;
 pub mod command_graph;
