@@ -1474,4 +1474,38 @@ fi
 # so a layout family added without the navbar is refused at its source.
 relay_check search "$ROOT/scripts/lib/search-check.mjs" "OK   search       " "FAIL search       "
 
+# 21. a page offers its other language, and the other language offers it back. A page that
+# names a counterpart (extra.alternate, ADR 0077) carries the hreflang pair in its head and the
+# locale switch in its body; both are read here from the built pages, never from a list. The
+# counterpart must be a page this build wrote, must declare the language the link claims for
+# it, and must name this page as its own counterpart: a switch that leads to a page with no way
+# back, or to a page in another language than it says, is refused.
+lc_n=0; lc_bad=0
+lc_route() { printf '%s' "$1" | sed -E 's|^https?://[^/]*||; s|/index\.html$|/|'; }
+lc_lang() { sed -n 's/.*<html lang="\([^"]*\)".*/\1/p' "$1" | sed -n '1p'; }
+while IFS= read -r f; do
+  [ -n "$f" ] || continue
+  lc_n=$((lc_n + 1))
+  rel="/${f#"$PUB"/}"; here="${rel%index.html}"
+  own="$(lc_lang "$f")"
+  pair="$(grep -o '<link rel="alternate" hreflang="[^"]*" href="[^"]*"' "$f" | grep -v "hreflang=\"$own\"" | sed -n '1p' || true)"
+  other_lang="$(printf '%s' "$pair" | sed -n 's/.*hreflang="\([^"]*\)".*/\1/p')"
+  other="$(lc_route "$(printf '%s' "$pair" | sed -n 's/.*href="\([^"]*\)".*/\1/p')")"
+  if [ -z "$other" ] || [ -z "$other_lang" ]; then bad locale "$here names its own language ($own) as an alternate and no other"; lc_bad=1; continue; fi
+  target="$PUB${other}index.html"
+  if [ ! -f "$target" ]; then bad locale "$here offers $other_lang at $other, which this build did not write"; lc_bad=1; continue; fi
+  got="$(lc_lang "$target")"
+  [ "$got" = "$other_lang" ] || { bad locale "$here offers $other as $other_lang, and that page declares ${got:-no language}"; lc_bad=1; }
+  back="$(grep -o '<link rel="alternate" hreflang="[^"]*" href="[^"]*"' "$target" | grep "hreflang=\"$own\"" | sed -n 's/.*href="\([^"]*\)".*/\1/p' | sed -n '1p' || true)"
+  [ "$(lc_route "$back")" = "$here" ] || { bad locale "$here offers $other, and $other does not offer $here back"; lc_bad=1; }
+  grep -q 'data-locale-switch' "$f" || { bad locale "$here names a counterpart in its head and draws no locale switch"; lc_bad=1; }
+  sw="$(tr '\n' ' ' < "$f" | sed 's/.*data-locale-switch//; s/<\/nav>.*//' | grep -o 'href="[^"]*"' | sed -n 's/href="\([^"]*\)"/\1/p' | sed -n '1p' || true)"
+  [ "$(lc_route "$sw")" = "$other" ] || { bad locale "$here: the switch leads to ${sw:-nowhere}, the head says $other"; lc_bad=1; }
+done <<EOF
+$(grep -rl --include=index.html '<link rel="alternate" hreflang=' "$PUB" 2>/dev/null | LC_ALL=C sort || true)
+EOF
+stray="$(grep -rl --include=index.html 'data-locale-switch' "$PUB" 2>/dev/null | while IFS= read -r f; do grep -q '<link rel="alternate" hreflang=' "$f" || printf '%s ' "/${f#"$PUB"/}"; done || true)"
+[ -z "$stray" ] || { bad locale "a locale switch on a page whose head names no counterpart: $stray"; lc_bad=1; }
+[ "$lc_bad" = 0 ] && ok locale "$lc_n page(s) offer another language; each counterpart is built, declares that language and offers the page back"
+
 printf 'site-check: %s failure(s)\n' "$fails"; [ "$fails" = 0 ] && exit 0 || exit 10

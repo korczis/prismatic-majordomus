@@ -1,0 +1,12 @@
+{#- The locale switch: where a page names a counterpart in another language, the reader is
+    offered it. Rendered from the same two front-matter keys base.html writes the hreflang
+    links from (extra.alternate, extra.alternate_lang; ADR 0077), so a page that declares no
+    counterpart draws nothing and no list of translated pages is typed anywhere. The labels
+    are the language codes the pages themselves declare. scripts/site-check holds every
+    switch to a counterpart that is built and that offers this page back. -#}
+{%- if page is defined and page.extra.alternate is defined %}
+<nav aria-label="Language" data-locale-switch class="mx-auto flex max-w-7xl justify-end gap-2 px-4 pt-4 text-sm">
+  <span lang="{{ page_lang }}" aria-current="true" class="rounded-base border border-default px-3 py-2 font-medium text-heading">{{ page_lang | upper }}</span>
+  <a lang="{{ page.extra.alternate_lang }}" hreflang="{{ page.extra.alternate_lang }}" rel="alternate" href="{{ get_url(path=page.extra.alternate, trailing_slash=true) }}" class="rounded-base border border-default px-3 py-2 text-body hover:underline">{{ page.extra.alternate_lang | upper }}</a>
+</nav>
+{%- endif %}
