@@ -1850,11 +1850,24 @@ if [ -n "$offered" ]; then
   [ -z "$other_offers" ] \
     || { bad release "the homepage carries data-release ${other_offers% } beside the ${offered} /build.json offers: a badge reads another source"; relbad=1; }
 fi
+# The pre-release beside it (I3449): when /build.json offers one, the homepage names it, every
+# data-prerelease it carries is that one version, and /releases/latest.json, which the
+# installer resolves unasked, still names a stable release: the pages show both channels and
+# the installer's default stays stable (I2829).
+offered_pre="$(jq -r '.release.prerelease.version // empty' "$PUB/build.json" 2>/dev/null || true)"
+home_pres="$(grep -oE 'data-prerelease="[^"]*"' "$PUB/index.html" 2>/dev/null | sed 's/^[^"]*"//; s/"$//' | LC_ALL=C sort -u | tr '\n' ' ' || true)"
+if [ -n "$offered_pre" ]; then
+  [ "${home_pres% }" = "$offered_pre" ] \
+    || { bad release "/build.json offers the pre-release $offered_pre and the homepage names ${home_pres:-none}: a person reading the page is not told it exists, or reads another source"; relbad=1; }
+  case "$pub_latest" in *-*) bad release "/releases/latest.json names the pre-release $pub_latest; the installer's default resolves the stable release only (I2829)"; relbad=1 ;; esac
+elif [ -n "$home_pres" ]; then
+  bad release "the homepage names the pre-release ${home_pres% } and /build.json offers none"; relbad=1
+fi
 dist_latest="$(jq -r '.latest.version // empty' "$DIST" 2>/dev/null || true)"
 static_latest="$(jq -r '.version // empty' "$SITE/static/releases/latest.json" 2>/dev/null || true)"
 [ "$static_latest" = "$dist_latest" ] \
   || { bad release "distribution.json names ${dist_latest:-no release} as the latest and site/static/releases/latest.json names ${static_latest:-none}; regenerate (scripts/derive)"; relbad=1; }
-[ "$relbad" = 0 ] && ok release "one release on every surface: the homepage, /build.json and /releases/latest.json offer ${offered:-none} ($(jq -r '.release.source // "no release"' "$PUB/build.json" 2>/dev/null)), and the committed projections agree on ${dist_latest:-none}"
+[ "$relbad" = 0 ] && ok release "one release on every surface: the homepage, /build.json and /releases/latest.json offer ${offered:-none}${offered_pre:+, and the pages name the pre-release $offered_pre beside it} ($(jq -r '.release.source // "no release"' "$PUB/build.json" 2>/dev/null)), and the committed projections agree on ${dist_latest:-none}"
 
 
 # 18. a publication offers no surface it cannot answer for. Every route the projection
