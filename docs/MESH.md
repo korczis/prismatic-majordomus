@@ -817,7 +817,7 @@ majordomus mesh peers             # machines → runtimes → active sessions, e
 majordomus mesh peer <runtime>    # one runtime; exits 10 when unknown
 majordomus mesh state             # counts, each runtime's newest claim, open reviews, untaken handovers, digest
 majordomus mesh state --full --live-claims   # every held claim; --after, --session, --runtime narrow
-majordomus mesh events --after 0  # the journal
+majordomus mesh events            # the journal from the beginning; --cursor <next> resumes
 majordomus mesh verify            # a live round with every dialed peer, convergence; exits 10 on failure
 majordomus mesh session open --session s1 --client codex --issue '#184'
 majordomus mesh claim apps/majordomus-cli --session s1 --issue '#184'   # exits 10 on claim_conflict
@@ -831,8 +831,26 @@ majordomus mesh review withdraw <request-key> --session s1 --note 'superseded by
 
 Every command has `--format json`, which prints the capability's answer unchanged.
 
+**Paging the raw journal.** `mesh events` walks the journal by arrival. Each answer carries a
+`cursor`, `<instance>:<n>`: the run of the runtime that answered it and the arrival number
+of the last event it returned. The CLI prints it as `next --cursor …`. Passing it back as
+`cursor` returns what that run applied since then. A walk resumed from every answered cursor
+returns each event of the journal exactly once. That includes an event from a runtime that
+was partitioned away and kept stamping with its own Lamport clock: when the link returns,
+its event arrives stamped at or below a position the walk already passed, and is still
+returned once, however often it is delivered. Events are numbered when they are applied to
+their stream, never when received, and a duplicate is never applied twice. The test is
+`events_resume_across_partition_test` (`cargo test --lib mesh::journal`).
+
+A cursor is ~20 bytes whatever the journal holds, but it names positions of one run only. A
+restarted server refuses an older run's cursor as `stale_cursor`, and the reader walks again
+from the beginning. A stream that compaction drops leaves its numbers unanswered, never a
+short page. `after=<lamport>` is still accepted and walks by stamp, which never returns an
+event stamped at or below it that arrives later; `newest` answers the journal's last events
+and the cursor of everything held, from which a reader follows what comes next.
+
 **HTTP and OpenAPI.** `GET /api/v1/mesh`, `/nodes`, `/identity`, `/doctor`, `/firewall?port=`, `/cooperation`,
-`/peers`, `/peer?runtime=`, `/state`, `/events?after=&limit=`; `POST /api/v1/mesh/register`,
+`/peers`, `/peer?runtime=`, `/state`, `/events?cursor=&after=&limit=&newest=`; `POST /api/v1/mesh/register`,
 `/verify`, `/sessions`, `/sessions/close`, `/claims`, `/claims/release`, `/handovers`,
 `/handovers/consume`, `/reviews`, `/reviews/answer`, `/reviews/withdraw`, `/link/hello`, `/link/sync`. The schemas
 are in `/openapi.json`, generated from the capability declarations.
