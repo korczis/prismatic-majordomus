@@ -1,0 +1,57 @@
+id: an-unmet-criterion-is-drafted-into-work
+title: "An unmet criterion is drafted into work from the evidence, and the draft is the same on every run"
+slug: an-unmet-criterion-is-drafted-into-work
+order: 304
+priority: p1
+problem: "Majordomus judges the gap and the plan of an intent and writes neither. A worker reads the ledger by hand to say which criterion is satisfied, missing or unknown, copies that into .ai/repo/project/gaps/<intent>.yaml, and then writes one issue per uncovered criterion, also by hand. Every input of that work is already derived: the state of each criterion's evidence (apps/majordomus-cli/src/intent.rs:1059-1150), the coverage finding criterion_uncovered (apps/majordomus-cli/src/intent_plan.rs:522) and the realization finding criterion_closed_unmet (apps/majordomus-cli/src/intent_realization.rs:746), the serving scope of a criterion (apps/majordomus-cli/src/intent.rs:1156-1173) and the gap's own suggested work (share/schemas/majordomus/gap/gap.v1.schema.json, work[].serves and work[].issue). Nothing turns them into a draft, so two workers drafting the same intent produce two different plans, and a rerun cannot be told from new work. The next ready issue is chosen by wave, priority and id alone (apps/majordomus-cli/src/plan.rs:531-543) and never asks whether the issue serves an unmet criterion or would be refused by its binding. An intent that work keeps finishing under while no criterion moves is reported by nothing."
+outcome: "`majordomus-cli intent draft gap <intent>` prints a gap record whose conditions are derived from the evidence at the presented commit, with every observation citing the ledger execution or claim it read; `majordomus-cli intent draft plan <intent>` prints one issue draft per criterion no live issue serves, with an identity derived from the intent and the criterion, so a rerun on unchanged inputs prints the same bytes and a criterion already served prints nothing; `majordomus-cli intent next` names the next READY issue that serves an unmet criterion and whose binding would be accepted, with why each issue ranked above it was passed over; and an intent under which tasks keep finishing while no criterion changes state is named stalled. Every draft is a read: nothing is written, and a draft becomes a record only through the worker's own commit."
+current_state: "Implemented: per-criterion evidence state (apps/majordomus-cli/src/intent.rs:143-190), coverage and purpose findings (apps/majordomus-cli/tests/intent_plan.rs::a_criterion_no_work_serves_is_refused_once_the_intent_has_work, ::work_under_an_intent_answers_why_it_exists_or_is_refused), gap and critique validation (apps/majordomus-cli/src/intent_review.rs:1-23), the binding's refusal causes (apps/majordomus-cli/src/intent_binding.rs:121-140). Absent: any draft of a gap or of work, an intent-aware next, a stall signal. Decided against so far: the intent intent-planning declares the non-goal 'Generating issues or a critique from an intent automatically' (.ai/repo/project/intents/intent-planning.yaml) and the milestones intent-opposition and intent-reassessment declare 'Deriving a plan from an outcome' and 'Drafting work from an outcome' as non-scope (branches feature/opposition-is-executed, origin/rescue/d1/feature/what-remains-of-an-intent-is-derived)."
+desired_state: "An ADR records that Majordomus drafts the deterministic half of a gap and a plan from derived facts, never writes them, and never drafts a criterion or an intent; the intent intent-planning's non-goal is narrowed to say so. Two read-only capabilities, intents.draft_gap and intents.draft_plan, and one read-only capability, intents.next, are declared once under apps/majordomus-cli/src/capability/builtin/ and reach the command line, HTTP and MCP by generation. The realization view carries a stalled flag per intent with the tasks that finished since the last change of a criterion's state."
+scope:
+  - apps/majordomus-cli/src/intent_draft.rs
+  - apps/majordomus-cli/src/intent.rs
+  - apps/majordomus-cli/src/intent_plan.rs
+  - apps/majordomus-cli/src/intent_review.rs
+  - apps/majordomus-cli/src/intent_realization.rs
+  - apps/majordomus-cli/src/capability/builtin/intents.rs
+  - apps/majordomus-cli/src/commands/intent.rs
+  - apps/majordomus-cli/tests
+  - .ai/repo/project/intents
+  - .ai/repo/project/gaps
+  - .ai/repo/project/critiques
+  - .ai/repo/adrs
+  - docs/PLANNING.md
+  - docs/CLAIMS.yaml
+  - test/cases
+non_scope:
+  - Drafting an intent, a criterion or an invariant from an outcome statement; that is the outcome-to-plan pipeline of the intent-tight-integration pack (prompt 80), which lane A audits
+  - Writing a gap, an issue or a critique; every draft is printed and the worker commits it
+  - Calling a model or an advisor; the drafts are derived from records alone and an advisor is reached only through the existing reasoning plan
+  - Changing the ranking of plan next or the plan engines; intents.next filters and explains, it does not reorder the plan
+acceptance_criteria:
+  - "intent draft gap prints a record that intent validate accepts as a gap, with one condition per criterion whose state follows the table the ADR records, and every non-unknown condition cites an observation naming the ledger execution, claim or served observation it read"
+  - "intent draft plan prints exactly one issue draft per criterion no live issue serves, each with serves set to that criterion, and prints nothing for a criterion a live issue serves or the gap observed satisfied"
+  - "Running either draft twice on an unchanged tree prints identical bytes, and a draft identity does not change when an unrelated record changes"
+  - "intent next names a READY issue serving an unmet criterion whose binding would be accepted, and lists each READY issue it passed over with the binding refusal or the met criterion that excluded it"
+  - "An intent under which at least the declared number of bound tasks finished while no criterion changed state is reported stalled by the realization on every surface, and an intent whose criterion moved is not"
+  - "No capability of this milestone writes: the repository-mutation writer set is unchanged"
+validation:
+  - majordomus intent validate
+  - bin/majordomus plan validate
+  - cargo test --test intent_draft
+  - cargo test --test intent_next
+  - bash test/run.sh <the draft case this milestone adds>
+evidence_required:
+  - gap_draft_follows_the_evidence_test
+  - plan_draft_is_idempotent_test
+  - intent_next_explains_what_it_passed_over_test
+  - stalled_intent_case
+depends_on: []
+risks:
+  - "Lane A audits the intent-tight-integration pack, whose prompt 80 (desired outcome to plan) overlaps this milestone; if lane A proposes a milestone for it, this one is its deterministic first half and the two must be merged into one before landing, not planned twice."
+  - "Reversing the intent-planning non-goal must be said in that intent and in an ADR in the same pull request, as the opposition milestone did for the structural critique."
+  - "A draft identity derived from wording would churn on every edit; it is derived from the intent id and the criterion id only, and a test proves that an edited statement leaves it unchanged."
+  - "The stall signal depends on the reassessment fields of I2076 (intent-reassessment), which are not on master; that issue waits for them rather than deriving a second notion of what remains."
+  - "This milestone needs intent-planning's records and the opposition's stamp on the trunk and does not declare them as milestone dependencies, because a milestone dependency blocks every issue until the other milestone is DONE."
+created_at: 2026-10-09
+updated_at: 2026-10-09

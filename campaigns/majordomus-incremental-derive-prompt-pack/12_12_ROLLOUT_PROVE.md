@@ -1,0 +1,16 @@
+# PAGE 12 — Default enablement, release, live verification and final convergence
+
+**Claude Code Opus/Fable execution prompt.**
+
+Reconcile every earlier checkpoint against current HEAD, open PRs, actual CI and generated artifacts. Resolve unfinished issues, missing edge coverage, duplicate code and deprecated shell logic. Benchmark baseline vs incremental using equivalent fixtures/hardware: no-op, one rule, one site page, schema, Rust generator edit, new worktree, cold cache, warm cache, interrupted cache and CI warm/cold. Record p50/p95 where feasible, sample count, SHA, cache state, platform and full output digest equivalence.
+
+Roll out in guarded sequence: opt-in incremental while full remains default, shadow differential mode, supported-default incremental after gates pass, retained `--full` escape hatch and documented rollback. Do not flip default if output ownership/side effects remain under-modeled. Check new code with fmt, clippy, focused and integration tests, `.ai` enforcements, full derive comparison, `derive-check`, site build, UI smoke, CI required verdict. Integrate only via permitted PR workflow; do not bypass approval/rulesets. Publish docs and release/deploy only if authorized, release-ready, and verified by actual runtime/source SHA checks.
+
+Report a strict final YES/PARTIAL/NO with actual SHAs and verified URLs, changed modules, before/after numbers, cache hit rate, feature coverage, tests, CI status, master merged or not, Pages live or not, rollback, unresolved risks and the single remaining highest-ROI bottleneck. The outcome must be operational, not merely compiled or described. Stop adding architecture once evidence proves the goal.
+
+
+## Mandatory Majordomus discipline
+Read `AGENTS.md`, `CLAUDE.md`, applicable `.ai/**` rules, current source, tests and relevant ADRs before editing. Use the current default branch and compare with unfinished PRs/worktrees first. Do not presume paths or APIs remain unchanged. Reuse the existing Rust CLI/capability registry, generator framework, `scripts/derive`, `scripts/derive-check`, CI planner, evidence types, and projection architecture. Never create a parallel source of truth, manual duplicate inventory, or cosmetic documentation-only enforcement. Stay inside this phase's scope. No privileged branch-protection bypass, force push, unsafe cleanup, release tag, or production deploy without existing explicit authorization. Always distinguish implemented, tested, integrated, published, and live-verified. If access is unavailable, produce an exact blocker and verify everything else. Do not claim time savings without measurements.
+
+## Standard completion handoff
+At the end write a machine-readable and human-readable checkpoint in the repository's existing approved context/evidence mechanism: source HEAD and worktree state; files changed; exact test commands/results; relevant measured durations; pending blockers; invariants proven; next phase's prerequisite status. Commit and propose/integrate according to repository policy and checks; do not create a new PR if an existing one should be updated. After each change rerun the narrow relevant tests and generated-artifact drift checks. A green test for an old SHA is not proof for a new one.

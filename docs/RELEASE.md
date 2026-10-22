@@ -593,6 +593,7 @@ reads that one answer:
 | MCP | the tool `majordomus_release_currency` |
 | Brief | the `release` line and section, read without the version |
 | Doctor | `clone release`: OK current, WARN owed, WARN overdue, INFO unknown |
+| UI | `/ui/delivery`: the hero's "Since then" tile and the panel "Is the trunk released?", read without the version, which the hero reads from `release.version` |
 
 It reads git and the clock when it is asked, and never enters committed derived data. The
 answer is made of three readings:
