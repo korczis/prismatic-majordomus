@@ -1954,9 +1954,28 @@ mj_mesh_task_release() { # <task id>
 mj_mesh_declared_enabled() {
   local f
   for f in $(mj_git ls-files -- '.ai/repo/mesh/*.yaml' '.ai/repo/mesh/*.yml' 2>/dev/null); do
-    grep -qE '^enabled:[[:space:]]*true[[:space:]]*$' "$MJ_ROOT/$f" 2>/dev/null && return 0
+    mj_mesh_declaration_open "$MJ_ROOT/$f" && return 0
   done
   return 1
+}
+
+# Whether one declaration opens a mesh for some machine: `enabled: true`, and either
+# `trust.policy: tofu` or at least one key in `trust.allow`. A declaration closed to everyone
+# (deny_unknown, the default, with nobody listed: the seed `init` writes since I2412) runs no
+# mesh on any machine, so nothing can be claimed on it — the same rule as
+# mesh::manager::closed_to and guard::mesh_declared_enabled.
+mj_mesh_declaration_open() { # <file>
+  awk '
+    /^enabled:[[:space:]]*true[[:space:]]*$/ { enabled = 1 }
+    /^trust:[[:space:]]*$/ { trust = 1; allow = 0; next }
+    trust && /^[^[:space:]#]/ { trust = 0; allow = 0 }
+    trust && /^[[:space:]]+policy:[[:space:]]*tofu[[:space:]]*$/ { open = 1 }
+    trust && /^[[:space:]]+allow:[[:space:]]*\[[[:space:]]*[^][:space:]]/ { open = 1 }
+    trust && /^[[:space:]]+allow:[[:space:]]*$/ { allow = 1; next }
+    trust && allow && /^[[:space:]]+-[[:space:]]*[^[:space:]]/ { open = 1 }
+    trust && allow && /^[[:space:]]+[A-Za-z_]+:/ { allow = 0 }
+    END { exit !(enabled && open) }
+  ' "$1" 2>/dev/null
 }
 
 # A task works on the mesh (I2289, project.a-task-works-on-the-mesh). On a repository that

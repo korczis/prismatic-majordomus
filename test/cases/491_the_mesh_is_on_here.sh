@@ -235,4 +235,35 @@ jq '.output' "$T/doctor-unlisted.run.json" > "$T/doctor-unlisted.json"
 jq -e '.ok == false and ([.checks[] | select(.check == "trust" and (.ok | not) and (.remediation | test("trust.allow")))] | length == 1)' \
   "$T/doctor-unlisted.json" >/dev/null \
   || { echo "    mesh doctor did not tell an unlisted machine so:"; cat "$T/doctor-unlisted.json"; exit 1; }
+# ---------------------------------------------------------------- 5. enrol, as a client calls it
+# `init` seeds a closed declaration (I2412): enabled, deny_unknown, nobody listed. The one step
+# that opens it for a machine is `mesh enrol`, and an MCP client reaches it as the
+# majordomus_mesh_enrol tool: the first call lists this machine's key, a second changes nothing.
+E="$T/enrol"; ESTATE="$T/enrol-state"; mkdir -p "$E" "$ESTATE"
+(
+  cd "$E" || exit 1
+  git init -q .
+  git config user.email t@example.com
+  git config user.name t
+  "$MJ" init >/dev/null
+  git add -A && git commit -qm base
+) || { echo "    the enrol fixture could not be made"; exit 1; }
+enrol() { # -> the tool's typed answer on stdout
+  { printf '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"case491","version":"0"}}}\n'
+    printf '{"jsonrpc":"2.0","method":"notifications/initialized"}\n'
+    printf '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"majordomus_mesh_enrol","arguments":{}}}\n'
+  } | XDG_STATE_HOME="$ESTATE" MAJORDOMUS_SHARE="$ROOT/share" "$RB" mcp --standalone --repo "$E" 2>"$T/enrol.err" \
+    | sed -n 2p | jq -e '.result.structuredContent'
+}
+first="$(enrol)" || { echo "    majordomus_mesh_enrol returned no typed answer:"; sed 's/^/    | /' "$T/enrol.err" | head -5; exit 1; }
+key="$(printf '%s' "$first" | jq -r '.key')"
+printf '%s' "$first" | jq -e '.added == true and (.key | length) == 64' >/dev/null \
+  || { echo "    the first enrol did not add a key: $first"; exit 1; }
+grep -qF "$key" "$E/$(printf '%s' "$first" | jq -r '.path')" \
+  || { echo "    the declaration does not list the enrolled key"; exit 1; }
+second="$(enrol)" || { echo "    a second majordomus_mesh_enrol returned no typed answer"; exit 1; }
+printf '%s' "$second" | jq -e --arg k "$key" '.added == false and .key == $k' >/dev/null \
+  || { echo "    a second enrol changed something: $second"; exit 1; }
+echo "    majordomus_mesh_enrol lists this machine's key once, and a second call changes nothing"
+
 echo "    ok: the declaration is on with deny_unknown; an unlisted machine stays closed, a listed one's worktrees link"
