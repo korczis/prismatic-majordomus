@@ -1313,7 +1313,14 @@ jobs:
       # baseline exists for this platform, so only the policy's budgets are judged here.
       - name: every warm screen of the UI is within its budget
         run: scripts/ci/timed --bound 600 ui-audit ui-budget timings.tsv "$MAJORDOMUS_BIN" bench system.http. --transport system --profile ci --no-write --check
+      # The bar is a derived copy, so a stale one is told in about a minute here rather than at
+      # the end of the 80-minute audit, which judges it too: four runs from 2026-10-21 to 10-22
+      # (39780445745 among them) spent the whole audit to report `FAIL ui navbar` (I3931). A
+      # branch stops here; an integration top still audits, so that every red of it is shown.
+      - name: the UI wears the bar the site renders
+        run: scripts/ci/timed --bound 600 ui-audit ui-navbar timings.tsv scripts/ui navbar
       - name: audit the UI in a browser
+        if: success() || (!cancelled() && startsWith(github.head_ref, 'integration/'))
         run: scripts/ci/timed --bound 5400 ui-audit ui-audit timings.tsv scripts/ui audit --report
       # The cases whose subject is the live UI driven in a browser, which the suite runners do
       # not have: each declares "# majordomus-skip-runs-in: ui" and is excused there only
