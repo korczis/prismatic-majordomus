@@ -55,6 +55,11 @@ report and every handover body follow `majordomus://skill/report-verification-st
 What a task learned does not end as a note: before the episode closes, or whenever the
 briefing names candidates awaiting review, follow `majordomus://skill/evolve` — decide each
 candidate, put each lesson where it changes behaviour, deliver, and tell the peers.
+When other sessions work on the mesh at the same time, which is the normal case, the frame
+around all of it is `majordomus://skill/deliver-through-the-mesh`: join and announce, take
+one free role, pay this session's debt first, hand judged heads to the landing seat, and
+deliver each release verified on the site and on every enrolled node, with every surface
+current.
 
 ## Answering "is it done?"
 
