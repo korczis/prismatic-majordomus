@@ -962,6 +962,109 @@ pub fn causal_key(event: &MeshEvent) -> (u64, StreamId, u64) {
     (event.lamport, event.stream.clone(), event.seq)
 }
 
+/// Where a walk of the journal stands: the run of the runtime that answered it and the last
+/// arrival number it returned ([`Journal::events_since`]). It is written `<instance>:<n>`,
+/// the instance being the 16 hex digits of that run, so it fits a command line and a query
+/// string however many streams the journal holds.
+///
+/// ```
+/// use majordomus_cli::mesh::journal::Cursor;
+///
+/// let c: Cursor = "0123456789abcdef:42".parse().unwrap();
+/// assert_eq!(c.arrival(), 42);
+/// assert_eq!(c.to_string(), "0123456789abcdef:42");
+/// assert!("42".parse::<Cursor>().is_err(), "a Lamport stamp is not a cursor");
+/// assert!("0123456789ABCDEF:1".parse::<Cursor>().is_err(), "lowercase hex only");
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Cursor {
+    instance: String,
+    arrival: u64,
+}
+
+impl Cursor {
+    /// The last arrival number the walk returned.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::journal::Cursor;
+    ///
+    /// assert_eq!("0123456789abcdef:7".parse::<Cursor>().unwrap().arrival(), 7);
+    /// ```
+    pub fn arrival(&self) -> u64 {
+        self.arrival
+    }
+}
+
+impl std::fmt::Display for Cursor {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}:{}", self.instance, self.arrival)
+    }
+}
+
+impl std::str::FromStr for Cursor {
+    type Err = CursorError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let malformed = || CursorError::Malformed(s.to_string());
+        let (instance, arrival) = s.split_once(':').ok_or_else(malformed)?;
+        if instance.len() != 16
+            || !instance
+                .bytes()
+                .all(|b| matches!(b, b'0'..=b'9' | b'a'..=b'f'))
+        {
+            return Err(malformed());
+        }
+        let arrival = arrival.parse().map_err(|_| malformed())?;
+        Ok(Cursor {
+            instance: instance.to_string(),
+            arrival,
+        })
+    }
+}
+
+/// Why a cursor was not walked.
+///
+/// ```
+/// use majordomus_cli::mesh::journal::{Cursor, CursorError};
+///
+/// let e = "nope".parse::<Cursor>().unwrap_err();
+/// assert!(matches!(e, CursorError::Malformed(_)));
+/// assert!(e.to_string().contains("nope"));
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum CursorError {
+    /// Not `<16 lowercase hex>:<number>`.
+    Malformed(String),
+    /// Issued by another run: its arrival numbers name nothing in this one. The reader
+    /// starts again from the beginning, or from a Lamport stamp.
+    Stale {
+        /// The run that issued the cursor.
+        issued_by: String,
+        /// The run answering now.
+        current: String,
+    },
+}
+
+impl std::fmt::Display for CursorError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            CursorError::Malformed(s) => {
+                write!(
+                    f,
+                    "'{s}' is not a cursor: expected <16 hex digits>:<arrival>"
+                )
+            }
+            CursorError::Stale { issued_by, current } => write!(
+                f,
+                "stale_cursor: the cursor was issued by run {issued_by} and this is run \
+                 {current}; walk again from the beginning, or from a Lamport stamp with after"
+            ),
+        }
+    }
+}
+
+impl std::error::Error for CursorError {}
+
 /// The canonical bytes of a JSON value: object keys sorted at every depth, no whitespace.
 /// Signer and verifier compute it identically regardless of how either parser orders keys.
 ///
@@ -1492,6 +1595,19 @@ struct Inner {
     streams: BTreeMap<StreamId, StreamLog>,
     lamport: u64,
     tallies: JournalTallies,
+    /// Every held event by the order this run applied it, `(stream, seq)` under its arrival
+    /// number: what a [`Cursor`] walks. An event gets its number when it is applied to its
+    /// stream, not when it is received, so one waiting for its gap is numbered after it.
+    arrivals: BTreeMap<u64, (StreamId, u64)>,
+    /// The last arrival number given; numbers are never reused within a run.
+    arrived: u64,
+}
+
+impl Inner {
+    fn arrive(&mut self, stream: &StreamId, seq: u64) {
+        self.arrived += 1;
+        self.arrivals.insert(self.arrived, (stream.clone(), seq));
+    }
 }
 
 /// The journal of one runtime. `Mutex<BTreeMap>`: a handful of events a second, and a
@@ -1665,6 +1781,8 @@ impl Journal {
                 streams,
                 lamport: 0,
                 tallies: JournalTallies::default(),
+                arrivals: BTreeMap::new(),
+                arrived: 0,
             }),
             rotation: std::sync::atomic::AtomicUsize::new(0),
             reloaded: IngestReport::default(),
@@ -1865,6 +1983,7 @@ impl Journal {
             .expect("own stream")
             .events
             .insert(seq, event.clone());
+        inner.arrive(&self.own, seq);
         inner.tallies.written += 1;
         let durability = self.persist(std::slice::from_ref(&event));
         crate::change::BLACKBOARD.advance();
@@ -2366,6 +2485,9 @@ impl Journal {
         }
         let max_lamport = applied.iter().map(|e| e.lamport).max().unwrap_or(lamport);
         inner.lamport = inner.lamport.max(max_lamport);
+        for e in &applied {
+            inner.arrive(&e.stream, e.seq);
+        }
         report.accepted += applied.len() as u64;
         if count {
             inner.tallies.received += applied.len() as u64;
@@ -2574,6 +2696,91 @@ impl Journal {
         ordered.into_iter().take(page).collect()
     }
 
+    /// At most `limit` events this run applied after `cursor`, in Lamport order, and the
+    /// cursor of the next page; the whole journal from the beginning when `cursor` is `None`.
+    ///
+    /// The walk is by arrival, not by stamp, and that is what makes it complete: a runtime
+    /// partitioned away keeps stamping with its own clock, so when the link returns its
+    /// events arrive stamped at or below a position a stamp walk already passed
+    /// ([`Journal::events_after`] never returns them). Every event is numbered when it is
+    /// applied to its stream, and a duplicate is never applied twice, so a walk resumed from
+    /// each answered cursor returns every event of the journal exactly once, the late ones
+    /// included. Numbers belong to this run: a cursor another run issued is refused with
+    /// [`CursorError::Stale`], never read as a position it does not name.
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use majordomus_cli::mesh::identity::NodeIdentity;
+    /// use majordomus_cli::mesh::journal::{EventBody, Journal};
+    ///
+    /// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+    ///     "repo".into(), None).unwrap();
+    /// j.append_own(EventBody::SessionClosed { session: "s1".into() }).unwrap();
+    /// j.append_own(EventBody::SessionClosed { session: "s2".into() }).unwrap();
+    ///
+    /// let (first, cursor) = j.events_since(None, 1).unwrap();
+    /// assert_eq!(first.len(), 1, "one page");
+    /// let (rest, end) = j.events_since(Some(&cursor), 100).unwrap();
+    /// assert_eq!(rest.len(), 1, "resumed where the reader left off");
+    /// assert!(j.events_since(Some(&end), 100).unwrap().0.is_empty(), "and nothing twice");
+    /// ```
+    pub fn events_since(
+        &self,
+        cursor: Option<&Cursor>,
+        limit: usize,
+    ) -> Result<(Vec<MeshEvent>, Cursor), CursorError> {
+        let instance = self.own.instance();
+        let from = match cursor {
+            Some(c) if c.instance != instance => {
+                return Err(CursorError::Stale {
+                    issued_by: c.instance.clone(),
+                    current: instance.to_string(),
+                });
+            }
+            Some(c) => c.arrival,
+            None => 0,
+        };
+        let inner = self.inner.lock().expect("journal lock");
+        let mut last = from;
+        let mut page = Vec::new();
+        for (&arrival, (stream, seq)) in inner.arrivals.range(from.saturating_add(1)..) {
+            if page.len() >= limit {
+                break;
+            }
+            if let Some(event) = inner.streams.get(stream).and_then(|l| l.events.get(seq)) {
+                page.push(event.clone());
+            }
+            last = arrival;
+        }
+        page.sort_by_cached_key(causal_key);
+        let next = Cursor {
+            instance: instance.to_string(),
+            arrival: last,
+        };
+        Ok((page, next))
+    }
+
+    /// The cursor that names everything this run has applied so far: where a reader who has
+    /// just read the journal as it stands resumes, so that only what comes next is returned.
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use majordomus_cli::mesh::identity::NodeIdentity;
+    /// use majordomus_cli::mesh::journal::{EventBody, Journal};
+    ///
+    /// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+    ///     "repo".into(), None).unwrap();
+    /// j.append_own(EventBody::SessionClosed { session: "s1".into() }).unwrap();
+    /// let head = j.head_cursor();
+    /// assert!(j.events_since(Some(&head), 100).unwrap().0.is_empty());
+    /// ```
+    pub fn head_cursor(&self) -> Cursor {
+        Cursor {
+            instance: self.own.instance().to_string(),
+            arrival: self.inner.lock().expect("journal lock").arrived,
+        }
+    }
+
     /// Drop every stream that has been expired for longer than `retention` and that nothing
     /// still needs, when the journal is over its bound or `force` is set; the file is
     /// rewritten to what remains. Only dead streams go, so no live claim can lose its
@@ -2687,6 +2894,10 @@ impl Journal {
         };
         let dead = unneeded(&inner.streams, due, &offer_lapsed);
         let mut dropped = 0u64;
+        let gone: BTreeSet<StreamId> = dead.iter().cloned().collect();
+        inner
+            .arrivals
+            .retain(|_, (stream, _)| !gone.contains(stream));
         for id in dead {
             if let Some(log) = inner.streams.remove(&id) {
                 dropped += log.events.len() as u64;
@@ -3693,6 +3904,113 @@ mod tests {
             read, all,
             "every event once, in order, however small the page"
         );
+    }
+
+    /// I2733: a runtime partitioned away keeps stamping with its own clock, so its event
+    /// arrives stamped below a position the reader's walk already passed. A walk by stamp
+    /// never returns it; a walk by cursor returns it once, however often it is delivered.
+    #[test]
+    fn events_resume_across_partition_test() {
+        let a = journal("0000000000000001");
+        let b = journal("0000000000000002");
+        // linked: A holds B's first event
+        opened(&b, "b1");
+        a.ingest(&b.missing_for(&a.marks(), usize::MAX), &accept_all);
+        // A's own work moves its clock well past B's
+        for n in 0..5 {
+            opened(&a, &format!("a{n}"));
+        }
+        // a reader walks A one event at a time, past B's stamp, to the end
+        let mut read = Vec::new();
+        let mut cursor = None;
+        let mut after = 0;
+        loop {
+            let (page, next) = a.events_since(cursor.as_ref(), 1).unwrap();
+            cursor = Some(next);
+            let Some(last) = page.last() else { break };
+            after = after.max(last.lamport);
+            read.extend(page);
+        }
+        assert_eq!(read.len(), 6, "B's first event and A's five");
+        // the link is cut: B writes under its own clock, below the walk's stamp
+        let late = opened(&b, "b2");
+        assert!(
+            late.lamport <= after,
+            "the fixture is a late stamp, or it proves nothing"
+        );
+        // the link returns, and the late event arrives twice
+        for _ in 0..2 {
+            a.ingest(&b.missing_for(&a.marks(), usize::MAX), &accept_all);
+            a.ingest(std::slice::from_ref(&late), &accept_all);
+        }
+        assert!(
+            a.events_after(after, usize::MAX).is_empty(),
+            "the gap the cursor closes: a walk by stamp never sees it"
+        );
+        let (page, next) = a.events_since(cursor.as_ref(), 1).unwrap();
+        assert_eq!(
+            page,
+            vec![late.clone()],
+            "the resumed walk returns the late event"
+        );
+        let (rest, _) = a.events_since(Some(&next), usize::MAX).unwrap();
+        assert!(rest.is_empty(), "and nothing a second time: {rest:?}");
+        read.extend(page);
+        // over the whole walk, every event of the journal exactly once
+        let mut walked: Vec<_> = read.iter().map(|e| (e.stream.clone(), e.seq)).collect();
+        walked.sort();
+        let mut held: Vec<_> = a
+            .events()
+            .iter()
+            .map(|e| (e.stream.clone(), e.seq))
+            .collect();
+        held.sort();
+        assert_eq!(walked, held);
+    }
+
+    #[test]
+    fn a_cursor_of_another_run_is_refused_and_a_dropped_stream_leaves_no_hole() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("journal.jsonl");
+        let open = |runtime: &str| {
+            Journal::open(
+                Arc::new(NodeIdentity::ephemeral().unwrap()),
+                runtime,
+                "repo".into(),
+                Some(path.clone()),
+            )
+            .unwrap()
+        };
+        let first = open("0000000000000001");
+        opened(&first, "s1");
+        let (_, cursor) = first.events_since(None, 100).unwrap();
+        drop(first);
+        // the same runtime restarted: a new run, whose numbers the old cursor does not name
+        let again = open("0000000000000001");
+        match again.events_since(Some(&cursor), 100) {
+            Err(CursorError::Stale { issued_by, current }) => assert_ne!(issued_by, current),
+            other => panic!("a stale cursor was walked: {other:?}"),
+        }
+        // the restarted run numbers what it reloaded, so a walk from the start reads it all
+        assert_eq!(again.events_since(None, 100).unwrap().0.len(), 1);
+
+        // a stream compaction drops leaves its numbers unanswered, never a page cut short
+        let b = journal("0000000000000002");
+        let c = journal("0000000000000003");
+        opened(&c, "gone");
+        b.ingest(&c.missing_for(&b.marks(), usize::MAX), &accept_all);
+        opened(&b, "kept");
+        assert_eq!(
+            b.compact(Duration::ZERO, Duration::ZERO, Duration::ZERO, true),
+            1
+        );
+        let (page, _) = b.events_since(None, 1).unwrap();
+        assert_eq!(
+            page.len(),
+            1,
+            "the kept event, not an empty page for the dropped one"
+        );
+        assert_eq!(page[0].stream, b.own);
     }
 
     #[test]
