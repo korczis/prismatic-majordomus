@@ -2253,15 +2253,17 @@ pub struct EconomicsRunsArgs {
 ///
 /// ```
 /// use clap::Parser;
-/// use majordomus_cli::cli::{Cli, Command, EconomicsCommand};
+/// use majordomus_cli::cli::{Cli, Command, EconomicsCommand, EconomicsTasksArgs, OutputFormat};
 /// let cli = Cli::try_parse_from([
 ///     "majordomus", "economics", "tasks", "--since", "2026-10-19T00:00:00Z",
 /// ])
 /// .unwrap();
-/// let Command::Economics(e) = cli.command else { panic!() };
-/// let EconomicsCommand::Tasks(t) = e.command else { panic!() };
+/// let Command::Economics(e) = cli.command else { panic!("economics") };
+/// let EconomicsCommand::Tasks(t) = e.command else { panic!("tasks") };
+/// let t: EconomicsTasksArgs = t;
 /// assert_eq!(t.since.as_deref(), Some("2026-10-19T00:00:00Z"));
 /// assert!(t.until.is_none());
+/// assert_eq!(t.format, OutputFormat::Text);
 /// ```
 pub struct EconomicsTasksArgs {
     #[command(flatten)]

@@ -51,6 +51,16 @@ pub const ARCHIVE_SUFFIX: &str = ".jsonl.archived";
 
 /// Which tasks to answer. A window filters by each task's `task.started` time, so a task
 /// with no start line in the ledgers read is answered only when no window is given.
+///
+/// ```
+/// use majordomus_cli::economics::tasks::TaskEconomicsQuery;
+/// let q: TaskEconomicsQuery = serde_json::from_str(r#"{"since":"2026-10-21T00:00:00Z"}"#).unwrap();
+/// assert_eq!(q.since.as_deref(), Some("2026-10-21T00:00:00Z"));
+/// assert!(q.until.is_none());
+/// assert_eq!(serde_json::from_str::<TaskEconomicsQuery>("{}").unwrap(), TaskEconomicsQuery::default());
+/// // a misspelt bound is refused, never read as no bound
+/// assert!(serde_json::from_str::<TaskEconomicsQuery>(r#"{"after":"x"}"#).is_err());
+/// ```
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields, default)]
 pub struct TaskEconomicsQuery {
@@ -63,6 +73,16 @@ pub struct TaskEconomicsQuery {
 }
 
 /// Every task the ledgers read carry, and what was read to answer it.
+///
+/// ```
+/// use majordomus_cli::economics::tasks::{fold, TaskEconomicsList, TaskEconomicsQuery, TaskEconomicsSource};
+/// let text = r#"{"ts":"2026-10-21T10:00:00Z","event":"task.started","head":"h","branch":"b","by":"me","session":"s-1","task_id":"t-1"}"#;
+/// let source = TaskEconomicsSource::parse("repo", "ledger.jsonl", text);
+/// let list: TaskEconomicsList = fold(vec![source], &TaskEconomicsQuery::default());
+/// assert_eq!((list.count, list.tasks.len()), (1, 1));
+/// assert_eq!(list.ledgers[0].path, "ledger.jsonl");
+/// assert!(list.unread.is_empty(), "fold reads no checkout, so it names none unread");
+/// ```
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct TaskEconomicsList {
     /// How many tasks are answered: the number of distinct task ids within the window.
@@ -77,7 +97,25 @@ pub struct TaskEconomicsList {
     pub unread: Vec<TaskEconomicsUnread>,
 }
 
-/// One task's delivery economics.
+/// One task's delivery economics: who carried it, when, how often `finish` refused it, and
+/// the fields nothing observes yet, each saying why it has no value.
+///
+/// ```
+/// use majordomus_cli::economics::tasks::{
+///     fold, TaskEconomicsRecord, TaskEconomicsSource, TaskEconomicsState,
+/// };
+/// let text = r#"{"ts":"2026-10-21T10:00:00Z","event":"task.started","head":"h","branch":"b",
+///     "by":"me","session":"s-1","task_id":"t-1","issue":"I3376"}"#;
+/// let source = TaskEconomicsSource::parse("repo", "ledger.jsonl", &text.replace('\n', ""));
+/// let list = fold(vec![source], &Default::default());
+/// let r: &TaskEconomicsRecord = &list.tasks[0];
+/// assert_eq!((r.task_id.as_str(), r.branch.as_str()), ("t-1", "b"));
+/// assert_eq!(r.state, TaskEconomicsState::Open);
+/// assert_eq!(r.outcome, "active");
+/// assert_eq!(r.wall_seconds, None, "an open task with no refusal has no end");
+/// assert_eq!(r.issue.as_deref(), Some("I3376"));
+/// assert!(r.spend.reason.contains("I3379"));
+/// ```
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct TaskEconomicsRecord {
     /// The task's id, as `start` wrote it.
@@ -129,7 +167,13 @@ impl crate::order::Ordered for TaskEconomicsRecord {
     }
 }
 
-/// Whether a task has finished.
+/// Whether a task has finished, as the command line, MCP and HTTP spell it.
+///
+/// ```
+/// use majordomus_cli::economics::tasks::TaskEconomicsState;
+/// assert_eq!(serde_json::to_value(TaskEconomicsState::Open).unwrap(), "open");
+/// assert_eq!(serde_json::to_value(TaskEconomicsState::Finished).unwrap(), "finished");
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum TaskEconomicsState {
@@ -139,7 +183,24 @@ pub enum TaskEconomicsState {
     Finished,
 }
 
-/// One episode that carried a task.
+/// One episode that carried a task, with the span of the lines it wrote about it.
+///
+/// ```
+/// use majordomus_cli::economics::tasks::{fold, TaskEconomicsEpisode, TaskEconomicsSource};
+/// let line = |ts: &str, event: &str, session: &str| {
+///     format!(r#"{{"ts":"{ts}","event":"{event}","head":"h","branch":"b","by":"me","session":"{session}","task_id":"t-1"}}"#)
+/// };
+/// let text = [
+///     line("2026-10-21T10:00:00Z", "task.started", "s-1"),
+///     line("2026-10-21T11:00:00Z", "task.finished", "s-2"),
+/// ]
+/// .join("\n");
+/// let list = fold(vec![TaskEconomicsSource::parse("repo", "ledger.jsonl", &text)], &Default::default());
+/// let episodes: &[TaskEconomicsEpisode] = &list.tasks[0].episodes;
+/// assert_eq!(episodes.len(), 2, "two session stamps are two episodes");
+/// assert_eq!((episodes[1].session.as_str(), episodes[1].lines), ("s-2", 1));
+/// assert_eq!(episodes[1].first_at, "2026-10-21T11:00:00Z");
+/// ```
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct TaskEconomicsEpisode {
     /// The episode's session id.
@@ -155,7 +216,18 @@ pub struct TaskEconomicsEpisode {
     pub lines: usize,
 }
 
-/// A field of the record that nothing observes yet.
+/// A field of the record that nothing observes yet, carrying the reason and the issue that
+/// will supply it in place of a value.
+///
+/// ```
+/// use majordomus_cli::economics::tasks::{fold, TaskEconomicsField, TaskEconomicsSource};
+/// let text = r#"{"ts":"2026-10-21T10:00:00Z","event":"task.started","head":"h","branch":"b","by":"me","task_id":"t-1"}"#;
+/// let list = fold(vec![TaskEconomicsSource::parse("repo", "ledger.jsonl", text)], &Default::default());
+/// let field: &TaskEconomicsField = &list.tasks[0].ci_reruns;
+/// let v = serde_json::to_value(field).unwrap();
+/// assert_eq!(v["status"], "not_observed");
+/// assert!(field.reason.contains("I3378"), "{}", field.reason);
+/// ```
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct TaskEconomicsField {
     /// Always `not_observed` until the field's supplier lands.
@@ -164,7 +236,14 @@ pub struct TaskEconomicsField {
     pub reason: String,
 }
 
-/// Whether a field holds an observation.
+/// Whether a field holds an observation. Its one variant says there is none, which is not a
+/// zero.
+///
+/// ```
+/// use majordomus_cli::economics::tasks::TaskEconomicsFieldStatus;
+/// let v = serde_json::to_value(TaskEconomicsFieldStatus::NotObserved).unwrap();
+/// assert_eq!(v, "not_observed");
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum TaskEconomicsFieldStatus {
@@ -172,7 +251,17 @@ pub enum TaskEconomicsFieldStatus {
     NotObserved,
 }
 
-/// One ledger file that was read.
+/// One ledger file that was read, with how many of its lines were entries and how many
+/// could not be read as one.
+///
+/// ```
+/// use majordomus_cli::economics::tasks::{TaskEconomicsLedger, TaskEconomicsSource};
+/// let s = TaskEconomicsSource::parse("repo", ".ai/local/state/ledger.jsonl", "{}\nnot json\n");
+/// let ledger: &TaskEconomicsLedger = &s.ledgers[0];
+/// assert_eq!(ledger.checkout, "repo");
+/// assert_eq!(ledger.path, ".ai/local/state/ledger.jsonl");
+/// assert_eq!((ledger.lines, ledger.skipped), (0, 2), "neither line is a ledger entry");
+/// ```
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct TaskEconomicsLedger {
     /// The checkout the ledger belongs to.
@@ -185,7 +274,17 @@ pub struct TaskEconomicsLedger {
     pub skipped: usize,
 }
 
-/// A checkout whose ledger was not read.
+/// A checkout whose ledger was not read, and the reason, so a missing ledger is never read
+/// as a checkout with no tasks.
+///
+/// ```
+/// use majordomus_cli::economics::tasks::{tasks, TaskEconomicsQuery, TaskEconomicsUnread};
+/// let dir = tempfile::tempdir().unwrap();
+/// let list = tasks(dir.path(), &TaskEconomicsQuery::default());
+/// let unread: &TaskEconomicsUnread = &list.unread[0];
+/// assert_eq!(unread.checkout, dir.path().display().to_string());
+/// assert_eq!(unread.reason, "no ledger under .ai/local/state");
+/// ```
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct TaskEconomicsUnread {
     /// The checkout.
@@ -195,6 +294,15 @@ pub struct TaskEconomicsUnread {
 }
 
 /// The entries of one checkout's ledgers, in the order they were written, and what was read.
+///
+/// ```
+/// use majordomus_cli::economics::tasks::TaskEconomicsSource;
+/// let line = r#"{"ts":"2026-10-21T10:00:00Z","event":"task.started","head":"h","branch":"b","by":"me","task_id":"t-1"}"#;
+/// let s = TaskEconomicsSource::parse("repo", "ledger.jsonl", line);
+/// assert_eq!(s.checkout, "repo");
+/// assert_eq!(s.entries.len(), 1);
+/// assert_eq!(s.entries[0].event, "task.started");
+/// ```
 #[derive(Debug, Clone, Default)]
 pub struct TaskEconomicsSource {
     /// The checkout the entries come from.
@@ -222,7 +330,20 @@ impl TaskEconomicsSource {
         s
     }
 
-    /// Append one more ledger file's text to this source.
+    /// Append one more ledger file's text to this source: its entries after the ones already
+    /// held, and one more [`TaskEconomicsLedger`] counting its lines.
+    ///
+    /// ```
+    /// use majordomus_cli::economics::tasks::TaskEconomicsSource;
+    /// let line = |id: &str| {
+    ///     format!(r#"{{"ts":"2026-10-21T10:00:00Z","event":"task.started","head":"h","branch":"b","by":"me","task_id":"{id}"}}"#)
+    /// };
+    /// let mut s = TaskEconomicsSource::parse("repo", "ledger.1.jsonl.archived", &line("old"));
+    /// s.push("ledger.jsonl", &format!("{}\nbroken\n", line("new")));
+    /// assert_eq!(s.ledgers.len(), 2);
+    /// assert_eq!((s.ledgers[1].lines, s.ledgers[1].skipped), (1, 1));
+    /// assert_eq!(s.entries[1].payload["task_id"], "new", "appended after the archive");
+    /// ```
     pub fn push(&mut self, path: &str, text: &str) {
         let (mut lines, mut skipped) = (0, 0);
         for line in text.lines().filter(|l| !l.trim().is_empty()) {
@@ -274,6 +395,24 @@ fn in_window(started_at: Option<&str>, q: &TaskEconomicsQuery) -> bool {
 /// Each source is folded on its own with [`tasks_from_ledger`], which names the episodes and
 /// the recorded outcome; the times, the refusals and each episode's span are read from the
 /// same lines here. A task id met in two sources is one task.
+///
+/// ```
+/// use majordomus_cli::economics::tasks::{fold, TaskEconomicsQuery, TaskEconomicsSource};
+/// let line = |ts: &str, event: &str, id: &str| {
+///     format!(r#"{{"ts":"{ts}","event":"{event}","head":"h","branch":"b","by":"me","session":"s-1","task_id":"{id}"}}"#)
+/// };
+/// let a = TaskEconomicsSource::parse("a", "ledger.jsonl", &line("2026-10-21T10:00:00Z", "task.started", "t-1"));
+/// let b = TaskEconomicsSource::parse("b", "ledger.jsonl", &[
+///     line("2026-10-21T11:00:00Z", "task.finished", "t-1"),
+///     line("2026-10-22T09:00:00Z", "task.started", "t-2"),
+/// ].join("\n"));
+/// let all = fold(vec![a.clone(), b.clone()], &TaskEconomicsQuery::default());
+/// assert_eq!(all.count, 2, "t-1 met in two checkouts is one task");
+/// assert_eq!(all.tasks[0].wall_seconds, Some(3600));
+/// let window = TaskEconomicsQuery { since: Some("2026-10-22T00:00:00Z".into()), until: None };
+/// let late = fold(vec![a, b], &window);
+/// assert_eq!(late.tasks.iter().map(|t| t.task_id.as_str()).collect::<Vec<_>>(), ["t-2"]);
+/// ```
 pub fn fold(sources: Vec<TaskEconomicsSource>, q: &TaskEconomicsQuery) -> TaskEconomicsList {
     let mut ledgers = Vec::new();
     let mut records: BTreeMap<String, TaskEconomicsRecord> = BTreeMap::new();
@@ -386,6 +525,23 @@ pub fn fold(sources: Vec<TaskEconomicsSource>, q: &TaskEconomicsQuery) -> TaskEc
 
 /// The ledgers of one checkout: its rotated archives, oldest first, then its live ledger.
 /// `None` when it holds neither.
+///
+/// ```
+/// use majordomus_cli::economics::tasks::{read_checkout, STATE_DIR};
+/// let dir = tempfile::tempdir().unwrap();
+/// assert!(read_checkout(dir.path(), "repo").is_none(), "no ledger at all");
+/// let state = dir.path().join(STATE_DIR);
+/// std::fs::create_dir_all(&state).unwrap();
+/// std::fs::write(state.join("ledger.20261020T000000Z.jsonl.archived"), "x\n").unwrap();
+/// std::fs::write(state.join("ledger.jsonl"), "y\n").unwrap();
+/// let s = read_checkout(dir.path(), "repo").unwrap();
+/// let paths: Vec<&str> = s.ledgers.iter().map(|l| l.path.as_str()).collect();
+/// assert_eq!(
+///     paths,
+///     [".ai/local/state/ledger.20261020T000000Z.jsonl.archived", ".ai/local/state/ledger.jsonl"],
+///     "archives first, then the live ledger"
+/// );
+/// ```
 pub fn read_checkout(dir: &Path, checkout: &str) -> Option<TaskEconomicsSource> {
     let state = dir.join(STATE_DIR);
     let mut archives: Vec<String> = std::fs::read_dir(&state)
@@ -420,6 +576,20 @@ pub fn read_checkout(dir: &Path, checkout: &str) -> Option<TaskEconomicsSource> 
 /// The checkouts are the ones `git worktree list` reports; when git cannot be asked, `root`
 /// alone is read. A checkout git marks prunable, or one holding no ledger, is listed as not
 /// read with the reason.
+///
+/// ```
+/// use majordomus_cli::economics::tasks::{tasks, TaskEconomicsQuery, STATE_DIR};
+/// let dir = tempfile::tempdir().unwrap();
+/// let state = dir.path().join(STATE_DIR);
+/// std::fs::create_dir_all(&state).unwrap();
+/// let line = r#"{"ts":"2026-10-21T10:00:00Z","event":"task.started","head":"h","branch":"b","by":"me","task_id":"t-1"}"#;
+/// std::fs::write(state.join("ledger.jsonl"), format!("{line}\n")).unwrap();
+/// // not a git repository: the directory alone is read
+/// let list = tasks(dir.path(), &TaskEconomicsQuery::default());
+/// assert_eq!(list.count, 1);
+/// assert_eq!(list.tasks[0].checkout, dir.path().display().to_string());
+/// assert!(list.unread.is_empty());
+/// ```
 pub fn tasks(root: &Path, q: &TaskEconomicsQuery) -> TaskEconomicsList {
     let records = crate::worktree::topology::read(root).unwrap_or_default();
     let mut sources = Vec::new();
