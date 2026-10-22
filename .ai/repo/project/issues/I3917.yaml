@@ -1,0 +1,30 @@
+id: I3917
+milestone: truthful-plan-surfaces
+title: "The plan's status counts leave the homepage hero and stay on the roadmap"
+slug: the-plan-counts-leave-the-hero
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "The homepage hero no longer shows the plan's issue counts by status (ready, blocked, active and the rest, index.html:154-158); the counts stay on /roadmap and /ui, where a reader comes for them. Rule homepage-tells-a-declared-story moves to version 2 without the clause that the hero's product view counts the plan, and homepage-check's product check follows it. The owner decided this on 2026-10-22."
+why: "On 2026-10-22 an outside reviewer read 384 blocked against 228 ready and 5 active on the front page as a sign of scope out of control rather than discipline. The owner chose to take the backlog off the hero."
+current_state: "index.html:154-158 counts plan.issues by plan.statuses.issue from site/data/generated/plan.json; rule homepage-tells-a-declared-story v1:57-62 requires the counts in the hero's product view; homepage-check product (:904-916) fails when they differ from the plan."
+desired_state: "The hero shows no plan counts; /roadmap shows them; rule v2 and homepage-check agree, and a case refuses plan counts back on the hero."
+scope:
+  - "site/templates/index.html"
+  - ".ai/repo/rules/project/homepage-tells-a-declared-story.v2.md"
+  - "scripts/ci/homepage-check"
+  - "test/cases"
+  - ".ai/repo/project/issues/I3917.yaml"
+acceptance_criteria:
+  - "The built homepage hero carries no data-issues count"
+  - "/roadmap still shows every status count from the plan"
+  - "Rule v2 and homepage-check agree, and a case fails when plan counts return to the hero"
+validation:
+  - "bin/majordomus plan validate"
+  - "scripts/ci/homepage-check"
+evidence_required:
+  - "hero_carries_no_plan_counts"
+depends_on: []
+serves: []
+created_at: 2026-10-22
+updated_at: 2026-10-22

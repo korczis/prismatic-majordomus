@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.6"
   },
   "registry": {
-    "fingerprint": "0706e0b424f71cd6fa1099d513f7a509662960a316f75c6c90b9c1ea011419da",
+    "fingerprint": "5d5ee9da53a2943d046cef980ef97eb5ece85e9bebee46a9bd057b0bc2efd3e7",
     "summary": {
-      "total": 3309,
+      "total": 3313,
       "builtin": 208,
-      "declarative": 3101,
+      "declarative": 3105,
       "by_kind": {
         "command": 32,
         "query": 176,
-        "resource": 3101
+        "resource": 3105
       },
       "by_stability": {
         "behaviorally_verified": 143,
         "experimental": 55,
-        "implemented": 3111
+        "implemented": 3115
       },
       "mcp_tools": 197,
-      "mcp_resources": 3156,
+      "mcp_resources": 3160,
       "http_routes": 202,
       "cli_commands": 112,
       "modules": 92,
@@ -86222,7 +86222,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 894,
+        "capabilities": 898,
         "capability_ids": []
       },
       {
@@ -86889,7 +86889,7 @@
     ]
   },
   "index": {
-    "fingerprint": "e9d18236df79ce1fbcbec43943c21409863e6e5fb24ab46ee77c8e2f037f32d0",
+    "fingerprint": "948c79778f9438d4c12a3b5a210adca9c8d27767c2114725650ce72639e60531",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -86929,7 +86929,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 35,
-      "issue": 894,
+      "issue": 898,
       "knowledge": 58,
       "mesh-declaration": 1,
       "milestone": 102,
@@ -94181,7 +94181,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 777106
+        "bytes": 802862
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -107248,7 +107248,7 @@
         "path": ".ai/repo/project/issues/I3449.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3729
+        "bytes": 4073
       },
       {
         "uri": "majordomus://issue/I3602",
@@ -107843,6 +107843,50 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 2409
+      },
+      {
+        "uri": "majordomus://issue/I3916",
+        "kind": "issue",
+        "identity": "I3916",
+        "title": "The homepage counts supported claims from the run the evidence page reads, and names the revision it was recorded at",
+        "description": "The homepage's proof figure (data-supported, site/templates/index.html:454-460) reads the same recorded evidence the evidence page reads (site/data/evidence.json from scripts/pages evidence: the nearest complete ancestor run, with its state, commit and how far behind it is), not the committed ledger .ai/repo/evidence/ledger.json. It shows the count with the revision it was recorded at and says when that revision is behind the one the page was built from; it never shows a bare 0 for a revision whose run is not recorded yet.",
+        "path": ".ai/repo/project/issues/I3916.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3041
+      },
+      {
+        "uri": "majordomus://issue/I3917",
+        "kind": "issue",
+        "identity": "I3917",
+        "title": "The plan's status counts leave the homepage hero and stay on the roadmap",
+        "description": "The homepage hero no longer shows the plan's issue counts by status (ready, blocked, active and the rest, index.html:154-158); the counts stay on /roadmap and /ui, where a reader comes for them. Rule homepage-tells-a-declared-story moves to version 2 without the clause that the hero's product view counts the plan, and homepage-check's product check follows it. The owner decided this on 2026-10-22.",
+        "path": ".ai/repo/project/issues/I3917.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1915
+      },
+      {
+        "uri": "majordomus://issue/I3918",
+        "kind": "issue",
+        "identity": "I3918",
+        "title": "README, CONTRIBUTING and the homepage say truthfully how big the tool is and what its registry counts are",
+        "description": "README.md and CONTRIBUTING.md stop saying the tool needs bash 3.2 and nothing else: they say that the shell tool is small and portable and hands every other command to the Rust executable it ships, prebuilt. The homepage's surfaces section (index.html:328-332) says what its numbers are: the capabilities are the builtin ones plus one generated resource per object of the layer (208 plus 3092 at 2026-10-22), and the MCP tools and HTTP routes are those builtin capabilities projected, so a reader does not read a small tool and a 3300-capability platform as a contradiction.",
+        "path": ".ai/repo/project/issues/I3918.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2461
+      },
+      {
+        "uri": "majordomus://issue/I3919",
+        "kind": "issue",
+        "identity": "I3919",
+        "title": "The coverage gate finds the end of a test module across multi-line and raw string literals",
+        "description": "scripts/rust-coverage's test_lines, which finds where an inline #[cfg(test)] module ends by matching braces, follows a string literal across lines and reads raw strings (r#...#) with their hashes, so braces inside a multi-line or raw string never close the module early. Case 132 gains a fixture whose test module holds a multi-line raw JSON string and whose uncovered panic branch after it is test code and owes nothing.",
+        "path": ".ai/repo/project/issues/I3919.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1924
       },
       {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
@@ -120761,7 +120805,7 @@
       "identity": [
         "id"
       ],
-      "objects": 894
+      "objects": 898
     },
     {
       "name": "knowledge",
