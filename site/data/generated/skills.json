@@ -66,10 +66,49 @@
         "a checkpoint recording the deploy and the commit it published"
       ],
       "path": ".ai/repo/skills/deploy-site/SKILL.md",
-      "sha256": "248d2f2c1adc4590828317e7cc3c98e76582473e36d1a5c9d938f3626fec5d96",
+      "sha256": "b028d6944da422298bdcc2d3a1333d0d6b6b1aecb2b3d1890737bd3781233d5e",
       "examples": [],
       "valid": true,
       "route": "/skills/deploy-site/"
+    },
+    {
+      "id": "evolve",
+      "uri": "majordomus://skill/evolve",
+      "title": "Evolve the repository's know-how",
+      "description": "Turn what sessions observed into reviewed knowledge and into the rule, skill, document or test each lesson belongs in, then deliver the change and tell every peer what moved.",
+      "status": "active",
+      "version": 1,
+      "tags": [
+        "knowledge",
+        "review",
+        "delivery",
+        "coordination"
+      ],
+      "related": [
+        "implement",
+        "report-verification-state",
+        "deploy-site"
+      ],
+      "inputs": [
+        "a checkout on a branch of its own, with the tool's task open and its scope naming the knowledge section",
+        "the candidates awaiting review, and whatever this session met and has not yet recorded"
+      ],
+      "outputs": [
+        "every reviewed candidate promoted with its evidence or rejected with its reason",
+        "for each promoted lesson that asks for one, the change to the rule, skill, document or test it belongs in",
+        "a delivered change, and an announcement and a handover that name what moved"
+      ],
+      "path": ".ai/repo/skills/evolve/SKILL.md",
+      "sha256": "6ecab6fd1e252d498a9eb65d37da52af0a2ea47fe988d85bc725baf32d0ddfe4",
+      "examples": [
+        {
+          "path": ".ai/repo/skills/evolve/examples/after-an-incident.md",
+          "title": "After an incident",
+          "body": "\nA commit stood fourteen minutes behind another worktree's build lock, and the cause was\nfound. Evolve from it: record the observation against the rule that should have caught it,\nderive and promote the lesson with the measurement as its evidence, add the shape to the\ngate and the case that proves the gate refuses it, write the post-mortem as a curated note,\namend the decision whose accepted cost this was, deliver, and tell the board which builds\nare bounded now and what to export until the change lands.\n"
+        }
+      ],
+      "valid": true,
+      "route": "/skills/evolve/"
     },
     {
       "id": "implement",
@@ -296,7 +335,7 @@
       "route": "/skills/report-verification-state/"
     }
   ],
-  "count": 7,
+  "count": 8,
   "by_tag": {
     "cleanup": [
       "assess-before-deleting"
@@ -320,6 +359,21 @@
     "deploy": [
       "deploy-site"
     ],
+    "knowledge": [
+      "evolve"
+    ],
+    "review": [
+      "evolve",
+      "pack-for-chatgpt",
+      "pack-for-review",
+      "repo-review"
+    ],
+    "delivery": [
+      "evolve"
+    ],
+    "coordination": [
+      "evolve"
+    ],
     "implementation": [
       "implement"
     ],
@@ -329,11 +383,6 @@
     ],
     "drift": [
       "implement",
-      "repo-review"
-    ],
-    "review": [
-      "pack-for-chatgpt",
-      "pack-for-review",
       "repo-review"
     ],
     "archive": [

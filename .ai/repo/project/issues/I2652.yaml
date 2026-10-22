@@ -1,0 +1,42 @@
+id: I2652
+milestone: development-runtime
+title: "The UI shows what the knowledge base holds: the candidates awaiting review and whether the deriver still writes, read and never acted on"
+slug: the-ui-shows-what-the-knowledge-base-holds
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Give the queue the work leaves behind a screen: what awaits a reviewer, what it is about, and whether a derivation still follows every closed episode, so that the result of a review is seen where every other state of the delivery is."
+why: "The owner, 2026-10-13: bring /evolve into Majordomus as a derived skill that improves the know-how in .ai/, with its result visible on /ui and on Pages; no new systems, only connect, derive, project. The skill is another session's; this is the half a reader sees. Every organ exists: knowledge_base.status and knowledge_base.candidates answer the questions, and no screen asks them."
+current_state: "Measured on master 3442ce68c5 on 2026-10-13: the UI has thirteen screens and none names the knowledge base; src/ui mentions it only in passing in roadmap.rs and deployments.rs. The candidates are read from the command line, MCP and HTTP alone."
+desired_state: "A screen at /ui/knowledge reads knowledge_base.status and knowledge_base.candidates as readings and draws: how many records await review, on this branch and unattributed; the deriver's judgement in words with every finding; the subjects the records are about; and the newest candidates, bounded, each leading to its record, with what is left out counted. The review is named as the commands a person runs, as text. The screen stands in the navigation, in the published snapshot and under the UI's latency budget."
+scope:
+  - "apps/majordomus-cli/src/ui/knowledge.rs"
+  - "apps/majordomus-cli/src/ui/mod.rs"
+  - "docs/MAJORDOMUS_UI.md"
+  - "test/cases/3003_the_knowledge_screen_answers.sh"
+  - ".ai/repo/project/issues/I2652.yaml"
+non_scope:
+  - "Promoting or rejecting a record from the screen: a screen reads and never executes (ADR 0142), and promotion is a person's act"
+  - "The evolve skill itself and its projection as a command, which are another session's"
+  - "A panel on the dashboard and a link from the Command screen, which follow once the application shell another session is building has landed"
+  - "A change to what knowledge_base.candidates answers"
+depends_on:
+  - I2486
+acceptance_criteria:
+  - "/ui/knowledge answers from knowledge_base.status and knowledge_base.candidates and names both as its sources with their age"
+  - "A queue longer than the screen's bound is drawn newest first to the bound and says how many records it left out"
+  - "An empty queue and a checkout where the deriver never ran are said in words, never as an empty table or an empty cell"
+  - "The page carries no form and no button: the review is the commands a person runs, shown as text"
+  - "No handler under src/ui executes a capability on the request, which case 1096 holds, and the route is within the UI's latency budget, which bench --check holds"
+  - "Every screen's navigation leads to it"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::knowledge"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 3003_the_knowledge_screen_answers 1096_no_screen_waits_for_a_source"
+  - "majordomus bench system.http. --transport system --profile ci --no-write --check"
+evidence_required:
+  - "knowledge_screen_unit_tests"
+  - "knowledge_screen_case_3003"
+  - "knowledge_screen_within_budget"
+created_at: 2026-10-13
+updated_at: 2026-10-13

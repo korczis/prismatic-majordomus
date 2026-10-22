@@ -1,0 +1,44 @@
+id: I2131
+milestone: runtime-lifecycle
+title: "A server in use through the Cockpit or HTTP is not stopped as idle, and a checkout keeps one address"
+slug: ui-use-keeps-the-server-and-its-address
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Count every surface's use toward the idle timeout, and bind a port derived from the checkout's identity before falling back to a random one."
+why: "'Attached' means MCP HTTP sessions only (apps/majordomus-cli/src/shared.rs:250-253), and the serve --idle loop stops after 900 s without one (apps/majordomus-cli/src/commands/serve.rs:128-146). A person using only the Cockpit, REST or the /events WebSocket is not counted, so a UI-first server stops 15 minutes into being viewed. The default port 8741 (apps/majordomus-cli/src/cli.rs:3301) goes to one checkout and every other one falls back to a random port (apps/majordomus-cli/src/http/server.rs:77-86): on 2026-10-09 the live server asked for 8741 and serves 61068, an address that changes on every restart, so a Streamable HTTP client configuration or a bookmarked Cockpit has nothing stable to name. docs/MCP.md:29 shows :8741 as if it were the norm. There is no majordomus ui command; serve ensure and env enter are the UI-first entries (apps/majordomus-cli/src/commands/serve.rs:481-576, apps/majordomus-cli/src/commands/env.rs:701-760) and work without stdio (case 190_entry_is_automatic.sh). Baseline audit of 2026-10-09 at master 1fb8d6be44, lifecycle gap 9 and drift 10."
+current_state: "A server with no MCP session stops at its idle timeout whatever else uses it. Every checkout but one serves on a random port."
+desired_state: "The idle timer counts as use an MCP session attached, an HTTP request answered within the last second (http::server::used_within) and an open /events channel, so the Cockpit, the REST API and a watched execution keep their server. The deferred part, a port derived from the repository and worktree identity, is I2702; whether an entry beyond serve ensure is needed is decided by ADR 0135 and planned as I2484."
+scope:
+  - "apps/majordomus-cli/src/shared.rs"
+  - "apps/majordomus-cli/src/commands/serve.rs"
+  - "apps/majordomus-cli/src/http/server.rs"
+  - "apps/majordomus-cli/src/http/events.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/tests/serve_lifecycle.rs"
+  - "docs/MCP.md"
+  - "docs/COCKPIT.md"
+non_scope:
+  - "Adding a majordomus ui command before this issue's record decides one is needed."
+depends_on: []
+acceptance_criteria:
+  - "A server with an open /events WebSocket and no MCP session is still running after its idle timeout, and stops within one timeout of the socket closing"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test serve_lifecycle"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 190_entry_is_automatic"
+evidence_required:
+  - "ui_use_keeps_server_alive_test"
+created_at: 2026-10-09
+updated_at: 2026-10-14T12:16:31Z
+started_at: 2026-10-14T12:15:51Z
+started_event: sha256:519bffc8c7526c1932149404a7c5b596e7088c07560d3fdd02910353edce7322
+completed_at: 2026-10-14T12:16:31Z
+completed_event: sha256:cf3febfce3dff0f70fcf578ee07d9be349e5f3f7df429224e436df80229c7a49
+evidence:
+  - covers: ui_use_keeps_server_alive_test
+    type: test
+    command: "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test serve_in_use a_server_watched_over_its_live_channel_outlives_its_idle_timeout_and_ends_once_it_closes"
+    result: "test result: ok. 2 passed; 0 failed (whole file) (run 2026-10-14 12:00-12:15Z on master 2ca25bb9cf plus this change)"
+    commit: 2ca25bb9cf91a6ea2aa3fe5eb013d44079e6375d
+    recorded_at: 2026-10-14T12:16:11Z

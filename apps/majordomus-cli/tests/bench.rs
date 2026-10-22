@@ -100,6 +100,7 @@ fn fixture<I: BenchmarkCases + serde::de::DeserializeOwned + JsonSchema + 'stati
             benchmark,
             cache,
             execution: majordomus_cli::capability::ExecutionPolicy::classify(kind),
+            skill: None,
         },
         handler: handler::<Value, EchoOut, _>(|_, v| {
             Ok(EchoOut {
@@ -226,6 +227,9 @@ fn the_shipped_registry_is_fully_covered_and_every_target_traces_to_a_capability
                 }
             }
             TargetKind::System { target } => assert!(SystemTarget::ALL.contains(target)),
+            // a page is the UI's, from its own route list; the projection's unit tests hold
+            // it to that list
+            TargetKind::Page { route, .. } => assert!(route.starts_with("/ui"), "{route}"),
         }
     }
     // every MCP tool and every HTTP route of a *required* executable is a target; a waived
@@ -500,6 +504,7 @@ fn the_runners_time_a_target_through_the_executor_a_socket_and_a_child_process()
         warmup: 1,
         samples: 3,
         cold_spawns: 1,
+        deferred: true,
     };
     let mut runner = Runner::new(ctx.clone(), tiny, &f.root())
         .with_executable(common::BIN.into())
@@ -560,6 +565,33 @@ fn the_runners_time_a_target_through_the_executor_a_socket_and_a_child_process()
         assert_eq!(r.len(), 1);
         assert_eq!(r[0].cache_mode, CacheMode::NotApplicable);
         assert!(r[0].stats.samples >= 1, "{}", s.key());
+    }
+    // the UI's pages: a screen over the pinned context and over the live view, and a
+    // deferred panel, each cold and warm; the panel takes the expensive targets' budget and
+    // only a profile that admits deferred panels measures it
+    for (key, samples) in [
+        ("system.http.ui.index", 3),
+        ("system.http.live.ui.index", 3),
+        ("system.http.ui.panels.pull_requests", 1),
+    ] {
+        let t = projection
+            .targets
+            .iter()
+            .find(|t| t.key == key)
+            .unwrap_or_else(|| panic!("{key} is a target"));
+        assert_eq!(t.is_deferred(), samples == 1, "{key}");
+        assert_eq!(Profile::QUICK.admits(t), !t.is_deferred(), "{key}");
+        assert!(Profile::FULL.admits(t), "{key}");
+        let r = runner.run(t).unwrap();
+        assert_eq!(
+            r.iter().map(|r| r.cache_mode).collect::<Vec<_>>(),
+            [CacheMode::Cold, CacheMode::Warm],
+            "{key}"
+        );
+        for r in &r {
+            assert_eq!(r.stats.samples, samples, "{key}");
+            assert!(r.stats.p50_us > 0.0, "{key}: {:?}", r.stats);
+        }
     }
     runner.finish();
 }
@@ -826,6 +858,25 @@ fn the_command_line_answers_coverage_runs_benchmarks_records_and_checks_a_baseli
         out.contains("STALE  system.mcp.ping"),
         "targets the baseline has and this filtered run did not measure are named: {out}"
     );
+    // the UI's deferred panels are selected and not measured by a quick run, which says so
+    let (code, out, err) = run_in(
+        &f.root(),
+        &[
+            "bench",
+            "system.http.ui.panels",
+            "--profile",
+            "quick",
+            "--no-write",
+        ],
+        "",
+    );
+    assert_eq!(code, 0, "{err}");
+    assert!(
+        out.contains("not measured by profile quick")
+            && out.contains("system.http.ui.panels.pull_requests")
+            && out.contains("system.http.ui.panels.drain"),
+        "{out}"
+    );
     // an unknown filter is not found; a bad flag is a usage error
     let (code, _, err) = run_in(&f.root(), &["bench", "nope.none", "--no-write"], "");
     assert_eq!(code, 12, "{err}");
@@ -859,6 +910,7 @@ fn a_refusal_is_timed_and_only_an_internal_failure_stops_the_run() {
         warmup: 1,
         samples: 3,
         cold_spawns: 1,
+        deferred: true,
     };
 
     for (id, error) in [

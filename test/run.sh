@@ -55,6 +55,9 @@ MJ="$ROOT/bin/majordomus"; export MJ ROOT
 # reclaim mark would otherwise run the reaper over this machine's real worktrees
 # (lib/rust_bin.sh mj_rust_reclaim). Case 276 sets its own mark against a fixture.
 MAJORDOMUS_RECLAIM_BELOW_MB=0; export MAJORDOMUS_RECLAIM_BELOW_MB
+# The same for the build's own pruning of idle incremental sessions (I2713): case 3030 turns
+# it on against a fixture.
+MAJORDOMUS_PRUNE_INCREMENTAL=0; export MAJORDOMUS_PRUNE_INCREMENTAL
 pass=0; fail=0; skipped=0; failed_names=""; skipped_names=""
 # The status a case exits with to say it declined to run; test/lib.sh's `skip` uses it.
 # Read here rather than sourced: run.sh is the runner, not a case, and the two agree on one

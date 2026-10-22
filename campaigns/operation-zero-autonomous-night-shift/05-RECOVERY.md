@@ -1,0 +1,9 @@
+# 05 — Durable night-run continuity and self-healing
+
+An LLM prompt alone cannot guarantee operation after Claude exits. Discover repo-supported supervising service/CI workflow/mesh worker and use it for a durable runner, within permissions. Do not fabricate a daemon or user-visible success. Require a persisted, replayable, machine-readable transaction journal stored using existing Majordomus storage strategy. Atomic updates, fsync/transactional semantics appropriate to storage, typed schema, revision links, fencing tokens and idempotency keys.
+
+Checkpoint after every material transition (not just at the end), with operation id, canonical entity IDs, expected heads, last observed remote result, guard verdict, allocated version, publishing/deploy proof, timestamps, retry classification, worker/lease ownership and next action. On restart, recover lease ownership safely, read remote truth, detect already-completed side effects, resume pending obligation rather than repeating action. Assume network acknowledgements can be lost.
+
+Retry transient 5xx/timeouts/rate-limits with capped exponential backoff and jitter; honor `Retry-After`. Handle missing permissions, required approvals, secret absent and policy denials as BLOCKED_EXTERNAL, not transient errors. Detect repeated identical failures and terminate that item's retry loop, leaving unrelated work active. Revalidate per-item assumptions after each reconciliation. Watchdog only restarts demonstrably stuck workers, never an actively progressing job. Limit logs/artifact sizes and avoid secret leakage. Supervisor must not silently consume unbounded resources or create recursive agents.
+
+Power-loss and duplicate delivery are first-class tests. Exactly once refers to externally observable version allocations and completion effects under at-least-once execution, not magical atomicity across GitHub and deployment providers.

@@ -1,0 +1,38 @@
+id: I2704
+milestone: runtime-trust
+title: "A dialer reads no reply beyond the link bound and no more candidates than the bound, and a refusing peer is retried at a measured, jittered rate"
+slug: mesh-replies-are-bounded-for-the-dialer
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Bound the link and rendezvous replies a dialer reads at the link message bound and the candidate count it accepts at the registration bound, give the link backoff jitter, and measure the unknown_link retry rate in a test."
+why: "Split from I2133 on 2026-10-14. I2133 bounded the discovery queue, answered a refused registration with its refusal alone and slowed the unknown_link retry, and its desired_state said 'Not done here' of capping the reply a dialer reads and the received candidate count, jitter on the link backoff, and a test that measures the unknown_link retry rate, while its acceptance criteria still required them, so it could never close. Baseline audit of 2026-10-09 at master 1fb8d6be44, mesh gaps 5 and 11, threats T4 and T13."
+current_state: "Every reply bridge::request reads is bounded at MAX_REPLY_BYTES, 32 MiB (apps/majordomus-cli/src/mcp/bridge.rs, I2147), not at MAX_LINK_MESSAGE (900 KiB, apps/majordomus-cli/src/mesh/link.rs), which bounds only what the answerer receives and the dialer sends. The rendezvous client takes every candidate an answer carries (apps/majordomus-cli/src/mesh/rendezvous.rs); MAX_CANDIDATES (32) bounds only what this node answers (apps/majordomus-cli/src/mesh/manager.rs). Cooperation::backoff (apps/majordomus-cli/src/mesh/cooperation.rs) is heartbeat times 2^failures with no jitter. No test measures how often a peer that answers hello and refuses every sync is retried."
+desired_state: "A link reply over MAX_LINK_MESSAGE and a rendezvous answer with more than MAX_CANDIDATES candidates are refused as typed errors before they are parsed; the link backoff carries a bounded jitter; a test drives a peer that welcomes and refuses every sync and measures the retry rate."
+scope:
+  - "apps/majordomus-cli/src/mesh/link.rs"
+  - "apps/majordomus-cli/src/mesh/rendezvous.rs"
+  - "apps/majordomus-cli/src/mesh/manager.rs"
+  - "apps/majordomus-cli/src/mesh/cooperation.rs"
+  - "apps/majordomus-cli/src/mcp/bridge.rs"
+  - "apps/majordomus-cli/tests/mesh.rs"
+  - "apps/majordomus-cli/tests/mesh_cooperation.rs"
+  - "docs/MESH.md"
+non_scope:
+  - "The bounded discovery queue and the registration answer, which I2133 delivered"
+  - "The general MAX_REPLY_BYTES bound of bridge::request, which is I2147's"
+depends_on:
+  - I2133
+acceptance_criteria:
+  - "A reply one byte over MAX_LINK_MESSAGE and a rendezvous answer with more than MAX_CANDIDATES candidates are refused as typed errors"
+  - "A peer that answers hello and refuses every sync is retried no faster than once per heartbeat"
+  - "Two runtimes whose links to one peer fail together do not retry it at the same instant: the link backoff carries a bounded jitter"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --lib mesh"
+  - "cargo test --test mesh --test mesh_cooperation"
+evidence_required:
+  - "reply_bound_test"
+  - "unknown_link_retry_rate_test"
+created_at: 2026-10-14
+updated_at: 2026-10-14

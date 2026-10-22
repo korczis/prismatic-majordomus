@@ -140,6 +140,27 @@ before it acts*, and until version 2 there was no such command.
 8. **Growth is loud before it is a cliff.** `scripts/ci/backlog-check` reports the landable
    backlog and fails when it exceeds its threshold, so that "nothing is being deployed" is
    a gate's finding and not a person's.
+10. **Build output in no worktree is reclaimed too, and a build prunes its own.** On
+   2026-10-14 this machine fell from 19GB to 4GB free in six minutes while 70GB sat in private
+   build directories (`mj_cargo_private_dir`) and 24GB of one of them was incremental sessions
+   of builds that never finished — none of it in a worktree, so no worktree predicate could
+   see it. So:
+   - every build first removes the stale incremental sessions of the build directory it is
+     about to write — its own, never another tree's — and says how many and how much (I2713);
+     below the floor its refusal names the largest build directories, so the next move is a
+     path and not a search. The test runner turns the pruning off
+     (`MAJORDOMUS_PRUNE_INCREMENTAL=0`);
+   - a private build directory is reclaimed whole when it is provably cargo's, a real
+     directory, named by no process, holding no file any process has open (a build holds its
+     lock file for as long as it runs, whatever its command line says) and written to by
+     nothing for `MAJORDOMUS_RECLAIM_IDLE_MIN` minutes (default 30). Its location is derived
+     from the function that creates it, and a sweep confined to a fixture sees none of the
+     machine's. The age here only ever keeps a directory: an age that cannot be read is a
+     skip, never a removal;
+   - in every build directory the sweep keeps, a crate's incremental sessions other than its
+     newest finalized one and any `-working` one, untouched for 10 minutes, are removed with
+     their locks: the garbage cargo itself collects after a build that succeeds. The build and
+     the sweep ask one function for what is stale (`mj_cargo_stale_sessions`).
 
 # Enforcement
 
@@ -156,7 +177,13 @@ before it acts*, and until version 2 there was no such command.
   `scripts/ci/backlog-check` (the wrapper is wired and caps at two) and exercised by case 276.
 - `test/cases/276_disk_is_bounded.sh` — the behavioural case for the build output and the
   bound: what the reaper refuses, that a pushed clean unattended worktree is reclaimed and an
-  unpushed one kept, that a build below the mark reclaims first and once per interval, and
-  that a build below the floor does not start.
+  unpushed one kept, that a build below the mark reclaims first and once per interval, that
+  an idle private build directory and stale incremental sessions are reclaimed while one in
+  use, held open, recently written, unmarked or linked is kept, and that a build below the
+  floor does not start.
+- `test/cases/3030_idle_incremental_sessions_are_pruned_by_the_build.sh` — a build prunes
+  its own build directory's stale sessions, keeps the newest, the working and the recent ones,
+  touches no other tree's, and a refusal below the floor names the largest build directories
+  (I2713).
 - `scripts/reap-orphans` — the reaper, dry-run by default, with `--kill` and `--reclaim` as
   two separate consents.

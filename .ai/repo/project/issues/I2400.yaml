@@ -1,0 +1,36 @@
+id: I2400
+milestone: everything-is-followed-in-one-stream
+title: "A signal model and a fold join every source the server already records"
+slug: monitor-core
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Add src/monitor: a Signal (cursor, at, source, kind, severity, actor, subject, summary, for_you), one reader per source (mesh journal, board, executor trail, executions) and the fold that drops unchanged session re-projections."
+why: "Each source answers its own page with its own cursor; 95% of mesh events are identical session_opened re-projections (954 of 1000 sampled 2026-10-10 21:05Z), so a reader of the journal reads noise."
+current_state: "No monitor module."
+desired_state: "src/monitor folds the four sources into ordered signals behind one opaque cursor, unit-tested per reader and for the fold."
+scope:
+  - "apps/majordomus-cli/src/monitor"
+  - "apps/majordomus-cli/src/lib.rs"
+depends_on: []
+acceptance_criteria:
+  - "A page after a cursor repeats no signal of the previous page"
+  - "An unchanged session re-projection is suppressed and counted; a new session or a changed intent is a signal"
+  - "A signal is for_you when its reviewer, handover target, claim conflict or text names the reader"
+validation:
+  - "cargo test --lib monitor"
+evidence_required:
+  - "monitor_fold_unit_tests"
+created_at: 2026-10-10
+updated_at: 2026-10-14T08:02:52Z
+started_at: 2026-10-14T08:02:46Z
+started_event: sha256:c999fc43beff88980fb517b6ab04dfcc0dd71cb1c52f0c99892f8cca4dbeaaff
+completed_at: 2026-10-14T08:02:52Z
+completed_event: sha256:e5ae1498dcf876c09ca98ee9cfdf2fa958a088e1913f331a3f4c8efa3c02680a
+evidence:
+  - covers: monitor_fold_unit_tests
+    type: test
+    command: "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib monitor"
+    result: "test result: ok. 64 passed; 0 failed (run 2026-10-14 between 07:40Z and 07:58Z on master ce5959db59)"
+    commit: ce5959db59096ff22a45ee65e1464b16df74348a
+    recorded_at: 2026-10-14T08:02:50Z

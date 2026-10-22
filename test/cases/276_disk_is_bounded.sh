@@ -196,6 +196,72 @@ expect_file "$WTS/pushed/queued.txt"
 expect_file "$T/shared-target/MARKER"
 [ -L "$WTS/symlinked/apps/majordomus-cli/target" ] || { echo "    it removed the symlink to a shared build directory"; exit 1; }
 
+# ---------------------------------------------------------------- build directories of no worktree
+# On 2026-10-14 the space was in neither: 70GB sat in the private build directories trees fall
+# back to behind another build's lock (mj_cargo_private_dir), and 24GB of one of them was
+# incremental sessions of builds that never finished. The private ones are swept only under
+# a root the sweep is given — a fixture-confined run sees none of the machine's — and each is
+# kept while a process names it, holds a file open under it, or wrote to it recently.
+PRIV="$T/cargo-home/build-private"
+mkpriv() {
+  mkdir -p "$PRIV/$1/debug"
+  printf 'Signature: 8a477f597d28d172789f06886806bc55\n' > "$PRIV/$1/CACHEDIR.TAG"
+  echo build-output > "$PRIV/$1/MARKER"
+}
+old() { find "$1" -exec touch -t 202001010000 {} +; }
+for p in idle recent held unmarked; do mkpriv "$p"; done
+old "$PRIV/idle"; old "$PRIV/unmarked"
+rm -f "$PRIV/unmarked/CACHEDIR.TAG"; rm -rf "$PRIV/unmarked/debug"
+mkdir -p "$T/elsewhere" && echo theirs > "$T/elsewhere/MARKER" && ln -s "$T/elsewhere" "$PRIV/linked"
+# held: a build holds its lock file open and names the directory nowhere on its command line
+: > "$PRIV/held/debug/.cargo-lock"; old "$PRIV/held"
+( exec 3<"$PRIV/held/debug/.cargo-lock"; exec sleep 300 ) &
+HELD=$!
+# incremental sessions inside a directory that is kept: two stale, the newest, a working one
+INC="$PRIV/recent/debug/incremental/majordomus_cli-0abc"
+mkdir -p "$INC/s-old1" "$INC/s-old2" "$INC/s-newest" "$INC/s-live-working"
+: > "$INC/s-old1.lock"
+touch -t 202001010000 "$INC/s-old1" "$INC/s-old2"
+touch -t 202101010000 "$INC/s-newest" "$INC/s-live-working"
+trap 'kill "$LIVE_CMD" "$LIVE_CWD" "$HELD" 2>/dev/null || true' EXIT
+sleep 1
+
+rc=0
+MAJORDOMUS_PRIVATE_BUILD_ROOT="$PRIV" MJ_ROOT="$FIX" "$REAPER" --targets > "$T/private.txt" 2>&1 || rc=$?
+LAST_OUT="$(cat "$T/private.txt")"
+[ "$rc" = 10 ] || { echo "    the private report exited $rc, not 10:"; sed 's/^/      /' "$T/private.txt"; exit 1; }
+expect_grep 'build-private/idle .*would reclaim — private, nobody using it'
+expect_grep 'build-private/recent .*keep — private, written in the last 30 min'
+expect_grep 'build-private/held .*keep — private build directory in use'
+expect_grep 'build-private/unmarked .*skip — carries no mark of cargo'
+expect_grep 'build-private/linked .*keep — not a directory of its own'
+expect_grep 'build-private/recent .*would prune 2 stale incremental session'
+expect_file "$PRIV/idle/MARKER"
+expect_file "$INC/s-old1.lock"
+
+# a fixture-confined run without a private root sees none of the machine's
+MJ_ROOT="$FIX" "$REAPER" --targets > "$T/confined.txt" 2>&1 || true
+LAST_OUT="$(cat "$T/confined.txt")"
+expect_no_grep 'build-private'
+
+rc=0
+MAJORDOMUS_PRIVATE_BUILD_ROOT="$PRIV" MJ_ROOT="$FIX" "$REAPER" --targets --reclaim > "$T/private-reclaim.txt" 2>&1 || rc=$?
+LAST_OUT="$(cat "$T/private-reclaim.txt")"
+[ "$rc" = 0 ] || { echo "    the private sweep exited $rc:"; sed 's/^/      /' "$T/private-reclaim.txt"; exit 1; }
+expect_grep 'build-private/idle .*reclaimed'
+expect_grep 'pruned 2 stale incremental session'
+[ -e "$PRIV/idle" ] && { echo "    the idle private build directory survived"; exit 1; }
+expect_file "$PRIV/recent/MARKER"
+expect_file "$PRIV/held/MARKER"
+expect_file "$PRIV/unmarked/MARKER"
+expect_file "$T/elsewhere/MARKER"
+[ -d "$INC/s-newest" ] || { echo "    the newest finalized session was pruned: the next build is not incremental"; exit 1; }
+[ -d "$INC/s-live-working" ] || { echo "    a working session was pruned under a running compile"; exit 1; }
+if [ -e "$INC/s-old1" ] || [ -e "$INC/s-old2" ] || [ -e "$INC/s-old1.lock" ]; then
+  echo "    a stale session or its lock survived"; exit 1
+fi
+kill "$HELD" 2>/dev/null || true
+
 # ---------------------------------------------------------------- the two consents
 # `--kill` ends servers; it does not delete a hundred gigabytes of build output on the way.
 #
@@ -369,4 +435,4 @@ else
   echo "    (a release executable is already built: the launcher's refusal is not exercised)"
 fi
 
-echo "    ok: the reaper refuses six ways, reclaims landed and pushed build output only, a build below the mark reclaims first, below the floor does not start, and no more than two builds compile at once"
+echo "    ok: the reaper refuses six ways, reclaims landed and pushed build output only, idle private build directories and stale incremental sessions, a build below the mark reclaims first, below the floor does not start, and no more than two builds compile at once"

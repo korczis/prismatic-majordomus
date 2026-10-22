@@ -43,6 +43,13 @@ fn main() {
     println!("cargo:rerun-if-changed=build.rs");
     println!("cargo:rerun-if-env-changed=MAJORDOMUS_BUILD_COMMIT");
     println!("cargo:rerun-if-env-changed=MAJORDOMUS_BUILD_DIRTY");
+    // Every worktree compiles this crate into one slot of the build directory they share
+    // (ADR 0139), and cargo judges that slot fresh by mtimes alone, so a tree whose sources
+    // are older than another tree's last build would be handed that build — its code, its
+    // generation, its commit. `.cargo/config.toml` sets this variable to the tree's own root;
+    // declaring it puts the tree into this script's fingerprint, so another tree's slot is
+    // stale here and this one's stays fresh. Case 1022 holds both halves.
+    println!("cargo:rerun-if-env-changed=MAJORDOMUS_BUILD_TREE");
     println!(
         "cargo:rustc-env=MAJORDOMUS_TARGET={}",
         std::env::var("TARGET").unwrap_or_else(|_| "unknown".into())

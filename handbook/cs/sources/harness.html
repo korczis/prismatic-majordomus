@@ -1,0 +1,714 @@
+<!-- The chapters of this source, as sections. assemble.py reads nothing else of it. -->
+<section id="co-je">
+      <h2>Co je harness a čí je</h2>
+      <p>Agent v terminálu jsou tři vrstvy. Model generuje text a volání nástrojů. Harness providera (Claude Code, Codex, Gemini CLI) z toho dělá smyčku: spouští nástroje, hlídá oprávnění, spravuje kontextové okno, komprimuje konverzaci a vystřeluje hooky. Třetí vrstva je repozitář sám: co v něm platí, co se v něm rozhodlo a co musí změna splnit, než ji někdo přijme.</p>
+      <div class="two">
+        <div class="card">
+          <h4>Harness providera</h4>
+          <ul>
+            <li>smyčka model → nástroj → výsledek</li>
+            <li>oprávnění a sandbox pro shell a soubory</li>
+            <li>kontextové okno, compaction, paměť providera</li>
+            <li>hooky: <code>SessionStart</code>, <code>UserPromptSubmit</code>, <code>PreCompact</code>, <code>SessionEnd</code></li>
+            <li>MCP klient</li>
+            <li>u každého providera jiný, mění se s jeho verzí</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h4>Harness repozitáře (Majordomus)</h4>
+          <ul>
+            <li>bootstrap soubory vyrenderované z jedné policy</li>
+            <li>co se stane na hranicích session, zapsané jako záznam</li>
+            <li>task se scope, profilem a závazky</li>
+            <li>finish contract: kdy je hotovo</li>
+            <li>git hooky a CI gates, které se ptají stejného soudce</li>
+            <li>sdílený MCP server: board, kdo na čem dělá</li>
+          </ul>
+        </div>
+      </div>
+      <p>Harness providera rozhoduje, co agent <em>může udělat</em>. Harness repozitáře rozhoduje, co se z toho <em>počítá</em>: co projde commitem, pushem a merge a co se zapíše jako hotové. Druhý nenahrazuje první. Majordomus nespouští nástroje, nehlídá oprávnění a nevolá model.</p>
+    </section>
+
+<section id="proc">
+      <h2>Proč nestačí harness providera</h2>
+      <p>Každý z následujících problémů se v repu Majordomusu skutečně stal. Harness providera ho nevyřeší, protože o repozitáři neví víc, než mu kdo napíše do instrukcí.</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Problém</th><th>Proč ho provider nevyřeší</th><th>Co dělá harness repa</th></tr></thead>
+        <tbody>
+          <tr><td>Instrukce pro Clauda a Codex si začnou odporovat</td><td>každý provider čte jiný soubor a nikdo je neporovnává</td><td>všechny se generují z jedné policy, ruční úpravu odhalí razítko</td></tr>
+          <tr><td>Compaction smaže stav, který nikdo nezapsal</td><td>provider komprimuje konverzaci, ne stav práce</td><td>hook <code>PreCompact</code> zapíše checkpoint dřív, než se konverzace zkrátí</td></tr>
+          <tr><td>Agent prohlásí „hotovo“ a test neproběhl</td><td>provider nemá definici hotového</td><td>finish contract: osm řádků, selhání jednoho znamená, že se nic nezapíše</td></tr>
+          <tr><td>Dvě sessions postaví stejný subsystém</td><td>provider nevidí jiné sessions</td><td>board sdíleného serveru, ohlášení záměru a cest, překryv scope</td></tr>
+          <tr><td>Pravidlo je napsané, ale nic ho nespouští</td><td>instrukce v Markdownu nejsou kontrola</td><td>každé pravidlo jmenuje validátor, test nebo důvod lidské kontroly; <code>doctor</code> hledá přerušený článek</td></tr>
+          <tr><td>Agent si přečte <code>.env</code> nebo vygenerovaný soubor jako zdroj</td><td>oprávnění providera jsou per nástroj, ne per obsah repa</td><td><code>scope.yaml</code>: co se nikdy nečte ani neservíruje</td></tr>
+          <tr><td>Zelená historie, rozbitý strom</td><td>provider nečte CI</td><td>gate bez odpovědi je <code>queued</code>, ne pass; finish to kontroluje</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+<section id="mapa">
+      <h2>Kontrolní body jedné změny</h2>
+      <p>Od otevření session po merge prochází změna čtyřmi pruhy. Hooky providera jen zapisují a nikdy nic neodmítnou, protože by tím zablokovaly člověka. Odmítat může task lifecycle, git a CI. Tam už je změna hotová a dá se posoudit podle toho, co skutečně obsahuje.</p>
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 720 372" role="img" aria-label="Čtyři pruhy kontrolních bodů: hooky providera, příkazy Majordomusu, git hooky a CI. Hooky providera jen zapisují; start, check, finish, git hooky a CI gates mohou odmítnout.">
+            <defs>
+              <marker id="m-time" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="mut"/></marker>
+            </defs>
+            <text x="150" y="22" font-size="11.5" class="mut">čas: od otevření session po merge</text>
+            <path d="M150 32H704" stroke="var(--muted)" stroke-width="1.25" fill="none" marker-end="url(#m-time)"/>
+
+            <rect x="16" y="46" width="688" height="66" rx="6" class="zone" stroke-width="1"/>
+            <rect x="16" y="120" width="688" height="66" rx="6" class="zone" stroke-width="1"/>
+            <rect x="16" y="194" width="688" height="66" rx="6" class="zone" stroke-width="1"/>
+            <rect x="16" y="268" width="688" height="66" rx="6" class="zone" stroke-width="1"/>
+
+            <g font-size="12.5" font-weight="600" class="ink">
+              <text x="28" y="74">Hooky providera</text>
+              <text x="28" y="148">Majordomus</text>
+              <text x="28" y="222">Git hooky</text>
+              <text x="28" y="296">CI</text>
+            </g>
+            <g font-size="11" class="mut">
+              <text x="28" y="92">vystřeluje provider</text>
+              <text x="28" y="166">volá agent</text>
+              <text x="28" y="240">vystřeluje git</text>
+              <text x="28" y="314">runner na PR</text>
+            </g>
+
+            <g stroke-width="1.5">
+              <circle cx="190" cy="72" r="8" fill="var(--panel)" stroke="var(--muted)"/>
+              <circle cx="300" cy="72" r="8" fill="var(--panel)" stroke="var(--muted)"/>
+              <circle cx="470" cy="72" r="8" fill="var(--panel)" stroke="var(--muted)"/>
+              <circle cx="650" cy="72" r="8" fill="var(--panel)" stroke="var(--muted)"/>
+
+              <circle cx="190" cy="146" r="8" fill="var(--panel)" stroke="var(--muted)"/>
+              <circle cx="270" cy="146" r="8" fill="var(--accent)" stroke="var(--accent)"/>
+              <circle cx="400" cy="146" r="8" fill="var(--accent)" stroke="var(--accent)"/>
+              <circle cx="590" cy="146" r="8" fill="var(--accent)" stroke="var(--accent)"/>
+
+              <circle cx="430" cy="220" r="8" fill="var(--accent)" stroke="var(--accent)"/>
+              <circle cx="520" cy="220" r="8" fill="var(--accent)" stroke="var(--accent)"/>
+              <circle cx="610" cy="220" r="8" fill="var(--accent)" stroke="var(--accent)"/>
+
+              <circle cx="670" cy="294" r="8" fill="var(--accent)" stroke="var(--accent)"/>
+            </g>
+            <g font-size="11" class="ink mono" text-anchor="middle">
+              <text x="190" y="98">SessionStart</text>
+              <text x="300" y="98">UserPromptSubmit</text>
+              <text x="470" y="98">PreCompact</text>
+              <text x="650" y="98">SessionEnd</text>
+
+              <text x="190" y="172">announce</text>
+              <text x="270" y="172">start</text>
+              <text x="400" y="172">check</text>
+              <text x="590" y="172">finish</text>
+
+              <text x="430" y="246">pre-commit</text>
+              <text x="520" y="246">commit-msg</text>
+              <text x="610" y="246">pre-push</text>
+
+              <text x="670" y="320">gates</text>
+            </g>
+
+            <circle cx="160" cy="356" r="6" fill="var(--accent)"/>
+            <text x="172" y="360" font-size="11.5" class="ink">může odmítnout (nenulový exit, nic se nezapíše)</text>
+            <circle cx="470" cy="356" r="6" fill="var(--panel)" stroke="var(--muted)" stroke-width="1.5"/>
+            <text x="482" y="360" font-size="11.5" class="ink">jen zapíše nebo ohlásí</text>
+          </svg>
+        </div>
+        <figcaption><code>UserPromptSubmit</code> vystřelí u každého promptu, ne jednou. <code>announce</code> je oznámení na boardu sdíleného serveru, ne zámek. Výlučný claim napříč stroji dává až <code>majordomus_mesh_claim</code>.</figcaption>
+      </figure>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Bod</th><th>Spouští</th><th>Co udělá</th><th>Verdikt</th></tr></thead>
+        <tbody>
+          <tr><td><code>SessionStart</code></td><td>provider</td><td>otevře epizodu, zmrazí session-context, vrátí briefing, který provider vloží do kontextu, nahodí sdílený server</td><td><span class="pill reports">zapíše</span></td></tr>
+          <tr><td><code>UserPromptSubmit</code></td><td>provider</td><td>uloží prompt do <code>.ai/local/prompts/</code> jako JSON a Markdown</td><td><span class="pill reports">zapíše</span></td></tr>
+          <tr><td><code>PreCompact</code></td><td>provider</td><td><code>checkpoint --derive</code>, <code>knowledge derive</code>: poslední chvíle před zkrácením konverzace</td><td><span class="pill reports">zapíše</span></td></tr>
+          <tr><td><code>SessionEnd</code></td><td>provider</td><td>checkpoint, kandidáti znalostí, <code>handover --derive --close</code>, obálka session do <code>.ai/repo/sessions/</code></td><td><span class="pill reports">zapíše</span></td></tr>
+          <tr><td><code>majordomus_announce</code></td><td>agent přes MCP</td><td>záměr a cesty na boardu; ostatní workery to vidí v <code>majordomus_peers</code></td><td><span class="pill reports">ohlásí</span></td></tr>
+          <tr><td><code>start</code></td><td>agent</td><td>založí task se scope, profilem a závazky (<code>--requires</code>)</td><td><span class="pill refuses">odmítne</span> když task už běží nebo token neexistuje</td></tr>
+          <tr><td><code>check</code></td><td>agent</td><td>scope, závazky, stav gates; překryv s jinými tasky jen hlásí</td><td><span class="pill refuses">odmítne</span> exit 10 mimo scope</td></tr>
+          <tr><td><code>pre-commit</code></td><td>git</td><td><code>doctor</code>, worktree guard, aktuálnost odvozených dat</td><td><span class="pill refuses">odmítne</span></td></tr>
+          <tr><td><code>commit-msg</code></td><td>git</td><td><code>commit validate</code> nad zprávou a staged soubory</td><td><span class="pill refuses">odmítne</span> exit 10</td></tr>
+          <tr><td><code>pre-push</code></td><td>git</td><td><code>finish --check</code>: smí se práce tasku publikovat?</td><td><span class="pill refuses">odmítne</span></td></tr>
+          <tr><td><code>finish</code></td><td>agent</td><td>vyhodnotí finish contract řádek po řádku</td><td><span class="pill refuses">odmítne</span> a nic nezapíše</td></tr>
+          <tr><td>CI gates</td><td>runner</td><td>gates z <code>.ai/repo/ci/gates.yaml</code> podle tříd cest, které změna mění</td><td><span class="pill refuses">odmítne</span>; gate, který neodpověděl, je <code>queued</code>, ne pass</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+<section id="prubeh">
+      <h2>Jedna session krok za krokem</h2>
+      <p>Takhle vypadá typická session v Claude Code nad supervizovaným repem. Kroky 1, 2 a 9 se dějí samy, ostatní dělá agent podle bootstrapu.</p>
+      <ol class="steps">
+        <li><div>
+          <h4>Provider otevře session, hook vrátí briefing</h4>
+          <p><code>SessionStart</code> otevře epizodu, zmrazí snímek kontextu a vypíše briefing. Provider ho vloží do kontextu dřív, než agent udělá první krok. Agent tak hned ví, kde je, co je rozdělané a kdo další pracuje v repu.</p>
+          <div class="code"><pre><code>## Majordomus — what this repository already knows
+Episode s-20261012095404-7216, on master at afbc259, working tree dirty.
+Active task t-20261009182131-ef1f (active, profile implementation): ...
+Shared server: ready http://0.0.0.0:58860 pid 12169 version 0.21.0
+Mesh: active — 2 of 2 provider(s) running; 7 node(s) known, 7 trusted
+Handover ...--master--afbc259--....md (same_worktree_same_branch, exact, fresh, 7h ago)
+Its Next Action: ...
+Knowledge candidates awaiting review on this branch: 3
+Run `majordomus context` for the full briefing, `majordomus check` before claiming ...</code></pre></div>
+          <p>Skutečný výstup z 12. 10. 2026, zkrácený. Handover nese štítek <code>exact</code>: HEAD se od zápisu nepohnul, takže se mu dá věřit doslova.</p>
+        </div></li>
+        <li><div>
+          <h4>Každý prompt se archivuje</h4>
+          <p><code>UserPromptSubmit</code> uloží prompt lokálně jako dva soubory pod jedním kmenem (<code>YYYYMMDDHHMMSS-&lt;slug&gt;.json</code> a <code>.md</code>). Archiv nikdy necestuje gitem a CI gate <code>prompt-privacy</code> hlídá, aby se žádný prompt nedostal do publikovaného výstupu.</p>
+        </div></li>
+        <li><div>
+          <h4>Agent si přečte plný kontext</h4>
+          <p><code>majordomus context</code> dá briefing v pořadí autority: git, task a profil, blokery, autorské záznamy, historie. <code>majordomus context resolve &lt;cesta&gt;</code> řekne, které kontextové dokumenty platí pro cesty, na kterých bude pracovat.</p>
+        </div></li>
+        <li><div>
+          <h4>Ohlásí se ostatním</h4>
+          <p><code>majordomus_peers</code> ukáže, kdo dalšího pracuje v repu a na čem. <code>majordomus_announce</code> přidá vlastní záměr a cesty. Pokud se scope s někým potká, odpověď to rovnou řekne.</p>
+        </div></li>
+        <li><div>
+          <h4>Založí task</h4>
+          <div class="code"><pre><code>majordomus start "Opravit porovnání callback URI" \
+    --scope apps/majordomus-cli/src/auth --requires tests,commit,push --profile debugging</code></pre></div>
+          <p>Od teď je jasné, kam smí psát, co dluží a jak hluboký obřad práce dostane.</p>
+        </div></li>
+        <li><div>
+          <h4>Pracuje a průběžně zapisuje</h4>
+          <p>Checkpoint v intervalu profilu (15 minut u <code>debugging</code>), rozhodnutí přes <code>decision add --why</code>, nejasnosti přes <code>question add</code>. Při compaction zapíše checkpoint hook sám.</p>
+        </div></li>
+        <li><div>
+          <h4>Ověří, než něco tvrdí</h4>
+          <p><code>majordomus check</code> vypíše každý závazek, scope a stav gates. Až potom smí agent říct, že je něco hotové.</p>
+        </div></li>
+        <li><div>
+          <h4>Commit a push projdou git hooky</h4>
+          <p><code>pre-commit</code>, <code>commit-msg</code> a <code>pre-push</code> se ptají stejného spustitelného souboru jako agent. Co by neprošlo, agent mohl vidět předem.</p>
+        </div></li>
+        <li><div>
+          <h4>Uzavře task nebo ho předá</h4>
+          <p><code>finish --outcome completed --verify-command "…"</code> projde kontrakt. Když práce hotová není, poctivý výsledek (<code>partial</code>, <code>blocked</code>, <code>failed</code>…) s poznámkou, nebo <code>handover</code> pro další session.</p>
+        </div></li>
+        <li><div>
+          <h4>Provider zavře session, hook uklidí</h4>
+          <p><code>SessionEnd</code> zapíše checkpoint, odvodí kandidáty znalostí z ledgeru, odvodí handover a zavře epizodu do neměnné obálky v <code>.ai/repo/sessions/</code>. Proběhne, i když agent na nic z toho nepomyslel.</p>
+        </div></li>
+      </ol>
+    </section>
+
+<section id="bootstrap">
+      <h2>Jedna policy, víc providerů</h2>
+      <p>Každý provider čte svůj soubor: Claude Code <code>CLAUDE.md</code>, Codex <code>AGENTS.md</code>, Gemini <code>GEMINI.md</code>. Kdyby se psaly ručně, za týden by si odporovaly. V Majordomusu jsou to <em>projekce</em>: <code>majordomus update</code> je vyrenderuje z šablon v <code>.ai/repo/providers/*.tmpl</code> podle seznamu v policy a každou opatří razítkem s hashem policy a hashem vlastního obsahu.</p>
+      <div class="code"><button type="button">Kopírovat</button><pre><code><span class="c"># .ai/repo/policy.yaml</span>
+projections:
+  - provider: agents
+    target: AGENTS.md
+    always_loaded: true
+  - provider: claude-code
+    target: CLAUDE.md
+  - provider: gemini
+    target: GEMINI.md
+  - provider: bb
+    target: .bb/AGENTS.md</code></pre></div>
+      <h3>Co v bootstrapu je a co ne</h3>
+      <div class="two">
+        <div class="card yes">
+          <h4>Je v něm</h4>
+          <ul>
+            <li>kde najít policy a pravidla (<code>.ai/README.md</code>)</li>
+            <li>jak rozlišit kontext pro cestu (<code>context resolve</code>)</li>
+            <li>jak se připojit k MCP serveru a ohlásit se</li>
+            <li>task lifecycle: <code>start</code>, <code>check</code>, <code>finish</code></li>
+            <li>kde se dělá nová práce (worktree topologie)</li>
+          </ul>
+        </div>
+        <div class="card no">
+          <h4>Není v něm</h4>
+          <ul>
+            <li>korpus pravidel: dvě kopie pravidla jsou jedno pravidlo a jedna lež</li>
+            <li>nic specifického pro jednoho providera, co by mělo platit pro všechny</li>
+            <li>text delší než řádkový limit z policy</li>
+            <li>ruční úpravy: ty odhalí razítko</li>
+          </ul>
+        </div>
+      </div>
+      <h3>Razítko a drift</h3>
+      <p>První řádek vygenerovaného souboru (nebo začátek vygenerovaného regionu mezi značkami <code>majordomus:begin</code> a <code>majordomus:end</code>) nese příkaz, který soubor regeneruje, hash policy a hash obsahu. Obsah, který nesedí na svůj hash, upravil někdo ručně. <code>doctor</code> to nahlásí a obyčejné <code>update</code> ruční úpravu nepřepíše. Oprava je <code>majordomus update --diff &lt;soubor&gt;</code>, přenést změnu do šablony nebo policy, a teprve pak <code>--force</code>.</p>
+      <p>Nový provider je šablona a jeden řádek v <code>projections</code>. Nic jiného ho neregistruje. Nativní vnořené soubory providera (třeba <code>CLAUDE.md</code> v podadresáři) jsou optimalizace. Co pro danou cestu platí, rozhoduje <code>majordomus context resolve &lt;cesta&gt;</code>.</p>
+    </section>
+
+<section id="hooky">
+      <h2>Hooky providera: zapisovat, nikdy blokovat</h2>
+      <p>Hranice session kreslí hooky, ne model. Model zapomene zapsat handover, když mu dojde kontext. Hook <code>SessionEnd</code> vystřelí vždycky. V Claude Code jsou čtyři hooky zapojené v <code>.claude/settings.json</code>:</p>
+      <div class="code"><button type="button">Kopírovat</button><pre><code>{
+  "hooks": {
+    "SessionStart":     [{ "hooks": [{ "type": "command",
+      "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/majordomus-session-start" }] }],
+    "UserPromptSubmit": [{ "hooks": [{ "type": "command",
+      "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/majordomus-capture" }] }],
+    "PreCompact":       [{ "hooks": [{ "type": "command",
+      "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/majordomus-session-compact" }] }],
+    "SessionEnd":       [{ "hooks": [{ "type": "command",
+      "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/majordomus-session-end" }] }]
+  }
+}</code></pre></div>
+      <p>Každý hook je tenký shell, který jen najde spustitelný soubor a předá mu payload:</p>
+      <div class="code"><button type="button">Kopírovat</button><pre><code><span class="c"># .claude/hooks/majordomus-session-start</span>
+root=$(CDPATH= cd -- "$(dirname -- "$0")/../.." &amp;&amp; pwd) || exit 0
+for mj in "$root/bin/majordomus" "$root/.majordomus/bin/majordomus"; do
+  [ -x "$mj" ] &amp;&amp; break
+  mj=
+done
+[ -n "$mj" ] || mj=$(command -v majordomus) || exit 0
+exec "$mj" --repo "$root" capture session --provider claude-code --event start</code></pre></div>
+      <p>Repozitář se odvozuje z cesty k hooku, ne z pracovního adresáře. Provider dosadí svůj projektový adresář do příkazu textově a pracovní adresář hooku není nijak smluvně daný.</p>
+      <h3>Co který hook dělá</h3>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Událost</th><th>Kroky</th></tr></thead>
+        <tbody>
+          <tr><td><code>SessionStart</code></td><td>otevře epizodu (při resume ji ponechá), zapíše snímek do <code>.ai/local/session-contexts/</code>, vypíše briefing na stdout, zajistí běžící sdílený server</td></tr>
+          <tr><td><code>UserPromptSubmit</code></td><td><code>capture prompt</code>: jeden JSON payload na stdin, jeden záznam; text promptu se kopíruje jako syrový úsek payloadu, aby se při dekódování nic neztratilo</td></tr>
+          <tr><td><code>PreCompact</code></td><td><code>checkpoint --derive</code>, <code>knowledge derive</code></td></tr>
+          <tr><td><code>SessionEnd</code></td><td><code>checkpoint --derive</code>, <code>knowledge derive</code>, <code>handover --derive --close</code>, <code>session close</code></td></tr>
+        </tbody>
+      </table></div>
+      <h3>Pravidla, která ty hooky drží</h3>
+      <ul>
+        <li><strong>Nikdy nezablokují člověka.</strong> V <code>UserPromptSubmit</code> by exit 2 zahodil prompt, který člověk napsal. Hook proto vrací vždy úspěch nebo exit příkazu, který má smluvně zakázáno vrátit 2.</li>
+        <li><strong>Selhání se nezamete.</strong> Každá událost se nejdřív zapíše jako <code>provider.event.received</code>, takže jde rozlišit „hook nevystřelil“ od „vystřelil a nic neudělal“. Chyba se zapíše jako <code>provider.event.failed</code>.</li>
+        <li><strong>Ztracený prompt shodí <code>doctor</code>.</strong> Payload, který capture nepřečte, jde do vlastního logu a <code>doctor</code> selhává, dokud log není prázdný. Je to jediná pojistka pro případ, že provider přejmenuje pole, ve kterém prompt posílá. Hook by pořád běžel a self-test by pořád prošel, protože posílá payload ve formátu, který si nástroj sám vyrobil.</li>
+        <li><strong>Hook nemá vlastní logiku.</strong> Rozhoduje spustitelný soubor. Hook se nemění, když se mění chování.</li>
+        <li><strong>Běží, ať je task otevřený, nebo ne.</strong> Epizoda a task jsou dva různé záznamy.</li>
+      </ul>
+    </section>
+
+<section id="server">
+      <h2>Sdílený server a board</h2>
+      <p>Každý provider spouští MCP server přes svou konfiguraci (<code>.mcp.json</code>, <code>.gemini/settings.json</code>, <code>.codex/config.toml</code>), všechny ukazují na <code>bin/majordomus-mcp</code>. První proces v checkoutu se stane serverem, každý další se k němu připojí. Claude, Codex a Gemini nad jedním checkoutem tak sdílejí jeden server a vidí se navzájem.</p>
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 720 262" role="img" aria-label="Tři klienti, každý spouští svůj proces majordomus mcp; první je server, další dva jsou mosty přes HTTP na /mcp. Server drží lease, board, HTTP rozhraní a index vrstvy .ai.">
+            <defs>
+              <marker id="m-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="mut"/></marker>
+            </defs>
+            <g font-size="12.5" font-weight="600" class="ink">
+              <rect x="16" y="30" width="150" height="48" rx="6" class="box" stroke-width="1.25"/><text x="30" y="59">Claude Code</text>
+              <rect x="16" y="106" width="150" height="48" rx="6" class="box" stroke-width="1.25"/><text x="30" y="135">Codex</text>
+              <rect x="16" y="182" width="150" height="48" rx="6" class="box" stroke-width="1.25"/><text x="30" y="211">Gemini CLI</text>
+            </g>
+            <g font-size="11.5" class="ink mono">
+              <rect x="214" y="30" width="176" height="48" rx="6" fill="var(--panel)" stroke="var(--accent)" stroke-width="1.5"/><text x="228" y="51">majordomus mcp</text>
+              <rect x="214" y="106" width="176" height="48" rx="6" class="box" stroke-width="1.25"/><text x="228" y="127">majordomus mcp</text>
+              <rect x="214" y="182" width="176" height="48" rx="6" class="box" stroke-width="1.25"/><text x="228" y="203">majordomus mcp</text>
+            </g>
+            <g font-size="11" class="mut">
+              <text x="228" y="68">p1 · server (vyhrál lease)</text>
+              <text x="228" y="144">p2 · most</text>
+              <text x="228" y="220">p3 · most</text>
+            </g>
+            <g stroke="var(--muted)" stroke-width="1.25" fill="none" marker-end="url(#m-a)">
+              <path d="M166 54H212"/>
+              <path d="M166 130H212"/>
+              <path d="M166 206H212"/>
+              <path d="M390 54H436"/>
+              <path d="M390 130H412V90H436"/>
+              <path d="M390 206H424V120H436"/>
+            </g>
+            <text x="174" y="46" font-size="10.5" class="mut">stdio</text>
+            <text x="394" y="186" font-size="10.5" class="mut">HTTP /mcp</text>
+
+            <rect x="438" y="20" width="266" height="222" rx="8" class="zone" stroke-width="1.25"/>
+            <text x="454" y="44" font-size="13.5" font-weight="600" class="ink">Sdílený server checkoutu</text>
+            <g font-size="11.5" class="ink">
+              <text x="454" y="74">lease .ai/local/state/mcp/server.json</text>
+              <text x="454" y="102">board: p1, p2, p3 a jejich ohlášení</text>
+              <text x="454" y="130">index vrstvy .ai/, čerstvý podle gitu</text>
+              <text x="454" y="158">HTTP API, OpenAPI, Swagger UI</text>
+              <text x="454" y="186">Cockpit, dokumentace, /mcp</text>
+            </g>
+            <text x="454" y="222" font-size="11" class="mut">žije, dokud je připojený aspoň jeden klient</text>
+          </svg>
+        </div>
+        <figcaption>Most nemá vlastní index ani registr, startuje v milisekundách a posílá jednu HTTP žádost na zprávu. Když server umře, most se při další zprávě sám stane serverem a klient nic nepozná.</figcaption>
+      </figure>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Vlastnost</th><th>Jak funguje</th></tr></thead>
+        <tbody>
+          <tr><td>volba serveru</td><td>první proces, který atomicky vytvoří lease soubor; zapíše do něj URL a zaloguje ji</td></tr>
+          <tr><td>není to daemon</td><td>nic ho nespouští kromě klienta a nic ho nedrží naživu kromě klientů; skončí s posledním</td></tr>
+          <tr><td>čerstvost</td><td>před každou odpovědí porovná otisk řídicích souborů gitu (<code>HEAD</code>, index, <code>packed-refs</code>, reflog); když se liší, přestaví vrstvu. Žádný polling ani watcher.</td></tr>
+          <tr><td>mrtvý lease</td><td>lease, jehož server neodpovídá, převezme další proces; nic, co klient po sobě nechá, ostatní nezamkne</td></tr>
+          <tr><td>signály</td><td><code>SIGTERM</code>, <code>SIGINT</code>, <code>SIGHUP</code> odstraní lease ještě v handleru</td></tr>
+          <tr><td>degradace</td><td>když lease nejde zapsat, klient se obslouží sám jako <code>--standalone</code> a log řekne proč</td></tr>
+        </tbody>
+      </table></div>
+      <h3>Board: kdo na čem pracuje</h3>
+      <p>Peer je každý připojený klient, pojmenovaný podle toho, co poslal v <code>initialize</code> (<code>claude-code</code>, <code>codex</code>, <code>gemini-cli</code>), a očíslovaný <code>p1</code>, <code>p2</code>… Už odpověď na <code>initialize</code> mu řekne URL serveru, jeho vlastní id a všechny ostatní peery s tím, co ohlásili.</p>
+      <ul>
+        <li><strong>Ohlášení je jeden řádek záměru a cesty.</strong> Žije jen v paměti serveru. Patří spojení, takže po reconnectu je potřeba ohlásit se znovu.</li>
+        <li><strong>Board patří repozitáři, ne checkoutu.</strong> Každý worktree má svůj server, <code>majordomus_peers</code> sesbírá boardy všech a u každého workera uvede worktree. Pole <code>complete: false</code> říká, že se některý checkout nepodařilo zeptat. Krátký board není důkaz, že tam nikdo není.</li>
+        <li><strong>Id peera je pozice, ne identita.</strong> <code>p1</code> se po reconnectu přidělí znovu a jiný board ho používá taky. Trvalá polovina identity je checkout.</li>
+        <li><strong>Překryv je informace, ne zámek.</strong> Dva scope se potkají, když jsou stejné, nebo jeden obsahuje druhý. <code>start</code> a <code>check --overlap</code> to hlásí. Výlučný claim napříč stroji je <code>majordomus_mesh_claim</code> a jeho odmítnutí jmenuje claim, na který narazilo.</li>
+      </ul>
+      <h3>Co smí nástroj změnit</h3>
+      <p>Každá capability má deklarovaný efekt a z něj se odvozují MCP anotace. Nikde se nepíšou ručně.</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Efekt</th><th>Co volání mění</th><th><code>readOnlyHint</code></th><th><code>destructiveHint</code></th></tr></thead>
+        <tbody>
+          <tr><td><code>read</code></td><td>nic</td><td><code>true</code></td><td><code>false</code></td></tr>
+          <tr><td><code>process_state</code></td><td>jen paměť procesu (peer se ohlásí)</td><td><code>false</code></td><td><code>false</code></td></tr>
+          <tr><td><code>repository_mutation</code></td><td>soubory repozitáře</td><td><code>false</code></td><td><code>true</code></td></tr>
+        </tbody>
+      </table></div>
+      <p>V repu Majordomusu je ze 177 MCP nástrojů jen šest typu <code>repository_mutation</code>. Jmenuje je odpověď na <code>initialize</code>, odvozená z registru, ne seznam v dokumentaci.</p>
+    </section>
+
+<section id="scope">
+      <h2>Dva druhy scope</h2>
+      <p>Slovo scope má v Majordomusu dva významy a je dobré je nemíchat.</p>
+      <div class="two">
+        <div class="card">
+          <h4>Scope repozitáře: co se čte</h4>
+          <p><code>.ai/repo/scope.yaml</code>, deklarované jednou. Co je mimo, se neindexuje, neservíruje přes MCP, HTTP ani CLI a nenajde se v žádné projekci.</p>
+          <p><code>out</code> vyhrává nad <code>in</code>. Cesta, která nesedí na nic v <code>in</code>, je mimo jako <code>undeclared</code>.</p>
+        </div>
+        <div class="card">
+          <h4>Scope tasku: kam se píše</h4>
+          <p><code>start --scope &lt;cesty&gt;</code>. <code>check</code> a <code>finish --outcome completed</code> selžou na změněném souboru mimo scope.</p>
+          <p>Ostatní výsledky soubory jen vyjmenují jako varování, aby worker, kterému scope vyšel úzký, nezůstal zaseknutý.</p>
+        </div>
+      </div>
+      <div class="code"><button type="button">Kopírovat</button><pre><code><span class="c"># .ai/repo/scope.yaml (výřez)</span>
+in:
+  - .ai/repo/**
+  - apps/**/src/**
+  - docs/**
+out:                     <span class="c"># vyhrává nad in</span>
+  paths: [.git/, .ai/local/, '**/node_modules/', '**/target/', vendor/]
+  binary: true           <span class="c"># NUL bajt v prvních 8 KiB</span>
+  max_bytes: 1048576
+  generated:
+    paths: [docs/generated/, site/data/generated/]
+  secret:
+    names: ['.env', '.env.*', '*.pem', '*.key', 'id_rsa*']
+  fixtures:
+    paths: ['**/fixtures/', '**/testdata/']
+    max_bytes: 65536     <span class="c"># fixture nad limit jsou data, ne kontext</span></code></pre></div>
+      <p>Na každou cestu dá <code>majordomus scope</code> odpověď i s důvodem (<code>secret</code>, <code>generated</code>, <code>over_limit</code>, <code>binary</code>…). Trackovaný soubor se jménem tajemství je varování <code>tracked_secret</code>: nikdy se nečte ani neservíruje a v repu by neměl být.</p>
+    </section>
+
+<section id="profily">
+      <h2>Profily: kolik harness stojí</h2>
+      <p>Ne každá změna potřebuje stejný obřad. Profil je jeden pracovní režim: kolik kontextu task dostane, jak silný model a jak hluboké přemýšlení si zaslouží, jak stručně worker reportuje a co musí vyprodukovat, než smí skončit. Task nese profil, se kterým začal. Výchozí je <code>implementation</code>.</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Profil</th><th>Na co</th><th>Model</th><th>Effort</th><th>Výstup</th><th>Checkpoint</th><th>Finish vyžaduje</th></tr></thead>
+        <tbody>
+          <tr><td><code>routine</code></td><td>přejmenování, bump, formulace, jednořádkové opravy</td><td><code>fast</code></td><td><code>low</code></td><td><code>terse</code></td><td>30 min</td><td>ověřovací příkaz, jen když se změnily soubory</td></tr>
+          <tr><td><code>implementation</code></td><td>popsaná změna ve známém návrhu</td><td><code>standard</code></td><td><code>medium</code></td><td><code>concise</code></td><td>15 min</td><td>ověřovací příkaz</td></tr>
+          <tr><td><code>debugging</code></td><td>reprodukovat, izolovat, opravit, dokázat</td><td><code>strong</code></td><td><code>high</code></td><td><code>concise</code></td><td>15 min</td><td>ověřovací příkaz a regresní test</td></tr>
+          <tr><td><code>deep-work</code></td><td>architektura, průřezová změna, problém bez známého tvaru</td><td><code>strongest</code></td><td><code>high</code></td><td><code>detailed</code></td><td>30 min</td><td>ověřovací příkaz a záznam rozhodnutí</td></tr>
+        </tbody>
+      </table></div>
+      <div class="code"><button type="button">Kopírovat</button><pre><code><span class="c"># .ai/repo/profiles/implementation.yaml</span>
+name: implementation
+description: build a described feature or change within a known design
+capability: standard        <span class="c"># fast | standard | strong | strongest</span>
+effort: medium              <span class="c"># low | medium | high | xhigh | max</span>
+verbosity: concise          <span class="c"># terse | concise | detailed</span>
+presentation: engineering   <span class="c"># machine | engineering | summary</span>
+context:
+  task: true
+  current_state: true
+  decisions: true
+  relevant_files: true
+  failing_output: false
+  recent_history_depth: 0
+verification:
+  verify_command_required: true
+  regression_test_required: false
+  decision_record_required: false
+checkpoint_interval: 15m
+output_contract: [outcome, changes, verification, blockers, next_action]</code></pre></div>
+      <ul>
+        <li><strong>Třída modelu, nikdy jméno modelu.</strong> <code>fast</code> až <code>strongest</code> jsou slova policy. Které modely jim odpovídají, říká deklarovaný katalog (<code>models route</code>, <code>share/models.yaml</code>). Profil tak přežije výměnu modelu. Katalog záměrně neobsahuje ceny ani hodnoty credentials, jen jméno proměnné prostředí a jestli je nastavená.</li>
+        <li><strong>Effort a verbosity jsou dvě osy.</strong> Přemýšlet tak tvrdě, jak task potřebuje, a reportovat tak stručně, jak říká profil.</li>
+        <li><strong><code>context.*</code> zapíná sekce briefingu.</strong> Rutinní změna nedostane historii a poznámky k architektuře, které by jen zabraly místo.</li>
+        <li><strong><code>output_contract</code> je tvar závěrečné zprávy.</strong> Deep-work navíc dluží seznam rozhodnutí.</li>
+        <li><strong>Klíče jsou uzavřené.</strong> Klíč, který nic nečte, je chyba, ne tichá no-op.</li>
+      </ul>
+    </section>
+
+<section id="zavazky">
+      <h2>Závazky tasku: co worker dluží</h2>
+      <p>Scope říká, kam smí worker psát. <code>--requires</code> říká, co dluží, než bude výsledek <code>completed</code> k dispozici. Jsou to dva různé sliby: změna může být dokonale uvnitř scope a pořád ležet nezacommitovaná na notebooku.</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Token</th><th>Znamená</th><th>Kdo to rozhodne</th></tr></thead>
+        <tbody>
+          <tr><td><code>implementation</code></td><td>slíbená práce je ve stromu</td><td>úsudek; drží ho řádky scope a poznámky kontraktu</td></tr>
+          <tr><td><code>tests</code></td><td>případy, které <code>usecase impact</code> jmenuje pro změněné soubory, proběhly a prošly</td><td>záznam workera</td></tr>
+          <tr><td><code>docs</code></td><td>dotčené dokumenty jsou aktualizované a odkazy v nich vedou někam</td><td>záznam workera</td></tr>
+          <tr><td><code>generated</code></td><td>každý odvozený artefakt odpovídá zdroji bajt po bajtu</td><td>záznam workera</td></tr>
+          <tr><td><code>rules</code></td><td>nový invariant je deklarovaný jako pravidlo</td><td>záznam workera</td></tr>
+          <tr><td><code>commit</code></td><td>práce je zacommitovaná</td><td>git, živě na HEAD</td></tr>
+          <tr><td><code>push</code></td><td>commit je na remote</td><td>git</td></tr>
+          <tr><td><code>target</code></td><td>trunk obsahuje práci</td><td>git</td></tr>
+          <tr><td><code>pages</code></td><td>publikovaný web servíruje tento commit</td><td><code>scripts/pages verify</code></td></tr>
+          <tr><td><code>deploy</code>, <code>verify</code></td><td>běží očekávaná revize; někdo se na výsledek podíval</td><td>nic tady; zapsáno jako známá mezera</td></tr>
+        </tbody>
+      </table></div>
+      <p>Závazek, který umí rozhodnout git nebo existující příkaz, se rozhoduje živě a zaznamenaný důkaz se vůbec nečte. U ostatních je důkaz zahašovaný přes vstupní soubory, takže změna kteréhokoli z nich ho udělá <code>stale</code>, ne jen starý. Kde nic rozhodnout nemůže, je to v souboru napsané v poli <code>unestablished</code>. Poctivá mezera je lepší než kontrola, která vždycky projde. Neznámý token odmítne už <code>start</code>.</p>
+    </section>
+
+<section id="finish">
+      <h2>Finish contract: kdy je hotovo</h2>
+      <p>„Hotovo“ je nejdražší slovo, které agent řekne. Majordomus ho agentovi nebere, ale nedovolí mu ho zapsat, dokud neprojde každý řádek kontraktu.</p>
+      <div class="code"><button type="button">Kopírovat</button><pre><code>majordomus start "&lt;task&gt;" --scope &lt;cesty&gt; [--requires tests,docs] [--profile debugging]
+majordomus context              <span class="c"># co je teď potřeba vědět; na začátku každé session</span>
+   ... práce ...
+majordomus checkpoint &lt; note.md <span class="c"># průběžný stav podle intervalu profilu</span>
+majordomus check                <span class="c"># před jakýmkoli tvrzením, že je něco hotové</span>
+majordomus handover &lt; note.md   <span class="c"># pokračuje jiná session, nebo:</span>
+majordomus finish --outcome completed --verify-command "cargo test -p majordomus-cli"</code></pre></div>
+      <h3>Řádky kontraktu (<code>verification.finish_requires</code>)</h3>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Řádek</th><th>Co ověřuje</th></tr></thead>
+        <tbody>
+          <tr><td><code>scope_respected</code></td><td>žádný změněný soubor mimo scope tasku; počítá se z gitu</td></tr>
+          <tr><td><code>verification_ran</code></td><td>ověřovací příkaz doběhl a uspěl</td></tr>
+          <tr><td><code>state_updated</code></td><td>záznamy tasku odpovídají práci</td></tr>
+          <tr><td><code>no_open_blockers</code></td><td>žádná otevřená otázka nepatří tomuto tasku</td></tr>
+          <tr><td><code>note_present</code></td><td>závěrečná poznámka existuje</td></tr>
+          <tr><td><code>obligations_met</code></td><td>každý závazek z <code>--requires</code> je splněný</td></tr>
+          <tr><td><code>gates_passed</code></td><td>gates, které změna vybrala, prošly; <code>queued</code> neprošel</td></tr>
+          <tr><td><code>publication_current</code></td><td>publikovaný výstup odpovídá stromu</td></tr>
+        </tbody>
+      </table></div>
+      <p>Když jakýkoli řádek selže, <code>finish --outcome completed</code> nezapíše nic a vypíše každý řádek s pass nebo fail. Ostatní výsledky jsou poctivé přiznání, že práce hotová není, a každý potřebuje poznámku: <code># Next Action</code> (co dál), nebo <code># Reason</code> (proč).</p>
+      <h3>Výsledky</h3>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Outcome</th><th>Znamená</th></tr></thead>
+        <tbody>
+          <tr><td><code>active</code></td><td>task běží</td></tr>
+          <tr><td><code>completed</code></td><td>hotovo a kontrakt to potvrdil</td></tr>
+          <tr><td><code>partial</code></td><td>část hotová, zbytek popsaný v dalším kroku</td></tr>
+          <tr><td><code>blocked</code></td><td>nejde pokračovat, dokud se nevyřeší něco mimo task</td></tr>
+          <tr><td><code>no_match</code></td><td>práce proběhla a hledaná věc neexistuje</td></tr>
+          <tr><td><code>failed</code></td><td>práci nešlo udělat</td></tr>
+          <tr><td><code>handed_over</code></td><td>pokračuje jiná session podle handoveru</td></tr>
+        </tbody>
+      </table></div>
+      <p>V transcriptu vypadají „hledali jsme a nic nenašli“ a „nešlo to prohledat“ stejně. Supervisor, který je nerozliší, neví, jestli zkusit znovu, eskalovat, nebo přijmout. Rozhoduje typované pole, ne próza. Outcome je jediné pole, které po <code>start</code> nějaký příkaz mění.</p>
+      <div class="note"><p>Identitu záznamu (repozitář, branch, HEAD, stav pracovního stromu, změněné soubory) agent nikdy nepíše. Počítá ji Majordomus z gitu a tělo, které se ji pokusí nastavit, je odmítnuto.</p></div>
+    </section>
+
+<section id="reasoning">
+      <h2>Nejistota a poradci</h2>
+      <p>Když agent narazí na podstatnou technickou nejistotu, nerozhoduje ji potichu. <code>majordomus reasoning</code> z ní dělá záznam, který další session přečte, místo aby se ptala znovu.</p>
+      <ol class="steps">
+        <li><div><h4>Důkaz první</h4><p>Agent sesbírá lokální důkazy a zapíše assessment: předmět, jak moc na tom záleží, hypotézu a důkazy.</p></div></li>
+        <li><div><h4>Plán rozhodne policy</h4><p>Triviální nebo nízká závažnost: rozhodnout lokálně. Podstatné bez vhodného poradce: strukturovaná lokální revize. Existující závěr na to odpovídá: použít ho. Podstatné a poradci jsou k dispozici: zeptat se jich.</p></div></li>
+        <li><div><h4>Poradci dodávají důkaz, ne verdikt</h4><p>Externí modely (jiný vendor, jiný nástroj) dávají hlubší revizi. Rozhodnutí patří agentovi, který pracuje. Neshoda se řeší experimentem, ne hlasováním.</p></div></li>
+        <li><div><h4>Závěr je typovaný záznam</h4><p>Rozhodnutí s důkazy, zamítnuté alternativy, zbývající rizika a plán ověření. Pak práce pokračuje.</p></div></li>
+      </ol>
+      <p>Chybějící poradce není chyba ani důvod zastavit se a ptát člověka. Checkout bez nainstalovaného poradce, bez klíče a bez sítě rozhoduje stejně a jen zapíše, že to bylo lokálně. Vendor není v logice nikde: protokol „zeptej se tohohle, pak tamtoho“ by se rozbil v den, kdy vyprší klíč.</p>
+    </section>
+
+<section id="git">
+      <h2>Git hooky: jeden soudce, víc míst</h2>
+      <p>Agent může příkaz Majordomusu přeskočit. Commit a push přeskočit nemůže. Git hooky jsou proto poslední místo, kde harness repozitáře vidí každou změnu bez ohledu na to, kdo ji udělal: člověk, Claude, Codex, nebo skript. Instalují se jednou: <code>git config core.hooksPath .githooks</code>.</p>
+      <div class="code"><button type="button">Kopírovat</button><pre><code><span class="c"># .githooks/pre-commit</span>
+bin/majordomus doctor || exit $?
+bin/majordomus-cli worktree guard --quiet || exit $?   <span class="c"># feature branch jen z vlastního worktree</span>
+scripts/pages current || exit $?                     <span class="c"># odvozená data odpovídají stromu</span>
+
+<span class="c"># .githooks/commit-msg</span>
+STAGED="$(git diff --cached --name-only --diff-filter=ACMR | paste -sd, -)"
+bin/majordomus-cli commit validate "$1" --paths "$STAGED" || exit $?
+
+<span class="c"># .githooks/pre-push (zkráceno)</span>
+<span class="c"># push, který nese jen refs/majordomus/* (záznamy kontinuity), projde bez kontraktu</span>
+bin/majordomus finish --check || exit $?</code></pre></div>
+      <h3>pre-commit</h3>
+      <ul>
+        <li><strong><code>doctor</code></strong> je jen pro čtení a spustí každou doktrínu, která je na něj navázaná. Podrobněji níže.</li>
+        <li><strong>Worktree guard.</strong> Feature branch se commituje jen z jejího kanonického worktree <code>&lt;repo&gt;-wt/&lt;branch&gt;</code>, trunk jen z primárního checkoutu. Cesta se odvozuje z gitu, nikde se neregistruje.</li>
+        <li><strong><code>pages current</code></strong> porovná zaznamenaný hash vstupů odvozených dat s hashem tohoto stromu za pětinu sekundy. Commit, který pohne kanonickým vstupem bez regenerace, by rozbil deploy tomu, kdo přistane jako další.</li>
+      </ul>
+      <h3>commit-msg</h3>
+      <p>Hook běží v jediném okamžiku, kdy existuje celý důkaz: zpráva je napsaná a soubory jsou staged. <code>fix</code> bez testu se dá zachytit, dokud je levné test přidat.</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Kód</th><th>Úroveň</th><th>Znamená</th></tr></thead>
+        <tbody>
+          <tr><td><code>commit.not_conventional</code></td><td>error</td><td>hlavička není <code>type(scope): subject</code></td></tr>
+          <tr><td><code>commit.subject_empty</code></td><td>error</td><td>za dvojtečkou nic není</td></tr>
+          <tr><td><code>commit.subject_too_long</code></td><td>error</td><td>delší než <code>subject_max_chars</code> (100)</td></tr>
+          <tr><td><code>commit.subject_trailing_period</code></td><td>error</td><td>subject je titulek, ne věta</td></tr>
+          <tr><td><code>commit.unknown_scope</code></td><td>policy (warning)</td><td>scope, který historie nikdy nepoužila</td></tr>
+          <tr><td><code>commit.fix_without_test</code></td><td>policy (warning)</td><td><code>fix</code> bez testu mezi soubory</td></tr>
+          <tr><td><code>commit.unresolved_reference</code></td><td>policy (error)</td><td>id záznamu, které vrstva nezná</td></tr>
+          <tr><td><code>commit.breaking_unexplained</code></td><td>policy (error)</td><td><code>!</code> bez těla a bez <code>BREAKING CHANGE:</code></td></tr>
+        </tbody>
+      </table></div>
+      <p>Limit 100 znaků je změřený, ne zvolený. Konvence gitu je 72. Medián subjectu v historii repa byl 73 znaků a 95. percentil 98. Limit, který porušuje polovina historie, není limit, ale šum, který učí lidi kontrolu ignorovat. Slovník scope se učí z historie, ne z ručně udržované tabulky cest.</p>
+      <p><strong>Hook nemá vlastní pravidlo.</strong> <code>commit-msg</code> se ptá <code>commit.validate</code>. Stejného soudce čte <code>scripts/ci/commit-policy</code> přes historii v CI a stejného dostane agent přes MCP jako <code>majordomus_commit_validate</code>. Agent si tak může verdikt zjistit dřív, než commit zkusí, a nemůže dostat jiný.</p>
+      <h3>pre-push</h3>
+      <p><code>finish --check</code> se ptá, jestli se práce tasku smí publikovat, a nic nezapíše. Výjimka je push, který nese jen <code>refs/majordomus/*</code>. To je úložiště kontinuity s podepsanými handovery a kontrakt by jinak odmítl handover právě pro task, který předává.</p>
+    </section>
+
+<section id="ci">
+      <h2>CI gates: co změna musí spustit</h2>
+      <p><code>.ai/repo/ci/gates.yaml</code> je celý model CI: které gates existují, který job je spouští a které třídy změněných cest je vybírají. <code>scripts/ci-plan</code> čte jen tenhle soubor. Workflow v <code>.github/workflows/validate.yml</code> je tenký adaptér nad plánem a nemá vlastní seznam cest. V repu Majordomusu je 74 gates ve 28 třídách cest.</p>
+      <div class="code"><button type="button">Kopírovat</button><pre><code><span class="c"># .ai/repo/ci/gates.yaml (výřez)</span>
+gates:
+  - id: shell-lint
+    job: structure
+    always: true
+    runs: scripts/ci/shell-lint
+    summary: bash -n over every script, shellcheck over the tool, the scripts and the cases
+
+  - id: prompt-privacy
+    job: structure
+    always: true
+    runs: scripts/ci/prompt-privacy
+    summary: no published or generated file is a prompt record, a rendering, or a copy of one</code></pre></div>
+      <h3>Pravidla plánovače</h3>
+      <ul>
+        <li>Gate s <code>always: true</code> běží v každém plánu.</li>
+        <li>Změněná cesta vybere gates <em>každé</em> třídy, na kterou sedí, ne jen první. Překryv může plán jen rozšířit.</li>
+        <li>Cesta, na kterou nesedí žádná třída, eskaluje na plný plán a plán ji jmenuje. Neznámá změna nikdy nespustí méně.</li>
+        <li><code>implies</code> přidá gate k rodiči, <code>requires</code> přidá gate, bez kterého jiný neběží.</li>
+        <li>Push na master, plánovaný běh a PR s labelem <code>ci:full</code> spouští všechno.</li>
+      </ul>
+      <h3>Jak číst verdikt</h3>
+      <div class="note">
+        <p><strong>Nulový exit code není verdikt.</strong> <code>scripts/derive</code> jednou skončil s nulou a přitom vypsal chybu: dva záznamy rozhodnutí sdílely identitu a oba vypadly z indexu. Všechno odvozené potom vzniklo bez nich. Odvozování teď běží pod <code>--strict</code> a chybová diagnostika běh ukončí.</p>
+        <p><strong>Zelená historie není zelený strom.</strong> Master jednou nesl dvě vady, které shodily každou branch, jež ho mergovala. Jeho poslední <em>dokončený</em> běh předcházel commitu, který je zavedl, a všechny pozdější běhy stály ve frontě.</p>
+        <p><strong>Gate, který neodpověděl, je <code>queued</code>, nikdy pass.</strong> Stejně tak test, který byl přeskočen.</p>
+      </div>
+    </section>
+
+<section id="doctor">
+      <h2>Doctor a preflight</h2>
+      <div class="two">
+        <div class="card">
+          <h4><code>majordomus doctor</code>: je harness zapojený?</h4>
+          <ul>
+            <li>vendorovaný balíček pravidel proti hashům v manifestu</li>
+            <li>řetěz každé doktríny od validátoru po CI</li>
+            <li>provider soubory proti jejich razítkům</li>
+            <li>zapojení každého vynucení, které policy jmenuje</li>
+            <li>schémata, layout, rozpočty, retence, graf pravidel, ADR, skills, prompty</li>
+            <li>log ztracených promptů je prázdný</li>
+          </ul>
+          <p style="margin-top:10px">Doctor detekuje, neopravuje. Regenerace je <code>majordomus generate</code>, nic se neopravuje na místě.</p>
+        </div>
+        <div class="card">
+          <h4><code>env preflight</code>: co je tady dokázané?</h4>
+          <p>Jedna typovaná hodnota o checkoutu: verdikt pro git, epizodu, briefing, task, handover, policy, pravidla, ADR, sdílený server, peery, zaznamenané testy, vynucení pravidel, projekce, generovanou dokumentaci a deploy.</p>
+          <p>Každý verdikt nese důkaz, na kterém stojí. Renderuje ji terminál při vstupu do adresáře, HTTP, MCP i Cockpit. Žádné rozhraní si stav nepočítá samo.</p>
+        </div>
+      </div>
+      <p>Verdikty preflightu:</p>
+      <div class="chips"><code>verified</code><code>active</code><code>fresh</code><code>stale</code><code>degraded</code><code>unavailable</code><code>failed</code><code>unknown</code><code>not_applicable</code></div>
+      <p>První tři nejdou vyrobit bez důkazu. Kontrola, která nemá co ukázat, nemůže vrátit <code>verified</code>, jen <code>unknown</code>.</p>
+      <h3>Důkaz je vztah ke stromu, ne časové razítko</h3>
+      <p>Každý zaznamenaný běh testu nese runner, výsledek, commit, stav pracovního stromu a digest. Jestli je důkaz pořád platný, se počítá při čtení:</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Stav</th><th>Znamená</th></tr></thead>
+        <tbody>
+          <tr><td><code>proven</code></td><td>od běhu se nic nezměnilo</td></tr>
+          <tr><td><code>inputs_unchanged</code></td><td>něco se změnilo, ale ne vstupy tohoto testu</td></tr>
+          <tr><td><code>stale</code></td><td>vstupy testu se změnily</td></tr>
+          <tr><td><code>failing</code></td><td>poslední běh selhal</td></tr>
+          <tr><td><code>not_run</code></td><td>test existuje a neběžel</td></tr>
+          <tr><td><code>unrunnable</code></td><td>test nejde spustit</td></tr>
+          <tr><td><code>no_test</code></td><td>tvrzení nemá test</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+<section id="vynuceni">
+      <h2>Pravidlo musí něco volat</h2>
+      <p>Nejčastější vada harness není špatné pravidlo, ale pravidlo, které nic nespouští. V repu Majordomusu se našlo 17 nezávislých případů kontroly, která byla zdokumentovaná jako blokující, ležela na disku, šla spustit, a nic ji nevolalo. Proto se u každého pravidla způsob vynucení odvozuje z toho, co jeho blok <code>x-majordomus</code> skutečně jmenuje. Deklarovat se nedá.</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Režim</th><th>Znamená</th></tr></thead>
+        <tbody>
+          <tr><td><code>dispatched</code></td><td>validátor, který spouští příkaz (<code>check</code>, <code>finish</code>, hook)</td></tr>
+          <tr><td><code>gated</code></td><td>testy, které spouští CI gate</td></tr>
+          <tr><td><code>reviewed</code></td><td>jen uvedený důvod, proč to stroj neumí ověřit; vynucuje člověk</td></tr>
+          <tr><td><code>declarative</code></td><td>nic; pravidlo je jen text</td></tr>
+        </tbody>
+      </table></div>
+      <p><code>majordomus doctor</code> pro každou doktrínu projde řetěz a nahlásí první přerušený článek:</p>
+      <div class="code"><pre><code>principle → doctrine → validator → enforcement point → exit code → test → CI → claim</code></pre></div>
+      <p>Čte přitom zdrojový kód, ne popis, který o sobě registr dává. Gate <code>rule-proof</code> navíc vyžaduje, aby každé blokující pravidlo jmenovalo validátor, test nebo důvod lidské kontroly. Pravidla bez důkazu jsou v ratchetu, který se smí jen zmenšovat. Řeší se zapojením vynucení, nikdy přeřazením pravidla do poradní třídy. Podrobněji ve stránce o paměti a pravidlech.</p>
+    </section>
+
+<section id="mereni">
+      <h2>Co harness stojí a co šetří</h2>
+      <p>Harness přidává kontext, kroky a kontroly. Jestli se to vyplatí, je otázka měření, ne přesvědčení. Majordomus neuvádí žádné procento úspory, které nezměřil, a číslo o tokenech napsané do prózy odmítne <code>majordomus economics check</code>.</p>
+      <ul>
+        <li><strong>Jednotka:</strong> tokeny na <em>úspěšně dokončený</em> task. Běh, který ušetří tokeny tím, že selže, není úspora. Pár běhů se počítá jen tehdy, když oba prošly všemi branami úspěchu.</li>
+        <li><strong>Kontrola a treatment:</strong> stejný task, stejný stav repa, stejný model, stejné nástroje, stejné akceptační testy, jednou s Majordomusem a jednou bez něj.</li>
+        <li><strong>Dvě různá měření:</strong> celková úspora tokenů z živých párových běhů (jediné číslo, které může podpořit tvrzení o úspoře) a poměr výběru kontextu (co kontextový kompilátor vybral z toho, co považoval za relevantní). Druhé není celková úspora a každé rozhraní to říká.</li>
+      </ul>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Třída čísla</th><th>Znamená</th></tr></thead>
+        <tbody>
+          <tr><td><code>observed</code></td><td>vrátil ho provider nebo jeho harness za běhu, zapsané beze změny</td></tr>
+          <tr><td><code>counted</code></td><td>spočítané deterministicky z bajtů na disku pojmenovaným, připnutým tokenizérem</td></tr>
+          <tr><td><code>derived</code></td><td>aritmetika nad observed nebo counted</td></tr>
+          <tr><td><code>estimated</code></td><td>číslo za něco, co nikdo nezměřil; nikdy se neporovnává ani nepublikuje</td></tr>
+          <tr><td><code>counterfactual</code></td><td>co by mechanismus ušetřil, modelované, ne pozorované; nikdy úspora</td></tr>
+        </tbody>
+      </table></div>
+      <p>Číslo spočítané z několika vstupů není nikdy silnější než nejslabší z nich.</p>
+    </section>
+
+<section id="hranice">
+      <h2>Co Majordomus jako harness nedělá</h2>
+      <div class="two">
+        <div class="card yes">
+          <h4>Dělá</h4>
+          <ul>
+            <li>renderuje bootstrap pro každého providera z jedné policy</li>
+            <li>zapisuje hranice session do typovaných záznamů</li>
+            <li>drží scope, profil a závazky tasku</li>
+            <li>odmítá „hotovo“ bez splněného kontraktu</li>
+            <li>dává hookům, CI a agentovi stejného soudce</li>
+            <li>ukazuje, kdo na čem dělá</li>
+            <li>říká, co je dokázané a na jakém důkazu</li>
+          </ul>
+        </div>
+        <div class="card no">
+          <h4>Nedělá</h4>
+          <ul>
+            <li>nevolá model, nedrží SDK, nečte hodnoty credentials</li>
+            <li>nespouští nástroje agenta a nehlídá jeho oprávnění</li>
+            <li>nemá agenty, persony, role ani katalog workerů</li>
+            <li>neukládá transcripty a nic neshrnuje modelem</li>
+            <li>nemá embeddingy ani vektorové úložiště</li>
+            <li>nezamyká cesty: ohlášený scope je claim, ne zámek</li>
+            <li>neuvádí úsporu, kterou nezměřil</li>
+          </ul>
+        </div>
+      </div>
+      <p>Jediný aktér, kterého Majordomus zná, je <code>owner</code>, volný řetězec v záznamu tasku. Supervizní nástroj, který přidává podstatná jména, se stává tím, co supervizuje.</p>
+      <p>Z toho plynou i limity. Je stavěný pro jeden repozitář, jednoho vlastníka a jednotky souběžných sessions. Nemá SSO, role ani oprávnění typu „tým X smí měnit pravidla Y“, neřeší sdílení pravidel napříč stovkami repozitářů a neumí ne-kódové artefakty, jako jsou HW specifikace nebo výsledky měření. Při devíti souběžných sessions na jednom stroji už je úzkým hrdlem stroj sám: disk, odvozování a fronta CI.</p>
+    </section>
+
+<section id="prenos">
+      <h2>Co se dá přenést i bez Majordomusu</h2>
+      <p>Na Majordomusu nezáleží tolik jako na tvaru řešení. Tohle funguje s jakýmkoli providerem, jakýmkoli CI a bez jediného řádku jeho kódu. Pořadí je zhruba podle poměru přínosu a ceny.</p>
+      <ol class="steps">
+        <li><div><h4>Jeden zdroj instrukcí, generované projekce</h4><p><code>CLAUDE.md</code>, <code>AGENTS.md</code> a <code>GEMINI.md</code> se generují z jedné šablony a CI hlídá, že nikdo neupravil výstup ručně. Bootstrap jen odkazuje, pravidla v něm nejsou.</p></div></li>
+        <li><div><h4>Gate, který neodpověděl, neprošel</h4><p>Chybějící verdikt je vlastní stav, ne pass. Stejně tak nulový exit code s chybou ve výstupu a přeskočený test. Stojí to málo a chytá to nejdražší omyly.</p></div></li>
+        <li><div><h4>Hook se ptá stejného soudce jako CI a agent</h4><p>Žádná logika v shellu hooku. Jedna kontrola, tři místa volání. Agent si verdikt může zjistit předem přes MCP nebo CLI.</p></div></li>
+        <li><div><h4>Hooky na hranicích session zapisují stav, nikdy neblokují</h4><p>Na konci session a před compaction se zapíše krátký stav: cíl, kde to je, další krok. Na začátku session ho dostane další worker. Selhání hooku se loguje, nezametá.</p></div></li>
+        <li><div><h4>„Hotovo“ je kontrakt, ne věta</h4><p>Seznam řádků, které musí projít: scope, ověřovací příkaz, závazky, gates. Selhání jednoho znamená, že se nic nezapíše. Výsledky jsou typované, <code>no_match</code> není <code>failed</code>.</p></div></li>
+        <li><div><h4>Každé pravidlo jmenuje, co ho spouští</h4><p>Pravidlo bez validátoru, testu nebo uvedeného důvodu lidské kontroly je text. Počet takových pravidel se smí jen snižovat.</p></div></li>
+        <li><div><h4>Repo říká, co agent nikdy nečte</h4><p>Tajemství, vygenerované soubory, velké fixtures a binárky jsou vyjmenované jednou a mimo dosah všech rozhraní, ne zakázané v instrukcích.</p></div></li>
+        <li><div><h4>Práce se ohlašuje dřív, než se staví</h4><p>Ať je to board, issue tracker nebo kanál: kdo na čem pracuje a jaké cesty se chystá měnit. Kolize objevená při merge je nejdražší možná.</p></div></li>
+      </ol>
+    </section>

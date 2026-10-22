@@ -1,7 +1,36 @@
+# One build directory for the intermediates of every worktree of this repository (ADR 0139,
+# project.worktrees-share-build-intermediates).
+#
+# `build-dir` is where cargo keeps what it compiles on the way — dependencies, fingerprints,
+# incremental state. `target-dir` is where the finished artifacts land, and stays per
+# worktree: the executable a checkout runs or borrows is never another checkout's, which is
+# the failure project.reclaim-only-what-you-own was written about. A shared CARGO_TARGET_DIR
+# would give up exactly that, because every worktree would overwrite one debug/majordomus.
+#
+# The location is under cargo's own home so that it is the same path in every worktree
+# whatever its depth, which a relative path in a committed file cannot be. It accumulates, so
+# scripts/reap-orphans measures it, bounds it and reduces it.
+#
 # Every compilation of a workspace member in any checkout of this repository passes through
 # scripts/build-slot, which lets at most two builds compile at once on one machine
 # (MAJORDOMUS_BUILD_SLOTS; project.accumulation-is-measured, "build concurrency is bounded").
 # A workspace wrapper and not `rustc-wrapper`: sccache keeps that one (RUSTC_WRAPPER), and
 # dependencies, which sccache serves from its cache, need no slot.
 [build]
+build-dir = "{cargo-cache-home}/build-shared/majordomus"
 rustc-workspace-wrapper = "scripts/build-slot"
+
+# Each tree's own root, for the crate's build script to rerun on (`rerun-if-env-changed`).
+#
+# Sharing the build directory shares more than the dependencies. Two worktrees are one package
+# at one path relative to its workspace, and cargo names a path package's units by that
+# relative path, so every worktree compiles majordomus-cli into the same slot; whether the
+# slot is fresh is then judged by comparing this tree's source mtimes with the slot's outputs.
+# A tree whose sources are older than another tree's last build was handed that build: on
+# 2026-10-12 a `cargo build` took one second and produced an executable of another worktree's
+# code, generation and commit. A variable whose value is this tree's absolute root — `relative`
+# resolves "." against the directory holding `.cargo/`, and `force` keeps an exported value
+# from standing in for it — enters the build script's fingerprint, so a slot last written by
+# another tree is stale here and is rebuilt, and a slot this tree wrote stays fresh.
+[env]
+MAJORDOMUS_BUILD_TREE = { value = ".", relative = true, force = true }
