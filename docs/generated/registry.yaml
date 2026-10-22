@@ -23854,7 +23854,7 @@ capabilities:
                 type:
                   - string
                   - "null"
-                description: "On `merge_succeeded`: the merge commit, once it is read."
+                description: "On `merge_succeeded`: the merge commit, once it is read; the head itself after a\nfast-forward."
             required:
               - at
               - actor
@@ -25360,7 +25360,7 @@ capabilities:
                 type:
                   - string
                   - "null"
-                description: "The merge method the executor asks the forge for: `merge` when the repository allows a\nmerge commit, and `None` when it does not. There is no other: the derived-file driver\nresolves merges, and a squash or rebase would replay commits it never saw, so with\n`None` every pull request the relation to master does not already decide is held\n(`merge_commit_not_allowed`), never merged otherwise."
+                description: "The merge method the executor asks the forge for: `merge` when the repository allows a\nmerge commit, and `None` when it does not. A head that contains master is landed by a\nfast-forward instead (`super::drain::landing_method`); this is the method of one that\ncarries master without containing it. There is no other: the derived-file driver\nresolves merges, and a squash or rebase would replay commits it never saw, so with\n`None` every pull request the relation to master does not already decide is held\n(`merge_commit_not_allowed`), never merged otherwise."
               merge_settings_unread:
                 type: boolean
                 description: "Whether the repository's merge settings went unread (the forge's answer carried none\nof them): `merge_method` is then `None` because nothing is known, not because a merge\ncommit is refused, and a held pull request says `merge_settings_unread` (I2966). Absent\nin a policy recorded before it was read, which read them."
@@ -26418,7 +26418,7 @@ capabilities:
                 type:
                   - string
                   - "null"
-                description: "On `merge_succeeded`: the merge commit, once it is read."
+                description: "On `merge_succeeded`: the merge commit, once it is read; the head itself after a\nfast-forward."
             required:
               - at
               - actor

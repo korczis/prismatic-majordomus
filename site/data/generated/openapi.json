@@ -26768,7 +26768,7 @@
           "type": "FailureClass | null"
         },
         {
-          "description": "On `merge_succeeded`: the merge commit, once it is read.",
+          "description": "On `merge_succeeded`: the merge commit, once it is read; the head itself after a\nfast-forward.",
           "name": "merge_commit",
           "refs": [],
           "required": false,
@@ -27101,7 +27101,7 @@
           "type": "array of LabelPolicy"
         },
         {
-          "description": "The merge method the executor asks the forge for: `merge` when the repository allows a\nmerge commit, and `None` when it does not. There is no other: the derived-file driver\nresolves merges, and a squash or rebase would replay commits it never saw, so with\n`None` every pull request the relation to master does not already decide is held\n(`merge_commit_not_allowed`), never merged otherwise.",
+          "description": "The merge method the executor asks the forge for: `merge` when the repository allows a\nmerge commit, and `None` when it does not. A head that contains master is landed by a\nfast-forward instead (`super::drain::landing_method`); this is the method of one that\ncarries master without containing it. There is no other: the derived-file driver\nresolves merges, and a squash or rebase would replay commits it never saw, so with\n`None` every pull request the relation to master does not already decide is held\n(`merge_commit_not_allowed`), never merged otherwise.",
           "name": "merge_method",
           "refs": [],
           "required": false,

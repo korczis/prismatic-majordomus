@@ -6,7 +6,7 @@
     "version": "1.0.0-alpha.6"
   },
   "registry": {
-    "fingerprint": "78441a199abdee8bb87203f79fb36c97c7948fa67e33ce570931f7dc0b398388",
+    "fingerprint": "336dbe3cc5f7588e023e697eb2504963849164c8ccd22c63e7a65e8e7eb68dc9",
     "summary": {
       "total": 3313,
       "builtin": 208,
@@ -33173,7 +33173,7 @@
                       "string",
                       "null"
                     ],
-                    "description": "On `merge_succeeded`: the merge commit, once it is read."
+                    "description": "On `merge_succeeded`: the merge commit, once it is read; the head itself after a\nfast-forward."
                   }
                 },
                 "required": [
@@ -35423,7 +35423,7 @@
                       "string",
                       "null"
                     ],
-                    "description": "The merge method the executor asks the forge for: `merge` when the repository allows a\nmerge commit, and `None` when it does not. There is no other: the derived-file driver\nresolves merges, and a squash or rebase would replay commits it never saw, so with\n`None` every pull request the relation to master does not already decide is held\n(`merge_commit_not_allowed`), never merged otherwise."
+                    "description": "The merge method the executor asks the forge for: `merge` when the repository allows a\nmerge commit, and `None` when it does not. A head that contains master is landed by a\nfast-forward instead (`super::drain::landing_method`); this is the method of one that\ncarries master without containing it. There is no other: the derived-file driver\nresolves merges, and a squash or rebase would replay commits it never saw, so with\n`None` every pull request the relation to master does not already decide is held\n(`merge_commit_not_allowed`), never merged otherwise."
                   },
                   "merge_settings_unread": {
                     "type": "boolean",
@@ -36998,7 +36998,7 @@
                       "string",
                       "null"
                     ],
-                    "description": "On `merge_succeeded`: the merge commit, once it is read."
+                    "description": "On `merge_succeeded`: the merge commit, once it is read; the head itself after a\nfast-forward."
                   }
                 },
                 "required": [
@@ -86889,7 +86889,7 @@
     ]
   },
   "index": {
-    "fingerprint": "d94811859bab25ff0936493a4def1004f4b78d5fdfb78d946aadd1ee3f2e1912",
+    "fingerprint": "662faa93ad68418b16f404982e631c6bb24995ea5cd1ebdbd5b69d875dc10b2c",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -94055,7 +94055,7 @@
         "title": "Pull-request integration",
         "path": "docs/INTEGRATION.md",
         "source_class": "document",
-        "bytes": 72184
+        "bytes": 74395
       },
       {
         "uri": "majordomus://document/docs/INTEGRATION_ROLLOUT.md",
@@ -115456,7 +115456,7 @@
         "identity": "test/cases/1036_the_executor_reopens_a_record_pull_request.sh",
         "path": "test/cases/1036_the_executor_reopens_a_record_pull_request.sh",
         "source_class": "case",
-        "bytes": 8295
+        "bytes": 8996
       },
       {
         "uri": "majordomus://test/test/cases/1037_the_closing_question_is_measured.sh",
@@ -115496,7 +115496,7 @@
         "identity": "test/cases/1040_a_stacked_head_lands_on_the_verdict_it_has.sh",
         "path": "test/cases/1040_a_stacked_head_lands_on_the_verdict_it_has.sh",
         "source_class": "case",
-        "bytes": 11989
+        "bytes": 12355
       },
       {
         "uri": "majordomus://test/test/cases/1041_a_release_publishes_its_metadata.sh",
@@ -119000,7 +119000,7 @@
         "identity": "test/cases/720_integration_follows_the_current_master.sh",
         "path": "test/cases/720_integration_follows_the_current_master.sh",
         "source_class": "case",
-        "bytes": 14226
+        "bytes": 14901
       },
       {
         "uri": "majordomus://test/test/cases/721_the_suite_shards_are_the_whole_suite.sh",
@@ -119088,7 +119088,7 @@
         "identity": "test/cases/740_integration_is_visible_where_a_person_looks.sh",
         "path": "test/cases/740_integration_is_visible_where_a_person_looks.sh",
         "source_class": "case",
-        "bytes": 12062
+        "bytes": 12708
       },
       {
         "uri": "majordomus://test/test/cases/741_a_continuous_drain_stops_cleanly_and_alone.sh",
@@ -119096,7 +119096,7 @@
         "identity": "test/cases/741_a_continuous_drain_stops_cleanly_and_alone.sh",
         "path": "test/cases/741_a_continuous_drain_stops_cleanly_and_alone.sh",
         "source_class": "case",
-        "bytes": 8399
+        "bytes": 9072
       },
       {
         "uri": "majordomus://test/test/cases/742_only_an_outage_is_asked_again.sh",
@@ -119104,7 +119104,7 @@
         "identity": "test/cases/742_only_an_outage_is_asked_again.sh",
         "path": "test/cases/742_only_an_outage_is_asked_again.sh",
         "source_class": "case",
-        "bytes": 7048
+        "bytes": 7086
       },
       {
         "uri": "majordomus://test/test/cases/743_release_version_answers_with_the_contract.sh",
@@ -119368,7 +119368,7 @@
         "identity": "test/cases/850_integration_drains_cycle_by_cycle.sh",
         "path": "test/cases/850_integration_drains_cycle_by_cycle.sh",
         "source_class": "case",
-        "bytes": 16327
+        "bytes": 17020
       },
       {
         "uri": "majordomus://test/test/cases/852_a_dry_run_moves_nothing.sh",
@@ -119384,7 +119384,7 @@
         "identity": "test/cases/855_racing_executors_merge_once.sh",
         "path": "test/cases/855_racing_executors_merge_once.sh",
         "source_class": "case",
-        "bytes": 6694
+        "bytes": 7424
       },
       {
         "uri": "majordomus://test/test/cases/856_racing_worktrees_share_one_lease.sh",
@@ -119392,7 +119392,7 @@
         "identity": "test/cases/856_racing_worktrees_share_one_lease.sh",
         "path": "test/cases/856_racing_worktrees_share_one_lease.sh",
         "source_class": "case",
-        "bytes": 6979
+        "bytes": 7640
       },
       {
         "uri": "majordomus://test/test/cases/857_required_checks_are_authoritative.sh",
@@ -119640,7 +119640,7 @@
         "identity": "test/cases/925_a_bound_check_is_only_its_apps_run.sh",
         "path": "test/cases/925_a_bound_check_is_only_its_apps_run.sh",
         "source_class": "case",
-        "bytes": 14224
+        "bytes": 14978
       },
       {
         "uri": "majordomus://test/test/cases/926_an_unread_writer_is_never_a_pass.sh",
@@ -119752,7 +119752,7 @@
         "identity": "test/cases/938_a_truncated_cross_reference_read_holds.sh",
         "path": "test/cases/938_a_truncated_cross_reference_read_holds.sh",
         "source_class": "case",
-        "bytes": 20663
+        "bytes": 21476
       },
       {
         "uri": "majordomus://test/test/cases/939_a_batch_landed_successor_supersedes.sh",

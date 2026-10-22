@@ -208,7 +208,11 @@ copy. No other list of labels exists. A label is compared case-insensitively.
 </div>
 
 
-`hold` makes the pull request `blocked`, with `label:NAME`. `obsolete` makes it `obsolete`,
+`hold` makes the pull request `blocked`, with `label:NAME`, until every commit of its head is
+on master: a hold has nothing left to hold then, and the relation to master decides, so a member
+a landed train carried is `redundant` (`head_reachable_from_master`). The executor closes
+nothing on that account; `prs cleanup --apply` does, when a person asks (I3910).
+`obsolete` makes it `obsolete`,
 with `label_obsolete:NAME` in the forge's spelling (owner decision D3): a person's mark is the
 only evidence that reaches the word — age, shared paths and a similar title never do — and it
 is never closed automatically. A pull request carrying both is `obsolete`, since a person acts
@@ -224,7 +228,8 @@ on its own once its own conditions hold, outside the executor and against whatev
 then, and refreshing it would only hand the forge a head to merge. Nothing acts on it until a
 person disarms it, and the queue lists every such pull request in a diagnostic.
 
-The executor merges only with a merge commit, because the derived-file driver resolves merges
+The executor lands a head that contains master by a fast-forward (see *One merge at a time*),
+and merges only with a merge commit otherwise, because the derived-file driver resolves merges
 and a squash or a rebase would replay commits it never saw. The merge method
 (`policy.merge_method`) is `merge` when the repository's settings allow a merge commit
 (`allow_merge_commit`, read with `gh api repos/OWNER/NAME`), and none otherwise. With none,
@@ -495,12 +500,31 @@ executor first sees the pull request as actionable, not when the forge was first
 3. observe again and rebuild the queue;
 4. act only if the second decision names the same master and head and still says `ready`,
    and otherwise record `stale_decision` and start again;
-5. merge with a merge commit (`--merge`) and `--match-head-commit <head>`, never `--admin`,
-   a squash or a rebase;
-6. verify that the forge shows it merged and that the fetched master contains its head;
-7. record the merge with the master before and after.
+5. land it: a head that contains master by a non-forced fast-forward of master to that head
+   (`gh api -X PATCH repos/OWNER/NAME/git/refs/heads/master -f sha=<head> -F force=false`),
+   and only a head that carries master without containing it by a merge commit (`--merge`,
+   `--match-head-commit <head>`); never `--admin`, a force, a squash or a rebase;
+6. verify that the forge shows it merged and that the fetched master is what was decided:
+   after a fast-forward master is the head itself and contains the master decided against,
+   after a merge master's first-parent successor of that master merges the head;
+7. record the landing with the master before and after, its method (`merge_attempted` says
+   `--fast-forward` or `--merge`) and the commit master became.
 
-A merge moves every other pull request behind master, so the next step always starts from a
+The act is a fast-forward because the owner decided so on 2026-10-22 (I3910). Branch
+protection here does not require a branch to be up to date (`strict: false`), so a merge commit
+pinned only to the head can land onto a master that moved after the decision, and two executors
+could each land one, the second with a tree nobody judged; only the parent check afterwards
+would see it. A non-forced ref update is a compare-and-swap the forge enforces: it is refused
+(HTTP 422, "Update is not a fast forward") unless master is still an ancestor of the head, so
+master always holds exactly the tree the checks judged. That refusal is not an unverified
+landing: it is recorded as `merge_failed` of class `stale`, the drain goes on, and the next step
+observes again and decides from the new master. The forge marks the pull request whose head
+master became as merged by itself. A head that does not contain master is landed by a merge
+commit only when it carries master (the `carries_master` link of a train whose lower link
+landed by a merge); that is rare, since a link above one that was fast-forwarded to contains
+master.
+
+A landing moves every other pull request behind master, so the next step always starts from a
 new observation.
 
 A merge that changes a projected plan record leaves GitHub behind by exactly that change.
@@ -564,7 +588,8 @@ it.
 |---|---|
 | the lowest, with its checks passed | `ready`, `contains_master` |
 | above an open link | `waiting_for_dependency`, `depends_on:#N`, whatever its checks say |
-| above a link that landed, with its checks passed | `ready`, `carries_master`: no refresh, and no second run of the checks |
+| above a link that was fast-forwarded to, with its checks passed | `ready`, `contains_master`: master is the link below, so it is fast-forwarded to in turn |
+| above a link that landed by a merge commit, with its checks passed | `ready`, `carries_master`: no refresh, and no second run of the checks |
 | above a link that landed after its head moved | `needs_refresh`: master holds what this head never saw |
 | above a link that was closed without a merge | `blocked`, `dependency_closed_unmerged:#N`: a person decides |
 
