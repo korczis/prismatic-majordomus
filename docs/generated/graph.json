@@ -63565,6 +63565,43 @@
         }
       },
       {
+        "id": "majordomus://issue/I3962",
+        "kind": "issue",
+        "label": "I3962",
+        "summary": "The codex advisor's final message is held to the answer schema and read from its file alone",
+        "route": "/cockpit/objects/issue/i3962",
+        "source": ".ai/repo/project/issues/I3962.yaml",
+        "facts": {
+          "created_at": "2026-10-22",
+          "current_state": "scripts/lib/advisors/codex-exec.mjs runs codex exec without --output-schema and falls back to run.stdout when the -o file is absent.",
+          "depends_on": [],
+          "evidence_required": [
+            "advisor_transport_contract"
+          ],
+          "milestone": "mcp-transports-are-reliable",
+          "non_scope": [
+            "The gemini-cli adapter, whose JSON envelope does not enforce a schema on the response",
+            "A live model call, which needs an authorised budget"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "scripts/lib/advisors/codex-exec.mjs",
+            "scripts/lib/advisors/contract.mjs",
+            "scripts/lib/advisors/process.mjs",
+            "scripts/lib/advisors/contract.test.mjs"
+          ],
+          "slug": "the-codex-advisor-answers-to-a-schema",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "node --test scripts/lib/advisors/contract.test.mjs",
+            "bash test/run.sh 731_advisor_transport_contract",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -122424,6 +122461,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3962",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3962",
+        "target": "majordomus://milestone/mcp-transports-are-reliable",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -133640,8 +133687,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3754,
-      "edges": 8679,
+      "nodes": 3755,
+      "edges": 8681,
       "acyclic": false,
       "truncated": false
     }

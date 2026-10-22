@@ -309,7 +309,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/economics.json` | `economics` | json | 30847 | `52031e569138f515` |
 | `docs/generated/economics.md` | `economics` | markdown | 15306 | `46a60ce991db2e51` |
 | `docs/generated/economics.yaml` | `economics` | yaml | 25727 | `4052a6677e5b73a2` |
-| `docs/generated/graph.json` | `graph` | json | 5252539 | `76ba9f197000644e` |
+| `docs/generated/graph.json` | `graph` | json | 5254396 | `527e8d753f51b51e` |
 | `docs/generated/graph.schema.json` | `graph-schema` | json | 7632 | `37d29841995d74d4` |
 | `docs/generated/modules/artifacts.md` | `modules/artifacts` | markdown | 1749 | `362e2d4e556b6006` |
 | `docs/generated/modules/brief.md` | `modules/brief` | markdown | 2401 | `fd6b9dbab7a9ff92` |
@@ -435,9 +435,9 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `site/data/registry/design.json` | `site-design` | json | 11594 | `ff6803878515ab46` |
 | `site/data/registry/distribution.json` | `site-distribution` | json | 3005 | `1dc59aaebd16174a` |
 | `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 825396 | `f64d8b604b18bb32` |
-| `site/data/registry/product-graph.json` | `site-product-graph` | json | 111829 | `84e6392e6c35f3dc` |
-| `site/data/registry/product.json` | `site-product` | json | 767568 | `5d6cc1b0c82c5fbd` |
-| `site/data/registry/registry.json` | `site-registry` | json | 7714657 | `00f8eb4a84dc90fe` |
+| `site/data/registry/product-graph.json` | `site-product-graph` | json | 111829 | `74da0311ce7b40aa` |
+| `site/data/registry/product.json` | `site-product` | json | 767568 | `0f058be450fc7319` |
+| `site/data/registry/registry.json` | `site-registry` | json | 7715266 | `83f20f9c2dd002cb` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180170 | `300b30d3144ed604` |
 | `site/data/registry/why.json` | `site-why` | json | 349931 | `ade5e059bf55bb30` |
 | `site/static/favicon.svg` | `design-mark` | text | 911 | `d2ebe74220e5c13d` |
