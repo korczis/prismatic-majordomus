@@ -6,7 +6,8 @@
 # A disposable repository with a bare origin, a recorded release and a real history:
 #
 #   only a release commit past the release   current: a release commit is no landed work
-#   a fix landed an hour ago                 owed, with the count and the wait, in the brief too
+#   a fix landed an hour ago                 owed, with the count and the wait, in the brief too,
+#                                            and the same answer to a tools/call over MCP
 #   a fix landed seven hours ago             overdue, and doctor's warning says so
 #   a top made 7 h ago that landed 1 h ago   owed for an hour: the wait runs from when this
 #                                            clone saw it land (its reflog), not from its commits
@@ -97,6 +98,14 @@ currency() { # [input]
   "$RB" run release.currency --input "${1:-"{\"next\":false}"}" --quiet --format json 2>/dev/null | jq -c '.output'
 }
 field() { printf '%s' "$1" | jq -r "$2"; }
+# The same question over MCP, as a client asks it: one session against this fixture, alone,
+# binding no port and writing no lease, and the typed answer of the tools/call or nothing.
+mcp_currency() { # arguments -> the structured content majordomus_release_currency answers
+  { printf '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"case3470","version":"0"}}}\n'
+    printf '{"jsonrpc":"2.0","method":"notifications/initialized"}\n'
+    printf '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"majordomus_release_currency","arguments":%s}}\n' "$1"
+  } | "$RB" mcp --standalone --repo "$PWD" 2>"$S/mcp.err" | sed -n 2p | jq -c '.result.structuredContent // empty'
+}
 
 # ---------------------------------------------------------------- 1. only a release commit past it
 c="$(currency)"
@@ -118,6 +127,13 @@ field "$b" '.lines[]' | grep -q '^release      1 landed commit(s) in 1 landing(s
   || { echo "    the brief has no release line:"; field "$b" '.lines[]' | sed 's/^/    | /'; exit 1; }
 field "$b" .line | grep -qF 'release owed 1' || { echo "    the brief's one line does not name it: $(field "$b" .line)"; exit 1; }
 echo "    a fix landed an hour ago is owed, with its count and its wait, in the brief too"
+m="$(mcp_currency '{"next":false}')"
+[ -n "$m" ] || { echo "    majordomus_release_currency gave no typed answer over MCP:"; sed 's/^/    | /' "$S/mcp.err" | head -5; exit 1; }
+[ "$(field "$m" .stance)" = owed ] && [ "$(field "$m" .landed)" = 1 ] \
+  && [ "$(field "$m" .release.reference)" = "$(field "$c" .release.reference)" ] \
+  && [ "$(field "$m" .waited_seconds)" -ge 3500 ] && [ "$(field "$m" .waited_seconds)" -lt 4000 ] \
+  || { echo "    over MCP the tool does not answer what the command does: $m (the command: $c)"; exit 1; }
+echo "    asked over MCP, majordomus_release_currency gives the command's answer: owed, one landed commit"
 
 # ---------------------------------------------------------------- 3. seven hours ago: overdue
 git reset -q --hard "$recorded"
