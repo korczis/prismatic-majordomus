@@ -852,9 +852,17 @@ cmd_built() {
 # that recorded a failure; `unknown`, with every reason, when the run cannot confirm the
 # report; and no evidence at all is published as unavailable, with the reason. ADR 68, as
 # ADR 0087 amends it; the reasons withhold `current` and never change the report.
+#
+# Beside the report, `claims` counts the guaranteed claims the run's own executions support
+# (I3916): the verdict scripts/ci/evidence-collect derived once the run's rows were recorded
+# (`run-report.json`), counted the way the site's product model counts a report (site.rs
+# `claim_evidence`: a guarantee is supported when the verdict is complete and no finding names
+# it). The homepage's proof figure and the evidence page both read this count, with the commit
+# the run was recorded at and how far behind the published one that is; a run that carries no
+# such verdict, and unavailable evidence, are `measured: false` with the reason, never a 0.
 cmd_evidence() {
   local commit="" from="" out="$ROOT/site/data/evidence.json" ledger_out="" slug="" tmp="" aid="" sha="" n=0
-  local m ecommit behind changed repo_url cov_json cov_txt report_txt state reasons d skipped=""
+  local m ecommit behind changed repo_url cov_json cov_txt report_txt run_report state reasons d skipped=""
   local -a froms=()
   while [ $# -gt 0 ]; do case "$1" in
     --commit) commit="$2"; shift 2 ;;
@@ -867,7 +875,8 @@ cmd_evidence() {
   commit="$(git -C "$ROOT" rev-parse --verify --quiet "$commit^{commit}")" || { echo "pages evidence: that is not a commit of this repository" >&2; exit 2; }
   evidence_unavailable() {
     jq -n --arg published "$commit" --arg reason "$1" \
-      '{schema: 1, available: false, published_commit: $published, reason: $reason}' > "$out" \
+      '{schema: 1, available: false, published_commit: $published, reason: $reason,
+        claims: {measured: false, declared: null, supported: null, reason: $reason}}' > "$out" \
       || { echo "pages evidence: could not write $out" >&2; exit 12; }
     echo "pages evidence: unavailable: $1"
   }
@@ -943,9 +952,30 @@ cmd_evidence() {
   report_txt="$from/report.txt"; [ -f "$report_txt" ] || report_txt=/dev/null
   cov_txt="$from/coverage.txt"; [ -f "$cov_txt" ] || cov_txt=/dev/null
   cov_json="$from/coverage.json"; [ -f "$cov_json" ] || cov_json=/dev/null
+  # the run's own verdict, when the collector kept one this build reads; an artifact gathered
+  # before it did, or one whose verdict is not a report, counts nothing
+  run_report="$from/run-report.json"
+  jq -e '(.claims | type == "array") and (.subject | type == "object")' "$run_report" >/dev/null 2>&1 || run_report=/dev/null
   jq -n --arg published "$commit" --argjson behind "$behind" --argjson changed "$changed" --arg repo "$repo_url" \
-    --slurpfile m "$m" --slurpfile cov "$cov_json" --rawfile report "$report_txt" --rawfile coverage "$cov_txt" '
+    --slurpfile m "$m" --slurpfile cov "$cov_json" --rawfile report "$report_txt" --rawfile coverage "$cov_txt" \
+    --slurpfile rr "$run_report" '
     $m[0] as $man
+    # the guaranteed claims the executions of the run support, counted as site.rs claim_evidence
+    # counts a report: measured only when the verdict read the whole matrix and a ledger
+    | (if ($rr | length) == 0 then
+         {measured: false, declared: null, supported: null,
+          reason: "The run carries no verdict over its own executions, so no count of the guaranteed claims it supports was recorded."}
+       else $rr[0] as $r
+         | [$r.findings[]? | .claim | select(type == "string")] as $against
+         | [$r.claims[] | select(.status == "guaranteed")] as $g
+         | (($r.subject.complete == true) and ($r.ledger.present == true)) as $measured
+         | {measured: $measured,
+            declared: ($g | length),
+            supported: (if $measured then [$g[] | .id as $id | select(any($against[]; . == $id) | not)] | length else null end),
+            reason: (if $measured then null
+                     elif $r.subject.complete != true then "The verdict of the run did not read the whole claims matrix."
+                     else "The verdict of the run found no ledger." end)}
+       end) as $claims
     # What the run cannot confirm about the report it carries. Each reason only withholds
     # `current`; none of them changes the report. A manifest written before the run measured
     # its trees has no such key, and reads as not measured. A report the collector failed to
@@ -987,6 +1017,7 @@ cmd_evidence() {
         run: $man.run,
         absent: $man.absent,
         totals: $man.totals,
+        claims: $claims,
         coverage: (if ($cov | length) == 0 then null else ($cov[0] | {crate, domain: (.domain | {lines, functions, regions})}) end),
         panels: [
           $man.panels[] | . as $p
@@ -1000,6 +1031,8 @@ cmd_evidence() {
       }' > "$out" || { echo "pages evidence: could not write $out" >&2; exit 12; }
   state="$(jq -r .state "$out")"
   reasons="$(jq -r '.unconfirmed | join(" ")' "$out")"
+  jq -r 'if .claims.measured then "pages evidence: the run of \(.commit[0:12]) supports \(.claims.supported) of \(.claims.declared) guaranteed claim(s)"
+         else "pages evidence: the guaranteed claims the run supports are not measured: \(.claims.reason)" end' "$out"
   if [ "$state" = current ]; then
     echo "pages evidence: current: the run of ${commit:0:12} confirms the report it carries"
   elif [ "$behind" != 0 ]; then
