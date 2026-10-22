@@ -6,7 +6,7 @@ template = "page.html"
 lang = "cs"
 translated_from = "silence-is-not-a-verdict/"
 source_digest = "b3f60dc4668868dae002bdf6e8876feb8a0d5cd7bcb13a872c60e105aeff8592"
-related = ["dokumentace-kterou-lze-odmitnout/", "vsechno-v-jednom-proudu/", "pochybnost-rozhodne-experiment/"]
+related = ["dokumentace-kterou-lze-odmitnout/", "vsechno-v-jednom-proudu/", "pochybnost-rozhodne-experiment/", "uspora-se-meri-netvrdi/"]
 [extra.translations]
 en = "silence-is-not-a-verdict/"
 +++
