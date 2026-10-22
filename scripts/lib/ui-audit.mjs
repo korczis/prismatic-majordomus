@@ -80,15 +80,23 @@ export async function auditPage(page, origin, route, width) {
   // A page that never loads is a finding about that page, not the end of the run. An audit
   // that aborts on the first slow navigation reports nothing about the 1600 visits after
   // it, which is how a whole sweep is lost to one asset that hung.
+  // A navigation that times out is tried once more before it is a finding: the first load of a
+  // surface on a loaded runner can pay for building what the next load reuses, and /docs/ @320
+  // was reported unreachable on master that way while every later visit of it loaded. A page
+  // that never loads still fails both attempts and is still reported.
   let response;
-  try {
-    response = await page.goto(`${origin}${route}`, { waitUntil: 'load', timeout: 20000 });
-  } catch (error) {
-    findings.push({
-      rule: 'page.unreachable',
-      detail: `the page did not load: ${String(error?.message ?? error).split('\n')[0]}`,
-    });
-    return { route, width, status: 0, findings, console_errors, failed_requests };
+  for (let attempt = 1; ; attempt += 1) {
+    try {
+      response = await page.goto(`${origin}${route}`, { waitUntil: 'load', timeout: 20000 });
+      break;
+    } catch (error) {
+      if (attempt < 2 && !String(error?.message ?? error).includes('ERR_CONNECTION_REFUSED')) continue;
+      findings.push({
+        rule: 'page.unreachable',
+        detail: `the page did not load in ${attempt} attempt(s): ${String(error?.message ?? error).split('\n')[0]}`,
+      });
+      return { route, width, status: 0, findings, console_errors, failed_requests };
+    }
   }
   const status = response?.status() ?? 0;
   if (status >= 400) {
@@ -374,8 +382,18 @@ export async function audit(origin, pages, { onVisit, concurrency = jobs() } = {
     // once — long enough, on a loaded machine, to exceed a per-visit timeout and report the
     // first page of the run as unreachable. Warming it costs one page load and removes a
     // whole class of finding that says more about the machine than about the site.
+    // Every surface is warmed, not only the root: a mounted surface (the documentation at its
+    // mount) is served from a tree of its own, and its first page was still the cold one. The
+    // surfaces are the plan's own first path segments, so nothing here names a mount; each is
+    // warmed through the first of its pages the plan visits.
+    const segment = (route) => route.split(/[/?#]/)[1] || '';
+    const firsts = new Map();
+    for (const t of targets) if (segment(t.route) && !firsts.has(segment(t.route))) firsts.set(segment(t.route), t.route);
     const warm = await context.newPage();
     await warm.goto(origin, { waitUntil: 'networkidle', timeout: 120000 }).catch(() => {});
+    for (const route of firsts.values()) {
+      await warm.goto(`${origin}${route}`, { waitUntil: 'load', timeout: 120000 }).catch(() => {});
+    }
     await warm.close().catch(() => {});
 
     await Promise.all(Array.from({ length: Math.max(1, concurrency) }, () => worker()));

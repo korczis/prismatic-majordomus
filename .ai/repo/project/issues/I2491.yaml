@@ -51,4 +51,21 @@ evidence_required:
   - "personal_install_case_2979"
   - "derived_discovery_doctest"
 created_at: 2026-10-12
-updated_at: 2026-10-12
+updated_at: 2026-10-14T07:39:55Z
+started_at: 2026-10-14T07:39:44Z
+started_event: sha256:54cc35058f03257a862683bf2f38756f9cec7d1221a31775ea6c333afce0f20a
+completed_at: 2026-10-14T07:39:55Z
+completed_event: sha256:8f850144586a4c4dcae20e92804eb27ac13a998b158a5d1cd852e840c89253ab
+evidence:
+  - covers: personal_install_case_2979
+    type: test
+    command: "MJ_TEST_JOBS=2 bash test/run.sh 2979_a_personal_layer_changes_nothing_shared 86_installer_platform"
+    result: "each: tests: 1 passed, 0 failed, 0 skipped (run 2026-10-14 before 07:36Z on master ce5959db59)"
+    commit: ce5959db59096ff22a45ee65e1464b16df74348a
+    recorded_at: 2026-10-14T07:39:49Z
+  - covers: derived_discovery_doctest
+    type: test
+    command: "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --doc layer_is_untracked"
+    result: "test result: ok. 1 passed; 0 failed (run 2026-10-14 before 07:36Z on master ce5959db59)"
+    commit: ce5959db59096ff22a45ee65e1464b16df74348a
+    recorded_at: 2026-10-14T07:39:52Z

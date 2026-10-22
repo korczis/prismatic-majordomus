@@ -1,0 +1,33 @@
+id: I3159
+milestone: repository-automation-is-typed
+title: "A shell unit is deleted only after a parity case shows its replacement gives the same verdict on the same fixture"
+slug: parity-before-deletion
+priority: p2
+profile: implementation
+objective: "Generalise I1804's per-gate parity into a harness: the inventory record of a unit being migrated names its parity case, the case runs the legacy and the new path on one fixture and compares exit code and structured output, and the shell check refuses deleting a class A or B unit whose record names no passing parity case."
+why: "Owner direction 2026-09-15 and 2026-10-17: characterise and differential-test legacy scripts before deletion; classify each difference as fix, architectural change or compatibility requirement. It extends milestone automation. Sources: chatgpt-majordomus:c140#2, chatgpt-majordomus:c244#8, chatgpt-majordomus:c290#2."
+current_state: "I1804 asks parity for the ratchet gates only; inventory.jsonl has no parity field."
+desired_state: "A parity field and a harness every migration uses."
+scope:
+  - ".ai/repo/automation"
+  - "apps/majordomus-cli/src/capability/builtin/shell.rs"
+  - "test/lib.sh"
+  - "docs/SHELL.md"
+  - "apps/majordomus-cli/src/automation/mod.rs"
+  - "test/cases/366_automation_inventory_agrees_with_the_tree.sh"
+  - "test/cases/365_new_shell_is_refused.sh"
+depends_on:
+  - "I1804"
+serves:
+  - "repository-automation-is-typed#parity-before-deletion"
+acceptance_criteria:
+  - "A deletion without a parity case is refused"
+  - "A recorded difference carries its classification"
+  - "Each new case named here takes its number from `scripts/case-numbers next` and is announced on the board before the file is written (ADR 0053); a case number written in this record before that is provisional"
+validation:
+  - "bin/majordomus-cli shell check"
+  - "bash test/run.sh 365_new_shell_is_refused"
+evidence_required:
+  - "case_parity_before_deletion"
+created_at: 2026-10-18
+updated_at: 2026-10-18

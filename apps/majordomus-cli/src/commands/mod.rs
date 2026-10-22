@@ -39,6 +39,7 @@ pub(crate) mod continuity;
 pub(crate) mod convergence;
 pub(crate) mod dashboard;
 pub(crate) mod delivery;
+pub(crate) mod deploy;
 pub(crate) mod devcontext;
 pub(crate) mod devtask;
 pub(crate) mod distribution;
@@ -48,6 +49,7 @@ pub(crate) mod env;
 pub(crate) mod evidence;
 pub(crate) mod executions;
 pub(crate) mod generate;
+pub(crate) mod guard;
 pub(crate) mod intent;
 pub(crate) mod knowledge;
 pub(crate) mod mcp;
@@ -56,6 +58,7 @@ pub(crate) mod models;
 pub(crate) mod monitor;
 pub(crate) mod offload;
 pub(crate) mod pack;
+pub(crate) mod plan;
 pub(crate) mod product;
 pub(crate) mod prs;
 pub(crate) mod quality;
@@ -101,15 +104,18 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Run(args) => executions::run(args),
         Command::Executions(args) => executions::executions(args),
         Command::Devcontext(args) => devcontext::run(args),
+        Command::Guard(args) => guard::run(args),
         Command::Mesh(args) => mesh::run(args),
         Command::Monitor(args) => monitor::run(args),
         Command::Models(args) => models::run(args),
         Command::Reasoning(args) => reasoning::run(args),
         Command::Evidence(args) => evidence::run(args),
         Command::Served(args) => served::run(args),
+        Command::Deploy(args) => deploy::run(args),
         Command::Rules(args) => rules::run(args),
         Command::Intent(args) => intent::run(args),
         Command::Delivery(args) => delivery::run(args),
+        Command::Plan(args) => plan::run(args),
         Command::Economics(args) => economics::run(args),
         Command::Entity(args) => entity::run(args),
         Command::Shell(args) => shell::run(args),

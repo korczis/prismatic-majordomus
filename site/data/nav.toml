@@ -19,6 +19,13 @@
 # snapshot, and to the item's `href` — the page about it — when it does not. The site map
 # always lists the `href`. No mount is written in this file.
 #
+# One item may be marked `primary = true`: the product itself. The bar then also shows it as a
+# link of its own beside the call to action on a wide screen, and above it inside the collapsed
+# menu on a narrow one, led by the same rule as its menu entry — the published copy when the
+# publication holds one, the page about it otherwise. It is the same item, rendered from this
+# one declaration, so no href is written twice; a visitor who came for the product does not
+# have to open a menu to find it.
+#
 # Nothing here enumerates a feature, a domain, a module, a capability or a command: those
 # routes are the generator's, and site-check refuses a feature route named by hand here.
 #
@@ -58,7 +65,7 @@ items = [
   { label = "Applications", href = "/applications/" },
   { label = "Skills", href = "/skills/" },
   { label = "What it supervises", href = "/supervises/" },
-  { label = "Product UI", href = "/docs/majordomus-ui/", surface = "ui", bar = true },
+  { label = "Product UI", href = "/docs/majordomus-ui/", surface = "ui", bar = true, primary = true },
   { label = "Cockpit", href = "/docs/cockpit/", bar = true },
 ]
 
@@ -82,6 +89,23 @@ items = [
   { label = "Article: proof-carrying documentation", href = "/proof-carrying-documentation/" },
   { label = "Article: everything, followed", href = "/everything-followed/" },
   { label = "The same argument, written in Czech", href = "/dokumentace-kterou-lze-odmitnout/" },
+  { label = "Everything, followed, written in Czech", href = "/vsechno-v-jednom-proudu/" },
+  { label = "Essay: the bet on a layer, not a model", href = "/the-bet-on-a-layer/" },
+  { label = "Essay in Czech: the bet on a layer, not a model", href = "/teze/" },
+  { label = "Article: a pasted brief becomes a plan", href = "/a-pasted-brief-becomes-a-plan/" },
+  { label = "The pasted brief, written in Czech", href = "/vlozene-zadani-se-stava-planem/" },
+  { label = "Article: seats, not names", href = "/seats-not-names/" },
+  { label = "Seats, not names, written in Czech", href = "/kresla-ne-jmena/" },
+  { label = "Article: a plan is attacked before it is built", href = "/a-plan-is-attacked-before-it-is-built/" },
+  { label = "The plan critique, written in Czech", href = "/plan-se-napadne-driv-nez-se-postavi/" },
+  { label = "Article: written once, derived everywhere", href = "/written-once-derived-everywhere/" },
+  { label = "Written once, derived everywhere, in Czech", href = "/napsano-jednou-odvozeno-vsude/" },
+  { label = "Article: claimed before it is built", href = "/claimed-before-it-is-built/" },
+  { label = "Claimed before it is built, in Czech", href = "/zabrano-driv-nez-se-stavi/" },
+  { label = "Article: a session ends, the work does not", href = "/a-session-ends-the-work-does-not/" },
+  { label = "A session ends, the work does not, in Czech", href = "/session-skonci-prace-ne/" },
+  { label = "Article: one branch, one place", href = "/one-branch-one-place/" },
+  { label = "One branch, one place, in Czech", href = "/jedna-vetev-jedno-misto/" },
 ]
 
 [[groups]]

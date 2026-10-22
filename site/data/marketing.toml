@@ -1,52 +1,64 @@
 # The only hand-written prose on the site: positioning sentences and button labels. No
 # capability claims (features, domains and claims are objects of the layer, derived onto the
 # page) and no numbers (the generator computes every count). Budget: scripts/site-check fails
-# when this file exceeds 80 lines (60 until the landing page named its interfaces in plain words).
+# when this file exceeds 90 lines (80 until the landing page was rewritten for a buyer rather
+# than for an engineer, which gave the hero a reassurance line and a works-beside line).
 [hero]
-eyebrow = "For teams that build software with AI coding agents"
-title = "AI coding agents do the work."
-subtitle = "Your repository decides whether it is done."
-lead = "Majordomus keeps AI-assisted work coordinated, traceable and verifiable. It carries what was learned from one session to the next, shows who is working on what, applies your repository's own rules, and records a task as finished only when your own checks pass. It runs beside whichever coding agent you use, and it never calls a model."
-cta_primary = "See it working"
+eyebrow = "The control layer for AI-assisted development"
+title = "Your AI agents say the work is done."
+subtitle = "Majordomus makes them prove it."
+lead = "Majordomus keeps AI coding agents honest. It remembers what every session learned, keeps parallel agents out of each other's way, and accepts a task as finished only when your own checks pass. It works beside the agent you already use, and it never calls a model."
+cta_primary = "Watch it refuse unfinished work"
 cta_install = "Get started"
+cta_product = "Open the product"
+reassure = "Open source. One command to install. No account, no sign-up."
+scenarios_label = "Or step into one recorded refusal"
+scenario_challenge = "The challenge: refused, then accepted"
+works_with = "Works beside the tools your team already uses"
+product_kicker = "the product · this project's own delivery"
+product_title = "This project's own plan and releases, read from its records at the commit this site was built from."
+product_snapshot = "A snapshot, read once at this site's commit."
+console_caption = "Recorded runs, not a mockup: each panel is the stdout of a scenario this site executed while it was being generated, with the machine and the clock redacted and nothing else touched."
+[recognise]
+title = "Agents are fast. Trust is slow."
+guaranteed = "The number beside each feature counts its guaranteed claims."
+lead = "AI agents can write code all day. The hard part is knowing what they changed, what they forgot, and whether any of it actually works."
+closing = "Majordomus fixes all three in the one place every agent already works: your repository."
+who = "Built for the people who answer for the result"
+more = "Recognise a specific moment? See the failures it answers"
+[map]
+kicker = "what you get"
+title = "Everything AI-assisted work needs, in one layer"
+lead = "The things every team ends up building by hand, ready on day one. Open any of them to see what it does and the evidence behind it."
+from = "what an agent changed"
+to = "what you can trust"
+[workflow]
+kicker = "how it works"
+title = "From first prompt to a checked finish"
+no_feature = "No feature names this step yet."
+lead = "Every task follows the same short path, whoever or whatever does the work. Your repository answers at each step, so nothing depends on an agent remembering to behave."
+closing = "No prompt tricks and no leap of faith. If a check fails the task is not finished, and the record says why."
+recorded = "See it run"
+[refuses]
+kicker = "the proof"
+title = "Watch it say no."
+lead = "An agent wanders outside its task, says it is done, and is refused. It cleans up and is refused again, because your own test still fails. Only when every check passes is the work accepted. This is a recording of the real tool, not a demo script."
+closing = "Any tool can tell an agent what to do. Majordomus decides whether what it did counts, and it keeps the record either way."
+replay = "Replay the run, step by step"
+more = "Every other refusal on record"
 verdict_kicker = "recorded run · the worker says it is done"
 verdict_after = "It is accepted only when every line passes:"
 verdict_link = "Replay the whole run, step by step"
-console_caption = "Recorded runs, not a mockup: each panel is the stdout of a scenario this site executed while it was being generated, with the machine and the clock redacted and nothing else touched."
-[recognise]
-title = "Where AI-assisted work breaks down"
-lead = "None of these are model problems. They are operations problems, and the repository is where operations belong."
-closing = "Majordomus turns each of them into repository state, a contract a machine checks and a record of what happened."
-who = "Who runs into them"
-more = "Recognise a specific moment? The failure modes it answers, by who meets them"
-[map]
-kicker = "what it controls"
-title = "One control layer, a few things it controls"
-lead = "Every feature is filed under exactly one domain. Open one for the failure it answers, the features in it and the evidence behind them; every member and every count is derived from the features' own files."
-from = "a worker's change"
-to = "a verified outcome"
-[workflow]
-kicker = "how it works"
-title = "One task, from start to finish"
-lead = "A worker claims a task and the paths it may touch, reads what the repository knows, records progress, is checked against policy, leaves a handover, and asks to finish. The repository answers each step."
-closing = "Nothing here asks a model to behave. check reports what does not hold against the task's scope and policy, and finish refuses to record the work while any line of the contract fails."
-recorded = "See a recorded run"
-[refuses]
-kicker = "the proof"
-title = "A worker's word is not proof"
-lead = "A worker strays outside its scope, says it is done, and is refused; fixes the scope and is refused again, because the repository's own test still fails; and is accepted only when every line of the contract passes. A recorded run of the real tool, stepped through."
-closing = "This is the difference between a tool that tells a worker what to do and one that decides whether what it did counts. A worker can always say it is finished; here that sentence is a claim the repository evaluates, line by line, and nothing is recorded while any line fails."
-replay = "Replay the recorded run, step by step"
-more = "Every other refusal the lifecycle recorded"
 [surfaces]
-kicker = "working interfaces"
-title = "One product, whichever way you work"
-lead = "People and agents work with Majordomus in different places, and every one of them shows the same repository records. Each is declared once and generated from that declaration, and a view that disagrees with it fails the build."
+kicker = "works your way"
+title = "One source of truth, wherever you work"
+lead = "Managers follow delivery in a browser. Agents ask through their own tools. Engineers stay in the terminal. Everyone gets the same answer, because every view is generated from the same records."
 source = ".ai/ declarations and the executable's capabilities"
 registry = "one registry, validated"
+engineers = "For engineers: one declaration reaches every interface"
 [interfaces]
-ui = "For a person following the delivery: health, releases, the roadmap, the open work, the evidence and the rules, in one place."
-cockpit = "For a person who wants the detail: every rule, record and check behind a figure, with its source."
+ui = "For whoever follows the delivery: health, releases, the roadmap, open work, evidence and rules, in one place."
+cockpit = "For whoever wants the detail: every rule, record and check behind a figure, with its source."
 cli = "For whoever does the work, person or agent: start a task, check it, hand it over, finish it."
 api = "For your own tools and dashboards: the same answers, over HTTP."
 mcp = "For coding agents: the same answers, as tools an agent can call."
@@ -56,16 +68,16 @@ live = "On your own repository it is live: start the local server and it answers
 published = "Open the published snapshot"
 snapshot = "A snapshot of this project's own repository, read once at the commit this site was published from. It is not a live reading, and nothing on it refreshes."
 [proof]
-plain = "Read the two figures apart. Declared is a promise the project has written down, together with the test that is meant to prove it. Supported means that test was run against this exact revision and the run was recorded. A promise without a recorded run is counted as a promise, and as nothing more."
+plain = "Two numbers, kept apart on purpose. Declared is a promise written down together with the test meant to prove it. Supported means that test ran against this exact revision and the run was recorded. A promise without a recorded run is counted as a promise, and as nothing more."
 [chain]
 legend = "A solid line is held by a machine: a projection that disagrees with its declaration fails the build, and a blocking rule is decided by a validator or a test. A dashed line is declared and waits for its evidence: a guaranteed claim names the test that is to prove it, and it counts as supported only when a recorded run of this revision does."
 [providers]
-title = "Repository intelligence is not a model provider."
+title = "Bring your own AI. Keep your own rules."
 boundary = "Majordomus never invokes a model; it decides what a worker is told, what it may touch, and whether its claim of being done can be believed."
 [install]
 kicker = "get started"
-title = "Try it on a repository you already have"
-layer = "What init creates is the layer this site is generated from: one directory, tracked, readable without the tool."
+title = "Running on your repository in minutes"
+layer = "One command installs it and one sets up your repository. It adds a single tracked directory, readable without the tool, and nothing else."
 [write_once]
 title = "Write once. Surface everywhere."
 lead = "A rule, a skill, a decision, a use case, an operational moment, a feature: each is one file under the layer with a schema. Discovery finds it, the schema validates it, the index holds it, and every interface reads the index. Nothing registers anything."

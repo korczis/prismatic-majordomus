@@ -14,6 +14,7 @@ use super::Model;
 use crate::error::{Error, Result};
 use crate::index::Index;
 use crate::metadata::yaml;
+use crate::release::version::Version;
 
 /// The contract a record follows.
 pub const SCHEMA: &str = "release/v1";
@@ -112,8 +113,14 @@ impl Release {
     }
 
     /// Is this release a candidate for the stable pointer?
+    ///
+    /// The version decides as well as the channel: a version with a pre-release part is never
+    /// the stable pointer, whatever its record says. The channel is authored by the release
+    /// workflow, and a record that mislabels `1.0.0-alpha.1` as stable would otherwise make
+    /// every unpinned installer and every node that follows `stable` take the alpha over
+    /// `0.27.0`. [`Release::findings`] reports the mislabel; this keeps it harmless.
     pub fn is_stable_candidate(&self) -> bool {
-        self.channel == Channel::Stable && !self.yanked
+        self.channel == Channel::Stable && !self.yanked && !has_prerelease(&self.version)
     }
 
     /// The artifact of a target id.
@@ -126,6 +133,17 @@ impl Release {
     /// the naming function does not derive, a URL from another repository.
     pub fn findings(&self, model: &Model) -> Vec<String> {
         let mut out = Vec::new();
+        if Version::parse(&self.version).is_none() {
+            out.push(format!(
+                "{}: version `{}` is not a semantic version, so no reader can order it; it is never resolved as the stable release",
+                self.tag, self.version
+            ));
+        } else if self.channel == Channel::Stable && has_prerelease(&self.version) {
+            out.push(format!(
+                "{}: version `{}` has a pre-release part and the record puts it on the stable channel; a pre-release is `channel: prerelease` (scripts/release-record derives it from the tag)",
+                self.tag, self.version
+            ));
+        }
         let prefix = model.project.download_prefix();
         // Completeness is judged against the set this release was published against, not
         // against the model as it stands now. A target added to the model is a promise about
@@ -341,21 +359,23 @@ impl Releases {
     }
 }
 
-/// A comparable key for a semantic version: the three numbers, then whether it is a final
-/// release (a pre-release sorts below its own final), then the pre-release text.
-fn version_key(version: &str) -> (u64, u64, u64, u8, String) {
-    let (core, pre) = match version.split_once('-') {
-        Some((c, p)) => (c, p.to_string()),
-        None => (version, String::new()),
-    };
-    let mut parts = core.split('.').map(|p| p.parse::<u64>().unwrap_or(0));
-    (
-        parts.next().unwrap_or(0),
-        parts.next().unwrap_or(0),
-        parts.next().unwrap_or(0),
-        u8::from(pre.is_empty()),
-        pre,
-    )
+/// Does this version have a pre-release part (`1.0.0-alpha.1`)? Build metadata (`+x`) is not
+/// part of precedence and is ignored, so `1.0.0+x` is a final release.
+///
+/// Asked of [`Version`], the crate's one reading of a version, so the stable pointer and the
+/// release writer cannot disagree about what a pre-release is (ADR 0004). A version that is
+/// not a semantic version at all is counted as one: nothing can show it is a final release,
+/// and the stable pointer is the one answer that must never be a guess.
+fn has_prerelease(version: &str) -> bool {
+    Version::parse(version).is_none_or(|v| v.is_prerelease())
+}
+
+/// The precedence of a record's version, as an ordinary `Ord`: [`Version`]'s, which is
+/// semantic-version precedence (a pre-release below its own final, identifiers one by one,
+/// numeric ones as numbers, build metadata ignored). A version that does not parse sorts
+/// below every one that does, so it can never outrank a release.
+fn version_key(version: &str) -> Option<Version> {
+    Version::parse(version)
 }
 
 /// The stable pointer, rendered from the record it points at. Identical in shape to a

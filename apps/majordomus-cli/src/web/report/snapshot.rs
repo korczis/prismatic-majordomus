@@ -19,8 +19,14 @@
 //! - **the script** is told it is in a snapshot (`data-snapshot` on the body), so it reads
 //!   nothing again and fetches no panel: a static page that refreshed itself would replace
 //!   what was read with whatever the host answers for a query it ignores;
+//! - **a slow panel** a screen defers to its script is read by the UI before the page is
+//!   written, because every page is asked with [`crate::ui::SNAPSHOT_HEADER`]: the published
+//!   screen shows what the live one shows once its script has run, not a link to it;
 //! - **every page says what it is**: read at which commit, when, and by which executable,
-//!   and how to see it live.
+//!   and how to see it live;
+//! - **no page names the machine**: the live surface shows the checkout's root and paths
+//!   under it, which on a publication would be the disk of whoever built it, so every
+//!   spelling of the root and of the home directory reads `<repo>` and `<home>` (I1012).
 //!
 //! A value the UI could not read when the snapshot was taken reads as the UI says it — none,
 //! unknown or not answered — and never as zero, because the UI's own rule (`ui-derived-state`)
@@ -226,7 +232,12 @@ pub fn render(
             continue;
         };
         let asked = std::time::Instant::now();
-        let response = handle(&Request::parse_target("GET", &target, Vec::new()));
+        // asked as a snapshot: a screen answers with its slow panels already in place
+        let mut request = Request::parse_target("GET", &target, Vec::new());
+        request
+            .headers
+            .push((crate::ui::SNAPSHOT_HEADER.to_string(), "1".to_string()));
+        let response = handle(&request);
         tracing::debug!(target = %target, ms = asked.elapsed().as_millis() as u64, status = response.status, "snapshot page");
         if response.status != 200 {
             continue;
@@ -276,6 +287,7 @@ pub fn render(
     let written: BTreeMap<String, String> = pages.clone();
     let mut left_out: BTreeSet<String> = BTreeSet::new();
     let mut frame: Option<String> = None;
+    let home = std::env::var_os("HOME").map(PathBuf::from);
     for (file, html) in &rendered {
         let page = rewrite(
             subject,
@@ -287,6 +299,7 @@ pub fn render(
             &origin,
             &mut left_out,
         );
+        let page = without_machine_paths(&page, root, home.as_deref());
         write(&dir, file, &page)?;
         if file == "index.html" {
             frame = Some(page);
@@ -691,7 +704,8 @@ impl Subject {
 }
 
 /// The attributes whose value is a URL a reader or the script follows.
-const URL_ATTRIBUTES: &str = "href|src|action|data-graph-lib|data-observatory-lib|data-panel-src";
+const URL_ATTRIBUTES: &str = "href|src|action|data-graph-lib|data-observatory-lib|\
+     data-observatory-companion|data-p5-lib|data-panel-src";
 
 fn attribute_pattern() -> regex::Regex {
     regex::Regex::new(&format!(r#"\b({URL_ATTRIBUTES})="([^"]*)""#))
@@ -883,6 +897,17 @@ fn banner(origin: &Origin, live: &str) -> crate::cockpit::html::El {
 /// The page a redirected name is in a publication: it sends the reader to `target`, the file
 /// of the route the process redirects that name to, by a refresh a browser follows without a
 /// script, and says so in a link for a reader whose browser does not.
+/// A page as a publication may carry it (I1012): every spelling of the repository's root and
+/// of the home directory replaced as [`crate::redaction::normalise_machine_paths`] replaces
+/// it, by a name in angle brackets escaped here, because the page is HTML and the bare name
+/// would read as an element. The live surface names the checkout it serves; a published page
+/// says where a thing is in the repository, never where the machine that read it keeps it.
+fn without_machine_paths(page: &str, root: &Path, home: Option<&Path>) -> String {
+    crate::redaction::normalise_machine_paths(page, root, home)
+        .replace("<repo>", "&lt;repo&gt;")
+        .replace("<home>", "&lt;home&gt;")
+}
+
 fn redirect_page(subject: &Subject, file: &str, target: &str, to: &str) -> String {
     let href = format!("{}{target}", up(file));
     let head = vec![
@@ -1293,6 +1318,61 @@ mod tests {
         assert_eq!(declared.id, "cockpit-snapshot");
         assert_eq!(declared.mount, COCKPIT.prefix);
         assert_eq!(declared.availability, Some(Availability::PublishedOnly));
+    }
+
+    /// The live overview names the checkout's root, and no page of the snapshot does (I1012):
+    /// the publication of 2026-10-21 carried the runner's absolute root on every Cockpit page.
+    #[test]
+    fn no_page_of_a_snapshot_names_the_root_it_was_read_from() {
+        let repo = crate::synthetic::SyntheticRepository::new(crate::synthetic::Shape::default())
+            .expect("a synthetic repository");
+        let ctx = repo.context().expect("a context");
+        let share = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../share");
+        let cockpit =
+            crate::cockpit::Cockpit::new(std::sync::Arc::clone(&ctx), "0.0.0-test", Some(&share));
+        let root = repo.root();
+        let spellings: Vec<String> = [Some(root.to_path_buf()), std::fs::canonicalize(root).ok()]
+            .into_iter()
+            .flatten()
+            .map(|p| p.to_string_lossy().trim_end_matches('/').to_string())
+            .collect();
+        let live = cockpit.handle(&Request::parse_target("GET", "/cockpit", Vec::new()));
+        let live = live.body.text().into_owned();
+        assert!(
+            spellings.iter().any(|s| live.contains(s.as_str())),
+            "the live overview no longer names its root, so this proves nothing"
+        );
+        let topology = crate::web::discover::discover(root, crate::web::discover::Runtime::full())
+            .expect("a topology");
+        let snapshot = render(
+            root,
+            &COCKPIT,
+            &|request| cockpit.handle(request),
+            cockpit_seeds(root),
+            &topology,
+            40,
+            600,
+        )
+        .expect("a snapshot");
+        for file in snapshot
+            .pages
+            .values()
+            .chain(std::iter::once(&LIVE_PAGE.to_string()))
+        {
+            let html = std::fs::read_to_string(snapshot.dir.join(file)).unwrap();
+            for s in &spellings {
+                assert!(!html.contains(s.as_str()), "{file} names the root {s}");
+            }
+        }
+        let overview = std::fs::read_to_string(snapshot.dir.join("index.html")).unwrap();
+        assert!(
+            overview.contains("&lt;repo&gt;"),
+            "the overview's root reads as the repository"
+        );
+        assert!(
+            !overview.contains("<repo>"),
+            "the name is escaped, not an element"
+        );
     }
 
     /// Two snapshots under one root link into each other by the pages each holds: the one

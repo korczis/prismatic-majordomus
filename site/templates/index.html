@@ -26,6 +26,15 @@
     available (docs/generated/web.json, projected by the generator). The interfaces block reads
     a mount and an availability from it and types neither. -#}
 {%- set web = load_data(path="data/generated/web.json") -%}
+{#- the plan and the releases, as the product's own first screen reads them: the hero counts
+    this project's issues from the dataset /plan/ is built from, and says what the newest
+    release record carried from the dataset /changelog/ is built from. Neither is described in
+    prose: the copy beside them names where they were read, never how the work stands. -#}
+{%- set plan = load_data(path="data/generated/plan.json") -%}
+{%- set log = load_data(path="data/generated/changelog.json") -%}
+{#- how far each issue's work travelled, inferred from the history (plan.delivery, ADR 0166):
+    absent until that projection is generated, and then the card says so -#}
+{%- set delivery = load_data(path="data/generated/delivery.json", required=false) -%}
 {#- the build's provenance is a fact of the build, written by scripts/site-build and never
     committed; a plain `zola serve` has none, and the trust strip then says so -#}
 {%- set build = load_data(path="data/build.json", required=false) -%}
@@ -42,11 +51,31 @@
     run challenge.toml names; nothing here names a step or a check. -#}
 {%- set refusals = [s for s in ch.steps if s.outcome == "refused" and s.argv[0] == "finish"] -%}
 {%- set accepted = [s for s in ch.steps if s.outcome == "accepted" and s.argv[0] == "finish"] -%}
+{#- the interfaces a person opens: the stable features the web topology gives an `interface`
+    surface, in the features' own order (block 04 lists them). The first is the product, and
+    the hero opens it: at its published copy when a publication holds one — the topology
+    gives that mount to a published surface, or the build names a snapshot of it (build.json
+    `snapshots`, ADR 0141) — and otherwise at the page that says what it is and how to open
+    it. No id, mount or route is written here. -#}
+{%- set face_ids = [w.feature for w in web.surfaces if w.category == "interface" and w.feature] -%}
+{%- set by_weight = model.features | sort(attribute="weight") -%}
+{%- set faces = [f for f in by_weight if f.status == "stable" and f.id in face_ids] -%}
+{%- set product = faces[0] if faces | length else false -%}
+{%- if product %}
+{%- set pw = [w for w in web.surfaces if w.category == "interface" and w.feature == product.id][0] -%}
+{%- set p_carried = [p for p in web.surfaces if p.mount == pw.mount and p.visibility == "public" and p.availability != "served-only"] -%}
+{%- set p_held = [s for s in build.snapshots if s.id == pw.id] if build and build.snapshots else [] -%}
+{%- set p_published = (p_carried | length) + (p_held | length) -%}
+{%- set p_doc = [s for s in model.surfaces if s.id == product.id] -%}
+{%- set p_about = base ~ (p_doc[0].route if p_doc | length else product.route) -%}
+{%- set p_href = (base ~ pw.mount ~ "/") if p_published else p_about -%}
+{%- endif %}
 
-{#- 1. hero — what this is, in plain words, and the two actions: start, or see it working.
-    Beside it, the answer the tool gave to a worker that said it was done: the finish contract
-    of the recorded run, line by line, with its verdict. "See it working" leads to that run,
-    replayed step by step on /challenge/ — a recording, and labelled as one. -#}
+{#- 1. hero — what this is, in plain words, and the two actions: start, or open the product.
+    Beside it, the product: the first screen of the interface a person opens, read from this
+    project's own plan, and a second action that opens it. "See it working" still leads to the
+    recorded run, replayed step by step on /challenge/; the run's first verdict is told where
+    the page argues it (refuses). -#}
 <section id="hero" class="{{ stage }} relative isolate scroll-mt-20 overflow-hidden border-b border-default bg-neutral-primary">
   <div aria-hidden="true" class="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(to_right,var(--mj-line)_1px,transparent_1px),linear-gradient(to_bottom,var(--mj-line)_1px,transparent_1px)] bg-[size:56px_56px] opacity-40 [mask-image:radial-gradient(ellipse_70%_60%_at_50%_0%,black,transparent)]"></div>
   <div class="mx-auto grid max-w-screen-xl gap-12 px-4 pb-12 pt-12 sm:px-6 sm:pt-16 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:gap-14 lg:px-8 lg:pb-16 lg:pt-12">
@@ -56,44 +85,94 @@
         {%- if offered %}<a href="{{ offered.notes_url }}" class="font-mono font-semibold text-heading hover:underline" data-release="{{ offered.version }}">{{ offered.version }}</a><span aria-hidden="true" class="text-body-subtle">&middot;</span>{% endif %}
         <span class="min-w-0 font-mono uppercase tracking-[0.18em] sm:truncate">{{ m.hero.eyebrow }}</span>
       </p>
-      <h1 class="mt-5 font-serif text-5xl font-medium leading-[1.02] tracking-tight text-balance text-heading sm:text-6xl">{{ m.hero.title }}<span class="mt-3 block italic text-fg-brand"> {{ m.hero.subtitle }}</span></h1>
-      <p class="mt-5 max-w-2xl text-lg leading-relaxed text-body">{{ m.hero.lead }}</p>
+      <h1 class="mt-5 font-serif text-4xl font-medium leading-[1.05] tracking-tight text-balance text-heading sm:text-6xl">{{ m.hero.title }}<span class="mt-2 block italic text-fg-brand sm:mt-3"> {{ m.hero.subtitle }}</span></h1>
+      <p class="mt-5 max-w-2xl text-base leading-relaxed text-body sm:text-lg">{{ m.hero.lead }}</p>
       <div class="mt-7 flex flex-col gap-3 sm:flex-row">
         <a href="#install" data-cta="install" class="inline-flex items-center justify-center rounded-base bg-brand px-6 py-3.5 text-base font-semibold text-white shadow-lg hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium">{{ m.hero.cta_install }}</a>
-        <a href="{{ get_url(path="/challenge/", trailing_slash=true) }}" data-cta="challenge" class="group inline-flex items-center justify-center rounded-base border border-default bg-neutral-primary-soft px-6 py-3.5 text-base font-semibold text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary">{{ m.hero.cta_primary }} <svg class="ms-2 h-4 w-4 transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M13 5l7 7-7 7"/></svg></a>
+        {%- if product %}
+        <a href="{{ p_href }}" data-cta="product" data-product="{{ product.id }}"{% if p_published %} data-published-product="{{ product.id }}"{% endif %} class="group inline-flex items-center justify-center rounded-base border border-default bg-neutral-primary-soft px-6 py-3.5 text-base font-semibold text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary">{{ m.hero.cta_product }} <svg class="ms-2 h-4 w-4 transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M13 5l7 7-7 7"/></svg></a>
+        {%- endif %}
       </div>
-      <div class="mt-6 max-w-xl">{% <code label="install" wrap={true}> %}{{ dist.install_command }}{% </code> %}</div>
+      <p class="mt-4 text-sm leading-relaxed text-body">{{ m.hero.reassure }} <a href="{{ get_url(path="/challenge/", trailing_slash=true) }}" data-cta="challenge" class="whitespace-nowrap font-semibold text-fg-brand hover:underline">{{ m.hero.cta_primary }} &rarr;</a></p>
+      {#- the scenarios a visitor can step into (I3223): the challenge first, refused and then
+          accepted, then every use case a recorded run refuses in, in the order of the refusals.
+          scripts/generate-site-data derives them into terminal.json `scenarios`; nothing here
+          names one, and homepage-check refuses a choice without a recorded run -#}
+      <div data-hero-scenarios class="mt-4">
+        <p class="font-mono text-xs uppercase tracking-widest text-body-subtle">{{ m.hero.scenarios_label }}</p>
+        <ul class="mt-2 space-y-1 text-sm">
+          <li><a href="{{ get_url(path="/challenge/", trailing_slash=true) }}" data-scenario="challenge" class="font-medium text-fg-brand hover:underline">{{ m.hero.scenario_challenge }}</a></li>
+          {%- for sc in term.scenarios | default(value=[]) %}
+          <li><a href="{{ get_url(path=sc.route, trailing_slash=true) }}" data-scenario="{{ sc.use_case }}" class="text-heading hover:underline">{{ sc.title }}</a></li>
+          {%- endfor %}
+        </ul>
+      </div>
+      {#- who it works beside: the worker tools the policy is generated for, named by the
+          product model and by nothing here (scripts/ci/homepage-check `providers`) -#}
+      <dl class="mt-8 border-t border-default pt-5">
+        <dt class="font-mono text-xs uppercase tracking-widest text-body-subtle">{{ m.hero.works_with }}</dt>
+        <dd class="mt-3 flex flex-wrap gap-2" data-providers>
+          {%- for pv in model.providers %}
+          {%- if pv.route %}<a href="{{ base }}{{ pv.route }}" class="rounded-full border border-default bg-neutral-primary-soft px-3 py-1 text-sm text-heading hover:border-brand-subtle hover:underline">{{ pv.title }}</a>
+          {%- else %}<span class="rounded-full border border-default bg-neutral-primary-soft px-3 py-1 text-sm text-heading">{{ pv.title }}</span>{% endif %}
+          {%- endfor %}
+        </dd>
+      </dl>
     </div>
 
-    {%- if refusals | length %}
-    {%- set st = refusals[0] %}
-    <figure class="relative min-w-0 self-start overflow-hidden rounded-xl border border-default bg-neutral-primary-soft shadow-2xl ring-1 ring-brand-subtle" data-verdict="{{ st.id }}">
-      <figcaption class="border-b border-default px-5 py-4">
-        <p class="font-mono text-xs uppercase tracking-widest text-body-subtle">{{ m.hero.verdict_kicker }}</p>
-        <p class="mt-2 text-base font-semibold leading-snug text-heading">{{ st.note }}</p>
+    {#- the product, in the hero: the first screen of the interface a person opens, drawn here
+        from the datasets that screen's facts are published in — the release this site
+        offers, the plan's issues counted by the status their records declare, in the plan's
+        order, and what the newest release record carried, counted by the changelog's own
+        groups. A count that is zero is not drawn. There is no progress bar: /roadmap/ says why
+        it has none, and a share of done issues per milestone is a stamp count, not delivery
+        (ADR 0166). It is a picture read at this build's commit and names it; the link under it
+        opens the product itself. -#}
+    {%- if product %}
+    {%- set released = [s for s in log.sections if not s.unreleased] -%}
+    <figure class="relative min-w-0 self-start overflow-hidden rounded-xl border border-default bg-neutral-primary-soft shadow-2xl ring-1 ring-brand-subtle" data-product-view="{{ product.id }}">
+      <figcaption class="flex min-w-0 items-center gap-2.5 border-b border-default px-5 py-3">
+        <span class="inline-flex h-5 w-5 shrink-0 text-fg-brand [&>svg]:h-full [&>svg]:w-full" aria-hidden="true">{{ load_data(path="static/images/logo-mark.svg", format="plain") | safe }}</span>
+        <span class="text-sm font-semibold text-heading">{{ project.short_name }}</span>
+        <span class="shrink-0 whitespace-nowrap font-mono text-xs text-body-subtle">{{ product.short_title }} &middot; {{ pw.mount }}</span>
+        {%- if offered %}<a href="{{ offered.notes_url }}" class="ms-auto hidden shrink-0 rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading hover:underline sm:inline">v{{ offered.version }}</a>{% endif %}
       </figcaption>
       <div class="px-5 py-4">
-        <p class="break-all font-mono text-xs text-body-subtle">$ {{ st.command }}</p>
-        <ul class="mt-3 space-y-1.5" aria-label="The finish contract, line by line">
-          {%- for line in st.decision %}{% if line is starting_with(pat="OK") or line is starting_with(pat="FAIL") %}
-          {%- set words = [w for w in line | split(pat=" ") if w != ""] %}
-          {%- set ok = line is starting_with(pat="OK") %}
-          <li class="flex items-center gap-3 font-mono text-sm">
-            <span class="inline-flex w-14 shrink-0 justify-center">{% if ok %}{{ <badge status="pass" /> }}{% else %}{{ <badge status="fail" /> }}{% endif %}</span>
-            <span class="text-heading">{{ words[1] }}</span>
-          </li>
+        <p class="font-mono text-xs uppercase tracking-widest text-body-subtle">{{ m.hero.product_kicker }}</p>
+        <p class="mt-2 text-base font-semibold leading-snug text-heading">{{ m.hero.product_title }}</p>
+        {%- set roadmap_href = get_url(path="/roadmap/", trailing_slash=true) %}
+        {#- what the history proves first, then what the records say: a declared status is a stamp,
+            and the stage beside it is the delivery the commits, merges and releases show -#}
+        {%- if delivery %}
+        <p class="mt-4 text-xs text-body-subtle">Delivery the history proves, inferred at <a href="{{ project.repository_url }}/commit/{{ delivery.observed.commit }}" class="font-mono hover:underline" data-product-delivery-commit="{{ delivery.observed.commit }}">{{ delivery.observed.commit | truncate(length=7, end="") }}</a></p>
+        <dl class="mt-2 flex flex-wrap gap-2" data-product-delivery>
+          {%- for stage in delivery.stages %}{% set n = delivery.tallies[stage] | default(value=0) %}{% if n > 0 and stage != "none" %}
+          <div class="min-w-14 flex-1 rounded-base border border-default bg-neutral-primary px-2 py-2 sm:min-w-16 sm:px-3"><dt class="text-xs text-body">{{ stage | replace(from="_", to=" ") }}</dt><dd class="mt-0.5 font-mono text-xl font-bold tracking-tight text-heading" data-delivery="{{ stage }}"><a href="{{ roadmap_href }}#delivery" class="hover:underline">{{ n }}</a></dd></div>
           {%- endif %}{% endfor %}
-        </ul>
-        {%- set verdict = [line for line in st.decision if line is starting_with(pat="finish:")] %}
-        {%- if verdict | length %}<p class="mt-4 rounded-base border border-danger-subtle bg-danger-soft px-3 py-2 font-mono text-sm font-semibold text-fg-danger-strong">{{ verdict[0] }}</p>{% endif %}
-        {%- if accepted | length %}<p class="mt-3 text-sm leading-relaxed text-body">{{ m.hero.verdict_after }} <span class="font-mono text-xs text-fg-success-strong">{% set done = accepted | last %}{{ [line for line in done.decision if line is starting_with(pat="finish:")] | first }}</span></p>{% endif %}
+        </dl>
+        {%- endif %}
+        <p class="mt-4 text-xs text-body-subtle">Issues of the plan, by the status their records declare</p>
+        <dl class="mt-2 flex flex-wrap gap-2" data-product-issues>
+          {%- for st in plan.statuses.issue %}{% set n = [i for i in plan.issues if i.status == st] | length %}{% if n > 0 %}
+          <div class="min-w-14 flex-1 rounded-base border border-default bg-neutral-primary px-2 py-2 sm:min-w-16 sm:px-3"><dt class="text-xs text-body">{{ st | lower }}</dt><dd class="mt-0.5 font-mono text-xl font-bold tracking-tight text-heading" data-issues="{{ st }}"><a href="{{ roadmap_href }}" class="hover:underline">{{ n }}</a></dd></div>
+          {%- endif %}{% endfor %}
+        </dl>
+        {%- if released | length %}{% set rel = released[0] %}
+        <p class="mt-4 text-xs text-body-subtle">Changes the release record of <a href="{{ rel.notes_url }}" class="font-mono text-heading hover:underline" data-product-release="{{ rel.version }}">v{{ rel.version }}</a> carries, {{ rel.date | truncate(length=10, end="") }}</p>
+        <dl class="mt-2 flex flex-wrap gap-x-4 gap-y-1" data-product-landings="{{ rel.version }}">
+          {%- for g in rel.groups %}{% if g.changes | length > 0 %}
+          <div class="inline-flex items-baseline gap-1.5"><dt class="text-xs text-body">{{ g.heading | lower }}</dt><dd class="font-mono text-sm font-bold text-heading" data-landings="{{ g.kind }}">{{ g.changes | length }}</dd></div>
+          {%- endif %}{% endfor %}
+        </dl>
+        <p class="mt-2 text-xs"><a href="{{ get_url(path="/changelog/", trailing_slash=true) }}" class="text-fg-brand hover:underline">Every change, release by release &rarr;</a></p>
+        {%- endif %}
       </div>
-      <p class="border-t border-default px-5 py-3 text-sm font-medium"><a href="{{ get_url(path="/challenge/", trailing_slash=true) }}" class="text-fg-brand hover:underline">{{ m.hero.verdict_link }} &rarr;</a></p>
+      <p class="border-t border-default px-5 py-3 text-sm font-medium"><a href="{{ p_href }}" class="text-fg-brand hover:underline" data-product-open="{{ product.id }}">{{ m.hero.cta_product }} &rarr;</a>{% if p_published %} <span class="ms-1 text-xs font-normal text-body-subtle">{{ m.hero.product_snapshot }}{% if build and build.commit and build.commit != "unknown" %} <a href="{{ project.repository_url }}/commit/{{ build.commit }}" class="font-mono hover:underline" data-product-commit="{{ build.commit }}">{{ build.commit | truncate(length=7, end="") }}</a>{% endif %}</span>{% endif %}</p>
     </figure>
     {%- endif %}
   </div>
 
-  {#- the strip: what this repository measures about itself today, in a visitor's words, each
+  {#- the strip: what this repository measures about itself at this build, in a visitor's words, each
       figure derived from the product model or the recorded corpus, none typed here. -#}
   <div class="border-t border-default bg-neutral-primary-soft">
     <dl class="mx-auto grid max-w-screen-xl grid-cols-2 gap-px px-4 sm:px-6 md:grid-cols-4 lg:px-8" data-hero-figures>
@@ -116,20 +195,28 @@
     {{ <landing_head number="01" kicker={x.problem.kicker} title={m.recognise.title} lead={m.recognise.lead} /> }}
     <ul class="grid gap-4 lg:grid-cols-3" data-problems>
       {%- for pid in home.problems %}{% set ds = [d for d in model.domains if d.id == pid and d.status == "stable"] %}{% if ds | length %}{% set d = ds[0] %}
-      <li class="min-w-0"><a href="#domain-{{ d.id }}" class="flex h-full flex-col rounded-xl border border-default bg-neutral-primary p-6 hover:border-brand-subtle hover:bg-neutral-secondary-medium" data-problem="{{ d.id }}">
-        <span class="font-mono text-xs uppercase tracking-widest text-fg-brand">{{ d.title }}</span>
-        <span class="mt-3 text-xl font-bold leading-snug tracking-tight text-heading">{{ d.problem }}</span>
-      </a></li>
+      {#- the node names the features that answer it (I3224): its domain's stable features in
+          the model's order, each linking its page with its claims' verdict; derived from
+          product.json, never declared, and homepage-check holds the list to the model -#}
+      {%- set dfs = [f for f in by_weight if f.domain == d.id and f.status == "stable"] %}
+      <li class="flex min-w-0 flex-col rounded-xl border border-default bg-neutral-primary p-6" data-problem="{{ d.id }}">
+        <a href="#domain-{{ d.id }}" class="group flex flex-col hover:underline">
+          <span class="font-mono text-xs uppercase tracking-widest text-fg-brand">{{ d.title }}</span>
+          <span class="mt-3 text-xl font-bold leading-snug tracking-tight text-heading">{{ d.problem }}</span>
+        </a>
+        <p class="mt-4 border-t border-default pt-4 text-sm text-body" data-node-features="problem:{{ d.id }}">
+          {%- for f in dfs %}{% if not loop.first %}, {% endif %}<a href="{{ base }}{{ f.route }}" data-feature="{{ f.id }}" class="font-medium text-heading hover:underline">{{ f.short_title }}</a> <span class="text-body-subtle">{{ f.evidence.claims.guaranteed | default(value=0) }}</span>{% endfor %}
+          <span class="block text-xs text-body-subtle">{{ m.recognise.guaranteed }}</span></p>
+      </li>
       {%- endif %}{% endfor %}
     </ul>
     <p class="mt-8 max-w-3xl text-lg font-semibold leading-snug text-fg-brand-strong">{{ m.recognise.closing }}</p>
     <h3 class="mt-10 text-base font-semibold tracking-tight text-heading">{{ m.recognise.who }}</h3>
-    <ul class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4" data-audiences>
+    {#- each audience is a name and a way in: its own page says what is in it for them, so the
+        summaries are one click away rather than eight paragraphs down a phone -#}
+    <ul class="mt-4 flex flex-wrap gap-2" data-audiences>
       {%- for a in why.audiences %}
-      <li class="min-w-0"><a href="{{ base }}{{ a.route }}" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary p-4 hover:border-brand-subtle hover:bg-neutral-secondary-medium" data-audience="{{ a.id }}">
-        <span class="text-sm font-semibold text-heading">{{ a.title }}</span>
-        <span class="mt-1 text-sm leading-snug text-body">{{ a.summary }}</span>
-      </a></li>
+      <li class="min-w-0"><a href="{{ base }}{{ a.route }}" class="inline-flex max-w-full rounded-full border border-default bg-neutral-primary px-4 py-2 text-sm font-medium text-heading hover:border-brand-subtle hover:bg-neutral-secondary-medium" data-audience="{{ a.id }}">{{ a.title }}</a></li>
       {%- endfor %}
     </ul>
     <details class="mt-6 min-w-0 rounded-base border border-default bg-neutral-primary">
@@ -147,13 +234,20 @@
 <section id="how" class="scroll-mt-20 border-b border-default bg-neutral-primary-soft">
   <div class="mx-auto max-w-screen-xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
     {{ <landing_head number="02" kicker={m.workflow.kicker} title={m.workflow.title} lead={m.workflow.lead} /> }}
-    <ol class="grid gap-3 sm:grid-cols-2 lg:grid-cols-6" aria-label="The task lifecycle">
+    <ol class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6" aria-label="The task lifecycle">
       {%- for w in term.walkthrough %}
       <li class="relative flex min-w-0 flex-col rounded-base border border-default bg-neutral-primary p-4">
         <span class="font-mono text-xs text-body-subtle">{{ loop.index }}</span>
         <span class="mt-1 font-mono text-base font-semibold text-heading">{{ w.label }}</span>
-        <span class="mt-2 text-sm leading-snug text-body">{{ w.what }}</span>
+        <span class="mt-2 text-xs leading-snug text-body sm:text-sm">{{ w.what }}</span>
         <a href="{{ base }}{{ w.route }}" class="mt-3 text-xs font-medium text-fg-brand hover:underline" data-recorded-run="{{ w.label }}">{{ m.workflow.recorded }} &rarr;</a>
+        {#- the features whose commands contain this step's command (I3224), or the plain fact
+            that none does -#}
+        {%- set sfs = [f for f in by_weight if f.status == "stable" and w.label in f.commands] %}
+        <p class="mt-3 border-t border-default pt-3 text-xs" data-node-features="step:{{ w.label }}">
+          {%- if sfs | length %}{% for f in sfs %}{% if not loop.first %}, {% endif %}<a href="{{ base }}{{ f.route }}" data-feature="{{ f.id }}" class="text-heading hover:underline">{{ f.short_title }}</a>{% endfor %}
+          {%- else %}<span class="text-body-subtle" data-no-feature>{{ m.workflow.no_feature }}</span>{% endif %}
+        </p>
       </li>
       {%- endfor %}
     </ol>
@@ -198,23 +292,22 @@
     deploy.snapshots, carried by build.json `snapshots`; ADR 0141) — and it is then labelled
     as a snapshot read at this build's commit, never as a live reading.
     scripts/ci/homepage-check holds both directions (`interfaces`). -#}
-{%- set face_ids = [w.feature for w in web.surfaces if w.category == "interface" and w.feature] -%}
 <section id="surfaces" class="scroll-mt-20 border-b border-default bg-neutral-primary">
   <div class="mx-auto max-w-screen-xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
     {{ <landing_head number="04" kicker={m.surfaces.kicker} title={m.surfaces.title} lead={m.surfaces.lead} /> }}
-    <ul class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" data-interfaces>
+    <ul class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3" data-interfaces>
       {%- for f in model.features | sort(attribute="weight") %}{% if f.status == "stable" and f.id in face_ids %}
       {%- set w = [w for w in web.surfaces if w.category == "interface" and w.feature == f.id][0] %}
       {%- set carried = [p for p in web.surfaces if p.mount == w.mount and p.visibility == "public" and p.availability != "served-only"] %}
       {%- set held = [s for s in build.snapshots if s.id == w.id] if build and build.snapshots else [] %}
       {%- set published = (carried | length) + (held | length) %}
       {%- set doc = [s for s in model.surfaces if s.id == f.id] %}
-      <li class="flex min-w-0 flex-col rounded-xl border border-brand-subtle bg-neutral-primary-soft p-5" data-interface="{{ f.id }}" data-availability="{% if published %}published{% else %}{{ w.availability }}{% endif %}">
+      <li class="col-span-2 flex min-w-0 flex-col rounded-xl border border-brand-subtle bg-neutral-primary-soft p-5 sm:col-span-1" data-interface="{{ f.id }}" data-availability="{% if published %}published{% else %}{{ w.availability }}{% endif %}">
         <h3 class="text-lg font-bold tracking-tight text-heading">{{ f.short_title }}</h3>
         <p class="mt-2 text-sm leading-relaxed text-body">{{ m.interfaces[f.id] or f.headline }}</p>
         {%- if published %}
         <p class="mt-3 text-sm"><a href="{{ base }}{{ w.mount }}/" class="font-semibold text-fg-brand underline" data-published="{{ f.id }}">{{ m.interfaces.published }} &rarr;</a></p>
-        <p class="mt-1 text-xs leading-relaxed text-body-subtle">{{ m.interfaces.snapshot }}</p>
+        <p class="mt-1 hidden text-xs leading-relaxed text-body-subtle sm:block">{{ m.interfaces.snapshot }}</p>
         <p class="mt-2 text-xs leading-relaxed text-body">{{ m.interfaces.live }} <code class="rounded-base border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading">{{ w.mount }}</code></p>
         {%- else %}
         <p class="mt-3 text-xs leading-relaxed text-body">{{ m.interfaces.local }} <code class="rounded-base border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading">{{ w.mount }}</code></p>
@@ -223,9 +316,9 @@
       </li>
       {%- endif %}{% endfor %}
       {%- for s in model.surfaces %}{% if s.id not in face_ids %}
-      <li class="flex min-w-0 flex-col rounded-xl border border-default bg-neutral-primary-soft p-5" data-interface="{{ s.id }}">
-        <h3 class="text-lg font-bold tracking-tight text-heading">{{ s.title }}</h3>
-        {%- if m.interfaces[s.id] or false %}<p class="mt-2 text-sm leading-relaxed text-body">{{ m.interfaces[s.id] }}</p>{% endif %}
+      <li class="flex min-w-0 flex-col rounded-xl border border-default bg-neutral-primary-soft p-3 sm:p-5" data-interface="{{ s.id }}">
+        <h3 class="break-words text-sm font-bold tracking-tight text-heading sm:text-lg">{{ s.title }}</h3>
+        {%- if m.interfaces[s.id] or false %}<p class="mt-2 text-xs leading-relaxed text-body sm:text-sm">{{ m.interfaces[s.id] }}</p>{% endif %}
         <p class="mt-auto pt-4 text-sm font-medium"><a href="{{ base }}{{ s.route }}" class="text-fg-brand hover:underline">Reference &rarr;</a></p>
       </li>
       {%- endif %}{% endfor %}
@@ -245,32 +338,26 @@
       <div class="min-w-0 rounded-xl border border-brand-subtle bg-brand-softer p-5">
         <h3 class="text-xl font-bold leading-snug tracking-tight text-fg-brand-strong">{{ m.providers.title }}</h3>
         <p class="mt-3 text-base leading-relaxed text-heading">{{ m.providers.boundary }}</p>
-        {#- the worker tools the policy is generated for, named by the product model -#}
-        <dl class="mt-4 border-t border-brand-subtle pt-4">
-          <dt class="text-xs font-semibold uppercase tracking-wide text-fg-brand-strong">instruction files generated for</dt>
-          <dd class="mt-2 flex flex-wrap gap-2" data-providers>
-            {%- for pv in model.providers %}
-            {%- if pv.route %}<a href="{{ base }}{{ pv.route }}" class="rounded-base border border-brand-subtle bg-neutral-primary px-2 py-1 text-sm text-heading hover:underline">{{ pv.title }}</a>
-            {%- else %}<span class="rounded-base border border-brand-subtle bg-neutral-primary px-2 py-1 text-sm text-heading">{{ pv.title }}</span>{% endif %}
-            {%- endfor %}
-          </dd>
-        </dl>
         <p class="mt-4 text-sm"><a href="{{ get_url(path="/limitations/", trailing_slash=true) }}" class="font-medium text-fg-brand underline">What it does not do &rarr;</a></p>
       </div>
     {#- one declaration, every surface: the one shown without JavaScript is derived — the first,
         in the registry's own order, that reaches all three — and the picker fetches the
-        published slice (graphs/surfaces.json) instead of carrying the registry. -#}
+        published slice (graphs/surfaces.json) instead of carrying the registry: the page ships
+        only the option it shows, and the others are drawn from the slice, fetched once the page
+        has loaded, so the list is whole by the time a reader opens it. -#}
     {%- set reg = load_data(path="data/registry/registry.json") -%}
     {%- set exe = load_data(path="data/generated/executable.json") -%}
     {%- set everywhere = [c for c in reg.registry.builtin if c.exposure.cli and c.exposure.http and c.exposure.mcp] -%}
     {%- if everywhere %}{% set shown = everywhere[0] %}{% else %}{% set shown = reg.registry.builtin[0] %}{% endif -%}
     {%- set shown_e = [e for e in exe.capabilities if e.id == shown.id][0] -%}
     <div class="min-w-0 rounded-xl border border-default bg-neutral-primary-soft p-5" data-surfaces
-         x-data="{ list: null, cap: null, async load() { if (!this.list) { const r = await fetch('{{ get_url(path="graphs/surfaces.json") }}'); this.list = await r.json(); } }, async choose(id) { await this.load(); this.cap = this.list.find((c) => c.id === id) || null; } }">
-      <h3 class="text-base font-semibold tracking-tight text-heading">One declaration, every surface</h3>
+         x-data="{ list: null, cap: null, async load() { if (!this.list) { const r = await fetch('{{ get_url(path="graphs/surfaces.json") }}'); this.list = await r.json(); } }, async choose(id) { await this.load(); this.cap = this.list.find((c) => c.id === id) || null; } }"
+         x-init="document.readyState === 'complete' ? load() : window.addEventListener('load', () => load(), { once: true })">
+      <h3 class="text-base font-semibold tracking-tight text-heading">{{ m.surfaces.engineers }}</h3>
       <label class="mt-3 block text-xs text-body">capability
         <select data-surface-picker x-on:focus="load()" x-on:change="choose($event.target.value)" class="mt-1 block w-full max-w-md rounded-base border border-default bg-neutral-primary px-2 py-1 font-mono text-sm text-heading">
-          {%- for c in reg.registry.builtin %}<option value="{{ c.id }}"{% if c.id == shown.id %} selected{% endif %}>{{ c.id }}</option>{% endfor %}
+          <option value="{{ shown.id }}" selected>{{ shown.id }}</option>
+          <template x-for="c in (list || []).filter((c) => c.id !== '{{ shown.id }}')" x-bind:key="c.id"><option x-bind:value="c.id" x-text="c.id"></option></template>
         </select>
       </label>
       <dl class="mt-4 grid gap-3 sm:grid-cols-2">
@@ -289,13 +376,15 @@
     refused. The challenge's recorded run, told step by step in the run's own sentences: a
     worker strays, says it is done, is refused, is refused again, and is accepted only when
     every line of the contract passes. The replay of that run — every command and its output
-    — is /challenge/'s, one click away; the hero carries its first verdict. Every other
+    — is /challenge/'s, one click away; beside the story is its first verdict, the finish
+    contract line by line, which the hero carried until the hero showed the product instead. Every other
     refusal the lifecycle recorded is listed behind a disclosure, each with its command, its
     exit status and the scenario page that carries its output. None of it is written here. -#}
 <section id="refuses" class="{{ stage }} relative isolate scroll-mt-20 overflow-hidden border-b border-default bg-neutral-primary">
   <div class="mx-auto max-w-screen-xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
     {{ <landing_head number="05" kicker={m.refuses.kicker} title={m.refuses.title} lead={m.refuses.lead} /> }}
-    <ol class="max-w-3xl min-w-0 space-y-3" aria-label="What happened in the recorded run" data-recorded-story="{{ ch.use_case.id }}">
+    <div class="grid gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:gap-14">
+    <ol class="hidden max-w-3xl min-w-0 space-y-3 sm:block" aria-label="What happened in the recorded run" data-recorded-story="{{ ch.use_case.id }}">
       {%- for s in ch.steps %}{% if s.actor == "worker" or s.argv[0] == "finish" or s.argv[0] == "check" %}
       <li class="flex min-w-0 gap-3">
         <span class="mt-0.5 inline-flex w-20 shrink-0 justify-center">{% if s.actor == "worker" %}<span class="font-mono text-xs text-body-subtle">worker</span>{% else %}{{ <badge status={s.outcome} /> }}{% endif %}</span>
@@ -303,6 +392,33 @@
       </li>
       {%- endif %}{% endfor %}
     </ol>
+    {%- if refusals | length %}
+    {%- set st = refusals[0] %}
+    <figure class="relative min-w-0 self-start overflow-hidden rounded-xl border border-default bg-neutral-primary-soft shadow-2xl ring-1 ring-brand-subtle" data-verdict="{{ st.id }}">
+      <figcaption class="border-b border-default px-5 py-4">
+        <p class="font-mono text-xs uppercase tracking-widest text-body-subtle">{{ m.refuses.verdict_kicker }}</p>
+        <p class="mt-2 text-base font-semibold leading-snug text-heading">{{ st.note }}</p>
+      </figcaption>
+      <div class="px-5 py-4">
+        <p class="break-all font-mono text-xs text-body-subtle">$ {{ st.command }}</p>
+        <ul class="mt-3 space-y-1.5" aria-label="The finish contract, line by line">
+          {%- for line in st.decision %}{% if line is starting_with(pat="OK") or line is starting_with(pat="FAIL") %}
+          {%- set words = [w for w in line | split(pat=" ") if w != ""] %}
+          {%- set ok = line is starting_with(pat="OK") %}
+          <li class="flex items-center gap-3 font-mono text-sm">
+            <span class="inline-flex w-14 shrink-0 justify-center">{% if ok %}{{ <badge status="pass" /> }}{% else %}{{ <badge status="fail" /> }}{% endif %}</span>
+            <span class="text-heading">{{ words[1] }}</span>
+          </li>
+          {%- endif %}{% endfor %}
+        </ul>
+        {%- set verdict = [line for line in st.decision if line is starting_with(pat="finish:")] %}
+        {%- if verdict | length %}<p class="mt-4 rounded-base border border-danger-subtle bg-danger-soft px-3 py-2 font-mono text-sm font-semibold text-fg-danger-strong">{{ verdict[0] }}</p>{% endif %}
+        {%- if accepted | length %}<p class="mt-3 text-sm leading-relaxed text-body">{{ m.refuses.verdict_after }} <span class="font-mono text-xs text-fg-success-strong">{% set done = accepted | last %}{{ [line for line in done.decision if line is starting_with(pat="finish:")] | first }}</span></p>{% endif %}
+      </div>
+      <p class="border-t border-default px-5 py-3 text-sm font-medium"><a href="{{ get_url(path="/challenge/", trailing_slash=true) }}" class="text-fg-brand hover:underline">{{ m.refuses.verdict_link }} &rarr;</a></p>
+    </figure>
+    {%- endif %}
+    </div>
     <p class="mt-8"><a href="{{ get_url(path="/challenge/", trailing_slash=true) }}" class="group inline-flex items-center justify-center rounded-base bg-brand px-5 py-3 text-sm font-semibold text-white hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium">{{ m.refuses.replay }} <svg class="ms-2 h-4 w-4 transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M13 5l7 7-7 7"/></svg></a></p>
     <p class="mt-8 max-w-3xl text-base leading-relaxed text-body">{{ m.refuses.closing }}</p>
     <p class="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm font-medium">
@@ -335,18 +451,18 @@
     {#- A status is what docs/CLAIMS.yaml declares; whether a recorded run supports it is the
         evidence verdict `majordomus evidence show` derives (product.json `evidence`), counted
         apart and never folded into the declared figure. No dataset reads as unknown. -#}
-    <dl class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" data-claims-proof>
+    <dl class="grid grid-cols-2 gap-3 lg:grid-cols-4" data-claims-proof>
       {%- for sid in caps.status_order %}
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary p-4"><dt class="text-xs font-semibold uppercase tracking-wide text-body-subtle"><a href="{{ get_url(path='/guarantees/', trailing_slash=true) }}#{{ sid }}" class="hover:underline">{{ sid }} claims, declared</a></dt><dd class="mt-1 font-mono text-2xl font-bold text-heading" data-declared="{{ sid }}">{{ [c for c in caps.claims if c.status == sid] | length }}</dd>
         {%- if sid == "guaranteed" %}<dd class="mt-2 text-xs text-body" data-supported="{% if model.evidence.available %}{{ model.evidence.supported }}{% else %}unknown{% endif %}">{% if model.evidence.available %}<span class="font-mono font-bold text-heading">{{ model.evidence.supported }}</span> supported by a recorded run at this revision{% else %}{{ <badge status="unknown" /> }} support by a recorded run: no evidence is recorded{% endif %} · <a href="{{ get_url(path="/evidence/", trailing_slash=true) }}" class="text-fg-brand underline">the ledger</a></dd>{% endif %}
-        <dd class="mt-2 text-xs leading-relaxed text-body">{{ caps.statuses[sid] }}</dd></div>
+        <dd class="mt-2 hidden text-xs leading-relaxed text-body sm:block">{{ caps.statuses[sid] }}</dd></div>
       {%- endfor %}
     </dl>
     {#- the evidence chain, stepped through: what is declared, what a machine holds, what a
         recorded run supports — every figure derived, every node one click from its detail -#}
-    <div class="mt-8 mb-8">{% include "partials/evidence-chain.html" %}</div>
+    <div class="mt-8 mb-8 hidden md:block">{% include "partials/evidence-chain.html" %}</div>
     {#- where this page came from, and what a reader can check for themselves -#}
-    <dl class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" data-trust>
+    <dl class="mt-6 grid grid-cols-2 gap-3 md:mt-0 lg:grid-cols-4" data-trust>
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary p-4" data-trust-key="release"{% if offered %} data-release="{{ offered.version }}"{% endif %}><dt class="text-xs text-body">latest release the installer resolves</dt>
         {%- if offered %}<dd class="mt-1 font-mono text-2xl font-bold text-heading"><a href="{{ offered.notes_url }}" class="hover:underline">{{ offered.version }}</a></dd><dd class="mt-1 text-xs text-body">published {{ offered.published_at | truncate(length=10, end="") }}</dd>
         {%- else %}<dd class="mt-1 font-mono text-2xl font-bold text-body-subtle">unknown</dd>{% endif %}</div>
@@ -356,14 +472,21 @@
         {%- else %}<dd class="mt-1 font-mono text-2xl font-bold text-body-subtle">unknown</dd>{% endif %}</div>
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary p-4" data-trust-key="use-cases"><dt class="text-xs text-body">executable use cases, across areas of work</dt><dd class="mt-1 font-mono text-2xl font-bold text-heading"><a href="{{ get_url(path="/use-cases/", trailing_slash=true) }}" class="hover:underline">{{ cat.use_cases | length }}</a></dd><dd class="mt-1 text-xs text-body">{{ cat.categories | length }} areas</dd></div>
     </dl>
-    <div class="mt-6 min-w-0 rounded-base border border-warning-subtle bg-warning-soft p-5">
-      <h3 class="text-lg font-bold leading-snug tracking-tight text-heading">{{ x.direction.planned_title }}</h3>
-      <p class="mt-2 text-sm leading-relaxed text-heading">{{ x.direction.planned_lead }}</p>
+    {#- what is built and what is not, said in its title and opened by whoever wants the list:
+        the honest half of the page stays on the page, and stops being a wall on a phone -#}
+    {%- set ic = [c for c in caps.claims if c.id is starting_with(pat=x.direction.claim_prefix)] %}
+    <details class="group mt-6 min-w-0 rounded-base border border-warning-subtle bg-warning-soft">
+      <summary class="flex cursor-pointer list-none items-start justify-between gap-3 p-5 focus:outline-none focus-visible:ring-4 focus-visible:ring-brand-medium [&::-webkit-details-marker]:hidden">
+        <div class="min-w-0"><h3 class="text-lg font-bold leading-snug tracking-tight text-heading">{{ x.direction.planned_title }}</h3>
+          <p class="mt-1 font-mono text-xs text-body">{% for sid in caps.status_order %}{% set n = [c for c in ic if c.status == sid] | length %}{% if n > 0 %}<span class="me-3" data-direction-count="{{ sid }}">{{ n }} {{ sid }}</span>{% endif %}{% endfor %}</p></div>
+        <svg aria-hidden="true" class="mt-1 h-4 w-4 shrink-0 text-body-subtle transition-transform group-open:rotate-180 motion-reduce:transition-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg>
+      </summary>
+      <div class="border-t border-warning-subtle px-5 pb-5 pt-4">
+      <p class="text-sm leading-relaxed text-heading">{{ x.direction.planned_lead }}</p>
       {#- What of the model is built and what is not, as docs/CLAIMS.yaml declares it: the claims
           whose id carries the prefix the data names, grouped by status in the matrix's own
           order. No sentence of these lists is written in the manifesto, so the prose above
           cannot deny a guarantee the matrix holds, nor list a planned claim as built. -#}
-      {%- set ic = [c for c in caps.claims if c.id is starting_with(pat=x.direction.claim_prefix)] %}
       <div class="mt-4 grid gap-4 md:grid-cols-2" data-direction-claims="{{ x.direction.claim_prefix }}">
         {%- for sid in caps.status_order %}{% set mine = [c for c in ic if c.status == sid] %}{% if mine | length > 0 %}
         <div class="min-w-0" data-direction-status="{{ sid }}">
@@ -377,10 +500,11 @@
         {%- endif %}{% endfor %}
       </div>
       <p class="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm font-medium">
-        <a href="{{ get_url(path="/roadmap/", trailing_slash=true) }}" class="text-fg-brand underline">What is scheduled, wave by wave &rarr;</a>
+        <a href="{{ get_url(path="/roadmap/", trailing_slash=true) }}" class="text-fg-brand underline">The milestones, in the order their graph derives &rarr;</a>
         <a href="{{ get_url(path="/method/argument/", trailing_slash=true) }}" class="text-fg-brand underline">The model stage by stage &rarr;</a>
       </p>
-    </div>
+      </div>
+    </details>
     <p class="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm font-medium">
       <a href="{{ get_url(path="/guarantees/", trailing_slash=true) }}" class="text-fg-brand hover:underline">Every claim, with the test that settles it &rarr;</a>
       <a href="{{ get_url(path="/doctrines/", trailing_slash=true) }}" class="text-fg-brand hover:underline">Every rule, with its validator &rarr;</a>

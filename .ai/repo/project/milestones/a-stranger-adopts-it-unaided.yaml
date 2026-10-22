@@ -1,0 +1,36 @@
+id: a-stranger-adopts-it-unaided
+title: "A stranger installs Majordomus and is stopped from a false done in ten minutes, and every outside first run teaches the tool"
+slug: a-stranger-adopts-it-unaided
+order: 162
+priority: p1
+problem: "Every test of adoption runs either in this repository or in a fixture the maintainer drives. Case 1024 proves an installed release serves a foreign repository, but stops at the MCP server answering; nothing walks a stranger's path from the installer to the refusal that is the product's whole point, and nothing times it. init reports what it created, not what it found in the repository it entered. Outside first runs exist only as maintainer-written field reports kept outside any repository. The owner's 2026-10-12 order that outreach waits for this is recorded nowhere on master. Proposed in ADR 0206 (Public outreach begins only after a stranger has finished a first task unaided) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c241#2, chatgpt-majordomus:c241#4, chatgpt-majordomus:c256#5, chatgpt-majordomus:c137#2, chatgpt-majordomus:c269#5."
+outcome: "The stranger's first ten minutes are one measured gate, init tells an adopter something true about their own repository, and each real outside run is recorded unedited and turned into cases."
+current_state: "scripts/ci/install-check and test/cases/1024_an_installed_release_serves_a_foreign_repository.sh install a fixture release and read initialize/tools/list (I2162 DONE). lib/init.sh prints 'created ...' and hook advice only. docs/ADOPTION.md describes the second run; docs/ADOPTION_SECOND_RUN.md, cited by a-second-adopter-is-served, is not on master. a-second-adopter-is-served holds one issue on master (I2601 VERIFY). No intent or ADR on master records 'beta before outreach'."
+desired_state: "A case runs the published-installer path to a refused and an accepted finish in a foreign fixture and records elapsed time and manual steps; init ends with its findings; .ai/repo/knowledge/curated carries one observed record per outside run, and each friction is an issue in this milestone or in a-second-adopter-is-served."
+scope:
+  - "scripts/ci/install-check"
+  - "lib/init.sh"
+  - "docs/ADOPTION.md"
+  - ".ai/repo/workflows"
+  - ".ai/repo/knowledge/curated"
+  - ".github/workflows"
+  - ".ai/repo/ci/gates.yaml"
+  - ".ai/repo/adrs"
+  - "share/providers.yaml"
+non_scope:
+  - "Outreach channels, posts and dates"
+  - "The adopting repositories themselves: evidence, read only"
+  - "Fixes the second-adopter findings already carry"
+acceptance_criteria:
+  - "Every criterion of intent a-stranger-adopts-it-unaided has its evidence"
+  - "No issue of the milestone decides by the identity of the repository it runs in"
+validation:
+  - "majordomus plan validate"
+evidence_required: []
+depends_on:
+  - "a-second-adopter-is-served"
+risks:
+  - "A ten-minute bar measured on a fast Mac may not hold on a cold Linux runner; the case records the platform and the bar is per platform"
+  - "Outside runs depend on real people; the milestone cannot close by effort alone"
+created_at: 2026-10-18
+updated_at: 2026-10-18

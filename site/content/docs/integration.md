@@ -13,6 +13,24 @@ change into the current master, verifies that it landed, discards what it assume
 decides again from what is there now. The decision is recorded in ADR 0101, the rule is
 `project.integration-follows-the-current-master`, and the code is `crate::integration`.
 
+## The model in force
+
+That is the executor. Who lands, how much at once and how often is decided by the owner, and
+the decision of 2026-10-16 is
+[rule `project.the-cooperation-model-is-the-owners-word`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md)
+and [ADR 0167](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/adrs/0167-work-moves-through-seats-on-the-mesh-and-lands-in-combined-tops.md).
+The rule is the one record of the seats, the scope each one claims on the mesh and what each
+does, and this document does not copy it: the site renders the rule and the decision from
+those files, so they cannot drift from what is read here. Who holds each seat now is drawn
+by the Mesh screen of the UI (`/ui/mesh`) from the live claims.
+
+What the decision changes here is the lander's unit of work, not the executor. `prs drain`
+below still takes one ready pull request at a time and never passes `--admin`; a combined top
+is the landing seat's own act, the batch ADR 0101 left to a person and the owner has now
+chosen. Everything else this document says of a decision still holds for a top: it is taken
+against the current master and the heads it names, its evidence is recorded, and no check is
+bypassed.
+
 ## The pipeline
 
 <pre class="mermaid">
@@ -134,7 +152,7 @@ The order above is a list of gates, and every gate is asked whatever the others 
 | `auto_merge` | the forge has no auto-merge armed on it | `auto_merge_armed` |
 | `supersession` | its cross-references were read whole, and no authorised successor is open, landed, merged elsewhere or unread | `declarations_unread`, then `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, one per successor |
 | `relation_to_master` | its merge is clean and changes something | `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT` |
-| `merge_method` | the repository allows a merge commit | `merge_commit_not_allowed` |
+| `merge_method` | the repository allows a merge commit | `merge_commit_not_allowed`, or `merge_settings_unread` |
 | `dependency` | every declared dependency landed | `depends_on:#N`, one per open dependency |
 | `review` | the review policy is satisfied on the head | `review:STATE`, or `review_policy_unread` |
 | `no_failing_check` | no required check failed | `required_check_failed` |
@@ -211,8 +229,12 @@ and a squash or a rebase would replay commits it never saw. The merge method
 (`policy.merge_method`) is `merge` when the repository's settings allow a merge commit
 (`allow_merge_commit`, read with `gh api repos/OWNER/NAME`), and none otherwise. With none,
 every pull request the relation to master does not already decide is `blocked` with
-`merge_commit_not_allowed` and `repository_settings` evidence, and the queue says why. The
-executor never falls back to a squash or a rebase. The `merge_method` gate comes after
+`merge_commit_not_allowed` and `repository_settings` evidence, and the queue says why. When
+the forge's answer carries none of the merge settings — a token that may not read them gets
+the repository without them, as the Pages workflow's does — nothing is known: the policy says
+`merge_settings_unread`, such a pull request is `unknown` with `merge_settings_unread`, and
+the queue says the settings could not be read, never that the repository allows nothing
+(I2966). The executor never falls back to a squash or a rebase. The `merge_method` gate comes after
 `relation_to_master` because closing work that is already on master does not depend on the
 merge setting: a `redundant` pull request stays `redundant`, lists
 `merge_commit_not_allowed` after its own reason, and `prs cleanup --apply` still closes it. So
@@ -590,6 +612,9 @@ Everything above is the executor, and the executor never passes `--admin`. One t
 outside it: the owner of the branch protection may decide to spend it. Rule
 `project.an-expedited-landing-is-the-owners-word` and ADR 0155 say when a named lander may
 merge past the required check, and what that never reaches.
+Since 2026-10-16 the lander is the landing seat of
+[*The model in force*](#the-model-in-force), and what it lands may be a combined top rather
+than one pull request: one seat at a time, and a landing may carry a whole top.
 
 The required check takes about an hour and the pool judges one pull request at a time. On
 2026-10-12 a release record that changed one file waited two and a half hours behind runs
@@ -626,7 +651,21 @@ trunk's run waits for. The lander reads the failed job first, through the jobs A
 answers while the run is still going. The trunk's own run is left to finish: its other jobs
 are the only reading of the trunk's other lanes. While the trunk's run is queued, a branch
 run on a head that contains the trunk is that reading, lane by lane, and is read before it
-is cancelled. Issue I2664 is the workflow doing this by itself.
+is cancelled. On a pull request the workflow does this by itself: the last step of every gate
+job, on `failure()` of a `pull_request` event alone, cancels the run by its own id
+(`.github/workflows/validate.yml`, case 3019). A push to master, the schedule and a dispatch
+are never cancelled that way.
+
+What the merged tree owes follows what the change touches, and rule clause 4 lists it: a
+record a crate test reads (a skill, a rule, a claim, the quality baseline, a plan record) owes
+the crate tests that open this repository itself (`tests/skills.rs`, `tests/quality.rs` and
+their siblings) and the `intent-check` gate, although no Rust moved. An active skill missing
+from the header of `tests/skills.rs` or from case 391 is refused in the structure job by the
+`skill-naming` gate, and a case that names the release record without being run by the
+`release-record-cases` gate by the `release-record-listing` gate. A change that adds or
+widens an exported Rust item owes `scripts/rust-check --quality` before it is pushed: the
+`rust-quality` gate's report, on the author's machine, with the finding the structure job
+would print; two implementations of 2026-10-14 met that gate only in the structure job.
 
 A red on the trunk has one carrier, named by the integrator. A second session that builds the
 same fix costs a disk and lands nothing sooner.

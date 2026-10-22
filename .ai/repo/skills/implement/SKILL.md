@@ -122,6 +122,11 @@ configuration, CI, benchmarks, provider adapters, examples, decisions — and ma
 ones it actually touches. Modify those and only those; the list exists so that no
 derived state is forgotten, not to manufacture work.
 
+A message a command or a check prints is a surface too: a case that asserts it pins its
+wording. Before rewording one, `grep -rlF '<the old sentence>' test/cases` and run every
+case it names; on 2026-10-19 a reworded refusal of `scripts/ci/english-only-check` reached
+CI with case 2984 still asserting the old sentence, because nothing local ran it.
+
 ## 9. Decide the evidence before the mechanism
 
 Choose how the behaviour will be proved: black-box behavioural first, then integration,

@@ -1,8 +1,8 @@
 {
   "schema": "majordomus/cli/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.24.1",
-  "version": "0.24.1",
+  "generator": "majordomus-cli 1.0.0-alpha.6",
+  "version": "1.0.0-alpha.6",
   "source": "apps/majordomus-cli/src/cli.rs",
   "route_prefix": "/docs/cli",
   "cli": {
@@ -174,15 +174,13 @@
             "name": "http_port",
             "long": "http-port",
             "positional": false,
-            "help": "Port the shared server binds when this process starts it; when it is taken, a free port is used instead and the URL is logged on stderr either way",
+            "help": "Port the shared server binds when this process starts it; without it, the port this checkout derives (8741 for the primary checkout). When it is taken, a free port is used instead and the URL is logged on stderr either way",
             "value_name": "PORT",
             "takes_value": true,
             "required": false,
             "global": false,
             "possible_values": [],
-            "defaults": [
-              "8741"
-            ]
+            "defaults": []
           }
         ],
         "examples": [
@@ -314,15 +312,13 @@
             "name": "port",
             "long": "port",
             "positional": false,
-            "help": "Port to bind; 0 picks a free one and the address is logged on stderr",
+            "help": "Port to bind; without it, the port this checkout derives (8741 for the primary checkout); 0 picks a free one and the address is logged on stderr",
             "value_name": "PORT",
             "takes_value": true,
             "required": false,
             "global": false,
             "possible_values": [],
-            "defaults": [
-              "8741"
-            ]
+            "defaults": []
           },
           {
             "name": "fallback",
@@ -358,6 +354,30 @@
             "positional": false,
             "help": "Bind the address this deployment object declares (`.ai/repo/deployments/<ID>.yaml`) instead of the local default. What a hosted process is started with; the address is the object's, not this command line's",
             "value_name": "ID",
+            "takes_value": true,
+            "required": false,
+            "global": false,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "node_seed_env",
+            "long": "node-seed-env",
+            "positional": false,
+            "help": "The environment variable holding this node's mesh key, a 64-hex seed: a hosted hub keeps one key across restarts on a disk that does not survive them, and without the variable its mesh stays off rather than minting a key nobody trusts (ADR 0220). The value is read, never printed. What a deployment's generated start command passes",
+            "value_name": "VAR",
+            "takes_value": true,
+            "required": false,
+            "global": false,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "advertise",
+            "long": "advertise",
+            "positional": false,
+            "help": "The one endpoint this node advertises to the mesh, instead of the addresses of the interface it binds: the public URL a hosted hub answers on (ADR 0220). What a deployment's generated start command passes",
+            "value_name": "URL",
             "takes_value": true,
             "required": false,
             "global": false,
@@ -531,29 +551,25 @@
                 "name": "port",
                 "long": "port",
                 "positional": false,
-                "help": "The port the started server asks for first; a taken one is replaced by a free one",
+                "help": "The port the started server asks for first, without it the one this checkout derives (8741 for the primary checkout); a taken one is replaced by a free one",
                 "value_name": "PORT",
                 "takes_value": true,
                 "required": false,
                 "global": false,
                 "possible_values": [],
-                "defaults": [
-                  "8741"
-                ]
+                "defaults": []
               },
               {
                 "name": "idle",
                 "long": "idle",
                 "positional": false,
-                "help": "The started server stops when no peer has been attached for this many seconds",
+                "help": "The started server stops when no peer has been attached for this many seconds; without it, the policy's declared `server.idle_seconds`, 900 when none is declared",
                 "value_name": "SECONDS",
                 "takes_value": true,
                 "required": false,
                 "global": false,
                 "possible_values": [],
-                "defaults": [
-                  "900"
-                ]
+                "defaults": []
               },
               {
                 "name": "wait",
@@ -10782,7 +10798,7 @@
             "route": "/docs/cli/worktree/create/",
             "executable": true,
             "usage": "majordomus worktree create [OPTIONS] [BRANCH]",
-            "about": "Create the canonical worktree of a branch, creating the branch from --base (default: the trunk) when it does not exist. The path is derived; none may be given",
+            "about": "Create the canonical worktree of a branch. A branch that does not exist here is fetched from the trunk's remote and taken up when the remote has it; otherwise it is created from --base, else from the remote's trunk fetched now (the local trunk only when the remote cannot be read, and then said, with how far behind). The path is derived; none may be given",
             "args": [
               {
                 "name": "branch",
@@ -11994,6 +12010,242 @@
                 "command": "majordomus worktree cleanup",
                 "setup": [],
                 "expectation": "exits 0; prints cleanup-eligible"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "worktree",
+              "uncommitted"
+            ],
+            "route": "/docs/cli/worktree/uncommitted/",
+            "executable": true,
+            "usage": "majordomus worktree uncommitted [OPTIONS]",
+            "about": "Every linked worktree holding uncommitted work: how many paths, how old the oldest change, what holds it (an active task, an open episode, a process inside) and whether it is abandoned, with the command that would put it on a remote ref. Reads every worktree and writes none",
+            "args": [
+              {
+                "name": "older_than",
+                "long": "older-than",
+                "positional": false,
+                "help": "Judge against this age instead of the policy's session.stranded_after (90s, 30m, 12h, 1d)",
+                "value_name": "DURATION",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "worktree-uncommitted-none",
+                "title": "Work no commit carries, and whether anything holds it",
+                "description": "Every linked worktree holding staged, unstaged, untracked or conflicted paths, with the count, the age of the oldest change, the task, episode or process that holds it, and `abandoned` when nothing does and it is older than the policy's session.stranded_after. A repository with no linked worktree has nothing to list; the reading writes nothing either way.",
+                "argv": [
+                  "worktree",
+                  "uncommitted"
+                ],
+                "command": "majordomus worktree uncommitted",
+                "setup": [],
+                "expectation": "exits 0; prints 0 with uncommitted work, nothing was changed"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "worktree",
+              "trunk"
+            ],
+            "route": "/docs/cli/worktree/trunk/",
+            "executable": true,
+            "usage": "majordomus worktree trunk [OPTIONS]",
+            "about": "How far this checkout and the local trunk are from the remote trunk, as of the last fetch, judged against the policy's checkout.trunk_distance: current, lagging, stale, unjudged or unmeasured, with the commands that bring it current. Fetches nothing; exit 10 when stale",
+            "args": [
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "worktree-trunk-unmeasured",
+                "title": "How far this checkout is from the remote trunk",
+                "description": "The checkout's HEAD and the local trunk counted against the remote-tracking trunk, as of the last fetch, and judged against the policy's checkout.trunk_distance. A repository with no remote has nothing to be measured against and says so — `unmeasured`, never `current`; nothing is fetched either way.",
+                "argv": [
+                  "worktree",
+                  "trunk"
+                ],
+                "command": "majordomus worktree trunk",
+                "setup": [],
+                "expectation": "exits 0; prints unmeasured, no remote-tracking branch"
               }
             ],
             "subcommands": []
@@ -16919,15 +17171,13 @@
                 "name": "base",
                 "long": "base",
                 "positional": false,
-                "help": "The trunk the landing raises from",
+                "help": "The trunk the landing raises from; when absent, the remote-tracking ref of the trunk this repository names",
                 "value_name": "REF",
                 "takes_value": true,
                 "required": false,
                 "global": false,
                 "possible_values": [],
-                "defaults": [
-                  "origin/master"
-                ]
+                "defaults": []
               },
               {
                 "name": "head",
@@ -19168,6 +19418,76 @@
                 "command": "majordomus devcontext policy",
                 "setup": [],
                 "expectation": "exits 0; prints TIER, is_a, REFUSED"
+              }
+            ],
+            "subcommands": []
+          }
+        ]
+      },
+      {
+        "path": [
+          "majordomus",
+          "guard"
+        ],
+        "route": "/docs/cli/guard/",
+        "executable": false,
+        "usage": "majordomus guard <COMMAND>",
+        "about": "The edit guard: whether a provider's tool may write a file of this checkout now, judged from the active task's scope and the writing session's live mesh claims",
+        "args": [],
+        "examples": [],
+        "subcommands": [
+          {
+            "path": [
+              "majordomus",
+              "guard",
+              "hook"
+            ],
+            "route": "/docs/cli/guard/hook/",
+            "executable": true,
+            "usage": "majordomus guard hook [OPTIONS]",
+            "about": "Judge the edit a provider's pre-tool payload (on stdin) is about to make; exit 2 with the reason and the remedy when no claim covers it, 0 otherwise",
+            "args": [
+              {
+                "name": "provider",
+                "long": "provider",
+                "positional": false,
+                "help": "The provider whose payload stdin carries; its session id on the mesh is `<provider>-<session_id>`",
+                "value_name": "PROVIDER",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "claude-code"
+                ]
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Where a relative path in the payload is resolved from (default: the current directory); the checkout judged is the one the written file belongs to",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              }
+            ],
+            "examples": [
+              {
+                "id": "guard-hook",
+                "title": "Judge the edit a provider's pre-tool payload names",
+                "description": "What a provider's pre-tool hook runs before an edit: the payload arrives on stdin, and the command exits 2 with the reason and the remedy when no claim covers the path it names, 0 otherwise. Here stdin is empty, so it names no path, and the command lets the tool run.",
+                "argv": [
+                  "guard",
+                  "hook",
+                  "--provider",
+                  "claude-code"
+                ],
+                "command": "majordomus guard hook --provider claude-code",
+                "setup": [],
+                "expectation": "exits 0"
               }
             ],
             "subcommands": []
@@ -25259,6 +25579,269 @@
       {
         "path": [
           "majordomus",
+          "deploy"
+        ],
+        "route": "/docs/cli/deploy/",
+        "executable": false,
+        "usage": "majordomus deploy [OPTIONS] <COMMAND>",
+        "about": "The tree a deployment's provider receives, assembled outside the checkout from the deployment object at one commit: its build inputs, the provider's generated files, the buildpack line and the executable built at that commit",
+        "args": [
+          {
+            "name": "repo",
+            "long": "repo",
+            "positional": false,
+            "help": "Start the search for the repository root here (default: the current directory)",
+            "value_name": "PATH",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "discovery",
+            "long": "discovery",
+            "positional": false,
+            "help": "How declarative files are enumerated",
+            "value_name": "DISCOVERY",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "vcs",
+                "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+              },
+              {
+                "name": "filesystem",
+                "help": "A walk of the work tree with the same glob semantics; untracked files included"
+              }
+            ],
+            "defaults": [
+              "vcs"
+            ]
+          },
+          {
+            "name": "strict",
+            "long": "strict",
+            "positional": false,
+            "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+            "value_name": "STRICT",
+            "takes_value": false,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": [
+              "false"
+            ]
+          },
+          {
+            "name": "share",
+            "long": "share",
+            "positional": false,
+            "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+            "value_name": "DIR",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "format",
+            "long": "format",
+            "positional": false,
+            "help": "Output shape",
+            "value_name": "FORMAT",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "text",
+                "help": "Lines for a person"
+              },
+              {
+                "name": "json",
+                "help": "One JSON document, deterministic"
+              }
+            ],
+            "defaults": [
+              "text"
+            ]
+          }
+        ],
+        "examples": [],
+        "subcommands": [
+          {
+            "path": [
+              "majordomus",
+              "deploy",
+              "slug"
+            ],
+            "route": "/docs/cli/deploy/slug/",
+            "executable": true,
+            "usage": "majordomus deploy slug [OPTIONS]",
+            "about": "Assemble the tree a provider receives into a directory outside the checkout",
+            "args": [
+              {
+                "name": "deployment",
+                "long": "deployment",
+                "positional": false,
+                "help": "The deployment (default: the one deployment that names a provider)",
+                "value_name": "DEPLOYMENT",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "commit",
+                "long": "commit",
+                "positional": false,
+                "help": "The commit every file is read at (default HEAD)",
+                "value_name": "COMMIT",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "executable",
+                "long": "executable",
+                "positional": false,
+                "help": "The executable built at that commit",
+                "value_name": "EXECUTABLE",
+                "takes_value": true,
+                "required": true,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "out",
+                "long": "out",
+                "positional": false,
+                "help": "The directory the slug is written into: outside the checkout, absent or empty",
+                "value_name": "OUT",
+                "takes_value": true,
+                "required": true,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "deploy-slug-no-provider",
+                "title": "A repository whose deployments name no provider has no tree to assemble",
+                "description": "Nothing hosts a deployment that names no provider, so there is no slug: refused with exit 15, and nothing is written. Where a deployment names one, `--commit <sha> --executable <built at that commit> --out <a directory outside the checkout>` writes its build inputs at that commit, the provider's generated files at the slug's root, the buildpack line, the executable and `.majordomus/SOURCE.json` — the tree the provider workflow pushes.",
+                "argv": [
+                  "deploy",
+                  "slug",
+                  "--executable",
+                  "majordomus",
+                  "--out",
+                  "/nonexistent/slug"
+                ],
+                "command": "majordomus deploy slug --executable majordomus --out /nonexistent/slug",
+                "setup": [],
+                "expectation": "exits 15"
+              }
+            ],
+            "subcommands": []
+          }
+        ]
+      },
+      {
+        "path": [
+          "majordomus",
           "rules"
         ],
         "route": "/docs/cli/rules/",
@@ -27453,6 +28036,429 @@
                 "command": "majordomus delivery show fixture-feature",
                 "setup": [],
                 "expectation": "exits 0; prints fixture-feature, on_master, NOT DELIVERED"
+              }
+            ],
+            "subcommands": []
+          }
+        ]
+      },
+      {
+        "path": [
+          "majordomus",
+          "plan"
+        ],
+        "route": "/docs/cli/plan/",
+        "executable": false,
+        "usage": "majordomus plan [OPTIONS] <COMMAND>",
+        "about": "How far each issue's work has travelled: none, branch, pr_open, merged, released or deployed, each with the object that proved it; the plan's records are read and moved by the shell tool's `plan`",
+        "args": [
+          {
+            "name": "repo",
+            "long": "repo",
+            "positional": false,
+            "help": "Start the search for the repository root here (default: the current directory)",
+            "value_name": "PATH",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "discovery",
+            "long": "discovery",
+            "positional": false,
+            "help": "How declarative files are enumerated",
+            "value_name": "DISCOVERY",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "vcs",
+                "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+              },
+              {
+                "name": "filesystem",
+                "help": "A walk of the work tree with the same glob semantics; untracked files included"
+              }
+            ],
+            "defaults": [
+              "vcs"
+            ]
+          },
+          {
+            "name": "strict",
+            "long": "strict",
+            "positional": false,
+            "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+            "value_name": "STRICT",
+            "takes_value": false,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": [
+              "false"
+            ]
+          },
+          {
+            "name": "share",
+            "long": "share",
+            "positional": false,
+            "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+            "value_name": "DIR",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "format",
+            "long": "format",
+            "positional": false,
+            "help": "Output shape",
+            "value_name": "FORMAT",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "text",
+                "help": "Lines for a person"
+              },
+              {
+                "name": "json",
+                "help": "One JSON document, deterministic"
+              }
+            ],
+            "defaults": [
+              "text"
+            ]
+          }
+        ],
+        "examples": [],
+        "subcommands": [
+          {
+            "path": [
+              "majordomus",
+              "plan",
+              "delivery"
+            ],
+            "route": "/docs/cli/plan/delivery/",
+            "executable": true,
+            "usage": "majordomus plan delivery [OPTIONS] [ISSUE]",
+            "about": "Every issue's furthest delivery stage, with the object that proved it and its declared status beside it",
+            "args": [
+              {
+                "name": "issue",
+                "positional": true,
+                "help": "One issue; default every issue of the plan",
+                "value_name": "ISSUE",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "at",
+                "long": "at",
+                "positional": false,
+                "help": "Observe as of this commit: its history and the tree's release records, nothing live (no branch, forge, deployment or clock)",
+                "value_name": "REV",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "plan-delivery-json",
+                "title": "How far every issue's work has travelled",
+                "description": "The same answer `GET /api/v1/plan/delivery` and the MCP tool `majordomus_plan_delivery` return: every issue with its declared status and the furthest stage proved — none, branch, pr_open, merged, released, deployed — each stage with the branch, pull request, merge commit, tag or `latest.json` that proved it. A checkout that never observed the forge says the forge is unread, and an issue it could have moved further is not settled.",
+                "argv": [
+                  "plan",
+                  "delivery",
+                  "--format",
+                  "json"
+                ],
+                "command": "majordomus plan delivery --format json",
+                "setup": [],
+                "expectation": "exits 0; prints one JSON document carrying /observed/commit, /tallies/none, /issues/0/stage, /sources"
+              },
+              {
+                "id": "plan-delivery-at",
+                "title": "One issue, as of a commit",
+                "description": "`--at` reads the merges in that commit's history and the tree's release records, and nothing live — no branch, no forge, no deployment, no clock — so it proves only merged and released and the answer is a function of the commit alone. That is what `scripts/generate-site-data` writes to `site/data/generated/delivery.json` and reproduces under `--check`.",
+                "argv": [
+                  "plan",
+                  "delivery",
+                  "I0001",
+                  "--at",
+                  "HEAD"
+                ],
+                "command": "majordomus plan delivery I0001 --at HEAD",
+                "setup": [],
+                "expectation": "exits 0; prints I0001, none, unread"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "plan",
+              "drift"
+            ],
+            "route": "/docs/cli/plan/drift/",
+            "executable": true,
+            "usage": "majordomus plan drift [OPTIONS] [ISSUE]",
+            "about": "Every contradiction between an issue's declared status and its delivery — merged_not_recorded, active_without_work, done_without_trace — each with its proof; with --gate, judged against the window .ai/repo/ci/plan.yaml declares",
+            "args": [
+              {
+                "name": "issue",
+                "positional": true,
+                "help": "One issue; default every issue of the plan",
+                "value_name": "ISSUE",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "at",
+                "long": "at",
+                "positional": false,
+                "help": "Observe as of this commit, as `plan delivery --at` does",
+                "value_name": "REV",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "gate",
+                "long": "gate",
+                "positional": false,
+                "help": "Judge as a gate: on a `head` merged work is pending, on the `trunk` past the window it is refused (exit 10 under blocking enforcement); a missing window exits 12",
+                "value_name": "TREE",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [
+                  {
+                    "name": "head",
+                    "help": "A head: merged work the plan has not recorded is pending"
+                  },
+                  {
+                    "name": "trunk",
+                    "help": "The trunk: merged work unrecorded past the window is refused"
+                  }
+                ],
+                "defaults": []
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "plan-drift-json",
+                "title": "Where the plan's stamps contradict the delivered work",
+                "description": "The same answer `GET /api/v1/plan/drift` and the MCP tool `majordomus_plan_drift` return: every merged_not_recorded, active_without_work and done_without_trace finding with the pull request, merge commit and release that prove it, its age against the window `.ai/repo/ci/plan.yaml` declares, and the command that settles it.",
+                "argv": [
+                  "plan",
+                  "drift",
+                  "--format",
+                  "json"
+                ],
+                "command": "majordomus plan drift --format json",
+                "setup": [],
+                "expectation": "exits 0; prints one JSON document carrying /observed/commit, /window/model, /tallies/merged_not_recorded, /verdict"
+              },
+              {
+                "id": "plan-drift-at",
+                "title": "As of a commit",
+                "description": "`--at` reads that commit's history and the tree's records only, as `plan delivery --at` does, so the open pull requests are unread and a finding says it is not settled. `--gate head|trunk` judges the answer as `scripts/ci/plan-drift-check` does: on a head merged work the plan has not recorded is pending; on the trunk one merged longer than the window ago is refused, naming `majordomus plan verify|done <id>`, and a missing window refuses with exit 12.",
+                "argv": [
+                  "plan",
+                  "drift",
+                  "--at",
+                  "HEAD"
+                ],
+                "command": "majordomus plan drift --at HEAD",
+                "setup": [],
+                "expectation": "exits 0; prints plan drift, window"
               }
             ],
             "subcommands": []

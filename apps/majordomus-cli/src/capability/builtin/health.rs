@@ -613,7 +613,7 @@ fn health(ctx: &Context, _: Empty) -> Result<Health, CapabilityError> {
     //
     // Not a second opinion and not a second reading: `server::standing_at` is what answers
     // `GET /api/v1/server`, and this reports what it says. It costs one small file and,
-    // when the lease names an address, one probe bounded by `lease::PROBE_TIMEOUT`; the
+    // when the lease names an address, one probe bounded by the declared probe timeout; the
     // five-second cache on `health.report` is as fresh as a file other processes write can
     // usefully be, and `server.status` is the uncached answer for a caller that needs one.
     let checkout = root.canonicalize().unwrap_or_else(|_| root.to_path_buf());
@@ -1156,17 +1156,29 @@ mod tests {
         let copy = dir.path().join("health-tests");
         std::fs::copy(std::env::current_exe().expect("this test binary"), &copy)
             .expect("a copy of this test binary");
-        let out = std::process::Command::new(&copy)
-            .args([
-                "--exact",
-                "capability::builtin::health::tests::readiness_refuses_a_process_whose_executable_was_removed_under_it",
-                "--nocapture",
-                "--test-threads",
-                "1",
-            ])
-            .env(STALE_CHILD, "1")
-            .output()
-            .expect("the copy runs");
+        // another test thread forking while the copy was open for writing leaves the copy's
+        // write descriptor in that child until it execs, and Linux refuses to execute a file
+        // open for writing (ETXTBSY): the race is the harness's, so it is waited out
+        let mut attempts = 0;
+        let out = loop {
+            let run = std::process::Command::new(&copy)
+                .args([
+                    "--exact",
+                    "capability::builtin::health::tests::readiness_refuses_a_process_whose_executable_was_removed_under_it",
+                    "--nocapture",
+                    "--test-threads",
+                    "1",
+                ])
+                .env(STALE_CHILD, "1")
+                .output();
+            match run {
+                Err(e) if e.kind() == std::io::ErrorKind::ExecutableFileBusy && attempts < 50 => {
+                    attempts += 1;
+                    std::thread::sleep(std::time::Duration::from_millis(100));
+                }
+                other => break other.expect("the copy runs"),
+            }
+        };
         let stdout = String::from_utf8_lossy(&out.stdout);
         assert!(
             out.status.success() && stdout.contains("1 passed"),

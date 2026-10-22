@@ -1,0 +1,26 @@
+id: I3071
+milestone: a-version-follows-the-work
+title: "/ui/delivery shows how much landed work waits for a release, and since when"
+slug: the-delivery-screen-shows-the-release-debt
+priority: p2
+profile: implementation
+parallel_safe: false
+serves:
+  - a-version-follows-every-session#shown
+objective: "Read release.currency on /ui/delivery as one more source. Show a KPI with the stance (current, owed, overdue), the count of landed commits past the last release, the oldest one's age and the required version. The answer links to the capability's route, like every other value on the screen. The published UI snapshot shows it only as read at the snapshot's revision and says so."
+why: "The delivery screen is where a person checks whether work reached the public. Release debt is the step between merged and published that it does not show."
+current_state: "/ui/delivery shows integration and deployment facts and no release debt."
+desired_state: "/ui/delivery says whether the trunk has been released, from the same answer the brief and doctor read."
+scope:
+  - "apps/majordomus-cli/src/ui/delivery.rs"
+  - "docs/MAJORDOMUS_UI.md"
+depends_on:
+  - "I3070"
+acceptance_criteria:
+  - "/ui/delivery shows release.currency's stance, count, age and required version, and its value leads to the capability's route"
+validation:
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "case_delivery_shows_release_currency"
+created_at: 2026-10-19
+updated_at: 2026-10-19

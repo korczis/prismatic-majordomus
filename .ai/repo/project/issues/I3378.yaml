@@ -1,0 +1,46 @@
+id: I3378
+milestone: every-task-states-its-delivery-economics
+title: "A permission request the provider reports leaves a receipt with its own elapsed time, and economics.tasks counts it as an approval"
+slug: a-permission-request-leaves-a-receipt
+priority: p2
+profile: implementation
+objective: "Wire the claude-code lifecycle adapter to the provider's permission hook: each request is recorded as provider.event.received with provider_event permission, the tool name, how it was decided where the payload says, and the hook's own elapsed milliseconds, never the tool's input. Write the mapping only from a payload captured from a named, dated client version committed as a fixture. Count approvals per task in economics.tasks; a provider with no captured payload reads not_observed."
+why: "T3 of the owner's report of 2026-10-19 names an approval as an intervention, and nothing records one. A backend written from documentation is unverified, so the payload is captured first. The critique noted a new hook adds a shell hop to every request and changes what the treatment installs; the receipt measures its own time, and I3375's pinned release keeps it out of a registered treatment until a registration names a release that carries it."
+current_state: "lib/capture.sh:286 wires SessionStart, SessionEnd and PreCompact; :1508-1512 dispatches them and :1506 writes the receipt first; share/events.yaml:160-166 declares provider.event.received; .claude/settings.json:25-36 holds no permission hook; test/fixtures/commands/stdin/claude-code-prompt.json is the only captured claude-code payload there."
+desired_state: "A permission request leaves one receipt; the footprint and automation inventory name the hook; economics.tasks counts approvals."
+scope:
+  - "lib/capture.sh"
+  - ".claude/settings.json"
+  - ".claude/hooks"
+  - "test/fixtures/commands/stdin"
+  - ".ai/repo/automation/inventory.jsonl"
+  - "test/cases/54_session_lifecycle_hooks.sh"
+  - "test/cases/3113_the_adoption_footprint_is_inventoried.sh"
+  - "docs/claims/session-lifecycle.md"
+  - "apps/majordomus-cli/src/economics"
+  - "apps/majordomus-cli/tests/economics.rs"
+non_scope:
+  - "Recording a tool's input or prompt text"
+  - "Deciding a permission request; the hook only records and returns success"
+  - "Codex and Gemini CLI until a payload of theirs is captured"
+depends_on:
+  - "I3376"
+serves:
+  - "the-product-proves-it-pays#interventions-are-typed-and-sourced"
+acceptance_criteria:
+  - "The fixture names its client, version and capture date, and only its fields are mapped"
+  - "Replaying it appends one receipt with provider_event permission, elapsed milliseconds and no tool input"
+  - "The hook exits 0 whatever happens, and a failed receipt leaves provider.event.failed"
+  - "The shim is in the automation inventory and majordomus shell check passes"
+  - "Case 3113 names the hook"
+  - "economics.tasks counts approvals per task from the receipts in its episodes"
+validation:
+  - "bash test/run.sh 54_session_lifecycle_hooks"
+  - "bash test/run.sh 3113_the_adoption_footprint_is_inventoried"
+  - "majordomus shell check"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test economics"
+evidence_required:
+  - "case_permission_request_leaves_a_receipt"
+  - "test_task_approvals_are_counted"
+created_at: 2026-10-19
+updated_at: 2026-10-19

@@ -187,6 +187,10 @@ if [ "$NOCSS" = 0 ]; then
   cp "$ROOT/node_modules/mermaid/dist/mermaid.min.js" "$SITE/static/js/mermaid.min.js"
   # loaded on demand by graph.js, never by the base layout: it is the largest asset on the site
   cp "$ROOT/node_modules/cytoscape/dist/cytoscape.min.js" "$SITE/static/js/cytoscape.min.js"
+  # Apache ECharts, for the charts drawn from the site's own tables (site/charts.js, ADR 0152):
+  # the `common` build, which holds the bar and line series the component draws and is two
+  # thirds the size of the full one. Fetched by charts.js when a chart nears the viewport.
+  cp "$ROOT/node_modules/echarts/dist/echarts.common.min.js" "$SITE/static/js/echarts.min.js"
 fi
 # the OpenAPI document the executable generated, served raw at /openapi.json: byte for byte the
 # committed file, so what the site offers is what `majordomus generate --check` verified
@@ -202,6 +206,9 @@ cp "$ROOT/docs/generated/openapi.json" "$SITE/static/openapi.json"
 # lets scripts/site-check refuse a stale artifact, and lets a probe of the public site prove
 # from outside that a composed surface is this commit's, from the one identity file it serves.
 commit="$(git -C "$ROOT" rev-parse HEAD 2>/dev/null || echo unknown)"
+# and that commit's own time, a fact of the commit and never of the clock that built it: what a
+# page names when it says when its data was observed (/roadmap/). Empty when there is no commit.
+commit_time="$(git -C "$ROOT" show -s --format=%cI HEAD 2>/dev/null || true)"
 dirty=false; [ -z "$(git -C "$ROOT" status --porcelain --untracked-files=no 2>/dev/null)" ] || dirty=true
 SURFACES="$(mktemp "${TMPDIR:-/tmp}/mj-site-surfaces.XXXXXX")"
 SNAPSHOTS="$(mktemp "${TMPDIR:-/tmp}/mj-site-snapshots.XXXXXX")"
@@ -234,10 +241,10 @@ while IFS="$MJ_TAB" read -r c_id c_mount c_artifact c_producer; do
 done <<EOF
 $COMPOSED
 EOF
-jq -n --arg commit "$commit" --argjson dirty "$dirty" \
+jq -n --arg commit "$commit" --arg commit_time "$commit_time" --argjson dirty "$dirty" \
   --slurpfile src "$SITE/data/generated/source.json" --slurpfile reg "$SITE/data/registry/registry.json" \
   --slurpfile surfaces "$SURFACES" --slurpfile snapshots "$SNAPSHOTS" --slurpfile release "$RELDIR/release.json" \
-  '{schema: 1, commit: $commit, dirty: $dirty,
+  '{schema: 1, commit: $commit, commit_time: (if $commit_time == "" then null else $commit_time end), dirty: $dirty,
     source_version: $src[0].source_version, source_hash: $src[0].source_hash, site_generator_version: $src[0].generator_version,
     registry_fingerprint: $reg[0].registry.fingerprint, index_fingerprint: $reg[0].index.fingerprint,
     registry_generator: ($reg[0].generator.id + " " + $reg[0].generator.version), registry_dataset: $reg[0].schema,
@@ -246,6 +253,7 @@ jq -n --arg commit "$commit" --argjson dirty "$dirty" \
 cp "$SITE/data/build.json" "$SITE/static/build.json"
 cp "$SITE/theme.js" "$SITE/static/js/theme.js"
 cp "$SITE/diagrams.js" "$SITE/static/js/diagrams.js"
+cp "$SITE/charts.js" "$SITE/static/js/charts.js"
 cp "$SITE/graph.js" "$SITE/static/js/graph.js"
 # a published copy of the composed product graph, fetched by graph.js where a page links to the
 # list instead of carrying the graph inline (the homepage); byte for byte the committed dataset
@@ -373,6 +381,30 @@ for (const page of pages) {
 }
 console.log(`  ${elements} scrolling element(s) put in the tab order (${scrollingTagNames.join(", ")}), ${named} task checkbox(es) named, ${aligned} table cell(s) aligned by class instead of inline style, over ${touched} page(s)`);
 '
+fi
+# Every diagram of the built site is named, described and linked (ADR 0152): an id its
+# address lands on, the nodes its source declares, and beside it a link for every node that is
+# the identity of an object this build wrote a page for. Nothing is typed: the identities and
+# routes are site/data/generated's, and a link is ordinary markup that scripts/ci/link-check
+# decides with the rest. Before the composition below, because another producer's pages are
+# not this site's to edit; needs no node_modules, so it runs under --no-css as well.
+if [ -d "$PUBLIC" ]; then
+  echo "== diagrams"
+  DIAGRAM_BASE="$BASE"
+  [ -n "$DIAGRAM_BASE" ] || DIAGRAM_BASE="$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$SITE/config.toml")"
+  node "$ROOT/scripts/lib/diagrams.mjs" "$PUBLIC" "$SITE/data/generated" "$DIAGRAM_BASE"
+fi
+# Every language the site declares, derived from the English pages just written (ADR 0218):
+# site/i18n/languages.json names them, site/i18n/<lang>/memory holds what is translated, and
+# each page is copied under /<lang>/ with every segment the memory knows replaced and its links
+# pointed at that language. Before the composition below, which adds pages that are not the
+# site's to translate. What the memory does not know is listed for scripts/site-translate.
+if [ -d "$PUBLIC" ] && [ -f "$SITE/i18n/languages.json" ]; then
+  echo "== languages"
+  I18N_BASE="$BASE"
+  [ -n "$I18N_BASE" ] || I18N_BASE="$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$SITE/config.toml")"
+  node "$ROOT/scripts/lib/site-i18n.mjs" build "$PUBLIC" "$SITE/i18n" "$I18N_BASE" \
+    "$ROOT/target/site-i18n/missing.json" || exit 10
 fi
 # the site's own routes, counted before another surface's pages join them
 routes="$(find "$PUBLIC" -name 'index.html' | wc -l | tr -d ' ')"

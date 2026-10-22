@@ -1,7 +1,7 @@
 +++
 title = "Owner-authorized SSH access persists across clients"
 description = "Owner-authorized SSH access persists across clients"
-weight = 157
+weight = 164
 [extra]
 kind = "rule"
 slug = "project-ssh-key-access-is-preauthorized-1"

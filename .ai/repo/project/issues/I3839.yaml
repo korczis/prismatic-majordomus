@@ -1,0 +1,30 @@
+id: I3839
+milestone: ci-critical-path
+title: "A build that cannot take its build directory's lock never falls back to a cold private directory below the free-disk bound: it waits, bounded, or refuses naming the bound and the holder"
+slug: a-locked-build-never-goes-private-below-the-disk-bound
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make lib/rust_bin.sh's mj_cargo_bounded, when the shared build directory's lock is held past its wait, consult the free-disk bound before it moves the build to mj_cargo_private_dir: above the bound it may go private as today; at or below it, it keeps waiting within a stated bound and then refuses with the free space, the bound and the lock's holder, never starting a cold private build."
+why: "Measured by f8 at 06:3xZ on 2026-10-21: `scripts/rust-check --quality` timed out on the shared build directory's lock, held by two other cargo runs, silently fell back to a cold build in ~/.cargo/build-private/<cksum>, and grew it to 5.3 GB while the volume held 32-35 GiB free, under the owner's 35 GiB floor of 2026-10-21. The same fallback built a cold private directory under a commit hook of dev-03's the same night. With several builds waiting, every one of them goes private at once, which multiplies the disk use exactly when the disk is lowest."
+current_state: "mj_cargo_bounded waits on cargo's \"Blocking waiting for file lock\" and then rebuilds in mj_cargo_private_dir (a cold one compiles every dependency once) whatever the free space; the floor (MAJORDOMUS_MIN_FREE_MB, default 5120) is checked only before the first build starts."
+desired_state: "No build goes private below the bound; a refused one says why and what holds the lock, and the bound is the one the floor and the owner's relaxation name."
+scope:
+  - "lib/rust_bin.sh"
+  - "bin/majordomus-cli"
+  - "docs/DEVELOPMENT_RUNTIME.md"
+non_scope:
+  - "The number of concurrent builders (I3825)"
+  - "A hook's build (I3831)"
+depends_on: []
+acceptance_criteria:
+  - "With the shared lock held by a fixture process and free space reported below the bound, a build never creates a private build directory and ends with a refusal naming the free space, the bound and the holder's pid"
+  - "With free space above the bound the fallback to a private directory works as before"
+  - "The refusal is reached within the stated wait bound, never an unbounded wait"
+validation:
+  - "bash test/run.sh 3849_a_locked_build_never_goes_private_below_the_disk_bound"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "a_locked_build_never_goes_private_below_the_disk_bound_test"
+created_at: 2026-10-21
+updated_at: 2026-10-21

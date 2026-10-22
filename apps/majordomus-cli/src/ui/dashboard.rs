@@ -17,8 +17,9 @@ use crate::cockpit::view::word_badge;
 use super::shell::View;
 use super::source::{ask, ask_all, Answer, Availability, Source};
 use super::view::{
-    counts, day, donut, hero, kpi, kpi_count, kpi_state, kpi_to, list, meter, more, nothing,
-    panel_to, shown, state, strip, table, text, timeline, unanswered, value, wide,
+    counts, day, donut, hero, kpi, kpi_count, kpi_not_observed, kpi_state, kpi_to, list, meter,
+    more, not_observed, nothing, panel_to, shown, state, strip, table, text, timeline, unanswered,
+    value, wide,
 };
 
 /// The route of the pull-request queue panel.
@@ -131,12 +132,23 @@ pub fn plan_panel(roadmap: &Answer, plan: &Answer) -> El {
             .take(ROWS)
             .map(milestone_row)
             .collect::<Vec<_>>();
+        // `plan.roadmap` names the first open milestones in the plan's order, which is not
+        // where the work is: that is `plan.flight`, read live on the Roadmap screen, too slow
+        // for this first paint (ADR 0166, decision 4)
         el("div")
-            .child(el("p").class("mj-ui-line").text(format!(
-                "Now {} · next {}",
-                shown(&roadmap.read("/now")),
-                shown(&roadmap.read("/next"))
-            )))
+            .child(
+                el("p")
+                    .class("mj-ui-line")
+                    .text(format!(
+                        "First open in the plan's order {} · then {} · ",
+                        shown(&roadmap.read("/now")),
+                        shown(&roadmap.read("/next"))
+                    ))
+                    .child(super::view::link(
+                        super::roadmap::ROUTE,
+                        "where the work is in flight",
+                    )),
+            )
             .child(table(
                 &["Milestone", "State", "Issues done"],
                 rows,
@@ -273,33 +285,35 @@ pub fn releases_panel(releases: &Answer, version: &Answer, limit: Option<usize>)
 /// active in this process, that — never a count. A process without a mesh runtime knows no
 /// machine because it asked nobody, and `0` there would read as a repository nobody works on.
 fn mesh_kpi(mesh: &Answer) -> El {
-    match mesh.read("/active").state {
-        Availability::Available(Value::Bool(false)) => kpi("Mesh active", &mesh.read("/active")),
-        _ => kpi_count("Mesh machines", &mesh.read("/machines")),
+    match super::mesh::unobserved(mesh) {
+        Some(why) => kpi_not_observed("Mesh", &why, &mesh.read("/active")),
+        None => kpi_count("Mesh machines", &mesh.read("/machines")),
     }
 }
 
 /// The machines this runtime knows, with the liveness of each runtime.
 pub fn mesh_panel(mesh: &Answer) -> El {
-    let body = unanswered(mesh).unwrap_or_else(|| {
-        let machines = list(mesh, "/machines");
-        let rows = machines
-            .iter()
-            .take(ROWS)
-            .map(machine_row)
-            .collect::<Vec<_>>();
-        el("div")
-            .child(table(
-                &["Machine", "Where", "Runtimes"],
-                rows,
-                "No machine is known to the mesh runtime.",
-            ))
-            .children(more(
-                ROWS.min(machines.len()),
-                machines.len(),
-                Some(super::mesh::ROUTE),
-            ))
-    });
+    let body = unanswered(mesh)
+        .or_else(|| super::mesh::unobserved(mesh).map(|why| not_observed("The mesh", &why)))
+        .unwrap_or_else(|| {
+            let machines = list(mesh, "/machines");
+            let rows = machines
+                .iter()
+                .take(ROWS)
+                .map(machine_row)
+                .collect::<Vec<_>>();
+            el("div")
+                .child(table(
+                    &["Machine", "Where", "Runtimes"],
+                    rows,
+                    "No machine is known to the mesh runtime.",
+                ))
+                .children(more(
+                    ROWS.min(machines.len()),
+                    machines.len(),
+                    Some(super::mesh::ROUTE),
+                ))
+        });
     panel_to(
         "Mesh",
         "The machines this runtime knows, and how alive each runtime is.",
@@ -733,12 +747,16 @@ mod tests {
             .all(|id| crate::capability::builtin::health::PROCESS_DIMENSIONS.contains(id));
         assert_eq!(word != "unknown", only_the_process, "{undecided:?}");
         assert!(!html.contains("read from health.report /status"));
-        assert!(html.contains("Mesh active"), "no runtime here is said so");
+        assert!(html.contains("not observed"), "no runtime here is said so");
         assert!(!html.contains("Mesh machines"), "and never counted as zero");
+        assert!(
+            !html.contains("Mesh active"),
+            "nor drawn as a measured `no`"
+        );
 
         // where a runtime is active the figure is the count of the machines it knows
         let mut active = ask(&ctx, MESH);
-        active.value = Ok(serde_json::json!({ "active": true, "machines": [{}, {}] }));
+        active.value = Ok(serde_json::json!({ "active": true, "machines": [{}, {}] }).into());
         let figure = mesh_kpi(&active).render();
         assert!(figure.contains("Mesh machines"), "{figure}");
         assert!(figure.contains(">2<"), "{figure}");
@@ -759,7 +777,7 @@ mod tests {
                     "gates": [{ "gate": "base", "passed": true }, { "gate": "ci", "passed": false }],
                     "reasons": ["behind_master:2"], "next_action": "bring master in"
                 }]}
-            })),
+            }).into()),
             took: std::time::Duration::ZERO,
             standing: crate::ui::source::Standing::NOW,
         };
@@ -800,7 +818,7 @@ mod tests {
         assert!(health_panel(&failed).render().contains("could not answer"));
         let unobserved = Answer {
             source: QUEUE,
-            value: Ok(serde_json::json!({ "observed": false, "reason": "never refreshed" })),
+            value: Ok(serde_json::json!({ "observed": false, "reason": "never refreshed" }).into()),
             ..failed.clone()
         };
         assert!(queue_panel(&unobserved, None)
@@ -814,7 +832,7 @@ mod tests {
             source,
             route: None,
             exposure: Exposure::default(),
-            value: Ok(value),
+            value: Ok(value.into()),
             took: std::time::Duration::ZERO,
             standing: crate::ui::source::Standing::NOW,
         }

@@ -1,7 +1,7 @@
 +++
 title = "A personal layer changes nothing shared"
 description = "A personal layer changes nothing shared"
-weight = 68
+weight = 71
 [extra]
 kind = "rule"
 slug = "project-a-personal-layer-changes-nothing-shared-1"

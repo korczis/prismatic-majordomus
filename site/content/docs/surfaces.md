@@ -542,10 +542,11 @@ the weakest of its parts [C23].
   shows this; it has not been observed in data (**debt** F-9) [C26].
 
 `project.never-reported-is-not-green` shows the whole problem in one rule. Its statement
-is "a check that has not reported is unknown, never passing". It is `class: advisory`, has
-no `x-majordomus` block, and says it is decided "by review and by the record, not by a
-gate". The proof graph reports it as `unproven`, and that is not a finding, because an
-advisory rule owes no proof. The rule exists, its ideas shaped `evidence-check` (see
+is "a check that has not reported is unknown, never passing". It is `class: advisory`, and
+its `x-majordomus` block declares, under `reviewed_because`, that it is decided "by review
+and by the record, not by a gate". The proof graph reports it as `reviewed`: a reader
+enforces it, which is weaker than any gate and is counted apart, and that is not a finding.
+The rule exists, its ideas shaped `evidence-check` (see
 `EVIDENCE.md`), and it is not mechanically enforced. The graph says exactly that.
 
 To measure it yourself:

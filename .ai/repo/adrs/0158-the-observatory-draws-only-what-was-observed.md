@@ -19,6 +19,8 @@ related:
   - file:docs/MAJORDOMUS_UI.md
   - file:apps/majordomus-cli/src/ui/observatory.rs
   - file:share/ui/observatory.js
+  - file:apps/majordomus-cli/src/http/events.rs
+  - file:.ai/repo/adrs/0126-a-caller-beyond-loopback-reads-and-changes-nothing-it-cannot-authenticate.md
 provenance:
   origin: authored
 ---
@@ -53,7 +55,9 @@ implementations of it would disagree within a week.
    under `apps/majordomus-cli/src/ui/`, an entry of `SCREENS`, sources asked through
    `source::ask_all`. It adds no capability, no transport, no store and no service. A fact
    it wants that no capability answers is a capability to add, by the canonical
-   declaration, and until then a scene that says it is unavailable.
+   declaration, and until then a scene that says it is unavailable. What it is told rather
+   than asks arrives on the one live channel the server already has (point 11, amended
+   2026-10-14); that is a use of an existing transport, not a second one.
 
 2. **One address, one preset, two redirects.** `/ui/observatory` is the screen.
    `/ui/kiosk` is the same screen, the same projection and the same script with the
@@ -88,15 +92,68 @@ implementations of it would disagree within a week.
 
 7. **The status word is true.** The page says `LIVE` only when it was read again within a
    stated bound, `STALE` when it was not, and `SNAPSHOT` on the public site, where it reads
-   nothing again and says at which revision it was taken. A recorded replay, when one
-   exists, is labelled as a replay with its original times; until one exists the public
-   site shows the scenes its own process could read and names the others as unavailable.
+   nothing again and says at which revision it was taken. A scene of the mesh, in a process
+   that runs none, draws the recording the repository carries and says `REPLAY` with the
+   time it was recorded; nothing else stands in for it, and a scene the recording does not
+   carry is unavailable.
+
+10. **A recording names nothing by its identity** (amended 2026-10-14, I2678). The recording is
+   what `observatory.capture` answers on a server that runs the mesh, committed at
+   `.ai/repo/observatory/recording.json` and read by `observatory.replay`. Machines are
+   numbered in the order the mesh listed them, runtimes and sessions are ordinals, and an
+   event keeps its kind, its logical clock and its time; no node id, runtime id, session key,
+   intent or path is carried. The owner asked for the mesh on the public site and for real
+   data only; this is the form of real data that a public page may hold.
 
 8. **It reads and never executes** (ADR 0142). A reader may choose a scene; nothing on the
    screen starts work, writes a record or changes the mesh.
 
 9. **Every scene leads to its rows.** A scene names the screen where the same facts are a
    table, so that a mark a reader doubts can be checked against the record it stands for.
+
+11. **What is pushed arrives on `/events`, the one live channel** (amended 2026-10-14). The
+   display may be told rather than ask, and when it is, the telling travels on the WebSocket
+   the server already serves at `/events` (`apps/majordomus-cli/src/http/events.rs`), not
+   on a socket, a stream protocol or a store of its own. One channel carries several
+   topics under one contract: executions are already on it, and the mesh journal and the
+   peer board join them on these terms. A further topic is a further source under the same
+   terms, never a second channel.
+   - *The same projection, pushed.* A topic's frame carries what the capability that answers
+     the same question over HTTP already answers, and nothing more, in the envelope every
+     frame of the channel has, a `type` and a `data`. For the journal that is the mark
+     `observatory.events` answers, within point 6. For the board it is what `peers.list`
+     answers, shown only where the screen that already shows the board is decided to show
+     it; the public snapshot carries no board. A client that does not know a type ignores
+     the frame, as the channel already requires, so no version changes.
+   - *A source is subscribed to, not copied.* The journal tells its subscribers what it
+     appended, its own events and replicated ones alike, and the board tells its subscribers
+     what was announced, attached or detached, the way the execution store tells the
+     channel. The channel stays an adapter that renders and holds no journal or board logic.
+   - *No gap between the picture and the stream.* The subscription is the request target,
+     naming its topics and, for the journal, carrying the logical clock the client last
+     drew, as an execution's carries its sequence. The board has no history to replay: its
+     subscription opens with the whole board as it stands, then each change. The server subscribes first, replays every retained event after that clock,
+     then goes live, so an event appended while the page was being read is written once and
+     is never lost between the read and the subscription. A clock the journal no longer
+     holds is answered as `observatory.events` answers it, expired, and the client reads its
+     page again before it draws another event. A client that falls behind receives
+     `stream.lagged` and does the same. Nothing is skipped in silence.
+   - *The status word follows the channel.* `LIVE` while the channel is open and its
+     heartbeat arrives within the stated bound; `RECONNECTING` while the page reopens it from
+     its clock; `STALE` when it cannot. While the word is not `LIVE`, no semantic mark moves:
+     a pulse, a packet or a trail drawn while the channel was down would stand for something
+     nobody observed. The public site, which has no server, keeps `SNAPSHOT` and `REPLAY`.
+   - *Still read-only.* The server never reads a frame on the channel. What a client follows
+     is its request target, so the channel has no message that could start work or change
+     the mesh (point 8). Its existing bounds hold for the display as for every client: its
+     own origin only, a bounded number of channels, and a caller beyond loopback held as
+     ADR 0126 holds every other.
+   - *Polling is the fallback, not the design.* When the channel is refused or absent, the
+     page follows the journal from its cursor through `observatory.events`, as it did before
+     this amendment, and its status says it is reading rather than being told.
+
+   This point decides the transport and its contract. The code that subscribes the journal
+   and the case that holds the contract come with the change that builds them.
 
 ## What is delivered with this decision, and what is not
 
@@ -107,12 +164,14 @@ on a server and on the published snapshot.
 
 Not delivered, and recorded as issues rather than drawn as if they were:
 
-- a replay of genuinely recorded mesh events on the public site (I2678); until then the
-  three scenes that need a mesh are unavailable there, because a CI runner runs none;
-- a pushed stream with a cursor in place of polling the page (I2679);
-- the evidence the owner's specification asks for at its gates: screenshots at 1080p and
-  4K, frame rates measured on named hardware, a soak of the kiosk, the disconnect and
-  recovery drills (I2680).
+- a recording captured on a schedule: the replay on the public site is the last capture
+  someone committed (I2678 delivered the replay itself);
+- a pushed stream: decided in point 11 and not yet built. Since I2679 the display follows
+  the journal from a cursor through `observatory.events` between readings of its page, and
+  until the change that builds point 11 lands, nothing is pushed to it;
+- a physical wall display: every frame rate and screenshot is headless Chromium's on the
+  machine its evidence names. The gates' verdicts and their evidence are in
+  `.ai/repo/benchmarks/observatory/manifest.json` (I2680);
 
 ## Alternatives rejected
 
@@ -127,6 +186,11 @@ has no reason to believe the others.
 **A new event store or stream protocol for the display.** The mesh already keeps an
 ordered journal with cursors and the UI already has one way to ask a source. A display is
 not a reason to own a second copy of either.
+
+**A socket of the Observatory's own** (rejected 2026-10-14, with point 11). It would repeat
+what `/events` already does, origin check, connection bound, heartbeat, replay from a
+cursor and `stream.lagged`, and the two would drift on exactly the properties a reader of a
+live display depends on.
 
 **Hiding unavailable scenes.** A scene that silently disappears reads as a product that
 has fewer scenes. Naming it with its reason tells the reader what the repository would

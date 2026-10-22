@@ -1,27 +1,27 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`
-# Generator: majordomus-cli 0.24.1
+# Generator: majordomus-cli 1.0.0-alpha.6
 schema: majordomus/benchmark-matrix/v1
 generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`"
-generator: majordomus-cli 0.24.1
+generator: majordomus-cli 1.0.0-alpha.6
 coverage:
   - scope: direct
-    required: 196
-    covered: 166
+    required: 208
+    covered: 175
     missing: 0
-    waived: 30
+    waived: 33
     inapplicable: 0
   - scope: http
-    required: 191
-    covered: 166
+    required: 202
+    covered: 175
     missing: 0
-    waived: 25
+    waived: 27
     inapplicable: 0
   - scope: mcp
-    required: 187
-    covered: 162
+    required: 197
+    covered: 171
     missing: 0
-    waived: 25
+    waived: 26
     inapplicable: 0
   - scope: system
     required: 14
@@ -30,10 +30,10 @@ coverage:
     waived: 0
     inapplicable: 0
   - scope: total
-    required: 588
-    covered: 508
+    required: 621
+    covered: 535
     missing: 0
-    waived: 80
+    waived: 86
     inapplicable: 0
 capabilities:
   - id: artifacts.list
@@ -290,6 +290,14 @@ capabilities:
     http: covered
     cases:
       - default
+  - id: deploy.slug
+    module: deploy
+    kind: command
+    cache: "—"
+    direct: waived
+    mcp: none
+    http: none
+    cases: []
   - id: design.contrast
     module: design
     kind: query
@@ -650,6 +658,14 @@ capabilities:
     http: covered
     cases:
       - default
+  - id: executions.report
+    module: executions
+    kind: command
+    cache: "—"
+    direct: waived
+    mcp: none
+    http: waived
+    cases: []
   - id: executions.start
     module: executions
     kind: command
@@ -705,6 +721,16 @@ capabilities:
     http: covered
     cases:
       - default
+  - id: guard.edit
+    module: guard
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - in-repository
+      - outside
   - id: health.live
     module: health
     kind: query
@@ -1249,6 +1275,34 @@ capabilities:
     http: covered
     cases:
       - default
+  - id: observatory.capture
+    module: observatory
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: observatory.events
+    module: observatory
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - newest
+      - after a cursor
+  - id: observatory.replay
+    module: observatory
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
   - id: pack.plan
     module: pack
     kind: query
@@ -1295,6 +1349,36 @@ capabilities:
     http: covered
     cases:
       - default
+  - id: plan.delivery
+    module: plan
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - every-issue
+      - one-issue-at-head
+  - id: plan.drift
+    module: plan
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - every-issue
+      - one-issue-at-head-as-trunk-gate
+  - id: plan.flight
+    module: plan
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - where-the-work-is
+      - one-milestone-inspected
   - id: plan.issues
     module: plan
     kind: query
@@ -1541,6 +1625,14 @@ capabilities:
     cases:
       - all
       - one-version
+  - id: release.currency
+    module: release
+    kind: query
+    cache: "—"
+    direct: waived
+    mcp: waived
+    http: waived
+    cases: []
   - id: release.next
     module: release
     kind: query
@@ -1838,6 +1930,26 @@ capabilities:
     http: covered
     cases:
       - default
+  - id: worktree.trunk
+    module: worktree
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+      - primary-checkout
+  - id: worktree.uncommitted
+    module: worktree
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - policy-threshold
+      - one-hour
 system_targets:
   - key: system.mcp.process_cold
     transport: mcp
@@ -1890,6 +2002,10 @@ pages:
     route: /ui/command
     view: pinned
     deferred: false
+  - key: system.http.ui.idd
+    route: /ui/idd
+    view: pinned
+    deferred: false
   - key: system.http.ui.roadmap
     route: /ui/roadmap
     view: pinned
@@ -1908,6 +2024,10 @@ pages:
     deferred: false
   - key: system.http.ui.capabilities
     route: /ui/capabilities
+    view: pinned
+    deferred: false
+  - key: system.http.ui.skills
+    route: /ui/skills
     view: pinned
     deferred: false
   - key: system.http.ui.mesh
@@ -1950,6 +2070,10 @@ pages:
     route: /ui/command
     view: live
     deferred: false
+  - key: system.http.live.ui.idd
+    route: /ui/idd
+    view: live
+    deferred: false
   - key: system.http.live.ui.roadmap
     route: /ui/roadmap
     view: live
@@ -1968,6 +2092,10 @@ pages:
     deferred: false
   - key: system.http.live.ui.capabilities
     route: /ui/capabilities
+    view: live
+    deferred: false
+  - key: system.http.live.ui.skills
+    route: /ui/skills
     view: live
     deferred: false
   - key: system.http.live.ui.mesh
@@ -2012,5 +2140,9 @@ pages:
     deferred: true
   - key: system.http.ui.panels.drain
     route: /ui/panels/drain
+    view: pinned
+    deferred: true
+  - key: system.http.ui.panels.standing
+    route: /ui/panels/standing
     view: pinned
     deferred: true

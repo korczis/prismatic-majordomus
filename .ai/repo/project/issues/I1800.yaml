@@ -1,0 +1,42 @@
+id: I1800
+milestone: automation
+title: The sandboxed engine a scripted capability runs in
+slug: the-sandboxed-engine
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Embed Rhai in the Rust executable as one engine constructor that every scripted capability runs under: eval disabled, no clock, limits on operations, call depth, expression depth and the sizes of strings, arrays and maps, and cancellation checked on every operation."
+why: "ADR 0069 decides that repository automation becomes scripted capabilities rather than shell. The declared exception to project.no-network-no-eval holds only if the interpreter is a sandbox and there is exactly one place that builds it, so the engine lands first and alone."
+current_state: "No interpreter is embedded; every orchestration is shell."
+desired_state: "apps/majordomus-cli/src/script builds the one engine; each guarantee it makes is proved by a unit test."
+scope:
+  - apps/majordomus-cli
+  - .ai/repo/adrs
+non_scope:
+  - Binding the engine to a capability; that is I1801
+depends_on: []
+acceptance_criteria:
+  - eval does not compile in a script
+  - a script has no clock function
+  - an endless loop ends with the operation limit, and a string cannot grow past its limit
+  - a cancelled execution stops at its next operation
+  - the engine is Send and Sync
+validation:
+  - cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib script::
+evidence_required:
+  - sandbox_engine_proved
+created_at: 2026-09-15
+updated_at: 2026-10-16T16:43:20Z
+started_at: 2026-10-16T16:43:09Z
+started_event: sha256:0ace6d842453e4a00b22d09cfcfb0aacd27ffe7644388a28615267a54a28f89d
+verified_at: 2026-10-16T16:43:13Z
+verified_event: sha256:5335256d1dfaf2dad35b9b591f0e76c9803db6018fcd3e11ee1a2cee29e4bcf3
+completed_at: 2026-10-16T16:43:20Z
+completed_event: sha256:2befb4528dd380121eee6504931ea2ae58241feae92704bd7216671a9ac10578
+evidence:
+  - covers: sandbox_engine_proved
+    type: test
+    command: "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib script::"
+    result: "test result: ok. 9 passed; 0 failed; 0 ignored (script::tests: eval_is_not_a_function_a_script_can_call, there_is_no_hidden_clock, a_runaway_script_is_stopped_by_its_operation_limit, a_string_cannot_grow_past_its_limit, a_cancelled_execution_stops_at_its_next_operation, the_engine_is_send_and_sync_for_the_shared_server, +3) at 09c334079f5; delivered by 7ac2fde4a45 (#1162) in the grand top 11e53f5a451"
+    commit: 09c334079f57de3429ce4e707d4bb4297d589245
+    recorded_at: 2026-10-16T16:43:18Z

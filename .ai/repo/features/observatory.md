@@ -11,7 +11,8 @@ weight: 94
 domain: surfaces
 featured: true
 areas: [observability]
-modules: [mesh, plan, distribution, release, health, economics, repository]
+modules: [observatory, mesh, plan, distribution, release, health, economics, repository, served]
+kinds: [deployment]
 rules: [project.ui-derived-state, project.interfaces-are-projections]
 claims: [observatory-draws-nothing-it-did-not-read]
 docs: [docs/MAJORDOMUS_UI.md]
@@ -49,6 +50,6 @@ and the script asks the server for nothing but that page. It starts no work and 
 record.
 
 On the published site the process that takes the snapshot runs no mesh, so the three scenes
-of the mesh are unavailable there and say so; a replay of genuinely recorded events is not
-built (I2678). The display learns of a change by reading its page again, not from a pushed
-stream (I2679). No frame rate, 4K composition or unattended soak has been measured (I2680).
+of the mesh replay the recording the repository carries, labelled `REPLAY` with the time it
+was recorded; the recording is as old as the last capture someone committed. The display
+follows the journal from a cursor between readings of its page (`observatory.events`). Its gates are recorded with their evidence in `.ai/repo/benchmarks/observatory/manifest.json`: screenshots at 1920x1080 and 3840x2160 of the published site, 60 frames per second in headless Chromium on an Apple M5 Pro, no WCAG 2.2 AA violation, reduced motion honoured, an hour-long soak with a stable page, and recovery drills. No physical wall display has been measured.

@@ -1,0 +1,34 @@
+id: I2674
+milestone: development-runtime
+title: "A node is provisioned as an S3 cache provider, idempotently, with no secret in the repository"
+slug: a-node-is-provisioned-as-an-s3-cache-provider-idempotently
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Provision a MinIO service on a chosen node: native or declared service, persistent storage on a bounded path, a private bucket with expiry, a least-privilege client identity, and a bounded bind."
+why: "The owner, 2026-10-13, with full clearance: set up MinIO, an sccache server and every mesh node, verified and validated. The cluster compiles the same Rust on every machine from a cold cache; two declared offload hosts were under their disk minimum that day. See ADR 0157."
+current_state: "Measured on master b29cf4e487 on 2026-10-13: no provisioning exists; the Jetson that was to host it is off the tailnet and answers on the LAN only slowly."
+desired_state: "A typed provisioning capability that discovers host facts, applies the service, bucket, lifecycle and policy, can be re-applied with no change, and writes credentials to a 0600 file outside the repository."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/"
+  - "apps/majordomus-cli/src/mesh/build_cache/"
+  - "docs/BUILD_CACHE.md"
+non_scope:
+  - "A second provider"
+  - "Public exposure of the store or its console"
+depends_on:
+  - I2670
+acceptance_criteria:
+  - "Applied twice, the second run changes nothing"
+  - "An unauthenticated write is refused by the store"
+  - "No credential appears in git, .ai, a log, an API answer or the docs"
+  - "The provider is not tied to MinIO: dl.min.io serves no binaries since 2025 (410 Gone), so the provisioning names a supported S3 server or records that it builds an unpatched release from source"
+  - "The data path cannot exhaust the root filesystem under the policy's floor"
+validation:
+  - "bin/majordomus plan validate"
+  - "majordomus mesh build-cache provision --dry-run"
+evidence_required:
+  - "provision_idempotent"
+  - "write_refused_unauthenticated"
+created_at: 2026-10-13
+updated_at: 2026-10-13

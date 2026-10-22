@@ -49,6 +49,39 @@ pub const SCHEMA: &str = "observatory/v1";
 /// The script that draws the projection, among the UI's assets.
 pub const LIB: &str = "observatory.js";
 
+/// The scenes that read what the repository proves (ADR 0160), drawn with p5 when the build
+/// has it. A second file beside [`LIB`]: the director and the first eight scenes are that
+/// one's, and this one only registers scenes with it.
+pub const SCENES_LIB: &str = "observatory-kiosk.js";
+
+/// The vendored p5, loaded only by a screen that draws one of those scenes. Built by
+/// `scripts/cockpit-assets` and not committed; a screen without it says so and its scenes
+/// stay available as rows.
+pub const P5_LIB: &str = "vendor/p5.min.js";
+
+/// The three scripts a page names, as the digested URLs the server emits.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Libs {
+    /// The director and the first scenes ([`LIB`]).
+    pub director: String,
+    /// The scenes of ADR 0160 ([`SCENES_LIB`]).
+    pub scenes: String,
+    /// The optional drawing library ([`P5_LIB`]).
+    pub p5: String,
+}
+
+#[cfg(test)]
+impl Libs {
+    /// The three scripts under one prefix, plain: what a fixture names.
+    pub fn under(prefix: &str) -> Libs {
+        Libs {
+            director: format!("{prefix}{LIB}"),
+            scenes: format!("{prefix}{SCENES_LIB}"),
+            p5: format!("{prefix}{P5_LIB}"),
+        }
+    }
+}
+
 const PEERS: Source = Source::of("mesh.peers");
 const EVENTS: Source = Source::with("mesh.events", r#"{"limit":200,"newest":true}"#);
 const STATE: Source = Source::with("mesh.state", r#"{"view":"full"}"#);
@@ -58,11 +91,46 @@ const VERSION: Source = Source::of("release.version");
 const HEALTH: Source = Source::of("health.report");
 const ECONOMICS: Source = Source::of("economics.runs");
 const REPOSITORY: Source = Source::of("repository.info");
+const RULES: Source = Source::of("rules.report");
+const EVIDENCE: Source = Source::of("evidence.report");
+const QUALITY: Source = Source::of("quality.report");
+const WAVES: Source = Source::of("plan.waves");
+const DISTRIBUTION: Source = Source::of("distribution.status");
+const CAPABILITIES: Source = Source::of("capabilities.list");
+const REPLAY: Source = Source::of("observatory.replay");
 
 /// Every source the Observatory reads, asked together.
 pub const SOURCES: &[Source] = &[
-    PEERS, EVENTS, STATE, ROADMAP, RELEASES, VERSION, HEALTH, ECONOMICS, REPOSITORY,
+    PEERS,
+    EVENTS,
+    STATE,
+    ROADMAP,
+    RELEASES,
+    VERSION,
+    HEALTH,
+    ECONOMICS,
+    REPOSITORY,
+    RULES,
+    EVIDENCE,
+    QUALITY,
+    WAVES,
+    DISTRIBUTION,
+    CAPABILITIES,
+    REPLAY,
 ];
+
+/// Where a scene's model came from when it is a replay: the recording the repository
+/// carries, and when that was recorded.
+#[derive(Debug, Clone, PartialEq, Serialize)]
+pub struct ReplayStanding {
+    /// When the recorded process read the scene.
+    pub recorded_at: String,
+    /// The commit that process stood at, when it said.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub revision: Option<String>,
+    /// The capabilities the recording names as read, from its manifest.
+    pub sources: Vec<String>,
+}
 
 /// How many marks one scene carries at most: a wall display is read from metres away, and
 /// a projection is bounded whatever the repository holds.
@@ -165,6 +233,69 @@ pub const SCENES: &[Scene] = &[
         dwell_seconds: 40,
     },
     Scene {
+        id: "proof",
+        label: "Proof Lattice",
+        character: Character::Semantic,
+        requires: &[RULES],
+        meaning: "A cell is one rule of the repository, coloured by the word the proof report decided for it: gated, reviewed, not run, stale or unproven. A rule that no run has proved is never drawn as passing.",
+        href: super::governance::ROUTE,
+        dwell_seconds: 45,
+    },
+    Scene {
+        id: "claims",
+        label: "Claim Ledger",
+        character: Character::Semantic,
+        requires: &[EVIDENCE],
+        meaning: "A row is one kind of claim the documents make; its bar is split by what the evidence says of those claims: not run, stale or without a test. The width is a count of claims.",
+        href: super::evidence::ROUTE,
+        dwell_seconds: 40,
+    },
+    Scene {
+        id: "surface",
+        label: "Surface Atlas",
+        character: Character::Semantic,
+        requires: &[QUALITY],
+        meaning: "An arc is a count the quality report measured: the operations each surface projects, and how much of the public API is documented, shown by an example and tested. Nothing is estimated.",
+        href: super::capabilities::ROUTE,
+        dwell_seconds: 40,
+    },
+    Scene {
+        id: "waves",
+        label: "Wave Front",
+        character: Character::Semantic,
+        requires: &[WAVES],
+        meaning: "A column is a wave of the plan: the issues that may run at the same time once the earlier waves are done. Its height is a count of issues, split by their recorded status.",
+        href: super::roadmap::ROUTE,
+        dwell_seconds: 40,
+    },
+    Scene {
+        id: "matrix",
+        label: "Release Matrix",
+        character: Character::Semantic,
+        requires: &[DISTRIBUTION],
+        meaning: "A tile is one check of the published installation: model, version, release, artifacts, metadata and public site, each in the word the check decided. Unknown is drawn as unknown.",
+        href: super::delivery::ROUTE,
+        dwell_seconds: 35,
+    },
+    Scene {
+        id: "registry",
+        label: "Registry Treemap",
+        character: Character::Semantic,
+        requires: &[CAPABILITIES],
+        meaning: "A tile is one module of the capability registry, as large as the number of capabilities it declares: the tests, issues, documents, claims, rules and decisions the repository is made of, and the operations it serves.",
+        href: super::capabilities::ROUTE,
+        dwell_seconds: 40,
+    },
+    Scene {
+        id: "ladder",
+        label: "Milestone Ladder",
+        character: Character::Semantic,
+        requires: &[ROADMAP],
+        meaning: "A rung is one milestone of the plan; its bar is as long as its issues are many and is split by their recorded status. The number beside it is the share that is done.",
+        href: super::roadmap::ROUTE,
+        dwell_seconds: 40,
+    },
+    Scene {
         id: "ambient",
         label: "Ambient Intelligence",
         character: Character::Ambient,
@@ -215,6 +346,10 @@ pub struct SceneProjection {
     pub reason: Option<String>,
     /// What the scene draws; `null` when it is unavailable.
     pub model: Value,
+    /// Present when the model is the repository's recording and not this process's reading:
+    /// a scene of the mesh, drawn where no mesh runs, and labelled a replay.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub replay: Option<ReplayStanding>,
 }
 
 /// The whole projection: what the page carries and the script draws.
@@ -266,13 +401,23 @@ pub fn project_from(answers: &Answers, observed_at: String) -> Projection {
     let scenes = SCENES
         .iter()
         .map(|scene| {
-            let (model, reason) = match unanswered(scene, answers) {
+            let (mut model, mut reason) = match unanswered(scene, answers) {
                 Some(reason) => (None, Some(reason)),
                 None => match model(scene.id, answers, &sources) {
                     Ok(model) => (Some(model), None),
                     Err(reason) => (None, Some(reason)),
                 },
             };
+            // a scene of the mesh in a process that runs none may draw the recording the
+            // repository carries, as a replay; a source that failed is not "no mesh here"
+            let mut replay = None;
+            if model.is_none() && no_mesh_here(scene, answers) {
+                if let Some((recorded, standing)) = recorded(scene.id, answers) {
+                    model = Some(recorded);
+                    reason = None;
+                    replay = Some(standing);
+                }
+            }
             SceneProjection {
                 id: scene.id,
                 label: scene.label,
@@ -284,6 +429,7 @@ pub fn project_from(answers: &Answers, observed_at: String) -> Projection {
                 available: model.is_some(),
                 reason,
                 model: model.unwrap_or(Value::Null),
+                replay,
             }
         })
         .collect();
@@ -317,7 +463,7 @@ fn unanswered(scene: &Scene, answers: &Answers) -> Option<String> {
 fn answer(answers: &Answers, source: Source) -> &Value {
     answers
         .get(&source)
-        .and_then(|a| a.value.as_ref().ok())
+        .and_then(Answer::ok)
         .unwrap_or(&Value::Null)
 }
 
@@ -338,6 +484,40 @@ fn word(value: &Value, key: &str) -> String {
 }
 
 /// A source that says it is not running here: its own reason, or the plain fact.
+/// Whether every source the scene requires answered, and one of them answered that no mesh
+/// runs in this process: the one case a recording may stand in for.
+fn no_mesh_here(scene: &Scene, answers: &Answers) -> bool {
+    crate::capability::builtin::observatory::RECORDED.contains(&scene.id)
+        && scene.requires.iter().all(|s| {
+            answers.get(s).is_some_and(|a| {
+                a.value
+                    .as_ref()
+                    .is_ok_and(|v| v.get("active") == Some(&Value::Bool(false)))
+            })
+        })
+}
+
+/// The repository's recording of one scene, with when it was recorded.
+fn recorded(id: &str, answers: &Answers) -> Option<(Value, ReplayStanding)> {
+    let replay = answers.get(&REPLAY)?.value.as_ref().ok()?;
+    let recording = replay.get("recording")?;
+    let model = recording.get("scenes")?.get(id)?.clone();
+    let standing = ReplayStanding {
+        recorded_at: recording.get("recorded_at")?.as_str()?.to_string(),
+        revision: recording
+            .get("revision")
+            .and_then(Value::as_str)
+            .map(str::to_string),
+        sources: recording
+            .pointer("/manifest/sources")?
+            .as_array()?
+            .iter()
+            .filter_map(|v| v.as_str().map(str::to_string))
+            .collect(),
+    };
+    Some((model, standing))
+}
+
 fn inactive(value: &Value, capability: &str) -> Option<String> {
     (value.get("active").and_then(Value::as_bool) != Some(true)).then(|| {
         match value.get("reason").and_then(Value::as_str) {
@@ -358,6 +538,30 @@ fn short(id: &str) -> String {
 fn tail(id: &str) -> String {
     let plain: Vec<char> = id.chars().filter(char::is_ascii_alphanumeric).collect();
     plain[plain.len().saturating_sub(12)..].iter().collect()
+}
+
+/// The marks of a page of `mesh.events`, newest first and at most [`BOUND`]: an event is a mark
+/// by its identity (stream and sequence), its kind, its node, its logical clock and its time,
+/// and never its body. One that states no sequence has no identity and is not drawn under an
+/// invented one. The scene and `observatory.events` both project through this, so a mark the
+/// stream delivers is the mark the page would have drawn.
+pub fn event_marks(listed: &[Value]) -> Vec<Value> {
+    listed
+        .iter()
+        .rev()
+        .take(BOUND)
+        .filter_map(|e| {
+            let stream = word(e, "stream");
+            let seq = e.get("seq").and_then(Value::as_u64)?;
+            Some(serde_json::json!({
+                "id": format!("{stream}:{seq}"),
+                "kind": e.pointer("/body/kind").and_then(Value::as_str).unwrap_or("unknown"),
+                "node": short(&stream),
+                "lamport": e.get("lamport").and_then(Value::as_u64),
+                "at": e.get("at").and_then(Value::as_u64),
+            }))
+        })
+        .collect()
 }
 
 /// The model one scene draws, or why there is nothing true to draw.
@@ -407,25 +611,7 @@ fn model(id: &str, answers: &Answers, sources: &[SourceStanding]) -> Result<Valu
             if let Some(reason) = inactive(events, EVENTS.capability) {
                 return Err(reason);
             }
-            let listed = items(events, "/events");
-            let marks: Vec<Value> = listed
-                .iter()
-                .rev()
-                .take(BOUND)
-                // an event is a mark by its identity, stream and sequence; one that states no
-                // sequence has none and is not drawn under an invented one
-                .filter_map(|e| {
-                    let stream = word(e, "stream");
-                    let seq = e.get("seq").and_then(Value::as_u64)?;
-                    Some(serde_json::json!({
-                        "id": format!("{stream}:{seq}"),
-                        "kind": e.pointer("/body/kind").and_then(Value::as_str).unwrap_or("unknown"),
-                        "node": short(&stream),
-                        "lamport": e.get("lamport").and_then(Value::as_u64),
-                        "at": e.get("at").and_then(Value::as_u64),
-                    }))
-                })
-                .collect();
+            let marks = event_marks(items(events, "/events"));
             Ok(serde_json::json!({
                 "events": marks,
                 "lamport": events.get("lamport").and_then(Value::as_u64),
@@ -532,6 +718,173 @@ fn model(id: &str, answers: &Answers, sources: &[SourceStanding]) -> Result<Valu
                 "reviews": reviews.len(),
             }))
         }
+        "proof" => {
+            let report = answer(answers, RULES);
+            let rules = items(report, "/rules");
+            if rules.is_empty() {
+                return Err("rules.report lists no rule".into());
+            }
+            let mut states = std::collections::BTreeMap::<String, u64>::new();
+            for r in rules {
+                *states.entry(word(r, "state")).or_default() += 1;
+            }
+            Ok(serde_json::json!({
+                "rules": rules.iter().take(BOUND).map(|r| serde_json::json!({
+                    "id": r.pointer("/rule/id").and_then(Value::as_str).unwrap_or_default(),
+                    "state": word(r, "state"),
+                    "class": r.pointer("/rule/class").and_then(Value::as_str),
+                })).collect::<Vec<_>>(),
+                "total": rules.len(),
+                "states": states,
+                "verdict": report.get("verdict"),
+                "coverage": report.get("coverage"),
+            }))
+        }
+        "claims" => {
+            let report = answer(answers, EVIDENCE);
+            let claims = items(report, "/claims");
+            if claims.is_empty() {
+                return Err("evidence.report examined no claim".into());
+            }
+            // a group per kind of claim, counted by what the evidence says of it; the claims
+            // themselves are not marks, there are more of them than a display can hold
+            let mut groups =
+                std::collections::BTreeMap::<String, std::collections::BTreeMap<String, u64>>::new(
+                );
+            for c in claims {
+                *groups
+                    .entry(word(c, "status"))
+                    .or_default()
+                    .entry(word(c, "state"))
+                    .or_default() += 1;
+            }
+            Ok(serde_json::json!({
+                "groups": groups.iter().take(BOUND).map(|(status, states)| serde_json::json!({
+                    "status": status,
+                    "total": states.values().sum::<u64>(),
+                    "states": states,
+                })).collect::<Vec<_>>(),
+                "total": claims.len(),
+                "examined": report.pointer("/subject/examined"),
+                "complete": report.pointer("/subject/complete"),
+            }))
+        }
+        "surface" => {
+            let report = answer(answers, QUALITY);
+            let ops = report.pointer("/report/operations");
+            let Some(ops) = ops.filter(|o| o.get("canonical").is_some()) else {
+                return Err("quality.report states no operation count".into());
+            };
+            Ok(serde_json::json!({
+                "operations": {
+                    "canonical": ops.get("canonical"),
+                    "cli": ops.get("cli"),
+                    "http": ops.get("http"),
+                    "openapi": ops.get("openapi"),
+                    "mcp": ops.get("mcp"),
+                },
+                "commands": {
+                    "total": ops.get("cli_commands"),
+                    "from_capability": ops.get("cli_from_capability"),
+                    "local": ops.get("cli_local"),
+                },
+                "modules": {
+                    "total": report.pointer("/report/modules/modules"),
+                    "documented": report.pointer("/report/modules/documented"),
+                    "exampled": report.pointer("/report/modules/exampled"),
+                    "tested": report.pointer("/report/modules/behaviourally_tested"),
+                },
+                "api": {
+                    "items": report.pointer("/report/public_api/items"),
+                    "documented": report.pointer("/report/public_api/documented"),
+                    "owe_example": report.pointer("/report/public_api/owe_example"),
+                    "exampled": report.pointer("/report/public_api/exampled"),
+                },
+                "target": report.pointer("/report/target"),
+            }))
+        }
+        "waves" => {
+            let report = answer(answers, WAVES);
+            let waves = items(report, "/waves");
+            if waves.is_empty() {
+                return Err("plan.waves holds no wave".into());
+            }
+            Ok(serde_json::json!({
+                "waves": waves.iter().take(BOUND).map(|w| {
+                    let mut by = std::collections::BTreeMap::<String, u64>::new();
+                    for i in items(w, "/issues") {
+                        *by.entry(word(i, "status")).or_default() += 1;
+                    }
+                    serde_json::json!({
+                        "wave": w.get("wave"),
+                        "issues": items(w, "/issues").len(),
+                        "by_status": by,
+                    })
+                }).collect::<Vec<_>>(),
+                "serialised": items(report, "/serialised_by_scope").len(),
+            }))
+        }
+        "matrix" => {
+            let status = answer(answers, DISTRIBUTION);
+            let checks = items(status, "/checks");
+            if checks.is_empty() {
+                return Err("distribution.status lists no check".into());
+            }
+            Ok(serde_json::json!({
+                "checks": checks.iter().take(BOUND).map(|c| serde_json::json!({
+                    "id": word(c, "id"),
+                    "state": word(c, "state"),
+                    "observed": c.get("observed"),
+                })).collect::<Vec<_>>(),
+                "installable": status.get("installable"),
+                "stable_tag": status.get("stable_tag"),
+                "local_version": status.get("local_version"),
+                "required_targets": status.get("required_targets"),
+                "published_artifacts": status.get("published_artifacts"),
+            }))
+        }
+        "registry" => {
+            let list = answer(answers, CAPABILITIES);
+            let caps = items(list, "/capabilities");
+            if caps.is_empty() {
+                return Err("capabilities.list holds no capability".into());
+            }
+            let mut modules = std::collections::BTreeMap::<String, u64>::new();
+            for c in caps {
+                *modules.entry(word(c, "module")).or_default() += 1;
+            }
+            let summary = list.get("summary");
+            let get = |k: &str| summary.and_then(|s| s.get(k));
+            Ok(serde_json::json!({
+                "modules": modules.iter().take(BOUND).map(|(module, count)| serde_json::json!({
+                    "module": module,
+                    "count": count,
+                })).collect::<Vec<_>>(),
+                "total": caps.len(),
+                "builtin": get("builtin"),
+                "declarative": get("declarative"),
+                "by_kind": get("by_kind"),
+                "by_stability": get("by_stability"),
+                "mcp_tools": get("mcp_tools"),
+                "http_routes": get("http_routes"),
+                "cli_commands": get("cli_commands"),
+            }))
+        }
+        "ladder" => {
+            let milestones = items(answer(answers, ROADMAP), "/milestones");
+            if milestones.is_empty() {
+                return Err("plan.roadmap holds no milestone".into());
+            }
+            Ok(serde_json::json!({
+                "milestones": milestones.iter().take(BOUND).map(|m| serde_json::json!({
+                    "id": word(m, "id"),
+                    "title": word(m, "title"),
+                    "status": word(m, "status"),
+                    "total": m.pointer("/counts/total").and_then(Value::as_u64),
+                    "by_status": m.pointer("/counts/by_status"),
+                })).collect::<Vec<_>>(),
+            }))
+        }
         "ambient" => Ok(serde_json::json!({
             "sources": sources.iter().map(|s| serde_json::json!({
                 "capability": s.capability,
@@ -544,7 +897,7 @@ fn model(id: &str, answers: &Answers, sources: &[SourceStanding]) -> Result<Valu
 
 /// The Observatory screen: the stage the script draws on, the projection it draws, and the
 /// same facts as a table for a reader without the script.
-pub fn screen(ctx: &Context, query: &[(String, String)], lib: &str, kiosk: bool) -> View {
+pub fn screen(ctx: &Context, query: &[(String, String)], libs: &Libs, kiosk: bool) -> View {
     // the scene a reader asked for by name; a name that is no scene selects nothing
     let selected = query
         .iter()
@@ -572,7 +925,9 @@ pub fn screen(ctx: &Context, query: &[(String, String)], lib: &str, kiosk: bool)
             "data-observatory",
             serde_json::to_string(&projection).unwrap_or_else(|_| "{}".into()),
         )
-        .attr("data-observatory-lib", lib)
+        .attr("data-observatory-lib", libs.director.as_str())
+        .attr("data-observatory-companion", libs.scenes.as_str())
+        .attr("data-p5-lib", libs.p5.as_str())
         .attr_if("data-observatory-scene", selected)
         .attr("data-observatory-mode", if kiosk { "kiosk" } else { "screen" })
         .child(
@@ -665,7 +1020,7 @@ mod tests {
             source,
             route: None,
             exposure: Exposure::default(),
-            value,
+            value: value.map(Into::into),
             took: Duration::from_millis(3),
             standing: Standing::NOW,
         }
@@ -697,7 +1052,7 @@ mod tests {
         ids.sort_unstable();
         ids.dedup();
         assert_eq!(ids.len(), SCENES.len());
-        assert_eq!(SCENES.len(), 8);
+        assert_eq!(SCENES.len(), 15);
         for s in SCENES {
             assert_eq!(
                 s.requires.is_empty(),
@@ -766,6 +1121,43 @@ mod tests {
         );
     }
 
+    /// Where no mesh runs, a scene of the mesh draws the repository's recording and says it
+    /// is a replay; where the source failed, or a mesh runs, the recording is not used.
+    #[test]
+    fn a_recording_stands_in_only_where_no_mesh_runs_and_says_so() {
+        let quiet =
+            serde_json::json!({ "active": false, "reason": "no shared server", "machines": [] });
+        let recording = serde_json::json!({ "present": true, "path": "x", "recording": {
+            "schema": "observatory-recording/v1", "recorded_at": "2026-10-14T05:00:00Z", "revision": "abc",
+            "scenes": { "mesh": { "machines": [{ "id": "m1", "label": "machine 1", "runtimes": [] }], "known": 1, "refused": 0 } },
+            "manifest": { "sources": ["mesh.peers"], "removed": ["identities"] },
+        }});
+        let p = project_from(
+            &all(&[(PEERS, Ok(quiet.clone())), (REPLAY, Ok(recording.clone()))]),
+            "2026-10-14T06:00:00Z".into(),
+        );
+        let mesh = scene(&p, "mesh");
+        assert!(mesh.available && mesh.reason.is_none());
+        assert_eq!(mesh.model["machines"][0]["label"], "machine 1");
+        assert_eq!(
+            mesh.replay.as_ref().map(|r| r.recorded_at.as_str()),
+            Some("2026-10-14T05:00:00Z")
+        );
+        assert_eq!(
+            mesh.replay.as_ref().map(|r| r.sources.clone()),
+            Some(vec!["mesh.peers".to_string()])
+        );
+        // a scene the recording does not carry stays unavailable, with its source's reason
+        assert!(!scene(&p, "activity").available && scene(&p, "activity").replay.is_none());
+        // a source that failed is not "no mesh here"
+        let failed = project_from(
+            &all(&[(PEERS, Err("refused".into())), (REPLAY, Ok(recording))]),
+            "2026-10-14T06:00:00Z".into(),
+        );
+        assert!(!scene(&failed, "mesh").available);
+        assert!(scene(&failed, "mesh").replay.is_none());
+    }
+
     /// What a source answered is what the scene draws: machines with their runtimes'
     /// liveness, events as kind, stream and clock, and nothing of an event's body.
     #[test]
@@ -831,6 +1223,135 @@ mod tests {
         assert_eq!(p, project_from(&answers, "2026-10-14T00:00:00Z".into()));
     }
 
+    /// The scenes of ADR 0160 draw counts the sources reported and nothing they did not: the
+    /// proof lattice's cells are the rules, its states are tallied from them, a claim ledger
+    /// groups claims rather than drawing each, and a source with nothing in it is a scene that
+    /// is not drawn, with the reason.
+    #[test]
+    fn the_proof_scenes_are_counted_from_what_the_sources_answered() {
+        let at = || "2026-10-14T00:00:00Z".to_string();
+        let answers = all(&[
+            (
+                RULES,
+                Ok(serde_json::json!({
+                    "verdict": "unproven",
+                    "rules": [
+                        {"rule": {"id": "a.one", "class": "blocking"}, "state": "gated"},
+                        {"rule": {"id": "a.two", "class": "advisory"}, "state": "not_run"},
+                        {"rule": {"id": "a.three", "class": "blocking"}, "state": "not_run"},
+                    ],
+                })),
+            ),
+            (
+                EVIDENCE,
+                Ok(serde_json::json!({
+                    "subject": {"examined": 3, "complete": false},
+                    "claims": [
+                        {"status": "guaranteed", "state": "not_run"},
+                        {"status": "guaranteed", "state": "stale"},
+                        {"status": "planned", "state": "no_test"},
+                    ],
+                })),
+            ),
+            (
+                QUALITY,
+                Ok(serde_json::json!({"report": {
+                    "operations": {"canonical": 10, "cli": 6, "http": 9, "openapi": 9, "mcp": 8,
+                                   "cli_commands": 12, "cli_from_capability": 6, "cli_local": 6},
+                    "modules": {"modules": 4, "documented": 4, "exampled": 2,
+                                "behaviourally_tested": 3},
+                    "public_api": {"items": 20, "documented": 20, "owe_example": 8, "exampled": 5},
+                    "target": "apps/x",
+                }})),
+            ),
+            (
+                WAVES,
+                Ok(serde_json::json!({
+                    "waves": [
+                        {"wave": 0, "issues": [{"status": "DONE"}, {"status": "READY"}]},
+                        {"wave": 1, "issues": [{"status": "PLANNED"}]},
+                    ],
+                    "serialised_by_scope": [{}, {}],
+                })),
+            ),
+            (
+                CAPABILITIES,
+                Ok(serde_json::json!({
+                    "summary": {"builtin": 2, "declarative": 3, "mcp_tools": 2},
+                    "capabilities": [
+                        {"module": "test"}, {"module": "test"}, {"module": "issue"},
+                        {"module": "plan"}, {"module": "plan"},
+                    ],
+                })),
+            ),
+            (
+                ROADMAP,
+                Ok(serde_json::json!({"milestones": [
+                    {"id": "M1", "title": "one", "status": "DONE",
+                     "counts": {"total": 4, "by_status": {"DONE": 4}}},
+                ]})),
+            ),
+            (
+                DISTRIBUTION,
+                Ok(serde_json::json!({
+                    "installable": true, "stable_tag": "v1", "local_version": "0.9",
+                    "required_targets": 6, "published_artifacts": 6,
+                    "checks": [{"id": "model", "state": "ok"}, {"id": "public", "state": "unknown"}],
+                })),
+            ),
+        ]);
+        let p = project_from(&answers, at());
+        let proof = scene(&p, "proof");
+        assert!(proof.available);
+        assert_eq!(proof.model["total"], 3);
+        assert_eq!(proof.model["states"]["not_run"], 2);
+        assert_eq!(proof.model["states"]["gated"], 1);
+        assert_eq!(proof.model["rules"].as_array().unwrap().len(), 3);
+        let claims = scene(&p, "claims");
+        assert_eq!(claims.model["total"], 3);
+        assert_eq!(claims.model["groups"][0]["status"], "guaranteed");
+        assert_eq!(claims.model["groups"][0]["states"]["stale"], 1);
+        let surface = scene(&p, "surface");
+        assert_eq!(surface.model["operations"]["canonical"], 10);
+        assert_eq!(surface.model["modules"]["tested"], 3);
+        assert_eq!(surface.model["api"]["owe_example"], 8);
+        let waves = scene(&p, "waves");
+        assert_eq!(waves.model["waves"][0]["issues"], 2);
+        assert_eq!(waves.model["waves"][0]["by_status"]["DONE"], 1);
+        assert_eq!(waves.model["serialised"], 2);
+        let registry = scene(&p, "registry");
+        assert_eq!(registry.model["total"], 5);
+        assert_eq!(registry.model["modules"][2]["module"], "test");
+        assert_eq!(registry.model["modules"][2]["count"], 2);
+        assert_eq!(registry.model["builtin"], 2);
+        let ladder = scene(&p, "ladder");
+        assert_eq!(ladder.model["milestones"][0]["total"], 4);
+        assert_eq!(ladder.model["milestones"][0]["by_status"]["DONE"], 4);
+        let matrix = scene(&p, "matrix");
+        assert_eq!(matrix.model["checks"][1]["state"], "unknown");
+        assert_eq!(matrix.model["required_targets"], 6);
+
+        // nothing in a source is a scene that is not drawn, never an empty picture
+        let empty = all(&[
+            (RULES, Ok(serde_json::json!({"rules": []}))),
+            (EVIDENCE, Ok(serde_json::json!({"claims": []}))),
+            (QUALITY, Ok(serde_json::json!({"report": {}}))),
+            (WAVES, Ok(serde_json::json!({"waves": []}))),
+            (CAPABILITIES, Ok(serde_json::json!({"capabilities": []}))),
+            (ROADMAP, Ok(serde_json::json!({"milestones": []}))),
+            (DISTRIBUTION, Err("no network".into())),
+        ]);
+        let p = project_from(&empty, at());
+        for id in [
+            "proof", "claims", "surface", "waves", "matrix", "registry", "ladder",
+        ] {
+            let s = scene(&p, id);
+            assert!(!s.available, "{id}");
+            assert_eq!(s.model, Value::Null, "{id}");
+            assert!(s.reason.is_some(), "{id}");
+        }
+    }
+
     /// The screen renders in a process that runs no mesh, which is what reads a published
     /// snapshot: the page carries the projection and the script's address, every scene is a
     /// row, and the mesh scenes say why they are not drawn.
@@ -838,11 +1359,16 @@ mod tests {
     fn the_screen_carries_the_projection_and_every_scene_as_a_row() {
         let repo = SyntheticRepository::new(Shape::default()).expect("a synthetic repository");
         let ctx = repo.context().expect("a context");
-        let html = screen(&ctx, &[], "/ui/assets/observatory.js?v=1", false)
-            .main
-            .render();
+        let libs = Libs {
+            director: "/ui/assets/observatory.js?v=1".into(),
+            scenes: "/ui/assets/observatory-kiosk.js?v=1".into(),
+            p5: "/ui/assets/vendor/p5.min.js".into(),
+        };
+        let html = screen(&ctx, &[], &libs, false).main.render();
         assert!(html.contains("data-observatory=\"{"), "{html}");
         assert!(html.contains("data-observatory-lib=\"/ui/assets/observatory.js?v=1\""));
+        assert!(html.contains("data-observatory-companion=\"/ui/assets/observatory-kiosk.js?v=1\""));
+        assert!(html.contains("data-p5-lib=\"/ui/assets/vendor/p5.min.js\""));
         assert!(html.contains(SCHEMA));
         for s in SCENES {
             assert!(
@@ -854,15 +1380,20 @@ mod tests {
         }
         assert!(!html.contains("data-observatory-scene"));
         let chosen = |v: &str| {
-            screen(&ctx, &[("scene".into(), v.into())], "x", false)
-                .main
-                .render()
+            screen(
+                &ctx,
+                &[("scene".into(), v.into())],
+                &Libs::under("x/"),
+                false,
+            )
+            .main
+            .render()
         };
         assert!(chosen("delivery").contains("data-observatory-scene=\"delivery\""));
         assert!(!chosen("no-such-scene").contains("data-observatory-scene"));
         // the kiosk is the same screen with one word changed
         assert!(html.contains("data-observatory-mode=\"screen\""));
-        let kiosk = screen(&ctx, &[], "x", true).main.render();
+        let kiosk = screen(&ctx, &[], &Libs::under("x/"), true).main.render();
         assert!(kiosk.contains("data-observatory-mode=\"kiosk\""));
         assert!(
             kiosk.contains(&format!("href=\"{ROUTE}\""))
