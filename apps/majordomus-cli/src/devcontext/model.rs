@@ -1154,6 +1154,17 @@ fn is_zero(n: &usize) -> bool {
 
 impl SourceCoverage {
     /// Whether the request reached no tracked file at all.
+    ///
+    /// ```
+    /// use majordomus_cli::devcontext::{SourceCoverage, UnreadSource};
+    ///
+    /// assert!(SourceCoverage::default().is_empty());
+    /// let refused = SourceCoverage {
+    ///     unread: vec![UnreadSource { path: "src/x.rs".into(), reason: "a symbolic link".into() }],
+    ///     ..Default::default()
+    /// };
+    /// assert!(!refused.is_empty(), "a file reached and refused is still reached");
+    /// ```
     pub fn is_empty(&self) -> bool {
         self.files.is_empty()
             && self.unread.is_empty()
@@ -1162,22 +1173,66 @@ impl SourceCoverage {
     }
 
     /// What reading every outlined file whole would cost.
+    ///
+    /// ```
+    /// use majordomus_cli::devcontext::{SourceCoverage, SourceFile};
+    ///
+    /// let f = |path: &str, whole: u64| SourceFile {
+    ///     path: path.into(), digest: String::new(), bytes: whole * 4, whole_tokens: whole,
+    ///     definitions: 1, truncated: 0, selected: 0, selected_tokens: 0, saved_tokens: whole,
+    /// };
+    /// let c = SourceCoverage { files: vec![f("a.rs", 10), f("b.rs", 32)], ..Default::default() };
+    /// assert_eq!(c.whole_tokens(), 42);
+    /// ```
     pub fn whole_tokens(&self) -> u64 {
         self.files.iter().map(|f| f.whole_tokens).sum()
     }
 
     /// What the selected ranges of those files cost.
+    ///
+    /// ```
+    /// use majordomus_cli::devcontext::{SourceCoverage, SourceFile};
+    ///
+    /// let f = SourceFile {
+    ///     path: "a.rs".into(), digest: String::new(), bytes: 400, whole_tokens: 100,
+    ///     definitions: 3, truncated: 0, selected: 1, selected_tokens: 25, saved_tokens: 75,
+    /// };
+    /// let c = SourceCoverage { files: vec![f.clone(), f], ..Default::default() };
+    /// assert_eq!(c.selected_tokens(), 50);
+    /// ```
     pub fn selected_tokens(&self) -> u64 {
         self.files.iter().map(|f| f.selected_tokens).sum()
     }
 
     /// The difference: what the ranges saved against whole-file reading.
+    ///
+    /// ```
+    /// use majordomus_cli::devcontext::{SourceCoverage, SourceFile};
+    ///
+    /// let f = SourceFile {
+    ///     path: "a.rs".into(), digest: String::new(), bytes: 400, whole_tokens: 100,
+    ///     definitions: 3, truncated: 0, selected: 1, selected_tokens: 25, saved_tokens: 75,
+    /// };
+    /// let c = SourceCoverage { files: vec![f], ..Default::default() };
+    /// assert_eq!(c.saved_tokens(), c.whole_tokens() - c.selected_tokens());
+    /// ```
     pub fn saved_tokens(&self) -> u64 {
         self.files.iter().map(|f| f.saved_tokens).sum()
     }
 }
 
 /// One source file the compiler outlined.
+///
+/// ```
+/// use majordomus_cli::devcontext::SourceFile;
+///
+/// let f: SourceFile = serde_json::from_value(serde_json::json!({
+///     "path": "src/big.rs", "digest": "sha256:00", "bytes": 4000, "whole_tokens": 1000,
+///     "definitions": 12, "truncated": 0, "selected": 2, "selected_tokens": 120,
+///     "saved_tokens": 880,
+/// })).unwrap();
+/// assert_eq!(f.whole_tokens - f.selected_tokens, f.saved_tokens);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct SourceFile {
     /// Repository-relative.
@@ -1202,6 +1257,13 @@ pub struct SourceFile {
 }
 
 /// A source file reached and not outlined.
+///
+/// ```
+/// use majordomus_cli::devcontext::UnreadSource;
+///
+/// let u = UnreadSource { path: "src/link.rs".into(), reason: "a symbolic link; not followed".into() };
+/// assert_eq!(serde_json::to_value(&u).unwrap()["reason"], "a symbolic link; not followed");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct UnreadSource {
     /// Repository-relative.

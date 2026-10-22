@@ -6,7 +6,7 @@
     "version": "1.0.0-alpha.6"
   },
   "registry": {
-    "fingerprint": "f89f917065b02a1ea57f63e6108a9410b98c2804743357c6ab97418ec0a4ffc2",
+    "fingerprint": "1e833dd0392277927ee813a6f9f8a72da531969e35e79eb60491d4c362ceccc5",
     "summary": {
       "total": 3300,
       "builtin": 208,
@@ -14548,7 +14548,7 @@
                   "selected_tokens",
                   "saved_tokens"
                 ],
-                "description": "One source file the compiler outlined."
+                "description": "One source file the compiler outlined.\n\n```\nuse majordomus_cli::devcontext::SourceFile;\n\nlet f: SourceFile = serde_json::from_value(serde_json::json!({\n    \"path\": \"src/big.rs\", \"digest\": \"sha256:00\", \"bytes\": 4000, \"whole_tokens\": 1000,\n    \"definitions\": 12, \"truncated\": 0, \"selected\": 2, \"selected_tokens\": 120,\n    \"saved_tokens\": 880,\n})).unwrap();\nassert_eq!(f.whole_tokens - f.selected_tokens, f.saved_tokens);\n```"
               },
               "UnreadSource": {
                 "type": "object",
@@ -14566,7 +14566,7 @@
                   "path",
                   "reason"
                 ],
-                "description": "A source file reached and not outlined."
+                "description": "A source file reached and not outlined.\n\n```\nuse majordomus_cli::devcontext::UnreadSource;\n\nlet u = UnreadSource { path: \"src/link.rs\".into(), reason: \"a symbolic link; not followed\".into() };\nassert_eq!(serde_json::to_value(&u).unwrap()[\"reason\"], \"a symbolic link; not followed\");\n```"
               }
             }
           }
@@ -87031,7 +87031,7 @@
     ]
   },
   "index": {
-    "fingerprint": "97dbed893aa4996c6e0b9b91d90067388e411a9b0266b550724e37f9d8fd4fae",
+    "fingerprint": "17b0041a39221c60e024149c9b8ee384dfd5e949931eaefd16047087512ca55d",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {

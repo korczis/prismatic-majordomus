@@ -14986,7 +14986,7 @@
                 "selected_tokens",
                 "saved_tokens"
               ],
-              "description": "One source file the compiler outlined."
+              "description": "One source file the compiler outlined.\n\n```\nuse majordomus_cli::devcontext::SourceFile;\n\nlet f: SourceFile = serde_json::from_value(serde_json::json!({\n    \"path\": \"src/big.rs\", \"digest\": \"sha256:00\", \"bytes\": 4000, \"whole_tokens\": 1000,\n    \"definitions\": 12, \"truncated\": 0, \"selected\": 2, \"selected_tokens\": 120,\n    \"saved_tokens\": 880,\n})).unwrap();\nassert_eq!(f.whole_tokens - f.selected_tokens, f.saved_tokens);\n```"
             },
             "UnreadSource": {
               "type": "object",
@@ -15004,7 +15004,7 @@
                 "path",
                 "reason"
               ],
-              "description": "A source file reached and not outlined."
+              "description": "A source file reached and not outlined.\n\n```\nuse majordomus_cli::devcontext::UnreadSource;\n\nlet u = UnreadSource { path: \"src/link.rs\".into(), reason: \"a symbolic link; not followed\".into() };\nassert_eq!(serde_json::to_value(&u).unwrap()[\"reason\"], \"a symbolic link; not followed\");\n```"
             }
           }
         }

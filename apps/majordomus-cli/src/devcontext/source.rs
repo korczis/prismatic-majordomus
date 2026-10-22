@@ -31,6 +31,27 @@
 //! is therefore a *syntactic definition*, observed: it says where an item is written, never
 //! what calls it. A file `syn` cannot parse, and every language it does not cover, is
 //! reported as such rather than answered with an empty outline that would read as complete.
+//!
+//! # A file, end to end
+//!
+//! A file is outlined into its definitions; the compiler names each one by a range of that
+//! file under [`SCHEME`], and the budget spends them as [`KIND`] entries.
+//!
+//! ```
+//! use majordomus_cli::devcontext::source::{outline, KIND, SCHEME};
+//!
+//! let text = "pub struct Budget;\n\nimpl Budget {\n    pub fn spend(&self) {}\n}\n";
+//! let defs = outline(text).unwrap();
+//! let uris: Vec<String> = defs
+//!     .iter()
+//!     .map(|d| format!("{SCHEME}src/budget.rs#L{}-L{}", d.first, d.last))
+//!     .collect();
+//! assert_eq!(uris, ["source:src/budget.rs#L1-L1", "source:src/budget.rs#L4-L4"]);
+//! assert_eq!(KIND, "source-range");
+//!
+//! // a definition never spans another: the impl block is its methods, not a range of its own
+//! assert_eq!(defs[1].symbol, "Budget::spend");
+//! ```
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::io::Read;
@@ -74,7 +95,7 @@ const INTENT_LIFT: f64 = 0.1;
 
 /// What the source reading produced: the files outlined and the ones that were not.
 #[derive(Debug, Default)]
-pub struct Outlined {
+pub(crate) struct Outlined {
     /// The Rust files read and outlined, in path order.
     pub files: Vec<SourceFile>,
     /// What was reached and not outlined, with the reason, in path order.
@@ -86,6 +107,13 @@ pub struct Outlined {
 }
 
 /// One definition `syn` found: what it is, what it is called, and where it is written.
+///
+/// ```
+/// use majordomus_cli::devcontext::source::{outline, Definition};
+///
+/// let d: Definition = outline("/// Doc.\nfn go() {}\n").unwrap().remove(0);
+/// assert_eq!((d.item, d.symbol.as_str(), d.first, d.last), ("fn", "go", 1, 2));
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Definition {
     /// The noun: `fn`, `struct`, `impl fn`, ...
@@ -338,7 +366,7 @@ fn read_guarded(ctx: &Context, root: &Path, rel: &str) -> Result<Vec<u8>, String
 /// `..`). `terms` are the intent's words; a definition whose name holds one of them is
 /// recorded as an intent match as well, which orders it before its siblings and never
 /// above a declared object.
-pub fn offer(
+pub(crate) fn offer(
     ctx: &Context,
     sel: &mut Selection,
     paths: &BTreeSet<String>,
@@ -375,7 +403,7 @@ pub fn offer(
             *out.unparsed.entry(ext).or_default() += 1;
         }
     }
-    rust.sort();
+    crate::order::canonical_strings(&mut rust);
     if rust.len() > MAX_SOURCE_FILES {
         out.truncated = rust.len() - MAX_SOURCE_FILES;
         rust.truncate(MAX_SOURCE_FILES);

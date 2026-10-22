@@ -253,7 +253,7 @@ fn compiled_text(v: &Value) -> String {
         }
         if let Some(by) = src["unparsed"].as_object() {
             let mut parts: Vec<String> = by.iter().map(|(ext, n)| format!("{ext} {n}")).collect();
-            parts.sort();
+            crate::order::canonical_strings(&mut parts);
             if !parts.is_empty() {
                 o.push_str(&format!(
                     "unparsed     {} (no parser here; no ranges)\n",
