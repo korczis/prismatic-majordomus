@@ -172,6 +172,22 @@ change frame never shows the blackboard from before it. Its state line says live
 reconnecting or closed, and while the channel is not live the UI's minute refresh reads it
 instead. The UI's published snapshot withholds it (`docs/MAJORDOMUS_UI.md`).
 
+## On the published site
+
+The published site is files, read once at the commit it was built from, and it follows no
+server: nothing on it is live, and it carries no blackboard. The UI's snapshot withholds
+`/ui/peers` until a public-safe form of the blackboard exists, labelled with the revision and
+time it was read (I2984).
+
+The site's home page has a section on the blackboard. It says what the blackboard shows, names
+`/ui/peers` and `/cockpit/monitor` as the pages a running server follows it live on, says that
+the site itself follows no server and names the commit it was built from, and lists the issues
+under [Not yet](#not-yet) with the title, page and status the plan gives each. Its words are
+`site/data/marketing.toml`'s. The issues are named once more in `site/data/homepage.toml`
+(`[blackboard] waits`), so that the page reads each one from the plan rather than saying how it
+stands, and `test/cases/3387_the_home_page_explains_the_blackboard.sh` holds that list and this
+one to each other and finds nothing on the page that is live or says it is.
+
 ## Not yet
 
 These are planned in milestone `peer-blackboard` and are not built:
