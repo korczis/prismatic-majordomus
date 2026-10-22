@@ -106,3 +106,48 @@ expect_grep 'no baseline'
 
 # --- and this repository's own tree passes its own gate, against its own baseline
 expect_grep 'missing' "$ROOT/.ai/repo/ci/github-drift-baseline.txt"
+
+# ---------------------------------------------------------------- a title GitHub would refuse
+# GitHub caps a milestone title at 255 characters and an issue title at 256, and the adapter
+# posts "<id> — <title>". A 282-character milestone title passed every offline step, GitHub
+# answered the projection on master with 422, and every pull request's structure job stayed
+# red on the missing milestone. So the adapter measures each projected title offline, and
+# core-check, which runs --plan in the structure job, refuses the record before it merges.
+expect_grep '^scripts/github-sync --plan$' "$ROOT/scripts/ci/core-check"
+title_is() {
+  awk -v t="$2" '/^title: /{ print "title: \"" t "\""; next } { print }' "$1" > "$T/t.$$" \
+    && mv "$T/t.$$" "$1"
+}
+times() { printf "$1%.0s" $(seq 1 "$2"); }
+MS=.ai/repo/project/milestones/M000.yaml; IS=.ai/repo/project/issues/I0002.yaml
+
+# the broken shape: "M000 — " and 275 more characters is 282, and nothing is projected
+title_is "$MS" "$(times x 275)"
+expect_exit 14 "$SYNC" --plan
+expect_grep 'milestone M000: projected title is 282 characters, GitHub refuses over 255'
+expect_grep '\.ai/repo/project/milestones/M000\.yaml'
+expect_grep "1 projected title\(s\) over GitHub's limit; nothing was projected"
+# --apply refuses it before it reads the remote or writes anything
+expect_exit 14 "$SYNC" --apply
+# --render measures the records it is asked for, and only those
+expect_exit 14 "$SYNC" --render M000
+expect_exit 0 "$SYNC" --render I0001
+
+# the limit is in characters, not bytes: 248 em dashes are 744 bytes and, with the prefix, a
+# 255-character title, which GitHub accepts; one more is refused
+EM="$(printf '\342\200\224')"
+title_is "$MS" "$(times "$EM" 248)"
+expect_exit 0 "$SYNC" --plan
+title_is "$MS" "$(times "$EM" 249)"
+expect_exit 14 "$SYNC" --plan
+expect_grep 'milestone M000: projected title is 256 characters'
+
+# an issue title is held to 256: "I0002 — " and 248 more passes, 249 more is refused
+title_is "$MS" 'Milestone M000'
+title_is "$IS" "$(times x 248)"
+expect_exit 0 "$SYNC" --plan
+title_is "$IS" "$(times x 249)"
+expect_exit 14 "$SYNC" --plan
+expect_grep 'issue I0002: projected title is 257 characters, GitHub refuses over 256'
+title_is "$IS" 'Issue I0002'
+expect_exit 0 "$SYNC" --plan
