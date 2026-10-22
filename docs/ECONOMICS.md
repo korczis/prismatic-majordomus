@@ -158,12 +158,35 @@ majordomus economics run --suite pilot  # live sessions; needs a Claude Code log
 majordomus economics summary            # every figure, recomputed from the recorded runs
 majordomus economics explain effective_token_reduction
 majordomus economics check              # refuse an unsupported claim
+majordomus economics tasks              # each task's wall time, refusals and episodes
 ```
 
 The same answers are served at `GET /api/v1/economics`, `/api/v1/economics/explain`,
-`/api/v1/economics/runs` and `/api/v1/economics/check`, by the MCP tools
-`majordomus_economics*`, and on the Cockpit's Economics page. All of them are projections of
-one calculator, `apps/majordomus-cli/src/economics`.
+`/api/v1/economics/runs`, `/api/v1/economics/check` and `/api/v1/economics/tasks`, by the
+MCP tools `majordomus_economics*`, and on the Cockpit's Economics page. All of them are
+projections of one calculator, `apps/majordomus-cli/src/economics`.
+
+## Each task's delivery economics
+
+`majordomus economics tasks` answers one record per task. It folds the ledger of every
+checkout that `git worktree list` reports, together with the archives a ledger rotation left
+beside it (`.ai/local/state/ledger.<time>.jsonl.archived`). Each record states:
+
+- the task's issue and intent, checkout and branch;
+- its first `task.started` and its last `task.finished` (or, while open, its last
+  `task.refused`), and the wall seconds between them;
+- how many times `finish` refused it;
+- the episodes that carried it, each with the span of its lines about the task.
+
+A task with no `task.finished` line reads `open`, never finished.
+
+Interventions, CI reruns, spend and acceptance are on every record as `not_observed`, with the
+reason and the issue that will supply each one (I3377 to I3381). There is no value, and that is
+not a zero.
+
+The answer also lists every ledger file it read, with its line and skipped-line counts, and
+every checkout it could not read, with the reason. `--since` and `--until` filter tasks by their
+start; a ledger is still read in full.
 
 ## What this does not measure
 
