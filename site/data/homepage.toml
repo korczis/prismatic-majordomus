@@ -2,10 +2,10 @@
 #
 # A landing page answers a visitor's questions in the order they are asked: what this is
 # (hero), why they should care (recognise), how it works (how), what they can do with it
-# (map, surfaces), how they know it works (refuses, proof), and how to start (install). This
-# file is that order, as the `id`s of the sections the homepage renders inside <main>. It is
-# not prose and carries no claim; the words are manifesto.toml's and marketing.toml's, and
-# every figure beside them is derived.
+# (map, surfaces, blackboard), how they know it works (refuses, proof), and how to start
+# (install). This file is that order, as the `id`s of the sections the homepage renders inside
+# <main>. It is not prose and carries no claim; the words are manifesto.toml's and
+# marketing.toml's, and every figure beside them is derived.
 #
 # scripts/ci/homepage-check holds the rendered page to it in both directions, and the rule
 # project.homepage-tells-a-declared-story makes that blocking: a section the page renders and
@@ -20,13 +20,24 @@
 #
 # To add a section: write it in site/templates/index.html with an id, name the id here where
 # it belongs in the argument, and give it at least one link or one derived figure.
-order = ["hero", "recognise", "how", "map", "surfaces", "refuses", "proof", "install"]
+order = ["hero", "recognise", "how", "map", "surfaces", "blackboard", "refuses", "proof", "install"]
 
 # The failures the homepage puts first, as the ids of the product domains whose `problem` it
 # shows (.ai/repo/features/domains/, ADR 0104). Editorial: which three, and in what order. The
 # sentences are the domains' own, and scripts/ci/homepage-check fails an id the product map
 # does not show or a problem the page does not render.
 problems = ["context", "coordination", "completion"]
+
+# The peer blackboard's section (ADR 0176). `doc` is the document it leads to, by its path under
+# docs/: the link is the route site/data/generated/docs.json gives that path. `waits` is the
+# work the blackboard waits for, as issue ids in the order the section lists them. Which issues
+# is docs/BLACKBOARD.md's own list under "Not yet", named here once more so the page can draw
+# each one from the plan: its title, its page and the status its record declares, and nothing
+# typed about how it stands (ADR 0166). test/cases/3387 holds this list and the document's to
+# each other both ways, and refuses one whose record is done.
+[blackboard]
+doc = "BLACKBOARD.md"
+waits = ["I2984", "I2999"]
 
 # What the homepage may make every visitor download from this site before they scroll: its own
 # HTML, the scripts and stylesheets it links, and graph data carried inline in the HTML. A

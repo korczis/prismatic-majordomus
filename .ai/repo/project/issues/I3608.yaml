@@ -1,0 +1,31 @@
+id: I3608
+milestone: mesh-journal-converges
+title: "An open review says how old it is, and lapses when nobody can answer it any more"
+slug: an-open-review-lapses
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Give every mesh review its age on every surface that lists it, and lapse an open review whose requesting session has closed or expired, or that has stood unanswered past a declared bound, with the reason recorded, so the open list holds only questions someone can still act on."
+why: "On 2026-10-20, majordomus_mesh_state kind=reviews open=true listed 20 open reviews, the oldest from 2026-10-17 (r-182b4e75e8df, r-19732de5ba2e, about v0.29.0), none answered. They name releases that have shipped and sessions that are gone, next to one live question (r-2780b7196cce, PR #1748). A reader cannot tell the live one from the dead ones without opening each, which is the stale claim winning, in the review queue."
+current_state: "A review is open until it is answered or withdrawn. The listing carries no request time, nothing lapses it, and a requester whose session closed leaves its reviews open forever."
+desired_state: "Each review carries requested_at and its age on mesh state, the brief and /ui/mesh. An open review lapses, recorded as lapsed with its reason, when its requesting session has closed or expired, or when it stands unanswered past the bound declared in the mesh configuration. A lapsed review is still readable and is not counted as open."
+scope:
+  - "apps/majordomus-cli/src/mesh/journal.rs"
+  - "apps/majordomus-cli/src/mesh/cooperation.rs"
+  - "apps/majordomus-cli/src/mesh/config.rs"
+  - "docs/MESH.md"
+non_scope:
+  - "Answering or withdrawing a review on someone's behalf"
+depends_on: []
+acceptance_criteria:
+  - "Every listed review carries requested_at, and the open list is ordered by it"
+  - "An open review whose requesting session closed lapses with reason session_closed, on every runtime that holds it"
+  - "An open review unanswered past the declared bound lapses with reason unanswered, and the bound is read from the mesh configuration, not pinned"
+  - "A lapsed review is readable by its key and is not counted as open"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --lib mesh::journal"
+evidence_required:
+  - "an_open_review_lapses_test"
+created_at: 2026-10-20
+updated_at: 2026-10-20

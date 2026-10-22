@@ -58,7 +58,7 @@
       ],
       "inputs": [
         "the commit to publish, checked out with a clean tree and contained in origin/master",
-        "zola, node_modules (npm ci) and, for the full gate, cargo",
+        "zola, node_modules (npm ci) and, for the full gate, cargo; or, without cargo, the rustdoc, ui-snapshot and cockpit-snapshot artifacts of the same commit's Pages run",
         "the operator's word, in this session, that the site is to go live now"
       ],
       "outputs": [
@@ -66,7 +66,7 @@
         "a checkpoint recording the deploy and the commit it published"
       ],
       "path": ".ai/repo/skills/deploy-site/SKILL.md",
-      "sha256": "b028d6944da422298bdcc2d3a1333d0d6b6b1aecb2b3d1890737bd3781233d5e",
+      "sha256": "eb55eb3c763e1295bf8223efa6398726fe3e77307a5b5cf4a4669470ddf404ce",
       "examples": [],
       "valid": true,
       "route": "/skills/deploy-site/"
@@ -138,7 +138,7 @@
         "an implementation record naming the invariant, the evidence, what was reconciled and what remains unsupported"
       ],
       "path": ".ai/repo/skills/implement/SKILL.md",
-      "sha256": "7d0ce54a0aea71650a1b6f1f2d4cbcca52827a354a232c1923bec3e00a91accf",
+      "sha256": "77f17470f7af7fc3aaf4902d2c47aaba4231de95f0fea430bf3fb242efb11fc7",
       "examples": [
         {
           "path": ".ai/repo/skills/implement/examples/add-a-catalogue-item.md",
@@ -419,6 +419,13 @@
       "description": "Majordomus artifacts: List the generated artifacts."
     },
     {
+      "name": "mj-blackboard",
+      "path": ".claude/skills/mj-blackboard/SKILL.md",
+      "kind": "domain",
+      "source": "module:blackboard",
+      "description": "Majordomus blackboard: Who works on what, now."
+    },
+    {
       "name": "mj-brief",
       "path": ".claude/skills/mj-brief/SKILL.md",
       "kind": "domain",
@@ -521,7 +528,7 @@
       "path": ".claude/skills/mj-economics/SKILL.md",
       "kind": "domain",
       "source": "module:economics",
-      "description": "Majordomus economics: Refuse unsupported economics claims; Explain one economics metric; Recorded benchmark runs; Token economics summary."
+      "description": "Majordomus economics: Refuse unsupported economics claims; Explain one economics metric; Recorded benchmark runs; Token economics summary; Each task's delivery economics."
     },
     {
       "name": "mj-editors",
@@ -622,6 +629,13 @@
       "description": "Majordomus knowledge base: Candidates awaiting review; One knowledge record; Whether the deriver is still writing."
     },
     {
+      "name": "mj-layout",
+      "path": ".claude/skills/mj-layout/SKILL.md",
+      "kind": "domain",
+      "source": "module:layout",
+      "description": "Majordomus layout: Refuse a misplaced artifact."
+    },
+    {
       "name": "mj-lifecycle",
       "path": ".claude/skills/mj-lifecycle/SKILL.md",
       "kind": "domain",
@@ -640,7 +654,7 @@
       "path": ".claude/skills/mj-mesh/SKILL.md",
       "kind": "domain",
       "source": "module:mesh",
-      "description": "Majordomus mesh: Claim a scope across the mesh; Cooperation, at a glance; The mesh self-check; The cooperation journal; The host firewall, as the mesh needs it; Consume a handover from the mesh; Publish a handover to the mesh; This machine's node identity; The discovered nodes; One runtime; Who…"
+      "description": "Majordomus mesh: Claim a scope across the mesh; Cooperation, at a glance; The mesh self-check; Enrol this machine in the mesh; The cooperation journal; The host firewall, as the mesh needs it; Consume a handover from the mesh; Publish a handover to the mesh; This machine's node identity; The…"
     },
     {
       "name": "mj-models",
@@ -876,7 +890,7 @@
   ],
   "claude_by_kind": {
     "command": 1,
-    "domain": 58,
+    "domain": 60,
     "skill": 8
   }
 }

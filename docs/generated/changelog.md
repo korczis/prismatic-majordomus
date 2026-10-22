@@ -1,11 +1,53 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the layer's release records, the decisions dated in each release's window, and the commits in its range; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.0.0-alpha.6 -->
+     Generator: majordomus-cli 1.0.0-alpha.7 -->
 # Changelog
 
 Every entry below is derived: a section per release the layer records, its decisions the ADRs dated inside that release's window, its changes the conventional commits in its range, its artifacts the record's own evidence. Nothing here is written by hand, and `majordomus generate changelog --check` fails when it stops matching the tree.
 
-Current version: **1.0.0-alpha.6**
+Current version: **1.0.0-alpha.7**
+
+## v1.0.0-alpha.5 — 2026-10-22
+
+### Added
+
+- **site**: a memory edit names the pages each key reaches (I3092) (`37205d4a1`)
+- **site**: a count inside a translated sentence is a slot (I3095) (`d296bf2ac`)
+- **site**: a translated bar keeps its English headroom (I3091), and the lessons are decided (`0ada9533f`)
+- **site**: translate the 8362 segments the alpha.1 build added to the Czech copy (`40d2a5875`)
+- **handbook**: the handbook carries the outlook, derived from the tree (`6b762a886`)
+- **site**: every article ends with the articles related to it, in its reader's language (`bf14f79f2`)
+
+### Fixed
+
+- **top**: #1789's reds, fixed at their sources and derived once (`76c578596`)
+- **top**: train 3a's pre-push reds, fixed at their source and derived once (`8e06eb3be`)
+- **handbook**: the outlook reads only the intent keys it shows (`f34dd4acb`)
+
+### Documentation
+
+- **site**: an article explains derivation, in English and in Czech (`a2d233d13`)
+- **site**: an article explains the plan critique, in English and in Czech (`6de68f89d`)
+- **site**: an article explains the cooperation model, in English and in Czech (`455304b1f`)
+
+### Housekeeping
+
+- **top**: train 3a, its members applied on the alpha.4 record and derived once (`c471d374c`)
+- **release**: record v1.0.0-alpha.4 and the metadata it publishes (`7dd644289`)
+- **release**: train 3a, site and docs members applied, bump to 1.0.0-alpha.5 (`3f32825b1`)
+- **derive**: the derived data follows the committed merge of master 9a5a9b7752 (`d10ea0aff`)
+- **plan**: I3094 is done by the alpha.1 top's pages.yml bounds, and master is derived once (`eef2f1cb5`)
+- **site**: derive the master merge once (`5e604fffc`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v1.0.0-alpha.5-aarch64-apple-darwin.tar.gz (`6204966024c0`)
+- `macos-x86_64` — majordomus-v1.0.0-alpha.5-x86_64-apple-darwin.tar.gz (`e854ee236363`)
+- `linux-x86_64-gnu` — majordomus-v1.0.0-alpha.5-x86_64-unknown-linux-gnu.tar.gz (`2106367929ab`)
+- `linux-x86_64-musl` — majordomus-v1.0.0-alpha.5-x86_64-unknown-linux-musl.tar.gz (`6cdb68bffb32`)
+- `linux-aarch64-gnu` — majordomus-v1.0.0-alpha.5-aarch64-unknown-linux-gnu.tar.gz (`ec943cc2672d`)
+- `linux-aarch64-musl` — majordomus-v1.0.0-alpha.5-aarch64-unknown-linux-musl.tar.gz (`b1c8dfd1285f`)
+
 
 ## v1.0.0-alpha.4 — 2026-10-21
 
