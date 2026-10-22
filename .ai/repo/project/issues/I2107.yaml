@@ -1,0 +1,24 @@
+id: I2107
+milestone: adopter-upgrades
+title: "doctor's rule-corpus check reads only the generated region of a host document"
+slug: doctors-rule-corpus-check-reads-only-the-generated-region
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "In region mode, read the generated region alone when deciding whether a bootstrap points at .ai/README.md and whether it carries a rule corpus; the host document around the region is the adopter's own prose."
+why: "prismatic-platform keeps a hand-written agent catalogue (### headings, bold bullets) in AGENTS.md beside a Majordomus region. doctor failed it with 'carries a rule corpus of its own' on every run, a finding no `update` can clear and, in an adopter whose pre-commit hook is doctor, a refusal of every commit."
+current_state: "mj_validate_bootstrap greps the whole target file in both modes; mj_bootstrap_rule_refs beside it already reads only the region."
+desired_state: "The pointer and corpus checks read mj_owned_content: the whole file in file mode, the region in region mode. A corpus inside a region still fails, naming the region."
+scope:
+  - "lib/doctor.sh"
+  - "test/cases/1004_a_region_is_all_doctor_reads_of_a_host_document.sh"
+acceptance_criteria:
+  - "A region-mode CLAUDE.md whose host prose carries headings, bold bullets and a profile table passes doctor; the same lines inside the region fail it; a file-mode AGENTS.md is still read end to end"
+  - "Case 1004 fails against master's lib/doctor.sh"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 1004_a_region_is_all_doctor_reads_of_a_host_document 899_a_bootstrap_names_only_rules_in_force 13_region_projection 03_update"
+evidence_required:
+  - "region_host_prose_case"
+created_at: 2026-10-09
+updated_at: 2026-10-09

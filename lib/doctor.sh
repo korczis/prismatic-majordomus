@@ -256,13 +256,20 @@ mj_validate_bootstrap() {
     if grep -q 'AGENTS\.md' "$MJ_ROOT/README.md"; then mj_doctrine_ok bootstrap "README.md" "names AGENTS.md"
     else mj_doctrine_fail bootstrap "README.md" "does not name AGENTS.md; a reader cannot find the agent bootstrap" "grep -n AGENTS.md README.md"; bad=1; fi
   fi
+  local owned
   while [ -n "$(mj_pol "projections.$j.target")" ]; do
     tgt="$(mj_pol "projections.$j.target")"; mode="$(mj_projection_mode "$j")"; j=$((j+1))
     [ -f "$MJ_ROOT/$tgt" ] || continue   # projection_integrity reports absence
-    if ! grep -q '\.ai/README\.md' "$MJ_ROOT/$tgt"; then
+    # The generated content only: the whole file in file mode, the region in region mode.
+    # Around a region is the host repository's own document — an agent catalogue, its own
+    # conventions — which no generator wrote and none may judge, and reading it failed every
+    # adopter that keeps such a document beside the region. A region that cannot be read is
+    # the projection doctrine's finding, not this one's.
+    owned="$(mj_owned_content "$MJ_ROOT/$tgt" "$mode" 2>/dev/null)" || continue
+    if ! printf '%s\n' "$owned" | grep -q '\.ai/README\.md'; then
       mj_doctrine_fail bootstrap "$tgt" "does not point at .ai/README.md; a worker reading it never reaches the layer" "grep -n '.ai/README.md' $tgt"; bad=1
-    elif grep -qE '^\| *`?(profile|routine|implementation)`? *\||^- \*\*[A-Za-z].*\*\*|^### (Rules|Ten rules|Lifecycle|Finish contract)' "$MJ_ROOT/$tgt"; then
-      mj_doctrine_fail bootstrap "$tgt" "carries a rule corpus of its own (a profile table, rule bullets or a rules section); rules live under .ai/repo/rules/" "grep -nE '^- \*\*|^### ' $tgt"; bad=1
+    elif printf '%s\n' "$owned" | grep -qE '^\| *`?(profile|routine|implementation)`? *\||^- \*\*[A-Za-z].*\*\*|^### (Rules|Ten rules|Lifecycle|Finish contract)'; then
+      mj_doctrine_fail bootstrap "$tgt" "carries a rule corpus of its own (a profile table, rule bullets or a rules section)$([ "$mode" = region ] && printf ' inside its generated region'); rules live under .ai/repo/rules/" "grep -nE '^- \*\*|^### ' $tgt"; bad=1
     fi
     mj_bootstrap_rule_refs "$tgt" "$mode" "$(mj_pol "projections.$((j-1)).provider")" || bad=1
   done
