@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+# step-bound-check — every timed step declares a bound, and every bound is smaller than the
+# bound of the job that runs it.
+#
+# The failure this refuses is not a slow step. It is a step killed by its *job's*
+# `timeout-minutes`, which GitHub reports as `cancelled` — and `cancelled` is what every
+# reader here, including the gates and including me, has taken for "not a failure". Measured
+# on this repository: the site job's UI audit was killed at exactly 50 minutes on master at
+# 6a8d47a47, at 70685d473, and on both runs of the integration branch. Three runs to the
+# second, nothing red, nobody told.
+#
+# A step whose own bound is smaller than its job's always loses the race to its own message.
+# That is the whole invariant: the step reports, the job never has to.
+#
+# It does NOT hold the sum: several steps can still add up past their job's bound and be
+# killed together, and nothing here sees that. The job bound remains the backstop it always
+# was; what changes is that one runaway step can no longer hide inside it.
+#
+# Exit: 0 ok · 10 a finding · 12 the workflow could not be read.
+set -eu
+ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+WF="${1:-$ROOT/.github/workflows/validate.yml}"
+[ -f "$WF" ] || { echo "step-bound-check: no workflow at $WF" >&2; exit 12; }
+
+found="$(mktemp "${TMPDIR:-/tmp}/mj.sb.XXXXXX")"
+trap 'rm -f "$found"' EXIT
+
+awk '
+  /^  [a-z0-9_-]+:[ \t]*$/ { job = $0; sub(/:[ \t]*$/, "", job); gsub(/^[ \t]+/, "", job); bound = 0; next }
+  /^    timeout-minutes: [0-9]+[ \t]*$/ { b = $0; sub(/.*: /, "", b); bound = b + 0; next }
+  /scripts\/ci\/timed/ {
+    if (job == "") next
+    if (bound == 0) { printf "%d\t%s\tthe job declares no timeout-minutes, so its steps have nothing to be smaller than\n", FNR, job; next }
+    line = $0
+    if (line !~ /scripts\/ci\/timed --bound [0-9]+/) {
+      printf "%d\t%s\tthe step carries no --bound, so a step that never finishes is never measured\n", FNR, job; next
+    }
+    s = line; sub(/.*scripts\/ci\/timed --bound /, "", s); sub(/[^0-9].*$/, "", s)
+    if (s + 0 >= bound * 60) {
+      printf "%d\t%s\tthe step bound %ss is not smaller than the job bound %dm; the job would kill it first\n", FNR, job, s, bound
+    }
+  }
+' "$WF" > "$found"
+
+n="$(grep -c . "$found" || true)"
+if [ "${n:-0}" = 0 ]; then
+  printf 'step-bound-check: every timed step is bounded under its job\n'
+  exit 0
+fi
+printf 'step-bound-check: a step could be killed by its job rather than report its own time:\n'
+while IFS="$(printf '\t')" read -r ln job msg; do
+  [ -n "$ln" ] || continue
+  printf '  %s:%s  job %s — %s\n' "$(basename "$WF")" "$ln" "$job" "$msg"
+done < "$found"
+printf '  [reproduce: scripts/ci/step-bound-check]\n'
+exit 10

@@ -129,6 +129,21 @@ if grep -q 'probe-check' "$T/gate2.out"; then
   echo "    the gate rejected a composition of two commands:"; cat "$T/gate2.out"; exit 1
 fi
 
+# ...and does not reject a recipe that *uses* a command's answer. `just open` reads one
+# value out of `serve status` and then opens a browser — work no command of either program
+# does, so the bridge cannot write it. Spelling a command is what the gate refuses; a
+# program named inside a command substitution is a value the recipe consumed.
+printf '%s\n' '# One value read out of a command, then work no command does.' \
+  "[group('probe')]" 'probe-open:' \
+  '    @url="$(bin/majordomus-cli serve status --format json | head -1)"; \' \
+  '    [ -n "$url" ] || exit 1; echo "$url"' \
+  > "$PROBE/.just/probe.just"
+( cd "$PROBE" && ./scripts/ci/command-graph >"$T/gate3.out" 2>&1 ) || true
+[ -s "$T/gate3.out" ] || { echo "    the gate said nothing at all on the third probe"; exit 1; }
+if grep -q 'probe-open' "$T/gate3.out"; then
+  echo "    the gate rejected a recipe that reads a command's answer:"; cat "$T/gate3.out"; exit 1
+fi
+
 # --- adding a command reaches every projection without editing one
 #
 # The graph is asked for a command that exists only because clap declares it. If a surface
@@ -192,7 +207,13 @@ unset OPENAI_API_KEY ANTHROPIC_API_KEY
 # repository must not appear when the question is asked about another one. Leaving a
 # repository leaves nothing behind because there is nothing to leave: the answer is
 # recomputed from where the caller is.
-OTHER="$T/other"; mkdir -p "$OTHER"; ( cd "$OTHER" && git init -q . && git commit -q --allow-empty -m x )
+# The identity is set here as every other fixture in this suite sets it: `git init` inherits
+# none, and a runner has no global one, so the commit below failed on CI with "empty ident
+# name" and nowhere else. test/run.sh configures the case's own $T repository; this is a
+# second repository the case makes for itself.
+OTHER="$T/other"; mkdir -p "$OTHER"
+( cd "$OTHER" && git init -q . && git config user.email t@example.com && git config user.name t \
+  && git commit -q --allow-empty -m x )
 "$RB" --repo "$OTHER" completion query --surface workflow -- just > "$T/other.txt" 2>&1 || true
 if grep -q 'site-build' "$T/other.txt"; then
   echo "    a workflow of one repository was offered in another"; exit 1

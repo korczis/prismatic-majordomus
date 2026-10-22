@@ -264,7 +264,11 @@ record_state() {
 # including its colour and description, because those are somebody's choice and not ours.
 if [ "$MODE" = apply ]; then
   have_labels="$(gh label list --repo "$REPO" --limit 200 --json name --jq '.[].name' 2>/dev/null || true)"
-  for id in $(selected_issues); do labels_of "$id"; done | tr ',' '\n' | LC_ALL=C sort -u | while read -r l; do
+  # The labels are gathered first and read in this shell: a loop fed by a pipe runs in a
+  # subshell, where note() would count drift into a copy that is gone when the loop ends
+  # (scripts/ci/shell-lint refuses the shape).
+  wanted_labels="$(for id in $(selected_issues); do labels_of "$id"; done | tr ',' '\n' | LC_ALL=C sort -u)"
+  while read -r l; do
     [ -n "$l" ] || continue
     printf '%s\n' "$have_labels" | grep -qxF "$l" && continue
     case "$l" in
@@ -277,7 +281,7 @@ if [ "$MODE" = apply ]; then
     esac
     gh label create "$l" --repo "$REPO" --description "$d" --force >/dev/null 2>&1 \
       && note OK created "label $l" || note OK exists "label $l"
-  done
+  done <<< "$wanted_labels"
 fi
 
 # ---------------------------------------------------------------- milestones
@@ -391,12 +395,20 @@ done
 # A remote issue claiming a canonical record this repository does not have. This ran through
 # a pipe, so it ran in a subshell, so every finding it made was lost before the count was
 # printed and --check could never fail on one. It reads from a file now.
+#
+# An issue claims a record in exactly two ways, and they are not interchangeable. A record
+# marker is an identity the adapter wrote, so it is the claim verbatim. A title is a
+# person's text, so it claims a record only when it carries the canonical shape the adapter
+# projects — `<id> — <title>`; anything else is a human-written title claiming nothing. The
+# field the claim came from is what separates them, so awk names it: reading a title as an
+# identity promoted "P0: 100% new-code coverage is a blocking invariant" to a record id and
+# reported the gate's one and only unmanaged finding against it.
 UNMANAGED="$(mktemp "${TMPDIR:-/tmp}/mj.un.XXXXXX")"
-awk -F'\t' '{ print $1 "\t" ($6 != "" ? $6 : $2) }' "$REMOTE_IS" > "$UNMANAGED"
-while IFS="$(printf '\t')" read -r n t; do
-  case "$t" in
-    *' — '*) cid="$(printf '%s' "$t" | sed -n 's/^\([MI][0-9][0-9]*\) — .*/\1/p')" ;;
-    *)       cid="$t" ;;
+awk -F'\t' '{ print $1 "\t" ($6 != "" ? "record" : "title") "\t" ($6 != "" ? $6 : $2) }' "$REMOTE_IS" > "$UNMANAGED"
+while IFS="$(printf '\t')" read -r n src t; do
+  case "$src" in
+    record) cid="$t" ;;
+    *)      cid="$(printf '%s' "$t" | sed -n 's/^\([MI][0-9][0-9]*\) — .*/\1/p')" ;;
   esac
   [ -n "$cid" ] || continue
   [ -f "$(mj_pj_flat "$cid")" ] || note DRIFT unmanaged "issue #$n claims to be $cid, which is not in the canonical model"

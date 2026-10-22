@@ -9,6 +9,9 @@ status: active
 class: blocking
 depends_on: []
 tags: [records, git]
+
+x-majordomus:
+  tests: [test/cases/05_handover.sh, test/cases/20_checkpoint.sh, test/cases/61_session_envelope.sh]
 ---
 
 # Rationale

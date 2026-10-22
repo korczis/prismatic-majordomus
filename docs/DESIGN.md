@@ -110,23 +110,13 @@ adds nouns becomes the thing it was meant to supervise.
 
 ## Core Mental Model
 
-```
-            Human / Organisation
-                    |
-                    v
-               MAJORDOMUS
-        policy · state · verification
-                    |
-      +-------------+-------------+
-      v             v             v
-   Worker A      Worker B      Worker C
-  (Claude Code)  (Codex)       (Gemini, Cursor, local ...)
-      |             |             |
-      +-------------+-------------+
-        an orchestrator (bb) runs any of them; the agent stays the worker
-                    |
-                    v
-          Verified, accepted outcomes
+```mermaid
+flowchart TD
+  human["Human / Organisation"] --> mj["MAJORDOMUS<br>policy · state · verification"]
+  mj --> wa["Worker A<br>(Claude Code)"]
+  mj --> wb["Worker B<br>(Codex)"]
+  mj --> wc["Worker C<br>(Gemini, Cursor, local ...)"]
+  wa & wb & wc -->|"an orchestrator (bb) runs any of them;<br>the agent stays the worker"| out["Verified, accepted outcomes"]
 ```
 
 Majordomus sits between the person and the workers. It holds one canonical policy,
@@ -267,36 +257,69 @@ Design rules for this schema:
 - **No provider capability lives in the canonical layer.** Model names, tool grants,
   and vendor flags belong in projections.
 
-## Session Model
+## Task Model and Episode Model
 
+These are two models, and this document called them one until 2026-09-11. The confusion is
+not academic: making the second depend on the first is what let an ordinary finished task
+silently disable continuity for every conversation after it, for six days, while every
+diagnostic reported health; ADR 0052, "The session lifecycle is the episode's, not the
+task's", records the audit and the decision.
+
+A **task** is a unit of intended work that a person opens and closes.
+
+```mermaid
+flowchart TD
+  st["majordomus start &lt;task&gt;"] --> sc["scope declared (paths)"]
+  sc --> claim["claim normalised, overlap reported"]
+  sc --> pf["profile selected"]
+  pf --> fixed["effort / verbosity / context /<br>verification fixed"]
+  pf --> worker["worker executes<br>(Majordomus is not involved)"]
+  worker --> ck["majordomus check"]
+  ck --> report["state consistent? scope respected? blockers?"]
+  ck -->|"incomplete"| cont["continue, or majordomus handover"]
+  ck --> fin["majordomus finish"]
+  fin --> contract["finish contract evaluated;<br>refuses if unmet"]
 ```
-majordomus start <task>
-      |
-      v
-  scope declared (paths)  --> claim normalised, overlap reported
-      |
-      v
-  profile selected        --> effort / verbosity / context / verification fixed
-      |
-      v
-  worker executes         (Majordomus is not involved)
-      |
-      v
-majordomus check          --> state consistent? scope respected? blockers?
-      |
-      +-- incomplete --> continue, or majordomus handover
-      |
-      v
-majordomus finish         --> finish contract evaluated; refuses if unmet
+
+A task is bounded by `start` and either `finish` or `handover`. There is no "still open
+from Tuesday" state that Majordomus recognises as healthy; `watch` reports any task record
+whose last update predates its declared checkpoint interval.
+
+An **episode** is a provider's conversation boundary. It begins when a client attaches and
+ends when it detaches, whether or not anybody declared a task and whether or not the last
+task anybody declared was finished a week ago.
+
+```mermaid
+flowchart TD
+  ss["provider fires SessionStart"]
+  kept["session start --if-open keep<br>(keyed by the provider session,<br>not the checkout)<br>briefing to stdout"]
+  work["work happens, every command stamping its own<br>episode id onto its ledger line"]
+  pc["provider fires PreCompact"]
+  cp["checkpoint --derive<br>(a checkpoint is an artefact of the episode;<br>no task is required)"]
+  se["provider fires SessionEnd"]
+  ho["handover, then session close<br>(the envelope's references computed from the ledger)"]
+
+  ss --> kept
+  ss --> work
+  work --> pc
+  pc --> cp
+  pc --> se
+  se --> ho
 ```
 
-A session is bounded by `start` and either `finish` or `handover`. There is no
-"still open from Tuesday" state that Majordomus recognises as healthy. `watch`
-reports any task record whose last update predates its declared checkpoint interval.
+`task != session` in both directions: a task spanning two sittings is named by both
+episodes, and an episode that touches three tasks names all three. Task outcome may change
+what a continuation record *says*; it may never decide whether one is *written*.
 
-Majordomus does not hook the worker's runtime in v0.1. It is invoked by the person, by
-a git hook, or by the worker following its projected instructions. This is a known
-limitation and is stated as such.
+Majordomus does hook the worker's runtime, where the provider offers hooks to run.
+`majordomus capture install` writes the shims and names the configuration entries it will
+not rewrite for you; which events a provider's adapter drives is declared in
+`share/providers.yaml` and reported by `lifecycle.providers`. A provider with no adapter
+loses the automation and none of the model — every command below is unchanged, and running
+them is again a matter of remembering.
+
+[`CONTINUITY.md`](CONTINUITY.md) carries the whole path, from entry through the episode to
+the tracked record and a future resume, and the reading that lets a person watch it.
 
 ## Context Model
 
@@ -458,14 +481,12 @@ Distinctions the evidence made necessary:
 
 ## Provider Projection Model
 
-```
-.ai/repo/policy.yaml
-         |
-         |  majordomus update
-         v
-   +-----+-----+-------------+
-   |           |             |
-CLAUDE.md   AGENTS.md    GEMINI.md   (+ .cursor/rules, generic)
+```mermaid
+flowchart TD
+  policy[".ai/repo/policy.yaml"] -->|"majordomus update"| claude["CLAUDE.md"]
+  policy -->|"majordomus update"| agents["AGENTS.md"]
+  policy -->|"majordomus update"| gemini["GEMINI.md"]
+  policy -->|"majordomus update"| extra["(+ .cursor/rules, generic)"]
 ```
 
 - Projections are generated, not hand-edited. Each carries a header stating that it

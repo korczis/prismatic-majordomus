@@ -11,6 +11,7 @@ tags:
   - versioning
   - projections
 related:
+  - rule:project.the-version-is-measured
   - rule:project.interfaces-are-projections
   - rule:project.derived-files-regenerated
   - rule:project.conventional-commits
@@ -29,6 +30,16 @@ provenance:
 ---
 
 # 29. The changelog is a projection of what the repository already records, and the version has one writer rather than one source
+
+> **Amended by [ADR 0051](0051-the-minimum-release-version-is-measured-from-the-public-contract.md) (proposed), 2026-09-12.**
+> The fourth decision below — that `release bump` takes by default *the bump the conventional
+> commits imply* — no longer holds. The minimum version is measured from the public capability
+> surface against the last release, and conventional commits are evidence beside that verdict
+> rather than the authority for it. The consequences section of this record names that
+> inference as a known cost ("a breaking change committed as `feat` produces a minor bump");
+> ADR 0051 is what removed it. Everything else here stands: the changelog is composed, the
+> window is one interval said twice, the parser is total, and the version keeps two statements
+> and one writer.
 
 ## Context
 
@@ -152,8 +163,13 @@ changes the history now changes a tracked file — the same merge cost every oth
 document in this repository already carries. And the bump's default is an inference from
 commit subjects, so a breaking change committed as `feat` produces a minor bump; the
 override exists for that, the report prints the commits it read as its evidence, and
-`project.conventional-commits` is advisory rather than blocking, so the inference will
-sometimes need overriding.
+`project.conventional-commits` was advisory rather than blocking when this was decided, so
+the inference will sometimes need overriding. It is blocking as of version 2 of that rule:
+the `commit-msg` hook refuses a message the policy does not accept, and the 54 commits of
+this history that predate it are recorded rather than rewritten. The inference over commits
+made since is therefore over conventional subjects; the overriding this paragraph anticipated
+remains available and remains the release author's, because a `feat:` prefix is evidence for
+a bump and never the decision (see [COMMIT.md](../../../docs/COMMIT.md)).
 
 What holds it: the crate's unit tests over the window arithmetic, the parser, the bump
 function and the narrowness of the write; `test/cases/103_release_projection.sh` over the

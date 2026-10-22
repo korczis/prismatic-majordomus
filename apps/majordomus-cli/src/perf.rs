@@ -61,7 +61,11 @@ pub struct Counters {
     pub graph_builds: AtomicU64,
     /// `CapabilityExecutor::execute`: every call through every transport.
     pub executions: AtomicU64,
-    /// Handlers actually run (an execution the cache did not answer).
+    /// Handlers actually run (an execution the cache did not answer), at every depth: a
+    /// handler that composes another capability through the executor counts both, which
+    /// is how composition is seen to use the one execution path rather than reach into
+    /// another module behind it. So `handler_invocations` equals `executions` minus
+    /// `cache_hits`, and an execution that ran a handler twice is exactly what breaks it.
     pub handler_invocations: AtomicU64,
     /// Executions answered from the cache.
     pub cache_hits: AtomicU64,

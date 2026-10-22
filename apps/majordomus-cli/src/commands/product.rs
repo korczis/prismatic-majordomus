@@ -396,12 +396,20 @@ fn providers_text(v: &Value) -> String {
             }
         };
         let episode = {
-            let v = s(&p["lifecycle"], "episode");
-            if v.is_empty() { "-".to_string() } else { v }
+            let v = s(&p["capability"], "episode");
+            if v.is_empty() {
+                "-".to_string()
+            } else {
+                v
+            }
         };
         let prompts = {
-            let v = s(&p["lifecycle"], "prompts");
-            if v.is_empty() { "-".to_string() } else { v }
+            let v = s(&p["capability"], "prompts");
+            if v.is_empty() {
+                "-".to_string()
+            } else {
+                v
+            }
         };
         out.push(format!(
             "{:<width$}  {:<36}  {:<10}  {:<7}  {:<10}  {:<13}  {:<5}  {}",

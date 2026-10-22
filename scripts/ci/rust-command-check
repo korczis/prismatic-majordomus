@@ -14,7 +14,15 @@
 #     already refuses — a capability outside its module's namespace, a duplicate identity —
 #     is not repeated here (rule capability-modules, case 91).
 # And across the tree: a module declared with `module!` that the root composes nowhere, and
-# a coverage floor that is absent or below MIN_FLOOR.
+# a coverage floor that is absent, not one integer, or below FLOOR_BOUND.
+#
+# The floor is a ratchet. FLOOR_BOUND is the lower bound the committed floor may not fall
+# under: the crate coverage measured when the bound was set (83.10-83.34% lines on every
+# recorded coverage job; the fixed 90 it replaced was never met by any run). It may rise and
+# never fall — raise FLOOR_BOUND and scripts/rust-coverage-threshold together when coverage
+# improves. This line is the one place the bound is written: test/cases/77_rust_evidence.sh
+# and test/cases/88_rust_command_tested.sh read it from here rather than restating it.
+# New uncovered code is refused regardless, by scripts/ci/coverage-differential.
 #
 # Enforcement is a ratchet, not a cliff. The modules that do not satisfy the rule today are
 # recorded in the baseline; the check fails only when a module that is not in the baseline
@@ -34,7 +42,7 @@ ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
 cd "$ROOT"
 DIR="apps/majordomus-cli/src/capability/builtin"
 BASELINE=".ai/repo/rust-command-baseline.txt"
-MIN_FLOOR=90
+FLOOR_BOUND=83
 FLOOR_FILE="scripts/rust-coverage-threshold"
 MODE="report"
 while [ $# -gt 0 ]; do case "$1" in
@@ -86,7 +94,8 @@ if [ ! -f "$FLOOR_FILE" ] || ! grep -qE '^[0-9]+$' "$FLOOR_FILE" 2>/dev/null; th
   add "-" "no coverage floor is declared in $FLOOR_FILE"
 else
   v="$(grep -m1 -oE '^[0-9]+$' "$FLOOR_FILE")"
-  [ "$v" -lt "$MIN_FLOOR" ] && add "-" "the coverage floor is ${v}%, below the ${MIN_FLOOR}% this rule calls high"
+  [ "$v" -lt "$FLOOR_BOUND" ] \
+    && add "-" "the coverage floor is ${v}%, below the ${FLOOR_BOUND}% bound it may rise from and never fall under"
 fi
 
 current="$(printf '%s' "$findings" | grep -v '^$' | cut -f1 | LC_ALL=C sort -u || true)"

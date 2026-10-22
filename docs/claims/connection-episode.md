@@ -2,7 +2,7 @@
 
 ## What it means
 
-Majordomus draws the episode boundary below the model, so that the episode which mattered — the one that ended in a crash, a compaction, or somebody closing the window — is recorded whether or not a model remembered to record it. Until ADR 0043 that was wired for one provider: Claude Code fires `SessionStart` and `SessionEnd`, a shim runs `capture session`, and the repository gets an episode. Every other client got nothing at all.
+Majordomus draws the episode boundary below the model, so that the episode which mattered — the one that ended in a crash, a compaction, or somebody closing the window — is recorded whether or not a model remembered to record it. Until ADR 0074 that was wired for one provider: Claude Code fires `SessionStart` and `SessionEnd`, a shim runs `capture session`, and the repository gets an episode. Every other client got nothing at all.
 
 A client with no hooks still has a boundary, and the shared server is standing on it. The client speaks `initialize`, calls `majordomus_session_attach` with its own durable name for the sitting, works, and goes. The episode opens on the attach, every message it sends is that episode's heartbeat, losing the connection detaches rather than closes it, and a client that comes back under the same name is given *its own* episode again — under whatever peer id it now has. A deliberate `majordomus_session_detach` closes it into a session record; a client that simply disappears has its episode closed as interrupted once the reattach grace has passed, and the difference between those two records is the one thing about an ended episode that changes what somebody does next.
 
@@ -32,7 +32,7 @@ majordomus capture status        # generic:session  connection  verified
 
 ## What it does not cover
 
-**Raw prompt capture, and the declaration says so.** An MCP server is handed `initialize`, tool calls and notifications; the person's prompt is never among them, in any version of the protocol. `share/providers.yaml` records `generic.lifecycle.prompts: none` with that reasoning in its evidence field, and there is deliberately no `connection` value under `prompts` for anybody to reach for. Prompt capture stays provider-specific.
+**Raw prompt capture, and the declaration says so.** An MCP server is handed `initialize`, tool calls and notifications; the person's prompt is never among them, in any version of the protocol. `share/providers.yaml` records `generic.capability.prompts: none` with that reasoning in its evidence field, and there is deliberately no `connection` value under `prompts` for anybody to reach for. Prompt capture stays provider-specific.
 
 **A compaction.** A connection cannot see one — nothing in the protocol announces that a client is about to discard its context — so a connection episode has a start and an end and no third event. A provider that fires `PreCompact` keeps that advantage.
 

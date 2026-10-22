@@ -1,7 +1,7 @@
 +++
 title = "The release"
 description = "the release: the changelog composed from the layer's release records, the decisions dated inside each release's window and the conventional commits in its range; the two statements of the version and the one command that writes them; the bump the commits imply and the evidence for it; and every surface derived from both"
-weight = 23
+weight = 25
 [extra]
 source = "docs/RELEASE.md"
 +++
@@ -10,7 +10,7 @@ source = "docs/RELEASE.md"
 
 What this project has shipped, what it would ship next, and the changelog that says so are
 one typed value, `release::Changelog`, composed by one module under
-[`apps/majordomus-cli/src/release/`](../apps/majordomus-cli/src/release/). Every surface
+[`apps/majordomus-cli/src/release/`](https://github.com/korczis/prismatic-majordomus/tree/master/apps/majordomus-cli/src/release). Every surface
 that states any of it renders that value: `majordomus release` on the command line, the HTTP
 route `/api/v1/changelog`, the MCP tool `majordomus_changelog` and the resource
 `majordomus://changelog`, and the generated document under `docs/generated/`. Nothing in it
@@ -19,8 +19,8 @@ Behaviour as implemented and tested; where this document and the executable disa
 document is wrong and changes in the same commit.
 
 The commands, their arguments and their executable examples are in the generated reference
-([`generated/cli.md`](generated/cli.md), under `majordomus release`); the capabilities, their
-routes and their benchmark cases in [`generated/capabilities.md`](generated/capabilities.md),
+([`generated/cli.md`](https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/cli.md), under `majordomus release`); the capabilities, their
+routes and their benchmark cases in [`generated/capabilities.md`](https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/capabilities.md),
 module `release`. Neither is restated here.
 
 ## The version is measured, not claimed
@@ -34,22 +34,41 @@ command line and every gate stayed green, because no gate was looking at the sur
 The surface is the capability registry — one declaration of which MCP, HTTP, OpenAPI and
 the command line are projections — and `docs/generated/registry.json` is committed at every
 commit and every tag, so two releases can be compared without building either. What a
-caller can hold is an *atom*: a public capability's identity, its kind, the MCP tool and
-resource it answers to, the HTTP method and path it is bound to, the command-line path that
-dispatches it.
+caller can hold is a public capability's identity, its kind, the MCP tool and resource it
+answers to, the HTTP method and path it is bound to, the command-line path that dispatches
+it, **and both of its schemas**.
 
 ```text
-an atom is gone      major implied   a caller who held it is broken
-an atom is new       minor implied   nothing broke, something arrived
-the surface is equal patch implied   nothing is owed; most commits are here
+something a caller held is gone    major implied   a caller who held it is broken
+a contract narrowed under a caller major implied   a required field, a removed value, a type
+something arrived                  minor implied   nothing broke, something is new
+a contract widened                 minor implied   every existing caller still works
+the surface is equal               nothing owed    most commits are here
 ```
 
+Schemas are compared **as contracts, in both directions**, which is the comparison a textual
+diff of two schemas gets wrong. An input is what a caller sends, so accepting more is
+compatible and demanding more is breaking; an output is what a caller receives, so promising
+more is compatible and promising less is breaking. The same edit — `x` becoming required —
+is a minor in an output and a major in an input. Descriptions, titles and examples are
+normalised away before anything is compared, so rewording a doc comment is not a release; a
+constraint the comparator has no rule for, changed, is counted **breaking** rather than
+guessed at, because a false major is an argument someone can win and a false patch is a
+caller who finds out by breaking.
+
 ```bash
-scripts/ci/version-matches-surface             # the tree against the newest version tag
-scripts/ci/version-matches-surface --explain   # every atom that arrived or left
-scripts/ci/version-matches-surface --implied   # just the level
-majordomus release bump --level minor          # raise both writers at once
+majordomus release analyze                     # the tree against the last release
+majordomus release analyze --explain           # every movement, and why each counts
+majordomus release analyze --format json       # the canonical VersionPlan every surface renders
+scripts/ci/version-matches-surface             # the gate: the same thing, mapping exit codes
+majordomus release bump                        # raise both writers to the measured minimum
 ```
+
+There is **one** engine and it lives in `apps/majordomus-cli/src/release/compat.rs`, reading
+`release/surface.rs`. The gate is an adapter over it; so is the Cockpit panel, the HTTP
+route, the MCP tool and the writer. Until [ADR 0051](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0051-the-minimum-release-version-is-measured-from-the-public-contract.md)
+there were two answers — a shell comparison in CI and a commit-subject inference inside
+`release bump` — and the inference won, because the writer runs before the gate does.
 
 **Below 1.0.0 the floor is a minor release** for any surface change, gone or new. Semantic
 versioning grants `0.y.z` a blanket exemption — anything may change — and Elm refuses that
@@ -59,7 +78,9 @@ the major reaches 1 the shift ends and the implied bump is the required one.
 
 **A removal is named whatever the verdict is.** Below 1.0.0 it does not refuse the release,
 and it is still stated as a breaking change: a caller who held what is gone otherwise finds
-out by breaking. The rule is `project.the-version-is-measured`; the gate is `version-surface`.
+out by breaking. The rule is `project.the-version-is-measured@2`; the gate is `version-surface`,
+selected by the `rust`, `rust-generated` and `distribution` path classes so that it runs
+before a change lands rather than only on a full plan.
 
 ### Where a removal is written down
 
@@ -70,7 +91,7 @@ The **release record** cannot hold it at all today. `release/v1`
 (`share/schemas/majordomus/release/release.v1.schema.json`) is `additionalProperties: false`
 and declares no field for a breaking change, and a record is written by the release workflow
 from the artifacts it published and by nobody else
-([`.ai/repo/releases/README.md`](../.ai/repo/releases/README.md)) — so an unreleased version
+([`.ai/repo/releases/README.md`](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/releases/README.md)) — so an unreleased version
 has no record for anything to be written into. The smallest field that would close this is a
 proposal, not a change made here: a schema change does not belong inside a documentation
 change.
@@ -129,12 +150,15 @@ writer.
 One section per release record, newest first by the date the record carries, with the
 unreleased work leading:
 
-```text
-   release record  ──►  version, tag, date, commit, artifacts
-   adr objects     ──►  the decisions dated inside this release's window
-   git log A..B    ──►  the changes, as conventional commits
-   issue·milestone ──►  the records those commits name, resolved against the layer
-```
+<pre class="mermaid">
+flowchart LR
+  record["release record"] --&gt; meta["version, tag, date,&lt;br&gt;commit, artifacts"]
+  adr["adr objects"] --&gt; decisions["the decisions dated inside&lt;br&gt;this release's window"]
+  log["git log A..B"] --&gt; changes["the changes, as&lt;br&gt;conventional commits"]
+  refs["issue · milestone"] --&gt; resolved["the records those commits name,&lt;br&gt;resolved against the layer"]
+  meta &amp; decisions &amp; changes &amp; resolved --&gt; section["one changelog section"]
+</pre>
+
 
 The window of a release is the same interval said in the two vocabularies its two sources
 have. An ADR carries a date and no commit; a commit carries no date the layer indexes. So
@@ -177,8 +201,11 @@ whole rather than split at a colon that was part of the sentence. This is the on
 decision in the parser worth arguing about, and it goes the other way from most changelog
 generators: a changelog that silently drops what it cannot classify lies by omission, and
 the commits it drops are exactly the ones nobody was paying attention to when they landed.
-`project.conventional-commits` is advisory, so a repository following it will always have
-some subjects that do not parse.
+`project.conventional-commits` is blocking since version 2 and the `commit-msg` hook
+refuses a subject that does not parse, so new commits arrive conventional. The history still
+holds 54 that predate the policy — recorded in `.ai/repo/commit-policy-baseline.txt`, every
+one of them published, none of them rewritable — and those are what the parser is lenient
+for. See [COMMIT.md](@/docs/commit.md).
 
 The kinds and the headings they render under, in the order a reader of a changelog wants
 them — what is new, what is fixed, what is faster, then the rest:
@@ -202,10 +229,12 @@ any change at all, each with its `kind`, the `heading` it is shown under, the `r
 by, and its own `changes` — and the groups are already in rank order when the document is
 composed:
 
-```text
-  section.groups[]  →  { kind: "feat", heading: "Added",   rank: 0, changes: [...] }
-                       { kind: "fix",  heading: "Fixed",   rank: 1, changes: [...] }
-                       { kind: "docs", heading: "Documentation", rank: 4, changes: [...] }
+```json
+{ "groups": [
+  { "kind": "feat", "heading": "Added",         "rank": 0, "changes": ["…"] },
+  { "kind": "fix",  "heading": "Fixed",         "rank": 1, "changes": ["…"] },
+  { "kind": "docs", "heading": "Documentation", "rank": 4, "changes": ["…"] }
+] }
 ```
 
 That order used to exist in exactly one place a projection could not reach: `ChangeKind::rank()`,
@@ -227,13 +256,15 @@ own `repository`, which the compiler passes in as `CARGO_PKG_REPOSITORY`. None o
 literal, so a fork or a move carries every link with it and nothing has to be told where the
 project now lives:
 
-```text
-  section  ──►  notes_url    the published release, from the record's own notes_url
-                compare_url  the range against the previous tag
-                tree_url     the tree at that tag
-  change   ──►  url          the commit
-  decision ──►  url          the ADR file that states the decision
-```
+<pre class="mermaid">
+flowchart LR
+  section["section"] --&gt; notes["notes_url&lt;br&gt;the published release, from&lt;br&gt;the record's own notes_url"]
+  section --&gt; compare["compare_url&lt;br&gt;the range against&lt;br&gt;the previous tag"]
+  section --&gt; tree["tree_url&lt;br&gt;the tree at that tag"]
+  change["change"] --&gt; curl["url&lt;br&gt;the commit"]
+  decision["decision"] --&gt; durl["url&lt;br&gt;the ADR file that&lt;br&gt;states the decision"]
+</pre>
+
 
 `forge()` in `changelog.rs` recognises one shape — `https://github.com/<owner>/<repo>` — and
 returns nothing for anything else. When it returns nothing, **no links are produced at all**
@@ -292,27 +323,36 @@ Counts of what that yields go stale; measure them instead:
 The version stays stated in two places, and should. `scripts/release-version` gives the
 reason and it is a real one: an installed tree has no `Cargo.toml`, and the crate is
 compiled before the shell tool exists, so neither program can read the other's copy at run
-time. [`DISTRIBUTION.md`](DISTRIBUTION.md#the-two-versions-and-why-there-are-two) is where
+time. [`DISTRIBUTION.md`](@/docs/distribution.md#the-two-versions-and-why-there-are-two) is where
 that is argued. What was missing was not a single source — it was a single writer.
 
-`majordomus release version` answers what both files state, whether they agree, what the
-commits since the last release imply, and the commits themselves as the evidence for that
-implication. It exits 10 when the two disagree, which is the same verdict and the same exit
-code `scripts/release-version --check` gives, so a person and a pipeline get one answer.
+`majordomus release version` answers what both files state and whether they agree. It exits
+10 when they do not, which is the same verdict and the same exit code
+`scripts/release-version --check` gives, so a person and a pipeline get one answer.
 
-`majordomus release bump` is the writer. The bump defaults to what the commits imply:
+`majordomus release bump` is the writer, and it **computes nothing**. It reads the same
+`VersionPlan` that `release analyze`, the HTTP route, the MCP tool and the gate read, and
+applies it:
+
+<pre class="mermaid">
+flowchart LR
+  plan["plan"] --&gt; validate["validate"] --&gt; apply["apply(plan)"]
+</pre>
+
+
+With no argument the version becomes the measured minimum: the baseline raised by what the
+contract requires. `--level major|minor|patch` and `--exact 1.2.3` name a **higher** version
+than that, for the cases where a maintainer means more than the contract did — reported with
+its provenance rather than silently. Neither may name a lower one:
 
 ```text
-  any commit marked breaking   →  major
-  any feat                     →  minor
-  anything else                →  patch
-  no commits at all            →  none
+  required minor, --level patch    REFUSED, nothing written
+  required minor, --exact 0.4.0    REFUSED, a version does not go down
+  required minor, --level major    allowed; "required 0.6.0, selected 1.0.0, explicit override"
 ```
 
-It is a total function of the changes, which is what makes the answer arguable from the
-evidence rather than a judgement a reader has to trust. `--level major|minor|patch|none`
-overrides it and `--exact 1.2.3` bypasses it, for the cases where a maintainer means
-something the commits do not say. `--dry-run` prints what would change and writes nothing.
+An override that could undershoot would not be an override — it would be the hole that makes
+the measurement decorative. `--dry-run` prints what would change and writes nothing.
 
 Two properties of the write matter:
 
@@ -323,10 +363,11 @@ Two properties of the write matter:
   disagreement with exit 10 — so a bump that half-applied is caught by the thing built to
   catch it rather than by the release three commits later.
 
-Zero-major is not special-cased: a project at `0.x` that declares a breaking change gets
-`1.0.0`. Some projects hold the convention that it should not, and others do not; applying
-it silently would make the derived answer unarguable, so a maintainer who means otherwise
-names the bump.
+Zero-major is not special-cased in the *arithmetic* — `Version::raised` is arithmetic and
+nothing else. Whether a breaking change below 1.0 costs a major or a minor is a policy
+question, and this repository answers it in exactly one place: `compat::Policy`, carrying the
+schema id `majordomus/version-policy/v1` and a mode decided by the baseline version alone. A
+second answer in the arithmetic is the shape this subsystem was built to remove.
 
 The version the crate declares is also the `current` field of the changelog, so a bump that
 was made and a changelog that was not regenerated disagree, and `generate --check` says so.
@@ -339,6 +380,7 @@ was made and a changelog that was not regenerated disagree, and `generate --chec
 |---|---|---|---|---|
 | the changelog | `majordomus release [changelog [VERSION]]` | `docs/generated/changelog.{json,yaml,md}` | `GET /api/v1/changelog` · `majordomus_changelog` · `majordomus://changelog` | through the registry |
 | the version report | `majordomus release version` | — | `GET /api/v1/release/version` · `majordomus_release_version` | through the registry |
+| the compatibility analysis | `majordomus release analyze` | — | `GET /api/v1/release/analysis` · `majordomus_release_analysis` | through the registry |
 | raising the version | `majordomus release bump` | — | withheld | withheld |
 
 </div>
@@ -346,7 +388,7 @@ was made and a changelog that was not regenerated disagree, and `generate --chec
 
 Nothing configures that last row. `release bump` writes tracked files, which
 `command_graph/semantics.rs` annotates as `RepositoryMutation`, and the exposure policy of
-[ADR 0027](../.ai/repo/adrs/0027-a-command-is-declared-once-and-every-surface-is-a-projection.md)
+[ADR 0027](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0027-a-command-is-declared-once-and-every-surface-is-a-projection.md)
 keeps repository mutations off every machine surface. No capability declares it, and
 `majordomus commands explain executable.release.bump` prints the reason each surface
 withholds it. The read half is two capabilities, and the command line renders them by
@@ -390,7 +432,7 @@ refusing would make the document unavailable exactly where it is read from a mac
 
 The release procedure itself — the tag, the pipeline, the build matrix, the record written
 from what was published, and recovery from a bad release — is
-[`DISTRIBUTION.md`](DISTRIBUTION.md#releasing). This document owns only the version and the
+[`DISTRIBUTION.md`](@/docs/distribution.md#releasing). This document owns only the version and the
 changelog it produces. The first step of that procedure is now `majordomus release bump`
 rather than an editor over two files, and `scripts/release-version --check` still runs
 after it: the check proves the work of one writer instead of the memory of one person.
@@ -418,7 +460,7 @@ thing those answers can be checked against.
 
 ## Related
 
-- [ADR 0029](../.ai/repo/adrs/0029-the-changelog-is-a-projection-and-the-version-has-one-writer.md) — the decision behind this document, and the four alternatives it rejected
+- [ADR 0029](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0029-the-changelog-is-a-projection-and-the-version-has-one-writer.md) — the decision behind this document, and the four alternatives it rejected
 - [`DISTRIBUTION.md`](@/docs/distribution.md) — how the tool is packaged, published and installed, and the release pipeline that writes the records this reads
 - [`COMMANDS.md`](@/docs/commands.md) — the effect model and the exposure policy that withhold `release bump`
 - [`CAPABILITIES.md`](@/docs/capabilities.md) — the registry the two read capabilities are declared in

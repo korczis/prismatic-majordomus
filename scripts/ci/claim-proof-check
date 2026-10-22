@@ -1,0 +1,165 @@
+#!/usr/bin/env bash
+# claim-proof-check — a claim marked `guaranteed` names a test, and the test names it back.
+#
+# THE SUBJECT IS CLAIMS. Rules are not measured here and this gate's verdict says nothing
+# about them; `scripts/ci/rule-proof-check` owns that population and is the only reader of
+# it. This script was `enforcement-check` and carried both halves, which was wrong twice
+# over, and the history is worth keeping because both mistakes are ones this repository
+# names elsewhere:
+#
+#   - It was a second inventory of a property another gate already owned. Its rule half
+#     accepted a blocking rule that carried an `x-majordomus:` block, *any* block — while
+#     rule-proof-check asks the stronger question of the same block, whether it names a
+#     validator or a test. Measured over all 102 blocking rules on master, the rule half
+#     never accepted anything rule-proof-check rejects, and no rule passed it through the
+#     `# Verification` branch that rule-proof-check would have failed. It was a weaker
+#     function of another gate's answer, which is the duplicate declaration this repository
+#     exists to remove.
+#
+#   - Worse, the weaker question became the wrong one. ADR 0048 gave a rule a third mode:
+#     `reviewed_because:`, a written reason that a person enforces it. That lives inside the
+#     `x-majordomus:` block, so the bare-block test read four rules that declare *a human
+#     reads this* as machine-followable proof, and printed `FIXED project.clean-room` — "a
+#     promise now has a proof" — when no proof had been wired and an exemption had been
+#     written. Its own baseline header said the list "shrinks by wiring the enforcement —
+#     never by softening". It softened and reported it as wiring.
+#
+# What is left here is the half nothing else reads. `scripts/generate-site-data --check`
+# verifies that the test a claim names *exists*. A path existing is not a proof executing:
+# the file can be renamed away from what it once asserted, or gutted, and the claim keeps
+# its pointer. `scripts/evidence-check` reads a third thing — the ledger, whether a run was
+# ever recorded. Neither reads the link back from the test to the claim, which is what this
+# gate does: the test the claim names contains the claim's id. That is deliberately weak —
+# a mention is not an assertion — and the verdict says "names" rather than "proves",
+# because a check that cannot see the difference must not claim it can.
+#
+# The half is a ratchet. The debt is real, predates the gate, and is recorded by id in
+# .ai/repo/claim-proof-baseline.txt: the set may shrink and may not grow. Nothing here is
+# ever satisfied by lowering a bar — a baseline entry is removed by writing the claim's id
+# into the test it names, never by demoting the claim's status, and the gate reports an
+# entry that no longer matches so the list cannot rot.
+#
+# Every verdict below states its denominator and names its population. That is the whole
+# point of the gate and it would be absurd for the gate itself to print a bare count, or a
+# list of ids a reader cannot tell the population of — which is exactly how this script's
+# previous failure report, printing rule ids and claim ids in one list under a remedy
+# paragraph that led with blocking rules, was read as a verdict on rules.
+#
+#   scripts/ci/claim-proof-check                    report, and fail on a new claim with no proof
+#   scripts/ci/claim-proof-check --write-baseline   record today's debt (a deliberate act)
+#   scripts/ci/claim-proof-check --strict           fail on any, baseline ignored
+#   MJ_ROOT=<dir> scripts/ci/claim-proof-check      measure another tree (case 230 does)
+#
+# Exit: 0 clean or debt unchanged, 10 a guaranteed claim whose test does not name it back
+# and which the baseline does not carry (or any under --strict), 12 unusable.
+set -eu
+set -o pipefail
+
+ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
+cd "$ROOT"
+CLAIMS="docs/CLAIMS.yaml"
+BASELINE=".ai/repo/claim-proof-baseline.txt"
+MODE="report"
+while [ $# -gt 0 ]; do case "$1" in
+  --write-baseline) MODE="write"; shift ;;
+  --strict) MODE="strict"; shift ;;
+  *) echo "claim-proof-check: unknown option $1" >&2; exit 2 ;;
+esac; done
+
+# A tree with no claims file is a tree where this gate does not apply — an adopting
+# repository owes no docs/CLAIMS.yaml of ours. That is different from a claims file with no
+# guaranteed claim in it, which is a population that vanished, and the two are reported
+# differently below: a check that cannot tell "does not apply" from "found nothing" is the
+# defect `project.empty-is-not-failure` is about.
+if [ ! -f "$CLAIMS" ]; then
+  echo "claim-proof-check: not applicable — this tree has no $CLAIMS"
+  exit 0
+fi
+
+# id, status and test, one row per claim, from the claims list. The fields are read in the
+# order they appear and the first of each wins, because the `note:` below a claim may
+# contain anything at all.
+rows="$(awk '
+  /^  - id: /   { if (id != "") print id "\t" st "\t" tst; id = substr($0, 9); st = ""; tst = ""; next }
+  /^    status: / { if (st  == "") st  = substr($0, 13) }
+  /^    test: /   { if (tst == "") tst = substr($0, 11) }
+  END { if (id != "") print id "\t" st "\t" tst }' "$CLAIMS")"
+
+claim_total=0
+debt=""
+while IFS="$(printf '\t')" read -r id st tst; do
+  [ "$st" = guaranteed ] || continue
+  claim_total=$((claim_total + 1))
+  if [ -n "$tst" ] && [ "$tst" != "-" ] && [ -f "$tst" ] && LC_ALL=C grep -qIF "$id" "$tst" 2>/dev/null; then continue; fi
+  debt="$debt$id
+"
+done <<ROWS
+$rows
+ROWS
+debt="$(printf '%s' "$debt" | grep -v '^$' || true)"
+current="$(printf '%s\n' "$debt" | grep -v '^$' | LC_ALL=C sort -u || true)"
+debt_n="$(printf '%s\n' "$debt" | grep -c . || true)"
+
+# ---------------------------------------------------------------- the report
+if [ "$MODE" = write ]; then
+  { echo "# Guaranteed claims whose test does not name the claim back."
+    echo "#"
+    echo "# A claim marked \`status: guaranteed\` in docs/CLAIMS.yaml names a test. This is the"
+    echo "# list of those whose test does not contain the claim's id, so the link is written"
+    echo "# once, in the claim, and nothing reads it back from the other end."
+    echo "#"
+    echo "# Rules are not in this list. A blocking rule that names no proof is"
+    echo "# scripts/ci/rule-proof-check and .ai/repo/rule-proof-baseline.txt."
+    echo "#"
+    echo "# Written by scripts/ci/claim-proof-check --write-baseline; never by hand. The list"
+    echo "# may only shrink, and it shrinks by writing the claim's id into the test it names —"
+    echo "# never by lowering the claim's status, which would move the promise instead of"
+    echo "# keeping it."
+    printf '%s\n' "$current" | grep -v '^$' || true
+  } > "$BASELINE"
+  echo "claim-proof-check: baseline written — $debt_n of $claim_total guaranteed claim(s)"
+  exit 0
+fi
+
+printf 'guaranteed claims:   %s of %s name a test that does not name the claim back\n' "$debt_n" "$claim_total"
+printf 'blocking rules:      not measured here — scripts/ci/rule-proof-check is the one reader of that population\n'
+
+# Zero is a failure unless zero is declared expected. A claims file that exists and carries
+# no guaranteed claim is a population that vanished, not a population that came back clean,
+# and reporting `clean` over it is precisely the defect this gate is named for.
+if [ "$claim_total" = 0 ]; then
+  echo "claim-proof-check: $CLAIMS exists and carries no guaranteed claim — the population vanished rather than came back empty" >&2
+  exit 12
+fi
+
+if [ "$MODE" = strict ]; then
+  if [ -z "$current" ]; then echo "claim-proof-check: every guaranteed claim names a test that names it back"; exit 0; fi
+  printf '%s\n' "$current" | sed 's/^/  /' >&2
+  echo "claim-proof-check: $(printf '%s\n' "$current" | grep -c . || true) guaranteed claim(s) whose test does not name them back (--strict)" >&2
+  exit 10
+fi
+
+[ -f "$BASELINE" ] || { echo "claim-proof-check: no baseline at $BASELINE (run --write-baseline)" >&2; exit 12; }
+known="$(grep -vE '^[[:space:]]*(#|$)' "$BASELINE" | LC_ALL=C sort -u || true)"
+
+gone="$(comm -13 <(printf '%s\n' "$current" | grep -v '^$') <(printf '%s\n' "$known" | grep -v '^$') || true)"
+new="$(comm -23 <(printf '%s\n' "$current" | grep -v '^$') <(printf '%s\n' "$known" | grep -v '^$') || true)"
+
+if [ -n "$gone" ]; then
+  echo
+  echo "claim-proof-check: a claim's test now names it — tighten the baseline (--write-baseline):"
+  printf '%s\n' "$gone" | sed 's/^/  FIXED claim /'
+fi
+
+if [ -n "$new" ]; then
+  echo >&2
+  echo "claim-proof-check: guaranteed claim(s) in $CLAIMS whose test does not name them back, not in $BASELINE:" >&2
+  printf '%s\n' "$new" | sed 's/^/  NEW claim /' >&2
+  echo "  Each of these is a claim id, not a rule id. Write the claim's id into the test the" >&2
+  echo "  claim names — a comment saying which claim the case proves is enough — so the link" >&2
+  echo "  can be read from both ends. Do not answer this by lowering the claim's status." >&2
+  echo "  [reproduce: scripts/ci/claim-proof-check]" >&2
+  exit 10
+fi
+
+printf 'claim-proof-check: %s known, no new guaranteed claim without a proof\n' "$(printf '%s\n' "$known" | grep -c . || true)"

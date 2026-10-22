@@ -115,15 +115,41 @@
         },
         "checkpoint_on_compact": {
           "type": "boolean",
-          "description": "Record a derived checkpoint when the provider announces a compaction. A compaction discards the conversation while the work continues."
+          "description": "Record a derived checkpoint when the provider announces a compaction, and again when an episode closes. Both are moments at which what the episode knows stops being reachable. Neither asks whether a task is open: a checkpoint is the episode's record and a task is an optional relation it names when it has one (ADR 0052)."
         },
         "handover_on_end": {
           "type": "boolean",
-          "description": "Write a derived continuation record when an episode ends with its task still active."
+          "description": "Write a derived continuation record when an episode ends. Until ADR 0052 this happened only while a task was still active, so a repository whose last task had been handed over stopped writing the one record a future worker resumes from."
+        },
+        "stranded_after": {
+          "type": "string",
+          "pattern": "^[0-9]+[smh]$",
+          "description": "How long an open episode may go without a sign of life before `majordomus recover` may close it. The sign of life is the later of the episode's own started_at and the newest ledger line it stamped. Generous on purpose: closing a live episode costs the worker inside it the boundary of its work, and leaving a dead one open another hour costs nothing."
         },
         "ensure_server_on_start": {
           "type": "boolean",
           "description": "On the start event, make sure the repository's shared server serves this checkout (`majordomus serve ensure`): a server is started when none answers, never built, and the briefing names where it stands. False leaves the server to the first MCP client."
+        },
+        "freshness": {
+          "type": "object",
+          "description": "How old a continuation record may be before it stops being current. This is a different question from divergence (exact/advanced/diverged/different_context), which says where the record's commit sits relative to HEAD and nothing whatever about time: a record is `advanced` on the day it is written and still `advanced` a month later. Declared once here and read by every surface; a second copy of either number in a shell function, a Rust constant or a page of prose is the drift this file exists to prevent.",
+          "additionalProperties": false,
+          "required": [
+            "fresh_minutes",
+            "stale_minutes"
+          ],
+          "properties": {
+            "fresh_minutes": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Below this age a record is `fresh`: current, act on it."
+            },
+            "stale_minutes": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "At or beyond this age a record is `stale`: history, never presented as the current instruction. Between the two it is `aging` \u2014 still current, but its age is stated."
+            }
+          }
         }
       }
     },
@@ -132,6 +158,23 @@
       "additionalProperties": false,
       "properties": {
         "retention_max_lines": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "prompts": {
+      "description": "Bounds on the raw prompt archive under .ai/local/prompts/. Pruning replaces a prompt body with a tombstone and keeps every other field, including the provenance of its episode link; a record is never deleted. Either bound alone is a bound.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "retention_max_days": {
+          "description": "A prompt body older than this many days is pruned.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "retention_max_bytes": {
+          "description": "The total size of the prompt bodies the archive keeps; the oldest are pruned first past it.",
           "type": "integer",
           "minimum": 1
         }
@@ -163,6 +206,54 @@
               "type": "string"
             }
           }
+        }
+      }
+    },
+    "commit": {
+      "type": "object",
+      "description": "What a commit message is held to. The type vocabulary is not here: it is the changelog's own, and a second copy under this key is the duplication the commit subsystem exists to remove.",
+      "additionalProperties": false,
+      "properties": {
+        "subject_max_chars": {
+          "description": "The widest a subject line may be, measured whole including the type and scope.",
+          "type": "integer",
+          "minimum": 20
+        },
+        "scope_unknown": {
+          "description": "A scope outside the vocabulary the repository's own history yields.",
+          "enum": [
+            "off",
+            "info",
+            "warning",
+            "error"
+          ]
+        },
+        "fix_requires_test": {
+          "description": "A `fix` whose files include no test.",
+          "enum": [
+            "off",
+            "info",
+            "warning",
+            "error"
+          ]
+        },
+        "reference_unresolved": {
+          "description": "A record id in the message that the layer does not hold.",
+          "enum": [
+            "off",
+            "info",
+            "warning",
+            "error"
+          ]
+        },
+        "breaking_unexplained": {
+          "description": "A commit marked breaking with no body and no BREAKING CHANGE trailer.",
+          "enum": [
+            "off",
+            "info",
+            "warning",
+            "error"
+          ]
         }
       }
     },
@@ -228,11 +319,23 @@
           "properties": {
             "doctor_ms": {
               "type": "integer",
-              "minimum": 1
+              "minimum": 1,
+              "description": "Wall-time budget for `majordomus doctor`; over it the command WARNs and still exits on its findings."
             },
             "watch_ms": {
               "type": "integer",
-              "minimum": 1
+              "minimum": 1,
+              "description": "Wall-time budget for `majordomus watch`; over it the command WARNs and still exits on its findings."
+            },
+            "enter_ms": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Wall-time budget for entering the repository (`majordomus env enter`) when a server is already serving this checkout, which is every entry but the first. Entering a directory is something a person does dozens of times a day and never chose to wait for."
+            },
+            "enter_cold_ms": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Wall-time budget for the first entry, which additionally finds that nothing answers and starts a server \u2014 and then returns, because entry never waits for a server it started to become ready."
             }
           }
         }

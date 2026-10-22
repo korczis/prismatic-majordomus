@@ -169,7 +169,7 @@ impl Share {
             .filter_map(|e| e.file_name().to_str().map(str::to_string))
             .filter_map(|n| n.strip_suffix(".tmpl").map(str::to_string))
             .collect();
-        out.sort();
+        crate::order::canonical(&mut out);
         out
     }
 
@@ -197,7 +197,7 @@ impl Share {
         let templates = self.provider_templates();
         let mut ids: Vec<String> = templates.clone();
         ids.extend(file.providers.keys().cloned());
-        ids.sort();
+        crate::order::canonical(&mut ids);
         ids.dedup();
         let providers = ids
             .into_iter()
@@ -209,10 +209,12 @@ impl Share {
                         .unwrap_or_else(|| id.clone()),
                     client_config: decl.and_then(|d| d.client_config.clone()),
                     scratch_roots: decl.map(|d| d.scratch_roots.clone()).unwrap_or_default(),
-                    lifecycle: decl
-                        .and_then(|d| d.lifecycle.as_ref())
-                        .map(lifecycle_of)
+                    capability: decl
+                        .and_then(|d| d.capability.as_ref())
+                        .map(capability_of)
                         .unwrap_or_default(),
+                    lifecycle: decl.map(|d| d.lifecycle.clone()).unwrap_or_default(),
+                    prompt_capture: decl.map(|d| d.prompt_capture).unwrap_or(false),
                     template: templates.contains(&id),
                     declared: decl.is_some(),
                     id,
@@ -249,10 +251,14 @@ struct ProviderEntry {
     #[serde(default)]
     scratch_roots: Vec<String>,
     #[serde(default)]
-    lifecycle: Option<ProviderLifecycleEntry>,
+    lifecycle: Vec<String>,
+    #[serde(default)]
+    prompt_capture: bool,
+    #[serde(default)]
+    capability: Option<ProviderCapabilityEntry>,
 }
 
-/// The `lifecycle:` block of one provider entry, as written.
+/// The `capability:` block of one provider entry, as written.
 ///
 /// The two capability keys deserialise straight into their enums, so a word outside the
 /// vocabulary fails the read of the whole file with the path named rather than degrading
@@ -260,7 +266,7 @@ struct ProviderEntry {
 /// failure this file was written to end.
 #[derive(Debug, Default, Clone, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
-struct ProviderLifecycleEntry {
+struct ProviderCapabilityEntry {
     #[serde(default)]
     episode: Option<EpisodeSource>,
     #[serde(default)]
@@ -271,8 +277,8 @@ struct ProviderLifecycleEntry {
     prompts_evidence: Option<String>,
 }
 
-fn lifecycle_of(e: &ProviderLifecycleEntry) -> ProviderLifecycle {
-    ProviderLifecycle {
+fn capability_of(e: &ProviderCapabilityEntry) -> ProviderCapability {
+    ProviderCapability {
         episode: e.episode.unwrap_or_default(),
         episode_evidence: e.episode_evidence.clone().unwrap_or_default(),
         prompts: e.prompts.unwrap_or_default(),
@@ -303,7 +309,7 @@ pub enum EpisodeSource {
     /// boundary from them. The strongest form: it sees a window somebody closed.
     Hooks,
     /// The provider fires no session event, but its client attaches to this repository's
-    /// shared MCP server, and the connection is the boundary (ADR 0043).
+    /// shared MCP server, and the connection is the boundary (ADR 0074).
     Connection,
     /// Neither. Nothing can say when this provider's episode began or ended, and the tool
     /// reports that rather than implying a capability nobody has.
@@ -367,16 +373,9 @@ impl PromptSource {
 /// other five this distribution declares. The rule
 /// `project.a-provider-capability-cites-its-evidence` refuses a declaration without one.
 #[derive(
-    Debug,
-    Clone,
-    Default,
-    PartialEq,
-    Eq,
-    serde::Serialize,
-    serde::Deserialize,
-    schemars::JsonSchema,
+    Debug, Clone, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize, schemars::JsonSchema,
 )]
-pub struct ProviderLifecycle {
+pub struct ProviderCapability {
     /// How the episode boundary is drawn for this provider.
     pub episode: EpisodeSource,
     /// Where `episode` was verified: a vendor documentation URL, or the statement that no
@@ -412,12 +411,25 @@ pub struct ProviderDeclaration {
     /// The scratch roots it creates checkouts under, unexpanded.
     #[serde(default)]
     pub scratch_roots: Vec<String>,
-    /// What it can do about the session lifecycle, and where each answer was verified. A
-    /// provider with no `lifecycle:` block declares nothing, which reads as `none` with no
-    /// evidence — the state the capability rule refuses, so that the gap is a finding
-    /// rather than a silent "unsupported".
+    /// What the provider itself can do about the session lifecycle, and where each answer
+    /// was verified. A provider with no `capability:` block declares nothing, which reads as
+    /// `none` with no evidence — the state the capability rule refuses, so that the gap is a
+    /// finding rather than a silent "unsupported". This is the provider's fact; `lifecycle`
+    /// and `prompt_capture` below are this tool's, and a provider can have the first without
+    /// the second (`unadapted`).
     #[serde(default)]
-    pub lifecycle: ProviderLifecycle,
+    pub capability: ProviderCapability,
+    /// The lifecycle events the tool's adapter for it declares, in the provider's own
+    /// vocabulary (`SessionStart`, `SessionEnd`, `PreCompact`). Empty means the tool ships
+    /// no lifecycle adapter for it, which costs a worker the automation and none of the
+    /// model. Declared, because the two other ways to answer this question are both wrong:
+    /// reading `.claude/hooks/` reports an installation as a capability, and a list written
+    /// into a page is a second source of truth that goes stale the day an adapter changes.
+    #[serde(default)]
+    pub lifecycle: Vec<String>,
+    /// Whether the tool's adapter for it can archive the worker's prompts.
+    #[serde(default)]
+    pub prompt_capture: bool,
     /// The distribution ships a template for it.
     pub template: bool,
     /// The distribution declares it.

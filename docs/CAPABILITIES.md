@@ -16,20 +16,15 @@ projections), [ADR 4](../.ai/repo/adrs/0004-canonical-architecture-and-performan
 `project.interfaces-are-projections`, `project.rust-canonical-declaration`,
 `project.rust-benchmark-coverage` and `project.rust-hot-path`.
 
-```text
-ONE CANONICAL DECLARATION   capability! { id, kind?, title, description, input, output,
-                                          stability, exposure, tags, cache?, benchmark?, handler }
-        ↓
-MODULE COMPOSITION          module! { id, title, description, stability, capabilities: [...] }
-        ↓
-ROOT COMPOSITION            compose_modules![repository, objects, capabilities, graph, health, peers, perf]
-        ↓
-CAPABILITY REGISTRY         + every declarative object of the layer, validated, frozen, fingerprinted
-        ↓
-DERIVED PROJECTIONS         MCP · HTTP · OpenAPI → Swagger UI · CLI · the Cockpit
-                            · the execution plane and its live channel
-                            · benchmark targets and coverage · cache policy · perf counters
-                            · docs/generated/* · the website's /registry/ pages
+```mermaid
+flowchart TD
+  decl["ONE CANONICAL DECLARATION<br>capability! { id, kind?, title, description, input, output,<br>stability, exposure, tags, cache?, benchmark?, handler }"]
+  modc["MODULE COMPOSITION<br>module! { id, title, description, stability, capabilities: [...] }"]
+  rootc["ROOT COMPOSITION<br>compose_modules![repository, objects, capabilities,<br>graph, health, peers, perf]"]
+  registry["CAPABILITY REGISTRY<br>+ every declarative object of the layer,<br>validated, frozen, fingerprinted"]
+  proj["DERIVED PROJECTIONS<br>MCP · HTTP · OpenAPI → Swagger UI · CLI · the Cockpit<br>· the execution plane and its live channel<br>· benchmark targets and coverage · cache policy · perf counters<br>· docs/generated/* · the website's /registry/ pages"]
+
+  decl --> modc --> rootc --> registry --> proj
 ```
 
 A contributor adding one capability edits one `capability!` block (with its typed input
@@ -39,8 +34,10 @@ A contributor adding a **command** has one more thing to say, and only one: whet
 the projection of a capability (a `CliExposure` on that capability's declaration) or belongs
 to the command line alone, in which case `cli::LOCAL` in
 [`src/cli/local.rs`](../apps/majordomus-cli/src/cli/local.rs) carries the reason and
-`majordomus quality report` checks it. A command that says neither is a gate failure rather
-than an operation quietly missing from the API — the rule is
+`majordomus quality report` checks it. There is no second list: `capabilities projections`
+answers the commands no capability claims and, of those, the ones that carry no reason, and
+`scripts/ci/projection-check` refuses the second set. A command that says neither is a gate
+failure rather than an operation quietly missing from the API — the rule is
 `project.operation-transport-parity` and the working reference is [`QUALITY.md`](QUALITY.md).
 
 ## What is canonical, what is derived, what is not authoritative

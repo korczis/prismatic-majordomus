@@ -1,7 +1,7 @@
 +++
 title = "The development runtime"
 description = "the development runtime: which program owns the semantics of the plan, tasks, sessions, context, executions, peers, evidence and completion, the measured inventory of every one of them, the storage each is decided to keep, the two event tiers, the derivation chain anything exposed must follow, what each surface may and may not decide, and the ranked gaps between that boundary and the code"
-weight = 34
+weight = 36
 [extra]
 source = "docs/DEVELOPMENT_RUNTIME.md"
 +++
@@ -14,7 +14,7 @@ which surface may decide what, and how far the code is from that boundary today.
 The companion documents are [`DYNAMICITY.md`](@/docs/dynamicity.md), which decides where a *fact*
 lives, and [`CAPABILITIES.md`](@/docs/capabilities.md), which decides how an *operation* is
 declared. This document is the third of that set: it decides where a *semantic* lives. The
-decision is [ADR 0040](../.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md);
+decision is [ADR 0040](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md);
 the rule is `project.development-semantics-are-canonical@1`.
 
 Every count in this document was measured. The commands are in
@@ -80,9 +80,11 @@ third.
 So the runtime, today, cannot change a single development object, and none of the
 lifecycle is reachable from the Cockpit, MCP or HTTP.
 
-**The Cockpit is not the offender.** Its trees reference the layer exactly once, as a
-display label in `apps/majordomus-cli/src/cockpit/pages.rs:1787`; it reads no state and
-writes none. It is already the pure projection that [`COCKPIT.md`](@/docs/cockpit.md) and ADR 0013
+**The Cockpit is not the offender.** Its trees reference the layer nowhere at all; it reads
+no state and writes none. The one reference this document recorded when ADR 0040 landed was
+a display label — `statistic()`'s provenance caption naming a layer path where every other
+call site names prose — and it has since been written as prose too, which is what the rest
+of the file already did. It is already the pure projection that [`COCKPIT.md`](@/docs/cockpit.md) and ADR 0013
 require. The defect is on the other side: the runtime has no development semantics to
 offer, so a Cockpit asked to become a development surface has two options — reimplement the
 lifecycle, or shell out to `bin/majordomus`. Both create a second implementation, and the
@@ -209,18 +211,27 @@ from `sources.yaml`, typed by `kinds.yaml`, validated against the kind's schema 
 derivation over it (`plan.rs`, `graph.rs`, `product.rs`, `why.rs`, `obligations.rs`). No
 surface reads a file.
 
-```text
-.ai/** ──discovery──▶ index ──derivation──▶ capability ──projection──▶ surface
-```
+<pre class="mermaid">
+flowchart LR
+  layer[".ai/**"] --&gt;|discovery| index["index"]
+  index --&gt;|derivation| capability["capability"]
+  capability --&gt;|projection| surface["surface"]
+</pre>
+
 
 **Mutate.** *Target flow.* A surface posts a typed input to a capability of kind `command`.
 The capability validates against its input schema, applies the transition to the object in
 its canonical storage, appends a registered ledger event, and returns the new state. The
 same call over MCP, HTTP, the CLI and the Cockpit is one code path.
 
-```text
-surface ──typed input──▶ capability ──▶ object in .ai/**  ──▶ ledger event ──▶ /events
-```
+<pre class="mermaid">
+flowchart LR
+  surface["surface"] --&gt;|typed input| capability["capability"]
+  capability --&gt; object["object in .ai/**"]
+  object --&gt; ledger["ledger event"]
+  ledger --&gt; events["/events"]
+</pre>
+
 
 *Actual flow today.* For the lifecycle's mutating commands, the surface is a terminal
 and the capability does not exist: `bin/majordomus` dispatches into `lib/<name>.sh`, which
@@ -261,21 +272,19 @@ the execution stream, or the reverse.
 
 ## The derivation chain every exposed object follows
 
-```text
-canonical declaration            capability!  under src/capability/builtin/<module>.rs
-        │                        (or, for a layer object, its kind in share/kinds.yaml)
-        ▼
-serialization schema             CanonicalSchema from the typed input/output
-        │                        (or share/schemas/majordomus/<kind>/<kind>.v1.schema.json)
-        ▼
-HTTP route + OpenAPI             src/http/router.rs, docs/generated/openapi.{json,yaml}
-        │
-        ▼
-MCP tool or resource             majordomus://<kind>/<identity>, or a tool by capability id
-        │
-        ▼
-Cockpit contract                 the page that renders that capability's JSON
-```
+<pre class="mermaid">
+flowchart TD
+  decl["canonical declaration&lt;br&gt;capability! under src/capability/builtin/&amp;lt;module&amp;gt;.rs&lt;br&gt;(or, for a layer object, its kind in share/kinds.yaml)"]
+  schema["serialization schema&lt;br&gt;CanonicalSchema from the typed input/output&lt;br&gt;(or share/schemas/majordomus/&amp;lt;kind&amp;gt;/&amp;lt;kind&amp;gt;.v1.schema.json)"]
+  http["HTTP route + OpenAPI&lt;br&gt;src/http/router.rs&lt;br&gt;docs/generated/openapi.json, openapi.yaml"]
+  mcp["MCP tool or resource&lt;br&gt;majordomus://&amp;lt;kind&amp;gt;/&amp;lt;identity&amp;gt;,&lt;br&gt;or a tool by capability id"]
+  cockpit["Cockpit contract&lt;br&gt;the page that renders that capability's JSON"]
+  decl --&gt; schema
+  schema --&gt; http
+  http --&gt; mcp
+  mcp --&gt; cockpit
+</pre>
+
 
 Every link is generated. Nothing on the chain is written by hand, and a hand-written entry
 anywhere on it is a violation of `project.rust-canonical-declaration@1` (ADR 0004) as much
@@ -368,7 +377,7 @@ ADR 0040, not an architecture.
 | knowledge | `.ai/repo/knowledge/` | tracked | `objects.*` | `lib/knowledge.sh` | — | **compiler is shell-only, no capability** |
 | use case | `.ai/repo/use-cases/*.md` | tracked | one resource each, the coverage gate, the site | `lib/usecase.sh` | [`USE_CASES.md`](@/docs/use-cases.md) | `lib/usecase.sh` is a **second writer of `docs/generated/`** |
 | artifact | `generate::Target` (15 targets) | `docs/generated/**`, `site/data/**` | site, docs, `artifacts.list` | `majordomus generate` | [`DYNAMICITY.md`](@/docs/dynamicity.md) | **two writers**: `src/generate.rs` and a shell set including `lib/usecase.sh`, `bin/majordomus`, `scripts/derive`, `scripts/generate-site-data` |
-| Cockpit | `src/cockpit/` | none | a person | — | [`COCKPIT.md`](@/docs/cockpit.md) | **clean** — one layer reference, a display label at `pages.rs:1787` |
+| Cockpit | `src/cockpit/` | none | a person | — | [`COCKPIT.md`](@/docs/cockpit.md) | **clean** — no layer reference at all; the one display label ADR 0040 recorded is now prose |
 | quality / gates | `.ai/repo/ci/gates.yaml` | tracked | `validate.yml`, `just gate` | hand-edited + `ci-plan --check` | [`CI.md`](@/docs/ci.md) | `ci-plan --check` prints the gate and class tallies; the cases live in `test/cases/` and `apps/majordomus-cli/tests/` |
 
 </div>

@@ -24,10 +24,13 @@ test-rust *args:
 rust-check:
     scripts/rust-check
 
-# Line coverage of the Rust crate, against the threshold in scripts/rust-coverage-threshold.
+# Line, function and region coverage of the Rust crate, measured over the code that is under
+# test rather than over the code plus the tests, against the crate floor in
+# scripts/rust-coverage-threshold and the session/continuity domain's in
+# scripts/session-coverage-threshold.
 [group('test')]
 coverage:
-    cd "{{crate}}" && RUSTFLAGS='' cargo llvm-cov --all-targets --summary-only --fail-under-lines "$(cat "{{root}}/scripts/rust-coverage-threshold")"
+    "{{root}}/scripts/rust-coverage"
 
 # The criterion microbenchmarks (benches/projections.rs, benches/shared.rs, benches/scaling.rs). `just bench scaling` runs one; `just bench-run` is the end-to-end measurement.
 [group('test')]

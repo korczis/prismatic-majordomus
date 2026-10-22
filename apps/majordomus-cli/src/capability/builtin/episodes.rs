@@ -1,5 +1,5 @@
 //! The `episodes` module: the execution episode of a client that has no provider hooks,
-//! opened and closed by the MCP connection itself (ADR 0043).
+//! opened and closed by the MCP connection itself (ADR 0074).
 //!
 //! Three capabilities, and the shape of them is the argument. `attach` is what a client
 //! calls to say *this connection is carrying this piece of work*, naming the work with its
@@ -22,7 +22,7 @@ use crate::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
 use crate::capability::handler::{CapabilityError, Context};
 use crate::capability::model::{CapabilityKind, Exposure, Stability};
 use crate::capability::module::ModuleDescriptor;
-use crate::episodes::{CloseReason, Episode, REATTACH_GRACE};
+use crate::episodes::{CloseReason, ConnectionEpisode, REATTACH_GRACE};
 use crate::{capability, module};
 
 use super::{get, mcp, post, Empty};
@@ -34,7 +34,7 @@ use super::{get, mcp, post, Empty};
 /// whose own `SessionEnd` hook closes its episode is a `claude-code` episode; the same window
 /// calling `attach` here would be a second, generic one, which is why a client with working
 /// hooks has no reason to call it. `share/providers.yaml` declares
-/// `generic.lifecycle.episode: connection` with the evidence, and `capture session` admits it
+/// `generic.capability.episode: connection` with the evidence, and `capture session` admits it
 /// without an adapter line for exactly that reason.
 pub const CONNECTION_PROVIDER: &str = "generic";
 
@@ -70,7 +70,7 @@ impl BenchmarkCases for AttachInput {
 /// The answer of `episodes.attach`.
 pub struct Attached {
     /// The episode this connection now holds.
-    pub episode: Episode,
+    pub episode: ConnectionEpisode,
     /// Whether an episode already under this identity was resumed rather than a new one
     /// opened. True after a reconnect, a client restart or a crash, and the field a caller
     /// checks to know whether it is continuing something.
@@ -133,7 +133,7 @@ impl BenchmarkCases for DetachInput {
 pub struct Detached {
     /// The episode as it was closed, its `repository` field carrying what the repository's
     /// own end event reported.
-    pub episode: Episode,
+    pub episode: ConnectionEpisode,
 }
 
 fn episodes_detach(ctx: &Context, input: DetachInput) -> Result<Detached, CapabilityError> {
@@ -173,10 +173,10 @@ pub struct EpisodeList {
     /// fault count: this is where a crashed client's work waits to be resumed.
     pub detached: usize,
     /// Every episode, open and detached, in external-identity order.
-    pub episodes: Vec<Episode>,
+    pub episodes: Vec<ConnectionEpisode>,
     /// The episode the calling connection holds, when it holds one.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub mine: Option<Episode>,
+    pub mine: Option<ConnectionEpisode>,
 }
 
 fn episodes_list(ctx: &Context, _: Empty) -> Result<EpisodeList, CapabilityError> {
@@ -184,11 +184,11 @@ fn episodes_list(ctx: &Context, _: Empty) -> Result<EpisodeList, CapabilityError
     Ok(EpisodeList {
         open: episodes
             .iter()
-            .filter(|e| e.state == crate::episodes::EpisodeState::Open)
+            .filter(|e| e.state == crate::episodes::ConnectionEpisodeState::Open)
             .count(),
         detached: episodes
             .iter()
-            .filter(|e| e.state == crate::episodes::EpisodeState::Detached)
+            .filter(|e| e.state == crate::episodes::ConnectionEpisodeState::Detached)
             .count(),
         mine: ctx.caller.as_ref().and_then(|c| ctx.episodes.of_peer(c)),
         episodes,
@@ -200,7 +200,7 @@ pub fn module() -> ModuleDescriptor {
     module! {
         id: "episodes",
         title: "Episodes",
-        description: "The execution episodes this shared server holds: one per client that asked for one, opened when the client attaches, kept alive by its own traffic, detached rather than closed when the connection goes, and closed on a deliberate detach, on shutdown, or by the reaper when nothing came back. The episode boundary for a client with no provider hooks of its own (ADR 0043).",
+        description: "The execution episodes this shared server holds: one per client that asked for one, opened when the client attaches, kept alive by its own traffic, detached rather than closed when the connection goes, and closed on a deliberate detach, on shutdown, or by the reaper when nothing came back. The episode boundary for a client with no provider hooks of its own (ADR 0074).",
         stability: Stability::BehaviorallyVerified,
         capabilities: [
             capability! {

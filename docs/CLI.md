@@ -149,6 +149,65 @@ migrate: .majordomus/ (pre-.ai layout) -> .ai/ (ai-repository/v1)
 dry run: nothing written
 ```
 
+## `majordomus recover`
+
+Bring this checkout's record stores back to what the contract describes: close episodes
+nobody ended, fold duplicate records of one episode into one, and classify the stray files
+the stores accumulate. Recurring, idempotent maintenance — unlike `migrate`, which is the
+one-time move off the pre-`.ai` layout and refuses to run twice.
+
+**Subjects:** `status` (the default, read-only), `episodes`, `records`, `orphans`, `all`.
+
+**Reads:** `.ai/local/state/sessions-open/`, `.ai/local/state/ledger.jsonl`, the closed
+record store, and the checkpoint and handover stores.
+**Writes:** a closed record per recovered episode under `.ai/repo/sessions/`, the folded
+record where duplicates existed, a `session.recovered` ledger line per action, and the
+removal of the open records and stray temps it acted on.
+
+**Behaviour:**
+- `--check` prints the plan and the evidence behind it and writes nothing. The same
+  measurement drives the real run, so the plan is the action.
+- A stray file is judged by its age before its content: a publish temp seconds old belongs
+  to a `session close` running now, and a `.mj-stage.XXXXXX` minutes old to a
+  `scripts/derive` running now. Both are reported as `live` and neither is touched; one
+  whose age cannot be read is skipped and counted.
+- A stale staging directory is reported and **never removed**. This command deletes no
+  directory tree — SECURITY.md states "no recursive deletion" — so a `.mj-stage.XXXXXX`
+  past the threshold is named, counted as skipped, and left for a person to remove.
+- An episode is *stranded* when its last sign of life — the later of its own `started_at`
+  and the newest ledger line it stamped — is older than `session.stranded_after`.
+  `--older-than <duration>` overrides the policy for one run.
+- Two guards stand between a live episode and the sweep, and neither is the other's
+  backstop. The episode this process resolves to is excluded before any predicate runs; and
+  a candidate whose evidence cannot be read as a timestamp is skipped and counted, never
+  treated as the oldest in the set (`project.destructive-sweeps-fail-closed`). An episode
+  belonging to another worktree is reported and never closed here.
+- A recovered record carries what the open record and the episode's own ledger lines prove.
+  `commits` and `changed_files` are the explicit empty list and `head` and `working_tree`
+  are absent: they describe a close that never happened, and the working tree at recovery
+  time belongs to whoever is working now. `outcome` is `interrupted`, which is what it was.
+- Duplicate records fold into the oldest by `created_at`, with the union of the lists the
+  others prove, and the superseded file names recorded in the survivor's body. Records that
+  disagree about the episode's identity or times are reported and nothing is folded.
+- Nothing is deleted for being unrecognised. A publish temp past the threshold holding the
+  only copy of a record is *published*; one whose episode is already published, or which is empty, is
+  removed; one holding content this version cannot classify is left exactly where it is and
+  counted. A directory somebody put in the checkpoint store is named, measured and left.
+- Idempotent. Running a subject twice takes its actions once, and running it after a crash
+  mid-run takes the ones that did not happen: the record is written before the open file is
+  removed, so an interruption between them costs nothing.
+
+```
+$ majordomus recover episodes --check
+episodes — open episodes in .ai/local/state/sessions-open
+  s-20260910194205-72ea  key=187c9e1e-…  last seen 2026-09-10T19:42:05Z (ledger, 13h ago)
+    stranded: 13h ago, over the 12h threshold; close with outcome interrupted
+  s-20260911063532-b41b  key=c93d195f-…  last seen 2026-09-11T08:31:02Z (ledger, 0m ago)
+    live: this process is inside it; never a candidate
+
+check: 1 action(s) would be taken and nothing was written (run: majordomus recover all)
+```
+
 ## `majordomus doctor`
 
 Is the supervisory layer real here? Read-only. Blocking by design: intended to run
@@ -356,10 +415,13 @@ that tries to set identity fields is rejected.
 `start` in this checkout; the old record is archived by that `start`. Without
 `--close` the task stays active for the next session to continue.
 
-The provider's `SessionEnd` event runs `--derive --close` when the task is still active, so
-an episode that ends leaves a continuation record and not only the envelope of what it
-produced. The two answer different questions: the session record indexes the episode, and a
-handover is what the next worker resumes from.
+The provider's `SessionEnd` event runs `--derive --close`, or `--derive --no-task` when no
+task record exists, so that an episode that ends leaves a continuation record and not only
+the envelope of what it produced. The two answer different questions: the session record
+indexes the episode, and a handover is what the next worker resumes from. It does not ask
+whether the task is active — until ADR 0052 it did, and a repository whose last task had
+been handed over stopped writing the one record a future worker resumes from, for six days,
+while every health check passed.
 
 **Refuses** (`10`) if a required section is missing or empty, or if the body contains
 an identity field. Refuses (`12`) with no active task unless `--no-task`.
@@ -634,11 +696,18 @@ EOF
 
 ## `majordomus evidence`
 
-Record that one obligation the active task declared has been discharged.
+Record evidence against the active task: one obligation it declared, discharged, or one
+validation gate of the CI model that has reported.
 
 ```
 majordomus evidence --covers <token> [--type <kind>] (--command <cmd> | --artifact <ref>) [--result <r>] [--json]
+majordomus evidence --gate <id> --exit <status> [--command <cmd>] [--result <r>] [--json]
 ```
+
+The two forms record different kinds of fact and are never one invocation. An obligation is
+a promise the task made; a gate is what the validation pipeline said about the tree. A line
+claiming to be both would be readable as neither, so passing `--covers` and `--gate`
+together exits `2`.
 
 A task's `scope` says where a worker may write; its `requires` says what the worker owes
 before the outcome `completed` is available. The tokens are declared in
@@ -679,6 +748,51 @@ record here.
 it; only an outcome of `completed` is refused. A worker reporting `blocked` is being honest,
 and refusing that would teach them to claim `completed` instead.
 
+### Recording a gate
+
+`--gate` names a gate of `.ai/repo/ci/gates.yaml`, this repository's CI model, and `--exit`
+the status it reported; `0` is a pass. A gate the model does not declare exits `2`, as does
+an `--exit` that is not a number.
+
+```
+majordomus evidence --gate rust-check --exit 0 --command 'scripts/rust-check --ci'
+```
+
+**Writes:** a `task.gate` line in the ledger, carrying the gate, its exit status and the hash
+of the files that select it. Those files are derived from the model rather than declared:
+the union of the paths of every class that names the gate, and everything for a gate every
+plan selects, because a gate every plan selects is a gate any change can invalidate. Change
+one of them and the run stops discharging the gate — committed or not, since the change set
+a task is judged over includes its working tree.
+
+`check` and `finish` evaluate every gate the task's own change set selects, through the
+doctrine `majordomus.completion-gates`, and report each in one vocabulary:
+
+| status | meaning |
+|--------|---------|
+| `pass` | it ran over these inputs and exited `0` |
+| `fail` | it ran over these inputs and did not |
+| `stale` | it ran, and the files that select it have changed since |
+| `blocked` | something it cannot run without has not passed |
+| `queued` | the plan selects it and no run has ever reported |
+| `exempt` | nothing this change did can make it true or false |
+| `unknown` | it cannot be judged here at all — no model, no reader |
+
+Only `fail`, `stale` and `blocked` refuse the outcome `completed`. `queued` is reported by
+name, never accepted as a pass and never refused: a verdict that never arrived and a verdict
+that said pass are different facts, and on 2026-09-10 this repository's trunk carried three
+branch-breaking defects overnight because they looked identical
+(`majordomus.never-reported-is-not-green`).
+
+The whole judgement — every gate, the plan that selected it, which obligations the change
+implies, and the nineteen questions of the done invariant with the source that answered each
+— is one document, `gates.completion`, read the same way by the command line, the HTTP API,
+MCP and the Cockpit:
+
+```
+majordomus-cli run gates.completion --input '{}' --format json | jq '.output.questions'
+```
+
 ## `majordomus checkpoint`
 
 Record compact progress inside an active task. Append-only; the body arrives on stdin.
@@ -704,11 +818,23 @@ one that can also say what was true.
   provider's compaction event runs — a compaction discards the conversation while the work
   continues, and the moment it is announced is the only moment anything can be written about
   a context that is about to stop being reachable.
-- `--show` prints the newest checkpoint for the active task in this worktree and branch.
+- `--show` prints the newest checkpoint for this worktree and branch — for the active task
+  when there is one, and otherwise the newest whatever task it names.
 - `--list` lists this worktree's checkpoints, newest first, with each one's git label.
 
-Exit `12` with no active task, `15` when the task is no longer active, `10` when the body
-carries identity fields or exceeds the cap.
+A checkpoint belongs to the **episode**, not to a task. It is written whether or not a task
+is open and whatever outcome the last one reached; the record's `task_id` is the task when
+there is one and `none` otherwise, and the ledger event omits the field entirely rather than
+writing a literal `none` that every reader of that event would collect as a task by that
+name. Only the task's own `checkpoint_at` is left alone when the task is over, because that
+field is the task's.
+
+This refused with `12` (no active task) and `15` (the task is no longer active) until ADR
+0052. Those two refusals are the 2026-09-05 outage: a task marked `handed_over` and never
+replaced silenced this repository's progress records for six days, while episodes went on
+opening and closing and every health check passed.
+
+Exit `10` when the body carries identity fields or exceeds the cap.
 
 ```
 $ majordomus checkpoint <<'EOF'
@@ -1049,12 +1175,63 @@ nothing loads it into a context, no command retrieves from it, and `doctor` fail
 anything under it is tracked by Git. The writer emits a closed set of fields, so the
 model's half of the exchange cannot arrive through it.
 
-**Nothing deletes a record.** The ledger, the checkpoints and the handovers rotate under a
-policy cap because each restates state that is still available elsewhere; a prompt is not —
-it existed once, was derived from nothing, and no other file can reconstruct it. So there is
-no cap to configure, the archive grows, `doctor` reports how many records and how many
-kibibytes it holds, and a person who wants it smaller deletes files themselves rather than
-discovering that the hook meant to keep their prompts had been discarding them.
+**A record carries the episode it belongs to.** It used to carry the provider's own session
+identifier and nothing else, and turning that into the canonical episode id needed
+`state/sessions-open/<provider session>.yaml` — a file that closing the episode deletes. So
+the instant an episode ended, nothing could say which episode its prompts had belonged to.
+Measured in this repository on 2026-09-11: 974 records, 80 provider sessions, 713 prompts
+with no surviving path to an episode.
+
+Every record now carries `episode`, `episode_link`, `repository_id` and `worktree_id`,
+written while the mapping is still there, using the identity the rest of the tool computes.
+`episode_link` says how the episode was determined, and the distinction is the point:
+
+| value | what it means |
+|---|---|
+| `open` | the episode was open under that provider session when the prompt arrived — an observation |
+| `session-context` | linked afterwards, from the frozen working context that names the provider session |
+| `ledger` | linked afterwards, because exactly one closed episode's window could contain that provider session's prompts |
+| `orphan` | no episode was open under that provider session; none was invented |
+| `unlinked-legacy` | written before records carried an episode, and nothing survives to link it |
+
+`orphan` and `unlinked-legacy` carry no episode. Nothing attaches a prompt to the episode
+nearest it in time: a prompt attributed to the wrong episode is worse than one attributed to
+none, because the second is visibly missing and the first is quietly false.
+
+`capture reconcile` applies those three kinds of evidence, in that order, to an archive
+written before the field existed, and `--dry-run` says what it would do. It refuses the
+moment two episodes could both be the answer, so a repository whose evidence is gone keeps a
+count of unlinked records rather than an invented attribution — and `doctor` reports that
+count rather than rounding it to zero.
+
+**Credential material never reaches the disk.** People paste keys into prompts, and a
+record is the one file here whose content nobody vetted before it was written. The known
+credential shapes — provider API keys, GitHub tokens, AWS key ids, Slack and Stripe tokens,
+PEM headers, bearer tokens, and an assignment of a long opaque value to something called a
+key, a token or a password — are replaced on the way to the record, before the bytes are
+anywhere but a variable. Nothing downstream sees the original: not the record, not either
+rendering, not the file name, not the log, which prints a payload's key names and never a
+value. What was replaced is recorded in `redacted`, so "nothing was found" and "the secret
+is gone" are statements a reader can tell apart.
+
+**The archive is mode 0600, directory included.** It was 0644 for its whole life, readable
+by every account on the machine — including the file names, which are the openings of the
+prompts. `capture render`, which is the archive's repair command, sets the mode over the
+whole directory on every run.
+
+**Retention takes the body and keeps the record.** The old rule was that nothing may ever be
+removed, on the argument that a prompt is derived from nothing and no other file can
+reconstruct it. That argument is about the *record* — that it happened, when, in which
+episode, under which head — and it was being applied to the bytes of the text, which is the
+part that carries the credentials and whose risk does not decay with its value. The archive
+reached 20 MB unbounded.
+
+So the policy declares `prompts.retention_max_days` and `prompts.retention_max_bytes`, and
+`majordomus capture prune` applies them: age first, then size, oldest body first. A pruned
+record keeps every field, including the provenance of its episode link, and gains a tombstone
+saying when the body went, how long it was, and its digest. A record is still never deleted,
+`doctor` reports an archive over either bound, and nothing prunes as a side effect of the
+hook that was supposed to be keeping them.
 
 **`capture status` reports every provider the distribution declares, for both aspects, with
 two facts per row and never one word standing in for both.** The **capability** is the
@@ -1074,7 +1251,7 @@ A repository holds itself to this by declaring an `enforcement` entry with
 `wired_by: provider-hook:<provider>`; `doctor` then fails unless the state is `verified`,
 and because `doctor` runs on `pre-commit`, a hook that stops capturing stops the commit.
 
-**Until ADR 0043 this paragraph said something untrue, and it is worth saying what.** It
+**Until ADR 0074 this paragraph said something untrue, and it is worth saying what.** It
 read: "Only Claude Code has an adapter today; every other provider the distribution declares
 is reported `unsupported` rather than assumed." Neither half held. The others were not
 reported `unsupported` — they were not reported at all, because the loop was over the
@@ -1318,13 +1495,23 @@ and `version`, never the file name. `docs/DOCTRINE.md` describes the format, the
 $ majordomus rules list
 majordomus.scope-integrity                 v1  blocking  vendor:majordomus enforced by check,finish,watch
 majordomus.sessions-are-workers            v1  advisory  vendor:majordomus no validator; see the rule
-project.english-only                       v1  blocking  project          no validator; see the rule
+project.english-only                       v1  blocking  project          proven by scripts/ci/english-only-check
+project.clean-room                         v1  blocking  project          review-enforced: the rule is about the provenance of what was written, which no program in this tree can read
 ```
 
 - `list [--json]` prints the effective set in resolved order: identity, class, provenance
-  (`vendor:<name>` or `project`), and whether the tool enforces it. A rule without an
-  `x-majordomus` block is normative for whoever reads it and enforced by nobody, and the
-  listing says `no validator; see the rule` rather than hiding it: the rule is normative for whoever reads it, and nothing checks it by machine.
+  (`vendor:<name>` or `project`), and how it is enforced. Three modes, which
+  [`DOCTRINE.md`](DOCTRINE.md) describes: `enforced by <commands>` for a rule the dispatcher
+  runs, `proven by <paths>` for one a gate or a case holds, and `review-enforced: <reason>`
+  for one that carries a `reviewed_because` saying why no program can express it. A rule
+  with no `x-majordomus` block at all says `no validator; see the rule` rather than hiding
+  it: the rule is normative for whoever reads it, and nothing checks it by machine.
+
+  This command answers what the rules *are*. What *proves* each one — whether the case it
+  names is still in the tree, whether a runner drives it, whether anything ever ran it, and
+  whether that run is older than what it is about — is a different question, and the
+  executable answers it: `majordomus-cli rules report`, `rules show <id>`,
+  `rules proves <test>`.
 - `show <id>` prints one rule, front matter and body, with the repository-relative path it
   was read from as the first line. An id outside the effective set exits 12.
 - `vendor status` compares the vendored baseline with the package the running executable
@@ -1528,6 +1715,7 @@ declaration the Rust executable indexes. See [`SCHEMAS.md`](SCHEMAS.md) for the 
 ```
 majordomus adr list [--status <status>] [--json]      every decision: id, status, date, title
 majordomus adr show <id> [--json]                     the path, then the file as written
+majordomus adr next [--json]                          the next free identity, and every source surveyed
 majordomus adr propose "<title>" [--from <ref>]...    write a new decision, status proposed
                        [--tag <tag>]... [--supersedes <id>]
 majordomus adr check [--json]                         validate every decision and every reference
@@ -1538,6 +1726,22 @@ majordomus adr affected [--base <ref>|--staged|--worktree] [--json]   the decisi
   filters to one of `proposed`, `accepted`, `superseded`, `rejected`.
 - `show` prints the repository-relative path on the first line and the file below it. An
   id that is not a decision exits `12` and names `adr list`.
+- `next` answers what the next free identity is, and says what it looked at to decide. Four
+  sources, each reporting how many identities it claimed: this working tree, every sibling
+  worktree as it stands on disk (authored and not yet committed is a real claim), every ref —
+  branches, tags, remote-tracking refs and every linked worktree's `HEAD`, in one
+  `git log --all --no-renames --diff-filter=A` — and the peer board of the shared server,
+  which is the only source that knows about an identity a session has decided to take and has
+  not written anywhere. A source that could not be reached is reported as unreachable and
+  never dropped silently from the denominator.
+  Allocation is **monotonic**: one above the highest identity anything has ever claimed,
+  never into a hole. A hole means an identity was taken and withdrawn, or taken and not yet
+  written, and nothing can tell either from a number nobody ever used — `0034` of this
+  repository is on no branch, in no tag and in no working tree, and `ADR 0035` cites it. Holes
+  are therefore listed as spent, with whatever cites them named as evidence for the reader.
+  The shell tool has no peer identity of its own, so a session that announced an allocation
+  and then asks is stepped over its own claim; the output says when the high-water mark came
+  from a board claim. `propose` allocates through the same survey.
 - `propose` writes `status: proposed` and nothing else. **There is no way to write
   `accepted`**: `--status` exits `15` naming the reason, because a tool that can write
   `accepted` turns its own inference into repository truth and a later reader cannot tell
@@ -1560,6 +1764,18 @@ majordomus adr affected [--base <ref>|--staged|--worktree] [--json]   the decisi
   file-name prefix, the required body sections; and across the set: duplicate identities,
   a `superseded` record with no `superseded_by`, one-sided supersession, and a reference
   that resolves to nothing. It exits `10` on any failure.
+- `check` also asks the question no single tree can answer about itself: for every identity
+  this tree **adds** relative to the base (`origin/master`, `origin/main`, `master`, `main`,
+  in that order; `MJ_ADR_BASE` overrides and is then the only candidate), does another ref
+  carry a *different* document at that identity? A different file name is a competing claim
+  and is refused, naming both documents, the refs that carry the other one, and
+  `majordomus adr next`; the same file name on two refs is an edit and is resolved by
+  merging. The verdict always states its subject — how many identities were added and what
+  they were measured against — and when the base does not resolve it says the other refs were
+  **not** surveyed rather than exiting clean with nothing said. `doctor` runs the same
+  examination, and `doctor` is the pre-commit hook, so a collision is refused on the branch
+  rather than at the merge where `generate --strict` would exclude every claimant and name
+  only the identity. `ADR 0053` is the reasoning.
 
 - `affected` reads a change set — the working tree against `HEAD` by default, `--staged`
   for the index, `--base <ref>` for `<ref>..HEAD` plus the working tree — and names every
@@ -1700,6 +1916,81 @@ run b-20260905T031200Z-9f1c saved as .ai/local/benchmarks/runs/b-20260905T031200
 Exit `2` on a usage error, `12` when a named target is not a public command of the
 registry, `13` when a target did not run cleanly (its row says `setup-failed` or the exit
 code it produced), `10`, `12` and `15` from `--check` as above.
+
+## `majordomus archive`
+
+Take a snapshot of the tracked tree that can be read, or checked, somewhere else.
+
+A repository leaves the machine more often than it looks: to a language model that will
+read all of it at once, to a reviewer who cannot clone, to an auditor who has to run the
+gates on a copy. Those were being done by hand, differently each time, and the hand-made
+version got two things wrong that only surface at the far end.
+
+**What travels is the git index and only the git index.** Nothing untracked is ever
+archived — not the build output, not the caches, and not `.ai/local/`, which is this
+checkout's own state and is never shared. That is one rule instead of a list of
+exclusions, and it is what makes the command safe to point at a repository nobody has
+read.
+
+**What is left out beyond that is declared, not coded.** `share/archive.yaml` holds the
+profiles; a repository may add or replace one in an `archive.yaml` of its own under `.ai/repo/`. A profile that
+drops the derived paths reads `.gitattributes` — every projection in this repository is
+already marked `merge=derived` there, for a different reason — rather than keeping a
+second list of generated paths, which is the duplication
+`.ai/repo/rules/project/commands-are-projections.v1.md` refuses.
+
+**Modes are carried explicitly.** `zip -X` strips the extra fields that hold the Unix
+mode, and the unpacked tree then has no executable in it: every script fails to run, and
+at the far end that is indistinguishable from the repository being broken. So the mode of
+each entry is read from the index — the authority, not the working tree — written into
+`_ARCHIVE/MANIFEST.txt`, and `_ARCHIVE/restore.sh` inside the archive puts the modes back
+and creates a local git index, because the checks here enumerate the repository with
+`git ls-files` and without an index they examine nothing and report that nothing is wrong.
+
+Every archive is read back before the command returns: the entry count must match what
+was staged, and if executables went in and none came out, that is a failure rather than a
+surprise for the recipient.
+
+**Reads:** `share/archive.yaml`, an `archive.yaml` under `.ai/repo/` when the repository has one,
+`.gitattributes`, and the git index.
+**Writes:** `tmp/archives/` — or wherever `--out` says.
+
+**The profiles shipped:**
+
+| Profile | For |
+|---|---|
+| `context` | A model that will read the repository. Every tracked source, without the projections generated from it. |
+| `audit` | Running the repository's own checks on a copy. Every tracked file, nothing dropped, modes and a git index restored. |
+| `governance` | The operating contract alone: `.ai/`, `docs/`, `AGENTS.md`, `CLAUDE.md`, and no code. |
+
+```
+$ majordomus archive --dry-run
+archive: profile context — 2299 of 2757 tracked file(s), 12919 KB of content
+         left out: 10 (binary)
+         left out: 443 (derived)
+         left out: 5 (excluded)
+         nothing written (--dry-run)
+
+$ majordomus archive
+OK   archive     prismatic-majordomus-context-20260911.zip — 2303 entr(ies) read back, 76 of them executable
+archive: profile context — 2299 of 2757 tracked file(s), 12919 KB of content
+         wrote tmp/archives/prismatic-majordomus-context-20260911.zip (5044 KB)
+```
+
+**Behaviour:**
+- `--list` prints the profiles with what each one is for, and marks the default.
+- `--dry-run` reports the selection and the reason every file was left out, and writes
+  nothing.
+- `--out` overrides the destination; `--format zip|tar.gz` overrides the container.
+- An existing output file is refused with `15` unless `--force` is given, so an archive
+  someone is uploading cannot be replaced underneath them.
+- A path the index names and the working tree no longer has is counted and reported, not
+  silently absent.
+- `--json` emits one object with the counts, the reasons and the path.
+
+Exit `2` on a usage error, `12` when there is no such profile or `zip` is not on `PATH`,
+`10` when a profile selects none of the tracked files, `15` when the output exists, `13`
+when the container could not be written or does not read back as what went in.
 
 ## `majordomus version`
 

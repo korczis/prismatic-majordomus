@@ -51,6 +51,7 @@ fn fast(root: &Path) -> RepositoryEnvironment {
             share: None,
             index: None,
             registry: None,
+            policy: None,
         },
         &EnvironmentQuery::fast().sealed(),
     )
@@ -149,7 +150,7 @@ fn an_unchanged_repository_gets_the_shorter_form_on_the_way_back_in() {
         &environment,
         BannerMode::Auto,
         &watching,
-        Some(&environment.digest()),
+        Some(&environment.news_digest()),
     )
     .expect("a second look");
     assert!(

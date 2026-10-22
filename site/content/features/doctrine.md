@@ -1,6 +1,6 @@
 +++
 title = "Rules a machine decides, wired, tested and CI-blocking"
-description = "Every rule is a portable Markdown object with front matter; a rule the tool enforces names its validator, the commands that dispatch it and the tests that prove it, and doctor walks that chain from the source, refusing a validator nobody declares and a declaration nothing runs; a blocking violation stops the command and an advisory one is reported."
+description = "Every rule is a portable Markdown object with front matter, and it is enforced in one of three declared modes: a validator the dispatcher runs, a gate or case that proves it, or a stated reason why no program can express it. Doctor walks the dispatch chain from the source, refusing a validator nobody declares and a declaration nothing runs; the proof graph walks the other relation, joining each rule to the tree and to the runs recorded against it, so that a rule naming a case which was deleted is reported as reading enforced rather than being it."
 weight = 70
 [extra]
 id = "doctrine"

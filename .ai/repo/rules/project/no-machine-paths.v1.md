@@ -9,6 +9,9 @@ status: active
 class: blocking
 depends_on: [project.derived-files-regenerated@1, project.generated-artifacts-are-typed@1]
 tags: [derived, generation, portability, reproducibility]
+
+x-majordomus:
+  tests: [test/cases/58_home_path_gate.sh, scripts/ci/no-machine-paths]
 ---
 
 # Rationale

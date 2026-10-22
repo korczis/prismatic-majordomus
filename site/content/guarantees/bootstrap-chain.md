@@ -1,7 +1,7 @@
 +++
 title = "Provider instruction files are thin bootstraps that point at the AI layer and carry no rule of their own"
 description = "CLAUDE.md, AGENTS.md, GEMINI.md and any other target the policy names are generated, and each says the same short thing: read README.md, then .ai/README.md, follow its discovery protocol, run majordomus context, and find the lifecycle under the layer's workflows. No rule lives in a provider file. A person reaches the layer through README.md and AGENTS.md; a worker reaches it through its own bootstrap; both arrive at the same .ai/."
-weight = 79
+weight = 81
 [extra]
 claim_id = "bootstrap-chain"
 status = "guaranteed"

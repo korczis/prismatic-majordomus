@@ -1,0 +1,55 @@
+{% extends "page.html" %}
+{#- One page of the HTTP API reference: a tag's operations and the schemas only that tag reaches,
+    or — for the page whose extra.api_tag is "shared" — the schemas several tags reach or none
+    does, and any operation carrying more than one tag. scripts/generate-site-data writes one of
+    these pages per tag; scripts/lib/openapi-site.jq decides every operation's and schema's home,
+    so no operation and no schema is published on two pages. -#}
+{% block body %}
+{%- set api = load_data(path="data/generated/openapi.json") -%}
+{%- set repo = project.repository_url -%}
+{%- set api_root = get_url(path="docs/api/", trailing_slash=true) -%}
+{%- set home = page.extra.api_slug -%}
+<div class="grid gap-10 lg:grid-cols-[16rem_minmax(0,1fr)]">
+  <nav class="lg:sticky lg:top-24 lg:self-start" aria-label="API sections">
+    <p class="mb-2"><a href="{{ api_root }}" class="font-mono text-xs uppercase tracking-wide text-fg-brand hover:underline">HTTP API index</a></p>
+    <p class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">on this page</p>
+    <ul class="flex flex-wrap gap-2 text-sm lg:flex-col lg:gap-1">
+      {%- for t in api.tags -%}{%- for o in t.operations -%}{%- if o.home == home and o.primary -%}
+      <li><a href="#op-{{ o.id | replace(from=".", to="-") }}" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">{{ o.id }}</a></li>
+      {%- endif -%}{%- endfor -%}{%- endfor -%}
+      <li><a href="#schemas" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Schemas</a></li>
+    </ul>
+  </nav>
+  <div class="min-w-0">
+    <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="{{ repo }}/blob/master/{{ page.extra.source }}" class="font-mono underline">{{ page.extra.source }}</a>, which the executable generates from its capability registry and CI refuses stale. The raw document is at <a href="{{ get_url(path="/openapi.json") }}" class="font-mono text-fg-brand underline">/openapi.json</a>; a running server serves the same document at its own <code class="font-mono">/openapi.json</code> and Swagger UI at <code class="font-mono">/swagger</code>.</p>
+
+    {%- for t in api.tags -%}
+    {%- if t.slug == home -%}
+    <section id="tag-{{ t.name }}" class="scroll-mt-24">
+      <h2 class="font-mono text-xl font-semibold tracking-tight text-heading">{{ t.name }}</h2>
+      <p class="mt-2 max-w-3xl text-sm text-body">{{ t.description }}</p>
+      {%- for o in t.operations -%}{%- if o.home == home -%}
+      {% include "partials/api-operation.html" %}
+      {%- endif -%}{%- endfor -%}
+    </section>
+    {%- endif -%}
+    {%- endfor -%}
+    {%- if home == "shared" and api.shared_operations | length > 0 -%}
+    <section id="shared-operations" class="scroll-mt-24">
+      <h2 class="text-xl font-semibold tracking-tight text-heading">Operations under more than one tag</h2>
+      {%- for t in api.tags -%}{%- for o in t.operations -%}{%- if o.home == "shared" and o.primary -%}
+      {% include "partials/api-operation.html" %}
+      {%- endif -%}{%- endfor -%}{%- endfor -%}
+    </section>
+    {%- endif -%}
+
+    <section id="schemas" class="mt-12 scroll-mt-24">
+      <h2 class="text-xl font-semibold tracking-tight text-heading">Schemas</h2>
+      <p class="mt-2 text-sm text-body">{% if home == "shared" %}The components more than one tag's operations use, or none does.{% else %}The components only this tag's operations use.{% endif %} Each row is the type's own field, its doc comment the description; a type another page owns links there.</p>
+      {%- for s in api.schemas -%}{%- if s.home == home -%}
+      {% include "partials/api-schema.html" %}
+      {%- endif -%}{%- endfor -%}
+    </section>
+  </div>
+</div>
+{% endblock body %}

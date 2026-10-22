@@ -3,7 +3,9 @@
 #
 # The registry is the repository's effective rule set: every rule under its rules section
 # (the vendored Majordomus baseline plus its own project rules) whose x-majordomus block
-# names a validator, in resolved dependency order. A validator function named
+# names a validator, in resolved dependency order. A rule whose block names tests but no
+# validator is gated rather than dispatched — the cases prove it, nothing calls it here —
+# and the loader passes over it, so it never reads as a validator this file cannot find. A validator function named
 # mj_validate_<validator> determines whether the rule holds. This dispatcher decides when a
 # validator runs: it iterates the registry and calls every doctrine that names the running
 # command. Nothing here selects validators by hand, so a rule added to the package runs
@@ -37,7 +39,7 @@ mj_doctrine_load() {
   # list fields in the order the rule declared them, and the first test as test
   awk '
     function flush(  j, nk, ks) {
-      if (cur == "" || s["enforced"] != 1) return
+      if (cur == "" || s["enforced"] != 1 || s["validator"] == "") return
       nk = split("id title class validator category policy_key exit_code file provenance", ks, " ")
       for (j = 1; j <= nk; j++) if (s[ks[j]] != "") print "doctrines." n "." ks[j] "=" s[ks[j]]
       print "doctrines." n ".summary=" s["description"]
@@ -248,21 +250,33 @@ H
     [ "$packaged" = 1 ] || [ -f "$MJ_HOME/$MJ_DR_TEST" ] || uc=$((uc+1))
     i=$((i+1))
   done
+  # The denominator this command reports against. Every number below is a statement about
+  # the REGISTRY — the rules carrying an x-majordomus block — and the registry is a minority
+  # of the effective rule set. "blocking: 36" beside a rule set with 93 blocking rules in it
+  # reads as a statement about all of them, and "missing validators: 0" is true of the
+  # registry while 57 blocking rules outside it have no validator at all: a rule that was
+  # never counted cannot be missing anything. Neither number is wrong; each was unreadable
+  # without the one beside it, so they are printed together.
+  local reg_rules reg_tally reg_blocking_unenforced
+  reg_tally="$(mj_rule_tally)"
+  reg_rules="${reg_tally%% *}"
+  reg_blocking_unenforced="${reg_tally##* }"
   if [ "$MJ_JSON" = 1 ]; then
-    printf '{"declared":%s,"blocking":%s,"advisory":%s,"unwired":%s,"untested":%s,"evidence_readable":%s}\n' \
-      "$n" "$bl" "$ad" "$un" "$uc" "$([ "$packaged" = 1 ] && printf false || printf true)"
+    printf '{"declared":%s,"rules":%s,"blocking":%s,"advisory":%s,"unwired":%s,"untested":%s,"blocking_without_validator":%s,"evidence_readable":%s}\n' \
+      "$n" "$reg_rules" "$bl" "$ad" "$un" "$uc" "$reg_blocking_unenforced" "$([ "$packaged" = 1 ] && printf false || printf true)"
   else
-    printf 'declared doctrines:   %s\n' "$n"
+    printf 'declared doctrines:   %s of %s rule(s) in the effective set\n' "$n" "$reg_rules"
     printf 'blocking:             %s\n' "$bl"
     printf 'advisory:             %s\n' "$ad"
     printf 'missing validators:   %s\n' "$un"
+    printf 'blocking rules with no validator, outside this registry: %s\n' "$reg_blocking_unenforced"
     if [ "$packaged" = 1 ]; then
       printf 'without a test file:  not readable here — a packaged distribution carries no test/;\n'
       printf '                      the cases are verified in the package'"'"'s own source tree\n'
     else
       printf 'without a test file:  %s\n' "$uc"
     fi
-    printf '\nthe registry is the effective rule set: majordomus rules list\nwiring is verified by: majordomus doctor\n'
+    printf '\nthe registry is the enforced subset of the effective rule set: majordomus rules list\nwiring is verified by: majordomus doctor\nthe rules outside it: scripts/ci/rule-proof-check\n'
   fi
   [ "$un" = 0 ] && [ "$uc" = 0 ] && exit "$MJ_EX_OK" || exit "$MJ_EX_CONTRACT"
 }

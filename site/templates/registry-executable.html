@@ -25,4 +25,6 @@
   </aside>
 </div>
 {% endblock body %}
-{% block scripts %}{% include "partials/mermaid.html" %}{% endblock scripts %}
+{#- the runtime only where the Markdown projected a diagram: most of these pages have none, and
+    homepage-check fails a page that loads it for nothing -#}
+{% block scripts %}{% if 'class="mermaid"' in page.content %}{% include "partials/mermaid.html" %}{% endif %}{% endblock scripts %}

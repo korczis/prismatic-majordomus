@@ -9,6 +9,9 @@ status: active
 class: blocking
 depends_on: [project.rust-cli-evidence@1]
 tags: [rust, mcp, resilience]
+
+x-majordomus:
+  tests: [test/cases/90_mcp_shared_server.sh, scripts/rust-check]
 ---
 
 # Rationale

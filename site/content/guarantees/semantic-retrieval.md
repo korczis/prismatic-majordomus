@@ -1,7 +1,7 @@
 +++
 title = "Ranked or semantic retrieval over durable records is deliberately not implemented"
 description = "There is no vector store, no embedding, no relevance score and no index. search is a literal grep across the record kinds in a fixed order. This is a decision, published so that a reader can see it was refused rather than forgotten."
-weight = 87
+weight = 89
 [extra]
 claim_id = "semantic-retrieval"
 status = "rejected"

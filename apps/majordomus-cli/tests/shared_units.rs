@@ -263,9 +263,11 @@ fn the_endpoint_opens_reaps_and_closes_sessions() {
     // An episode this connection is carrying, so that the reaper's OTHER clock is exercised
     // here rather than left to a constant nobody can move. Fifteen minutes is the real
     // grace and no test may wait it out, which is exactly why `reap_idle` takes both bounds
-    // (ADR 0043): a reaper wired to a constant is a reaper nothing proves.
+    // (ADR 0074): a reaper wired to a constant is a reaper nothing proves.
     let peer = app.context.peers.list()[0].id.clone();
-    app.context.episodes.attach(&peer, "unit-episode", "generic");
+    app.context
+        .episodes
+        .attach(&peer, "unit-episode", "generic");
     assert_eq!(app.context.episodes.list().len(), 1);
 
     let gone = endpoint.reap_idle(Duration::ZERO, Duration::ZERO);

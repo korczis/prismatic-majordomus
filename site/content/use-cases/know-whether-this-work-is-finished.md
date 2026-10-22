@@ -1,7 +1,7 @@
 +++
 title = "Know whether the work in this checkout is finished"
 description = "Ask the repository you are standing in, and be told what is still owed by name."
-weight = 9
+weight = 10
 [extra]
 id = "know-whether-this-work-is-finished"
 source = ".ai/repo/use-cases/know-whether-this-work-is-finished.md"

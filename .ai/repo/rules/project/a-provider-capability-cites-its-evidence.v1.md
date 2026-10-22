@@ -42,7 +42,7 @@ editing six surfaces is a provider six surfaces will eventually disagree about.
 
 # Required behaviour
 
-`share/providers.yaml` is the one declaration. Each provider entry carries a `lifecycle:`
+`share/providers.yaml` is the one declaration. Each provider entry carries a `capability:`
 block with four keys:
 
 - `episode` — `hooks` (the provider fires its own session events), `connection` (it fires
@@ -73,7 +73,7 @@ about the provider.
 # Failure behaviour
 
 `scripts/provider-evidence-check` exits non-zero naming each provider, each aspect and each
-reason: a missing `lifecycle` block, an empty citation, a value outside the vocabulary, or a
+reason: a missing `capability` block, an empty citation, a value outside the vocabulary, or a
 provider the declaration names that `majordomus capture status` does not report. The
 repository's CI runs it as a gate; it is not advisory.
 

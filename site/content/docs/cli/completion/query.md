@@ -1,7 +1,7 @@
 +++
 title = "majordomus completion query"
 description = "The candidates for one command line, from the command graph. What a shell adapter calls on every TAB"
-weight = 61
+weight = 62
 [extra]
 route = "/docs/cli/completion/query/"
 command = "majordomus completion query"

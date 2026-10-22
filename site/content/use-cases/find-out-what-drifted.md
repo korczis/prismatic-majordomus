@@ -1,7 +1,7 @@
 +++
 title = "Find out what has drifted since anyone last looked"
 description = "Ask what has moved, rather than whether anything is wrong."
-weight = 7
+weight = 8
 [extra]
 id = "find-out-what-drifted"
 source = ".ai/repo/use-cases/find-out-what-drifted.md"

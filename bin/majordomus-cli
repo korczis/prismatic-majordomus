@@ -46,6 +46,11 @@ if [ "$stale" = 1 ] && [ -z "${MAJORDOMUS_BIN:-}" ]; then
     printf 'majordomus-cli: %s is missing or stale and cargo is not installed; install a Rust toolchain (rustup) or set MAJORDOMUS_BIN\n' "$bin" >&2
     exit 12
   fi
+  # A build is bounded on the disk it may consume the way a wait is bounded on time: below
+  # the floor it does not start, because a build that fills the volume takes every other
+  # session on the machine with it. Decided in lib/rust_bin.sh, so that this launcher and
+  # every other caller that builds cannot disagree about the floor.
+  mj_rust_space_check "$root" "the build of the executable" || exit 12
   printf 'majordomus-cli: building the executable (%s profile) ...\n' "$profile" >&2
   flags=""
   [ "$profile" = release ] && flags="--release"

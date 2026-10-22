@@ -16,7 +16,7 @@
 #
 # WHAT IT DECIDES, from share/providers.yaml and from the tool's own output:
 #
-#   declaration   every declared provider carries a lifecycle block with both capabilities
+#   declaration   every declared provider carries a capability block with both capabilities
 #   vocabulary    episode is hooks|connection|none and prompts is hook|none, and nothing else
 #   evidence      both citations are present and non-empty, for every value including `none`
 #   coverage      `majordomus capture status` reports every provider the declaration names,
@@ -85,23 +85,23 @@ decl() { sed -n "s/^providers\.$1\.$2=//p" "$TMP/flat" | head -n 1 || true; }
 
 for p in $providers; do
   for aspect in episode prompts; do
-    value="$(decl "$p" "lifecycle.$aspect")"
-    evidence="$(decl "$p" "lifecycle.${aspect}_evidence")"
+    value="$(decl "$p" "capability.$aspect")"
+    evidence="$(decl "$p" "capability.${aspect}_evidence")"
     if [ -z "$value" ]; then
-      finding "$p" "$aspect" "declares no lifecycle.$aspect; a provider whose capability nobody wrote down is reported as incapable, which is a claim about somebody else's product"
+      finding "$p" "$aspect" "declares no capability.$aspect; a provider whose capability nobody wrote down is reported as incapable, which is a claim about somebody else's product"
       continue
     fi
     case "$aspect:$value" in
       episode:hooks|episode:connection|episode:none) ;;
       prompts:hook|prompts:none) ;;
-      *) finding "$p" "$aspect" "lifecycle.$aspect is '$value', which is outside the vocabulary" ;;
+      *) finding "$p" "$aspect" "capability.$aspect is '$value', which is outside the vocabulary" ;;
     esac
     # Non-empty, and not a placeholder standing in for one. A citation of two words is a
     # cell nobody verified, and the point of the rule is that somebody had to.
     if [ -z "$evidence" ]; then
-      finding "$p" "$aspect" "lifecycle.${aspect}_evidence is empty; a capability with no citation cannot be re-verified and rots in whichever direction the world moves"
+      finding "$p" "$aspect" "capability.${aspect}_evidence is empty; a capability with no citation cannot be re-verified and rots in whichever direction the world moves"
     elif [ "${#evidence}" -lt 24 ]; then
-      finding "$p" "$aspect" "lifecycle.${aspect}_evidence is ${#evidence} characters ('$evidence'); a citation names a document or says what was searched and when"
+      finding "$p" "$aspect" "capability.${aspect}_evidence is ${#evidence} characters ('$evidence'); a citation names a document or says what was searched and when"
     fi
   done
 done
@@ -121,7 +121,7 @@ if "$ROOT/bin/majordomus" --repo "$ROOT" --json capture status > "$TMP/status.js
         continue
       fi
       state="$(printf '%s' "$row" | sed -n 's/.*"state":"\([^"]*\)".*/\1/p')"
-      value="$(decl "$p" "lifecycle.$declared_aspect")"
+      value="$(decl "$p" "capability.$declared_aspect")"
       if [ "$state" = unsupported ] && [ -n "$value" ] && [ "$value" != none ]; then
         finding "$p" "$aspect" "reported 'unsupported' while the declaration says '$value'; 'unsupported' is a statement about the provider, and the word for a capability this distribution ships no adapter for is 'unadapted'"
       fi

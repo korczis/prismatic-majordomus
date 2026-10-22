@@ -7,11 +7,15 @@
 # block, or add the block without a validator function behind it.
 #
 # What is proved here: all four documents exist with the identities ADR 0039 fixed; each
-# carries the front-matter fields the rules README requires; each declares a class the
-# repository can back, so advisory-without-validator and blocking-with-validator both pass
-# and blocking-without-validator fails; and every depends_on reference resolves to a rule
-# that really exists at the version named, so the set loads instead of erroring as a
-# missing dependency.
+# carries the front-matter fields the rules README requires; each declares an enforcement
+# block the repository can back, in whichever of the two modes it claims — a named validator
+# must exist as a function in lib/, and a block without one must name the tests that prove
+# it instead; and every depends_on reference resolves to a rule that really exists at the
+# version named, so the set loads instead of erroring as a missing dependency.
+#
+# Whether a rule is obliged to carry proof at all is not decided here. That is
+# scripts/ci/rule-proof-check, which asks it of every rule in the set rather than of these
+# four, and test/cases/125_rule_proof.sh mutation-tests it.
 . "$ROOT/test/lib.sh"
 
 RULES="$ROOT/.ai/repo/rules/project"
@@ -46,18 +50,24 @@ for id in $ids; do
   # and that block requires a validator function that exists in lib/
   class="$(field "$f" class)"
   case "$class" in
-    advisory)
-      grep -q '^x-majordomus:' "$f" &&
-        { echo "    $id: advisory but carries an x-majordomus block"; exit 1; }
-      ;;
-    blocking)
-      grep -q '^x-majordomus:' "$f" ||
-        { echo "    $id: blocking with no x-majordomus block; see project.rule-is-a-doctrine"; exit 1; }
-      validator="$(sed -n 's/^  validator: //p' "$f" | head -1)"
-      [ -n "$validator" ] ||
-        { echo "    $id: x-majordomus block names no validator"; exit 1; }
-      grep -rq "mj_validate_$validator()" "$ROOT/lib" ||
-        { echo "    $id: no mj_validate_$validator() in lib/"; exit 1; }
+    advisory|blocking)
+      # An enforcement block is valid in one of two modes, and the class does not decide
+      # which: a rule that names a validator is dispatched and the function must be there,
+      # and a rule that names tests instead is gated — the cases prove it and nothing calls
+      # it. An advisory rule may carry either; before the second mode existed it could carry
+      # neither, and asserting that here would now refuse a gated advisory rule for being
+      # proven. What a class still decides is whether proof is required at all, and that is
+      # scripts/ci/rule-proof-check, over every rule rather than these four.
+      if grep -q '^x-majordomus:' "$f"; then
+        validator="$(sed -n 's/^  validator: //p' "$f" | head -1)"
+        if [ -n "$validator" ]; then
+          grep -rq "mj_validate_$validator()" "$ROOT/lib" ||
+            { echo "    $id: no mj_validate_$validator() in lib/"; exit 1; }
+        else
+          grep -q '^  tests:' "$f" ||
+            { echo "    $id: x-majordomus block names neither a validator nor a test"; exit 1; }
+        fi
+      fi
       ;;
     *)
       echo "    $id: class '$class' is neither advisory nor blocking"; exit 1

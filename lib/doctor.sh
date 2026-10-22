@@ -87,7 +87,8 @@ mj_validate_policy() {
     unk="$(mj_yaml_unknown_keys "$MJ_POL_FLAT" "$MJ_ALLOW_DIR/policy.txt" || true)"
       if [ -z "$unk" ]; then mj_doctrine_ok policy "$(mj_rel "$MJ_POLICY_FILE")" "parsed, version 1"
       else mj_doctrine_fail policy "$(mj_rel "$MJ_POLICY_FILE")" "unknown keys: $(printf '%s' "$unk" | tr '\n' ' ')" "grep -nE '$(printf '%s' "$unk" | sed 's/\..*//' | LC_ALL=C sort -u | tr '\n' '|' | sed 's/|$//')' $(mj_rel "$MJ_POLICY_FILE")"; fi
-  else mj_doctrine_fail policy "$(mj_rel "$MJ_POLICY_FILE")" "unsupported version '$(mj_pol version)' (want 1)"; fi
+  else mj_doctrine_fail policy "$(mj_rel "$MJ_POLICY_FILE")" "unsupported version '$(mj_pol version)' (want 1)" \
+    "grep -n '^version:' $(mj_rel "$MJ_POLICY_FILE")"; fi
 
   local pf n count=0
   for pf in "$MJ_PROFILES_DIR"/*.yaml; do
@@ -95,12 +96,14 @@ mj_validate_policy() {
     if mj_load_profile "$n" 2>/dev/null; then
       unk="$(mj_yaml_unknown_keys "$MJ_PRO_FLAT" "$MJ_ALLOW_DIR/profile.txt" || true)"
       [ -n "$unk" ] && mj_doctrine_fail profiles "$n" "unknown keys: $(printf '%s' "$unk" | tr '\n' ' ')" "cat $(mj_rel "$MJ_PROFILES_DIR")/$n.yaml"
-      [ "$(mj_pro name)" = "$n" ] || mj_doctrine_fail profiles "$n" "name field '$(mj_pro name)' does not match filename"
+      [ "$(mj_pro name)" = "$n" ] || mj_doctrine_fail profiles "$n" "name field '$(mj_pro name)' does not match filename" \
+        "grep -n '^name:' $(mj_rel "$MJ_PROFILES_DIR")/$n.yaml"
     else mj_doctrine_fail profiles "$n" "does not parse" "cat $(mj_rel "$MJ_PROFILES_DIR")/$n.yaml"; fi
   done
   local def; def="$(mj_pol profiles.default)"
   if [ -f "$MJ_PROFILES_DIR/$def.yaml" ]; then mj_doctrine_ok profiles "$count files" "parsed; default '$def' exists"
-  else mj_doctrine_fail profiles "default" "profiles.default='$def' has no file $(mj_rel "$MJ_PROFILES_DIR")/$def.yaml"; fi
+  else mj_doctrine_fail profiles "default" "profiles.default='$def' has no file $(mj_rel "$MJ_PROFILES_DIR")/$def.yaml" \
+    "ls $(mj_rel "$MJ_PROFILES_DIR")"; fi
 
   return 0
 }
@@ -166,7 +169,8 @@ mj_validate_wiring() {
             mj_doctrine_fail wiring "$name" "git config $target names '$path' and it is not an executable here" "ls -l $path"
           else mj_doctrine_ok wiring "$name" "declared in this clone as $target"; fi ;;
         ci)
-          if [ ! -f "$MJ_ROOT/$target" ]; then mj_doctrine_fail wiring "$name" "ci file $target does not exist"
+          if [ ! -f "$MJ_ROOT/$target" ]; then mj_doctrine_fail wiring "$name" "ci file $target does not exist" \
+            "grep -n 'wired_by' $(mj_rel "$MJ_POLICY_FILE")"
           elif ! grep -qE "${prog}[[:space:]]+$arg0" "$MJ_ROOT/$target"; then mj_doctrine_fail wiring "$name" "$target does not invoke $prog $arg0" "grep -n $prog $target"
           else mj_doctrine_ok wiring "$name" "invoked from $target"; fi ;;
         provider-hook)
@@ -186,15 +190,18 @@ mj_validate_wiring() {
               cst="$(mj_capture_state "$cprov" "$caspect")"; creason="${cst#*"$MJ_TAB"}"; cst="${cst%%"$MJ_TAB"*}"
               if [ "$cst" = verified ]; then mj_doctrine_ok wiring "$name" "$creason"
               else mj_doctrine_fail wiring "$name" "$cst — $creason" "majordomus capture status"; fi ;;
-            *) mj_doctrine_fail wiring "$name" "unknown provider-hook aspect '$caspect' (provider-hook:<provider> | provider-hook:<provider>:session)" ;;
+            *) mj_doctrine_fail wiring "$name" "unknown provider-hook aspect '$caspect' (provider-hook:<provider> | provider-hook:<provider>:session)" \
+                 "grep -n 'wired_by' $(mj_rel "$MJ_POLICY_FILE")" ;;
           esac ;;
         manual) mj_doctrine_skip wiring "$name" "wired_by: manual — documented, not verified" ;;
-        *) mj_doctrine_fail wiring "$name" "unknown wired_by kind '$kind' (git-hook:<name> | ci:<path> | provider-hook:<provider>[:session] | manual)" ;;
+        *) mj_doctrine_fail wiring "$name" "unknown wired_by kind '$kind' (git-hook:<name> | ci:<path> | provider-hook:<provider>[:session] | manual)" \
+             "grep -n 'wired_by' $(mj_rel "$MJ_POLICY_FILE")" ;;
       esac
     fi
     i=$((i+1))
   done
-  [ "$i" = 0 ] && mj_doctrine_fail wiring "policy" "no enforcement entries declared; nothing is wired to run majordomus"
+  [ "$i" = 0 ] && mj_doctrine_fail wiring "policy" "no enforcement entries declared; nothing is wired to run majordomus" \
+    "grep -n 'enforcement:' $(mj_rel "$MJ_POLICY_FILE")"
 
   return 0
 }
@@ -289,7 +296,8 @@ mj_validate_budget() {
     if grep -qE '\b[0-9]+ (agents|files|apps|commands|skills|rules)\b' "$measured"; then
       mj_doctrine_fail counts "$subject" "hardcoded count in always-loaded context" "grep -nE '[0-9]+ (agents|files|apps|commands|skills|rules)' $always"
     else mj_doctrine_ok counts "$subject" "no hardcoded counts"; fi
-  elif [ -z "$always" ]; then mj_doctrine_fail budget "policy" "no projection is marked always_loaded: true"; fi
+  elif [ -z "$always" ]; then mj_doctrine_fail budget "policy" "no projection is marked always_loaded: true" \
+    "grep -n 'always_loaded' $(mj_rel "$MJ_POLICY_FILE")"; fi
   rm -f "$owned"
 
   # 8. the continuity subsystem: reachable through the CLI, not merely present on disk.
@@ -472,11 +480,35 @@ mj_validate_ai_layout() {
   return 0
 }
 
+# Three directories were checked here as one class, and they are two classes.
+#
+# The prompts section is **tracked**: the manifest names it, the layer is incomplete
+# without it, and no command creates it on demand. Absence is a finding.
+#
+# The two record stores are **checkout-local** — under .ai/local/, which .gitignore
+# excludes — and they are created on demand, by their own writers and by `majordomus
+# update`, which does create both (measured: `create .ai/local/state/handovers/`). So every
+# new worktree was born with two findings that named a remedy for a cause that did not
+# exist, and every worker in it read them on every run. Two standing warnings that no
+# action clears are not a signal; they teach a reader to skim the report.
+#
+# The signal is not lost, because it was never here. The condition that matters is that
+# episodes have opened in this checkout and the writers have stopped, and
+# `mj_validate_lifecycle` already reports exactly that — conditioned on there having been
+# activity to judge, which is the half this check had no way of knowing. What is left here
+# is absence, reported as absence, in the same words doctor already uses for a local store
+# nothing has written to yet.
 mj_validate_layout() {
-  local d
-  for d in "$MJ_STATE_DIR/handovers" "$MJ_STATE_DIR/checkpoints" "$MJ_PROMPTS_DIR"; do
-    if [ -d "$d" ]; then mj_doctrine_ok layout "$(mj_rel "$d")" "present"
-    else mj_doctrine_fail layout "$(mj_rel "$d")" "missing; the command that writes it will create it, but update installs it" "majordomus update"; fi
+  local d n
+  if [ -d "$MJ_PROMPTS_DIR" ]; then mj_doctrine_ok layout "$(mj_rel "$MJ_PROMPTS_DIR")" "present"
+  else mj_doctrine_fail layout "$(mj_rel "$MJ_PROMPTS_DIR")" "missing; the manifest names it and no command creates it on demand" "majordomus update"; fi
+  for d in "$MJ_STATE_DIR/handovers" "$MJ_STATE_DIR/checkpoints"; do
+    if [ -d "$d" ]; then
+      n="$(find "$d" -name '*.md' 2>/dev/null | wc -l | tr -d ' ')"
+      mj_doctrine_ok layout "$(mj_rel "$d")" "present, $n record(s)"
+    else
+      mj_doctrine_ok layout "$(mj_rel "$d")" "absent: nothing has been written to this checkout-local store; its writer and majordomus update both create it"
+    fi
   done
   return 0
 }
@@ -502,6 +534,104 @@ mj_validate_prompts() {
     reason="$(mj_prompt_validate "$f")" || { mj_doctrine_fail prompt "$(basename "$f" .md)" "$(printf '%s' "$reason" | tr '\n' ';' | sed 's/;$//')" "majordomus prompt show $(basename "$f" .md)"; bad=1; }
   done
   [ "$n" -gt 0 ] && [ "$bad" = 0 ] && mj_doctrine_ok prompt "$n asset(s)" "front matter valid, every token known"
+  return 0
+}
+
+# ---------------------------------------------------------------- lifecycle writtenness
+# Whether the lifecycle is still *writing*, which is a different question from whether its
+# stores can be read.
+#
+# Every check that existed before this one asked the second question. `retention` counted
+# the files and found them under the cap. `layout` found the directories present.
+# `resolver` found a record and reported its divergence label. All three passed, every day,
+# for the six days in which this repository wrote no checkpoint and no handover at all
+# (ADR 0052) — because a store that nothing writes to is perfectly reachable, perfectly
+# well-formed and perfectly under its retention cap.
+#
+# The invariant here is the one that spans both halves: *if lifecycle events are arriving,
+# the derived state they produce must advance.* Episodes were opening and closing that whole
+# week, which is the evidence that makes the absence of records a finding rather than a
+# quiet period. A repository where nothing at all is happening is not failing; one that is
+# demonstrably busy and has written nothing a future worker could resume from is.
+mj_validate_lifecycle() {
+  # No watch-specific path. The other validators that take one do so because their full
+  # output is too long for a drift report; this one emits four lines and the question it
+  # answers — is the lifecycle still writing — is exactly what a watch is for.
+  local ledger="$MJ_STATE_DIR/ledger.jsonl"
+  if [ ! -f "$ledger" ]; then
+    mj_doctrine_ok lifecycle "ledger" "no ledger yet; nothing has happened here to be silent about"
+    return 0
+  fi
+
+  # Is anything happening? Episodes opening is the cheapest evidence of a live lifecycle,
+  # and it is the evidence that was present throughout the outage.
+  local opens; opens="$(grep -c '"event":"session.started"' "$ledger" 2>/dev/null || true)"
+  : "${opens:=0}"
+  if [ "$opens" -lt 2 ]; then
+    mj_doctrine_ok lifecycle "activity" "$opens episode(s) opened here; too few to judge whether the writers stopped"
+    return 0
+  fi
+
+  # The two records a future worker resumes from. Absence is judged against the same
+  # thresholds everything else reads, so there is one place to change the answer.
+  local d
+  for d in checkpoints handovers; do
+    if ! mj_resolve_latest "$MJ_STATE_DIR/$d" ""; then
+      mj_doctrine_fail lifecycle "$d" \
+        "$opens episode(s) have opened here and no $d record exists for this worktree and branch" \
+        "majordomus ${d%s} --list"
+      continue
+    fi
+    mj_freshness "$MJ_RES_CREATED" >/dev/null
+    case "$MJ_FRESH_STATE" in
+      stale|invalid)
+        mj_doctrine_fail lifecycle "$d" \
+          "the newest record is $MJ_FRESH_STATE ($MJ_FRESH_REASON) while episodes go on opening; the writer has stopped" \
+          "majordomus ${d%s} --list" ;;
+      unknown)
+        mj_doctrine_fail lifecycle "$d" \
+          "the newest record cannot be dated ($MJ_FRESH_REASON), so nothing can say whether the writer is still running" \
+          "majordomus ${d%s} --list" ;;
+      *)
+        mj_doctrine_ok lifecycle "$d" "newest record is $MJ_FRESH_STATE, $MJ_FRESH_REASON" ;;
+    esac
+  done
+
+  # A receipt with no resulting event beside it. The receipt exists precisely so that an
+  # adapter which arrived and did nothing is distinguishable from one that never fired, and
+  # a count that keeps climbing while the records do not is that adapter.
+  local got failed
+  got="$(grep -c '"event":"provider.event.received"' "$ledger" 2>/dev/null || true)"; : "${got:=0}"
+  failed="$(grep -c '"event":"provider.event.failed"' "$ledger" 2>/dev/null || true)"; : "${failed:=0}"
+  if [ "$failed" -gt 0 ]; then
+    mj_doctrine_fail lifecycle "receipts" \
+      "$failed lifecycle event(s) arrived and did not complete their work" \
+      "majordomus history --event provider.event.failed"
+  elif [ "$got" -gt 0 ]; then
+    mj_doctrine_ok lifecycle "receipts" "$got lifecycle event(s) received, none failed"
+  fi
+
+  # Episodes that opened and were never closed. An episode is a conversation boundary; one
+  # that outlives every threshold the policy has is a client that went away without saying
+  # so, and it is not closed here — a diagnostic that silently mutated state would be the
+  # watchdog this design refuses. It is named, so that recovery is a decision somebody makes.
+  local open_dir="$MJ_STATE_DIR/sessions-open" f stranded=0 newest_open=""
+  if [ -d "$open_dir" ]; then
+    for f in "$open_dir"/*.yaml; do
+      [ -f "$f" ] || continue
+      mj_freshness "$(sed -n 's/^started_at: //p' "$f" | head -n 1)" >/dev/null
+      case "$MJ_FRESH_STATE" in
+        stale|invalid) stranded=$((stranded + 1)); newest_open="$MJ_FRESH_REASON" ;;
+      esac
+    done
+  fi
+  if [ "$stranded" -gt 0 ]; then
+    mj_doctrine_fail lifecycle "episodes" \
+      "$stranded open episode(s) older than the policy's stale threshold (oldest: $newest_open); their clients are gone and nothing closed them" \
+      "majordomus session list"
+  else
+    mj_doctrine_ok lifecycle "episodes" "no episode has outlived the stale threshold"
+  fi
   return 0
 }
 
@@ -554,8 +684,30 @@ mj_validate_rule_package() {
     mj_info rules "distribution" "ships a different package ($(mj_rules_manifest_rev "$MJ_STD_RULES_DIR")); the vendored one stays authoritative until updated" "majordomus rules vendor diff"
   fi
   mj_rules_load || { mj_doctrine_fail rules "effective set" "$MJ_RULES_ERROR" "majordomus rules list"; return 0; }
-  n="$(mj_rule_count)"
-  mj_doctrine_ok rules "$n rule(s)" "resolve in one deterministic order; vendored baseline plus project rules, no override"
+  # A verdict states what it is a verdict about. "122 rule(s) resolve in one deterministic
+  # order" is true and is read as covering the whole set, while the doctrine check below
+  # examines only the subset carrying a validator — so the two numbers are printed beside
+  # each other here, and neither can be mistaken for the other.
+  local tally total enforced blocking blocking_unenforced
+  tally="$(mj_rule_tally)"
+  total="${tally%% *}"; tally="${tally#* }"
+  enforced="${tally%% *}"; tally="${tally#* }"
+  blocking="${tally%% *}"; blocking_unenforced="${tally#* }"
+  n="$total"
+  mj_doctrine_ok rules "$n rule(s)" "resolve in one deterministic order; vendored baseline plus project rules, no override — $enforced carry a validator, $((n - enforced)) are normative text this tool does not check"
+  # The number the doctrine check cannot report, because those rules are not in its
+  # registry at all: a rule declared blocking with no x-majordomus block. Nothing in this
+  # tool runs for it. It may still be held by a CI gate, a behavioural case or a reviewer,
+  # and scripts/ci/rule-proof-check is what decides that; what is certain from here is
+  # only that the dispatcher will never stop a command on its behalf. Reported rather than
+  # failed, because the honest count is large and predates the report; the gate ratchets it.
+  if [ "$blocking_unenforced" -gt 0 ]; then
+    mj_info rules "blocking without a validator" \
+      "$blocking_unenforced of $blocking blocking rule(s) carry no x-majordomus block, so no validator runs for them and the doctrine verdict below says nothing about them" \
+      "majordomus rules list | grep -v 'enforced by'"
+  else
+    mj_doctrine_ok rules "blocking" "all $blocking blocking rule(s) carry a validator"
+  fi
   return 0
 }
 
@@ -678,7 +830,17 @@ mj_validate_doctrine_wiring() {
       "cat $root/RELEASE.json"
   fi
 
-  [ "$bad" = 0 ] && mj_doctrine_ok doctrine "$n doctrines" "$([ "$packaged" = 1 ] && printf 'validator, dispatch and propagation resolve for every one' || printf 'validator, dispatch, propagation, test and CI resolve for every one')"
+  # State the denominator, always. This line used to read "41 doctrines — validator,
+  # dispatch, propagation, test and CI resolve for every one", beside another line in the
+  # same run reporting 122 rules. "Every one" meant every one of 41 and said nothing about
+  # the other 81, and no reader could tell that from the sentence. The subset is now named
+  # in the subject, and the remainder is named in the detail, so the verdict cannot be
+  # read as covering rules it never looked at.
+  local reg_total reg_rest
+  reg_total="$(mj_rule_count)"
+  reg_rest=$((reg_total - n))
+  [ "$bad" = 0 ] && mj_doctrine_ok doctrine "$n of $reg_total rule(s) carry a validator" \
+    "$([ "$packaged" = 1 ] && printf 'validator, dispatch and propagation resolve for every one of the %s' "$n" || printf 'validator, dispatch, propagation, test and CI resolve for every one of the %s' "$n")$([ "$reg_rest" -gt 0 ] && printf '; the remaining %s declare no validator and this check does not examine them' "$reg_rest")"
   return 0
 }
 # watch's view of the same doctrine: every target against the stamp it carries.

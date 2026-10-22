@@ -1,4 +1,4 @@
-//! The shared server: one per repository, holding the lease, serving every web surface the
+//! The shared server: one per checkout (ADR 0035, ADR 0044), holding the lease, serving every web surface the
 //! process resolved — the home page, the Cockpit, Swagger UI, OpenAPI, the capability
 //! routes, the documentation and every generated report — and MCP over HTTP for every
 //! peer that attaches. It is started by the first `majordomus mcp` or `serve` in a repository and
@@ -25,6 +25,63 @@ pub struct SharedServer {
     lease: Lease,
     /// Set by [`SharedServer::stop`]; the reader thread ends at its next tick.
     stopping: Arc<AtomicBool>,
+    /// The mesh runtime this server activated (or left inactive, with the reason).
+    mesh: Arc<crate::mesh::MeshRuntime>,
+}
+
+/// Activate the mesh from the repository's declaration, when there is one and it is
+/// enabled. Every failure is a reason on `mesh.status`, never a failed server.
+fn activate_mesh(ctx: &Arc<Context>, version: &str, url: &str) {
+    let Some(parsed) = crate::capability::builtin::mesh::declaration(ctx) else {
+        return;
+    };
+    let config = match parsed {
+        Ok(config) => config,
+        Err(e) => {
+            tracing::warn!(error = %e, "the mesh declaration does not parse; the mesh stays off");
+            ctx.mesh
+                .decline(&format!("the declaration does not parse: {e}"));
+            return;
+        }
+    };
+    if !config.enabled {
+        ctx.mesh.decline("the mesh declaration is disabled");
+        return;
+    }
+    let Some(identity_path) = crate::mesh::default_identity_path() else {
+        ctx.mesh
+            .decline("no HOME and no XDG_STATE_HOME: nowhere to keep a node identity");
+        return;
+    };
+    let identity = match crate::mesh::NodeIdentity::load_or_create(&identity_path) {
+        Ok(identity) => identity,
+        Err(e) => {
+            tracing::warn!(error = %e, "the node identity did not load; the mesh stays off");
+            ctx.mesh.decline(&e.to_string());
+            return;
+        }
+    };
+    let endpoints = vec![url
+        .trim_start_matches("http://")
+        .trim_end_matches('/')
+        .to_string()];
+    let root = std::path::Path::new(&ctx.index.repository.root);
+    let repos = crate::repository::git_identity(root)
+        .map(|g| vec![g.id])
+        .unwrap_or_default();
+    let node = identity.public.node_id.clone();
+    match ctx
+        .mesh
+        .activate(&config, identity, endpoints, repos, version)
+    {
+        Ok(()) => {
+            tracing::info!(node = %node, "mesh active: this node announces and listens per the declaration")
+        }
+        Err(e) => {
+            tracing::warn!(error = %e, "the mesh did not activate");
+            ctx.mesh.decline(&e.to_string());
+        }
+    }
 }
 
 impl SharedServer {
@@ -32,7 +89,7 @@ impl SharedServer {
     /// port is replaced by a free one and said so; without it, a taken port is an error.
     #[allow(clippy::too_many_arguments)]
     pub fn start(
-        ctx: Arc<Context>,
+        live: Arc<crate::live::Live>,
         version: &'static str,
         host: &str,
         port: u16,
@@ -51,11 +108,18 @@ impl SharedServer {
             None => server::bind(host, port)?,
         };
         let url = bound.url();
-        let endpoint = Arc::new(McpEndpoint::new(Arc::clone(&ctx), version, url.clone()));
-        let router = Router::new(ctx, version)
+        let ctx_for_mesh = live.current();
+        let endpoint = Arc::new(McpEndpoint::new(Arc::clone(&live), version, url.clone()));
+        let router = Router::new(live, version)
             .with_mcp(Arc::clone(&endpoint))
             .with_cockpit(share_dir);
         lease.publish(&url)?;
+        // The mesh, when the repository declares one — before the workers pick up their
+        // first request, so a client that connects on the "listening" line already sees
+        // the activated runtime. Never blocking: providers open sockets on their own
+        // threads, and a declaration that is absent, disabled or malformed leaves the
+        // runtime inactive with the reason `mesh.status` reports.
+        activate_mesh(&ctx_for_mesh, version, &url);
         // what it serves is read off the resolution, so this line cannot name a route the
         // process does not have or miss one it does
         let surfaces = router.served()?.summary(&url);
@@ -101,13 +165,17 @@ impl SharedServer {
             url = %url,
             lease = %lease.path().display(),
             surfaces = %surfaces,
-            "shared server listening on {url} — {surfaces}; the one server for this repository: every later `majordomus mcp` here attaches to it, and it ends when the last peer leaves"
+            // "of this checkout", not "for this repository": a linked worktree is a
+            // checkout with a lease and a server of its own, and this line is the first
+            // thing a person reads when a client starts one (ADR 0044).
+            "shared server listening on {url} — {surfaces}; the one server of this checkout: every later `majordomus mcp` here attaches to it, and it ends when the last peer leaves"
         );
         Ok(SharedServer {
             running,
             endpoint,
             lease,
             stopping,
+            mesh: ctx_for_mesh.mesh.clone(),
         })
     }
 
@@ -148,6 +216,7 @@ impl SharedServer {
 
     /// Stop serving and release the lease.
     pub fn stop(self) {
+        self.mesh.stop();
         self.stopping.store(true, Ordering::SeqCst);
         self.endpoint.close_all();
         self.running.stop();

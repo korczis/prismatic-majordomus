@@ -322,16 +322,25 @@ pub fn run(args: CapabilitiesArgs) -> Result<u8> {
             // `project.rust-benchmark-coverage` says so, and what decides the verdict is
             // therefore whether anything is *missing*, not whether anything is waived
             if coverage.has_no_missing() {
-                w(&mut out, format!("OK   benchmarks  {} target(s) cover {} requirement(s), {} waived — every executable timed directly and on every transport it is exposed on, plus the transports' own operations", projection.targets.len(), total.required, total.waived))?;
-                for line in coverage
-                    .lines
-                    .iter()
-                    .filter(|l| l.state == crate::bench::CoverageState::Waived)
-                {
+                w(&mut out, format!("OK   benchmarks  {} target(s) cover {} requirement(s), {} waived, {} inapplicable — every executable timed directly and on every transport it is exposed on where its declared precondition holds, plus the transports' own operations", projection.targets.len(), total.required, total.waived, total.inapplicable))?;
+                for line in coverage.lines.iter().filter(|l| {
+                    matches!(
+                        l.state,
+                        crate::bench::CoverageState::Waived
+                            | crate::bench::CoverageState::Inapplicable
+                    )
+                }) {
+                    // an inapplicable line is shown, never folded into the count it did
+                    // not earn: the repository lacks what its precondition names
                     w(
                         &mut out,
                         format!(
-                            "     waived   {} on {} — {}",
+                            "     {:<8} {} on {} — {}",
+                            if line.state == crate::bench::CoverageState::Waived {
+                                "waived"
+                            } else {
+                                "inapplicable"
+                            },
                             line.subject,
                             line.transport.name(),
                             line.reason.as_deref().unwrap_or("no reason")

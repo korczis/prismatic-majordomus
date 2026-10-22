@@ -1,7 +1,7 @@
 +++
 title = "A task is started with a declared file scope and a profile, and only one task is active per checkout"
 description = "majordomus start requires --scope: the repository paths this task may touch. It records the scope, the profile, the owner and the git state in state/current.yaml. While that record's outcome is active, a second start in the same checkout is refused with exit code 15. A task ends by finish or by handover --close; the next start archives the old record rather than discarding it."
-weight = 45
+weight = 47
 [extra]
 claim_id = "scoped-task"
 status = "guaranteed"

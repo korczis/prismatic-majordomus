@@ -253,10 +253,18 @@ printf '{"prompt":"injected by something","prompt_id":"n2","prompt_source":"hook
 printf '{"prompt":"no origin declared","prompt_id":"n3"}' | ./.claude/hooks/majordomus-capture
 [ "$(records)" = "$((was + 1))" ] || { echo "    a payload with no declared origin was dropped"; exit 1; }
 
-# ---------------------------------------------------------------- nothing is ever deleted
-# The ledger and the handovers rotate under a policy cap; a prompt does not, because no
-# other file can reconstruct one. Capturing must therefore leave every earlier record where
-# it was, and there must be no cap to reach.
+# ---------------------------------------------------------------- capture deletes nothing
+# Capturing must leave every earlier record exactly where it was: a record is written once
+# and no write path touches another one.
+#
+# This block used to end by asserting that the policy declared no cap on prompts at all,
+# because the doctrine was that nothing may ever be removed from this archive. That argument
+# was about the *record* — that it happened, when, in which episode — and it was applied to
+# the bytes of the text, which is the part that carries credentials and whose risk does not
+# decay. The archive reached 20 MB unbounded. Retention now exists (`prompts:` in the policy,
+# `majordomus capture prune`, rule majordomus.prompt-continuity, test/cases/140), and it takes
+# the body and keeps the record — so what is asserted here is the part that did not change:
+# the hook prunes nothing, and only the command a person runs does.
 # written the way an older version wrote them: one line, and `ts` before the field had a
 # sibling called finished_at. They must reformat rather than be reported forever.
 for d in 20010101000000 20010102000000 20010103000000; do
@@ -269,7 +277,13 @@ printf '%s' "$second" | sed 's/"p2"/"p3"/' | ./.claude/hooks/majordomus-capture
 for d in 20010101000000 20010102000000 20010103000000; do
   [ -f ".ai/local/prompts/$d-old.json" ] || { echo "    $d-old.json was deleted"; exit 1; }
 done
-expect_no_grep '^prompts:' .ai/repo/policy.yaml   # there is no cap on prompts to configure
+# the cap exists, and reaching it is not what capture does with it: the hook wrote a record
+# and took no body, however old the planted ones are
+grep -qE '^prompts:' .ai/repo/policy.yaml || { echo "    the policy declares no prompts retention block"; exit 1; }
+for d in 20010101000000 20010102000000 20010103000000; do
+  grep -qF 'an older prompt' ".ai/local/prompts/$d-old.json" \
+    || { echo "    capturing pruned a body; only 'capture prune' may"; exit 1; }
+done
 
 # ---------------------------------------------------------------- the pair is enforced
 # The archive above now holds records planted by hand, which have no rendering. That is the

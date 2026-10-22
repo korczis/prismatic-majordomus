@@ -40,13 +40,17 @@ permissions:
   # canonical project model and its GitHub projection still agree.
   issues: read
 
-# A newer commit of the same pull request supersedes the runs of the older ones. Every
-# other run (master, the schedule, a dispatch) is its own group: it neither waits for nor
-# cancels another, so a master run held up by a scarce runner does not hold up the next
-# commit's evidence; only deployments queue, in the pages job's own group.
+# One run of a pull request at a time, and a started run reaches its verdict. A newer commit
+# waits in the group and replaces any commit still waiting there, so a burst of pushes costs
+# one run each for the first and the last — never a run that was killed halfway. Until
+# 2026-09-15 a newer commit cancelled the run in progress; the suite takes over two hours,
+# sessions merge master into their branches more often than that, and pull request #576
+# was cancelled four times in a row without ever producing the verdict a merge is decided
+# on. Every other run (master, the schedule, a dispatch) is its own group: it neither waits
+# for nor cancels another; only deployments queue, in the pages job's own group.
 concurrency:
   group: validate-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.run_id }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: false
 
 # Every job carries a timeout. GitHub's default is six hours, which is not a bound: a job
 # that hangs holds a runner for a shift, and while any job of a run is still going the run's
@@ -73,13 +77,16 @@ jobs:
       projection_closure: ${{ steps.plan.outputs.projection_closure }}
       web_topology: ${{ steps.plan.outputs.web_topology }}
       rust_coverage: ${{ steps.plan.outputs.rust_coverage }}
+      coverage_differential: ${{ steps.plan.outputs.coverage_differential }}
       rust_bench: ${{ steps.plan.outputs.rust_bench }}
       command_graph: ${{ steps.plan.outputs.command_graph }}
+      version_surface: ${{ steps.plan.outputs.version_surface }}
       cockpit_assets: ${{ steps.plan.outputs.cockpit_assets }}
       cockpit_probe: ${{ steps.plan.outputs.cockpit_probe }}
       site_build: ${{ steps.plan.outputs.site_build }}
       site_probe: ${{ steps.plan.outputs.site_probe }}
       ui_audit: ${{ steps.plan.outputs.ui_audit }}
+      interaction_probe: ${{ steps.plan.outputs.interaction_probe }}
       macos: ${{ steps.plan.outputs.macos }}
       installer_live: ${{ steps.plan.outputs.installer_live }}
       pages_live: ${{ steps.plan.outputs.pages_live }}
@@ -130,7 +137,15 @@ jobs:
     timeout-minutes: 25
     runs-on: ubuntu-latest
     steps:
+      # the whole history and its tags: `version-matches-surface` asks what the public
+      # surface has lost since the last release, and it finds that release with
+      # `git tag --list 'v[0-9]*'` and reads the registry out of it with `git show`. A
+      # depth-1 checkout with no tags gives it neither, so the gate failed for want of the
+      # data rather than for anything about the tree, on every run it has ever had. The
+      # suite job already checks out in full, for the same class of reason.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - run: sudo apt-get install -y shellcheck >/dev/null
       - name: pinned actionlint
         env:
@@ -168,7 +183,21 @@ jobs:
   suite:
     needs: plan
     if: needs.plan.outputs.shell_suite == 'true'
-    timeout-minutes: 100
+    # 150, not 100. The bound is a backstop against a wedged runner, and every case already
+    # carries one of its own (test/run.sh, `majordomus-timeout:`), so the job bound only has
+    # to sit above what a healthy run costs. It did not. The suite costs 93 to 100 minutes,
+    # and two branches cut a minute apart on 2026-09-11 decided it:
+    #
+    #   #209  10:01:37Z -> 11:34:25Z   92m 48s   failure    (a verdict)
+    #   #208  10:02:38Z -> 11:43:00Z  100m 22s   cancelled  (killed at the bound)
+    #
+    # Seventy-nine seconds of runner variance settled whether a pull request was validated
+    # at all. A margin of 7% is a coin flip, not a bound; 150 makes it about 60%. And a
+    # cancelled job carries no verdict while looking, in GitHub's own interface, exactly
+    # like one a person abandoned — which is how master's suite went days without reporting
+    # and nobody noticed. The true cost should be re-measured from the first run that is
+    # allowed to finish, and this number set from that.
+    timeout-minutes: 150
     runs-on: ubuntu-latest
     steps:
       # the whole history: a case that clones this checkout into a fixture and pushes
@@ -180,6 +209,15 @@ jobs:
         uses: ./.github/actions/setup-site
       - id: rust
         uses: ./.github/actions/setup-rust
+      # `just` is a subject of this suite, not a convenience: 77_rust_evidence asks whether a
+      # person running `just test` reaches the same gates CI runs, and 90 and 102 read the
+      # recipe list and the completion it declares. The runner had no `just`, so 77 died at
+      # the `just --dump` assignment — `bash -eu` makes a 127 fatal before the case's own
+      # "the justfile does not parse" guard can say so — and 90 and 102 skipped their
+      # justfile halves silently. A gate nothing can run is not a gate.
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: just
       - name: the executable, built once for every case
         run: |
           RUSTFLAGS='' cargo build --quiet --locked --manifest-path apps/majordomus-cli/Cargo.toml
@@ -209,7 +247,7 @@ jobs:
   # executable is the artifact majordomus-cli-<target> for a later job or a later phase.
   rust:
     needs: plan
-    if: needs.plan.outputs.rust_check == 'true' || needs.plan.outputs.rust_integration == 'true' || needs.plan.outputs.projection_closure == 'true' || needs.plan.outputs.web_topology == 'true' || needs.plan.outputs.command_graph == 'true'
+    if: needs.plan.outputs.rust_check == 'true' || needs.plan.outputs.rust_integration == 'true' || needs.plan.outputs.projection_closure == 'true' || needs.plan.outputs.web_topology == 'true' || needs.plan.outputs.command_graph == 'true' || needs.plan.outputs.version_surface == 'true'
     timeout-minutes: 30
     runs-on: ubuntu-latest
     steps:
@@ -237,9 +275,10 @@ jobs:
         with:
           name: ci-plan
       # The other gates the model assigns to this job — the ones that need the executable
-      # the step above built: projection-closure, web-topology, command-graph. rust-check
-      # and rust-integration are the step above, with the mode and the artifact argument
-      # the model's line does not carry, so they are the only two skipped here.
+      # the step above built: projection-closure, web-topology, command-graph,
+      # version-surface. rust-check and rust-integration are the step above, with the mode
+      # and the artifact argument the model's line does not carry, so they are the only two
+      # skipped here.
       - name: the rust gates of the plan
         run: MJ_CI_TIMINGS=timings.tsv scripts/ci/run-plan --plan plan.json --job rust --skip rust-check,rust-integration
       - id: target
@@ -261,10 +300,17 @@ jobs:
           retention-days: 14
 
   # ------------------------------------------------------------------ coverage
-  # Line coverage of the crate, with the threshold scripts/rust-check enforces locally.
+  # Line, function and region coverage of the crate, measured over the code that is under
+  # test rather than over the code plus the tests, and held to two thresholds: the crate-wide
+  # floor in scripts/rust-coverage-threshold and the canonical session/continuity domain's in
+  # scripts/session-coverage-threshold. `cargo llvm-cov --summary-only` is not run directly
+  # here any more: it has no way to exclude a `#[cfg(test)] mod tests` that lives in the same
+  # file as the code it tests, so its denominator contained the tests and the number moved
+  # whenever a test was added or deleted. scripts/rust-coverage is the same measurement with
+  # that subtracted; it runs the same suite once and post-processes the JSON export.
   coverage:
     needs: plan
-    if: needs.plan.outputs.rust_coverage == 'true'
+    if: needs.plan.outputs.rust_coverage == 'true' || needs.plan.outputs.coverage_differential == 'true'
     timeout-minutes: 25
     runs-on: ubuntu-latest
     defaults:
@@ -277,9 +323,15 @@ jobs:
         with:
           components: llvm-tools-preview
       - uses: taiki-e/install-action@cargo-llvm-cov
-      - run: cargo llvm-cov --all-targets --summary-only --fail-under-lines "$(cat ../../scripts/rust-coverage-threshold)"
+      - run: ../../scripts/rust-coverage --export ../../coverage.json
       - if: always()
-        run: ../../scripts/ci/summary --job coverage --fact "rust cache hit=${{ steps.rust.outputs.cache-hit }}" --fact "threshold=$(cat ../../scripts/rust-coverage-threshold)"
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-metrics-coverage
+          path: coverage.json
+          retention-days: 14
+      - if: always()
+        run: ../../scripts/ci/summary --job coverage --fact "rust cache hit=${{ steps.rust.outputs.cache-hit }}" --fact "crate threshold=$(cat ../../scripts/rust-coverage-threshold)" --fact "session domain threshold=$(cat ../../scripts/session-coverage-threshold)"
 
   # ------------------------------------------------------------------ bench
   # The benchmark check against the committed baseline of its platform (.ai/repo/benchmarks/
@@ -311,7 +363,12 @@ jobs:
     timeout-minutes: 50
     runs-on: ubuntu-latest
     steps:
+      # The whole history, because scripts/ci/link-check decides a commit link by whether the
+      # commit is in the history being published, and refuses to report clean from a shallow
+      # clone that cannot say.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - id: site
         uses: ./.github/actions/setup-site
       # One generation for the whole job. This step is the gate — it stages a fresh generation
@@ -323,23 +380,23 @@ jobs:
       # toolchain the site job already has.
       - name: the Cockpit stylesheet in sync
         if: needs.plan.outputs.cockpit_assets == 'true'
-        run: scripts/ci/timed cockpit-assets "cockpit-assets --check" timings.tsv scripts/cockpit-assets --check
+        run: scripts/ci/timed --bound 2700 cockpit-assets "cockpit-assets --check" timings.tsv scripts/cockpit-assets --check
       - name: derived site data in sync
-        run: scripts/ci/timed site-build "generate-site-data --check" timings.tsv scripts/generate-site-data --check
+        run: scripts/ci/timed --bound 2700 site-build "generate-site-data --check" timings.tsv scripts/generate-site-data --check
       - name: build the site
-        run: scripts/ci/timed site-build site-build timings.tsv scripts/site-build --no-data
+        run: scripts/ci/timed --bound 2700 site-build site-build timings.tsv scripts/site-build --no-data
       # Metadata and landmarks on every route, no unrendered template delimiter, every
       # internal link resolving, no remote asset, no credential, and the generated data
       # still matching its canonical sources.
       - name: check the site
-        run: scripts/ci/timed site-build site-check timings.tsv scripts/site-check --no-sync
+        run: scripts/ci/timed --bound 2700 site-build site-check timings.tsv scripts/site-check --no-sync
       # Browser-measured: no horizontal overflow at 320/390/1280 on every route, the mobile
       # menu, the dropdowns, the theme toggle, Mermaid rendering. The full sweep, deliberately:
       # every overflow this site has produced came from canonical data rendered into a shared
       # template, which no sample of one route per template can see.
       - name: probe the site in a browser
         if: needs.plan.outputs.site_probe == 'true'
-        run: CHROME_BIN=google-chrome SITE_PROBE_JOBS=4 scripts/ci/timed site-probe site-probe timings.tsv scripts/site-probe
+        run: CHROME_BIN=google-chrome SITE_PROBE_JOBS=4 scripts/ci/timed --bound 2700 site-probe site-probe timings.tsv scripts/site-probe
       # Every discovered page at every width the compiled theme implies, in a browser,
       # against the responsive, semantic, component and WCAG invariants. It drives the
       # repository's own server, so it needs the executable; the Rust cache makes that a
@@ -354,7 +411,7 @@ jobs:
           echo "MAJORDOMUS_BIN=$PWD/apps/majordomus-cli/target/debug/majordomus" >> "$GITHUB_ENV"
       - name: audit the UI in a browser
         if: needs.plan.outputs.ui_audit == 'true'
-        run: scripts/ci/timed ui-audit ui-audit timings.tsv scripts/ui audit --report
+        run: scripts/ci/timed --bound 2700 ui-audit ui-audit timings.tsv scripts/ui audit --report
       - if: always() && needs.plan.outputs.ui_audit == 'true'
         uses: actions/upload-artifact@v4
         with:
@@ -371,6 +428,35 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ci-metrics-site
+          path: timings.tsv
+          retention-days: 14
+
+  # ----------------------------------------------------------------- interactions
+  # Every interactive control on every page of the built site, exercised in a real browser by the behaviour spec
+  # that claims it (project.every-link-and-control-is-tested). Its own job: the site job's browser steps already
+  # run to that job's bound, and a gate in a job that never finishes enforces nothing. The installed Chrome drives
+  # it; a missing browser under CI is a failure, never a skip.
+  interactions:
+    needs: plan
+    if: needs.plan.outputs.interaction_probe == 'true'
+    # the full probe measured 599 s on a 4-job local run over every page with a control; a hosted runner is slower,
+    # and a job killed at its bound reports cancelled, which the verdict counts as red
+    timeout-minutes: 45
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: site
+        uses: ./.github/actions/setup-site
+      - name: build the site
+        run: scripts/ci/timed --bound 2400 interaction-probe site-build timings.tsv scripts/site-build --no-data
+      - name: exercise every control
+        run: CHROME_BIN=google-chrome MJ_PROBE_JOBS=4 scripts/ci/timed --bound 2400 interaction-probe interaction-probe timings.tsv scripts/interaction-probe
+      - if: always()
+        run: scripts/ci/summary --job interactions --timings timings.tsv --fact "npm cache hit=${{ steps.site.outputs.npm-cache-hit }}"
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-metrics-interactions
           path: timings.tsv
           retention-days: 14
 
@@ -396,9 +482,9 @@ jobs:
       # build them out of node_modules before a browser is pointed at those pages. Without
       # this the probe reports a console 404 on every page that lazily loads one.
       - name: vendor the lazy-loaded libraries the probe expects to find
-        run: scripts/ci/timed cockpit-assets cockpit-assets timings.tsv scripts/cockpit-assets
+        run: scripts/ci/timed --bound 900 cockpit-assets cockpit-assets timings.tsv scripts/cockpit-assets
       - name: probe the Cockpit
-        run: CHROME_BIN=google-chrome scripts/ci/timed cockpit-probe cockpit-probe timings.tsv scripts/cockpit-probe
+        run: CHROME_BIN=google-chrome scripts/ci/timed --bound 900 cockpit-probe cockpit-probe timings.tsv scripts/cockpit-probe
       - if: always()
         run: scripts/ci/summary --job cockpit --timings timings.tsv --fact "npm cache hit=${{ steps.site.outputs.npm-cache-hit }}" --fact "rust cache hit=${{ steps.rust.outputs.cache-hit }}"
       - if: always()
@@ -514,7 +600,7 @@ jobs:
   # setting and is not made here; until it is required, this is a verdict a person can read
   # and not one the merge obeys.
   ci:
-    needs: [plan, structure, suite, rust, coverage, bench, site, cockpit, macos, install, pages]
+    needs: [plan, structure, suite, rust, coverage, bench, site, interactions, cockpit, macos, install, pages]
     if: always()
     timeout-minutes: 15
     runs-on: ubuntu-latest

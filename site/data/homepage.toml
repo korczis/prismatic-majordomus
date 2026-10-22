@@ -1,0 +1,27 @@
+# The homepage's story, declared once.
+#
+# A landing page is an argument with an order: what hurts, how this answers it, what it
+# refuses, what it does for the part that hurts you, what proves it, what is not built, and
+# how to try it. This file is that order, as the `id`s of the sections the homepage renders
+# inside <main>. It is not prose and carries no claim; the words are manifesto.toml's and
+# marketing.toml's, and every figure beside them is derived.
+#
+# scripts/ci/homepage-check holds the rendered page to it in both directions, and the rule
+# project.homepage-tells-a-declared-story makes that blocking: a section the page renders and
+# this list does not name fails the build, and so does a section named here that the page
+# does not render, or renders empty, or renders out of this order. The page drifted into a
+# stack of twenty-two sections once, each defensible alone; this is what stops it happening
+# again without a person deciding it should.
+#
+# To add a section: write it in site/templates/index.html with an id, name the id here where
+# it belongs in the argument, and give it at least one link or one derived figure.
+order = ["hero", "recognise", "how", "refuses", "chapters", "proof", "built", "install"]
+
+# What the homepage may make every visitor download from this site before they scroll: the
+# scripts and stylesheets it links, and graph data carried inline in the HTML. A figure is
+# measured, never aspired to — scripts/ci/homepage-check reports the current weight on every
+# build, and raising a budget is a reviewed change to this file. The HTML is not budgeted here:
+# its size follows the recorded runs the page replays.
+[budget]
+assets_bytes = 340000
+inline_json_bytes = 8000

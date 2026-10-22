@@ -59,6 +59,7 @@ if [ -n "${MAJORDOMUS_BIN:-}" ]; then RB="$MAJORDOMUS_BIN"
   printf '==> derive: MAJORDOMUS_BIN=%s (not building; it must be of this tree'"'"'s generation)\n' "$RB" >&2
 else
   # a machine-wide rustflags profile can make a dev build refuse to link; the crate sets none
+  mj_rust_space_check "$ROOT" "the build this derivation needs" || exit 12
   step "building the Rust executable ($PROFILE)"
   release=(); [ "$PROFILE" = release ] && release=(--release)
   RUSTFLAGS='' cargo build --quiet --manifest-path "$CRATE/Cargo.toml" "${release[@]}"
@@ -95,5 +96,11 @@ step "stage B: scripts/generate-site-data (site data, content, derived documents
 step_done
 step "stage C: majordomus generate (the site dataset and the benchmark matrix over the index)"
 "$RB" generate --repo "$ROOT" --strict >/dev/null
+step_done
+step "stage D: scripts/gitattributes (the merge policy, from the generators)"
+# Last, because it reads stage A's artifact manifest and stage B's published content tree:
+# the set of files a merge must not try to merge is exactly the set the stages above write,
+# and until this ran it was a hand list that was wrong in both directions.
+"$ROOT/scripts/gitattributes" >/dev/null
 step_done
 printf '==> derive: done in %ss; scripts/derive-check proves it\n' "$(( $(now) - RUN_T0 ))" >&2

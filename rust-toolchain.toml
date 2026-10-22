@@ -1,0 +1,25 @@
+# The one Rust toolchain this repository is built, linted and formatted with.
+#
+# It was unpinned until now: .github/actions/setup-rust installed `stable` and called it
+# "the pinned Rust toolchain" in its own description, and nothing named a version anywhere
+# in the tree. On 2026-09-11 CI's `stable` was 1.98.1 and a developer's default was 1.90.0 —
+# eight minor versions apart — and rustfmt does not format the same way across that gap. So
+# `cargo fmt` locally produced a tree that `cargo fmt --check` refused on the runner, and
+# the only way to find out was to push. The same trap had already turned master red once
+# through clippy.
+#
+# Pinning here rather than in the workflow is deliberate: rustup reads this file, so the
+# toolchain a person gets in this directory is the toolchain CI uses, without anyone having
+# to remember. The components are the ones the gates need, so a clone that has to fetch the
+# toolchain fetches a usable one.
+#
+# Raising it is a deliberate change: bump the channel, run `cargo fmt` and `scripts/rust-check
+# --ci`, and commit whatever the new rustfmt and clippy ask for in the same change.
+# llvm-tools-preview is here and not only in the coverage job's `components:` input, because
+# rustup keeps `stable` and `1.98.1` as two installations even when they are the same release,
+# and a component added to one is absent from the other. The workflow adds it to `stable`;
+# cargo, reading this file, would then run `cargo llvm-cov` under a toolchain that does not
+# have it.
+[toolchain]
+channel = "1.98.1"
+components = ["rustfmt", "clippy", "llvm-tools-preview"]

@@ -9,6 +9,9 @@ status: active
 class: blocking
 depends_on: [project.interfaces-are-projections@1, project.derived-once@1, project.no-machine-paths@1]
 tags: [mcp, coordination, derived, gates]
+
+x-majordomus:
+  tests: [test/cases/110_lease_reader.sh, test/cases/106_context_peers.sh]
 ---
 
 # Rationale

@@ -9,6 +9,9 @@ status: active
 class: blocking
 depends_on: []
 tags: [context, documentation]
+
+x-majordomus:
+  tests: [test/cases/69_context_documents.sh]
 ---
 
 # Rationale

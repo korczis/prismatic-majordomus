@@ -24,6 +24,13 @@
 # the scoped context documents: discovery, resolution, validation, impact
 # shellcheck source=context_docs.sh
 . "$MJ_LIB_DIR/context_docs.sh"
+# the open episode and the working context it froze, so that the GIT section can say how far
+# the briefing the worker is actually holding has drifted from the checkout it describes.
+# session.sh reaches back here through session_context.sh; both files guard against being
+# sourced twice, and every reference across the pair is resolved when it is called rather
+# than when it is read, so the cycle terminates and no definition is missing at call time.
+# shellcheck source=session.sh
+. "$MJ_LIB_DIR/session.sh"
 
 mj_cmd_context() {
   local for_provider="" budget="" prompt_name="" no_prompt="${MJ_NO_PROMPT:-0}"
@@ -89,6 +96,34 @@ H
 # projections describe the same selection.
 mj_ctx_excl() { printf '%s — %s\n' "$1" "$2" >> "$MJ_CTX_TMP/excluded"; }
 
+# The age of the briefing the worker is holding, printed inside the GIT section because that
+# is where every other recorded head is already checked. The briefing is the document the
+# provider's start hook froze when the episode opened; it is the only thing in this output
+# the worker did not just ask for, and until now the only recorded head in the repository
+# that nothing compared. `advanced` carries the distance because "your briefing is four
+# commits old" is actionable and "your briefing is stale" is not.
+#
+# Silent when there is no open episode, when the episode belongs to another worktree, and
+# when the store holds no document for it: each of those is a different fact, and the
+# session_lifecycle doctrine is the surface that reports them.
+mj_ctx_briefing() {
+  mj_is_function mj_load_session || return 0
+  mj_load_session >/dev/null 2>&1 || return 0
+  mj_session_is_foreign && return 0
+  local sid fresh label head since
+  sid="$(mj_ses session_id)"
+  [ -n "$sid" ] || return 0
+  fresh="$(mj_session_context_freshness "$sid")" || return 0
+  label="${fresh%%	*}"; fresh="${fresh#*	}"
+  head="${fresh%%	*}"; since="${fresh#*	}"
+  case "$label" in
+    exact)    printf 'briefing     %s at %s\n' "$label" "${head:0:7}" ;;
+    advanced) printf 'briefing     %s — %s commit(s) since it was frozen at %s\n' "$label" "$since" "${head:0:7}" ;;
+    *)        printf 'briefing     %s from %s\n' "$label" "${head:0:7}"
+              printf 'WARNING      the briefing this episode opened with no longer describes this checkout; this output supersedes it\n' ;;
+  esac
+}
+
 mj_context_sections() {
   local prompt_name="$1" no_prompt="$2"
   : > "$MJ_CTX_TMP/excluded"
@@ -115,6 +150,7 @@ mj_context_sections() {
         diverged|different_context) printf 'WARNING      the task record no longer describes this checkout; trust git, not the records below\n' ;;
       esac
     fi
+    mj_ctx_briefing
   } > "$MJ_CTX_TMP/10.git"
   MJ_CTX_LABEL="${label:-none}"
 
@@ -323,25 +359,21 @@ mj_ctx_render() {
   printf '%s of %s lines%s\n' "$(( $(mj_lines "$out") + 1 ))" "$budget" "${dropped:+ (dropped:$dropped)}" >> "$out"
 }
 
-# The other workers attached to this repository's shared server, and specifically the ones
-# whose claimed paths meet this task's scope.
+# mj_peer_board — the board of this repository's shared server, as JSON, on stdout.
 #
-# Co-operation between concurrent workers failed today not because the board did not exist
-# but because looking at it was voluntary: a session announced, its connection was
-# re-established, and it was invisible to eight others for three hours; two sessions built
-# the same subsystem because neither read the board first. So the board arrives where every
-# worker is already told to look — `majordomus context`, the first thing the bootstrap asks
-# for — rather than waiting to be asked for.
+# The one network call site this tool has, and the reason it lives in this file rather than
+# beside either of its callers: SECURITY.md, project.no-network-no-eval and
+# test/cases/08_no_forbidden_constructs.sh all name `lib/context.sh` as the single declared
+# exception, and hold it to its shape in both directions. A second call site elsewhere would
+# widen a promise three documents make; one function called twice does not.
 #
-# It degrades to nothing rather than to noise. No executable, no server, no jq, no curl, a
-# server that does not answer within two seconds, or a board holding nobody but the caller:
-# the section is not written at all, because a repository with one worker in it must not
-# grow a section about being alone. Nothing here fails a command: a coordination hint that
-# can break `context` would be worse than no hint.
-mj_context_peers() {
-  local have_task="$1"
-  mj_has jq || return 0
-  mj_has curl || return 0
+# Silence is the only failure mode. No executable, no server, no jq, no curl, a lease
+# outside loopback, a server that does not answer within two seconds: nothing is printed and
+# the status is non-zero, because every caller here is offering a coordination hint and a
+# hint that can break the command carrying it is worse than no hint.
+mj_peer_board() {
+  mj_has jq || return 1
+  mj_has curl || return 1
   # Where the server is comes from the one reader of the lease: `serve status`, the
   # executable's typed reading of that file served like every other fact (ADR 0035,
   # project.the-lease-is-read-once). This function used to find the lease itself — its own
@@ -357,29 +389,48 @@ mj_context_peers() {
   # shellcheck source=rust_bin.sh
   . "$MJ_LIB_DIR/rust_bin.sh"
   bin="$(mj_rust_bin "$MJ_HOME")"
-  [ -x "$bin" ] || return 0
+  [ -x "$bin" ] || return 1
   share="$(mj_rust_share "$MJ_HOME")"
   # a subshell, so that the share this tool would use is the executable's and not exported
   # into everything `context` runs after it
   status="$( ( [ -z "$share" ] || export MAJORDOMUS_SHARE="$share"
-               "$bin" serve status --repo "$MJ_ROOT" --format json ) 2>/dev/null )" || return 0
+               "$bin" serve status --repo "$MJ_ROOT" --format json ) 2>/dev/null )" || return 1
   # this checkout's server if it has one, else the primary's: the order this function asked
   # for before, now answered rather than guessed
   url="$(printf '%s' "$status" | jq -r '
     [ (.servers[]? | select(.this_checkout == true)),
       (.servers[]? | select(.primary == true)) ]
-    | map(select((.lease.url // "") != "")) | .[0].lease.url // empty' 2>/dev/null)" || return 0
-  [ -n "$url" ] || return 0
+    | map(select((.lease.url // "") != "")) | .[0].lease.url // empty' 2>/dev/null)" || return 1
+  [ -n "$url" ] || return 1
   # Nothing leaves this machine. SECURITY.md's "local only" carries exactly one exception
   # and this request is it, so the exception is only as wide as its guard: a lease naming
   # anything but loopback is not the shared server of this repository, and the section is
   # not written rather than the promise being quietly widened.
   case "$url" in
     http://127.0.0.1:*|http://localhost:*|"http://[::1]:"*) ;;
-    *) return 0 ;;
+    *) return 1 ;;
   esac
-  local board; board="$(curl -fsS --max-time 2 "$url/api/v1/peers" 2>/dev/null)" || return 0
-  printf '%s' "$board" | jq -e '.peers' >/dev/null 2>&1 || return 0
+  local board; board="$(curl -fsS --max-time 2 "$url/api/v1/peers" 2>/dev/null)" || return 1
+  printf '%s' "$board" | jq -e '.peers' >/dev/null 2>&1 || return 1
+  printf '%s' "$board"
+}
+
+# The other workers attached to this repository's shared server, and specifically the ones
+# whose claimed paths meet this task's scope.
+#
+# Co-operation between concurrent workers failed today not because the board did not exist
+# but because looking at it was voluntary: a session announced, its connection was
+# re-established, and it was invisible to eight others for three hours; two sessions built
+# the same subsystem because neither read the board first. So the board arrives where every
+# worker is already told to look — `majordomus context`, the first thing the bootstrap asks
+# for — rather than waiting to be asked for.
+#
+# It degrades to nothing rather than to noise: an unreachable board, or a board holding
+# nobody but the caller, and the section is not written at all, because a repository with
+# one worker in it must not grow a section about being alone.
+mj_context_peers() {
+  local have_task="$1" board
+  board="$(mj_peer_board)" || return 0
 
   # One line per *claim*, not per peer: a peer may hold several at once, because one MCP
   # session is not always one piece of work — a client that fans work out to subagents shares

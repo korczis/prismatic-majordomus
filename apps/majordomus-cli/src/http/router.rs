@@ -16,6 +16,7 @@ use serde_json::{json, Value};
 
 use crate::capability::{CapabilityError, CaseContext, Context, HttpMethod};
 use crate::cockpit::Cockpit;
+use crate::live::{IntoLive, Live, Memo};
 use crate::web::discover::Runtime;
 use crate::web::home;
 
@@ -303,18 +304,23 @@ pub struct ErrorDetail {
 /// Routes requests to the surfaces this process serves. Cheap to clone: every worker
 /// thread holds one, and the resolution behind it is shared.
 pub struct Router {
-    ctx: Arc<Context>,
+    /// The repository as it is now. Every request takes the current context from here
+    /// before it is answered, which is what keeps a server that has run for hours from
+    /// serving the repository it started in.
+    live: Arc<Live>,
     version: &'static str,
-    /// The OpenAPI document, rendered once: the registry is immutable for the process.
-    openapi: Arc<std::sync::OnceLock<Result<String, String>>>,
+    /// The OpenAPI document, rendered once per generation of the repository: it is a
+    /// projection of the registry, and the registry is a projection of the index.
+    openapi: Arc<Memo<Result<String, String>>>,
     /// MCP over HTTP at the mount its surface declares, when this router serves a shared
     /// server.
     mcp: Option<Arc<McpEndpoint>>,
     /// The Cockpit, when the process located a distribution to serve its assets from.
     cockpit: Option<Arc<Cockpit>>,
     /// The resolved surfaces and their handlers, and the context narrowed to them. Built
-    /// on first use, because the builder learns what this process offers after `new`.
-    served: Arc<std::sync::OnceLock<Result<Resolution, String>>>,
+    /// on first use, because the builder learns what this process offers after `new`, and
+    /// again for each generation, because the topology is read out of the repository.
+    served: Arc<Memo<Result<Resolution, String>>>,
     /// Which git repository the served checkout belongs to, asked once: the index route
     /// answers it on every probe, and a probe must not cost a subprocess.
     git: Arc<std::sync::OnceLock<Option<crate::repository::GitIdentity>>>,
@@ -327,17 +333,60 @@ struct Resolution {
     ctx: Arc<Context>,
 }
 
+/// The surfaces a router serves, held for as long as its reader needs them.
+///
+/// A resolution belongs to one generation of the repository and is replaced when the
+/// repository moves under the process, so it cannot be lent out as a bare reference tied
+/// to the router. This holds the generation alive while the caller reads it, and derefs to
+/// the surfaces themselves so that a caller writes `router.served()?.summary(url)` exactly
+/// as it did when the index was immutable.
+///
+/// ```
+/// # use majordomus_cli::http::Router;
+/// # use majordomus_cli::http::router::ServedRef;
+/// # fn example(router: &Router) {
+/// // the surfaces, read through the generation that resolved them
+/// let served: ServedRef = router.served().expect("a topology that resolves");
+/// assert!(served.topology().surfaces.iter().any(|s| s.id == "home"));
+/// # }
+/// ```
+pub struct ServedRef {
+    resolution: Arc<Result<Resolution, String>>,
+}
+
+impl std::ops::Deref for ServedRef {
+    type Target = Served;
+
+    fn deref(&self) -> &Served {
+        match &*self.resolution {
+            Ok(resolution) => &resolution.served,
+            // `served()` is the only constructor and it builds one only from `Ok`
+            Err(reason) => unreachable!("a resolved surface set that did not resolve: {reason}"),
+        }
+    }
+}
+
+impl std::fmt::Debug for ServedRef {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ServedRef").finish()
+    }
+}
+
 impl Router {
-    /// A router over a loaded context, without `/mcp` and without the Cockpit.
-    pub fn new(ctx: Arc<Context>, version: &'static str) -> Self {
+    /// A router over a view of the repository, without `/mcp` and without the Cockpit.
+    ///
+    /// `live` is either the [`Live`] the shared server follows the repository with or a
+    /// plain [`Arc<Context>`], which becomes a pinned view: a one-shot process and a
+    /// benchmark have nothing to follow and pay nothing to prove it.
+    pub fn new(live: impl IntoLive, version: &'static str) -> Self {
         crate::perf::Counters::bump(&crate::perf::COUNTERS.http_projection_builds);
         Router {
-            ctx,
+            live: live.into_live(),
             version,
-            openapi: Arc::new(std::sync::OnceLock::new()),
+            openapi: Arc::new(Memo::default()),
             mcp: None,
             cockpit: None,
-            served: Arc::new(std::sync::OnceLock::new()),
+            served: Arc::new(Memo::default()),
             git: Arc::new(std::sync::OnceLock::new()),
         }
     }
@@ -345,7 +394,7 @@ impl Router {
     /// The same router, serving the Cockpit's pages with its assets read from `share_dir`.
     pub fn with_cockpit(mut self, share_dir: Option<&std::path::Path>) -> Self {
         self.cockpit = Some(Arc::new(Cockpit::new(
-            Arc::clone(&self.ctx),
+            Arc::clone(&self.live),
             self.version,
             share_dir,
         )));
@@ -366,24 +415,28 @@ impl Router {
         }
     }
 
-    /// The resolved surfaces, narrowed and validated once.
-    fn resolution(&self) -> Result<&Resolution, &String> {
-        self.served
-            .get_or_init(|| {
-                let root = std::path::Path::new(&self.ctx.index.repository.root);
-                Served::resolve(&self.ctx.web, root, self.runtime())
-                    .map(|served| Resolution {
-                        ctx: Arc::new(self.ctx.with_web(served.shared())),
-                        served,
-                    })
-                    // the reason alone: `served()` puts it back into the same error, and a
-                    // message that names its own kind twice reads as a bug in the tool
-                    .map_err(|e| match e {
-                        crate::error::Error::InvalidSurface { reason, .. } => reason,
-                        other => other.to_string(),
-                    })
-            })
-            .as_ref()
+    /// The resolved surfaces, narrowed and validated once per generation of the
+    /// repository.
+    ///
+    /// Once per *generation* and not once per process: the topology is discovered from the
+    /// site's configuration and the generated web root, both of which are files in the
+    /// repository, so a checkout that moved may serve a different set of surfaces.
+    fn resolution(&self) -> Arc<Result<Resolution, String>> {
+        let view = self.live.view();
+        self.served.get_or_init(view.generation, || {
+            let root = std::path::Path::new(&view.ctx.index.repository.root);
+            Served::resolve(&view.ctx.web, root, self.runtime())
+                .map(|served| Resolution {
+                    ctx: Arc::new(view.ctx.with_web(served.shared())),
+                    served,
+                })
+                // the reason alone: `served()` puts it back into the same error, and a
+                // message that names its own kind twice reads as a bug in the tool
+                .map_err(|e| match e {
+                    crate::error::Error::InvalidSurface { reason, .. } => reason,
+                    other => other.to_string(),
+                })
+        })
     }
 
     /// The surfaces this router serves, for a caller that wants to describe them: the
@@ -392,9 +445,10 @@ impl Router {
     /// The answer is the resolution, not a fresh discovery — a router that could not
     /// resolve its topology never answered a request either, and says the same thing here
     /// that it says to a client.
-    pub fn served(&self) -> crate::error::Result<&Served> {
-        match self.resolution() {
-            Ok(resolution) => Ok(&resolution.served),
+    pub fn served(&self) -> crate::error::Result<ServedRef> {
+        let resolution = self.resolution();
+        match &*resolution {
+            Ok(_) => Ok(ServedRef { resolution }),
             Err(reason) => Err(crate::error::Error::InvalidSurface {
                 surface: "topology".into(),
                 reason: reason.clone(),
@@ -416,21 +470,24 @@ impl Router {
         }
         // a process whose topology does not resolve serves nothing, the live channel
         // included: the same answer every other path gets
-        if let Err(reason) = self.resolution() {
-            return Some(Err(Response::error(500, "internal", reason)));
-        }
-        Some(events::accept(self.ctx.executions.store(), req))
+        let resolution = self.resolution();
+        let ctx = match &*resolution {
+            Ok(resolution) => &resolution.ctx,
+            Err(reason) => return Some(Err(Response::error(500, "internal", reason))),
+        };
+        Some(events::accept(ctx.executions.store(), req))
     }
 
     fn openapi(&self) -> Response {
-        let rendered = self.openapi.get_or_init(|| {
+        let view = self.live.view();
+        let rendered = self.openapi.get_or_init(view.generation, || {
             let cases = CaseContext {
-                index: &self.ctx.index,
+                index: &view.ctx.index,
             };
-            openapi::document(&self.ctx.registry, self.version, Some(&cases))
+            openapi::document(&view.ctx.registry, self.version, Some(&cases))
                 .map(|d| openapi::render(&d))
         });
-        match rendered {
+        match &*rendered {
             Ok(text) => Response::new(200, "application/json", text.clone()),
             Err(e) => error_response(500, "internal", e),
         }
@@ -449,7 +506,8 @@ impl Router {
                 return refusal;
             }
         }
-        let resolution = match self.resolution() {
+        let held = self.resolution();
+        let resolution = match &*held {
             Ok(resolution) => resolution,
             Err(reason) => return error_response(500, "internal", reason),
         };
@@ -516,7 +574,10 @@ impl Router {
             // because handing the socket over is something only the server can do. What
             // reaches here is a request that did not ask to be upgraded, and the reply says
             // what this path is and where the same events are readable over HTTP.
-            Bound::Route(Native::Events) => match events::accept(self.ctx.executions.store(), req) {
+            Bound::Route(Native::Events) => match events::accept(
+                resolution.ctx.executions.store(),
+                req,
+            ) {
                 Ok(_) => Response::error(
                     500,
                     "internal",
@@ -567,12 +628,12 @@ impl Router {
             let identity = home::Identity {
                 version: self.version,
                 summary: crate::about::SUMMARY,
-                repository: repository_name(&self.ctx.index.repository.root),
-                revision: match &self.ctx.index.repository.git {
+                repository: repository_name(&resolution.ctx.index.repository.root),
+                revision: match &resolution.ctx.index.repository.git {
                     crate::git::GitState::Available(info) => info.head.as_deref(),
                     crate::git::GitState::Unavailable { .. } => None,
                 },
-                capabilities: self.ctx.registry.summary().total,
+                capabilities: resolution.ctx.registry.summary().total,
             };
             let ready = |id: &str| {
                 if resolution.served.ready(id) {
@@ -603,7 +664,9 @@ impl Router {
             })
             .collect();
         let git = self.git.get_or_init(|| {
-            crate::repository::git_identity(std::path::Path::new(&self.ctx.index.repository.root))
+            crate::repository::git_identity(std::path::Path::new(
+                &resolution.ctx.index.repository.root,
+            ))
         });
         // whether this process is still the checkout's server. A server whose lease was
         // taken over keeps serving the peers it already has, so it goes on answering here,
@@ -619,12 +682,12 @@ impl Router {
                 // can reach the socket, and where the checkout sits on the host is of no
                 // use to them and of some use to somebody else. The HTML page has always
                 // withheld it; the two projections of one surface now agree.
-                "repository": repository_name(&self.ctx.index.repository.root),
+                "repository": repository_name(&resolution.ctx.index.repository.root),
                 // which repository, without saying where it is: a second process that
                 // already knows the root computes the same value and knows this server is
                 // its own (crate::repository::identity)
                 "repository_id": crate::repository::identity(
-                    std::path::Path::new(&self.ctx.index.repository.root),
+                    std::path::Path::new(&resolution.ctx.index.repository.root),
                 ),
                 // and which git repository that checkout belongs to: one value for every
                 // worktree of it, so that a reader can tell two servers of one repository

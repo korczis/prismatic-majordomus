@@ -11,9 +11,13 @@
 # claiming one identity, or a project rule reusing a vendored namespace is an error, and
 # an unresolved set is not applied partially: the command that needed it stops.
 #
-# Rules with an x-majordomus block are enforced: the dispatcher in doctrine.sh reads them
-# as its registry. Rules without one are normative for whoever reads them and enforced by
-# nobody, which is a fact `rules list` shows rather than hides.
+# Rules with an x-majordomus block are enforced, in one of two modes. A rule that names a
+# validator is dispatched: doctrine.sh reads it as its registry and calls the validator at
+# run time. A rule that names none is gated: nothing dispatches it, and the behavioural
+# cases it names are what prove it. Either mode names at least one test, because a rule
+# nothing proves is a rule nobody enforces. Rules without the block are normative for
+# whoever reads them and enforced by nobody, which is a fact `rules list` shows rather
+# than hides.
 
 MJ_RULES_FLAT=""          # rules.N.<field> for the effective set, resolved order
 MJ_RULES_ERROR=""         # why the last load failed
@@ -75,11 +79,23 @@ mj_rule_scan() {
         }
         enforced = 0; for (i = 1; i <= nl; i++) if (index(keys[i], "x-majordomus.") == 1) enforced = 1
         if (enforced) {
-          if (first["x-majordomus.validator"] == "") fail("x-majordomus lacks validator")
-          if (first["x-majordomus.category"] == "") fail("x-majordomus lacks category")
-          if (first["x-majordomus.exit_code"] == "") fail("x-majordomus lacks exit_code")
-          if (first["x-majordomus.enforced_by.0"] == "") fail("x-majordomus names no enforcing command")
-          if (first["x-majordomus.tests.0"] == "") fail("x-majordomus names no test")
+          if (first["x-majordomus.validator"] != "") {
+            if (first["x-majordomus.category"] == "") fail("x-majordomus lacks category")
+            if (first["x-majordomus.exit_code"] == "") fail("x-majordomus lacks exit_code")
+            if (first["x-majordomus.enforced_by.0"] == "") fail("x-majordomus names no enforcing command")
+          } else if (first["x-majordomus.enforced_by.0"] != "")
+            fail("x-majordomus names an enforcing command but no validator to dispatch")
+          else if (first["x-majordomus.category"] != "" || first["x-majordomus.exit_code"] != "")
+            fail("x-majordomus names a category or exit code but no validator to use them")
+          # The third mode. A rule may carry a reason why nothing executable can express it
+          # instead of naming a test, and the reason is the whole declaration: there is no
+          # flag beside it, because a flag can be set and a reason cannot be set without
+          # writing one. A block that names neither a test nor a reason is enforcement
+          # nobody can reproduce, which is what this refuses.
+          if (first["x-majordomus.tests.0"] == "" && first["x-majordomus.reviewed_because"] == "")
+            fail("x-majordomus names no test and gives no reviewed_because")
+          if (first["x-majordomus.reviewed_because"] != "" && first["x-majordomus.validator"] != "")
+            fail("x-majordomus gives a reviewed_because and a validator; a dispatched rule is not review-enforced")
         }
         # the flat record, in the order the registry is read in; @ is the resolved index
         nout = split("id version title description statement status class", out, " ")
@@ -193,6 +209,49 @@ mj_rules_load() {
 mj_rule()       { mj_yget "$MJ_RULES_FLAT" "rules.$1.$2"; }
 mj_rule_list()  { mj_ylist "$MJ_RULES_FLAT" "rules.$1.$2"; }
 mj_rule_count() { awk 'index($0, "rules.") == 1 && $0 ~ /^rules\.[0-9]+\.id=/ { n++ } END { printf "%s", n + 0 }' "$MJ_RULES_FLAT"; }
+# The tally every verdict about the rule set owes its reader. `mj_rule_count` answers "how
+# many rules", and a surface that reports a number over the *enforced* subset while saying
+# "every one" invites the reader to hear it as a statement about all of them — which is how
+# a repository convinces itself it is covered when most of its rules are prose nothing runs.
+# So the four numbers are produced together, by one pass, and printed as one line:
+#
+#   <total> <enforced> <blocking> <blocking-with-no-validator>
+#
+# enforced means the rule carries an x-majordomus block, so doctrine.sh has a validator to
+# dispatch. A blocking rule without one is a promise the tool cannot keep by itself; it may
+# still be held by a CI gate or a reviewer, but nothing here can see that, and a count that
+# does not separate the two cannot be read.
+mj_rule_tally() {
+  awk '
+    index($0, "rules.") != 1 { next }
+    { eq = index($0, "="); k = substr($0, 1, eq - 1); v = substr($0, eq + 1)
+      if (split(k, p, ".") < 3) next
+      i = p[2]; f = substr(k, length("rules." i ".") + 1)
+      if (f == "id") { n++; seen[i] = 1 }
+      else if (f == "class") cls[i] = v
+      else if (f == "enforced") enf[i] = v }
+    END {
+      for (i in seen) {
+        if (enf[i] == 1) e++
+        if (cls[i] == "blocking") { b++; if (enf[i] != 1) bu++ }
+      }
+      printf "%s %s %s %s", n + 0, e + 0, b + 0, bu + 0
+    }' "$MJ_RULES_FLAT"
+}
+# The blocking rules with no validator, one id per line, in registry order — the list
+# behind the fourth number above, so a reader can act on it rather than only fear it.
+mj_rules_blocking_unenforced() {
+  awk '
+    index($0, "rules.") != 1 { next }
+    { eq = index($0, "="); k = substr($0, 1, eq - 1); v = substr($0, eq + 1)
+      if (split(k, p, ".") < 3) next
+      i = p[2]; f = substr(k, length("rules." i ".") + 1)
+      if (f == "id") { id[i] = v; if (!(i in ord)) { ord[i] = ++n; byord[n] = i } }
+      else if (f == "class") cls[i] = v
+      else if (f == "enforced") enf[i] = v }
+    END { for (j = 1; j <= n; j++) { i = byord[j]; if (cls[i] == "blocking" && enf[i] != 1) print id[i] } }
+  ' "$MJ_RULES_FLAT"
+}
 mj_rule_index() {
   awk -v id="$1" 'index($0, "rules.") == 1 && $0 ~ /^rules\.[0-9]+\.id=/ && substr($0, index($0, "=") + 1) == id { split($0, p, "."); printf "%s", p[2]; f = 1; exit } END { exit !f }' "$MJ_RULES_FLAT"
 }
@@ -200,6 +259,7 @@ mj_rule_index() {
 mj_rules_render() {
   awk -v json="$1" '
     function jesc(s,  o, i, c) { o = ""; for (i = 1; i <= length(s); i++) { c = substr(s, i, 1); if (c == "\\") o = o "\\\\"; else if (c == "\"") o = o "\\\""; else if (c != "\n") o = o c } return o }
+    function jlist(v,  a, m, j, o) { if (v == "") return ""; m = split(v, a, ","); o = ""; for (j = 1; j <= m; j++) o = o (j > 1 ? "," : "") "\"" jesc(a[j]) "\""; return o }
     {
       eq = index($0, "="); k = substr($0, 1, eq - 1); v = substr($0, eq + 1)
       if (split(k, p, ".") < 3 || p[1] != "rules") next
@@ -208,16 +268,19 @@ mj_rules_render() {
       if (f == "id") id[i] = v; else if (f == "version") ver[i] = v; else if (f == "class") cls[i] = v
       else if (f == "status") st[i] = v; else if (f == "provenance") prov[i] = v; else if (f == "file") file[i] = v
       else if (f == "enforced") enf[i] = v
+      else if (f == "validator") val[i] = v
+      else if (f == "reviewed_because") rev[i] = v
+      else if (f ~ /^tests\.[0-9]+$/) ts[i] = (i in ts ? ts[i] "," v : v)
       else if (f ~ /^enforced_by\.[0-9]+$/) eb[i] = (i in eb ? eb[i] "," v : v)
       else if (f ~ /^depends_on\.[0-9]+$/) dep[i] = (i in dep ? dep[i] ",\"" v "\"" : "\"" v "\"")
     }
     END {
       if (json) {
         printf "{\"schema\":1,\"rules\":["
-        for (i = 0; i < n; i++) printf "%s{\"id\":\"%s\",\"version\":%s,\"class\":\"%s\",\"status\":\"%s\",\"provenance\":\"%s\",\"file\":\"%s\",\"enforced\":%s,\"depends_on\":[%s]}", (i ? "," : ""), id[i], ver[i], cls[i], st[i], prov[i], jesc(file[i]), (enf[i] == 1 ? "true" : "false"), dep[i]
+        for (i = 0; i < n; i++) printf "%s{\"id\":\"%s\",\"version\":%s,\"class\":\"%s\",\"status\":\"%s\",\"provenance\":\"%s\",\"file\":\"%s\",\"enforced\":%s,\"mode\":\"%s\",\"tests\":[%s],\"depends_on\":[%s]}", (i ? "," : ""), id[i], ver[i], cls[i], st[i], prov[i], jesc(file[i]), (enf[i] == 1 ? "true" : "false"), (enf[i] != 1 ? "none" : val[i] != "" ? "dispatched" : ts[i] != "" ? "gated" : "reviewed"), jlist(ts[i]), dep[i]
         printf "]}\n"
       } else
-        for (i = 0; i < n; i++) printf "%-42s v%-2s %-9s %-16s %s\n", id[i], ver[i], cls[i], prov[i], (enf[i] == 1 ? "enforced by " eb[i] : "no validator; see the rule")
+        for (i = 0; i < n; i++) printf "%-42s v%-2s %-9s %-16s %s\n", id[i], ver[i], cls[i], prov[i], (enf[i] != 1 ? "no validator; see the rule" : val[i] != "" ? "enforced by " eb[i] : ts[i] != "" ? "proven by " ts[i] : "review-enforced: " rev[i])
     }' "$MJ_RULES_FLAT"
 }
 
@@ -347,6 +410,11 @@ usage: majordomus rules list [--json]           the effective set in resolved or
   vendor update is the only way the baseline changes: a newer executable reports it,
   never applies it. It refuses over a hand-edited vendor directory unless --force, and
   it never touches rules/project/.
+
+  This command answers what the rules ARE. What PROVES each one — whether the case it
+  names is in the tree, whether a runner drives it, whether anything ever ran it, and
+  whether that run is older than what it is about — is a different question, and the
+  executable answers it: majordomus-cli rules report, rules show <id>, rules proves <test>.
 H
 }
 

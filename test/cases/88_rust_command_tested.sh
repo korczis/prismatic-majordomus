@@ -8,7 +8,8 @@
 # it; either accepted form of assertion — an in-file #[test] or a doc example cargo runs —
 # satisfies the rule on its own; a module with neither is reported once; a module composed by
 # nobody, a composed module with no file, and a composed module declaring no command are each
-# reported; the coverage floor must be declared and must be high; and the ratchet works in
+# reported; the coverage floor must be declared, one integer, and not under the bound the
+# check declares (it may rise and never fall); and the module ratchet works in
 # both directions — debt already recorded in the baseline does not fail the gate, debt that is
 # not recorded does, and clearing debt is noticed.
 . "$ROOT/test/lib.sh"
@@ -17,7 +18,10 @@ CHECK="$ROOT/scripts/ci/rust-command-check"
 
 F="$PWD/fixture"; B="$F/apps/majordomus-cli/src/capability/builtin"
 mkdir -p "$B" "$F/scripts" "$F/.ai/repo" "$PWD/empty"
-printf '90\n' > "$F/scripts/rust-coverage-threshold"
+# the floor ratchets from a bound the check itself declares, once; the case reads it there
+BOUND="$(sed -n 's/^FLOOR_BOUND=\([0-9][0-9]*\)$/\1/p' "$CHECK")"
+case "$BOUND" in ''|*[!0-9]*) echo "    the check declares no integer FLOOR_BOUND: '$BOUND'"; exit 1 ;; esac
+printf '%s\n' "$BOUND" > "$F/scripts/rust-coverage-threshold"
 run() { MJ_ROOT="$F" "$CHECK" > out.txt 2>&1; echo $?; }
 
 good_module() {
@@ -115,19 +119,29 @@ grep -q 'rust-command empty .*declares no capability' out.txt \
   || { echo "    a composed module declaring no command was not reported"; cat out.txt; exit 1; }
 rm -f "$B/empty.rs"; compose tested documented bare newcmd
 
-# --- the coverage floor is declared, and it is high
+# --- the coverage floor is declared, one integer, and never under the bound it ratchets from
 rm -f "$F/scripts/rust-coverage-threshold"
 rc="$(run)"
 grep -q 'no coverage floor is declared' out.txt \
   || { echo "    a missing coverage floor was not reported"; cat out.txt; exit 1; }
-printf '60\n' > "$F/scripts/rust-coverage-threshold"
+printf '%s.5\n' "$BOUND" > "$F/scripts/rust-coverage-threshold"
 rc="$(run)"
-grep -q 'floor is 60%, below the 90%' out.txt \
-  || { echo "    a floor below the rule's minimum was not reported"; cat out.txt; exit 1; }
-printf '90\n' > "$F/scripts/rust-coverage-threshold"
+grep -q 'no coverage floor is declared' out.txt \
+  || { echo "    a floor that is not one integer was not reported"; cat out.txt; exit 1; }
+below=$((BOUND - 1))
+printf '%s\n' "$below" > "$F/scripts/rust-coverage-threshold"
+rc="$(run)"
+grep -q "floor is ${below}%, below the ${BOUND}% bound" out.txt \
+  || { echo "    a floor one under the ratchet's bound was not reported"; cat out.txt; exit 1; }
+[ "$rc" = 10 ] || { echo "    a floor under the bound did not fail the gate ($rc)"; cat out.txt; exit 1; }
+printf '%s\n' "$BOUND" > "$F/scripts/rust-coverage-threshold"
 rc="$(run)"
 grep -q 'coverage floor' out.txt \
-  && { echo "    a floor at the minimum was still reported"; cat out.txt; exit 1; }
+  && { echo "    a floor at the bound was still reported"; cat out.txt; exit 1; }
+printf '%s\n' "$((BOUND + 1))" > "$F/scripts/rust-coverage-threshold"
+rc="$(run)"
+grep -q 'coverage floor' out.txt \
+  && { echo "    a floor raised above the bound was reported; a ratchet may rise"; cat out.txt; exit 1; }
 
 # --- the rule exists, is blocking, and names the gate that holds it
 R="$ROOT/.ai/repo/rules/project/rust-command-tested-in-file.v1.md"

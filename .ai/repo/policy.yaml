@@ -23,6 +23,8 @@ verification:
     - no_open_blockers
     - note_present
     - obligations_met
+    - gates_passed
+    - publication_current
 
 checkpoint:
   max_body_lines: 40                     # a checkpoint is a progress note, not a report
@@ -35,19 +37,54 @@ handover:
 ledger:
   retention_max_lines: 5000
 
+# The prompt archive under .ai/local/prompts/. Nothing used to bound it: the ledger, the
+# handovers and the checkpoints each rotate under a cap because each restates state that is
+# still available elsewhere, and a prompt restates nothing — so the archive grew without
+# limit, 20 MB of raw prompts in this repository before anyone measured it.
+#
+# What is bounded is the *body*, never the record. Pruning replaces the prompt text with a
+# tombstone and keeps every other field, including how the record came to be linked to its
+# episode: the archive stays a complete index of what was asked and when, and only the bytes
+# nobody can be held responsible for keeping go. A record is still never deleted.
+#
+# Two bounds, because they fail differently. `retention_max_days` is about exposure — raw
+# prompts carry credentials and customer names, and age is the only thing that reliably
+# reduces what they are worth to someone who should not have them. `retention_max_bytes` is
+# about the disk, and prunes oldest-first until the archive's bodies fit. Either alone is a
+# bound; both is the usual configuration. `majordomus capture prune` applies them, doctor
+# reports an archive over either, and nothing prunes behind a person's back.
+prompts:
+  retention_max_days: 90                 # a prompt body older than this is pruned
+  retention_max_bytes: 8388608           # 8 MiB of bodies; the oldest are pruned first
+
 # The provider's episode events do three things beyond drawing the boundary, and each is a
 # switch here rather than a constant in the shim. The start event hands the worker a
 # briefing on standard output, which the provider adds to the context it is about to build;
 # the compaction event records a derived checkpoint, because a compaction discards the
-# conversation while the work continues; the end event writes a derived continuation record
-# when the task is still active, because a closed envelope says what an episode produced and
-# not what the next worker should do.
+# conversation while the work continues; the end event writes a derived continuation record,
+# because a closed envelope says what an episode produced and not what the next worker
+# should do. None of the three asks whether a task is active: an episode is the provider's
+# boundary and a task is an optional relation it carries, and making the first depend on the
+# second is what silenced this subsystem for six days (ADR 0052).
 session:
   briefing_on_start: true
   briefing_budget_lines: 60              # cap on what the start event injects, per episode
-  checkpoint_on_compact: true
+  checkpoint_on_compact: true            # also the checkpoint the close records, for the
+                                         # same reason: both are moments at which what the
+                                         # episode knows stops being reachable
   handover_on_end: true
   ensure_server_on_start: true           # the start event converges on a ready shared server
+  stranded_after: 12h                    # an open episode silent this long may be recovered
+  # How old a continuation record may be before it stops being current. Divergence
+  # (exact/advanced/diverged/different_context) is a fact about git topology and says
+  # nothing about age; a record can be `advanced` and six days dead at the same time, which
+  # is exactly the combination that promoted a finished instruction into every new episode.
+  # Declared once here and read by every surface: a second copy of these numbers in a
+  # shell function, a Rust constant or a page of prose is the drift this file exists to
+  # prevent.
+  freshness:
+    fresh_minutes: 720                   # 12h: within a working day either side, current
+    stale_minutes: 2880                  # 48h: beyond this it is history, never current
 
 # `majordomus bench` samples every public command this many times after the warm-up runs;
 # `bench --check` refuses a regression larger than these fractions of the baseline's
@@ -61,8 +98,91 @@ benchmark:
     p95: 0.5
     p99: 0.6
   budget:
-    doctor_ms: 3000
-    watch_ms: 3000
+    # doctor and watch report their own wall time against these, INFO under and WARN over,
+    # never as the exit code. They are two numbers because they are two different bills:
+    # watch dispatches the same doctrine registry in a different mode. They carried the
+    # same value until 2026-09-12 only because neither had ever been measured.
+    #
+    # These judge THIS repository. The same two keys in share/skeleton/policy.yaml judge a
+    # repository on the day it adopts Majordomus, whose catalogue is the vendored baseline
+    # and nothing else; that is a different corpus and it is measured separately, there.
+    #
+    # THE MEASUREMENT (2026-09-12, at 3407ca2d4). Twenty runs of each command in a linked
+    # worktree, Apple silicon, `env -u MAJORDOMUS_SHARE MJ_TIMING=1 bin/majordomus <cmd>`,
+    # 160+ GiB free throughout. Every run's exit status was asserted before its duration was
+    # kept — doctor 0 or 10, watch 0 or 11 — because a command that exits on a usage error
+    # returns in milliseconds and is otherwise recorded as a very fast run. Ten of the twenty
+    # ran with this machine's 1-minute load average between 4.4 and 10.2 and ten between 13.7
+    # and 34.7, which is what a working day here actually looks like: many sessions at once.
+    #
+    #   command   n    min  median    p90    max  spread   budget  headroom over p90
+    #   doctor   20  24952   38354  64252  96413   3.86x   100000              1.56x
+    #   watch    20  18019   28418  40236  49737   2.76x    60000              1.49x
+    #
+    # One rule, applied to both: the p90 of that sample times 1.5, to the nearest 10 s, and
+    # checked to sit above the slowest run recorded. Recompute it from the table.
+    #
+    # WHY THE HEADROOM IS THAT LARGE, AND WHAT THESE NUMBERS CANNOT DO. Ten consecutive
+    # doctor runs ranged from 34505 ms to 96413 ms — 2.8x, at a fixed corpus, on one
+    # afternoon. Wall time here is mostly the host's concurrency and it does not even track
+    # the load average closely (run 5 cost 34505 ms at a load of 25.5; run 4 cost 96413 ms at
+    # 25.4). A budget tight enough to catch a 50% regression would therefore fire on most
+    # busy afternoons, and a WARN that is usually noise is a WARN nobody reads — which is
+    # exactly what the previous pair had become. So these refuse a gross structural change
+    # (an index build on doctor's path, a validator that walks the whole tree several times
+    # over) and nothing subtler. The instrument for anything subtler is `majordomus bench`,
+    # which takes a distribution rather than one sample and compares it against a baseline
+    # under the `regression` fractions above.
+    #
+    # The two are set independently but they agree: measured as alternating pairs, so that
+    # both see the same host in the same minute, watch cost a median 0.57 of doctor, and
+    # these two budgets stand in a ratio of 0.60.
+    #
+    # WHY 3000 WAS WRONG RATHER THAN SOMETHING HAVING REGRESSED. It was written on
+    # 2026-09-05 by 0334deff1, the commit that introduced the mechanism; that message
+    # describes the mechanism and cites no run, and no bench baseline for these two targets
+    # has ever existed under .ai/repo/benchmarks/. It was never derived from a measurement.
+    # It is also decidable as wrong from this file alone, with no machine at all:
+    # `MJ_TIMING=1 majordomus doctor` names 40 phases which account for most of the command,
+    # and over the quieter ten of the runs above their median sum is 22733 ms — an aggregate
+    # an order of magnitude below the sum of its own parts. The four dearest over that same
+    # ten (validate:adr 4799, validate:catalogue 3561, validate:schema_integrity 2456,
+    # validate:skills 1902) alone cost 12718 ms. The shape is linear in the corpus with a
+    # process spawned per document — one run's own counters are 365 yaml_flatten and 166
+    # git — which is this tool's shape, not a regression in it.
+    doctor_ms: 100000
+    watch_ms: 60000
+    # Entering the repository (ADR 0043). `enter_ms` is a `cd` into a checkout whose runtime
+    # is already up, which is every entry but one; `enter_cold_ms` is the entry that finds
+    # nothing serving, starts a server and returns without waiting for it.
+    #
+    # The two are nearly the same number on purpose. Starting the runtime costs a fork and an
+    # exec and nothing else, because entry never waits for readiness — the entry file's
+    # `watch_file` over the lease is what brings the published address in a moment later. If
+    # these two ever drift apart, something on the cold path has started waiting.
+    #
+    # Measured, not guessed (test/cases/190 measures both on every run): on 2026-09-11, with
+    # this machine under a load average of 100–136 and a debug build, warm entry ran 130–241
+    # ms and a cold entry that started a server 175–220 ms. They are set above the worst of
+    # those rather than at the median, because what they must refuse is a change that makes
+    # entry structurally slower — an index build, a network call, a wait for readiness — and
+    # not a busy afternoon.
+    #
+    # What the case measures is `env enter --no-banner --no-bridge`: entry's own work and
+    # the runtime half. The banner and the workflow bridge are deliberately outside, not
+    # because they are free — the whole adapter call ran 166–241 ms at a load average of 100
+    # and 551–655 ms at 128 — but because neither is entry's to be held to. The banner's cost
+    # depends on a terminal and the bridge's on whether a declaration moved since the last
+    # entry, both were paid the same way before ADR 0043, and a budget over them would be a
+    # budget over the renderer wearing entry's name.
+    #
+    # What is deliberately outside both: the very first entry into a checkout nobody has
+    # entered yet, which was 1407 ms on the same machine. That is the fast resolver writing
+    # its cache for the first time; it cost the same before ADR 0043 as after, the runtime
+    # half contributes nothing to it, and a budget over it would be a budget over
+    # `environment::resolve` wearing entry's name.
+    enter_ms: 750
+    enter_cold_ms: 1000
 
 # Use-case coverage: every public command must be named and run by an active use case
 # (required); a guaranteed claim or an MCP tool without one is reported (advisory).
@@ -112,6 +232,38 @@ enforcement:
     path: bin/majordomus-cli
     args: [worktree, guard]
     wired_by: git-hook:pre-commit
+  # The commit policy (rule project.conventional-commits). The message is judged at the one
+  # moment its whole evidence exists — written, with the files staged — by the same
+  # capability the gate reads the history through. The hook asks; the judge decides.
+  - name: commit-policy-on-message
+    path: bin/majordomus-cli
+    args: [commit, validate]
+    wired_by: git-hook:commit-msg
+
+# What a commit message is held to. Read by the Rust executable's commit subsystem, which
+# is what the `commit-msg` hook refuses with and what `scripts/ci/commit-policy` reads the
+# history through — one declaration, one judge, every surface.
+#
+# `subject_max_chars` is measured, not chosen. The git convention is 72 and the distribution
+# says this repository has never written that way: over 1161 non-merge commits the median
+# subject is 73 characters and the 95th percentile is 98. 100 is what this project declares
+# for a line of anything, and it is a width this history can actually meet — a limit half the
+# history violates is not a limit, it is noise that teaches people to ignore the check.
+#
+# The three levels below are the judgements a repository can reasonably disagree about.
+# `scope_unknown` is a warning because the vocabulary is learned from history and must not
+# refuse the first commit of a new subsystem. `fix_requires_test` is a warning for the same
+# reason it exists at all: it is the cheapest possible reminder that a bug which can come
+# back needs a regression test, and it is not evidence enough to refuse a commit on. The two
+# errors are the ones with no judgement in them: a record id the layer does not hold cannot
+# be told from a good one until somebody follows it, and a breaking change that explains
+# nothing produces a release note saying a thing broke.
+commit:
+  subject_max_chars: 100
+  scope_unknown: warning
+  fix_requires_test: warning
+  reference_unresolved: error
+  breaking_unexplained: error
 
 projections:
   - provider: agents

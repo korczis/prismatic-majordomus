@@ -392,6 +392,39 @@
   .mj-graph-controls .mj-input {
     @apply w-40 sm:w-56;
   }
+  /* The legend the drawing builds for itself, which is also the filter: one entry per node
+     kind, the swatch carrying the colour the drawing gave that kind, and a click that takes
+     the kind out of the picture. It wraps rather than scrolls, because the composed graph
+     has 34 kinds and a reader who cannot see the whole vocabulary cannot use it. */
+  .mj-graph-legend {
+    @apply mt-2 flex flex-wrap items-center gap-1;
+  }
+  .mj-graph-legend-entry {
+    @apply inline-flex items-center gap-1 rounded-sm px-1 py-0.5 text-meta;
+    color: var(--mj-body);
+    border: 1px solid transparent;
+    cursor: pointer;
+  }
+  .mj-graph-legend-entry:hover {
+    border-color: var(--mj-line);
+    background: var(--mj-sunken);
+  }
+  .mj-graph-legend-entry.is-hidden {
+    opacity: 0.4;
+    text-decoration: line-through;
+  }
+  .mj-graph-legend-name {
+    @apply font-mono;
+  }
+  .mj-graph-legend-count {
+    color: var(--mj-muted);
+  }
+  .mj-graph-swatch {
+    @apply inline-block rounded-sm;
+    width: 0.6rem;
+    height: 0.6rem;
+    border: 1px solid var(--mj-line);
+  }
   /* Until a drawing library fills it, the frame says why it is empty rather than sitting
      there as a grey rectangle. */
   .mj-graph:empty::after,

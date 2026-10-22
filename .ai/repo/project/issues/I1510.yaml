@@ -1,0 +1,32 @@
+id: I1510
+milestone: development-runtime
+title: A gap the audit calls planned names a plan object that exists
+slug: audit-rows-are-checked-against-the-plan
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Check docs/COCKPIT_IDE_AUDIT.md's gap matrix against the plan, so that a row whose status is `planned` must name an issue that exists, and a row cannot quietly claim to be scheduled when nothing schedules it."
+why: "The audit's matrix uses a fixed status vocabulary in which `planned` requires a plan object, and its own search for the IDE keywords across the issues and the milestones returned nothing — so no row was planned and the work was not in the plan at all. That negative was true when it was written and it stayed true, unnoticed, for a day, because nothing reads the document. Re-run on today's master before this milestone was written, the same search still returned nothing for palette, diff view, CI status or syntax highlighting. A document that states a status vocabulary and has no reader is a document whose statuses drift the moment anyone edits it, which is the one-sided-check class this repository has now paid for several times: a relation asserted in one direction with the converse owned by nobody."
+current_state: "The matrix is prose. Its `planned` rows, of which there were none, reference nothing. Nothing notices when a row's status stops matching the repository, and nothing notices when a plan object that a row depends on is completed or cancelled."
+desired_state: "A check reads the matrix and the plan together. A row marked `planned` names an issue id that exists; a row that names an issue that does not exist is a failure with both named. Nothing is asserted about rows in the other statuses, which are evidence claims and not plan claims."
+scope:
+  - test/cases
+  - scripts
+  - docs/COCKPIT_IDE_AUDIT.md
+non_scope:
+  - Checking the other statuses. Whether a row is genuinely canonical+implemented+verified is an evidence question that its named test answers, not something a text check can decide.
+  - Generating the matrix. It is a human argument about a moment, and a generated table would lose the reasoning that makes it worth reading.
+depends_on: []
+acceptance_criteria:
+  - A row whose status is planned and which names no existing issue is a reported failure, with the row and the missing id named
+  - A row naming an issue that exists passes
+  - The check runs in the repository's own suite as test case 194
+validation:
+  - bash test/run.sh 194_audit_rows_are_planned
+  - bin/majordomus doctor
+evidence_required:
+  - unplanned_row_is_refused
+  - check_is_in_the_suite
+risk: "Low. The trap worth naming is a check that parses prose too eagerly and starts failing on an editorial change to a sentence; it must key on the status vocabulary and the issue id, and ignore everything else in the row."
+created_at: 2026-09-11
+updated_at: 2026-09-11

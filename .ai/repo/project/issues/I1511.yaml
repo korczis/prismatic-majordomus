@@ -1,0 +1,28 @@
+id: I1511
+milestone: development-runtime
+title: The documentation surface answers in a checkout that has not built the site
+slug: docs-surface-answers-unbuilt
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Make /docs/ say what it needs rather than fail, so that a developer entering a fresh worktree does not meet a broken documentation surface as their first impression of the runtime."
+why: "F4 of the audit's failure table. /docs/ is served from target/web/docs, which is a build output, so in any checkout that has not built the site the surface returns 503. Every other error this server produces is a model of what an error should say — the 404 body names the route and points at /openapi.json — and this one is the exception. It matters more than its size suggests because a fresh linked worktree is exactly where a new worker starts, and a documentation surface that is down is indistinguishable from a documentation surface that does not exist."
+current_state: "GET /docs/ returns 503 with a 251-byte JSON body in a checkout whose site has not been built. Nothing on the way in says the surface has a build step."
+desired_state: "The surface either answers from something every checkout has, or returns an error that names the one command that would make it answer."
+scope:
+  - apps/majordomus-cli/src/web
+  - docs/COCKPIT.md
+  - test/cases
+non_scope:
+  - Building the site as a side effect of serving. A read surface that triggers a build is the class of side effect the repository's own diagnostics rule forbids.
+depends_on: []
+acceptance_criteria:
+  - A checkout that has not built the site gets an answer or an error naming the command that fixes it
+  - Nothing builds anything as a side effect of a GET
+validation:
+  - bash test/run.sh
+evidence_required:
+  - unbuilt_checkout_gets_a_useful_answer
+risk: "Low."
+created_at: 2026-09-11
+updated_at: 2026-09-11

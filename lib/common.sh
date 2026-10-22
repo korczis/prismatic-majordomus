@@ -317,7 +317,15 @@ mj_git_touched() {
 # one tab, computed once: a loop that writes IFS="$MJ_TAB" per iteration forks a
 # subshell per line, which is where a listing of a few hundred rows lost a second
 MJ_TAB="$(printf '\t')"
-mj_now()    { date -u +%Y-%m-%dT%H:%M:%SZ; }
+# The clock, in one place, so that a test can move it. Ageing is a first-class dimension of
+# this subsystem (ADR 0052) and the thresholds it is judged against are measured in days;
+# a suite that proved them by waiting would take a week to run once. MAJORDOMUS_NOW, when
+# set to an ISO-8601 UTC instant, is that instant for every reader here. It is deliberately
+# not a policy key: policy is a repository decision and this is a test instrument.
+mj_now() {
+  if [ -n "${MAJORDOMUS_NOW:-}" ]; then printf '%s' "$MAJORDOMUS_NOW"; return; fi
+  date -u +%Y-%m-%dT%H:%M:%SZ
+}
 
 # ---------------------------------------------------------------- timing
 # Phase timing and work counters, on only when MJ_TIMING is set: every phase a command
@@ -365,7 +373,13 @@ mj_timing_report() {
   } >&2
   rm -f "$MJ_TIMING_FILE"
 }
-mj_now_compact() { date -u +%Y%m%dT%H%M%SZ; }
+# The same instant as mj_now, in the form a record's filename uses. It reads the same
+# override for the same reason: a record dated six days ago in its front matter and today in
+# its name is a fixture no resolver would agree with itself about.
+mj_now_compact() {
+  if [ -n "${MAJORDOMUS_NOW:-}" ]; then printf '%s' "$MAJORDOMUS_NOW" | tr -d ':-'; return; fi
+  date -u +%Y%m%dT%H%M%SZ
+}
 mj_rand16() { od -An -N8 -tx1 /dev/urandom | tr -d ' \n'; }
 mj_sha256() {
   if command -v sha256sum >/dev/null 2>&1; then sha256sum "$1" | cut -d' ' -f1
@@ -722,16 +736,42 @@ mj_event_requires() {
 }
 
 # ---------------------------------------------------------------- ledger
+# The keys this function writes itself. A payload may not carry one of them: JSON permits a
+# duplicated key and says nothing about which wins, so a line with two `"event"` keys means
+# different things to different readers — and this repository had exactly that. The receipt
+# every lifecycle hook writes passed a payload field literally named `event` (the provider's
+# own event name), producing
+#
+#   {"ts":...,"event":"provider.event.received",...,"provider":"claude-code","event":"start"}
+#
+# which `history --validate` read as the event `start`, a name share/events.yaml does not
+# declare, and refused with exit 10. Written by d5d541850; it never reached CI because no
+# runner's ledger holds a provider receipt.
+#
+# Declared here rather than checked at each call site, because the whole point is that no
+# caller can get it wrong. Every entry is matched with its opening quote, so a longer key
+# ending in a reserved name (`provider_session`, `session_path`, `ahead`) is not a
+# collision; mj_json_esc turns a quote inside a value into `\"`, so a reserved name appearing
+# inside a string is not one either.
+MJ_LEDGER_ENVELOPE_KEYS='ts event head branch by session'
+
 # mj_ledger_append event 'extra json fields without braces'
-# The event must be one share/events.yaml declares, and must carry the payload keys that
-# entry requires. Both are internal errors rather than findings: a command that writes an
-# event the vocabulary does not define is a bug in Majordomus, not a fact about the
-# repository being supervised.
+# The event must be one share/events.yaml declares, must carry the payload keys that entry
+# requires, and must not carry a key from the envelope. All three are internal errors rather
+# than findings: a command that writes an event the vocabulary does not define, or that
+# overwrites the envelope it is being wrapped in, is a bug in Majordomus and not a fact
+# about the repository being supervised.
 mj_ledger_append() {
   local ev="$1" extra="${2:-}" line sid k
   mj_events_load
   mj_event_known "$ev" || mj_die "$MJ_EX_INTERNAL" \
     "unregistered event '$ev'; declare it in share/events.yaml or use one of: $(mj_event_ids | tr '\n' ' ')"
+  for k in $MJ_LEDGER_ENVELOPE_KEYS; do
+    case "$extra" in *"\"$k\":"*)
+        mj_die "$MJ_EX_INTERNAL" \
+          "event '$ev' carries the payload field '$k', which is a ledger envelope key; every line would carry it twice and readers would disagree about which one it means — rename the field (the provider receipt's own '$k' became 'provider_$k')" ;;
+    esac
+  done
   for k in $(mj_event_requires "$ev"); do
     case "$extra" in *"\"$k\":"*) ;;
       *) mj_die "$MJ_EX_INTERNAL" "event '$ev' is missing the required field '$k'" ;;
@@ -806,8 +846,10 @@ mj_provider_session_env() {
     [ -n "${MJ_LIB_capture:-}" ] || . "$MJ_LIB_DIR/capture.sh"
     local n v
     for n in $(mj_lifecycle_session_vars); do
-      # the name comes from the adapter table, never from anything a payload carries
-      eval "v=\${$n:-}"
+      # the name comes from the adapter table, never from anything a payload carries.
+      # Indirect expansion, not eval: eval would run whatever the name expanded to, and
+      # SECURITY.md forbids it outright (test/cases/08_no_forbidden_constructs.sh).
+      v="${!n:-}"
       if [ -n "$v" ]; then printf '%s' "$v"; return 0; fi
     done
   fi
@@ -905,8 +947,69 @@ mj_load_profile() {
 }
 mj_pro() { [ -n "${MJ_PRO_FLAT:-}" ] || return 0; mj_yget "$MJ_PRO_FLAT" "$1"; }
 
-mj_cleanup() { mj_timing_report; rm -f "${MJ_CUR_FLAT:-}" "${MJ_POL_FLAT:-}" "${MJ_PRO_FLAT:-}" 2>/dev/null; }
+mj_cleanup() {
+  mj_timing_report
+  rm -f "${MJ_CUR_FLAT:-}" "${MJ_POL_FLAT:-}" "${MJ_PRO_FLAT:-}" "${MJ_REC_TMP:-}" 2>/dev/null
+  # A lock this process is holding goes with it. Releasing here and not only at the end of
+  # the critical section is what makes the lock crash-safe for every exit a command has:
+  # mj_die, a failed `set -e` command, an interrupt from the test runner's bound.
+  [ -n "${MJ_HELD_LOCK:-}" ] && rmdir "${MJ_HELD_LOCK}" 2>/dev/null
+  return 0
+}
 trap mj_cleanup EXIT
+
+# ---------------------------------------------------------------- mutual exclusion
+# One named lock, taken by creating a directory, which is the one filesystem operation
+# POSIX guarantees is atomic and which works on every filesystem this tool runs on. The
+# shape is `adr propose`'s, generalised here because a second command needed it: a
+# check-then-write over a shared store is not exactly-once unless the check and the write
+# are inside the same critical section, and `session close` proved that by publishing two
+# canonical records for one episode when two of a provider's end events arrived together.
+#
+# It never blocks for ever and it never refuses. A lock older than MJ_LOCK_STALE seconds
+# belonged to a process that died holding it, and waiting on a dead process is a worse
+# failure than proceeding without the guarantee — so the wait is bounded, a stale lock is
+# broken, and the caller is told which happened through the return value rather than being
+# stopped. The guard inside the section stays correct without the lock; it is only narrower.
+#
+#   mj_lock_take PATH   -> 0 took it · 1 proceeded without it (bounded wait expired)
+#   mj_lock_release     -> releases whatever this process holds
+MJ_HELD_LOCK=""
+MJ_LOCK_WAIT="${MJ_LOCK_WAIT:-100}"      # tenths of a second
+MJ_LOCK_STALE="${MJ_LOCK_STALE:-60}"     # seconds before a held lock is called abandoned
+mj_lock_take() {
+  local lock="$1" waited=0 age
+  mkdir -p "$(dirname "$lock")" 2>/dev/null || true
+  while ! mkdir "$lock" 2>/dev/null; do
+    age="$(mj_file_age_secs "$lock")"
+    if [ -n "$age" ] && [ "$age" -gt "$MJ_LOCK_STALE" ]; then
+      rmdir "$lock" 2>/dev/null || true
+      continue
+    fi
+    waited=$((waited + 1))
+    if [ "$waited" -ge "$MJ_LOCK_WAIT" ]; then
+      mj_err "warning: $(mj_rel "$lock") has been held for $((waited / 10))s; continuing without it"
+      return 1
+    fi
+    sleep 0.1 2>/dev/null || sleep 1
+  done
+  MJ_HELD_LOCK="$lock"
+  return 0
+}
+mj_lock_release() {
+  [ -n "${MJ_HELD_LOCK:-}" ] || return 0
+  rmdir "$MJ_HELD_LOCK" 2>/dev/null || true
+  MJ_HELD_LOCK=""
+  return 0
+}
+# Seconds since a path was last modified, or nothing when it cannot be read. GNU stat first,
+# then BSD; the two disagree about every flag they share.
+mj_file_age_secs() {
+  local t
+  t="$(stat -c %Y "$1" 2>/dev/null || stat -f %m "$1" 2>/dev/null)" || return 0
+  [ -n "$t" ] || return 0
+  printf '%s' "$(( $(date +%s) - t ))"
+}
 
 # ---------------------------------------------------------------- records
 # A record is a Markdown file with computed YAML front matter and an authored body.
@@ -968,19 +1071,34 @@ mj_reject_identity() {
   grep -qE '^(schema_version|created_at|task_id|repository_id|worktree|branch|head|working_tree|changed_files):' "$1"
 }
 
+# collect staging files an earlier writer was killed before it could unlink. A SIGKILL runs
+# no trap, and the file it leaves sits in a tracked directory looking like repository content.
+# An hour of grace, so that a sibling publishing right now is never robbed of the file it is
+# about to link: the window between mktemp and ln is microseconds.
+mj_sweep_record_temps() {
+  find "$1" -maxdepth 1 -type f -name '.tmp.??????' -mmin +60 -exec rm -f {} + 2>/dev/null || true
+}
+
 # publish content as a new file in a directory, atomically, mode 0600, never overwriting.
 # mj_publish_record DIR NAME_PREFIX CONTENT_FILE -> prints the final path
+#
+# The staging file is created inside DIR because the hard link that publishes it cannot cross
+# a filesystem, and DIR is tracked — so an abort between mktemp and the unlink below dirties a
+# record section. Three things stop that: MJ_REC_TMP puts the file on the EXIT trap's list, the
+# sweep above collects what a kill left on an earlier run, and .gitignore makes either
+# uncommittable in the meantime. A leftover must never be able to reach a commit.
 mj_publish_record() {
-  local dir="$1" prefix="$2" src="$3" tmp final n=0 head
+  local dir="$1" prefix="$2" src="$3" final n=0 head
   mkdir -p "$dir"
-  tmp="$(mktemp "$dir/.tmp.XXXXXX")"; chmod 600 "$tmp"; cat "$src" > "$tmp"
+  mj_sweep_record_temps "$dir"
+  MJ_REC_TMP="$(mktemp "$dir/.tmp.XXXXXX")"; chmod 600 "$MJ_REC_TMP"; cat "$src" > "$MJ_REC_TMP"
   head="$(mj_git_head)"
   while :; do
     final="$dir/$(mj_now_compact)--${prefix:+$prefix--}$(mj_branch_key)--${head:0:7}--$(mj_rand16).md"
-    ln "$tmp" "$final" 2>/dev/null && break
-    n=$((n + 1)); [ "$n" -lt 10 ] || { rm -f "$tmp"; return 1; }
+    ln "$MJ_REC_TMP" "$final" 2>/dev/null && break
+    n=$((n + 1)); [ "$n" -lt 10 ] || { rm -f "$MJ_REC_TMP"; MJ_REC_TMP=""; return 1; }
   done
-  rm -f "$tmp"
+  rm -f "$MJ_REC_TMP"; MJ_REC_TMP=""
   printf '%s\n' "$final"
 }
 
@@ -992,7 +1110,14 @@ mj_record_front_matter() {
     "$(mj_now)" "$task_id" "$profile" "$(printf '%s' "$owner" | sed 's/"/\\"/g')"
   printf 'repository_id: %s\nworktree: %s\nbranch: %s\nhead: %s\nworking_tree: %s\nchanged_files:\n' \
     "$(mj_git_repo_id)" "$MJ_ROOT" "$(mj_git_branch)" "$(mj_git_head)" "$(mj_git_dirty)"
-  mj_git status --porcelain=v1 2>/dev/null | cut -c4- | sed 's/^.* -> //' | sed 's/^/  - /'
+  # The work, not the exhaust. This was `git status --porcelain` verbatim, which is the
+  # dirty tree and not the episode's work product: running the tool dirties the tree, and a
+  # checkpoint written after a `scripts/derive` named every generated file as something the
+  # worker had done. lib/changed.sh classifies against the five declarations that already
+  # say what is derived; it is sourced here rather than at the top because this is on the
+  # record-writing path and nothing else in common.sh needs it.
+  [ -n "${MJ_LIB_changed:-}" ] || . "$MJ_LIB_DIR/changed.sh"
+  mj_changed_files_block
   local extra; for extra in "$@"; do printf '%s\n' "$extra"; done
   printf -- '---\n\n'
 }
@@ -1007,7 +1132,7 @@ mj_record_front_matter() {
 MJ_RES_PATH=""; MJ_RES_TIER=""; MJ_RES_MATCH=""; MJ_RES_HEAD=""; MJ_RES_BRANCH=""
 MJ_RES_DIRTY=""; MJ_RES_CREATED=""; MJ_RES_TASK=""; MJ_RES_SKIPPED=0
 mj_resolve_latest() {
-  local dir="$1" want_task="${2:-}" f fm flat tier key best="" best_key=""
+  local dir="$1" want_task="${2:-}" f fm flat tier key best="" best_key="" rversion
   local my_id my_branch; my_id="$(mj_git_repo_id)"; my_branch="$(mj_git_branch)"
   MJ_RES_PATH=""; MJ_RES_SKIPPED=0
   [ -d "$dir" ] || return 1
@@ -1022,7 +1147,19 @@ mj_resolve_latest() {
     # A record carries a version, a head and a time. `schema_version: 1` is what the local
     # records have always said; a shared session record says `schema: <kind>/v1` instead,
     # and both are versions this resolver reads (ADR 0014).
-    if { [ "$(mj_yget "$flat" schema_version)" != 1 ] && [ -z "$(mj_yget "$flat" schema)" ]; } \
+    #
+    # The version has to be one this executable reads, not merely present. The test used to
+    # be "`schema:` is non-empty", which accepts `session/v2` — a record written by a newer
+    # Majordomus — and offers it to the next worker as the thing to resume from, under a
+    # contract that no longer describes its fields. A record from the future is not a record
+    # this version can read, and being handed one silently is worse than being handed none:
+    # the worker cannot tell it is wrong until it has acted on it.
+    rversion="$(mj_yget "$flat" schema)"
+    if [ -n "$rversion" ] && [ "${rversion##*/}" != v1 ]; then
+      rm -f "$fm" "$flat"
+      mj_err "warning: skipped $f: schema '$rversion', and this executable reads v1 (run: majordomus doctor)"
+      MJ_RES_SKIPPED=$((MJ_RES_SKIPPED+1)); continue; fi
+    if { [ "$(mj_yget "$flat" schema_version)" != 1 ] && [ -z "$rversion" ]; } \
        || [ -z "$(mj_yget "$flat" head)" ] || [ -z "$(mj_yget "$flat" created_at)" ]; then
       rm -f "$fm" "$flat"; mj_err "warning: skipped $f: missing required fields"; MJ_RES_SKIPPED=$((MJ_RES_SKIPPED+1)); continue; fi
     if [ -n "$want_task" ] && [ "$(mj_yget "$flat" task_id)" != "$want_task" ]; then rm -f "$fm" "$flat"; continue; fi
@@ -1059,8 +1196,17 @@ mj_resolve_latest() {
 # Position of a record in the ledger, zero-padded, or 000000 when nothing recorded it.
 # created_at has second resolution, so two records written inside one second would
 # otherwise resolve in an order decided by a random filename suffix. The ledger is
-# append-only and written in the order the commands ran, which makes it the one portable
-# monotonic tiebreak available without sub-second timestamps.
+# append-only and written in the order the commands ran, which makes it a monotonic
+# tiebreak for "which of these did this machine write last".
+#
+# That, and nothing more: .ai/local/state/ledger.jsonl is gitignored, machine-local and
+# rotated under a retention cap, so this number is not a fact about the repository and
+# **must never order anything that gets published**. mj_session_keys used it, and the
+# committed order of six session records sharing a created_at second was therefore decided
+# by a line number no clone could reproduce; it now breaks that tie on the record's own name
+# instead. The one caller left is mj_resolve_latest, which answers "the record most
+# relevant to this worktree right now" — a question about this machine, whose answer is
+# never committed.
 mj_record_rank() {
   local base n
   base="$(basename "$1")"
@@ -1073,6 +1219,16 @@ mj_age_minutes() {
   local e; e="$(mj_epoch "$1")"; [ -n "$e" ] || return 1
   printf '%s' $(( ( $(mj_epoch "$(mj_now)") - e ) / 60 ))
 }
+# "18" -> "18m"; "1500" -> "25h". A span, not a moment: a threshold is a length of time
+# and rendering it with mj_age_human produced "past the 2d ago this repository calls stale".
+mj_duration_human() {
+  local m="$1"
+  if [ -z "$m" ]; then printf 'unknown'
+  elif [ "$m" -lt 90 ]; then printf '%sm' "$m"
+  elif [ "$m" -lt 2880 ]; then printf '%sh' $((m/60))
+  else printf '%sd' $((m/1440)); fi
+}
+
 # "18" -> "18m ago"; "1500" -> "25h ago"
 mj_age_human() {
   local m="$1"
@@ -1082,7 +1238,101 @@ mj_age_human() {
   else printf '%sd ago' $((m/1440)); fi
 }
 
-# value of a flat JSON key on one ledger line: mj_json_field LINE KEY
+# ---------------------------------------------------------------- freshness
+# How far a record may still be trusted as *current*, which is a different question from
+# how far its commit is from HEAD. mj_git_label answers the second: exact, advanced,
+# diverged, different_context — a statement about topology. A record whose commit is an
+# ancestor of HEAD is `advanced` on the day it is written and `advanced` six days later,
+# and on 2026-09-05 that word carried a finished instruction into every episode for a week
+# (ADR 0052). This answers the first, in five words:
+#
+#   fresh     inside session.freshness.fresh_minutes — current, act on it
+#   aging     between the two thresholds — current, but say how old
+#   stale     at or beyond session.freshness.stale_minutes — history, never current
+#   unknown   no timestamp to judge; absence reported as absence, not as freshness
+#   invalid   a timestamp that does not parse, or one in the future
+#
+# Sets MJ_FRESH_STATE, MJ_FRESH_MINUTES and MJ_FRESH_REASON, and prints the state. The
+# three variables are the answer and the printed word is a convenience: a caller that wants
+# the reason must call this as a statement, because `f="$(mj_freshness ...)"` runs it in a
+# subshell and the variables die with it. Under `set -u` that mistake is not a wrong string
+# but an unbound variable that kills the briefing mid-sentence, so they are initialised at
+# load time below and the callers here are statements.
+# Requires
+# a loaded policy: the thresholds live in .ai/repo/policy.yaml and nothing here carries a
+# default, for the reason mj_pol_req states — a fallback beside the reader is a second
+# source of truth for the same number.
+MJ_FRESH_STATE=unknown; MJ_FRESH_MINUTES=""; MJ_FRESH_REASON=""
+mj_freshness() {
+  local ts="$1" fresh stale mins
+  MJ_FRESH_STATE=unknown; MJ_FRESH_MINUTES=""; MJ_FRESH_REASON=""
+
+  if [ -z "$ts" ]; then
+    MJ_FRESH_REASON="no timestamp"; printf 'unknown'; return 0
+  fi
+  if ! mins="$(mj_age_minutes "$ts")"; then
+    MJ_FRESH_STATE=invalid; MJ_FRESH_REASON="timestamp does not parse: $ts"
+    printf 'invalid'; return 0
+  fi
+  MJ_FRESH_MINUTES="$mins"
+  if [ "$mins" -lt 0 ]; then
+    MJ_FRESH_STATE=invalid
+    MJ_FRESH_REASON="timestamp is $(( -mins )) minute(s) in the future"
+    printf 'invalid'; return 0
+  fi
+
+  fresh="$(mj_pol session.freshness.fresh_minutes)"
+  stale="$(mj_pol session.freshness.stale_minutes)"
+  case "$fresh" in ''|*[!0-9]*) MJ_FRESH_REASON="policy is missing session.freshness.fresh_minutes"; printf 'unknown'; return 0 ;; esac
+  case "$stale" in ''|*[!0-9]*) MJ_FRESH_REASON="policy is missing session.freshness.stale_minutes"; printf 'unknown'; return 0 ;; esac
+
+  if [ "$mins" -ge "$stale" ]; then
+    MJ_FRESH_STATE=stale
+    MJ_FRESH_REASON="$(mj_age_human "$mins"), past the $(mj_duration_human "$stale") this repository calls stale"
+  elif [ "$mins" -ge "$fresh" ]; then
+    MJ_FRESH_STATE=aging
+    MJ_FRESH_REASON="$(mj_age_human "$mins"), past the $(mj_duration_human "$fresh") this repository calls fresh"
+  else
+    MJ_FRESH_STATE=fresh
+    MJ_FRESH_REASON="$(mj_age_human "$mins")"
+  fi
+  printf '%s' "$MJ_FRESH_STATE"
+}
+
+# True when a record must not be presented as the current instruction. `stale` and
+# `invalid` are the two states a reader acts on differently; `unknown` is not one of them,
+# because a record with no timestamp is not thereby old.
+mj_freshness_is_history() {
+  case "$1" in stale|invalid) return 0 ;; esac
+  return 1
+}
+
+# One awk function, prepended to any program that reads a ledger line, so that every reader
+# of a key agrees on which occurrence of it is the answer: the FIRST, which is the one in the
+# envelope that `mj_ledger_append` wrote.
+#
+# The idiom it replaces is `sub(/^.*"event":"/, "", e)`. awk's `.*` is greedy, so that
+# strips up to the LAST occurrence and returns the payload's value instead of the
+# envelope's. It was in three readers, and on the provider receipts — which carried
+# `"event"` twice until this was fixed — `history --validate` used it to read the event name
+# as `start`, refusing a line the registry does in fact declare. A reader that takes the
+# last of a duplicated key stays wrong about a line written by an older version, so the
+# writer's guard is not a reason to keep it.
+#
+# Prepended rather than copied: three copies of one extraction is how two of them came to
+# disagree with mj_history_render, which had it right all along.
+MJ_LEDGER_FIELD_AWK='
+  function mjfield(line, key,   r) {
+    if (match(line, "\"" key "\":\"")) { r = substr(line, RSTART + RLENGTH); sub(/".*/, "", r); return r }
+    if (match(line, "\"" key "\":"))   { r = substr(line, RSTART + RLENGTH); sub(/[,}].*/, "", r); return r }
+    return ""
+  }
+'
+
+# Value of a flat JSON key on one ledger line: mj_json_field LINE KEY. Already the first
+# occurrence — it is `match`, not a greedy `sub` — and left alone because it distinguishes an
+# absent key (nothing printed) from one whose value is the empty string (an empty line),
+# which mjfield's single return value cannot.
 mj_json_field() {
   printf '%s' "$1" | awk -v k="$2" '
     { s=$0

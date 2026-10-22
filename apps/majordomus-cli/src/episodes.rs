@@ -1,5 +1,5 @@
 //! Episodes: the execution episode of a client that has no provider hooks, drawn by the
-//! MCP connection itself (ADR 0043).
+//! MCP connection itself (ADR 0074).
 //!
 //! # The defect this exists for
 //!
@@ -98,7 +98,7 @@ impl CloseReason {
 /// Where an episode stands.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub enum EpisodeState {
+pub enum ConnectionEpisodeState {
     /// A connection holds it and the client is speaking.
     Open,
     /// The connection has gone; the episode is kept for [`REATTACH_GRACE`] so the client
@@ -110,7 +110,7 @@ pub enum EpisodeState {
 /// One episode: what the client calls itself, which connection holds it now, and what the
 /// repository did about it.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-pub struct Episode {
+pub struct ConnectionEpisode {
     /// The client's own durable name for this piece of work, and the key everything here is
     /// addressed by. Never a peer id: see the module documentation.
     pub external_id: String,
@@ -128,7 +128,7 @@ pub struct Episode {
     /// How many times a connection has taken it over, the first attach included.
     pub attachments: u32,
     /// Open, or detached and waiting for its client.
-    pub state: EpisodeState,
+    pub state: ConnectionEpisodeState,
     /// What the repository's own episode command reported, verbatim — the record it opened,
     /// or the reason it could not. Never interpreted here, and never empty: a subsystem
     /// that silently does nothing is the failure mode this field exists to make visible.
@@ -149,7 +149,7 @@ pub struct EpisodeBoard {
 }
 
 struct Entry {
-    episode: Episode,
+    episode: ConnectionEpisode,
     last_activity: Instant,
     detached_since: Option<Instant>,
 }
@@ -163,7 +163,7 @@ struct Entry {
 /// same payload shape, through the same adapter resolution.
 pub trait EpisodeDriver: Send + Sync {
     /// Open the episode for `external_id` under `provider`. Returns what to record in
-    /// [`Episode::repository`] — a description of what happened, successful or not.
+    /// [`ConnectionEpisode::repository`] — a description of what happened, successful or not.
     fn open(&self, provider: &str, external_id: &str) -> String;
     /// Close it, with the reason the record is to carry.
     fn close(&self, provider: &str, external_id: &str, reason: CloseReason) -> String;
@@ -211,7 +211,14 @@ impl ToolDriver {
         let mut child = match Command::new(&tool)
             .arg("--repo")
             .arg(&self.root)
-            .args(["capture", "session", "--provider", provider, "--event", event])
+            .args([
+                "capture",
+                "session",
+                "--provider",
+                provider,
+                "--event",
+                event,
+            ])
             .current_dir(&self.root)
             .stdin(std::process::Stdio::piped())
             .stdout(std::process::Stdio::piped())
@@ -219,7 +226,12 @@ impl ToolDriver {
             .spawn()
         {
             Ok(c) => c,
-            Err(e) => return format!("no episode was recorded: {} did not start: {e}", tool.display()),
+            Err(e) => {
+                return format!(
+                    "no episode was recorded: {} did not start: {e}",
+                    tool.display()
+                )
+            }
         };
         if let Some(mut stdin) = child.stdin.take() {
             use std::io::Write;
@@ -231,14 +243,24 @@ impl ToolDriver {
             // context. Its last line is the one that says what happened.
             Ok(out) => {
                 let text = String::from_utf8_lossy(&out.stderr);
-                let last = text.lines().rev().find(|l| !l.trim().is_empty()).unwrap_or("");
+                let last = text
+                    .lines()
+                    .rev()
+                    .find(|l| !l.trim().is_empty())
+                    .unwrap_or("");
                 if last.is_empty() {
-                    format!("`capture session --event {event}` exited {} and said nothing", out.status)
+                    format!(
+                        "`capture session --event {event}` exited {} and said nothing",
+                        out.status
+                    )
                 } else {
                     last.trim().to_string()
                 }
             }
-            Err(e) => format!("no episode was recorded: {} did not finish: {e}", tool.display()),
+            Err(e) => format!(
+                "no episode was recorded: {} did not finish: {e}",
+                tool.display()
+            ),
         }
     }
 }
@@ -334,7 +356,12 @@ impl EpisodeBoard {
     /// gap belong to one episode, which is what makes the record of it true.
     ///
     /// Returns the episode and whether it was resumed rather than opened.
-    pub fn attach(&self, peer: &PeerId, external_id: &str, provider: &str) -> (Episode, bool) {
+    pub fn attach(
+        &self,
+        peer: &PeerId,
+        external_id: &str,
+        provider: &str,
+    ) -> (ConnectionEpisode, bool) {
         let mut episodes = self.lock();
         // A connection holds zero or one episode. A peer attaching to a second external
         // identity is not a second worker, it is the same connection changing its mind —
@@ -342,20 +369,22 @@ impl EpisodeBoard {
         // that has stopped speaking for it.
         let previously_held: Vec<String> = episodes
             .values()
-            .filter(|e| e.episode.peer.as_ref() == Some(peer) && e.episode.external_id != external_id)
+            .filter(|e| {
+                e.episode.peer.as_ref() == Some(peer) && e.episode.external_id != external_id
+            })
             .map(|e| e.episode.external_id.clone())
             .collect();
         for id in previously_held {
             if let Some(entry) = episodes.get_mut(&id) {
                 entry.episode.peer = None;
-                entry.episode.state = EpisodeState::Detached;
+                entry.episode.state = ConnectionEpisodeState::Detached;
                 entry.detached_since = Some(Instant::now());
             }
         }
 
         if let Some(entry) = episodes.get_mut(external_id) {
             entry.episode.peer = Some(peer.clone());
-            entry.episode.state = EpisodeState::Open;
+            entry.episode.state = ConnectionEpisodeState::Open;
             entry.episode.attachments = entry.episode.attachments.saturating_add(1);
             entry.detached_since = None;
             entry.last_activity = Instant::now();
@@ -378,14 +407,14 @@ impl EpisodeBoard {
         // else's — because an argument about threads is worth exactly as much as the run
         // that confirms it.
         let repository = self.driver.open(provider, external_id);
-        let episode = Episode {
+        let episode = ConnectionEpisode {
             external_id: external_id.to_string(),
             provider: provider.to_string(),
             peer: Some(peer.clone()),
             opened_at: now_rfc3339(),
             last_activity_seconds_ago: 0,
             attachments: 1,
-            state: EpisodeState::Open,
+            state: ConnectionEpisodeState::Open,
             repository,
         };
         episodes.insert(
@@ -417,13 +446,13 @@ impl EpisodeBoard {
     /// This is the difference between a lifecycle and a session counter. Closing here would
     /// publish a record saying the work ended every time a socket dropped, and the work
     /// almost never ends when a socket drops.
-    pub fn detach(&self, peer: &PeerId) -> Vec<Episode> {
+    pub fn detach(&self, peer: &PeerId) -> Vec<ConnectionEpisode> {
         let mut episodes = self.lock();
         let mut out = Vec::new();
         for entry in episodes.values_mut() {
             if entry.episode.peer.as_ref() == Some(peer) {
                 entry.episode.peer = None;
-                entry.episode.state = EpisodeState::Detached;
+                entry.episode.state = ConnectionEpisodeState::Detached;
                 entry.detached_since = Some(Instant::now());
                 out.push(entry.episode.clone());
             }
@@ -432,19 +461,21 @@ impl EpisodeBoard {
     }
 
     /// Close one episode deliberately, by name: the client said it was done.
-    pub fn close(&self, external_id: &str, reason: CloseReason) -> Option<Episode> {
+    pub fn close(&self, external_id: &str, reason: CloseReason) -> Option<ConnectionEpisode> {
         let mut episodes = self.lock();
         let entry = episodes.remove(external_id)?;
         let mut episode = entry.episode;
-        episode.repository = self.driver.close(&episode.provider, &episode.external_id, reason);
+        episode.repository = self
+            .driver
+            .close(&episode.provider, &episode.external_id, reason);
         episode.peer = None;
-        episode.state = EpisodeState::Detached;
+        episode.state = ConnectionEpisodeState::Detached;
         Some(episode)
     }
 
     /// Close every episode detached longer than `grace`. The reaper, and the answer to the
     /// client that never comes back.
-    pub fn reap(&self, grace: Duration) -> Vec<Episode> {
+    pub fn reap(&self, grace: Duration) -> Vec<ConnectionEpisode> {
         let expired: Vec<String> = {
             let episodes = self.lock();
             episodes
@@ -464,7 +495,7 @@ impl EpisodeBoard {
     /// An episode left open by a server that has gone is an episode nothing will ever close,
     /// and the repository would carry it as open for ever — the failure ADR 0041 names on
     /// the hook side, reached here by a different road.
-    pub fn close_all(&self) -> Vec<Episode> {
+    pub fn close_all(&self) -> Vec<ConnectionEpisode> {
         let ids: Vec<String> = self.lock().keys().cloned().collect();
         ids.into_iter()
             .filter_map(|id| self.close(&id, CloseReason::Shutdown))
@@ -472,7 +503,7 @@ impl EpisodeBoard {
     }
 
     /// Every episode this server holds, open and detached, in external-identity order.
-    pub fn list(&self) -> Vec<Episode> {
+    pub fn list(&self) -> Vec<ConnectionEpisode> {
         let episodes = self.lock();
         episodes
             .values()
@@ -485,7 +516,7 @@ impl EpisodeBoard {
     }
 
     /// The episode a connection holds, if it holds one.
-    pub fn of_peer(&self, peer: &PeerId) -> Option<Episode> {
+    pub fn of_peer(&self, peer: &PeerId) -> Option<ConnectionEpisode> {
         self.list()
             .into_iter()
             .find(|e| e.peer.as_ref() == Some(peer))
@@ -585,10 +616,10 @@ mod tests {
             format!("episode opened for {external_id}")
         }
         fn close(&self, provider: &str, external_id: &str, reason: CloseReason) -> String {
-            self.calls
-                .lock()
-                .unwrap()
-                .push(format!("close {provider} {external_id} {}", reason.as_str()));
+            self.calls.lock().unwrap().push(format!(
+                "close {provider} {external_id} {}",
+                reason.as_str()
+            ));
             format!("episode closed for {external_id}")
         }
     }
@@ -620,13 +651,20 @@ mod tests {
         assert_eq!(opened.attachments, 1);
 
         board.detach(&first);
-        assert_eq!(board.list().len(), 1, "a detach must not discard the episode");
-        assert_eq!(board.list()[0].state, EpisodeState::Detached);
+        assert_eq!(
+            board.list().len(),
+            1,
+            "a detach must not discard the episode"
+        );
+        assert_eq!(board.list()[0].state, ConnectionEpisodeState::Detached);
 
         // a new connection: a different peer id, the same worker
         let second = ids[1].clone();
         let (again, resumed) = board.attach(&second, "thread-7", "generic");
-        assert!(resumed, "the same external identity must resume, not re-open");
+        assert!(
+            resumed,
+            "the same external identity must resume, not re-open"
+        );
         assert_eq!(again.opened_at, opened.opened_at, "it is the same episode");
         assert_eq!(again.attachments, 2);
         assert_eq!(again.peer.as_ref(), Some(&second));
@@ -643,14 +681,21 @@ mod tests {
     fn a_connection_holds_at_most_one_episode() {
         let (board, _) = board();
         let p = peers(1).remove(0);
-        assert!(board.of_peer(&p).is_none(), "attaching nothing holds nothing");
+        assert!(
+            board.of_peer(&p).is_none(),
+            "attaching nothing holds nothing"
+        );
         board.attach(&p, "one", "generic");
         board.attach(&p, "two", "generic");
         assert_eq!(board.of_peer(&p).map(|e| e.external_id), Some("two".into()));
-        let one = board.list().into_iter().find(|e| e.external_id == "one").unwrap();
+        let one = board
+            .list()
+            .into_iter()
+            .find(|e| e.external_id == "one")
+            .unwrap();
         assert_eq!(
             one.state,
-            EpisodeState::Detached,
+            ConnectionEpisodeState::Detached,
             "the episode it stopped speaking for is released, and recoverable"
         );
     }
@@ -661,7 +706,10 @@ mod tests {
         let (board, rec) = board();
         let p = peers(1).remove(0);
         board.attach(&p, "gone", "generic");
-        assert!(board.reap(Duration::from_secs(1)).is_empty(), "an attached episode is never reaped");
+        assert!(
+            board.reap(Duration::from_secs(1)).is_empty(),
+            "an attached episode is never reaped"
+        );
         board.detach(&p);
         assert!(
             board.reap(Duration::from_secs(3600)).is_empty(),

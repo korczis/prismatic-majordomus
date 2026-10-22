@@ -45,7 +45,12 @@ BEGIN {
     # Every kind this extractor can assert. A source class declaring a kind that is not
     # here is not guessed at: its nodes carry `unknown` and a finding names the class, so
     # a new source class cannot quietly acquire a made-up type.
-    known = " policy scope profile prompt rule milestone issue claim document session handover checkpoint decision question doctrine implementation test adr skill use-case application taxonomy knowledge session "
+    # `context` is the directory contract — `.ai/**/README.md`, schema context/v1. It was
+    # absent here while `sources.yaml`, the Rust index and `majordomus context resolve` all
+    # used it, so every contract degraded to `document` on this side: eleven of them in this
+    # repository collided as `document:<path>` claimed by two classes, and the verdict named
+    # the same path on both sides of "claimed by". One vocabulary, two engines, out of step.
+    known = " policy scope context profile prompt rule milestone issue claim document session handover checkpoint decision question doctrine implementation test adr skill use-case application taxonomy knowledge session "
     # The edge types are a closed set. An undeclared type is a defect rather than a new
     # vocabulary word, because a reader who cannot enumerate the relations cannot tell a
     # missing one from one that was never modelled.
@@ -130,7 +135,7 @@ function extract_one(i, k,   p, id, title) {
     else if (k == "profile" || k == "prompt")  title = f(p, "description")
     # a curated note and a taxonomy carry no identity of their own: the file is the object,
     # and its first heading, or the comment the file opens with, is what a reader sees
-    else if (k == "document" || k == "knowledge") title = h1[p]
+    else if (k == "document" || k == "knowledge" || k == "context") title = h1[p]
 
     if (id == "") id = p
     emit(node_id(k, id), k, sscope[i], p, shash[i], title)

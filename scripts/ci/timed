@@ -1,11 +1,57 @@
 #!/usr/bin/env bash
-# timed — run one command and append its wall time as a row a summary can read:
-#   scripts/ci/timed <gate> <step> <rows-file> <command> [args...]
+# timed — run one command under a declared bound and append its wall time as a row a
+# summary can read:
+#
+#   scripts/ci/timed --bound <seconds> <gate> <step> <rows-file> <command> [args...]
+#
 # The row is "<gate><TAB><step><TAB><seconds>"; the command's exit code is this script's.
+#
+# WHY THERE IS A BOUND. Until this, the only thing that measured how long a step took was
+# the arithmetic below, and it runs *after* the command returns. So a step that never
+# returns was never measured: the job's own `timeout-minutes` killed it, GitHub reported
+# the killed job as `cancelled`, every reader took `cancelled` for "not a failure", and no
+# row was ever written to say otherwise. Measured on this repository: the site job's
+# "audit the UI in a browser" step was killed at exactly its job's 50-minute bound on
+# master at 6a8d47a47 (01:14 -> 02:04), on 70685d473 (23:13 -> 00:03), and on both runs of
+# the integration branch — three consecutive runs, each to the second, and nothing said so.
+#
+# A bound here fails the step instead, with a message naming the bound and the elapsed
+# time, and writes the row with the time it actually took. A failure a person can read
+# beats a cancellation nobody counts. The bound must be smaller than the job's, or the job
+# kills the step first and this is back to where it started;
+# scripts/ci/step-bound-check holds that.
 set -u
-[ $# -ge 4 ] || { echo "timed: usage: timed <gate> <step> <rows-file> <command> [args...]" >&2; exit 2; }
+
+bound=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --bound) [ $# -ge 2 ] || { echo "timed: --bound needs a value in seconds" >&2; exit 2; }
+             bound="$2"; shift 2 ;;
+    --bound=*) bound="${1#--bound=}"; shift ;;
+    *) break ;;
+  esac
+done
+case "$bound" in
+  ''|*[!0-9]*) echo "timed: --bound <seconds> is required; a step with no bound cannot report that it ran out of time" >&2; exit 2 ;;
+esac
+[ $# -ge 4 ] || { echo "timed: usage: timed --bound <seconds> <gate> <step> <rows-file> <command> [args...]" >&2; exit 2; }
 gate="$1"; step="$2"; rows="$3"; shift 3
+
+# `timeout` is not on every platform this runs on; when it is missing the command still
+# runs, and the absence is said out loud rather than passed off as a bound that held.
 t0="$(date +%s)"
-"$@"; rc=$?
-printf '%s\t%s\t%s\n' "$gate" "$step" "$(( $(date +%s) - t0 ))" >> "$rows"
+if command -v timeout >/dev/null 2>&1; then
+  timeout --signal=TERM --kill-after=30s "$bound" "$@"; rc=$?
+else
+  echo "timed: no timeout(1) here, so '$step' runs unbounded; this is a measurement, not a bound" >&2
+  "$@"; rc=$?
+fi
+elapsed=$(( $(date +%s) - t0 ))
+printf '%s\t%s\t%s\n' "$gate" "$step" "$elapsed" >> "$rows"
+
+# 124 is timeout(1)'s own verdict, and 137 is what a KILL after it looks like.
+if [ "$rc" = 124 ] || [ "$rc" = 137 ]; then
+  printf 'timed: %s ran %ss and was stopped at its %ss bound. This is a failure, not a cancellation: raise the bound deliberately, or make the step finish inside it.\n' \
+    "$step" "$elapsed" "$bound" >&2
+fi
 exit "$rc"

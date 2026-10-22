@@ -1,6 +1,12 @@
-# The shell entry point is an adapter: it resolves the tool, evaluates what the tool
-# exports and asks it to render. It reads nothing about the repository itself, builds
-# nothing, and reaches no network.
+# The shell entry point is an adapter: it resolves the tool and makes exactly one call to
+# it — the bootstrap command — evaluating what that call exports. It reads nothing about the
+# repository itself, builds nothing, and reaches no network of its own.
+#
+# Since ADR 0043 that one call brings the runtime up, which is why the "exactly one" half is
+# now checked rather than assumed: two calls are two readings of the repository on the hot
+# path of every `cd`, and the moment the file chooses between commands it has started
+# deciding things. What the one call *does* is project.entry-converges' and case 190's; this
+# case is about the file.
 #
 # The rule is `project.envrc-is-an-adapter`, and this is its verification. There is no
 # runtime enforcement and there should not be: the file is evaluated by a shell this tool
@@ -42,6 +48,12 @@ adapter_check() {
       echo "    .envrc:$n carries control flow: $stripped"
       bad=1
     fi
+    # a parameter of the runtime is the bootstrap command's own default, declared once in
+    # the command line's declaration and changed there, not carried here
+    if printf '%s' "$stripped" | grep -Eq -- '--(wait|port|idle)[ =]'; then
+      echo "    .envrc:$n carries a parameter of the runtime: $stripped"
+      bad=1
+    fi
   done < "$file"
   # the budget: an adapter is a handful of statements, and a file that grows past it has
   # started to become a program
@@ -51,15 +63,35 @@ adapter_check() {
     echo "    .envrc carries $statements statements, over the budget of 8"
     bad=1
   fi
+  # exactly one call to the tool, and it is the bootstrap command (ADR 0043). Counted over
+  # the text a shell would execute, with comments and single-quoted strings gone, so that a
+  # command named inside a message is not mistaken for a call.
+  local stripped_file calls
+  stripped_file="$(mktemp "${TMPDIR:-/tmp}/mj100.XXXXXX")"
+  sed -e 's/^[[:space:]]*#.*$//' -e "s/'[^']*'//g" "$file" > "$stripped_file"
+  calls="$(grep -cE '(^|[|;&(){]|\$\()[[:space:]]*(bin/)?majordomus[a-z-]*[[:space:]]' "$stripped_file" || true)"
+  if [ "$calls" != 1 ]; then
+    echo "    .envrc makes $calls call(s) to the tool; entering the repository is one call"
+    bad=1
+  fi
+  if ! grep -Eq '(^|[|;&(){]|\$\()[[:space:]]*(bin/)?majordomus[a-z-]*[[:space:]]+enter([[:space:]]|"|$)' "$stripped_file"; then
+    echo "    .envrc's one call is not the bootstrap command (majordomus env enter)"
+    bad=1
+  fi
+  rm -f "$stripped_file"
   return "$bad"
 }
 
 adapter_check "$ENVRC" || exit 1
 
-# it does the four things the rule allows, and they are what it is for
+# it does the three things the rule allows, and they are what it is for
 grep -q 'PATH_add' "$ENVRC" || { echo "    the adapter puts nothing on the path"; exit 1; }
 grep -q 'watch_file' "$ENVRC" || { echo "    the adapter declares nothing to watch"; exit 1; }
 grep -q 'majordomus-env' "$ENVRC" || { echo "    the adapter does not call the tool"; exit 1; }
+# the lease is what it watches: the entry that starts a server returns before that server has
+# published an address, and this is what brings the address in when it does (ADR 0043)
+grep -q 'state/mcp/server.json' "$ENVRC" || {
+  echo "    the adapter does not watch the lease; a cold entry's address would never arrive"; exit 1; }
 
 # ---------------------------------------------------------------- the adapter it calls
 #
@@ -71,7 +103,7 @@ cp "$ROOT/lib/rust_bin.sh" "$MISSING/lib/"
 # CARGO_TARGET_DIR empty as well as MAJORDOMUS_BIN: the adapter reads that variable, so a
 # suite run by somebody whose worktrees share one build directory would find a real
 # executable here and this would assert nothing. "No executable anywhere" is the case.
-( cd "$MISSING" && MAJORDOMUS_BIN="" CARGO_TARGET_DIR="" bin/majordomus-env status >"$T/missing.out" 2>"$T/missing.err" )
+( cd "$MISSING" && MAJORDOMUS_BIN="" CARGO_TARGET_DIR="" bin/majordomus-env enter >"$T/missing.out" 2>"$T/missing.err" )
 code=$?
 [ "$code" = 0 ] || { echo "    the adapter exited $code where the executable is absent"; exit 1; }
 grep -q 'not built' "$T/missing.err" || {
@@ -105,6 +137,22 @@ bash -c ". '$T/export.sh'" || { echo "    a shell could not evaluate the export"
 grep -qE '^(export )?[A-Za-z_]+=' "$T/b.out" || { echo "    the export lost its assignments"; exit 1; }
 [ -s "$T/b.err" ] || { echo "    the banner was not drawn"; exit 1; }
 
+# ---------------------------------------------------------------- what entering exports
+#
+# The same contract as `export`, because `enter` is what the entry file actually calls: every
+# line of standard output is an assignment a shell can evaluate and nothing else. `--no-runtime`
+# because this asserts the shape of the output, not that a server came up — that is case 190's.
+"$RB" env enter --shell direnv --no-banner --no-bridge --no-runtime > "$T/enter.sh" 2>"$T/enter.err"
+[ -s "$T/enter.sh" ] || { echo "    entering exported nothing:"; cat "$T/enter.err"; exit 1; }
+while IFS= read -r line; do
+  case "$line" in
+    ""|\#*) continue ;;
+    export\ *=*|[A-Za-z_]*=*) continue ;;
+    *) echo "    entering exported something that is not an assignment: $line"; exit 1 ;;
+  esac
+done < "$T/enter.sh"
+bash -c ". '$T/enter.sh'" || { echo "    a shell could not evaluate what entering exported"; exit 1; }
+
 # ---------------------------------------------------------------- the check can fail
 #
 # A reader that silently stops reading and a rule that silently stops being enforced are
@@ -114,4 +162,20 @@ PROBE="$T/probe.envrc"
 grep -q 'git rev-parse' "$PROBE" || { echo "    the probe did not take"; exit 1; }
 if adapter_check "$PROBE" >/dev/null 2>&1; then
   echo "    the reader accepted an .envrc that runs git"; exit 1
+fi
+
+# and a second call to the tool, which is what version 2 of the rule added: one call, or the
+# file has started choosing between commands
+SECOND="$T/second.envrc"
+{ cat "$ENVRC"; printf '%s\n' 'bin/majordomus-env banner'; } > "$SECOND"
+if adapter_check "$SECOND" >/dev/null 2>&1; then
+  echo "    the reader accepted an .envrc that calls the tool twice"; exit 1
+fi
+
+# and a runtime parameter carried here rather than left to the command's own default
+PARAM="$T/param.envrc"
+sed 's|enter --shell direnv|enter --shell direnv --wait 20|' "$ENVRC" > "$PARAM"
+grep -q -- '--wait 20' "$PARAM" || { echo "    the parameter probe did not take"; exit 1; }
+if adapter_check "$PARAM" >/dev/null 2>&1; then
+  echo "    the reader accepted an .envrc that makes entering a wait"; exit 1
 fi

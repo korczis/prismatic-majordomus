@@ -112,7 +112,7 @@ fn node(doc: &CommandDoc, path: &[String], registry: Option<&CapabilityRegistry>
     // the registry classified its kind, and the classification is verified there. The
     // annotation beside the declaration answers only for the commands that have none.
     let effect = capability
-        .map(|c| super::model::Effect::of_capability(c.kind))
+        .map(|c| super::model::Effect::of_capability(c.execution))
         .unwrap_or(sem.effect);
     let stability = capability
         .map(|c| c.stability)

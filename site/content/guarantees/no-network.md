@@ -1,7 +1,7 @@
 +++
 title = "Nothing performs a network call, evaluates generated text, or deletes recursively"
 description = "Majordomus is local. No command opens a network connection, no text that came from a worker, a model, a handover body or a policy file is ever passed to eval or a shell, and no command deletes recursively outside a temporary directory it created itself. Writes are confined to .ai/ and the projection targets the policy names."
-weight = 44
+weight = 46
 [extra]
 claim_id = "no-network"
 status = "guaranteed"

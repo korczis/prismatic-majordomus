@@ -9,6 +9,9 @@ status: active
 class: blocking
 depends_on: [project.no-claim-without-test@1, project.derived-once@1]
 tags: [projection, github, enforcement, drift]
+
+x-majordomus:
+  tests: [test/cases/97_github_gate.sh, test/cases/45_github_projection.sh]
 ---
 
 # Rationale
@@ -43,7 +46,7 @@ to stop two records of the same work from disagreeing.
 - The backlog of a projection that stopped being applied is ratcheted against a committed
   baseline rather than tolerated silently. The number may fall and may never rise, and
   writing it is a deliberate act, as it already is for
-  [`.ai/repo/projection-baseline.txt`](../../projection-baseline.txt).
+  [`.ai/repo/claim-proof-baseline.txt`](../../claim-proof-baseline.txt).
 - A gate that cannot reach the remote — no `gh`, no token, no permission — exits unusable
   and says which, and never exits clean. A projection gate that skips quietly reintroduces
   the exact defect it was written to remove.

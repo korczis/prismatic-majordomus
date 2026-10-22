@@ -310,6 +310,15 @@ kinds:
       field: schema
       supported: [deployment/v1]
 
+  mesh-declaration:
+    format: yaml
+    # the identity fixes the path: share/schemas/majordomus/mesh-declaration/mesh-declaration.v1.schema.json
+    schema: majordomus.mesh-declaration/v1
+    identity: [id]
+    schema_version:
+      field: schema
+      supported: [mesh/v1]
+
   workspace:
     format: yaml
     # the identity fixes the path: share/schemas/majordomus/workspace/workspace.v1.schema.json

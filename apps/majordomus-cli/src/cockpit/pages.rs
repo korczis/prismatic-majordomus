@@ -12,18 +12,26 @@ use serde_json::{json, Value};
 use crate::capability::builtin::{
     ArtifactReport, CheckState, CommandIndex, Continuity, DesignReport, DirectoryReport,
     DirectoryState, EventHistory, ExecutionList, ExecutionView, GraphList, Health, HealthStatus,
-    InstallabilityReport, ObjectList, ObjectSummary, QualityAnswer, Record, RepositoryReport,
-    TokenList,
+    InstallabilityReport, NodeList, ObjectList, ObjectSummary, QualityAnswer, Record,
+    RepositoryReport, TokenList,
 };
-use crate::capability::{Capability, CapabilityKind, Context, Provenance};
+use crate::capability::{
+    Capability, CapabilityKind, Context, Effect as CapabilityEffect, Provenance,
+};
 use crate::command_graph::CommandNode;
 use crate::execution::{Execution, ExecutionState, StepState};
 use crate::generate;
 use crate::graph::Graph;
 use crate::http::router::percent_encode;
+use crate::release::compat::{Impact, Severity, Status as ReleaseStatus, VersionPlan};
 use crate::worktree::{
     BranchState, MigrationPlan, RepositoryTopology, Standing, StepOutcome, TopologyDiagnostic,
     WorktreeState,
+};
+
+use crate::capability::builtin::lifecycle::{
+    ClosedSessions, EpisodeStanding, Episodes, PointerLayout, ProviderLifecycles, Recovery,
+    RuntimeView,
 };
 
 use super::html::{el, empty, El, Node};
@@ -713,6 +721,9 @@ pub fn capability(ctx: &Context, id: &str) -> Page {
                 "Benchmark",
                 Node::Element(mono(match &c.benchmark {
                     crate::capability::BenchmarkPolicy::Required => "required".to_string(),
+                    crate::capability::BenchmarkPolicy::RequiredWhen { precondition } => {
+                        format!("required when: {}", word(precondition))
+                    }
                     crate::capability::BenchmarkPolicy::Waived { reason } => {
                         format!("waived: {}", word(reason))
                     }
@@ -989,16 +1000,23 @@ fn runner_form(c: &Capability, http: &crate::capability::HttpExposure, start_rou
 
     // what the page says about running this comes from the descriptor's own policy, never
     // from a list of capabilities that need care
-    let effect = match (c.kind, c.execution.cancellable) {
-        (CapabilityKind::Command, _) => alert(
+    // The sentence is derived from the declared effect, not from the kind: two commands are
+    // the same kind whether one announces a peer and the other writes a tracked record, and
+    // telling a person the second is the first is how a control comes to lie.
+    let effect = match (c.kind, c.execution.effect, c.execution.cancellable) {
+        (CapabilityKind::Command, CapabilityEffect::RepositoryMutation, _) => alert(
             "warn",
-            "A command. It changes this process's own memory — never the repository — and is sent as a POST from this page's origin.",
+            "A command that writes the repository. It changes tracked files a commit will carry, and is sent as a POST from this page's origin.",
         ),
-        (_, true) => alert(
+        (CapabilityKind::Command, _, _) => alert(
+            "warn",
+            "A command. It changes this process's own memory — not the repository — and is sent as a POST from this page's origin.",
+        ),
+        (_, _, true) => alert(
             "info",
             "It reads and changes nothing, and it stops when it is asked to. Run it as an execution to watch it happen and to be able to cancel it.",
         ),
-        (_, false) => alert("info", "A query. It reads and changes nothing."),
+        (_, _, false) => alert("info", "A query. It reads and changes nothing."),
     };
 
     card_with(
@@ -1635,6 +1653,11 @@ pub fn graph(ctx: &Context, id: &str) -> Page {
 /// The divergence label is a badge and a word, never a colour alone, because the difference
 /// between `advanced` and `diverged` is the difference between "some of this is already
 /// done" and "this describes a history that no longer exists".
+///
+/// Freshness is a second badge beside it and not a shade of the first, because the two
+/// answer different questions and their disagreement is the interesting case. This page
+/// showed one badge until ADR 0052, so a handover that was `advanced` and six days dead
+/// rendered as a calm blue `advanced` with its `Next action` printed underneath in full.
 fn record_card(title: &str, r: Option<&Record>, empty_note: &str) -> El {
     let Some(r) = r else {
         return card(title, nothing(empty_note));
@@ -1645,9 +1668,31 @@ fn record_card(title: &str, r: Option<&Record>, empty_note: &str) -> El {
         "unknown" => "warn",
         _ => "fail",
     };
+    let fresh_level = match r.freshness.as_str() {
+        "fresh" => "ok",
+        "aging" => "info",
+        "unknown" => "warn",
+        _ => "fail",
+    };
+    // One badge carrying both words, at the worse of the two levels. Two elements would
+    // want a flex container and a gap, and the stylesheet is a Tailwind build — a new class
+    // here is a build step for a separator. What matters is that `advanced` can no longer
+    // appear alone: the reader sees `advanced · stale` and the two stop agreeing in public.
+    let worst = if fresh_level == "fail" || level == "fail" {
+        "fail"
+    } else if fresh_level == "warn" || level == "warn" {
+        "warn"
+    } else if fresh_level == "info" || level == "info" {
+        "info"
+    } else {
+        "ok"
+    };
     card_with(
         title,
-        badge(level, r.divergence.as_str()),
+        badge(
+            worst,
+            format!("{} · {}", r.divergence.as_str(), r.freshness.as_str()),
+        ),
         el("div")
             .child(facts(vec![
                 ("Path", Node::Element(mono(r.path.clone()))),
@@ -1665,6 +1710,10 @@ fn record_card(title: &str, r: Option<&Record>, empty_note: &str) -> El {
                     "Working tree then",
                     Node::Element(el("span").text(&r.working_tree)),
                 ),
+                (
+                    "Age",
+                    Node::Element(el("span").text(&r.freshness_reason)),
+                ),
             ]))
             .when(!r.divergence.trustworthy(), |d| {
                 d.child(alert(
@@ -1672,11 +1721,351 @@ fn record_card(title: &str, r: Option<&Record>, empty_note: &str) -> El {
                     "The commit this record was written at is not in this history. Trust git over anything it says.",
                 ))
             })
+            .when(!r.next_action_withheld.is_empty(), |d| {
+                d.child(alert("fail", &r.next_action_withheld))
+            })
             .when(!r.next_action.is_empty(), |d| {
                 d.child(el("h3").class("mj-card-title").text("Next action"))
                     .child(pre(r.next_action.clone()))
             }),
     )
+}
+
+/// Every open episode of this checkout's store, and not only the one the pointer follows.
+///
+/// The card above this one is `continuity.state`'s: the episode `session-current.yaml`
+/// resolves to, which is the episode the briefing is about and the only one that surface can
+/// name. This table is the store. On 2026-09-11 this repository held five open episodes in
+/// one checkout, four of which no surface could see, and an episode nobody can see is an
+/// episode that never closes.
+///
+/// The standing is a word beside a badge because the difference between `open` and
+/// `stranded` is the difference between "another window is using this" and "nothing can ever
+/// close this", and a reader must not have to infer that from a colour.
+fn episodes_card(e: &Episodes) -> El {
+    if e.episodes.is_empty() {
+        return card(
+            "Every open episode",
+            nothing(if e.present {
+                "The store is here and holds no open episode. Nothing is open in this repository."
+            } else {
+                "This checkout has no open-episode store yet. That is a fresh clone, not a fault: the first start event creates it."
+            }),
+        );
+    }
+    let rows: Vec<El> = e
+        .episodes
+        .iter()
+        .map(|x| {
+            let level = match x.standing {
+                EpisodeStanding::Current => "ok",
+                EpisodeStanding::Open => "info",
+                EpisodeStanding::Foreign => "warn",
+                EpisodeStanding::Stranded => "fail",
+            };
+            row(vec![
+                cell(mono(x.session_id.clone())),
+                cell(badge(level, x.standing.as_str())),
+                cell(el("span").text(if x.provider.is_empty() {
+                    "(opened by hand)"
+                } else {
+                    &x.provider
+                })),
+                cell(mono(x.branch.clone())),
+                text_cell(x.started_at.clone()),
+                cell(if x.last_activity.is_empty() {
+                    el("span").text("(has written nothing)")
+                } else {
+                    el("span").text(format!("{} · {}", x.last_activity, x.last_event))
+                }),
+                cell(if x.tasks.is_empty() {
+                    el("span").text("—")
+                } else {
+                    el("div")
+                        .class("mj-marks")
+                        .children(x.tasks.iter().map(|t| mono(t.clone())).collect::<Vec<_>>())
+                }),
+                text_cell(x.events.to_string()),
+            ])
+        })
+        .collect();
+    card_with(
+        "Every open episode",
+        badge(
+            if e.episodes.len() > 1 { "info" } else { "ok" },
+            format!("{} open", e.episodes.len()),
+        ),
+        el("div")
+            .child(el("p").class("mj-prose").text(
+                "One episode per provider window, read from the store rather than from the pointer. Only the one marked `current` is the episode the briefing above is about; the others are other workers, and their ledger lines are stamped with their own ids.",
+            ))
+            .child(table(
+                &[
+                    "Episode",
+                    "Standing",
+                    "Provider",
+                    "Branch",
+                    "Opened",
+                    "Last seen in the ledger",
+                    "Tasks it touched",
+                    "Events",
+                ],
+                rows,
+            ))
+            .children(
+                e.findings
+                    .iter()
+                    .map(|f| alert("info", f.clone()))
+                    .collect::<Vec<_>>(),
+            ),
+    )
+}
+
+/// The commit this process is answering about, against the commit the repository is on.
+///
+/// A server that built its index once and held it answered every question — the API, MCP,
+/// this page — about a commit from whenever it started, and said nothing about it. There is
+/// no way to notice that from inside an answer, so the comparison is put on the page.
+fn runtime_card(r: &RuntimeView) -> El {
+    let short = |h: &str| h[..7.min(h.len())].to_string();
+    card_with(
+        "This process against the repository",
+        badge(
+            if r.agree { "ok" } else { "fail" },
+            if r.agree { "current" } else { "behind" },
+        ),
+        el("div")
+            .child(facts(vec![
+                ("Serving", Node::Element(mono(short(&r.served_head)))),
+                (
+                    "Repository is on",
+                    Node::Element(mono(short(&r.repository_head))),
+                ),
+                (
+                    "Branch served",
+                    Node::Element(mono(r.served_branch.clone())),
+                ),
+                (
+                    "Branch now",
+                    Node::Element(mono(r.repository_branch.clone())),
+                ),
+                (
+                    "Working tree now",
+                    Node::Element(el("span").text(&r.repository_working_tree)),
+                ),
+                (
+                    "Objects in the served index",
+                    Node::Element(el("span").text(r.objects.to_string())),
+                ),
+                ("Index", Node::Element(el("span").text(&r.index_state))),
+            ]))
+            .child(alert(if r.agree { "ok" } else { "fail" }, r.note.clone())),
+    )
+}
+
+/// What each provider's adapter declares it can do, and what this repository wires to it.
+///
+/// Declared, never guessed. The obvious implementation reads `.claude/hooks/` and reports
+/// what it finds, which answers a different question — whether somebody ran the installer —
+/// and answers it as though it were a statement about the provider.
+fn providers_card(p: &ProviderLifecycles) -> El {
+    let rows: Vec<El> = p
+        .providers
+        .iter()
+        .map(|x| {
+            row(vec![
+                cell(el("span").text(&x.title)),
+                cell(if x.lifecycle.is_empty() {
+                    el("span").text("(no lifecycle adapter)")
+                } else {
+                    el("div").class("mj-marks").children(
+                        x.lifecycle
+                            .iter()
+                            .map(|e| tag(e.clone()))
+                            .collect::<Vec<_>>(),
+                    )
+                }),
+                cell(badge(
+                    if x.prompt_capture { "ok" } else { "info" },
+                    if x.prompt_capture { "yes" } else { "no" },
+                )),
+                cell(if x.client_config.is_empty() {
+                    el("span").text("—")
+                } else {
+                    mono(x.client_config.clone())
+                }),
+                cell(if x.wired.is_empty() {
+                    el("span").text("—")
+                } else {
+                    el("div")
+                        .class("mj-marks")
+                        .children(x.wired.iter().map(|w| tag(w.clone())).collect::<Vec<_>>())
+                }),
+            ])
+        })
+        .collect();
+    card_with(
+        "Providers",
+        badge(
+            "info",
+            format!("{} of {} with a lifecycle adapter", p.with_lifecycle, p.providers.len()),
+        ),
+        el("div")
+            .child(el("p").class("mj-prose").text(
+                "What the distribution declares each adapter can do, in the provider's own vocabulary, beside the enforcement entries this repository's policy wires to its hook. Whether a shim is installed in this checkout is a different question, and `majordomus capture status` is the command that owns it.",
+            ))
+            .child(table(
+                &["Provider", "Lifecycle events", "Prompt capture", "Client configuration", "Wired here"],
+                rows,
+            ))
+            .children(
+                p.findings
+                    .iter()
+                    .map(|f| alert("warn", f.clone()))
+                    .collect::<Vec<_>>(),
+            ),
+    )
+}
+
+/// What the store needs somebody to do: stranded episodes, orphan temporary files, the
+/// migration status of the pointer, and the started-against-closed arithmetic.
+///
+/// Every row carries the command that clears it. A finding with no remedy is a complaint,
+/// and a page full of complaints teaches a reader to stop reading it.
+fn recovery_card(r: &Recovery) -> El {
+    let clean = r.stranded.is_empty()
+        && r.orphans.is_empty()
+        && r.balance.agrees
+        && r.pointer.layout != PointerLayout::Inline;
+    let body = el("div")
+        .child(facts(vec![
+            (
+                "Pointer",
+                Node::Element(badge(
+                    match r.pointer.layout {
+                        PointerLayout::Pointer if r.pointer.resolves => "ok",
+                        PointerLayout::Absent => "info",
+                        _ => "warn",
+                    },
+                    r.pointer.layout.as_str(),
+                )),
+            ),
+            (
+                "Episodes accounted for",
+                Node::Element(badge(
+                    if r.balance.agrees { "ok" } else { "warn" },
+                    format!(
+                        "{} started · {} closed · {} open",
+                        r.balance.started, r.balance.closed, r.balance.open
+                    ),
+                )),
+            ),
+        ]))
+        .child(alert("info", r.pointer.note.clone()))
+        .child(alert(
+            if r.balance.agrees { "info" } else { "warn" },
+            r.balance.note.clone(),
+        ))
+        .when(!r.stranded.is_empty(), |d| {
+            d.child(el("h3").class("mj-card-title").text("Cannot close themselves"))
+                .child(table(
+                    &["Episode", "Why", "Clears it"],
+                    r.stranded
+                        .iter()
+                        .map(|x| {
+                            row(vec![
+                                cell(mono(x.session_id.clone())),
+                                cell(el("span").text(&x.reason)),
+                                cell(mono(x.remedy.clone())),
+                            ])
+                        })
+                        .collect(),
+                ))
+        })
+        .when(!r.orphans.is_empty(), |d| {
+            d.child(el("h3").class("mj-card-title").text("Temporary files left behind"))
+                .child(table(
+                    &["Path", "Bytes"],
+                    r.orphans
+                        .iter()
+                        .map(|o| row(vec![cell(mono(o.path.clone())), text_cell(o.bytes.to_string())]))
+                        .collect(),
+                ))
+        })
+        .when(clean, |d| {
+            d.child(nothing(
+                "Nothing to recover: every open record names a worktree that exists, no close left a temporary file behind, and the ledger's arithmetic adds up.",
+            ))
+        });
+    card_with(
+        "Recovery",
+        badge(
+            if clean { "ok" } else { "warn" },
+            if clean {
+                "clean".to_string()
+            } else {
+                format!("{} to look at", r.findings.len())
+            },
+        ),
+        body,
+    )
+}
+
+/// The tracked records a clone receives — the only half of this subsystem that travels.
+fn closed_card(c: &ClosedSessions) -> El {
+    if c.total == 0 {
+        return card(
+            "Closed episodes",
+            nothing("No episode has closed into the layer's sessions section yet."),
+        );
+    }
+    let rows: Vec<El> = c
+        .newest
+        .iter()
+        .map(|x| {
+            row(vec![
+                cell(link(
+                    format!("/cockpit/object?uri={}", percent_encode(&x.uri)),
+                    x.session_id.clone(),
+                )),
+                text_cell(x.created_at.clone()),
+                cell(mono(x.branch.clone())),
+                cell(if x.outcome.is_empty() {
+                    el("span").text("—")
+                } else {
+                    word_badge(&x.outcome)
+                }),
+                cell(el("span").text(&x.title)),
+            ])
+        })
+        .collect();
+    card_with(
+        "Closed episodes",
+        badge("info", format!("{} tracked", c.total)),
+        el("div")
+            .child(el("div").class("mj-stats").children(vec![
+                statistic(c.total.to_string(), "closed records", "the session records"),
+                statistic(
+                    c.on_this_branch.to_string(),
+                    "on this branch",
+                    "the session records",
+                ),
+                statistic(c.window.to_string(), "shown below", "the session records"),
+            ]))
+            .child(table(
+                &["Episode", "Closed", "Branch", "Outcome", "Title"],
+                rows,
+            )),
+    )
+}
+
+/// One section that could not be read, as a card rather than as a dead page.
+///
+/// The continuity page asks six capabilities now. Failing the whole page because one of them
+/// could not answer would hide the five that could, and the one a reader most needs is the
+/// one most likely to fail: a store nothing has written yet.
+fn section_error(title: &str, e: String) -> El {
+    card(title, alert("fail", e))
 }
 
 /// What this checkout's lifecycle is holding.
@@ -1784,7 +2173,9 @@ pub fn continuity(ctx: &Context) -> Page {
                 el("div").class("mj-stats").children(
                     c.tallies
                         .iter()
-                        .map(|(k, n)| statistic(n.to_string(), k.clone(), ".ai/local/state"))
+                        .map(|(k, n)| {
+                            statistic(n.to_string(), k.clone(), "this checkout's local state")
+                        })
                         .collect::<Vec<_>>(),
                 ),
             )
@@ -1829,9 +2220,29 @@ pub fn continuity(ctx: &Context) -> Page {
                 "No checkpoint resolves here yet.",
             ))
             .child(blockers)
+            .child(match ask::<Episodes>(ctx, "lifecycle.episodes", json!({})) {
+                Ok(e) => episodes_card(&e),
+                Err(e) => section_error("Every open episode", e),
+            })
+            .child(match ask::<RuntimeView>(ctx, "lifecycle.runtime", json!({})) {
+                Ok(r) => runtime_card(&r),
+                Err(e) => section_error("This process against the repository", e),
+            })
+            .child(match ask::<Recovery>(ctx, "lifecycle.recovery", json!({})) {
+                Ok(r) => recovery_card(&r),
+                Err(e) => section_error("Recovery", e),
+            })
+            .child(match ask::<ProviderLifecycles>(ctx, "lifecycle.providers", json!({})) {
+                Ok(p) => providers_card(&p),
+                Err(e) => section_error("Providers", e),
+            })
+            .child(match ask::<ClosedSessions>(ctx, "lifecycle.closed", json!({})) {
+                Ok(c) => closed_card(&c),
+                Err(e) => section_error("Closed episodes", e),
+            })
             .node(findings),
     )
-    .subtitle("What this checkout's lifecycle is holding. Local to this machine, served here and published nowhere.")
+    .subtitle("What this checkout's lifecycle is holding, and what the subsystem around it is doing. Local to this machine, served here and published nowhere.")
     .trail(vec![("Cockpit", Some("/cockpit")), ("Continuity", None)])
 }
 
@@ -2050,6 +2461,292 @@ pub fn directories(ctx: &Context, query: &[(String, String)]) -> Page {
         ])
 }
 
+/// The model catalogue and its routing: the vendors and models `share/models.yaml`
+/// declares, with each vendor's credential *presence* (never a value), rendered from
+/// the same `models.list` every other surface reads. No model name lives in this page.
+pub fn models(ctx: &Context) -> Page {
+    let report: crate::capability::builtin::ModelsReport = match ask(ctx, "models.list", json!({}))
+    {
+        Ok(r) => r,
+        Err(e) => return failed(Area::Models, "Models", e),
+    };
+    let vendors: Vec<El> = report
+        .vendors
+        .iter()
+        .map(|v| {
+            let credential = match v.credential_configured {
+                Some(true) => "credential configured",
+                Some(false) => "credential not configured",
+                None => "no credential declared",
+            };
+            card_with(
+                format!("{} — {}", v.vendor.title, v.vendor.id),
+                word_badge(match v.vendor.inference {
+                    crate::models::Inference::Remote => "remote",
+                    crate::models::Inference::Local => "local",
+                }),
+                el("p").class("mj-prose").text(credential),
+            )
+        })
+        .collect();
+    let models: Vec<El> = report
+        .models
+        .iter()
+        .map(|m| {
+            let status = match m.status {
+                crate::models::ModelStatus::Available => "available",
+                crate::models::ModelStatus::Preview => "preview",
+                crate::models::ModelStatus::Deprecated => "deprecated",
+                crate::models::ModelStatus::Retired => "retired",
+            };
+            card_with(
+                m.id.clone(),
+                word_badge(status),
+                el("div")
+                    .child(facts(vec![
+                        ("Vendor", Node::Element(el("span").text(&m.vendor))),
+                        ("Native id", Node::Element(mono(m.native_id.clone()))),
+                        (
+                            "Context",
+                            Node::Element(
+                                el("span").text(
+                                    m.context_window
+                                        .map(|c| c.to_string())
+                                        .unwrap_or_else(|| "(not declared)".into()),
+                                ),
+                            ),
+                        ),
+                        (
+                            "Capabilities",
+                            Node::Element(el("span").text(m.capabilities.join(", "))),
+                        ),
+                    ]))
+                    .when(!m.aliases.is_empty(), |d| {
+                        d.child(facts(vec![(
+                            "Aliases",
+                            Node::Element(el("span").text(m.aliases.join(", "))),
+                        )]))
+                    })
+                    .when(m.note.is_some(), |d| {
+                        d.child(
+                            el("p")
+                                .class("mj-prose")
+                                .text(m.note.clone().unwrap_or_default()),
+                        )
+                    }),
+            )
+        })
+        .collect();
+    let mut findings = el("ul").class("mj-list");
+    for finding in &report.diagnostics {
+        findings = findings.child(el("li").text(finding));
+    }
+    Page::new(
+        Area::Models,
+        "Models",
+        el("div")
+            .class("mj-grid")
+            .child(card(
+                format!("Vendors ({})", report.vendors.len()),
+                if vendors.is_empty() {
+                    el("p").class("mj-prose").text(
+                        "The catalogue declares no vendors. share/models.yaml is the one place to add one.",
+                    )
+                } else {
+                    el("div").class("mj-grid").children(vendors)
+                },
+            ))
+            .child(card(
+                format!("Models ({})", report.count),
+                if models.is_empty() {
+                    el("p").class("mj-prose").text(
+                        "The catalogue declares no models; `models.route` answers that nothing qualifies, which is the truthful answer.",
+                    )
+                } else {
+                    el("div").class("mj-grid").children(models)
+                },
+            ))
+            .when(!report.diagnostics.is_empty(), |d| {
+                d.child(card("Findings", findings))
+            }),
+    )
+}
+
+/// The mesh: the discovered nodes of this process's runtime, the providers that heard
+/// them, and why the mesh is or is not running. Everything on this page is the same
+/// `mesh.status` and `mesh.nodes` every other surface renders; the Cockpit holds no
+/// node list of its own (project.mesh-is-observation-not-authority).
+pub fn mesh(ctx: &Context) -> Page {
+    let status: crate::mesh::MeshStatus = match ask(ctx, "mesh.status", json!({})) {
+        Ok(s) => s,
+        Err(e) => return failed(Area::Mesh, "Mesh", e),
+    };
+    let nodes: NodeList = match ask(ctx, "mesh.nodes", json!({})) {
+        Ok(n) => n,
+        Err(e) => return failed(Area::Mesh, "Mesh", e),
+    };
+
+    let this_node = facts(vec![(
+        "Mesh",
+        Node::Element(word_badge(if status.active {
+            "active"
+        } else {
+            "inactive"
+        })),
+    )]);
+    let mut overview = el("div").child(this_node);
+    // Beside the list rather than inside it. `.mj-facts` is a grid whose first column is
+    // `max-content`, so a paragraph placed among its rows becomes a grid item that sizes
+    // that column to the whole sentence: the card then overflows a 320px viewport, which is
+    // what the Cockpit probe measured. A `<p>` is also not a child a `<dl>` may have.
+    if let Some(reason) = &status.reason {
+        overview = overview.child(el("p").class("mj-prose").text(reason));
+    }
+    if let Some(identity) = &status.identity {
+        overview = overview.child(facts(vec![
+            ("Node", Node::Element(mono(identity.node_id.to_string()))),
+            (
+                "Name",
+                Node::Element(el("span").text(&identity.display_name)),
+            ),
+            (
+                "Instance",
+                Node::Element(mono(identity.instance_id.to_string())),
+            ),
+        ]));
+    }
+    if let Some(policy) = &status.trust_policy {
+        overview = overview.child(facts(vec![(
+            "Trust policy",
+            Node::Element(word_badge(policy)),
+        )]));
+    }
+    let t = &status.tallies;
+    let r = &status.refusals;
+    overview = overview.child(facts(vec![
+        (
+            "Nodes",
+            Node::Element(el("span").text(format!(
+                "{} ({} trusted, {} present)",
+                t.nodes, t.trusted, t.present
+            ))),
+        ),
+        (
+            "Accepted / replayed / expired",
+            Node::Element(el("span").text(format!("{} / {} / {}", t.accepted, t.replayed, t.expired))),
+        ),
+        (
+            "Refused",
+            Node::Element(el("span").text(format!(
+                "oversized {}, malformed {}, version {}, bounds {}, stale {}, signature {}, self {}",
+                r.oversized, r.malformed, r.version, r.bounds, r.stale, r.signature, r.self_heard
+            ))),
+        ),
+    ]));
+
+    let providers: Vec<El> = status
+        .providers
+        .iter()
+        .map(|p| {
+            let state = match p.state {
+                crate::mesh::provider::MeshProviderState::Running => "running",
+                crate::mesh::provider::MeshProviderState::Failed => "failed",
+                crate::mesh::provider::MeshProviderState::Stopped => "stopped",
+            };
+            card_with(
+                p.id.clone(),
+                word_badge(state),
+                el("div")
+                    .child(facts(vec![
+                        ("Sent", Node::Element(el("span").text(p.sent.to_string()))),
+                        (
+                            "Received",
+                            Node::Element(el("span").text(p.received.to_string())),
+                        ),
+                    ]))
+                    .when(p.detail.is_some(), |d| {
+                        d.child(
+                            el("p")
+                                .class("mj-prose")
+                                .text(p.detail.clone().unwrap_or_default()),
+                        )
+                    }),
+            )
+        })
+        .collect();
+
+    let node_cards: Vec<El> = nodes
+        .nodes
+        .iter()
+        .map(|n| {
+            let trust = match &n.trust {
+                crate::mesh::TrustState::Trusted(by) => format!("trusted ({by})"),
+                crate::mesh::TrustState::Observed => "observed".to_string(),
+                crate::mesh::TrustState::Rejected(why) => format!("rejected: {why}"),
+            };
+            let presence = match n.presence {
+                crate::mesh::Presence::Present => "present",
+                crate::mesh::Presence::Absent => "absent",
+            };
+            let sources = n
+                .sources
+                .iter()
+                .map(|s| format!("{} via {} at {}", s.source.as_str(), s.path, s.at))
+                .collect::<Vec<_>>()
+                .join("; ");
+            card_with(
+                format!("{} — {}", n.display_name, n.node_id),
+                word_badge(presence),
+                el("div")
+                    .child(el("p").class("mj-prose").text(trust))
+                    .child(facts(vec![
+                        (
+                            "Endpoints",
+                            Node::Element(el("span").text(n.endpoints.join(", "))),
+                        ),
+                        (
+                            "Transports",
+                            Node::Element(el("span").text(n.capabilities.join(", "))),
+                        ),
+                        (
+                            "Seen",
+                            Node::Element(el("span").text(format!(
+                                "first {}, last {}, restarts {}",
+                                n.first_seen, n.last_seen, n.restarts
+                            ))),
+                        ),
+                        ("Sources", Node::Element(el("span").text(sources))),
+                        ("Key", Node::Element(mono(n.public_key.clone()))),
+                    ])),
+            )
+        })
+        .collect();
+
+    Page::new(
+        Area::Mesh,
+        "Mesh",
+        el("div")
+            .class("mj-grid")
+            .child(card("This node", overview))
+            .when(!providers.is_empty(), |d| {
+                d.child(card(
+                    "Discovery providers",
+                    el("div").class("mj-grid").children(providers),
+                ))
+            })
+            .child(card(
+                format!("Discovered nodes ({})", nodes.count),
+                if node_cards.is_empty() {
+                    el("p")
+                        .class("mj-prose")
+                        .text("No nodes observed. The registry fills as advertisements arrive; `majordomus mesh doctor` proves the prerequisites on this machine alone.")
+                } else {
+                    el("div").class("mj-grid").children(node_cards)
+                },
+            )),
+    )
+}
+
 /// The health report: the verdicts the engines already reach, read through one capability.
 pub fn health(ctx: &Context) -> Page {
     let health: Health = match ask(ctx, "health.report", json!({})) {
@@ -2115,6 +2812,244 @@ pub fn health(ctx: &Context) -> Page {
     )
     .subtitle("The same verdicts `capabilities validate`, `bench coverage --check` and `generate --check` reach, read through one capability.")
     .trail(vec![("Cockpit", Some("/cockpit")), ("Health", None)])
+}
+
+// --------------------------------------------------------------------- release
+
+/// A digest, cut to what a person compares by eye.
+///
+/// `sha256:` and 64 hex characters is 71, and a 320px viewport is about 40 — so the full
+/// value in a table cell is the whole page's overflow. Two fingerprints that differ do so in
+/// the first bytes with overwhelming probability, which is what this cell is read for; the
+/// whole value stays in the JSON every machine surface answers with, where nothing truncates
+/// it. The commit two rows above is abbreviated for the same reason.
+fn short_digest(digest: &str) -> String {
+    match digest.split_once(':') {
+        Some((algo, hex)) => format!("{algo}:{}…", &hex[..hex.len().min(12)]),
+        None => digest.chars().take(12).collect::<String>() + "…",
+    }
+}
+
+/// What the public contract did since the last release, and the smallest version it allows.
+///
+/// Every number here is read from `release.analysis` — the one engine the command line, the
+/// HTTP route, the MCP tool, the CI gate and `release bump` all read. The Cockpit computes
+/// no compatibility of its own and increments no version: the page shows the verdict and the
+/// exact command that acts on it, because raising the version writes tracked files and the
+/// exposure policy keeps repository mutations off every machine surface (ADR 0027).
+pub fn release(ctx: &Context) -> Page {
+    let plan: VersionPlan = match ask(ctx, "release.analysis", json!({})) {
+        Ok(p) => p,
+        // Not `failed`, which answers 500. Every way this capability refuses is a *state of
+        // the repository* — it has published nothing, or its last release predates the
+        // committed registry — and a repository that has not released yet is not a server
+        // error. It is still never rendered as an empty diff, which would read as "nothing
+        // changed": the page says what could not be measured and why.
+        Err(reason) => {
+            return Page::new(
+                Area::Release,
+                "Release",
+                el("div").class("mj-grid").child(card(
+                    "Nothing to measure against yet",
+                    el("div")
+                        // `mj-identity`: the reason names what could not be read, and that
+                        // is an identity — a 40-character commit, or a ref — with no space
+                        // to break at. The cockpit job checks out one commit deep, so this
+                        // is the page CI renders, and it is the one that overflowed 320px.
+                        .child(el("p").class("mj-prose mj-identity").text(&reason))
+                        .child(el("p").class("mj-note").text(
+                            "The smallest allowed version is measured against the surface the last release published. Until there is one — a release record, and the registry committed at its commit — there is no baseline, and no bump can be derived. A version named deliberately is still written: `majordomus release bump --level minor`.",
+                        )),
+                )),
+            )
+            .subtitle("The smallest version this tree may declare, measured from the public capability surface against the last release.")
+            .trail(vec![("Cockpit", Some("/cockpit")), ("Release", None)]);
+        }
+    };
+    let (added, changed, removed) = plan.counts();
+    let blocked = plan.status == ReleaseStatus::Blocked;
+
+    let verdict = card_with(
+        if blocked {
+            format!("{} → {} required", plan.declared_version, plan.required_version)
+        } else {
+            format!("{} — aligned", plan.declared_version)
+        },
+        badge(
+            if blocked { "fail" } else { "ok" },
+            if blocked { "blocked" } else { "aligned" },
+        ),
+        el("div")
+            .child(facts(vec![
+                ("Last release", Node::Element(mono(&plan.baseline.reference))),
+                ("Required bump", Node::Element(badge(
+                    if plan.required == Impact::Major { "fail" } else if plan.required == Impact::Minor { "warn" } else { "ok" },
+                    plan.required.as_str(),
+                ))),
+                ("Declared bump", Node::Element(mono(plan.declared.as_str()))),
+                ("Next minimum", Node::Element(mono(&plan.required_version))),
+                ("Surface", Node::Element(mono(format!(
+                    "{} public atoms, was {}",
+                    plan.atoms, plan.baseline.atoms
+                )))),
+            ]))
+            .child(
+                el("div").class("mj-marks").children(vec![
+                    badge("ok", format!("{added} added")),
+                    badge("info", format!("{changed} changed")),
+                    badge(if removed > 0 { "fail" } else { "ok" }, format!("{removed} removed")),
+                ]),
+            )
+            .child(el("p").class("mj-note").text(plan.policy.statement()))
+            .when(blocked, |d| {
+                d.child(el("p").class("mj-prose").text(
+                    "The public contract moved by more than the version says. Raise it with the one writer:",
+                ))
+                .child(mono("majordomus release bump"))
+            }),
+    );
+
+    // Why — every movement, with the reason it counts for what it does. The list is the
+    // evidence for the badge above, so a surprising verdict can be checked rather than
+    // believed.
+    let why = card(
+        "Why",
+        el("div")
+            .when(plan.changes.is_empty(), |d| {
+                d.child(el("p").class("mj-prose").text(format!(
+                    "Nothing a caller can hold has moved since {}. No bump is owed.",
+                    plan.baseline.reference
+                )))
+            })
+            .when(!plan.changes.is_empty(), |d| {
+                d.child(
+                    el("ul").class("mj-list").children(
+                        plan.changes
+                            .iter()
+                            .map(|c| {
+                                // Prose, not a `mono` chip. A change id is a dotted path
+                                // with no spaces to break at
+                                // (`$defs.Record.properties.next_action_withheld`), and
+                                // `.mj-mono` does not break — only `a.mj-mono` does — so a
+                                // chip of one overflows a 320px viewport however its row is
+                                // laid out. Rendered as prose beside its reason it wraps,
+                                // and the monospace was decoration rather than meaning.
+                                el("li")
+                                    .child(badge(
+                                        match c.impact {
+                                            Impact::Major => "fail",
+                                            Impact::Minor => "warn",
+                                            _ => "ok",
+                                        },
+                                        c.impact.as_str(),
+                                    ))
+                                    .child(
+                                        el("div")
+                                            .class("mj-identity")
+                                            .text(format!("{c} — {}", c.detail)),
+                                    )
+                            })
+                            .collect::<Vec<_>>(),
+                    ),
+                )
+            }),
+    );
+
+    let mut cards = vec![verdict, why];
+
+    // The line this subsystem exists for: the human account and the measured one, side by
+    // side, when they disagree.
+    if plan.understated {
+        cards.push(card_with(
+            "The commits understate the change".to_string(),
+            badge("warn", "evidence"),
+            el("div")
+                .child(facts(vec![
+                    ("Commits say", Node::Element(mono(plan.commits.implied.as_str()))),
+                    ("The contract moved by", Node::Element(mono(plan.implied.as_str()))),
+                    ("Commits since", Node::Element(mono(plan.commits.commits.to_string()))),
+                ]))
+                .child(el("p").class("mj-note").text(
+                    "Conventional commits are how a change explains itself; the contract is what decides the version. The measurement wins.",
+                )),
+        ));
+    }
+
+    if !plan.diagnostics.is_empty() {
+        cards.push(card(
+            "The release state",
+            el("ul").class("mj-list").children(
+                plan.diagnostics
+                    .iter()
+                    .map(|d| {
+                        el("li")
+                            .child(badge(
+                                if d.severity == Severity::Error {
+                                    "fail"
+                                } else {
+                                    "warn"
+                                },
+                                if d.severity == Severity::Error {
+                                    "error"
+                                } else {
+                                    "warning"
+                                },
+                            ))
+                            .child(el("span").text(&d.message))
+                    })
+                    .collect::<Vec<_>>(),
+            ),
+        ));
+    }
+
+    cards.push(card(
+        "Provenance",
+        facts(vec![
+            // Not `mono`: the schema id is 28 characters with no space to break at, and
+            // `.mj-mono` does not break. Beside a label on one row it is the widest thing
+            // on the page at 320px.
+            (
+                "Policy",
+                Node::Element(el("span").class("mj-prose").text(&plan.policy.schema)),
+            ),
+            (
+                "Baseline commit",
+                Node::Element(mono(
+                    plan.baseline.commit.chars().take(12).collect::<String>(),
+                )),
+            ),
+            (
+                "Recorded",
+                Node::Element(badge(
+                    if plan.baseline.recorded { "ok" } else { "warn" },
+                    if plan.baseline.recorded {
+                        "yes"
+                    } else {
+                        "from a tag alone"
+                    },
+                )),
+            ),
+            (
+                "Baseline digest",
+                Node::Element(mono(short_digest(&plan.baseline.fingerprint))),
+            ),
+            (
+                "This digest",
+                Node::Element(mono(short_digest(&plan.fingerprint))),
+            ),
+            (
+                "Writers agree",
+                Node::Element(badge(
+                    if plan.writers_agree { "ok" } else { "fail" },
+                    if plan.writers_agree { "yes" } else { "no" },
+                )),
+            ),
+        ]),
+    ));
+
+    Page::new(Area::Release, "Release", el("div").class("mj-grid").children(cards))
+        .subtitle("The smallest version this tree may declare, measured from the public capability surface against the last release — the same verdict `majordomus release analyze` and the `version-surface` gate reach.")
+        .trail(vec![("Cockpit", Some("/cockpit")), ("Release", None)])
 }
 
 // --------------------------------------------------------------------- artifacts

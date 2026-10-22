@@ -140,12 +140,45 @@ rm -f site/elsewhere.rs
 git add -A >/dev/null 2>&1
 expect_exit 0 "$DC" --root "$T"
 
-# --- the other documented exemptions hold: third-party bytes and compiled artifacts, the
-# categorical hue script, the colour arithmetic of the audit
+# --- the other documented exemptions hold: third-party bytes and compiled artifacts, and
+# the colour arithmetic of the audit
 mkdir -p share/cockpit/vendor scripts/lib
 printf '.x{color:#abcdef}\n' > share/cockpit/vendor/lib.min.css
 printf '.x{color:#abcdef}\n' > share/cockpit/cockpit.css
-printf 'const hue = "#ff0000";\n' > share/cockpit/graph.js
 printf 'export const BLACK = "#000000";\n' > scripts/lib/ui-contrast.mjs
+git add -A >/dev/null 2>&1
+expect_exit 0 "$DC" --root "$T"
+
+# --- the graph viewer is NOT one of them any more. It was exempted by path, with the reason
+# "a categorical scale over data, generated at run time; there is no literal palette to
+# share" — and the second half was untrue: a categorical series is exactly what a
+# declaration can hold, and the hue it rotated moved every node kind's colour whenever one
+# kind was added. share/design/tokens.yaml now declares the series, the viewer reads
+# `--mj-series-<n>`, and this file is read like every other surface. The assertion is the
+# same one, inverted: what used to prove the exemption now proves its absence.
+printf 'const hue = "#ff0000";\n' > share/cockpit/graph.js
+git add -A >/dev/null 2>&1
+expect_exit 10 "$DC" --root "$T"
+expect_grep 'share/cockpit/graph.js'
+expect_grep 'a colour chosen outside share/design/tokens.yaml'
+rm -f share/cockpit/graph.js
+git add -A >/dev/null 2>&1
+expect_exit 0 "$DC" --root "$T"
+
+# --- a read that names a token *family* is answered by the family, not by one token. The
+# viewer asks for `--mj-series-1`, `--mj-series-2` and so on until the page stops answering,
+# because how many colours the series has is the declaration's decision and not a number in
+# a script. The declaration must still emit at least one member: a surface cannot invent a
+# family any more than it can invent a token.
+# the series the declaration does emit: a read of the family is answered by the family
+printf 'const c = getComputedStyle(e).getPropertyValue("--mj-series-" + n);\n' > share/cockpit/graph.js
+git add -A >/dev/null 2>&1
+expect_exit 0 "$DC" --root "$T"
+# a family the declaration does not emit is refused exactly as a single unknown token is
+printf 'const c = getComputedStyle(e).getPropertyValue("--mj-nosuch-" + n);\n' > share/cockpit/graph.js
+git add -A >/dev/null 2>&1
+expect_exit 10 "$DC" --root "$T"
+expect_grep 'reads the family --mj-nosuch-\*, of which the declaration emits nothing'
+rm -f share/cockpit/graph.js
 git add -A >/dev/null 2>&1
 expect_exit 0 "$DC" --root "$T"

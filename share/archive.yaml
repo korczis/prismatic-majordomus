@@ -1,0 +1,91 @@
+# The archive profiles: what a snapshot of this repository is for, and therefore what it
+# holds. Shipped with the tool, beside share/commands.yaml — a repository configures the
+# profiles without redefining what an archive is.
+#
+# An archive exists because the tree has to leave the machine: to a language model that
+# will read it, to a reviewer who cannot clone, to an auditor who must run the gates on a
+# copy. Those are different subjects, so they are different profiles rather than different
+# invocations of one, and the difference is written here rather than remembered.
+#
+# Selection is subtractive and its terms are already declared elsewhere:
+#
+#   source: tracked   the git index is the file set — the same contract every other
+#                     discovery in this repository uses (`--discovery vcs`). Nothing
+#                     untracked is ever archived, so build output, caches and the local
+#                     half of the AI layer cannot leak into a file that is sent away.
+#   derived: drop     a path .gitattributes marks `merge=derived` is a projection of a
+#                     canonical source that is itself in the archive. There is no second
+#                     list of generated paths here, and adding one would be the defect
+#                     `.ai/repo/rules/project/commands-are-projections.v1.md` forbids.
+#   binary: drop      by extension, from binary_extensions below.
+#   exclude/include   globs, applied in that order, for what neither rule can express.
+#
+# The exclusions are globs rather than names wherever a name would go stale: the ratchet
+# baselines are `*-baseline.txt`, and listing the four that existed the day this was
+# written would have stopped covering the sixth.
+#
+# Fidelity is not optional. The mode of every file is read from the git index and written
+# into the archive's manifest, because a zip reader that discards the extra fields
+# silently unpacks a tree in which nothing is executable — the failure that produced this
+# file. `restore: true` ships the script that puts the modes back and builds a local git
+# index, so a gate can run in the unpacked copy and its verdict means something.
+version: 1
+
+# Which profile `majordomus archive` uses when none is named.
+default: context
+
+# Dropped when a profile sets `binary: drop`. Extensions only, no dot.
+binary_extensions: ["png", "jpg", "jpeg", "gif", "webp", "ico", "svg", "pdf", "woff", "woff2", "ttf", "otf", "eot", "zip", "gz", "bz2", "xz", "tar", "mp3", "mp4", "mov", "wasm", "so", "dylib", "dll", "class", "jar"]
+
+profiles:
+  - id: context
+    title: Context for a language model
+    summary: Every tracked source, without the projections generated from it, under one orientation document.
+    source: tracked
+    derived: drop
+    binary: drop
+    exclude: ["package-lock.json", ".ai/repo/*-baseline.txt"]
+    include: ["AGENTS.md", "CLAUDE.md", "docs/INSTALL.md"]
+    format: zip
+    manifest: true
+    restore: true
+    orientation:
+      - "This archive is a source-only snapshot of the repository, taken from the git index at the commit recorded in _ARCHIVE/GIT.txt. It holds no build output, no dependencies and no generated projection, because every projection in this repository is a function of a canonical file that is here."
+      - "Start with README.md. Then docs/CONCEPTS.md for the vocabulary — task, episode, scope, claim, obligation, projection. Then .ai/README.md, which is the provider-neutral context layer this repository both defines and consumes: .ai/repo/ is the shared contract, and .ai/local/ is per-checkout state that git never tracked and this archive therefore cannot contain."
+      - "The design rule that explains the shape of everything else is docs/CAPABILITIES.md with ADR 0002 and ADR 0004 under .ai/repo/adrs/: a capability is declared once, and the CLI, MCP, HTTP, documentation and website surfaces are projections of that one declaration. A semantic definition repeated across projections is treated as a defect, which is why the generated projections are absent here and nothing is lost by their absence."
+      - "The behaviour that is actually guaranteed is in test/cases/ — every case is end to end against the real binary — and in docs/claims/ with docs/CLAIMS.yaml, which record what is guaranteed, advisory, planned or refused. Prefer those to prose when the two disagree."
+      - "Nothing in this archive is executable as it stands: run _ARCHIVE/restore.sh once to put the file modes back and create a local git index, and the repository's own checks will run against the copy."
+    note: The profile for handing the repository to a model that will read it. Dropping the projections is what makes it fit; keeping the canonical sources is what makes it complete.
+
+  - id: audit
+    title: A faithful copy the gates can run in
+    summary: Every tracked file, nothing dropped, with the modes and a local git index restored.
+    source: tracked
+    derived: keep
+    binary: keep
+    exclude: []
+    include: []
+    format: zip
+    manifest: true
+    restore: true
+    orientation:
+      - "This archive is every tracked file of the repository at the commit recorded in _ARCHIVE/GIT.txt, with nothing removed. It exists so that a check can run somewhere other than the checkout it came from and its verdict can be believed."
+      - "Run _ARCHIVE/restore.sh first. It re-applies the file mode of every entry from _ARCHIVE/MANIFEST.txt and creates a git repository whose single commit is this tree, because a copy without modes and without an index fails gates for reasons that belong to the copy rather than to the repository — and a failure that cannot be attributed is worse than no measurement."
+      - "The derived artifacts are present precisely because the checks that compare a projection with its source cannot run without them. What this copy still lacks is history: one commit, no remotes, no reflog, so any check that reads more than the working tree will say so rather than being wrong quietly."
+    note: The profile for running the repository's own checks on a copy. It keeps the derived artifacts because the freshness gates compare them with their sources.
+
+  - id: governance
+    title: The operating contract alone
+    summary: The AI layer, the documentation and the provider bootstraps, without any code.
+    source: tracked
+    derived: drop
+    binary: drop
+    exclude: ["apps/**", "site/**", "lib/**", "bin/**", "scripts/**", "test/**", "share/**", "examples/**", "deploy/**"]
+    include: ["AGENTS.md", "CLAUDE.md", "README.md"]
+    format: zip
+    manifest: true
+    restore: false
+    orientation:
+      - "This archive is the repository's operating contract and nothing else: the AI context layer under .ai/repo/ — rules, ADRs, use cases, features, skills, profiles, prompts, workflows, the project model — together with docs/ and the provider bootstrap files AGENTS.md and CLAUDE.md."
+      - "It carries no source code by design. Read it to learn what this repository requires of a worker and why, not to learn how the tool is implemented. .ai/README.md states the layer's own protocol; docs/CONCEPTS.md defines the vocabulary the rules are written in."
+    note: The small pack. It answers what the rules are, and deliberately cannot answer how they are implemented.

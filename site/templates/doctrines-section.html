@@ -32,7 +32,10 @@
 
     <ul class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3" role="list" aria-live="polite">
       {%- for d in doc.doctrines -%}
-      <li x-show="(cls === 'all' || cls === '{{ d.class }}') && ('{{ d.id }} {{ d.title | lower }} {{ d.validator }} {{ d.enforced_by | join(sep=" ") }}'.includes(q.toLowerCase()))">
+      {#- the row's text is data, not code: interpolated into a JavaScript string, one apostrophe in a title broke the
+          expression and the filter with it. An attribute is escaped by the template; the expression only reads it. -#}
+      <li data-cls="{{ d.class }}" data-text="{{ d.id | lower }} {{ d.title | lower }} {{ d.validator | lower }} {{ d.enforced_by | join(sep=" ") | lower }}"
+          x-show="(cls === 'all' || cls === $el.dataset.cls) && $el.dataset.text.includes(q.toLowerCase())">
         <a href="{{ get_url(path="/doctrines/" ~ d.slug ~ "/", trailing_slash=true) }}" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
           <div class="mb-2 flex items-start justify-between gap-2">{{ <doctrine_class class={d.class} /> }}<span class="font-mono text-xs text-body-subtle">{{ d.enforced_by | join(sep=" · ") }}</span></div>
           <h2 class="mb-2 text-lg font-semibold tracking-tight text-heading">{{ d.title }}</h2>

@@ -1,0 +1,46 @@
+id: development-runtime
+title: The runtime has a development surface
+slug: development-runtime
+version: "0.6"
+order: 100
+priority: p0
+problem: "The Cockpit is a faithful projection of a registry that has almost nothing development-shaped in it. Re-measured on today's master, the registry declares exactly three capabilities of kind `command` — executions.start, executions.cancel, peers.announce — and the OpenAPI document the server serves has exactly those three non-GET operations to match. Every command of the development lifecycle lives in a second program, bin/majordomus, and every one of its nodes in the command graph is withheld from every machine surface. So no development surface can be built by adding pages: there is nothing behind the pages to call, and `majordomus_plan_done` answers `unknown tool` because there is no capability for a plan transition. docs/COCKPIT_IDE_AUDIT.md is the evidence; ADR 0040 is the decision it argues for. Until this milestone existed, none of it was in the plan at all: a keyword search of the issues and milestones for palette, diff view, CI status and syntax highlighting returned nothing, so the work could not be scheduled, blocked or reported."
+outcome: "A development transition is decided in exactly one place — a `capability!` of kind `command` in the Rust registry — and every surface that offers it is a projection: the CLI, the MCP tool, the HTTP route, the OpenAPI operation and the Cockpit's generated runner form, none of them written by hand. The lifecycle stops being a second program with no surfaces, and the execution history a development surface would show exists somewhere durable."
+current_state: "Three command capabilities, all of them about executions or peers. The lifecycle transitions exist only in lib/plan.sh and lib/start.sh. `majordomus run` executes in its own process and never reaches the running server, so the execution plane the Cockpit shows and the one a person uses are disjoint. A server whose executable has been replaced still reports itself `ready`. Two capabilities — devtask.issue and devtask.milestone — landed after the audit's base and give the runtime its first canonical read of an issue and a milestone as work; neither of them writes anything."
+desired_state: "Phase A of the audit's plan has landed end to end — one transition, one capability, four surfaces, no hand-written projection — and the phases that depend on it are schedulable against it. The three load-bearing defects named in the audit's F-table are fixed or explicitly deferred with a record, rather than carried silently under every later measurement."
+scope:
+  - apps/majordomus-cli/src/capability/builtin
+  - apps/majordomus-cli/src/cockpit
+  - lib
+  - share
+  - docs
+  - test/cases
+non_scope:
+  - A terminal, a PTY or shell execution on any surface. The audit records this as a non-goal and share/cockpit/palette.js already states the boundary in terms.
+  - Editing repository source in the browser. The Cockpit refuses every non-GET route by decision, and this milestone does not reopen that decision.
+  - Retries and a scheduler. apps/majordomus-cli/src/execution/mod.rs states in its own module documentation that it has none, by decision.
+  - A second datastore or a second project model. The records stay canonical and the runtime reads them.
+  - The `/cockpit/worktrees` response time. It is F3 in the audit's table and is being fixed on fix/cockpit-answers-quickly; this milestone references that work rather than duplicating it.
+  - A wholesale port of lib/*.sh. Phase A is one transition; the rest is scheduled behind it or not at all.
+acceptance_criteria:
+  - The registry declares at least one capability of kind command that changes a development record, and the generated OpenAPI carries its non-GET operation without anyone editing the document
+  - The same transition is reachable from the CLI, from MCP and over HTTP, and the Cockpit's existing generic runner drives it with no Cockpit source edited
+  - An execution a person starts is visible to the server that serves the repository, or the record says which decision was taken instead and why
+  - A surface that reports a runtime as ready cannot be serving an executable that no longer exists on disk
+  - No claim in docs/COCKPIT_IDE_AUDIT.md is left standing that a command in this repository contradicts
+validation:
+  - majordomus plan validate
+  - bin/majordomus-cli capabilities validate
+  - bin/majordomus-cli generate --check
+  - bash test/run.sh
+evidence_required:
+  - suite
+  - one_mutating_development_capability
+  - projection_not_handwritten
+depends_on: []
+risks:
+  - "Phase A is the whole architecture in miniature. If the pattern does not land cleanly on one transition, no later phase would have worked either, and the correct response is to stop rather than to widen."
+  - "A second name for an existing concept can land in parallel. One already has: the devtask module documents itself as a join over plan and trace rather than a second model, and holds an equality assertion against plan.issues. It is additive and should stay, but its readiness vocabulary refines the canonical statuses, and Phase A should converge the naming rather than grow a third."
+  - "Master moves during the work. It moved eleven times during the audit that produced this milestone, and again between that audit and this record."
+created_at: 2026-09-11
+updated_at: 2026-09-11

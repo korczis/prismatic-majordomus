@@ -24,7 +24,13 @@ want="$(jq '[.matrix.rows[] | select(.status != "draft") | .exposed | length] | 
 got="$(grep -o '✓' "$P/features/matrix/index.html" | wc -l | tr -d ' ')"
 [ "$want" = "$got" ] || { echo "    /features/matrix/ shows $got marks, the model derived $want"; exit 1; }
 # the hero's positioning words are marketing.toml's, and the h1 is its title
-expect_grep "<h1[^>]*>$(sed -n 's/^title = "\(.*\)"$/\1/p' "$ROOT/site/data/marketing.toml" | head -1)</h1>" "$P/index.html"
+# The title is followed by the hero's subtitle, rendered inside the same h1 as a <span>, so
+# the title ends at `</h1>` or at that span. It was asserted as `...title</h1>` alone, which
+# the template has not produced since the subtitle was added — the case aborted here on
+# every run and no assertion below this line executed. The title is escaped as a literal:
+# it ends in `.`, which in ERE matches any character.
+hero_title="$(sed -n 's/^title = "\(.*\)"$/\1/p' "$ROOT/site/data/marketing.toml" | head -1 | sed 's/[][\.*^$+?(){}|/]/\\&/g')"
+expect_grep "<h1[^>]*>${hero_title}(</h1>|<span)" "$P/index.html"
 expect_grep 'id="install"' "$P/index.html"
 expect_grep 'id="chapters"' "$P/index.html"
 # the routes that moved answer with a redirect rather than a 404

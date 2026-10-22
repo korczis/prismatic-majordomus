@@ -15,7 +15,12 @@
 # stale commit got in, which is the failure this whole case is about.
 W="$T/tree"
 mkdir -p "$W"
-(cd "$ROOT" && git archive HEAD) | (cd "$W" && tar xf -) || {
+# A clone, not `git archive | tar` into a fresh `git init`: the derived data now names commits
+# (the release record of v0.6.0 and the changelog projected from it), and a history-less
+# export cannot resolve them, so the registry half failed with `Not a valid commit name` and
+# the gate read a current tree as stale. A clone carries exactly the committed tree, and the
+# history a real checkout has.
+git clone -q --no-local "$ROOT" "$W" 2>/dev/null || {
   echo "    could not export HEAD"; exit 1; }
 # The export is a repository, not just a tree, for the same reason the second half's is
 # below: the gate asks both halves, and the registry half discovers its index with
@@ -23,8 +28,8 @@ mkdir -p "$W"
 # around it, indexes nothing, and reads every artifact as stale. Locally that half is skipped
 # for want of an executable and the case passes; in CI, where MAJORDOMUS_BIN is set, it ran
 # and failed on a tree that is current.
-(cd "$W" && git init -q . && git config user.email t@example.com && git config user.name t \
-  && git add -A && git commit -qm export) || { echo "    could not make the export a repository"; exit 1; }
+(cd "$W" && git config user.email t@example.com && git config user.name t) \
+  || { echo "    could not configure the export"; exit 1; }
 
 out="$(cd "$W" && scripts/pages current 2>&1)" || {
   echo "    the committed tree is not current; run scripts/derive and commit the result"
@@ -69,11 +74,14 @@ esac
 RB="$(rust_bin)" || rust_bin_exit $?
 # this half needs a git repository, not just a tree: the index is discovered with
 # `git ls-files`, so an export with no `.git` indexes a different set and every artifact
-# reads as stale for a reason that has nothing to do with the gate
-W2="$T/tree2"; mkdir -p "$W2"
-(cd "$ROOT" && git archive HEAD) | (cd "$W2" && tar xf -) || { echo "    could not export HEAD"; exit 1; }
-(cd "$W2" && git init -q . && git config user.email t@example.com && git config user.name t \
-  && git add -A && git commit -qm export) || { echo "    could not make the export a repository"; exit 1; }
+# reads as stale for a reason that has nothing to do with the gate. And it needs the history:
+# the registry resolves the commits the release record and the changelog name, which a fresh
+# `git init` over an archive does not have, so this half exited 10 on a current tree with
+# `Not a valid commit name` — the same clone as the first export, for the same reason.
+W2="$T/tree2"
+git clone -q --no-local "$ROOT" "$W2" 2>/dev/null || { echo "    could not export HEAD"; exit 1; }
+(cd "$W2" && git config user.email t@example.com && git config user.name t) \
+  || { echo "    could not configure the export"; exit 1; }
 
 rc=0; out="$(cd "$W2" && MAJORDOMUS_BIN="$RB" scripts/pages current 2>&1)" || rc=$?
 [ "$rc" = 0 ] || { echo "    the committed tree fails the registry half (got $rc)"; printf '    | %s\n' "$out"; exit 1; }

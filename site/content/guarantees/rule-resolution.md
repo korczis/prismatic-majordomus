@@ -1,7 +1,7 @@
 +++
 title = "The effective rule set is resolved as a dependency graph in a deterministic order, and a set that does not resolve is applied by nothing"
 description = "A rule is a Markdown file with YAML front matter: identity (id and version, never the file name), class, status, depends_on as exact id@version references, and for the rules the tool enforces an x-majordomus block naming the validator, the commands and the tests. The effective set is every active vendored rule plus every active project rule, ordered so that each dependency precedes the rule that depends on it. Any defect in that graph stops the command that needed the set, with the reason, and no rule is applied partially."
-weight = 78
+weight = 80
 [extra]
 claim_id = "rule-resolution"
 status = "guaranteed"

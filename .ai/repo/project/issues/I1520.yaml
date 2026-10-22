@@ -1,0 +1,35 @@
+id: I1520
+milestone: development-runtime
+title: A step that runs out of time says so itself
+slug: a-step-reports-its-own-time
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make a CI step that exceeds its time report a failure naming the bound and the elapsed time, instead of being killed by its job and reported by GitHub as a cancellation that every reader in this repository treats as not-a-failure."
+why: "The site job's 'audit the UI in a browser' step has been killed at exactly its job's 50-minute timeout-minutes bound on master at 6a8d47a47 (01:14 to 02:04), at 70685d473 (23:13 to 00:03), and on both runs of the integration branch #310 — three consecutive runs, each to the second, and nothing was ever red. GitHub reports a job killed by its own bound as `cancelled`, and `cancelled` is what the gates, the summaries and three sessions in one night all read as 'not a failure'. I read it that way myself an hour before measuring it.\n\nThe cause was in the instrument. scripts/ci/timed computed the elapsed time after the command returned, so a command that never returned was never measured and no row was ever written to say otherwise. The only thing that could have reported the problem was the thing the problem prevented from running. That is the class: a verdict with no measurement behind it, the same family as english-only-check dying on its own regex and announcing that every file is English, and coverage-differential being declared, planned, named in a job's if: and invoked by no step."
+current_state: "All 13 timeout-minutes in .github/workflows/validate.yml are job-level; no step carries a bound of its own. scripts/ci/timed measures after the fact and cannot report a step it never saw finish. The UI audit is over its job's bound and has been for as long as the run retention window goes back."
+desired_state: "Every timed step declares a bound smaller than its job's, so a runaway step always loses the race to its own message; the timing row is written even when the bound fires, because that is exactly when it is the only evidence; and a gate holds the relation so a new step cannot be added without one."
+scope:
+  - scripts/ci
+  - .github/workflows
+  - .ai/repo/ci
+  - test/cases
+non_scope:
+  - Making the UI audit faster, or deciding what its bound should be. This converts a silent kill into a named failure; what the right bound is, is a separate and deliberate decision.
+  - The sum of a job's step bounds. Several steps can still add up past their job's bound and be killed together; the job bound remains the backstop it always was.
+depends_on: []
+acceptance_criteria:
+  - A step over its bound exits non-zero with a message naming the bound and the elapsed time
+  - The timing row is written when the bound fires, not only when the command returns
+  - Every scripts/ci/timed call declares a bound strictly smaller than its job's timeout-minutes
+  - A gate refuses a timed step with no bound, and one whose bound reaches its job's
+validation:
+  - bash scripts/ci/step-bound-check
+  - bash test/run.sh 349_a_step_reports_its_own_time
+evidence_required:
+  - a_step_over_its_bound_reports_it
+  - no_step_can_be_killed_by_its_job_first
+risk: "This makes the site job red rather than cancelled, loudly and on every run, until the UI audit finishes inside its bound or somebody raises the bound with a reason. That is the intended effect and it is worth saying plainly: a silent kill is exchanged for a visible failure, not for a fix."
+created_at: 2026-09-15
+updated_at: 2026-09-15
+started_at: 2026-09-15

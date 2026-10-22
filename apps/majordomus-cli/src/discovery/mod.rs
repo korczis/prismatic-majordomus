@@ -205,7 +205,7 @@ impl DiscoverySource for VcsIndex {
             .filter(|p| matcher.matches(p))
             .cloned()
             .collect();
-        out.sort();
+        crate::order::canonical(&mut out);
         Ok(out)
     }
 }
@@ -227,7 +227,7 @@ impl DiscoverySource for FileSystem {
         let matcher = glob::Glob::new(pattern);
         let mut out = Vec::new();
         walk(root, root, &matcher, &self.excluded, &mut out)?;
-        out.sort();
+        crate::order::canonical(&mut out);
         Ok(out)
     }
 }

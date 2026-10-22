@@ -504,6 +504,33 @@
       "source": "share/standard/majordomus/rules/handover-integrity.v1.md"
     },
     {
+      "id": "majordomus.lifecycle-observed",
+      "slug": "lifecycle-observed",
+      "title": "Lifecycle observation",
+      "class": "blocking",
+      "principle": "",
+      "statement": "While episodes keep opening, the newest checkpoint and the newest handover for this worktree and branch must be within the policy's freshness thresholds; every provider lifecycle event received must be recorded before any guard runs; and an open episode older than the stale threshold is a finding.",
+      "summary": "A store that can be read is not a store that is being written. While episodes go on opening, the records a future worker resumes from must go on advancing, every lifecycle event received must leave evidence it arrived, and an episode that outlives the staleness threshold must be named rather than left open.",
+      "validator": "lifecycle",
+      "validator_function": "mj_validate_lifecycle",
+      "defined_in": "lib/doctor.sh",
+      "category": "lifecycle",
+      "enforced_by": [
+        "doctor",
+        "watch"
+      ],
+      "exit_code": 10,
+      "policy_key": "",
+      "claims": [
+        "session-lifecycle"
+      ],
+      "test": "test/cases/130_lifecycle_survives_a_stale_task.sh",
+      "depends_on": [
+        "majordomus.handover-integrity@1"
+      ],
+      "source": "share/standard/majordomus/rules/lifecycle-observed.v1.md"
+    },
+    {
       "id": "majordomus.note-integrity",
       "slug": "note-integrity",
       "title": "Note integrity",
@@ -697,6 +724,33 @@
         "majordomus.sessions-are-workers@1"
       ],
       "source": "share/standard/majordomus/rules/prompt-capture.v1.md"
+    },
+    {
+      "id": "majordomus.prompt-continuity",
+      "slug": "prompt-continuity",
+      "title": "A prompt record carries its own identity, is bounded, and is private",
+      "class": "blocking",
+      "principle": "",
+      "statement": "A prompt record carries the canonical episode, provider session, repository and worktree it was captured in, or records explicitly that no episode could be resolved; the archive is mode 0600, bounded by prompts.retention_max_days and prompts.retention_max_bytes, and obvious credential material is replaced before it is persisted.",
+      "summary": "Every captured prompt names the episode it belongs to or says why it cannot; the archive is readable by its owner alone, bounded by a declared retention policy, and never holds credential material verbatim.",
+      "validator": "prompt_continuity",
+      "validator_function": "mj_validate_prompt_continuity",
+      "defined_in": "lib/capture.sh",
+      "category": "prompts",
+      "enforced_by": [
+        "doctor",
+        "watch"
+      ],
+      "exit_code": 10,
+      "policy_key": "",
+      "claims": [
+        "prompt-continuity"
+      ],
+      "test": "test/cases/140_prompt_continuity.sh",
+      "depends_on": [
+        "majordomus.prompt-capture@1"
+      ],
+      "source": "share/standard/majordomus/rules/prompt-continuity.v1.md"
     },
     {
       "id": "majordomus.prompt-integrity",
@@ -918,6 +972,31 @@
       "source": "share/standard/majordomus/rules/session-records.v1.md"
     },
     {
+      "id": "majordomus.record-changed-files",
+      "slug": "record-changed-files",
+      "title": "A record's changed_files names the work, not the tool's exhaust",
+      "class": "advisory",
+      "principle": "",
+      "statement": "A record's changed_files is the working tree classified against the declarations that say what is derived — the scope file's generated and never-read sets, the policy's projection targets, the merge driver's derived trees, and the record stores themselves — never git status verbatim.",
+      "summary": "The changed_files block of a checkpoint, a handover or a closed session names what the episode produced. Paths a declaration already calls generated, projected or local are classified out, and the classification reads those declarations rather than a list of its own.",
+      "validator": "record_changed_files",
+      "validator_function": "mj_validate_record_changed_files",
+      "defined_in": "lib/changed.sh",
+      "category": "records",
+      "enforced_by": [
+        "doctor"
+      ],
+      "exit_code": 10,
+      "policy_key": "",
+      "claims": [],
+      "test": "test/cases/136_changed_files_classifier.sh",
+      "depends_on": [
+        "majordomus.session-records@1",
+        "majordomus.handover-integrity@1"
+      ],
+      "source": "share/standard/majordomus/rules/record-changed-files.v1.md"
+    },
+    {
       "id": "majordomus.session-lifecycle",
       "slug": "session-lifecycle",
       "title": "The episode boundary is drawn below the model, and its working context is local",
@@ -1110,12 +1189,61 @@
         "majordomus.verification-integrity@1"
       ],
       "source": "share/standard/majordomus/rules/obligation-closure.v1.md"
+    },
+    {
+      "id": "majordomus.completion-gates",
+      "slug": "completion-gates",
+      "title": "Completion is gated",
+      "class": "blocking",
+      "principle": "",
+      "statement": "The gates a change must pass are derived from the repository's CI model and the change's own paths; a gate known to be failing, or whose recorded run no longer describes the tree, refuses the outcome completed; a gate that has never reported is recorded as unverified and never as passing; and no surface may reach that judgement a second time.",
+      "summary": "A task reaches the outcome completed only when no validation gate its own change set selects is known to be failing, and a gate's verdict discharges nothing once the files that select it have changed since the run.",
+      "validator": "completion_gates",
+      "validator_function": "mj_validate_completion_gates",
+      "defined_in": "lib/gates.sh",
+      "category": "gate",
+      "enforced_by": [
+        "check",
+        "finish"
+      ],
+      "exit_code": 10,
+      "policy_key": "gates_passed",
+      "claims": [],
+      "test": "test/cases/131_completion_gates.sh",
+      "depends_on": [
+        "majordomus.obligation-closure@1"
+      ],
+      "source": "share/standard/majordomus/rules/completion-gates.v1.md"
+    },
+    {
+      "id": "majordomus.publication-currency",
+      "slug": "publication-currency",
+      "title": "A session does not finish behind its own published site",
+      "class": "blocking",
+      "principle": "",
+      "statement": "A gate the CI model marks at-finish measures the deployment rather than the tree, so no path class can select it; finish runs it live and refuses the outcome completed while it reports the publication is not a projection of the trunk. It is measured, never recorded: evidence about a live site expires with the site and not with a file hash.",
+      "summary": "A repository that publishes has a second tree — the one the public is being served — and no commit-level gate can measure it, because no change to any file can make it right or wrong. A session that lands work and leaves the publication owed has finished nothing the public can see, and every check stays green while that is true. The gates that measure a deployment are declared as such in the CI model, and finish asks them.",
+      "validator": "publication_currency",
+      "validator_function": "mj_validate_publication_currency",
+      "defined_in": "lib/gates.sh",
+      "category": "gate",
+      "enforced_by": [
+        "finish"
+      ],
+      "exit_code": 10,
+      "policy_key": "publication_current",
+      "claims": [],
+      "test": "test/cases/275_publication_is_current.sh",
+      "depends_on": [
+        "majordomus.completion-gates@1"
+      ],
+      "source": "share/standard/majordomus/rules/publication-currency.v1.md"
     }
   ],
   "counts": {
-    "declared": 40,
-    "blocking": 36,
-    "advisory": 4
+    "declared": 45,
+    "blocking": 40,
+    "advisory": 5
   },
   "index": {
     "majordomus.ai-layout-integrity": 0,
@@ -1136,27 +1264,32 @@
     "majordomus.enforcement-wiring": 15,
     "majordomus.command-coverage": 16,
     "majordomus.handover-integrity": 17,
-    "majordomus.note-integrity": 18,
-    "majordomus.profile-requirements": 19,
-    "majordomus.project-integrity": 20,
-    "majordomus.projection-integrity": 21,
-    "majordomus.context-budget": 22,
-    "majordomus.deployment-contract": 23,
-    "majordomus.prompt-capture": 24,
-    "majordomus.prompt-integrity": 25,
-    "majordomus.questions-store-integrity": 26,
-    "majordomus.retention-caps": 27,
-    "majordomus.roadmap-integrity": 28,
-    "majordomus.rule-package-integrity": 29,
-    "majordomus.schema-integrity": 30,
-    "majordomus.scope-integrity": 31,
-    "majordomus.session-records": 32,
-    "majordomus.session-lifecycle": 33,
-    "majordomus.skill-integrity": 34,
-    "majordomus.state-consistency": 35,
-    "majordomus.task-continuity": 36,
-    "majordomus.use-case-coverage": 37,
-    "majordomus.verification-integrity": 38,
-    "majordomus.obligation-closure": 39
+    "majordomus.lifecycle-observed": 18,
+    "majordomus.note-integrity": 19,
+    "majordomus.profile-requirements": 20,
+    "majordomus.project-integrity": 21,
+    "majordomus.projection-integrity": 22,
+    "majordomus.context-budget": 23,
+    "majordomus.deployment-contract": 24,
+    "majordomus.prompt-capture": 25,
+    "majordomus.prompt-continuity": 26,
+    "majordomus.prompt-integrity": 27,
+    "majordomus.questions-store-integrity": 28,
+    "majordomus.retention-caps": 29,
+    "majordomus.roadmap-integrity": 30,
+    "majordomus.rule-package-integrity": 31,
+    "majordomus.schema-integrity": 32,
+    "majordomus.scope-integrity": 33,
+    "majordomus.session-records": 34,
+    "majordomus.record-changed-files": 35,
+    "majordomus.session-lifecycle": 36,
+    "majordomus.skill-integrity": 37,
+    "majordomus.state-consistency": 38,
+    "majordomus.task-continuity": 39,
+    "majordomus.use-case-coverage": 40,
+    "majordomus.verification-integrity": 41,
+    "majordomus.obligation-closure": 42,
+    "majordomus.completion-gates": 43,
+    "majordomus.publication-currency": 44
   }
 }

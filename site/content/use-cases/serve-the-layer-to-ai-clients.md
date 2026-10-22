@@ -1,7 +1,7 @@
 +++
 title = "Serve the repository's AI layer to every AI client through one shared server"
 description = "Open the repository in any client the tool declares a provider for (docs/generated/providers.md) and have each of them read the same rules, prompts and knowledge over MCP from one process, seeing each other."
-weight = 10
+weight = 11
 [extra]
 id = "serve-the-layer-to-ai-clients"
 source = ".ai/repo/use-cases/serve-the-layer-to-ai-clients.md"
@@ -43,4 +43,4 @@ then:
 
 ## Outcome
 
-The first client to open the repository is the shared server; every later one attaches to it. Each client sees the same objects as majordomus:// resources and the same tools, lists the other clients with majordomus_peers, and announces its intent and the paths it will touch with majordomus_announce. A lease a client leaves behind never locks the others out, and a client that cannot serve says so instead of serving a degraded layer silently.
+The first client to open a checkout is its shared server; every later client of that checkout attaches to it, and a linked worktree, being a checkout, has one of its own. Each client sees the same objects as majordomus:// resources and the same tools, lists every worker of the repository with majordomus_peers - its own board and the board of every other checkout, each peer stamped with the worktree it is in (ADR 0044) - and announces its intent and the paths it will touch with majordomus_announce. A lease a client leaves behind never locks the others out, and a client that cannot serve says so instead of serving a degraded layer silently.

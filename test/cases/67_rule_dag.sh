@@ -214,7 +214,11 @@ x-majordomus:\
   enforced_by: [check]\
   exit_code: 10\
   tests: [test\/cases\/67_rule_dag.sh]/'
-red 'half\.md: x-majordomus lacks validator' "an x-majordomus block without a validator"
+# A block with no validator is not automatically a missing validator: since the enforcement
+# block grew a second mode it may legitimately name only the tests that prove the rule. What
+# is refused is the half-declaration — naming where a validator would run, or what it would
+# report, without the validator. The message says which half is missing rather than assuming.
+red 'half\.md: x-majordomus names an enforcing command but no validator' "an enforcing command with no validator"
 prule half.md project.half 1
 mutate half.md 's/^tags: \[fixture\]$/tags: [fixture]\
 x-majordomus:\
@@ -231,6 +235,15 @@ x-majordomus:\
   enforced_by: [check]\
   exit_code: 10/'
 red 'half\.md: x-majordomus names no test' "an x-majordomus block without tests"
+# ...and the second mode itself, which none of the refusals above may catch: a block that
+# names the tests and nothing else is whole. The set resolves, and the rule reads as proven
+# by what it names rather than as enforced by a validator nobody wrote.
+prule half.md project.half 1
+mutate half.md 's/^tags: \[fixture\]$/tags: [fixture]\
+x-majordomus:\
+  tests: [test\/cases\/67_rule_dag.sh]/'
+green "with a gated x-majordomus block"
+expect_grep 'project\.half .* proven by test/cases/67_rule_dag\.sh'
 rm -f "$P/half.md"
 
 # ---------------------------------------------------------------- mutation 8: a deprecated dependency

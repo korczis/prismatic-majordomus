@@ -9,6 +9,9 @@ status: active
 class: blocking
 depends_on: []
 tags: [safety, tooling]
+
+x-majordomus:
+  reviewed_because: no deleting sweep in this tree is exercised by a case yet; when one is written the guard becomes a case and this declaration falls away
 ---
 
 # Rationale
@@ -49,8 +52,21 @@ changed script under `scripts/` that deletes anything and does not carry the gua
 
 # Verification
 
-There is no `test/cases/` case for this yet; a sweep script exercised by one would live
-under `test/cases/`, named for the script, proving that a candidate with an unreadable
-input is skipped and counted rather than selected. Until one exists, the rule is held by
-review: any new deleting sweep under `scripts/` is read for the guard before it is trusted,
-and this file is the checklist a reviewer reads it against.
+`test/cases/135_session_store_recovery.sh` is the first executable instance. `majordomus
+recover` selects open episodes for closure by age, which is the shape this rule is about,
+and the case proves all three halves of the required behaviour against a real run: a
+candidate whose last sign of life cannot be read as a timestamp, and one carrying no
+identity at all, are both left open and counted in the `skipped` line rather than selected;
+the measured value that decided every candidate is printed before any of them is acted on,
+including the candidates nothing happens to; and `--check` writes nothing, so the plan can
+be read before the sweep runs at all.
+
+The bug the guard exists to catch bit once more while that case was being written, from the
+other direction. `mj_epoch` returns non-zero on a string neither `date` can parse, and the
+first draft read it as `[ -n "$last" ] && last_e="$(mj_epoch "$last")"` — an assignment
+after the final `&&` is not exempt from `set -e`, so the whole command died on the first
+unreadable candidate having printed one header line. A predicate that cannot measure its
+input must be false; it must not be an exception either.
+
+Sweeps under `scripts/` are still held by review, and this file is the checklist a reviewer
+reads them against; `lib/recover.sh` is what a new one should be read beside.

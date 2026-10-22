@@ -51,6 +51,7 @@
 
 use std::collections::BTreeMap;
 use std::fmt;
+use std::path::PathBuf;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Mutex;
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
@@ -94,7 +95,10 @@ pub struct ClientInfo {
     pub name: String,
     /// `clientInfo.version`.
     pub version: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    // `default` as well as `skip_serializing_if`: a board is now read back off the wire
+    // from a sibling checkout's server, and a field that is skipped when absent must also
+    // be accepted when absent, or the peer that omitted it makes the whole board unreadable.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     /// `clientInfo.title`, when the client sends one.
     pub title: Option<String>,
 }
@@ -165,6 +169,49 @@ fn claim_key(name: Option<&str>) -> String {
         .to_string()
 }
 
+/// Which checkout of the repository a peer is attached to.
+///
+/// A board is one process's memory and a server serves one checkout, so a peer read from
+/// a sibling checkout's server and a peer of this one are otherwise indistinguishable —
+/// and worse than indistinguishable, because the ids collide: `p1` is the first session
+/// of *every* board, so a repository-wide listing without this field would hold several
+/// peers called `p1` and no way to tell them apart. This is the qualification. The
+/// worktree path is the durable half of a worker's identity: the peer id is a position on
+/// one board and is handed out again after a reconnect (`p3` this morning, `p1` after the
+/// bridge re-attached), while the checkout a worker is working in outlives its connection.
+///
+/// Absent on a peer a server reports about its own board without being asked which
+/// checkout that is — `peers.announce` answers about the announcing session and the
+/// answer is this server's by construction. The repository-wide listing stamps every
+/// peer it gathers, its own included, so that no entry of that answer is unqualified.
+///
+/// ```
+/// use majordomus_cli::peers::PeerCheckout;
+/// let c = PeerCheckout {
+///     id: "b8293f11".into(),
+///     worktree: "/repo-wt/feature/x".into(),
+///     branch: Some("feature/x".into()),
+///     this_checkout: false,
+/// };
+/// let v = serde_json::to_value(&c).unwrap();
+/// assert_eq!(v["branch"], "feature/x");
+/// assert_eq!(v["this_checkout"], false);
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct PeerCheckout {
+    /// The checkout's identity digest, the same value `server.status` reports as
+    /// `checkout_id`. One per checkout, never a path, and stable across a restart.
+    pub id: String,
+    /// Where the checkout is. The one thing on this board that a human can act on
+    /// directly, and the one thing that survives a reconnect.
+    pub worktree: PathBuf,
+    /// The branch checked out there, when it could be read.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub branch: Option<String>,
+    /// Whether this is the checkout of the server answering the call.
+    pub this_checkout: bool,
+}
+
 /// One peer as the board lists it.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct Peer {
@@ -191,12 +238,22 @@ pub struct Peer {
     /// before it and the other peers stopped seeing the rest of the scope.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub claims: Vec<Announcement>,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    // `default` as well as `skip_serializing_if`, for the reason on `ClientInfo::title`:
+    // a peer that has attached and not yet announced serializes without this field, and
+    // before the board was gathered off the wire nothing ever read one back.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     /// The most recently made of [`Peer::claims`], for a reader that wants one line rather
     /// than all of them. Derived from `claims` and never a second account of it: a peer
     /// holding one claim reports the same thing in both, which is what every peer that does
     /// not name its claims reports.
     pub announcement: Option<Announcement>,
+    /// Which checkout of the repository this peer is attached to; see [`PeerCheckout`].
+    ///
+    /// The board itself never sets it — a board does not know where it is — and it is
+    /// stamped by the reader that gathered this peer, which is the one thing that knows
+    /// which checkout's server it asked.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub checkout: Option<PeerCheckout>,
 }
 
 /// Two peers that claimed the same ground.
@@ -214,6 +271,14 @@ pub struct Overlap {
     pub intent: String,
     /// The claims that meet: one line per pair, `yours` and `theirs`.
     pub paths: Vec<OverlapPath>,
+    /// Which checkout the other peer is attached to, when the reader knew.
+    ///
+    /// The overlap that matters most is the one nobody could see before: two workers in
+    /// two worktrees of one repository, each reading a board that held only itself, both
+    /// claiming `apps/majordomus-cli/src`. Naming the checkout is what turns "p1 is on
+    /// your ground" into something a reader can act on when `p1` is not on this board.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub checkout: Option<PeerCheckout>,
 }
 
 /// One pair of claims that contain one another.
@@ -461,19 +526,7 @@ impl PeerBoard {
     /// the answer a reader wants: it is not "these two sessions overlap" but "these two
     /// pieces of work overlap", and the intent says which.
     pub fn overlaps(&self) -> Vec<Overlap> {
-        let slots = self.lock();
-        let mut out = Vec::new();
-        for (seq, s) in slots.iter() {
-            for mine in s.claims.values() {
-                for o in overlaps_against(&slots, *seq, &mine.scope) {
-                    // each pair once: report it against the later peer only
-                    if o.peer.seq() < *seq {
-                        out.push(o);
-                    }
-                }
-            }
-        }
-        out
+        overlaps_among(&self.list())
     }
 
     /// One peer, as listed.
@@ -583,7 +636,73 @@ fn peer(seq: u64, s: &Slot) -> Peer {
         attached: !s.departed,
         claims: s.claims(),
         announcement: s.latest(),
+        // a board does not know which checkout it is the board of; whoever gathered this
+        // peer stamps it (`peers.list`), because that is the reader that asked a server
+        checkout: None,
     }
+}
+
+/// Every pair of claims that meet among an arbitrary set of peers, each pair once.
+///
+/// The listing side of the overlap question, and the only account of it: [`PeerBoard::overlaps`]
+/// is this function over its own peers, and the repository-wide listing is this function
+/// over the peers of every checkout's board. They cannot drift into two answers, and a
+/// collision between two worktrees is found by exactly the algorithm that found a
+/// collision between two sessions of one — which is the whole point, because until the
+/// board became repository-wide the second kind was the only kind anyone could see.
+///
+/// A pair is reported once, against the later peer of the two, naming the earlier one:
+/// `yours` is the later peer's path and `theirs` the earlier's, and [`Overlap::peer`]
+/// with [`Overlap::checkout`] says who and where the earlier one is. Peers are paired by
+/// position, never by [`PeerId`], because ids are unique to one board and a gathered list
+/// holds a `p1` per checkout.
+///
+/// ```
+/// use majordomus_cli::peers::{overlaps_among, PeerBoard, Transport};
+/// let board = PeerBoard::new();
+/// let a = board.attach(Transport::Stdio);
+/// let b = board.attach(Transport::Http);
+/// board.announce(&a, "the ordering rule", vec!["apps/majordomus-cli/src".into()]);
+/// board.announce(&b, "the release model", vec!["apps/majordomus-cli/src/release".into()]);
+/// let found = overlaps_among(&board.list());
+/// assert_eq!(found.len(), 1);
+/// assert_eq!(found[0].peer.as_str(), "p1", "reported against the later peer, naming the earlier");
+/// assert_eq!(found[0].paths[0].yours, "apps/majordomus-cli/src/release");
+/// assert_eq!(found[0].paths[0].theirs, "apps/majordomus-cli/src");
+/// // and it is the same answer the board gives about itself
+/// assert_eq!(board.overlaps(), found);
+/// ```
+pub fn overlaps_among(peers: &[Peer]) -> Vec<Overlap> {
+    let mut out = Vec::new();
+    for (i, later) in peers.iter().enumerate() {
+        for mine in &later.claims {
+            for earlier in peers.iter().take(i) {
+                for theirs in &earlier.claims {
+                    let mut paths: Vec<OverlapPath> = Vec::new();
+                    for yours in &mine.scope {
+                        for their in &theirs.scope {
+                            if claims_meet(yours, their) {
+                                paths.push(OverlapPath {
+                                    yours: yours.clone(),
+                                    theirs: their.clone(),
+                                });
+                            }
+                        }
+                    }
+                    if !paths.is_empty() {
+                        out.push(Overlap {
+                            peer: earlier.id.clone(),
+                            attached: earlier.attached,
+                            intent: theirs.intent.clone(),
+                            paths,
+                            checkout: earlier.checkout.clone(),
+                        });
+                    }
+                }
+            }
+        }
+    }
+    out
 }
 
 /// Every claim of every peer other than `seq` whose scope meets `scope`.
@@ -615,6 +734,9 @@ fn overlaps_against(slots: &BTreeMap<u64, Slot>, seq: u64, scope: &[String]) -> 
                     attached: !s.departed,
                     intent: theirs.intent.clone(),
                     paths,
+                    // this board's own peers: the caller is on this checkout too, and the
+                    // one answer that gathers several boards stamps them all itself
+                    checkout: None,
                 });
             }
         }
@@ -652,9 +774,115 @@ pub fn rfc3339(t: SystemTime) -> String {
     format!("{y:04}-{mth:02}-{d:02}T{h:02}:{m:02}:{s:02}Z")
 }
 
+/// The inverse of [`rfc3339`]: `2026-08-29T10:40:00Z` back to Unix seconds.
+///
+/// It lives beside the formatter because the two are one thing, and a repository that had
+/// the one without the other grew a second parser every time somebody needed to compare two
+/// recorded instants. Strict about the shape it accepts — exactly `YYYY-MM-DDTHH:MM:SSZ`,
+/// which is the only shape this tool writes — because a lenient parser that guessed at a
+/// half-recognised string would answer `None` for a *malformed* timestamp and a plausible
+/// number for a *different* one, and only the first of those is safe.
+///
+/// `None` is the honest answer for anything else, and the caller's job is to report it as
+/// unjudgeable rather than as fresh: an episode whose evidence cannot be read as a time is
+/// one a recovery sweep must skip and count, never one it may sweep.
+///
+/// ```
+/// use majordomus_cli::peers::{epoch_seconds, rfc3339};
+/// use std::time::{Duration, UNIX_EPOCH};
+///
+/// assert_eq!(epoch_seconds("1970-01-01T00:00:00Z"), Some(0));
+/// assert_eq!(epoch_seconds("2026-08-29T10:40:00Z"), Some(1_788_000_000));
+/// assert_eq!(epoch_seconds("not a timestamp"), None);
+/// assert_eq!(epoch_seconds("2026-08-29 10:40:00Z"), None, "the T is not optional");
+/// assert_eq!(epoch_seconds("2026-08-29T10:40:00+02:00"), None, "UTC or nothing");
+///
+/// // and it round-trips with the formatter it is the inverse of
+/// for secs in [0u64, 1, 1_788_000_000, 2_000_000_000] {
+///     let text = rfc3339(UNIX_EPOCH + Duration::from_secs(secs));
+///     assert_eq!(epoch_seconds(&text), Some(secs as i64), "{text}");
+/// }
+/// ```
+pub fn epoch_seconds(ts: &str) -> Option<i64> {
+    let b = ts.as_bytes();
+    if b.len() != 20
+        || b[4] != b'-'
+        || b[7] != b'-'
+        || b[10] != b'T'
+        || b[13] != b':'
+        || b[16] != b':'
+        || b[19] != b'Z'
+    {
+        return None;
+    }
+    let n = |from: usize, to: usize| -> Option<i64> {
+        let part = ts.get(from..to)?;
+        part.bytes().all(|c| c.is_ascii_digit()).then_some(())?;
+        part.parse::<i64>().ok()
+    };
+    let (y, m, d) = (n(0, 4)?, n(5, 7)?, n(8, 10)?);
+    let (hh, mm, ss) = (n(11, 13)?, n(14, 16)?, n(17, 19)?);
+    if !(1..=12).contains(&m) || !(1..=31).contains(&d) || hh > 23 || mm > 59 || ss > 60 {
+        return None;
+    }
+    // days-from-civil, Howard Hinnant's algorithm — the inverse of the civil-from-days
+    // above, so the two agree by construction rather than by two tables being kept level.
+    let y = if m <= 2 { y - 1 } else { y };
+    let era = y.div_euclid(400);
+    let yoe = y - era * 400;
+    let mp = if m > 2 { m - 3 } else { m + 9 };
+    let doy = (153 * mp + 2) / 5 + d - 1;
+    let doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
+    let days = era * 146_097 + doe - 719_468;
+    Some(days * 86_400 + hh * 3600 + mm * 60 + ss)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// A board is now read back off the wire: `peers.list` gathers a sibling checkout's
+    /// board from that checkout's own server, and `serde` parses the answer into these
+    /// types. Every shape a board can serialise must therefore parse again — including the
+    /// two nothing had ever read back before the gather existed: a peer that has attached
+    /// and not yet announced (no `announcement`), and a client that sent no `title`. Both
+    /// are skipped when absent, and a field that is skipped must also be defaulted, or one
+    /// silent peer makes an entire sibling board unreadable and the answer `complete:
+    /// false` — which is the failure this decision exists to remove, arriving by another
+    /// door. Caught in review of ADR 0044, before it ever ran.
+    #[test]
+    fn a_board_survives_the_wire_including_a_peer_that_said_nothing() {
+        let board = PeerBoard::new();
+        let quiet = board.attach(Transport::Http);
+        let listed = board.list();
+        let text = serde_json::to_string(&listed[0]).expect("a peer serialises");
+        assert!(
+            !text.contains("announcement"),
+            "a peer that said nothing carries no announcement: {text}"
+        );
+        assert!(
+            !text.contains("title"),
+            "and no title, because its client sent none: {text}"
+        );
+        let back: Peer = serde_json::from_str(&text).expect("a silent peer must read back");
+        assert_eq!(back, listed[0]);
+        assert!(
+            back.checkout.is_none(),
+            "a board does not know which checkout it is the board of"
+        );
+
+        // and the shape a peer that has said everything has
+        board.announce(&quiet, "the ordering rule", vec!["apps".into()]);
+        let spoken = board.list().remove(0);
+        let text = serde_json::to_string(&spoken).unwrap();
+        assert_eq!(serde_json::from_str::<Peer>(&text).unwrap(), spoken);
+
+        // the whole answer, as a sibling would send it and the gather would read it
+        let whole = serde_json::json!({ "count": 1, "peers": board.list() });
+        let peers: Vec<Peer> = serde_json::from_value(whole["peers"].clone())
+            .expect("the array the gather reads out of a sibling's answer");
+        assert_eq!(peers, board.list());
+    }
 
     fn board_with(claims: &[(&str, &[&str])]) -> (PeerBoard, Vec<PeerId>) {
         let board = PeerBoard::new();

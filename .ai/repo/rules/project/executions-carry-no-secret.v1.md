@@ -9,6 +9,9 @@ status: active
 class: blocking
 depends_on: [project.execution-events-are-typed@1, project.no-machine-paths@1]
 tags: [security, architecture, rust]
+
+x-majordomus:
+  tests: [apps/majordomus-cli/tests/executions.rs]
 ---
 
 # Rationale

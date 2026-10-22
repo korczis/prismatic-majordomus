@@ -58,7 +58,7 @@ expect_exit 0 "$BIN" web compose --destination target/site
 grep -q 'example report' target/site/example-report/index.html
 
 # and it is served, by the same server, from the same resolution
-"$BIN" serve --port 0 > serve.log 2>&1 &
+"$BIN" serve --port 0 --idle 60 > serve.log 2>&1 &
 serve_pid=$!
 url=""
 for _ in $(seq 1 50); do

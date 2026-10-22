@@ -1,0 +1,73 @@
+{#- One operation of the HTTP API reference, as a card. Included by api-tag.html with `o` (the
+    operation), `api` (data/generated/openapi.json) and `api_root` (the reference's route) in
+    scope. A schema it names lives on the page of the tag that owns it, or on the shared page,
+    so every link to one goes through `api.schema_homes`. -#}
+{%- set anchor = "op-" ~ (o.id | replace(from=".", to="-")) -%}
+<article id="{{ anchor }}" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-center gap-2">
+    <span class="rounded px-2 py-0.5 font-mono text-xs font-bold {% if o.method == "GET" %}bg-success-soft text-fg-success-strong border border-success-subtle{% else %}bg-warning-soft text-fg-warning border border-warning-subtle{% endif %}">{{ o.method }}</span>
+    <code class="break-all font-mono text-base font-semibold text-heading">{{ o.path }}</code>
+    <a href="#{{ anchor }}" class="font-mono text-xs text-body-subtle hover:underline">{{ o.id }}</a>
+  </div>
+  <h3 class="mt-3 text-lg font-semibold tracking-tight text-heading">{{ o.summary }}</h3>
+  <p class="mt-1 break-words text-sm text-body">{{ o.description }}</p>
+  <ul class="mt-3 flex flex-wrap gap-2 text-xs">
+    <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">{{ o.kind }}</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">{{ o.stability }}</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="benchmark policy">benchmark {{ o.benchmark }}{% if o.benchmark_reason %}: {{ o.benchmark_reason }}{% endif %}</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="cache policy">cache {{ o.cache }}{% if o.cache_detail %} ({{ o.cache_detail }}){% endif %}</span></li>
+    {%- if o.mcp_tool %}<li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">MCP tool {{ o.mcp_tool }}</span></li>{% endif -%}
+    {%- if o.mcp_resource %}<li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">MCP resource {{ o.mcp_resource }}</span></li>{% endif -%}
+    {%- if o.cli %}<li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">$ {{ o.cli }}</span></li>{% endif -%}
+  </ul>
+
+  {%- if o.parameters | length > 0 -%}
+  <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Query parameters</h4>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[36rem] text-left text-sm">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">name</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th><th class="px-3 py-2">examples</th></tr></thead>
+      <tbody>
+        {%- for p in o.parameters -%}
+        <tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">{{ p.name }}</td>
+          <td class="px-3 py-2 font-mono text-body">{{ p.type }}</td>
+          <td class="px-3 py-2 font-mono text-body">{% if p.required %}yes{% else %}no{% endif %}</td>
+          <td class="px-3 py-2 text-body">{{ p.description }}</td>
+          <td class="px-3 py-2 font-mono text-xs text-body">{% for ex in p.examples %}<span class="block break-all"><span class="text-body-subtle">{{ ex.case }}:</span> {{ ex.value }}</span>{% endfor %}</td>
+        </tr>
+        {%- endfor -%}
+      </tbody>
+    </table>
+  </div>
+  {%- elif o.method == "GET" -%}
+  <p class="mt-5 text-sm text-body-subtle">No parameters.</p>
+  {%- endif -%}
+
+  {%- if o.method == "POST" -%}
+  <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Request body <span class="normal-case">— <a href="{{ api_root }}{{ api.schema_homes[o.body_schema] }}/#schema-{{ o.body_schema }}" class="font-mono text-fg-brand underline">{{ o.body_schema }}</a>, JSON</span></h4>
+  {%- for ex in o.body_examples -%}
+  <p class="mt-2 font-mono text-xs text-body-subtle">example <span class="text-heading">{{ ex.case }}</span></p>
+  <div class="mt-1 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-body">{{ ex.json }}</pre></div>
+  {%- endfor -%}
+  {%- endif -%}
+
+  <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
+  <p class="mt-1 text-xs text-body-subtle">The port is whatever the server logged; 8741 is the one it asks for first. The values are the operation's first example.</p>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading">{{ o.curl }}</pre></div>
+
+  <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Responses</h4>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">status</th><th class="px-3 py-2">body</th><th class="px-3 py-2">meaning</th></tr></thead>
+      <tbody>
+        {%- for r in o.responses -%}
+        <tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold {% if r.status == "200" %}text-fg-success-strong{% else %}text-heading{% endif %}">{{ r.status }}</td>
+          <td class="px-3 py-2 font-mono">{% if r.schema %}<a href="{{ api_root }}{{ api.schema_homes[r.schema] }}/#schema-{{ r.schema }}" class="text-fg-brand hover:underline">{{ r.schema }}</a>{% endif %}</td>
+          <td class="px-3 py-2 text-body">{{ r.description | markdown(inline=true) | safe }}</td>
+        </tr>
+        {%- endfor -%}
+      </tbody>
+    </table>
+  </div>
+</article>

@@ -37,12 +37,16 @@ An execution is a capability call this process gave an identity to.
 
 ### The lifecycle
 
-```text
-  queued ──► running ──┬──► succeeded
-     │                 ├──► failed
-     │                 └──► cancelling ──┬──► cancelled
-     │                                   ├──► succeeded   (it finished before it noticed)
-     └──► cancelled                      └──► failed
+```mermaid
+stateDiagram-v2
+  queued --> running
+  queued --> cancelled
+  running --> succeeded
+  running --> failed
+  running --> cancelling
+  cancelling --> cancelled
+  cancelling --> succeeded: it finished before it noticed
+  cancelling --> failed
 ```
 
 `ExecutionState::may_move_to` is the whole contract and the store refuses anything else, so

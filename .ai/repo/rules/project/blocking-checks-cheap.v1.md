@@ -9,6 +9,9 @@ status: active
 class: blocking
 depends_on: []
 tags: [doctrine]
+
+x-majordomus:
+  tests: [test/cases/17_doctrine_enforcement.sh]
 ---
 
 # Rationale

@@ -1,0 +1,33 @@
+# The known answer for scripts/lib/pipeline-counts.awk with FNS=bad is lines 5 8 15 17 25 32.
+# shell-lint scans this file before it trusts the scanner with any other.
+bad() { fails=$((fails+1)); }
+printf x | while read -r l; do
+  bad a "$l"
+done
+for x in 1; do bad b x; done
+printf y | while read -r l; do bad c "$l"; done
+printf z | while read -r a; do grep -q "$a" f || echo "$a"; done | head -1 | grep -q . && bad d "after the loop"
+while read -r l; do bad e "$l"; done < file
+printf w | while read -r l; do echo "bad f is text, not a call"; done
+jq -r '.items[] | "do bad
+  done | while x; do bad g
+" ' f | while read -r l; do
+  sed 's/"/\&quot;/g' "$l" || bad h "$l"
+done
+cat <<'TXT' | while read -r l; do bad i "$l"; done
+| while read -r q; do bad j; done
+TXT
+x=1 || bad k "or-or is not a pipe"
+remote="$(grep -rhoE '<(script|link)[^>]+(src|href)="https?://[^"]+"' $pages | grep -v 'rel="canonical"')"
+# a comment with an apostrophe: the plugin's own rule
+printf c | while read -r c; do grep -qF "$(printf '%s' "$c" | sed 's/&/\&amp;/g; s/"/\&quot;/g' | cut -c1-40)" f || echo "$c"; done | head -1 | grep -q . && bad l "after"
+printf m | while read -r m; do
+  bad m "$(printf '%s' "$m")"
+done
+JS_TEXT="$(cat <<'JS'
+  // it's JavaScript: an apostrophe, a "quote", and | while x; do bad n; done are not shell
+JS
+)"
+printf o | while read -r o; do
+  bad o "$JS_TEXT"
+done

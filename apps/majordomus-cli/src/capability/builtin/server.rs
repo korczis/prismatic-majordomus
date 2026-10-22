@@ -504,7 +504,7 @@ fn peers_of(ctx: &Context, url: &str) -> Option<usize> {
 /// `.git` file, the primary a directory) and the branch from that checkout's own HEAD, so
 /// the narrow entry says everything about this checkout that the wide list would have
 /// said, at the price of two file reads.
-fn checkouts_of(
+pub(crate) fn checkouts_of(
     root: &Path,
     git: Option<&GitIdentity>,
     which: Checkouts,

@@ -18,7 +18,7 @@
 # to that surface; any other claim implemented in the crate belongs to the executable as a
 # whole. The prefixes are the crate's directories, listed once below.
 
-# Two spellings of an id. `anchor` is the HTML id on /docs/api/ (`#op-<id with . as ->`), which
+# Two spellings of an id. `anchor` is the HTML id on the API reference (`#op-<id with . as ->`), which
 # api.html forms the same way and Zola never touches. `slug` is the route segment: Zola
 # slugifies paths, so an underscore in an id becomes a dash there, and the dataset says the
 # route Zola will actually serve.
@@ -87,7 +87,10 @@ def claim_ref: { id: .id, status: .status, route: ("/guarantees/" + .id + "/"), 
           kind: .kind,
           source_path: .source_path,
           source_url: blob(.source_path),
-          api_anchor: (if .exposure.http then ("/docs/api/#op-" + (.id | anchor)) else null end),
+          api_anchor: (if .exposure.http then ("/docs/api/" + (.module | slug) + "/#op-" + (.id | anchor)) else null end),
+          # an operation lives on its tag's page of the reference, and every tag is the module of
+          # the capabilities under it; site-check reads the id on exactly that page, so a
+          # capability whose operation scripts/lib/openapi-site.jq homed elsewhere fails the build
           tool: (.exposure.mcp.tool // null),
           resource: (.exposure.mcp.resource.uri // null),
           cli: (if .exposure.cli then ("majordomus " + (.exposure.cli.path | join(" "))) else null end),

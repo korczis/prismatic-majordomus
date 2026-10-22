@@ -122,7 +122,15 @@ expect_grep '^Usage: majordomus mcp'
 expect_grep 'standalone'
 
 # --- the justfile routes the Rust commands to the executable (when just is installed)
+# Most of those recipes are not written in the justfile: it imports the bridge that `majordomus
+# commands bridge` materialises from the command graph into .ai/local/cache/, which entering the
+# repository (direnv) writes and a fresh clone lacks. This case read a local checkout's cache, so
+# it passed wherever direnv had run and failed in CI with "justfile lacks the recipe mcp" on a
+# tree that was correct. Materialise the bridge first, as `just bridge` does: what is asserted is
+# that the justfile plus its derived bridge route these commands, not that some cache is warm.
 if command -v just >/dev/null 2>&1; then
+  "$ROOT/bin/majordomus-cli" commands bridge --repo "$ROOT" > "$S/bridge.txt" 2>&1 \
+    || { echo "    the bridge could not be materialised"; cat "$S/bridge.txt"; exit 1; }
   (cd "$ROOT" && just --list --unsorted) > "$S/just.txt" 2>&1 || { echo "    just --list failed"; cat "$S/just.txt"; exit 1; }
   for r in mcp serve inspect capabilities validate generate rust-check bench; do
     grep -qE "^\s+$r( |$)" "$S/just.txt" || { echo "    justfile lacks the recipe $r"; cat "$S/just.txt"; exit 1; }

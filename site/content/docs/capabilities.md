@@ -1,14 +1,14 @@
 +++
 title = "Capabilities"
 description = "the Rust executable's capability model: one definition, and MCP, HTTP, OpenAPI, Swagger UI, the command line and the generated reference derived from it; what is canonical, how to extend it, how it fails"
-weight = 35
+weight = 37
 [extra]
 source = "docs/CAPABILITIES.md"
 +++
 
 {% raw %}
 
-How the Rust executable under [`apps/majordomus-cli/`](../apps/majordomus-cli/) exposes
+How the Rust executable under [`apps/majordomus-cli/`](https://github.com/korczis/prismatic-majordomus/tree/master/apps/majordomus-cli) exposes
 what it exposes: one canonical declaration per capability, modules that compose
 capabilities, a root that composes modules, the registry built from them, one executor
 every transport calls, and the projections (MCP, HTTP, OpenAPI, Swagger UI, the command
@@ -16,29 +16,25 @@ line, the benchmark targets, the cache behaviour, the generated reference and ma
 that are derived from the registry and define nothing of their own. Behaviour as
 implemented and tested; where this document and the executable disagree, the document is
 wrong and changes in the same commit. The decisions are
-[ADR 2](../.ai/repo/adrs/0002-canonical-capability-registry.md) (the registry and the
-projections), [ADR 4](../.ai/repo/adrs/0004-canonical-architecture-and-performance-truth.md)
+[ADR 2](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0002-canonical-capability-registry.md) (the registry and the
+projections), [ADR 4](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0004-canonical-architecture-and-performance-truth.md)
 (modules, the executor, benchmarks as evidence) and
-[ADR 5](../.ai/repo/adrs/0005-one-projection-plan-canonical-owners-and-the-site-as-registry-view.md)
+[ADR 5](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0005-one-projection-plan-canonical-owners-and-the-site-as-registry-view.md)
 (one projection plan, named owners, the site as a view of the registry); the rules are
 `project.interfaces-are-projections`, `project.rust-canonical-declaration`,
 `project.rust-benchmark-coverage` and `project.rust-hot-path`.
 
-```text
-ONE CANONICAL DECLARATION   capability! { id, kind?, title, description, input, output,
-                                          stability, exposure, tags, cache?, benchmark?, handler }
-        ↓
-MODULE COMPOSITION          module! { id, title, description, stability, capabilities: [...] }
-        ↓
-ROOT COMPOSITION            compose_modules![repository, objects, capabilities, graph, health, peers, perf]
-        ↓
-CAPABILITY REGISTRY         + every declarative object of the layer, validated, frozen, fingerprinted
-        ↓
-DERIVED PROJECTIONS         MCP · HTTP · OpenAPI → Swagger UI · CLI · the Cockpit
-                            · the execution plane and its live channel
-                            · benchmark targets and coverage · cache policy · perf counters
-                            · docs/generated/* · the website's /registry/ pages
-```
+<pre class="mermaid">
+flowchart TD
+  decl["ONE CANONICAL DECLARATION&lt;br&gt;capability! { id, kind?, title, description, input, output,&lt;br&gt;stability, exposure, tags, cache?, benchmark?, handler }"]
+  modc["MODULE COMPOSITION&lt;br&gt;module! { id, title, description, stability, capabilities: [...] }"]
+  rootc["ROOT COMPOSITION&lt;br&gt;compose_modules![repository, objects, capabilities,&lt;br&gt;graph, health, peers, perf]"]
+  registry["CAPABILITY REGISTRY&lt;br&gt;+ every declarative object of the layer,&lt;br&gt;validated, frozen, fingerprinted"]
+  proj["DERIVED PROJECTIONS&lt;br&gt;MCP · HTTP · OpenAPI → Swagger UI · CLI · the Cockpit&lt;br&gt;· the execution plane and its live channel&lt;br&gt;· benchmark targets and coverage · cache policy · perf counters&lt;br&gt;· docs/generated/* · the website's /registry/ pages"]
+
+  decl --&gt; modc --&gt; rootc --&gt; registry --&gt; proj
+</pre>
+
 
 A contributor adding one capability edits one `capability!` block (with its typed input
 and output and the input's benchmark cases) and runs `majordomus generate`. Nothing else.
@@ -46,9 +42,11 @@ and output and the input's benchmark cases) and runs `majordomus generate`. Noth
 A contributor adding a **command** has one more thing to say, and only one: whether it is
 the projection of a capability (a `CliExposure` on that capability's declaration) or belongs
 to the command line alone, in which case `cli::LOCAL` in
-[`src/cli/local.rs`](../apps/majordomus-cli/src/cli/local.rs) carries the reason and
-`majordomus quality report` checks it. A command that says neither is a gate failure rather
-than an operation quietly missing from the API — the rule is
+[`src/cli/local.rs`](https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/cli/local.rs) carries the reason and
+`majordomus quality report` checks it. There is no second list: `capabilities projections`
+answers the commands no capability claims and, of those, the ones that carry no reason, and
+`scripts/ci/projection-check` refuses the second set. A command that says neither is a gate
+failure rather than an operation quietly missing from the API — the rule is
 `project.operation-transport-parity` and the working reference is [`QUALITY.md`](@/docs/quality.md).
 
 ## What is canonical, what is derived, what is not authoritative
@@ -492,7 +490,7 @@ out of date. `scripts/derive` and `scripts/derive-check` propagate the two apart
 **Every artifact is typed.** It declares the *document* it projects, the *encoding* it is
 written in (`json`, `yaml`, `markdown`, `text`, matching its own suffix), the *schema* its
 content satisfies when the document has a contract, and the *source* it was derived from.
-The rule is [`project.generated-artifacts-are-typed@1`](../.ai/repo/rules/project/generated-artifacts-are-typed.v1.md);
+The rule is [`project.generated-artifacts-are-typed@1`](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/rules/project/generated-artifacts-are-typed.v1.md);
 `generate` and `generate --check` verify the plan before a byte is written or compared and
 refuse a half-typed tree.
 

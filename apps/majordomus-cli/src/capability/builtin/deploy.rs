@@ -68,6 +68,14 @@ pub struct DeploymentCheck {
     pub refusals: Vec<Refusal>,
 }
 
+/// The view orders as the deployment it wraps: the file path it adds is provenance, not a
+/// second opinion about the sequence.
+impl crate::order::Ordered for DeploymentView {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        self.deployment.order_key()
+    }
+}
+
 fn views(ctx: &Context) -> (Vec<DeploymentView>, Vec<Refusal>) {
     let mut out = Vec::new();
     let mut bad = Vec::new();
@@ -80,7 +88,7 @@ fn views(ctx: &Context) -> (Vec<DeploymentView>, Vec<Refusal>) {
             Err(refusal) => bad.push(refusal),
         }
     }
-    out.sort_by(|a, b| a.deployment.id.cmp(&b.deployment.id));
+    crate::order::canonical(&mut out);
     (out, bad)
 }
 

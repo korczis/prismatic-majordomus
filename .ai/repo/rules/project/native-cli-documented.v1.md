@@ -9,6 +9,9 @@ status: active
 class: blocking
 depends_on: [project.rust-canonical-declaration@1, project.derived-files-regenerated@1, project.no-claim-without-test@1]
 tags: [rust, cli, documentation, projections]
+
+x-majordomus:
+  tests: [scripts/site-check, scripts/site-probe]
 ---
 
 # Rationale

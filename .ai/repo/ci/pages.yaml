@@ -36,17 +36,64 @@ deploy:
 # Seconds, wall clock, on a GitHub-hosted Linux runner with the caches warm. Derived from
 # measurement, not from taste: `scripts/pages benchmark` locally and the timing rows every
 # deployment writes are what these were set from, and what a change to them must cite.
+#
+# There is one key per row `scripts/pages report` actually measures, and `controlled` is the
+# sum of them. Both halves of that are load-bearing and neither held until 2026-09-12. The
+# first set named `checkout` and `setup` separately while the workflow times them as one step,
+# and named no phase at all for `fingerprint` or `local-check` — so three of the six rows of
+# every job summary printed an empty budget cell. It also summed to 105 against a `controlled`
+# of 75, which made the aggregate stricter than the parts it is made of: every phase could be
+# inside its own budget and the run still breach, with nothing to point at. A total that
+# cannot be reached by adding up its own rows is a number nobody can act on.
+#
+# THE MEASUREMENT THESE WERE RE-DERIVED FROM (2026-09-12). Twenty-five runs of
+# .github/workflows/pages.yml that reached the publish step, 2026-09-10T22:56Z ..
+# 2026-09-12T06:38Z, read from the per-step timings of
+# `gh api repos/korczis/prismatic-majordomus/actions/runs/<id>/jobs`, on ubuntu-latest with
+# both cache domains restoring:
+#
+#   row              min  median  p90  max   budget  headroom over p90
+#   checkout-setup     7      10   12   15       18              1.5x
+#   fingerprint        0       0    0    1        3                --
+#   build              4       4    5    6        8              1.6x
+#   check             30      38   46   47       60              1.3x
+#   local-check        0       0    0    1        3                --
+#   publish           13      20   24   24       28              1.2x
+#   controlled        60      75   84   86      120              1.4x
+#
+# WHY THE OLD BUDGET WAS WRONG, RATHER THAN THE PATH HAVING REGRESSED. The numbers above
+# replace the set written when this file was created (b959046cd) and never changed since.
+# Those were derived from .ai/repo/benchmarks/pages/baseline.macos-arm64.json — a local macOS
+# arm64 laptop, five samples, `check` median 9799 ms — over a site of 417 routes. The site
+# `check` walks is now 1021 routes, 2.45x that baseline, and that file's own README says a
+# baseline of one machine says nothing about another. Nothing regressed: over the same
+# twenty-five runs `checkout-setup` held at 7-15 s and `build` at 4-6 s, so both cache domains
+# below restore; and `check` cost 41 ms per route at 896 routes on 2026-09-10 (37 s) against
+# 45 ms per route at 1022 routes on 2026-09-12 (46 s), so its growth is the corpus it walks
+# rather than a defect in how it walks it. What had gone stale was the budget, which had never
+# been re-derived on the machine it judges.
 budget:
   warm:
-    checkout: 10
-    setup: 30
-    build: 20
-    check: 25
-    publish: 20
-    controlled: 75
-  # a cold runner pays for the caches it cannot restore; it is still bounded
+    # everything before `scripts/pages build`, which the workflow times as one row because it
+    # runs as one step: the runner's own checkout and the setup-site action. The Actions queue
+    # is measured before this and is deliberately not in it. The name is one token because
+    # the keys of this file are [A-Za-z0-9_-] — `mj_yaml_flatten` refuses anything else.
+    checkout-setup: 18
+    fingerprint: 3
+    build: 8
+    # the whole of `scripts/site-check`, which walks every published route. It is the phase
+    # that grows with the site and the first place to look when `controlled` moves.
+    check: 60
+    local-check: 3
+    publish: 28
+    # the sum of the rows above, and the number the SLO verdict is taken against
+    controlled: 120
+  # a cold runner pays for the caches it cannot restore; it is still bounded. No cold run
+  # appears in the window above, so this keeps the allowance the previous pair expressed —
+  # 180 against a warm 75, which is 105 s for an uncached `npm ci` and Zola download — over
+  # the re-derived warm budget: 120 + 105.
   cold:
-    controlled: 180
+    controlled: 225
   # push -> publicly observable. Reported against every deployment, and not enforced: the
   # queue and GitHub's own Pages build are the larger half of it and neither is ours.
   end_to_end: 60

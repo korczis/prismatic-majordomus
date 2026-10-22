@@ -1,6 +1,6 @@
 # majordomus-covers: capture
 # majordomus-negative: capture
-# The session lifecycle of a client that has no provider hooks at all (ADR 0043), driven end
+# The session lifecycle of a client that has no provider hooks at all (ADR 0074), driven end
 # to end over the real transport, and the provider capability matrix the whole thing is
 # declared by.
 #
@@ -63,7 +63,7 @@ for p in $declared; do
     jq -e --arg p "$p" --arg a "$a" \
       '[.providers[] | select(.provider == $p and .aspect == $a)] | length == 1' \
       "$S/status.json" >/dev/null \
-      || { echo "    capture status does not report $p:$a — the regression that started ADR 0043"; jq -r '.providers[] | "\(.provider) \(.aspect) \(.state)"' "$S/status.json" | sed 's/^/    | /'; exit 1; }
+      || { echo "    capture status does not report $p:$a — the regression that started ADR 0074"; jq -r '.providers[] | "\(.provider) \(.aspect) \(.state)"' "$S/status.json" | sed 's/^/    | /'; exit 1; }
     # Every cell carries its citation. A capability with no evidence cannot be re-verified
     # and rots in whichever direction the world moves; that is the rule
     # project.a-provider-capability-cites-its-evidence, and this is it holding.

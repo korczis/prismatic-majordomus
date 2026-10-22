@@ -1,0 +1,34 @@
+id: I1501
+milestone: development-runtime
+title: An execution a person starts is an execution the server can see
+slug: execution-planes-converge
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Make `majordomus-cli run` reach the server that serves this repository, so that the execution plane a surface shows and the execution plane a person uses are the same plane — or record the decision that they are not, and stop every surface from implying otherwise."
+why: "F2 of the audit's failure table, and the one that decides whether an execution history can exist at all. `run` builds a registry in its own process, executes there, streams to its own terminal and exits; the server's execution store is a different store in a different process. Measured rather than read: with a run in flight, the server reported 0 count, 0 active and 0 remembered throughout, and an earlier run that produced a named succeeded execution was never seen by the server either. The consequence is exact — /cockpit/executions can only ever show work started through that server by executions.start, everything a developer actually runs is invisible to it, and docs/EXECUTIONS.md's live channel, which genuinely works and streams frames, is a window onto a plane almost nothing writes to. Combined with non-durability, which the execution module already states as its own decision, the execution history a development surface needs does not exist anywhere today."
+current_state: "Two disjoint planes. The registry declares executions.start, executions.cancel and executions.events; all three operate on the accepting process's own store. `run` is a CLI path that never contacts a server, and nothing in the output of either side says the other exists."
+desired_state: "A run either registers with the repository's server, so that one execution history exists, or refuses to imply that it did. Whichever is chosen is stated where a reader of the execution surface meets it, not only in a design document."
+scope:
+  - apps/majordomus-cli/src/execution
+  - apps/majordomus-cli/src/capability/builtin/executions.rs
+  - apps/majordomus-cli/src/commands
+  - docs/EXECUTIONS.md
+  - test/cases
+non_scope:
+  - A durable queue, retries or a scheduler. The execution module states it has none by decision; convergence of the two planes does not reopen that.
+  - Making the server execute on the caller's behalf when no server is running. A checkout with no server must still be able to run a capability.
+depends_on: []
+acceptance_criteria:
+  - An execution started by the CLI while a server is serving the repository is visible in that server's execution list, or the CLI says plainly that it is not and why
+  - The claim is proved by polling the server while a run is in flight, not by reading the source
+  - No surface describes an execution history that no writer reaches
+validation:
+  - bash test/run.sh 100_execution_plane
+  - bin/majordomus-cli capabilities validate
+evidence_required:
+  - run_is_visible_to_the_server
+  - measured_while_in_flight
+risk: "Medium. Making `run` depend on a server changes the cost and the failure modes of the most-used command in the executable, and a checkout with no server must keep working. The safe shape is that the server is used when one is already serving this repository and never started for a run."
+created_at: 2026-09-11
+updated_at: 2026-09-11

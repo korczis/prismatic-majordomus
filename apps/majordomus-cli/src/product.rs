@@ -33,7 +33,7 @@ use crate::capability::{Capability, CapabilityRegistry, Provenance};
 use crate::cockpit::nav;
 use crate::index::Index;
 use crate::model::{Object, Severity};
-use crate::share::ProviderLifecycle;
+use crate::share::ProviderCapability;
 use crate::web::Topology;
 use crate::why::Catalogue;
 
@@ -450,6 +450,14 @@ pub struct ResolvedRefs {
 
 // ---------------------------------------------------------------- providers
 
+/// A provider is presented by its id — the directory its bootstrap is written under and the
+/// name every other projection of the product matrix refers to it by.
+impl crate::order::Ordered for ProductProvider {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::plain(&self.id, &self.id)
+    }
+}
+
 /// One provider the tool has an adapter for, discovered from the templates the distribution
 /// ships and decorated with what this repository does with it.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
@@ -473,7 +481,7 @@ pub struct ProductProvider {
     #[serde(default)]
     pub scratch_roots: Vec<String>,
     /// What it can do about the session lifecycle, and where each answer was verified
-    /// (`share/providers.yaml`, ADR 0043). The capability, never the wiring: `hooks` says
+    /// (`share/providers.yaml`, ADR 0074). The capability, never the wiring: `hooks` says
     /// the vendor fires session events, not that this repository has installed anything to
     /// receive them. The other half — what is wired here, and whether driving it produced
     /// anything — is `majordomus capture status`, which reads this same declaration and
@@ -481,7 +489,7 @@ pub struct ProductProvider {
     /// the adapter table and can run a shim, and a second account it could not compute
     /// correctly is worse than one reader more.
     #[serde(default)]
-    pub lifecycle: ProviderLifecycle,
+    pub capability: ProviderCapability,
 }
 
 /// One bootstrap a provider renders.
@@ -1626,11 +1634,11 @@ fn providers(index: &Index) -> Vec<ProductProvider> {
                     .map(|(_, n)| n.clone())
                     .collect(),
                 scratch_roots: decl.scratch_roots.clone(),
-                lifecycle: decl.lifecycle.clone(),
+                capability: decl.capability.clone(),
             }
         })
         .collect();
-    out.sort_by(|a, b| a.id.cmp(&b.id));
+    crate::order::canonical(&mut out);
     out
 }
 

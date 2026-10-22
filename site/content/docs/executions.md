@@ -1,21 +1,21 @@
 +++
 title = "Executions"
 description = "the execution plane: running a capability as work that can be watched — the model, the lifecycle, the typed event protocol, the live channel and its guarantees, what each interface offers, the limits and what happens at each, and what it deliberately does not do"
-weight = 40
+weight = 42
 [extra]
 source = "docs/EXECUTIONS.md"
 +++
 
 {% raw %}
 
-How the Rust executable under [`apps/majordomus-cli/`](../apps/majordomus-cli/) runs a
+How the Rust executable under [`apps/majordomus-cli/`](https://github.com/korczis/prismatic-majordomus/tree/master/apps/majordomus-cli) runs a
 capability as work that can be watched: the model, the lifecycle, the typed event protocol,
 the live channel, what each interface offers, and what it deliberately does not do.
 Behaviour as implemented and tested; where this document and the executable disagree, the
 document is wrong and changes in the same commit. The decision is
-[ADR 22](../.ai/repo/adrs/0033-an-execution-is-a-watched-capability-call-not-a-second-registry.md);
-the rules are [`project.execution-events-are-typed`](../.ai/repo/rules/project/execution-events-are-typed.v1.md)
-and [`project.executions-carry-no-secret`](../.ai/repo/rules/project/executions-carry-no-secret.v1.md);
+[ADR 22](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0033-an-execution-is-a-watched-capability-call-not-a-second-registry.md);
+the rules are [`project.execution-events-are-typed`](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/rules/project/execution-events-are-typed.v1.md)
+and [`project.executions-carry-no-secret`](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/rules/project/executions-carry-no-secret.v1.md);
 the registry it runs on is [`CAPABILITIES.md`](@/docs/capabilities.md).
 
 ```text
@@ -50,13 +50,18 @@ An execution is a capability call this process gave an identity to.
 
 ### The lifecycle
 
-```text
-  queued ──► running ──┬──► succeeded
-     │                 ├──► failed
-     │                 └──► cancelling ──┬──► cancelled
-     │                                   ├──► succeeded   (it finished before it noticed)
-     └──► cancelled                      └──► failed
-```
+<pre class="mermaid">
+stateDiagram-v2
+  queued --&gt; running
+  queued --&gt; cancelled
+  running --&gt; succeeded
+  running --&gt; failed
+  running --&gt; cancelling
+  cancelling --&gt; cancelled
+  cancelling --&gt; succeeded: it finished before it noticed
+  cancelling --&gt; failed
+</pre>
+
 
 `ExecutionState::may_move_to` is the whole contract and the store refuses anything else, so
 a client that reads a final state never sees it move again. There is no `starting`: an

@@ -1750,10 +1750,10 @@ fn product_graph(registry: &CapabilityRegistry, index: &Index) -> Graph {
                     kind: "kind".into(),
                     label: k.name.clone(),
                     summary: Some(format!("{} object(s) of the layer", k.objects)),
-                    route: Some(format!(
-                        "/registry/modules/{}/",
-                        k.name.replace(['.', '_'], "-")
-                    )),
+                    // A kind is not a module and has no page of its own: the route used to be
+                    // built as if it were one, and every kind node linked a 404. Its objects are
+                    // reached through the Cockpit and MCP edges below; the node renders unlinked.
+                    route: None,
                     source: Some("share/kinds.yaml".into()),
                     status: None,
                     external: false,

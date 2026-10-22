@@ -1,6 +1,9 @@
 {% extends "page.html" %}
 {% block body %}
 {%- set roadmap = load_data(path="data/generated/roadmap.json") -%}
+{#- docs/PLAN_STATUS.md is a reference file with no page of its own (docs/README.md, "Reference files"); the
+    tracked file on the forge is what a reader can open -#}
+{%- set project_meta = load_data(path="data/generated/project.json") -%}
 {%- set caps = load_data(path="data/generated/capabilities.json") -%}
 {%- set graph = load_data(path="data/generated/roadmap-graph.json") -%}
 {%- set graph_id = "roadmap" -%}
@@ -59,7 +62,7 @@
 <p class="mt-8 text-sm text-body-subtle">
   Generated from <code class="font-mono">.ai/repo/project/milestones/</code> through the same projection
   <code class="font-mono">majordomus plan roadmap</code> prints. The current state as a document is
-  <a class="underline" href="{{ get_url(path='/docs/plan-status/', trailing_slash=true) }}">docs/PLAN_STATUS.md</a>.
+  <a class="underline" href="{{ project_meta.repository_url }}/blob/master/docs/PLAN_STATUS.md">docs/PLAN_STATUS.md</a>.
 </p>
 {% endblock body %}
 {% block scripts %}{% include "partials/graph-scripts.html" %}{% endblock scripts %}

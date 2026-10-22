@@ -328,6 +328,14 @@ pub struct WorktreeState {
     pub diagnostics: Vec<TopologyDiagnostic>,
 }
 
+/// A branch state is the branch it describes, ordered by the same name, so the topology
+/// listing and the trace listing read in the same sequence.
+impl crate::order::Ordered for BranchState {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::plain(&self.name, &self.name)
+    }
+}
+
 /// One local branch, with or without a work tree.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct BranchState {

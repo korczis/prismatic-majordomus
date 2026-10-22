@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2034  # MJ_DOCTRINE_SKIPPED is read by the dispatcher in doctrine.sh
 # sourced by doctor as well as by the dispatcher; guard against re-sourcing
 [ -n "${MJ_LIB_capture:-}" ] && return 0 || MJ_LIB_capture=1
 # capture — raw local prompt history, written below the model rather than by it.
@@ -65,18 +66,158 @@ MJ_CAPTURE_SCHEMA_EXT="schema.json proto"
 
 # The fields the hook writes, in order. Everything observable before the model runs is here,
 # and this is what a record always carries.
-MJ_CAPTURE_FIELDS="schema started_at provider event id session source cwd repository branch head text"
+#
+# `episode`, `episode_link`, `repository_id` and `worktree_id` are the record's identity, and
+# they are here rather than derivable because they stopped being derivable. A record used to
+# carry the provider's own session UUID and nothing else, and the only thing that could turn
+# that UUID into the canonical episode id was state/sessions-open/<uuid>.yaml — which the end
+# of the episode deletes. Measured on 2026-09-11 in this repository: 974 records, 80 provider
+# sessions, and no way left to say which episode 713 of those prompts belonged to. An identity
+# that lives in a file somebody else will delete is not an identity, so it is written into the
+# record at the moment it is still true.
+#
+# `episode_link` is how the episode was determined, and it is not decoration: a record whose
+# episode was resolved while the episode was open is evidence, and one linked afterwards from
+# a session context is an inference. A reader that cannot tell them apart cannot tell what the
+# archive proves. The values are declared in MJ_CAPTURE_LINKS below.
+MJ_CAPTURE_FIELDS="schema started_at provider event id session episode episode_link repository_id worktree_id source cwd repository branch head text"
+
+# How a record came to name the episode it names, strongest evidence first:
+#   open             the episode was open under that provider session when the prompt arrived
+#   session-context  .ai/local/session-contexts/ records the provider session of that episode
+#   ledger           the ledger's own timestamps left exactly one episode it could have been
+#   orphan           no episode could be resolved, and none was invented
+#   unlinked-legacy  written before a record carried its episode, and no evidence survives
+# `orphan` and `unlinked-legacy` both carry a null episode. They are two words because they
+# are two different facts: the first is a capture that happened outside any episode this
+# checkout knew about, the second is a record that predates the field entirely. Collapsing
+# them would make a migration look like a live defect for the rest of the archive's life.
+MJ_CAPTURE_LINKS="open session-context ledger orphan unlinked-legacy"
 
 # The fields the schema declares that the hook cannot fill, because at UserPromptSubmit the
 # turn has not happened. They are absent from a record rather than null in it: an absent
 # field says "not observed", and a null one would claim it was observed to be nothing. A
 # renderer shows them when they are there, a reformat carries them through, and nothing here
 # invents one. The order is the order they render in.
-MJ_CAPTURE_OPTIONAL="finished_at duration_ms model effort tokens meta"
+#
+# `redacted` and the three `pruned_*` members are optional for the same reason and not the
+# same cause: they say something happened to this record that does not happen to most of
+# them. `redacted` names the credential shapes the writer replaced before the text was ever
+# on disk, so a reader can tell "no secret was found" from "the secret is gone"; the
+# `pruned_*` three are the tombstone retention leaves behind — when, how many bytes, and the
+# digest of what they were — so that a pruned record still proves what it held without
+# holding it. A record that was never redacted and never pruned carries none of them.
+MJ_CAPTURE_OPTIONAL="finished_at duration_ms model effort tokens meta redacted pruned_at pruned_bytes pruned_sha256"
 
 # `ts` was this field's name before it had a sibling called finished_at; mj_capture_raw takes
 # candidates, so a record written under the old name still reformats and still renders.
 MJ_CAPTURE_STARTED="started_at,ts"
+
+# ---------------------------------------------------------------- secret hygiene
+# A prompt is the one file in this repository whose content nobody vetted before it was
+# written. People paste keys into prompts — to ask why a request 401s, to have a config file
+# read back — and the archive then holds a live credential in a world-readable file for as
+# long as the archive lives. Nothing else the tool writes has that shape.
+#
+# So the writer redacts before it persists, not after. The substitution happens on the raw
+# JSON span on its way to the record, which means there is no moment at which the secret was
+# on disk: not in the record, not in either rendering, not in the file name, and not in the
+# diagnostics, because the slug is taken from the redacted text and the log never prints a
+# value at all.
+#
+# The table is deliberately conservative and deliberately data. Each line is `name<TAB>ERE`,
+# and only shapes that are credentials by construction are here — a token whose own prefix
+# says what it is. A heuristic that redacted anything "secret-looking" would eat the prompts
+# people most need to read back, and a prompt archive that mangles ordinary text is one
+# nobody trusts. Two exceptions carry a name as well as a shape: an assignment of a long
+# opaque value to something called a key, a token or a password, and a PEM private-key
+# header, because both are unambiguous about what they are. The three casings are spelled
+# out rather than matched case-insensitively: `sed -E` is what applies these, and BSD and GNU
+# sed disagree about every way of asking for a case-insensitive match.
+#
+# What is replaced is the credential and nothing around it, so the prompt still reads as the
+# sentence it was. The replacement names the pattern that fired, because "[redacted]" leaves
+# a reader unable to tell a key from a password from a coincidence.
+MJ_CAPTURE_SECRETS='anthropic-key	sk-ant-[A-Za-z0-9_-]{16,}
+openai-key	sk-(proj-)?[A-Za-z0-9_-]{20,}
+github-token	gh[pousr]_[A-Za-z0-9_]{20,}
+github-pat	github_pat_[A-Za-z0-9_]{20,}
+aws-access-key-id	AKIA[0-9A-Z]{16}
+google-api-key	AIza[0-9A-Za-z_-]{35}
+slack-token	xox[abprs]-[A-Za-z0-9-]{10,}
+stripe-key	[rs]k_(live|test)_[A-Za-z0-9]{16,}
+private-key-header	-----BEGIN ([A-Z]+ )?PRIVATE KEY-----
+bearer-token	[Bb]earer [A-Za-z0-9._~+/=-]{20,}'
+
+# The assignment form, kept apart because its replacement keeps the left-hand side. A value
+# is redacted; the name of the thing it was assigned to is what makes the prompt readable
+# afterwards, and is not itself a secret.
+MJ_CAPTURE_SECRET_ASSIGN='([Aa][Pp][Ii][-_]?[Kk][Ee][Yy]|[Aa][Cc][Cc][Ee][Ss][Ss][-_]?[Tt][Oo][Kk][Ee][Nn]|[Ss][Ee][Cc][Rr][Ee][Tt][-_]?[Kk][Ee][Yy]|[Pp][Aa][Ss][Ss][Ww][Oo][Rr][Dd])([\"'\'']?[ ]*[:=][ ]*[\"'\'']?)[A-Za-z0-9._~+/-]{16,}'
+
+# The sed script both of the above become. Built once per capture, from the table, so adding
+# a pattern is a line of data and never a change to the writer.
+mj_capture_secret_script() {
+  local name pat
+  while IFS="$(printf '\t')" read -r name pat; do
+    [ -n "$pat" ] || continue
+    printf 's%%%s%%[redacted:%s]%%g\n' "$pat" "$name"
+  done <<EOF
+$MJ_CAPTURE_SECRETS
+EOF
+  printf 's%%%s%%\\1\\2[redacted:assignment]%%g\n' "$MJ_CAPTURE_SECRET_ASSIGN"
+}
+
+# Redact stdin. The input and the output are both raw JSON spans: every pattern above matches
+# only bytes that are their own literal in JSON — no quote, no backslash, no control byte — so
+# a substitution cannot land inside an escape and cannot leave the span unparseable.
+#
+# The substitutions are delimited with `%` and not `/` or `|`: a credential shape contains
+# slashes (a bearer token is base64) and alternations (`(live|test)`), and either byte used
+# as the delimiter turns the pattern into a syntax error sed reports at run time — which, in
+# a hook that must never fail, is a redaction that silently stops happening.
+mj_capture_redact() {
+  local script
+  script="$(mktemp "${TMPDIR:-/tmp}/mj.redact.XXXXXX")" || { cat; return 0; }
+  mj_capture_secret_script > "$script"
+  sed -E -f "$script" 2>/dev/null || cat
+  rm -f "$script"
+}
+
+# The names of the patterns that fired, comma-separated, or nothing. Read off the redacted
+# text rather than from the substitution, so the record's own bytes are what it describes.
+mj_capture_redacted_kinds() {
+  printf '%s' "$1" | grep -oE '\[redacted:[a-z-]+\]' 2>/dev/null \
+    | sed -e 's/^\[redacted://' -e 's/\]$//' | LC_ALL=C sort -u | paste -sd, - | sed 's/[[:space:]]*$//'
+}
+
+# ---------------------------------------------------------------- permissions
+# 0600, because the archive is raw prompts and the session state beside it has always been
+# 0600. It was 0644 here for the whole life of the archive: every prompt anyone in this
+# repository ever typed was readable by every account on the machine, which is the one
+# property this directory must not have. Both are set on every write, and the directory too,
+# because a mode that is only set when the directory is created is a mode a single `mkdir`
+# somewhere else undoes.
+mj_capture_secure_dir()  { [ -d "$1" ] && chmod 700 "$1" 2>/dev/null; return 0; }
+mj_capture_secure_file() { [ -e "$1" ] && chmod 600 "$1" 2>/dev/null; return 0; }
+
+# ---------------------------------------------------------------- the episode
+# Which episode this prompt belongs to, resolved through the one resolver the rest of the
+# tool uses (`mj_open_session_id`, lib/common.sh) rather than a second reading of the same
+# store. The provider session comes from the payload, which is stronger than the environment:
+# the hook is handed the identity of the session the prompt was typed in, and a worker's
+# exported variable is only the identity of whatever opened the terminal.
+#
+# MJ_SESSION_KEY makes the resolution strict — that episode or none — which is the whole
+# point. The resolver's other two steps fall back to the environment and then to this
+# checkout's pointer, and either would happily hand a prompt the episode of whichever window
+# opened one last. A prompt attributed to the wrong episode is worse than a prompt attributed
+# to none: the second is visibly missing, the first is quietly false.
+#
+# A subshell, so the strict key cannot leak into anything the caller does afterwards.
+mj_capture_episode_of() {
+  [ -n "${1:-}" ] || return 0
+  ( MJ_SESSION_KEY="$1"; export MJ_SESSION_KEY; mj_open_session_id 2>/dev/null ) || true
+}
 
 # ---------------------------------------------------------------- provider adapters
 # One line per provider Majordomus can capture from:
@@ -148,7 +289,7 @@ MJ_CAPTURE_LIFECYCLE='claude-code .claude/settings.json SessionStart SessionEnd 
 # A provider whose declared episode source is `connection` has no adapter line above and
 # must not need one: it fires no event, so there is no vendor payload shape to version
 # against and nothing to install. What draws its boundary is the MCP connection itself
-# (ADR 0043), and the payload is this tool's own — written by the shared server, read here.
+# (ADR 0074), and the payload is this tool's own — written by the shared server, read here.
 #
 # The keys are the same three the hook adapters read, under the names the protocol side
 # already uses, so that one reader serves both and `capture session` stays one command. It
@@ -196,7 +337,7 @@ mj_lifecycle_session_vars() { printf '%s\n' "$MJ_CAPTURE_LIFECYCLE" | awk '$13 !
 
 # ------------------------------------------------- the declared capability of a provider
 # What the vendor offers, read from share/providers.yaml, where every cell carries the
-# citation it was verified from (ADR 0043).
+# citation it was verified from (ADR 0074).
 #
 # This exists because `capture status` used to enumerate `mj_capture_providers` — the
 # providers with a line in the adapter table above, which is one — and therefore said
@@ -242,8 +383,8 @@ mj_providers_declared() {
 
 # One declared field of one provider: mj_provider_decl <provider> <key>
 #   key is one of: title, client_config,
-#                  lifecycle.episode, lifecycle.episode_evidence,
-#                  lifecycle.prompts, lifecycle.prompts_evidence
+#                  capability.episode, capability.episode_evidence,
+#                  capability.prompts, capability.prompts_evidence
 mj_provider_decl() {
   mj_providers_flat 2>/dev/null | sed -n "s/^providers\.$1\.$2=//p" | head -n 1
 }
@@ -253,14 +394,14 @@ mj_provider_decl() {
 # the capability rule refuses — so the gap is a finding rather than a silent "unsupported".
 mj_provider_capability() {
   case "$2" in
-    prompt|prompts) mj_provider_decl "$1" lifecycle.prompts ;;
-    *)              mj_provider_decl "$1" lifecycle.episode ;;
+    prompt|prompts) mj_provider_decl "$1" capability.prompts ;;
+    *)              mj_provider_decl "$1" capability.episode ;;
   esac
 }
 mj_provider_evidence() {
   case "$2" in
-    prompt|prompts) mj_provider_decl "$1" lifecycle.prompts_evidence ;;
-    *)              mj_provider_decl "$1" lifecycle.episode_evidence ;;
+    prompt|prompts) mj_provider_decl "$1" capability.prompts_evidence ;;
+    *)              mj_provider_decl "$1" capability.episode_evidence ;;
   esac
 }
 
@@ -293,12 +434,16 @@ mj_cmd_capture() {
   case "$sub" in
     prompt)  mj_capture_prompt "$@" ;;
     render)  mj_capture_render "$@" ;;
+    reconcile) mj_capture_reconcile "$@" ;;
+    prune)   mj_capture_prune "$@" ;;
     session) mj_capture_session "$@" ;;
     install) mj_capture_install "$@" ;;
     status)  mj_capture_status "$@" ;;
     --help|-h|"") cat <<H
 usage: majordomus capture prompt --provider <name>   < the provider's hook payload
        majordomus capture render [--force]
+       majordomus capture reconcile [--dry-run]
+       majordomus capture prune [--dry-run]
        majordomus capture session --provider <name> --event start|end  < the payload
        majordomus capture install [--provider <name>]
        majordomus capture status [--json]
@@ -313,9 +458,14 @@ usage: majordomus capture prompt --provider <name>   < the provider's hook paylo
   hook's output to the model's context, and the local half of the layer is never loaded
   'capture prompt' reads one JSON object on stdin and never exits 2, because in a
   provider hook that exit code can reject the person's prompt
+  'capture reconcile' links a record to its episode from evidence that still exists — the
+  open-episode store, a session context, or an episode window only one provider session
+  can have used — and marks the rest unlinked rather than guessing
+  'capture prune' applies prompts.retention_max_days and prompts.retention_max_bytes: it
+  takes the body and keeps the record, its identity and a tombstone of what was taken
 H
       [ "$sub" = "" ] && return "$MJ_EX_USAGE"; return 0 ;;
-    *) mj_die "$MJ_EX_USAGE" "capture: unknown subcommand '$sub' (prompt|render|session|install|status)" ;;
+    *) mj_die "$MJ_EX_USAGE" "capture: unknown subcommand '$sub' (prompt|render|reconcile|prune|session|install|status)" ;;
   esac
 }
 
@@ -342,7 +492,11 @@ mj_capture_prompt() {
   mj_require_repo 2>/dev/null || { mj_err "capture prompt: not in a repository"; return "$MJ_EX_MISSING"; }
   dir="$(mj_capture_dir)"
   mkdir -p "$dir" 2>/dev/null || { mj_err "capture prompt: cannot create $dir"; return "$MJ_EX_INTERNAL"; }
+  # every capture, not only the one that created the directory: a mode set once is a mode
+  # the next `mkdir -p` from somewhere else quietly replaces
+  mj_capture_secure_dir "$dir"
   log="$dir/.capture.log"
+  mj_capture_secure_file "$log"
 
   local payload scan rc=0
   payload="$(mktemp "${TMPDIR:-/tmp}/mj.cap.XXXXXX")"; scan="$payload.f"
@@ -371,6 +525,17 @@ mj_capture_write() {
     mj_capture_log "$dir/.capture.log" \
       "payload from '$provider' carries none of '$k_text'; nothing captured. The payload's own keys were: $(cut -f1 "$scan" | paste -sd, - 2>/dev/null || cut -f1 "$scan" | tr '\n' ',')"
     return 0; }
+
+  # Before anything else touches it, and before it is anywhere but a shell variable: the
+  # credential shapes go. Everything downstream — the slug in the file name, the record, both
+  # renderings — is built from the redacted span, so there is no path by which the original
+  # bytes reach the disk. The log above prints the payload's key names and never a value, for
+  # the same reason.
+  local v_redacted kinds
+  v_redacted="$(printf '%s' "$v_text" | mj_capture_redact)"
+  kinds=""
+  if [ "$v_redacted" != "$v_text" ]; then kinds="$(mj_capture_redacted_kinds "$v_redacted")"; fi
+  v_text="$v_redacted"
   v_id="$(mj_capture_raw "$scan" "$k_id")";           [ -n "$v_id" ]      || v_id=null
   v_session="$(mj_capture_raw "$scan" "$k_session")"; [ -n "$v_session" ] || v_session=null
   v_source="$(mj_capture_raw "$scan" "$k_source")";   [ -n "$v_source" ]  || v_source=null
@@ -403,10 +568,24 @@ mj_capture_write() {
   # two prompts in one second whose openings agree are still two prompts
   while [ -e "$file" ]; do file="$dir/$stamp-$slug-$n.json"; n=$((n + 1)); [ "$n" -gt 99 ] && return 0; done
 
+  # The identity, resolved now because now is the only moment it is still resolvable. The
+  # provider session the payload names is turned into the canonical episode id through the
+  # open-episode store; when nothing there answers, the record says `orphan` and carries a
+  # null episode. It is never attached to the episode the pointer happens to name: see
+  # mj_capture_episode_of.
+  local episode link
+  episode="$(mj_capture_episode_of "$(mj_capture_ident "$v_session")")"
+  if [ -n "$episode" ]; then link=open; else link=orphan; fi
+
   mj_capture_record \
-    "\"$MJ_CAPTURE_SCHEMA\"" "\"$(mj_now)\"" "\"$provider\"" "\"$event\"" "$v_id" "$v_session" "$v_source" "$v_cwd" \
-    "\"$(mj_json_esc "$MJ_ROOT")\"" "\"$(mj_json_esc "$(mj_git_branch)")\"" "\"$(mj_git_head)\"" "$v_text" > "$file" \
+    "\"$MJ_CAPTURE_SCHEMA\"" "\"$(mj_now)\"" "\"$provider\"" "\"$event\"" "$v_id" "$v_session" \
+    "$([ -n "$episode" ] && printf '"%s"' "$(mj_json_esc "$episode")" || printf 'null')" "\"$link\"" \
+    "\"$(mj_json_esc "$(mj_repository_id)")\"" "\"$(mj_worktree_id)\"" \
+    "$v_source" "$v_cwd" \
+    "\"$(mj_json_esc "$MJ_ROOT")\"" "\"$(mj_json_esc "$(mj_git_branch)")\"" "\"$(mj_git_head)\"" "$v_text" \
+    ${kinds:+"$(printf 'redacted\t"%s"' "$kinds")"} > "$file" \
     || { mj_err "capture prompt: cannot write $file"; return "$MJ_EX_INTERNAL"; }
+  mj_capture_secure_file "$file"
 
   # The record exists now, so the prompt is safe whatever happens next. A rendering that
   # cannot be written is therefore not a lost prompt and does not go in .capture.log, whose
@@ -430,10 +609,14 @@ mj_capture_record() {
   # that order. `shift` rather than an indexed expansion, because the indexed form needs
   # eval and this repository forbids it (project.no-network-no-eval): nothing read from a
   # provider's payload may reach a shell that evaluates it.
-  for k in $MJ_CAPTURE_FIELDS; do
-    if [ "$#" -gt 0 ]; then v="$1"; shift; else v=null; fi
-    printf '%s\t%s\n' "$k" "$v"
-  done | mj_capture_emit
+  { for k in $MJ_CAPTURE_FIELDS; do
+      if [ "$#" -gt 0 ]; then v="$1"; shift; else v=null; fi
+      printf '%s\t%s\n' "$k" "$v"
+    done
+    # anything left is an optional member the caller already shaped as `key<TAB>raw-json`,
+    # written after the closed set in the order it was passed. A member the writer had no
+    # reason to emit is absent rather than null, which is what the schema means by optional.
+    while [ "$#" -gt 0 ]; do printf '%s\n' "$1"; shift; done; } | mj_capture_emit
 }
 
 # key<TAB>raw-json-value lines to a pretty object. One place decides the indentation and
@@ -505,6 +688,13 @@ mj_capture_render_one() {
 
   v="$(mj_capture_raw "$scan" text)"
   if [ -n "$v" ] && [ "$v" != null ]; then mj_capture_decode "$v" > "$body" 2>/dev/null || rc=1
+  elif [ -n "$(mj_capture_raw "$scan" pruned_at)" ]; then
+    # A pruned record has no text and is not a broken record: retention took the body and
+    # left the tombstone. The rendering says so in the body rather than showing an empty
+    # block, because a reader who finds nothing under ## PROMPT cannot tell a prompt that
+    # was pruned from a rendering that failed — and the document schema says this section is
+    # never empty.
+    mj_capture_tombstone "$scan" > "$body"
   else : > "$body"; fi
   [ "$rc" = 0 ] || { rm -f "$scan" "$body"; return 1; }
   fence="$(mj_capture_fence "$body")"
@@ -584,7 +774,28 @@ mj_capture_render_one() {
   rm -f "$scan" "$body"
   [ "$rc" = 0 ] || { rm -f "$tmp"; return 1; }
   mv "$tmp" "$yml" 2>/dev/null || { rm -f "$tmp"; return 1; }
+  # The renderings hold the prompt in clear text, exactly as the record does, so they are
+  # the record's mode and not the umask's. The record itself is set here too: the reformat
+  # above moves a temporary over it, and a `mv` carries the temporary's mode with it.
+  mj_capture_secure_file "$rec"; mj_capture_secure_file "$md"; mj_capture_secure_file "$yml"
   return 0
+}
+
+# What a rendering shows where the prompt was. Everything retention kept: when the body went,
+# how many bytes it was, and the digest of those bytes — enough to recognise a prompt somebody
+# still has a copy of, and not enough to reconstruct one nobody does.
+mj_capture_tombstone() {
+  local scan="$1" at bytes digest
+  at="$(mj_capture_plain "$scan" pruned_at)"
+  bytes="$(mj_capture_plain "$scan" pruned_bytes)"
+  digest="$(mj_capture_plain "$scan" pruned_sha256)"
+  printf '(the body was pruned by retention on %s' "${at:-an unrecorded date}"
+  [ -n "$bytes" ] && printf '; it was %s byte(s)' "$bytes"
+  [ -n "$digest" ] && printf '; sha256 %s' "$digest"
+  printf ')\n'
+  printf '\n'
+  printf 'Every other field of this record is unchanged, including how it came to name its\n'
+  printf 'episode. The record was never deleted and never will be; only the prompt itself is gone.\n'
 }
 
 # The record's own fields, re-emitted in the declared order. A field the file does not carry
@@ -743,6 +954,12 @@ mj_capture_render() {
   mj_require_repo
   dir="$(mj_capture_dir)"; rel="$(mj_rel "$dir")"
   [ -d "$dir" ] || { printf 'no archive in %s; nothing to render\n' "$rel"; return 0; }
+  # The mode, on every file, on every run — before anything is decided about rendering.
+  # `capture render` is the archive's repair command and the one the permission finding names,
+  # and a repair that only reaches the records it happened to rewrite leaves most of an
+  # archive loose. It is a chmod over a directory listing; it costs nothing to do it to all.
+  mj_capture_secure_dir "$dir"
+  for f in "$dir"/* ; do [ -f "$f" ] && mj_capture_secure_file "$f"; done
   for f in "$dir"/*.json; do
     [ -e "$f" ] || break
     md="$(mj_capture_md "$f")"
@@ -812,6 +1029,379 @@ mj_capture_raw() {
 }
 
 
+# ---------------------------------------------------------------- capture reconcile
+# The join that used to die when the episode closed.
+#
+# A record carries the provider's own session UUID. Turning that into the canonical episode
+# id needed state/sessions-open/<uuid>.yaml, and closing the episode deletes that file — so
+# from the moment an episode ended, nothing could say which episode its prompts belonged to.
+# The writer now stamps the episode into the record while it is still resolvable, which fixes
+# every prompt from here on and no prompt already written. This command is for those, and for
+# the live case the writer cannot cover: a prompt captured before its episode was open.
+#
+# It links only on evidence, in a fixed order, and says which kind of evidence it used:
+#
+#   1. the open-episode store             — the mapping is still there
+#   2. .ai/local/session-contexts/        — the frozen context of an episode records the
+#                                           provider session that opened it, and it survives
+#                                           the close
+#   3. the episode windows, where one and only one closed episode of this worktree contains
+#      the whole span of that provider session's prompts, and no other provider session has
+#      claimed it
+#
+# and nothing else. There is no fourth tier, and in particular no "nearest episode in time":
+# a prompt attached to the wrong episode is worse than a prompt attached to none, because the
+# second is visibly missing and the first is quietly false. What tier 3 will not do is exactly
+# what makes it usable — it refuses the moment two episodes could both be the answer.
+#
+# A record no tier reaches is marked, not left blank: `unlinked-legacy` for one written before
+# records carried an episode, `orphan` for one whose capture found no episode at the time. Both
+# carry a null episode. Neither is repaired by guessing, and a validator that reported this
+# archive as fully linked would be lying about 713 records in this repository alone.
+mj_capture_reconcile() {
+  local dry=0 dir rel links windows f scan ps ep lk new_ep new_link row ov changed=0 kept=0 stuck=0 refused=0 n=0
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --dry-run) dry=1; shift ;;
+      *) mj_die "$MJ_EX_USAGE" "capture reconcile: unknown option $1" ;;
+    esac
+  done
+  mj_require_installed
+  # not on the hook path, so the session machinery this needs is sourced here
+  # shellcheck source=session.sh
+  . "$MJ_LIB_DIR/session.sh"
+  dir="$(mj_capture_dir)"; rel="$(mj_rel "$dir")"
+  [ -d "$dir" ] || { printf 'no archive at %s; nothing to reconcile\n' "$rel"; return 0; }
+  mj_capture_secure_dir "$dir"
+
+  links="$(mktemp "${TMPDIR:-/tmp}/mj.links.XXXXXX")"
+  windows="$(mktemp "${TMPDIR:-/tmp}/mj.win.XXXXXX")"
+  mj_capture_link_table > "$links"
+  mj_capture_episode_windows "$links" > "$windows"
+  mj_capture_tier3_table "$dir" "$links" "$windows" >> "$links"
+
+  ov="$(mktemp "${TMPDIR:-/tmp}/mj.ov.XXXXXX")"
+  for f in "$dir"/*.json; do
+    [ -e "$f" ] || break
+    n=$((n + 1))
+    scan="$(mktemp "${TMPDIR:-/tmp}/mj.rc.XXXXXX")"
+    if ! awk -f "$MJ_LIB_DIR/json_scan.awk" < "$f" > "$scan" 2>/dev/null; then
+      refused=$((refused + 1)); rm -f "$scan"; continue
+    fi
+    ep="$(mj_capture_raw "$scan" episode)"; lk="$(mj_capture_raw "$scan" episode_link)"
+    # evidence already recorded is never recomputed: a link made while the episode was open
+    # is stronger than anything this command can reconstruct afterwards
+    case "$lk" in
+      '"open"'|'"session-context"'|'"ledger"') kept=$((kept + 1)); rm -f "$scan"; continue ;;
+    esac
+    ps="$(mj_capture_ident "$(mj_capture_raw "$scan" session)")"
+    new_ep=""; new_link=""
+    if [ -n "$ps" ]; then
+      row="$(awk -F'\t' -v k="$ps" '$1 == k { print; exit }' "$links")"
+      if [ -n "$row" ]; then
+        new_ep="$(printf '%s' "$row" | cut -f2)"; new_link="$(printf '%s' "$row" | cut -f3)"
+      fi
+    fi
+    if [ -z "$new_ep" ]; then
+      # no evidence. Which of the two unlinked words applies is a fact about the record, not
+      # about this run: a record that already said `orphan` was written by a capture that
+      # looked and found nothing, and relabelling it would erase that.
+      if [ "$lk" = '"orphan"' ]; then new_link='orphan'; else new_link='unlinked-legacy'; fi
+      stuck=$((stuck + 1))
+    else
+      changed=$((changed + 1))
+    fi
+    # a record already carrying exactly this answer is not rewritten
+    if [ "$lk" = "\"$new_link\"" ] && { [ -z "$new_ep" ] && [ "$ep" = null ] || [ "$ep" = "\"$new_ep\"" ]; }; then
+      rm -f "$scan"; continue
+    fi
+    if [ "$dry" = 1 ]; then rm -f "$scan"; continue; fi
+    : > "$ov"
+    if [ -n "$new_ep" ]; then printf 'episode\t"%s"\n' "$(mj_json_esc "$new_ep")" >> "$ov"
+    else printf 'episode\tnull\n' >> "$ov"; fi
+    printf 'episode_link\t"%s"\n' "$new_link" >> "$ov"
+    # the two identity members a legacy record has no way to carry. They are facts about this
+    # checkout, and a record reconciled somewhere else must not be stamped with them, so they
+    # are written only when the record's own `repository` is this repository's root.
+    if [ "$(mj_capture_raw "$scan" repository_id)" = "" ] \
+       && [ "$(mj_capture_raw "$scan" repository)" = "\"$(mj_json_esc "$MJ_ROOT")\"" ]; then
+      printf 'repository_id\t"%s"\n' "$(mj_json_esc "$(mj_repository_id)")" >> "$ov"
+      printf 'worktree_id\t"%s"\n' "$(mj_worktree_id)" >> "$ov"
+    fi
+    if mj_capture_rewrite "$f" "$scan" "$ov" > "$f.part" 2>/dev/null && [ -s "$f.part" ]; then
+      mv "$f.part" "$f" 2>/dev/null && mj_capture_render_one "$f" >/dev/null 2>&1
+    else
+      rm -f "$f.part"; refused=$((refused + 1))
+      [ -n "$new_ep" ] && changed=$((changed - 1))
+    fi
+    rm -f "$scan"
+  done
+  rm -f "$links" "$windows" "$ov"
+  if [ "$dry" = 1 ]; then
+    printf 'reconcile --dry-run: %s record(s); %s would be linked, %s already linked, %s have no evidence and stay unlinked\n' \
+      "$n" "$changed" "$kept" "$stuck"
+  else
+    printf 'reconcile: %s record(s); %s linked, %s already linked, %s unlinked for want of evidence' \
+      "$n" "$changed" "$kept" "$stuck"
+    [ "$refused" != 0 ] && printf ', %s left untouched (this writer cannot account for every member)' "$refused"
+    printf '\n'
+    mj_ledger_append prompts.reconciled \
+      "\"records\":$n,\"linked\":$changed,\"unlinked\":$stuck,\"refused\":$refused" 2>/dev/null || true
+  fi
+  return 0
+}
+
+# `<provider session>\t<episode>\t<kind>` for every mapping that still exists, strongest
+# first, one line per provider session — the first line for a key wins, which is what the
+# lookup above relies on.
+mj_capture_link_table() {
+  local f ps sid
+  for f in "$(mj_session_open_dir)"/*.yaml; do
+    [ -f "$f" ] || break
+    ps="$(sed -n 's/^provider_session: *"\{0,1\}\([^"]*\)"\{0,1\}$/\1/p' "$f" | head -n 1)"
+    sid="$(sed -n 's/^session_id: //p' "$f" | head -n 1)"
+    [ -n "$ps" ] && [ -n "$sid" ] && printf '%s\t%s\t%s\n' "$(mj_capture_ident "$ps")" "$sid" open
+  done
+  # The frozen working context of an episode names the provider session that opened it, and
+  # unlike the open-episode file it is not deleted at the close. It was the only surviving
+  # link for 261 of this repository's 974 records.
+  for f in "$MJ_AI_LOCAL_DIR"/session-contexts/*.md; do
+    [ -f "$f" ] || break
+    ps="$(sed -n 's/^provider_session: *"\{0,1\}\([^"]*\)"\{0,1\}$/\1/p' "$f" | head -n 1)"
+    sid="$(sed -n 's/^session_id: //p' "$f" | head -n 1)"
+    [ -n "$ps" ] && [ -n "$sid" ] && printf '%s\t%s\t%s\n' "$(mj_capture_ident "$ps")" "$sid" session-context
+  done
+  return 0
+}
+
+# `<episode>\t<started_at>\t<closed_at>` for every closed episode of this worktree that no
+# provider session already claims. An episode a mapping already names is not a candidate for
+# an inference: it has an answer, and offering it as a second one would let a prompt be
+# attributed to an episode that demonstrably belongs to a different provider session.
+mj_capture_episode_windows() {
+  local claimed="$1" f sid st cl wt
+  for f in "$(mj_session_store)"/*.md; do
+    [ -f "$f" ] || break
+    sid="$(sed -n 's/^session_id: //p' "$f" | head -n 1)"
+    st="$(sed -n 's/^started_at: //p' "$f" | head -n 1)"
+    cl="$(sed -n 's/^closed_at: //p' "$f" | head -n 1)"
+    wt="$(sed -n 's/^worktree_id: //p' "$f" | head -n 1)"
+    [ -n "$sid" ] && [ -n "$st" ] && [ -n "$cl" ] || continue
+    [ -n "$wt" ] && [ "$wt" != "$(mj_worktree_id)" ] && continue
+    awk -F'\t' -v s="$sid" '$2 == s { f = 1 } END { exit f }' "$claimed" || continue
+    printf '%s\t%s\t%s\n' "$sid" "$st" "$cl"
+  done
+  return 0
+}
+
+# Tier 3, and only where it is unambiguous: `<provider session>\t<episode>\tledger` for every
+# provider session whose prompts all fall inside exactly one unclaimed episode window.
+#
+# The span of a provider session is the first and last prompt it produced — the ledger's own
+# timestamps, read off the archive it wrote. A window that contains the whole span is a
+# candidate; two candidates is no answer, and neither is none. Measured over this repository
+# on 2026-09-11: 60 unresolved provider sessions, 6 unclaimed windows, and 0 sessions where
+# exactly one window contained the span — the tier is implemented because the evidence might
+# exist elsewhere, and it is honest here because it found nothing and claimed nothing.
+mj_capture_tier3_table() {
+  local dir="$1" links="$2" windows="$3" spans
+  [ -s "$windows" ] || return 0
+  spans="$(mktemp "${TMPDIR:-/tmp}/mj.span.XXXXXX")"
+  # one pass over the archive: the session and the timestamp of every record, as the pretty
+  # shape writes them. A record in some older shape contributes nothing here, which can only
+  # narrow a span and therefore can only make a match less likely, never wrongly more.
+  find "$dir" -maxdepth 1 -name '*.json' -exec awk '
+    /^  "session": / { s = $0; sub(/^  "session": "?/, "", s); sub(/"?,?$/, "", s) }
+    /^  "(started_at|ts)": / { t = $0; sub(/^  "[a-z_]*": "?/, "", t); sub(/"?,?$/, "", t) }
+    FNR == 1 && NR > 1 { emit() }
+    function emit() { if (s != "" && s != "null" && t != "") print s "\t" t; s = ""; t = "" }
+    END { emit() }' {} + 2>/dev/null \
+    | LC_ALL=C sort > "$spans"
+  awk -F'\t' -v w="$windows" -v l="$links" '
+    BEGIN {
+      while ((getline line < w) > 0) { split(line, a, "\t"); nw++; ws[nw] = a[1]; wa[nw] = a[2]; wb[nw] = a[3] }
+      close(w)
+      while ((getline line < l) > 0) { split(line, a, "\t"); known[a[1]] = 1 }
+      close(l)
+    }
+    { if (lo[$1] == "" || $2 < lo[$1]) lo[$1] = $2; if ($2 > hi[$1]) hi[$1] = $2 }
+    END {
+      for (s in lo) {
+        if (s in known) continue
+        hit = 0; which = ""
+        for (i = 1; i <= nw; i++) if (wa[i] <= lo[s] && hi[s] <= wb[i]) { hit++; which = ws[i] }
+        if (hit == 1) print s "\t" which "\tledger"
+      }
+    }' "$spans"
+  rm -f "$spans"
+  return 0
+}
+
+# One record, re-emitted with overrides. The closed field set in its declared order, then the
+# optional members the record carries, exactly as `mj_capture_reformat` does — this is that
+# function with a place to put a value the caller decided.
+#
+# OVERRIDES is a file of `key<TAB>raw-json` lines. A raw span, never a string to be quoted,
+# because everything else in this writer is a raw span and a second convention here is how a
+# quote ends up doubled inside somebody's prompt three months later.
+#
+# A record whose members this cannot account for in full is refused rather than rewritten,
+# for the reason `mj_capture_accounted` exists: a rewrite that drops what it could not read
+# is worse than no rewrite at all.
+mj_capture_rewrite() {
+  local rec="$1" scan="$2" ov="$3" k v
+  mj_capture_accounted "$scan" "$rec" || return 1
+  { for k in $MJ_CAPTURE_FIELDS; do
+      v="$(mj_capture_override "$ov" "$k")"
+      if [ -n "$v" ]; then :
+      elif [ "$k" = schema ]; then v="\"$MJ_CAPTURE_SCHEMA\""
+      elif [ "$k" = started_at ]; then v="$(mj_capture_raw "$scan" "$MJ_CAPTURE_STARTED")"
+      else v="$(mj_capture_raw "$scan" "$k")"; fi
+      [ -n "$v" ] || v=null
+      printf '%s\t%s\n' "$k" "$v"
+    done
+    for k in $MJ_CAPTURE_OPTIONAL; do
+      v="$(mj_capture_override "$ov" "$k")"
+      [ -n "$v" ] || v="$(mj_capture_raw "$scan" "$k")"
+      [ -n "$v" ] && [ "$v" != null ] && printf '%s\t%s\n' "$k" "$v"
+    done; } | mj_capture_emit
+}
+
+mj_capture_override() {
+  [ -n "${1:-}" ] && [ -f "$1" ] || return 0
+  awk -F'\t' -v k="$2" '$1 == k { sub(/^[^\t]*\t/, ""); print; exit }' "$1"
+}
+
+# ---------------------------------------------------------------- capture prune
+# Retention, for the one store that had none.
+#
+# The ledger, the handovers and the checkpoints rotate under a policy cap because each
+# restates state that is still available elsewhere. A prompt restates nothing, which is why
+# nothing pruned them and why the archive reached 20 MB here without anyone deciding it
+# should. But the reason a prompt cannot be deleted is a reason about the *record* — that it
+# happened, when, in which episode, under which head — and not about the bytes of the text.
+# The text is the part that carries credentials and customer names, the part whose value
+# decays and whose risk does not.
+#
+# So pruning takes the body and keeps the record. Every field survives, including how the
+# record came to name its episode, and three members are added saying what was taken: when,
+# how many bytes, and their digest. The archive stays a complete index of what was asked and
+# when; what leaves is only what nobody can justify keeping.
+#
+# Two bounds, both from the policy, neither with a default written here: `prompts.retention_max_days`
+# and `prompts.retention_max_bytes`. Age first, because that is the bound about exposure; then
+# size, oldest body first, until the total fits.
+#
+# Atomic per record: the rewrite goes to a temporary beside the record and is moved over it,
+# so a reader never opens a half-pruned record and an interrupted run leaves every record it
+# had not reached exactly as it was.
+mj_capture_prune() {
+  local dry=0 dir rel days bytes cutoff total pruned=0 refused=0 n=0 f scan ov body sz
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --dry-run) dry=1; shift ;;
+      *) mj_die "$MJ_EX_USAGE" "capture prune: unknown option $1" ;;
+    esac
+  done
+  mj_require_installed
+  mj_load_policy || mj_die "$MJ_EX_CONTRACT" "policy does not parse (run: majordomus doctor)"
+  days="$(mj_pol_req prompts.retention_max_days)" || mj_die "$MJ_EX_CONTRACT" \
+    "policy declares no prompts.retention_max_days; add a prompts: block (see share/skeleton/policy.yaml)"
+  bytes="$(mj_pol_req prompts.retention_max_bytes)" || mj_die "$MJ_EX_CONTRACT" \
+    "policy declares no prompts.retention_max_bytes; add a prompts: block (see share/skeleton/policy.yaml)"
+  dir="$(mj_capture_dir)"; rel="$(mj_rel "$dir")"
+  [ -d "$dir" ] || { printf 'no archive at %s; nothing to prune\n' "$rel"; return 0; }
+  mj_capture_secure_dir "$dir"
+  cutoff="$(mj_capture_cutoff "$days")"
+
+  # the bodies, oldest first, with the size of each. The name is the second the prompt was
+  # captured in, so the listing is already in age order and no timestamp has to be parsed
+  # out of a record to decide which body goes first.
+  local list; list="$(mktemp "${TMPDIR:-/tmp}/mj.prune.XXXXXX")"
+  ov="$(mktemp "${TMPDIR:-/tmp}/mj.pov.XXXXXX")"
+  total=0
+  for f in "$dir"/*.json; do
+    [ -e "$f" ] || break
+    n=$((n + 1))
+    sz="$(mj_capture_body_bytes "$f")"
+    [ "$sz" = 0 ] && continue                       # already pruned, or empty
+    total=$((total + sz))
+    printf '%s\t%s\n' "$f" "$sz" >> "$list"
+  done
+
+  # 1. age. 2. size, oldest first, until what is left fits.
+  local keep="$total" over line file
+  while IFS="$(printf '\t')" read -r file sz; do
+    [ -n "$file" ] || continue
+    over=0
+    [ "$(basename "$file" | cut -c1-14)" \< "$cutoff" ] && over=1
+    [ "$over" = 0 ] && [ "$keep" -gt "$bytes" ] && over=1
+    [ "$over" = 1 ] || continue
+    if [ "$dry" = 0 ]; then
+      mj_capture_prune_one "$file" "$ov" || { refused=$((refused + 1)); continue; }
+    fi
+    keep=$((keep - sz)); pruned=$((pruned + 1))
+  done < "$list"
+  rm -f "$list" "$ov"
+
+  if [ "$dry" = 1 ]; then
+    printf 'prune --dry-run: %s record(s), %s byte(s) of body; %s would be pruned, leaving %s byte(s) (cap %s, %s day(s))\n' \
+      "$n" "$total" "$pruned" "$keep" "$bytes" "$days"
+  else
+    printf 'prune: %s record(s); %s body(ies) pruned, %s byte(s) left of cap %s, older than %s day(s) taken' \
+      "$n" "$pruned" "$keep" "$bytes" "$days"
+    [ "$refused" != 0 ] && printf ', %s refused (this writer cannot account for every member)' "$refused"
+    printf '\n'
+    [ "$pruned" = 0 ] || mj_ledger_append prompts.pruned \
+      "\"records\":$n,\"pruned\":$pruned,\"bytes_left\":$keep" 2>/dev/null || true
+  fi
+  return 0
+}
+
+# The compact stamp a record's name must sort at or after to survive the age bound. `date -v`
+# on BSD and `date -d` on GNU; a system that answers neither prunes on size alone rather than
+# on a cutoff nobody computed, because an unbounded cutoff would take the whole archive.
+mj_capture_cutoff() {
+  local d="$1" s
+  s="$(date -u -v-"${d}"d +%Y%m%d%H%M%S 2>/dev/null)" || s=""
+  [ -n "$s" ] || s="$(date -u -d "$d days ago" +%Y%m%d%H%M%S 2>/dev/null)" || s=""
+  [ -n "$s" ] || s="00000000000000"
+  printf '%s' "$s"
+}
+
+# How many bytes of prompt this record holds: the length of the raw `text` span, which is what
+# pruning removes and therefore what the size bound is about. A record with no text, or one
+# already pruned, is 0.
+mj_capture_body_bytes() {
+  local v
+  v="$(sed -n 's/^  "text": \(.*\),\{0,1\}$/\1/p' "$1" 2>/dev/null | head -n 1)"
+  [ -n "$v" ] && [ "$v" != null ] || { printf '0'; return 0; }
+  printf '%s' "${#v}"
+}
+
+# One record, pruned. The digest is of the raw span exactly as the record holds it, so a
+# person holding a copy of the prompt can be told whether it is the one that was here.
+mj_capture_prune_one() {
+  local rec="$1" ov="$2" scan v sz digest
+  scan="$(mktemp "${TMPDIR:-/tmp}/mj.pr.XXXXXX")"
+  awk -f "$MJ_LIB_DIR/json_scan.awk" < "$rec" > "$scan" 2>/dev/null || { rm -f "$scan"; return 1; }
+  v="$(mj_capture_raw "$scan" text)"
+  [ -n "$v" ] && [ "$v" != null ] || { rm -f "$scan"; return 1; }
+  sz="${#v}"
+  digest="$(printf '%s' "$v" | mj_sha256 /dev/stdin | cut -c1-16)"
+  : > "$ov"
+  printf 'text\tnull\n' >> "$ov"
+  printf 'pruned_at\t"%s"\n' "$(mj_now)" >> "$ov"
+  printf 'pruned_bytes\t%s\n' "$sz" >> "$ov"
+  printf 'pruned_sha256\t"%s"\n' "$digest" >> "$ov"
+  if mj_capture_rewrite "$rec" "$scan" "$ov" > "$rec.part" 2>/dev/null && [ -s "$rec.part" ]; then
+    mv "$rec.part" "$rec" 2>/dev/null || { rm -f "$rec.part" "$scan"; return 1; }
+    mj_capture_render_one "$rec" >/dev/null 2>&1 || true
+    rm -f "$scan"; return 0
+  fi
+  rm -f "$rec.part" "$scan"; return 1
+}
+
 # ---------------------------------------------------------------- capture session
 # The episode boundary, drawn where the provider draws it. Reads the provider's lifecycle
 # payload on stdin and opens or closes the session; both are idempotent, because the events
@@ -846,7 +1436,7 @@ mj_capture_session() {
   # An adapter line, or a declaration saying the boundary is the connection. The second is
   # not a weaker form of the first: a provider that fires no event has no payload shape to
   # adapt to, and demanding a line for it was what made this command — the one generic entry
-  # point to the episode boundary — reachable only by Claude Code (ADR 0043).
+  # point to the episode boundary — reachable only by Claude Code (ADR 0074).
   mj_lifecycle_adapter "$provider" >/dev/null 2>&1 \
     || [ "$(mj_provider_capability "$provider" session)" = connection ] || {
     mj_err "capture session: no lifecycle adapter for provider '$provider' and no declared connection episode (have: $(mj_lifecycle_providers | paste -sd' ' -))"
@@ -892,11 +1482,53 @@ mj_capture_session() {
   # shellcheck disable=SC2034  # read by mj_session_here_file in lib/common.sh
   [ -n "$psession" ] && MJ_SESSION_KEY="$psession"
 
+  # The receipt, before anything decides what to do about the event. Whatever happens after
+  # this line — a guard that skips the work, a record that cannot be written, a policy that
+  # does not parse — the repository knows the event arrived, from whom, and when.
+  #
+  # This is the line whose absence made the 2026-09-05 outage unreadable. Every adapter
+  # below reports its refusals on stderr and returns 0, which is what a provider hook must
+  # do; stderr is not kept, so afterwards an event that never fired and an event that fired
+  # and did nothing were the same observation. Not blocking the provider and pretending the
+  # work happened are different instructions, and only the first is a contract (ADR 0052).
+  mj_capture_session_receipt "$provider" "$event" "$psession"
+
   case "$event" in
     start)   mj_capture_session_start   "$provider" "$psession" "$source" ;;
     end)     mj_capture_session_end     "$provider" "$psession" "$reason" ;;
     compact) mj_capture_session_compact "$provider" "$psession" ;;
   esac
+  return 0
+}
+
+# One typed line saying an event arrived. Best-effort by construction: a receipt that could
+# fail the hook would be a new way to lose an episode, which is the failure it exists to
+# make visible. A ledger that cannot be written is itself reported beside the working
+# contexts.
+# The provider's own event name is `provider_event` and not `event`: `event` is the ledger
+# envelope's key, and a line carrying it twice is read as its payload by some readers and as
+# its envelope by others. It was `event` until this was found, and every receipt this
+# repository had written since d5d541850 made `history --validate` exit 10 on the name
+# `start`. `mj_ledger_append` now refuses the collision outright, so this cannot recur here or
+# in any other caller.
+mj_capture_session_receipt() {
+  local provider="$1" event="$2" psession="$3" fields
+  fields="\"provider\":\"$(mj_json_esc "$provider")\",\"provider_event\":\"$(mj_json_esc "$event")\""
+  [ -n "$psession" ] && fields="$fields,\"provider_session\":\"$(mj_json_esc "$psession")\""
+  mj_ledger_append provider.event.received "$fields" 2>/dev/null \
+    || mj_session_context_log "$provider $event event: the receipt could not be appended to the ledger"
+  return 0
+}
+
+# The other half of the receipt: the event arrived and the work it should have done did not
+# complete. A receipt with neither a resulting record nor one of these beside it is a
+# finding in its own right, which is what lets health see a writer that has stopped.
+mj_capture_session_failed() {
+  local provider="$1" event="$2" reason="$3" fields
+  fields="\"provider\":\"$(mj_json_esc "$provider")\",\"provider_event\":\"$(mj_json_esc "$event")\""
+  fields="$fields,\"reason\":\"$(mj_json_esc "$reason")\""
+  mj_ledger_append provider.event.failed "$fields" 2>/dev/null || true
+  mj_session_context_log "$provider $event event: $reason"
   return 0
 }
 
@@ -931,7 +1563,7 @@ mj_capture_session_start() {
   set -- --if-open keep --provider "$provider"
   [ -n "$psession" ] && set -- "$@" --provider-session "$psession"
   out="$( (mj_session_start "$@") 2>&1 )" || {
-    mj_session_context_log "$provider start event: the episode did not open: $(printf '%s' "$out" | tail -n 1)"
+    mj_capture_session_failed "$provider" start "the episode did not open: $(printf '%s' "$out" | tail -n 1)"
     mj_err "capture session: the episode did not open; see the log beside the working contexts"
     return 0; }
   mj_err "capture session: $(printf '%s' "$out" | head -n 1)${source:+ (source $source)}"
@@ -997,17 +1629,19 @@ mj_capture_session_compact() {
   # not a reason to fail here: this runs in a provider hook, where the cost of dying is the
   # episode nobody can reopen. Nothing is recorded and the reason is logged beside the
   # working contexts, which is where every other failure on this path is reported.
-  mj_load_policy || { mj_session_context_log "$provider compact event: the policy does not parse; nothing recorded"; return 0; }
+  mj_load_policy || {
+    mj_capture_session_failed "$provider" compact "the policy does not parse; nothing recorded"
+    return 0; }
   if [ "$(mj_pol session.checkpoint_on_compact)" = false ]; then
     mj_err "capture session: compaction ahead; session.checkpoint_on_compact is false, so nothing is recorded"
     return 0
   fi
-  if ! mj_load_current || [ "$(mj_cur outcome)" != active ]; then
-    mj_err "capture session: compaction with no active task here; nothing to checkpoint"
-    return 0
-  fi
+  # No task guard. A compaction discards the conversation whether or not anybody declared a
+  # task, and what is about to stop being reachable is worth the same either way. This
+  # asked for an `active` task until ADR 0052, which meant that finishing a task turned
+  # compaction checkpoints off for every episode after it — silently, for six days.
   out="$( (mj_cmd_checkpoint --derive) 2>&1 )" || {
-    mj_session_context_log "$provider compact event: the checkpoint was not written: $(printf '%s' "$out" | tail -n 1)"
+    mj_capture_session_failed "$provider" compact "the checkpoint was not written: $(printf '%s' "$out" | tail -n 1)"
     mj_err "capture session: the checkpoint was not written; see the log beside the working contexts"
     return 0; }
   mj_err "capture session: compaction ahead${psession:+ (provider session $psession)}; checkpointed into $(printf '%s' "$out" | tail -n 1)"
@@ -1032,12 +1666,35 @@ mj_capture_session_end() {
   # The same reasoning as the compaction event, with one difference: an end that cannot read
   # the policy still closes the episode. Only the continuation record is skipped, because
   # leaving a session open for ever is the worse of the two failures.
+  # shellcheck source=checkpoint.sh
+  . "$MJ_LIB_DIR/checkpoint.sh"
   local policy_ok=1
-  mj_load_policy || { policy_ok=0; mj_session_context_log "$provider end event: the policy does not parse; the episode is closed without a continuation record"; }
-  if [ "$policy_ok" = 1 ] && [ "$(mj_pol session.handover_on_end)" != false ] && mj_load_current && [ "$(mj_cur outcome)" = active ]; then
-    out="$( (mj_cmd_handover --derive --close) 2>&1 )" \
-      && mj_err "capture session: the task was still active; continuation written to $(printf '%s' "$out" | tail -n 1)" \
-      || mj_session_context_log "$provider end event: the continuation was not written: $(printf '%s' "$out" | tail -n 1)"
+  mj_load_policy || { policy_ok=0; mj_capture_session_failed "$provider" end "the policy does not parse; the episode is closed without a continuation record"; }
+
+  # A final progress record, before the continuation one. An episode that opened and closed
+  # without ever being compacted used to write no checkpoint at all, which left the newest
+  # one dating from whenever the last compaction happened to be — so a health check that
+  # asks whether progress records are still advancing would report a stopped writer for ever
+  # in a repository that simply never compacts, and a finding that never clears teaches its
+  # reader to skip the report. The close is the other moment at which what the episode knows
+  # stops being reachable, so it records the same thing for the same reason.
+  if [ "$policy_ok" = 1 ] && [ "$(mj_pol session.checkpoint_on_compact)" != false ]; then
+    out="$( (mj_cmd_checkpoint --derive) 2>&1 )" \
+      || mj_capture_session_failed "$provider" end "the closing checkpoint was not written: $(printf '%s' "$out" | tail -n 1)"
+  fi
+
+  if [ "$policy_ok" = 1 ] && [ "$(mj_pol session.handover_on_end)" != false ]; then
+    # The continuation record is the episode's, and it is written whether or not a task is
+    # open and whatever outcome the last one reached. `--close` marks an active task handed
+    # over and does nothing when there is none; `--no-task` lets the record exist without
+    # one. Until ADR 0052 this whole branch was conditional on an `active` task, so a
+    # repository whose last task had been handed over stopped producing the one record a
+    # future worker resumes from — which is exactly what happened here on 2026-09-05.
+    set -- --derive --close
+    mj_load_current || set -- --derive --no-task
+    out="$( (mj_cmd_handover "$@") 2>&1 )" \
+      && mj_err "capture session: continuation written to $(printf '%s' "$out" | tail -n 1)" \
+      || mj_capture_session_failed "$provider" end "the continuation was not written: $(printf '%s' "$out" | tail -n 1)"
   fi
   # The episode this provider session opened, named rather than resolved: an end event
   # closes its own or nothing. Before this, an end event closed whatever was open in the
@@ -1047,7 +1704,7 @@ mj_capture_session_end() {
   set -- --if-none ignore --outcome "$outcome"
   [ -n "$psession" ] && set -- "$@" --provider-session "$psession"
   out="$( (mj_session_close "$@" < /dev/null) 2>&1 )" || {
-    mj_session_context_log "$provider end event: the episode did not close: $(printf '%s' "$out" | tail -n 1)"
+    mj_capture_session_failed "$provider" end "the episode did not close: $(printf '%s' "$out" | tail -n 1)"
     mj_err "capture session: the episode did not close; see the log beside the working contexts"
     return 0; }
   if [ -n "$out" ]; then mj_err "capture session: episode closed ($outcome${reason:+, reason $reason}) into $out"
@@ -1078,7 +1735,7 @@ mj_capture_session_end() {
 # to something else, in place, proven by running it. A second vocabulary for the same facts
 # would only have to be learnt twice.
 #
-# `unadapted` is the state ADR 0043 added, and it exists because collapsing it into
+# `unadapted` is the state ADR 0074 added, and it exists because collapsing it into
 # `unsupported` made this tool say something untrue about somebody else's product. Before
 # it, a provider was `unsupported` precisely when `lib/capture.sh` had no line for it — so
 # the day Codex and Gemini CLI shipped SessionStart, SessionEnd and a pre-model prompt hook,
@@ -1138,7 +1795,7 @@ mj_lifecycle_state() {
   cap="$(mj_provider_capability "$p" session)"; ev="$(mj_provider_evidence "$p" session)"
   case "$cap" in
     none) printf 'unsupported\t%s\n' "${ev:-the declaration carries no evidence for this cell; run: majordomus doctor}"; return 0 ;;
-    # No hooks, but the client speaks MCP, so the connection is the boundary (ADR 0043).
+    # No hooks, but the client speaks MCP, so the connection is the boundary (ADR 0074).
     # The wiring being checked here is a different wiring: not a shim the provider runs, but
     # a client configuration that starts this repository's shared server.
     connection) mj_lifecycle_connection_state "$p" "$ev"; return 0 ;;
@@ -1163,7 +1820,7 @@ mj_lifecycle_state() {
   else printf 'wired\t%s are in place but a synthetic payload through the end shim did not reach the command\n' "$shims"; fi
 }
 
-# The episode a connection draws, as it stands here (ADR 0043). A different wiring is being
+# The episode a connection draws, as it stands here (ADR 0074). A different wiring is being
 # checked from the hook aspect's, and the words mean the same things: not the shims a
 # provider runs, but the client configuration that starts this repository's shared MCP
 # server, and the command the server drives when a client attaches.
@@ -1392,7 +2049,7 @@ mj_capture_config() {
 # Codex capture prompts here" got silence, which reads as no and was, by 2026-09-11, wrong.
 #
 # The capability column is the declaration's, with its citation in the reason; the state
-# column is this checkout's. Two facts, two columns, never folded into one word (ADR 0043).
+# column is this checkout's. Two facts, two columns, never folded into one word (ADR 0074).
 mj_capture_status() {
   [ $# = 0 ] || mj_die "$MJ_EX_USAGE" "capture status: unknown option $1"
   mj_require_installed
@@ -1407,6 +2064,16 @@ mj_capture_status() {
         printf '{"provider":"%s","aspect":"%s","capability":"%s","state":"%s","reason":"%s","evidence":"%s"}' \
           "$p" "$a" "${cap:-}" "$state" "$(mj_json_esc "$reason")" "$(mj_json_esc "$(mj_provider_evidence "$p" "$a")")"
       done
+    done
+    printf ']'
+    # The same denominator the text surface prints. A verdict that states its subject on
+    # one projection and not the other is half a verdict on the surface that omits it.
+    printf ',"unadapted":['
+    first=1
+    for p in $(mj_capture_declared_providers 2>/dev/null); do
+      case " $(mj_capture_providers | tr '\n' ' ') " in *" $p "*) continue ;; esac
+      [ "$first" = 1 ] || printf ','; first=0
+      printf '"%s"' "$p"
     done
     printf ']}\n'; return 0
   fi
@@ -1426,6 +2093,245 @@ mj_capture_status() {
         "$state" "${cap:--}" "$reason"
     done
   done
+  # The denominator, because a listing of what was examined is read as a listing of what
+  # exists. The distribution declares six providers and this table carries an adapter for
+  # one of them, so the two rows above are every row there can be — and a reader who
+  # counted them against `share/providers.yaml` concluded that four providers were broken.
+  # They are not: a provider with no `lifecycle` and no `prompt_capture` is one this tool
+  # ships no capture adapter for, which costs its worker the automation and none of the
+  # model. Saying so here is the difference between a status and a number somebody has to
+  # interpret (project.a-verdict-states-its-subject).
+  mj_capture_unadapted
+}
+
+# Every provider the distribution declares that this table has no adapter for, in the
+# distribution's order. Read from `share/providers.yaml` rather than listed here: a second
+# hand-maintained copy of the provider set is the defect this function exists to report.
+mj_capture_unadapted() {
+  local decl adapted missing="" one
+  decl="$(mj_capture_declared_providers)" || return 0
+  [ -n "$decl" ] || return 0
+  adapted=" $(mj_capture_providers | tr '\n' ' ')"
+  for one in $decl; do
+    case "$adapted" in *" $one "*) continue ;; esac
+    missing="$missing $one"
+  done
+  [ -n "$missing" ] || return 0
+  printf '%-22s %-12s %s\n' "(no adapter)" "n/a" \
+    "this tool ships no capture adapter for:${missing}; they read the model and lose the automation"
+}
+
+# The provider ids `share/providers.yaml` declares. The keys of the `providers:` mapping,
+# one indent in — the same subset of YAML the rest of this library reads.
+mj_capture_declared_providers() {
+  local f="$MJ_SHARE_DIR/providers.yaml"
+  [ -r "$f" ] || return 1
+  awk '
+    /^providers:[[:space:]]*$/ { inp = 1; next }
+    inp && /^[^[:space:]#]/    { inp = 0 }
+    inp && /^  [a-z0-9][a-z0-9_-]*:[[:space:]]*$/ {
+      id = $1; sub(/:$/, "", id); print id
+    }
+  ' "$f"
+}
+
+# ---------------------------------------------------------------- prompt continuity
+# The four things that were wrong with the archive on 2026-09-11, each now a finding.
+#
+# 1. The join died at close. A record named the provider's session and nothing else, and the
+#    only mapping to the canonical episode was a file the close deletes. 974 records, 80
+#    provider sessions, 713 prompts that nothing could attribute. Every record written from
+#    now on carries its episode; a record that carries neither an episode nor a word saying
+#    why is the defect, and `capture reconcile` is what closes it.
+# 2. Nothing prunes. The archive was 20 MB and had no bound at all, while the ledger, the
+#    handovers and the checkpoints each had one.
+# 3. The records were 0644. The session state beside them has always been 0600, and a raw
+#    prompt is the most private thing this tool writes.
+# 4. Nothing redacted. A prompt containing a credential was persisted verbatim, and stayed.
+#
+# The permission finding is deliberately not "some file is 0644": it is a count, with the
+# repair named, because an archive of a thousand records repaired one file at a time is an
+# archive nobody repairs.
+mj_validate_prompt_continuity() {
+  local dir rel n
+  dir="$(mj_capture_dir)"; rel="$(mj_rel "$dir")"
+  if [ ! -d "$dir" ]; then
+    mj_doctrine_skip prompts "$rel" "no archive here; nothing has been captured into this checkout"
+    MJ_DOCTRINE_SKIPPED=1; return 0
+  fi
+  n="$(find "$dir" -maxdepth 1 -name '*.json' 2>/dev/null | wc -l | tr -d ' ')"
+  mj_capture_permissions "$dir" "$rel"
+  [ "$n" -gt 0 ] || { mj_doctrine_ok prompts "$rel" "no records yet; the archive is empty"; return 0; }
+  mj_capture_identity "$dir" "$rel" "$n"
+  mj_capture_retention "$dir" "$rel"
+  return 0
+}
+
+# Nothing under the archive is readable by anyone but its owner. The directory as well as the
+# files: a 0755 directory over 0600 records still tells every account on the machine what was
+# asked and when, because the file names are the openings of the prompts.
+mj_capture_permissions() {
+  local dir="$1" rel="$2" loose dperm spec found rc unasked=""
+  dperm="$(mj_capture_mode "$dir")" || dperm=""
+  [ -n "$dperm" ] || unasked="the directory's own mode (no stat here answers 'stat -c %a' or 'stat -f %Lp' with octal digits)"
+  # `-perm /077` is GNU and `-perm +077` is BSD, and each rejects the other's spelling — the
+  # gate runs on Linux and the development machine is a Mac, so both are asked and the first
+  # that the local find accepts is the answer. A find that accepts neither reports nothing
+  # rather than zero, because "no loose files" and "the question could not be asked" are
+  # different answers and only one of them is a pass.
+  #
+  # Both spellings are asked of the directory itself, where the answer does not matter and
+  # only the exit does. Neither being accepted used to leave `spec` at the BSD spelling and
+  # walk with it anyway, and the walk's own failure then reached `wc -l`, which turned it
+  # into a clean zero — a check reporting "no loose files" because it never looked.
+  spec=""
+  if find "$dir" -maxdepth 0 -perm /077 >/dev/null 2>&1; then spec=/077
+  elif find "$dir" -maxdepth 0 -perm +077 >/dev/null 2>&1; then spec=+077; fi
+  loose=""
+  if [ -n "$spec" ]; then
+    rc=0; found="$(find "$dir" -type f -perm "$spec" 2>/dev/null)" || rc=$?
+    # a find that errored mid-walk has not seen the whole archive, so it has not answered
+    if [ "$rc" = 0 ]; then loose="$(printf '%s' "$found" | grep -c '[^[:space:]]' || true)"; fi
+  fi
+  [ -n "$loose" ] || unasked="${unasked:+$unasked, and }the records' modes (no find here accepts '-perm /077' or '-perm +077', or the walk failed)"
+  if [ -n "$unasked" ]; then
+    # Never silently green. This environment cannot be asked the question, which is a fact
+    # about the environment and not a result about the archive — and an unverifiable
+    # privacy guarantee is not a satisfied one (majordomus.never-reported-is-not-green).
+    mj_doctrine_fail prompts "$rel" \
+      "unverified — this environment cannot be asked $unasked; whether the archive is private is unknown here, and unknown is not a pass" \
+      "ls -ld $rel && ls -l $rel"
+  elif [ "$loose" != 0 ]; then
+    mj_doctrine_fail prompts "$rel" \
+      "$loose file(s) in the prompt archive are readable beyond their owner; raw prompts are the most private thing this tool writes" \
+      "chmod 700 $rel && chmod 600 $rel/*   # or: majordomus capture render, which sets both"
+  elif [ -n "$dperm" ] && [ "$dperm" != 700 ]; then
+    mj_doctrine_fail prompts "$rel" \
+      "the archive directory is mode $dperm; the file names are the openings of the prompts" \
+      "chmod 700 $rel"
+  else
+    mj_doctrine_ok prompts "$rel" "the archive and every record in it are readable by their owner only"
+  fi
+}
+
+# The mode of one path as octal digits, or nothing and a non-zero status when this system
+# cannot be asked.
+#
+# GNU FIRST. The ORDER is load-bearing, and this is the same trap lib/recover.sh and
+# lib/common.sh already name for mtime — this was the one site left facing the other way.
+# `stat -f` means two different things: on BSD it is "this format string", on GNU it is
+# "report the FILE SYSTEM, not the file". Asked BSD-first, a GNU stat read `%Lp` as a
+# filename, failed on it, printed the *filesystem* block for the directory to STDOUT
+# anyway, and exited non-zero — so `||` ran the GNU spelling too and appended the real
+# mode to that paragraph. The caller compared the whole thing against `700`, so an archive
+# that was mode 700 was reported as
+#
+#     the archive directory is mode   File: "…/.ai/local/prompts"
+#         ID: … Type: ext4  Block size: 4096 …
+#     700; the file names are the openings of the prompts
+#
+# `doctor` therefore failed with exit 10 and `watch` drifted with exit 11 inside every
+# use-case scenario that runs `init` first, on Linux only — so twelve scenarios passed on
+# the Mac that wrote them and failed on every CI runner, taking `generate-site-data
+# --check` and the whole `core-check` gate with them.
+#
+# `stat -c` is unambiguous: GNU accepts it, BSD rejects the option and falls through. The
+# answer is then shape-checked rather than trusted, which is what makes that class of
+# failure impossible rather than merely unlikely: anything that is not octal digits is not
+# a mode, whatever printed it, and this says so with its status instead of handing a caller
+# a number that is not one.
+mj_capture_mode() {
+  local m
+  m="$(stat -c '%a' "$1" 2>/dev/null || stat -f '%Lp' "$1" 2>/dev/null || true)"
+  case "$m" in ''|*[!0-7]*) return 1 ;; esac
+  printf '%s' "$m"
+}
+
+# Every record says which episode it belongs to, or says in so many words that it does not.
+# A record with neither is the state this whole subsystem exists to end: an archive whose
+# attribution nobody can reconstruct and nobody can see is missing.
+#
+# An unlinked record is reported, never counted as a pass and never counted as a failure of
+# the repository: the evidence for those prompts does not exist and no command can make it.
+# A validator that reported this archive as fully linked would be inventing the linkage the
+# migration deliberately refused to invent.
+mj_capture_identity() {
+  local dir="$1" rel="$2" n="$3" out silent linked unlinked bad
+  out="$(find "$dir" -maxdepth 1 -name '*.json' -exec awk '
+    FNR == 1 { seen[FILENAME] = 1 }
+    /^  "episode_link": "/ { v = $0; sub(/^  "episode_link": "/, "", v); sub(/",?$/, "", v); link[FILENAME] = v }
+    END {
+      for (f in seen) {
+        l = link[f]
+        if (l == "") print "SILENT " f
+        else if (l == "orphan" || l == "unlinked-legacy") print "UNLINKED " f
+        else if (l == "open" || l == "session-context" || l == "ledger") print "LINKED " f
+        else print "BAD " f " " l
+      }
+    }' {} + 2>/dev/null)"
+  silent="$(printf '%s' "$out" | grep -c '^SILENT ' || true)"
+  unlinked="$(printf '%s' "$out" | grep -c '^UNLINKED ' || true)"
+  linked="$(printf '%s' "$out" | grep -c '^LINKED ' || true)"
+  bad="$(printf '%s' "$out" | grep -c '^BAD ' || true)"
+  if [ "$bad" != 0 ]; then
+    mj_doctrine_fail prompts "$rel" \
+      "$bad record(s) name a provenance that is not one of: $MJ_CAPTURE_LINKS" \
+      "grep -h '\"episode_link\"' $rel/*.json | sort -u"
+  elif [ "$silent" != 0 ]; then
+    mj_doctrine_fail prompts "$rel" \
+      "$silent record(s) say nothing about which episode they belong to; the mapping from a provider session to an episode is deleted when the episode closes, so this is unrecoverable once it is lost" \
+      "majordomus capture reconcile"
+  else
+    mj_doctrine_ok prompts "$rel" \
+      "$n record(s) each name their episode or say why they cannot: $linked linked, $unlinked unlinked with their provenance recorded"
+  fi
+}
+
+# The archive is within the bounds the policy declares. Reported the way the ledger's,
+# the handovers' and the checkpoints' caps are reported, and repaired by a command a person
+# runs: nothing prunes behind anyone's back, and a prompt archive that shrank as a side
+# effect of a hook would be the worse defect.
+mj_capture_retention() {
+  local dir="$1" rel="$2" days bytes total over cutoff
+  # shellcheck disable=SC2034  # set by the awk pass below, read by the findings
+  if ! days="$(mj_pol_req prompts.retention_max_days)"; then
+    mj_doctrine_fail prompts "retention" "policy declares no prompts.retention_max_days" \
+      "add a prompts: block to $(mj_rel "$MJ_POLICY_FILE"); see share/skeleton/policy.yaml"
+    return 0
+  fi
+  if ! bytes="$(mj_pol_req prompts.retention_max_bytes)"; then
+    mj_doctrine_fail prompts "retention" "policy declares no prompts.retention_max_bytes" \
+      "add a prompts: block to $(mj_rel "$MJ_POLICY_FILE"); see share/skeleton/policy.yaml"
+    return 0
+  fi
+  cutoff="$(mj_capture_cutoff "$days")"
+  # One awk pass over the archive, not a process per record. This runs on every `doctor`,
+  # which has a wall-time budget of three seconds, and a `sed` per record over a thousand
+  # records is most of that budget spent on a number.
+  local counted
+  counted="$(find "$dir" -maxdepth 1 -name '*.json' -exec awk -v cut="$cutoff" '
+    /^  "text": / {
+      v = $0; sub(/^  "text": /, "", v); sub(/,$/, "", v)
+      if (v == "null") next
+      total += length(v)
+      n = split(FILENAME, p, "/"); stamp = substr(p[n], 1, 14)
+      if (stamp < cut) over++
+    }
+    END { print total + 0 "\t" over + 0 }' {} + 2>/dev/null | awk -F'\t' '
+    { t += $1; o += $2 } END { print t + 0 "\t" o + 0 }')"
+  total="$(printf '%s' "$counted" | cut -f1)"; over="$(printf '%s' "$counted" | cut -f2)"
+  [ -n "$total" ] || total=0
+  [ -n "$over" ] || over=0
+  if [ "$over" != 0 ]; then
+    mj_doctrine_fail prompts "retention" \
+      "$over prompt body(ies) are older than the $days day(s) the policy allows" "majordomus capture prune"
+  elif [ "$total" -gt "$bytes" ]; then
+    mj_doctrine_fail prompts "retention" \
+      "$total byte(s) of prompt bodies over the cap of $bytes" "majordomus capture prune"
+  else
+    mj_doctrine_ok prompts "retention" \
+      "$total byte(s) of bodies under the cap of $bytes, none older than $days day(s)"
+  fi
 }
 
 # ---------------------------------------------------------------- doctrine
@@ -1547,6 +2453,6 @@ mj_capture_records() {
   elif [ "$shape" != 0 ]; then
     mj_doctrine_fail capture "$rel" "$shape record(s) are not a $MJ_CAPTURE_SCHEMA object: $(printf '%s' "$out" | sed -n 's/^SHAPE .*\///p' | head -n 3 | tr '\n' ' ')" "majordomus capture render   # reformats a record written by an older version"
   else
-    mj_doctrine_ok capture "$rel" "$n record(s), $(du -sk "$dir" 2>/dev/null | awk '{ print $1 }') KiB, each an object of $MJ_CAPTURE_SCHEMA carrying the person's prompt only; nothing prunes them"
+    mj_doctrine_ok capture "$rel" "$n record(s), $(du -sk "$dir" 2>/dev/null | awk '{ print $1 }') KiB, each an object of $MJ_CAPTURE_SCHEMA carrying the person's prompt only"
   fi
 }

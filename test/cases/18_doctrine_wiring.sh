@@ -48,13 +48,25 @@ RULES="$T/.ai/repo/rules/vendor/majordomus/rules"
 cp -R "$RULES" "$T/rules.orig"
 wire
 
-# a healthy tree passes, and says so in one line naming a derived count
+# A healthy tree passes, and says so in one line naming a derived count — and the count
+# carries its denominator. The line used to read "41 doctrines — validator, dispatch,
+# propagation, test and CI resolve for every one" while the same run reported 122 rules;
+# "every one" meant every one of 41 and no reader could tell. Both numbers are asserted
+# here, in that order, so the subset can never again be phrased as the whole
+# (project.a-verdict-states-its-subject).
 expect_exit 0 "$MJ" doctor
-expect_grep 'OK +doctrine +[0-9]+ doctrines .* validator, dispatch, propagation, test and CI resolve'
+expect_grep 'OK +doctrine +[0-9]+ of [0-9]+ rule\(s\) carry a validator .* validator, dispatch, propagation, test and CI resolve for every one of the [0-9]+'
+expect_grep 'OK +doctrine .* the remaining [0-9]+ declare no validator and this check does not examine them'
+expect_grep 'OK +rules +[0-9]+ rule\(s\) .* [0-9]+ carry a validator, [0-9]+ are normative text this tool does not check'
 
-# `doctrine status` derives its counts; nothing is written down
+# `doctrine status` derives its counts; nothing is written down. Its numbers are statements
+# about the registry, which is a minority of the rule set, so the registry's size and the
+# set's size are printed together and the blocking rules outside it are named rather than
+# left where only another surface can see them.
 expect_exit 0 "$MJ" doctrine status
+expect_grep 'declared doctrines:   [0-9]+ of [0-9]+ rule\(s\) in the effective set'
 expect_grep 'missing validators:   0'
+expect_grep 'blocking rules with no validator, outside this registry: [0-9]+'
 expect_grep 'without a test file:  0'
 expect_exit 0 "$MJ" doctrine list
 expect_grep 'majordomus.scope-integrity +blocking +mj_validate_scope'

@@ -19,10 +19,10 @@ use majordomus_cli::bench::{
 };
 use majordomus_cli::capability::handler::handler;
 use majordomus_cli::capability::{
-    builtin, Availability, BenchmarkCases, BenchmarkPolicy, CachePolicy, CanonicalSchema,
-    Capability, CapabilityError, CapabilityId, CapabilityKind, CapabilityRegistry, CaseContext,
-    Context, Executable, Exposure, HttpExposure, HttpMethod, McpExposure, ModuleId, NamedCase,
-    Provenance as Origin, Stability, Visibility, WaiverReason,
+    builtin, Availability, BenchmarkCases, BenchmarkPolicy, BenchmarkPrecondition, CachePolicy,
+    CanonicalSchema, Capability, CapabilityError, CapabilityId, CapabilityKind, CapabilityRegistry,
+    CaseContext, Context, Executable, Exposure, HttpExposure, HttpMethod, McpExposure, ModuleId,
+    NamedCase, Provenance as Origin, Stability, Visibility, WaiverReason,
 };
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -208,10 +208,10 @@ fn the_shipped_registry_is_fully_covered_and_every_target_traces_to_a_capability
                 ..
             } => {
                 let c = ctx.registry.get(id).expect("a target names a capability");
-                assert_eq!(
-                    c.benchmark,
-                    BenchmarkPolicy::Required,
-                    "{id} is a target and its descriptor waived it"
+                assert!(
+                    c.benchmark.is_target(),
+                    "{id} is a target and its descriptor waived it: {:?}",
+                    c.benchmark
                 );
                 match transport {
                     Transport::Mcp => assert_eq!(
@@ -234,7 +234,7 @@ fn the_shipped_registry_is_fully_covered_and_every_target_traces_to_a_capability
     for c in ctx
         .registry
         .iter()
-        .filter(|c| c.kind.is_executable() && c.benchmark == BenchmarkPolicy::Required)
+        .filter(|c| c.kind.is_executable() && c.benchmark.is_target())
     {
         if c.exposure.mcp.as_ref().is_some_and(|m| m.tool.is_some()) {
             assert!(
@@ -359,6 +359,134 @@ fn exposure_and_policy_decide_the_targets_and_the_requirements_with_no_other_edi
         .all(|l| l.state == CoverageState::Waived && l.reason.as_deref() == Some("destructive")));
     assert!(!cov.is_complete() && cov.has_no_missing());
     assert_eq!(cov.tallies["total"].waived, 2);
+}
+
+/// `plan.transition` in a repository whose plan holds nothing — the repository
+/// `majordomus init` writes.
+///
+/// `Fixture::new` writes `I0001`, so the case provider always found an issue here and the
+/// empty plan was never exercised: the provider produced no case, and coverage reported
+/// `missing 3` (direct, MCP, HTTP) in every fresh repository.
+///
+/// The requirement is conditional, and declared so on the descriptor
+/// (`BenchmarkPolicy::RequiredWhen { precondition: PlanHoldsAnIssue }`): every case of a
+/// command that writes is a refusal chosen from an issue's own status, and a plan with no
+/// issue has no such refusal to time. So the lines are `inapplicable`, with the
+/// precondition as their reason — never `covered`, which would claim a measurement nobody
+/// took, and never `waived`, which would say it is never timed.
+#[test]
+fn coverage_is_complete_in_a_repository_whose_plan_holds_nothing() {
+    let f = Fixture::new();
+
+    // the contrast first: with an issue in the plan, the requirement is an ordinary one
+    let with_issue = {
+        let app = common::load_app(&f);
+        let ctx = app.context.clone();
+        let p = BenchmarkProjection::from_context(&ctx);
+        Coverage::compute(&ctx, &p)
+    };
+    let lines: Vec<_> = with_issue
+        .lines
+        .iter()
+        .filter(|l| l.subject == "plan.transition")
+        .collect();
+    assert_eq!(
+        lines.len(),
+        3,
+        "plan.transition is required on all three transports"
+    );
+    assert!(
+        lines
+            .iter()
+            .all(|l| l.state == CoverageState::Covered && l.cases == 1),
+        "with an issue in the plan every transport has its refusal case\n{}",
+        with_issue.render()
+    );
+
+    f.remove(".ai/repo/project/issues/I0001.yaml");
+    f.commit("the plan holds nothing");
+    let app = common::load_app(&f);
+    let ctx = app.context.clone();
+    let p = BenchmarkProjection::from_context(&ctx);
+    let coverage = Coverage::compute(&ctx, &p);
+    let lines: Vec<_> = coverage
+        .lines
+        .iter()
+        .filter(|l| l.subject == "plan.transition")
+        .collect();
+    assert_eq!(
+        lines.len(),
+        3,
+        "an empty plan does not remove the requirement from the denominator"
+    );
+    assert!(
+        lines.iter().all(|l| l.state == CoverageState::Inapplicable
+            && l.cases == 0
+            && l.reason.as_deref() == Some("plan_holds_an_issue")),
+        "an empty plan makes plan.transition inapplicable, naming the precondition\n{}",
+        coverage.render()
+    );
+    assert!(coverage.has_no_missing(), "{}", coverage.render());
+    assert_eq!(coverage.tallies["total"].missing, 0);
+    assert_eq!(coverage.tallies["total"].inapplicable, 3);
+    assert!(coverage
+        .render()
+        .contains("INAPPLICABLE plan.transition on direct (plan_holds_an_issue)"));
+}
+
+/// The precondition is not a waiver: when it holds and the input produces no case, the
+/// requirement is missing, exactly as an unconditional one would be.
+#[test]
+fn a_conditional_requirement_whose_precondition_holds_is_missing_without_a_case() {
+    let f = Fixture::new(); // holds I0001
+    let ctx = context(
+        &f,
+        vec![fixture::<NoCaseIn>(
+            "fixture.conditional",
+            true,
+            true,
+            BenchmarkPolicy::RequiredWhen {
+                precondition: BenchmarkPrecondition::PlanHoldsAnIssue,
+            },
+            CachePolicy::Disabled,
+        )],
+    );
+    let p = BenchmarkProjection::from_context(&ctx);
+    let cov = Coverage::compute(&ctx, &p);
+    let lines: Vec<_> = cov
+        .lines
+        .iter()
+        .filter(|l| l.subject == "fixture.conditional")
+        .collect();
+    assert_eq!(lines.len(), 3);
+    assert!(
+        lines.iter().all(|l| l.state == CoverageState::Missing),
+        "{}",
+        cov.render()
+    );
+    assert!(!cov.has_no_missing());
+
+    // and with cases it is timed like any other requirement
+    let ctx = context(
+        &f,
+        vec![fixture::<EchoIn>(
+            "fixture.conditional",
+            true,
+            true,
+            BenchmarkPolicy::RequiredWhen {
+                precondition: BenchmarkPrecondition::PlanHoldsAnIssue,
+            },
+            CachePolicy::Disabled,
+        )],
+    );
+    let p = BenchmarkProjection::from_context(&ctx);
+    assert_eq!(p.of_capability("fixture.conditional").count(), 6);
+    let cov = Coverage::compute(&ctx, &p);
+    assert!(cov
+        .lines
+        .iter()
+        .filter(|l| l.subject == "fixture.conditional")
+        .all(|l| l.state == CoverageState::Covered && l.cases == 2));
 }
 
 #[test]

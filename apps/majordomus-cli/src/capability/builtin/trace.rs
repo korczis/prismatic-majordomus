@@ -160,7 +160,7 @@ fn issue_ids(index: &Index) -> Vec<String> {
         .filter(|o| o.kind == "issue")
         .map(|o| o.identity.clone())
         .collect();
-    ids.sort();
+    crate::order::canonical(&mut ids);
     ids
 }
 

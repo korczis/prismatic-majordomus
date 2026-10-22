@@ -34,6 +34,27 @@ echo "==> shellcheck"
 # shellcheck disable=SC2086
 shellcheck -x -s bash -S warning $scripts
 shellcheck -x -s bash -S warning test/cases/*.sh
+# A gate that counts its findings in a variable and raises one inside a loop fed by a pipe
+# (`... | while read -r l; do fail "$l"; done`) loses every one of them: bash runs that loop in a
+# subshell, so the finding is printed and the count, and the exit status, never see it. That is
+# how eighteen of site-check's checks printed FAIL and passed. Every script that defines such a
+# counting function is read for calls to it inside a pipeline loop. The scanner is run against
+# a fixture whose answer is known first, so a scanner that stopped finding them cannot pass for
+# a clean tree; and a script it cannot read to the end is a failure, not a pass.
+echo "==> no counting call inside a pipeline loop"
+pc_awk=scripts/lib/pipeline-counts.awk; pc_fixture=scripts/lib/pipeline-counts.fixture
+pc_want="5 8 15 17 25 32"
+pc_got="$(LC_ALL=C awk -v FNS=bad -f "$pc_awk" "$pc_fixture" | sed -E 's#^[^:]*:([0-9]+):.*#\1#' | tr '\n' ' ' | sed 's/ $//')"
+[ "$pc_got" = "$pc_want" ] || { echo "shell-lint: $pc_awk found lines [$pc_got] in $pc_fixture, whose answer is [$pc_want]; the scanner is not trustworthy"; exit 1; }
+pc_hits=0
+for f in $scripts; do
+  fns="$(LC_ALL=C awk -f scripts/lib/counting-functions.awk "$f" | sort -u | tr '\n' '|' | sed 's/|$//')"
+  [ -n "$fns" ] || continue
+  rc=0; out="$(LC_ALL=C awk -v FNS="$fns" -f "$pc_awk" "$f")" || rc=$?
+  [ "$rc" = 0 ] || { echo "shell-lint: $out"; echo "shell-lint: $pc_awk could not read $f to the end"; exit 1; }
+  [ -z "$out" ] || { printf 'shell-lint: %s\n' "$out"; pc_hits=1; }
+done
+[ "$pc_hits" = 0 ] || { echo "shell-lint: a counting call inside a pipeline loop is lost to a subshell; read the loop's input from a file (\`done < file\`) instead"; exit 1; }
 # The installer is POSIX shell, not bash, and is generated: it is linted as what it is, and
 # as what is actually published rather than as its template.
 if [ -f site/static/install.sh ]; then

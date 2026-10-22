@@ -5,17 +5,17 @@ kind: feature
 title: Rules a machine decides, wired, tested and CI-blocking
 short_title: Doctrine
 headline: A rule is enforced when a validator decides it, a command runs it, a test proves it and CI blocks on it; anything less is documentation, and the tool knows the difference.
-summary: Every rule is a portable Markdown object with front matter; a rule the tool enforces names its validator, the commands that dispatch it and the tests that prove it, and doctor walks that chain from the source, refusing a validator nobody declares and a declaration nothing runs; a blocking violation stops the command and an advisory one is reported.
+summary: Every rule is a portable Markdown object with front matter, and it is enforced in one of three declared modes: a validator the dispatcher runs, a gate or case that proves it, or a stated reason why no program can express it. Doctor walks the dispatch chain from the source, refusing a validator nobody declares and a declaration nothing runs; the proof graph walks the other relation, joining each rule to the tree and to the runs recorded against it, so that a rule naming a case which was deleted is reported as reading enforced rather than being it.
 status: stable
 weight: 70
 featured: true
 areas: [governance, verification]
-modules: [health]
+modules: [health, rules]
 commands: [rules, doctrine, doctor, check, watch]
 kinds: [rule]
-rules: [project.rule-is-a-doctrine, majordomus.doctrine-wiring-integrity, majordomus.enforcement-wiring, majordomus.rule-package-integrity, project.no-claim-without-test]
+rules: [project.rule-is-a-doctrine, majordomus.doctrine-wiring-integrity, majordomus.enforcement-wiring, majordomus.rule-package-integrity, project.no-claim-without-test, project.english-only, project.finding-carries-reproduce]
 docs: [docs/DOCTRINE.md, docs/DOGFOODING.md]
-claims: [doctrine-registry, doctrine-class-decides, dispatcher-wiring, wiring-reconciliation, vendored-rule-package, rule-resolution, drift-watch]
+claims: [doctrine-registry, doctrine-class-decides, dispatcher-wiring, wiring-reconciliation, vendored-rule-package, rule-resolution, drift-watch, rule-proof-is-named-and-resolves, rule-exemption-carries-its-reason, rule-state-is-derived-from-what-ran, authored-files-are-english, a-finding-names-how-to-see-it-again]
 use_cases: [prove-a-rule-is-enforced, read-the-rules-the-tool-applies, gate-ci-on-the-tool-itself, find-out-what-drifted]
 cockpit: [health]
 related: [finish-contract, policy]

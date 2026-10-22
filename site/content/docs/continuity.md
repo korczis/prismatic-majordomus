@@ -170,14 +170,24 @@ nothing else; every other record is written exactly as before.
 
 They are easy to conflate and expensive to conflate.
 
-A **checkpoint** is a progress note inside an active task. It is written often, it is
-short by policy (`checkpoint.max_body_lines`), and its job is to be quotable whole into
-the next briefing. "Reproduced the fault with the fixture; the cause is in normalisation,
-not comparison; next, write the regression test."
+A **checkpoint** is a progress note of an episode. It is written often, it is short by
+policy (`checkpoint.max_body_lines`), and its job is to be quotable whole into the next
+briefing. "Reproduced the fault with the fixture; the cause is in normalisation, not
+comparison; next, write the regression test."
 
 A **handover** is a deliberate continuation package written when a worker stops. It has
 required sections, it is refused if any of them is empty, and it is the thing another
 worker resumes from. It is written rarely.
+
+**Neither of them belongs to a task.** Both name the task they were written under when
+there is one, and both are written when there is not. A task is a unit of intended work
+that somebody opens and closes; an episode is a provider's conversation boundary that
+begins when a client attaches and ends when it detaches. Making the records depend on the
+first means that the ordinary act of finishing a task disables continuity for every episode
+after it — which is not a hypothetical. Between 2026-09-05 and 2026-09-11 this repository
+wrote neither record, because a task had been marked `handed_over` and three separate
+guards each asked, correctly against their own contract, whether a task was `active`. ADR
+0052 removed the premise they shared.
 
 A checkpoint that grows into a report is refused rather than truncated, with the
 suggestion to write a handover instead. The cap is the mechanism that keeps the two
@@ -312,23 +322,59 @@ about to build. That is the one moment at which a continuation record reaches a 
 without the worker asking for it, and it is the difference between a record that is written
 automatically and one that is also read.
 
-```
-provider fires SessionStart
-        |
-        +--> session opens (or the open one is kept)
-        +--> the working context is frozen
-        +--> the briefing goes to stdout: the episode, the resolved handover with its
-        |    divergence label, the blockers, and the one section to act on
-        v
-   work happens
-        |
-provider fires PreCompact
-        +--> a derived checkpoint, because the conversation is about to stop holding it
-        |
-provider fires SessionEnd
-        +--> a derived handover, when the task is still active
-        +--> the episode closes into its envelope of references
-```
+<pre class="mermaid">
+flowchart TD
+  ss["provider fires SessionStart"]
+  opens["session opens (or the open one is kept)"]
+  frozen["the working context is frozen"]
+  brief["the briefing goes to stdout: the episode, the resolved&lt;br&gt;handover with its divergence label AND its freshness,&lt;br&gt;the blockers, and — only when the record is still&lt;br&gt;current — the one section to act on"]
+  work["work happens"]
+  pc["provider fires PreCompact"]
+  cp1["a derived checkpoint, because the conversation&lt;br&gt;is about to stop holding it"]
+  se["provider fires SessionEnd"]
+  cp2["a derived checkpoint, for the same reason: the close&lt;br&gt;is the other moment at which what the episode knows&lt;br&gt;stops being reachable"]
+  ho["a derived handover"]
+  env["the episode closes into its envelope of references"]
+
+  ss --&gt; opens
+  ss --&gt; frozen
+  ss --&gt; brief
+  ss --&gt; work
+  work --&gt; pc
+  pc --&gt; cp1
+  pc --&gt; se
+  se --&gt; cp2
+  se --&gt; ho
+  se --&gt; env
+</pre>
+
+
+Every one of those arrows fires whether or not a task is open and whatever outcome the last
+task reached, and each event writes a `provider.event.received` line to the ledger *before*
+any of them is decided. A hook must return success to its provider — blocking somebody's
+work is the worse failure — but returning success is not the same as claiming the work
+happened, and without the receipt an event that never fired and an event that fired and did
+nothing are the same observation afterwards.
+
+## Divergence is not freshness
+
+Every record carries two independent judgements and they answer different questions.
+
+**Divergence** — `exact`, `advanced`, `diverged`, `different_context` — says where the
+record's commit sits relative to this checkout's HEAD. **Freshness** — `fresh`, `aging`,
+`stale`, `unknown`, `invalid` — says how old it is, against `session.freshness` in the
+policy, which is the only place either threshold is written.
+
+A record is `advanced` on the day it is written and still `advanced` a month later:
+`advanced` means its commit is an ancestor of HEAD, which sounds like agreement and says
+nothing whatever about time. A record that is both `advanced` and `stale` is the exact
+shape of the 2026-09-05 outage, and it is the reason the two are reported side by side.
+
+A stale record is history. The briefing still shows it — knowing what the last worker was
+doing is worth having — but it is labelled as historical, its age and the reason are
+stated, and its `Next Action` is deliberately **not** quoted as the thing to do now. An
+instruction that was correct six days ago, handed over without qualification, is worse than
+no instruction: the worker cannot tell it is wrong until after acting on it.
 
 The episode belongs to the provider session that opened it, and not to the checkout. Two
 windows of the same provider open on one worktree are two workers: each start event opens
@@ -365,32 +411,116 @@ account of events the ledger already holds is what this design refuses.
 It is served and never published. Those records name this machine, so no generated document
 and no site page carries one, and a test proves it.
 
+### One episode, and then the rest of them
+
+`continuity.state` answers about **one** episode: the one `state/session-current.yaml`
+resolves to. That is the right answer for a briefing — a worker wants its own episode, not a
+census — and it is the wrong answer for anybody asking whether the subsystem is working,
+because the pointer is a symlink that the most recent start event re-aims. On 2026-09-11
+this repository held five open episodes in one checkout and no surface the tool has could
+name more than one of them. An episode nobody can see is an episode that never closes.
+
+So there is a second reading, `lifecycle.*`, which reads the **store** rather than the
+pointer and answers the operator's questions instead of the worker's:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| Capability | Answers | Where the answer comes from |
+|---|---|---|
+| `lifecycle.episodes` | every open episode, its provider session, where it stands (`current`, `open`, `foreign`, `stranded`), the tasks it touched, and what the ledger last saw it do | `state/sessions-open/*.yaml`, `state/session-current.yaml`, `state/ledger.jsonl` |
+| `lifecycle.recovery` | episodes that can no longer close themselves, temporary files a killed close left in the tracked section, whether the pointer has been migrated, and whether every episode the ledger saw start is accounted for | the same store, plus the sessions section the manifest names |
+| `lifecycle.runtime` | the commit this process is answering about, against the commit the repository is on right now | the served index's git state, and `git` read on the call |
+| `lifecycle.providers` | which lifecycle events each provider's adapter declares, whether it can archive prompts, and which of this repository's enforcement entries are wired to its hook | `share/providers.yaml` and the policy's `enforcement` |
+| `lifecycle.closed` | the tracked records a clone receives: how many, how many on this branch, and the newest twenty | the object index, kind `session` |
+
+</div>
+
+
+Each is exposed over MCP and over `GET /api/v1/lifecycle/<name>`, and the Cockpit's
+Continuity page is their projection. None of them writes: the lifecycle has one writer, and
+a second account of events the ledger already holds is what this design refuses.
+
+Two things are deliberately **not** among them.
+
+**No clock and no thresholds.** Nothing in `lifecycle.*` decides that a record is old. Age
+is `session.freshness` in the policy and `continuity.state`'s to judge; a second engine for
+it here would be the second source of truth that makes the numbers disagree. (`session.freshness`
+and the `fresh | aging | stale | unknown | invalid` labels are ADR 0052's and arrive with it;
+until they do, a record carries its divergence label and its recorded timestamp, and a reader
+does the arithmetic. The whole point of ADR 0052 is that a reader should not have to.)
+
+**No guess about attachment.** Whether the provider that opened an episode is still attached
+to its conversation is not a fact of this repository. The episode file records no process,
+the peer board records no episode, and a client that exits without firing its end event
+leaves a file identical to one a live worker is using. What `lifecycle.episodes` reports is
+what it can observe — where the file is, whose worktree it names, whether the pointer
+follows it, and when the ledger last saw it write — and `stranded` is reserved for the one
+case the repository can actually establish: the worktree the episode opened in is gone from
+disk, so nothing can compose its record.
+
+### The whole path, once
+
+Everything above is one path, and it is worth seeing whole. Every box is a thing that
+exists; the labels on the arrows are what has to be true for the next box to be reached.
+
+<pre class="mermaid">
+flowchart TD
+  cmd["a person runs a command&lt;br&gt;or opens an editor"]
+  conv["a provider starts a conversation&lt;br&gt;(Claude Code: SessionStart)"]
+  entry["ENTRY&lt;br&gt;bin/majordomus, .envrc, or the hook shim"]
+  runtime["RUNTIME ENSURED&lt;br&gt;serve ensure: one shared server per checkout,&lt;br&gt;started if none answers, never built"]
+  client["CLIENT ATTACHED&lt;br&gt;MCP over stdio or HTTP; the peer board is what&lt;br&gt;the other workers can see"]
+  episode["EPISODE OPENED&lt;br&gt;keyed by the provider session, not by the checkout:&lt;br&gt;state/sessions-open/&amp;lt;provider session&amp;gt;.yaml and the pointer&lt;br&gt;aimed at it. --if-open keep returns this provider&lt;br&gt;session's episode and no other."]
+  fresh["FRESHNESS VALIDATED&lt;br&gt;the resolved handover and checkpoint carry two independent&lt;br&gt;labels: divergence (where their commit sits) and freshness&lt;br&gt;(how old they are). A stale record is shown as history;&lt;br&gt;its Next Action is not quoted as the thing to do now.&lt;br&gt;[ADR 0052]"]
+  context["CONTEXT PROJECTED&lt;br&gt;the briefing, within session.briefing_budget_lines, frozen&lt;br&gt;into local/session-contexts/ as the working context —&lt;br&gt;what this episode was told, never rewritten"]
+  events["WORK AND EVENTS&lt;br&gt;every command appends one ledger line, stamped with the&lt;br&gt;episode that wrote it. A line with no episode belongs to&lt;br&gt;none: work outside a session is attributed to nobody&lt;br&gt;rather than to whoever was open nearby."]
+  checkpoints["CHECKPOINTS&lt;br&gt;written by hand, and derived on PreCompact — the moment&lt;br&gt;the conversation stops being a place anything is kept.&lt;br&gt;An artefact of the episode: no task required."]
+  closing["CLOSE AND HANDOVER&lt;br&gt;SessionEnd closes the episode and, when work is still open,&lt;br&gt;writes the continuation record. The envelope's reference&lt;br&gt;lists are computed from the ledger at close, never&lt;br&gt;accumulated during the episode."]
+  record[".ai/repo/sessions/&amp;lt;stamp&amp;gt;--&amp;lt;episode&amp;gt;--&amp;lt;branch&amp;gt;--&amp;lt;head&amp;gt;--&amp;lt;digest&amp;gt;.md&lt;br&gt;TRACKED. The only half of this that survives a clone:&lt;br&gt;everything under .ai/local/ names this machine and&lt;br&gt;travels nowhere."]
+  resume["A FUTURE RESUME&lt;br&gt;locally, the next episode's briefing resolves the records of&lt;br&gt;this worktree and branch; elsewhere, a clone receives the&lt;br&gt;closed records and reads them as history, because a record&lt;br&gt;is evidence and never authority."]
+  watching["and, beside the path, watching it:&lt;br&gt;lifecycle.episodes · lifecycle.recovery · lifecycle.runtime&lt;br&gt;lifecycle.providers · lifecycle.closed · continuity.state&lt;br&gt;projected together on the Cockpit's /cockpit/continuity"]
+
+  cmd &amp; conv --&gt; entry
+  entry --&gt; runtime --&gt; client --&gt; episode --&gt; fresh --&gt; context
+  context --&gt; events --&gt; checkpoints --&gt; closing --&gt; record --&gt; resume
+</pre>
+
+
+One box in that path is marked, because it is the newest and the one this repository most
+recently did without: **freshness validated** is a step, not a property of the record.
+Without it a handover that was `advanced` — a true statement about git topology, and
+identically true on the day it was written and a month later — was quoted into every new
+episode for six days after the work it described was finished. The decision, the thresholds
+and the labels are ADR 0052's, "The
+session lifecycle is the episode's, not the task's"; every other box in the path is behaviour this tree already has. And the **tracked** box is where the local
+half stops: a clone receives the closed records and nothing else, which is why no generated
+document and no site page may carry a briefing, a working context or an open episode.
+
 ## Where the lifecycle puts each piece
 
-```
-majordomus start "<task>" --scope <paths> [--profile <name>]
-        |                                  names any prior record for this branch
-        v
-majordomus context                         the briefing, within budget
-        |
-        v
-   work happens (Majordomus is not involved)
-        |
-        +---> majordomus checkpoint        progress, often, short
-        +---> majordomus decision add      what was decided and why
-        +---> majordomus question add      what is unresolved, and it now blocks
-        |
-        v
-majordomus check                           scope, state, blockers, store integrity
-        |
-        +-- not finished --> majordomus handover   ---> the next session runs context
-        |
-        v
-majordomus finish --outcome <...> --verify-command "<cmd>"
-        |
-        v
-majordomus history                         the lifecycle, reconstructable
-```
+<pre class="mermaid">
+flowchart TD
+  st["majordomus start #quot;&amp;lt;task&amp;gt;#quot; --scope &amp;lt;paths&amp;gt; [--profile &amp;lt;name&amp;gt;]&lt;br&gt;names any prior record for this branch"]
+  ctx["majordomus context&lt;br&gt;the briefing, within budget"]
+  work["work happens (Majordomus is not involved)"]
+  cp["majordomus checkpoint&lt;br&gt;progress, often, short"]
+  dec["majordomus decision add&lt;br&gt;what was decided and why"]
+  qq["majordomus question add&lt;br&gt;what is unresolved, and it now blocks"]
+  ck["majordomus check&lt;br&gt;scope, state, blockers, store integrity"]
+  ho["majordomus handover"]
+  nxt["the next session runs context"]
+  fin["majordomus finish --outcome &amp;lt;...&amp;gt; --verify-command #quot;&amp;lt;cmd&amp;gt;#quot;"]
+  hist["majordomus history&lt;br&gt;the lifecycle, reconstructable"]
+
+  st --&gt; ctx --&gt; work
+  work --&gt; cp
+  work --&gt; dec
+  work --&gt; qq
+  work --&gt; ck
+  ck --&gt;|"not finished"| ho --&gt; nxt
+  ck --&gt; fin --&gt; hist
+</pre>
+
 
 ## What this does not do
 

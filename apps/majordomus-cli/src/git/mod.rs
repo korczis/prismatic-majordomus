@@ -129,10 +129,71 @@ pub fn ls_files_any(root: &Path, pathspecs: &[&str]) -> Result<Vec<String>> {
     ls_files_with(root, pathspecs)
 }
 
+/// A `git` invocation against `root` that only ever reads: the one constructor every
+/// read in this crate goes through.
+///
+/// # Why a reader needs a constructor at all
+///
+/// `git status` refreshes the staging index as a side effect — when an entry's recorded
+/// stat data no longer matches the file, or is *racily* close to the index's own
+/// modification time, git rewrites `.git/index` with the refreshed data. Nothing about
+/// the repository changed; the reader changed the file it read.
+///
+/// That file is one of the six [`crate::live::WORKTREE_FILES`] the shared server stamps to
+/// decide whether the repository has moved. So a served page that asked git for the state
+/// of the working tree moved the stamp, and the *next* request found a stamp it did not
+/// recognise and paid a whole [`crate::app::App::load`] — discovery, every declared file
+/// read and validated, the registry, the Why catalogue, the product model, the web
+/// topology — to rebuild a picture that was already current. An observer that disturbs
+/// what it observes, and then charges the next caller for the disturbance.
+///
+/// `GIT_OPTIONAL_LOCKS=0` is git's own name for this: complete the request without any
+/// optional sub-operation that would take a lock, which is exactly the index write-back.
+/// Locks a command genuinely requires — `commit`, `add` — are unaffected, so this is safe
+/// on any invocation and is not a reason to keep two constructors.
+///
+/// `GIT_DIR` and `GIT_WORK_TREE` are removed for a second reason: inherited from a hook's
+/// environment they would silently redirect `-C root` at another repository.
+///
+/// ```
+/// use majordomus_cli::git::read_only;
+/// use std::process::Command;
+///
+/// let dir = tempfile::tempdir().unwrap();
+/// let git = |args: &[&str]| {
+///     Command::new("git").arg("-C").arg(dir.path()).args(args).output().unwrap()
+/// };
+/// git(&["init", "-q"]);
+/// git(&["config", "user.email", "t@example.com"]);
+/// git(&["config", "user.name", "t"]);
+/// std::fs::write(dir.path().join("a"), "a").unwrap();
+/// git(&["add", "-A"]);
+/// git(&["commit", "-qm", "one"]);
+///
+/// // the same answer a plain `git status` gives, with the staging index left alone —
+/// // which is the whole difference, since that file is what the server watches
+/// let index = dir.path().join(".git/index");
+/// let before = std::fs::metadata(&index).unwrap().modified().unwrap();
+/// let out = read_only(dir.path()).args(["status", "--porcelain"]).output().unwrap();
+/// assert!(out.status.success());
+/// assert!(out.stdout.is_empty(), "a committed tree is clean");
+/// assert_eq!(
+///     std::fs::metadata(&index).unwrap().modified().unwrap(),
+///     before,
+///     "reading the working tree must not rewrite the staging index"
+/// );
+/// ```
+pub fn read_only(root: &Path) -> Command {
+    let mut cmd = Command::new("git");
+    cmd.env("GIT_OPTIONAL_LOCKS", "0");
+    cmd.env_remove("GIT_DIR");
+    cmd.env_remove("GIT_WORK_TREE");
+    cmd.arg("-C").arg(root);
+    cmd
+}
+
 fn ls_files_with(root: &Path, pathspecs: &[&str]) -> Result<Vec<String>> {
-    let out = Command::new("git")
-        .arg("-C")
-        .arg(root)
+    let out = read_only(root)
         .args(["ls-files", "-z", "--"])
         .args(pathspecs)
         .output()
@@ -174,9 +235,7 @@ fn ls_files_with(root: &Path, pathspecs: &[&str]) -> Result<Vec<String>> {
 /// divergence label depends on, and a caller that had the whole command runner in order to
 /// ask it could ask anything.
 pub fn is_ancestor(root: &Path, ancestor: &str, descendant: &str) -> Option<bool> {
-    let out = Command::new("git")
-        .arg("-C")
-        .arg(root)
+    let out = read_only(root)
         .args(["merge-base", "--is-ancestor", ancestor, descendant])
         .output()
         .ok()?;
@@ -193,9 +252,7 @@ pub fn is_ancestor(root: &Path, ancestor: &str, descendant: &str) -> Option<bool
 }
 
 fn run(root: &Path, args: &[&str]) -> Result<String> {
-    let out = Command::new("git")
-        .arg("-C")
-        .arg(root)
+    let out = read_only(root)
         .args(args)
         .output()
         .map_err(|e| Error::Git {

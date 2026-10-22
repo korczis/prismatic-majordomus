@@ -11,6 +11,7 @@
 #   MAJORDOMUS_BIN            use this executable
 #   MAJORDOMUS_BUILD_PROFILE  debug (default) or release
 #   MAJORDOMUS_BANNER         auto (default), full, compact or off
+#   MAJORDOMUS_RUNTIME        auto (default) or off — whether entry brings the runtime up
 #
 # Exit codes are the executable's, except that a missing executable is 0: this runs on
 # every `cd`, and a non-zero exit there makes direnv report the whole environment failed.
@@ -54,6 +55,17 @@ fi
 # not start a compiler — so this is one line, and the work goes on with what is there.
 if mj_rust_stale "$root" "$bin"; then
   printf 'majordomus: the executable is older than the sources; what follows is the previous build. Run `just build`\n' >&2
+  # And no runtime from it. Since ADR 0043 entering this repository brings its shared server
+  # up, and a server started from stale code answers with a tree that is no longer there —
+  # to the Cockpit, to the API, and to every other worker attached to it, none of whom can
+  # see that the process is older than the checkout it claims to serve. That is the same
+  # refusal `lib/capture.sh` makes on the agent's entry path, decided by the same function,
+  # so a checkout where the two paths disagree cannot exist.
+  #
+  # Exported into this process only: direnv applies the assignments on stdout and nothing
+  # else, so it does not follow the person into their shell. When they build, the next `cd`
+  # ensures a runtime from the executable they just built.
+  export MAJORDOMUS_RUNTIME=off
 fi
 
 # The log is off unless somebody asked for it: entering a directory must not print

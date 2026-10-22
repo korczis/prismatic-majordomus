@@ -27,7 +27,9 @@
 
     <ul class="mt-6 grid gap-4 md:grid-cols-2" role="list" aria-live="polite">
       {%- for s in sk.skills -%}
-      <li x-show="(tag === 'all' || '{{ s.tags | join(sep=" ") }}'.split(' ').includes(tag)) && ('{{ s.id }} {{ s.title | lower }} {{ s.tags | join(sep=" ") }}'.includes(q.toLowerCase()))">
+      {#- data, not code: text interpolated into a JavaScript string breaks on the first apostrophe (see doctrines) -#}
+      <li data-tags="{{ s.tags | join(sep=" ") }}" data-text="{{ s.id | lower }} {{ s.title | lower }} {{ s.tags | join(sep=" ") | lower }}"
+          x-show="(tag === 'all' || $el.dataset.tags.split(' ').includes(tag)) && $el.dataset.text.includes(q.toLowerCase())">
         <a href="{{ get_url(path='/skills/' ~ s.id ~ '/', trailing_slash=true) }}" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
           <span class="mb-2 flex flex-wrap items-center gap-2"><code class="font-mono text-sm font-medium text-fg-brand">{{ s.id }}</code>{{ <badge status={s.status} /> }}<span class="font-mono text-xs text-body-subtle">v{{ s.version }}</span></span>
           <h2 class="text-lg font-semibold tracking-tight text-heading">{{ s.title }}</h2>

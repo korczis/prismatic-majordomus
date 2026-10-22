@@ -281,8 +281,19 @@ git checkout -- "$ENTRY"
 
 # ---------------------------------------------------------------- the one writer
 #
-# --dry-run writes nothing at all, and says which two files it would write.
-expect_exit 0 "$RB" release bump --dry-run
+# This fixture publishes release *records* and never commits a registry, so the public
+# contract of its releases cannot be read — and the writer says so rather than inventing a
+# floor. That is the honest answer and it is the one ADR 0051 requires: before it, the bump
+# was derived from the commit subjects here, which is the authority that was removed.
+expect_exit 12 "$RB" release bump --dry-run
+expect_grep 'the public contract cannot be measured here'
+expect_grep 'name the version deliberately'
+[ "$(sha256_of_file "$MANIFEST")" = "$before_manifest" ] || { echo "    a refused bump wrote to $MANIFEST"; exit 1; }
+[ "$(sha256_of_file "$ENTRY")" = "$before_entry" ] || { echo "    a refused bump wrote to $ENTRY"; exit 1; }
+
+# A version named deliberately is still written: refusing would make the command unusable in
+# exactly the repositories that most need to cut a first release. --dry-run writes nothing.
+expect_exit 0 "$RB" release bump --level minor --dry-run
 expect_grep 'would raise 1\.0\.0 -> 1\.1\.0'
 expect_grep "$MANIFEST"
 expect_grep "$ENTRY"
@@ -429,7 +440,9 @@ export ANTHROPIC_API_KEY=SENTINEL_ANTHROPIC_DO_NOT_LEAK
   "$RB" release changelog v1.0.0
   "$RB" release version
   "$RB" release version --format json
-  "$RB" release bump --dry-run
+  # Its exit code is not what this section asserts — only its output is scanned — and in
+  # this fixture it refuses, because no release here committed a registry to measure against.
+  "$RB" release bump --dry-run || true
   "$RB" capabilities describe release.changelog
   "$RB" capabilities describe release.version
   "$RB" commands show executable.release.bump
@@ -469,3 +482,97 @@ printf 'MJ_VERSION="%s"\n' "$("$ROOT/scripts/release-version")" > "$PROBE/bin/ma
 ( cd "$PROBE" && ./scripts/ci/release-check > "$S/probe2.out" 2>&1 ) || true
 grep -q 'CHANGELOG.md' "$S/probe2.out" || {
   echo "    the gate did not reject an authored changelog:"; cat "$S/probe2.out"; exit 1; }
+
+# --------------------------------------------- a published tag with no record is a finding
+#
+# The failure this covers is the one v0.7.0 had: six archives and a GitHub Release published,
+# and then the job that proposes the record's pull request failed (run 34965490909 — the
+# publish job held no `pull-requests: write`). The tag existed, the release page existed, the
+# crate said 0.7.0, master held no record, and the published latest.json went on naming
+# 0.6.0 to every installer. The only thing that was red was one job.
+#
+# The probe above is not a git checkout, so it cannot answer this; a second one is, with its
+# own tags and its own records — the two sources check 5 reads, and nothing else.
+TAGP="$S/tagprobe"; mkdir -p "$TAGP/scripts/ci" "$TAGP/apps/majordomus-cli/src/release" "$TAGP/bin" "$TAGP/.ai/repo/releases"
+cp "$ROOT/scripts/ci/release-check" "$TAGP/scripts/ci/"
+cp "$ROOT/scripts/release-version" "$TAGP/scripts/"
+cp "$ROOT/apps/majordomus-cli/Cargo.toml" "$TAGP/apps/majordomus-cli/"
+cp "$ROOT/apps/majordomus-cli/Cargo.lock" "$TAGP/apps/majordomus-cli/"
+cp "$ROOT/apps/majordomus-cli/src/release/version.rs" "$TAGP/apps/majordomus-cli/src/release/"
+# The version this checkout declares, so that the probe's one release is the one its crate
+# states and the checks either side of this one stay clean: what is measured here is the tag
+# against the record, and nothing else.
+TAGV="$("$ROOT/scripts/release-version")"
+printf 'MJ_VERSION="%s"\n' "$TAGV" > "$TAGP/bin/majordomus"
+(
+  cd "$TAGP" || exit 1
+  git init -q .
+  git config user.email t@example.com
+  git config user.name T
+  git add -A >/dev/null
+  git commit -qm "the tree the gate reads"
+  git tag "v$TAGV"
+)
+
+# the record of the one release this probe published
+tagprobe_record() {
+  cat > "$TAGP/.ai/repo/releases/v$TAGV.yaml" <<Y
+schema: release/v1
+version: "$TAGV"
+tag: v$TAGV
+channel: stable
+Y
+}
+
+# the positive half first: the one published tag has a record, and the gate passes
+tagprobe_record
+( cd "$TAGP" && ./scripts/ci/release-check > "$S/tag-ok.out" 2>&1; echo $? > "$S/tag-ok.code" ) || true
+[ "$(cat "$S/tag-ok.code")" = 0 ] || {
+  echo "    a tree whose every published tag has a record was not accepted (exit $(cat "$S/tag-ok.code")):"
+  cat "$S/tag-ok.out"; exit 1; }
+grep -q 'every published tag this checkout carries has a release record' "$S/tag-ok.out" || {
+  echo "    the gate did not state what it had measured:"; cat "$S/tag-ok.out"; exit 1; }
+
+# the negative half: the record is removed and nothing else changes. That is exactly the
+# state the failed publish job left master in, and it must be a finding naming the tag.
+rm "$TAGP/.ai/repo/releases/v$TAGV.yaml"
+( cd "$TAGP" && ./scripts/ci/release-check > "$S/tag-bad.out" 2>&1; echo $? > "$S/tag-bad.code" ) || true
+[ "$(cat "$S/tag-bad.code")" = 10 ] || {
+  echo "    a published tag with no release record did not fail the gate (exit $(cat "$S/tag-bad.code")):"
+  cat "$S/tag-bad.out"; exit 1; }
+grep -q "FAIL  v$TAGV is published and the layer holds no release record" "$S/tag-bad.out" || {
+  echo "    the refusal does not name the tag it is about:"; cat "$S/tag-bad.out"; exit 1; }
+
+# and the debt is recorded rather than absorbed: a baseline line excuses that one tag, names
+# it as debt, and the summary refuses to call the tree clean while it is there
+printf '# known debt\nv%s  # the record is in flight\n' "$TAGV" > "$TAGP/.ai/repo/release-record-baseline.txt"
+( cd "$TAGP" && ./scripts/ci/release-check > "$S/tag-debt.out" 2>&1; echo $? > "$S/tag-debt.code" ) || true
+[ "$(cat "$S/tag-debt.code")" = 0 ] || {
+  echo "    a recorded-debt tag still failed the gate (exit $(cat "$S/tag-debt.code")):"
+  cat "$S/tag-debt.out"; exit 1; }
+grep -q "v$TAGV has no release record and is recorded debt" "$S/tag-debt.out" || {
+  echo "    the excused tag was not named as debt:"; cat "$S/tag-debt.out"; exit 1; }
+grep -q 'every published tag this checkout carries has a release record' "$S/tag-debt.out" && {
+  echo "    a tree carrying excused debt was reported as clean:"; cat "$S/tag-debt.out"; exit 1; }
+
+# a baseline line the tree has outgrown is reported, so the list cannot rot
+tagprobe_record
+( cd "$TAGP" && ./scripts/ci/release-check > "$S/tag-stale.out" 2>&1 ) || true
+grep -q "note  v$TAGV is excused in .*: delete the line" "$S/tag-stale.out" || {
+  echo "    a cleared debt line was not reported:"; cat "$S/tag-stale.out"; exit 1; }
+
+# and a tree whose tags cannot be read is told so rather than passed quietly: the first probe
+# is these same scripts in a directory that is no git checkout at all
+grep -q 'the published tags could not be read here' "$S/probe2.out" || {
+  echo "    a tree whose tags cannot be read said nothing about it:"; cat "$S/probe2.out"; exit 1; }
+
+# the other half of the same honesty: records and no tags is a checkout whose tags were never
+# fetched, and answering "nothing to compare" there is the quiet pass this check is for
+rm "$TAGP/.ai/repo/release-record-baseline.txt"
+( cd "$TAGP" && git tag -d "v$TAGV" >/dev/null )
+( cd "$TAGP" && ./scripts/ci/release-check > "$S/tag-unfetched.out" 2>&1; echo $? > "$S/tag-unfetched.code" ) || true
+[ "$(cat "$S/tag-unfetched.code")" = 10 ] || {
+  echo "    a checkout with records and no tags was not reported (exit $(cat "$S/tag-unfetched.code")):"
+  cat "$S/tag-unfetched.out"; exit 1; }
+grep -q 'was not measured' "$S/tag-unfetched.out" || {
+  echo "    the unmeasured state was not named as unmeasured:"; cat "$S/tag-unfetched.out"; exit 1; }

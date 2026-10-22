@@ -9,6 +9,9 @@ status: active
 class: blocking
 depends_on: [project.interfaces-are-projections@1, project.rust-canonical-declaration@1, project.no-machine-paths@1]
 tags: [git, worktree, filesystem, safety, agents, coordination]
+
+x-majordomus:
+  tests: [test/cases/96_worktree_topology.sh, scripts/ci/worktree-check]
 ---
 
 # Rationale

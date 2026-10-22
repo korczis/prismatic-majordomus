@@ -9,6 +9,9 @@ status: active
 class: blocking
 depends_on: [project.interfaces-are-projections@1, project.native-cli-documented@1]
 tags: [architecture, capabilities, cli, api, rust]
+
+x-majordomus:
+  tests: [apps/majordomus-cli/tests/quality.rs]
 ---
 
 # Rationale

@@ -9,6 +9,9 @@ status: active
 class: advisory
 depends_on: [project.no-claim-without-test@1]
 tags: [performance, command]
+
+x-majordomus:
+  tests: [test/cases/79_bench_command.sh]
 ---
 
 # Rationale

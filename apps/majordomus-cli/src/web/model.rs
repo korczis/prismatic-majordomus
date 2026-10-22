@@ -395,6 +395,14 @@ impl Availability {
     }
 }
 
+/// A surface is presented by its id: the composition writes its artifact under that name,
+/// the topology reports it under that name, and the title is prose.
+impl crate::order::Ordered for Surface {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::plain(&self.id, &self.id)
+    }
+}
+
 /// One resolved surface: everything a consumer needs, with the provenance of what it could
 /// be surprised by.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]

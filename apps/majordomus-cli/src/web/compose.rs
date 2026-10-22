@@ -58,7 +58,7 @@ pub fn compose(topology: &Topology, root: &Path, destination: &Path) -> Result<C
 
     let mut files = BTreeMap::new();
     let mut ordered: Vec<_> = topology.surfaces.iter().filter(|s| s.publishes()).collect();
-    ordered.sort_by(|a, b| a.id.cmp(&b.id));
+    crate::order::canonical(&mut ordered);
     for surface in ordered {
         let Some(artifact) = surface.artifact.as_ref() else {
             continue;

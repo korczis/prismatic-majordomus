@@ -228,7 +228,7 @@ pub fn entrypoints(workflows: &[WorkflowDescriptor], order: &[String]) -> Vec<Wo
         .filter_map(|w| w.group.clone())
         .filter(|g| !groups.contains(g))
         .collect();
-    rest.sort();
+    crate::order::canonical(&mut rest);
     rest.dedup();
     groups.extend(rest);
 

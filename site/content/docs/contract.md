@@ -10,11 +10,11 @@ source = "AGENTS.md"
 
 This file is a bootstrap, not the rulebook. Read `README.md` for what this
 repository is. The provider-neutral AI context and governance layer lives under
-[`.ai/`](.ai/), and everything normative is there.
+[`.ai/`](https://github.com/korczis/prismatic-majordomus/tree/master/.ai), and everything normative is there.
 
 Before substantive planning, implementation, review or repository mutation:
 
-1. read [`.ai/README.md`](.ai/README.md) and follow its discovery protocol,
+1. read [`.ai/README.md`](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/README.md) and follow its discovery protocol,
 2. load the effective rules under `.ai/repo/rules/` and resolve their dependencies,
 3. load only the skills, workflows and knowledge the task is about,
 4. never load `.ai/local/` implicitly; it is this checkout's own state and not context.
@@ -48,14 +48,21 @@ A capability you add or change has use cases: run `majordomus usecase impact` an
 scenarios it names, and close a coverage gap (`majordomus usecase coverage`) with a use
 case that executes (`.ai/repo/workflows/use-cases.md`); `finish` refuses a required gap.
 
-You are probably not alone. One shared server serves this repository, and every worker
-attached to it is visible to every other through `majordomus_peers`. Announce what you are
-doing and the paths you expect to touch, with `majordomus_announce`, before you start — and
-again whenever the connection is re-established, because an announcement belongs to a
-connection and a worker that reconnects keeps its work while losing its place on the board.
-Read the board before you open a mandate and before you fan work out: two workers built the
-same subsystem in one afternoon because neither looked first. A scope announced there is a
-claim, not a lock; the task's own scope and `check --overlap` are what refuse a commit.
+You are probably not alone. A server serves the checkout it was started in, and a linked
+worktree is a checkout with a server of its own, so this repository has as many servers as
+it has worktrees being worked in. The board, however, is the repository's:
+`majordomus_peers` gathers every checkout's board and hands you every worker of this
+repository, each stamped with the worktree it is working in (ADR 0044). Check `complete` —
+`false` means a checkout could not be asked, and `boards` says which and why; a short board
+is not proof that nobody is there. Announce what you are doing and the paths you expect to
+touch, with `majordomus_announce`, before you start — and again whenever the connection is
+re-established, because an announcement belongs to a connection and a worker that reconnects
+keeps its work while losing its place on the board. A peer id (`p1`, `p2`) is a position on
+one board, reassigned on reconnect and reused by every other board: never correlate a worker
+across time by it — the checkout a peer carries is the durable half of its identity. Read
+the board before you open a mandate and before you fan work out: two workers built the same
+subsystem in one afternoon because neither looked first. A scope announced there is a claim,
+not a lock; the task's own scope and `check --overlap` are what refuse a commit.
 
 Push what you have, early. A branch whose commits reach no remote is invisible to every
 other worker, cannot be integrated by anyone but you, and is one disk away from being lost;

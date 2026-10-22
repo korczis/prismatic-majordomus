@@ -7,16 +7,17 @@
 # remains here is what no program implements: opening a browser, and building the
 # Cockpit's static assets.
 #
-# Neither recipe below opens the lease. `serve status` is the executable's one typed
-# reading of that file (ADR 0035, project.the-lease-is-read-once); `mcp-status` was a `cat`
-# of it and `open` a `sed` regular expression over JSON, which would have found nothing the
-# day anything wrote the document pretty-printed, and said "no server" rather than "I
-# cannot read this".
-
-# Where the repository's shared server is, and every other server of this repository.
-[group('serve')]
-mcp-status:
-    @bin/majordomus-cli serve status
+# No recipe below opens the lease. `serve status` is the executable's one typed reading of
+# that file (ADR 0035, project.the-lease-is-read-once); `open` was a `sed` regular
+# expression over JSON, which would have found nothing the day anything wrote the document
+# pretty-printed, and said "no server" rather than "I cannot read this".
+#
+# `mcp-status` was here too, as one call to `serve status` — a hand-written bridge, which
+# the generated one already writes as `serve-status`. The older name survives as a
+# compatibility alias declared beside the command line
+# (`command_graph::semantics::WORKFLOW_ALIASES`) and rendered into the bridge, never as a
+# recipe here. `open` stays: it asks `serve status` for one value and then does what no
+# command of either program does, which is open a browser.
 
 # Open a surface of the running shared server in a browser: `just open`, `just open cockpit`, `just open swagger`. The address is the one `serve status` reports for this checkout; the surfaces come from the server.
 [group('serve')]

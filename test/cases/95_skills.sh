@@ -200,6 +200,12 @@ rm -rf "$F/.ai/repo/skills"; mkdir -p "$F/.ai/repo/skills"
 cp -R "$ROOT/.ai/repo/skills/README.md" "$F/.ai/repo/skills/" 2>/dev/null || true
 cp -R .ai/repo/skills/review .ai/repo/skills/alpha "$F/.ai/repo/skills/"
 mkdir -p "$F/site/data" "$F/test"; cp "$ROOT/site/data/marketing.toml" "$ROOT/site/data/nav.toml" "$F/site/data/"; cp -R "$ROOT/site/content-src" "$ROOT/site/templates" "$ROOT/site/static" "$F/site/"; cp -R "$ROOT/test/cases" "$F/test/"
+# site/static/app.css is a Tailwind build product and is ignored, so whether it exists in
+# the tree depends on whether anyone has run a full build here. base.html links it with
+# cachebust=true, which makes zola read it, so the fixture build below passed on a machine
+# that had built the site and failed on a clean checkout — the fixture inheriting ambient
+# state, not a fact about skills. The fixture provides its own.
+[ -f "$F/site/static/app.css" ] || printf '/* fixture: no Tailwind build here. */\n' > "$F/site/static/app.css"
 git -C "$F" init -q; git -C "$F" config user.email fixture@example.invalid; git -C "$F" config user.name fixture
 git -C "$F" add -A >/dev/null; git -C "$F" commit -qm fixture
 expect_exit 0 "$F/scripts/generate-site-data"

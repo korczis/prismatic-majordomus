@@ -2,7 +2,8 @@
   "schema": 1,
   "name": "Prismatic Majordomus",
   "short_name": "Majordomus",
-  "version": "0.5.0",
+  "version": "0.7.0",
+  "release": "0.7.0",
   "tagline": "A lightweight supervisory control layer for AI-assisted work.",
   "license": "MIT",
   "repository_url": "https://github.com/korczis/prismatic-majordomus",
@@ -123,6 +124,11 @@
       "read_only": false
     },
     {
+      "name": "recover",
+      "summary": "bring this checkout's record stores back to what the contract describes",
+      "read_only": false
+    },
+    {
       "name": "update",
       "summary": "regenerate provider projections from policy",
       "read_only": false
@@ -150,6 +156,11 @@
     {
       "name": "bench",
       "summary": "time every public command, cold and warm, against the baseline",
+      "read_only": false
+    },
+    {
+      "name": "archive",
+      "summary": "a snapshot of the tracked tree, for reading or checking elsewhere",
       "read_only": false
     }
   ],

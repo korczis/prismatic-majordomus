@@ -12,7 +12,7 @@
 #
 # Adding pipefail to a script that already exists can change what it does — a pipeline
 # ending in `head` or `grep -q` may now fail where it used to be ignored — so this is a
-# ratchet rather than a sweep, the same shape as scripts/ci/projection-check. The scripts
+# ratchet rather than a sweep, the same shape as scripts/ci/rust-command-check. The scripts
 # that pipe under `set -e` without pipefail today are recorded in the baseline; the check
 # fails when a NEW one appears, and reports — without failing — every baseline entry that
 # has since been fixed, so the baseline can be tightened deliberately.
@@ -44,7 +44,11 @@ esac; done
 measured() {
   find scripts lib bin -type f 2>/dev/null | LC_ALL=C sort | while IFS= read -r f; do
     head -1 "$f" | grep -q '^#!.*sh' || continue
-    grep -q 'set -[a-z]*e' "$f" || continue
+    # in command position, not in prose: `lib/context.sh` explains in a comment why a
+    # construct is written "an `if`, not `[ ] &&`: under set -e …" and carries no `set -e`
+    # of its own, and the gate read the sentence as the setting and asked the file to add
+    # pipefail to a `set -e` that is not there.
+    grep -qE '^[[:space:]]*set -[a-z]*e' "$f" || continue
     grep -q ' | ' "$f" || continue
     printf '%s\n' "$f"
   done

@@ -50,6 +50,14 @@ fi
 # names, because a list of names is the same manually maintained catalogue this whole gate
 # exists to prevent.
 #
+# Spelling a command is not the same as *using* one. `just open` reads one value out of
+# `serve status` into a shell variable and then opens a browser — work no command of either
+# program does, and work the bridge therefore cannot write. So a line counts as spelling a
+# command only when the line *is* the invocation: after the leading whitespace, `@` and `-`
+# that `just` allows, it begins with a launcher. A program named inside a command
+# substitution, a pipeline or an assignment is a value the recipe consumed, not a name it
+# repeated, and the rule this gate carries says "a recipe whose body is a call".
+#
 # One recipe is still named: `bridge` is a single call, and it is the one that *writes* the
 # bridge, so it cannot come from it.
 #
@@ -75,10 +83,17 @@ while IFS= read -r file; do
     case "$line" in
       \#*) continue ;;
       [a-zA-Z_]*:*) close; recipe="${line%%[ :]*}"; calls=0; first_line="" ;;
-      *bin/majordomus*|*"{{rust_bin}}"*|*"{{shell_bin}}"*|*target/debug/majordomus\ *|*target/release/majordomus\ *)
+      *)
         [ -n "$recipe" ] || continue
-        calls=$((calls + 1))
-        [ -n "$first_line" ] || first_line="$(printf '%s' "$line" | sed 's/^[[:space:]]*//')"
+        # the line with its leading whitespace, `@` and `-` removed: what it *starts* with
+        # is what says whether it spells a command or merely uses one
+        spelled="$(printf '%s' "$line" | sed 's/^[[:space:]]*//; s/^[@-]*//; s/^[[:space:]]*//')"
+        case "$spelled" in
+          bin/majordomus*|'"{{rust_bin}}"'*|'{{rust_bin}}'*|'"{{shell_bin}}"'*|'{{shell_bin}}'*|'"{{majordomus_executable}}"'*|'"{{majordomus_tool}}"'*|target/debug/majordomus\ *|target/release/majordomus\ *)
+            calls=$((calls + 1))
+            [ -n "$first_line" ] || first_line="$spelled"
+            ;;
+        esac
         ;;
     esac
   done < "$file"

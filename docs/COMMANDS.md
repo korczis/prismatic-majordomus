@@ -149,13 +149,11 @@ graph no longer carries fails the build rather than pointing at nothing.
 
 There is one completion engine, and the shell adapters know nothing.
 
-```text
-   zsh / bash
-        │  words, cursor
-        ▼
-   generic adapter ──► majordomus completion query ──► CompletionEngine
-                                                            │
-                                              CommandGraph  +  value sources
+```mermaid
+flowchart LR
+  shell["zsh / bash"] -->|"words, cursor"| adapter["generic adapter"]
+  adapter --> query["majordomus completion query"] --> engine["CompletionEngine"]
+  engine --- sources["CommandGraph  +  value sources"]
 ```
 
 An adapter reads the words being completed, finds the cursor, asks the executable and prints
@@ -216,17 +214,23 @@ argument a typed value has already said everything a completion needs.
 # .envrc
 PATH_add bin
 watch_file .ai/local/state/mcp/server.json
-eval "$(bin/majordomus-env export --shell direnv --banner --bridge)"
+eval "$(bin/majordomus-env enter --shell direnv)"
 ```
 
-One call: the assignments on stdout for `eval`, the banner on stderr, and the bridge
-refreshed when a declaration behind it changed. Deciding whether a generated file is current
-is the tool's work — a staleness rule implemented in the shell entry point would be a second
-implementation running on every `cd` that nothing tests. The rule
-`project.envrc-is-an-adapter` holds that shut.
+One call, and it is the whole of entering: the assignments on stdout for `eval`, the banner
+on stderr, the workflow bridge refreshed when a declaration behind it changed, and this
+repository's shared server ensured when nothing is serving this checkout. Which of those are
+worth doing, and when each may be skipped, is the tool's work — a staleness rule or a
+liveness check implemented in the shell entry point would be a second implementation running
+on every `cd` that nothing tests. The rules `project.envrc-is-an-adapter` and
+`project.entry-converges` hold that shut, and ADR 0043 is the decision.
 
-Entering the repository never builds anything and never reaches the network. A checkout that
-has not built the executable yet prints one line naming the recipe that builds it and exits 0.
+Entering the repository never builds anything, never reaches a remote network, and never
+waits for a server it started to answer: the entry returns and `watch_file` over the lease
+brings the published address in when the server publishes one. A checkout that has not built
+the executable yet prints one line naming the recipe that builds it and exits 0 — and
+ensures no runtime, because a server started from stale code answers with a tree that is no
+longer there.
 
 ## Adding a command
 
@@ -333,13 +337,13 @@ Nothing time-dependent is in either, so two builds over one tree agree.
 
 A fresh clone has no bridge and no executable.
 
-```text
-clone
-  └─ direnv, or `just`
-       └─ the executable is absent: one line naming `just build`, exit 0
-            └─ just build
-                 └─ just bridge   (or the next `cd`)
-                      └─ every command of both programs, as a recipe
+```mermaid
+flowchart TD
+  clone["clone"] --> entry["direnv, or just"]
+  entry --> absent["the executable is absent:<br>one line naming just build, exit 0"]
+  absent --> build["just build"]
+  build --> bridge["just bridge<br>(or the next cd)"]
+  bridge --> recipes["every command of both programs, as a recipe"]
 ```
 
 The root justfile imports the bridge optionally, so a clone without one still has a

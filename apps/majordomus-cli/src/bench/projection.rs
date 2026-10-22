@@ -6,9 +6,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::capability::{
-    BenchmarkPolicy, CachePolicy, CapabilityKind, CapabilityRegistry, CaseContext, Context,
-};
+use crate::capability::{CachePolicy, CapabilityKind, CapabilityRegistry, CaseContext, Context};
 
 use super::system::SystemTarget;
 
@@ -128,7 +126,7 @@ impl BenchmarkProjection {
             if !c.kind.is_executable() || !c.stability.executable() {
                 continue;
             }
-            if c.benchmark != BenchmarkPolicy::Required {
+            if !c.benchmark.is_target() {
                 continue;
             }
             let Some(provider) = registry.cases(c.id.as_str()) else {

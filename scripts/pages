@@ -13,7 +13,19 @@
 #                                         build and check N times; JSON (milliseconds) on stdout,
 #                                         and with --write-baseline into the tracked baseline of
 #                                         this platform under .ai/repo/benchmarks/pages/
-#   scripts/pages report --timings FILE   the SLO verdict for a run, as a Markdown fragment
+#   scripts/pages report --timings FILE [--queue N] [--pages-build N] [--end-to-end N]
+#                       [--cold] [--advisory]
+#                                         the SLO verdict for a run: a Markdown fragment on
+#                                         $GITHUB_STEP_SUMMARY (stdout without it), one
+#                                         machine-readable `pages-slo` line always, and exit
+#                                         10 when the controlled path is over budget.
+#                                         --advisory reports a breach as a ::warning and
+#                                         exits 0: for the caller that measures a deployment
+#                                         which has already happened.
+#   scripts/pages built [--branch B] [--commit SHA] [--wait N] [--porcelain]
+#                                         GitHub's own "pages build and deployment" of that commit:
+#                                         0 built, 10 errored, 12 not determinable (no gh, no token,
+#                                         or GitHub has not built it yet)
 #   scripts/pages verify --url URL --commit SHA [--timeout N] [--quiet]
 #                                         poll the public site until it serves that commit;
 #                                         --timeout 0 is a single probe. 0 it serves it,
@@ -126,7 +138,25 @@ cmd_build() {
   else timed build "$ROOT/scripts/site-build" --no-data; fi
 }
 
-cmd_check() { timed check "$ROOT/scripts/site-check" --no-sync; }
+# The static checks over the output, and then the one question none of them asks: is any of
+# this the local half of the AI layer? `.ai/local/` holds the prompts a person typed, the
+# ledger and the session contexts, and it becomes public the moment the generator reads it.
+# The gate is cheap and it is on the publication path deliberately — the fast path is what
+# turns a commit into public bytes, so the check that those bytes are not somebody's prompts
+# belongs where the bytes are made, not only in a suite that runs beside it.
+cmd_check() {
+  timed check "$ROOT/scripts/site-check" --no-sync
+  # --no-probe: the gate's first question — does planting a file under the local root move the
+  # generator's input fingerprint — is a property of the tree, not of this build, and it costs
+  # two generations of the fingerprint. It belongs where tree properties are held
+  # (test/cases/181_local_is_never_published.sh, which runs it against this checkout) and not
+  # on a publication path whose whole budget is 120 seconds. What runs here are the two
+  # questions that are about these bytes: no published path under the local root, and no
+  # published file that is one of its records. Both are a find away, and on a runner — where
+  # the local half is empty, as it is on every fresh clone — the second says so rather than
+  # passing silently.
+  timed local-check "$ROOT/scripts/ci/local-never-published" --no-probe
+}
 
 # ---------------------------------------------------------------- the trigger paths
 # Derived, never written twice: the classes of the gate model that name the gate this model
@@ -154,20 +184,23 @@ cmd_paths() {
 }
 
 # ---------------------------------------------------------------- budgets
+# The warm phases are whatever the model declares, in the order it declares them. A list
+# repeated here is a list that drifts from the one the verdict is taken against, which is how
+# `fingerprint` and `local-check` came to be summed into `controlled` while no budget named
+# them and every job summary printed them with an empty budget cell.
 cmd_budget() {
+  local rows
+  rows="$(awk -F= '$1 ~ /^budget\.warm\./ { k = $1; sub(/^budget\.warm\./, "", k); print k "=" $2 }' "$FLAT")"
   if [ "${1:-}" = --json ]; then
-    jq -n --arg w "$(for k in checkout setup build check publish controlled; do printf '%s=%s\n' "$k" "$(m "budget.warm.$k")"; done)" \
-          --arg c "$(m budget.cold.controlled)" --arg e "$(m budget.end_to_end)" '
+    jq -n --arg w "$rows" --arg c "$(m budget.cold.controlled)" --arg e "$(m budget.end_to_end)" '
       { schema: 1,
         warm: ($w | split("\n") | map(select(length > 0)) | map(split("=") | {key: .[0], value: (.[1] | tonumber)}) | from_entries),
         cold: { controlled: ($c | tonumber) },
         end_to_end: ($e | tonumber) }'
   else
-    printf 'warm  %-12s %s s\n' checkout "$(m budget.warm.checkout)" setup "$(m budget.warm.setup)" \
-      build "$(m budget.warm.build)" check "$(m budget.warm.check)" publish "$(m budget.warm.publish)" \
-      controlled "$(m budget.warm.controlled)"
-    printf 'cold  %-12s %s s\n' controlled "$(m budget.cold.controlled)"
-    printf 'slo   %-12s %s s (push to publicly observable; reported, not enforced)\n' end_to_end "$(m budget.end_to_end)"
+    printf '%s\n' "$rows" | while IFS='=' read -r k v; do printf 'warm  %-14s %s s\n' "$k" "$v"; done
+    printf 'cold  %-14s %s s\n' controlled "$(m budget.cold.controlled)"
+    printf 'slo   %-14s %s s (push to publicly observable; reported, not enforced)\n' end_to_end "$(m budget.end_to_end)"
   fi
 }
 
@@ -228,21 +261,51 @@ mj_pages_platform() {
 # The timing rows of one deployment against the budgets, as the fragment the workflow appends
 # to its job summary. Controlled latency is what can fail; external latency is reported beside
 # it and never conflated with it.
+#
+# Two things this command learned on 2026-09-12, both from the same defect. Between
+# 2026-09-11T22:36Z and 2026-09-12T06:38Z the Pages workflow reported `failure` on run after
+# run while every one of them pushed gh-pages correctly and the public site served the commit
+# each had built. What was red was this command: the controlled path was over budget, this
+# exits 10 when it is, and the workflow ran it as an ordinary step AFTER the publish. So a
+# measurement of a deployment that had already succeeded became the verdict on the deployment.
+#
+#   1. A BREACH MUST NAME ITS CAUSE, NOT ONLY ITS SIZE. `controlled` is the sum of the
+#      per-phase budgets, so a total over budget has at least one row over its own. `blame`
+#      below is that row, and it goes into the annotation and the summary line. Before this,
+#      the whole Markdown fragment went to $GITHUB_STEP_SUMMARY and nothing went to the log,
+#      so the log of those eleven runs read `Process completed with exit code 10` with no number
+#      above it anywhere a reader would look.
+#
+#   2. A REPORT IS NOT ALWAYS A GATE. `--advisory` keeps every number and makes the breach a
+#      ::warning annotation instead of this command's exit status. It is for the one caller
+#      that measures work already done; the default is unchanged, so a person running this and
+#      any gate that calls it still gets exit 10 on a breach.
 cmd_report() {
-  local timings="" ext_queue="" ext_pages="" e2e="" cold=0 out
+  local timings="" ext_queue="" ext_pages="" e2e="" cold=0 advisory=0 out
   while [ $# -gt 0 ]; do case "$1" in
     --timings) timings="$2"; shift 2 ;;
     --queue) ext_queue="$2"; shift 2 ;;
     --pages-build) ext_pages="$2"; shift 2 ;;
     --end-to-end) e2e="$2"; shift 2 ;;
     --cold) cold=1; shift ;;
+    --advisory) advisory=1; shift ;;
     *) echo "pages report: unknown option $1" >&2; exit 2 ;;
   esac; done
   [ -n "$timings" ] && [ -s "$timings" ] || { echo "pages report: --timings names no rows" >&2; exit 2; }
-  local controlled budget verdict rc=0
+  local controlled budget verdict rc=0 blame=""
   controlled="$(awk -F'\t' '{ s += $3 } END { print s + 0 }' "$timings")"
   if [ "$cold" = 1 ]; then budget="$(m budget.cold.controlled)"; else budget="$(m budget.warm.controlled)"; fi
   if [ "$controlled" -le "$budget" ]; then verdict="PASS"; else verdict="OVER BUDGET"; rc=10; fi
+  # which phases are over their own budget: the place to look, rather than a number to argue
+  # with. A row the model declares no budget for is skipped rather than guessed at.
+  blame="$(awk -F'\t' '{ print $2 "\t" $3 }' "$timings" | while IFS="$(printf '\t')" read -r step secs; do
+    b="$(m "budget.warm.$step")"
+    case "$b" in ''|*[!0-9]*) continue ;; esac
+    case "$secs" in ''|*[!0-9]*) continue ;; esac
+    [ "$secs" -gt "$b" ] && printf '%s %ss/%ss; ' "$step" "$secs" "$b"
+    :
+  done)"
+  blame="${blame%; }"
   out="${GITHUB_STEP_SUMMARY:-/dev/stdout}"
   {
     printf '### Pages fast path\n\n'
@@ -257,10 +320,31 @@ cmd_report() {
     printf 'Pages SLO: **%s** — controlled path %s s / %s s' "$verdict" "$controlled" "$budget"
     [ -n "$e2e" ] && printf ', push to public %s s / %s s' "$e2e" "$(m budget.end_to_end)"
     printf '\n'
+    [ -n "$blame" ] && printf '\nOver its own budget: %s\n' "$blame"
+    if [ "$rc" != 0 ] && [ "$advisory" = 1 ]; then
+      printf '\nThis is the latency of the publication path, not whether the site published:\nthe run states that separately, and a breach here is a warning rather than this\nrun'"'"'s verdict. `scripts/pages report` without `--advisory` still exits 10.\n'
+    fi
     if [ -n "$e2e" ] && [ "$e2e" -gt "$(m budget.end_to_end)" ] && [ "$rc" = 0 ]; then
       printf '\nThe end-to-end target was not met while the controlled path was inside its budget: the\nremainder is the Actions queue and GitHub'"'"'s own Pages build, which this repository does not\nspend. That is an external limit, not a regression here.\n'
     fi
   } >> "$out"
+  # One line for a reader that is not a person, always, and on the log rather than in the job
+  # summary: the Markdown above is invisible to `gh run view --log`, which is where the four
+  # red runs of 2026-09-12 were read from.
+  printf 'pages-slo verdict=%s controlled=%s budget=%s over=%s\n' \
+    "$verdict" "$controlled" "$budget" "${blame:-none}"
+  if [ -n "${GITHUB_OUTPUT:-}" ]; then
+    { printf 'verdict=%s\n' "$verdict"
+      printf 'controlled=%s\n' "$controlled"
+      printf 'budget=%s\n' "$budget"
+      printf 'over=%s\n' "$blame"
+    } >> "$GITHUB_OUTPUT"
+  fi
+  if [ "$rc" != 0 ] && [ "$advisory" = 1 ]; then
+    printf '::warning title=Pages controlled path over budget::controlled path %s s against a budget of %s s (%s). This is the latency of the publication path, not whether the site published — see the publication state annotation for that.\n' \
+      "$controlled" "$budget" "${blame:-no single phase over its own budget}"
+    rc=0
+  fi
   return "$rc"
 }
 
@@ -335,6 +419,95 @@ cmd_verify() {
 }
 
 # ---------------------------------------------------------------- dispatch
+# ---------------------------------------------------------------- GitHub's own build
+# Publishing is two steps owned by two parties. This repository pushes gh-pages; GitHub's own
+# "pages build and deployment" turns that branch into the bytes a reader gets. The second can
+# fail on a branch that was pushed perfectly, and when it does every signal this repository
+# owns is green: the workflow succeeded, the branch carries the right tree, `git log` on
+# gh-pages is exactly what it should be, and the public site is a commit behind.
+#
+# That is not hypothetical. On 2026-09-10 at 17:35:10Z GitHub's build of gh-pages commit
+# dfd9c989c errored with "Page build failed."; the site served the previous commit for 27
+# minutes and nothing anywhere went red. It is still readable from the API today:
+#
+#   gh api repos/korczis/prismatic-majordomus/pages/builds --jq '.[0]'
+#
+# So the status is read rather than inferred from the symptom, and it is read in exactly one
+# place: here. `scripts/ci/pages-check` asked the same API in its own words until this command
+# existed, and .github/workflows/pages.yml could not ask at all — which is why the one silent
+# mode of the three was the one that leaves a green tick. Two readers, one definition.
+#
+# Exit is the judgement, not the reading: 0 the build of that commit succeeded, 10 it errored,
+# 12 it could not be determined — no gh, no `pages: read`, or GitHub has not built that commit
+# yet when the wait ran out. 12 is never an `ok`: a build still in flight is weather and a
+# caller must be free to treat it as such, but it must not be able to mistake it for success.
+cmd_built() {
+  local branch="gh-pages" commit="" wait=0 porcelain=0 slug="" build="" all="" newest="" t0 status bcommit berror
+  while [ $# -gt 0 ]; do case "$1" in
+    --branch) branch="$2"; shift 2 ;;
+    --commit) commit="$2"; shift 2 ;;
+    --wait) wait="$2"; shift 2 ;;
+    --porcelain) porcelain=1; shift ;;
+    *) echo "pages built: unknown option $1" >&2; exit 2 ;;
+  esac; done
+  command -v gh >/dev/null 2>&1 || {
+    [ "$porcelain" = 1 ] && printf 'unreadable\t\tgh is not installed\n'
+    [ "$porcelain" = 1 ] || echo "pages built: gh is not installed, so GitHub's own build was not read" >&2
+    return 12; }
+  slug="${GITHUB_REPOSITORY:-}"
+  [ -n "$slug" ] || slug="$(git -C "$ROOT" remote get-url origin 2>/dev/null | sed -n 's|.*[:/]\([^/][^/]*/[^/][^/]*\)$|\1|p' | sed 's|\.git$||')"
+  [ -n "$slug" ] || { echo "pages built: no repository slug (no GITHUB_REPOSITORY, no origin)" >&2; return 12; }
+  if [ -z "$commit" ]; then
+    git -C "$ROOT" fetch -q origin "$branch" 2>/dev/null || true
+    commit="$(git -C "$ROOT" rev-parse "origin/$branch" 2>/dev/null || git -C "$ROOT" rev-parse "$branch" 2>/dev/null || true)"
+  fi
+  [ -n "$commit" ] || { echo "pages built: no commit to ask about (branch $branch is not here)" >&2; return 12; }
+  t0="$(now)"
+  while :; do
+    # The newest build OF THAT COMMIT, not merely the newest build. A commit can be built
+    # more than once (a re-run, a dispatch), and asking only for `.[0]` makes every question
+    # about anything but the very last push unanswerable — including the one a person asks
+    # when they come back to an incident: was the build of dfd9c989c the thing that broke?
+    # The list is newest-first, so the first match is the newest build of it; `newest` is
+    # kept beside it so that "GitHub has not built this at all yet" can say what it HAS built.
+    all="$(gh api "repos/$slug/pages/builds" --jq '.[] | "\(.status)\t\(.commit)\t\(.error.message // "no message")"' 2>/dev/null || true)"
+    newest="$(printf '%s\n' "$all" | head -1)"
+    build="$(printf '%s\n' "$all" | awk -F'\t' -v c="$commit" '$2 == c { print; exit }')"
+    [ -n "$build" ] || build="$newest"
+    status="$(printf '%s' "$build" | cut -f1)"
+    bcommit="$(printf '%s' "$build" | cut -f2)"
+    berror="$(printf '%s' "$build" | cut -f3)"
+    if [ -n "$build" ] && [ "$bcommit" = "$commit" ] && [ "$status" != building ] && [ "$status" != queued ]; then
+      break
+    fi
+    [ $(( $(now) - t0 )) -lt "$wait" ] || break
+    sleep 10
+  done
+  if [ -z "$build" ]; then
+    [ "$porcelain" = 1 ] && printf 'unreadable\t\tno token, or no pages:read\n'
+    [ "$porcelain" = 1 ] || echo "pages built: GitHub's Pages build for $slug could not be read (no token, or no pages:read)" >&2
+    return 12
+  fi
+  if [ "$porcelain" = 1 ]; then printf '%s\t%s\t%s\n' "$status" "$bcommit" "$berror"; fi
+  if [ "$bcommit" != "$commit" ]; then
+    [ "$porcelain" = 1 ] || printf "pages built: GitHub's newest build is of %s (%s), not %s of %s\n" "${bcommit:0:12}" "$status" "${commit:0:12}" "$branch" >&2
+    return 12
+  fi
+  case "$status" in
+    built)
+      [ "$porcelain" = 1 ] || printf "pages built: GitHub's own build of %s is built\n" "${commit:0:12}"
+      return 0 ;;
+    errored)
+      [ "$porcelain" = 1 ] || {
+        printf "pages built: GitHub's own build of %s ERRORED: %s\n" "${commit:0:12}" "$berror" >&2
+        printf "             the branch is right and the site is not. Re-run the build by dispatching the\n             pages workflow, or push %s again.\n" "$branch" >&2; }
+      return 10 ;;
+    *)
+      [ "$porcelain" = 1 ] || printf "pages built: GitHub's build of %s is %s; not a verdict\n" "${commit:0:12}" "$status" >&2
+      return 12 ;;
+  esac
+}
+
 case "${1:-}" in
   build)       shift; cmd_build "$@" ;;
   check)       shift; cmd_check "$@" ;;
@@ -345,6 +518,7 @@ case "${1:-}" in
   budget)      shift; cmd_budget "$@" ;;
   benchmark)   shift; cmd_benchmark "$@" ;;
   report)      shift; cmd_report "$@" ;;
+  built)       shift; cmd_built "$@" ;;
   verify)      shift; cmd_verify "$@" ;;
   -h|--help|"") sed -n '2,23p' "$0" | sed 's/^# \{0,1\}//' ;;
   *) echo "pages: unknown command $1 (scripts/pages --help)" >&2; exit 2 ;;

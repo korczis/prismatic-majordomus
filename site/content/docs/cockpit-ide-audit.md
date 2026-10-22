@@ -1,7 +1,7 @@
 +++
 title = "The Cockpit as a development surface: baseline, archaeology and gap matrix"
 description = "forensic finding, 2026-09-10: what the Cockpit would need in order to become a development surface — the governance preflight and its two defects, the two-program split, the system run end to end with every command and response recorded, the gap matrix, the drift audit, and the phased plan with the failures that must be fixed first"
-weight = 33
+weight = 35
 [extra]
 source = "docs/COCKPIT_IDE_AUDIT.md"
 +++
@@ -14,7 +14,7 @@ a server this worktree built and started itself. It is phase 01 of the Cockpit I
 control-plane pack and it implements nothing: it establishes what exists, proves it by
 running it, and says what the smallest safe next phase is.
 
-The architecture it measures against is [ADR 0040](../.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md)
+The architecture it measures against is [ADR 0040](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md)
 and [`DEVELOPMENT_RUNTIME.md`](@/docs/development-runtime.md): one canonical runtime — the
 capability registry of the Rust executable — and every surface a consumer of it. This
 document is the evidence behind that decision and the plan that follows from it.
@@ -91,7 +91,7 @@ that implements it.
 
 The full per-concept inventory — canonical owner, storage, schema, discovery, consumers,
 mutation path, events, tests, docs and drift — is in
-[`DEVELOPMENT_RUNTIME.md`](DEVELOPMENT_RUNTIME.md#the-inventory) and is not repeated here.
+[`DEVELOPMENT_RUNTIME.md`](@/docs/development-runtime.md#the-inventory) and is not repeated here.
 This section records only what that inventory does not: the entry and projection subjects
 the pack names, and the two-program split that explains most of the rest.
 
@@ -318,11 +318,29 @@ seconds against a 3-second budget — seventeen to twenty-five times over, every
 One status per capability, from the pack's vocabulary: `canonical+implemented+verified`,
 `implemented but duplicated`, `documented only`, `planned`, `partially implemented`,
 `broken`, `absent`. "Verified" requires a test that exercises it, named in the row.
-"Planned" requires a plan object; a search of `.ai/repo/project/issues/*.yaml` and
-`milestones/*.yaml` for the IDE keywords in this matrix returned nothing for palette,
-editor, diff, terminal, retries or CI status, so **no row is `planned`** — the IDE work is
-not in the plan at all. The only IDE-adjacent plan objects are `I0927` (the Cockpit shows
-the deployment) and the `capability-graph` milestone's Cockpit issues, all already shipped.
+"Planned" requires a plan object.
+
+When this matrix was first written, none of it was planned. The search is recorded so the
+negative is checkable, and it was re-run against master at `87b9ac659` on 2026-09-11 with
+the same result:
+
+```console
+$ for kw in palette 'diff view' 'CI status' 'syntax highlight'; do
+    printf '%s -> ' "$kw"
+    grep -ril "$kw" .ai/repo/project/issues/ .ai/repo/project/milestones/ | wc -l
+  done
+palette -> 0
+diff view -> 0
+CI status -> 0
+syntax highlight -> 0
+```
+
+The only IDE-adjacent plan objects were `I0927` (the Cockpit shows the deployment) and the
+`capability-graph` milestone's Cockpit issues, all already shipped.
+
+**That is no longer the state.** The milestone `development-runtime` and the issues `I1501`
+through `I1512` were written from this matrix and its §6 plan, and are what the rows below
+mean when they say `planned`. §7 records which row each one answers.
 
 ### Development
 
@@ -361,8 +379,8 @@ the deployment) and the `capability-graph` milestone's Cockpit issues, all alrea
 | commits | partially implemented | conventional-commit parsing and `trace.commit`; no commit browsing surface |
 | diffs | absent | — |
 | PRs | partially implemented | `trace` derives issue↔PR edges; `scripts/github-sync`; no capability, no surface |
-| issues | implemented but duplicated | read `plan.*`; write `lib/plan.sh` + `lib/project.awk`; **no Cockpit page at all** |
-| milestones | implemented but duplicated | same split; not in the Cockpit |
+| issues | implemented but duplicated, **and now read canonically** | read `plan.*` and, since `08e4bb252`, `devtask.issue`; write `lib/plan.sh` + `lib/project.awk`; **still no Cockpit page at all** — planned as `I1507` |
+| milestones | implemented but duplicated, **and now read canonically** | same split, and `devtask.milestone` since `08e4bb252`; still not in the Cockpit — planned as `I1507` |
 | issue↔milestone↔code linkage | canonical+implemented+verified | `trace.issue/commit/report`; `test/cases/98_traceability.sh`; registry and CLI only |
 | release / changelog / version | canonical+implemented+verified | `release.changelog`, `release.version`; no Cockpit page |
 
@@ -520,32 +538,37 @@ Cockpit's documented route table, and semantics decided in the browser.
 
 ### The target flow for one development mutation
 
-```text
-Cockpit form / MCP tool / HTTP POST / CLI
-        │  typed input, validated against the capability's own schema
-        ▼
-capability!  kind: command    ← the only place the transition is decided
-        │
-        ├─▶ the object in its canonical storage   (.ai/repo/project/issues/<id>.yaml)
-        ├─▶ a ledger event whose name share/events.yaml declares   (durable record)
-        └─▶ the execution stream                                   (live view)
-```
+<pre class="mermaid">
+flowchart TD
+  entry["Cockpit form / MCP tool /&lt;br&gt;HTTP POST / CLI"]
+  cap["capability! kind: command&lt;br&gt;the only place the transition is decided"]
+  entry --&gt;|"typed input, validated against&lt;br&gt;the capability's own schema"| cap
+  cap --&gt; object["the object in its canonical storage&lt;br&gt;(.ai/repo/project/issues/&amp;lt;id&amp;gt;.yaml)"]
+  cap --&gt; ledger["a ledger event whose name&lt;br&gt;share/events.yaml declares&lt;br&gt;(durable record)"]
+  cap --&gt; stream["the execution stream&lt;br&gt;(live view)"]
+</pre>
+
 
 Nothing in that diagram is new infrastructure. Every box exists; the arrows from the first
 box to the rest are what is missing.
 
 ### Dependency graph
 
-```text
-A. one mutating development capability, end to end
-        │
-        ├──▶ B. events: a mutating capability appends to the ledger
-        │            │
-        │            └──▶ E. Cockpit development pages (issues, sessions, peers)
-        ├──▶ C. the lifecycle capabilities (task, session, checkpoint, handover, finish)
-        └──▶ D. compiled context as a capability
-F. navigation and route derivation ──▶ E     (independent of A–D; do it any time)
-```
+<pre class="mermaid">
+flowchart TD
+  a["A. one mutating development&lt;br&gt;capability, end to end"]
+  b["B. events: a mutating capability&lt;br&gt;appends to the ledger"]
+  c["C. the lifecycle capabilities&lt;br&gt;(task, session, checkpoint,&lt;br&gt;handover, finish)"]
+  d["D. compiled context as a capability"]
+  e["E. Cockpit development pages&lt;br&gt;(issues, sessions, peers)"]
+  f["F. navigation and route derivation&lt;br&gt;(independent of A–D; do it any time)"]
+  a --&gt; b
+  a --&gt; c
+  a --&gt; d
+  b --&gt; e
+  f --&gt; e
+</pre>
+
 
 ### Phases
 
@@ -645,6 +668,170 @@ moves one issue, with its ledger event and its use case. It touches one module, 
 file and one baseline line; it is provable end to end through four surfaces in a single
 sitting; and it either establishes the pattern for everything else or shows immediately
 that the pattern is wrong.
+
+## 7. Re-verification on 2026-09-11, and the plan objects
+
+The audit above was measured against `08e4bb252`. This section re-measures its load-bearing
+claims against master at `87b9ac659`, from an executable built in the worktree that took the
+measurements rather than through any running server — §3's own warning about stale servers
+applies to this section as much as to the original. A row is corrected where a command says
+it has changed, and marked unverified where no command was run.
+
+`P2` of §1 predicted this: the audit's base was historical before the audit finished. It was
+`08e4bb252` at the start, `06fa25891` at the end, and `87b9ac659` a day later.
+
+### The central finding still holds
+
+```console
+$ python3 -c "import json;c=json.load(open('docs/generated/registry.json'))['capabilities'];\
+              print([x['id'] for x in c if x['kind']=='command'])"
+['executions.cancel', 'executions.start', 'peers.announce']
+
+$ python3 -c "import json;d=json.load(open('docs/generated/openapi.json'));\
+              print(sorted((p,m) for p,o in d['paths'].items() for m in o if m!='get'))"
+[('/api/v1/executions/cancel', 'post'), ('/api/v1/executions/start', 'post'),
+ ('/api/v1/peers/announce', 'post')]
+```
+
+Three mutating capabilities, three non-GET operations, none of them development-shaped.
+The paragraph this document opens with is unchanged after a day of landings.
+
+### What did change: two capabilities and one module
+
+```console
+$ git diff --stat 08e4bb252 87b9ac659 -- docs/generated/registry.json   # then compared as sets
+capabilities added:   devtask.issue, devtask.milestone
+capabilities removed: none
+modules added:        devtask
+counts:               78 → 80
+```
+
+Both are `kind: query` — they read and write nothing — but they are the runtime's first
+canonical answer to *an issue as work*: readiness, waves, blockers, the parallel subsets,
+each field carrying whether a person authored it or a machine derived it, as a pure function
+of the canonical records and explicitly so that a surface reading it derives nothing itself.
+Two rows of §4 are corrected above because of it. The `devtask` module's own documentation
+states it is not a second project model, and §6's risk table already names the convergence
+this creates; that risk is now carried by the milestone rather than only by this document.
+
+### The ADR: no renumbering was needed
+
+ADR 0040 is on master and is this document's decision.
+
+```console
+$ git log --oneline -1 87b9ac659 -- .ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md
+93c5f3f87 docs(architecture): name the canonical development runtime and make it enforceable
+
+$ git merge-base --is-ancestor feature/development-runtime-model origin/master && echo merged
+merged
+```
+
+The whole of `feature/development-runtime-model` — this audit, `DEVELOPMENT_RUNTIME.md` and
+the decision — landed on master between the audit finishing and this re-verification. No
+number had to be found and none was allocated.
+
+### Two further Cockpit findings, measured here
+
+**`/cockpit/graphs/composed` is a megabyte in one document.** Measured against a server this
+worktree built and started:
+
+```console
+$ curl -s "$B/cockpit/graphs/composed" -o composed.html -w '%{http_code} %{size_download} %{time_total}\n'
+200 1196619 0.059885
+$ wc -m < composed.html ;  grep -o '<tr' composed.html | wc -l ;  grep -c 'page=' composed.html
+1196549
+4729
+0
+```
+
+This follows a contract rather than contradicting one: `docs/COCKPIT.md` states that a
+detail page pages nothing, and gives the reason — the drawing is an enhancement, a reader
+without JavaScript has only those lists, and a reader checking whether a path is in the
+manifest must find it with the browser's own search. The contract is right; at 4,729 rows
+its cost has outgrown it, because a megabyte is not searchable by a person either. A second
+finding came with it: the sweep in `apps/majordomus-cli/tests/cockpit.rs` names
+`/cockpit/graphs`, `/cockpit/graphs/topology` and `/cockpit/graphs/registry`, and not
+`/cockpit/graphs/composed` — the largest page the Cockpit serves is one no test renders.
+Planned as `I1509`.
+
+**`/cockpit/search` does *not* break the no-JavaScript claim.** This was reported as an
+empty shell of 157 characters contradicting `With JavaScript off every page still shows
+everything it knows`. It does not reproduce, and the correction matters more than the
+claim would have:
+
+```console
+$ curl -s "$B/cockpit/search"        | wc -m        # no query
+16212
+$ curl -s "$B/cockpit/search?q=scope" | wc -m       # a query, server-rendered
+42865                                               # 164 result rows, no script involved
+```
+
+The 157 characters are the *visible text of the `<main>` region with no query given* — 160
+by my count — and that text is `Type something. The search is the repository's own:
+case-insensitive, over identities, titles, descriptions and content.` The page carries a
+real `<form method="get" action="/cockpit/search">`; submitting it without JavaScript
+returns the results in the HTML. A page with no query knows nothing to show, so the claim
+holds. No issue was written for it. It is recorded because the measurement that produced
+the number was right and the conclusion drawn from it was not, which is the more expensive
+of the two mistakes.
+
+### The index was degraded, and the cause was not in the repository
+
+```console
+$ curl -s http://127.0.0.1:8741/api/v1/repository | grep -o '"state":"[a-z]*"'
+"state":"degraded"
+```
+
+Four files claimed `majordomus://session/s-20260909152316-024f`, so every claimant was
+excluded and the session was absent from the registry that exists to hold it. One was
+committed; three were written the next morning, thirteen and fifteen seconds apart, by a
+closer re-closing a session closed the evening before, and all three sat *staged and
+uncommitted* in the primary checkout — which is what the running server reads, and why no
+committed tree was ever wrong. The commit sets were compared rather than assumed: each of
+the three contains all 94 commits of the committed record and 202 more. The complete record
+is now the one in the tree and the partial one is gone; the redundant files were unstaged
+and left on disk. The writer is unchanged and is `I1503`.
+
+### Rows not re-verified
+
+Every row of §4 not named above is carried through unchanged and **unverified against
+`87b9ac659`**. The capability set moved by exactly two between the two commits, so a row
+whose evidence is a capability or a test that still exists is unlikely to have changed —
+but "unlikely" is not a measurement, and this document's own rule is that a number without
+a command beside it is a defect in it.
+
+Three timings in §3 are explicitly *not* re-measured and should not be quoted: the 18.3 s
+for `/cockpit/worktrees`, the 4.6 s for `/cockpit/quality`, and the 51–74 s for `doctor`.
+The first is being fixed on `fix/cockpit-answers-quickly` and this document does not
+duplicate that work. `doctor` was observed at 83.6 s during this session's own pre-commit
+hook, on a machine running many suites at once, which §6's risk table says is exactly the
+condition under which a timing must not be read as a property of the command.
+
+### What §6's plan became
+
+<div class="overflow-x-auto" tabindex="0">
+
+| plan item | object |
+|---|---|
+| F2 — `run` never reaches the server | `I1501` |
+| F1 — a stale server reports itself ready | `I1502` |
+| the duplicate session identity | `I1503` |
+| Phase A — one mutating development capability | `I1504` |
+| Phase B — one event model | `I1505` |
+| Phase C — the lifecycle | `I1506` |
+| Phase E — Cockpit development pages | `I1507` |
+| Phase F / F5 — navigation derived from the dispatcher | `I1508` |
+| the composed graph | `I1509` |
+| this matrix is checked against the plan | `I1510` |
+| F4 — `/docs/` is 503 in an unbuilt checkout | `I1511` |
+| CI status has no reader | `I1512` |
+| F3 — `/cockpit/worktrees` is slow | not written: `fix/cockpit-answers-quickly` |
+| Phase D — compiled context | not written: owned by the context-compiler work |
+| F6 — `doctor` over budget | not written: reported by `doctor` itself on every run |
+| F7 — `MAJORDOMUS_SHARE` inherited into hooks | not written: it broke this session's commit too |
+
+</div>
+
 
 ## How this was measured
 

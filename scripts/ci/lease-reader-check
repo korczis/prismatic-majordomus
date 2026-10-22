@@ -102,13 +102,36 @@ subject() {
       .envrc) continue ;;                                     # watches, never opens
       *.md|docs/*|site/*|.ai/*) continue ;;                   # documentation
       apps/majordomus-cli/tests/*|test/cases/*) continue ;;    # the lease as a subject
+      scripts/ci/lease-reader-check) continue ;;               # this gate: it names the lease
+                                                               # path, file and schema because
+                                                               # that is how it finds a second
+                                                               # reader. Counting itself made it
+                                                               # report its own detector as the
+                                                               # violation, which no branch could
+                                                               # ever clear — the same shape as
+                                                               # providers-check excluding the
+                                                               # gates that quote its pattern.
     esac
     printf '%s\n' "$f"
   done
 }
 
+# The names have to be found in code, not in a sentence about code. This gate reported
+# ITSELF for eleven days: the comment above, the one that explains why the bare file name
+# must be matched, contains the bare file name. A file cannot document its own subject
+# matter without containing its own subject matter, and a detector that greps for a literal
+# cannot tell the two apart unless it is told to.
+#
+# So a line whose first non-blank run is `#`, `//`, `*` or `/*` is prose and is dropped:
+# that covers shell, Rust, JavaScript, TOML and YAML, which is every language here that
+# could hold a parser. The exclusion is deliberately one-directional and it is worth being
+# explicit about which direction: a real reader that opened the lease ONLY from a commented
+# line would be missed, and no such thing exists or could work. A trailing comment on a
+# line that also carries code still counts, which is the safe way round.
+uncommented() { LC_ALL=C grep -vE '^[[:space:]]*(#|//|\*|/\*)' "$1" 2>/dev/null || true; }
+
 current="$(subject | while IFS= read -r f; do
-  if LC_ALL=C grep -qIF -e "$lease_path" -e "$lease_name" -e "$schema" "$f" 2>/dev/null; then printf '%s\n' "$f"; fi
+  if uncommented "$f" | LC_ALL=C grep -qIF -e "$lease_path" -e "$lease_name" -e "$schema"; then printf '%s\n' "$f"; fi
 done)"
 
 if [ "$MODE" = write ]; then

@@ -199,6 +199,11 @@
     },
     {
       "kind": "depends_on",
+      "source": "rule:majordomus.lifecycle-observed",
+      "target": "rule:majordomus.handover-integrity"
+    },
+    {
+      "kind": "depends_on",
       "source": "rule:majordomus.context-budget",
       "target": "rule:majordomus.projection-integrity"
     },
@@ -214,6 +219,21 @@
     },
     {
       "kind": "depends_on",
+      "source": "rule:majordomus.prompt-continuity",
+      "target": "rule:majordomus.prompt-capture"
+    },
+    {
+      "kind": "depends_on",
+      "source": "rule:majordomus.record-changed-files",
+      "target": "rule:majordomus.session-records"
+    },
+    {
+      "kind": "depends_on",
+      "source": "rule:majordomus.record-changed-files",
+      "target": "rule:majordomus.handover-integrity"
+    },
+    {
+      "kind": "depends_on",
       "source": "rule:majordomus.session-lifecycle",
       "target": "rule:majordomus.session-records"
     },
@@ -226,6 +246,16 @@
       "kind": "depends_on",
       "source": "rule:majordomus.obligation-closure",
       "target": "rule:majordomus.verification-integrity"
+    },
+    {
+      "kind": "depends_on",
+      "source": "rule:majordomus.completion-gates",
+      "target": "rule:majordomus.obligation-closure"
+    },
+    {
+      "kind": "depends_on",
+      "source": "rule:majordomus.publication-currency",
+      "target": "rule:majordomus.completion-gates"
     },
     {
       "kind": "decided_by",
@@ -319,6 +349,11 @@
     },
     {
       "kind": "decided_by",
+      "source": "rule:majordomus.lifecycle-observed",
+      "target": "validator:lifecycle"
+    },
+    {
+      "kind": "decided_by",
       "source": "rule:majordomus.note-integrity",
       "target": "validator:note"
     },
@@ -351,6 +386,11 @@
       "kind": "decided_by",
       "source": "rule:majordomus.prompt-capture",
       "target": "validator:prompt_capture"
+    },
+    {
+      "kind": "decided_by",
+      "source": "rule:majordomus.prompt-continuity",
+      "target": "validator:prompt_continuity"
     },
     {
       "kind": "decided_by",
@@ -394,6 +434,11 @@
     },
     {
       "kind": "decided_by",
+      "source": "rule:majordomus.record-changed-files",
+      "target": "validator:record_changed_files"
+    },
+    {
+      "kind": "decided_by",
       "source": "rule:majordomus.session-lifecycle",
       "target": "validator:session_lifecycle"
     },
@@ -426,6 +471,16 @@
       "kind": "decided_by",
       "source": "rule:majordomus.obligation-closure",
       "target": "validator:obligations"
+    },
+    {
+      "kind": "decided_by",
+      "source": "rule:majordomus.completion-gates",
+      "target": "validator:completion_gates"
+    },
+    {
+      "kind": "decided_by",
+      "source": "rule:majordomus.publication-currency",
+      "target": "validator:publication_currency"
     },
     {
       "kind": "run_by",
@@ -516,6 +571,16 @@
       "kind": "run_by",
       "source": "validator:command_surface",
       "target": "command:watch"
+    },
+    {
+      "kind": "run_by",
+      "source": "validator:completion_gates",
+      "target": "command:check"
+    },
+    {
+      "kind": "run_by",
+      "source": "validator:completion_gates",
+      "target": "command:finish"
     },
     {
       "kind": "run_by",
@@ -594,6 +659,16 @@
     },
     {
       "kind": "run_by",
+      "source": "validator:lifecycle",
+      "target": "command:doctor"
+    },
+    {
+      "kind": "run_by",
+      "source": "validator:lifecycle",
+      "target": "command:watch"
+    },
+    {
+      "kind": "run_by",
       "source": "validator:note",
       "target": "command:finish"
     },
@@ -664,6 +739,16 @@
     },
     {
       "kind": "run_by",
+      "source": "validator:prompt_continuity",
+      "target": "command:doctor"
+    },
+    {
+      "kind": "run_by",
+      "source": "validator:prompt_continuity",
+      "target": "command:watch"
+    },
+    {
+      "kind": "run_by",
       "source": "validator:prompts",
       "target": "command:doctor"
     },
@@ -674,6 +759,11 @@
     },
     {
       "kind": "run_by",
+      "source": "validator:publication_currency",
+      "target": "command:finish"
+    },
+    {
+      "kind": "run_by",
       "source": "validator:questions_store",
       "target": "command:doctor"
     },
@@ -681,6 +771,11 @@
       "kind": "run_by",
       "source": "validator:questions_store",
       "target": "command:watch"
+    },
+    {
+      "kind": "run_by",
+      "source": "validator:record_changed_files",
+      "target": "command:doctor"
     },
     {
       "kind": "run_by",
@@ -909,6 +1004,11 @@
     },
     {
       "kind": "proved_by",
+      "source": "rule:majordomus.lifecycle-observed",
+      "target": "test:test/cases/130_lifecycle_survives_a_stale_task.sh"
+    },
+    {
+      "kind": "proved_by",
       "source": "rule:majordomus.note-integrity",
       "target": "test:test/cases/06_finish.sh"
     },
@@ -941,6 +1041,11 @@
       "kind": "proved_by",
       "source": "rule:majordomus.prompt-capture",
       "target": "test:test/cases/29_prompt_capture.sh"
+    },
+    {
+      "kind": "proved_by",
+      "source": "rule:majordomus.prompt-continuity",
+      "target": "test:test/cases/140_prompt_continuity.sh"
     },
     {
       "kind": "proved_by",
@@ -984,6 +1089,11 @@
     },
     {
       "kind": "proved_by",
+      "source": "rule:majordomus.record-changed-files",
+      "target": "test:test/cases/136_changed_files_classifier.sh"
+    },
+    {
+      "kind": "proved_by",
       "source": "rule:majordomus.session-lifecycle",
       "target": "test:test/cases/54_session_lifecycle_hooks.sh"
     },
@@ -1016,6 +1126,16 @@
       "kind": "proved_by",
       "source": "rule:majordomus.obligation-closure",
       "target": "test:test/cases/103_obligations.sh"
+    },
+    {
+      "kind": "proved_by",
+      "source": "rule:majordomus.completion-gates",
+      "target": "test:test/cases/131_completion_gates.sh"
+    },
+    {
+      "kind": "proved_by",
+      "source": "rule:majordomus.publication-currency",
+      "target": "test:test/cases/275_publication_is_current.sh"
     }
   ],
   "generator": "scripts/lib/governance-graph.jq",
@@ -1284,6 +1404,17 @@
     },
     {
       "external": false,
+      "id": "rule:majordomus.lifecycle-observed",
+      "kind": "rule",
+      "label": "lifecycle-observed",
+      "note": "exit 10 · lifecycle",
+      "role": "text",
+      "route": "/doctrines/lifecycle-observed/",
+      "status": "blocking",
+      "summary": "A store that can be read is not a store that is being written. While episodes go on opening, the records a future worker resumes from must go on advancing, every lifecycle event received must leave evidence it arrived, and an episode that outlives the staleness threshold must be named rather than left open."
+    },
+    {
+      "external": false,
       "id": "rule:majordomus.note-integrity",
       "kind": "rule",
       "label": "note-integrity",
@@ -1358,6 +1489,17 @@
       "route": "/doctrines/prompt-capture/",
       "status": "blocking",
       "summary": "A repository that declares prompt capture has it wired below the model and proven by running it; the archive stays ignored and untracked, every prompt is present as both a record and a rendering, and neither carries anything the model said."
+    },
+    {
+      "external": false,
+      "id": "rule:majordomus.prompt-continuity",
+      "kind": "rule",
+      "label": "prompt-continuity",
+      "note": "exit 10 · prompts",
+      "role": "text",
+      "route": "/doctrines/prompt-continuity/",
+      "status": "blocking",
+      "summary": "Every captured prompt names the episode it belongs to or says why it cannot; the archive is readable by its owner alone, bounded by a declared retention policy, and never holds credential material verbatim."
     },
     {
       "external": false,
@@ -1449,6 +1591,17 @@
     },
     {
       "external": false,
+      "id": "rule:majordomus.record-changed-files",
+      "kind": "rule",
+      "label": "record-changed-files",
+      "note": "exit 10 · records",
+      "role": "warn",
+      "route": "/doctrines/record-changed-files/",
+      "status": "advisory",
+      "summary": "The changed_files block of a checkpoint, a handover or a closed session names what the episode produced. Paths a declaration already calls generated, projected or local are classified out, and the classification reads those declarations rather than a list of its own."
+    },
+    {
+      "external": false,
       "id": "rule:majordomus.session-lifecycle",
       "kind": "rule",
       "label": "session-lifecycle",
@@ -1526,6 +1679,28 @@
     },
     {
       "external": false,
+      "id": "rule:majordomus.completion-gates",
+      "kind": "rule",
+      "label": "completion-gates",
+      "note": "exit 10 · gate",
+      "role": "text",
+      "route": "/doctrines/completion-gates/",
+      "status": "blocking",
+      "summary": "A task reaches the outcome completed only when no validation gate its own change set selects is known to be failing, and a gate's verdict discharges nothing once the files that select it have changed since the run."
+    },
+    {
+      "external": false,
+      "id": "rule:majordomus.publication-currency",
+      "kind": "rule",
+      "label": "publication-currency",
+      "note": "exit 10 · gate",
+      "role": "text",
+      "route": "/doctrines/publication-currency/",
+      "status": "blocking",
+      "summary": "A repository that publishes has a second tree — the one the public is being served — and no commit-level gate can measure it, because no change to any file can make it right or wrong. A session that lands work and leaves the publication owed has finished nothing the public can see, and every check stays green while that is true. The gates that measure a deployment are declared as such in the CI model, and finish asks them."
+    },
+    {
+      "external": false,
       "id": "validator:adr",
       "kind": "validator",
       "label": "mj_validate_adr",
@@ -1598,6 +1773,14 @@
     },
     {
       "external": false,
+      "id": "validator:completion_gates",
+      "kind": "validator",
+      "label": "mj_validate_completion_gates",
+      "role": "muted",
+      "summary": "Decides the rule. Declared in lib/gates.sh."
+    },
+    {
+      "external": false,
       "id": "validator:context",
       "kind": "validator",
       "label": "mj_validate_context",
@@ -1659,6 +1842,14 @@
       "label": "mj_validate_ledger",
       "role": "muted",
       "summary": "Decides the rule. Declared in lib/check.sh."
+    },
+    {
+      "external": false,
+      "id": "validator:lifecycle",
+      "kind": "validator",
+      "label": "mj_validate_lifecycle",
+      "role": "muted",
+      "summary": "Decides the rule. Declared in lib/doctor.sh."
     },
     {
       "external": false,
@@ -1726,6 +1917,14 @@
     },
     {
       "external": false,
+      "id": "validator:prompt_continuity",
+      "kind": "validator",
+      "label": "mj_validate_prompt_continuity",
+      "role": "muted",
+      "summary": "Decides the rule. Declared in lib/capture.sh."
+    },
+    {
+      "external": false,
       "id": "validator:prompts",
       "kind": "validator",
       "label": "mj_validate_prompts",
@@ -1734,11 +1933,27 @@
     },
     {
       "external": false,
+      "id": "validator:publication_currency",
+      "kind": "validator",
+      "label": "mj_validate_publication_currency",
+      "role": "muted",
+      "summary": "Decides the rule. Declared in lib/gates.sh."
+    },
+    {
+      "external": false,
       "id": "validator:questions_store",
       "kind": "validator",
       "label": "mj_validate_questions_store",
       "role": "muted",
       "summary": "Decides the rule. Declared in lib/doctor.sh."
+    },
+    {
+      "external": false,
+      "id": "validator:record_changed_files",
+      "kind": "validator",
+      "label": "mj_validate_record_changed_files",
+      "role": "muted",
+      "summary": "Decides the rule. Declared in lib/changed.sh."
     },
     {
       "external": false,
@@ -1926,6 +2141,38 @@
     },
     {
       "external": false,
+      "id": "test:test/cases/130_lifecycle_survives_a_stale_task.sh",
+      "kind": "test",
+      "label": "test/cases/130_lifecycle_survives_a_stale_task.sh",
+      "role": "good",
+      "summary": "A behavioural case. It proves the validator answers, not that the rule is written down."
+    },
+    {
+      "external": false,
+      "id": "test:test/cases/131_completion_gates.sh",
+      "kind": "test",
+      "label": "test/cases/131_completion_gates.sh",
+      "role": "good",
+      "summary": "A behavioural case. It proves the validator answers, not that the rule is written down."
+    },
+    {
+      "external": false,
+      "id": "test:test/cases/136_changed_files_classifier.sh",
+      "kind": "test",
+      "label": "test/cases/136_changed_files_classifier.sh",
+      "role": "good",
+      "summary": "A behavioural case. It proves the validator answers, not that the rule is written down."
+    },
+    {
+      "external": false,
+      "id": "test:test/cases/140_prompt_continuity.sh",
+      "kind": "test",
+      "label": "test/cases/140_prompt_continuity.sh",
+      "role": "good",
+      "summary": "A behavioural case. It proves the validator answers, not that the rule is written down."
+    },
+    {
+      "external": false,
       "id": "test:test/cases/14_wiring_dispatcher.sh",
       "kind": "test",
       "label": "test/cases/14_wiring_dispatcher.sh",
@@ -2001,6 +2248,14 @@
       "id": "test:test/cases/25_continuity_lifecycle.sh",
       "kind": "test",
       "label": "test/cases/25_continuity_lifecycle.sh",
+      "role": "good",
+      "summary": "A behavioural case. It proves the validator answers, not that the rule is written down."
+    },
+    {
+      "external": false,
+      "id": "test:test/cases/275_publication_is_current.sh",
+      "kind": "test",
+      "label": "test/cases/275_publication_is_current.sh",
       "role": "good",
       "summary": "A behavioural case. It proves the validator answers, not that the rule is written down."
     },

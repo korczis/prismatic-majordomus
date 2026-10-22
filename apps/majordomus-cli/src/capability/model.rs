@@ -196,6 +196,77 @@ pub enum WaiverReason {
     /// A benchmark host cannot stage an execution to read, and running the operation in a
     /// loop would measure the work rather than the operation.
     TransientState,
+    /// The capability answers about what this repository has *published*, so its input is a
+    /// release: a version tag, the commit it points at, and the projection committed there.
+    /// A benchmark fixture is a repository that has published nothing, and the honest answer
+    /// in one is a refusal — so the case would time an error path and call it coverage.
+    /// Distinct from [`WaiverReason::ExternalDependency`]: nothing outside this process is
+    /// consulted, and distinct from [`WaiverReason::TransientState`]: the history is durable,
+    /// it simply does not exist yet where the benchmark runs.
+    PublishedHistory,
+}
+
+/// What a repository must hold before a conditional benchmark requirement applies to it.
+/// Typed, like a waiver's reason, so that the condition is a reviewable statement on the
+/// descriptor and never a provider quietly returning nothing.
+///
+/// ```
+/// use majordomus_cli::capability::BenchmarkPrecondition;
+/// let p: BenchmarkPrecondition = serde_json::from_str(r#""plan_holds_an_issue""#).unwrap();
+/// assert_eq!(p, BenchmarkPrecondition::PlanHoldsAnIssue);
+/// ```
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
+)]
+#[serde(rename_all = "snake_case")]
+pub enum BenchmarkPrecondition {
+    /// The plan holds at least one issue. A command whose every honest case is a refusal
+    /// chosen from an issue's own status has no such refusal in a plan with no issue: the
+    /// only answer there is a lookup miss, which times an error path and is not the
+    /// operation.
+    PlanHoldsAnIssue,
+}
+
+impl BenchmarkPrecondition {
+    /// Does the repository this index describes hold what the precondition names?
+    ///
+    /// It is answered from the index, so the same capability can be a requirement in one
+    /// repository and inapplicable in another without any provider returning nothing.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::BenchmarkPrecondition;
+    /// use majordomus_cli::synthetic::SyntheticRepository;
+    ///
+    /// let repo = SyntheticRepository::small().unwrap();
+    /// let p = BenchmarkPrecondition::PlanHoldsAnIssue;
+    ///
+    /// // a repository whose plan holds nothing: the requirement does not apply here
+    /// assert!(!p.holds(&repo.index().unwrap()));
+    ///
+    /// // declare where issues live, as `majordomus init` does, and put one issue in the plan
+    /// let sources = repo.root().join(".ai/repo/knowledge/sources.yaml");
+    /// let mut text = std::fs::read_to_string(&sources).unwrap();
+    /// text.push_str("  - id: issue\n    kind: issue\n    discovery: vcs\n    pathspec: ':(glob).ai/repo/project/issues/*.yaml'\n    required: false\n");
+    /// std::fs::write(&sources, text).unwrap();
+    /// let issues = repo.root().join(".ai/repo/project/issues");
+    /// std::fs::create_dir_all(&issues).unwrap();
+    /// std::fs::write(
+    ///     issues.join("I0001.yaml"),
+    ///     "id: I0001\nmilestone: M000\ntitle: A first issue\nslug: a-first-issue\n\
+    ///      priority: p1\nprofile: implementation\nobjective: \"Do the first thing.\"\n\
+    ///      scope:\n  - lib\nacceptance_criteria:\n  - It is done\nvalidation:\n  - \"true\"\n\
+    ///      evidence_required:\n  - proof\n",
+    /// )
+    /// .unwrap();
+    ///
+    /// // the same precondition now holds, answered from the index alone
+    /// assert!(p.holds(&repo.index().unwrap()));
+    /// ```
+    pub fn holds(self, index: &crate::index::Index) -> bool {
+        match self {
+            Self::PlanHoldsAnIssue => index.objects.iter().any(|o| o.kind == crate::plan::ISSUE),
+        }
+    }
 }
 
 /// Whether the capability is a benchmark target. `Required` is the default and the norm:
@@ -206,11 +277,46 @@ pub enum WaiverReason {
 pub enum BenchmarkPolicy {
     /// Timed directly and through every exposure; coverage fails without a case.
     Required,
+    /// Required exactly like `Required` in a repository where the precondition holds, and
+    /// reported as inapplicable — never covered, never waived — where it does not. Not a
+    /// waiver: with the precondition met and no case, the requirement is missing.
+    RequiredWhen {
+        /// What the repository must hold.
+        precondition: BenchmarkPrecondition,
+    },
     /// Not timed, for the typed reason; coverage reports it as waived, never as covered.
     Waived {
         /// Why.
         reason: WaiverReason,
     },
+}
+
+impl BenchmarkPolicy {
+    /// Is the capability a benchmark target at all — required, unconditionally or on a
+    /// precondition? Only a waiver says no.
+    ///
+    /// A conditional requirement is a target even where its precondition does not hold:
+    /// being inapplicable to one repository is not the same as being waived, and coverage
+    /// only decides applicability after this has said the capability is timed at all.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::{BenchmarkPolicy, BenchmarkPrecondition, WaiverReason};
+    ///
+    /// assert!(BenchmarkPolicy::Required.is_target());
+    ///
+    /// // conditional, and still a target: the precondition decides applicability, not this
+    /// let conditional = BenchmarkPolicy::RequiredWhen {
+    ///     precondition: BenchmarkPrecondition::PlanHoldsAnIssue,
+    /// };
+    /// assert!(conditional.is_target());
+    ///
+    /// // only a waiver takes a capability out of the benchmark set
+    /// let waived = BenchmarkPolicy::Waived { reason: WaiverReason::PublishedHistory };
+    /// assert!(!waived.is_target());
+    /// ```
+    pub fn is_target(self) -> bool {
+        !matches!(self, Self::Waived { .. })
+    }
 }
 
 /// Whether, and how, the executor keeps results of this capability. Cache lives in the
@@ -262,7 +368,9 @@ impl CachePolicy {
 
 /// What a capability is. Three kinds exist because three semantics exist: something that
 /// is executed and changes nothing, something that is executed and changes this process's
-/// own memory, and something that is read. Nothing of any kind writes to the repository.
+/// own memory, and something that is read. A command may also write the repository's own
+/// tracked records, which its kind does not say and its execution policy does
+/// ([`ExecutionPolicy::writes_repository`]).
 ///
 /// How *long* a call takes is not a kind. A read that walks every file of the layer is
 /// still a read, and the thing that makes it worth watching — that it reports as it goes
@@ -275,9 +383,10 @@ impl CachePolicy {
 pub enum CapabilityKind {
     /// Executable and read-only: a typed handler, an input schema, an output schema.
     Query,
-    /// Executable with an effect on this process's in-memory state and nowhere else (a
-    /// peer announcing itself): a typed handler, bound to `POST` over HTTP, and announced
-    /// to MCP clients as not read-only.
+    /// Executable and changing something: a typed handler, bound to `POST` over HTTP, and
+    /// announced to MCP clients as not read-only. Most reach no further than this process's
+    /// own memory (a peer announcing itself); one that writes the repository's tracked
+    /// records says so on its execution policy, which is where a projection reads it.
     Command,
     /// Declarative content the repository holds: read as it is, never executed.
     Resource,
@@ -337,10 +446,21 @@ pub enum Effect {
     ProcessState,
     /// The repository changes.
     ///
-    /// Nothing classifies to this, and the doctrine of this tool is why: no capability of
-    /// any kind writes to the repository. It is on the model so that the day one does, it
-    /// says so here — where a projection already reads it and a client already asks before
-    /// running it — rather than in whichever page happens to render its button.
+    /// For most of this executable's life nothing classified to this, because no capability
+    /// of any kind wrote to the repository. That day arrived with [ADR 0040]: development
+    /// semantics are capabilities of this runtime, and the first of them — `plan.transition`
+    /// — stamps a field into an issue's own tracked record. The variant was put on the model
+    /// in advance so that when one did, it would say so *here*, where a projection already
+    /// reads it and a client already asks before running it, rather than in whichever page
+    /// happens to render its button.
+    ///
+    /// It is not classified from the kind, because the kind cannot know it: a command that
+    /// announces a peer and a command that writes a tracked file are the same kind. A
+    /// handler that writes the repository says so with
+    /// [`ExecutionPolicy::writes_repository`], the way one that stops says so with
+    /// [`ExecutionPolicy::stoppable`].
+    ///
+    /// [ADR 0040]: ../../../../.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md
     RepositoryMutation,
 }
 
@@ -426,6 +546,31 @@ impl ExecutionPolicy {
     pub fn stoppable(self) -> Self {
         ExecutionPolicy {
             cancellable: true,
+            ..self
+        }
+    }
+
+    /// The same policy, for a handler that writes the repository's own tracked files.
+    ///
+    /// The second and last thing the kind cannot decide. Two commands are the same kind
+    /// whether one announces a peer into this process's memory and the other stamps a field
+    /// into a record a commit will carry, and the difference is the whole of what a caller
+    /// needs to know before saying yes. It is stated by the handler because only the handler
+    /// knows it.
+    ///
+    /// This is a widening and never a narrowing: a query cannot reach for it, because the
+    /// registry accepts a declared policy only when it is the kind's own or one of these two
+    /// documented additions to it.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::{CapabilityKind, Effect, ExecutionPolicy};
+    /// let p = ExecutionPolicy::classify(CapabilityKind::Command).writes_repository();
+    /// assert_eq!(p.effect, Effect::RepositoryMutation);
+    /// assert!(p.needs_confirmation());
+    /// ```
+    pub fn writes_repository(self) -> Self {
+        ExecutionPolicy {
+            effect: Effect::RepositoryMutation,
             ..self
         }
     }
@@ -575,7 +720,7 @@ pub struct McpExposure {
 pub enum HttpMethod {
     /// Read-only; the input is bound from the query string.
     Get,
-    /// The input is bound from the JSON body. No builtin uses it yet.
+    /// The input is bound from the JSON body. Every mutating capability uses it.
     Post,
 }
 
@@ -820,6 +965,15 @@ pub struct Capability {
     /// What running it as an execution means: classified from the kind, so that a client
     /// reads a fact rather than deciding for itself.
     pub execution: ExecutionPolicy,
+}
+
+/// A capability is presented by its id: the command line's table, the site's registry pages
+/// and the closure matrix all list it that way, and a title is neither unique nor stable
+/// enough to be the thing a reader navigates by.
+impl crate::order::Ordered for Capability {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::plain(self.id.as_str(), self.id.as_str())
+    }
 }
 
 #[cfg(test)]

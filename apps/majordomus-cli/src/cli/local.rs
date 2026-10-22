@@ -230,6 +230,11 @@ pub const LOCAL: &[LocalCommand] = &[
     },
     // ---------------------------------------------------------------- other names
     LocalCommand {
+        command: "commit",
+        reason: LocalReason::Alias("commit plan"),
+        note: "plans when no subcommand follows it, because planning is what a person wants when they ask about committing; the two are one operation typed two ways.",
+    },
+    LocalCommand {
         command: "why",
         reason: LocalReason::Alias("why list"),
         note: "runs the catalogue listing when no subcommand follows it, so the two are one operation typed two ways.",
@@ -254,6 +259,16 @@ pub const LOCAL: &[LocalCommand] = &[
         command: "capabilities schema",
         reason: LocalReason::RendersCapability("capabilities.describe"),
         note: "prints the canonical input or output schema that capabilities.describe already carries on the descriptor it returns.",
+    },
+    LocalCommand {
+        command: "mesh status",
+        reason: LocalReason::RendersCapability("mesh.status"),
+        note: "asks this checkout's running server for mesh.status and renders it: the mesh lives in the server's memory, so an in-process answer would truthfully say only that this process runs no mesh.",
+    },
+    LocalCommand {
+        command: "mesh nodes",
+        reason: LocalReason::RendersCapability("mesh.nodes"),
+        note: "asks this checkout's running server for mesh.nodes and renders it, for the same reason as mesh status: the registry is the server's, not this process's.",
     },
     LocalCommand {
         command: "capabilities validate",
@@ -412,6 +427,11 @@ pub const LOCAL: &[LocalCommand] = &[
         reason: LocalReason::SessionLocal,
         note: "prints the environment variables for the shell to evaluate, which is the shell's own state and nobody else's.",
     },
+    LocalCommand {
+        command: "env enter",
+        reason: LocalReason::SessionLocal,
+        note: "is the whole of entering this repository as one call (ADR 0043) — the assignments, the banner, the bridge refreshed and the runtime ensured — and every part of it is about the shell that just arrived, which no caller over a socket shares.",
+    },
     // ---------------------------------------------------------------- executions
     LocalCommand {
         command: "executions",
@@ -439,6 +459,11 @@ pub const LOCAL: &[LocalCommand] = &[
         command: "release version",
         reason: LocalReason::RendersCapability("release.version"),
         note: "prints the declared and the tool's version and whether they agree.",
+    },
+    LocalCommand {
+        command: "release analyze",
+        reason: LocalReason::RendersCapability("release.analysis"),
+        note: "prints what the public contract did since the last release and the smallest version it allows.",
     },
     LocalCommand {
         command: "release bump",

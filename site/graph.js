@@ -3,7 +3,8 @@
 // Progressive enhancement, in the strict sense: the page ships the whole graph as a rendered
 // list of nodes and their edges, which is what a reader without JavaScript, a crawler, and a
 // screen reader get. This script only adds a second view of the same data. If Cytoscape fails
-// to load, the list stays and nothing is lost.
+// to load, the list stays and nothing is lost. Where a page links to the list instead of
+// carrying it (partials/graph.html's graph_src), the link is what stays.
 //
 // The library is 400 kB, so it is not in the base layout: it is fetched the first time a graph
 // scrolls into view, once per page, and never on a page without one.
@@ -95,12 +96,24 @@
     ];
   }
 
-  function mount(el, cytoscape) {
+  // The data is the page's own <script type="application/json"> when it carries one, and the
+  // published JSON named by data-graph-src when it does not: a page that only summarises a graph
+  // (the homepage) fetches it on first sight rather than shipping it inline to every visitor.
+  function graphData(el) {
     var payload = document.getElementById(el.getAttribute('data-graph'));
-    if (!payload) { return; }
-    var data;
-    try { data = JSON.parse(payload.textContent); } catch (e) { return; }
-    if (!data.nodes || !data.nodes.length) { return; }
+    if (payload) {
+      try { return Promise.resolve(JSON.parse(payload.textContent)); } catch (e) { return Promise.reject(e); }
+    }
+    var url = el.getAttribute('data-graph-src');
+    if (!url || !window.fetch) { return Promise.reject(new Error('no graph data')); }
+    return fetch(url).then(function (r) {
+      if (!r.ok) { throw new Error('graph data ' + r.status); }
+      return r.json();
+    });
+  }
+
+  function mount(el, cytoscape, data) {
+    if (!data || !data.nodes || !data.nodes.length) { return; }
 
     var base = (el.getAttribute('data-graph-base') || '').replace(/\/$/, '');
     var canvas = el.querySelector('[data-graph-canvas]');
@@ -214,6 +227,10 @@
     if (toggle) { toggle.addEventListener('click', function () { setTimeout(function () { cy.style(stylesheet(palette())); }, 0); }); }
 
     canvas.setAttribute('data-graph-ready', '1');
+    // the drawing, reachable from its own figure and nowhere else: scripts/lib/interaction-specs/graph.mjs
+    // asserts that a filter hides the edges of its kind and that a name in the list focuses its node,
+    // which only the drawing itself can answer
+    el.mjGraph = cy;
     return cy;
   }
 
@@ -227,7 +244,7 @@
   if (!src) { return; }
 
   function start(el) {
-    loadCytoscape(src).then(function (cytoscape) { mount(el, cytoscape); }).catch(function () {
+    Promise.all([loadCytoscape(src), graphData(el)]).then(function (r) { mount(el, r[0], r[1]); }).catch(function () {
       var note = el.querySelector('[data-graph-note]');
       if (note) { note.hidden = false; }         // the list below is the graph; say so and stop
     });

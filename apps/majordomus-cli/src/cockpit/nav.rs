@@ -49,12 +49,18 @@ pub enum Area {
     Continuity,
     /// The branch-to-worktree topology of the repository.
     Worktrees,
+    /// The discovered nodes of the mesh, and the machinery that observes them.
+    Mesh,
+    /// The declared model catalogue and its routing.
+    Models,
     /// The health report.
     Health,
     /// What the crate's own public surface is held to.
     Quality,
     /// What the generator writes.
     Artifacts,
+    /// What the public contract did since the last release, and the version it requires.
+    Release,
     /// The design system: what every surface of this tool is rendered with.
     Design,
     /// The HTTP and MCP surfaces.
@@ -135,6 +141,18 @@ pub fn areas() -> &'static [AreaInfo] {
             area: Area::Worktrees,
         },
         AreaInfo {
+            id: "mesh",
+            label: "Mesh",
+            href: "/cockpit/mesh",
+            area: Area::Mesh,
+        },
+        AreaInfo {
+            id: "models",
+            label: "Models",
+            href: "/cockpit/models",
+            area: Area::Models,
+        },
+        AreaInfo {
             id: "health",
             label: "Health",
             href: "/cockpit/health",
@@ -145,6 +163,12 @@ pub fn areas() -> &'static [AreaInfo] {
             label: "Artifacts",
             href: "/cockpit/artifacts",
             area: Area::Artifacts,
+        },
+        AreaInfo {
+            id: "release",
+            label: "Release",
+            href: "/cockpit/release",
+            area: Area::Release,
         },
         AreaInfo {
             id: "design",

@@ -9,6 +9,9 @@ status: active
 class: blocking
 depends_on: []
 tags: [gates, diagnostics]
+
+x-majordomus:
+  tests: [test/cases/104_strict_derivation.sh]
 ---
 
 # Rationale

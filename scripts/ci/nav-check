@@ -1,0 +1,284 @@
+#!/usr/bin/env bash
+# nav-check — the site's navigation is declared once, and every projection derives from it.
+#
+# `site/data/nav.toml` is the one declaration of what the site's navigation is: five groups,
+# their items, and one call to action. The navbar renders it, the footer renders it, and
+# anything else that shows a route a visitor can navigate to renders it. That is the whole
+# claim, and two measured failures are why it needs a gate rather than a comment.
+#
+#   1. The declaration said it was projected, and one projection was not. The header of
+#      nav.toml stated that the footer renders from this file. The footer did not read `nav`
+#      at all — it was five links typed by hand — so the site had two navigations, one of
+#      which nothing could change by editing the declaration. A file that claims to be a
+#      single source is more dangerous than one that does not, because a reader stops
+#      looking.
+#   2. The same route was declared twice under two names. `/docs/cli/` and `/docs/api/` each
+#      appeared in two groups, labelled differently in each, because the categories they sat
+#      under answered the same question. A visitor met the same page twice and had to guess
+#      which label was the real one; nothing in the repository noticed for as long as it was
+#      true.
+#
+# So this gate decides four things:
+#
+#   1. **No href is written twice.** Not across groups, not within one. The single allowed
+#      repeat is a group's own href appearing as its *first* item's href — that is the
+#      dropdown's landing link, the same route reached by clicking the group itself, and it
+#      is a rendering decision rather than a second entry. The same route under a second
+#      label anywhere else is the defect above. `[[redirects]]` is not examined: `from`/`to`
+#      are not navigation, they are the addresses navigation used to have.
+#   2. **The primary navigation is small.** At most six `[[groups]]`. A navbar is not a
+#      sitemap — it carries the top-level questions a visitor arrives with, and the version
+#      of this file that carried nine categories is the one that duplicated two routes.
+#   3. **Every projection derives.** A template that renders site navigation reads `nav`
+#      rather than typing routes: navbar.html and footer.html must each reference
+#      `nav.groups`, and neither may contain a site route typed by hand that the declaration
+#      does not carry.
+#   4. **The call to action exists and goes somewhere.** A `[cta]` with a label, an href, and
+#      a page at the end of it.
+#
+# # What counts as a route typed by hand
+#
+# Two literal forms, and only literal ones:
+#
+#   href="/docs/"                  an absolute site route written into the attribute
+#   get_url(path="/docs/")         the same route handed to Zola's resolver
+#
+# Everything else is derived by construction and is not examined: `get_url(path=g.href)`
+# reads the declaration, `href="{{ project.repository_url }}/blob/…"` is an external URL
+# whose value never begins with `/`, and a route interpolated from a variable —
+# `href="/{{ x }}/"` — is a computation, not a typed route, so a captured path containing
+# `{` or `}` is skipped rather than guessed at. Two literals are exempt by declaration: `/`,
+# the home link every page carries and no navbar group ever is, and anything the declaration
+# itself carries, which is the point of declaring it. Relative and external hrefs are out of
+# scope entirely; only a leading `/` makes something a site route.
+#
+#   scripts/ci/nav-check            every finding, and the verdict
+#   MJ_ROOT=<dir> ...               examine that tree instead of this one
+#
+# Exit: 0 clean · 10 findings · 12 unusable.
+set -euo pipefail
+
+ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
+cd "$ROOT"
+
+NAV="site/data/nav.toml"
+MAX_GROUPS=6
+# The templates that render site navigation. Each must read the declaration; each is scanned
+# for routes typed beside it.
+PROJECTIONS="site/templates/partials/navbar.html site/templates/partials/footer.html"
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -h|--help) sed -n '2,58p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    *) echo "nav-check: unknown option $1" >&2; exit 2 ;;
+  esac
+done
+
+command -v python3 >/dev/null 2>&1 || { echo "nav-check: python3 is not installed" >&2; exit 12; }
+[ -f "$NAV" ] || { echo "nav-check: $NAV is missing" >&2; exit 12; }
+
+findings=0
+ok()   { printf 'ok    %s\n' "$*"; }
+fail() { printf 'FAIL  %s\n' "$*"; findings=$((findings+1)); }
+
+# ------------------------------------------------------------------ the declaration, read once
+# tomllib is the parser the format has; a regex reader here would be a second, worse one, and
+# this repository has already paid for hand-written readers of declared files.
+facts="$(python3 - "$NAV" <<'PY'
+import sys, tomllib
+
+path = sys.argv[1]
+try:
+    with open(path, "rb") as fh:
+        nav = tomllib.load(fh)
+except Exception as exc:                                  # a malformed declaration is unusable
+    print(f"unusable\t{path} does not parse as TOML: {exc}")
+    sys.exit(0)
+
+def out(kind, *rest):
+    print(kind + "\t" + "\t".join(str(r) for r in rest))
+
+groups = nav.get("groups") or []
+if not isinstance(groups, list):
+    out("unusable", f"{path} declares no [[groups]] array")
+    sys.exit(0)
+out("groups", len(groups))
+
+# Every declared href, with where it was written, so a duplicate can be named on both sides.
+places = {}
+order = []
+def declare(href, where):
+    if href in places:
+        out("dup", f"{href} is declared twice: {places[href]} and {where}")
+    else:
+        places[href] = where
+        order.append(href)
+
+for g in groups:
+    label = g.get("label") or "(unlabelled)"
+    href = g.get("href")
+    items = g.get("items") or []
+    if not href:
+        out("err", f"the group {label!r} declares no href")
+    else:
+        declare(href, f"the group {label!r}")
+    # The one allowed repeat: the first item of a dropdown is the group's own landing page.
+    # Only the first, and only when it is the group's own href — anything looser readmits the
+    # defect this check exists for.
+    for i, item in enumerate(items):
+        ihref = item.get("href")
+        ilabel = item.get("label") or "(unlabelled)"
+        if not ihref:
+            out("err", f"the item {ilabel!r} of group {label!r} declares no href")
+            continue
+        if i == 0 and ihref == href:
+            continue
+        declare(ihref, f"{label!r} → {ilabel!r}")
+
+cta = nav.get("cta") or {}
+if not cta.get("label") or not cta.get("href"):
+    out("nocta", f"{path} declares no [cta] with a label and an href")
+else:
+    out("cta", cta["label"], cta["href"])
+    # The call to action is an action, not a sixth category, but it is still a route the
+    # declaration owns — a template may link it without typing it by hand.
+    if cta["href"] not in places:
+        order.append(cta["href"])
+
+for href in order:
+    out("href", href)
+PY
+)"
+
+# The facts are tab-delimited and read with awk throughout: BSD sed does not honour `\t`
+# inside a bracket expression, so a `[^\t]*` field reader here is empty on macOS and green
+# for the wrong reason — which is exactly the silent half-verdict this repository keeps
+# finding in its own checks.
+fact() { printf '%s\n' "$facts" | awk -F'\t' -v k="$1" -v f="${2:-2}" '$1==k{print $f}'; }
+
+if [ -n "$(fact unusable)" ]; then
+  fact unusable | sed 's/^/nav-check: /' >&2
+  exit 12
+fi
+
+# ------------------------------------------------------------------- 1. no href is written twice
+dups="$(fact dup)"
+malformed="$(fact err)"
+if [ -n "$malformed" ]; then
+  while IFS= read -r line; do [ -n "$line" ] && fail "$line"; done <<EOF
+$malformed
+EOF
+fi
+if [ -n "$dups" ]; then
+  while IFS= read -r line; do
+    [ -n "$line" ] || continue
+    fail "$line — one page reached under two labels is a reader guessing which is the real one; a group's own href may repeat as its first item and nowhere else"
+  done <<EOF
+$dups
+EOF
+else
+  ok "every href in $NAV is declared once"
+fi
+
+# ---------------------------------------------------------------- 2. the primary navigation is small
+count="$(fact groups | head -n 1)"
+if [ -z "$count" ]; then
+  echo "nav-check: $NAV declares no groups" >&2
+  exit 12
+elif [ "$count" -gt "$MAX_GROUPS" ]; then
+  fail "$NAV declares $count groups and the limit is $MAX_GROUPS — a navbar is not a sitemap: it carries the top-level questions a visitor arrives with, and a category that exists because a page needed a home belongs under one of them"
+else
+  ok "$count top-level group(s), at or under the limit of $MAX_GROUPS"
+fi
+
+# --------------------------------------------------------------------- 3. every projection derives
+declared="$(mktemp "${TMPDIR:-/tmp}/mj-nav-check.XXXXXX")"
+trap 'rm -f "$declared"' EXIT
+fact href > "$declared"
+
+for tpl in $PROJECTIONS; do
+  if [ ! -f "$tpl" ]; then
+    fail "$tpl is missing — it is named here as a projection of $NAV"
+    continue
+  fi
+  if grep -q 'nav\.groups' "$tpl"; then
+    ok "$tpl renders nav.groups"
+  else
+    fail "$tpl renders site navigation without reading nav.groups; $NAV is the one declaration and a second navigation typed beside it cannot be changed by editing it"
+  fi
+
+  typed="$(python3 - "$tpl" "$declared" <<'PY'
+import re, sys
+
+tpl, declared_path = sys.argv[1], sys.argv[2]
+
+def norm(route):
+    route = route.split("#", 1)[0].split("?", 1)[0]
+    if not route:
+        return "/"
+    return route if route.endswith("/") else route + "/"
+
+declared = {norm(l.strip()) for l in open(declared_path, encoding="utf-8") if l.strip()}
+declared.add("/")                               # the home link, which is no group's route
+
+text = open(tpl, encoding="utf-8").read()
+# Only literal absolute routes. A value that starts with `{{` is an external URL or a
+# computation; a captured path containing a brace is interpolated, so it was not typed.
+patterns = [re.compile(r'href="(/[^"]*)"'),
+            re.compile(r'get_url\(\s*path\s*=\s*"(/[^"]*)"')]
+seen = []
+for pat in patterns:
+    for m in pat.finditer(text):
+        route = m.group(1)
+        if "{" in route or "}" in route:
+            continue
+        if norm(route) in declared or route in seen:
+            continue
+        seen.append(route)
+for route in seen:
+    print(route)
+PY
+)"
+  if [ -n "$typed" ]; then
+    while IFS= read -r route; do
+      [ -n "$route" ] || continue
+      fail "$tpl types the site route $route, which $NAV does not declare — a route a navigation shows is declared there and read from there, or it is a second navigation"
+    done <<EOF
+$typed
+EOF
+  else
+    ok "$tpl types no site route that $NAV does not declare"
+  fi
+done
+
+# -------------------------------------------------------------- 4. the call to action goes somewhere
+# Resolution is against the content tree, and against the built site when there is one: the
+# call to action is the one route whose target this gate is willing to assert on its own,
+# because a dead primary action is the cheapest way to lose a visitor who had decided.
+resolves() {
+  p="${1#/}"; p="${p%/}"
+  [ -n "$p" ] || return 0
+  [ -f "site/content/$p.md" ] || [ -f "site/content/$p/_index.md" ] \
+    || [ -f "site/content/$p/index.md" ] || [ -f "site/public/$p/index.html" ] \
+    || [ -f "site/public/$p.html" ]
+}
+
+nocta="$(fact nocta)"
+if [ -n "$nocta" ]; then
+  fail "$nocta — a visitor who has decided needs an action, not a dropdown"
+else
+  cta_label="$(fact cta 2 | head -n 1)"
+  cta_href="$(fact cta 3 | head -n 1)"
+  if resolves "$cta_href"; then
+    ok "the call to action '$cta_label' points at $cta_href, which is a page"
+  else
+    fail "the call to action '$cta_label' points at $cta_href and no page answers it — the one action on the bar is the one link that may not be dead"
+  fi
+fi
+
+if [ "$findings" -eq 0 ]; then
+  printf 'nav-check: the navigation is declared once in %s, and every projection derives from it\n' "$NAV"
+  exit 0
+fi
+printf 'nav-check: %s finding(s)\n' "$findings" >&2
+exit 10
