@@ -21,7 +21,6 @@ use crate::environment::preflight::{self, Preflight, Probe, RulesTally};
 use crate::environment::{
     resolve, EnvironmentQuery, FieldSource, Inputs, RepositoryEnvironment, Resolution,
 };
-use crate::repository::Repository;
 use crate::{capability, module};
 
 use super::{get, mcp};
@@ -57,7 +56,7 @@ impl BenchmarkCases for PreflightInput {
 
 fn preflight(ctx: &Context, input: PreflightInput) -> Result<Preflight, CapabilityError> {
     let root = std::path::Path::new(&ctx.index.repository.root);
-    let repository = Repository::open(root).map_err(|e| {
+    let repository = ctx.repository().map_err(|e| {
         CapabilityError::Internal(format!("the repository could not be re-read: {e}"))
     })?;
     // Located here rather than carried on the context, so that the provider projections are
@@ -180,8 +179,7 @@ fn snapshot(
     ctx: &Context,
     input: EnvironmentInput,
 ) -> Result<RepositoryEnvironment, CapabilityError> {
-    let root = std::path::Path::new(&ctx.index.repository.root);
-    let repository = Repository::open(root).map_err(|e| {
+    let repository = ctx.repository().map_err(|e| {
         CapabilityError::Internal(format!("the repository could not be re-read: {e}"))
     })?;
     // The share directory is not carried on the context; without it the provider
