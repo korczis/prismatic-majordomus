@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.6"
   },
   "registry": {
-    "fingerprint": "c0467f277b5737c1ae80ac45aa9277ca3fd2abaf7542f14acc4034f4b00c908e",
+    "fingerprint": "88db5b81d1f8e2cb56fceed6d4926bd9d62b4fe6e47ee0ef5d210835e5c79a95",
     "summary": {
-      "total": 3321,
+      "total": 3322,
       "builtin": 209,
-      "declarative": 3112,
+      "declarative": 3113,
       "by_kind": {
         "command": 32,
         "query": 177,
-        "resource": 3112
+        "resource": 3113
       },
       "by_stability": {
         "behaviorally_verified": 143,
         "experimental": 56,
-        "implemented": 3122
+        "implemented": 3123
       },
       "mcp_tools": 198,
-      "mcp_resources": 3167,
+      "mcp_resources": 3168,
       "http_routes": 203,
       "cli_commands": 112,
       "modules": 93,
@@ -86398,7 +86398,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 900,
+        "capabilities": 901,
         "capability_ids": []
       },
       {
@@ -87065,7 +87065,7 @@
     ]
   },
   "index": {
-    "fingerprint": "e064ba19549a8df4aa4ec09bc653e95875b137209bb690dcd648959de33f9b7a",
+    "fingerprint": "5ce90236ecc10084019e69c3a9399ab0d40155dc3f9e00874139291f3d243705",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -87105,7 +87105,7 @@
       "gap": 5,
       "implementation": 52,
       "intent": 36,
-      "issue": 900,
+      "issue": 901,
       "knowledge": 58,
       "mesh-declaration": 1,
       "milestone": 103,
@@ -94295,7 +94295,7 @@
         "title": "`majordomus ui` — the product",
         "path": "docs/MAJORDOMUS_UI.md",
         "source_class": "document",
-        "bytes": 40653
+        "bytes": 43099
       },
       {
         "uri": "majordomus://document/docs/MCP.md",
@@ -94385,7 +94385,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 799860
+        "bytes": 800037
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -97378,7 +97378,7 @@
         "path": ".ai/repo/project/gaps/a-browser-computes-what-the-server-verifies.yaml",
         "section": "project",
         "source_class": "gap",
-        "bytes": 1857
+        "bytes": 2401
       },
       {
         "uri": "majordomus://gap/a-session-leaves-what-it-observed",
@@ -97860,7 +97860,7 @@
         "path": ".ai/repo/project/intents/a-browser-computes-what-the-server-verifies.yaml",
         "section": "project",
         "source_class": "intent",
-        "bytes": 2192
+        "bytes": 2666
       },
       {
         "uri": "majordomus://intent/a-change-is-judged-in-minutes",
@@ -103141,6 +103141,17 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 2918
+      },
+      {
+        "uri": "majordomus://issue/I2788",
+        "kind": "issue",
+        "identity": "I2788",
+        "title": "A page computes the canonical digest in a Worker and shows the server's verdict",
+        "description": "Add the UI screen /ui/compute: when the person asks, a same-origin Worker loads the committed wasm32 portable core, computes the canonical digest of the JSON the page holds, and the page asks compute.verify and shows match, mismatch or invalid. The module is committed under share/ui/compute with the digest of the core sources it was built from; a test refuses a module whose sources moved or that carries a host path, and the portable-core gate executes the committed module against the fixture. Only the Worker's response allows WebAssembly compilation; every page keeps the Cockpit's policy.",
+        "path": ".ai/repo/project/issues/I2788.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2507
       },
       {
         "uri": "majordomus://issue/I2789",
@@ -118963,7 +118974,7 @@
         "identity": "test/cases/575_nothing_runs_perl.sh",
         "path": "test/cases/575_nothing_runs_perl.sh",
         "source_class": "case",
-        "bytes": 6408
+        "bytes": 6413
       },
       {
         "uri": "majordomus://test/test/cases/578_an_unknown_gate_refuses_completed.sh",
@@ -121064,7 +121075,7 @@
       "identity": [
         "id"
       ],
-      "objects": 900
+      "objects": 901
     },
     {
       "name": "knowledge",
@@ -166574,6 +166585,14 @@
         "route": "GET /ui/mesh"
       },
       {
+        "key": "system.http.ui.compute",
+        "kind": "page",
+        "transport": "http",
+        "module": "system",
+        "cached": true,
+        "route": "GET /ui/compute"
+      },
+      {
         "key": "system.http.ui.delivery",
         "kind": "page",
         "transport": "http",
@@ -166708,6 +166727,14 @@
         "module": "system",
         "cached": true,
         "route": "GET /ui/mesh"
+      },
+      {
+        "key": "system.http.live.ui.compute",
+        "kind": "page",
+        "transport": "http",
+        "module": "system",
+        "cached": true,
+        "route": "GET /ui/compute"
       },
       {
         "key": "system.http.live.ui.delivery",

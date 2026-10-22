@@ -507,9 +507,11 @@ gates:
   # browser's wasm32. This gate proves both answer the shared fixture: the crate's own tests
   # on the host, then the wasm32 module built and executed by node through the C ABI a
   # browser Worker calls. A module that only compiles proves nothing about what it computes.
+  # The committed module /ui/compute serves (I2788) is executed against the same fixture: it
+  # is built on whichever host last rebuilt it, so its answers are what is held, not its bytes.
   - id: portable-core
     job: structure
-    runs: rustup target add wasm32-unknown-unknown >/dev/null 2>&1; cargo test --quiet --manifest-path apps/majordomus-core/Cargo.toml --target-dir apps/majordomus-core/target && cargo build --quiet --release --target wasm32-unknown-unknown --manifest-path apps/majordomus-core/Cargo.toml --target-dir apps/majordomus-core/target && node apps/majordomus-core/tests/wasm-parity.mjs apps/majordomus-core/target/wasm32-unknown-unknown/release/majordomus_core.wasm apps/majordomus-core/fixtures/canonical-digest.v1.json
+    runs: rustup target add wasm32-unknown-unknown >/dev/null 2>&1; cargo test --quiet --manifest-path apps/majordomus-core/Cargo.toml --target-dir apps/majordomus-core/target && cargo build --quiet --release --target wasm32-unknown-unknown --manifest-path apps/majordomus-core/Cargo.toml --target-dir apps/majordomus-core/target && node apps/majordomus-core/tests/wasm-parity.mjs apps/majordomus-core/target/wasm32-unknown-unknown/release/majordomus_core.wasm apps/majordomus-core/fixtures/canonical-digest.v1.json && node apps/majordomus-core/tests/wasm-parity.mjs share/ui/compute/majordomus_core.wasm apps/majordomus-core/fixtures/canonical-digest.v1.json
     summary: the portable core answers the shared canonical-digest fixture on the host and, built for wasm32 and executed, in the module a browser loads (ADR 0170)
 
   - id: crate-boundary
@@ -1038,6 +1040,12 @@ classes:
   - id: ui
     paths: [share/ui/**, apps/majordomus-cli/src/ui/**]
     gates: [cockpit-assets, cockpit-probe, rust-check, rust-integration, design, ui-audit]
+
+  # the committed wasm32 module of the portable core and the Worker that runs it (I2788,
+  # ADR 0170): a change to either is judged by the fixture, executed against that module
+  - id: browser-compute
+    paths: [share/ui/compute/**]
+    gates: [portable-core]
 
   # the design tokens and their projections. The canonical file reaches every surface, so a
   # change here is selected by the site, the Cockpit and the crate at once; the class exists

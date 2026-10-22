@@ -41,6 +41,7 @@
 pub(crate) mod capabilities;
 pub(crate) mod claim;
 pub(crate) mod command;
+pub(crate) mod compute;
 pub(crate) mod dashboard;
 pub(crate) mod delivery;
 pub(crate) mod deployments;
@@ -197,6 +198,12 @@ pub(crate) const SCREENS: &[Screen] = &[
         answers: "Which machines and runtimes are on the mesh, and what they recorded.",
     },
     Screen {
+        route: compute::ROUTE,
+        title: "Browser compute",
+        icon: "bolt",
+        answers: "Whether this browser computes what the server computes, and the server's verdict on it.",
+    },
+    Screen {
         route: delivery::ROUTE,
         title: "CI/CD & Releases",
         icon: "layers",
@@ -342,7 +349,12 @@ impl Ui {
             );
         }
         if let Some(name) = req.path.strip_prefix(ASSETS_PREFIX) {
-            return self.assets.respond(name, req);
+            let response = self.assets.respond(name, req);
+            // the one response allowed to compile WebAssembly: the Worker's own (ADR 0170)
+            return match name == compute::WORKER {
+                true => response.with_header("Content-Security-Policy", compute::worker_policy()),
+                false => response,
+            };
         }
         // one reading of the repository for the whole screen: the generation there is, never
         // a wait for the next one (ADR 0142); a screen drawn from a generation the repository
@@ -461,6 +473,18 @@ impl Ui {
             issues::ROUTE => issues::screen(ctx, query),
             prs::ROUTE => prs::screen(ctx, query),
             mesh::ROUTE => mesh::screen(ctx, query),
+            compute::ROUTE => {
+                let files = compute::Files {
+                    worker: self.assets.url(compute::WORKER),
+                    page: self.assets.url(compute::PAGE),
+                    module: self.assets.url(compute::MODULE),
+                };
+                let provenance = self
+                    .assets
+                    .text(compute::PROVENANCE)
+                    .and_then(|text| serde_json::from_str(&text).ok());
+                compute::screen(ctx, &files, provenance.as_ref())
+            }
             delivery::ROUTE => delivery::screen(ctx),
             deployments::ROUTE => deployments::screen(ctx),
             command::ROUTE => command::screen(ctx, query),
@@ -815,6 +839,10 @@ mod tests {
                 capabilities::screen(&ctx, &[("id".into(), "plan.status".into())]),
             ),
             (deployments::ROUTE, deployments::screen(&ctx)),
+            (
+                compute::ROUTE,
+                compute::screen(&ctx, &compute::Files::default(), None),
+            ),
             (skills::ROUTE, skills::screen(&ctx)),
             (docs::ROUTE, docs::screen(&ctx)),
             (knowledge::ROUTE, knowledge::screen(&ctx)),

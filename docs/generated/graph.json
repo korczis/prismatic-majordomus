@@ -43816,6 +43816,60 @@
         }
       },
       {
+        "id": "majordomus://issue/I2788",
+        "kind": "issue",
+        "label": "I2788",
+        "summary": "A page computes the canonical digest in a Worker and shows the server's verdict",
+        "route": "/cockpit/objects/issue/i2788",
+        "source": ".ai/repo/project/issues/I2788.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "/ui/compute is served under the Cockpit's policy, and only the Worker script's response adds 'wasm-unsafe-eval'",
+            "The committed module is served as application/wasm, byte for byte",
+            "The committed module names the digest of the core sources it was built from, that digest is the sources' current one, and the module carries no host path",
+            "The committed module, executed, answers every fixture row",
+            "In a real browser the page computes on request and shows the server's match"
+          ],
+          "created_at": "2026-10-17",
+          "current_state": "The wasm32 module is built and executed only by node in a CI gate; nothing serves it to a browser.",
+          "depends_on": [
+            "I2785"
+          ],
+          "desired_state": "/ui/compute computes in the browser on request and shows the server's recomputation; the served module is the committed one, tied to its sources and judged by the fixture.",
+          "evidence_required": [
+            "ui_compute_tests"
+          ],
+          "milestone": "browser-compute",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui",
+            "apps/majordomus-cli/src/cockpit/assets.rs",
+            "apps/majordomus-cli/src/web",
+            "apps/majordomus-cli/src/bench",
+            "apps/majordomus-cli/tests/ui_compute.rs",
+            "apps/majordomus-core",
+            "share/ui",
+            ".ai/repo",
+            "docs",
+            "site",
+            "test/cases",
+            ".gitattributes"
+          ],
+          "serves": [
+            "a-browser-computes-what-the-server-verifies#a-page-computes-and-the-server-agrees"
+          ],
+          "slug": "a-browser-computes-on-the-page",
+          "updated_at": "2026-10-17",
+          "validation": [
+            "majordomus plan validate",
+            "cargo test --test ui_compute",
+            "cargo test --lib cockpit::assets"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I2789",
         "kind": "issue",
         "label": "I2789",
@@ -116926,6 +116980,21 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2788",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2788",
+        "target": "majordomus://issue/I2785",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2788",
+        "target": "majordomus://milestone/browser-compute",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I2789",
         "target": "kind:issue",
         "kind": "is_a"
@@ -134662,8 +134731,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3779,
-      "edges": 8730,
+      "nodes": 3780,
+      "edges": 8733,
       "acyclic": false,
       "truncated": false
     }

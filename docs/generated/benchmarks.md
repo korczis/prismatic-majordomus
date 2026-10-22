@@ -264,6 +264,7 @@ Every screen and panel of the UI's own route list, read with `GET` and `Accept: 
 | `system.http.ui.capabilities` | `/ui/capabilities` | pinned | — |
 | `system.http.ui.skills` | `/ui/skills` | pinned | — |
 | `system.http.ui.mesh` | `/ui/mesh` | pinned | — |
+| `system.http.ui.compute` | `/ui/compute` | pinned | — |
 | `system.http.ui.delivery` | `/ui/delivery` | pinned | — |
 | `system.http.ui.deployments` | `/ui/deployments` | pinned | — |
 | `system.http.ui.evidence` | `/ui/evidence` | pinned | — |
@@ -281,6 +282,7 @@ Every screen and panel of the UI's own route list, read with `GET` and `Accept: 
 | `system.http.live.ui.capabilities` | `/ui/capabilities` | live | — |
 | `system.http.live.ui.skills` | `/ui/skills` | live | — |
 | `system.http.live.ui.mesh` | `/ui/mesh` | live | — |
+| `system.http.live.ui.compute` | `/ui/compute` | live | — |
 | `system.http.live.ui.delivery` | `/ui/delivery` | live | — |
 | `system.http.live.ui.deployments` | `/ui/deployments` | live | — |
 | `system.http.live.ui.evidence` | `/ui/evidence` | live | — |
