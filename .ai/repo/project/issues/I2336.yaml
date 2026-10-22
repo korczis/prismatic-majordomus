@@ -1,0 +1,40 @@
+id: I2336
+milestone: mesh-peers-execute-assigned-work
+title: "A crashed, replayed, expired, stale or untrusted assignment is refused or resumed, and a worker's patch is validated before it is integrated"
+slug: assignments-survive-failure
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Test a crash, a duplicate message, a replay, an untrusted node, an expired delegation, a stale source tree, a divergent result, a partial output, an unreachable node and the absence of any provider; make tasks idempotent and resumable; and validate a worker's patch before it reaches integration."
+why: "Dispatch multiplies the ways a task can half-happen. Each of the ten conditions has a known analogue in this repository's history of the mesh and of fan-out agents that died with uncommitted work. Source: autopilot prompts/03-mesh-workers.md Issue 5 'Recovery and security'."
+current_state: "The mesh's own failure modes are tested in the crate and in a container lab: partition, crash recovery, three-node convergence, claim conflict (apps/majordomus-cli/tests/mesh_cooperation.rs, test/mesh-lab). Nothing executes on a peer, so none of the ten conditions has a test."
+desired_state: "Each condition is a test in the crate or a scenario of the lab. A worker's result is a branch pushed by the worker and judged like any other head: by the scope of its assignment, the impacted gates and the integration classifier. A result from a tree older than the assignment's base is refused as stale, and a second result for one assignment is refused as divergent."
+scope:
+  - "apps/majordomus-cli/tests/mesh_cooperation.rs"
+  - "apps/majordomus-cli/tests/mesh.rs"
+  - "test/mesh-lab"
+  - "scripts/ci/mesh-check"
+  - "scripts/ci/mesh-lab-evidence"
+  - "docs/MESH.md"
+non_scope:
+  - "New mesh guarantees. The list of what is not guaranteed in docs/MESH.md is updated, not shortened by assertion."
+depends_on:
+  - I2334
+  - I2335
+acceptance_criteria:
+  - "Each of the ten named conditions has a test or a lab scenario that fails when its guard is removed"
+  - "A task delivered twice runs once"
+  - "A patch outside its assignment's scope is refused before any integration step sees it"
+  - "The lab's evidence record lists the new scenarios with their results"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test mesh_cooperation"
+  - "cargo test --test mesh"
+  - "scripts/ci/mesh-check"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 414_mesh_lab_evidence <the cases this issue adds>"
+evidence_required:
+  - "assignment_failure_tests"
+  - "patch_validation_case"
+  - "mesh_lab_scenarios"
+created_at: 2026-10-10
+updated_at: 2026-10-10

@@ -1,0 +1,41 @@
+id: I2356
+milestone: delivery-reads-the-same-on-every-surface
+title: "The actions of a run are derived from its capabilities and are the same on every surface, each with a preview, an idempotency key and its prerequisites"
+slug: run-actions-are-derived
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Derive the available actions, their authorisation prerequisites, their validation and their conflict constraints from the capability and command model; offer the same action through the command line, MCP, the Cockpit and HTTP; and give every mutating action a dry run where meaningful, a scope preview, an idempotency key, evidence and failure reporting."
+why: "A stop button that is a second implementation of stop is a second authority. The Cockpit's generic runner already drives command capabilities; what a run's actions add is authority, preview and idempotency, and those belong to the declaration. Source: convergence prompts/05-derived-ui-mcp-observability.md Issue 05.2 'Command/action projection'; autopilot prompts/02-durable-supervisor.md Issue 5 'UI/API projection' (the controls)."
+current_state: "A capability of kind command is declared once and projected to every surface, and the Cockpit runs it through a generic form (docs/CAPABILITIES.md, docs/COMMANDS.md, apps/majordomus-cli/src/command_graph/policy.rs). Neighbouring work, not repeated: the Cockpit asking before it runs a mutating capability (I2153), the task lifecycle as capabilities (I2141), parity of writers across transports (I2150), lifecycle commands as non-interactive capabilities (I1506)."
+desired_state: "A command capability can declare the grant it needs, whether it has a dry run, how its scope is previewed and that it takes an idempotency key. The surfaces render those from the declaration: an action whose grant the caller lacks is shown as unavailable with the reason, and a repeated key performs nothing twice. No surface builds a shell string and none bypasses the lifecycle."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/commands.rs"
+  - "apps/majordomus-cli/src/command_graph/policy.rs"
+  - "apps/majordomus-cli/src/command_graph/model.rs"
+  - "apps/majordomus-cli/src/cockpit/pages.rs"
+  - "apps/majordomus-cli/src/cockpit/view.rs"
+  - "docs/COMMANDS.md"
+  - "docs/COCKPIT.md"
+non_scope:
+  - "The confirmation dialogue, which is I2153."
+  - "New actions beyond those the run declares in I2331."
+depends_on:
+  - I2331
+  - I2321
+acceptance_criteria:
+  - "run stop invoked from the command line, MCP and the Cockpit records the same event"
+  - "An action whose grant is absent is refused alike on every surface, with the grant named"
+  - "The same idempotency key sent twice performs the action once"
+  - "A dry run of a mutating action writes nothing to the trail and shows the scope it would touch"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test cockpit"
+  - "cargo test --test mcp_conformance_projection"
+  - "scripts/ci/cockpit-projection-check"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the cases this issue adds>"
+evidence_required:
+  - "run_action_parity_case"
+  - "idempotency_key_test"
+created_at: 2026-10-10
+updated_at: 2026-10-10

@@ -1,0 +1,36 @@
+id: I2324
+milestone: a-finished-task-is-explained-by-its-evidence
+title: "A recorded run carries what it cost and why it ran: its duration, its retries, the cache decision and the operation that caused it"
+slug: a-recorded-run-carries-its-cost
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Record on the existing evidence run the start and end, the measured wall time and processor time where available, the status, the retries, the cache decision, the causal dependency and a reference to its diagnostics, with provenance to the commit, the pull request, the environment and the artifact version, without replacing the outcome evidence that is already there."
+why: "The baseline's timings are taken by scripts beside the ledger; unless a run carries its own cost, the comparison the proof milestone must publish has no canonical source. And a ledger that cannot tell a cache hit from an execution lets a hit pass for a verification. Source: convergence prompts/01-canonical-execution-evidence.md Issue 01.2 'Integrate telemetry into evidence ledger'."
+current_state: "An evidence run records its executions with outcomes and runners and what was absent or dropped (apps/majordomus-cli/src/evidence/run.rs); CI collects evidence through scripts/ci/evidence-collect and times steps with scripts/ci/timed. A run carries no duration, no retry count, no cache decision and no cause. Typed runs that carry what they measured are I1951 on master, whose code has partly landed; provider-reported telemetry is I0301 to I0305."
+desired_state: "The run record gains the cost and cause fields as optional additions under a new schema version. A failure stays a failure whatever was cached, a cache hit is recorded as a hit and never as a passing execution, and a local test run is never recorded as evidence of a deployment's health."
+scope:
+  - "apps/majordomus-cli/src/evidence/run.rs"
+  - "apps/majordomus-cli/src/evidence/ledger.rs"
+  - "scripts/ci/evidence-collect"
+  - "scripts/ci/timed"
+  - "lib/evidence.sh"
+  - "docs/EVIDENCE.md"
+non_scope:
+  - "Provider-reported token and latency telemetry (I0301 to I0305)."
+  - "A second ledger for timings."
+depends_on:
+  - I2323
+acceptance_criteria:
+  - "A recorded run states its duration and whether each execution ran or was served from a cache"
+  - "A run served from a cache does not satisfy a criterion that requires an execution at the presented revision"
+  - "A run that failed and was retried is recorded as failed once and passed once, never as passed alone"
+validation:
+  - "bin/majordomus plan validate"
+  - "scripts/evidence-check"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the cases this issue adds>"
+evidence_required:
+  - "run_cost_fields_test"
+  - "cache_hit_is_not_verification_case"
+created_at: 2026-10-10
+updated_at: 2026-10-10

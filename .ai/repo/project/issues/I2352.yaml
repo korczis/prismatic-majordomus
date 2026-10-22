@@ -1,0 +1,40 @@
+id: I2352
+milestone: delivery-is-held-by-evidence
+title: "A finish says which of merged, published, deployed and healthy it proved, and completed needs every one its goal declares"
+slug: completion-states-what-it-proved
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Decide completion from evidence: the linked intent criteria where present, the scope at the current head, verified tests, consistent generated artifacts, the review and integration requirements, and deployment checks only when a deploy is part of the declared goal; tell code merged, artifact published, deployed and healthy apart; and turn a missing permission, environment or secret prompt into an explicit blocker."
+why: "One green flag for four different facts is how a release was called done on 2026-10-10 while its publication had died. An unattended run decides completion itself, so the decision has to be typed and to say what it did not prove. Source: convergence prompts/04-policy-gates-and-completion.md Issue 04.3 'Completion semantics from evidence'; autopilot prompts/06-closed-loop-delivery.md Issue 2 'Completion policy'."
+current_state: "finish requires what policy lists (scope respected, verification ran, obligations met, gates passed, publication current) and records typed outcomes (lib/finish.sh, .ai/repo/policy.yaml). The done invariant answers nineteen questions each from its source, unknown where nothing answers (apps/majordomus-cli/src/gates/done.rs, share/obligations.yaml). Delivery computes on master, tested and deployed per feature (ADR 0071). Neighbouring work, not repeated: one completion policy (I1968), finish reading what its work serves (I2055 to I2057, I2061), command and deployment criteria judged from recorded runs and observations (I2221 to I2223)."
+desired_state: "The outcome of a finish carries four typed states, each proved, failed, unknown or not required, with the record that decided it. Which of them a task requires follows from its goal: the issue, the criterion it serves and the obligations its change set triggers. completed is refused while a required state is failed or unknown. A retry or a failure never marks completion. Existing outcomes keep their meaning and older records read as before."
+scope:
+  - "apps/majordomus-cli/src/gates/done.rs"
+  - "apps/majordomus-cli/src/capability/builtin/obligations.rs"
+  - "share/obligations.yaml"
+  - "lib/finish.sh"
+  - "apps/majordomus-cli/src/delivery/mod.rs"
+  - ".ai/repo/policy.yaml"
+  - "docs/DELIVERY.md"
+  - "test/cases/131_completion_gates.sh"
+  - "test/cases/578_an_unknown_gate_refuses_completed.sh"
+non_scope:
+  - "A second definition of done."
+  - "Requiring a deployment of a task whose goal declares none."
+depends_on:
+  - I2325
+acceptance_criteria:
+  - "A task whose goal declares a deployment cannot be completed while deployed or healthy is unknown"
+  - "A documentation task with no deployment in its goal completes with deployed and healthy shown as not required"
+  - "A finish blocked by a missing permission or secret records an external blocker and never completed"
+  - "A finish record written before the states existed reads with each state unknown and its outcome unchanged"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 06_finish 131_completion_gates 578_an_unknown_gate_refuses_completed 895_a_finished_task_does_not_satisfy_an_intent <the cases this issue adds>"
+evidence_required:
+  - "completion_states_case"
+  - "not_required_state_case"
+  - "older_finish_record_test"
+created_at: 2026-10-10
+updated_at: 2026-10-10

@@ -1,0 +1,38 @@
+id: I2350
+milestone: delivery-is-held-by-evidence
+title: "One gate model names what a local check, a pull request, an integration and a release must run, and no second inventory exists"
+slug: one-gate-model-names-every-tier
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Model the fast local, the pull-request impacted, the complete integration and the release-level checks as selections of the existing gate dispatch and claim and evidence system, with a conservative, reproducible affected-test selection that falls back to the full plan when impact cannot be proved, and diagnostics that name the cause, the reproducing command and the owner."
+why: "The gate model is one file, and what each tier runs is still decided in four places: that file, the core-check script, the workflows and the release model. A gate added to one and not the others is the duplicated inventory the pack names. Source: convergence prompts/04-policy-gates-and-completion.md Issue 04.1 'Single authoritative quality policy'; autopilot prompts/04-pr-drain.md Issue 4 'Review and checks' (the non-impacting check)."
+current_state: "gates.yaml declares gates, jobs and path classes and scripts/ci-plan reads nothing else to plan a change (test/cases/94_ci_plan.sh). scripts/ci/core-check carries its own ordered list of checks; the release has its own model (.ai/repo/ci/release.yaml); a task's gates are recorded and enforced at finish (lib/gates.sh, apps/majordomus-cli/src/gates/judge.rs). The tiers are not named."
+desired_state: "Each gate declares the tiers it belongs to, and the local check, the pull-request plan, the integration plan and the release plan are each a selection of the one model. core-check and the release model read their lists from it. A gate's failure prints why it was selected, the command that reproduces it and the rule or owner it answers to."
+scope:
+  - ".ai/repo/ci/gates.yaml"
+  - ".ai/repo/ci/release.yaml"
+  - "scripts/ci-plan"
+  - "scripts/ci/core-check"
+  - "lib/gates.sh"
+  - "apps/majordomus-cli/src/gates/model.rs"
+  - "apps/majordomus-cli/src/gates/judge.rs"
+  - "docs/CI.md"
+non_scope:
+  - "Reusing recorded results, which is I2348."
+  - "A tier an adopter must declare: a repository with no model keeps today's behaviour."
+depends_on: []
+acceptance_criteria:
+  - "A gate added to the model with its tiers appears in the local check, the plan and the release selection with no other file edited"
+  - "No script outside the model carries a list of gates, proved by a check that finds one when it is put back"
+  - "A change whose impact cannot be proved runs the full plan, and the plan says which path caused it"
+  - "A failing gate's output names the selection reason, the reproducing command and its owner"
+validation:
+  - "bin/majordomus plan validate"
+  - "scripts/ci-plan --check"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 94_ci_plan <the cases this issue adds>"
+evidence_required:
+  - "tier_selection_case"
+  - "no_second_gate_list_check"
+created_at: 2026-10-10
+updated_at: 2026-10-10

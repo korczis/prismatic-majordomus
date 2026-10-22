@@ -1,0 +1,51 @@
+id: a-finished-task-is-explained-by-its-evidence
+title: "One query explains a finished task from its intent to its deployment, from canonical evidence alone"
+slug: a-finished-task-is-explained-by-its-evidence
+order: 322
+priority: p1
+problem: "The convergence pack (Majordomus: Verified Delivery Convergence, 2026-10-10), prompts/01-canonical-execution-evidence.md, asks for one evidence and trace model with no duplicate state. The facts exist in several stores that do not share an identity. The evidence ledger records runs with their commit and working-tree state; the trace module derives an issue's branches and commits from git; intent realisation joins episodes; the delivery module computes whether a feature is on master, deployed and verified; an execution is an in-memory record bounded at 200. A person who asks why a finished task counts as finished reads five answers and joins them by hand, and a step nobody measured looks the same as a step that passed."
+outcome: "An operation has one identity that every store carries, a recorded run says what it cost and what caused it, and one query walks a finished task from the intent it served through its commits, tests, pull request and release to its deployment, marking each step proved, failed or unknown from canonical evidence only."
+current_state: "Implemented: typed evidence run records with origin, commit, working-tree state, provenance, totals and absences (apps/majordomus-cli/src/evidence/run.rs), freshness judged at the presented revision (docs/EVIDENCE.md), the trace capabilities over git and scripts/traceability over the forge, intent realisation and binding, the delivery computation (ADR 0071), redaction of printed text. Planned elsewhere and not repeated here: provider-reported execution telemetry (I0301 to I0305, execution-telemetry), a durable event per mutating capability (I1505), evidence by subject on every surface (I1953), ids every coordination store shares (I2144, on PR 863's stack). Absent: one operation identity, timing and cache decision on a recorded run, the single explaining query."
+desired_state: "The operation identity is defined once, versioned, deterministic in its serialisation, and states which fields are computed, optional, redactable or local. Recorded runs carry duration, retries, the cache decision and the operation that caused them, added to the existing ledger and not beside it. The explaining query is a capability projected to the command line, HTTP, OpenAPI and MCP, and check and finish read the same records. Duplicate, reordered, corrupted and secret-bearing events have tests that fail when the guard is removed. Legacy evidence is migrated without invented measurements and the readers it replaces are deleted."
+scope:
+  - "apps/majordomus-cli/src/evidence/run.rs"
+  - "apps/majordomus-cli/src/evidence/record.rs"
+  - "apps/majordomus-cli/src/evidence/ledger.rs"
+  - "apps/majordomus-cli/src/evidence/provenance.rs"
+  - "apps/majordomus-cli/src/capability/builtin/trace.rs"
+  - "apps/majordomus-cli/src/capability/builtin/evidence.rs"
+  - "apps/majordomus-cli/src/build_identity.rs"
+  - "lib/evidence.sh"
+  - "lib/finish.sh"
+  - "scripts/traceability"
+  - "docs/EVIDENCE.md"
+  - "docs/SCHEMAS.md"
+non_scope:
+  - "A second task database, a tracing service or an orchestration layer. The ledger, the trail and git stay the stores."
+  - "Provider-reported token and latency telemetry, which is the execution-telemetry milestone (I0301 to I0305)."
+  - "A new page or endpoint where no consumer exists today. A missing surface is recorded as a gap for the surfaces milestone."
+  - "Secrets, raw provider credentials or private transcripts in persistent evidence."
+acceptance_criteria:
+  - "One query explains a finished task from intent to commit, tests and deployment where one exists, using canonical evidence only, and marks every step it cannot prove as unknown"
+  - "A cache hit is never reported as a verification, and a local test run is never reported as the health of a deployment"
+  - "The same operation identity appears on the evidence run, the integration trail event and the execution that belong to one act"
+  - "Removing any guard of the adversarial set makes its test fail"
+  - "No surface registers the explaining query by hand: it is declared once and projected"
+validation:
+  - "bin/majordomus plan validate"
+  - "scripts/evidence-check"
+  - "cargo test --test redaction"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the cases this milestone adds>"
+evidence_required:
+  - "operation_identity_schema"
+  - "explain_query_case"
+  - "adversarial_evidence_tests"
+  - "legacy_evidence_migration"
+risks:
+  - "A new identity added beside the existing ones is a sixth answer. The work starts from the fields the ledger, the trail and the execution model already carry and names which of them it replaces."
+  - "Timing fields invite fabricated history. A legacy record gains no measurement it did not have; the field is absent and the reader says unknown."
+  - "The master plan still lists as open several evidence issues whose code has landed. The baseline's inventory (I2311) decides which of them this milestone extends before any of its issues starts."
+depends_on:
+  - delivery-baseline-is-measured
+created_at: 2026-10-10
+updated_at: 2026-10-10

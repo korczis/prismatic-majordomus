@@ -1,0 +1,42 @@
+id: I2349
+milestone: derive-does-only-what-a-change-requires
+title: "Derive and CI time are held by a measured, noise-aware budget, and a regression names the stage that caused it"
+slug: derive-and-ci-time-are-budgeted
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Collect the median and p95 of a no-op and of representative changed-input derives with machine metadata, the nodes rebuilt, the work saved and the critical path; compare with the baseline; refuse an unbounded regression with portable, noise-aware thresholds per scenario; wire it into the existing CI policy and doctor; and give a regression a stage-level explanation and a reproducible fixture."
+why: "A gain nobody holds decays. The bench check already refuses a regression by policy, and the suite's case budget has been raised to follow runner load before, which is the opposite of a budget. Source: convergence prompts/02-incremental-derived-graph.md Issue 02.5 'Performance contracts and docs'; autopilot prompts/05-performance.md Issue 5 'Budget gate'."
+current_state: "majordomus bench derives targets from the command registry, keeps a committed baseline and refuses a regression by policy (docs/PERFORMANCE.md, test/cases/82_bench_check.sh). CI budgets are the recorded measurements (.ai/repo/ci/baseline.json), the suite and step bounds have their own checks (scripts/ci/suite-budget, scripts/ci/step-bound-check), and the pages path has an SLO report. Verdicts that depend on the runner, budgets for first run and hooks, and the slowest suite case are planned on branches (I2068, I2089, I2115). The derive has no budget."
+desired_state: "Each scenario the baseline timed has a budget stated as a ratio to its measured baseline with a tolerance set from the measured noise, never an absolute number written by hand. The gate reports, on a breach, the stage and the nodes that grew and the command that reproduces it. doctor reports the same reading locally. The documents say which scenarios are held and on which hosts."
+scope:
+  - "scripts/ci/suite-budget"
+  - "scripts/ci/step-bound-check"
+  - "scripts/ci-baseline"
+  - ".ai/repo/ci/baseline.json"
+  - "lib/bench.sh"
+  - "lib/doctor.sh"
+  - "apps/majordomus-cli/src/bench/baseline.rs"
+  - "docs/PERFORMANCE.md"
+  - "docs/CI.md"
+non_scope:
+  - "An absolute target such as sixty seconds."
+  - "Raising a budget to follow a slow runner."
+depends_on:
+  - I2315
+  - I2347
+acceptance_criteria:
+  - "Each budget is derived from a recorded baseline with its sample size, and none is a number typed into a file"
+  - "A seeded slowdown of one stage fails the gate, and the message names that stage and the reproducing command"
+  - "A single cold sample on a loaded runner does not fail the gate"
+  - "The no-op derive's measured median is lower than the baseline's by the factor the report states"
+validation:
+  - "bin/majordomus plan validate"
+  - "scripts/ci/suite-budget"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 82_bench_check 417_the_suite_finishes_inside_its_bound <the cases this issue adds>"
+evidence_required:
+  - "noop_derive_timing"
+  - "budget_breach_explained_case"
+  - "noise_tolerance_test"
+created_at: 2026-10-10
+updated_at: 2026-10-10

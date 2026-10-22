@@ -1,0 +1,51 @@
+id: a-delivery-run-is-durable
+title: "A delivery run is a durable record a resident supervisor reconciles, and it ends in a named state"
+slug: a-delivery-run-is-durable
+order: 323
+priority: p1
+problem: "The autopilot pack (Majordomus Autonomous Delivery Convergence, 2026-10-10), prompts/02-durable-supervisor.md, asks that prs drain finish an authorised campaign unattended, through supervised long-running work and not one conversational session. Today a drain is a process a session holds. prs drain --continuous drains, waits and drains again while it holds the base's lease; it stops for a person on a verification failure or an unreadable forge; it lives exactly as long as the terminal that started it. Nothing records what the run was asked to achieve, under whose authority, how far it got or why it stopped, so a restart begins again from an observation and a person supplies the rest. The execution engine states that it is not a job system: no durable queue, no retry, no schedule (ADR 0033)."
+outcome: "A delivery run is a typed record with an identity, a desired outcome, the authority it runs under, a phase, a cursor, a lease and its blockers, replayed from an append-only trail. One supervisor leads it, persists before it acts, reconciles what an ambiguous answer left, survives its terminal, and ends only as satisfied, blocked, budget exhausted, cancelled or fatal."
+current_state: "Implemented: the integration trail and its events, the per-base lease with a reach across machines (apps/majordomus-cli/src/integration/exclusive.rs), verification of each merge and a halt after an unverified one (integration/proof.rs), retries with bounds on forge reads (integration/retry.rs), the continuous mode and its rollout gate (docs/INTEGRATION.md), one shared server per checkout with a lease. Planned elsewhere and not repeated here: a typed prs train (I2298, announced on the peer board, no branch yet), a server that hands its sessions on (I2126 to I2131 on PR 863's stack), an execution a person starts being visible to the server (I1501). Absent: a run record, a supervisor that outlives its terminal, run-level budgets and terminal states."
+desired_state: "The run record extends the integration trail's model and storage; it is versioned and replayable, and an older trail still reads. ensure, start, status, stop and resume are idempotent, one leader per base and campaign is decided by lease heartbeat and a fencing token and never by time alone, and a restart starts no second worker. A blocker is either actionable or external, equivalent failures are bounded, and the run continues on independent work while one item waits. The run is resident on the existing shared server lifecycle or a justified supervised service, with shutdown and recovery tests."
+scope:
+  - "apps/majordomus-cli/src/integration/model.rs"
+  - "apps/majordomus-cli/src/integration/drain.rs"
+  - "apps/majordomus-cli/src/integration/exclusive.rs"
+  - "apps/majordomus-cli/src/integration/proof.rs"
+  - "apps/majordomus-cli/src/integration/retry.rs"
+  - "apps/majordomus-cli/src/capability/builtin/integration.rs"
+  - "apps/majordomus-cli/src/commands/prs.rs"
+  - "apps/majordomus-cli/src/shared.rs"
+  - "apps/majordomus-cli/src/lease.rs"
+  - ".ai/repo/policy.yaml"
+  - "docs/INTEGRATION.md"
+non_scope:
+  - "A second orchestrator, queue or state store beside the integration trail and the lease."
+  - "Turning the execution engine into a job system. ADR 0033 stands; a run uses executions to be watched, not to be scheduled."
+  - "The typed prs train and its ADR, which are I2298."
+  - "Dispatching work to other machines, which is the mesh workers milestone."
+  - "The Cockpit pages and follow stream of a run, which are the surfaces milestone."
+acceptance_criteria:
+  - "A run killed at any step and started again resumes from its cursor, starts no second worker and repeats no merge"
+  - "A merge whose answer was lost is reconciled from the forge and git before anything else is attempted, and is never retried blind"
+  - "A run ends in exactly one of satisfied, blocked, budget exhausted, cancelled or fatal, with the evidence for that state"
+  - "A run started with detach is alive after its terminal closes, and status, stop and resume reach it from another session"
+  - "Two supervisors contending for one base and campaign leave one leader, proved by a concurrent test"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test integration_executor"
+  - "cargo test --test integration_across_machines"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 741_a_continuous_drain_stops_cleanly_and_alone 850_integration_drains_cycle_by_cycle <the cases this milestone adds>"
+evidence_required:
+  - "run_record_replay_test"
+  - "crash_resume_case"
+  - "ambiguous_merge_reconciled_test"
+  - "detached_run_case"
+risks:
+  - "A resident process on a shared machine is a new thing to orphan. Its lifecycle is the shared server's or a supervised service's, and the orphan reaper must know it."
+  - "A fencing token that only one clone reads gives two leaders across machines. Where no mesh reaches, the policy of the lease's reach decides whether the run may start at all."
+  - "The trail is read by every worktree of the repository. A schema change that an older executable cannot read stops every observer, so the record is additive and versioned."
+depends_on:
+  - delivery-baseline-is-measured
+created_at: 2026-10-10
+updated_at: 2026-10-10

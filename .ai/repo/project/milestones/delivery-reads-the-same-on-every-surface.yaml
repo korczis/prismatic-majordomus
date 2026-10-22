@@ -1,0 +1,55 @@
+id: delivery-reads-the-same-on-every-surface
+title: "The state of a delivery reads the same on the command line, HTTP, MCP and the Cockpit, with its age"
+slug: delivery-reads-the-same-on-every-surface
+order: 328
+priority: p2
+problem: "The convergence pack (Majordomus: Verified Delivery Convergence, 2026-10-10), prompts/05-derived-ui-mcp-observability.md, asks that the user interface be a derived projection of canonical evidence and command capabilities, and the autopilot pack asks that a run, its checkpoints, its blocker and its next action be exposed the same way (prompts/02-durable-supervisor.md, Issue 5). The Cockpit is already a projection of the registry and already has an integration page and a four-question overview. What it lacks is the subject both packs care about: no surface answers, for one delivery, what is wanted, what it waits on, who is working on it, whether its checks, derive, release and deployment are proved, and what the next safe action is. A person diagnosing a stuck delivery reads the queue, the board, the CI run and a terminal."
+outcome: "One read view answers what a delivery wants, what it waits on and what is proved, each fact with its source and age; the actions of a run are derived from its capabilities and are the same on every surface; the Cockpit opens on the outcome, its progress, its obstacles and the next safe action; and a run is followed live without a surface becoming an authority."
+current_state: "Implemented: one capability registry projected to the command line, HTTP, OpenAPI, MCP and the Cockpit (docs/CAPABILITIES.md, docs/SURFACES.md); the dashboard overview whose every card names its source capability (ADR 0088); the integration page with lanes, throughput and lease; the generic runner for command capabilities; the live channel executions use (docs/EXECUTIONS.md); the UI conformance audit at phone widths (scripts/ui). Planned elsewhere and not repeated here: observed_at on every answer (I2149), transport parity extended to writers (I2150), no surface keeping its own list (I2152), the Cockpit asking before it writes (I2153), coordination objects in the Cockpit (I2155), an added object reaching all four surfaces (I2227), the ui command and grouped areas (I2231, I2232, I2234), the phone drawer and its probes (I2096 to I2103). The convergence pack's issue 05.5, cross-surface contract tests, is covered by I2150 and I2227 and is not written again."
+desired_state: "The delivery view is one capability composed from the run record, the queue, the gate verdict, the derive timings, the release status and the delivery computation, and absent data is shown as unknown, never as healthy. Run actions carry their authorisation prerequisites, a dry run where one is meaningful, a scope preview and an idempotency key, and the browser builds no shell string. The landing page is keyboard and touch operable with loading, error and empty states. Run events travel over the existing live channel, a disconnected or lagging client is told so, and an old green is never shown as current."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/dashboard.rs"
+  - "apps/majordomus-cli/src/capability/builtin/integration.rs"
+  - "apps/majordomus-cli/src/capability/builtin/delivery.rs"
+  - "apps/majordomus-cli/src/capability/builtin/executions.rs"
+  - "apps/majordomus-cli/src/capability/builtin/commands.rs"
+  - "apps/majordomus-cli/src/cockpit/pages.rs"
+  - "apps/majordomus-cli/src/cockpit/nav.rs"
+  - "apps/majordomus-cli/src/cockpit/view.rs"
+  - "apps/majordomus-cli/src/live.rs"
+  - "share/cockpit"
+  - "scripts/ui"
+  - "docs/COCKPIT.md"
+  - "docs/SURFACES.md"
+  - "docs/EXECUTIONS.md"
+non_scope:
+  - "A scheduler in JavaScript, a pull-request list kept by hand, or backend logic copied into the page."
+  - "A bespoke endpoint where the registry's projection serves. A route is added only by declaring a capability."
+  - "A new design system or front-end stack. The existing tokens and components are used."
+  - "A low-level debugging dashboard as the landing page."
+  - "The cross-surface parity property and late-added capability propagation, which are I2150 and I2227."
+acceptance_criteria:
+  - "A capability added to the registry appears in the delivery view's sources, the command line, MCP and the Cockpit with no surface edited by hand"
+  - "Every fact the delivery view shows carries the capability it was read from and when it was observed, and a fact with no source is shown as unknown"
+  - "The same run action invoked from the command line, MCP and the Cockpit records the same event and is refused alike without the authority it needs"
+  - "The landing page passes the UI conformance audit at the phone widths it already audits, by keyboard and by touch"
+  - "A client that reconnects after a gap is shown the age of what it sees and never a success older than the last observation"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test dashboard"
+  - "cargo test --test cockpit"
+  - "scripts/ui check"
+  - "scripts/ci/cockpit-projection-check"
+evidence_required:
+  - "delivery_view_sources_test"
+  - "run_action_parity_case"
+  - "landing_page_audit"
+  - "stale_snapshot_case"
+risks:
+  - "A view that composes six capabilities is as slow as the slowest. The Cockpit's worktrees page already took seconds on this repository (I2101); the view reads recorded observations and reaches no network during a request."
+  - "A control that mutates from a browser is the Cockpit's first step beyond the generic runner. It lands behind the confirmation I2153 plans, or it does not land."
+  - "This milestone overlaps three planned Cockpit milestones on PR 863's stack. The baseline's decision assigns each page to one owner before any is built."
+depends_on:
+  - delivery-baseline-is-measured
+created_at: 2026-10-10
+updated_at: 2026-10-10

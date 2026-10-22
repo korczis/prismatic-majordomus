@@ -1,0 +1,44 @@
+id: I2353
+milestone: delivery-is-held-by-evidence
+title: "A release is cut once per delivery boundary from an immutable artifact identity, and a change that alters nothing rebuilds nothing"
+slug: a-release-is-cut-once-from-an-immutable-identity
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Release once per valid, policy-defined delivery boundary; avoid a version bump with no meaning and a full site rebuild on a no-op; reuse the provenance attestation, the installer's verification and the existing version machinery; test the artifact's hash and attestation, rollback and a non-corrupting install; and make release jobs consume an immutable artifact identity and never a mutable branch tip."
+why: "On 2026-10-10 every landing staled every other branch's derived files because the changelog is composed from tags, a record pull request had no check of its own, and the publish step died on a staging command. Each was repaired by a person in the middle of a release. Source: convergence prompts/04-policy-gates-and-completion.md Issue 04.4 'Release/deploy provenance'; autopilot prompts/05-performance.md Issue 4 'Release pipeline'."
+current_state: "The version is measured from the surface and written by one command; release phases are declared in .ai/repo/ci/release.yaml and run by .github/workflows/release.yml after the release verdict; archives carry a provenance attestation since PR 874 (I2165) and install.sh verifies checksum and size; version.yml proposes a bump and never tags. Neighbouring work, not repeated: release status and the agent's release workflow (I2279 to I2281), a tag only from a judged commit (I2294), the release chain as one typed capability (I2299), the staging command (I2302), a tag that does not turn other pull requests red (I2054)."
+desired_state: "The policy states what a delivery boundary is, and a merge that changes no released surface produces no bump, no tag and no site rebuild. Every job after the build reads the artifact by digest. Cases cover a wrong hash, a mismatched attestation, a second release of one version, a lost deploy acknowledgement, a partial rollback and an install interrupted halfway. The documents claim exactly the verification the installer performs."
+scope:
+  - ".github/workflows/release.yml"
+  - ".github/workflows/version.yml"
+  - ".ai/repo/ci/release.yaml"
+  - ".ai/repo/ci/version.yaml"
+  - "scripts/release-verify"
+  - "scripts/release-package"
+  - "scripts/ci/release-verdict"
+  - "site/static/install.sh"
+  - "test/cases/85_installer.sh"
+  - "test/cases/87_release_pipeline.sh"
+  - "docs/RELEASE.md"
+  - "docs/DISTRIBUTION.md"
+non_scope:
+  - "The release chain as one capability, release status and the record pull request, which are I2299, I2279 to I2281, I2282 and I2296."
+  - "A stronger cryptographic guarantee than the code implements."
+depends_on: []
+acceptance_criteria:
+  - "A merge that changes no released surface causes no bump and no publish job, proved on a fixture"
+  - "A release job given an artifact whose digest differs from the build's refuses it"
+  - "A second release of an existing version is refused and changes nothing published"
+  - "An install interrupted after download leaves the previous version runnable"
+  - "docs/DISTRIBUTION.md states what each install path verifies, and a case holds the sentence to the script"
+validation:
+  - "bin/majordomus plan validate"
+  - "scripts/release-verify"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 85_installer 87_release_pipeline 362_a_release_follows_the_ci_verdict 743_release_version_answers_with_the_contract <the cases this issue adds>"
+evidence_required:
+  - "release_once_case"
+  - "artifact_digest_mismatch_case"
+  - "interrupted_install_case"
+created_at: 2026-10-10
+updated_at: 2026-10-10

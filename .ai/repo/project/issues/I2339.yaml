@@ -1,0 +1,40 @@
+id: I2339
+milestone: the-queue-drains-until-settled
+title: "Repairs that touch nothing in common run side by side, merges into one base stay one at a time, and no edit is lost between worktrees"
+slug: independent-repairs-run-in-parallel
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "After every successful mutation observe head and base again and recompute the queue; group repairs that are independent by conflict for parallel execution; keep merges into a base serial under the per-base lease with a crash-safe reclaim and a fencing token; treat conflicts on shared generated files apart from conflicts on source; and never retry an ambiguous merge blind."
+why: "The integration document states the true cost of the present mechanics: the refresh pipeline is one deep, so throughput is one pull request per run of the required check. Parallel preparation is what several sessions did by hand on 2026-10-10, without a shared rule for which repairs were independent. Source: autopilot prompts/04-pr-drain.md Issue 3 'Incremental progression'; convergence prompts/03-pr-integration-throughput.md Issue 03.4 'Cross-worktree coordination' and Issue 03.3 'Safe incremental drain and recovery' (what it adds to the existing loop)."
+current_state: "The drain observes, selects, observes again and acts only on an unchanged decision; a merge is verified and an unverified one halts the base (docs/INTEGRATION.md). One pull request is refreshed at a time. The plan's scope-conflict model and the session scopes say which work may run together. The convergence pack's Issue 03.3 restates this loop and is reused as it stands. Lifting the one-deep pipeline by a stacked train is I2298."
+desired_state: "The drain computes, from the files each open pull request changes and the derived-file set, which repairs are independent, and runs those at once up to the profile's concurrency. A conflict only on generated files is settled by regeneration and never counted as a source conflict. The merge step is unchanged and serial. A simulated pair of overlapping worktrees proves no edit is lost. Stale worktrees and duplicate patches are reported and not modified."
+scope:
+  - "apps/majordomus-cli/src/integration/drain.rs"
+  - "apps/majordomus-cli/src/integration/relation.rs"
+  - "apps/majordomus-cli/src/integration/exclusive.rs"
+  - "apps/majordomus-cli/src/integration/proof.rs"
+  - "scripts/merge-derived"
+  - "apps/majordomus-cli/tests/integration_executor.rs"
+non_scope:
+  - "The stacked train, which is I2298."
+  - "Batch composition, which is I2051 and I2052."
+  - "Reconciling worktrees, which is I2283."
+depends_on:
+  - I2338
+  - I2329
+acceptance_criteria:
+  - "Two repairs that change no common authored file run concurrently, and two that do are serialised"
+  - "Two merges into one base never overlap, proved by a concurrent test over the lease"
+  - "A merge whose answer is ambiguous is reconciled and never sent a second time"
+  - "Two worktrees editing the same file end with both edits present or one refused, never one silently dropped"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test integration_executor"
+  - "cargo test --test integration_across_machines"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the cases this issue adds>"
+evidence_required:
+  - "parallel_repair_serial_merge_test"
+  - "no_lost_edit_case"
+created_at: 2026-10-10
+updated_at: 2026-10-10

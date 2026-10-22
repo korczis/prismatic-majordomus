@@ -1,0 +1,42 @@
+id: I2354
+milestone: delivery-is-held-by-evidence
+title: "Every bypass of a delivery gate is a case that is refused, and doctor proves each enforced rule reaches a validator, a rejection test and CI"
+slug: every-bypass-is-a-refused-case
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Test bypass attempts, red CI, skipped jobs, a malformed gate, an incorrect head revision, a mismatched attestation, a repeated release, a lost deploy acknowledgement, a partial rollback and drift between documents and claims; and ensure every enforced rule has a registered validator, an executable rejection test and a connection to CI that doctor proves, with optional complexity kept optional for adopters."
+why: "Each of the four issues before this one adds a guard. A guard is real only once something has tried to walk around it and been refused, and this repository has counted about 158 declarations with no enforcement behind them before. Source: convergence prompts/04-policy-gates-and-completion.md Issue 04.5 'Adversarial tests, documentation and doctrine'."
+current_state: "rule-proof-check holds each blocking rule to a named proof; doctor reports hooks and wiring; the case 910 holds that nothing merges around the integrator and 362 that a release follows the verdict. Neighbouring work, not repeated: every known bypass of the acceptance contract as a CI case (I2240), doctor reading a hook as wired only when it can run (I2248), the wiring graph read in both directions (I2249), a rule proven only by a run of its proof (I2160)."
+desired_state: "One list of bypass attempts is kept with the gates, each entry naming its case. The cases exist for every attempt named here and fail when their guard is removed. doctor's proof chain shows, for each rule this milestone enforces, the validator, the rejection test and the gate that runs it. The claims that describe the gates name those tests."
+scope:
+  - "scripts/ci/rule-proof-check"
+  - "scripts/ci/claim-proof-check"
+  - "lib/doctor.sh"
+  - "test/cases/910_nothing_merges_around_the_integrator.sh"
+  - "test/cases/362_a_release_follows_the_ci_verdict.sh"
+  - "docs/CLAIMS.yaml"
+  - "docs/CI.md"
+non_scope:
+  - "The acceptance-contract bypasses of the recovery pack (I2240)."
+  - "A rule with no rejection test: it is not counted as enforced."
+depends_on:
+  - I2350
+  - I2351
+  - I2352
+  - I2353
+acceptance_criteria:
+  - "Each of the ten named attempts has a case, and the case fails when the guard it covers is removed"
+  - "doctor lists, for every rule this milestone enforces, its validator, its rejection test and the gate that runs it, and reports a rule missing any of the three"
+  - "Every claim about a delivery gate names a test, and the strict claim check passes"
+  - "A repository that declares none of the optional tiers passes doctor unchanged"
+validation:
+  - "bin/majordomus plan validate"
+  - "scripts/ci/rule-proof-check"
+  - "scripts/ci/claim-proof-check --strict"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 910_nothing_merges_around_the_integrator 362_a_release_follows_the_ci_verdict <the cases this issue adds>"
+evidence_required:
+  - "bypass_cases"
+  - "rule_proof_chain_report"
+created_at: 2026-10-10
+updated_at: 2026-10-10

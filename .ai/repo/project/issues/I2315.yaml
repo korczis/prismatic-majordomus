@@ -1,0 +1,39 @@
+id: I2315
+milestone: delivery-baseline-is-measured
+title: "A derive, a check, a CI run and a release are timed per stage, each with the machine and the load it ran under"
+slug: the-critical-path-is-timed
+priority: p0
+profile: deep-work
+parallel_safe: true
+objective: "Time the canonical commands for a no-op derive, a one-rule change, a Rust change and a documents-only change, the checks each selects, the release path as a dry run, and prs refresh and status, per stage, cold and warm, on macOS and Linux, locally and in CI, and record the provenance of every measurement."
+why: "The only derive numbers the packs have are 699 s on one Linux run and more than an hour on a loaded Mac, both from one commit message. Service-level candidates defined from anecdotes would be fiction. Two items of the two packs ask for this measurement; it is taken once and its instrumentation stays. Source: convergence prompts/00-current-reality-and-pr-triage.md Issue 00.3 'Measure baseline and critical path'; autopilot prompts/05-performance.md Issue 1 'Profile full critical path'."
+current_state: "scripts/derive reports what each of its three stages cost; MJ_TIMING reports phase timings and counters; scripts/ci/timed and the ci job gather step durations into the performance metrics artifact; scripts/ci-baseline writes them to .ai/repo/ci/baseline.json; the pages fast path has its own budget and benchmark (.ai/repo/ci/pages.yaml). Queue and retry overhead, artifact publication and the split between build and generation inside a derive are not separated, and no measurement carries the load of its machine."
+desired_state: "A repeatable fixture times each representative change on a named host with its core count and load average, cold and warm, with wall time, processor time where available, cache hits and misses and the number of outputs rewritten. The results are tracked beside the existing baselines, and candidates for service levels are stated from them. A production deploy is not run."
+scope:
+  - "scripts/derive"
+  - "scripts/generate-site-data"
+  - "scripts/ci/timed"
+  - "scripts/ci/metrics"
+  - "scripts/ci-baseline"
+  - ".ai/repo/ci/baseline.json"
+  - "lib/common.sh"
+  - "docs/PERFORMANCE.md"
+  - "docs/CI.md"
+non_scope:
+  - "Optimising anything measured."
+  - "A destructive or production deploy."
+depends_on: []
+acceptance_criteria:
+  - "Each timing names its host, operating system, core count, load average, whether it was cold or warm and how many samples it summarises"
+  - "The derive's time is split by stage, and within a stage into build and generation"
+  - "A measurement that could not be taken on a platform says so and names the platform"
+  - "The fixture reruns with one command and reproduces the table within the stated noise"
+validation:
+  - "bin/majordomus plan validate"
+  - "scripts/derive-check"
+  - "scripts/ci-baseline"
+evidence_required:
+  - "critical_path_timings"
+  - "timing_fixture"
+created_at: 2026-10-10
+updated_at: 2026-10-10

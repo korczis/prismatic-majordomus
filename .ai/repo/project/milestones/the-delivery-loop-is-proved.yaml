@@ -1,0 +1,56 @@
+id: the-delivery-loop-is-proved
+title: "The loop is proved unattended on this repository and on a stranger's, against the measured baseline"
+slug: the-delivery-loop-is-proved
+order: 329
+priority: p1
+problem: "Both packs end by refusing to count infrastructure as the result. The convergence pack's last milestone (prompts/06-self-hosted-proof-release.md) is the reproducible evidence that the product delivers meaningful work with lower latency and no hidden manual steps; the autopilot pack's (prompts/06-closed-loop-delivery.md) takes an intent-driven campaign to a real, verified, bounded conclusion on this repository and on a clean consumer. Neither exists. On 2026-10-10 a release reached its users through a person noticing a failed publish job, another proposing its record, and a third rerunning a workflow that had raced a deploy."
+outcome: "One disposable change travels from its intent to a verified deployment on this repository with no prompt from a person; an installed release runs the same loop in a fresh repository that is not this one; each injected failure fails closed and recovers; and the loop's latency, throughput and manual interventions are published against the baseline with their sample sizes."
+current_state: "Nothing of the loop has run end to end. Its parts are the outcomes of the eight milestones between the baseline and this one. Related proofs that exist or are planned and are not repeated here: a stranger's first change as a journey CI walks (I2255), an installed archive serving a foreign repository in CI (I2162), a product intent and its pilot (I2262, I2263), the task lifecycle with no optional subsystem (I2267), the before-release audit of documents, claims, coverage and debt (I2070), the use-case demonstrations (docs/USE_CASES.md)."
+desired_state: "The vertical slice is recorded with real commands and real results: intent, plan, issue, assignment, repair, checks, merge, version, release, provenance, deployment and probe, each linked as evidence, with any step a sandbox stood in for labelled simulated. The consumer run starts from the documented install of a pinned release. The failure rehearsal covers an interrupted derive, a failed test, a stale pull request, a moved head, a vanished peer, a wrong release digest and an aborted deploy. The comparison states environment, sample size and exceptions, and the claims, the operator's guide and the release notes say what was proved and nothing more."
+scope:
+  - "docs/DOGFOODING.md"
+  - "docs/USE_CASES.md"
+  - "docs/INTEGRATION.md"
+  - "docs/INTEGRATION_ROLLOUT.md"
+  - "docs/PERFORMANCE.md"
+  - "docs/CLAIMS.yaml"
+  - "docs/GUIDE.md"
+  - "docs/ADOPTION.md"
+  - "docs/INSTALL.md"
+  - "README.md"
+  - ".ai/repo/use-cases"
+  - "site/static/install.sh"
+  - "scripts/ci/install-check"
+non_scope:
+  - "More infrastructure. A gap the proof finds becomes a tracked issue; it is not built inside this milestone."
+  - "A forced public deployment. A step that is unsafe or irreversible runs in a sandbox and is labelled simulated."
+  - "A claim of sixty-second CI or a five-minute release. Only measured numbers are published."
+  - "Feature expansion beyond what the two packs name."
+acceptance_criteria:
+  - "The recorded slice shows zero prompts from a person between the run's start and its terminal state, and every step links to its evidence"
+  - "The consumer run starts from the documented one-line install of a pinned release in a repository with no path of this one in it"
+  - "Each of the seven injected failures ends in a diagnosis and a recovery with canonical state intact, on Linux and on macOS where a host is available, and an unavailable host is named"
+  - "The published comparison gives median and p95 for feedback latency, derive, CI and eligible pull-request dwell against the baseline, with sample sizes, and the non-regression gate reads the same numbers"
+  - "Every claim the release notes and the site make about the loop names a test, and the claim gate passes"
+validation:
+  - "bin/majordomus plan validate"
+  - "scripts/ci/claim-proof-check --strict"
+  - "scripts/ci/install-check"
+  - "scripts/ci/doc-command-check"
+evidence_required:
+  - "self_hosted_slice_record"
+  - "consumer_repository_run"
+  - "failure_rehearsal_cases"
+  - "baseline_comparison"
+  - "claims_backed_by_tests"
+risks:
+  - "A proof assembled by a person who helps it along proves the person. The slice's record counts prompts, and one prompt fails it."
+  - "The baseline was measured on a machine at load 25. A comparison on an idle host is a comparison of hosts; both sides state theirs or the gain is not claimed."
+  - "A real deploy of a disposable change reaches real users. The change is one whose deployment is harmless, or the deployment step is simulated and labelled."
+depends_on:
+  - delivery-baseline-is-measured
+  - a-delivery-run-is-durable
+  - the-queue-drains-until-settled
+  - delivery-is-held-by-evidence
+created_at: 2026-10-10
+updated_at: 2026-10-10

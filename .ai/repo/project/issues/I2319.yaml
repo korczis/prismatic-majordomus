@@ -1,0 +1,39 @@
+id: I2319
+milestone: autonomy-is-authorised-policy
+title: "A task's scope is amended by a recorded proposal tied to what the task serves, approved inside the delegated envelope and escalated outside it"
+slug: a-scope-is-amended-by-proposal
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "When discovered work exceeds a task's scope, write an amendment that names the original intent or criterion and the evidence of impact, approve it automatically inside the authority profile's envelope, recompute the plan's conflicts and the gates it selects, and escalate only an amendment that crosses a trust, repository, environment, destructive or cost boundary."
+why: "A scope fixed at start is the first obstacle the pack names. On 2026-10-09 the only route past it was to close the task and start another, three times on two branches (I2114). An unattended run that meets a projection outside its scope today can only stop. Source: autopilot prompts/01-policy-autonomy.md Issue 2 'Evolving scope protocol'."
+current_state: "check and finish judge every changed path against the scope declared at start, and a scope cannot change (lib/start.sh, lib/check.sh). I2114, open on master, plans to admit a derive's projections and to add scope widen with a reason. Neither ties a widening to what the task serves nor bounds who may approve it."
+desired_state: "An amendment is a record on the task: the paths, the reason, the criterion or issue it serves, the evidence, who or what approved it and under which delegation. Inside the envelope it is approved without a person and the plan's scope conflicts and the selected gates are recomputed. Outside it the task is refused with an escalation that names the boundary. No amendment edits another issue's record or rewrites an approval already given."
+scope:
+  - "lib/start.sh"
+  - "lib/check.sh"
+  - "apps/majordomus-cli/src/scope.rs"
+  - "apps/majordomus-cli/src/capability/builtin/scope.rs"
+  - "apps/majordomus-cli/src/capability/builtin/devtask.rs"
+  - ".ai/repo/scope.yaml"
+  - "docs/SCOPE.md"
+non_scope:
+  - "The scope widen command and the admission of derive projections, which are I2114."
+  - "The acceptance contract of the recovery pack, where a scope is a tracked record on its branch (I2237)."
+depends_on:
+  - I2114
+  - I2321
+acceptance_criteria:
+  - "An amendment inside the envelope is recorded with its reason, criterion and approver, and the task's id is unchanged"
+  - "An amendment that names a path of another repository, a deployment environment or a destructive operation is refused with the boundary named"
+  - "After an amendment, plan validate reports the scope conflicts of the widened scope"
+  - "A path outside both the scope and every approved amendment is refused exactly as before"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test scope"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 93_scope_policy 108_scope_after_trunk_merge <the cases this issue adds>"
+evidence_required:
+  - "scope_amendment_case"
+  - "amendment_escalation_case"
+created_at: 2026-10-10
+updated_at: 2026-10-10

@@ -1,0 +1,53 @@
+id: autonomy-is-authorised-policy
+title: "An unattended run acts under a declared authority, and policy tells a safety invariant from a procedure"
+slug: autonomy-is-authorised-policy
+order: 321
+priority: p1
+problem: "The autopilot pack (Majordomus Autonomous Delivery Convergence, 2026-10-10), prompts/01-policy-autonomy.md, asks that autonomous completion be the default for explicitly authorised runs without opening a hole through validation, provenance, merge or deployment safeguards. Today the rules do not carry the distinction that would allow it. A rule is advisory or blocking and names its proof, and nothing says whether it protects an invariant (trust, immutable evidence, a validated merge, a secret boundary) or encodes a procedure (a scope fixed at start, a handover cadence, a person's acknowledgement). A task's scope cannot change: it is closed and a new task started, three times in one day on two branches on 2026-10-09 (I2114). No record says what an unattended run may do in this repository; the owner's consent lives in conversation, and the mesh rule states only the negative, that a trusted peer is an observation and not an authority."
+outcome: "Every rule declares its class, only a procedure can be delegated, and one authority profile in the repository's policy says which worktrees, pushes, merges, publications and deployments an unattended run may perform, within which cost, time and concurrency bounds. A scope grows by a recorded amendment inside that envelope and escalates outside it. A repair is bound to the issue and criterion it serves."
+current_state: "Implemented: project rules with enforcement level and proof (docs/DOCTRINE.md, scripts/ci/rule-proof-check); a repository scope declaration (.ai/repo/scope.yaml, docs/SCOPE.md); intent binding at start with declared exemptions, integration among them (.ai/repo/policy.yaml, ADR 0111); a mesh trust list that authenticates and authorises nothing (.ai/repo/mesh/majordomus.yaml, rule project.mesh-is-observation-not-authority); a plan transition capability that writes issue markers. Planned and not built: scope widen (I2114, open on master). Absent: a class on a rule, a delegation record, an authority profile, a scope amendment tied to an intent."
+desired_state: "The baseline's classification of restrictions (I2313) is carried into the rule model as a typed class with override semantics derived from it. The authority profile is declared in policy, validated, projected by update to adopters, and read by every unattended mutation before it acts. A scope amendment is a record with its reason and evidence, approved automatically inside the envelope and refused with an escalation outside it. Each gate that waited for a person where a recorded proof decides the same question is converted, with its negative test, and branch protection and release integrity are untouched."
+scope:
+  - ".ai/repo/policy.yaml"
+  - ".ai/repo/scope.yaml"
+  - ".ai/repo/rules/project"
+  - ".ai/repo/mesh/majordomus.yaml"
+  - "apps/majordomus-cli/src/policy.rs"
+  - "apps/majordomus-cli/src/scope.rs"
+  - "apps/majordomus-cli/src/rules"
+  - "apps/majordomus-cli/src/intent_binding.rs"
+  - "lib/start.sh"
+  - "lib/check.sh"
+  - "lib/update.sh"
+  - "docs/DOCTRINE.md"
+  - "docs/SCOPE.md"
+  - "SECURITY.md"
+non_scope:
+  - "Weakening a safety invariant. A rule classed as an invariant has no override, delegated or otherwise."
+  - "Authority derived from mesh trust. Discovery and a trusted key grant nothing; a delegation is explicit, expiring and audited."
+  - "The scope widen command itself, which is I2114 on master. This milestone adds the amendment record and the envelope around it."
+  - "Rewriting an approval that was already given, or editing another issue's record to make room."
+  - "The acceptance contract and forge gate of the recovery pack (I2236 to I2240, planned with the earlier owner packs in their pending wave)."
+acceptance_criteria:
+  - "Every project rule declares one class, and a rule with no class fails the rule gate"
+  - "An unattended mutation with no authority profile, or outside the one declared, is refused before it acts, and the refusal names the missing grant"
+  - "A scope amendment inside the envelope is approved and recorded without a person; one that crosses a trust, repository, environment, destructive or cost boundary is refused with an escalation"
+  - "A repository that adopted an earlier version receives the rule classes and an absent, closed-by-default authority profile through update"
+  - "No change of this milestone removes a required check, a branch protection or a release integrity check, proved by the cases that already hold them"
+validation:
+  - "bin/majordomus plan validate"
+  - "scripts/ci/rule-proof-check"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 93_scope_policy <the cases this milestone adds>"
+evidence_required:
+  - "rule_classes_gated"
+  - "authority_profile_refusal_case"
+  - "scope_amendment_case"
+  - "adopter_migration_case"
+risks:
+  - "A class is a claim about a rule, and a wrong one turns an invariant into something delegable. The classification is reviewed rule by rule against the baseline, and the default for an unclassified rule is invariant."
+  - "An authority profile committed to the repository grants to whoever can commit. The profile declares the envelope; the grant to a run is local and expiring, and the two must not collapse into one file."
+  - "Editing existing rules moves their projections in every adopter. The change goes through update with a migration case, not by hand."
+depends_on:
+  - delivery-baseline-is-measured
+created_at: 2026-10-10
+updated_at: 2026-10-10

@@ -1,0 +1,38 @@
+id: I2347
+milestone: derive-does-only-what-a-change-requires
+title: "An incremental derive is proved byte-identical to a full one, under reordering, interruption and a poisoned cache"
+slug: incremental-equals-full
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Keep the full authoritative gate, add a reliable incremental path, and prove that an incremental pass implies the equivalent full validation for the same inputs, under randomised dependency order, an added, removed or renamed input, a generation failure, an interruption, concurrent branches, cache poisoning and line-ending differences across platforms; and detect drift, orphans and phantom changes."
+why: "The commit hook, derive-check and CI all trust that the committed derived files are what the tree generates. An incremental path that is right most of the time breaks that trust once and for every branch at the same moment. Source: convergence prompts/02-incremental-derived-graph.md Issue 02.4 'Fast-check and full-check equivalence'."
+current_state: "scripts/derive-check runs the derive a second time and compares; scripts/ci/generation-converges and generate --check hold the executable's projections; the cases 51 and 56 hold that derived artifacts are committed and current. All of them judge a full derive."
+desired_state: "A property-shaped test builds trees with seeded changes, derives each incrementally and in full, and compares every byte. It covers each named condition. derive-check gains a mode that verifies an incremental result against a full one, the full derive stays the gate on the trunk, and the documents say exactly when the slow full validation is required."
+scope:
+  - "scripts/derive-check"
+  - "scripts/ci/generation-converges"
+  - "apps/majordomus-cli/tests/generate_check.rs"
+  - "test/cases/51_derived_artifacts_committed.sh"
+  - "test/cases/56_derived_current_gate.sh"
+  - "docs/CI.md"
+non_scope:
+  - "Replacing the full derive as the trunk's gate."
+depends_on:
+  - I2346
+acceptance_criteria:
+  - "For every seeded change the incremental and the full derive produce identical artifacts"
+  - "An input renamed, added or removed leaves no orphaned output and no phantom change"
+  - "A poisoned cache entry and an interrupted run are each detected, and the result still equals the full derive"
+  - "The equivalence test fails when the invalidation of one node is deliberately narrowed too far"
+validation:
+  - "bin/majordomus plan validate"
+  - "scripts/derive-check"
+  - "scripts/ci/generation-converges"
+  - "cargo test --test generate_check"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 51_derived_artifacts_committed 56_derived_current_gate <the cases this issue adds>"
+evidence_required:
+  - "incremental_equals_full_test"
+  - "under_invalidation_mutation_test"
+created_at: 2026-10-10
+updated_at: 2026-10-10

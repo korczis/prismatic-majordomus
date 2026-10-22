@@ -1,0 +1,41 @@
+id: I2346
+milestone: derive-does-only-what-a-change-requires
+title: "A change regenerates only what it invalidates, identical work runs once, and only writers of one output wait for each other"
+slug: a-change-regenerates-only-what-it-invalidates
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Invalidate only the nodes a change reaches, run independent nodes in parallel inside measured limits, single-flight identical work by exact key, serialise only writes to one output, handle a lock timeout, a dead process, signals, a stale lock and abandoned temporary files safely, and publish atomically with no partial generation."
+why: "One derive at a time per machine has been a rule since PR 855, which also ended orphaned derive processes. It is also the queue several sessions stood in on 2026-10-10. The lock is correct for a derive that writes everything; it can narrow only when the graph shows which outputs a derive writes. Source: convergence prompts/02-incremental-derived-graph.md Issue 02.3 'Precise invalidation and bounded parallelism'; autopilot prompts/05-performance.md Issue 2 'Derivation DAG' (single-flight and atomic publication)."
+current_state: "Every stage of scripts/derive runs under the machine's derive lock, and a stopped derive takes its process tree with it (lib/machine_lock.sh, rule project.one-derive-at-a-time, test/cases/1018_one_derive_at_a_time_and_no_orphans.sh). A derive refuses a tree with untracked files. A reclaim that spares a worktree a derive is building is planned on a branch (I2109). Every derive regenerates everything."
+desired_state: "Given the changed paths, the derive computes the invalidated nodes from the graph and runs only those. Two derives in different worktrees that would write the same key share one computation; two that write different outputs do not wait for each other; the machine-wide lock remains for work the graph cannot separate, and the rule is amended in the same change to say so. Outputs are staged and moved into place together. A local no-op derive reaches no network unless an existing contract requires it."
+scope:
+  - "scripts/derive"
+  - "scripts/generate-site-data"
+  - "lib/machine_lock.sh"
+  - "lib/derive.sh"
+  - ".ai/repo/rules/project/one-derive-at-a-time.v1.md"
+  - "test/cases/1018_one_derive_at_a_time_and_no_orphans.sh"
+  - "test/cases/1020_a_derive_sees_what_the_commit_will.sh"
+  - "docs/PERFORMANCE.md"
+non_scope:
+  - "Removing single-flight protection to gain speed."
+  - "Parallelism beyond what the baseline's measurements show the machine carries."
+depends_on:
+  - I2345
+acceptance_criteria:
+  - "A change to one rule rewrites only that rule's projections, and the site's unrelated assets keep their bytes and modification times"
+  - "Two concurrent derives of one tree compute each node once"
+  - "A derive killed at any point leaves either the previous outputs or the new ones, never a mixture, and no temporary file"
+  - "A stale lock of a dead process is taken over, and a live one is waited for inside a bound"
+  - "The cases that hold one derive at a time and no orphans pass, amended only where the rule was"
+validation:
+  - "bin/majordomus plan validate"
+  - "scripts/derive-check"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 1018_one_derive_at_a_time_and_no_orphans 1020_a_derive_sees_what_the_commit_will <the cases this issue adds>"
+evidence_required:
+  - "narrow_invalidation_case"
+  - "concurrent_derive_case"
+  - "atomic_publish_test"
+created_at: 2026-10-10
+updated_at: 2026-10-10

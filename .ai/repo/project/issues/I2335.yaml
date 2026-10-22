@@ -1,0 +1,40 @@
+id: I2335
+milestone: mesh-peers-execute-assigned-work
+title: "A provider-neutral adapter starts a worker, Claude Code is its first provider, and one local worker is the fallback"
+slug: an-adapter-starts-a-worker
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Define a provider-neutral worker adapter and implement Claude Code through the invocation, authentication and session mechanisms this repository already uses; make every other provider optional; degrade to one local worker; and detect a prompt for human confirmation and route it to the delegated authority or mark an external approval blocker."
+why: "A supervisor that cannot start a worker is a queue. The repository already starts Claude Code headless in one place, for measurement, and that knowledge should not be written a second time for dispatch. Source: autopilot prompts/03-mesh-workers.md Issue 4 'Worker adapters'."
+current_state: "The economics runner runs sessions in Claude Code headless with stream-json output, with the user's own settings shut out and a wall-clock limit per session (apps/majordomus-cli/src/economics/runner.rs). Providers are declared once beside their templates (share/providers.yaml, .ai/repo/providers, apps/majordomus-cli/src/providers.rs). A headless run can strand an episode, which the session lifecycle reports as orphaned."
+desired_state: "The adapter is a trait with start, observe, ask for a handover and stop. The Claude Code provider shares its invocation with the economics runner. A run with no provider installed reports the missing provider as an external blocker; a run with no remote worker uses one local worker under the same contract. A confirmation prompt is answered from the delegation when the act is inside it and otherwise ends the task as waiting for approval."
+scope:
+  - "apps/majordomus-cli/src/providers.rs"
+  - "apps/majordomus-cli/src/economics/runner.rs"
+  - "share/providers.yaml"
+  - ".ai/repo/providers"
+  - "apps/majordomus-cli/src/capability/builtin/lifecycle.rs"
+  - "docs/MESH.md"
+  - "docs/MODELS.md"
+non_scope:
+  - "A second or third provider."
+  - "Bypassing a provider's own permission system: a prompt outside the delegation is a blocker, never auto-approved."
+depends_on:
+  - I2333
+acceptance_criteria:
+  - "The adapter starts, observes and stops a scripted provider in a test with no real provider installed"
+  - "With Claude Code installed, an assigned task runs in it under a wall-clock limit and its episode is closed, not stranded"
+  - "With no provider the run reports an external blocker; with no remote worker it proceeds with one local worker"
+  - "A confirmation prompt for an act outside the delegation ends the task as waiting for approval and is never answered yes"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test providers_projection"
+  - "cargo test --test economics"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the cases this issue adds>"
+evidence_required:
+  - "scripted_provider_adapter_test"
+  - "local_fallback_case"
+  - "confirmation_prompt_case"
+created_at: 2026-10-10
+updated_at: 2026-10-10

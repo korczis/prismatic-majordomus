@@ -1,0 +1,41 @@
+id: I2331
+milestone: a-delivery-run-is-durable
+title: "A run outlives the terminal that started it, and status, stop and resume reach it from any session"
+slug: a-run-outlives-its-terminal
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Detach a run from its terminal using the existing shared server lifecycle or a justified supervised service, with shutdown and recovery tests; keep --continuous as observation and make --until-settled the mode that remediates; and offer runs, run status, run stop and run resume as commands that read and write the run record only."
+why: "The owner's stated goal is that one authorised command launches the work and nobody has to keep a Claude Code window open. Today the drain dies with its shell, and the commands the pack's README sketches do not exist. Source: autopilot prompts/02-durable-supervisor.md Issue 4 'Resident execution'; autopilot README 'Proposed UX'."
+current_state: "One shared server per checkout is started, attached to and stopped through a lease (apps/majordomus-cli/src/shared.rs, apps/majordomus-cli/src/served.rs); prs drain is a foreground command (apps/majordomus-cli/src/commands/prs.rs). Server lifecycle hardening is planned with the earlier owner packs (I2126 to I2131), and an execution a person starts being visible to the server is I1501."
+desired_state: "A detached run is owned by a process whose lifecycle is declared, observable and covered by the orphan reaper. The run commands are capabilities declared once and projected to every surface; none of them holds state of its own. A machine restart leaves a run that resume continues. Following a run streams its events and creates no authoritative state."
+scope:
+  - "apps/majordomus-cli/src/commands/prs.rs"
+  - "apps/majordomus-cli/src/shared.rs"
+  - "apps/majordomus-cli/src/served.rs"
+  - "apps/majordomus-cli/src/capability/builtin/server.rs"
+  - "apps/majordomus-cli/src/capability/builtin/integration.rs"
+  - "apps/majordomus-cli/tests/serve_lifecycle.rs"
+  - "scripts/reap-orphans"
+  - "docs/INTEGRATION.md"
+non_scope:
+  - "The live stream and the Cockpit page of a run, which are the surfaces milestone."
+  - "A system service installed without the user's act."
+depends_on:
+  - I2329
+acceptance_criteria:
+  - "A run started with detach is alive after the starting shell exits, and run status from another session shows its phase and cursor"
+  - "run stop ends it in order and releases the lease; run resume continues from the watermark"
+  - "The process that owns a detached run is listed by the orphan reaper's read mode and is never killed while its run is live"
+  - "The run commands appear on the command line, HTTP, OpenAPI and MCP from one declaration"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test serve_lifecycle"
+  - "bin/majordomus-cli capabilities validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the cases this issue adds>"
+evidence_required:
+  - "detached_run_case"
+  - "run_commands_projected_test"
+  - "reaper_spares_live_run_case"
+created_at: 2026-10-10
+updated_at: 2026-10-10

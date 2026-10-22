@@ -1,0 +1,38 @@
+id: I2340
+milestone: the-queue-drains-until-settled
+title: "Observing the queue is timed, and an answer that cannot change is asked once"
+slug: observation-is-timed-and-cached
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Instrument the time and the network calls of refresh, classification, merge-tree and CI polling; cache immutable computations by base revision, head revision and driver or configuration version, invalidated after every merge; batch independent reads with regard for the forge's rate limit; and keep the rank deterministic, fair and explained."
+why: "An unattended drain observes after every action, so the cost of one observation multiplies by the length of the queue. With 51 open pull requests the forge's rate limit and the merge-tree of every head are the loop's floor, and nobody has measured either. Source: convergence prompts/03-pr-integration-throughput.md Issue 03.2 'Optimize observation and planning'."
+current_state: "A refresh observes the forge and fetches every open head; relations are decided by git's merge with the derived driver; a cache keyed by revisions exists for relations (ADR 0101); waits and starvation are folded from the trail and shown, and never change the rank (apps/majordomus-cli/src/integration/forge.rs, relation.rs, wait.rs). Bounding forge subprocesses and asking the cheapest question first are planned on a rescue branch (I2044), as is making starvation a finding (I2043)."
+desired_state: "Each observation records its duration and its calls by kind. A relation, a patch-id comparison and a check result for a head that has not moved are read from a cache whose key includes the driver and configuration version, and a corrupt entry is recomputed. Reads are batched and back off before the rate limit. Readiness of the highest-ranked candidates is established first, and no open pull request is dropped from the census to save a call."
+scope:
+  - "apps/majordomus-cli/src/integration/forge.rs"
+  - "apps/majordomus-cli/src/integration/relation.rs"
+  - "apps/majordomus-cli/src/integration/metrics.rs"
+  - "apps/majordomus-cli/src/integration/wait.rs"
+  - "apps/majordomus-cli/tests/integration_refresh_trail.rs"
+  - "docs/INTEGRATION.md"
+non_scope:
+  - "Changing the rank to favour age."
+  - "Dropping a pull request from an observation."
+depends_on:
+  - I2314
+acceptance_criteria:
+  - "An observation's duration and call counts are in the trail and on prs status"
+  - "A second observation with no head or base moved makes no merge-tree computation, proved by a counter"
+  - "A changed driver or configuration version invalidates every cached relation"
+  - "On a scripted forge that reports its rate limit nearly spent, the observation backs off and reports unknown for what it could not read"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test integration_refresh_trail"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the cases this issue adds>"
+evidence_required:
+  - "observation_cost_metrics"
+  - "relation_cache_test"
+  - "rate_limit_backoff_test"
+created_at: 2026-10-10
+updated_at: 2026-10-10

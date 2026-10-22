@@ -1,0 +1,42 @@
+id: I2325
+milestone: a-finished-task-is-explained-by-its-evidence
+title: "One query explains a finished task from its intent to its commit, its tests and its deployment, and says which step is unknown"
+slug: one-query-explains-a-finished-task
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Thread the canonical records through check, finish and the issue, milestone and intent lifecycle, and declare one capability that walks a finished task from the intent it served through its commits, tests, pull request and release to its deployment, on every surface the registry projects."
+why: "The acceptance line of the convergence pack's milestone is this query. Its parts exist as five capabilities with five identities; the join is done by a person. Where a surface for it is missing today, the pack asks that the gap be documented, not filled with a speculative interface. Source: convergence prompts/01-canonical-execution-evidence.md Issue 01.3 'Real lifecycle and projection reuse' and the milestone's acceptance line."
+current_state: "trace answers an issue's branches and commits from git and scripts/traceability adds pull requests from the forge; intent realisation joins episodes; evidence answers by claim and test; delivery answers by feature (apps/majordomus-cli/src/capability/builtin/trace.rs, intent_realization.rs, evidence.rs, delivery.rs). finish records an outcome and the requirements it checked (lib/finish.sh)."
+desired_state: "One declared capability returns, for a task or an issue, an ordered chain of steps each with its state (proved, failed or unknown), the record that decided it and that record's age. It reads only canonical records, is idempotent, detects a chain whose head has moved since it was proved, and returns the minimum that answers the question. check and finish read the same chain. A surface that cannot yet show it is listed as a gap."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/trace.rs"
+  - "apps/majordomus-cli/src/capability/builtin/intent_realization.rs"
+  - "apps/majordomus-cli/src/capability/builtin/evidence.rs"
+  - "apps/majordomus-cli/src/capability/builtin/delivery.rs"
+  - "lib/finish.sh"
+  - "lib/check.sh"
+  - "scripts/traceability"
+  - "docs/EVIDENCE.md"
+non_scope:
+  - "A new page or bespoke endpoint."
+  - "Reaching the forge during a request: the pull-request step reads a recorded observation."
+depends_on:
+  - I2323
+  - I2324
+acceptance_criteria:
+  - "For a finished task on a fixture repository the query returns every step from intent to deployment with the record that decided each"
+  - "A step with no record is unknown, and the chain as a whole is never reported complete while a step is unknown"
+  - "The command line, HTTP and MCP return the same chain for the same input"
+  - "A chain proved at an older head reports itself stale after the head moves"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test projections"
+  - "bin/majordomus-cli capabilities validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the cases this issue adds>"
+evidence_required:
+  - "explain_query_case"
+  - "unknown_step_case"
+  - "stale_chain_test"
+created_at: 2026-10-10
+updated_at: 2026-10-10

@@ -1,0 +1,48 @@
+id: delivery-baseline-is-measured
+title: "Delivery is measured at a named revision before anything about it is changed"
+slug: delivery-baseline-is-measured
+order: 320
+priority: p0
+problem: "Two owner packs of 2026-10-10 open with the same demand: prove the current state before changing anything (autopilot pack (Majordomus Autonomous Delivery Convergence, 2026-10-10), prompts/00-live-audit.md; convergence pack (Majordomus: Verified Delivery Convergence, 2026-10-10), prompts/00-current-reality-and-pr-triage.md). What they were written from is not current, and the convergence pack says so itself. It read the public repository page (3,438 commits and 52 open pull requests as a navigation count), a rollout snapshot of 2026-10-06 that counted 16 open pull requests, and a finding of 2026-09-11 that master was unprotected. Its derive times, 699 s on Linux and more than an hour on a loaded Mac, are two anecdotes from one commit message. The autopilot pack proposes commands (prs drain --until-settled, prs runs, prs run status) that it marks as not verified to exist. Choosing the nine milestones that follow from numbers like these would repeat the failure both packs name: work chosen from an assumption."
+outcome: "One baseline, taken at a named master revision with its observation time, says what exists, what every open pull request is and needs, what stops unattended work and why, and what a derive, a check, a CI run and a drain cost today. Every later milestone of the two packs is chosen, narrowed or dropped against it."
+current_state: "The instruments exist and nobody has run them as one audit. prs refresh, prs status, prs explain and prs drain --dry-run classify and rank every open pull request with git's own merge (docs/INTEGRATION.md, ADR 0101). The executor's trail feeds throughput and wait medians (apps/majordomus-cli/src/integration/metrics.rs and wait.rs). scripts/ci-baseline writes per-run, per-job and per-step CI durations to .ai/repo/ci/baseline.json. scripts/derive prints what each stage cost and MJ_TIMING reports phase timings (docs/PERFORMANCE.md). The last recorded census is the stage-1 dry run of 2026-10-06 in docs/INTEGRATION_ROLLOUT.md, against 16 pull requests; the forge listed 51 open pull requests, 10 of them drafts, on 2026-10-10. No record classifies the rules that require a person, and none says which transitions an unattended drain lacks."
+desired_state: "A tracked baseline report names the master revision and the time it was taken at and carries: the census of every open pull request with its disposition, rank, overlaps and next safe action; the map of delivery components with the source, consumers, tests and measured or unknown cost of each; the trace of an unattended drain on a blocked pull request with each missing transition named; the classification of every rule that stops unattended work; the queue and critical-path timings with the machine they were measured on; the gate suite's result on the unchanged head and the forge's branch rules as read that day. A decision classifies every proposal of the two packs as reuse, extend, merge, delete or new, and the issues of the later milestones are confirmed, narrowed or cancelled by it. Nothing is merged, refactored or released by this milestone."
+scope:
+  - "docs/INTEGRATION_ROLLOUT.md"
+  - "docs/INTEGRATION.md"
+  - "docs/PERFORMANCE.md"
+  - "docs/CI.md"
+  - "docs/RESPONSIBILITIES.yaml"
+  - "scripts/ci-baseline"
+  - ".ai/repo/ci/baseline.json"
+  - ".ai/repo/policy.yaml"
+  - ".ai/repo/project/issues"
+  - ".ai/repo/project/milestones"
+non_scope:
+  - "Merging, closing, refreshing or repairing any pull request. The audit reads; the queue is the executor's."
+  - "Any refactor, any new capability and any release. Instrumentation the measurements need is the only code this milestone may add."
+  - "A second catalogue of components or pull requests kept by hand. Every table is produced by a command the report names."
+  - "A production deploy. The release path is measured as a dry run where one is supported, and reported as unmeasured where it is not."
+acceptance_criteria:
+  - "The baseline report names the master revision, the observation time and the machine of every measurement in it"
+  - "The census holds exactly the pull requests the forge listed as open at the observation, each with a disposition from the integration classifier and none decided by title or age"
+  - "Every number in the report is produced by a command the report names, and a quantity nothing measured is written as unknown, never as zero"
+  - "Every proposal of both packs carries one of reuse, extend, merge, delete or new, with the existing mechanism named for the first four"
+  - "The gate suite's result on the unchanged head is recorded as it was, failures included"
+validation:
+  - "bin/majordomus plan validate"
+  - "bin/majordomus-cli prs status"
+  - "scripts/ci/reference-check"
+evidence_required:
+  - "pull_request_census"
+  - "component_gap_map"
+  - "critical_path_timings"
+  - "restriction_classification"
+  - "convergence_decision"
+risks:
+  - "The queue moves while it is counted: a census is true of one observation, and the report must carry that observation's time and master rather than be corrected by hand afterwards."
+  - "Timings taken on the shared Mac at load 25 measure the machine and not the change. A measurement names its host and load, and the derive is timed on the idle Linux host CI resembles."
+  - "An audit that produces a hand-written catalogue becomes the parallel system both packs forbid. Each table is a command's output or it is not in the report."
+depends_on: []
+created_at: 2026-10-10
+updated_at: 2026-10-10

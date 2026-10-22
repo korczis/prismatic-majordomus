@@ -1,0 +1,37 @@
+id: I2345
+milestone: derive-does-only-what-a-change-requires
+title: "A derived output is addressed by the digest of everything it depends on, and a missing or corrupt cache entry is recomputed"
+slug: derived-outputs-are-content-addressed
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Key every derived output by a digest over its canonicalised input blobs, the tool and generator versions, the relevant flags and the environment constraints; tell machine-specific outputs from portable ones; recompute on a missing or corrupt entry; and keep a changed-only run byte-for-byte equal to a clean full regeneration."
+why: "Without a key that covers every meaningful dependency a cache is a way to publish stale output with a green check. The declared graph of I2344 is what makes a complete key possible. Source: convergence prompts/02-incremental-derived-graph.md Issue 02.2 'Deterministic content addressing'."
+current_state: "The site data records one input hash for the whole set, which scripts/pages current compares in a fraction of a second. The executable refuses to generate for a tree whose crate it was not built from (exit 15). No per-artifact key exists and nothing is cached between derives. A flattened-YAML cache by content hash and its equivalence cases are planned on master (I0821, I0822, I0841)."
+desired_state: "Each node of the graph has a key computed from its declaration. Outputs are stored under their key in a location, with an eviction rule and permissions, that the existing policy for local state covers. An entry is verified by digest when read. A portable output's key excludes the host; a machine-specific one's includes it. The full derive can be run with the cache disabled and is the reference."
+scope:
+  - "scripts/derive"
+  - "scripts/generate-site-data"
+  - "lib/derive.sh"
+  - "lib/sha256.sh"
+  - "apps/majordomus-cli/src/generation.rs"
+  - "docs/PERFORMANCE.md"
+non_scope:
+  - "A remote cache shared between machines. A local cache is proved first."
+  - "Trusting an entry that fails its digest."
+depends_on:
+  - I2344
+acceptance_criteria:
+  - "Changing any declared input, tool version or flag of a node changes its key"
+  - "A truncated or altered cache entry is detected and the node recomputed"
+  - "A derive with a warm cache and a derive with the cache disabled produce identical trees"
+  - "An output marked machine-specific is never served from an entry written on another host"
+validation:
+  - "bin/majordomus plan validate"
+  - "scripts/derive-check"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the cases this issue adds>"
+evidence_required:
+  - "cache_key_completeness_test"
+  - "corrupt_entry_recomputed_test"
+created_at: 2026-10-10
+updated_at: 2026-10-10

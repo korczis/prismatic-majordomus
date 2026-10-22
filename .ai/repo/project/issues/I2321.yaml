@@ -1,0 +1,41 @@
+id: I2321
+milestone: autonomy-is-authorised-policy
+title: "An authority profile declares what an unattended run may do in this repository, and a peer's identity grants none of it"
+slug: an-authority-profile-is-declared
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Define a repository-scoped authority profile for autonomous delivery: the worktrees it may use, whether it may commit, push, update a branch, open a pull request, merge, publish and deploy to which environments, and its cost, time and concurrency bounds; and require an explicit, short-lived, audited delegation before any of it is exercised."
+why: "Every later milestone mutates something on the owner's behalf. The owner's consent currently lives in conversation and in session memory, where no executable can read it and no audit can find it. The mesh rule says a trusted identity is not an authority and offers nothing that is. Source: autopilot prompts/01-policy-autonomy.md Issue 4 'Authority profile'; autopilot README 'Confirm authority through user-established local config'."
+current_state: "Policy declares verification requirements, intent binding and retention; it declares no authority (.ai/repo/policy.yaml, apps/majordomus-cli/src/policy.rs). The mesh declaration lists trusted keys (.ai/repo/mesh/majordomus.yaml). The integration engine acts for whoever runs it, with that person's forge credentials."
+desired_state: "The profile is a typed, validated section of policy, closed by default, projected to adopters by update. It states the envelope. The grant to one run is a local record established by the user, naming the run, the grants taken from the envelope and an expiry, and it is never committed and never logged with a secret. Every unattended mutation asks one function whether the grant covers it and records the answer in the trail. A trusted mesh identity with no delegation is refused."
+scope:
+  - ".ai/repo/policy.yaml"
+  - "apps/majordomus-cli/src/policy.rs"
+  - ".ai/repo/mesh/majordomus.yaml"
+  - "apps/majordomus-cli/src/mesh/trust.rs"
+  - "lib/update.sh"
+  - "docs/MESH.md"
+  - "SECURITY.md"
+  - ".ai/repo/rules/project/mesh-is-observation-not-authority.v1.md"
+non_scope:
+  - "Storing forge or deployment credentials. The profile bounds acts; credentials stay where the user keeps them."
+  - "The handshake that carries a delegation between machines, which is the mesh workers milestone."
+depends_on:
+  - I2318
+acceptance_criteria:
+  - "With no profile, or with a grant that has expired, an unattended merge, push, publication or deploy is refused before it acts and the refusal names the missing grant"
+  - "A grant cannot exceed the envelope the repository declares, proved by a test that tries"
+  - "Every exercised grant leaves a trail event naming the run, the act and the delegation, and no event carries a credential"
+  - "A trusted mesh key that presents no delegation is refused"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test mesh_cooperation"
+  - "cargo test --test redaction"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the cases this issue adds>"
+evidence_required:
+  - "authority_profile_refusal_case"
+  - "grant_exceeds_envelope_test"
+  - "delegation_audit_events"
+created_at: 2026-10-10
+updated_at: 2026-10-10

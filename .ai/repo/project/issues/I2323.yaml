@@ -1,0 +1,39 @@
+id: I2323
+milestone: a-finished-task-is-explained-by-its-evidence
+title: "An operation has one identity: the head, the worktree, what it serves, the digests of its inputs and the tool that ran it"
+slug: an-operation-has-one-identity
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Define or refine one operation identity from the typed models that exist: repository head, worktree, intent, issue and session references, exact inputs and their hashes, generator or capability version, dependency keys, environment identity, output digests and timestamps, with each field marked computed, immutable, optional, redactable or local."
+why: "The evidence run, the integration trail event, the execution and the session each identify the same act differently, so no query can join them without guessing. The run record of the supervisor milestone and the cache keys of the derive milestone need the same identity and would otherwise each invent one. Source: convergence prompts/01-canonical-execution-evidence.md Issue 01.1 'Canonical execution identity'."
+current_state: "An evidence run carries its origin, commit, working-tree state and provenance (apps/majordomus-cli/src/evidence/run.rs, provenance.rs). An execution carries an id this process gave it (apps/majordomus-cli/src/execution/model.rs). A session has an identity of its own (apps/majordomus-cli/src/session/identity.rs). The build identity names the executable (apps/majordomus-cli/src/build_identity.rs). No type composes them."
+desired_state: "One versioned type with deterministic serialisation is the identity of an operation, and the existing records carry it or a reference to it. A migration reads records written before it. No secret, raw provider credential or private transcript can be a field, enforced by the type and by the redactor."
+scope:
+  - "apps/majordomus-cli/src/evidence/record.rs"
+  - "apps/majordomus-cli/src/evidence/provenance.rs"
+  - "apps/majordomus-cli/src/evidence/run.rs"
+  - "apps/majordomus-cli/src/build_identity.rs"
+  - "apps/majordomus-cli/src/execution/model.rs"
+  - "apps/majordomus-cli/src/session/identity.rs"
+  - "docs/EVIDENCE.md"
+  - "docs/SCHEMAS.md"
+non_scope:
+  - "A new store."
+  - "Ids across the coordination stores, which are I2144."
+depends_on: []
+acceptance_criteria:
+  - "Two serialisations of one identity are byte-identical, and a changed input digest changes the identity"
+  - "A record written before the identity existed is read without loss and reports the identity's fields as absent, not invented"
+  - "A value the redactor recognises as a credential cannot be stored in any field of the identity"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test redaction"
+  - "cargo test --test properties"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the cases this issue adds>"
+evidence_required:
+  - "operation_identity_schema"
+  - "identity_determinism_test"
+  - "legacy_record_read_test"
+created_at: 2026-10-10
+updated_at: 2026-10-10

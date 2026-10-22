@@ -1,0 +1,37 @@
+id: I2342
+milestone: the-queue-drains-until-settled
+title: "A simulated queue of fifty pull requests exercises every race the drain names, and the gain is measured against the baseline"
+slug: a-simulated-queue-exercises-every-race
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Build fixtures for a queue of at least fifty pull requests covering conflicts, a moving base, a stale review, failing tests, a worker crash, a force-push race, same-file overlap, forge rate limits, a status timeout, an unknown fork, a long-lived branch, already-merged and superseded heads, a lost network, an abused lease, a duplicate merge and a base with and without protection; and document time to integrate, throughput and interventions before and after."
+why: "The classification was checked against 70 real pull requests on 2026-09-30 and 16 on 2026-10-06, each time by hand against the live forge. The new behaviours mutate, and a mutation cannot be rehearsed on the real queue. Source: autopilot prompts/04-pr-drain.md Issue 6 'Simulation'; convergence prompts/03-pr-integration-throughput.md Issue 03.5 'Tests and measured rollout'."
+current_state: "The executor's tests drive the engine over a scripted forge with small queues (apps/majordomus-cli/src/integration/tests.rs, apps/majordomus-cli/tests/integration_executor.rs). The two safety properties as generated property tests are planned on a rescue branch (I2046). No fixture reaches fifty pull requests or combines the races."
+desired_state: "A generator builds a queue of a given size and mix deterministically from a seed, and the scripted forge can move a base, expire a review, fail a check, time out a status and exhaust a rate limit on cue. The suite runs the unattended drain over it and asserts the safety properties after every step. The first real merge of the new mode happens only with the required authority and green evidence, and its timings are recorded beside the baseline's."
+scope:
+  - "apps/majordomus-cli/src/integration/tests.rs"
+  - "apps/majordomus-cli/tests/integration_executor.rs"
+  - "apps/majordomus-cli/tests/integration_trail.rs"
+  - "apps/majordomus-cli/tests/properties.rs"
+  - "docs/INTEGRATION_ROLLOUT.md"
+non_scope:
+  - "A simulation that replaces the staged rollout on the real repository."
+depends_on:
+  - I2339
+  - I2341
+acceptance_criteria:
+  - "A seeded queue of fifty pull requests with every named condition runs to a settled or blocked state with no safety property violated at any step"
+  - "The same seed produces the same trail"
+  - "Each named race has an assertion that fails when its guard is removed"
+  - "The rollout record states time to integrate an eligible pull request, throughput per hour and interventions, before and after, with sample sizes"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test integration_executor"
+  - "cargo test --test properties"
+evidence_required:
+  - "fifty_pull_request_simulation"
+  - "race_guard_mutations"
+  - "before_after_throughput"
+created_at: 2026-10-10
+updated_at: 2026-10-10

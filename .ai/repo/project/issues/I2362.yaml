@@ -1,0 +1,39 @@
+id: I2362
+milestone: the-delivery-loop-is-proved
+title: "The loop's latency, throughput and manual interventions are compared with the measured baseline, with sample sizes and exceptions"
+slug: the-loop-is-compared-with-the-baseline
+priority: p1
+profile: deep-work
+parallel_safe: true
+objective: "Publish an evidence-backed comparison of median and p95 feedback latency, no-op work eliminated, the derive's critical path, CI latency, the dwell time of eligible pull requests, manual interventions, accepted outcomes and regressions, stating environment, sample size, confidence and exceptions, and gate on bounded non-regression with a justified tolerance."
+why: "Both packs forbid inventing a result such as sixty-second CI or a five-minute release. The only defence is a comparison whose two sides were measured the same way, and the baseline of this plan was taken for that purpose. Source: convergence prompts/06-self-hosted-proof-release.md Issue 06.4 'Compare against measured baseline'; autopilot README 'Success measure'."
+current_state: "The baseline's metrics and timings are the outputs of I2314 and I2315. The recorded runs carry their cost once I2324 lands. Nothing compares two periods today beyond the bench check on single commands."
+desired_state: "One generated report sets each baseline metric beside the same metric measured after the milestones, from the same commands, with both environments stated. A metric that could not be measured on one side is shown as not comparable. The non-regression gate of I2349 reads the same numbers the report prints."
+scope:
+  - "docs/PERFORMANCE.md"
+  - "docs/INTEGRATION_ROLLOUT.md"
+  - ".ai/repo/ci/baseline.json"
+  - "scripts/ci-baseline"
+  - "apps/majordomus-cli/src/integration/metrics.rs"
+non_scope:
+  - "A number that was not measured."
+  - "A comparison across hosts presented as a gain of the change."
+depends_on:
+  - I2359
+  - I2314
+  - I2315
+  - I2349
+acceptance_criteria:
+  - "Each compared metric states both sample sizes, both environments and the command that produced it"
+  - "Manual interventions are counted on both sides from recorded events"
+  - "A metric measured on one side only is shown as not comparable"
+  - "The gate and the report read one source, proved by changing it and seeing both move"
+validation:
+  - "bin/majordomus plan validate"
+  - "scripts/ci-baseline"
+  - "scripts/derive-check"
+evidence_required:
+  - "baseline_comparison"
+  - "comparison_single_source_test"
+created_at: 2026-10-10
+updated_at: 2026-10-10

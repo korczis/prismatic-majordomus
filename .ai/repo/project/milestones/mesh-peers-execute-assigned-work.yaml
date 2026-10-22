@@ -1,0 +1,55 @@
+id: mesh-peers-execute-assigned-work
+title: "A trusted peer executes assigned work only under an explicit, expiring delegation"
+slug: mesh-peers-execute-assigned-work
+order: 324
+priority: p2
+problem: "The autopilot pack (Majordomus Autonomous Delivery Convergence, 2026-10-10), prompts/03-mesh-workers.md, asks that discovered trusted peers execute durable tasks while observation stays observation. The mesh today is deliberately not that: docs/MESH.md says it is not a remote execution facility and nothing a peer sends runs anything. Sessions, claims, handovers and reviews replicate; work is divided by a person reading the board and typing instructions into each session. On 2026-10-10 that meant an executor session handing milestones to other sessions by mesh handover and a person telling each one to proceed. The pack's own caution is the constraint: discovery is observation, the board is volatile, and neither implies execution."
+outcome: "A worker opts in by advertising the task classes it will execute and its limits; a supervisor assigns a ready issue to one capable worker under a fenced lease and an expiring delegation; the worker receives the compiled context of its assignment, and a replacement resumes from a durable handover without a person. Discovery alone still starts nothing."
+current_state: "Implemented: authenticated links and one replicated journal (ADR 0067), exclusive and advisory claims with deterministic conflict resolution, handover publish and consume, review request and answer, liveness and expiry (apps/majordomus-cli/src/mesh/cooperation.rs), the peer board gathered across checkouts (ADR 0044), context compilation (majordomus context), continuity records, a handover asked for before the window fills (ADR 0123), and one headless invocation of Claude Code in the economics runner (apps/majordomus-cli/src/economics/runner.rs). Planned elsewhere and not repeated here: the task lifecycle as capabilities and one typed task model (I2141 to I2144), every session joining the mesh at start (I2285 to I2292), mesh trust hardening (I2123, I2132 to I2136), one state and one next step per worktree (I2283). Absent: a worker advertisement, a delegation, an assignment, an adapter that starts a worker."
+desired_state: "The authorisation handshake and the advertisement are mesh events with their own versions; a delegation names the run, the task class, the scope and an expiry, and is refused when expired, replayed or presented by an untrusted node. Assignment is deterministic and conflict-aware over the plan's ready set and the existing claim predicate, carries an idempotency key and can be cancelled. The worker adapter is provider-neutral; Claude Code is its first provider through the invocation the repository already uses; with no peer and no provider the run degrades to one local worker. A worker's patch is validated before it is integrated."
+scope:
+  - "apps/majordomus-cli/src/mesh/protocol.rs"
+  - "apps/majordomus-cli/src/mesh/link.rs"
+  - "apps/majordomus-cli/src/mesh/trust.rs"
+  - "apps/majordomus-cli/src/mesh/cooperation.rs"
+  - "apps/majordomus-cli/src/mesh/handover.rs"
+  - "apps/majordomus-cli/src/mesh/journal.rs"
+  - "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+  - "apps/majordomus-cli/src/peers.rs"
+  - "apps/majordomus-cli/src/providers.rs"
+  - ".ai/repo/mesh/majordomus.yaml"
+  - "lib/context.sh"
+  - "lib/handover.sh"
+  - "docs/MESH.md"
+  - "SECURITY.md"
+non_scope:
+  - "Execution on discovery or on trust alone. The rule project.mesh-is-observation-not-authority is kept and strengthened, never relaxed."
+  - "Transport security, WAN operation and NAT traversal, which docs/MESH.md lists as not guaranteed and this milestone does not change."
+  - "Providers other than the first. The adapter is neutral; a second provider is later work."
+  - "Automatic joining of the mesh at session start, which is I2285 to I2292."
+  - "The task lifecycle capabilities, which are I2141 to I2144."
+acceptance_criteria:
+  - "A trusted peer that advertised nothing is assigned nothing, and a peer that advertised receives nothing without a delegation, each proved by a test"
+  - "An expired, replayed or wrongly addressed delegation is refused with a typed reason and leaves no assignment"
+  - "Two supervisors assigning the same ready issue leave one assignment, and the loser is told which one holds"
+  - "A worker that disconnects mid-task is replaced, and the replacement resumes from the handover with no prompt from a person"
+  - "With no reachable peer and no provider the run proceeds with one local worker, or reports the missing provider as an external blocker"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test mesh_cooperation"
+  - "cargo test --test mesh"
+  - "scripts/ci/mesh-check"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 130_mesh 368_mesh_handover_resolves <the cases this milestone adds>"
+evidence_required:
+  - "delegation_refusal_tests"
+  - "assignment_contention_test"
+  - "worker_replacement_case"
+  - "local_fallback_case"
+risks:
+  - "A worker that executes on another machine acts with that machine's credentials. The delegation bounds what is asked; it cannot bound what the host allows, and SECURITY.md must say so."
+  - "A headless provider session can strand an episode or wait on a confirmation prompt forever. The adapter detects the prompt and routes it to the delegated authority or records an external approval blocker."
+  - "The wire gains events older executables do not know. The link protocol version is priced by the version gate (I2164) or by this milestone's own bump."
+depends_on:
+  - delivery-baseline-is-measured
+created_at: 2026-10-10
+updated_at: 2026-10-10

@@ -1,0 +1,41 @@
+id: I2344
+milestone: derive-does-only-what-a-change-requires
+title: "Every derived artifact declares its inputs, its generator and its consumers, and a hidden input is refused"
+slug: the-derive-graph-is-declared
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Inventory the derived artifacts with their authoritative inputs, generators, output schemas, transitive edges and consumers; hold that graph as data by extending the artifact manifest and the generation plan; reject an input the graph does not declare; and prove that generating one artifact cannot change another."
+why: "The derivation graph today is a comment at the head of scripts/derive and a drawing in a document. Nothing can be invalidated narrowly until the edges are data, and the stage that writes the site data reads so much of the tree that its real inputs are unknown. Source: convergence prompts/02-incremental-derived-graph.md Issue 02.1 'Trace the derive DAG'; autopilot prompts/05-performance.md Issue 2 'Derivation DAG' (the declaration half)."
+current_state: "scripts/derive runs three stages in a fixed order and says no stage reads its own output. docs/generated/artifacts.json lists the derived artifacts and scripts/gitattributes reads it. The generation plan in the executable knows the outputs of generate (apps/majordomus-cli/src/generation.rs). scripts/pages fingerprint hashes the site data's inputs as one set. Derived data that stops hashing inputs it cannot control is I1409 on master."
+desired_state: "For each derived artifact the manifest names the canonical inputs as paths or patterns, the generator and its version, the tool versions that matter and the consumers. The derive reads that data to order its work. A generator that reads a file outside its declaration is caught by a check in CI. A test regenerates each artifact alone and asserts no other output's bytes moved."
+scope:
+  - "scripts/derive"
+  - "scripts/generate-site-data"
+  - "scripts/gitattributes"
+  - "scripts/pages"
+  - "apps/majordomus-cli/src/generation.rs"
+  - "apps/majordomus-cli/src/generate.rs"
+  - "docs/generated/artifacts.json"
+  - "docs/GITHUB_PAGES_ARCHITECTURE.md"
+non_scope:
+  - "Caching or skipping anything, which is I2345 and I2346."
+  - "An inventory kept apart from the manifest."
+depends_on:
+  - I2315
+acceptance_criteria:
+  - "Every committed derived artifact appears in the manifest with at least one input and one generator, and an artifact with neither fails the check"
+  - "A generator made to read an undeclared file in a test is refused"
+  - "Regenerating any one artifact leaves every other derived file byte-identical"
+  - "The order the derive runs in is computed from the declared edges, and the fixed order in the script is gone"
+validation:
+  - "bin/majordomus plan validate"
+  - "scripts/derive-check"
+  - "cargo test --test generate_check"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 51_derived_artifacts_committed <the cases this issue adds>"
+evidence_required:
+  - "derive_graph_declared"
+  - "hidden_input_refused_test"
+  - "isolated_regeneration_test"
+created_at: 2026-10-10
+updated_at: 2026-10-10

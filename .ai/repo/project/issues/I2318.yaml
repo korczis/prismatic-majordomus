@@ -1,0 +1,39 @@
+id: I2318
+milestone: autonomy-is-authorised-policy
+title: "Every rule declares whether it is a safety invariant, a procedure or a preference, and only a procedure can be delegated"
+slug: a-rule-declares-its-class
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Add a typed class to the rule model, derived from the existing enforcement fields, with override semantics: an invariant has no override, a procedure may be satisfied by a delegated authority or a recorded proof, a preference is advice."
+why: "An unattended run has to know which refusals it may route to a delegation and which it must stop at. Today that knowledge is in people's heads and in the baseline's table (I2313). Until a rule carries it, every gate either blocks the run or is bypassed wholesale. Source: autopilot prompts/01-policy-autonomy.md Issue 1 'Policy taxonomy'."
+current_state: "A rule has an id, a version, an enforcement level and a proof, validated by the rule schema and projected into the bootstraps (docs/DOCTRINE.md, apps/majordomus-cli/src/rules, lib/rules.sh). It has no class and no override semantics."
+desired_state: "The rule schema carries the class and what may satisfy it. Every project rule declares one, taken from the baseline's classification; a rule without a class fails the rule gate, and the default offered to a migrating repository is invariant. The class is read by one function that every enforcement point calls, and it is projected to the command line, MCP and the documents with the rule."
+scope:
+  - "share/schemas/majordomus/rule"
+  - "apps/majordomus-cli/src/rules"
+  - "apps/majordomus-cli/src/capability/builtin/rules.rs"
+  - "lib/rules.sh"
+  - "lib/doctrine.sh"
+  - "docs/DOCTRINE.md"
+  - "scripts/ci/rule-proof-check"
+non_scope:
+  - "Changing what any rule requires."
+  - "Model and provider preferences beyond classing them as preferences."
+depends_on:
+  - I2313
+acceptance_criteria:
+  - "Every project rule carries a class, and a copy of the rule set with one class removed fails the rule gate"
+  - "An enforcement point asked to override an invariant refuses, whatever authority is presented"
+  - "A repository on the previous rule schema reads as before, with every unclassified rule treated as an invariant"
+validation:
+  - "bin/majordomus plan validate"
+  - "scripts/ci/rule-proof-check"
+  - "cargo test --test rules"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the cases this issue adds>"
+evidence_required:
+  - "rule_classes_gated"
+  - "invariant_override_refused_test"
+  - "rule_schema_migration_case"
+created_at: 2026-10-10
+updated_at: 2026-10-10

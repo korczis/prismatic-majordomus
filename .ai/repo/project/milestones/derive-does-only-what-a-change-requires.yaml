@@ -1,0 +1,56 @@
+id: derive-does-only-what-a-change-requires
+title: "A derive regenerates only what a change invalidates, and is proved equal to a full one"
+slug: derive-does-only-what-a-change-requires
+order: 326
+priority: p1
+problem: "Both packs name the derive as the cost every change pays (convergence pack (Majordomus: Verified Delivery Convergence, 2026-10-10), prompts/02-incremental-derived-graph.md; autopilot pack (Majordomus Autonomous Delivery Convergence, 2026-10-10), prompts/05-performance.md). scripts/derive regenerates every committed derived artifact in three stages whatever changed; one run took 699 s on an idle Linux host and between 52 and 64 minutes on the shared Mac at load 25 on 2026-10-10, and one derive runs at a time per machine by rule since PR 855. A plan record, a rule or a document each pay the whole price, every landing stales every other branch's derived files, and sessions queue behind one lock or ship the derive to another machine. The same holds one level up: CI selects gates by path class but keeps no proof that a skipped gate could not have changed, and no result is reused for inputs it already judged."
+outcome: "Every derived artifact declares its inputs and its generator, an output is addressed by the digest of everything it depends on, a change regenerates only what it invalidates, identical work runs once, and an incremental derive is proved byte-identical to a full one. A gate's result is reused only for the exact inputs it judged, and derive and CI time are held by a measured, noise-aware budget."
+current_state: "Implemented: the three-stage derive with its graph written in the script's header and drawn in docs/GITHUB_PAGES_ARCHITECTURE.md; the manifest of derived artifacts (docs/generated/artifacts.json) that scripts/gitattributes reads; an input fingerprint for the site data (scripts/pages fingerprint and current); the machine-wide derive lock and orphan handling (lib/machine_lock.sh, rule project.one-derive-at-a-time); derive-check and the generation-converges gate; the CI plan from path classes (.ai/repo/ci/gates.yaml, scripts/ci-plan); benchmark baselines and a regression check (docs/PERFORMANCE.md). Planned elsewhere and not repeated here: derived data that stops hashing inputs it cannot control (I1409), a flattened-YAML cache and its equivalence cases (I0821, I0822, I0841), runner-dependent verdicts (I2068), the slowest suite case (I2115), measured budgets for first run, hooks and CI (I2089). Absent: declared inputs per artifact, a content-addressed cache, invalidation narrower than everything, an equivalence proof, reuse of a gate result."
+desired_state: "The derivation graph is data the derive reads, extended from the artifact manifest and the generation plan and not a second inventory; an undeclared input is refused. Cache keys cover canonicalised inputs, generator and tool versions, flags and the environment constraints that matter; a missing or corrupt entry is recomputed and never trusted. Independent nodes run in parallel inside measured limits, identical work single-flights by key, writers of one output serialise, and publication is atomic. The full derive stays the authority and the incremental path is proved against it under reordering, interruption and a poisoned cache."
+scope:
+  - "scripts/derive"
+  - "scripts/derive-check"
+  - "scripts/generate-site-data"
+  - "scripts/gitattributes"
+  - "scripts/ci-plan"
+  - "lib/derive.sh"
+  - "lib/machine_lock.sh"
+  - "apps/majordomus-cli/src/generation.rs"
+  - "apps/majordomus-cli/src/generate.rs"
+  - "docs/generated/artifacts.json"
+  - ".ai/repo/ci/gates.yaml"
+  - ".ai/repo/ci/baseline.json"
+  - "docs/PERFORMANCE.md"
+  - "docs/CI.md"
+  - "docs/GITHUB_PAGES_ARCHITECTURE.md"
+non_scope:
+  - "Removing single-flight protection to gain speed. The lock narrows from the machine to the output only where the graph proves two derives cannot write the same file."
+  - "A filesystem-timestamp heuristic in place of declared inputs."
+  - "A network dependency in a local no-op derive."
+  - "An absolute target such as sixty seconds for the whole pipeline. Budgets are set from the baseline's measurements."
+  - "A generated-artifact inventory kept by hand."
+acceptance_criteria:
+  - "A no-op derive is cheaper than the baseline by measurement, with the sample size and the machine stated"
+  - "Changing one rule regenerates the projections of that rule and leaves every unrelated output's bytes and timestamps untouched"
+  - "A clean full derive and an incremental derive of the same tree produce identical artifacts, under randomised node order, an interrupted run and a poisoned cache entry"
+  - "Two derives that write different outputs run at once, and two that would write one output do not"
+  - "A gate skipped for a change carries the recorded proof that none of its inputs changed, and a result is never reused for different inputs"
+validation:
+  - "bin/majordomus plan validate"
+  - "scripts/derive-check"
+  - "scripts/ci/generation-converges"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 51_derived_artifacts_committed 56_derived_current_gate 94_ci_plan 1018_one_derive_at_a_time_and_no_orphans <the cases this milestone adds>"
+evidence_required:
+  - "derive_graph_declared"
+  - "incremental_equals_full_test"
+  - "noop_derive_timing"
+  - "concurrent_derive_case"
+  - "gate_result_reuse_case"
+risks:
+  - "A cache that is wrong once publishes a wrong site with a green check. The full derive remains the gate on master and the incremental path earns trust by the equivalence proof, not by speed."
+  - "Stage B runs the use-case scenarios and reads most of the tree; its true inputs may be nearly everything, and the first honest graph may invalidate almost as much as today. That is a finding to report, not to hide."
+  - "The derive's output differs between macOS and Linux in places CI already knows. Machine-specific outputs are declared as such or the cache poisons across hosts."
+depends_on:
+  - delivery-baseline-is-measured
+created_at: 2026-10-10
+updated_at: 2026-10-10

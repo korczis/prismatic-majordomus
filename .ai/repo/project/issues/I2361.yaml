@@ -1,0 +1,37 @@
+id: I2361
+milestone: the-delivery-loop-is-proved
+title: "Each injected failure of the loop fails closed, is diagnosed, and recovers without corrupting a record"
+slug: the-loop-recovers-from-injected-failures
+priority: p1
+profile: deep-work
+parallel_safe: true
+objective: "Inject an interrupted derive, a failed test, a stale pull request, an advanced repository head, a vanished peer, an incorrect release digest and an aborted deploy, and demonstrate beside normal success a fixable conflict, a crash and restart, a fallback from an unavailable peer, no progress and budget exhaustion; each failing closed with coherent diagnostics and recovering, on Linux and macOS where accessible."
+why: "The parts have their own failure tests. What has not been rehearsed is a failure in one part while the others are mid-flight, which is how the release of 2026-10-10 went. Source: convergence prompts/06-self-hosted-proof-release.md Issue 06.3 'Failure and recovery rehearsal'; autopilot prompts/06-closed-loop-delivery.md Issue 3 'Self-host and consumer' (the scenarios)."
+current_state: "The continuous drain stops cleanly on a signal (case 741); one derive at a time leaves no orphans (case 1018); the mesh lab rehearses partition and crash. No rehearsal crosses subsystems."
+desired_state: "Each scenario is a scripted run that injects its failure at a declared point of the loop, asserts the terminal or recovered state and that every canonical record still validates, and records its timings. A scenario that cannot run on a host says so and names the host. The scenarios run in CI where the runner allows and on demand otherwise."
+scope:
+  - "apps/majordomus-cli/tests/integration_executor.rs"
+  - "test/mesh-lab"
+  - "test/cases/741_a_continuous_drain_stops_cleanly_and_alone.sh"
+  - "test/cases/1018_one_derive_at_a_time_and_no_orphans.sh"
+  - ".ai/repo/ci/gates.yaml"
+  - "docs/INTEGRATION.md"
+non_scope:
+  - "Injecting a failure into the real forge or a production deployment."
+depends_on:
+  - I2359
+acceptance_criteria:
+  - "Each of the seven injected failures and the five demonstrations has a scripted scenario with an asserted end state"
+  - "After every scenario the plan, the trail, the ledger and the mesh journal validate"
+  - "Each scenario's diagnosis names the failing step and the next command"
+  - "A scenario skipped for lack of a host is reported as not run, never as passed"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test integration_executor"
+  - "scripts/ci/mesh-check"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 741_a_continuous_drain_stops_cleanly_and_alone 1018_one_derive_at_a_time_and_no_orphans <the cases this issue adds>"
+evidence_required:
+  - "failure_rehearsal_cases"
+  - "records_validate_after_failure"
+created_at: 2026-10-10
+updated_at: 2026-10-10

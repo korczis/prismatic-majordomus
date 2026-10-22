@@ -1,0 +1,37 @@
+id: I2320
+milestone: autonomy-is-authorised-policy
+title: "A repair the executor starts is bound to an issue and the criterion it serves, or creates them through a plan transition"
+slug: a-repair-serves-a-criterion
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Resolve every pull-request repair to a canonical intent criterion, milestone and issue through the existing binding, or create and link them through the plan's transition capability, keeping the objective and the acceptance criteria while the plan is refreshed from what the repository shows."
+why: "A repair that serves nothing is work outside the plan, and an unattended run would produce a great deal of it. The binding exists for tasks a person starts; a task a supervisor starts has no person to answer what it serves. Source: autopilot prompts/01-policy-autonomy.md Issue 3 'Milestone intent reconciliation'."
+current_state: "start asks intents.binding what a task serves, from its issue, its intent or its scope, and policy sets what a refused answer costs; integration is a declared exemption class (.ai/repo/policy.yaml, ADR 0111). A pull request names its issue through its branch (I1405, scripts/traceability). The plan transition capability writes lifecycle markers; it does not create an issue."
+desired_state: "A repair task carries the issue the pull request names and the criterion that issue serves. Where the pull request names none, the supervisor creates an issue under the milestone the changed paths belong to, through a declared plan capability, records that it did and why, and never edits the objective or the acceptance criteria of an existing record. The integration exemption remains for a refresh that changes no authored path."
+scope:
+  - "apps/majordomus-cli/src/intent_binding.rs"
+  - "lib/intent_binding.sh"
+  - "apps/majordomus-cli/src/capability/builtin/plan.rs"
+  - "apps/majordomus-cli/src/plan.rs"
+  - "lib/plan.sh"
+  - "scripts/traceability"
+  - ".ai/repo/policy.yaml"
+  - "docs/PLANNING.md"
+non_scope:
+  - "Drafting work for unmet criteria in general, which is I2217 to I2219."
+  - "Editing an existing issue or milestone record."
+depends_on: []
+acceptance_criteria:
+  - "A repair of a pull request whose branch names an issue is bound to that issue and its criterion with no question asked"
+  - "A repair of a pull request that names no issue creates one through a plan capability, and the record says which run created it"
+  - "A repair that would require changing an existing record's objective or acceptance is refused and escalated"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test intent_binding"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the cases this issue adds>"
+evidence_required:
+  - "repair_binding_case"
+  - "issue_created_by_run_case"
+created_at: 2026-10-10
+updated_at: 2026-10-10

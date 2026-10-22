@@ -1,0 +1,44 @@
+id: I2317
+milestone: delivery-baseline-is-measured
+title: "One decision classes every proposal of the two packs as reuse, extend, merge, delete or new, and the baseline report is accepted"
+slug: the-convergence-decision-is-recorded
+priority: p0
+profile: deep-work
+parallel_safe: false
+objective: "From the seven measurements of this milestone, decide for every proposal of the two packs whether an existing mechanism is reused, extended, merged with another, deleted or newly built, confirm, narrow or cancel the issues of the later milestones accordingly, and publish the baseline report with its risk matrix and roll-forward order."
+why: "The issues of the nine later milestones were written on 2026-10-10 from the packs and a reading of the tree, before any measurement. The packs themselves say to choose only the work the audit shows is needed. A plan that is not corrected by its own baseline is the assumption-driven work the audit exists to prevent. Source: convergence prompts/00-current-reality-and-pr-triage.md Issue 00.4 'Architectural convergence decision' and Issue 00.5 'Audit acceptance and report'."
+current_state: "The later milestones carry 46 issues derived from 71 pack items, each naming the existing mechanism it extends and the neighbouring issues it does not repeat. No measurement has confirmed any of them. No decision record covers the incremental graph's boundaries, the owner of enforcement or the owner of the projections."
+desired_state: "The baseline report is a tracked document with the revision, the time, the census coverage, the timings, the gate and branch-rule audit, the component map, the restriction table, a risk matrix and the order of roll-forward. Each pack proposal carries its class and the mechanism it lands on. An architecture decision record is written only where existing policy calls for one. Issues the baseline shows are unnecessary are cancelled, issues it shows are missing are added through the plan, anti-goals are listed, and unrelated scope is frozen until the proof milestone closes."
+scope:
+  - ".ai/repo/project/issues"
+  - ".ai/repo/project/milestones"
+  - ".ai/repo/adrs"
+  - "docs/INTEGRATION_ROLLOUT.md"
+  - "docs/PERFORMANCE.md"
+  - "docs/ROADMAP.md"
+non_scope:
+  - "Implementing any proposal."
+  - "Claiming progress on a later milestone: this issue audits and decides."
+depends_on:
+  - I2310
+  - I2311
+  - I2312
+  - I2313
+  - I2314
+  - I2315
+  - I2316
+acceptance_criteria:
+  - "Every item of both packs appears once with its class and, for reuse, extend, merge and delete, the existing mechanism it concerns"
+  - "Every issue of the later milestones is confirmed, narrowed or cancelled with a reference to the measurement that decided it"
+  - "The report states what was not audited and why, and the next command for each external blocker"
+  - "The plan validates after the changes, and the projection to the forge agrees with it"
+validation:
+  - "bin/majordomus plan validate"
+  - "scripts/ci/github-check"
+  - "scripts/ci/reference-check"
+evidence_required:
+  - "baseline_report"
+  - "convergence_decision"
+  - "plan_corrected_by_baseline"
+created_at: 2026-10-10
+updated_at: 2026-10-10

@@ -1,0 +1,53 @@
+id: the-queue-drains-until-settled
+title: "One command drains the pull-request queue until it is settled, repairing what it can and naming what it cannot"
+slug: the-queue-drains-until-settled
+order: 325
+priority: p1
+problem: "Both packs ask for the same thing of the integration engine (autopilot pack (Majordomus Autonomous Delivery Convergence, 2026-10-10), prompts/04-pr-drain.md; convergence pack (Majordomus: Verified Delivery Convergence, 2026-10-10), prompts/03-pr-integration-throughput.md): keep the classifier, the merge-tree relation, the per-base lease and the trail, and make the drain converge. The engine merges what is ready and refreshes what is merely behind. Everything else waits for a person: the repair lane is a person's by its own document, a pull request that conflicts on an authored path or fails a required check stays where it is, and the refresh pipeline is one deep, so throughput is one pull request per run of the required check. The forge listed 51 open pull requests on 2026-10-10, about twice the count of the day before, while several sessions prepared heads by hand."
+outcome: "prs drain --until-settled takes the automatic next action of every lane, has an authored conflict or a failed check repaired by an assigned worker in a worktree of its own, runs independent repairs side by side while merges into one base stay one at a time, and stops when every pull request in scope is merged, closed on proof or blocked with a reason. Without an autonomous profile it behaves exactly as it does today."
+current_state: "Implemented and reused as they are: the dispositions and lanes, the deterministic rank, the relation to master by git's own merge with the derived driver, one verified merge at a time with a second observation before the act, refresh and repair by a merge commit and a plain push, cleanup of what is provably on master or superseded, waiting and starvation folded from the trail, the continuous mode and its rollout gate (docs/INTEGRATION.md, ADR 0101). The convergence pack's issue 03.3 describes this existing behaviour and adds nothing to it. Planned elsewhere and not repeated here: the integration-hardening issues of the mission (I2040 to I2063 on a rescue branch), a typed prs train that lifts the one-deep pipeline (I2298), reopening a record pull request (I2296), one state per worktree (I2283). Absent: an action for the repair lane, parallel repair, a settled contract."
+desired_state: "Each lane has one automatic next action declared with the disposition that selects it, and the drain takes it under the run's authority. A fixable pull request becomes a canonical repair task bound to its issue, worked in an isolated worktree and pushed as a fast-forward of the observed head. After every mutation the queue is observed again. Observation is timed and immutable answers are cached by base, head and driver version. A simulated queue of at least fifty pull requests exercises every race the engine names, and each new mutation is opened by a recorded rollout stage."
+scope:
+  - "apps/majordomus-cli/src/integration/classify.rs"
+  - "apps/majordomus-cli/src/integration/drain.rs"
+  - "apps/majordomus-cli/src/integration/repair.rs"
+  - "apps/majordomus-cli/src/integration/relation.rs"
+  - "apps/majordomus-cli/src/integration/forge.rs"
+  - "apps/majordomus-cli/src/integration/metrics.rs"
+  - "apps/majordomus-cli/src/integration/wait.rs"
+  - "apps/majordomus-cli/src/integration/tests.rs"
+  - "apps/majordomus-cli/src/capability/builtin/integration.rs"
+  - "docs/INTEGRATION.md"
+  - "docs/INTEGRATION_ROLLOUT.md"
+non_scope:
+  - "Another merger, a cron orchestration or a second state machine. The engine of ADR 0101 is extended in place."
+  - "A rebase, a squash, a forced push or an administrator merge. project.land-and-publish and the never-force rule stand."
+  - "Closing or deleting another person's branch without the proof cleanup already requires."
+  - "Forged approvals, disabled checks or a relaxed required status. A check the gate model shows as non-impacting is still obeyed where the branch rules require it."
+  - "The stacked train and batch composition, which are I2298 and I2051 to I2052."
+acceptance_criteria:
+  - "On a fixture queue with one pull request of every disposition, an unattended drain takes the declared action of each lane and merges nothing that is not ready"
+  - "A pull request that conflicts on an authored path is repaired by an assigned worker in a worktree that is not the author's, and the push is a fast-forward of the head that was observed"
+  - "Two repairs that share no path run at once, and two merges into one base never do"
+  - "The drain's final report lists every in-scope pull request as merged, closed with its proof, or blocked with its reason, and never reports settled while one is none of these"
+  - "With no autonomous profile, the cases that hold today's drain behaviour pass unchanged"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test integration_executor"
+  - "cargo test --test integration_repair"
+  - "cargo test --test integration_rollout"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 720_integration_follows_the_current_master 910_nothing_merges_around_the_integrator <the cases this milestone adds>"
+evidence_required:
+  - "lane_action_case"
+  - "authored_conflict_repair_case"
+  - "parallel_repair_serial_merge_test"
+  - "settled_report_case"
+  - "fifty_pull_request_simulation"
+risks:
+  - "A worker that resolves an authored conflict is writing another author's code. The repair is validated by the impacted checks and by review where the base requires it, and a conflict the policy does not delegate stays a person's."
+  - "Parallel repairs make every merge stale the others again, which is the cost the one-deep pipeline was built to avoid. The gain must be measured against the baseline, not assumed."
+  - "The forge's rate limit and status latency bound the loop more than local work does. Observation is budgeted and backs off, and a queue it cannot read is unknown, never ready."
+depends_on:
+  - delivery-baseline-is-measured
+created_at: 2026-10-10
+updated_at: 2026-10-10

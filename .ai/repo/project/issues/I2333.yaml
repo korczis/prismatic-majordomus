@@ -1,0 +1,42 @@
+id: I2333
+milestone: mesh-peers-execute-assigned-work
+title: "A ready issue is assigned to one capable worker under a fenced lease, and an assignment can be cancelled"
+slug: a-ready-issue-is-assigned-once
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Map the plan's ready issues to capable trusted workers with a lease per issue that carries a fencing token, deterministic conflict-aware scheduling, an idempotency key and cancellation, built on the peers, claims, handovers and execution contracts that exist, and remove claims that report a worker online when it is not."
+why: "Work is divided today by a person reading the board. Two workers built the same subsystem in one afternoon because neither looked first, and a stale announcement kept a scope claimed for hours. A supervisor that assigns needs the claim to be a lease and the board to be true. Source: autopilot prompts/03-mesh-workers.md Issue 2 'Assignment and claims'; convergence prompts/03-pr-integration-throughput.md Issue 03.4 'Cross-worktree coordination' (the scheduling half)."
+current_state: "Exclusive claims refuse an overlapping claim on every runtime, expire with their holder's heartbeat and resolve a concurrent pair deterministically (apps/majordomus-cli/src/mesh/cooperation.rs, state.rs). The plan derives ready issues and scope conflicts between them (lib/project.awk through the plan capabilities). The peer board's announcements are advisory claims. No record joins an issue to the worker doing it. One typed task model and orphaned-task detection are planned with the earlier owner packs (I2141 to I2144), and one state per worktree is I2283."
+desired_state: "An assignment is a journal event naming the run, the issue, the worker, the scope taken from the issue, a token and a key that makes a repeated assignment a no-op. The scheduler picks, for each ready issue whose scope meets no live assignment, the first capable worker in a stable order. Cancelling an assignment ends the worker's task through the adapter and releases the lease. A worker whose stream stopped beating holds no assignment."
+scope:
+  - "apps/majordomus-cli/src/mesh/cooperation.rs"
+  - "apps/majordomus-cli/src/mesh/state.rs"
+  - "apps/majordomus-cli/src/mesh/journal.rs"
+  - "apps/majordomus-cli/src/peers.rs"
+  - "apps/majordomus-cli/src/capability/builtin/plan.rs"
+  - "apps/majordomus-cli/src/capability/builtin/peers.rs"
+  - "docs/MESH.md"
+non_scope:
+  - "Strong consistency under a partition. The fold names one winner after healing, as it does for claims."
+  - "Identifying stale worktrees and duplicate patches, which is I2283."
+depends_on:
+  - I2332
+  - I2328
+acceptance_criteria:
+  - "Two supervisors assigning one ready issue at once leave one assignment on every runtime, and the other is told which holds"
+  - "Two ready issues whose scopes meet are never assigned at the same time"
+  - "A repeated assignment with the same key changes nothing"
+  - "A cancelled assignment's worker stops, and its lease is free for the next scheduling round"
+  - "No surface lists a worker as holding an assignment after its stream expired"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test mesh_cooperation"
+  - "cargo test --test peer_claims"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the cases this issue adds>"
+evidence_required:
+  - "assignment_contention_test"
+  - "scope_conflict_scheduling_test"
+  - "assignment_cancel_case"
+created_at: 2026-10-10
+updated_at: 2026-10-10

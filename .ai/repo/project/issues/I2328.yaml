@@ -1,0 +1,37 @@
+id: I2328
+milestone: a-delivery-run-is-durable
+title: "A delivery run is a typed record: its outcome, its authority, its phase, its cursor, its lease and its blockers, replayed from the trail"
+slug: a-delivery-run-is-a-typed-record
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Extend the session, issue and integration events with a run: its id, the desired outcome, the authority policy it refers to, the repository and base, the active milestone and intent, the phase, the cursor, the attempt, the lease, the deadline, the progress watermark, the blockers and the evidence, stored where the integration trail is stored, replayable and versioned."
+why: "A drain today is a process and its memory. Nothing durable says what the run was asked to achieve or how far it got, which is why a restart needs a person. Every other issue of this milestone, and the drain, mesh and surface milestones, read this record. Source: autopilot prompts/02-durable-supervisor.md Issue 1 'Typed run model'."
+current_state: "The integration trail is an append-only event log every worktree of the repository reads, with events for observation, selection, refresh, repair, merge and failure (apps/majordomus-cli/src/integration/model.rs, docs/INTEGRATION.md). The lease names its holder and how far it reaches (integration/exclusive.rs). There is no run event and no cursor. A typed prs train is announced as I2298 with no branch yet."
+desired_state: "Run events are additions to the trail's model under a new version; a run's state is a fold of its events and of nothing else; an executable that does not know the new events still reads the rest of the trail. The record names its authority by reference to the grant of I2321 and carries the operation identity of I2323 when that has landed. The metrics the baseline found unrecorded, manual prompts among them, are events of the run."
+scope:
+  - "apps/majordomus-cli/src/integration/model.rs"
+  - "apps/majordomus-cli/src/integration/mod.rs"
+  - "apps/majordomus-cli/src/integration/exclusive.rs"
+  - "apps/majordomus-cli/src/capability/builtin/integration.rs"
+  - "docs/INTEGRATION.md"
+  - "docs/SCHEMAS.md"
+non_scope:
+  - "A second store or a database."
+  - "The typed prs train, which is I2298."
+depends_on:
+  - I2321
+acceptance_criteria:
+  - "Replaying a run's events from an empty state yields the same run state as the live fold, proved by a property test"
+  - "A trail holding run events is read by the previous executable's observers without error"
+  - "A run with no authority reference cannot be created"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test integration_trail"
+  - "cargo test --test properties"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the cases this issue adds>"
+evidence_required:
+  - "run_record_replay_test"
+  - "trail_backward_compatibility_test"
+created_at: 2026-10-10
+updated_at: 2026-10-10

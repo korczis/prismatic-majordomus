@@ -1,0 +1,35 @@
+id: I2316
+milestone: delivery-baseline-is-measured
+title: "The gate suite is run on the unchanged head and the forge's branch rules are read, each recorded with its date"
+slug: gates-and-branch-rules-are-observed
+priority: p0
+profile: deep-work
+parallel_safe: true
+objective: "Run the current gate suite on the unchanged master head and record every failure as it is, read the forge's branch protection and rulesets without changing them, and compare the required checks with the jobs the workflow actually runs."
+why: "The convergence pack repeats a finding of 2026-09-11 that master was unprotected and forbids extrapolating from it. Read through the forge's API on 2026-10-10, master requires the status ci, without the strict flag and without binding administrators. That reading is one session's and is written nowhere a later reader can find with its date. Source: convergence prompts/00-current-reality-and-pr-triage.md preamble and Issue 00.5 'Audit acceptance and report' (gate and branch-rule audit); prompts/04-policy-gates-and-completion.md preamble."
+current_state: "The verdict job decides one required status from the plan and the jobs' results (scripts/ci/verdict). The integration engine reads the base's protection and rulesets at each observation and treats an unreadable one as unknown (apps/majordomus-cli/src/integration/forge.rs). Recording the forge settings in the documents is planned with the earlier owner packs (I2241, in their pending wave) for the recovery lane."
+desired_state: "The baseline report holds the result of every gate on the named head, the protection and rulesets as the forge returned them with the time of the read, and a table of required contexts against workflow jobs with every mismatch named. Where the settings allow a path around the required status, the report says which."
+scope:
+  - "scripts/ci/verdict"
+  - "scripts/ci/core-check"
+  - ".github/workflows/validate.yml"
+  - ".ai/repo/ci/gates.yaml"
+  - "apps/majordomus-cli/src/integration/forge.rs"
+  - "docs/CI.md"
+non_scope:
+  - "Changing a branch rule or a workflow."
+  - "Repairing a failing gate. A failure is recorded and becomes an issue."
+depends_on: []
+acceptance_criteria:
+  - "The report lists every gate of the full plan with its result on the named head, failures included"
+  - "The forge's protection and rulesets are quoted as read, with the time of the read and the account's permission level"
+  - "Each required context is matched to the job that reports it, and a context no job reports is named"
+validation:
+  - "bin/majordomus plan validate"
+  - "scripts/ci-plan --full"
+  - "scripts/ci/core-check"
+evidence_required:
+  - "gate_suite_result"
+  - "forge_protection_observation"
+created_at: 2026-10-10
+updated_at: 2026-10-10

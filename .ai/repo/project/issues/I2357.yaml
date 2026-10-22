@@ -1,0 +1,40 @@
+id: I2357
+milestone: delivery-reads-the-same-on-every-surface
+title: "The Cockpit opens on the outcome, its progress, its obstacles and the next safe action, on a phone as on a desk"
+slug: the-cockpit-opens-on-the-outcome
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Make the landing page prioritise the outcome, the progress, the obstacles and the next safe action, with drilldowns to the repository, intents, milestones and issues, worktrees, pull requests, peers, the mesh, CI, derive costs, release and evidence; responsive and mobile-first, with keyboard and touch operation, drawers, focus order, loading, error and empty states and a clear confirmation for destructive actions; built with the existing design system and stack."
+why: "The landing page answers whether the layer is healthy. The owner's question is whether the work is moving and what it needs, and today that is assembled from several pages built for debugging. Source: convergence prompts/05-derived-ui-mcp-observability.md Issue 05.3 'High-level usable UI'."
+current_state: "The Cockpit renders the registry, with an overview of four questions, an integration page and pages per kind (docs/COCKPIT.md, apps/majordomus-cli/src/cockpit/pages.rs). scripts/ui audits every page at phone widths. Neighbouring work, not repeated: majordomus ui opening the Cockpit (I2231), areas grouped under what they serve (I2232), the overview naming intents (I2234), the phone drawer and its probes (I2096 to I2103), dense surfaces at a phone width (I2103)."
+desired_state: "The landing page reads the delivery view of I2355 and shows, in that order, what is wanted, how far it is, what stands in the way and the one next safe action with its control. Every figure links to the page of its source. Each state of loading, error, empty and stale has a rendering. The page passes the conformance audit by keyboard and by touch."
+scope:
+  - "apps/majordomus-cli/src/cockpit/pages.rs"
+  - "apps/majordomus-cli/src/cockpit/nav.rs"
+  - "apps/majordomus-cli/src/cockpit/view.rs"
+  - "apps/majordomus-cli/src/cockpit/html.rs"
+  - "share/cockpit"
+  - "scripts/ui"
+  - "scripts/cockpit-probe"
+  - "docs/COCKPIT.md"
+non_scope:
+  - "A new front-end stack or design system."
+  - "The drawer and the navigation on a phone, which are I2096 to I2103."
+depends_on:
+  - I2355
+acceptance_criteria:
+  - "With a run in progress the landing page shows its outcome, progress, blockers and next action, each linked to its source page"
+  - "With nothing observed the page says so and names the command that observes"
+  - "The page passes scripts/ui at the phone widths it audits, and every control is reachable by keyboard"
+  - "No value on the page is computed in the browser from a copied list"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test cockpit"
+  - "scripts/ui check"
+  - "scripts/ci/cockpit-projection-check --ui-integrity"
+evidence_required:
+  - "landing_page_audit"
+  - "landing_page_states_case"
+created_at: 2026-10-10
+updated_at: 2026-10-10

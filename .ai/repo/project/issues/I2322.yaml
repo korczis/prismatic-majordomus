@@ -1,0 +1,40 @@
+id: I2322
+milestone: autonomy-is-authorised-policy
+title: "A gate that waited for a person's acknowledgement is decided by a recorded proof, and adopters receive the change through update"
+slug: acknowledgements-become-proofs
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "For each restriction the baseline classed as a procedure and marked for change, modify the rule, the policy, the validator and test bindings, the claims and the decision records so that a deterministic machine proof decides it, keep branch protection and release integrity as they are, and carry the change to existing repositories through the update mechanism."
+why: "A rule changed only in a document is the docs-only rule the pack forbids, and a rule changed only here strands every adopter on the old behaviour. Both failures have happened in this repository before with vendored rule packages. Source: autopilot prompts/01-policy-autonomy.md Issue 5 'Rules and migration'."
+current_state: "Rules are vendored into adopters as a package with a manifest (scripts/rules-package), update regenerates provider projections from policy (lib/update.sh), and rule-proof-check holds each blocking rule to a proof. Which rules change is not known until I2313 is done; the scope rule (project.scope-is-declared) is the one the pack names outright, and the others are added to the task scope when the classification names them."
+desired_state: "Each converted gate has a validator registered with its rule, a test that fails when the proof is absent, and a claim that names the test. The migration is a case that takes a repository on the previous package through update and shows the new behaviour. No conversion touches a required check, the protection of the trunk or the checks of a release."
+scope:
+  - ".ai/repo/rules/README.md"
+  - ".ai/repo/rules/project/scope-is-declared.v1.md"
+  - "scripts/rules-package"
+  - "scripts/ci/rule-proof-check"
+  - "lib/update.sh"
+  - "lib/finish.sh"
+  - "docs/CLAIMS.yaml"
+  - "docs/DOCTRINE.md"
+non_scope:
+  - "Any rule the baseline classed as an invariant."
+  - "A rule with no negative test: such a conversion is not accepted."
+depends_on:
+  - I2313
+  - I2318
+acceptance_criteria:
+  - "Each converted gate is decided by a recorded proof, and removing the proof makes the gate refuse"
+  - "A repository vendoring the previous rule package gains the converted rules by running update, proved by a case"
+  - "The cases that hold branch protection, the required status and release integrity pass unchanged"
+validation:
+  - "bin/majordomus plan validate"
+  - "scripts/ci/rule-proof-check"
+  - "scripts/ci/claim-proof-check --strict"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the cases this issue adds>"
+evidence_required:
+  - "converted_gate_cases"
+  - "adopter_migration_case"
+created_at: 2026-10-10
+updated_at: 2026-10-10

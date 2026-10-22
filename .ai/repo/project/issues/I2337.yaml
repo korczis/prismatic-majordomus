@@ -1,0 +1,39 @@
+id: I2337
+milestone: the-queue-drains-until-settled
+title: "Each lane of the queue has one automatic next action, and an unattended drain takes it"
+slug: each-lane-has-an-automatic-action
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Declare for every disposition the action an unattended drain takes: ready is re-observed and merged; behind is refreshed by the existing merge; fixable becomes a canonical repair task with a worker; waiting for review has its review requested where policy allows; externally blocked is observed with backoff; superseded and redundant are closed on the proof cleanup already requires."
+why: "The lanes exist and three of them have no executor but a person. The pack asks that the classifier, the relation, the lock and the trail be kept, so the change is a table of actions beside the table of dispositions, taken by the same loop. Source: autopilot prompts/04-pr-drain.md Issue 1 'Existing lanes', Issue 2 'Safe branch maintenance' (the part that already exists) and Issue 4 'Review and checks'."
+current_state: "docs/INTEGRATION.md lists each disposition with its lane and a next step written for a person. The drain acts on ready and, with --refresh, on the first needs_refresh; cleanup closes what is provably on master or superseded; repair brings master into one named pull request. Branch maintenance is already a merge commit and a plain push that refuses a moved branch, never a rebase or a forced push, so the pack's Issue 2 is reused as it is. Review requests exist on the mesh."
+desired_state: "The action of a disposition is declared with it in the classifier's model and projected to prs explain and the documents. In the until-settled mode the drain takes the action of the first actionable pull request by rank under the run's authority, records it, observes again and repeats. Requesting a review is an action only where the authority profile grants it; no approval is forged and no check is disabled. A check the gate model shows cannot be affected by a change is not run again locally, and the branch rules are obeyed regardless."
+scope:
+  - "apps/majordomus-cli/src/integration/classify.rs"
+  - "apps/majordomus-cli/src/integration/drain.rs"
+  - "apps/majordomus-cli/src/integration/model.rs"
+  - "apps/majordomus-cli/src/capability/builtin/integration.rs"
+  - "apps/majordomus-cli/src/commands/prs.rs"
+  - "docs/INTEGRATION.md"
+non_scope:
+  - "Deciding a disposition by a second classifier."
+  - "The repair of authored conflicts itself, which is I2338."
+depends_on:
+  - I2328
+  - I2321
+acceptance_criteria:
+  - "prs explain shows, for every disposition, the automatic action or the reason there is none"
+  - "On a fixture queue holding one pull request of each disposition, the unattended drain records the declared action for each and merges only the ready one"
+  - "A review is requested only where the profile grants it, and no event of the run approves a pull request"
+  - "After every action the queue is observed again before the next is chosen"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test integration_executor"
+  - "cargo test --test integration_dry_run_proof"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the cases this issue adds>"
+evidence_required:
+  - "lane_action_case"
+  - "no_forged_approval_test"
+created_at: 2026-10-10
+updated_at: 2026-10-10

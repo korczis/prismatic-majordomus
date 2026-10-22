@@ -1,0 +1,37 @@
+id: I2351
+milestone: delivery-is-held-by-evidence
+title: "The required status waits on every job it needs and fails closed, and a base the forge does not protect is reported as a blocker"
+slug: the-required-status-fails-closed
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Prove that the status aggregator waits on all required jobs, treats failure, an unexcused skip and cancellation as red, and corresponds to the status the forge actually requires; defend against a branch race, a stale check at an old head, merge-commit semantics and a cancelled run; and report missing forge protection as a visible blocker with the steps to configure it, changing the forge only with explicit authorised access."
+why: "A file in the repository cannot create server-side protection, and a document that says the trunk is protected is true only on the day someone read the setting. The baseline reads it once (I2316); this issue makes the reading a standing check. Source: convergence prompts/04-policy-gates-and-completion.md Issue 04.2 'CI wiring and non-bypassable verdict'."
+current_state: "scripts/ci/verdict is green only when planning succeeded, every selected gate ran in a job that succeeded and no job failed or was cancelled (test/cases/94_ci_plan.sh, test/cases/26_ci_wiring.sh). The integration engine reads branch protection and rulesets and refuses when it cannot. Read on 2026-10-10, master requires the status ci. Neighbouring work, not repeated: the record pull request's dispatched verdict (I2282), reopening a record pull request with no run (I2296), the forge gate and its bypass cases of the recovery pack (I2239 to I2241), a rule proven only by a run of its proof (I2160)."
+desired_state: "Cases cover a failed, a skipped, a cancelled and a missing job, a check reported for a head that is no longer the pull request's, and a run cancelled by a newer push. doctor, given a recorded observation of the forge, compares the required contexts with the workflow's jobs and reports an unprotected or weaker base as a blocker; without an observation it says the protection is unknown. Credentials used by the workflow are the least that work."
+scope:
+  - "scripts/ci/verdict"
+  - ".github/workflows/validate.yml"
+  - "apps/majordomus-cli/src/integration/forge.rs"
+  - "lib/doctor.sh"
+  - "test/cases/94_ci_plan.sh"
+  - "test/cases/26_ci_wiring.sh"
+  - "docs/CI.md"
+non_scope:
+  - "Changing the forge's settings without the owner's explicit grant."
+  - "Claiming protection in a document without a dated observation."
+depends_on:
+  - I2316
+acceptance_criteria:
+  - "The verdict is red for a failed, an unexcused skipped, a cancelled and a missing required job, one case each"
+  - "A green check on a head that is not the pull request's current head does not make it ready"
+  - "With an observation that shows no required status on the base, doctor reports a blocker and names the setting"
+  - "With no observation, doctor says the protection is unknown and never that it holds"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 26_ci_wiring 94_ci_plan 996_the_record_pull_request_gets_its_verdict <the cases this issue adds>"
+evidence_required:
+  - "verdict_fail_closed_cases"
+  - "unprotected_base_blocker_case"
+created_at: 2026-10-10
+updated_at: 2026-10-10

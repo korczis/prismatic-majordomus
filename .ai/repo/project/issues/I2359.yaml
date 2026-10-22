@@ -1,0 +1,39 @@
+id: I2359
+milestone: the-delivery-loop-is-proved
+title: "One disposable change travels from its intent to a verified deployment on this repository with no prompt from a person"
+slug: one-change-travels-the-whole-loop
+priority: p1
+profile: deep-work
+parallel_safe: false
+objective: "Create a scoped, realistic and disposable change and carry it by real commands from intent to plan, issue, assignment, repair, tests, review and pull request, merge, version and release, provenance, deployment to a pre-authorised target, a runtime probe, linked evidence and closure, with credentials redacted and any sandboxed step labelled simulated."
+why: "Every milestone before this one ends in tests of its own part. Neither pack accepts parts: the result is one run in which nobody typed proceed. Source: autopilot prompts/06-closed-loop-delivery.md Issue 1 'End-to-end execution'; convergence prompts/06-self-hosted-proof-release.md Issue 06.1 'Own-repository vertical slice'."
+current_state: "No end-to-end run exists. The use-case demonstrations exercise single commands (docs/USE_CASES.md), and docs/DOGFOODING.md records how the repository uses itself. The pieces the slice needs are the acceptance of the supervisor, drain and gates milestones."
+desired_state: "A recorded run starts from one authorised command and ends in a terminal state. Its record lists every step with the command, the result and the evidence it left, counts the prompts a person gave, which must be zero, and marks each step real or simulated. The explaining query of I2325 returns the whole chain for the change."
+scope:
+  - "docs/DOGFOODING.md"
+  - "docs/USE_CASES.md"
+  - ".ai/repo/use-cases"
+  - "docs/INTEGRATION_ROLLOUT.md"
+non_scope:
+  - "A deployment that is unsafe or irreversible: it is simulated and labelled."
+  - "Building anything the run shows to be missing."
+depends_on:
+  - I2341
+  - I2343
+  - I2352
+  - I2353
+  - I2338
+acceptance_criteria:
+  - "The run's record shows zero prompts from a person between start and terminal state"
+  - "Every step names its command and links the evidence it left, and no credential appears"
+  - "Each step that a sandbox stood in for is labelled simulated, and the summary counts them"
+  - "The explaining query returns the chain from the intent to the deployment probe for the change"
+validation:
+  - "bin/majordomus plan validate"
+  - "bin/majordomus-cli delivery report"
+  - "scripts/ci/doc-command-check"
+evidence_required:
+  - "self_hosted_slice_record"
+  - "zero_prompt_count"
+created_at: 2026-10-10
+updated_at: 2026-10-10

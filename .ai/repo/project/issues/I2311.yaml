@@ -1,0 +1,37 @@
+id: I2311
+milestone: delivery-baseline-is-measured
+title: "The map of delivery components is read from the registry, and each gap names the evidence for it"
+slug: delivery-components-are-mapped
+priority: p0
+profile: deep-work
+parallel_safe: true
+objective: "Produce, from the capability registry, the command graph and the declared responsibilities, a machine-readable map of the components delivery runs through, with the source, consumers, tests and measured or unknown cost of each, and the gaps the two packs assume."
+why: "Both packs describe subsystems from public documents and an archive of 2026-09-11 and warn that their examples are not verified. The master plan itself lists as open issues whose code has landed, so the plan cannot serve as the inventory either. Without one map, each later milestone would rediscover what exists. Source: autopilot prompts/00-live-audit.md Issue 1 'Inventory reality' (component half, 'machine-readable gap map, not a hand-written parallel catalog'); convergence prompts/00-current-reality-and-pr-triage.md Issue 00.1 'Evidence-backed inventory'."
+current_state: "The registry answers which capabilities, routes, tools and commands exist (docs/generated/registry.json, docs/CAPABILITIES.md); docs/RESPONSIBILITIES.yaml and docs/HARDCODING_LEDGER.yaml record owners and known duplications; the command graph joins the shell tool and the executable. No single reading covers the runtime, the command line, MCP, HTTP, the Cockpit, discovery, execution, the derive pipeline, caches, lifecycle, evidence, the test harness, CI, release, deploy and the document generators with their costs."
+desired_state: "One generated document lists each component with its authoritative source, its consumers, the tests that hold it, its cost as measured or as unknown, its owner, where it is duplicated and how it can drift, each with a source or commit link. Observations, hypotheses and goals are kept apart. The plan's issues whose code is already on master are listed so that the decision issue can close or cancel them. The document is produced by a command and checked in CI like the other generated documents."
+scope:
+  - "docs/RESPONSIBILITIES.yaml"
+  - "docs/HARDCODING_LEDGER.yaml"
+  - "docs/CAPABILITIES.md"
+  - "docs/SURFACES.md"
+  - "docs/generated/registry.json"
+  - "apps/majordomus-cli/src/command_graph/model.rs"
+  - "scripts/generate-site-data"
+non_scope:
+  - "A catalogue written by hand beside the registry."
+  - "Changing any component the map describes."
+depends_on: []
+acceptance_criteria:
+  - "Every row of the map is derived from the registry, the command graph or a declared record, and the command that regenerates it is named in the document"
+  - "A component whose cost nobody measured says unknown"
+  - "Each gap names what was looked for, where, and at which revision it was absent"
+  - "The issues of the master plan whose acceptance the tree already meets are listed with the evidence"
+validation:
+  - "bin/majordomus plan validate"
+  - "bin/majordomus-cli capabilities validate"
+  - "scripts/derive-check"
+evidence_required:
+  - "component_gap_map"
+  - "landed_but_open_issues_list"
+created_at: 2026-10-10
+updated_at: 2026-10-10

@@ -1,0 +1,37 @@
+id: I2330
+milestone: a-delivery-run-is-durable
+title: "A run that makes no progress stops inside its budget, keeps working on what is independent, and ends in one of five named states"
+slug: a-run-ends-in-a-named-state
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Tell a blocker with an actionable fix from one with an external dependency; enforce bounded backoff, a maximum of equivalent failed attempts, spend and time tokens per task, a global run budget, a circuit breaker and a safe resume; continue the independent nodes of the plan; and end only as satisfied, blocked, budget exhausted, cancelled or fatal."
+why: "The opposite failure to a run that stops for a person is a run that never stops: the same repair attempted until the account's limit is spent. One worker on another machine did stop on the weekly limit on 2026-10-09 after three hours, having pushed nothing. Source: autopilot prompts/02-durable-supervisor.md Issue 3 'No-progress and budget controls'."
+current_state: "Forge reads retry within bounds and a silent check stops holding the refresh pipeline after four hours (apps/majordomus-cli/src/integration/retry.rs, docs/INTEGRATION.md). The continuous mode runs until a signal or a failure. No budget, no count of equivalent failures and no terminal state exist."
+desired_state: "Budgets are declared in the authority profile and consumed by events of the run. Two attempts are equivalent when they fail the same step of the same head for the same class of reason, and their count is bounded. A breaker opens on a failing dependency and closes by a probe. The run's terminal state is one of the five, each with the evidence that decided it, and a resumed run continues from its watermark with its remaining budget."
+scope:
+  - "apps/majordomus-cli/src/integration/retry.rs"
+  - "apps/majordomus-cli/src/integration/wait.rs"
+  - "apps/majordomus-cli/src/integration/drain.rs"
+  - ".ai/repo/policy.yaml"
+  - "docs/INTEGRATION.md"
+non_scope:
+  - "Provider cost accounting beyond what a provider reports, which is the cost-per-accepted-outcome milestone."
+depends_on:
+  - I2328
+acceptance_criteria:
+  - "A repair that fails the same way reaches its attempt bound and is marked blocked with the reason, while another pull request of the run proceeds"
+  - "A run whose budget is spent ends as budget exhausted and performs no further mutation"
+  - "A blocker is recorded as actionable or external, and an external one is retried only by backoff"
+  - "No run ends in a state outside the five, proved over generated event sequences"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test integration_executor"
+  - "cargo test --test properties"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the cases this issue adds>"
+evidence_required:
+  - "attempt_bound_case"
+  - "budget_exhausted_case"
+  - "terminal_state_property_test"
+created_at: 2026-10-10
+updated_at: 2026-10-10

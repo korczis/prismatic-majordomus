@@ -1,0 +1,41 @@
+id: I2338
+milestone: the-queue-drains-until-settled
+title: "A pull request that conflicts on an authored path or fails a required check is repaired by an assigned worker in a worktree of its own"
+slug: a-fixable-pull-request-is-repaired-by-a-worker
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Turn a fixable pull request into a canonical repair task: create an isolated worktree, reconcile against the latest base, have an assigned worker resolve what the derived driver cannot, rerun the impacted checks and update the pull request by a fast-forward of the head that was observed, preserving authorship."
+why: "prs repair refuses a pull request that conflicts on an authored path and names the files as the owner's to settle. That refusal is correct for a mechanical repair and is where every unattended drain stops. Most of the 51 open pull requests of 2026-10-10 were waiting for exactly this kind of hand. Source: autopilot prompts/04-pr-drain.md Issue 1 'Existing lanes' (fixable) and Issue 2 'Safe branch maintenance' (the stale branch in an isolated worktree)."
+current_state: "prs repair and drain --refresh merge master into a head in a scratch worktree under the common git directory, run the derive, commit with the hooks and push a fast-forward, refusing a branch that moved (apps/majordomus-cli/src/integration/repair.rs). A conflict on an authored path and a failed required check are needs_repair or conflicting, with no executor."
+desired_state: "For a pull request the classifier calls conflicting or needs_repair and the authority profile allows to be repaired, the drain creates a repair task bound to the pull request's issue (I2320), assigns it (I2333) and gives the worker a worktree that is not the author's. The worker's result is judged by the impacted gates and pushed only as a fast-forward of the observed head while origin still serves that head. A branch the profile does not own is never updated without the delegated permission, and a protected or foreign branch never by force."
+scope:
+  - "apps/majordomus-cli/src/integration/repair.rs"
+  - "apps/majordomus-cli/src/integration/drain.rs"
+  - "apps/majordomus-cli/src/worktree/service.rs"
+  - "apps/majordomus-cli/tests/integration_repair.rs"
+  - "scripts/merge-derived"
+  - "docs/INTEGRATION.md"
+non_scope:
+  - "A rebase, a squash or a forced push."
+  - "Repairing a fork's head or a branch whose author moved it since the observation."
+depends_on:
+  - I2337
+  - I2320
+  - I2333
+acceptance_criteria:
+  - "A pull request conflicting on one authored file is repaired by a scripted worker and pushed as a fast-forward of the observed head"
+  - "The repair's commits keep the original author on the original commits and name the worker on its own"
+  - "A branch that moved between the observation and the push is refused and nothing is pushed"
+  - "A repair whose impacted gates fail is not pushed, and the attempt counts against the run's bound"
+  - "The author's own checkout and worktree are never touched"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test integration_repair"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 57_derived_merge_driver <the cases this issue adds>"
+evidence_required:
+  - "authored_conflict_repair_case"
+  - "moved_branch_refused_test"
+  - "authorship_preserved_test"
+created_at: 2026-10-10
+updated_at: 2026-10-10

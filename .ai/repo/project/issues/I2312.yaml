@@ -1,0 +1,34 @@
+id: I2312
+milestone: delivery-baseline-is-measured
+title: "An unattended drain is traced on a blocked pull request, and every transition it lacks is named"
+slug: the-blocked-overnight-path-is-traced
+priority: p0
+profile: debugging
+parallel_safe: true
+objective: "Run the continuous drain against a scripted forge holding one pull request whose required check failed and one that conflicts on an authored path, and record at each step whether the system schedules a repair, starts a worker, records state, resumes after a restart, verifies and merges."
+why: "The owner's complaint behind the autopilot pack is a night in which nothing moved until a person typed proceed. The integration document says what the engine does when a pull request is ready or behind; it does not say, as an observed sequence, where a blocked one stops. The later milestones are sized by that sequence. Source: autopilot prompts/00-live-audit.md Issue 2 'Trace blocked overnight path'."
+current_state: "docs/INTEGRATION.md states that the repair lane is a person's, that a verification failure and an unreadable forge stop the continuous mode for a person, and that a continuous drain never runs as a dry run. The crate's executor tests drive the engine over a scripted forge (apps/majordomus-cli/tests/integration_executor.rs). No case follows a blocked pull request through a restart."
+desired_state: "A case over the scripted forge shows the present behaviour at every step for both blocked pull requests, including a kill and a restart of the executor in the middle. The baseline report lists each missing transition with the module that would own it and the issue of a later milestone that supplies it, or says that nothing supplies it yet."
+scope:
+  - "apps/majordomus-cli/tests/integration_executor.rs"
+  - "apps/majordomus-cli/src/integration/drain.rs"
+  - "apps/majordomus-cli/src/integration/repair.rs"
+  - "apps/majordomus-cli/src/integration/retry.rs"
+  - "docs/INTEGRATION.md"
+non_scope:
+  - "Adding any missing transition. The trace names them."
+  - "Running against the real forge with mutations."
+depends_on: []
+acceptance_criteria:
+  - "The case records what the executor did at each of: observe, classify, select, repair, wait, restart, verify, merge"
+  - "Every transition the system lacks is named with the step it would follow and the evidence that it is absent"
+  - "Each named transition maps to an issue of a later milestone, or is listed as unowned"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test integration_executor"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the cases this issue adds>"
+evidence_required:
+  - "blocked_path_trace_case"
+  - "missing_transition_list"
+created_at: 2026-10-10
+updated_at: 2026-10-10

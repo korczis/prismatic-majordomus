@@ -1,0 +1,35 @@
+id: I2313
+milestone: delivery-baseline-is-measured
+title: "Every rule and gate that stops unattended work is classed as a safety invariant or a procedure, with the proof for the class"
+slug: restrictions-are-classified
+priority: p0
+profile: deep-work
+parallel_safe: true
+objective: "List every rule, policy key, hook and gate that requires a person to continue, forbids a scope change, forces serial steps, forces a full derive or waits on a gate a change cannot affect, and decide for each whether to keep, change or remove it, telling real safety gates from procedure."
+why: "The autopilot pack lists what it wants relaxed (an immutable initial scope, conversational continuation, blanket serial execution, repeated full derives, acknowledgement of routine authorised actions) and what must be preserved (typed ownership, evidence freshness, required checks, provenance, secret safety, trust that is not authority). Which rule of this repository belongs to which list has not been decided anywhere, and a wrong decision either blocks the mission or removes a safeguard. Source: autopilot prompts/00-live-audit.md Issue 3 'Classify existing restrictions'."
+current_state: "Rules live under .ai/repo/rules/project with an enforcement level and a proof; finish requirements and intent binding are policy keys (.ai/repo/policy.yaml); hooks call doctor, the worktree guard and the pages check (.githooks); the derive lock is a rule (project.one-derive-at-a-time). Nothing marks a rule as an invariant or as a procedure."
+desired_state: "A table in the baseline report names each restriction, where it is enforced, what it protects, its class (invariant, procedure or preference), the decision (keep, change or remove), the proof the decision rests on and the migration a change would need. The policy milestone's issues take their input from this table."
+scope:
+  - ".ai/repo/policy.yaml"
+  - ".githooks/pre-commit"
+  - ".githooks/pre-push"
+  - "lib/finish.sh"
+  - "lib/check.sh"
+  - "lib/start.sh"
+  - "docs/DOCTRINE.md"
+  - "scripts/ci/rule-proof-check"
+non_scope:
+  - "Changing any rule, policy key, hook or gate. The classification decides nothing into effect."
+depends_on: []
+acceptance_criteria:
+  - "Every blocking project rule and every finish requirement appears in the table with a class and a decision"
+  - "Each restriction classed as a procedure names the invariant that still holds when it is relaxed"
+  - "No restriction that guards trust, evidence, a validated merge, data loss or a secret boundary is marked for removal"
+validation:
+  - "bin/majordomus plan validate"
+  - "scripts/ci/rule-proof-check"
+  - "bin/majordomus rules"
+evidence_required:
+  - "restriction_classification"
+created_at: 2026-10-10
+updated_at: 2026-10-10

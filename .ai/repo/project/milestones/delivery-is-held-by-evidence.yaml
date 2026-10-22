@@ -1,0 +1,58 @@
+id: delivery-is-held-by-evidence
+title: "No gate, finish or release reports a success its evidence does not hold"
+slug: delivery-is-held-by-evidence
+order: 327
+priority: p1
+problem: "The convergence pack (Majordomus: Verified Delivery Convergence, 2026-10-10), prompts/04-policy-gates-and-completion.md, asks for validation that cannot be bypassed and for deploy evidence that is real; the autopilot pack asks the same of completion and release (prompts/06-closed-loop-delivery.md, Issue 2; prompts/05-performance.md, Issue 4). The pieces exist and their seams are where a false green can form. The gate model is one file, but what a local check, a pull request, an integration and a release must each run is spread over that file, shell and workflows. The verdict job decides the one required status, and the pack's only source for whether the forge requires it is a finding of 2026-09-11. A finish records an outcome; merged, published, deployed and healthy are four different facts and a task can be called completed on the first. On 2026-10-10 the v0.20.0 publication died on a staging command and its record had to be proposed by hand."
+outcome: "One gate model names what each tier must run and no second inventory exists; the required status waits on every job it needs, fails closed, and a base the forge does not protect is reported as a blocker; a finish says which of merged, published, deployed and healthy it proved; a release is cut once per delivery boundary from an immutable artifact identity; and every bypass anyone has named is a case that is refused."
+current_state: "Implemented: the gate model and its planner (.ai/repo/ci/gates.yaml, scripts/ci-plan, test/cases/94_ci_plan.sh); the verdict aggregator (scripts/ci/verdict); the done invariant that takes each answer from its source (apps/majordomus-cli/src/gates/done.rs, share/obligations.yaml); finish requirements in policy; the delivery computation (ADR 0071); release phases, the release verdict and release verification; a provenance attestation on release archives (PR 874, I2165). Planned elsewhere and not repeated here: one completion policy (I1968), finish reading what its work serves (I2055 to I2057, I2061), command and deployment criteria (I2221 to I2223), the acceptance contract and forge gate (I2236 to I2241), a rule proven only by a run of its proof (I2160), release status and workflow (I2279 to I2281), a tag from a judged commit (I2294), the release chain as one typed capability (I2299), the release staging command (I2302), the record pull request's verdict (I2282, I2296), the pages gate against a deploy in flight (I2297)."
+desired_state: "The four tiers (fast local, pull request by impact, complete integration, release) are selections of the one gate model, and affected-test selection falls back to the full plan whenever impact cannot be proved. The verdict is proved against failed, skipped and cancelled jobs, a stale head and a cancelled run, and doctor compares the required status with what the forge enforces. Completion carries typed states for merged, published, deployed and healthy and requires the ones the task's goal declares. Release jobs consume an artifact identified by digest, a no-op change rebuilds and bumps nothing, and repeated release, mismatched attestation and partial rollback have cases."
+scope:
+  - ".ai/repo/ci/gates.yaml"
+  - ".ai/repo/ci/release.yaml"
+  - ".ai/repo/ci/version.yaml"
+  - ".github/workflows/validate.yml"
+  - ".github/workflows/release.yml"
+  - ".github/workflows/version.yml"
+  - "scripts/ci-plan"
+  - "scripts/ci/verdict"
+  - "scripts/ci/release-verdict"
+  - "scripts/release-verify"
+  - "apps/majordomus-cli/src/gates/done.rs"
+  - "apps/majordomus-cli/src/gates/model.rs"
+  - "share/obligations.yaml"
+  - "lib/finish.sh"
+  - "lib/doctor.sh"
+  - "docs/CI.md"
+  - "docs/RELEASE.md"
+  - "docs/DELIVERY.md"
+non_scope:
+  - "Creating server-side branch protection from a file in the repository. The setting is the owner's act on the forge; this milestone observes it and reports its absence."
+  - "A stronger cryptographic claim than the code implements. What install verifies is stated as it is."
+  - "A self-upgrading production, a forced merge or a destructive cleanup."
+  - "The release chain as one typed capability, release status and the record pull request, which are I2299, I2279 to I2281, I2282 and I2296."
+  - "Complexity an adopter must take. Every tier beyond the fast local one stays optional for a repository that does not declare it."
+acceptance_criteria:
+  - "The required status is red when any job it needs failed, was skipped without the plan excusing it, or was cancelled, proved by a case for each"
+  - "On a base the forge does not protect with the required status, doctor reports a blocker and no document claims protection"
+  - "finish refuses the outcome completed while a state its goal declares, among merged, published, deployed and healthy, is failed or unknown"
+  - "A change that alters no released surface produces no version bump and no site rebuild, and a second release of one version is refused"
+  - "Every bypass in the adversarial list is a case that fails when its guard is removed, and doctor shows each enforced rule reaching a validator, a rejection test and CI"
+validation:
+  - "bin/majordomus plan validate"
+  - "scripts/ci/rule-proof-check"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 94_ci_plan 131_completion_gates 26_ci_wiring 362_a_release_follows_the_ci_verdict 578_an_unknown_gate_refuses_completed <the cases this milestone adds>"
+evidence_required:
+  - "verdict_fail_closed_cases"
+  - "forge_protection_observation"
+  - "completion_states_case"
+  - "release_once_case"
+  - "bypass_cases"
+risks:
+  - "Affected-test selection that is wrong once lets a regression through with a green check. The selection is conservative, reproducible, and falls back to the full plan when impact cannot be proved."
+  - "Eleven neighbouring issues on unmerged branches touch the same files. Each issue here names the neighbour it builds on, and the baseline's decision (I2317) settles the order before work starts."
+  - "A completion that requires deployed and healthy cannot be met by a task whose goal never included a deploy. The states required are the ones the goal declares, or every documentation task becomes unfinishable."
+depends_on:
+  - delivery-baseline-is-measured
+created_at: 2026-10-10
+updated_at: 2026-10-10

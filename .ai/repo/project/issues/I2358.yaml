@@ -1,0 +1,41 @@
+id: I2358
+milestone: delivery-reads-the-same-on-every-surface
+title: "A run is followed live over the channel executions already use, and a stale snapshot is never shown as a current success"
+slug: a-run-is-followed-live
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Reuse the existing server and mesh event delivery to stream a run; handle a disconnected server, stale snapshots, backpressure, concurrent agents, reconnection and permissions; explain the freshness of what is shown; and keep the web page from becoming an authority."
+why: "An old green shown as current is the false success both packs forbid, and a run that takes hours will be watched from a page that was opened once. The channel for watching work exists and carries only executions. Source: convergence prompts/05-derived-ui-mcp-observability.md Issue 05.4 'Streaming and state freshness'; autopilot prompts/02-durable-supervisor.md Issue 4 'Resident execution' (follow streams, no new authoritative state)."
+current_state: "Executions stream typed events over a WebSocket with bounded queues, and a lagging subscriber is told stream.lagged (docs/EXECUTIONS.md, apps/majordomus-cli/src/execution/sink.rs). The server re-reads the repository so that an answer is current (apps/majordomus-cli/src/live.rs). The integration trail is read on request. prs has no follow."
+desired_state: "Run events are published to the existing live channel as they are appended to the trail, and run follow on the command line and the run's page read the same stream. A client that connects late is given the snapshot and then the events after it. A client that lagged or reconnected is told, and the page marks what it shows with its age until it has caught up. A caller without permission to read a run receives nothing of it."
+scope:
+  - "apps/majordomus-cli/src/live.rs"
+  - "apps/majordomus-cli/src/execution/sink.rs"
+  - "apps/majordomus-cli/src/execution/event.rs"
+  - "apps/majordomus-cli/src/capability/builtin/executions.rs"
+  - "apps/majordomus-cli/src/commands/prs.rs"
+  - "apps/majordomus-cli/tests/executions.rs"
+  - "docs/EXECUTIONS.md"
+non_scope:
+  - "A second event transport."
+  - "State held by the page or the follower."
+depends_on:
+  - I2331
+  - I2355
+acceptance_criteria:
+  - "run follow and the run's page show the same events in the same order"
+  - "A follower that connects mid-run receives a snapshot and then only later events, none twice"
+  - "After a disconnection the page shows the age of its last event and no success newer than it"
+  - "A subscriber that cannot keep up is told it lagged and the supervisor is not slowed"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test executions"
+  - "cargo test --test http_serve"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the cases this issue adds>"
+evidence_required:
+  - "run_follow_parity_case"
+  - "stale_snapshot_case"
+  - "lagging_subscriber_test"
+created_at: 2026-10-10
+updated_at: 2026-10-10

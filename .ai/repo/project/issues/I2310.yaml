@@ -1,0 +1,38 @@
+id: I2310
+milestone: delivery-baseline-is-measured
+title: "Every open pull request is censused through the integration engine, with its disposition, its overlaps and its place in a safe order"
+slug: open-pull-requests-are-censused
+priority: p0
+profile: deep-work
+parallel_safe: true
+objective: "Record one census of every open pull request, taken through prs refresh, prs status, prs explain and prs drain --dry-run at a named master, and derive from it the conflict and dependency order in which the queue can be landed safely."
+why: "The packs were written from a navigation count of 52 and a snapshot of 16 from 2026-10-06, and say neither is a per-pull-request assessment. The forge listed 51 open pull requests, 10 of them drafts, on 2026-10-10, and several sessions were preparing heads by hand without one shared order. Four items of the two packs ask for the same table; it is produced once. Source: autopilot prompts/00-live-audit.md Issue 1 'Inventory reality' (pull-request half) and Issue 5 'Sequence PRs'; convergence prompts/00-current-reality-and-pr-triage.md Issue 00.2 'PR-by-PR census and disposition' and prompts/03-pr-integration-throughput.md Issue 03.1 'Backlog hygiene, evidence-based' (the mapping half)."
+current_state: "The classifier, the rank and the relation to master exist and answer per pull request (docs/INTEGRATION.md). The last census written down is the stage-1 dry run of 2026-10-06 in docs/INTEGRATION_ROLLOUT.md. scripts/traceability maps a head branch to its issue. Nothing records which open pull requests touch the same files, which are stale or orphaned, or which already solve an item the packs propose."
+desired_state: "A dated section of docs/INTEGRATION_ROLLOUT.md, produced by a command the section names, holds for every open pull request: number, title, head and base revision, age, how far it is behind, the relation git's merge decides, required checks and their state, disposition, lane, rank, blocking reasons, the files it shares with other open pull requests, the issue and milestone it names, the risk and the next safe action. A dependency and conflict order follows from it, with what lands first, what is superseded and by what proof, and what needs a repair in a worktree of its own. Pull requests 855 and 874 are audited as landed so that nothing they did is planned again."
+scope:
+  - "docs/INTEGRATION_ROLLOUT.md"
+  - "docs/INTEGRATION.md"
+  - "scripts/traceability"
+  - "apps/majordomus-cli/src/integration/classify.rs"
+  - "apps/majordomus-cli/src/integration/relation.rs"
+  - "apps/majordomus-cli/src/capability/builtin/integration.rs"
+non_scope:
+  - "Merging, closing, refreshing or repairing anything during the census."
+  - "Deciding a disposition from a title, an age or the forge's mergeable flag."
+depends_on: []
+acceptance_criteria:
+  - "The census lists exactly the pull requests the forge reported open at the observation it names, and the count is stated beside the forge's own"
+  - "Every row's disposition, lane and rank are the integration classifier's answers, reproducible with prs explain for that number"
+  - "Every pair of open pull requests that changes a common authored file is listed with the files"
+  - "Each pull request that already solves an item of the two packs is named beside that item"
+  - "The trail shows no merge, refresh, repair or cleanup recorded by the census"
+validation:
+  - "bin/majordomus plan validate"
+  - "bin/majordomus-cli prs status"
+  - "bin/majordomus-cli prs drain --dry-run"
+evidence_required:
+  - "pull_request_census"
+  - "overlap_table"
+  - "landing_order"
+created_at: 2026-10-10
+updated_at: 2026-10-10

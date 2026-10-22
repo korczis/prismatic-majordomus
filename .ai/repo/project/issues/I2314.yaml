@@ -1,0 +1,33 @@
+id: I2314
+milestone: delivery-baseline-is-measured
+title: "The queue's baseline is read from the trail: age, throughput, retries, loops without progress and the time from ready to merged"
+slug: the-queue-baseline-is-measured
+priority: p0
+profile: deep-work
+parallel_safe: true
+objective: "Measure, from the integration trail and the recorded CI runs, the age of the queue, the throughput of actionable pull requests, the share of time spent in derive, test, refresh and CI, the retry rate, loops that made no progress, and the median and p95 time from actionable to merged."
+why: "The success measure of the autopilot pack is stated as p50 and p95 elapsed time, backlog age, throughput and manual prompts. None can be claimed as improved without the number it started from, and a quantity the trail never recorded has to be reported as unknown, not as zero. Source: autopilot prompts/00-live-audit.md Issue 4 'Baseline metrics'; autopilot README 'Success measure'."
+current_state: "The trail records transitions, selections, refreshes and merges; wait and starvation are folded from it; the Cockpit shows merges per day, median wait, CI rounds per merge and median cycle over seven days (apps/majordomus-cli/src/integration/metrics.rs, wait.rs). scripts/ci-baseline writes CI durations per run, job and step. Manual prompts and time lost to a derive queue are recorded nowhere."
+desired_state: "The baseline report carries each metric with its window, its sample size and the command that produced it. A metric the trail cannot answer is listed as unknown with what would have to be recorded to answer it, and that recording becomes part of the run record issue."
+scope:
+  - "apps/majordomus-cli/src/integration/metrics.rs"
+  - "apps/majordomus-cli/src/integration/wait.rs"
+  - "scripts/ci-baseline"
+  - ".ai/repo/ci/baseline.json"
+  - "docs/INTEGRATION_ROLLOUT.md"
+non_scope:
+  - "Changing what the executor does. Only reading, and the instrumentation a missing reading needs."
+depends_on: []
+acceptance_criteria:
+  - "Each metric states its window, its sample size and the command that reproduces it"
+  - "A metric with no recorded source is reported as unknown and names the record that would supply it"
+  - "The medians shown on the Cockpit's integration page equal the report's for the same window"
+validation:
+  - "bin/majordomus plan validate"
+  - "bin/majordomus-cli prs events"
+  - "scripts/ci-baseline"
+evidence_required:
+  - "queue_baseline_metrics"
+  - "unknown_metrics_list"
+created_at: 2026-10-10
+updated_at: 2026-10-10

@@ -1,0 +1,37 @@
+id: I2334
+milestone: mesh-peers-execute-assigned-work
+title: "A worker is handed the compiled context of its assignment, and a replacement resumes from a durable handover without a person"
+slug: a-worker-is-handed-its-context
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Compile, before assignment, the current intent, the issue's acceptance, the latest provenance, the repository context and the relevant knowledge; write a checkpoint and a durable handover when a worker reaches its context limit or disconnects; and rehydrate a replacement worker from it with nobody typing proceed."
+why: "The sentence the owner wants never to type again is the instruction to proceed. It is typed because a session that fills its window or dies leaves its successor nothing a supervisor can hand over mechanically. Source: autopilot prompts/03-mesh-workers.md Issue 3 'Context and handover'."
+current_state: "majordomus context compiles a bounded context for a task; handover writes a record with required sections and can derive one; a handover is asked for before the window fills (ADR 0123); mesh handover publish and consume carry one between machines; continuity records transfer a session (lib/context.sh, lib/handover.sh, apps/majordomus-cli/src/mesh/handover.rs, docs/CONTINUITY.md). Each of these is started by a person or a session's own hook."
+desired_state: "An assignment carries a reference to a compiled context built from the issue, the intent criterion it serves and the newest handover of that issue. The adapter asks the worker for a handover at the declared fill level and on an orderly end; an abrupt end leaves the last checkpoint. The supervisor assigns the same issue again with that handover in the context, and the trail records the replacement."
+scope:
+  - "lib/context.sh"
+  - "lib/handover.sh"
+  - "lib/session_context.sh"
+  - "apps/majordomus-cli/src/mesh/handover.rs"
+  - "apps/majordomus-cli/src/capability/builtin/continuity.rs"
+  - "docs/CONTINUITY.md"
+  - "docs/CONTEXT.md"
+non_scope:
+  - "A transcript as state. policy.yaml keeps transcript_is_state false."
+  - "A new context compiler."
+depends_on:
+  - I2333
+acceptance_criteria:
+  - "The context an assigned worker starts with names the issue, its acceptance criteria, the criterion it serves and the newest handover, inside the declared budget"
+  - "A worker ended at its context limit leaves a handover the replacement's context contains"
+  - "A worker killed abruptly is replaced, and the replacement starts from the last checkpoint with no prompt from a person"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test continuity"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 368_mesh_handover_resolves <the cases this issue adds>"
+evidence_required:
+  - "assignment_context_case"
+  - "worker_replacement_case"
+created_at: 2026-10-10
+updated_at: 2026-10-10

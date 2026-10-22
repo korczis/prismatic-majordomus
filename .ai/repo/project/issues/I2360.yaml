@@ -1,0 +1,37 @@
+id: I2360
+milestone: the-delivery-loop-is-proved
+title: "An installed release runs the same loop in a fresh repository that is not this one"
+slug: the-loop-runs-in-a-strangers-repository
+priority: p1
+profile: deep-work
+parallel_safe: true
+objective: "In a fresh disposable project, install by the documented one-line path or a version-pinned release, initialise the layer and the optional parts by their real capabilities, repeat a task with tests, the rejection of missing evidence, a rerun, completion and the status projection, prove no path or consumer is hardcoded to this repository, and rerun without the internet where the installed feature is documented as local-first."
+why: "A loop that works only here proves this checkout. A release of this tool has already shipped whose installed tree could not find its own executable when it served another repository (0.10.0, lib/rust_bin.sh). Source: convergence prompts/06-self-hosted-proof-release.md Issue 06.2 'External consumer repository'; autopilot prompts/06-closed-loop-delivery.md Issue 3 'Self-host and consumer' (the consumer)."
+current_state: "install-check and case 85 hold the installer; an installed tree finding its executable has its own case. Neighbouring work, not repeated: a stranger's first change as a journey CI walks (I2255), a released archive serving a foreign repository in CI (I2162), the task lifecycle with no optional subsystem started (I2267), the product intent and its pilot (I2262, I2263)."
+desired_state: "A scripted run creates an empty repository outside this tree, installs a pinned release, initialises it, and carries one task through the loop including an unattended drain of one pull request against a scripted or disposable forge. The run is repeated offline for what the documents call local-first. Its record states the release, the host and each result."
+scope:
+  - "site/static/install.sh"
+  - "scripts/ci/install-check"
+  - "test/cases/85_installer.sh"
+  - "docs/ADOPTION.md"
+  - "docs/INSTALL.md"
+  - "docs/ADOPTION_FIRST_RUN.md"
+non_scope:
+  - "The first-change journey without a drain, which is I2255."
+  - "Publishing a release to make the run possible: it uses one that exists."
+depends_on:
+  - I2359
+acceptance_criteria:
+  - "The consumer repository contains no path of this repository, proved by a search of the run's tree and records"
+  - "A finish with missing evidence is refused there, and accepted after the evidence is recorded"
+  - "The offline rerun passes for every feature the documents call local-first, and names any that needed the network"
+  - "No consumer was registered by hand: the surfaces of the consumer repository come from its registry"
+validation:
+  - "bin/majordomus plan validate"
+  - "scripts/ci/install-check"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 85_installer 744_an_installed_tool_finds_its_own_executable <the cases this issue adds>"
+evidence_required:
+  - "consumer_repository_run"
+  - "offline_rerun_case"
+created_at: 2026-10-10
+updated_at: 2026-10-10

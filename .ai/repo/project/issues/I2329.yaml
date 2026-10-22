@@ -1,0 +1,39 @@
+id: I2329
+milestone: a-delivery-run-is-durable
+title: "One supervisor leads a run: it persists before it acts, reconciles an ambiguous merge, and a restart starts no second worker"
+slug: one-supervisor-leads-a-run
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make ensure, start, status, stop and resume idempotent with a graceful shutdown and one leader per scoped campaign; persist intent before every side effect and reconcile the outcome after an ambiguous response, a merge above all; detect a dead owner by lease heartbeat and a fencing token and not by time alone."
+why: "An unattended run that crashes between asking the forge to merge and hearing the answer must not ask again. The engine already halts for a person after an unverified merge; an unattended one has to reconcile instead, and it must not find a second copy of itself doing the same. Source: autopilot prompts/02-durable-supervisor.md Issue 2 'Supervisor lifecycle'."
+current_state: "The executor records an intent event before a merge, verifies the merge against the forge and the fetched master, and halts every later drain after one it could not verify until a person passes --resume-after-failure (apps/majordomus-cli/src/integration/proof.rs, drain.rs). The lease is called stale after 30 minutes. There is no fencing token and no notion of a worker the supervisor started."
+desired_state: "Each side effect is preceded by a persisted intent and followed by a persisted outcome. On start the supervisor reads its run, reconciles any intent without an outcome from the forge and git, and adopts or ends the workers the run lists. Leadership carries a monotonic token that every write of the run presents, and a write with an older token is refused. Stop lets the step in progress end and releases the lease."
+scope:
+  - "apps/majordomus-cli/src/integration/drain.rs"
+  - "apps/majordomus-cli/src/integration/exclusive.rs"
+  - "apps/majordomus-cli/src/integration/proof.rs"
+  - "apps/majordomus-cli/src/lease.rs"
+  - "apps/majordomus-cli/tests/integration_executor.rs"
+  - "apps/majordomus-cli/tests/integration_across_machines.rs"
+non_scope:
+  - "Retrying a merge whose outcome is unknown."
+  - "A halt that reaches every executor of a base across machines, which is I2050."
+depends_on:
+  - I2328
+acceptance_criteria:
+  - "A supervisor killed after the merge request and before its answer reconciles on restart and neither repeats nor loses the merge"
+  - "Two supervisors started for one base and campaign leave one leader, and the other's writes are refused by token"
+  - "A restart with a live worker of the run adopts it and starts none"
+  - "start, stop and resume called twice have the effect of calling them once"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test integration_executor"
+  - "cargo test --test integration_across_machines"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the cases this issue adds>"
+evidence_required:
+  - "ambiguous_merge_reconciled_test"
+  - "fencing_token_test"
+  - "crash_resume_case"
+created_at: 2026-10-10
+updated_at: 2026-10-10

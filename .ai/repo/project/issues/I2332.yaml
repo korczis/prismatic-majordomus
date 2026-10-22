@@ -1,0 +1,42 @@
+id: I2332
+milestone: mesh-peers-execute-assigned-work
+title: "A worker advertises what it will execute and under whose delegation, and discovery alone starts nothing"
+slug: a-worker-advertises-and-is-delegated
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Keep signed mesh discovery as observation, and add an authenticated authorisation handshake and an opt-in worker advertisement that names the task classes a runtime will execute and its resource limits, so that no execution follows from discovery or trust alone."
+why: "The mesh document states that nothing a peer sends runs anything, and the rule project.mesh-is-observation-not-authority holds it. Dispatch needs a third thing beside discovery and trust, and if it is not typed and explicit it will be inferred from one of the other two. Source: autopilot prompts/03-mesh-workers.md Issue 1 'Separate trust from execution'."
+current_state: "Runtimes discover each other, exchange a signed hello and welcome, and replicate sessions, claims, handovers and reviews (apps/majordomus-cli/src/mesh/link.rs, protocol.rs, cooperation.rs). Trust is a list of keys in .ai/repo/mesh/majordomus.yaml. No event says a runtime is willing to work, and none carries a delegation."
+desired_state: "An advertisement is a journal event a runtime publishes by its user's choice: task classes, concurrency and resource limits, and the providers it can start. A delegation is the grant of I2321 carried in an authenticated exchange: the run, the task class, the scope and an expiry. Both are versioned on the wire, shown by mesh peers and the Cockpit, and absent by default."
+scope:
+  - "apps/majordomus-cli/src/mesh/protocol.rs"
+  - "apps/majordomus-cli/src/mesh/link.rs"
+  - "apps/majordomus-cli/src/mesh/trust.rs"
+  - "apps/majordomus-cli/src/mesh/registry.rs"
+  - "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+  - ".ai/repo/mesh/majordomus.yaml"
+  - "docs/MESH.md"
+  - "SECURITY.md"
+  - ".ai/repo/rules/project/mesh-is-observation-not-authority.v1.md"
+non_scope:
+  - "Assignment, which is I2333."
+  - "Trust hardening of the link itself, which is I2123 and I2132 to I2136."
+depends_on:
+  - I2321
+acceptance_criteria:
+  - "A trusted runtime that published no advertisement is offered no work"
+  - "A runtime that advertised receives no task without a delegation that names it, the run and the task class"
+  - "A delegation that is expired, replayed or signed by a key outside the trust list is refused with a typed reason"
+  - "An executable of the previous link protocol still links and is treated as advertising nothing"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test mesh_cooperation"
+  - "scripts/ci/mesh-check"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the cases this issue adds>"
+evidence_required:
+  - "no_advertisement_no_work_test"
+  - "delegation_refusal_tests"
+  - "link_compatibility_test"
+created_at: 2026-10-10
+updated_at: 2026-10-10

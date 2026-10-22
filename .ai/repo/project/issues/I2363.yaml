@@ -1,0 +1,46 @@
+id: I2363
+milestone: the-delivery-loop-is-proved
+title: "The operator's guide, the claims and the release notes say what the loop does and nothing more, and the release that ships it is verified where it is served"
+slug: the-loop-is-documented-and-shipped
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Write the operator's guide for prs drain --until-settled, the background service's status, resume, permissions and troubleshooting; regenerate OpenAPI, MCP, the Cockpit and the site from the capabilities; back every claim with a test; bump, publish and deploy only by the existing release semantics and permissions; verify the installed artifact and the served interface; and record remaining debt as tracked issues."
+why: "The last step of both packs is the one most often done by assertion. The repository's own rule before a release is that the documents are true, the claims validated, the changes covered and the debt lower. Source: autopilot prompts/06-closed-loop-delivery.md Issue 4 'Docs/projections'; convergence prompts/06-self-hosted-proof-release.md Issue 06.5 'Truthful public claims and shipping'."
+current_state: "Claims live in docs/CLAIMS.yaml with their tests and are checked strictly; documented commands are run by doc-command-check; the release is measured, tagged and recorded by the release machinery; the site is derived. The before-release audit is planned on a branch (I2070), and release status and the release workflow with the earlier owner packs (I2279 to I2281)."
+desired_state: "docs/INTEGRATION.md and the guide describe the unattended mode as it shipped, with every command runnable. Each new claim names the test that proves it and is guaranteed only where a recorded run exists. The release that carries the mode is tagged at an immutable revision with its provenance linked, and the installed artifact and the served site are verified after publication. What the proof found missing is a list of issues in the plan."
+scope:
+  - "docs/INTEGRATION.md"
+  - "docs/GUIDE.md"
+  - "docs/CLAIMS.yaml"
+  - "docs/RELEASE.md"
+  - "docs/DISTRIBUTION.md"
+  - "README.md"
+  - "scripts/ci/claim-proof-check"
+  - "scripts/ci/doc-command-check"
+  - "scripts/release-verify"
+non_scope:
+  - "A claim without a test."
+  - "A deployment claimed without the probe that verified it."
+  - "Feature expansion."
+depends_on:
+  - I2360
+  - I2361
+  - I2362
+acceptance_criteria:
+  - "Every command in the operator's guide is run by doc-command-check"
+  - "Every claim about the loop names a test, and the strict claim check and the evidence check pass"
+  - "The release is verified from the installed artifact and from the served site after publication, and the verification is recorded"
+  - "Each gap the proof found is an issue in the plan, and none is hidden in prose"
+validation:
+  - "bin/majordomus plan validate"
+  - "scripts/ci/claim-proof-check --strict"
+  - "scripts/ci/doc-command-check"
+  - "scripts/evidence-check"
+  - "scripts/release-verify"
+evidence_required:
+  - "claims_backed_by_tests"
+  - "operator_guide_commands_checked"
+  - "release_verified_where_served"
+created_at: 2026-10-10
+updated_at: 2026-10-10

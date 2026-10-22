@@ -1,0 +1,40 @@
+id: I2355
+milestone: delivery-reads-the-same-on-every-surface
+title: "One read view answers what a delivery wants, what it waits on and what is proved, each fact with its source and its age"
+slug: one-view-answers-a-delivery
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Expose from the canonical registry one concise projection with the desired outcome, the pending issue or task, the dependency blockers, the running peer or worker if known, pull-request readiness, the CI verdict, the derive's critical path, cache hits and misses, the release and deploy proof and the last update, every fact carrying its source, age and provenance."
+why: "A person diagnosing a stuck delivery today reads the queue, the board, a CI run and a terminal, and joins them. The pack's acceptance is that the same evidence diagnoses a slow or stuck delivery on every surface. Source: convergence prompts/05-derived-ui-mcp-observability.md Issue 05.1 'Typed read views'; autopilot prompts/02-durable-supervisor.md Issue 5 'UI/API projection' (the read half)."
+current_state: "dashboard.overview answers four questions with cards that each name the capability, input and pointer their value was read from (ADR 0088, apps/majordomus-cli/src/capability/builtin/dashboard.rs). The integration page shows lanes, throughput and lease. Delivery answers per feature. Neighbouring work, not repeated: observed_at on every state answer (I2149), coordination objects in the Cockpit (I2155), gate state the runtime can answer (I1512), issues, milestones, sessions and peers as projections (I1507)."
+desired_state: "One capability returns the view for a run or for the repository. It is composed, in the dashboard's manner, from the run record, the queue, the gate verdict, the recorded derive timings, release status and the delivery computation; it stores nothing; a fact with no source is unknown and is never shown as healthy. It extends the existing introspection types and adds no bespoke endpoint."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/dashboard.rs"
+  - "apps/majordomus-cli/src/capability/builtin/integration.rs"
+  - "apps/majordomus-cli/src/capability/builtin/delivery.rs"
+  - "apps/majordomus-cli/src/capability/builtin/views.rs"
+  - "apps/majordomus-cli/tests/dashboard.rs"
+  - "docs/SURFACES.md"
+  - "docs/COCKPIT.md"
+non_scope:
+  - "A second store for the view."
+  - "Reaching the forge or the site during a request."
+depends_on:
+  - I2328
+  - I2325
+acceptance_criteria:
+  - "Every value of the view equals the value of the capability and pointer it names, proved by asking the source"
+  - "A fact whose source has no answer is unknown, and the view's summary is never healthy while one is"
+  - "Each fact carries when it was observed"
+  - "The view is reachable from the command line, HTTP, OpenAPI and MCP from one declaration"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test dashboard"
+  - "bin/majordomus-cli capabilities validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the cases this issue adds>"
+evidence_required:
+  - "delivery_view_sources_test"
+  - "unknown_is_not_healthy_test"
+created_at: 2026-10-10
+updated_at: 2026-10-10
