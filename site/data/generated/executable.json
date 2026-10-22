@@ -477,6 +477,23 @@
       "tool": "majordomus_deployments_observed"
     },
     {
+      "api_anchor": null,
+      "claims": [],
+      "cli": "majordomus deploy slug",
+      "id": "deploy.slug",
+      "kind": "command",
+      "module": "deploy",
+      "module_route": "/registry/modules/deploy/",
+      "resource": null,
+      "route": "/registry/capabilities/deploy-slug/",
+      "slug": "deploy-slug",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/deploy.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/deploy.rs",
+      "tests": [],
+      "title": "Assemble the tree a provider receives",
+      "tool": null
+    },
+    {
       "api_anchor": "/docs/api/design/#op-design-contrast",
       "claims": [],
       "cli": null,
@@ -3095,6 +3112,23 @@
       "tool": "majordomus_changelog"
     },
     {
+      "api_anchor": "/docs/api/release/#op-release-currency",
+      "claims": [],
+      "cli": null,
+      "id": "release.currency",
+      "kind": "query",
+      "module": "release",
+      "module_route": "/registry/modules/release/",
+      "resource": null,
+      "route": "/registry/capabilities/release-currency/",
+      "slug": "release-currency",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/release.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/release.rs",
+      "tests": [],
+      "title": "Whether the trunk's landed work is released",
+      "tool": "majordomus_release_currency"
+    },
+    {
       "api_anchor": "/docs/api/release/#op-release-next",
       "claims": [],
       "cli": null,
@@ -4309,11 +4343,11 @@
     ]
   },
   "counts": {
-    "capabilities": 206,
+    "capabilities": 208,
     "claims": 93,
     "modules": 58
   },
-  "generator": "majordomus-cli 1.0.0-alpha.5",
+  "generator": "majordomus-cli 1.0.0-alpha.6",
   "modules": [
     {
       "capabilities": [
@@ -4555,6 +4589,11 @@
           "id": "deploy.observed",
           "route": "/registry/capabilities/deploy-observed/",
           "slug": "deploy-observed"
+        },
+        {
+          "id": "deploy.slug",
+          "route": "/registry/capabilities/deploy-slug/",
+          "slug": "deploy-slug"
         }
       ],
       "claims": [],
@@ -5714,6 +5753,11 @@
           "id": "release.changelog",
           "route": "/registry/capabilities/release-changelog/",
           "slug": "release-changelog"
+        },
+        {
+          "id": "release.currency",
+          "route": "/registry/capabilities/release-currency/",
+          "slug": "release-currency"
         },
         {
           "id": "release.next",

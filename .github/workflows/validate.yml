@@ -1183,8 +1183,9 @@ jobs:
       fail-fast: false
       matrix:
         shard: [1, 2, 3, 4, 5, 6]
-    # a sixth of a probe that no longer fits 55 minutes, plus the setup
-    timeout-minutes: 30
+    # a sixth of a probe that no longer fits 55 minutes, plus the setup; the slowest shard ran
+    # 1450-1527 s of its former 1500 s bound on every run of 2026-10-21/22, so the bound is 1800 s
+    timeout-minutes: 36
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -1201,7 +1202,7 @@ jobs:
           MJ_PROBE_JOBS: 4
           MJ_PROBE_SHARD: ${{ matrix.shard }}/6
           MJ_PROBE_REPORT: interaction-probe-routes.txt
-        run: scripts/ci/timed --bound 1500 interaction-probe "interaction-probe-${{ matrix.shard }}" timings.tsv scripts/interaction-probe
+        run: scripts/ci/timed --bound 1800 interaction-probe "interaction-probe-${{ matrix.shard }}" timings.tsv scripts/interaction-probe
       - if: always()
         run: scripts/ci/summary --job interactions --timings timings.tsv --fact "shard=${{ matrix.shard }}/6" --fact "npm cache hit=${{ steps.site.outputs.npm-cache-hit }}"
       - if: always()

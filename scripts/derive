@@ -125,9 +125,26 @@ fi
 # derive cost. On 2026-10-09 that cost a release two extra derives on a machine at load 40,
 # and a memory note that already said "stage new files before derive" did not prevent it.
 # So the derive refuses before it waits for the lock or builds anything
-# (project.a-derive-sees-what-the-commit-will).
+# (project.a-derive-sees-what-the-commit-will). The same holds for a merge that is not yet a
+# commit (I2863, below).
 derive_preflight() {
-  local untracked n
+  local untracked n gd head
+  # A merge, cherry-pick or revert that is not yet committed: HEAD is still the commit being
+  # left, and every projection that reads history reads HEAD's. On 2026-10-21 #1753 merged
+  # master and was derived before the merge commit existed; the released_in rule found an
+  # older merge in the old base's history, recorded idd-workspace as released in v0.30.0, and
+  # CI's site job called roadmap.json stale (I2863). So the derive refuses until it is committed.
+  gd="$(git -C "$ROOT" rev-parse --git-dir 2>/dev/null || true)"
+  case "$gd" in /*) ;; ?*) gd="$ROOT/$gd" ;; esac
+  for head in MERGE_HEAD CHERRY_PICK_HEAD REVERT_HEAD; do
+    [ -n "$gd" ] && [ -e "$gd/$head" ] || continue
+    printf '==> derive: refused before anything ran: %s is present, so %s is uncommitted;\n' \
+      "$head" "$(printf '%s' "$head" | sed 's/_HEAD$//; s/_/-/' | tr '[:upper:]' '[:lower:]')" >&2
+    printf '    a derive now would read the history of the commit being left (HEAD %s, %s %s).\n' \
+      "$(git -C "$ROOT" rev-parse --short=11 HEAD 2>/dev/null)" "$head" "$(cut -c1-11 "$gd/$head" | head -n 1)" >&2
+    printf '    Commit it (git commit), then derive again.\n' >&2
+    exit 10
+  done
   untracked="$(git -C "$ROOT" ls-files --others --exclude-standard 2>/dev/null || true)"
   [ -n "$untracked" ] || return 0
   n="$(printf '%s\n' "$untracked" | wc -l | tr -d ' ')"
