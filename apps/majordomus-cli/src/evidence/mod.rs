@@ -1594,13 +1594,15 @@ pub fn report_at(
         crate::git::GitState::Unavailable { .. } => (None, "unknown".to_string()),
     };
 
-    // one comparison per commit the ledger names, not one per claim
-    let mut comparisons: BTreeMap<String, Comparison> = BTreeMap::new();
-    for e in &ledger.executions {
-        comparisons
-            .entry(e.commit.clone())
-            .or_insert_with(|| compare(&root, &e.commit, presented));
-    }
+    // one comparison per commit the ledger names, not one per claim, and side by side
+    let commits: BTreeSet<&str> = ledger
+        .executions
+        .iter()
+        .map(|e| e.commit.as_str())
+        .collect();
+    let commits: Vec<&str> = commits.into_iter().collect();
+    let comparisons: BTreeMap<String, Comparison> =
+        freshness::compare_each(&root, &commits, presented);
     // and one containment per pair of commits the monotone rule asks about
     let mut containments: BTreeMap<(String, String), crate::git::Containment> = BTreeMap::new();
     let mut contains = |descendant: &str, ancestor: &str| {

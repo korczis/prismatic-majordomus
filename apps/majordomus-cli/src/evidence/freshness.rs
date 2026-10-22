@@ -62,8 +62,9 @@
 //! assert_eq!(judge(&run("error")).state, ProofState::Failing);
 //! ```
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -546,6 +547,81 @@ pub fn compare(root: &Path, evidence_commit: &str, presented: &Presented) -> Com
         containment,
         changed,
     }
+}
+
+/// [`compare`] for each of `commits`, keyed by the commit, every answer the one `compare`
+/// gives it alone.
+///
+/// A report compares the presented revision with every commit its ledger names, and each
+/// comparison is a `git diff` over the whole tree between the two: one after the other they
+/// were the largest part of `generate --check site`, which the pre-commit gate is bounded by
+/// (case 56). The comparisons do not depend on each other and git answers each one as a read
+/// that takes no lock ([`git::read_only`]), so they run side by side, as many at once as the
+/// machine runs.
+///
+/// ```
+/// use majordomus_cli::evidence::freshness::{compare, compare_each, Presented};
+/// use std::process::Command;
+///
+/// let dir = tempfile::tempdir().unwrap();
+/// let git = |args: &[&str]| {
+///     let out = Command::new("git").arg("-C").arg(dir.path()).args(args).output().unwrap();
+///     String::from_utf8_lossy(&out.stdout).trim().to_string()
+/// };
+/// git(&["init", "-q"]);
+/// git(&["config", "user.email", "t@example.com"]);
+/// git(&["config", "user.name", "t"]);
+/// git(&["commit", "-q", "--allow-empty", "-m", "one"]);
+/// let one = git(&["rev-parse", "HEAD"]);
+/// std::fs::write(dir.path().join("a"), "a").unwrap();
+/// git(&["add", "a"]);
+/// git(&["commit", "-q", "-m", "two"]);
+/// let two = git(&["rev-parse", "HEAD"]);
+/// let unknown = "0".repeat(40);
+///
+/// let commits = [one.as_str(), two.as_str(), unknown.as_str()];
+/// let each = compare_each(dir.path(), &commits, &Presented::WorkingTree);
+/// assert_eq!(each.len(), 3);
+/// for commit in commits {
+///     assert_eq!(each[commit], compare(dir.path(), commit, &Presented::WorkingTree));
+/// }
+/// ```
+pub fn compare_each(
+    root: &Path,
+    commits: &[&str],
+    presented: &Presented,
+) -> BTreeMap<String, Comparison> {
+    let threads = std::thread::available_parallelism()
+        .map(|n| n.get())
+        .unwrap_or(4)
+        .clamp(1, 16)
+        .min(commits.len());
+    if threads < 2 {
+        return commits
+            .iter()
+            .map(|c| (c.to_string(), compare(root, c, presented)))
+            .collect();
+    }
+    let next = AtomicUsize::new(0);
+    std::thread::scope(|scope| {
+        let workers: Vec<_> = (0..threads)
+            .map(|_| {
+                scope.spawn(|| {
+                    let mut mine = Vec::new();
+                    loop {
+                        let Some(commit) = commits.get(next.fetch_add(1, Ordering::Relaxed)) else {
+                            return mine;
+                        };
+                        mine.push((commit.to_string(), compare(root, commit, presented)));
+                    }
+                })
+            })
+            .collect();
+        workers
+            .into_iter()
+            .flat_map(|w| w.join().unwrap_or_else(|e| std::panic::resume_unwind(e)))
+            .collect()
+    })
 }
 
 // ---------------------------------------------------------------- the judgement
