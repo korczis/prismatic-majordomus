@@ -60,6 +60,15 @@
       "summary": "A supervisory control layer that is real rather than described"
     },
     {
+      "id": "execution-telemetry",
+      "kind": "milestone",
+      "label": "execution-telemetry",
+      "status": "PLANNED",
+      "route": "/plan/execution-telemetry/",
+      "external": false,
+      "summary": "Execution telemetry, only from providers that expose it honestly"
+    },
+    {
       "id": "fly-deployment",
       "kind": "milestone",
       "label": "fly-deployment",
@@ -672,6 +681,15 @@
       "summary": "Profiles become runtime constraints rather than advice"
     },
     {
+      "id": "cost-per-accepted-outcome",
+      "kind": "milestone",
+      "label": "cost-per-accepted-outcome",
+      "status": "BLOCKED",
+      "route": "/plan/cost-per-accepted-outcome/",
+      "external": false,
+      "summary": "Cost per accepted outcome, only on measured data"
+    },
+    {
       "id": "intent-planning",
       "kind": "milestone",
       "label": "intent-planning",
@@ -825,13 +843,13 @@
       "summary": "Every inference a decision rests on names its model and source, stays inside a declared budget, counts independent sources rather than answers, and is never reached from a hook path"
     },
     {
-      "id": "execution-telemetry",
+      "id": "routing-recommendations",
       "kind": "milestone",
-      "label": "execution-telemetry",
+      "label": "routing-recommendations",
       "status": "BLOCKED",
-      "route": "/plan/execution-telemetry/",
+      "route": "/plan/routing-recommendations/",
       "external": false,
-      "summary": "Execution telemetry, only from providers that expose it honestly"
+      "summary": "Routing recommendations derived from measured cost"
     },
     {
       "id": "intent-bound-work",
@@ -852,6 +870,15 @@
       "summary": "Work is offered to a peer by capability under a fenced lease, and runs there as an execution"
     },
     {
+      "id": "operation-convergence",
+      "kind": "milestone",
+      "label": "operation-convergence",
+      "status": "BLOCKED",
+      "route": "/plan/operation-convergence/",
+      "external": false,
+      "summary": "After the alpha, the time from an intent to its verified satisfaction is measured from the records"
+    },
+    {
       "id": "a-prompt-reaches-the-work-it-serves",
       "kind": "milestone",
       "label": "a-prompt-reaches-the-work-it-serves",
@@ -870,13 +897,13 @@
       "summary": "What a session proposes as knowledge is reconciled with what the repository already knows before a person reviews it, and a promotion stands on evidence that resolves"
     },
     {
-      "id": "cost-per-accepted-outcome",
+      "id": "shared-policy",
       "kind": "milestone",
-      "label": "cost-per-accepted-outcome",
+      "label": "shared-policy",
       "status": "BLOCKED",
-      "route": "/plan/cost-per-accepted-outcome/",
+      "route": "/plan/shared-policy/",
       "external": false,
-      "summary": "Cost per accepted outcome, only on measured data"
+      "summary": "Shared policy across repositories and workers"
     },
     {
       "id": "a-finish-reads-the-criteria-its-work-serves",
@@ -886,39 +913,17 @@
       "route": "/plan/a-finish-reads-the-criteria-its-work-serves/",
       "external": false,
       "summary": "A finish reads what its work serves"
-    },
-    {
-      "id": "routing-recommendations",
-      "kind": "milestone",
-      "label": "routing-recommendations",
-      "status": "BLOCKED",
-      "route": "/plan/routing-recommendations/",
-      "external": false,
-      "summary": "Routing recommendations derived from measured cost"
-    },
-    {
-      "id": "operation-convergence",
-      "kind": "milestone",
-      "label": "operation-convergence",
-      "status": "BLOCKED",
-      "route": "/plan/operation-convergence/",
-      "external": false,
-      "summary": "After the alpha, the time from an intent to its verified satisfaction is measured from the records"
-    },
-    {
-      "id": "shared-policy",
-      "kind": "milestone",
-      "label": "shared-policy",
-      "status": "BLOCKED",
-      "route": "/plan/shared-policy/",
-      "external": false,
-      "summary": "Shared policy across repositories and workers"
     }
   ],
   "edges": [
     {
       "source": "foundation",
       "target": "runtime-adapters",
+      "kind": "unblocks"
+    },
+    {
+      "source": "execution-telemetry",
+      "target": "cost-per-accepted-outcome",
       "kind": "unblocks"
     },
     {
@@ -1037,8 +1042,8 @@
       "kind": "unblocks"
     },
     {
-      "source": "runtime-adapters",
-      "target": "execution-telemetry",
+      "source": "cost-per-accepted-outcome",
+      "target": "routing-recommendations",
       "kind": "unblocks"
     },
     {
@@ -1059,6 +1064,11 @@
     {
       "source": "runtime-adapters",
       "target": "mesh-peers-execute-assigned-work",
+      "kind": "unblocks"
+    },
+    {
+      "source": "cost-per-accepted-outcome",
+      "target": "operation-convergence",
       "kind": "unblocks"
     },
     {
@@ -1087,28 +1097,13 @@
       "kind": "unblocks"
     },
     {
-      "source": "execution-telemetry",
-      "target": "cost-per-accepted-outcome",
+      "source": "routing-recommendations",
+      "target": "shared-policy",
       "kind": "unblocks"
     },
     {
       "source": "intent-bound-work",
       "target": "a-finish-reads-the-criteria-its-work-serves",
-      "kind": "unblocks"
-    },
-    {
-      "source": "cost-per-accepted-outcome",
-      "target": "routing-recommendations",
-      "kind": "unblocks"
-    },
-    {
-      "source": "cost-per-accepted-outcome",
-      "target": "operation-convergence",
-      "kind": "unblocks"
-    },
-    {
-      "source": "routing-recommendations",
-      "target": "shared-policy",
       "kind": "unblocks"
     }
   ]

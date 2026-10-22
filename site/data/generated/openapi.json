@@ -1192,6 +1192,7 @@
     "schema-UncommittedTallies": "docs/api/worktree/",
     "schema-UncommittedWorktree": "docs/api/worktree/",
     "schema-UpstreamState": "docs/api/worktree/",
+    "schema-UsageSource": "docs/api/shared/",
     "schema-UseCaseRef": "docs/api/product/",
     "schema-ValidationOutcome": "docs/api/reasoning/",
     "schema-ValidationReport": "docs/api/why/",
@@ -1277,7 +1278,7 @@
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
     "operations": 202,
-    "schemas": 1013,
+    "schemas": 1014,
     "tags": 58
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -2565,6 +2566,7 @@
     "UncommittedTallies": "worktree",
     "UncommittedWorktree": "worktree",
     "UpstreamState": "worktree",
+    "UsageSource": "shared",
     "UseCaseRef": "product",
     "ValidationOutcome": "reasoning",
     "ValidationReport": "why",
@@ -40809,6 +40811,22 @@
           "type": "array of string"
         },
         {
+          "description": "The official seams through which the provider reports what a session consumed, as\nshare/providers.yaml declares them (`otel`, `app-server`, `stream-json`, or `none`\nalone; I3287). Empty when the declaration says nothing, which is not the same answer\nas `none`.",
+          "name": "usage",
+          "refs": [
+            "UsageSource"
+          ],
+          "required": false,
+          "type": "array of UsageSource"
+        },
+        {
+          "description": "Where `usage` was verified.",
+          "name": "usage_evidence",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
           "description": "What the two together mean.",
           "name": "note",
           "refs": [],
@@ -40979,6 +40997,22 @@
           "refs": [],
           "required": false,
           "type": "string | null"
+        },
+        {
+          "description": "The official seams through which the provider reports what a session consumed (I3287,\nADR 0213), every one it offers: `none` alone when it offers nothing a receiver could\nread. Empty in a value written before the axis existed, which declares nothing.",
+          "name": "usage",
+          "refs": [
+            "UsageSource"
+          ],
+          "required": false,
+          "type": "array of UsageSource"
+        },
+        {
+          "description": "Where `usage` was verified, on the same terms as `episode_evidence`.",
+          "name": "usage_evidence",
+          "refs": [],
+          "required": false,
+          "type": "string"
         }
       ],
       "type": "object",
@@ -58060,6 +58094,38 @@
       "variants": []
     },
     {
+      "description": "One official seam through which a provider reports what a session consumed.\n\nUsage is read only where the provider itself reports it (ADR 0213): an official\nOpenTelemetry export, a protocol notification of the client's own server, or the usage a\nnon-interactive run prints in its structured output. Never a transcript, a proxy, or a\npatched client. `none` is the declared answer for a provider that offers no such seam,\nand it stands alone.\n\n```\nuse majordomus_cli::share::UsageSource;\nassert_eq!(serde_json::from_str::<UsageSource>(\"\\\"otel\\\"\").unwrap(), UsageSource::Otel);\nassert_eq!(serde_json::from_str::<UsageSource>(\"\\\"app-server\\\"\").unwrap(), UsageSource::AppServer);\nassert!(serde_json::from_str::<UsageSource>(\"\\\"transcript\\\"\").is_err(), \"no transcript seam\");\nassert_eq!(UsageSource::StreamJson.as_str(), \"stream-json\");\n```",
+      "home": "shared",
+      "is_enum": true,
+      "name": "UsageSource",
+      "properties": [],
+      "type": "\"otel\" | \"app-server\" | \"stream-json\" | \"none\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "ProviderLifecycle",
+        "ProviderOffers"
+      ],
+      "values": [
+        {
+          "description": "The provider's own OpenTelemetry export, which the person enables.",
+          "value": "otel"
+        },
+        {
+          "description": "A notification of the client's own app server protocol.",
+          "value": "app-server"
+        },
+        {
+          "description": "The usage a non-interactive run reports in its structured (`stream-json`) output.",
+          "value": "stream-json"
+        },
+        {
+          "description": "No official seam reports usage.",
+          "value": "none"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "One use case the feature names.",
       "home": "product",
       "is_enum": false,
@@ -65931,7 +65997,7 @@
           "cache_detail": "max_entries=2",
           "cli": "",
           "curl": "curl -s \"http://127.0.0.1:8741/api/v1/lifecycle/providers\"",
-          "description": "Per provider: the lifecycle events its adapter declares in the provider's own vocabulary, whether it can archive prompts, and which of this repository's enforcement entries name its hook. Declared in share/providers.yaml and in the policy; never inferred from whether a shim happens to be on disk.",
+          "description": "Per provider: the lifecycle events its adapter declares in the provider's own vocabulary, whether it can archive prompts, the official seams through which it reports what a session consumed (usage, with the citation), and which of this repository's enforcement entries name its hook. Declared in share/providers.yaml and in the policy; never inferred from whether a shim happens to be on disk.",
           "home": "lifecycle",
           "id": "lifecycle.providers",
           "kind": "query",

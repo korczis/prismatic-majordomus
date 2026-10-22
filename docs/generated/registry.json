@@ -44724,7 +44724,7 @@
       "module": "lifecycle",
       "kind": "query",
       "title": "What each provider's adapter declares",
-      "description": "Per provider: the lifecycle events its adapter declares in the provider's own vocabulary, whether it can archive prompts, and which of this repository's enforcement entries name its hook. Declared in share/providers.yaml and in the policy; never inferred from whether a shim happens to be on disk.",
+      "description": "Per provider: the lifecycle events its adapter declares in the provider's own vocabulary, whether it can archive prompts, the official seams through which it reports what a session consumed (usage, with the citation), and which of this repository's enforcement entries name its hook. Declared in share/providers.yaml and in the policy; never inferred from whether a shim happens to be on disk.",
       "input": {
         "name": "Empty",
         "schema": {
@@ -44800,6 +44800,18 @@
                   },
                   "description": "The enforcement entries of *this repository's* policy that name this provider's hook\nin `wired_by`. Declared wiring, not a file on disk: whether a shim is installed is a\nquestion for `majordomus capture status`, which is the command that owns it."
                 },
+                "usage": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/UsageSource"
+                  },
+                  "description": "The official seams through which the provider reports what a session consumed, as\nshare/providers.yaml declares them (`otel`, `app-server`, `stream-json`, or `none`\nalone; I3287). Empty when the declaration says nothing, which is not the same answer\nas `none`.",
+                  "default": []
+                },
+                "usage_evidence": {
+                  "type": "string",
+                  "description": "Where `usage` was verified."
+                },
                 "note": {
                   "type": "string",
                   "description": "What the two together mean."
@@ -44812,6 +44824,31 @@
                 "note"
               ],
               "description": "One provider's lifecycle surface: what its adapter declares it can do, and what this\nrepository has wired to it.\n\nThe two halves come from different places and must not be confused. `lifecycle` and\n`prompt_capture` are the *distribution's* declaration — what the shipped adapter can do\nfor this provider at all — while `wired` is *this repository's* policy naming that\nprovider's hook in `wired_by`. Either can be empty with the other full, and that pairing\nis the interesting finding: a provider this repository wires but the tool ships no\nlifecycle for is a hook that will never fire.\n\nNeither half is inferred from a file on disk. Whether a shim is actually installed is\n`majordomus capture status`'s question, and this type deliberately does not answer it.\n\n```\nuse majordomus_cli::capability::builtin::lifecycle::ProviderLifecycle;\nuse serde_json::json;\n\n// a provider the tool adapts and this repository wires: both halves present\nlet full: ProviderLifecycle = serde_json::from_value(json!({\n    \"id\": \"claude\",\n    \"title\": \"Claude Code\",\n    \"lifecycle\": [\"SessionStart\", \"SessionEnd\", \"PreCompact\"],\n    \"prompt_capture\": true,\n    \"client_config\": \".mcp.json\",\n    \"wired\": [\"session.start\", \"session.close\"],\n    \"note\": \"adapted and wired\",\n})).unwrap();\nassert!(!full.lifecycle.is_empty() && !full.wired.is_empty());\nassert!(full.prompt_capture);\n\n// and one the tool ships no adapter for: it loses the automation and none of the model,\n// because every command remains the same\nlet unadapted: ProviderLifecycle = serde_json::from_value(json!({\n    \"id\": \"some-editor\",\n    \"title\": \"Some Editor\",\n    \"prompt_capture\": false,\n    \"note\": \"no lifecycle adapter ships for it\",\n})).unwrap();\nassert!(unadapted.lifecycle.is_empty(), \"nothing will fire for it\");\nassert!(unadapted.client_config.is_empty(), \"and it reads no project-scoped config\");\n```"
+            },
+            "UsageSource": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "otel",
+                  "description": "The provider's own OpenTelemetry export, which the person enables."
+                },
+                {
+                  "type": "string",
+                  "const": "app-server",
+                  "description": "A notification of the client's own app server protocol."
+                },
+                {
+                  "type": "string",
+                  "const": "stream-json",
+                  "description": "The usage a non-interactive run reports in its structured (`stream-json`) output."
+                },
+                {
+                  "type": "string",
+                  "const": "none",
+                  "description": "No official seam reports usage."
+                }
+              ],
+              "description": "One official seam through which a provider reports what a session consumed.\n\nUsage is read only where the provider itself reports it (ADR 0213): an official\nOpenTelemetry export, a protocol notification of the client's own server, or the usage a\nnon-interactive run prints in its structured output. Never a transcript, a proxy, or a\npatched client. `none` is the declared answer for a provider that offers no such seam,\nand it stands alone.\n\n```\nuse majordomus_cli::share::UsageSource;\nassert_eq!(serde_json::from_str::<UsageSource>(\"\\\"otel\\\"\").unwrap(), UsageSource::Otel);\nassert_eq!(serde_json::from_str::<UsageSource>(\"\\\"app-server\\\"\").unwrap(), UsageSource::AppServer);\nassert!(serde_json::from_str::<UsageSource>(\"\\\"transcript\\\"\").is_err(), \"no transcript seam\");\nassert_eq!(UsageSource::StreamJson.as_str(), \"stream-json\");\n```"
             }
           }
         }
@@ -64564,7 +64601,9 @@
                     "prompts": "none",
                     "prompts_evidence": "",
                     "browser": "none",
-                    "browser_evidence": ""
+                    "browser_evidence": "",
+                    "usage": [],
+                    "usage_evidence": ""
                   }
                 }
               },
@@ -64641,6 +64680,19 @@
                     "null"
                   ],
                   "description": "What a person does, once, to install the bridge on a machine, in the vendor's terms.\nDeclared for a `bridge` only."
+                },
+                "usage": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/UsageSource"
+                  },
+                  "description": "The official seams through which the provider reports what a session consumed (I3287,\nADR 0213), every one it offers: `none` alone when it offers nothing a receiver could\nread. Empty in a value written before the axis existed, which declares nothing.",
+                  "default": []
+                },
+                "usage_evidence": {
+                  "type": "string",
+                  "description": "Where `usage` was verified, on the same terms as `episode_evidence`.",
+                  "default": ""
                 }
               },
               "required": [
@@ -64700,6 +64752,31 @@
                 }
               ],
               "description": "Whether one provider's client drives a browser in the same session as this repository's\nMCP server.\n\nA bridge is the one way a single session both works on a page and reads and changes the\nlive mesh (`docs/MCP.md`, \"Claude in the browser\"). It is a vendor capability like the two\nabove, so it is declared with its citation; whether *this machine* has the bridge is a\ndifferent fact, which preflight reads from the machine and never from here. A browser\nagent of the vendor's own — a side panel that reaches only the vendor's cloud — is not a\nbridge: nothing it does arrives in a session that holds this repository's server.\n\n```\nuse majordomus_cli::share::BrowserSource;\nassert_eq!(serde_json::from_str::<BrowserSource>(\"\\\"bridge\\\"\").unwrap(), BrowserSource::Bridge);\nassert!(serde_json::from_str::<BrowserSource>(\"\\\"extension\\\"\").is_err(), \"one word for it\");\nassert_eq!(BrowserSource::default(), BrowserSource::None, \"undeclared reads as none\");\nassert_eq!(BrowserSource::Bridge.as_str(), \"bridge\");\n```"
+            },
+            "UsageSource": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "otel",
+                  "description": "The provider's own OpenTelemetry export, which the person enables."
+                },
+                {
+                  "type": "string",
+                  "const": "app-server",
+                  "description": "A notification of the client's own app server protocol."
+                },
+                {
+                  "type": "string",
+                  "const": "stream-json",
+                  "description": "The usage a non-interactive run reports in its structured (`stream-json`) output."
+                },
+                {
+                  "type": "string",
+                  "const": "none",
+                  "description": "No official seam reports usage."
+                }
+              ],
+              "description": "One official seam through which a provider reports what a session consumed.\n\nUsage is read only where the provider itself reports it (ADR 0213): an official\nOpenTelemetry export, a protocol notification of the client's own server, or the usage a\nnon-interactive run prints in its structured output. Never a transcript, a proxy, or a\npatched client. `none` is the declared answer for a provider that offers no such seam,\nand it stands alone.\n\n```\nuse majordomus_cli::share::UsageSource;\nassert_eq!(serde_json::from_str::<UsageSource>(\"\\\"otel\\\"\").unwrap(), UsageSource::Otel);\nassert_eq!(serde_json::from_str::<UsageSource>(\"\\\"app-server\\\"\").unwrap(), UsageSource::AppServer);\nassert!(serde_json::from_str::<UsageSource>(\"\\\"transcript\\\"\").is_err(), \"no transcript seam\");\nassert_eq!(UsageSource::StreamJson.as_str(), \"stream-json\");\n```"
             }
           }
         }

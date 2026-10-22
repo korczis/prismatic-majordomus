@@ -7,11 +7,14 @@ profile: deep-work
 parallel_safe: false
 objective: "Define the durable shape of a task's execution facts: which fields exist, who reported each one, and how a provider that reported nothing is recorded, so that absence is a value with a reason rather than a missing key or a zero."
 why: "Every economic statement this repository could make rests on this record. If absence is representable only as a gap, the first report that reads it will treat a gap as a zero and the whole layer becomes an estimate wearing a measurement's clothes."
-current_state: "Nothing measures a session. The economics document states what measurement would take and deliberately claims nothing, and no schema exists to be filled."
+current_state: "The record exists: share/schemas/majordomus/telemetry/telemetry.v1.schema.json (kind telemetry, under .ai/local/state/telemetry/) names a reporter for every fact and writes absence as not_reported with its reason (#1051, commit 4e6e7d765c2). Its milestone derived it BLOCKED only because execution-telemetry still depended on runtime-adapters; I3287 rescoped it from the shell era (share, lib) to where the record and its Rust reader live. The Option<u64> usage record the receiver writes is I3288's."
 desired_state: "One schema, with an allowlist like every other record here, in which each measured field names its reporter, and not_reported is a first-class value carrying why it is absent."
 scope:
-  - share
-  - lib
+  - share/schemas
+  - share/kinds.yaml
+  - share/allow
+  - apps/majordomus-cli/src/economics
+  - apps/majordomus-cli/tests/metadata_contract.rs
   - docs
 non_scope:
   - Collecting anything; this issue defines what would be stored
@@ -28,4 +31,4 @@ evidence_required:
   - suite
 risk: "A schema designed around one provider's numbers becomes that provider's schema; the reporter field is what keeps a second provider from having to lie to fit."
 created_at: 2026-09-04
-updated_at: 2026-09-04
+updated_at: 2026-10-22
