@@ -89,6 +89,11 @@ for id in $targets; do
 done
 [ "$missing" = 0 ] || die "the release is missing an artifact of a supported target; a partial release is not a release" 10
 
+# counted before the record is opened, so that a tree whose debt cannot be counted writes no
+# record at all rather than one without it
+debt="$("$mj" release --repo "$ROOT" debt --record 2>/dev/null)" && [ -n "$debt" ] \
+  || die "the debt this release carries could not be counted (majordomus release debt); a record without it gives the next release nothing to be held against" 10
+
 mkdir -p "$(dirname "$out")"
 {
   printf '# Written by scripts/release-record from the artifacts that were published.\n'
@@ -106,6 +111,10 @@ mkdir -p "$(dirname "$out")"
   # so. See Release::required_targets.
   printf 'required_targets:\n'
   for id in $targets; do printf '  - %s\n' "$id"; done
+  # The debt the released tree carries, counted by the tool and written down so that the
+  # next release has something to be held against: it must carry less. Recorded, not judged
+  # here; the judging was done before the tag (scripts/ci/release-verdict).
+  printf '%s\n' "$debt"
   printf 'artifacts:\n%s' "$body"
 } > "$out"
 

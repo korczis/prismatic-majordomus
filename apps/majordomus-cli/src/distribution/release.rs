@@ -91,6 +91,15 @@ pub struct Release {
     /// consistency alone, and `.ai/repo/releases/README.md` says so.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub required_targets: Option<Vec<String>>,
+    /// The debt the release carried: every baseline of accepted violations, counted on the
+    /// commit that was released, and their total. What the next release is held against —
+    /// it must carry less, by at least the declared minimum (`release::debt`). Written by
+    /// `scripts/release-record` from `majordomus release debt --record`.
+    ///
+    /// Absent on records written before the field existed. The first release after such a
+    /// record is compared with nothing, and says so.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub debt: Option<crate::release::debt::RecordedDebt>,
     /// One entry per built target.
     pub artifacts: Vec<ReleaseArtifact>,
 }

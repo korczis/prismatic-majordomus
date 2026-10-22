@@ -38,6 +38,7 @@
 pub mod changelog;
 pub mod commits;
 pub mod compat;
+pub mod debt;
 pub mod model;
 pub mod surface;
 pub mod version;

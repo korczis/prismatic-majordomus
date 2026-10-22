@@ -1,0 +1,26 @@
+id: claims-and-releases-are-held-to-evidence
+title: A release carries less debt than the one before it, over evidence recorded since that release
+statement: "No release is cut from a tree whose accepted violations, counted by each baseline's declared form, did not fall by the declared minimum since the previous release, whose baselines hold more than their own gates measure, or whose evidence ledger was last recorded by CI before the previous release was published."
+invariants:
+  - The counts are those of the declaration .ai/repo/ci/debt.yaml; no second reader adds them up
+  - A count, a ledger or a gate that cannot be read is a refusal, never a zero
+  - A change is never refused for debt it did not add or evidence it cannot re-record
+milestones:
+  - claims-held-to-evidence
+satisfaction:
+  - id: debt-falls-every-release
+    criterion: A release whose payable debt did not fall by the minimum since the previous release, or whose baseline grew, or whose baseline its own gate calls tightenable, is refused by name
+    evidence: test
+    ref: test/cases/997_a_release_carries_less_debt_than_the_last.sh
+  - id: evidence-is-not-older-than-the-release
+    criterion: A release whose evidence ledger's newest CI execution predates the previous release's publication, holds none, or cannot be read is refused, and a change is not
+    evidence: test
+    ref: test/cases/997_a_release_carries_less_debt_than_the_last.sh
+governance:
+  - rule:project.a-release-carries-less-debt-than-the-last
+non_goals:
+  - "Proving the guarantees themselves: test-evidence (ADR 0087) carries coverage, freshness and the surfaces (I1948, I1953, I1956, I1960, I1962, I1963)"
+  - "Refusing a newly added unsupported guarantee: evidence-check --strict is its stated end state, owned by test-evidence"
+  - Independent acceptance of a worker's own change; that is acceptance-is-independent-of-the-worker
+created_at: 2026-10-09
+updated_at: 2026-10-09

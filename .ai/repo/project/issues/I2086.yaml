@@ -1,0 +1,21 @@
+id: I2086
+milestone: recovery-baseline
+title: "The audit's findings are reproduced at a named revision"
+slug: the-audits-findings-are-reproduced-at-a-named-revision
+priority: p0
+profile: implementation
+parallel_safe: true
+scope:
+  - ".ai/repo/project/gaps"
+objective: "Re-measure each finding of the 2026-10-07 audit at the checked-out revision and record it as an observation of the recovery gap."
+why: "The audit is a lead; a recovery that trusts it inherits its errors."
+current_state: "Done at 893a79be65: 15 findings, 12 confirmed and 3 changed (F02, F04, F10), 0 fixed; reproducers kept outside the tree."
+desired_state: "The findings index and its reproducers are tracked beside this plan, and the issue closes when they are."
+validation:
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "findings_are_reproduced"
+acceptance_criteria:
+  - "The fifteen findings are tracked with status, revision and a rerunnable command each"
+created_at: 2026-10-09
+updated_at: 2026-10-09

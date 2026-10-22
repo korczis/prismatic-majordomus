@@ -1,0 +1,25 @@
+id: I2089
+milestone: recovery-baseline
+title: "First run, hooks, doctor, the MCP list and CI have measured budgets"
+slug: first-run-hooks-doctor-the-mcp-list-and-ci-have-measured-budgets
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Measure first run, a hooked commit, doctor, tools/list and CI feedback on an idle machine and set budgets a regression is refused against."
+why: "Finding F09/F11: init writes 99 files; a hooked commit took 11-16 s and doctor 12-13 s under load 12-23; tools/list is 1,972,961 bytes."
+current_state: "No measurement taken today is clean: every one ran under load."
+desired_state: "Budgets with the load they were measured under, and either cases 82 and 83 extended or the policy change from reported to refused stated."
+validation:
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "budgets_are_measured"
+scope:
+  - ".ai/repo/benchmarks"
+  - "scripts/ci"
+  - "share/skeleton/policy.yaml"
+  - "lib/doctor.sh"
+  - "test/cases"
+acceptance_criteria:
+  - "Each budget states its method and the load it was measured under; case 82 or 83 holds it"
+created_at: 2026-10-09
+updated_at: 2026-10-09

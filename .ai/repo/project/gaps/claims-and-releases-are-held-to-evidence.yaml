@@ -1,0 +1,19 @@
+intent: claims-and-releases-are-held-to-evidence
+observed_at: 893a79be65
+recorded_by: "claude-code (session 66); the findings were re-measured by a read-only subagent in a disposable clone"
+recorded_at: 2026-10-09
+observations:
+  - id: f08
+    statement: "confirmed at 893a79be65: Grown since the audit: 219 guaranteed claims now (237 examined), 0 supported. Both gates exit 0 because they are ratchets (no regression against baseline), so CI is green with zero supported guarantees. The recorded evidence run is dated 2026-09-17, 22 days before this measurement. claim-proof-check says every guaranteed claim names a test; evidence-check says none of those tests has a recorded supporting run."
+    source: "command:MAJORDOMUS_BIN=<debug bin> scripts/evidence-check"
+conditions:
+  - criterion: debt-falls-every-release
+    state: missing
+    because: "no release has been compared with the one before it; three shipped over byte-identical baselines"
+    observations: [f08]
+  - criterion: evidence-is-not-older-than-the-release
+    state: conflicting
+    because: "evidence-check exits 0 while supporting 0 of 219 guaranteed claims over a ledger last recorded on 2026-09-17"
+    observations: [f08]
+risks:
+  - "The pipefail baseline declares 29 while its gate measures 28; the first release under this gate is refused until it is written again"

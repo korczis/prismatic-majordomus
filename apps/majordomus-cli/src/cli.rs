@@ -1384,6 +1384,15 @@ pub enum ReleaseCommand {
         #[arg(long)]
         explain: bool,
     },
+    /// The debt this tree carries — every baseline of accepted violations, counted — against what the previous release recorded; exit 10 when a baseline grew, is undeclared or cannot be read
+    Debt {
+        /// Judge the tree as a release: also exit 10 when the total is not lower than the previous release's by the declared minimum
+        #[arg(long)]
+        release: bool,
+        /// Print only the block a release record carries, for the next release to be compared with
+        #[arg(long, conflicts_with = "release")]
+        record: bool,
+    },
     /// Raise the version in the one place it is authored, to at least what the public contract requires; scripts/derive derives the rest
     Bump {
         /// Raise by this much instead of by the measured minimum; never below it
@@ -4288,6 +4297,27 @@ pub const EXAMPLES: &[CommandExamples] = &[
             setup: &[],
             expect: Expect::ExitCode(12),
         }],
+    },
+    CommandExamples {
+        command: "release debt",
+        examples: &[
+            ExampleDoc {
+                id: "release-debt",
+                title: "The debt this tree carries, against the release before it",
+                description: "Every baseline of accepted violations the repository declares in `.ai/repo/ci/debt.yaml`, counted in the form its own gate reads it, beside what the previous release recorded for it, and the total. It exits 10 when a baseline grew, when a file named like a baseline is neither counted nor excluded with a reason, or when one cannot be counted. A repository that declares no baselines has nothing that is known to be debt, which is not a repository with none: the command says so and exits 12, as it does here.",
+                argv: &["release", "debt"],
+                setup: &[],
+                expect: Expect::ExitCode(12),
+            },
+            ExampleDoc {
+                id: "release-debt-release",
+                title: "The same, judged as a release",
+                description: "`--release` is the gate of a release: beside everything the plain form refuses, a total that is not lower than the previous release's by the declared minimum exits 10, and the report says the largest total a release may carry. `scripts/ci/release-verdict` runs it before a tag is pushed and the release pipeline's `debt` phase before an artifact is built.",
+                argv: &["release", "debt", "--release"],
+                setup: &[],
+                expect: Expect::ExitCode(12),
+            },
+        ],
     },
     CommandExamples {
         command: "release bump",

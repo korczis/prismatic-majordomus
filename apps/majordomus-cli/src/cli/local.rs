@@ -591,6 +591,11 @@ pub const LOCAL: &[LocalCommand] = &[
         note: "prints what the public contract did since the last release and the smallest version it allows.",
     },
     LocalCommand {
+        command: "release debt",
+        reason: LocalReason::RendersCapability("release.debt"),
+        note: "prints every baseline's debt against the previous release's record, and exits 10 when a baseline grew or, under --release, when the total did not fall by the minimum.",
+    },
+    LocalCommand {
         command: "release bump",
         reason: LocalReason::WritesRepository,
         note: "raises the version in the one place it is authored, and the lock's record of it; the one writer, and a deliberate act.",

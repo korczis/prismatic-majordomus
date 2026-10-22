@@ -1,0 +1,145 @@
+# The debt this repository carries: every baseline of accepted violations, the gate that
+# reads it, and the form its entries take. `majordomus release debt` counts them, compares
+# each with what the previous release recorded, and refuses a release that does not carry
+# less. Rule: project.a-release-carries-less-debt-than-the-last.
+#
+# A baseline is a list a gate accepted on the day it could not be made to pass. Each gate
+# keeps its own list from growing inside one change; this file is what makes the lists get
+# shorter. Nothing here is a threshold a gate reads: the gates keep their own files, and this
+# names them.
+#
+# form:
+#   entries   one violation per line; blank lines and `#` comment lines are not entries
+#   counts    the file states numbers (`54`, `crate_sorts=90`, `missing 192`, `path 6`);
+#             the debt is the last integer of every line, summed
+#
+# payable: false   debt no change can pay. It is still counted and may not grow; it is left
+#                  out of what a release must reduce. `because` is required beside it: a
+#                  baseline is not declared unpayable to escape the rule.
+#
+# not_entries:     a line beginning with this is not an entry.
+#
+# slack:           how the baseline's own gate says the baseline is above the truth: the
+#                  command to run from the root and the words it prints. A release whose
+#                  gate says so is refused until the baseline is written again; a gate
+#                  that cannot be run is refused too. A baseline without it is named in
+#                  every release as "slack not measured". Declared for the gates whose
+#                  wording was read: pipefail-check, evidence-check, claim-proof-check and
+#                  source-pin-check. diagram-check
+#                  refuses a baseline above the truth by itself.
+#
+# A file under .ai/repo whose name says `baseline` and that is neither listed below nor
+# excluded under `not_debt` is refused, so that a new baseline cannot arrive unseen.
+version: 1
+
+# How much lower than the previous release's total a release must be. The owner's word
+# (2026-10-08): every release reduces the debt by at least a minimum. Raising this number is
+# how the step is made larger; it is never lowered below 1.
+minimum_reduction: 1
+
+baselines:
+  - id: rust-quality
+    path: .ai/repo/rust-quality-baseline.txt
+    gate: rust-quality
+    form: entries
+  - id: doc-command
+    path: .ai/repo/doc-command-baseline.txt
+    gate: doc-command-check
+    form: entries
+  - id: evidence
+    path: .ai/repo/evidence-baseline.txt
+    gate: evidence-check
+    form: entries
+    # a `+` line is a guarantee the evidence supports: a proof kept, not a debt
+    not_entries: "+"
+    slack:
+      command: scripts/evidence-check
+      says: tighten the baseline
+  - id: mcp-tool-run
+    path: .ai/repo/mcp-tool-run-baseline.txt
+    gate: mcp-tool-run
+    form: entries
+  - id: case-numbers
+    path: .ai/repo/ci/case-numbers-baseline.txt
+    gate: case-numbers
+    form: entries
+  - id: pipefail
+    path: .ai/repo/pipefail-baseline.txt
+    gate: pipefail-check
+    form: entries
+    slack:
+      command: scripts/ci/pipefail-check
+      says: tighten the baseline
+  - id: development-semantics
+    path: .ai/repo/development-semantics-baseline.txt
+    gate: development-semantics
+    form: entries
+  - id: ui-integrity
+    path: .ai/repo/ui-integrity-baseline.txt
+    gate: ui-integrity
+    form: entries
+  - id: liveness
+    path: .ai/repo/liveness-baseline.txt
+    gate: liveness-check
+    form: entries
+  - id: release-record
+    path: .ai/repo/release-record-baseline.txt
+    gate: release-check
+    form: entries
+  - id: claim-proof
+    path: .ai/repo/claim-proof-baseline.txt
+    gate: claim-proof-check
+    form: entries
+    slack:
+      command: scripts/ci/claim-proof-check
+      says: tighten the baseline
+  - id: lease-reader
+    path: .ai/repo/lease-reader-baseline.txt
+    gate: lease-reader-check
+    form: entries
+  - id: rule-proof
+    path: .ai/repo/rule-proof-baseline.txt
+    gate: rule-proof
+    form: entries
+  - id: commit-policy
+    path: .ai/repo/commit-policy-baseline.txt
+    gate: commit-policy
+    form: counts
+    # Counted, recorded, and refused if it grows; left out of what a release must reduce.
+    # The owner delegated the decision on 2026-10-08 and the coordinator made it: frozen as a
+    # historical exemption, neither owed nor retired.
+    payable: false
+    because: the commits it counts are already published, and this repository's history is append-only, so no change can make them conform
+  - id: order
+    path: .ai/repo/order-baseline.txt
+    gate: order-check
+    form: counts
+  - id: github-drift
+    path: .ai/repo/ci/github-drift-baseline.txt
+    gate: github-check
+    form: counts
+  - id: source-pin
+    path: .ai/repo/source-pin-baseline.txt
+    gate: source-pin-check
+    form: counts
+    slack:
+      command: scripts/ci/source-pin-check
+      says: tighten the baseline
+  - id: diagram
+    path: .ai/repo/diagram-baseline.txt
+    gate: diagram-check
+    form: counts
+
+# The tracked evidence ledger. A release may not be cut over evidence whose newest CI
+# execution was recorded before the previous release was published: the check that reads
+# the ledger passes while supporting no claim (0 of 237 through v0.16.0 and v0.17.0), so
+# its age is judged here. A change is never refused for it; a change cannot re-record it.
+evidence_ledger: .ai/repo/evidence/ledger.json
+
+not_debt:
+  - path: .ai/repo/ci/baseline.json
+    because: recorded durations of the workflows, a measurement a run is compared with and not a list of violations
+  - path: .ai/repo/benchmarks/pages/baseline.macos-arm64.json
+    because: recorded page timings, a measurement a benchmark is compared with and not a list of violations
+  - path: .ai/repo/benchmarks/rust/baseline.macos-aarch64-debug.json
+    because: recorded command timings, a measurement a benchmark is compared with and not a list of violations

@@ -73,6 +73,9 @@ jobs:
       - name: the tagged commit passed ci
         env:
           GH_TOKEN: ${{ github.token }}
+          # the debt is judged two steps on, by the contract's own phase, once the
+          # executable that counts it is built
+          RELEASE_VERDICT_DEBT: phase
         run: scripts/ci/release-verdict --tag "${{ steps.resolve.outputs.tag }}" --wait 300
 
       - uses: ./.github/actions/setup-rust
@@ -82,6 +85,13 @@ jobs:
           cargo build --quiet --locked --manifest-path apps/majordomus-cli/Cargo.toml
           apps/majordomus-cli/target/debug/majordomus distribution validate
           apps/majordomus-cli/target/debug/majordomus generate distribution --check
+
+      # A release carries less debt than the one before it. Every baseline of accepted
+      # violations is counted on the tagged tree and held against what the previous release's
+      # record carries: none may have grown, and the total must be lower by the declared
+      # minimum (.ai/repo/ci/debt.yaml). Before a single artifact is built.
+      - name: the tagged tree carries less debt than the release before it
+        run: apps/majordomus-cli/target/debug/majordomus release debt --release
 
       - id: matrix
         name: the build matrix, generated from the model

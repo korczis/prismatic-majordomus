@@ -41,6 +41,11 @@ phases:
     runs: scripts/ci/release-verdict --tag "$TAG" --wait 300
     summary: the tagged commit's ci check — the aggregate verdict of the validate workflow — concluded success; a failure, a run still in progress, or a verdict that cannot be read refuses the release before anything is built
 
+  - id: debt
+    job: plan
+    runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- release debt --release
+    summary: the tagged tree carries less debt than the release before it — no baseline of accepted violations grew, and their total fell by at least the declared minimum; a previous release that recorded none is said to be that, and a baseline that cannot be counted refuses
+
   - id: build
     job: build
     runs: scripts/release-package --target "$TARGET" --tag "$TAG" --out dist

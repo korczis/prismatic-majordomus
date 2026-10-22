@@ -1,0 +1,174 @@
+intent: claims-and-releases-are-held-to-evidence
+reviewed_at: "2ce9315fa8"
+reviewed_by: "claude-code subagent (Explore, read-only, fresh context) dispatched by session d1 (fcbeae95), not the author; given the staged records, the M00 findings and the M00/M10 prompts and none of the author's reasoning. 20 findings, 10 blocking. Resolutions are the author's to write: every finding is open."
+findings:
+  - id: count-of-findings-misstated
+    class: unproven_assumption
+    subject: I2086
+    finding: "recovery-baseline.yaml and I2086 say 11 confirmed and 4 changed; findings.json and the gap's own prefixes give 12 confirmed and 3 changed (F02, F04, F10). Correct both and recompute the counts from the gap."
+    blocking: true
+    resolution:
+      state: rejected
+      because: "Not this intent\'s plan: I2086 is maintenance under recovery-baseline, which no intent names; corrected there. Corrected to 12 confirmed and 3 changed (F02, F04, F10) in recovery-baseline and I2086, from findings.json."
+  - id: guaranteed-count-misstated
+    class: unproven_assumption
+    subject: recovery-is-verified-independently
+    finding: "claims-held-to-evidence and I2070 say none of 237 guaranteed claims; the findings say 219 guaranteed of 237 examined. Write 0 of 219 guaranteed (237 examined)."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2070
+      because: "Written as 0 of 219 guaranteed claims (237 examined) in claims-held-to-evidence and I2070."
+  - id: gap-self-declares-satisfied
+    class: unproven_assumption
+    subject: recovery-is-verified-independently#findings-are-reproduced
+    finding: "The gap marks findings-are-reproduced satisfied from the author's own session, citing 3 of 15 findings, with a command ref the engine never meets and reproducers in an ignored directory; invariant 3 forbids a worker accepting its own report. Mark it unknown, cite all 15, move the reproducer index into the tree."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2070
+      because: "Corrected in the plan records that land with I2070. The criterion is gone; no condition of either gap is satisfied, and the findings index is tracked by I2086 rather than asserted."
+  - id: observations-truncated
+    class: unproven_assumption
+    subject: recovery-is-verified-independently
+    finding: "Observations f02, f03, f05, f07, f10, f12 and f15 stop mid-sentence and cite file sources for findings observed by commands (F03 branch protection, F09 timings). Store whole statements with a rerunnable command each."
+    blocking: false
+    resolution:
+      state: rejected
+      because: "Not this intent\'s plan: I2086 is maintenance under recovery-baseline, which no intent names; corrected there. Observations now carry whole statements, with the command that observed them as their source where one ran."
+  - id: command-refs-wrong-or-circular
+    class: unproven_assumption
+    subject: recovery-is-verified-independently
+    finding: "Command refs are never resolved: majordomus-cli benchmark does not exist (it is bench), majordomus check compares no intent scope, scripts/ci/pages-check checks the served Pages ref, claim-proof-check checks a claim names a test, and intent show of this intent is circular. Replace each with the checker or a test that measures the criterion."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2070
+      because: "Corrected in the plan records that land with I2070. The five wrong or circular command criteria are removed. The two that remain, on acceptance-is-independent-of-the-worker, observe external state that no test can (git check-ignore, the branch protection API) and are never counted as met."
+  - id: test-criteria-met-without-the-work
+    class: insufficient_work
+    subject: recovery-is-verified-independently
+    finding: "every-issue-serves-a-criterion is already enforced (intent_plan.rs issue_without_purpose, tests/intent_plan.rs) and case 543 drives only homepage-check, so two test criteria can read current with no recovery work while the gap calls the first missing. Mark the first observed or widen it to M00-I02's no-self-referential-only-intent; point the second at a new case over README, docs, site and Cockpit."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2070
+      because: "Corrected in the plan records that land with I2070. Both removed. The remaining test criteria name case 997, which the change carrying this plan adds; neither reads current without it."
+  - id: title-overreaches-scope
+    class: missed_requirement
+    subject: recovery-is-verified-independently
+    finding: "The title promises a judgement not decided by the worker it judges and the statement lets reproduced stand for fixed, while non_goals exclude M01-M09 (F01, F03, F04 high; F02); the gap risk names only F01/F03. Narrow title and statement to claims and the release held to evidence, and declare enforcement-independent-of-the-worker as a second intent with M01/M03 milestones and no issues so it stays visible."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2070
+      because: "Corrected in the plan records that land with I2070. Split: claims-and-releases-are-held-to-evidence keeps the release half; acceptance-is-independent-of-the-worker names F01 and F03 with milestones recovery-acceptance-contract (M01) and recovery-forge-gate (M03) and no issues until a session takes them."
+  - id: tamper-contradicts-design
+    class: unproven_assumption
+    subject: I2093
+    finding: "I2093 and the intent say a tampered record is refused; docs/EVIDENCE.md and evidence/mod.rs record tamper resistance as not implemented and refused, and ADR 0087 already turns a moved test digest into stale. Define tampered, cite ADR 0087 and narrow the new work to rule and policy versions."
+    blocking: true
+    resolution:
+      state: rejected
+      because: "I2093 is withdrawn: binding proofs and tamper resistance are test-evidence's under ADR 0087, and this plan no longer claims either."
+  - id: ratchet-acceptance-unowned
+    class: missed_requirement
+    subject: recovery-is-verified-independently
+    finding: "claims-held-to-evidence accepts that adding an unsupported guarantee fails, while scripts/evidence-check deliberately does not refuse it (--strict is the stated end state) and no criterion or issue carries M10-I04. Add a criterion and an issue and record the design change."
+    blocking: true
+    resolution:
+      state: rejected
+      because: "The acceptance is removed; refusing a newly added unsupported guarantee is evidence-check --strict, test-evidence's stated end state, recorded as a non-goal of the intent."
+  - id: m10-duplicates-test-evidence
+    class: unnecessary_work
+    subject: recovery-is-verified-independently
+    finding: "I2091, I2092, I2093 and I2095 re-plan the open p1 milestone test-evidence (I1948, I1953, I1956, I1960, I1962, I1963; cases 513, 524, 526) with overlapping scope and no cross-reference, and duplicate_work cannot see it because those issues serve no criterion. Name test-evidence among the intent's milestones, make those issues serve these criteria, and keep only the delta (README and docs prose, the provenance split, rule and policy versions, the release comparison)."
+    blocking: true
+    resolution:
+      state: rejected
+      because: "I2091, I2092, I2093 and I2095 are withdrawn; test-evidence's I1948, I1953, I1956, I1960, I1962 and I1963 carry that work, and the intent names them as its non-goal. Only the release delta (I2070) remains."
+  - id: phantom-scope
+    class: surface_missing
+    subject: I2090
+    finding: "Scope apps/majordomus-cli/src/intent does not exist (the code is src/intent.rs, intent_plan.rs, intent_review.rs) and registries, providers and routes live under src/capability and share/providers. Scope the real paths."
+    blocking: true
+    resolution:
+      state: rejected
+      because: "Not this intent\'s plan: I2090 is maintenance under recovery-baseline, which no intent names; corrected there. Scoped to src/intent.rs, src/intent_plan.rs, src/capability and share/providers."
+  - id: scope-misses-criterion-surfaces
+    class: surface_missing
+    subject: I2095
+    finding: "I2095 omits README.md, I2092 omits cockpit, MCP and HTTP, I2089 omits share/skeleton/policy.yaml and lib/doctor.sh, each a surface its criterion names. Add them."
+    blocking: false
+    resolution:
+      state: rejected
+      because: "Not this intent\'s plan: I2089 is maintenance under recovery-baseline, which no intent names; corrected there. I2089 adds share/skeleton/policy.yaml and lib/doctor.sh; I2092 and I2095 are withdrawn."
+  - id: budget-contradicts-existing-case
+    class: regression_risk
+    subject: I2089
+    finding: "The criterion says a regression beyond the budgets is refused; case 83 asserts the budget never becomes the exit code. State the policy change and name cases 82 and 83 to extend."
+    blocking: false
+    resolution:
+      state: rejected
+      because: "Not this intent\'s plan: I2089 is maintenance under recovery-baseline, which no intent names; corrected there. The desired state names cases 82 and 83 and requires the policy change from reported to refused to be stated, not implied."
+  - id: criteria-not-falsifiable
+    class: insufficient_work
+    subject: recovery-is-verified-independently
+    finding: "Taken on an idle machine cannot be checked in CI, registry, provider, route or service is undefined, and I2086/I2087 desired states are perpetual. State a measured threshold, define growth by file kind, and make both issues finite."
+    blocking: false
+    resolution:
+      state: rejected
+      because: "Not this intent\'s plan: I2090 is maintenance under recovery-baseline, which no intent names; corrected there. Growth is defined by file kind (a module under src/capability/builtin, share/providers, share/kinds.yaml) and checked in a fixture; I2086 and I2087 close on a tracked artefact."
+  - id: acceptance-equals-desired-state
+    class: insufficient_work
+    subject: recovery-is-verified-independently
+    finding: "Each issue's acceptance criteria repeat its desired state and validation is only plan validate, while the M00 prompt requires a regression and a negative or mutation test per issue. Name the case and the mutation per issue."
+    blocking: false
+    resolution:
+      state: rejected
+      because: "Not this intent\'s plan: I2088 is maintenance under recovery-baseline, which no intent names; corrected there. Each remaining issue names the case that holds it: I2088 a case on the corrected sentences, I2089 cases 82/83, I2090 a fixture, I2070 case 997 with its mutation."
+  - id: dependency-order-missing
+    class: delivery_verification
+    subject: recovery-is-verified-independently
+    finding: "The M10 prompt requires M02, M03 and M04 first, all unassigned, and no new issue has depends_on although I2092/I2095 need I2091 and I2093 needs I1948/I1963. Add depends_on and a risk that M10 runs before M02-M04."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2070
+      because: "Recorded as a risk on claims-held-to-evidence (M10 runs before M02-M04 for its release half only); recovery-forge-gate depends on recovery-acceptance-contract."
+  - id: f13-unanswered
+    class: missed_requirement
+    subject: I2087
+    finding: "M00-I02 accepts no self-referential-only intent; the gap maps f13 to every-issue-serves-a-criterion and the plan adds a fourth intent about the tool. Give f13 its own criterion or record it as a risk."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2070
+      because: "Corrected in the plan records that land with I2070. Recorded as a risk on recovery-baseline: a product intent is recovery M11, owned by session d1."
+  - id: i2070-chronology
+    class: regression_risk
+    subject: I2070
+    finding: "I2070's dates predate its new milestone and its code is staged before any critique of the plan it now serves. Set updated_at to 2026-10-09 and record the critique before it gets a started_at."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2070
+      because: "updated_at set to 2026-10-09; I2070 gets no started_at before this critique is recorded."
+  - id: observed-revision-not-in-history
+    class: regression_risk
+    subject: recovery-is-verified-independently
+    finding: "The gap was observed at 893a79be65, which is not an ancestor of the branch head 2ce9315fa8. Bring the branch to master before committing."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2070
+      because: "Corrected in the plan records that land with I2070. The branch merges master (6800dcb519, which contains 893a79be65) before the plan is committed."
+  - id: mixed-change
+    class: regression_risk
+    subject: recovery-is-verified-independently
+    finding: "The recovery plan is staged together with the release-debt implementation, 33 files in one change. Commit the plan records separately."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2070
+      because: "Corrected in the plan records that land with I2070. The plan records are committed separately from the release.debt implementation."

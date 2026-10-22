@@ -41,6 +41,7 @@ pub fn run(args: ReleaseArgs) -> Result<u8> {
             let since = since.clone();
             analyze(&args, since.as_deref(), explain)
         }
+        Some(ReleaseCommand::Debt { release, record }) => debt(&args, release, record),
         Some(ReleaseCommand::Bump {
             ref level,
             ref exact,
@@ -82,6 +83,208 @@ fn render_changelog(args: &ReleaseArgs, only: Option<String>) -> Result<u8> {
         }
     }
     Ok(0)
+}
+
+/// Exit code when the debt refuses: a baseline grew, is undeclared or unreadable, or — judged
+/// as a release — the total did not fall by the declared minimum.
+pub const EXIT_DEBT: u8 = 10;
+
+/// The debt, through the capability so that every surface counts one value.
+///
+/// Without `--release` this is the gate of a change: it exits [`EXIT_DEBT`] only when a
+/// baseline grew or could not be counted. With it, it is the gate of a release, and a total
+/// that did not fall by the minimum refuses too. `--record` prints the block a release
+/// record carries and judges nothing, so that the writer of a record cannot be stopped by
+/// the verdict it is recording. A declaration that cannot be read is [`EXIT_UNREADABLE`].
+fn debt(args: &ReleaseArgs, as_release: bool, record: bool) -> Result<u8> {
+    let app = App::load(&args.repo)?;
+    let value = app
+        .context
+        .execute("release.debt", serde_json::json!({}))
+        .map_err(|e| Error::Refused {
+            code: EXIT_UNREADABLE,
+            reason: e.to_string(),
+        })?;
+    let root = std::path::PathBuf::from(&app.context.index.repository.root);
+    debt_answer(
+        value,
+        args.format,
+        as_release,
+        record,
+        Some(&root),
+        &mut std::io::stdout().lock(),
+    )
+}
+
+/// Write the debt report `value` to `out` in the form asked for, and say how to exit.
+fn debt_answer(
+    value: serde_json::Value,
+    format: OutputFormat,
+    as_release: bool,
+    record: bool,
+    root: Option<&std::path::Path>,
+    out: &mut dyn Write,
+) -> Result<u8> {
+    let report: release::debt::DebtReport = typed(value.clone())?;
+    if record {
+        // The writer of a record is not stopped by a debt that is owed: that is the verdict
+        // it records. It is stopped by counts that could not be taken, which it would
+        // otherwise write down as numbers.
+        if report.standing == release::debt::DebtStanding::Refused {
+            return Ok(EXIT_DEBT);
+        }
+        write!(out, "{}", debt_record(&report)).map_err(Error::Transport)?;
+        return Ok(0);
+    }
+    match format {
+        OutputFormat::Json => writeln!(
+            out,
+            "{}",
+            serde_json::to_string_pretty(&value).unwrap_or_default()
+        )
+        .map_err(Error::Transport)?,
+        OutputFormat::Text => {
+            write!(out, "{}", debt_text(&report, as_release)).map_err(Error::Transport)?;
+        }
+    }
+    let allowed = if as_release {
+        report.release_allowed
+    } else {
+        report.change_allowed
+    };
+    // A release also asks each gate that can say so whether its baseline is above the truth.
+    let (lines, tight) = match root.filter(|_| as_release) {
+        Some(root) => debt_slack(root, &report),
+        None => (Vec::new(), true),
+    };
+    if format == OutputFormat::Text {
+        for line in &lines {
+            writeln!(out, "{line}").map_err(Error::Transport)?;
+        }
+    }
+    Ok(if allowed && tight { 0 } else { EXIT_DEBT })
+}
+
+/// Ask every baseline's gate that can state slack whether the baseline holds more than the
+/// tree owes, and name the baselines whose gate cannot say.
+///
+/// The lines to print, and whether every baseline asked is tight. A gate that could not be
+/// run is a refusal: "could not be asked" is not "has no slack".
+fn debt_slack(root: &std::path::Path, report: &release::debt::DebtReport) -> (Vec<String>, bool) {
+    let mut lines = Vec::new();
+    let mut tight = true;
+    let mut unmeasured = Vec::new();
+    for baseline in &report.baselines {
+        let Some(slack) = &baseline.slack else {
+            unmeasured.push(baseline.id.as_str());
+            continue;
+        };
+        let (code, text) = std::process::Command::new("sh")
+            .arg("-c")
+            .arg(&slack.command)
+            .current_dir(root)
+            .output()
+            .map(|o| {
+                (
+                    o.status.code(),
+                    String::from_utf8_lossy(&o.stdout).into_owned()
+                        + &String::from_utf8_lossy(&o.stderr),
+                )
+            })
+            .unwrap_or((None, String::new()));
+        // a gate answers with 0 or 10; any other exit is a gate that could not judge
+        if !matches!(code, Some(0 | 10)) {
+            tight = false;
+            lines.push(format!(
+                "FAIL {}: its gate could not be asked whether the baseline is above the truth ({})",
+                baseline.path, slack.command
+            ));
+        } else if text.contains(&slack.says) {
+            tight = false;
+            lines.push(format!(
+                "FAIL {} declares {} and its own gate says it can be tightened ({}): write the baseline before the tag",
+                baseline.path, baseline.count, slack.command
+            ));
+        }
+    }
+    if !unmeasured.is_empty() {
+        lines.push(format!(
+            "INFO slack not measured, the gate cannot state it: {}",
+            unmeasured.join(", ")
+        ));
+    }
+    (lines, tight)
+}
+
+/// A capability's answer as the type its declaration promises. An answer that is not that
+/// type is a defect between two parts of one executable, reported as one and never rendered.
+fn typed<T: serde::de::DeserializeOwned>(value: serde_json::Value) -> Result<T> {
+    serde_json::from_value(value).map_err(|e| Error::Protocol {
+        reason: e.to_string(),
+    })
+}
+
+/// The block a release record carries: the total, and each baseline by its id.
+fn debt_record(report: &release::debt::DebtReport) -> String {
+    let recorded = report.recorded();
+    let mut s = format!(
+        "debt:\n  total: {}\n  payable: {}\n",
+        recorded.total, report.payable
+    );
+    if !recorded.unpayable.is_empty() {
+        s += "  unpayable:\n";
+        for id in &recorded.unpayable {
+            s += &format!("    - {id}\n");
+        }
+    }
+    s += "  baselines:\n";
+    for (id, count) in &recorded.baselines {
+        s += &format!("    {id}: {count}\n");
+    }
+    s
+}
+
+/// The report, for a person: every baseline with what it was, then the verdict.
+fn debt_text(report: &release::debt::DebtReport, as_release: bool) -> String {
+    let against = report
+        .previous_release
+        .as_deref()
+        .unwrap_or("no previous release");
+    let mut s = format!("debt     against {against}\n");
+    for b in &report.baselines {
+        let was = b
+            .previous
+            .map_or_else(|| "-".to_string(), |n| n.to_string());
+        let frozen = if b.payable { "" } else { "  (cannot be paid)" };
+        s += &format!(
+            "  {:<24} {:>6}  was {:>6}  {}{frozen}\n",
+            b.id, b.count, was, b.path
+        );
+    }
+    let was = report
+        .previous_total
+        .map_or_else(|| "-".to_string(), |n| n.to_string());
+    s += &format!("  {:<24} {:>6}  was {:>6}\n", "total", report.total, was);
+    if report.payable != report.total {
+        let was = report
+            .previous_payable
+            .map_or_else(|| "-".to_string(), |n| n.to_string());
+        s += &format!(
+            "  {:<24} {:>6}  was {:>6}\n",
+            "of which payable", report.payable, was
+        );
+    }
+    // each finding is marked for what it does: a refusal of this verdict, or a statement
+    for finding in &report.findings {
+        let refuses = report.refusing.contains(finding)
+            || (as_release && report.release_refusing.contains(finding));
+        let word = if refuses { "FAIL" } else { "OK  " };
+        s += &format!("{word} {finding}\n");
+    }
+    if as_release && report.standing == release::debt::DebtStanding::Owed {
+        s += "     pay at least the minimum before the tag: remove a baseline entry by fixing what it names\n";
+    }
+    s
 }
 
 /// The version report, and the verdict on where the version is stated.
@@ -805,5 +1008,441 @@ mod tests {
              name the version deliberately: `majordomus release bump --level minor` or \
              `--exact <version>`\n"
         );
+    }
+
+    fn debt_report(value: serde_json::Value) -> release::debt::DebtReport {
+        serde_json::from_value(value).unwrap()
+    }
+
+    /// Two baselines, one of them frozen, against a release that carried the same.
+    fn owed() -> release::debt::DebtReport {
+        debt_report(serde_json::json!({
+            "baselines": [
+                {"id": "list", "path": ".ai/repo/list-baseline.txt", "gate": "list-check",
+                 "form": "entries", "count": 5, "previous": 5, "payable": true, "because": ""},
+                {"id": "frozen", "path": ".ai/repo/frozen-baseline.txt", "gate": "frozen-check",
+                 "form": "counts", "count": 2, "previous": 2, "payable": false,
+                 "because": "published commits in an append-only history"}
+            ],
+            "total": 7, "payable": 5,
+            "previous_release": "v1.0.0", "previous_total": 7, "previous_payable": 5,
+            "minimum_reduction": 1, "standing": "owed",
+            "change_allowed": true, "release_allowed": false,
+            "findings": [
+                "the debt is 5 and was 5 at v1.0.0",
+                ".ai/repo/frozen-baseline.txt is declared unpayable and holds 2: published commits in an append-only history"
+            ],
+            "release_refusing": ["the debt is 5 and was 5 at v1.0.0"]
+        }))
+    }
+
+    #[test]
+    fn the_debt_report_shows_every_baseline_with_what_it_was_and_the_verdict_asked_for() {
+        let report = owed();
+
+        // as a release: refused, with what to do
+        let text = debt_text(&report, true);
+        assert!(text.starts_with("debt     against v1.0.0\n"), "{text}");
+        assert!(
+            text.contains(
+                "list                          5  was      5  .ai/repo/list-baseline.txt\n"
+            ),
+            "{text}"
+        );
+        assert!(
+            text.contains(".ai/repo/frozen-baseline.txt  (cannot be paid)\n"),
+            "{text}"
+        );
+        assert!(
+            text.contains("total                         7  was      7\n"),
+            "{text}"
+        );
+        assert!(
+            text.contains("of which payable              5  was      5\n"),
+            "{text}"
+        );
+        assert!(
+            text.contains("FAIL the debt is 5 and was 5 at v1.0.0\n"),
+            "{text}"
+        );
+        assert!(
+            text.contains("pay at least the minimum before the tag")
+                // a statement beside a refusal is not marked as one
+                && text.contains("OK   .ai/repo/frozen-baseline.txt is declared unpayable and holds 2"),
+            "{text}"
+        );
+
+        // as a change the same finding is not a refusal, and nothing is asked to be paid
+        let text = debt_text(&report, false);
+        assert!(
+            text.contains("OK   the debt is 5 and was 5 at v1.0.0\n"),
+            "{text}"
+        );
+        assert!(!text.contains("pay at least"), "{text}");
+    }
+
+    #[test]
+    fn a_first_measurement_prints_no_number_it_was_not_given() {
+        let report = debt_report(serde_json::json!({
+            "baselines": [
+                {"id": "list", "path": ".ai/repo/list-baseline.txt", "gate": "list-check",
+                 "form": "entries", "count": 5, "previous": null, "payable": true, "because": ""}
+            ],
+            "total": 5, "payable": 5,
+            "previous_release": null, "previous_total": null, "previous_payable": null,
+            "minimum_reduction": 1, "standing": "unrecorded",
+            "change_allowed": true, "release_allowed": true,
+            "findings": ["recorded now and compared with nothing"]
+        }));
+        let text = debt_text(&report, true);
+        assert!(
+            text.starts_with("debt     against no previous release\n"),
+            "{text}"
+        );
+        assert!(
+            text.contains("list                          5  was      -"),
+            "{text}"
+        );
+        assert!(
+            text.contains("total                         5  was      -\n"),
+            "{text}"
+        );
+        assert!(
+            !text.contains("of which payable"),
+            "all of it is payable: {text}"
+        );
+        assert!(
+            text.contains("OK   recorded now and compared with nothing\n"),
+            "{text}"
+        );
+
+        // the block a record carries names no unpayable baseline when there is none
+        assert_eq!(
+            debt_record(&report),
+            "debt:\n  total: 5\n  payable: 5\n  baselines:\n    list: 5\n"
+        );
+    }
+
+    #[test]
+    fn an_answer_of_another_shape_is_a_protocol_error_and_is_not_rendered() {
+        match typed::<release::debt::DebtReport>(serde_json::json!({"total": "seven"})) {
+            Err(Error::Protocol { reason }) => assert!(!reason.is_empty()),
+            other => panic!("a malformed answer was accepted: {}", other.is_ok()),
+        }
+    }
+
+    #[test]
+    fn debt_that_cannot_be_paid_has_no_earlier_number_at_a_first_measurement() {
+        let mut report = owed();
+        report.previous_payable = None;
+        let text = debt_text(&report, false);
+        assert!(
+            text.contains("of which payable              5  was      -\n"),
+            "{text}"
+        );
+    }
+
+    /// A destination that takes nothing: a closed pipe.
+    struct Closed;
+    impl Write for Closed {
+        fn write(&mut self, _: &[u8]) -> std::io::Result<usize> {
+            Err(std::io::ErrorKind::BrokenPipe.into())
+        }
+        fn flush(&mut self) -> std::io::Result<()> {
+            Ok(())
+        }
+    }
+
+    #[test]
+    fn an_answer_that_cannot_be_written_or_read_is_an_error_and_never_an_exit_code() {
+        let value = serde_json::to_value(owed()).unwrap();
+        for (format, record) in [
+            (OutputFormat::Text, true),
+            (OutputFormat::Text, false),
+            (OutputFormat::Json, false),
+        ] {
+            assert!(
+                matches!(
+                    debt_answer(value.clone(), format, true, record, None, &mut Closed),
+                    Err(Error::Transport(_))
+                ),
+                "a report that reached nobody is not a verdict"
+            );
+        }
+        assert!(matches!(
+            debt_answer(
+                serde_json::json!({}),
+                OutputFormat::Text,
+                true,
+                false,
+                None,
+                &mut Vec::new()
+            ),
+            Err(Error::Protocol { .. })
+        ));
+
+        // written, the verdict is the exit: owed refuses a release and not a change
+        let mut out = Vec::new();
+        assert_eq!(
+            debt_answer(
+                value.clone(),
+                OutputFormat::Text,
+                true,
+                false,
+                None,
+                &mut out
+            )
+            .unwrap(),
+            EXIT_DEBT
+        );
+        assert!(String::from_utf8(out)
+            .unwrap()
+            .contains("FAIL the debt is 5"));
+        assert_eq!(
+            debt_answer(
+                value,
+                OutputFormat::Json,
+                false,
+                false,
+                None,
+                &mut Vec::new()
+            )
+            .unwrap(),
+            0
+        );
+    }
+
+    /// A report of one paid-down baseline whose gate is asked with `command`, and one whose
+    /// gate cannot say.
+    fn asked(command: &str) -> serde_json::Value {
+        serde_json::json!({
+            "baselines": [
+                {"id": "list", "path": ".ai/repo/list-baseline.txt", "gate": "list-check",
+                 "form": "entries", "count": 4, "previous": 5, "payable": true,
+                 "slack": {"command": command, "says": "tighten the baseline"}},
+                {"id": "numbers", "path": ".ai/repo/numbers-baseline.txt", "gate": "numbers-check",
+                 "form": "counts", "count": 2, "previous": 2, "payable": true}
+            ],
+            "total": 6, "payable": 6,
+            "previous_release": "v1.0.0", "previous_total": 7, "previous_payable": 7,
+            "minimum_reduction": 1, "standing": "reduced",
+            "change_allowed": true, "release_allowed": true,
+            "findings": ["the debt fell from 7 to 6 since v1.0.0, by at least the minimum of 1"]
+        })
+    }
+
+    #[test]
+    fn a_baseline_its_own_gate_calls_tightenable_refuses_a_release_and_not_a_change() {
+        let root = tempfile::tempdir().unwrap();
+        let run = |command: &str, as_release: bool, format: OutputFormat| {
+            let mut out = Vec::new();
+            let code = debt_answer(
+                asked(command),
+                format,
+                as_release,
+                false,
+                Some(root.path()),
+                &mut out,
+            )
+            .unwrap();
+            (code, String::from_utf8(out).unwrap())
+        };
+
+        // the gate says nothing of slack: the release stands, and the gate that cannot say
+        // is named rather than passed over
+        let (code, text) = run("echo 'no new debt'", true, OutputFormat::Text);
+        assert_eq!(code, 0, "{text}");
+        assert!(
+            text.contains("INFO slack not measured, the gate cannot state it: numbers\n"),
+            "{text}"
+        );
+
+        // the gate says the baseline is above the truth, on either stream and at any exit
+        for command in [
+            "echo 'FIXED scripts/x - tighten the baseline'",
+            "echo 'tighten the baseline' >&2; exit 10",
+        ] {
+            let (code, text) = run(command, true, OutputFormat::Text);
+            assert_eq!(code, EXIT_DEBT, "{text}");
+            assert!(
+                text.contains(&format!(
+                    "FAIL .ai/repo/list-baseline.txt declares 4 and its own gate says it can be tightened ({command}): write the baseline before the tag"
+                )),
+                "{text}"
+            );
+        }
+
+        // a gate that could not be run is not a gate with no slack
+        let (code, text) = run("exit 127", true, OutputFormat::Text);
+        assert_eq!(code, EXIT_DEBT);
+        assert!(
+            text.contains(
+                "its gate could not be asked whether the baseline is above the truth (exit 127)"
+            ),
+            "{text}"
+        );
+
+        // a change is not asked, and a JSON answer is not followed by lines that are not JSON
+        let (code, text) = run("echo 'tighten the baseline'", false, OutputFormat::Text);
+        assert_eq!(code, 0);
+        assert!(!text.contains("tightened"), "{text}");
+        let (code, text) = run("echo 'tighten the baseline'", true, OutputFormat::Json);
+        assert_eq!(code, EXIT_DEBT);
+        assert!(
+            serde_json::from_str::<serde_json::Value>(&text).is_ok(),
+            "{text}"
+        );
+
+        // lines that cannot be written are an error, not an exit code
+        assert!(matches!(
+            debt_answer(
+                asked("true"),
+                OutputFormat::Text,
+                true,
+                false,
+                Some(root.path()),
+                &mut ClosedAfter(1)
+            ),
+            Err(Error::Transport(_))
+        ));
+    }
+
+    #[test]
+    fn when_every_gate_can_state_slack_nothing_is_named_as_not_measured() {
+        let root = tempfile::tempdir().unwrap();
+        let mut value = asked("echo 'no new debt'");
+        value["baselines"].as_array_mut().unwrap().truncate(1);
+        let (lines, tight) = debt_slack(root.path(), &typed(value).unwrap());
+        assert!(tight);
+        assert!(lines.is_empty(), "{lines:?}");
+    }
+
+    /// A destination that takes `n` writes and then closes.
+    struct ClosedAfter(usize);
+    impl Write for ClosedAfter {
+        fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+            if self.0 == 0 {
+                return Err(std::io::ErrorKind::BrokenPipe.into());
+            }
+            self.0 -= 1;
+            Ok(buf.len())
+        }
+        fn flush(&mut self) -> std::io::Result<()> {
+            Ok(())
+        }
+    }
+
+    #[test]
+    fn the_debt_command_in_no_repository_is_an_error() {
+        let nowhere = tempfile::tempdir().unwrap();
+        assert!(debt(&debt_args(nowhere.path(), OutputFormat::Text), false, false).is_err());
+    }
+
+    #[test]
+    fn a_refusal_of_any_change_is_marked_whichever_verdict_was_asked_for() {
+        let mut report = owed();
+        let grew = ".ai/repo/list-baseline.txt grew from 5 to 6 since v1.0.0".to_string();
+        report.findings.insert(0, grew.clone());
+        report.refusing = vec![grew];
+        report.standing = release::debt::DebtStanding::Refused;
+        let text = debt_text(&report, false);
+        assert!(
+            text.contains("FAIL .ai/repo/list-baseline.txt grew from 5 to 6"),
+            "{text}"
+        );
+        assert!(text.contains("OK   the debt is 5 and was 5"), "{text}");
+
+        // and counts that could not be taken are never written into a record
+        let value = serde_json::to_value(&report).unwrap();
+        let mut out = Vec::new();
+        assert_eq!(
+            debt_answer(value, OutputFormat::Text, true, true, None, &mut out).unwrap(),
+            EXIT_DEBT
+        );
+        assert!(out.is_empty(), "a refused record prints no block");
+    }
+
+    /// A gate that says it could not judge: both declared gates exit 12 for that.
+    #[test]
+    fn a_gate_that_could_not_judge_is_not_a_gate_with_no_slack() {
+        let root = tempfile::tempdir().unwrap();
+        let command = "echo 'no verdict is available' >&2; exit 12";
+        let mut out = Vec::new();
+        let code = debt_answer(
+            asked(command),
+            OutputFormat::Text,
+            true,
+            false,
+            Some(root.path()),
+            &mut out,
+        )
+        .unwrap();
+        assert_eq!(code, EXIT_DEBT);
+        assert!(String::from_utf8(out).unwrap().contains(&format!(
+            "its gate could not be asked whether the baseline is above the truth ({command})"
+        )));
+    }
+
+    #[test]
+    fn the_record_block_names_what_cannot_be_paid() {
+        assert_eq!(
+            debt_record(&owed()),
+            "debt:\n  total: 7\n  payable: 5\n  unpayable:\n    - frozen\n  baselines:\n    frozen: 2\n    list: 5\n"
+        );
+    }
+
+    fn debt_args(root: &std::path::Path, format: OutputFormat) -> ReleaseArgs {
+        ReleaseArgs {
+            repo: crate::cli::RepoArgs {
+                repo: Some(root.to_path_buf()),
+                discovery: crate::cli::DiscoveryMode::Filesystem,
+                share: Some(std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../share")),
+                ..Default::default()
+            },
+            command: None,
+            format,
+        }
+    }
+
+    #[test]
+    fn the_debt_command_exits_by_what_the_tree_carries() {
+        let fixture = crate::synthetic::SyntheticRepository::small().unwrap();
+        let root = fixture.root();
+        let text = debt_args(root, OutputFormat::Text);
+
+        // no declaration: nothing is known to be debt, which is not a tree with none
+        match debt(&text, false, false) {
+            Err(Error::Refused { code, reason }) => {
+                assert_eq!(code, EXIT_UNREADABLE);
+                assert!(reason.contains("nothing is known to be debt"), "{reason}");
+            }
+            other => panic!(
+                "an unreadable declaration answered {:?}",
+                other.map_err(|e| e.to_string())
+            ),
+        }
+
+        std::fs::create_dir_all(root.join(".ai/repo/ci")).unwrap();
+        std::fs::write(root.join(".ai/repo/list-baseline.txt"), "one\ntwo\n").unwrap();
+        std::fs::write(
+            root.join(".ai/repo/ci/debt.yaml"),
+            "version: 1\nminimum_reduction: 1\nbaselines:\n  - id: list\n    path: .ai/repo/list-baseline.txt\n    gate: list-check\n    form: entries\n",
+        )
+        .unwrap();
+        // a first measurement refuses neither a change nor a release, in either format
+        assert_eq!(debt(&text, false, false).unwrap(), 0);
+        assert_eq!(debt(&text, true, false).unwrap(), 0);
+        assert_eq!(
+            debt(&debt_args(root, OutputFormat::Json), true, false).unwrap(),
+            0
+        );
+        assert_eq!(debt(&text, false, true).unwrap(), 0);
+
+        // a baseline the declaration does not count refuses both, and no record is written
+        // over a tree that could not be counted
+        std::fs::write(root.join(".ai/repo/other-baseline.txt"), "three\n").unwrap();
+        assert_eq!(debt(&text, false, false).unwrap(), EXIT_DEBT);
+        assert_eq!(debt(&text, true, false).unwrap(), EXIT_DEBT);
+        assert_eq!(debt(&text, false, true).unwrap(), EXIT_DEBT);
     }
 }

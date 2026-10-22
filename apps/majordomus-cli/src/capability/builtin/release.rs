@@ -177,12 +177,40 @@ pub fn module() -> ModuleDescriptor {
                 benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::PublishedHistory },
                 handler: analysis,
             },
+            capability! {
+                id: DEBT_ID,
+                title: "The debt this tree carries, against the release before it",
+                description: "Every baseline of accepted violations `.ai/repo/ci/debt.yaml` declares, counted in the form its own gate reads it — one entry per line, or the numbers the file states, summed — beside what the previous release's record carries for it. No baseline may be larger than it was, in any change; a release must carry a total lower than the previous release's by at least the declared minimum; a previous release that recorded nothing is said to be that, and the counts are recorded and compared with nothing; at zero nothing is owed. A file named like a baseline that the declaration neither counts nor excludes with a reason, a counter that states no number and a declared file that cannot be read are refusals, never a zero.",
+                input: Empty,
+                output: release::debt::DebtReport,
+                stability: Stability::Implemented,
+                exposure: Exposure {
+                    mcp: Some(McpExposure {
+                        tool: Some("majordomus_release_debt".into()),
+                        resource: None,
+                    }),
+                    http: get("/api/v1/release/debt"),
+                    // `majordomus release debt` renders this capability for a person at a
+                    // terminal and for the release's own gates; `cli::LOCAL` declares that
+                    // once, as it does for the two capabilities above.
+                    cli: None,
+                },
+                tags: ["release", "debt"],
+                // Waived for the reason the analysis is: the comparison reads what the last
+                // release recorded, and a benchmark fixture has published nothing. The
+                // behavioural case is where it is exercised against recorded releases.
+                benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::PublishedHistory },
+                handler: debt,
+            },
         ],
     }
 }
 
 /// The compatibility analysis, named beside its declaration.
 pub const ANALYSIS_ID: &str = "release.analysis";
+
+/// The debt measurement, named beside its declaration.
+pub const DEBT_ID: &str = "release.debt";
 
 /// The capability's own id. Beside its declaration, so the two cannot drift apart without
 /// the test below noticing; the document carries it so that no page has to enumerate where
@@ -281,6 +309,15 @@ fn analysis(ctx: &Context, input: AnalysisInput) -> Result<VersionPlan, Capabili
     .map_err(|e| CapabilityError::NotFound(e.to_string()))
 }
 
+/// The one measurement of the debt, behind every surface that shows it.
+///
+/// A declaration that cannot be read is a refusal and never a report of no debt: "nothing is
+/// owed" and "nothing could be counted" are different facts.
+fn debt(ctx: &Context, _: Empty) -> Result<release::debt::DebtReport, CapabilityError> {
+    let root = std::path::Path::new(&ctx.index.repository.root);
+    release::debt::measure(root, &ctx.index.objects).map_err(CapabilityError::NotFound)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -298,6 +335,7 @@ mod tests {
             ANALYSIS_ID, "release.analysis",
             "the id beside the declaration is the declared one"
         );
+        assert_eq!(DEBT_ID, "release.debt");
         let expected: &[(&str, &str, &str)] = &[
             (
                 "release.changelog",
@@ -313,6 +351,11 @@ mod tests {
                 "release.analysis",
                 "majordomus_release_analysis",
                 "/api/v1/release/analysis",
+            ),
+            (
+                "release.debt",
+                "majordomus_release_debt",
+                "/api/v1/release/debt",
             ),
         ];
         let ids: Vec<&str> = m

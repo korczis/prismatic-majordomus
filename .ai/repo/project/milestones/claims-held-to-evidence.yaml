@@ -1,0 +1,34 @@
+id: claims-held-to-evidence
+title: "A release carries less debt than the last, over evidence recorded since that release"
+slug: claims-held-to-evidence
+order: 231
+priority: p0
+problem: "On 2026-10-08 eighteen baselines held 2788 accepted violations and no release was asked to carry fewer; v0.16.0, v0.17.0 and the batch after shipped over byte-identical baselines. The evidence ledger, last recorded on 2026-09-17, supported 0 of 219 guaranteed claims (237 examined), and evidence-check passed because it refuses only lost evidence."
+outcome: "release.debt counts every baseline by its declared form, records the counts, and refuses a release whose debt did not fall, whose baseline is above its gate's measure, or whose evidence is older than the previous release."
+current_state: "release.debt is written and tested on feature/a-release-carries-less-debt-than-the-last, not on master."
+desired_state: "release.debt is on master and refuses at every release."
+scope:
+  - apps/majordomus-cli/src/release
+  - apps/majordomus-cli/src/commands/release.rs
+  - apps/majordomus-cli/src/capability/builtin/release.rs
+  - .ai/repo/ci
+  - .ai/repo/rules/project
+  - scripts/release-record
+  - scripts/ci/release-verdict
+  - docs/RELEASE.md
+  - test/cases
+non_scope:
+  - Accepting an ADR; acceptance is the owner's act
+  - Bumping the version; the integrator decides it
+acceptance_criteria:
+  - "Case 997 refuses a release that paid nothing, a baseline that grew, a tightenable baseline, a gate that could not judge, and stale evidence; and a change for none of the release-only refusals"
+  - "A mutation that turns any of those refusals into a pass makes case 997 fail"
+validation:
+  - "bin/majordomus plan validate"
+  - "bash test/run.sh 997_a_release_carries_less_debt_than_the_last"
+evidence_required:
+  - release_debt_case_997
+risks:
+  - "The recovery campaign orders M10 after M02, M03 and M04, none of which is assigned; this milestone is the release half of M10 and does not wait for them, which leaves the guarantees themselves to test-evidence"
+created_at: 2026-10-09
+updated_at: 2026-10-09

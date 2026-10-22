@@ -1,0 +1,32 @@
+id: recovery-baseline
+title: "The recovery starts from findings measured at a named revision, not from an audit's word"
+slug: recovery-baseline
+order: 230
+priority: p0
+problem: "An independent audit at 3ede593c0e (2026-10-07) reported fifteen findings about scope, verifiers, hooks, doctor, the YAML readers, the public description, evidence, adoption cost, the MCP surface and growth. Treated as facts, they would carry the audit's errors into the work."
+outcome: "Each finding is re-measured at a named revision with a command that reproduces it, the README describes what ships, and budgets for first run, hooks, doctor and the MCP list are measured with their method stated."
+current_state: "Re-measured at 893a79be65 on 2026-10-09: 12 confirmed, 3 changed (F02, F04, F10), 0 fixed. The README calls the tool lightweight, shell-only, model-free and read-only."
+desired_state: "The findings and their reproducers are tracked; the README names the supervisor core and its optional modules as they ship; budgets are measured."
+scope:
+  - .ai/repo/project
+  - README.md
+  - site/content
+  - docs
+  - .ai/repo/benchmarks
+  - test/cases
+non_scope:
+  - Accepting an ADR; acceptance is the owner's act
+  - Bumping the version; the integrator decides it
+acceptance_criteria:
+  - "Each of the fifteen findings has a status at a named revision and a command a reader can rerun"
+  - "No README sentence claims a mechanism the tree does not have; case 9xx holds the sentences that were corrected"
+  - "Budgets come with the machine load they were measured under, and case 82 or 83 is extended or its policy change stated"
+validation:
+  - "bin/majordomus plan validate"
+evidence_required:
+  - findings_reproduced_at_a_revision
+risks:
+  - "No intent names this milestone: its issues are measurement and correction, and the outcomes they serve are the two recovery intents"
+  - "F13: the three intents on master are about the plan machinery itself; a product outcome is recovery M11, owned by d1"
+created_at: 2026-10-09
+updated_at: 2026-10-09

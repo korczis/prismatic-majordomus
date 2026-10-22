@@ -172,6 +172,7 @@ fn sample_release(model: &Model, tag: &str, channel: Channel) -> Release {
         notes_url: None,
         yanked: false,
         required_targets: Some(model.published().map(|t| t.id.clone()).collect()),
+        debt: None,
         artifacts: model
             .published()
             .map(|t| {
