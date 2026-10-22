@@ -98,24 +98,31 @@ mj_validate_command_surface() {
     bad=1
   fi
 
-  # A here-string rather than `printf | grep -q`: grep exits at the first match and closes
-  # the pipe, and the printf behind it then writes to a closed descriptor. The EPIPE
-  # diagnostic that bash prints is harmless, appears only when the timing is unlucky, and
-  # lands in the middle of doctor's output — which is recorded as evidence, so a committed
-  # artifact ended up differing between machines by whether the race happened to fire.
+  # Whether a word is a line of a list is a pattern match on the list between newlines, in
+  # this shell: a grep per command, each on a here-string, was most of this validator, and
+  # a pipe into `grep -q` raced its own writer (an EPIPE diagnostic in doctor's recorded
+  # output, on unlucky timing). The usage text is read once for every public command.
+  local nl='
+' unlisted
   for c in $dispatched; do
-    grep -Fxq "$c" <<<"$ids" || {
-      mj_doctrine_fail command "$c" "dispatched by bin/majordomus but absent from share/commands.yaml" "grep -n 'id: $c' share/commands.yaml"; bad=1; }
+    case "$nl$ids$nl" in *"$nl$c$nl"*) ;; *)
+      mj_doctrine_fail command "$c" "dispatched by bin/majordomus but absent from share/commands.yaml" "grep -n 'id: $c' share/commands.yaml"; bad=1 ;;
+    esac
   done
   for c in $public; do
     [ "$c" = version ] && continue      # dispatched ahead of the option parser
-    grep -Fxq "$c" <<<"$dispatched" || {
-      mj_doctrine_fail command "$c" "declared public but bin/majordomus does not dispatch it" "grep -n '$c)' bin/majordomus"; bad=1; }
+    case "$nl$dispatched$nl" in *"$nl$c$nl"*) ;; *)
+      mj_doctrine_fail command "$c" "declared public but bin/majordomus does not dispatch it" "grep -n '$c)' bin/majordomus"; bad=1 ;;
+    esac
   done
-  # a command is public exactly when the usage text lists it, in both directions
-  for c in $public; do
-    grep -qE "^  $c( |\$)" "$MJ_BIN_DIR/majordomus" || {
-      mj_doctrine_fail command "$c" "declared public but the usage text does not list it" "bin/majordomus --help"; bad=1; }
+  # a command is public exactly when the usage text lists it, in both directions: a line of
+  # bin/majordomus that is two spaces, the command, then a space or its end
+  unlisted="$(awk 'NR == FNR { if ($0 != "") want[++n] = $0; next } { line[++m] = $0 }
+    END { for (i = 1; i <= n; i++) { re = "^  " want[i] "( |$)"; ok = 0
+            for (j = 1; j <= m; j++) if (line[j] ~ re) { ok = 1; break }
+            if (!ok) print want[i] } }' - "$MJ_BIN_DIR/majordomus" <<<"$public")"
+  for c in $unlisted; do
+    mj_doctrine_fail command "$c" "declared public but the usage text does not list it" "bin/majordomus --help"; bad=1
   done
 
   # An effect names something the command takes and a class the registry knows. A subcommand
@@ -209,11 +216,17 @@ mj_validate_command_coverage() {
     mj_doctrine_skip command "coverage" "this installation carries no test suite to measure" "ls test/cases"
     return 0
   fi
-  local f c bad=0 declared="" behaviour="" negative="" public
+  local f c bad=0 declared="" behaviour="" negative="" public heads nl='
+'
   # every header of every case in one pass: the first covers line and the first negative
-  # line of each file, as the per-file sed pipelines read them before
-  behaviour="$(awk 'FNR == 1 { c = 0 } c == 0 && sub(/^# majordomus-covers: */, "") { printf " %s", $0; c = 1 }' "$cases"/*.sh)"
-  negative="$(awk 'FNR == 1 { c = 0 } c == 0 && sub(/^# majordomus-negative: */, "") { printf " %s", $0; c = 1 }' "$cases"/*.sh)"
+  # line of each file, as the per-file sed pipelines read them before. A file is left once it
+  # has given both, rather than read to its end twice, once for each header (I0820).
+  heads="$(awk 'FNR == 1 { c = 0; g = 0 }
+      c == 0 && /^# majordomus-covers:/ { v = $0; sub(/^# majordomus-covers: */, "", v); b = b " " v; c = 1 }
+      g == 0 && /^# majordomus-negative:/ { v = $0; sub(/^# majordomus-negative: */, "", v); n = n " " v; g = 1 }
+      c && g { nextfile }
+      END { printf "%s\n%s.", b, n }' "$cases"/*.sh)"
+  behaviour="${heads%%"$nl"*}"; negative="${heads#*"$nl"}"; negative="${negative%.}"
   declared="$behaviour"
   public="$(mj_cmdreg_public)"
   [ -n "$(printf '%s' "$declared" | tr -d ' ')" ] || {
@@ -248,10 +261,16 @@ mj_validate_command_coverage() {
   # loop above still requires every public command to be named by a bare one, so widening the
   # vocabulary cannot be used to satisfy the narrower obligation. mj_covers_resolve holds the
   # rule for the prefixed names; test/cases/31 calls the same function.
-  local why rc undecided="" absent=""
+  #
+  # The rule is called in this shell, its answer written to a file and read back only when
+  # there is one, and a bare name is looked up in the public list by a pattern match: a
+  # command substitution and a grep per name were most of this validator (I0820).
+  local why rc undecided="" absent="" said
+  said="$(mktemp "${TMPDIR:-/tmp}/mj.covers.XXXXXX")"
   for c in $(printf '%s\n' $behaviour $negative | LC_ALL=C sort -u); do
     [ "$c" = none ] && continue
-    rc=0; why="$(mj_covers_resolve "$root" "$c")" || rc=$?
+    rc=0; mj_covers_resolve "$root" "$c" > "$said" || rc=$?
+    why=""; case "$rc" in 1|3) IFS= read -r why < "$said" || : ;; esac
     case "$rc" in
       0) continue ;;
       1) mj_doctrine_fail command "$c" "$why" "grep -rn '$c' test/cases/ | grep majordomus-"; bad=1
@@ -260,9 +279,11 @@ mj_validate_command_coverage() {
          case " $absent " in *" $why "*) ;; *) absent="$absent $why" ;; esac
          continue ;;
     esac
-    grep -Fxq "$c" <<<"$public" || {
-      mj_doctrine_fail command "$c" "a test case declares coverage of it, but it is not a public command" "grep -rn '$c' test/cases/ | grep majordomus-"; bad=1; }
+    case "$nl$public$nl" in *"$nl$c$nl"*) ;; *)
+      mj_doctrine_fail command "$c" "a test case declares coverage of it, but it is not a public command" "grep -rn '$c' test/cases/ | grep majordomus-"; bad=1 ;;
+    esac
   done
+  rm -f "$said"
   # A name this installation cannot resolve is reported as undecided, never as resolved and
   # never as broken: the suite was copied without the models it names (case 28 and case 65
   # run from such a copy), and the repository's own run of case 31 decides it.

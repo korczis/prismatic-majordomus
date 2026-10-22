@@ -420,6 +420,77 @@ fn two_runtimes_link_and_share_sessions_claims_reviews_and_a_handover() {
 }
 
 #[test]
+fn a_notice_reaches_a_linked_runtime() {
+    // I2874: what a seat did, said once, seen on every machine, and never in the digest
+    let a = Node::new();
+    let b = Node::new();
+    a.declare("one-repository", &[&a.key, &b.key], &[]);
+    let sa = a.serve();
+    b.declare("one-repository", &[&a.key, &b.key], &[&sa]);
+    let sb = b.serve();
+    wait_until(
+        "both runtimes hold one connected link",
+        Duration::from_secs(15),
+        || connected(&sa) == 1 && connected(&sb) == 1,
+    );
+    let digest_before = state(&sb)["digest"].clone();
+
+    let (status, written) = post(
+        &sa,
+        "/api/v1/mesh/notices",
+        json!({"session": "a1", "subject": "worktree-cleanup",
+               "text": "2 removed: feature/a, fix/b", "bytes": 1_073_741_824u64}),
+    );
+    assert_eq!(status, 200, "{written}");
+    let key = written["key"].as_str().unwrap().to_string();
+    wait_until("B holds A's notice", Duration::from_secs(10), || {
+        sb.get("/api/v1/mesh/notices").1["notices"]
+            .as_array()
+            .is_some_and(|n| n.iter().any(|x| x["key"] == json!(key)))
+    });
+    let notices = sb.get("/api/v1/mesh/notices").1["notices"].clone();
+    let n = notices
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|x| x["key"] == json!(key))
+        .unwrap()
+        .clone();
+    assert_eq!(n["subject"], json!("worktree-cleanup"));
+    assert_eq!(n["text"], json!("2 removed: feature/a, fix/b"));
+    assert_eq!(n["bytes"], json!(1_073_741_824u64));
+    assert_eq!(
+        notices.as_array().unwrap().len(),
+        1,
+        "once, however often it was synced: {notices}"
+    );
+
+    // the digested state counts it as opaque and nothing else: as a runtime older than the
+    // kind reads it
+    let after = state(&sb);
+    assert_eq!(after["opaque_events"], json!(1), "{after}");
+    assert_ne!(
+        after["digest"], digest_before,
+        "the opaque count is part of the digest"
+    );
+    assert_eq!(state(&sa)["digest"], after["digest"], "both runtimes agree");
+
+    // a second notice of the same session inside the minute is refused with the time left
+    let (status, refused) = post(
+        &sa,
+        "/api/v1/mesh/notices",
+        json!({"session": "a1", "subject": "disk-prune", "text": "again"}),
+    );
+    assert_eq!(status, 422, "{refused}");
+    assert!(
+        refused["error"]["message"]
+            .as_str()
+            .is_some_and(|m| m.contains("one notice per 60 s")),
+        "{refused}"
+    );
+}
+
+#[test]
 fn runtimes_of_different_repositories_never_link_and_say_why() {
     // mesh-repository-isolation
     let x = Node::new();

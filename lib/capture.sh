@@ -1579,6 +1579,27 @@ mj_capture_session_failed() {
   return 0
 }
 
+# The executable a step of a lifecycle event runs, through the one resolution every lifecycle
+# step shares (mj_rust_lifecycle, I3320): its path on stdout, or provider.event.failed naming
+# <what-did-not-happen> and the cause, the cause again on stderr, and 12. The step then does
+# without it, and the event goes on: the hook's exit status belongs to the provider. Before
+# this, each step tested `-x` on its own and returned quietly, so an executable that was
+# missing, or older than the contract the tree declares, made the server, the mesh and the
+# brief vanish with nothing on the record to say why.
+mj_capture_lifecycle_bin() {
+  local provider="$1" event="$2" what="$3" out rc=0
+  # shellcheck source=rust_bin.sh
+  . "$MJ_LIB_DIR/rust_bin.sh"
+  # the path on success, the cause on failure: the resolution writes one or the other
+  out="$(mj_rust_lifecycle "$MJ_HOME" "$MJ_ROOT" 2>&1)" || rc=$?
+  if [ "$rc" != 0 ]; then
+    mj_capture_session_failed "$provider" "$event" "$what: the executable is ${out:-not usable}"
+    printf '%s\n' "${out:-not usable}" >&2
+    return 12
+  fi
+  printf '%s\n' "$out"
+}
+
 # The strings the provider sends are its own; nothing here lets one name a path or reach a
 # shell, so they are reduced to the same safe form the prompt archive uses for an identity.
 # Named apart from `mj_capture_plain` deliberately: that one reads a field out of a scan and
@@ -1635,7 +1656,7 @@ mj_capture_session_start() {
   # `enabled: true` and a server whose mesh is not active is the drift this repository paid
   # for on 2026-09-12 (ADR 0059), and the briefing is where a worker hears of it before its
   # first tool call. It travels as an argument, like the server line.
-  local mesh; mesh="$(mj_capture_mesh_line "$server")"
+  local mesh; mesh="$(mj_capture_mesh_line "$server" "$provider")"
   [ -n "$mesh" ] && [ -n "$joined" ] && mesh="$mesh
 Mesh session: $joined — this session is on the mesh under that id; claim the paths you work on under it (majordomus_mesh_claim, session \"$joined\") before you edit them"
   # What happened around the repository since the last hour, under the mesh (ADR 0133): a
@@ -1650,19 +1671,17 @@ Mesh session: $joined — this session is on the mesh under that id; claim the p
   mj_derive_briefing "$server" "$mesh" "$monitor" 2>/dev/null || mj_session_context_log "$provider start event: the briefing could not be assembled"
   # How to keep itself awake and reporting (ADR 0136), told to every provider's session the
   # policy switches it for, whether or not a mod of that provider shows the brief as well.
-  [ "$(mj_pol session.brief_on_interval)" = true ] && mj_capture_keep_awake "$psession"
+  [ "$(mj_pol session.brief_on_interval)" = true ] && mj_capture_keep_awake "$provider" "$psession"
   return 0
 }
 
 # What the session is told about keeping itself awake, and the brief as it stands: the
 # executable's own `brief --keep-awake`, asked of the server just ensured. Best-effort, like
-# the server and mesh lines: an executable that is missing or stale says nothing here.
+# the server and mesh lines, and never silent: an executable that is missing or stale leaves
+# provider.event.failed with its cause (I3320) and the event goes on.
 mj_capture_keep_awake() {
-  local psession="${1:-}" bin
-  # shellcheck source=rust_bin.sh
-  . "$MJ_LIB_DIR/rust_bin.sh"
-  bin="$(mj_rust_bin "$MJ_HOME")"
-  { [ -x "$bin" ] && ! mj_rust_stale "$MJ_HOME" "$bin"; } || return 0
+  local provider="$1" psession="${2:-}" bin
+  bin="$(mj_capture_lifecycle_bin "$provider" start "the keep-awake brief was not given")" || return 0
   set -- brief --repo "$MJ_ROOT" --keep-awake --this-checkout
   [ -n "$psession" ] && set -- "$@" --session "$psession"
   printf '\n## Keeping awake\n\n'
@@ -1679,16 +1698,8 @@ mj_capture_keep_awake() {
 mj_capture_ensure_server() {
   local provider="$1" bin share line
   [ "$(mj_pol session.ensure_server_on_start)" = false ] && { printf 'not ensured: session.ensure_server_on_start is false\n'; return 0; }
-  # shellcheck source=rust_bin.sh
-  . "$MJ_LIB_DIR/rust_bin.sh"
-  bin="$(mj_rust_bin "$MJ_HOME")"
-  if [ ! -x "$bin" ]; then
-    mj_session_context_log "$provider start event: the executable is not built; no server ensured"
-    printf 'not ensured: the executable is not built (run `just build`)\n'; return 0
-  fi
-  if mj_rust_stale "$MJ_HOME" "$bin"; then
-    mj_session_context_log "$provider start event: the executable is older than its sources; no server ensured"
-    printf 'not ensured: the executable is older than its sources (run `just build`)\n'; return 0
+  if ! bin="$(mj_capture_lifecycle_bin "$provider" start "no server was ensured" 2>&1)"; then
+    printf 'not ensured: the executable is %s\n' "${bin:-not usable}"; return 0
   fi
   share="$(mj_rust_share "$MJ_ROOT")"
   [ -n "$share" ] && export MAJORDOMUS_SHARE="$share"
@@ -1712,9 +1723,7 @@ mj_capture_mesh_join() {
   local provider="$1" psession="$2" server="$3" bin share id
   [ -n "$psession" ] || return 0
   case "$server" in ready\ http://*) ;; *) return 0 ;; esac
-  # shellcheck source=rust_bin.sh
-  . "$MJ_LIB_DIR/rust_bin.sh"
-  bin="$(mj_rust_bin "$MJ_HOME")"; [ -x "$bin" ] || return 0
+  bin="$(mj_capture_lifecycle_bin "$provider" start "the session did not join the mesh")" || return 0
   share="$(mj_rust_share "$MJ_ROOT")"
   [ -n "$share" ] && export MAJORDOMUS_SHARE="$share"
   id="$(mj_capture_mesh_session "$provider" "$psession")"
@@ -1731,13 +1740,16 @@ mj_capture_mesh_join() {
 }
 
 # Close this provider session on the mesh at its end, so that its claims end everywhere at
-# once rather than when its runtime stops beating. Best-effort, like the join.
+# once rather than when its runtime stops beating. Best-effort, like the join, and judged by
+# the same resolution — but quietly: only an executable that passed it at the start could
+# have joined, so one that does not pass it now has nothing of this session's to close, and
+# the start event already recorded why (I3320).
 mj_capture_mesh_leave() {
   local provider="$1" psession="$2" bin share
   [ -n "$psession" ] || return 0
   # shellcheck source=rust_bin.sh
   . "$MJ_LIB_DIR/rust_bin.sh"
-  bin="$(mj_rust_bin "$MJ_HOME")"; [ -x "$bin" ] || return 0
+  bin="$(mj_rust_lifecycle "$MJ_HOME" "$MJ_ROOT" 2>/dev/null)" || return 0
   share="$(mj_rust_share "$MJ_ROOT")"
   [ -n "$share" ] && export MAJORDOMUS_SHARE="$share"
   "$bin" mesh session close --repo "$MJ_ROOT" --format json \
@@ -1758,14 +1770,12 @@ mj_capture_mesh_leave() {
 # mesh lives in its memory — and reads the declaration from the index. No request leaves
 # this file: SECURITY.md's one declared request stays the one in context.sh.
 mj_capture_mesh_line() {
-  local server="$1" decl bin share out
+  local server="$1" provider="${2:-unknown}" decl bin share out
   case "$server" in ready\ http://*) ;; *) return 0 ;; esac
   decl="$(mj_git ls-files -- .ai/repo/mesh 2>/dev/null | grep -E '^\.ai/repo/mesh/[^/]+\.ya?ml$' | head -n 1 || true)"
   [ -n "$decl" ] || return 0
   mj_has jq || return 0
-  # shellcheck source=rust_bin.sh
-  . "$MJ_LIB_DIR/rust_bin.sh"
-  bin="$(mj_rust_bin "$MJ_HOME")"; [ -x "$bin" ] || return 0
+  bin="$(mj_capture_lifecycle_bin "$provider" start "the mesh line was not read")" || return 0
   share="$(mj_rust_share "$MJ_ROOT")"
   [ -n "$share" ] && export MAJORDOMUS_SHARE="$share"
   # exit 10 is a failed check, and the report is printed either way
