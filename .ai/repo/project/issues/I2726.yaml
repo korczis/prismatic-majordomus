@@ -1,0 +1,27 @@
+id: I2726
+milestone: release-in-minutes
+title: "Release metadata is published on a fast check, and the full derivation runs in a parallel record job"
+slug: metadata-on-a-fast-check
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Publish releases/<tag>.json and latest.json after the record and a release-scoped generate --check, reuse the built executable, check out blob-less, and move the whole derivation and derive-check into a parallel record job that proposes the record PR."
+why: "ADR 0162 (owner 2026-10-14: release per patch or minor under 5-10 minutes). The publish job spends 7.7 minutes deriving and re-deriving and 2.2 compiling before publishing two files; this amends ADR 0131 decision 1."
+current_state: "Publish runs the full derive and derive-check before site-deploy --release-metadata."
+desired_state: "Publish serves the metadata within about four minutes of the build phase ending; the record job's derive-check still judges the record's tree; ADR 0131 decisions 2-5 hold."
+scope:
+  - ".github/workflows/release.yml"
+  - "scripts/site-deploy"
+  - "scripts/derive-check"
+  - "test/cases"
+non_scope: []
+depends_on: []
+acceptance_criteria:
+  - "The metadata is served before the parallel record job's derivation finishes, and a stale release projection is still refused"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "metadata_fast_check_test"
+created_at: 2026-10-14
+updated_at: 2026-10-14

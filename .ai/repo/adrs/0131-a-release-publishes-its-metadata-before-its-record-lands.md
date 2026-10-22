@@ -19,6 +19,7 @@ related:
   - file:.ai/repo/project/issues/I2303.yaml
   - test:test/cases/1041_a_release_publishes_its_metadata.sh
   - test:test/cases/96_site_deploy.sh
+  - file:.ai/repo/adrs/0162-a-release-is-served-within-ten-minutes-of-its-tag.md
 ---
 # 131. A release publishes its metadata to the site before its record lands, and the site never goes back a release
 
@@ -51,6 +52,10 @@ The owner set the bound at 15 minutes from tag to served release and chose, aske
    `site/static/releases/latest.json` of that tree onto what `gh-pages` serves, commits them
    alone, and pushes. It is the one deploy script with one more mode, not a second deploy
    path.
+   *Amended 2026-10-14 by ADR 0162:* the metadata is published after a release-scoped
+   `generate --check` rather than the whole derivation, which moves to a parallel record job,
+   and the deploy is made by the run through GitHub Actions rather than a `gh-pages` branch
+   build. Decisions 2-5 are unchanged.
 
 2. **Two files and nothing else.** `build.json`, every page and every other file stay what
    master's last deploy published. The `pages-live` gate, which asks that the site was built

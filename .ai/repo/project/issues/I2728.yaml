@@ -1,0 +1,25 @@
+id: I2728
+milestone: release-in-minutes
+title: "Smoke tests wait for the served metadata in one job, not six"
+slug: smoke-waits-in-one-job
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Add one job that waits until the served metadata names the release, and start the smoke legs only after it."
+why: "ADR 0162 (owner 2026-10-14: release per patch or minor under 5-10 minutes). Six smoke jobs, two on macOS, hold slots for 3-9 minutes each while polling."
+current_state: "Every smoke leg polls for the metadata itself."
+desired_state: "One metadata-live job polls; the smoke legs need it and hold no slot while waiting."
+scope:
+  - ".github/workflows/release.yml"
+  - "test/cases"
+non_scope: []
+depends_on: []
+acceptance_criteria:
+  - "No smoke leg starts before the metadata names the release"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "smoke_waits_once_test"
+created_at: 2026-10-14
+updated_at: 2026-10-14

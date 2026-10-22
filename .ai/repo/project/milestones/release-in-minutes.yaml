@@ -1,0 +1,41 @@
+id: release-in-minutes
+title: "A release is served within ten minutes of its tag"
+slug: release-in-minutes
+order: 145
+priority: p0
+problem: "Measured on 2026-10-14 over v0.22.0-v0.26.0: tag to releases/latest.json served took 39-62 minutes, 39-45 of them execution and 0-24 queue. Every release compiles the crate fourteen times cold, because tag-scoped caches are never read and no trunk job saves the release keys; the macOS x86_64 leg spends 9.1 minutes on a debug build to learn an artifact name and 14.9 on the release build; the publish job checks out the full history, recompiles the executable and derives the tree twice (7.7 minutes) before publishing two files; the metadata deploy waits on GitHub's pages-build-deployment, queued 0-47 minutes behind PR validate runs of 360-530 job-minutes each on twenty hosted slots."
+outcome: "Tag to served is about 8-9 minutes uncontended and stays near it during the day (ADR 0162): a release is promoted from a trunk candidate, its metadata is published on a fast check while the full derivation runs beside it, the site is deployed by the run, release work has priority over PR validation without cancelling anything, and every release records its tag-to-served time."
+current_state: "ADR 0131 publishes the metadata before the record lands; everything else in the path is built and derived at tag time and deployed through the gh-pages branch build."
+desired_state: "release-check records tag-to-served per release with every stage's time, and a release over 10 minutes is a board finding naming its slowest stage. Each issue below is a slice that lands on its own."
+scope:
+  - ".github/workflows/release.yml"
+  - ".github/workflows/validate.yml"
+  - ".github/workflows/pages.yml"
+  - ".github/actions"
+  - "scripts/site-deploy"
+  - "scripts/release-package"
+  - "scripts/release-verify"
+  - "scripts/ci"
+  - "share/distribution.yaml"
+  - "docs/DISTRIBUTION.md"
+  - "test/cases"
+non_scope:
+  - "Self-hosted runners, which need an isolation decision of their own"
+  - "Skipping targets for a patch release (ADR 0019)"
+  - "Cancelling another session's run on a current head (ADR 0155, cases 26 and 3019)"
+acceptance_criteria:
+  - "Three consecutive releases are served within 10 minutes of their tag, as release-check records"
+  - "A release promoted from a candidate passes release-verify on the promoted archives"
+  - "The site never goes back a release under the run-deployed Pages (ADR 0131 decision 4)"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 1041_a_release_publishes_its_metadata 96_site_deploy 26_ci_wiring"
+evidence_required:
+  - "tag_to_served_measured"
+  - "candidate_promotion_verified"
+depends_on: []
+risks:
+  - "Deploying Pages from Actions changes the repository's Pages source, an owner setting."
+  - "Candidate builds cost about 40-60 job-minutes per push to master."
+created_at: 2026-10-14
+updated_at: 2026-10-14

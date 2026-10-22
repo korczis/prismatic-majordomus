@@ -1,0 +1,29 @@
+id: I2725
+milestone: release-in-minutes
+title: "A release is promoted from a candidate built on the trunk"
+slug: a-release-is-promoted-from-a-candidate
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Build the model's release matrix on every push to master that changes what ships, keep the archives as run artifacts named by commit and target, and let the tag's run download and verify them instead of building."
+why: "ADR 0162 (owner 2026-10-14: release per patch or minor under 5-10 minutes). Every release compiles the crate fourteen times cold; the build phase is 24-31 minutes of the 39-62."
+current_state: "The release run builds every target at tag time."
+desired_state: "The tag's run promotes the tagged commit's candidate archives through release-verify, refuses a mismatched commit, target or digest, and builds only a target with no candidate."
+scope:
+  - ".github/workflows/release.yml"
+  - ".github/workflows/validate.yml"
+  - "scripts/release-package"
+  - "scripts/release-verify"
+  - "share/distribution.yaml"
+  - "test/cases"
+non_scope: []
+depends_on: []
+acceptance_criteria:
+  - "A tag on a commit with candidates is published from them, verified, in under three minutes of build phase"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "candidate_promotion_verified"
+created_at: 2026-10-14
+updated_at: 2026-10-14

@@ -1,0 +1,28 @@
+id: I2727
+milestone: release-in-minutes
+title: "The site is deployed by the run that built it, from GitHub Actions"
+slug: pages-is-deployed-by-the-run
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Switch the Pages source to GitHub Actions and make scripts/site-deploy upload the artifact and deploy it from the same job, for the trunk deploy and the release metadata mode, composing the two files onto master's last deployed artifact."
+why: "ADR 0162 (owner 2026-10-14: release per patch or minor under 5-10 minutes). pages-build-deployment runs about 40 seconds but queued 0-47 minutes; publish also dispatches pages.yml, holding three slots for 15-30 minutes."
+current_state: "Deploys push to gh-pages and wait for GitHub's branch build."
+desired_state: "No deploy waits on pages-build-deployment; the release metadata mode never moves the site back a release; publish dispatches nothing."
+scope:
+  - ".github/workflows/pages.yml"
+  - ".github/workflows/release.yml"
+  - "scripts/site-deploy"
+  - "docs/DISTRIBUTION.md"
+  - "test/cases"
+non_scope: []
+depends_on: []
+acceptance_criteria:
+  - "A release metadata deploy is served without a gh-pages branch build, and the site never goes back a release"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "run_deployed_pages_test"
+created_at: 2026-10-14
+updated_at: 2026-10-14

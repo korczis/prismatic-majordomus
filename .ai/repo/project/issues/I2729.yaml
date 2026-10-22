@@ -1,0 +1,27 @@
+id: I2729
+milestone: release-in-minutes
+title: "Every release records its tag-to-served time, and one over ten minutes is a finding"
+slug: tag-to-served-is-measured
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Make release-check record tag-to-served per release with each stage's time as a derived measurement, and put a release served more than 10 minutes after its tag on the board naming its slowest stage."
+why: "ADR 0162 (owner 2026-10-14: release per patch or minor under 5-10 minutes). Tag-to-served was measured by hand on 2026-10-14; nothing records it per release."
+current_state: "release-check names a site that serves a release master does not record, but no duration."
+desired_state: "Each recorded release carries tag-to-served and stage times; over 10 minutes is a board finding."
+scope:
+  - "scripts/ci"
+  - ".ai/repo/releases"
+  - "docs/DISTRIBUTION.md"
+  - "test/cases"
+non_scope: []
+depends_on: []
+acceptance_criteria:
+  - "A release served in more than 10 minutes yields a finding naming its slowest stage"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "tag_to_served_measured"
+created_at: 2026-10-14
+updated_at: 2026-10-14
