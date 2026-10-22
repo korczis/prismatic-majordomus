@@ -34,7 +34,7 @@ mkdir -p "$R"
   "$MJ" update >/dev/null
   mkdir -p .ai/repo/mesh
   printf 'schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\n' > .ai/repo/mesh/majordomus.yaml
-  printf 'multicast:\n  enabled: false\ntrust:\n  policy: tofu\n' >> .ai/repo/mesh/majordomus.yaml
+  printf 'multicast:\n  enabled: false\ntailscale:\n  enabled: false\ntrust:\n  policy: tofu\n' >> .ai/repo/mesh/majordomus.yaml
   printf 'cooperation:\n  heartbeat_seconds: 1\n  expiry_seconds: 4\n  repository: case-3381\n' >> .ai/repo/mesh/majordomus.yaml
   git add -A && git commit -qm base
 )
