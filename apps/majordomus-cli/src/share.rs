@@ -65,6 +65,46 @@ pub const GENERATED_SCHEMAS_DIR: &str = "generated";
 /// The suffix of a schema file: `<name>.schema.json`.
 pub const SCHEMA_SUFFIX: &str = ".schema.json";
 
+/// The projection of the version inside a share directory: `version.txt`.
+const VERSION_FILE: &str = "version.txt";
+
+/// The version a share directory states (`version=<x>` in its `version.txt`), when it
+/// states one. A fixture or a hand-made share states none, and nothing is concluded from
+/// that.
+fn stated_version(share: &Path) -> Option<String> {
+    let text = std::fs::read_to_string(share.join(VERSION_FILE)).ok()?;
+    text.lines()
+        .find_map(|line| line.strip_prefix("version="))
+        .map(|v| v.trim().to_string())
+        .filter(|v| !v.is_empty())
+}
+
+/// Does an inherited share lose to the executable's own? Only when everything is known:
+/// the named share states a version, it is not this executable's, and the share beside the
+/// executable states exactly this executable's.
+fn yields_to_own(named: Option<&str>, own: Option<&str>, executable: &str) -> bool {
+    matches!((named, own), (Some(n), Some(o)) if n != executable && o == executable)
+}
+
+/// Must the share the environment names yield to the one beside the executable? The one
+/// beside it has to be a share at all and another directory than the named one; the rest
+/// is [`yields_to_own`] over what the two state.
+fn named_yields(named: &Path, beside: &Path, executable: &str) -> bool {
+    if !beside.join(KINDS_FILE).is_file() {
+        return false;
+    }
+    if let (Ok(a), Ok(b)) = (named.canonicalize(), beside.canonicalize()) {
+        if a == b {
+            return false;
+        }
+    }
+    yields_to_own(
+        stated_version(named).as_deref(),
+        stated_version(beside).as_deref(),
+        executable,
+    )
+}
+
 /// A located distribution directory.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Share {
@@ -80,27 +120,68 @@ impl Share {
     /// itself), and `<directory of the executable>/../share` (an installation laid out as
     /// `bin/` beside `share/`). A candidate that exists but holds no kinds file is skipped
     /// only when it came from a convention; an explicit path that lacks one is an error.
+    ///
+    /// One named share is not taken: a `MAJORDOMUS_SHARE` whose `version.txt` states another
+    /// version than this executable's, while the share beside the executable states this
+    /// one. The variable is inherited — a terminal multiplexer started in one checkout hands
+    /// it to every shell it opens, in every repository — and a share of another version is
+    /// another distribution's kinds, schemas and UI assets. A share that states no version,
+    /// as every fixture does, and `--share` are taken as given.
     pub fn locate(explicit: Option<&Path>, repo_root: &Path) -> Result<Self> {
+        let named = std::env::var_os(SHARE_ENV).map(PathBuf::from);
+        let exe = std::env::current_exe().ok();
+        Self::locate_among(
+            explicit,
+            named.as_deref(),
+            repo_root,
+            exe.as_deref(),
+            env!("CARGO_PKG_VERSION"),
+        )
+    }
+
+    /// [`Share::locate`] over what it reads from the process: the share the environment
+    /// names, the path of the executable and the executable's version.
+    fn locate_among(
+        explicit: Option<&Path>,
+        named: Option<&Path>,
+        repo_root: &Path,
+        exe: Option<&Path>,
+        executable: &str,
+    ) -> Result<Self> {
         let mut tried = Vec::new();
         if let Some(p) = explicit {
             return Self::open(p, "--share");
         }
-        if let Some(p) = std::env::var_os(SHARE_ENV) {
-            return Self::open(Path::new(&p), SHARE_ENV);
+        let beside = exe.and_then(Path::parent).map(|dir| dir.join("../share"));
+        if let Some(named) = named {
+            if let Some(own) = beside
+                .as_deref()
+                .filter(|own| named_yields(named, own, executable))
+            {
+                // Said once a process: a server locates its share on every capability call
+                // that needs one, and a line per call would bury what it is there to say.
+                static SAID: std::sync::Once = std::sync::Once::new();
+                SAID.call_once(|| {
+                    tracing::warn!(
+                        named = %named.display(),
+                        used = %own.display(),
+                        "{SHARE_ENV} names the share of another version; this executable reads the one it was installed with"
+                    );
+                });
+                return Self::open(own, "installation");
+            }
+            return Self::open(named, SHARE_ENV);
         }
         let in_repo = repo_root.join("share");
         if in_repo.join(KINDS_FILE).is_file() {
             return Self::open(&in_repo, "repository");
         }
         tried.push(in_repo);
-        if let Ok(exe) = std::env::current_exe() {
-            if let Some(dir) = exe.parent() {
-                let beside = dir.join("../share");
-                if beside.join(KINDS_FILE).is_file() {
-                    return Self::open(&beside, "installation");
-                }
-                tried.push(beside);
+        if let Some(beside) = beside {
+            if beside.join(KINDS_FILE).is_file() {
+                return Self::open(&beside, "installation");
             }
+            tried.push(beside);
         }
         Err(Error::ShareNotFound { tried })
     }
@@ -689,6 +770,172 @@ pub fn schema_identity(relative: &str) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// A share states its version in one line of `version.txt`; a file without it, or with
+    /// nothing after the sign, states none.
+    #[test]
+    fn a_share_states_its_version_or_none() {
+        let dir = tempfile::tempdir().expect("a directory");
+        assert_eq!(stated_version(dir.path()), None, "no version.txt");
+        std::fs::write(
+            dir.path().join(VERSION_FILE),
+            "# GENERATED FILE\nversion=0.21.0\n",
+        )
+        .expect("written");
+        assert_eq!(stated_version(dir.path()).as_deref(), Some("0.21.0"));
+        std::fs::write(dir.path().join(VERSION_FILE), "version=\n").expect("written");
+        assert_eq!(
+            stated_version(dir.path()),
+            None,
+            "an empty statement is none"
+        );
+    }
+
+    /// The decision is made only when both versions are known, and only one way.
+    #[test]
+    fn a_named_share_yields_only_when_both_versions_are_known() {
+        assert!(yields_to_own(Some("0.21.0"), Some("0.22.0"), "0.22.0"));
+        assert!(
+            !yields_to_own(Some("0.22.0"), Some("0.22.0"), "0.22.0"),
+            "the same version"
+        );
+        assert!(
+            !yields_to_own(None, Some("0.22.0"), "0.22.0"),
+            "a fixture states none"
+        );
+        assert!(
+            !yields_to_own(Some("0.21.0"), None, "0.22.0"),
+            "no share of its own to prefer"
+        );
+        assert!(
+            !yields_to_own(Some("0.21.0"), Some("0.20.0"), "0.22.0"),
+            "the share beside it is not its own either"
+        );
+    }
+
+    /// A share directory for the tests below: a kinds file, and the version it states.
+    fn a_share(dir: &Path, version: Option<&str>) {
+        std::fs::create_dir_all(dir).expect("a directory");
+        std::fs::write(dir.join(KINDS_FILE), "version: 1\nkinds: []\n").expect("kinds");
+        if let Some(v) = version {
+            std::fs::write(dir.join(VERSION_FILE), format!("version={v}\n")).expect("version");
+        }
+    }
+
+    /// The path of an executable installed under `root`, in a directory that exists: the
+    /// share beside it is found through that directory.
+    fn an_executable_under(root: &Path) -> PathBuf {
+        let libexec = root.join("libexec");
+        std::fs::create_dir_all(&libexec).expect("a directory");
+        libexec.join("majordomus-cli")
+    }
+
+    /// An installed executable handed another version's share by its environment reads the
+    /// share it was installed with; the same variable naming a fixture, the same version or
+    /// the very directory beside it is obeyed, and so is `--share` whatever it states.
+    #[test]
+    fn an_inherited_share_of_another_version_yields_to_the_installed_one() {
+        let root = tempfile::tempdir().expect("a directory");
+        let installed = root.path().join("installed");
+        let exe = an_executable_under(&installed);
+        let own = installed.join("share");
+        a_share(&own, Some("0.22.0"));
+        let other = root.path().join("checkout/share");
+        let repo = root.path().join("repository");
+        std::fs::create_dir_all(&repo).expect("a repository");
+        let locate = |explicit: Option<&Path>, named: &Path| {
+            Share::locate_among(explicit, Some(named), &repo, Some(&exe), "0.22.0")
+                .expect("a share")
+        };
+        let canonical = |dir: &Path| dir.canonicalize().expect("it exists");
+
+        a_share(&other, Some("0.21.0"));
+        let share = locate(None, &other);
+        assert_eq!(share.origin, "installation");
+        assert_eq!(share.dir(), canonical(&own));
+        let share = locate(Some(&other), &other);
+        assert_eq!(
+            (share.origin, share.dir()),
+            ("--share", &*canonical(&other))
+        );
+
+        a_share(&other, Some("0.22.0"));
+        let share = locate(None, &other);
+        assert_eq!(
+            (share.origin, share.dir()),
+            (SHARE_ENV, &*canonical(&other)),
+            "the same version is the distribution the variable is for"
+        );
+
+        std::fs::remove_file(other.join(VERSION_FILE)).expect("removed");
+        let share = locate(None, &other);
+        assert_eq!(
+            (share.origin, share.dir()),
+            (SHARE_ENV, &*canonical(&other)),
+            "a fixture states no version and is taken as named"
+        );
+
+        let share = locate(None, &installed.join("libexec/../share"));
+        assert_eq!(
+            share.origin, SHARE_ENV,
+            "the share beside the executable, named, is not a second one"
+        );
+    }
+
+    /// With no share beside it that is its own, an executable has nothing to prefer: a
+    /// build in a checkout, or an installation whose share states another version.
+    #[test]
+    fn a_named_share_is_obeyed_when_the_executable_has_none_of_its_own() {
+        let root = tempfile::tempdir().expect("a directory");
+        let other = root.path().join("checkout/share");
+        a_share(&other, Some("0.21.0"));
+        let repo = root.path().join("repository");
+        std::fs::create_dir_all(&repo).expect("a repository");
+
+        let built = root.path().join("target/debug/majordomus");
+        let share = Share::locate_among(None, Some(&other), &repo, Some(&built), "0.22.0")
+            .expect("a share");
+        assert_eq!(share.origin, SHARE_ENV, "no share beside a build");
+        let share =
+            Share::locate_among(None, Some(&other), &repo, None, "0.22.0").expect("a share");
+        assert_eq!(share.origin, SHARE_ENV, "no executable path at all");
+
+        let installed = root.path().join("installed");
+        a_share(&installed.join("share"), Some("0.20.0"));
+        let exe = an_executable_under(&installed);
+        let share =
+            Share::locate_among(None, Some(&other), &repo, Some(&exe), "0.22.0").expect("a share");
+        assert_eq!(
+            share.origin, SHARE_ENV,
+            "a share beside it of a third version is not its own"
+        );
+    }
+
+    /// Without the variable the order is the one it always was: the repository's share,
+    /// then the one beside the executable, then an error that names both.
+    #[test]
+    fn the_conventions_are_tried_in_order_when_nothing_is_named() {
+        let root = tempfile::tempdir().expect("a directory");
+        let repo = root.path().join("repository");
+        std::fs::create_dir_all(&repo).expect("a repository");
+        let installed = root.path().join("installed");
+        let exe = an_executable_under(&installed);
+
+        let err = Share::locate_among(None, None, &repo, Some(&exe), "0.22.0").unwrap_err();
+        assert_eq!(err.exit_code(), 12);
+        assert!(
+            matches!(&err, Error::ShareNotFound { tried } if tried.len() == 2),
+            "both conventions are named: {err:?}"
+        );
+
+        a_share(&installed.join("share"), Some("0.22.0"));
+        let share = Share::locate_among(None, None, &repo, Some(&exe), "0.22.0").expect("a share");
+        assert_eq!(share.origin, "installation");
+
+        a_share(&repo.join("share"), None);
+        let share = Share::locate_among(None, None, &repo, Some(&exe), "0.22.0").expect("a share");
+        assert_eq!(share.origin, "repository");
+    }
 
     /// The word each offer is printed as is the word it is declared and serialised as, so a
     /// reader of the table and a reader of the JSON read one vocabulary.

@@ -1,0 +1,38 @@
+id: I2644
+milestone: adopter-upgrades
+title: "An inherited root or URL of another checkout is not obeyed: MAJORDOMUS_ROOT and MAJORDOMUS_URL are checked against the checkout the program is started in"
+slug: an-inherited-root-or-url-of-another-checkout-is-not-obeyed
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Make a program started in one checkout stop following the root and the server URL a shell inherited from another: decide it from the checkout's own root and its own lease, say it once, and leave a value that names this checkout as given."
+why: "I2609 decided the share and left the two other assignments of the entry adapter undecided. Measured on 2026-10-13: the tmux server `agents` keeps MAJORDOMUS_ROOT (the primary checkout) and MAJORDOMUS_URL (the primary's server, a port of a process that may be gone) in its global environment and hands them to every window in every repository and worktree. Every gate and commit run from such a window had to be wrapped in `env -u MAJORDOMUS_SHARE -u MAJORDOMUS_ROOT -u MAJORDOMUS_URL`, a workaround announced on the board and written nowhere a tool reads."
+current_state: "docs/ENVIRONMENT.md states that MAJORDOMUS_ROOT and MAJORDOMUS_URL are inherited the same way as the share and are not decided. No reader of either variable compares it with the checkout it runs in, and nothing says which readers there are."
+desired_state: "Every reader of MAJORDOMUS_ROOT and MAJORDOMUS_URL is named in one place. A root that is not the checkout the program was started in, and a URL that is not the one this checkout's lease names, are not followed; the program says so once on standard error and uses the checkout's own. A value that names this checkout, an explicit flag, and a directory that is no checkout at all are taken as given."
+scope:
+  - "apps/majordomus-cli/src"
+  - "lib"
+  - "bin"
+  - "test/cases"
+  - "docs/ENVIRONMENT.md"
+  - ".ai/repo/project/issues/I2644.yaml"
+non_scope:
+  - "MAJORDOMUS_SHARE: decided by I2609"
+  - "Changing what the entry adapter exports, or the environment of a terminal multiplexer: shared state a person set up"
+  - "A client that is pointed at another repository's server on purpose, by a flag"
+depends_on:
+  - I2609
+acceptance_criteria:
+  - "The readers of MAJORDOMUS_ROOT and of MAJORDOMUS_URL in the executable and in the shell tool are listed in docs/ENVIRONMENT.md, and a case fails when a reader exists that the list does not name"
+  - "Started in a linked worktree under a MAJORDOMUS_ROOT that names the primary checkout, the shell tool and the executable act on the worktree and name both paths on standard error exactly once"
+  - "Under a MAJORDOMUS_URL that this checkout's lease does not name, a command that reaches the shared server reaches this checkout's own, or reports that there is none; it never answers from another checkout's server"
+  - "A root and a URL that name this checkout are followed with nothing said"
+  - "The case fails on the tree before the change"
+validation:
+  - "bin/majordomus plan validate"
+  - "bash test/run.sh 65_tool_root_independence 2994_an_executable_reads_its_own_share"
+evidence_required:
+  - "inherited_root_case"
+  - "inherited_url_case"
+created_at: 2026-10-13
+updated_at: 2026-10-13

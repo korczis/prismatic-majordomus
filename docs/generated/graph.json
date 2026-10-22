@@ -34852,6 +34852,93 @@
         }
       },
       {
+        "id": "majordomus://issue/I2609",
+        "kind": "issue",
+        "label": "I2609",
+        "summary": "An executable does not read another version's share from the environment: an inherited MAJORDOMUS_SHARE of another version yields to the share the program was installed with",
+        "route": "/cockpit/objects/issue/i2609",
+        "source": ".ai/repo/project/issues/I2609.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "On a packaged layout, the shell tool under a MAJORDOMUS_SHARE that states another version initialises a repository from its own share and names both versions on standard error exactly once",
+            "On the same layout the executable reports its share with origin installation and warns once in the process",
+            "A named share that states no version, and one that states the program's version, are read as named by both halves",
+            "The decision is covered in process: Share::locate's order and every row of the table have a unit test that runs them without the environment or the executable's real path",
+            "No public item is added to the crate"
+          ],
+          "created_at": "2026-10-13",
+          "depends_on": [],
+          "evidence_required": [
+            "installed_layout_case_2994",
+            "share_locate_unit_tests"
+          ],
+          "milestone": "adopter-upgrades",
+          "non_scope": [
+            "MAJORDOMUS_ROOT and MAJORDOMUS_URL inherited from another repository: a client sent to another repository's server is a second decision, to be checked against the checkout's own lease",
+            "Refusing a share of another version when the program has none of its own beside it: a build in a checkout is pointed at shares on purpose",
+            "The other defects of the adopter UI report (forge adapter, empty states, deferred panels, the application shell)"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/share.rs",
+            "lib/common.sh",
+            "test/cases/2994_an_executable_reads_its_own_share.sh",
+            "docs/ENVIRONMENT.md",
+            ".ai/repo/project/issues/I2609.yaml"
+          ],
+          "slug": "an-executable-reads-its-own-share",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "bash test/run.sh 2994_an_executable_reads_its_own_share 65_tool_root_independence 744_an_installed_tool_finds_its_own_executable",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib share::"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2644",
+        "kind": "issue",
+        "label": "I2644",
+        "summary": "An inherited root or URL of another checkout is not obeyed: MAJORDOMUS_ROOT and MAJORDOMUS_URL are checked against the checkout the program is started in",
+        "route": "/cockpit/objects/issue/i2644",
+        "source": ".ai/repo/project/issues/I2644.yaml",
+        "facts": {
+          "created_at": "2026-10-13",
+          "depends_on": [
+            "I2609"
+          ],
+          "evidence_required": [
+            "inherited_root_case",
+            "inherited_url_case"
+          ],
+          "milestone": "adopter-upgrades",
+          "non_scope": [
+            "MAJORDOMUS_SHARE: decided by I2609",
+            "Changing what the entry adapter exports, or the environment of a terminal multiplexer: shared state a person set up",
+            "A client that is pointed at another repository's server on purpose, by a flag"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src",
+            "lib",
+            "bin",
+            "test/cases",
+            "docs/ENVIRONMENT.md",
+            ".ai/repo/project/issues/I2644.yaml"
+          ],
+          "slug": "an-inherited-root-or-url-of-another-checkout-is-not-obeyed",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "bash test/run.sh 65_tool_root_independence 2994_an_executable_reads_its_own_share"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -51284,6 +51371,13 @@
         "label": "test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh",
         "route": "/cockpit/objects/test/test-cases-2984-a-handbook-edition-is-built-from-the-tree-sh",
         "source": "test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/2994_an_executable_reads_its_own_share.sh",
+        "kind": "test",
+        "label": "test/cases/2994_an_executable_reads_its_own_share.sh",
+        "route": "/cockpit/objects/test/test-cases-2994-an-executable-reads-its-own-share-sh",
+        "source": "test/cases/2994_an_executable_reads_its_own_share.sh"
       },
       {
         "id": "majordomus://test/test/cases/29_prompt_capture.sh",
@@ -76305,6 +76399,31 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2609",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2609",
+        "target": "majordomus://milestone/adopter-upgrades",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2644",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2644",
+        "target": "majordomus://issue/I2609",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2644",
+        "target": "majordomus://milestone/adopter-upgrades",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -80426,6 +80545,11 @@
       },
       {
         "source": "majordomus://test/test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/2994_an_executable_reads_its_own_share.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -85736,8 +85860,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2732,
-      "edges": 5988,
+      "nodes": 2735,
+      "edges": 5994,
       "acyclic": false,
       "truncated": false
     }

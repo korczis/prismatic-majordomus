@@ -1,0 +1,37 @@
+id: I2609
+milestone: adopter-upgrades
+title: "An executable does not read another version's share from the environment: an inherited MAJORDOMUS_SHARE of another version yields to the share the program was installed with"
+slug: an-executable-reads-its-own-share
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make an installed program read its own distribution when the environment it inherited names another version's: decide it from what the two share directories state, by one table in the executable and in the shell tool, say it once, and leave every share that states no version, and --share, as named."
+why: "Found from an adopting repository on 2026-10-13 (session 17db9780, defect D1 of the adopter UI report). A tmux server started in the primary checkout keeps MAJORDOMUS_SHARE, MAJORDOMUS_ROOT and MAJORDOMUS_URL in its global environment and hands them to every window, in every repository. An installed 0.22.0 server started there logged share=<primary>/share origin=\"MAJORDOMUS_SHARE\": a 0.21.0 share with no share/ui/, so every screen was an empty state, /ui/assets/ui.css answered 404 and no deferred panel loaded, and the index was Degraded over policy keys its own schema knows. Share::locate (apps/majordomus-cli/src/share.rs) took the variable before the share beside the executable and checked nothing about it; lib/common.sh refused only another worktree of the same repository."
+current_state: "Share::locate and lib/common.sh obey MAJORDOMUS_SHARE whatever it names. An installed tool started from a shell that inherited the variable reads another version's kinds, schemas, allow-lists, skeleton and UI assets, and nothing says so."
+desired_state: "A named share whose version.txt states another version than the program's, while the share beside the program states the program's own, yields to the one beside it, in the executable and in the shell tool; the program says so once on standard error and the shell tool hands the corrected variable to what it starts. A share that states no version, a share of the same version, and --share are taken as given."
+scope:
+  - "apps/majordomus-cli/src/share.rs"
+  - "lib/common.sh"
+  - "test/cases/2994_an_executable_reads_its_own_share.sh"
+  - "docs/ENVIRONMENT.md"
+  - ".ai/repo/project/issues/I2609.yaml"
+non_scope:
+  - "MAJORDOMUS_ROOT and MAJORDOMUS_URL inherited from another repository: a client sent to another repository's server is a second decision, to be checked against the checkout's own lease"
+  - "Refusing a share of another version when the program has none of its own beside it: a build in a checkout is pointed at shares on purpose"
+  - "The other defects of the adopter UI report (forge adapter, empty states, deferred panels, the application shell)"
+depends_on: []
+acceptance_criteria:
+  - "On a packaged layout, the shell tool under a MAJORDOMUS_SHARE that states another version initialises a repository from its own share and names both versions on standard error exactly once"
+  - "On the same layout the executable reports its share with origin installation and warns once in the process"
+  - "A named share that states no version, and one that states the program's version, are read as named by both halves"
+  - "The decision is covered in process: Share::locate's order and every row of the table have a unit test that runs them without the environment or the executable's real path"
+  - "No public item is added to the crate"
+validation:
+  - "bin/majordomus plan validate"
+  - "bash test/run.sh 2994_an_executable_reads_its_own_share 65_tool_root_independence 744_an_installed_tool_finds_its_own_executable"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib share::"
+evidence_required:
+  - "installed_layout_case_2994"
+  - "share_locate_unit_tests"
+created_at: 2026-10-13
+updated_at: 2026-10-13

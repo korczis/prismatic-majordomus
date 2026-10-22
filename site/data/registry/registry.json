@@ -6,23 +6,23 @@
     "version": "0.23.0"
   },
   "registry": {
-    "fingerprint": "932596f1a095328bf2430f8cb6c3809c80a354a9e6eb99599810c8ee490c4c3e",
+    "fingerprint": "858e2df1c16b19cb63266aef9d5e79ff0c7083399696f9fbda2978374b9f0a64",
     "summary": {
-      "total": 2319,
+      "total": 2322,
       "builtin": 196,
-      "declarative": 2123,
+      "declarative": 2126,
       "by_kind": {
         "command": 30,
         "query": 166,
-        "resource": 2123
+        "resource": 2126
       },
       "by_stability": {
         "behaviorally_verified": 136,
         "experimental": 51,
-        "implemented": 2132
+        "implemented": 2135
       },
       "mcp_tools": 187,
-      "mcp_resources": 2178,
+      "mcp_resources": 2181,
       "http_routes": 191,
       "cli_commands": 107,
       "modules": 90,
@@ -80676,7 +80676,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 341,
+        "capabilities": 343,
         "capability_ids": []
       },
       {
@@ -81228,7 +81228,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 464,
+        "capabilities": 465,
         "capability_ids": []
       },
       {
@@ -81318,7 +81318,7 @@
     ]
   },
   "index": {
-    "fingerprint": "cff43ec38d499cfa3893b14b608a3a0f0227a65fa44d01b555b87fc2724cc0df",
+    "fingerprint": "8f5e22a8ae7e55434afbf6991fbf6f6cf9f90a37e60624cd9ba2531e557674b3",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -81358,7 +81358,7 @@
       "gap": 3,
       "implementation": 52,
       "intent": 4,
-      "issue": 341,
+      "issue": 343,
       "knowledge": 1,
       "mesh-declaration": 1,
       "milestone": 35,
@@ -81372,7 +81372,7 @@
       "session": 89,
       "skill": 7,
       "taxonomy": 10,
-      "test": 464,
+      "test": 465,
       "use-case": 49,
       "workspace": 1
     },
@@ -87080,7 +87080,7 @@
         "title": "The repository environment — one snapshot, every surface a rendering",
         "path": "docs/ENVIRONMENT.md",
         "source_class": "document",
-        "bytes": 7378
+        "bytes": 9103
       },
       {
         "uri": "majordomus://document/docs/EVIDENCE.md",
@@ -90354,7 +90354,7 @@
         "identity": "lib/common.sh",
         "path": "lib/common.sh",
         "source_class": "library",
-        "bytes": 98315
+        "bytes": 100194
       },
       {
         "uri": "majordomus://implementation/lib/context.sh",
@@ -94462,6 +94462,28 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 4702
+      },
+      {
+        "uri": "majordomus://issue/I2609",
+        "kind": "issue",
+        "identity": "I2609",
+        "title": "An executable does not read another version's share from the environment: an inherited MAJORDOMUS_SHARE of another version yields to the share the program was installed with",
+        "description": "Make an installed program read its own distribution when the environment it inherited names another version's: decide it from what the two share directories state, by one table in the executable and in the shell tool, say it once, and leave every share that states no version, and --share, as named.",
+        "path": ".ai/repo/project/issues/I2609.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3835
+      },
+      {
+        "uri": "majordomus://issue/I2644",
+        "kind": "issue",
+        "identity": "I2644",
+        "title": "An inherited root or URL of another checkout is not obeyed: MAJORDOMUS_ROOT and MAJORDOMUS_URL are checked against the checkout the program is started in",
+        "description": "Make a program started in one checkout stop following the root and the server URL a shell inherited from another: decide it from the checkout's own root and its own lease, say it once, and leave a value that names this checkout as given.",
+        "path": ".ai/repo/project/issues/I2644.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3249
       },
       {
         "uri": "majordomus://knowledge/start-here",
@@ -101201,6 +101223,14 @@
         "bytes": 7923
       },
       {
+        "uri": "majordomus://test/test/cases/2994_an_executable_reads_its_own_share.sh",
+        "kind": "test",
+        "identity": "test/cases/2994_an_executable_reads_its_own_share.sh",
+        "path": "test/cases/2994_an_executable_reads_its_own_share.sh",
+        "source_class": "case",
+        "bytes": 6125
+      },
+      {
         "uri": "majordomus://test/test/cases/29_prompt_capture.sh",
         "kind": "test",
         "identity": "test/cases/29_prompt_capture.sh",
@@ -104291,7 +104321,7 @@
       "identity": [
         "id"
       ],
-      "objects": 341
+      "objects": 343
     },
     {
       "name": "knowledge",
@@ -104443,7 +104473,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 464
+      "objects": 465
     },
     {
       "name": "use-case",

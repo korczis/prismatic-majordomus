@@ -140,6 +140,34 @@ else MJ_HOME="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"; fi
 # together. Unset, it is the share directory beside this executable, which is what an
 # ordinary run wants and what makes the tool work from any checkout.
 MJ_SHARE_DIR="${MAJORDOMUS_SHARE:-$MJ_HOME/share}"
+# One named share is not taken: a share that states another version than this program's,
+# while the share beside this program states this one. The variable is inherited — a
+# terminal multiplexer started in one checkout hands it to every shell it opens, in every
+# repository — and a share of another version is another distribution's kinds, schemas,
+# allow-lists and skeleton. Only what is decidable yields: a share that states no version
+# (a fixture, a hand-made directory) is taken as named, and so is any share when this
+# program does not know its own version (a script that sources this file for its helpers).
+# The Rust executable makes the same decision (share.rs, `yields_to_own`), and is handed
+# the corrected variable, so the two halves read one distribution and the line below is
+# said once for the processes this one starts.
+mj_share_stated_version() {   # <share directory>: the version its version.txt states, or nothing
+  local mj_sv_line
+  [ -r "$1/version.txt" ] || return 0
+  while IFS= read -r mj_sv_line || [ -n "$mj_sv_line" ]; do
+    case "$mj_sv_line" in version=*) printf '%s' "${mj_sv_line#version=}"; return 0 ;; esac
+  done < "$1/version.txt"
+}
+if [ -n "${MAJORDOMUS_SHARE:-}" ] && [ -n "${MJ_VERSION:-}" ] && [ "$MAJORDOMUS_SHARE" != "$MJ_HOME/share" ]; then
+  mj_named_version="$(mj_share_stated_version "$MAJORDOMUS_SHARE")"
+  if [ -n "$mj_named_version" ] && [ "$mj_named_version" != "$MJ_VERSION" ] \
+    && [ "$(mj_share_stated_version "$MJ_HOME/share")" = "$MJ_VERSION" ]; then
+    printf 'majordomus: MAJORDOMUS_SHARE names %s, the share of version %s; this is version %s and reads the share it was installed with (%s)\n' \
+      "$MAJORDOMUS_SHARE" "$mj_named_version" "$MJ_VERSION" "$MJ_HOME/share" >&2
+    MJ_SHARE_DIR="$MJ_HOME/share"
+    MAJORDOMUS_SHARE="$MJ_SHARE_DIR"; export MAJORDOMUS_SHARE
+  fi
+  unset mj_named_version
+fi
 MJ_SKELETON_DIR="$MJ_SHARE_DIR/skeleton"
 MJ_ALLOW_DIR="$MJ_SHARE_DIR/allow"
 MJ_STD_RULES_DIR="$MJ_SHARE_DIR/standard/majordomus"

@@ -99,6 +99,34 @@ server behind it, never on the strength of a connection alone. The server publis
 only after its request workers start, so the lease-triggered reload can reach it. While it
 prepares its routes, its lease remains in the starting state.
 
+### An inherited share of another version
+
+The assignments outlive the directory they were written for. A shell that leaves the
+checkout keeps them unless direnv unloads them, and a terminal multiplexer started inside
+one keeps `MAJORDOMUS_SHARE` in its global environment and hands it to every window it
+opens, in every repository. An installed 0.22.0 server started from such a window read the
+`share/` of a 0.21.0 checkout: it had no `share/ui/`, so every screen was an empty state
+and no asset answered, and its kinds, schemas and allow-lists were another version's.
+
+So one named share is not taken. When `MAJORDOMUS_SHARE` names a directory whose
+`version.txt` states another version than the program's, and the share beside the program
+states the program's own, the program reads the one beside it and says so once on standard
+error. Both halves of the tool decide it by the same table — `Share::locate` in the
+executable, `lib/common.sh` in the shell tool, which also hands the corrected variable to
+what it starts:
+
+| the named share states | the share beside the program states | read |
+|---|---|---|
+| another version | the program's version | the one beside the program |
+| the program's version | anything | the named one |
+| no version (a fixture, a hand-made directory) | anything | the named one |
+| another version | another version, or there is none | the named one |
+
+`--share` is never second-guessed, and a build run from a checkout has no share beside it,
+so `bin/majordomus-cli` and the test suite behave as before. `MAJORDOMUS_ROOT` and
+`MAJORDOMUS_URL` are inherited the same way and are not decided here; that is issue I2644.
+`test/cases/2994_an_executable_reads_its_own_share.sh` is the proof, on a packaged layout.
+
 ## What is canonical, and what is derived
 
 | Fact | Canonical source |
