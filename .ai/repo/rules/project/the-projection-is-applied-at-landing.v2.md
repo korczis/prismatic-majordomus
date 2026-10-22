@@ -1,17 +1,20 @@
-+++
-title = "A landing that changes what GitHub shows applies the change itself"
-description = "A landing that changes what GitHub shows applies the change itself"
-weight = 171
-[extra]
-kind = "rule"
-slug = "project-the-projection-is-applied-at-landing-1"
-identity = "project.the-projection-is-applied-at-landing@1"
-status = "active"
-source = ".ai/repo/rules/project/the-projection-is-applied-at-landing.v1.md"
-+++
-{% raw %}
+---
+id: project.the-projection-is-applied-at-landing
+version: 2
+kind: rule
+title: A landing that changes what GitHub shows applies the change itself
+description: The GitHub projection of the plan is applied by a workflow that every push to the default branch starts, which asks what GitHub does not show yet, applies it with the executable that reads the plan, and proves the result with the projection's gate; a person's apply is the fallback when that workflow fails and never the mechanism. The one run a pull request may start is the pull request projection, which writes only that pull request's own metadata from the base's checkout.
+statement: Every push to the default branch starts the workflow `.ai/repo/ci/github.yaml` declares, which runs `scripts/github-sync --check`, then `scripts/github-sync --apply` when something is owed and the checkout is still the tip, then `scripts/ci/github-check`; it holds `issues: write` and `contents: read` and nothing broader, runs one at a time and is never cancelled, refuses to read or apply without the Rust executable, and never forces a region a person edited; `scripts/github-sync --apply` run by a person is the fallback, bounded by apply.window. No run of the issue projection is reachable from a pull request; the one workflow a pull request may start is `.github/workflows/pr-meta.yml` (`.ai/repo/ci/pr-meta.yaml`), on `pull_request_target`, which checks out the default branch and never the head, reads issues and never writes one, and writes only that pull request's labels, milestone, assignee and managed region.
+status: active
+class: blocking
+depends_on: [project.github-projection-gated@1, project.no-claim-without-test@1]
+tags: [projection, github, enforcement, landing, ci]
 
-## Rationale
+x-majordomus:
+  tests: [test/cases/1097_the_projection_is_applied_at_landing.sh, test/cases/1038_a_head_is_judged_against_what_it_changes.sh, test/cases/26_ci_wiring.sh, test/cases/3970_a_pull_request_carries_its_metadata.sh]
+---
+
+# Rationale
 
 GitHub's issues and milestones are a projection of the plan on the trunk. A landing that
 changes a plan record, or anything a record's rendering is derived from, leaves GitHub
@@ -33,11 +36,11 @@ and intents are aligned with the repository, and that is enforced for the future
 This is the shape `.github/workflows/version.yml` removed for the version: a judge that
 works, and a writer that runs only when somebody remembers it.
 
-## Required behaviour
+# Required behaviour
 
 1. **The landing is the actor.** A workflow runs on every push to the default branch, with
    no path filter, and on a schedule so that a failed or cancelled run is asked again. Its
-   model is [`.ai/repo/ci/github.yaml`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/ci/github.yaml); the workflow file carries no
+   model is [`.ai/repo/ci/github.yaml`](../../ci/github.yaml); the workflow file carries no
    trigger, permission or phase the model does not declare.
 2. **Ask, apply, prove, in that order.** `scripts/github-sync --check` says what is owed.
    When something is, `scripts/github-sync --apply` writes it, and `scripts/ci/github-check`
@@ -63,8 +66,16 @@ works, and a writer that runs only when somebody remembers it.
    executable. `apply.window` bounds how long that may take before the gate refuses the
    trunk. No procedure, runbook or agent instruction names the manual apply as the step that
    normally follows a landing.
+10. **A pull request's own metadata, and nothing else, from the base (version 2).** The one
+   run a pull request may start is the pull request projection,
+   [`.github/workflows/pr-meta.yml`](../../../../.github/workflows/pr-meta.yml), modelled by
+   [`.ai/repo/ci/pr-meta.yaml`](../../ci/pr-meta.yaml). It runs on `pull_request_target`,
+   checks out the default branch and never the head (the head's commits and records are read
+   with git as data), holds `pull-requests: write`, `issues: read` and `contents: read`, and
+   writes only that pull request's labels, milestone, assignee and its managed region. It
+   never creates, closes or edits an issue, so the issue projection stays the trunk's alone.
 
-## Failure behaviour
+# Failure behaviour
 
 A run that cannot read the remote, cannot build the executable, has a mutation refused by
 GitHub (exit 13), or leaves the gate with a finding is a failed run of the
@@ -75,7 +86,16 @@ passed, with the command named, as before.
 `test/cases/1097_the_projection_is_applied_at_landing.sh` fails when the workflow and the
 model disagree on any of the points above.
 
-## Verification
+# Version 2
+
+Version 1 said no trigger a pull request can reach, for any projection. On 2026-10-22 the
+owner asked for every pull request to carry its metadata, kept current by GitHub itself
+(I3970). A pull request's labels, milestone, assignee and `Refs` links are not the plan: they
+are the pull request's, derived from the trunk's records, and keeping them current needs a
+run the pull request starts. Version 2 admits exactly that run and keeps everything version
+1 refused for the issue projection.
+
+# Verification
 
 `test/cases/1097_the_projection_is_applied_at_landing.sh` reads the workflow and the model
 and holds one to the other: the triggers, the absence of a path filter and of any
@@ -88,8 +108,10 @@ applies nothing. Each assertion was broken by a mutation of the workflow or the 
 
 `test/cases/1038_a_head_is_judged_against_what_it_changes.sh` holds the window the fallback
 is bounded by, and `test/cases/26_ci_wiring.sh` holds every workflow to having a model.
+Requirement 10 is held by `test/cases/1097_the_projection_is_applied_at_landing.sh`, which
+refuses a pull-request workflow that checks out the head or writes issues, and by
+`test/cases/3970_a_pull_request_carries_its_metadata.sh`, which drives the projection.
 
 What no case here proves is the run on GitHub itself: that the workflow token is accepted
 for every write the adapter makes. That is observed on the first landing after this rule,
 in the run's own log.
-{% endraw %}

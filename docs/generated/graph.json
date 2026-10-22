@@ -77832,12 +77832,12 @@
         }
       },
       {
-        "id": "majordomus://rule/project.the-projection-is-applied-at-landing@1",
+        "id": "majordomus://rule/project.the-projection-is-applied-at-landing@2",
         "kind": "rule",
-        "label": "project.the-projection-is-applied-at-landing@1",
+        "label": "project.the-projection-is-applied-at-landing@2",
         "summary": "A landing that changes what GitHub shows applies the change itself",
-        "route": "/cockpit/objects/rule/project-the-projection-is-applied-at-landing-1",
-        "source": ".ai/repo/rules/project/the-projection-is-applied-at-landing.v1.md",
+        "route": "/cockpit/objects/rule/project-the-projection-is-applied-at-landing-2",
+        "source": ".ai/repo/rules/project/the-projection-is-applied-at-landing.v2.md",
         "status": "active",
         "facts": {
           "class": "blocking",
@@ -87167,6 +87167,13 @@
         "label": "test/cases/391_skills_are_proven_capabilities.sh",
         "route": "/cockpit/objects/test/test-cases-391-skills-are-proven-capabilities-sh",
         "source": "test/cases/391_skills_are_proven_capabilities.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3970_a_pull_request_carries_its_metadata.sh",
+        "kind": "test",
+        "label": "test/cases/3970_a_pull_request_carries_its_metadata.sh",
+        "route": "/cockpit/objects/test/test-cases-3970-a-pull-request-carries-its-metadata-sh",
+        "source": "test/cases/3970_a_pull_request_carries_its_metadata.sh"
       },
       {
         "id": "majordomus://test/test/cases/400_derivation_is_one_graph.sh",
@@ -127199,17 +127206,17 @@
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.the-projection-is-applied-at-landing@1",
+        "source": "majordomus://rule/project.the-projection-is-applied-at-landing@2",
         "target": "kind:rule",
         "kind": "is_a"
       },
       {
-        "source": "majordomus://rule/project.the-projection-is-applied-at-landing@1",
+        "source": "majordomus://rule/project.the-projection-is-applied-at-landing@2",
         "target": "majordomus://rule/project.github-projection-gated@1",
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.the-projection-is-applied-at-landing@1",
+        "source": "majordomus://rule/project.the-projection-is-applied-at-landing@2",
         "target": "majordomus://rule/project.no-claim-without-test@1",
         "kind": "depends_on"
       },
@@ -129925,6 +129932,11 @@
       },
       {
         "source": "majordomus://test/test/cases/391_skills_are_proven_capabilities.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3970_a_pull_request_carries_its_metadata.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -135035,8 +135047,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3780,
-      "edges": 8742,
+      "nodes": 3781,
+      "edges": 8743,
       "acyclic": false,
       "truncated": false
     }
