@@ -133,7 +133,7 @@ pub fn kpi_state(label: &str, reading: &Reading) -> El {
     let badge = reading
         .text()
         .filter(|w| !w.is_empty())
-        .map(|w| word_badge(&w));
+        .map(|w| word_badge(&w.to_lowercase()));
     kpi_with(label, reading, shown(reading), badge)
 }
 
@@ -819,6 +819,8 @@ mod tests {
             state.contains("mj-badge") && state.contains("warn"),
             "{state}"
         );
+        let uppercase = kpi_state("Stage", &reading(serde_json::json!("EXECUTING"))).render();
+        assert!(uppercase.contains(">executing</span>"), "{uppercase}");
         let blank = kpi_state("Health", &reading(serde_json::json!(""))).render();
         assert!(
             !blank.contains("mj-badge"),
