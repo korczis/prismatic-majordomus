@@ -26,6 +26,10 @@
     available (docs/generated/web.json, projected by the generator). The interfaces block reads
     a mount and an availability from it and types neither. -#}
 {%- set web = load_data(path="data/generated/web.json") -%}
+{#- the plan and its milestones, as the product's own first screen reads them: the hero shows
+    this project's delivery from the same two datasets /roadmap/ and /plan/ are built from -#}
+{%- set plan = load_data(path="data/generated/plan.json") -%}
+{%- set road = load_data(path="data/generated/roadmap.json") -%}
 {#- the build's provenance is a fact of the build, written by scripts/site-build and never
     committed; a plain `zola serve` has none, and the trust strip then says so -#}
 {%- set build = load_data(path="data/build.json", required=false) -%}
@@ -42,11 +46,31 @@
     run challenge.toml names; nothing here names a step or a check. -#}
 {%- set refusals = [s for s in ch.steps if s.outcome == "refused" and s.argv[0] == "finish"] -%}
 {%- set accepted = [s for s in ch.steps if s.outcome == "accepted" and s.argv[0] == "finish"] -%}
+{#- the interfaces a person opens: the stable features the web topology gives an `interface`
+    surface, in the features' own order (block 04 lists them). The first is the product, and
+    the hero opens it: at its published copy when a publication holds one — the topology
+    gives that mount to a published surface, or the build names a snapshot of it (build.json
+    `snapshots`, ADR 0141) — and otherwise at the page that says what it is and how to open
+    it. No id, mount or route is written here. -#}
+{%- set face_ids = [w.feature for w in web.surfaces if w.category == "interface" and w.feature] -%}
+{%- set by_weight = model.features | sort(attribute="weight") -%}
+{%- set faces = [f for f in by_weight if f.status == "stable" and f.id in face_ids] -%}
+{%- set product = faces[0] if faces | length else false -%}
+{%- if product %}
+{%- set pw = [w for w in web.surfaces if w.category == "interface" and w.feature == product.id][0] -%}
+{%- set p_carried = [p for p in web.surfaces if p.mount == pw.mount and p.visibility == "public" and p.availability != "served-only"] -%}
+{%- set p_held = [s for s in build.snapshots if s.id == pw.id] if build and build.snapshots else [] -%}
+{%- set p_published = (p_carried | length) + (p_held | length) -%}
+{%- set p_doc = [s for s in model.surfaces if s.id == product.id] -%}
+{%- set p_about = base ~ (p_doc[0].route if p_doc | length else product.route) -%}
+{%- set p_href = (base ~ pw.mount ~ "/") if p_published else p_about -%}
+{%- endif %}
 
-{#- 1. hero — what this is, in plain words, and the two actions: start, or see it working.
-    Beside it, the answer the tool gave to a worker that said it was done: the finish contract
-    of the recorded run, line by line, with its verdict. "See it working" leads to that run,
-    replayed step by step on /challenge/ — a recording, and labelled as one. -#}
+{#- 1. hero — what this is, in plain words, and the two actions: start, or open the product.
+    Beside it, the product: the first screen of the interface a person opens, read from this
+    project's own plan, and a second action that opens it. "See it working" still leads to the
+    recorded run, replayed step by step on /challenge/; the run's first verdict is told where
+    the page argues it (refuses). -#}
 <section id="hero" class="{{ stage }} relative isolate scroll-mt-20 overflow-hidden border-b border-default bg-neutral-primary">
   <div aria-hidden="true" class="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(to_right,var(--mj-line)_1px,transparent_1px),linear-gradient(to_bottom,var(--mj-line)_1px,transparent_1px)] bg-[size:56px_56px] opacity-40 [mask-image:radial-gradient(ellipse_70%_60%_at_50%_0%,black,transparent)]"></div>
   <div class="mx-auto grid max-w-screen-xl gap-12 px-4 pb-12 pt-12 sm:px-6 sm:pt-16 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:gap-14 lg:px-8 lg:pb-16 lg:pt-12">
@@ -60,35 +84,51 @@
       <p class="mt-5 max-w-2xl text-lg leading-relaxed text-body">{{ m.hero.lead }}</p>
       <div class="mt-7 flex flex-col gap-3 sm:flex-row">
         <a href="#install" data-cta="install" class="inline-flex items-center justify-center rounded-base bg-brand px-6 py-3.5 text-base font-semibold text-white shadow-lg hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium">{{ m.hero.cta_install }}</a>
-        <a href="{{ get_url(path="/challenge/", trailing_slash=true) }}" data-cta="challenge" class="group inline-flex items-center justify-center rounded-base border border-default bg-neutral-primary-soft px-6 py-3.5 text-base font-semibold text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary">{{ m.hero.cta_primary }} <svg class="ms-2 h-4 w-4 transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M13 5l7 7-7 7"/></svg></a>
+        {%- if product %}
+        <a href="{{ p_href }}" data-cta="product" data-product="{{ product.id }}"{% if p_published %} data-published-product="{{ product.id }}"{% endif %} class="group inline-flex items-center justify-center rounded-base border border-default bg-neutral-primary-soft px-6 py-3.5 text-base font-semibold text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary">{{ m.hero.cta_product }} <svg class="ms-2 h-4 w-4 transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M13 5l7 7-7 7"/></svg></a>
+        {%- endif %}
       </div>
+      <p class="mt-4 text-sm text-body"><a href="{{ get_url(path="/challenge/", trailing_slash=true) }}" data-cta="challenge" class="font-medium text-fg-brand hover:underline">{{ m.hero.cta_primary }} &rarr;</a></p>
       <div class="mt-6 max-w-xl">{% <code label="install" wrap={true}> %}{{ dist.install_command }}{% </code> %}</div>
     </div>
 
-    {%- if refusals | length %}
-    {%- set st = refusals[0] %}
-    <figure class="relative min-w-0 self-start overflow-hidden rounded-xl border border-default bg-neutral-primary-soft shadow-2xl ring-1 ring-brand-subtle" data-verdict="{{ st.id }}">
-      <figcaption class="border-b border-default px-5 py-4">
-        <p class="font-mono text-xs uppercase tracking-widest text-body-subtle">{{ m.hero.verdict_kicker }}</p>
-        <p class="mt-2 text-base font-semibold leading-snug text-heading">{{ st.note }}</p>
+    {#- the product, in the hero: the first screen of the interface a person opens, drawn here
+        from the datasets that screen's facts are published in — the release this site
+        offers, the plan's issues counted by the plan's own statuses in the plan's order, and
+        the milestones that are under way (some of their issues done, not all), in the
+        roadmap's order. A count that is zero is not drawn. It is a picture read at this
+        build's commit and says so; the link under it opens the product itself. -#}
+    {%- if product %}
+    {%- set under_way = [x for x in road.milestones | sort(attribute="order") if x.issues.total > 0 and x.issues.by_status.DONE > 0 and x.issues.by_status.DONE < x.issues.total] -%}
+    <figure class="relative min-w-0 self-start overflow-hidden rounded-xl border border-default bg-neutral-primary-soft shadow-2xl ring-1 ring-brand-subtle" data-product-view="{{ product.id }}">
+      <figcaption class="flex min-w-0 items-center gap-2.5 border-b border-default px-5 py-3">
+        <span class="inline-flex h-5 w-5 shrink-0 text-fg-brand [&>svg]:h-full [&>svg]:w-full" aria-hidden="true">{{ load_data(path="static/images/logo-mark.svg", format="plain") | safe }}</span>
+        <span class="text-sm font-semibold text-heading">{{ project.short_name }}</span>
+        <span class="shrink-0 whitespace-nowrap font-mono text-xs text-body-subtle">{{ product.short_title }} &middot; {{ pw.mount }}</span>
+        {%- if offered %}<a href="{{ offered.notes_url }}" class="ms-auto hidden shrink-0 rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading hover:underline sm:inline">v{{ offered.version }}</a>{% endif %}
       </figcaption>
       <div class="px-5 py-4">
-        <p class="break-all font-mono text-xs text-body-subtle">$ {{ st.command }}</p>
-        <ul class="mt-3 space-y-1.5" aria-label="The finish contract, line by line">
-          {%- for line in st.decision %}{% if line is starting_with(pat="OK") or line is starting_with(pat="FAIL") %}
-          {%- set words = [w for w in line | split(pat=" ") if w != ""] %}
-          {%- set ok = line is starting_with(pat="OK") %}
-          <li class="flex items-center gap-3 font-mono text-sm">
-            <span class="inline-flex w-14 shrink-0 justify-center">{% if ok %}{{ <badge status="pass" /> }}{% else %}{{ <badge status="fail" /> }}{% endif %}</span>
-            <span class="text-heading">{{ words[1] }}</span>
-          </li>
+        <p class="font-mono text-xs uppercase tracking-widest text-body-subtle">{{ m.hero.product_kicker }}</p>
+        <p class="mt-2 text-base font-semibold leading-snug text-heading">{{ m.hero.product_title }}</p>
+        <p class="mt-4 text-xs text-body-subtle">Issues of the plan, by status</p>
+        <dl class="mt-2 flex flex-wrap gap-2" data-product-issues>
+          {%- for st in plan.statuses.issue %}{% set n = [i for i in plan.issues if i.status == st] | length %}{% if n > 0 %}
+          <div class="min-w-16 flex-1 rounded-base border border-default bg-neutral-primary px-3 py-2"><dt class="text-xs text-body">{{ st | lower }}</dt><dd class="mt-0.5 font-mono text-xl font-bold tracking-tight text-heading" data-issues="{{ st }}">{{ n }}</dd></div>
           {%- endif %}{% endfor %}
+        </dl>
+        {%- if under_way | length %}
+        <p class="mt-4 text-xs text-body-subtle">Milestones under way, issues done</p>
+        <ul class="mt-2 space-y-3" aria-label="Milestones under way" data-product-milestones>
+          {%- for x in under_way[:3] %}
+          <li class="min-w-0">
+            <p class="flex min-w-0 items-baseline justify-between gap-3 text-sm"><a href="{{ get_url(path="/plan/" ~ (x.id | lower) ~ "/", trailing_slash=true) }}" class="min-w-0 text-heading hover:underline sm:truncate">{{ x.title }}</a><span class="shrink-0 font-mono text-xs text-body-subtle">{{ x.issues.by_status.DONE }} of {{ x.issues.total }}</span></p>
+            <svg class="mt-1.5 h-1.5 w-full text-fg-brand" viewBox="0 0 100 2" preserveAspectRatio="none" aria-hidden="true"><rect width="100" height="2" fill="currentColor" opacity="0.18"/><rect width="{{ (x.issues.by_status.DONE * 100 / x.issues.total) | round }}" height="2" fill="currentColor"/></svg>
+          </li>
+          {%- endfor %}
         </ul>
-        {%- set verdict = [line for line in st.decision if line is starting_with(pat="finish:")] %}
-        {%- if verdict | length %}<p class="mt-4 rounded-base border border-danger-subtle bg-danger-soft px-3 py-2 font-mono text-sm font-semibold text-fg-danger-strong">{{ verdict[0] }}</p>{% endif %}
-        {%- if accepted | length %}<p class="mt-3 text-sm leading-relaxed text-body">{{ m.hero.verdict_after }} <span class="font-mono text-xs text-fg-success-strong">{% set done = accepted | last %}{{ [line for line in done.decision if line is starting_with(pat="finish:")] | first }}</span></p>{% endif %}
+        {%- endif %}
       </div>
-      <p class="border-t border-default px-5 py-3 text-sm font-medium"><a href="{{ get_url(path="/challenge/", trailing_slash=true) }}" class="text-fg-brand hover:underline">{{ m.hero.verdict_link }} &rarr;</a></p>
+      <p class="border-t border-default px-5 py-3 text-sm font-medium"><a href="{{ p_href }}" class="text-fg-brand hover:underline" data-product-open="{{ product.id }}">{{ m.hero.cta_product }} &rarr;</a>{% if p_published %} <span class="ms-1 text-xs font-normal text-body-subtle">{{ m.hero.product_snapshot }}</span>{% endif %}</p>
     </figure>
     {%- endif %}
   </div>
@@ -198,7 +238,6 @@
     deploy.snapshots, carried by build.json `snapshots`; ADR 0141) — and it is then labelled
     as a snapshot read at this build's commit, never as a live reading.
     scripts/ci/homepage-check holds both directions (`interfaces`). -#}
-{%- set face_ids = [w.feature for w in web.surfaces if w.category == "interface" and w.feature] -%}
 <section id="surfaces" class="scroll-mt-20 border-b border-default bg-neutral-primary">
   <div class="mx-auto max-w-screen-xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
     {{ <landing_head number="04" kicker={m.surfaces.kicker} title={m.surfaces.title} lead={m.surfaces.lead} /> }}
@@ -289,12 +328,14 @@
     refused. The challenge's recorded run, told step by step in the run's own sentences: a
     worker strays, says it is done, is refused, is refused again, and is accepted only when
     every line of the contract passes. The replay of that run — every command and its output
-    — is /challenge/'s, one click away; the hero carries its first verdict. Every other
+    — is /challenge/'s, one click away; beside the story is its first verdict, the finish
+    contract line by line, which the hero carried until the hero showed the product instead. Every other
     refusal the lifecycle recorded is listed behind a disclosure, each with its command, its
     exit status and the scenario page that carries its output. None of it is written here. -#}
 <section id="refuses" class="{{ stage }} relative isolate scroll-mt-20 overflow-hidden border-b border-default bg-neutral-primary">
   <div class="mx-auto max-w-screen-xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
     {{ <landing_head number="05" kicker={m.refuses.kicker} title={m.refuses.title} lead={m.refuses.lead} /> }}
+    <div class="grid gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:gap-14">
     <ol class="max-w-3xl min-w-0 space-y-3" aria-label="What happened in the recorded run" data-recorded-story="{{ ch.use_case.id }}">
       {%- for s in ch.steps %}{% if s.actor == "worker" or s.argv[0] == "finish" or s.argv[0] == "check" %}
       <li class="flex min-w-0 gap-3">
@@ -303,6 +344,33 @@
       </li>
       {%- endif %}{% endfor %}
     </ol>
+    {%- if refusals | length %}
+    {%- set st = refusals[0] %}
+    <figure class="relative min-w-0 self-start overflow-hidden rounded-xl border border-default bg-neutral-primary-soft shadow-2xl ring-1 ring-brand-subtle" data-verdict="{{ st.id }}">
+      <figcaption class="border-b border-default px-5 py-4">
+        <p class="font-mono text-xs uppercase tracking-widest text-body-subtle">{{ m.refuses.verdict_kicker }}</p>
+        <p class="mt-2 text-base font-semibold leading-snug text-heading">{{ st.note }}</p>
+      </figcaption>
+      <div class="px-5 py-4">
+        <p class="break-all font-mono text-xs text-body-subtle">$ {{ st.command }}</p>
+        <ul class="mt-3 space-y-1.5" aria-label="The finish contract, line by line">
+          {%- for line in st.decision %}{% if line is starting_with(pat="OK") or line is starting_with(pat="FAIL") %}
+          {%- set words = [w for w in line | split(pat=" ") if w != ""] %}
+          {%- set ok = line is starting_with(pat="OK") %}
+          <li class="flex items-center gap-3 font-mono text-sm">
+            <span class="inline-flex w-14 shrink-0 justify-center">{% if ok %}{{ <badge status="pass" /> }}{% else %}{{ <badge status="fail" /> }}{% endif %}</span>
+            <span class="text-heading">{{ words[1] }}</span>
+          </li>
+          {%- endif %}{% endfor %}
+        </ul>
+        {%- set verdict = [line for line in st.decision if line is starting_with(pat="finish:")] %}
+        {%- if verdict | length %}<p class="mt-4 rounded-base border border-danger-subtle bg-danger-soft px-3 py-2 font-mono text-sm font-semibold text-fg-danger-strong">{{ verdict[0] }}</p>{% endif %}
+        {%- if accepted | length %}<p class="mt-3 text-sm leading-relaxed text-body">{{ m.refuses.verdict_after }} <span class="font-mono text-xs text-fg-success-strong">{% set done = accepted | last %}{{ [line for line in done.decision if line is starting_with(pat="finish:")] | first }}</span></p>{% endif %}
+      </div>
+      <p class="border-t border-default px-5 py-3 text-sm font-medium"><a href="{{ get_url(path="/challenge/", trailing_slash=true) }}" class="text-fg-brand hover:underline">{{ m.refuses.verdict_link }} &rarr;</a></p>
+    </figure>
+    {%- endif %}
+    </div>
     <p class="mt-8"><a href="{{ get_url(path="/challenge/", trailing_slash=true) }}" class="group inline-flex items-center justify-center rounded-base bg-brand px-5 py-3 text-sm font-semibold text-white hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium">{{ m.refuses.replay }} <svg class="ms-2 h-4 w-4 transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M13 5l7 7-7 7"/></svg></a></p>
     <p class="mt-8 max-w-3xl text-base leading-relaxed text-body">{{ m.refuses.closing }}</p>
     <p class="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm font-medium">
