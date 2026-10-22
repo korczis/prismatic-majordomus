@@ -231,7 +231,7 @@ mj_bench_check() {
   [ -f "$b" ] || { mj_fail bench baseline "no baseline at $(mj_rel "$b")" "majordomus bench --write-baseline"; return "$MJ_EX_MISSING"; }
   grep -q "\"schema\":\"$MJ_BASELINE_SCHEMA\"" "$b" \
     || { mj_fail bench baseline "$(mj_rel "$b") is not comparable: schema is not $MJ_BASELINE_SCHEMA" "head -c 200 $(mj_rel "$b")"; return "$MJ_EX_REFUSED"; }
-  local r50 r95 r99 bad=0 line c m base cur
+  local r50 r95 r99 bad=0 line c m base cur l
   r50="$(mj_pol_req benchmark.regression.p50)"; r95="$(mj_pol_req benchmark.regression.p95)"; r99="$(mj_pol_req benchmark.regression.p99)"
   while IFS="$MJ_TAB" read -r c m base cur; do
     [ -n "$c" ] || continue
@@ -241,7 +241,7 @@ mj_bench_check() {
         for (i = 1; i <= 3; i++) { d = x[i] - b[i]; rel = (b[i] > 0) ? d / b[i] : 0
           if (rel > th[i] + 0) printf "%s %s -> %s ms (+%d%%, threshold %d%%)\n", nm[i], b[i], x[i], rel * 100, th[i] * 100 } }')"
     if [ -n "$line" ]; then
-      printf '%s\n' "$line" | while IFS= read -r l; do mj_fail bench "$c $m" "regression: $l" "majordomus bench $c"; done
+      while IFS= read -r l; do mj_fail bench "$c $m" "regression: $l" "majordomus bench $c"; done < <(printf '%s\n' "$line")
       bad=1
     else mj_ok bench "$c $m" "within thresholds ($base -> $cur ms p50/p95/p99)"; fi
   done < <(mj_bench_compare_rows "$b")

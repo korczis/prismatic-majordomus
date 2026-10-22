@@ -283,10 +283,14 @@ mj_validate_decisions() {
 }
 
 mj_projection_targets() { local j=0; while [ -n "$(mj_pol "projections.$j.target")" ]; do printf '%s\n' "$(mj_pol "projections.$j.target")"; j=$((j+1)); done; }
+# "None" is said only when none was listed: the overlaps are counted where they are
+# reported, in this shell, and the answer is read from what that added.
 mj_report_overlap_from_current() {
+  local before="$MJ_FINDINGS"
   # shellcheck disable=SC2046
   mj_report_overlap "$(mj_ylist "$MJ_CUR_FLAT" scope | tr '\n' ' ')"
-  [ "$MJ_FINDINGS" = 0 ] && mj_info overlap "$(mj_cur id)" "no other worktree claims an overlapping path"
+  [ "$MJ_FINDINGS" != "$before" ] || mj_info overlap "$(mj_cur id)" "no other worktree claims an overlapping path"
+  return 0
 }
 # changed.sh defines mj_validate_record_changed_files, and the classifier it judges by
 # shellcheck source=changed.sh

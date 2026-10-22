@@ -165,20 +165,20 @@ mj_plan_roadmap() {
 
 # ---------------------------------------------------------------- validate
 mj_plan_validate() {
-  local unk line lvl code subj msg fails=0
+  local unk line lvl code subj msg rec keys fails=0
   unk="$(mj_project_unknown_keys || true)"
   if [ -n "$unk" ]; then
-    printf '%s\n' "$unk" | while read -r rec keys; do
+    while read -r rec keys; do
       mj_fail schema "$rec" "unknown keys: $keys" "majordomus plan validate"
-    done
+    done < <(printf '%s\n' "$unk")
     fails=1
   fi
-  mj_pj_findings | while IFS="$MJ_TAB" read -r _ lvl code subj msg; do
+  while IFS="$MJ_TAB" read -r _ lvl code subj msg; do
     case "$lvl" in
       FAIL) mj_fail "$code" "$subj" "$msg" "majordomus plan show $subj" ;;
       *)    mj_warn "$code" "$subj" "$msg" "majordomus plan show $subj" ;;
     esac
-  done
+  done < <(mj_pj_findings)
   local nf nw ni nm
   nf="$(mj_pj_fail_count)"; nw="$(mj_pj_warn_count)"
   ni="$(mj_pj_issue_ids | wc -l | tr -d ' ')"; nm="$(mj_pj_milestone_ids | wc -l | tr -d ' ')"
