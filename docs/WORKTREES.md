@@ -570,13 +570,24 @@ this repository's tooling starts goes through `mj_cargo_bounded` (`lib/rust_bin.
 | the lock came free before the bound | nothing: the build went on in the shared directory |
 | the build is already in its own directory and is still blocked | exit 75 with the reason, instead of a wait |
 | the disk floor refuses a private build | exit 12 with the floor's own message |
+| an exported `CARGO_BUILD_BUILD_DIR` another worktree's build is running in | before compiling anything, one line names that worktree and its process, and the build runs in this tree's own directory; exit 75 when that is the directory held |
 
 A private directory compiles every dependency once, so its first build is the slow one.
 `MAJORDOMUS_BUILD_LOCK_WAIT=0` never waits; an exported `CARGO_BUILD_BUILD_DIR` is taken as
-the tree's own directory and is never replaced. The rule is
+the tree's own directory and is never replaced while it serves this tree alone. The rule is
 `project.a-build-never-waits-in-silence-on-anothers-lock`; `scripts/liveness-check` refuses
 a tracked script that calls cargo any other way, and
-`test/cases/3002_a_build_never_waits_in_silence.sh` proves each row above.
+`test/cases/3002_a_build_never_waits_in_silence.sh` proves each row above but the last.
+
+An export is inherited by every worktree a shell or a chain enters, and cargo's lock does not
+keep two of them apart: `cargo test` releases it before the binaries and doctests it built
+run. On 2026-10-14 a rust job lost about 600 doctests to another worktree's build in the same
+exported directory (I2714). So a build in an exported directory records its tree and process
+in `<build-dir>/.majordomus-holders/<pid>` for as long as it runs and removes the record when
+it ends; a build of another tree that finds a live holder moves, and a record whose process is
+gone holds nothing. Builds of one tree share the directory as before, and the shared
+directory, which serves every worktree by design, gets no record.
+`test/cases/3725_a_build_dir_serves_one_worktree.sh` proves the last row.
 
 ## Idle incremental sessions in the shared build directory
 

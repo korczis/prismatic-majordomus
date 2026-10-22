@@ -13,6 +13,7 @@ desired_state: "A build records which worktree holds its build directory while i
 scope:
   - lib/rust_bin.sh
   - docs/DEVELOPMENT_RUNTIME.md
+  - docs/WORKTREES.md
   - .ai/repo/adrs/0139-*.md
   - test/cases
 acceptance_criteria:
@@ -23,4 +24,15 @@ validation:
 evidence_required:
   - "build_dir_has_one_holder_case"
 created_at: 2026-10-14
-updated_at: 2026-10-14
+updated_at: 2026-10-20T21:12:30Z
+started_at: 2026-10-20T21:11:51Z
+started_event: sha256:24aee6781577ffa25535e2eff687ea5d7efdcb4d77da72be8878b58e481f9021
+completed_at: 2026-10-20T21:12:30Z
+completed_event: sha256:c888200f0f9ab5d284f760b776429c725a12e40700f700d3c6dfb2f2b8bb9b7b
+evidence:
+  - covers: build_dir_has_one_holder_case
+    type: test
+    command: "bash test/run.sh 3725_a_build_dir_serves_one_worktree 3002_a_build_never_waits_in_silence"
+    result: "both ok on the branch's tree over master 91c0b5d5658, compiling nothing (a stand-in cargo). 3725: two worktrees building with the same exported CARGO_BUILD_BUILD_DIR at once, the second moves to its own directory with a line naming the first tree and its pid; a tree's repeated builds, and a second build of the holding tree, stay and say nothing; a dead holder holds nothing; a held own directory stops with 75 before cargo runs; the disk floor is asked before a move; records are removed on success and failure; the shared directory gets none. Against master's lib/rust_bin.sh 3725 fails at its first assertion (no holder recorded)."
+    commit: 91c0b5d5658c0bcddcd724582068bfa1f51074d1
+    recorded_at: 2026-10-20T21:12:19Z

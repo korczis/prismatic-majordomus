@@ -1085,6 +1085,68 @@ mj_cargo_private_dir() {
     "$(printf '%s' "$1" | cksum | awk '{ print $1 }')"
 }
 
+# ------------------------------------------------------------------------------ one holder per exported build directory
+#
+# The shared build directory serves every worktree by design (ADR 0139): it holds
+# intermediates, cargo's lock serialises the compiles, and each worktree keeps its finished
+# artifacts. A directory a caller exports through CARGO_BUILD_BUILD_DIR is taken as the tree's
+# own (mj_cargo_bounded never replaces it), and an export is inherited: every worktree a shell
+# or a chain enters builds there too. Cargo's lock does not keep two of them apart, because
+# `cargo test` releases it when compiling ends, before the binaries and doctests it built run
+# (mj_rust_profile_users). On 2026-10-14 ~17:30Z the rust job judging I1501 ran in the exported
+# directory b6-zeta while another worktree's landing chain and an agent built there too: about
+# 600 doctests failed with "no such file ... libmajordomus_cli-<hash>.rlib" and none of it was
+# the head's defect; the 40-minute job ran again (I2714).
+#
+# So a build in an exported directory leaves its holder there for as long as it runs,
+# <build-dir>/.majordomus-holders/<pid> holding the tree's root, and a build of another tree
+# that finds a live holder compiles nothing there: it moves to its own directory, or stops with
+# 75 when it is already there, and names the holder. Builds of one tree share the directory as
+# before. The record is written before the others are read, so two trees arriving at once both
+# see each other and both move, which costs two cold builds and never a shared directory. A
+# holder whose process is gone is no holder, and its record is removed by whoever reads it.
+
+# mj_rust_hold_build_dir <tree-root> <build-dir>
+#
+# Record this tree as a holder of that build directory, under the process that runs the build:
+# this shell's own (BASHPID in a bash subshell, where $$ is the parent's), alive for as long as
+# mj_cargo_bounded runs in it. Never call it in a command substitution, whose process is gone
+# when the substitution ends. Returns 0 when no live holder of another tree is there;
+# otherwise removes its own record again, sets MJ_RUST_HOLDER to `<root> (pid <pid>)` of the
+# other holder and returns 1. A directory the record cannot be written to returns 0: cargo,
+# which must write there as well, is what refuses it.
+mj_rust_hold_build_dir() {
+  MJ_RUST_HOLDER=''
+  mj_hd_root="$(cd "$1" 2>/dev/null && pwd -P)" || mj_hd_root="$1"
+  mj_hd_dir="$2/.majordomus-holders"
+  mj_hd_pid="${BASHPID:-$$}"
+  mkdir -p "$mj_hd_dir" 2>/dev/null && printf '%s\n' "$mj_hd_root" > "$mj_hd_dir/$mj_hd_pid" 2>/dev/null \
+    || return 0
+  for mj_hd_f in "$mj_hd_dir"/*; do
+    [ -f "$mj_hd_f" ] || continue
+    mj_hd_p="${mj_hd_f##*/}"
+    [ "$mj_hd_p" != "$mj_hd_pid" ] || continue
+    case "$mj_hd_p" in ''|*[!0-9]*) continue ;; esac
+    if ! ps -p "$mj_hd_p" >/dev/null 2>&1; then
+      rm -f "$mj_hd_f" 2>/dev/null || true   # its process is gone: no holder
+      continue
+    fi
+    # an unreadable or half-written record is another tree's until it says otherwise
+    mj_hd_other="$(cat "$mj_hd_f" 2>/dev/null || true)"
+    [ "$mj_hd_other" != "$mj_hd_root" ] || continue
+    rm -f "$mj_hd_dir/$mj_hd_pid" 2>/dev/null || true
+    MJ_RUST_HOLDER="${mj_hd_other:-a tree whose record could not be read} (pid $mj_hd_p)"
+    return 1
+  done
+  return 0
+}
+
+# mj_rust_release_build_dir <build-dir> — remove this process's holder record there, if any.
+mj_rust_release_build_dir() {
+  [ -n "$1" ] || return 0
+  rm -f "$1/.majordomus-holders/${BASHPID:-$$}" 2>/dev/null || true
+}
+
 # mj_cargo_bounded <tree-root> <cargo arguments...>
 #
 # Run cargo, and never wait in silence behind another build's lock
@@ -1105,10 +1167,14 @@ mj_cargo_private_dir() {
 #     build directory (mj_cargo_private_dir), after the disk floor has been asked;
 #   - a build that is already in a directory of its own (CARGO_BUILD_BUILD_DIR set by the
 #     caller) and is still blocked at the bound has no second place to go: it stops with
-#     exit 75 and says what holds it, rather than wait for ever.
+#     exit 75 and says what holds it, rather than wait for ever;
+#   - a build in a directory of its own records itself as that directory's holder while it
+#     runs, and one that finds another worktree holding it moves to this tree's own directory,
+#     or stops with 75, before it compiles anything (mj_rust_hold_build_dir, I2714).
 #
 # Exit status: cargo's own; 12 when the disk floor refuses the private build; 75 when the
-# bound was reached with nowhere left to build.
+# bound was reached with nowhere left to build, or another worktree holds every directory
+# this build could use.
 mj_cargo_bounded() {
   mj_cb_root="$1"; shift
   mj_cb_wait="${MAJORDOMUS_BUILD_LOCK_WAIT:-$MJ_BUILD_LOCK_WAIT_DEFAULT}"
@@ -1124,7 +1190,36 @@ mj_cargo_bounded() {
   mj_rust_prune_build_dir "$mj_cb_root"
   mj_cb_log="$(mktemp "${TMPDIR:-/tmp}/mj-cargo.XXXXXX")" || return 12
   mj_cb_private=0
-  [ -n "${CARGO_BUILD_BUILD_DIR:-}" ] && mj_cb_private=1
+  mj_cb_held=''
+  if [ -n "${CARGO_BUILD_BUILD_DIR:-}" ]; then
+    mj_cb_private=1
+    # an exported directory serves one tree at a time (I2714): see mj_rust_hold_build_dir
+    if mj_rust_hold_build_dir "$mj_cb_root" "$CARGO_BUILD_BUILD_DIR"; then
+      mj_cb_held="$CARGO_BUILD_BUILD_DIR"
+    else
+      mj_cb_own="$(mj_cargo_private_dir "$mj_cb_root")"
+      if [ "$CARGO_BUILD_BUILD_DIR" = "$mj_cb_own" ]; then
+        printf 'majordomus: the build directory %s is held by another worktree, %s, and it is already this tree'"'"'s own, so there is nowhere else to build; stopping before compiling anything\n' \
+          "$CARGO_BUILD_BUILD_DIR" "$MJ_RUST_HOLDER" >&2
+        rm -f "$mj_cb_log"
+        return 75
+      fi
+      printf 'majordomus: the build directory %s is held by another worktree, %s; this build compiles nothing there\n' \
+        "$CARGO_BUILD_BUILD_DIR" "$MJ_RUST_HOLDER" >&2
+      mj_rust_space_check "$mj_cb_root" "a build in this tree's own build directory" || { rm -f "$mj_cb_log"; return 12; }
+      if ! mj_rust_hold_build_dir "$mj_cb_root" "$mj_cb_own"; then
+        printf 'majordomus: this tree'"'"'s own build directory %s is held by another worktree too, %s; stopping before compiling anything\n' \
+          "$mj_cb_own" "$MJ_RUST_HOLDER" >&2
+        rm -f "$mj_cb_log"
+        return 75
+      fi
+      CARGO_BUILD_BUILD_DIR="$mj_cb_own"
+      export CARGO_BUILD_BUILD_DIR
+      mj_cb_held="$mj_cb_own"
+      printf 'majordomus: building in this tree'"'"'s own build directory instead: %s (a cold one compiles every dependency once)\n' \
+        "$CARGO_BUILD_BUILD_DIR" >&2
+    fi
+  fi
   while :; do
     : > "$mj_cb_log"
     command cargo "$@" 2>"$mj_cb_log" &
@@ -1156,6 +1251,7 @@ mj_cargo_bounded() {
         cat "$mj_cb_log" >&2
       fi
       rm -f "$mj_cb_log"
+      mj_rust_release_build_dir "$mj_cb_held"
       return "$mj_cb_rc"
     fi
     # the bound: say what was observed, stop waiting, and go where no other tree builds
@@ -1169,12 +1265,20 @@ mj_cargo_bounded() {
       printf 'majordomus: the build directory is already this tree'"'"'s own (%s), so there is nowhere else to build; stopping instead of waiting. Find the holder: pgrep -lf cargo\n' \
         "${CARGO_BUILD_BUILD_DIR:-unset}" >&2
       rm -f "$mj_cb_log"
+      mj_rust_release_build_dir "$mj_cb_held"
       return 75
     fi
     mj_rust_space_check "$mj_cb_root" "a build in this tree's own build directory" || { rm -f "$mj_cb_log"; return 12; }
     CARGO_BUILD_BUILD_DIR="$(mj_cargo_private_dir "$mj_cb_root")"
     export CARGO_BUILD_BUILD_DIR
     mj_cb_private=1
+    if ! mj_rust_hold_build_dir "$mj_cb_root" "$CARGO_BUILD_BUILD_DIR"; then
+      printf 'majordomus: this tree'"'"'s own build directory %s is held by another worktree, %s; stopping before compiling anything\n' \
+        "$CARGO_BUILD_BUILD_DIR" "$MJ_RUST_HOLDER" >&2
+      rm -f "$mj_cb_log"
+      return 75
+    fi
+    mj_cb_held="$CARGO_BUILD_BUILD_DIR"
     printf 'majordomus: building in this tree'"'"'s own build directory instead: %s (a cold one compiles every dependency once)\n' \
       "$CARGO_BUILD_BUILD_DIR" >&2
   done
