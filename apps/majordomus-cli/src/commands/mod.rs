@@ -53,6 +53,7 @@ pub(crate) mod generate;
 pub(crate) mod guard;
 pub(crate) mod intent;
 pub(crate) mod knowledge;
+mod layout;
 pub(crate) mod mcp;
 pub(crate) mod mesh;
 pub(crate) mod models;
@@ -120,6 +121,7 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Economics(args) => economics::run(args),
         Command::Entity(args) => entity::run(args),
         Command::Shell(args) => shell::run(args),
+        Command::Layout(args) => layout::run(args),
         Command::Pack(args) => pack::run(args),
         Command::Dashboard(args) => dashboard::run(args),
         Command::Brief(args) => brief::run(args),
