@@ -754,14 +754,51 @@ mj_uc_run_live() { # index, evidence-file
 # A scenario's evidence is a function of its use case, its fixture and the tool that runs it,
 # and of nothing a records commit changes. Every derive used to execute every scenario again,
 # records-only commits included, and that was 60% of a site generation (catalogue.json, 1406 of
-# 2334 s, measured on 2026-10-21). A PASSING run is now kept beside the evidence and reused
-# when its key matches: the executable's own bytes (the binary MAJORDOMUS_BIN names), the blob
-# ids of every tracked file the tool is made of, and the use case's own file. Anything the key
-# cannot vouch for runs as before: no MAJORDOMUS_BIN, a tree that is not this tool's own source,
-# an uncommitted change outside the record paths, a failed run (never cached), --keep, or
-# MJ_UC_CACHE=0. The reused file is the very evidence that run wrote, so the site data built
-# from it is byte-identical, which `generate-site-data --check` proves.
+# 2334 s, measured on 2026-10-21). A PASSING run is now kept and reused when its key matches:
+# the generation of the executable MAJORDOMUS_BIN names, the blob ids of every tracked file the
+# tool is made of, and the use case's own file. Anything the key cannot vouch for runs as
+# before: no MAJORDOMUS_BIN, a tree that is not this tool's own source, an uncommitted change
+# outside the record paths, an executable that is not of this tree's generation, a failed run
+# (never cached), --keep, or MJ_UC_CACHE=0. The reused file is the very evidence that run
+# wrote, so the site data built from it is byte-identical, which `generate-site-data --check`
+# proves.
+#
+# THE EXECUTABLE BY ITS GENERATION (I2868). The key hashed the executable's bytes, and those
+# carry where it was built: build.rs compiles in the commit and the dirty flag, so two builds of
+# identical sources never shared a key, and every CI build, which starts from no workspace
+# crate, was a new tool whose store held nothing. What the executable *is* is its generation,
+# the digest of the crate sources it was built from, which `distribution build` reports beside
+# the same digest taken over this tree's crate (`tree_generation`, by the one definition
+# `majordomus generate` uses; the shell does not restate it). The two must be equal or there
+# is no key: an executable built from other sources may behave otherwise, and a key that named
+# it by this tree would serve its evidence as this tree's. One that reports no generation
+# predates the question and gets no key. The tracked blob ids cover the crate's sources and the
+# toolchain pin (rust-toolchain.toml, which the generation does not read and no exclusion below
+# removes), so equal keys mean the same sources under the same pinned compiler.
+#
+# ONE STORE PER CLONE (I2867). The store was $MJ_AI_LOCAL_DIR/cache/use-cases, one per checkout,
+# and every train, repair lane and fresh worktree derives in a checkout of its own: each paid
+# the whole fill again (797 of 952 s of a generation in a fresh worktree, 56 s with the entries
+# present, measured on 2026-10-21) for a tool an earlier checkout had already run. It now lives
+# under git's common directory, which the primary checkout and every linked worktree of the
+# clone share. Sharing is safe because the key is content-addressed: an entry can only be read
+# by a tree whose tool has the same sources. MJ_UC_CACHE_DIR names another store (CI restores
+# one there by the tool key); a git that cannot name its common directory keeps the old
+# per-checkout store.
+#
+# Readers only ever see whole entries: a write goes to a temporary file in the store itself,
+# on the same filesystem, and is renamed into place, which is atomic. Several checkouts write
+# at once, so no write removes another key's entry for its use case (the per-checkout store
+# did, and two worktrees deriving different tools would have evicted each other on every run).
+# The store is bounded instead, after each write: at most MJ_UC_CACHE_KEEP entries per use case,
+# the most recently used first (a hit refreshes its entry's time), and nothing unused for
+# MJ_UC_CACHE_DAYS days. Four is the tools that are live at once on one clone (master, a train
+# top, a repair lane, the branch being worked on); fourteen days outlives any of them, and an
+# entry costs about 10 KB, so the bound holds a clone's store near 2 MB. A sweep removes only
+# the files it listed and ignores what another writer removed first.
 MJ_UC_CACHE_EXCLUDE=".ai/repo/project .ai/repo/knowledge site docs test/cases"
+MJ_UC_CACHE_KEEP="${MJ_UC_CACHE_KEEP:-4}"
+MJ_UC_CACHE_DAYS="${MJ_UC_CACHE_DAYS:-14}"
 mj_uc_tool_key() { # prints the key of the tool the scenarios run, or nothing
   [ "${MJ_UC_CACHE:-1}" = 1 ] || return 0
   [ -n "${MAJORDOMUS_BIN:-}" ] && [ -f "$MAJORDOMUS_BIN" ] || return 0
@@ -772,15 +809,78 @@ mj_uc_tool_key() { # prints the key of the tool the scenarios run, or nothing
     && [ "$(cd "$MJ_LIB_DIR" 2>/dev/null && pwd -P)" = "$(cd "$MJ_ROOT/lib" && pwd -P)" ] \
     || return 0
   git -C "$MJ_ROOT" rev-parse --verify -q HEAD >/dev/null 2>&1 || return 0
-  local p list
+  local p list generation
   set -- .
   for p in $MJ_UC_CACHE_EXCLUDE "$(mj_rel "$MJ_UC_DIR")"; do set -- "$@" ":(exclude)$p"; done
   # an uncommitted change to the tool is in no key: then nothing is reused
   [ -z "$(git -C "$MJ_ROOT" status --porcelain --untracked-files=all -- "$@" 2>/dev/null)" ] || return 0
+  # asked last, because it is the one question that runs the executable
+  generation="$(mj_uc_tool_generation)"
+  [ -n "$generation" ] || return 0
   list="$(mktemp "${TMPDIR:-/tmp}/mj-uckey.XXXXXX")"
-  { mj_sha256 "$MAJORDOMUS_BIN"; git -C "$MJ_ROOT" ls-files -s -- "$@"; } > "$list" 2>/dev/null \
-    && mj_sha256 "$list"
+  { printf 'generation %s\n' "$generation"; git -C "$MJ_ROOT" ls-files -s -- "$@"; } \
+    > "$list" 2>/dev/null && mj_sha256 "$list"
   rm -f "$list"
+}
+
+# The generation of MAJORDOMUS_BIN when it is the generation of this tree's crate, or nothing.
+# The executable is asked at most once per shell, path and tree: the question costs it an index
+# build, and its answer is a property of the file and the sources, which a run does not move.
+MJ_UC_GENERATION_OF=""; MJ_UC_GENERATION=""
+mj_uc_tool_generation() {
+  local asked="$MAJORDOMUS_BIN $MJ_ROOT" out ours theirs
+  if [ "$MJ_UC_GENERATION_OF" != "$asked" ]; then
+    out="$(
+      # the share the executable reads, as mj_rust_share names it, when this tree's lib carries
+      # that function; a fixture's lib does not, and its stand-in reads no share
+      if [ -f "$MJ_LIB_DIR/rust_bin.sh" ]; then
+        # shellcheck source=rust_bin.sh
+        . "$MJ_LIB_DIR/rust_bin.sh"
+        share="$(mj_rust_share "$MJ_ROOT")"
+        if [ -n "$share" ]; then export MAJORDOMUS_SHARE="$share"; fi
+      fi
+      "$MAJORDOMUS_BIN" distribution build --repo "$MJ_ROOT" --format json 2>/dev/null
+    )" || out=""
+    # a quote before the name, so that tree_generation is never read as generation; a build
+    # that could not read its sources says `unknown`, which is no generation of anything, and
+    # two answers to one name are two lines, which equal nothing and give no key
+    ours="$(printf '%s\n' "$out" | sed -n 's/.*"generation": *"\([0-9a-f]\{64\}\)".*/\1/p')"
+    theirs="$(printf '%s\n' "$out" | sed -n 's/.*"tree_generation": *"\([0-9a-f]\{64\}\)".*/\1/p')"
+    MJ_UC_GENERATION=""
+    if [ -n "$ours" ] && [ "$ours" = "$theirs" ]; then MJ_UC_GENERATION="$ours"; fi
+    MJ_UC_GENERATION_OF="$asked"
+  fi
+  printf '%s' "$MJ_UC_GENERATION"
+}
+
+mj_uc_cache_dir() { # the store this checkout reads and writes
+  local common=""
+  if [ -n "${MJ_UC_CACHE_DIR:-}" ]; then printf '%s' "$MJ_UC_CACHE_DIR"; return 0; fi
+  # absolute (git 2.31), because a linked worktree's answer is otherwise relative to where git
+  # was asked from; an older git echoes the option back, which names no directory
+  common="$(git -C "$MJ_ROOT" rev-parse --path-format=absolute --git-common-dir 2>/dev/null)" || common=""
+  if [ -n "$common" ] && [ -d "$common" ]; then printf '%s/majordomus/use-case-cache' "$common"
+  else printf '%s/cache/use-cases' "$MJ_AI_LOCAL_DIR"; fi
+}
+
+mj_uc_cache_put() { # evidence-file, entry, store, use-case id: one whole entry, then the bound
+  local out="$1" hit="$2" dir="$3" id="$4" tmp keep="$MJ_UC_CACHE_KEEP" days="$MJ_UC_CACHE_DAYS"
+  case "$keep" in ''|*[!0-9]*|0) keep=4 ;; esac
+  case "$days" in ''|*[!0-9]*) days=14 ;; esac
+  mkdir -p "$dir" 2>/dev/null || return 0
+  # in the store itself, so the rename is on one filesystem and atomic; the name ends in no
+  # .json, so no reader and no per-use-case sweep takes it for an entry
+  tmp="$(mktemp "$dir/.writing.$id.XXXXXX" 2>/dev/null)" || return 0
+  { cp "$out" "$tmp" && mv -f "$tmp" "$hit"; } 2>/dev/null || { rm -f "$tmp"; return 0; }
+  # the use case's entries, most recently used first, past the bound; the one just written
+  # counts first and is never removed, even when another shares its second
+  # shellcheck disable=SC2012  # an entry is <id>.<hex>.json, nothing ls could mangle
+  ls -t "$dir/$id".*.json 2>/dev/null | awk -v hit="$hit" -v keep="$keep" \
+    '$0 != hit { n++; if (n + 1 > keep) print }' | while IFS= read -r e; do rm -f "$e" 2>/dev/null || :; done
+  # what nobody used for $days days, and a writer's temporary file an hour after it died
+  find "$dir" -maxdepth 1 -type f \( -name '*.json' -mtime +"$days" -o -name '.writing.*' -mmin +60 \) \
+    -exec rm -f {} + 2>/dev/null || :
+  return 0
 }
 
 mj_uc_run_cached() { # index, evidence-file, keep: a cached passing run of the same key, or a run
@@ -788,12 +888,12 @@ mj_uc_run_cached() { # index, evidence-file, keep: a cached passing run of the s
   [ -n "${MJ_UC_TOOL_KEY:-}" ] && [ "$keep" = 0 ] || { mj_uc_run_one "$@"; return; }
   id="$(mj_uc_v "$i" id)"; f="$(mj_uc_file "$i")"
   key="$(printf '%s %s' "$MJ_UC_TOOL_KEY" "$(mj_sha256 "$f")" | mj_sha256_hex)"
-  dir="$MJ_AI_LOCAL_DIR/cache/use-cases"; hit="$dir/$id.$key.json"
-  if [ -s "$hit" ]; then cp "$hit" "$out"; return 0; fi
+  dir="$(mj_uc_cache_dir)"; hit="$dir/$id.$key.json"
+  # an entry a sweep removed between the test and the copy is a miss, never a failure; a hit
+  # is a use, and the bound keeps what is used
+  if [ -s "$hit" ] && cp "$hit" "$out" 2>/dev/null; then touch "$hit" 2>/dev/null || :; return 0; fi
   mj_uc_run_one "$@" || rc=$?
-  if [ "$rc" = 0 ] && [ -s "$out" ]; then
-    mkdir -p "$dir" && rm -f "$dir/$id".*.json && cp "$out" "$hit.tmp.$$" && mv "$hit.tmp.$$" "$hit"
-  fi
+  if [ "$rc" = 0 ] && [ -s "$out" ]; then mj_uc_cache_put "$out" "$hit" "$dir" "$id"; fi
   return "$rc"
 }
 
