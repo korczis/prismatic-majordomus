@@ -4,7 +4,7 @@ description = "An AI session's context window fills, gets compacted, or closes w
 template = "page.html"
 [extra]
 lang = "en"
-related = ["the-bet-on-a-layer/", "everything-followed/", "claimed-before-it-is-built/", "one-branch-one-place/"]
+related = ["the-bet-on-a-layer/", "everything-followed/", "claimed-before-it-is-built/", "one-branch-one-place/", "many-machines-one-journal/"]
 [extra.translations]
 cs = "session-skonci-prace-ne/"
 +++
