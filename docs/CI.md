@@ -77,6 +77,17 @@ changed path selects the gates of every class it matches, as a union; a class ma
 the whole plan; a path no class knows escalates it too, and the plan names the path; a
 gate brings what it implies and what it requires.
 
+`classes` may be absent, and an absent `classes` is the empty list: a model that declares
+gates and no class is a model, and both readers of the file (`scripts/ci-plan` and the
+executable's `gates.model` and `gates.completion`) count its gates. No rule is added for it.
+The rules above, over no class, say that a plan with no changed path selects the gates marked
+`always` and no other, and that every changed path is in no class, so it is reported as
+unclassified and escalates the plan the way an unclassified path does under any model. It does
+not mean "every gate applies"; a repository that wants a gate in every plan marks it `always`,
+and one that wants a change planned narrowly declares the class that covers it.
+`test/cases/3001_a_gate_model_without_classes_is_a_model.sh` holds both readers to that and
+to one selection.
+
 ```bash
 scripts/ci-plan --check                       # the model resolves: every gate, job and reference
 scripts/ci-plan --format text                 # what CI would run for the working tree against master

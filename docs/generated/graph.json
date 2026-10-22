@@ -34992,6 +34992,46 @@
         }
       },
       {
+        "id": "majordomus://issue/I2606",
+        "kind": "issue",
+        "label": "I2606",
+        "summary": "A gate model without classes is a model",
+        "route": "/cockpit/objects/issue/i2606",
+        "source": ".ai/repo/project/issues/I2606.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A model with gates and no classes loads and its gates are counted",
+            "Both programs agree on which gates a change selects under it"
+          ],
+          "created_at": "2026-10-13",
+          "current_state": "apps/majordomus-cli/src/gates/model.rs:157-165 has no default for `classes`.",
+          "depends_on": [],
+          "desired_state": "An absent `classes` is empty: a plan then selects the gates marked always, and every other changed path is unclassified.",
+          "evidence_required": [
+            "gate_model_without_classes_case"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "Read a gates.yaml that declares gates and no classes instead of reporting that it does not parse.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/gates",
+            "lib/gates.sh",
+            "docs/CI.md",
+            "test/cases"
+          ],
+          "slug": "a-gate-model-without-classes-is-a-model",
+          "started_at": "2026-10-13T12:30:12Z",
+          "started_event": "sha256:bdd0c0815d7f86b5436db09537bee4e7390e110fbaaae0fb5291f1a1d09d5504",
+          "updated_at": "2026-10-13T14:28:11Z",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I2652",
         "kind": "issue",
         "label": "I2652",
@@ -35377,6 +35417,44 @@
             "bin/majordomus bench --check",
             "scripts/generate-site-data --check",
             "shellcheck -x -s bash bin/majordomus lib/*.sh"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "milestone",
+        "label": "a-second-adopter-is-served",
+        "summary": "A second adopter is served: what a foreign repository met on its first day is fixed in the tool",
+        "route": "/cockpit/objects/milestone/a-second-adopter-is-served",
+        "source": ".ai/repo/project/milestones/a-second-adopter-is-served.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every issue of this milestone is DONE or CANCELLED with its reason",
+            "No fix decides by the identity of the repository it runs in"
+          ],
+          "created_at": "2026-10-13",
+          "evidence_required": [
+            "findings_recorded"
+          ],
+          "non_scope": [
+            "The adopting repository itself: it is the evidence, read only",
+            "I1982 and I1996 of adopter-upgrades, which I2597 and I2587 widen rather than replace",
+            "Accepting any ADR these issues propose; acceptance is the owner's act"
+          ],
+          "order": 116,
+          "priority": "p1",
+          "scope": [
+            "lib",
+            "apps/majordomus-cli/src",
+            "share",
+            "docs",
+            "test/cases"
+          ],
+          "slug": "a-second-adopter-is-served",
+          "updated_at": "2026-10-13",
+          "validation": [
+            "bin/majordomus plan validate",
+            "scripts/derive-check"
           ]
         }
       },
@@ -51569,6 +51647,13 @@
         "label": "test/cases/29_prompt_capture.sh",
         "route": "/cockpit/objects/test/test-cases-29-prompt-capture-sh",
         "source": "test/cases/29_prompt_capture.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3001_a_gate_model_without_classes_is_a_model.sh",
+        "kind": "test",
+        "label": "test/cases/3001_a_gate_model_without_classes_is_a_model.sh",
+        "route": "/cockpit/objects/test/test-cases-3001-a-gate-model-without-classes-is-a-model-sh",
+        "source": "test/cases/3001_a_gate_model_without_classes_is_a_model.sh"
       },
       {
         "id": "majordomus://test/test/cases/3003_the_knowledge_screen_answers.sh",
@@ -76705,6 +76790,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2606",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2606",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I2652",
         "target": "kind:issue",
         "kind": "is_a"
@@ -76756,6 +76851,11 @@
       },
       {
         "source": "majordomus://milestone/M004",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/a-second-adopter-is-served",
         "target": "kind:milestone",
         "kind": "is_a"
       },
@@ -80886,6 +80986,11 @@
       },
       {
         "source": "majordomus://test/test/cases/29_prompt_capture.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3001_a_gate_model_without_classes_is_a_model.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -86196,8 +86301,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2744,
-      "edges": 6023,
+      "nodes": 2747,
+      "edges": 6027,
       "acyclic": false,
       "truncated": false
     }
