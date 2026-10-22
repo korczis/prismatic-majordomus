@@ -1,0 +1,36 @@
+id: I3830
+milestone: ci-critical-path
+title: "A local gate reports and CI decides: pre-commit and pre-push refuse only on integrity"
+slug: a-local-gate-reports-and-ci-decides
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make doctor, the worktree guard, rustdoc and scripts/ci/run-plan --before-push report their findings in the pre-commit and pre-push hooks without refusing, while derive-current (scripts/pages current), the SSH permissions check, finish --check, case numbers and an uncomputable plan keep refusing; CI keeps every required check and remains the verdict."
+why: "The owner's relaxation of 2026-10-21 (rule project.the-cooperation-model-is-the-owners-word v2, I3824): local gates are informative and CI holds the verdict. On 2026-10-20 a push of a rescue ref spent 3490 s in run-plan --before-push at load 70-90, and a commit hook started a cold cargo build."
+current_state: ".githooks/pre-commit refuses on doctor and on the worktree guard; .githooks/pre-push refuses on rustdoc (scripts/rust-check --doc) and on any failed gate or case of scripts/ci/run-plan --before-push; rule project.a-push-runs-what-ci-would-find-first v1 says a refused gate is fixed before the push."
+desired_state: "A red reporting gate prints its finding and lets the commit or push through; the integrity checks refuse as before; rule project.a-push-runs-what-ci-would-find-first v2 states which checks refuse and that CI decides the rest."
+scope:
+  - ".githooks"
+  - "bin/majordomus-cli"
+  - ".ai/repo/rules/project/a-push-runs-what-ci-would-find-first.v2.md"
+  - "test/cases/1021_a_push_runs_what_ci_would_find_first.sh"
+  - "test/cases/3025_abandoned_work_in_a_worktree_is_named.sh"
+  - "test/cases/26_ci_wiring.sh"
+  - "test/cases/3830_a_local_gate_reports_and_ci_decides.sh"
+  - "docs/CI.md"
+non_scope:
+  - "Changing which checks CI requires"
+  - "Claude Code permission settings, which are the owner's to paste"
+depends_on: []
+acceptance_criteria:
+  - "A fixture push whose run-plan gate fails exits 0 with a line naming the gate and saying CI holds the verdict, and CI's validate refuses the same head"
+  - "A commit that moves a canonical input without regenerating is still refused by scripts/pages current"
+  - "An uncomputable plan (exit 12), a failed finish --check and a duplicate case number still refuse the push"
+  - "doctor still finds each enforcement wired by its hook"
+validation:
+  - "bash test/run.sh 1021_a_push_runs_what_ci_would_find_first 3830_a_local_gate_reports_and_ci_decides 26_ci_wiring"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "a_local_gate_reports_and_ci_decides_test"
+created_at: 2026-10-21
+updated_at: 2026-10-21
