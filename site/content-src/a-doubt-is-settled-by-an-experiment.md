@@ -4,7 +4,7 @@ description = "A material engineering uncertainty decided silently cannot be aud
 template = "page.html"
 [extra]
 lang = "en"
-related = ["a-plan-is-attacked-before-it-is-built/", "a-session-ends-the-work-does-not/", "many-machines-one-journal/"]
+related = ["a-plan-is-attacked-before-it-is-built/", "a-session-ends-the-work-does-not/", "many-machines-one-journal/", "silence-is-not-a-verdict/"]
 [extra.translations]
 cs = "pochybnost-rozhodne-experiment/"
 +++
