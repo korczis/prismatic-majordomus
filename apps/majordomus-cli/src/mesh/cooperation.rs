@@ -1337,7 +1337,11 @@ impl Cooperation {
         for peer in peers.iter().filter(|p| p.attached) {
             let session = format!("board-{}", peer.id);
             seen.push(session.clone());
-            let intent = peer.claims.first().map(|c| c.intent.clone());
+            // clipped before it is compared, because the clipped intent is what the entry
+            // keeps: compared whole, an intent past the clip never equals what was stored,
+            // and its session was opened again on every projection (one event every five
+            // seconds for as long as the worker stayed attached)
+            let intent = peer.claims.first().map(|c| clip(&c.intent, 512));
             let entry = projected.entry(session.clone()).or_default();
             let fresh = entry.info.session.is_empty();
             if fresh || entry.info.intent != intent {
@@ -1350,7 +1354,7 @@ impl Cooperation {
                         .clone()
                         .filter(|t| !t.is_empty())
                         .map(|t| clip(&t, 128)),
-                    intent: intent.clone().map(|i| clip(&i, 512)),
+                    intent: intent.clone(),
                     checkout: self.checkout.id.clone(),
                     branch: self.checkout.git(&["symbolic-ref", "--short", "HEAD"]),
                     head: self.checkout.git(&["rev-parse", "--verify", "HEAD"]),
@@ -4191,6 +4195,47 @@ mod tests {
             state.claims.iter().all(|c| !c.state.is_live()),
             "a departed session holds nothing"
         );
+    }
+
+    /// An announcement longer than the clip is projected once, like any other: the journal
+    /// is every machine's, and a session reopened on each projection filled it with
+    /// identical records.
+    #[test]
+    fn a_long_announcement_opens_its_session_once() {
+        let net = Arc::new(InProcess::default());
+        let board = Arc::new(crate::peers::PeerBoard::new());
+        let a = Cooperation::new(CooperationSetup {
+            identity: Arc::new(NodeIdentity::ephemeral().unwrap()),
+            runtime: "00000000000000a1".into(),
+            repository: of_root_commits(&["root".into()]),
+            endpoints: vec!["a:1".into()],
+            version: "test".into(),
+            config: CooperationConfig::default(),
+            trust: TrustConfig::default(),
+            journal_path: None,
+            registry: Arc::new(MeshRegistry::new()),
+            transport: Arc::clone(&net) as Arc<dyn LinkTransport>,
+            board: Some(Arc::clone(&board)),
+            checkout: CheckoutFacts::default(),
+        })
+        .unwrap();
+        let p = board.attach(crate::peers::Transport::Http);
+        let long = "the train lands segment by segment ".repeat(20);
+        assert!(long.chars().count() > 512, "past the clip");
+        board.announce(&p, &long, vec!["apps/majordomus-cli".into()]);
+        a.project_board();
+        let once = a.state();
+        a.project_board();
+        a.project_board();
+        let state = a.state();
+        assert_eq!(state.sessions.len(), 1);
+        // a reopened session carries the same words, so only its stamp says it was written
+        assert_eq!(
+            state.sessions[0].updated_lamport, once.sessions[0].updated_lamport,
+            "an unchanged board writes nothing"
+        );
+        let kept = state.sessions[0].info.intent.as_deref().unwrap_or_default();
+        assert!(long.starts_with(kept) && kept.len() < long.len(), "{kept}");
     }
 
     #[test]
