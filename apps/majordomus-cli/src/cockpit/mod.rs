@@ -262,6 +262,7 @@ impl Cockpit {
             "/cockpit/economics" => pages::economics(ctx),
             "/cockpit/directories" => pages::directories(ctx, query),
             "/cockpit/health" => pages::health(ctx),
+            "/cockpit/coverage" => pages::coverage(ctx),
             "/cockpit/quality" => pages::quality(ctx),
             "/cockpit/artifacts" => pages::artifacts(ctx),
             "/cockpit/release" => pages::release(ctx),

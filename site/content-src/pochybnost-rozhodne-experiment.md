@@ -6,7 +6,7 @@ template = "page.html"
 lang = "cs"
 translated_from = "a-doubt-is-settled-by-an-experiment/"
 source_digest = "0a1f3e7b1e481f311e05e742227c225c5ad0737c1fc87fb753315a8fdef4b382"
-related = ["plan-se-napadne-driv-nez-se-postavi/", "session-skonci-prace-ne/", "mnoho-stroju-jeden-denik/", "mlceni-neni-verdikt/", "uspora-se-meri-netvrdi/"]
+related = ["plan-se-napadne-driv-nez-se-postavi/", "session-skonci-prace-ne/", "mnoho-stroju-jeden-denik/", "mlceni-neni-verdikt/", "uspora-se-meri-netvrdi/", "jeden-zdroj-kazdy-jazyk/"]
 [extra.translations]
 en = "a-doubt-is-settled-by-an-experiment/"
 +++

@@ -1,0 +1,15 @@
+run.sh: 3 cases, 2 at a time
+ok      01_passes  1s
+FAIL    02_fails  1s
+skip    03_declines  1s
+run.sh: 1 exclusive cases, one at a time
+ok      04_exclusive  1s
+run.sh: results
+ok   01_passes
+    expected /proven/ in output:
+not run
+FAIL 02_fails
+skip 03_declines
+ok   04_exclusive
+tests: 2 passed, 1 failed, 1 skipped
+failed: 02_fails

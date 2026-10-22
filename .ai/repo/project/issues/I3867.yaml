@@ -1,0 +1,39 @@
+id: I3867
+milestone: public-proof
+title: "An article explains in both languages how every language of the site is derived from one source"
+slug: one-source-every-language
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Publish site/content-src/one-source-every-language.md, an English article on how majordomus.dev is multilingual (ADR 0218 and its amendment of 2026-10-21). It covers the owner's order, the three ways weighed and the one taken, the pass over the built site, the memory keyed by the English and the structure a translation must keep, the separate translation step and its coverage, the rule and the site-languages gate that hold every copy to its original in a browser, the article translations that are a second source held to the first by check 21, and what the pass does not do yet. Every statement is one that ADR 0218, rule project.the-site-is-offered-in-every-language, the gates or case 3590 state on master, and no count is typed by hand. site/content-src/jeden-zdroj-kazdy-jazyk.md is its Czech translation, naming translated_from and its source's digest. site/data/nav.toml lists both. Both relate the derivation, proof-carrying documentation and reasoning articles, each of which names them back in its own language."
+why: "The owner asked on 2026-10-19 that the site be multilingual and that its articles be interlinked in every language. A reader meets two kinds of Czech page, machine copies and authored translations, and no article says which is which or why neither is maintained by hand."
+current_state: "No article explains how the site's languages are derived. The article groups relate each other, and none of them names it."
+desired_state: "/one-source-every-language/ and /jeden-zdroj-kazdy-jazyk/ are built, are counterparts of each other, are listed in the navigation, and are related both ways with three other groups. Check 21 and check 19 pass, with the translation at its source's digest."
+scope:
+  - ".ai/repo/project/issues/I3867.yaml"
+  - "site/content-src/one-source-every-language.md"
+  - "site/content-src/jeden-zdroj-kazdy-jazyk.md"
+  - "site/content-src/written-once-derived-everywhere.md"
+  - "site/content-src/napsano-jednou-odvozeno-vsude.md"
+  - "site/content-src/proof-carrying-documentation.md"
+  - "site/content-src/dokumentace-kterou-lze-odmitnout.md"
+  - "site/content-src/a-doubt-is-settled-by-an-experiment.md"
+  - "site/content-src/pochybnost-rozhodne-experiment.md"
+  - "site/data/nav.toml"
+  - "scripts/ci/english-only-allow.txt"
+non_scope:
+  - "Changing the translation pass, the memory or the gates, or settling the stale statement the fact-check found (I3868)"
+depends_on:
+  - "I3866"
+acceptance_criteria:
+  - "Both articles are built, declare each other in [extra.translations], and the Czech one records translated_from = one-source-every-language/ and the digest check 21 computes of its source"
+  - "Each statement is one a record, rule, gate or case on master states, and check 19 finds no count typed by hand"
+  - "scripts/site-check --articles passes the tree, counting the new related links"
+validation:
+  - "majordomus plan validate"
+  - "scripts/site-check --articles site/content-src site/data/nav.toml site/config.toml"
+  - "scripts/site-check --prose-figures site/content-src"
+evidence_required: []
+serves: []
+created_at: 2026-10-22
+updated_at: 2026-10-22

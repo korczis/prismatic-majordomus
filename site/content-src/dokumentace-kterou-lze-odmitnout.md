@@ -4,7 +4,7 @@ description = "Tvrzení, které nemůže spadnout, je jen dobře naformátovaná
 template = "page.html"
 [extra]
 lang = "cs"
-related = ["teze/", "vlozene-zadani-se-stava-planem/", "vsechno-v-jednom-proudu/", "plan-se-napadne-driv-nez-se-postavi/", "napsano-jednou-odvozeno-vsude/", "mlceni-neni-verdikt/", "automatizace-je-schopnost/", "uspora-se-meri-netvrdi/", "pravidlo-se-dokazuje-odmitnutim/", "pripad-uziti-se-spousti-ne-popisuje/"]
+related = ["teze/", "vlozene-zadani-se-stava-planem/", "vsechno-v-jednom-proudu/", "plan-se-napadne-driv-nez-se-postavi/", "napsano-jednou-odvozeno-vsude/", "mlceni-neni-verdikt/", "automatizace-je-schopnost/", "uspora-se-meri-netvrdi/", "pravidlo-se-dokazuje-odmitnutim/", "pripad-uziti-se-spousti-ne-popisuje/", "jeden-zdroj-kazdy-jazyk/"]
 [extra.translations]
 en = "proof-carrying-documentation/"
 +++

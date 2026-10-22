@@ -132,3 +132,16 @@ decision whose slug was edited arrives as an `R` rather than an `A`; without the
 survey undercounted this tree's own refs, and an undercounting allocator is worse than no
 allocator. `majordomus adr next` prints what each source claimed, so the failure is visible
 rather than inferred.
+
+## Amendment, 2026-10-22: the path half is gated, and a person accepts a collision by label (I3083)
+
+The decision says that the path half of `project.work-is-claimed-before-it-is-built` is not
+gated, and must not be, because two implementations arriving at one module is sometimes the
+right thing to accept. The judgement is still a person's, but a gate now asks the question.
+The `collision-check` gate of `.ai/repo/ci/gates.yaml` (`scripts/ci/collision-gate`) refuses,
+on every pull request, a path the pull request adds that another unmerged branch adds
+independently with different content. A person accepts a deliberate collision by labelling
+the pull request `collision:accepted`, and the collision is still printed for the reviewer.
+The rule says so in its own text and stays advisory. What this decision feared, a tool
+refusing a judgement that belongs to a person, is answered by the label rather than by
+leaving the path half ungated.

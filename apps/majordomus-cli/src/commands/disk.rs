@@ -109,6 +109,9 @@ fn render(out: &mut impl Write, r: &DiskPruneResult) -> std::io::Result<()> {
     if let (Some(before), Some(after)) = (r.free_before, r.free_after) {
         writeln!(out, "free: {} before, {} after", gib(before), gib(after))?;
     }
+    if let Some(n) = &r.notice {
+        writeln!(out, "{n}")?;
+    }
     Ok(())
 }
 

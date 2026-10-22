@@ -122,3 +122,20 @@ The alternative, dropping article counterparts from check 21 and deleting the te
 have kept point 1's wording. It would also have removed the one place where a translation is
 proved to keep up with its source. The owner's order is a site that reads in every language and
 stays current, so the gate stays and the record moves to it.
+
+### Amendment, 2026-10-22: what the site's other surfaces carry in each language (I3868)
+
+The consequence that said "Search, the sitemap and the JavaScript strings of the site are not
+yet translated" was true when it was written and is not true of all three now. Measured on
+majordomus.dev at 76c57859663:
+- The sitemap carries every copy. 1,296 of its 2,592 locations are /cs/ routes, and every
+  location names its alternates with hreflang. Case 3590 holds this for /cs/guide/.
+- The search index (docs/index.json) lists every /cs/ route, 2,632 of its 5,513 pages. A machine
+  copy's entry still carries the English page's title and description. Only a declared
+  translation's entry reads in its own language.
+- The homepage's own scripts and Alpine expressions carry no English phrase on /cs/. Their
+  visible strings are markup the pass translates, such as the search field's placeholder. Other
+  pages' scripts were not measured.
+
+So the bullet reads, from this date: the search index's titles and descriptions of machine
+copies are not yet translated, and the other two surfaces are.

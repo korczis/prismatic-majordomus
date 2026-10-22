@@ -4,7 +4,7 @@ description = "A capability of this repository is declared in one place and reac
 template = "page.html"
 [extra]
 lang = "en"
-related = ["proof-carrying-documentation/", "a-plan-is-attacked-before-it-is-built/", "the-bet-on-a-layer/", "claimed-before-it-is-built/", "one-branch-one-place/", "automation-is-a-capability/", "knowledge-is-derived-a-person-promotes-it/", "a-use-case-is-run-not-described/"]
+related = ["proof-carrying-documentation/", "a-plan-is-attacked-before-it-is-built/", "the-bet-on-a-layer/", "claimed-before-it-is-built/", "one-branch-one-place/", "automation-is-a-capability/", "knowledge-is-derived-a-person-promotes-it/", "a-use-case-is-run-not-described/", "one-source-every-language/"]
 [extra.translations]
 cs = "napsano-jednou-odvozeno-vsude/"
 +++

@@ -96,6 +96,10 @@ pub(crate) struct DiskPruneResult {
     pub free_before: Option<u64>,
     /// Free bytes on the same volume after it.
     pub free_after: Option<u64>,
+    /// The one mesh notice of this prune (I2874): sent with its key, or not sent with why.
+    /// Absent for a check, a prune that removed nothing, or a repository without a mesh.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub notice: Option<String>,
 }
 
 /// `<CARGO_HOME>`, as cargo reads it.
@@ -106,7 +110,7 @@ fn cargo_home() -> PathBuf {
         .unwrap_or_else(|| PathBuf::from(".cargo"))
 }
 
-fn prune(_ctx: &Context, input: DiskPruneInput) -> Result<DiskPruneResult, CapabilityError> {
+fn prune(ctx: &Context, input: DiskPruneInput) -> Result<DiskPruneResult, CapabilityError> {
     if input.idle_minutes == 0 {
         return Err(CapabilityError::Refused(
             "idle_minutes is zero, which would make every build directory idle the moment it \
@@ -125,11 +129,53 @@ fn prune(_ctx: &Context, input: DiskPruneInput) -> Result<DiskPruneResult, Capab
     let containers = input
         .containers
         .then(|| containers::prune_containers(&containers::Runtime::from_path(), input.check));
+    let notice = announce(ctx, &build_dirs, containers.as_ref());
     Ok(DiskPruneResult {
         build_dirs,
         containers,
         free_before,
         free_after: disk::free_bytes(&home),
+        notice,
+    })
+}
+
+/// The one notice a prune that removed something publishes (I2874, I3833): the build
+/// directories removed and the bytes they held, and the container steps run. Inside the
+/// server it is published through the running cooperation; from the command line, through
+/// the shared server. A check, a prune that removed nothing and a repository without a mesh
+/// publish none.
+fn announce(
+    ctx: &Context,
+    build_dirs: &BuildDirReport,
+    containers: Option<&ContainerReport>,
+) -> Option<String> {
+    let removed: Vec<String> = build_dirs
+        .candidates
+        .iter()
+        .filter(|c| c.removed)
+        .map(|c| c.path.clone())
+        .collect();
+    let steps = containers.map(|c| c.steps.len()).unwrap_or(0);
+    if build_dirs.check || (removed.is_empty() && steps == 0) {
+        return None;
+    }
+    let mut text =
+        crate::integration::exclusive::run_summary("build director(ies) removed", &removed);
+    if steps > 0 {
+        text.push_str(&format!("; {steps} container step(s) run"));
+    }
+    let bytes = Some(build_dirs.reclaimed_bytes);
+    if let Some(cooperation) = ctx.mesh.cooperation() {
+        return Some(
+            match cooperation.publish_notice("disk-prune", "disk-prune".into(), text, bytes) {
+                Ok(written) => format!("notice sent: {}", written.key),
+                Err(e) => format!("notice not sent: {e}"),
+            },
+        );
+    }
+    let root = std::path::Path::new(&ctx.index.repository.root);
+    crate::guard::mesh_declared_enabled(root).then(|| {
+        crate::integration::exclusive::notify(root, "disk-prune", "disk-prune", &text, bytes)
     })
 }
 

@@ -148,6 +148,8 @@ fn the_command_line_http_and_mcp_agree_on_the_verdict_the_evidence_alone_derives
         origin: Origin::Local,
         command: id.reproduce(),
         run: None,
+        cases: vec![],
+        detail: None,
     }]);
     ledger.save(&f.root()).unwrap();
     f.commit("record a passing run");
@@ -205,6 +207,8 @@ fn a_criterion_is_met_only_by_a_recorded_passing_run_of_the_test_that_is_there()
         origin: Origin::Local,
         command: id.reproduce(),
         run: None,
+        cases: vec![],
+        detail: None,
     };
     let record = |e: Execution| {
         let mut ledger = Ledger::empty();
@@ -298,6 +302,8 @@ fn a_criterion_is_met_only_by_evidence_current_at_the_working_tree_and_follows_i
         origin: Origin::Local,
         command: id.reproduce(),
         run: None,
+        cases: vec![],
+        detail: None,
     };
     let record = |e: Execution| {
         let mut ledger = Ledger::empty();
@@ -421,6 +427,8 @@ fn a_test_that_names_no_code_under_test_is_current_only_at_the_commit_it_ran_on(
             origin: Origin::Local,
             command: id.reproduce(),
             run: None,
+            cases: vec![],
+            detail: None,
         }]);
         ledger.save(&f.root()).unwrap();
         f.commit("record a run");
@@ -958,6 +966,8 @@ fn record_at_head(f: &Fixture, outcome: Outcome) -> String {
         origin: Origin::Local,
         command: id.reproduce(),
         run: None,
+        cases: vec![],
+        detail: None,
     }]);
     ledger.save(&f.root()).unwrap();
     f.commit("record a run");

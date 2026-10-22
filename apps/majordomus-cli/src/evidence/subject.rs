@@ -1463,6 +1463,11 @@ pub struct SubjectEvidence {
     pub mechanisms: Vec<String>,
     /// Advisory findings about the subject; never a finding of the evidence report.
     pub subject_findings: Vec<SubjectFinding>,
+    /// The supplementary records read beside the verdict, and every route state they
+    /// weakened through the monotone rule, each naming its records
+    /// ([`crate::evidence::supplementary::answer`]). Absent when the answer read none.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub supplementary: Option<crate::evidence::supplementary::SubjectSupplementary>,
 }
 
 /// One route of a subject, judged at the presented revision.
@@ -1933,6 +1938,7 @@ impl<'a> Judge<'a> {
             members,
             mechanisms: entry.mechanisms.clone(),
             subject_findings,
+            supplementary: None,
         })
     }
 
