@@ -184,6 +184,8 @@ fn a_skill_is_tested_only_by_a_recorded_passing_run_of_the_test_that_names_it() 
         origin: Origin::Local,
         command: id.reproduce(),
         run: None,
+        cases: vec![],
+        detail: None,
     };
     let record = |e: Execution| {
         let mut ledger = Ledger::empty();
@@ -291,6 +293,8 @@ fn a_skill_tested_documented_enforced_and_used_is_proven_and_each_debt_names_its
         origin: Origin::Local,
         command: id.reproduce(),
         run: None,
+        cases: vec![],
+        detail: None,
     }]);
     ledger.save(&f.root()).unwrap();
 

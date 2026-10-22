@@ -440,6 +440,57 @@ than ignored: the crate's own unit-test binary (`Running unittests src/lib.rs`),
 doctests (`Doc-tests <crate>`), a binary outside `tests/`, and a `test result:` line with no
 `Running` line before it, which is never credited to the previous binary.
 
+### Every line is read, or listed
+
+Each runner the recorder reads has one adapter
+([`src/evidence/adapters.rs`](../apps/majordomus-cli/src/evidence/adapters.rs)), and the web
+report's test page (`majordomus web report tests`) reads the same adapters, so the recorded
+evidence and the page cannot read one run two ways. There are two runners:
+
+| runner | what is read | per-test results |
+|---|---|---|
+| `test/run.sh` | the TSV report, and what the runner printed when `--run suite` kept it | the case itself, with its phase; its log, the lines printed before its verdict, is the execution's `detail` |
+| `cargo test` (libtest) | the output: `Running`, `running N tests`, `test <name> ... <word>`, the `---- <name> stdout ----` blocks and `test result:` | each `test` line, with its captured output, its ignore reason or its slow-test note as the case's `detail`; a binary that did not pass carries its result line as its `detail` |
+
+Every line an adapter is given is either read into a case result or listed, one by one, in
+the run record's `dropped_lines`, with its stream (`report` or `output`), its number, its
+text and why: a blank line between the parts of a run, cargo's own build and summary lines,
+the suite runner's totals, a verdict for a case the report has no row for, output no
+verdict followed. The run record's `lines` counts, per runner and stream, the lines held and
+the lines read, so `read` plus the listed lines is the whole stream. The unit tests and the
+doctests, which no claim can name, are listed in `dropped` with every test they ran.
+
+The ledger keeps one line's worth per test: of an execution's cases, only the ones that did
+not pass, by name and outcome, and no output and no `detail`. A green row is what it always
+was, and the ledger's version did not change. Everything else stays in the run record.
+
+### A local run, kept locally
+
+`evidence record --run suite` runs the repository's suite itself and records it as a local
+run. It runs `bash test/run.sh` (every case, or the ones named with `--case`) with its report
+written outside the checkout, echoing what the runner prints to standard error as it prints
+it; stamps the checkout the run left, naming that report, as `evidence stamp` would; and
+records the report and the runner's output into the local ledger. It takes no report, no
+measurement, no other origin and not the tracked ledger: each is refused, and so is a
+`--case` without `--run suite` and a runner that exits with anything but 0 or 1, which states
+nothing about the cases.
+
+<!-- majordomus:unrun it runs this repository's whole suite, or a case of it, which no documentation check repeats; case 515 and tests/evidence_local_runs.rs run it against a fixture whose runner is this repository's test/run.sh -->
+```sh
+majordomus evidence record --run suite
+majordomus evidence record --run suite --case 07_scope --case 08_other
+```
+
+Every recording into the local ledger is a local run, `--run suite` among them, and is kept
+in the **local run index**, `.ai/local/evidence/runs/` (ADR 0087, decision 2): one
+`run-<id>.json` per run, inside the ignored local layer, named in the answer's `local_run`
+(`local run` in the text). The index is bounded: it keeps the newest **50** run records
+(`LOCAL_RUNS_BOUND`) and drops the oldest when a run past that is appended. A file under the
+directory that the index did not write, a CI artifact copied there to read, is never counted
+or dropped. A recording into the tracked ledger never reaches the index, and the index never
+reaches the tracked ledger: a local run changes no tracked file and moves no verdict.
+`evidence coverage` reads the directory by default.
+
 ### In CI
 
 Half the wiring is already there. The `suite` job of

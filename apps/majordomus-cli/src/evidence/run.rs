@@ -5,9 +5,11 @@
 //! [`EvidenceProducer`] is the word that names which. Not everything a report holds is
 //! something a claim can name: the crate's own unit-test binary and its doctests ran, and no
 //! claim of `docs/CLAIMS.yaml` can point at one of their tests yet. Such an entry is listed as
-//! an [`EvidenceDropped`], with the report it came from and the reason, rather than ignored,
-//! because a recording that silently threw part of a run away reads as a run that was
-//! smaller than it was.
+//! an [`EvidenceDropped`], with the report it came from, the reason and the cases it ran,
+//! rather than ignored, because a recording that silently threw part of a run away reads as a
+//! run that was smaller than it was. The same holds line by line: every line a runner printed
+//! that no case result holds is listed in [`EvidenceRunRecord::dropped_lines`], and
+//! [`EvidenceRunRecord::lines`] counts what was read beside it.
 //!
 //! # What a run is made of
 //!
@@ -90,6 +92,7 @@ use std::path::Path;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+use super::adapters::{EvidenceCase, EvidenceDroppedLine, EvidenceLines};
 use super::coverage::EvidenceCoverage;
 use super::freshness::{weakened_by, Judgement, Presented, Supplementary, TreeState};
 use super::ledger::{outcome_counts, LedgerTarget};
@@ -171,14 +174,15 @@ impl EvidenceProducer {
 ///
 /// `cargo test` runs the crate's own unit-test binary and its doctests beside the
 /// integration binaries under `tests/`. They ran, and a claim names a test by its path, so
-/// none of their tests is anything a claim can point at until a runner records them one by
-/// one. A recording lists each such entry with the report it came from ([`producer`]), what
-/// it was ([`what`]) and why it is not recorded ([`reason`]), so that the part of a run
-/// nobody can use yet is visible rather than silently smaller.
+/// none of their tests is anything a claim can point at. A recording lists each such entry
+/// with the report it came from ([`producer`]), what it was ([`what`]), why it is not
+/// recorded ([`reason`]) and every test it ran ([`cases`]), so that the part of a run nobody
+/// can use yet is visible rather than silently smaller.
 ///
 /// [`producer`]: EvidenceDropped::producer
 /// [`what`]: EvidenceDropped::what
 /// [`reason`]: EvidenceDropped::reason
+/// [`cases`]: EvidenceDropped::cases
 ///
 /// ```
 /// use majordomus_cli::evidence::{EvidenceDropped, EvidenceProducer};
@@ -202,6 +206,9 @@ pub struct EvidenceDropped {
     pub what: String,
     /// Why it is listed rather than recorded. It carries no counts.
     pub reason: String,
+    /// Each test it ran, as its own line reported it; absent from the document when none.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub cases: Vec<EvidenceCase>,
 }
 
 /// The version of the [`EvidenceRunRecord`] document.
@@ -255,6 +262,13 @@ pub struct EvidenceRunRecord {
     /// What the reports held that no claim can name yet.
     #[serde(default)]
     pub dropped: Vec<EvidenceDropped>,
+    /// How many lines each report and output held, and how many a case result holds.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub lines: Vec<EvidenceLines>,
+    /// Every line a report or an output held that no case result holds, with why: the rest
+    /// of what [`EvidenceRunRecord::lines`] counts.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub dropped_lines: Vec<EvidenceDroppedLine>,
     /// Tests the reports named that this repository does not have.
     #[serde(default)]
     pub unknown: Vec<String>,

@@ -650,6 +650,8 @@ fn closed_work_reality_contradicts_is_named_on_every_surface_and_exits_10() {
         origin: Origin::Local,
         command: id.reproduce(),
         run: None,
+        cases: vec![],
+        detail: None,
     }]);
     ledger.save(&f.root()).unwrap();
     f.commit("the case fails");

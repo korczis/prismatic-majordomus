@@ -95,8 +95,16 @@ pub fn run(args: EvidenceArgs) -> Result<u8> {
             coverage,
             ledger,
             run_record,
+            run,
+            cases,
         } => {
             let mut input = json!({});
+            if let Some(r) = &run {
+                input["run"] = json!(r);
+            }
+            if !cases.is_empty() {
+                input["cases"] = json!(cases);
+            }
             if !provenance.is_empty() {
                 input["provenance"] = json!(provenance);
             }
@@ -459,8 +467,46 @@ fn record_text(out: &mut impl Write, v: &Value, run_record: Option<&Path>) -> Re
     for u in v["unknown"].as_array().into_iter().flatten() {
         writeln!(out, "unknown      {} (no such test here)", u).map_err(Error::Transport)?;
     }
+    let lines: Vec<String> = r["lines"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .map(|l| {
+            format!(
+                "{} {} ({} of {} read)",
+                l["producer"].as_str().unwrap_or("?"),
+                l["stream"].as_str().unwrap_or("?"),
+                l["read"],
+                l["lines"]
+            )
+        })
+        .collect();
+    if !lines.is_empty() {
+        writeln!(out, "lines        {}", lines.join(", ")).map_err(Error::Transport)?;
+    }
+    // every line no case result holds is in the run record; here, how many and why
+    let mut why: Vec<String> = r["dropped_lines"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter_map(|d| d["reason"].as_str().map(str::to_string))
+        .collect();
+    crate::order::canonical_strings(&mut why);
+    let mut counted: Vec<(String, usize)> = Vec::new();
+    for reason in why {
+        match counted.last_mut() {
+            Some((r, n)) if *r == reason => *n += 1,
+            _ => counted.push((reason, 1)),
+        }
+    }
+    for (reason, n) in counted {
+        writeln!(out, "not read     {n} line(s): {reason}").map_err(Error::Transport)?;
+    }
     if let Some(p) = run_record {
         writeln!(out, "run record   {}", p.display()).map_err(Error::Transport)?;
+    }
+    if let Some(p) = v["local_run"].as_str() {
+        writeln!(out, "local run    {p}").map_err(Error::Transport)?;
     }
     Ok(())
 }
@@ -1077,6 +1123,8 @@ mod tests {
                 coverage: None,
                 ledger: None,
                 run_record: None,
+                run: None,
+                cases: vec![],
             },
             format: OutputFormat::Text,
         };
@@ -1414,6 +1462,8 @@ mod tests {
             coverage: None,
             ledger: None,
             run_record: None,
+            run: None,
+            cases: vec![],
         }
     }
 
@@ -1449,6 +1499,8 @@ mod tests {
             coverage: None,
             ledger: Some("local".into()),
             run_record: Some(run_record.clone()),
+            run: None,
+            cases: vec![],
         };
         assert_eq!(run(evidence(&repo, cmd, OutputFormat::Json)).unwrap(), 0);
         let v: Value =
@@ -1476,6 +1528,8 @@ mod tests {
             coverage: Some(reports.path().join("coverage.json")),
             ledger: None,
             run_record: None,
+            run: None,
+            cases: vec![],
         };
         let err = run(evidence(&repo, cmd, OutputFormat::Text)).unwrap_err();
         assert!(err.to_string().contains("absent.json"), "{err}");

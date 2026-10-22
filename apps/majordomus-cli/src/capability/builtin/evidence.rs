@@ -128,8 +128,9 @@ use super::{get, mcp};
 pub const EVIDENCE_URI: &str = "majordomus://evidence";
 
 /// Where `evidence.coverage` reads run records when no source is named: the local run
-/// directory ADR 0087 (decision 2) declares, inside the ignored local layer.
-pub const RUNS_DIR: &str = ".ai/local/evidence/runs";
+/// directory ADR 0087 (decision 2) declares, inside the ignored local layer, which the local
+/// run index ([`crate::evidence::local_runs`]) writes.
+pub const RUNS_DIR: &str = crate::evidence::LOCAL_RUNS_DIR;
 
 /// How a reader that named an unknown subject finds the ones there are.
 const LIST_SUBJECTS: &str = "every subject is listed under `subjects` in \
@@ -347,6 +348,29 @@ pub struct EvidenceRecordInput {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     /// Also write the run record to this file.
     pub run_record: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// Run a runner and record that run, instead of reading a report another run wrote:
+    /// `suite` runs `test/run.sh`, stamps the checkout it left and records it as a local run,
+    /// kept in the local run index and never in the tracked ledger.
+    pub run: Option<EvidenceRecordRun>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    /// The cases a `run` runs, by name; every case when none is named.
+    pub cases: Vec<String>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+/// The runner `evidence record --run` runs itself.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::evidence::EvidenceRecordRun;
+/// let r: EvidenceRecordRun = serde_json::from_str(r#""suite""#).unwrap();
+/// assert_eq!(r, EvidenceRecordRun::Suite);
+/// assert!(serde_json::from_str::<EvidenceRecordRun>(r#""crate""#).is_err());
+/// ```
+pub enum EvidenceRecordRun {
+    /// `test/run.sh`: the suite, or the cases named.
+    Suite,
 }
 
 impl BenchmarkCases for EvidenceRecordInput {
@@ -695,6 +719,7 @@ pub struct TestEvidence {
 ///     unknown: vec!["docs/CLAIMS.yaml".to_string()],
 ///     dropped: vec![],
 ///     ledger: majordomus_cli::evidence::LEDGER_PATH.to_string(),
+///     local_run: None,
 ///     run_record: serde_json::from_value(serde_json::json!({
 ///         "schema": 1, "id": "local:06fa258913a1:20260926T120000Z", "origin": "local",
 ///         "commit": "06fa258913a1b2c3d4e5f60718293a4b5c6d7e8f", "working_tree": "clean",
@@ -729,6 +754,10 @@ pub struct RecordReport {
     pub dropped: Vec<EvidenceDropped>,
     /// Where the ledger was written: the path of the target the recording named.
     pub ledger: String,
+    /// Where the local run index keeps the recording, for a local run: a recording into the
+    /// local ledger, `--run suite` among them. Absent from the document otherwise.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub local_run: Option<String>,
     /// The recording as a typed run.
     pub run_record: EvidenceRunRecord,
 }
@@ -1067,6 +1096,14 @@ fn test(ctx: &Context, input: EvidenceTestInput) -> Result<TestEvidence, Capabil
 
 fn record(ctx: &Context, input: EvidenceRecordInput) -> Result<RecordReport, CapabilityError> {
     let root = root_of(ctx);
+    if input.run == Some(EvidenceRecordRun::Suite) {
+        return run_suite(&root, input);
+    }
+    if !input.cases.is_empty() {
+        return Err(CapabilityError::InvalidInput(
+            "a case is named only for a run the recorder runs itself: give --run suite".into(),
+        ));
+    }
     let origin = match input.origin.as_deref() {
         None => Origin::Local,
         Some(w) => Origin::parse(w).ok_or_else(|| {
@@ -1111,6 +1148,67 @@ fn record(ctx: &Context, input: EvidenceRecordInput) -> Result<RecordReport, Cap
         unknown: got.unknown,
         dropped: got.dropped,
         ledger: ledger.path().to_string(),
+        local_run: got.local_run,
+        run_record: got.run_record,
+    })
+}
+
+/// `evidence record --run suite`: the suite run here and now, stamped by this run, recorded
+/// as a local run into the local ledger and the local run index, and never into the tracked
+/// ledger. It reads no report another run wrote, so a report, a measurement, an origin other
+/// than local or the tracked ledger is refused rather than ignored.
+fn run_suite(
+    root: &std::path::Path,
+    input: EvidenceRecordInput,
+) -> Result<RecordReport, CapabilityError> {
+    let given: Vec<&str> = [
+        ("--suite", input.suite.is_some()),
+        ("--crate-output", input.crate_output.is_some()),
+        ("--coverage", input.coverage.is_some()),
+        ("--provenance", !input.provenance.is_empty()),
+    ]
+    .into_iter()
+    .filter_map(|(flag, is)| is.then_some(flag))
+    .collect();
+    if !given.is_empty() {
+        return Err(CapabilityError::InvalidInput(format!(
+            "--run suite runs the suite and measures the checkout itself; it reads no report \
+             or measurement, so {} cannot be given with it",
+            given.join(", ")
+        )));
+    }
+    if input
+        .origin
+        .as_deref()
+        .is_some_and(|o| Origin::parse(o) != Some(Origin::Local))
+    {
+        return Err(CapabilityError::InvalidInput(
+            "--run suite is a local run: its origin is local".into(),
+        ));
+    }
+    if input.ledger == Some(LedgerTarget::Repo) {
+        return Err(CapabilityError::InvalidInput(format!(
+            "a local run never reaches the tracked ledger: --run suite records into {} and \
+             keeps the run in {RUNS_DIR}",
+            LedgerTarget::Local.path()
+        )));
+    }
+    let req = evidence::SuiteRunRequest {
+        cases: input.cases,
+        run_record: input.run_record.map(std::path::PathBuf::from),
+    };
+    // the runner's own output goes where a person watching sees it, never into the answer
+    let got =
+        evidence::run_suite(root, &req, &mut std::io::stderr()).map_err(refused_or_internal)?;
+    Ok(RecordReport {
+        recorded: got.recorded,
+        passed: got.passed,
+        commit: got.commit,
+        working_tree: got.working_tree,
+        unknown: got.unknown,
+        dropped: got.dropped,
+        ledger: LedgerTarget::Local.path().to_string(),
+        local_run: got.local_run,
         run_record: got.run_record,
     })
 }
@@ -1532,7 +1630,7 @@ pub fn module() -> ModuleDescriptor {
                 id: "evidence.record",
                 kind: CapabilityKind::Command,
                 title: "Record a run that happened",
-                description: "Reads what the runs already wrote — the suite's TSV report, cargo test's output, a coverage summary — carries into each result what that run measured about its own checkout (the commit and the tree, from the measurement `evidence stamp` wrote), with the digest of the test's own source, the time and the origin, and merges it into the ledger. It records; it decides nothing: a case that failed is a case the runner said failed, and a test no report named is left exactly as it was, so recording one case never erases the evidence for the rest. It refuses a tree with no commit, a measurement of another commit or of another report, a local measurement that names no report, and a CI report without a measurement; a local report recorded without one carries the tree unknown, which never reads proven. Every recording returns a run record (its commit, the tree each report's run measured, its totals and what was absent, dropped or unknown, and a coverage summary bound to its commit), and --ledger local writes only the ignored local ledger. A crate binary that ran no test, or only a filtered subset, is recorded as a skip, and what no claim can name yet (the crate's own unit tests, its doctests) is listed as dropped.",
+                description: "Reads what the runs already wrote — the suite's TSV report, cargo test's output, a coverage summary — carries into each result what that run measured about its own checkout (the commit and the tree, from the measurement `evidence stamp` wrote), with the digest of the test's own source, the time and the origin, and merges it into the ledger. It records; it decides nothing: a case that failed is a case the runner said failed, and a test no report named is left exactly as it was, so recording one case never erases the evidence for the rest. It refuses a tree with no commit, a measurement of another commit or of another report, a local measurement that names no report, and a CI report without a measurement; a local report recorded without one carries the tree unknown, which never reads proven. Every recording returns a run record (its commit, the tree each report's run measured, its totals and what was absent, dropped or unknown, and a coverage summary bound to its commit), and --ledger local writes only the ignored local layer: the local ledger, and the run record into the local run index .ai/local/evidence/runs, which keeps the newest 50. Each execution carries the per-test results its runner's own lines reported (a crate binary's tests, a suite case with its phase) and what the runner printed about it (a suite case's log, a failing binary's result line); every line a runner printed that no case result holds is listed in the run record with why. A crate binary that ran no test, or only a filtered subset, is recorded as a skip, and what no claim can name yet (the crate's own unit tests, its doctests) is listed as dropped, with its cases. --run suite runs test/run.sh itself (the cases named with --case, or every case), stamps the checkout the run left and records it as a local run, never into the tracked ledger.",
                 input: EvidenceRecordInput,
                 output: RecordReport,
                 stability: Stability::BehaviorallyVerified,

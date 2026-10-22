@@ -60,6 +60,8 @@
 //!     origin: Origin::Local,
 //!     command: id.reproduce(),
 //!     run: None,
+//!     cases: vec![],
+//!     detail: None,
 //! };
 //! assert!(run.outcome.proves());
 //!
@@ -143,15 +145,20 @@ use serde_json::Value;
 
 use crate::index::Index;
 
+pub mod adapters;
 pub mod coverage;
 pub mod freshness;
 pub mod ledger;
+pub mod local_runs;
 pub mod provenance;
 pub mod publication;
 pub mod record;
 pub mod run;
 pub mod subject;
 
+pub use adapters::{
+    read_libtest, read_suite, EvidenceCase, EvidenceDroppedLine, EvidenceLines, EvidenceStream,
+};
 pub use coverage::{
     CommitId, EvidenceCoverage, EvidenceCoverageCount, EvidenceCoverageDimensions,
     EvidenceCoverageDomain, EvidenceCoverageFloors,
@@ -162,6 +169,7 @@ pub use freshness::{
     UNCOMMITTED_RUN,
 };
 pub use ledger::{outcome_counts, Ledger, LedgerTarget, LEDGER_PATH, LOCAL_LEDGER_PATH};
+pub use local_runs::{run_suite, SuiteRunRequest, LOCAL_RUNS_BOUND, LOCAL_RUNS_DIR};
 pub use provenance::{
     stamp, EvidenceHost, EvidenceProvenance, EvidenceReportArtifact, EvidenceToolchain,
     EvidenceToolchainSource, StampRequest,
@@ -554,6 +562,8 @@ impl TestId {
 ///     origin: Origin::Ci,
 ///     command: id.reproduce(),
 ///     run: None,
+///     cases: vec![],
+///     detail: None,
 /// };
 ///
 /// // it is a value in a tracked JSON file, so it has to survive the file unchanged
@@ -584,6 +594,8 @@ impl TestId {
 ///     origin: Origin::Local,
 ///     command: "bash test/run.sh 07_scope".into(),
 ///     run: None,
+///     cases: vec![],
+///     detail: None,
 /// };
 /// assert!(e.outcome.proves());
 /// ```
@@ -616,6 +628,18 @@ pub struct Execution {
     /// one that could name itself. Absent for a local run, and absent from every row recorded
     /// before runs were named, which is why the ledger's version did not change.
     pub run: Option<RunRef>,
+    /// Each test its runner reported for it, read by [`adapters`] from the runner's own
+    /// lines: a crate binary's tests, or a suite case itself with its phase. The tracked
+    /// ledger keeps only the cases that did not pass, without their output
+    /// ([`Execution::for_ledger`]); a run record keeps every one. Absent from every row
+    /// recorded before cases were read, which is why the ledger's version did not change.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub cases: Vec<EvidenceCase>,
+    /// What the runner printed about it beyond its cases' own lines: a suite case's log, or
+    /// a crate binary's result line when it did not pass. Kept in the run record, never in
+    /// the tracked ledger.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub detail: Option<String>,
 }
 
 /// The continuous-integration run an execution was recorded in: enough to navigate back to
@@ -736,6 +760,37 @@ impl crate::order::Ordered for Execution {
 }
 
 impl Execution {
+    /// The execution as the ledger keeps it: one line's worth of meaning, not a log. The
+    /// cases that did not pass are kept by name and outcome; the cases that passed, every
+    /// case's output and the execution's detail stay in the run record.
+    ///
+    /// ```
+    /// use majordomus_cli::evidence::{EvidenceCase, Execution, Outcome};
+    /// let case = |name: &str, outcome| EvidenceCase {
+    ///     name: name.into(), outcome, seconds: None, phase: None, detail: Some("output".into()),
+    /// };
+    /// let mut e: Execution = serde_json::from_value(serde_json::json!({
+    ///     "test": "crate:why", "runner": "crate", "source": "apps/majordomus-cli/tests/why.rs",
+    ///     "outcome": "fail", "seconds": 1, "commit": "a".repeat(40), "working_tree": "clean",
+    ///     "digest": "sha256:0", "at": "2026-09-26T12:00:00Z", "origin": "local",
+    ///     "command": "cargo test --test why"
+    /// })).unwrap();
+    /// e.cases = vec![case("holds", Outcome::Pass), case("breaks", Outcome::Fail)];
+    /// e.detail = Some("test result: FAILED.".into());
+    /// let kept = e.for_ledger();
+    /// assert_eq!(kept.cases.len(), 1);
+    /// assert_eq!((kept.cases[0].name.as_str(), kept.cases[0].detail.as_deref()), ("breaks", None));
+    /// assert!(kept.detail.is_none());
+    /// ```
+    pub fn for_ledger(mut self) -> Execution {
+        self.cases.retain(|c| !c.outcome.proves());
+        for c in &mut self.cases {
+            c.detail = None;
+        }
+        self.detail = None;
+        self
+    }
+
     /// Does the test's source still hash to what was recorded?
     ///
     /// `None` when the source is not there to hash — which is itself a finding, reported by
@@ -766,6 +821,8 @@ impl Execution {
     ///     origin: Origin::Local,
     ///     command: id.reproduce(),
     ///     run: None,
+    ///     cases: vec![],
+    ///     detail: None,
     /// };
     /// assert_eq!(run.digest_matches(repo.path()), Some(true));
     ///

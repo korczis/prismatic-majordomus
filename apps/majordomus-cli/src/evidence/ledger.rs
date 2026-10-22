@@ -15,9 +15,10 @@
 //! tests would grow without bound and the question it answers ("is this claim proven now?")
 //! only ever reads the newest. Not stdout, not artifacts: a captured log of every case is
 //! megabytes per run and belongs where the run happened. What is kept is the durable
-//! semantic part — outcome, duration, commit, tree state, digest, time, origin, and the
-//! command that produces it again — which is what a reader needs to decide whether to
-//! believe it and how to check.
+//! semantic part — outcome, duration, commit, tree state, digest, time, origin, the
+//! command that produces it again, and the names of the cases that did not pass — which is
+//! what a reader needs to decide whether to believe it and how to check. A case's output
+//! and an execution's detail stay in the run record ([`Execution::for_ledger`]).
 //!
 //! # JSON, not the layer's YAML
 //!
@@ -48,6 +49,8 @@
 //!         origin: Origin::Local,
 //!         command: format!("bash test/run.sh {name}"),
 //!         run: None,
+//!         cases: vec![],
+//!         detail: None,
 //!     }
 //! }
 //!
@@ -130,6 +133,8 @@ pub const LEDGER_VERSION: u32 = 1;
 /// #         at: "2026-09-11T00:00:00Z".into(), origin: Origin::Local,
 /// #         command: format!("bash test/run.sh {name}"),
 /// #         run: None,
+/// #         cases: vec![],
+/// #         detail: None,
 /// #     }
 /// # }
 /// use majordomus_cli::evidence::ledger::{Ledger, LEDGER_PATH, LEDGER_VERSION};
@@ -278,6 +283,8 @@ impl Ledger {
     /// #         at: "2026-09-11T00:00:00Z".into(), origin: Origin::Local,
     /// #         command: format!("bash test/run.sh {name}"),
     /// #         run: None,
+    /// #         cases: vec![],
+    /// #         detail: None,
     /// #     }
     /// # }
     /// use majordomus_cli::evidence::Ledger;
@@ -310,6 +317,8 @@ impl Ledger {
     /// #         at: "2026-09-11T00:00:00Z".into(), origin: Origin::Local,
     /// #         command: format!("bash test/run.sh {name}"),
     /// #         run: None,
+    /// #         cases: vec![],
+    /// #         detail: None,
     /// #     }
     /// # }
     /// use majordomus_cli::evidence::Ledger;
@@ -333,6 +342,8 @@ impl Ledger {
     pub fn merge(&mut self, executions: impl IntoIterator<Item = Execution>) -> usize {
         let mut n = 0;
         for e in executions {
+            // one line's worth of meaning per test: what did not pass, never a log
+            let e = e.for_ledger();
             match self.executions.iter_mut().find(|x| x.test == e.test) {
                 Some(slot) => *slot = e,
                 None => self.executions.push(e),
@@ -356,6 +367,8 @@ impl Ledger {
     /// #         at: "2026-09-11T00:00:00Z".into(), origin: Origin::Local,
     /// #         command: format!("bash test/run.sh {name}"),
     /// #         run: None,
+    /// #         cases: vec![],
+    /// #         detail: None,
     /// #     }
     /// # }
     /// use majordomus_cli::evidence::ledger::{Ledger, LEDGER_PATH};
@@ -431,6 +444,8 @@ impl Ledger {
     /// #         at: "2026-09-11T00:00:00Z".into(), origin: Origin::Local,
     /// #         command: format!("bash test/run.sh {name}"),
     /// #         run: None,
+    /// #         cases: vec![],
+    /// #         detail: None,
     /// #     }
     /// # }
     /// use majordomus_cli::evidence::ledger::{Ledger, LEDGER_PATH};
@@ -479,6 +494,8 @@ impl Ledger {
     /// #         at: "2026-09-11T00:00:00Z".into(), origin: Origin::Local,
     /// #         command: format!("bash test/run.sh {name}"),
     /// #         run: None,
+    /// #         cases: vec![],
+    /// #         detail: None,
     /// #     }
     /// # }
     /// use majordomus_cli::evidence::Ledger;
@@ -585,6 +602,8 @@ mod tests {
             origin: Origin::Local,
             command: format!("bash test/run.sh {test}"),
             run: None,
+            cases: vec![],
+            detail: None,
         }
     }
 
