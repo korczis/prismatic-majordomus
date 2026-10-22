@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.6"
   },
   "registry": {
-    "fingerprint": "88dad26b6264527f9aa79e5d4a83fcd69629be1b5a78ac5a1fca127fed014dcf",
+    "fingerprint": "420cee98c2cc7c0e9174a647661fbb721897b29e5d4f799e261d8afcd549356f",
     "summary": {
-      "total": 3300,
+      "total": 3301,
       "builtin": 208,
-      "declarative": 3092,
+      "declarative": 3093,
       "by_kind": {
         "command": 32,
         "query": 176,
-        "resource": 3092
+        "resource": 3093
       },
       "by_stability": {
         "behaviorally_verified": 143,
         "experimental": 55,
-        "implemented": 3102
+        "implemented": 3103
       },
       "mcp_tools": 197,
-      "mcp_resources": 3147,
+      "mcp_resources": 3148,
       "http_routes": 202,
       "cli_commands": 112,
       "modules": 92,
@@ -86222,7 +86222,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 888,
+        "capabilities": 889,
         "capability_ids": []
       },
       {
@@ -86889,7 +86889,7 @@
     ]
   },
   "index": {
-    "fingerprint": "6abcd36d1e222ec184c9dc96e87d39540e0ebc8bb109643f1e14fa72c4f7c11c",
+    "fingerprint": "ae66cf8f4323002b1fa7a3abd0b61a11f3116e4f54fdddf29d40eaebc71dbe26",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -86929,7 +86929,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 34,
-      "issue": 888,
+      "issue": 889,
       "knowledge": 58,
       "mesh-declaration": 1,
       "milestone": 101,
@@ -94170,7 +94170,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 769573
+        "bytes": 769788
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -107735,6 +107735,17 @@
         "bytes": 2645
       },
       {
+        "uri": "majordomus://issue/I3840",
+        "kind": "issue",
+        "identity": "I3840",
+        "title": "The intent workspace answers within its 100 ms budget: its shared-scope fold holds the first pairs, not every pair",
+        "description": "Bring /ui/idd back under the warm p95 budget of .ai/repo/benchmarks/rust/policy.yaml without touching the budget. The 'What can run together?' panel's shared-scope fold draws its first SHARED_SCOPE_SHOWN pairs and links to /ui/panels/shared-scope, a panel route that lists every pair; the screen borrows the plan's lists (view::items) instead of cloning them on every request.",
+        "path": ".ai/repo/project/issues/I3840.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3612
+      },
+      {
         "uri": "majordomus://issue/I3841",
         "kind": "issue",
         "identity": "I3841",
@@ -120662,7 +120673,7 @@
       "identity": [
         "id"
       ],
-      "objects": 888
+      "objects": 889
     },
     {
       "name": "knowledge",
@@ -166313,6 +166324,14 @@
         "module": "system",
         "cached": true,
         "route": "GET /ui/panels/standing"
+      },
+      {
+        "key": "system.http.ui.panels.shared_scope",
+        "kind": "page",
+        "transport": "http",
+        "module": "system",
+        "cached": true,
+        "route": "GET /ui/panels/shared-scope"
       }
     ],
     "coverage": {

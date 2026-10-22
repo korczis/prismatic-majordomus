@@ -63476,6 +63476,46 @@
         }
       },
       {
+        "id": "majordomus://issue/I3840",
+        "kind": "issue",
+        "label": "I3840",
+        "summary": "The intent workspace answers within its 100 ms budget: its shared-scope fold holds the first pairs, not every pair",
+        "route": "/cockpit/objects/issue/i3840",
+        "source": ".ai/repo/project/issues/I3840.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The shared-scope fold draws at most SHARED_SCOPE_SHOWN pairs and links to the panel listing all of them, stating the total",
+            "/ui/panels/shared-scope lists every pair of the named intent's issues and is a panel the UI dispatcher answers",
+            "bench --check passes system.http.ui.idd and system.http.live.ui.idd within the 100 ms warm p95 budget, which is unchanged"
+          ],
+          "created_at": "2026-10-21",
+          "current_state": "The fold renders every entry of plan.waves serialised_by_scope whose subject serves the intent; render clones plan.waves (1.6 MB) and plan.issues (1 MB) as Vec<Value> on each request.",
+          "depends_on": [],
+          "evidence_required": [
+            "shared_scope_fold_test"
+          ],
+          "milestone": "idd-reads-at-a-glance",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I3840.yaml",
+            "apps/majordomus-cli/src/ui/idd.rs",
+            "apps/majordomus-cli/src/ui/mod.rs"
+          ],
+          "slug": "the-intent-workspace-answers-within-its-budget",
+          "started_at": "2026-10-21T02:39:44Z",
+          "started_event": "sha256:c67e196625e0d794f73188cba8e30e31848c7fdb816a56a535591dc55740a270",
+          "updated_at": "2026-10-21T02:51:16Z",
+          "validation": [
+            "cargo test --lib -- ui::",
+            "majordomus bench system.http.ui.idd --transport system --profile ci --no-write"
+          ],
+          "verified_at": "2026-10-21T02:51:16Z",
+          "verified_event": "sha256:c5b9fd9de749f2f8b4036aae9d870388be2dffc6acde167d24c76a221b98eb7a"
+        }
+      },
+      {
         "id": "majordomus://issue/I3841",
         "kind": "issue",
         "label": "I3841",
@@ -122399,6 +122439,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3840",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3840",
+        "target": "majordomus://milestone/idd-reads-at-a-glance",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I3841",
         "target": "kind:issue",
         "kind": "is_a"
@@ -133640,8 +133690,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3754,
-      "edges": 8679,
+      "nodes": 3755,
+      "edges": 8681,
       "acyclic": false,
       "truncated": false
     }
