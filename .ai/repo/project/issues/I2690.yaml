@@ -1,0 +1,35 @@
+id: I2690
+milestone: development-runtime
+title: "A session reads whether it is current, attached, announced and useful, from one capability"
+slug: a-session-reads-whether-it-has-joined-the-cluster
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Derive the four facts of ADR 0156 for the calling worker and answer them as one read: how far the checkout is behind the remote trunk after a bounded fetch, the newest release tag, the transport to the shared server, whether an open mesh session names this worker, and what the board leaves unheld."
+why: "The owner, 2026-10-13, after a session worked three hours stale and unannounced in a cluster of nineteen workers: this must never happen again; it must be formalized, derived, inferred, enforced, in .ai, announced, a hard requirement, on GitHub Pages, tested, documented and on the landing page. See ADR 0156."
+current_state: "Measured on master f0696ec535 on 2026-10-13: majordomus context prints the task and the peers but not whether the checkout is behind the trunk or the session is unannounced; the SessionStart line says 'Already up to date' from a state fetched earlier; mesh peers lists asks to all but no command lists what is unheld."
+desired_state: "One read capability, declared once with capability! under apps/majordomus-cli/src/capability/builtin/ and projected by majordomus generate to CLI, MCP and HTTP, answers current, attached, announced and useful with the commands that repair each one; an unreachable remote, a closed mesh and a missing server are each a named state, never 'current'."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/"
+  - "apps/majordomus-cli/src/mesh/"
+  - "test/cases/3010_a_session_joins_the_cluster.sh"
+  - ".ai/repo/policy.yaml"
+non_scope:
+  - "Refusing anything: that is I2691"
+  - "Any screen or page: that is I2692"
+  - "A change to how the board is gathered (ADR 0044)"
+acceptance_criteria:
+  - "A checkout N commits behind the fetched trunk is reported behind by N with the newest tag"
+  - "An unreachable remote is unverified and is never reported current"
+  - "A session with no open mesh session on the live server is reported unannounced with the command that announces it"
+  - "With no claim held, the answer lists unheld asks to all, review requests with no answer and tasks without an owner, bounded and counted"
+  - "The bounds (how far behind, how old a fetch) are read from the policy and declared once"
+validation:
+  - "bin/majordomus plan validate"
+  - "majordomus generate --check"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 3010_a_session_joins_the_cluster"
+evidence_required:
+  - "join_state_unit_tests"
+  - "join_state_case_3004"
+created_at: 2026-10-13
+updated_at: 2026-10-13

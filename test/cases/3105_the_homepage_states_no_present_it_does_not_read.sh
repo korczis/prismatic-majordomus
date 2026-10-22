@@ -21,7 +21,7 @@
 . "$ROOT/test/lib.sh"
 CHECK="$ROOT/scripts/ci/homepage-check"
 [ -x "$CHECK" ] || { echo "    scripts/ci/homepage-check is missing or not executable"; exit 1; }
-command -v python3 >/dev/null || skip "python3 absent"
+mj_runs python3 || skip "$(mj_runs_why python3)"
 
 F="$PWD/fixture"
 # the least tree homepage-check reads before it judges anything; the copy and the template are

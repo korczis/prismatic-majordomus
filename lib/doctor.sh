@@ -348,8 +348,18 @@ mj_validate_projection() {
 # names .ai/README.md, and no generated target carries what the layer is for. A rule that
 # exists in one provider's file and nowhere else is the two-rulebooks failure this tool was
 # distilled from, so a generated target that holds a rule corpus fails here.
+#
+# Both questions are asked of the generated content only: the whole file in file mode, the
+# region in region mode. The host document around a region is the repository's own, written
+# by people before or beside the layer; it may carry rule bullets and a rules section, and no
+# edit of the policy could remove them, so a finding there could never be fixed by what
+# doctor tells the reader to run. The pointer is read from the same span for the same reason
+# turned round: the region is what a worker is promised, and a host that happens to name
+# .ai/README.md does not stand in for a region that lost it. Absent or malformed markers are
+# the projection doctrine's finding and nothing is judged here.
 mj_validate_bootstrap() {
-  local j=0 tgt mode bad=0
+  local j=0 tgt mode bad=0 owned region
+  region="$(mktemp "${TMPDIR:-/tmp}/mj.bs.XXXXXX")"
   if mj_personal_active; then
     # The chain starts at the project's README, and a personal layer changes nothing the
     # project shares: the README is the repository's, the layer is one person's. The agent
@@ -363,13 +373,19 @@ mj_validate_bootstrap() {
     tgt="$(mj_pol "projections.$j.target")"; mode="$(mj_projection_mode "$j")"; j=$((j+1))
     [ -f "$MJ_ROOT/$tgt" ] || continue   # projection_integrity reports absence
     mj_personal_is_the_projects "$tgt" && continue   # the project's file, like its README
-    if ! grep -q '\.ai/README\.md' "$MJ_ROOT/$tgt"; then
+    owned="$MJ_ROOT/$tgt"
+    if [ "$mode" = region ]; then
+      mj_region_extract "$MJ_ROOT/$tgt" > "$region" 2>/dev/null || continue   # projection_integrity reports the markers
+      owned="$region"
+    fi
+    if ! grep -q '\.ai/README\.md' "$owned"; then
       mj_doctrine_fail bootstrap "$tgt" "does not point at .ai/README.md; a worker reading it never reaches the layer" "grep -n '.ai/README.md' $tgt"; bad=1
-    elif grep -qE '^\| *`?(profile|routine|implementation)`? *\||^- \*\*[A-Za-z].*\*\*|^### (Rules|Ten rules|Lifecycle|Finish contract)' "$MJ_ROOT/$tgt"; then
+    elif grep -qE '^\| *`?(profile|routine|implementation)`? *\||^- \*\*[A-Za-z].*\*\*|^### (Rules|Ten rules|Lifecycle|Finish contract)' "$owned"; then
       mj_doctrine_fail bootstrap "$tgt" "carries a rule corpus of its own (a profile table, rule bullets or a rules section); rules live under .ai/repo/rules/" "grep -nE '^- \*\*|^### ' $tgt"; bad=1
     fi
     mj_bootstrap_rule_refs "$tgt" "$mode" "$(mj_pol "projections.$((j-1)).provider")" || bad=1
   done
+  rm -f "$region"
   [ "$bad" = 0 ] && [ "$j" -gt 0 ] && mj_doctrine_ok bootstrap "$j projection(s)" "each points at .ai/README.md, carries no rule of its own and names only rules in force"
   return 0
 }

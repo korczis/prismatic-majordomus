@@ -1,0 +1,111 @@
+---
+schema: adr/v1
+id: adr-0156
+kind: adr
+title: A session joins the cluster before it works — current, announced and useful — and the repository says when it has not
+status: proposed
+date: 2026-10-13
+tags:
+  - coordination
+  - mesh
+  - governance
+  - enforcement
+related:
+  - file:.ai/repo/adrs/0043-entering-the-repository-brings-its-runtime-up.md
+  - file:.ai/repo/adrs/0044-cooperation-is-repository-wide-the-board-is-gathered-not-shared.md
+  - file:.ai/repo/rules/project/work-is-claimed-before-it-is-built.v1.md
+  - file:.ai/repo/rules/project/a-session-joins-the-cluster-before-it-works.v1.md
+  - file:docs/MESH.md
+provenance:
+  origin: authored
+---
+
+# 156. A session joins the cluster before it works — current, announced and useful — and the repository says when it has not
+
+## Context
+
+On 2026-10-13 a session on the owner's Mac was asked to update, join the mesh and take up
+the unfinished work. It did the first two as reads and the third alone. For about three
+hours it behaved as the only worker of a repository that had nineteen:
+
+- its checkout stood at `3491f35` while the trunk was ninety-odd commits on; `v0.22.0` and
+  `v0.23.0` had been tagged and published in that time, and a landing seat was landing the
+  pull request the session was about to re-run;
+- the `majordomus` MCP server had failed to connect, and the session fell back to the bare
+  CLI without saying so to anyone — so it never called `announce`, never read the board and
+  never saw that the cluster routes every derive to another machine, not to the Mac it was
+  sitting at;
+- it started a compile on that Mac, filled a volume that was already at 100% and stopped
+  there, reporting the disk and not the cluster;
+- the board held open asks addressed to everybody ("I am free. What is unheld?"), unanswered
+  reviews and a disk-reclaim task, while this session went looking for work on its own.
+
+Every rule needed to avoid this already existed as prose: announce, read the board, claim
+before building, never tag a taken version. The session had the prose, in `CLAUDE.md`, and
+did not follow it — and nothing in the repository noticed. The owner's reading was exact:
+"this must never happen again; it must be formalized, derived, enforced, in `.ai`".
+
+## Decision
+
+A session is *joined* when four facts hold, and the repository derives them instead of
+asking the session to remember them.
+
+1. **Current.** The checkout's trunk is compared with the remote trunk after a bounded
+   fetch. The briefing says how many commits behind, the newest release tag it knows, and
+   whether it could ask at all. Not being able to ask is `unverified`, never `current`.
+2. **Attached.** The session's transport to the shared server is named: MCP attached, CLI
+   only, or none. A fall-back to the CLI is allowed and is reported, once, at the head of
+   the briefing and on the board.
+3. **Announced.** The worker has an open mesh session on the live server of this checkout
+   (ADR 0044): its intent, and the paths and identifiers it is about to take. A new
+   identifier is announced before it is written, as `project.work-is-claimed-before-it-is-built`
+   already requires.
+4. **Useful.** A worker that holds no claim is not idle: the briefing lists what the board
+   leaves unheld — open asks to all, review requests with no answer, tasks without an
+   owner — and the worker takes one, or says on the board why it takes none.
+
+`majordomus context` prints the four as its first block, with the same names the board
+uses. `start`, `check` and `finish` refuse a non-trivial change while the session is not
+announced or is behind the trunk by more than the policy's bound, naming the command that
+repairs it. The pre-commit and pre-push hooks run the same derivation. An environment that
+cannot answer — no network, no server, mesh closed — is reported as such and does not
+block: absence is a state, not a reason to stop, and not a licence to say `current`.
+
+The policy declares the bounds (how far behind, how old a fetch) in one place, and every
+surface projects the derived result: the briefing, `doctor`, the Cockpit, the handbook, the
+site's description of how workers keep together, and the published GitHub Pages. None of
+them states the rule by hand (ADR 0004: a repeated semantic definition is a design defect).
+
+Which machine derives is not this ADR's to decide, but where it is declared it is part of
+the briefing: a session that is told derives go to another lane is told so before it
+compiles.
+
+## Consequences
+
+- A late session is visible on the board within one heartbeat, as late, and nobody has to
+  guess why it is quiet.
+- A session cannot be mistaken for the only worker: the board is the first thing it reads.
+- A new check in `start`/`check`/`finish` can refuse work, so the policy bound must be
+  generous enough that a short outage of the network does not stop a person; an
+  unreachable remote never refuses.
+- The mechanism has a cost: one bounded fetch on entry. It is on the same path as the
+  runtime bring-up of ADR 0043 and shares its timeout.
+
+## Alternatives rejected
+
+- **A stronger paragraph in `CLAUDE.md`.** That is what failed. The paragraph was read and
+  not followed; a fifth emphasis is not a mechanism.
+- **Refusing every command while behind.** A worker with no network could do nothing, and a
+  read of the state is exactly what it needs to see why. Reads are never refused.
+- **Letting the MCP server be the only enforcement point.** The failure began with the MCP
+  server not connecting; the check must live where that case still runs — the CLI and the
+  hooks.
+
+## Verification
+
+the case numbered 3010 (`a_session_joins_the_cluster`, under test/cases) proves, in a fixture with a bare origin,
+that a checkout behind its trunk is reported behind, that an unreachable remote is
+`unverified` and not `current`, that an unannounced session is refused by `check` naming
+the repairing command and a read is not, and that a worker with no claim is shown the open
+asks. It lands with the capability that derives the four facts; until it does, the rule is
+advisory and this decision is proposed.

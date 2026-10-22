@@ -1948,15 +1948,36 @@ mj_mesh_task_release() { # <task id>
 }
 
 # Whether the repository declares its mesh enabled: a tracked declaration under
-# .ai/repo/mesh/ whose top-level `enabled` is true. The declaration is what the server obeys
-# (ADR 0059); whether a server runs right now is another question, and a task is judged
-# against what the repository declared, not against which processes happen to be up.
+# .ai/repo/mesh/ whose top-level `enabled` is true, and whose trust admits some machine. The
+# declaration is what the server obeys (ADR 0059); whether a server runs right now is another
+# question, and a task is judged against what the repository declared, not against which
+# processes happen to be up.
+#
+# A declaration that is enabled and closed — `trust.policy: deny_unknown` with an empty
+# `allow` — is the one `init` seeds (ADR 0168): the mesh is on in principle and runs on no
+# machine until `majordomus mesh enrol` lists one. Nothing can claim on it, so it asks nothing
+# of a task; read as enabled, every fresh adopter's completed `finish` was refused by
+# task-on-the-mesh (found merging #947 into master, 2026-10-16).
 mj_mesh_declared_enabled() {
   local f
   for f in $(mj_git ls-files -- '.ai/repo/mesh/*.yaml' '.ai/repo/mesh/*.yml' 2>/dev/null); do
-    grep -qE '^enabled:[[:space:]]*true[[:space:]]*$' "$MJ_ROOT/$f" 2>/dev/null && return 0
+    grep -qE '^enabled:[[:space:]]*true[[:space:]]*$' "$MJ_ROOT/$f" 2>/dev/null || continue
+    mj_mesh_declaration_admits "$MJ_ROOT/$f" && return 0
   done
   return 1
+}
+# Whether a declaration's trust admits any machine: any policy but deny_unknown, or an
+# `allow` list with at least one key, inline or as items. No trust block admits (the
+# runtime's default policy is not deny_unknown).
+mj_mesh_declaration_admits() {
+  awk '
+    /^trust:/ { t = 1; next }
+    t && /^[^[:space:]#]/ { t = 0 }
+    t && /^[[:space:]]+policy:/ { p = $2; gsub(/["\047]/, "", p) }
+    t && /^[[:space:]]+allow:[[:space:]]*\[[[:space:]]*[^][:space:]]/ { n++ }
+    t && /^[[:space:]]+-[[:space:]]+[^[:space:]]/ { n++ }
+    END { exit !(p != "deny_unknown" || n > 0) }
+  ' "$1"
 }
 
 # A task works on the mesh (I2289, project.a-task-works-on-the-mesh). On a repository that

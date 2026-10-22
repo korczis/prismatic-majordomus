@@ -45,9 +45,15 @@ poll() {
 
 # ---------------------------------------------------------------- 1. the committed declaration
 expect_file "$DECL"
-# This repository's decision is not the tool's default: the skeleton ships no declaration.
-skeleton_mesh="$(find "$ROOT/share/skeleton" -path '*/repo/mesh/*' -name '*.yaml' 2>/dev/null)"
-[ -z "$skeleton_mesh" ] || { echo "    the skeleton ships a mesh declaration, so every new repository would inherit this one's: $skeleton_mesh"; exit 1; }
+# This repository's fleet is not the tool's default: the declaration the skeleton ships (ADR
+# 0139) lists no key and names no endpoint, so a new repository inherits nobody's trust and
+# dials nobody's hub — it stays closed until one of its own machines is enrolled.
+skeleton_mesh="$ROOT/share/skeleton/ai/repo/mesh/mesh.yaml"
+expect_file "$skeleton_mesh"
+grep -q '^  allow: \[\]$' "$skeleton_mesh" && grep -q '^  policy: deny_unknown$' "$skeleton_mesh" \
+  || { echo "    the skeleton's mesh declaration trusts somebody, or not by deny_unknown:"; cat "$skeleton_mesh"; exit 1; }
+! grep -qE 'https?://|^rendezvous:|seeds:' "$skeleton_mesh" \
+  || { echo "    the skeleton's mesh declaration names an endpoint a new repository would dial:"; cat "$skeleton_mesh"; exit 1; }
 EMPTY="$T/no-identity"; mkdir -p "$EMPTY"
 # The self-check runs in this process, under the state directory given here: `mesh doctor`
 # would ask a server serving $ROOT, whose identity is the machine's and not the fixture's
@@ -99,6 +105,9 @@ derive_declaration() { # out want-changes [rendezvous-url [seed-url [listed-key]
     { hubs = 0 }
     s == "trust:" && /^  allow:/ && key != "" { print; print "    - \"" key "\""; n++; next }
     s == "multicast:" && /^  enabled:/ { print "  enabled: false"; n++; next }
+    # the tailnet stays quiet: a fixture on a machine that runs Tailscale would register with
+    # the real hubs of the fleet and meet its siblings there
+    /^trust:/ && !tailnet { print "tailscale:"; print "  enabled: false"; tailnet = 1; n++ }
     s == "rendezvous:" && /^  endpoints:/ {
       if (rv != "") { print "  endpoints:"; print "    - " rv } else print "  endpoints: []"
       hubs = 1; n++; next
@@ -128,7 +137,7 @@ mkdir -p "$R"
   git add -A && git commit -qm base
 ) || { echo "    the fixture repository could not be made"; exit 1; }
 mkdir -p "$R/.ai/repo/mesh"
-derive_declaration "$R/.ai/repo/mesh/majordomus.yaml" 2 || exit 1
+derive_declaration "$R/.ai/repo/mesh/majordomus.yaml" 3 || exit 1
 git -C "$R" add .ai/repo/mesh/majordomus.yaml
 git -C "$R" commit -qm "the committed mesh declaration, loopback-only"
 B="$T/wt-b"; C="$T/wt-c"
@@ -158,12 +167,12 @@ jq -e --arg key "$KEY" '.active == false and (.reason | startswith("closed: ") a
   || { echo "    an unlisted machine's mesh is not closed with its key named:"; echo "$LAST_OUT"; exit 1; }
 mj "$R" "$MACHINE" serve stop >/dev/null || true
 poll 100 sh -c "! [ -s '$R/.ai/local/state/mcp/server.json' ]" || true
-derive_declaration "$R/.ai/repo/mesh/majordomus.yaml" 3 "" "" "$KEY" || exit 1
+derive_declaration "$R/.ai/repo/mesh/majordomus.yaml" 4 "" "" "$KEY" || exit 1
 git -C "$R" commit -qam "this machine's key is listed"
 serve "$R" "$MACHINE"
 poll 300 has_url "$R" || { cat "$R.serve.log"; exit 1; }
 URL_A="$(url_of "$R")"
-derive_declaration "$B/.ai/repo/mesh/majordomus.yaml" 3 "$URL_A" "" "$KEY" || exit 1
+derive_declaration "$B/.ai/repo/mesh/majordomus.yaml" 4 "$URL_A" "" "$KEY" || exit 1
 serve "$B" "$MACHINE"
 poll 300 has_url "$B" || { cat "$B.serve.log"; exit 1; }
 
@@ -204,7 +213,7 @@ expect_grep 'cooperation verified'
 # ---------------------------------------------------------------- 4. another machine, unlisted
 # Its declaration names A as hub and seed, the same as a contributor's clone naming the
 # repository's hubs; its own key is listed nowhere, so it stays closed and dials neither.
-derive_declaration "$C/.ai/repo/mesh/majordomus.yaml" 3 "$URL_A" "$URL_A" || exit 1
+derive_declaration "$C/.ai/repo/mesh/majordomus.yaml" 4 "$URL_A" "$URL_A" || exit 1
 serve "$C" "$STRANGER"
 poll 300 has_url "$C" || { cat "$C.serve.log"; exit 1; }
 expect_exit 0 mj "$C" "$STRANGER" mesh status --format json

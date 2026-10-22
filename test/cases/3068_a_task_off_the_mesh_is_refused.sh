@@ -35,6 +35,10 @@ refused_by_mesh() {
 }
 
 # ---------------------------------------------------------------- 1. no enabled mesh: not judged
+# `init` seeds an enabled, closed declaration (ADR 0168: deny_unknown, nobody listed). It runs on
+# no machine until one is enrolled, so it is judged as no mesh, not as one nobody claimed on.
+grep -q '^enabled: true' .ai/repo/mesh/mesh.yaml 2>/dev/null \
+  || { echo "    init did not seed the enabled, closed declaration this section stands on"; exit 1; }
 expect_exit 0 "$MJ" start "No mesh here" --scope lib
 "$MJ" check >"$T/check0" 2>&1 || true
 grep -q '^FAIL mesh' "$T/check0" && { echo "    a repository without a mesh was judged"; cat "$T/check0"; exit 1; }
