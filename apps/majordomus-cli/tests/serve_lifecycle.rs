@@ -863,3 +863,151 @@ fn stop_leaves_a_server_of_another_checkout_alone() {
     assert_eq!(code, 0, "{out}");
     assert!(out.starts_with("stopped "), "{out}");
 }
+
+/// [`mj`] with this test's own node identity, so the machine's real key is never read.
+fn mj_as(cwd: &Path, state: &Path, args: &[&str]) -> (i32, String, String) {
+    let out = common::majordomus()
+        .args(args)
+        .current_dir(cwd)
+        .env("MAJORDOMUS_SHARE", dist_share())
+        .env("MAJORDOMUS_LOG", "info")
+        .env("XDG_STATE_HOME", state)
+        .output()
+        .expect("run majordomus");
+    (
+        out.status.code().unwrap_or(-1),
+        String::from_utf8_lossy(&out.stdout).into_owned(),
+        String::from_utf8_lossy(&out.stderr).into_owned(),
+    )
+}
+
+fn post(url: &str, target: &str, body: &str) -> Option<u16> {
+    let address = url.strip_prefix("http://")?;
+    let mut stream =
+        TcpStream::connect_timeout(&address.parse().ok()?, Duration::from_secs(2)).ok()?;
+    stream
+        .write_all(
+            format!(
+                "POST {target} HTTP/1.1\r\nHost: {address}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+                body.len()
+            )
+            .as_bytes(),
+        )
+        .ok()?;
+    let mut raw = Vec::new();
+    stream.read_to_end(&mut raw).ok()?;
+    let text = String::from_utf8_lossy(&raw).into_owned();
+    text.split_whitespace().nth(1)?.parse().ok()
+}
+
+/// I2411: a primary checkout's server whose mesh is enabled, and which lists this machine,
+/// binds this machine's private addresses beside loopback and nothing else. A trusted peer
+/// on the tailnet or the LAN reaches it there, a write from there is refused (I2123), what
+/// it advertises is exactly what it bound, and with no declaration it binds loopback alone.
+#[test]
+fn mesh_server_reachable_on_tailnet() {
+    use majordomus_cli::mesh::address::{interfaces, is_private_peer_address, private_addresses};
+    let private = private_addresses();
+    if private.is_empty() {
+        eprintln!("this machine has no private IPv4 address; the case is held by the unit tests");
+        return;
+    }
+    let state = tempfile::tempdir().unwrap();
+    let identity = majordomus_cli::mesh::NodeIdentity::load_or_create(
+        &state.path().join("majordomus").join("node.json"),
+    )
+    .unwrap();
+
+    // ---- enabled, and this machine listed
+    let f = Fixture::new();
+    // the key quoted: a hex string must never read as a number
+    f.write(
+        ".ai/repo/mesh/majordomus.yaml",
+        &format!(
+            "schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\nmulticast:\n  enabled: false\ntailscale:\n  enabled: false\nbroadcast:\n  mode: disabled\ntrust:\n  policy: deny_unknown\n  allow:\n    - \"{}\"\n",
+            identity.public.public_key
+        ),
+    );
+    f.commit("a mesh that lists this machine");
+    let (code, out, err) = mj_as(
+        &f.root(),
+        state.path(),
+        &[
+            "serve", "ensure", "--format", "json", "--wait", "40", "--idle", "120",
+        ],
+    );
+    assert_eq!(code, 0, "{out}\n{err}");
+    let a: Value = serde_json::from_str(&out).unwrap();
+    let url = a["url"].as_str().unwrap().to_string();
+    assert!(
+        url.starts_with("http://127.0.0.1:"),
+        "the lease names loopback: {url}"
+    );
+    let port = url.rsplit(':').next().unwrap().to_string();
+
+    // every private address answers, and a write from there is refused
+    for ip in &private {
+        let there = format!("http://{ip}:{port}");
+        let (status, _) =
+            get(&there, "/api/v1/server").unwrap_or_else(|| panic!("nothing answers on {there}"));
+        assert_eq!(status, 200, "{there}");
+        let refused = post(
+            &there,
+            "/api/v1/mesh/claims",
+            r#"{"session":"s1","scope":["docs"]}"#,
+        );
+        assert_eq!(refused, Some(403), "a write from {there} was not refused");
+    }
+    // no other interface address is bound: a public one, a bridge, anything not private
+    for (name, ip) in interfaces() {
+        if !is_private_peer_address(ip) {
+            assert!(
+                get(&format!("http://{ip}:{port}"), "/").is_none(),
+                "{name} {ip} answers, and it is not a private address"
+            );
+        }
+    }
+    // what the mesh advertises is loopback and the bound private addresses, nothing else
+    let (_, body) = get(&url, "/api/v1/mesh/cooperation").unwrap();
+    let status: Value = serde_json::from_str(&body).unwrap();
+    let advertised: Vec<String> = status["endpoints"]
+        .as_array()
+        .map(|a| {
+            a.iter()
+                .filter_map(|e| e.as_str().map(String::from))
+                .collect()
+        })
+        .unwrap_or_default();
+    assert!(!advertised.is_empty(), "no endpoints advertised: {status}");
+    for e in &advertised {
+        let ip: std::net::Ipv4Addr = e.rsplit_once(':').unwrap().0.parse().unwrap();
+        assert!(
+            ip.is_loopback() || private.contains(&ip),
+            "{e} is advertised and not bound: {advertised:?}"
+        );
+    }
+    let (code, out, _) = mj_as(&f.root(), state.path(), &["serve", "stop"]);
+    assert_eq!(code, 0, "{out}");
+
+    // ---- no declaration: loopback alone
+    let plain = Fixture::new();
+    let (code, out, err) = mj_as(
+        &plain.root(),
+        state.path(),
+        &[
+            "serve", "ensure", "--format", "json", "--wait", "40", "--idle", "120",
+        ],
+    );
+    assert_eq!(code, 0, "{out}\n{err}");
+    let b: Value = serde_json::from_str(&out).unwrap();
+    let url = b["url"].as_str().unwrap().to_string();
+    let port = url.rsplit(':').next().unwrap().to_string();
+    for ip in &private {
+        assert!(
+            get(&format!("http://{ip}:{port}"), "/").is_none(),
+            "{ip}:{port} answers with no mesh declaration"
+        );
+    }
+    let (code, out, _) = mj_as(&plain.root(), state.path(), &["serve", "stop"]);
+    assert_eq!(code, 0, "{out}");
+}

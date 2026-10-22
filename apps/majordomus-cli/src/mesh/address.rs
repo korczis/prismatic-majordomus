@@ -84,6 +84,39 @@ fn rank(name: &str) -> u8 {
     u8::from(BRIDGES.iter().any(|b| name.starts_with(b)))
 }
 
+/// Whether `ip` is an address a trusted peer reaches this machine on and the internet does
+/// not: a private network (RFC 1918) or the tailnet's shared range (100.64.0.0/10, RFC 6598).
+/// Loopback, link-local and every public address are not (I2411).
+///
+/// ```
+/// use std::net::Ipv4Addr;
+/// use majordomus_cli::mesh::address::is_private_peer_address;
+/// assert!(is_private_peer_address(Ipv4Addr::new(192, 168, 100, 96)));
+/// assert!(is_private_peer_address(Ipv4Addr::new(10, 1, 2, 3)));
+/// assert!(is_private_peer_address(Ipv4Addr::new(172, 16, 0, 1)));
+/// assert!(is_private_peer_address(Ipv4Addr::new(100, 120, 245, 51)), "a tailnet address");
+/// assert!(!is_private_peer_address(Ipv4Addr::new(100, 128, 0, 1)), "beyond 100.64.0.0/10");
+/// assert!(!is_private_peer_address(Ipv4Addr::new(8, 8, 8, 8)));
+/// assert!(!is_private_peer_address(Ipv4Addr::new(127, 0, 0, 1)), "loopback is bound anyway");
+/// assert!(!is_private_peer_address(Ipv4Addr::new(169, 254, 1, 1)), "link-local");
+/// ```
+pub fn is_private_peer_address(ip: Ipv4Addr) -> bool {
+    let [a, b, ..] = ip.octets();
+    ip.is_private() || (a == 100 && (b & 0xC0) == 64)
+}
+
+/// This machine's private addresses: the ones a mesh-enabled primary server listens on
+/// beside loopback (I2411), each once, in the interfaces' order.
+pub fn private_addresses() -> Vec<Ipv4Addr> {
+    let mut out: Vec<Ipv4Addr> = Vec::new();
+    for (_, ip) in interfaces() {
+        if is_private_peer_address(ip) && !out.contains(&ip) {
+            out.push(ip);
+        }
+    }
+    out
+}
+
 /// The up, non-loopback IPv4 interfaces of this machine, ranked, with their names. What is
 /// left out is what a remote runtime could not dial anyway: an interface that is down,
 /// loopback, unspecified, or link-local. The order is the advertising preference — a

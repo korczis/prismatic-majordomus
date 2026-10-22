@@ -570,9 +570,20 @@ cooperation:
 ```
 
 The declaration is the one place mesh behaviour is configured; there are no environment
-variables for it. To be dialed from other machines, the server must listen beyond loopback:
-`majordomus serve --host 0.0.0.0` (or a deployment object). A server on loopback can still dial
-out, and a link, once dialed, replicates both ways.
+variables for it. A primary checkout's server on the default host is dialable without one
+(I2411): when the declaration is enabled and lists this machine's key, it binds one listener
+per private address of the machine, an RFC 1918 LAN address or a tailnet address in
+100.64.0.0/10, on the same port as its loopback listener, and advertises exactly those. A
+public address is never bound, because none is asked for; the guarantee holds at the socket,
+not at accept, so a public interface does not even answer a handshake. A caller on a private
+address is held to the remote-caller rule (it reads, and changes nothing it cannot
+authenticate, I2123). A machine its declaration does not list, a disabled declaration, a
+linked worktree's server and a server whose host a flag, the environment or a deployment
+object names all bind what they bound before: loopback, or the host they were given. The
+listeners are bound once, at start: a laptop that joins a network serves there after the
+next start. A server on loopback can still dial out, and a link, once dialed, replicates both
+ways. `majordomus serve --host 0.0.0.0` still binds every interface, public ones included,
+for a machine that means to.
 
 `--host` lasts as long as that one process. For a machine that should always be dialable,
 export `MAJORDOMUS_HTTP_HOST=0.0.0.0` in the shell's startup file: it is not mesh

@@ -120,14 +120,20 @@ fn serve(args: &ServeArgs, repo: &Repository) -> Result<u8> {
         Some(id) => Some(deployment(&app, id)?),
         None => None,
     };
+    // Only a primary checkout's server on the default host widens for the mesh (I2411): a
+    // flag, the environment or a deployment object said where to bind, and a linked
+    // worktree leaves the network to the primary checkout's server.
+    let root = std::path::Path::new(&app.context.index.repository.root);
+    let linked = crate::repository::git_identity(root).is_some_and(|g| g.linked);
+    let mut widen = false;
     let (host, port) = match &declared {
         Some((_, listen)) => (listen.interface.host().to_string(), listen.port.get()),
         None => (
-            crate::cli::checkout_http_host(
-                args.host.as_deref(),
-                std::path::Path::new(&app.context.index.repository.root),
-            )
-            .0,
+            {
+                let (host, origin) = crate::cli::checkout_http_host(args.host.as_deref(), root);
+                widen = origin == crate::cli::HostOrigin::Default && !linked;
+                host
+            },
             // the port this checkout asks for on every start, unless one was given (I2702)
             args.port
                 .unwrap_or_else(|| crate::cli::checkout_port(repo.root())),
@@ -148,6 +154,7 @@ fn serve(args: &ServeArgs, repo: &Repository) -> Result<u8> {
         declared.as_ref().map(|(file, _)| file.as_str()),
         lease,
         Some(app.share.dir()),
+        widen,
     )?;
     // this loop answers a stop signal itself, so that the process ends by its own return
     shared.take_stop_requests();

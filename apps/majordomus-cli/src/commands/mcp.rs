@@ -179,7 +179,10 @@ impl Session {
         let live = Arc::new(Live::watching(args.repo.clone(), app.context.clone()));
         let ctx = live.current();
         let root = std::path::Path::new(&app.context.index.repository.root);
-        let (http_host, _) = crate::cli::checkout_http_host(args.http_host.as_deref(), root);
+        let (http_host, origin) = crate::cli::checkout_http_host(args.http_host.as_deref(), root);
+        // a primary checkout's server on the default host widens for the mesh (I2411)
+        let linked = crate::repository::git_identity(root).is_some_and(|g| g.linked);
+        let widen = origin == crate::cli::HostOrigin::Default && !linked;
         // the port this checkout asks for on every start, unless one was given (I2702)
         let http_port = args
             .http_port
@@ -193,6 +196,7 @@ impl Session {
             None,
             lease,
             Some(app.share.dir()),
+            widen,
         )?;
         let peer = ctx.peers.attach(PeerTransport::Stdio);
         let mut server = Server::new(Surface::new(live).for_peer(peer.clone()), crate::VERSION)

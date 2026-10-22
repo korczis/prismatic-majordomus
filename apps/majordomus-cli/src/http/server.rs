@@ -125,6 +125,22 @@ pub fn bind_declared(host: &str, port: u16, source: &str) -> Result<Bound> {
     Ok(Bound { server, address })
 }
 
+/// Bind `ip:port` for the mesh: a private address of this machine a trusted peer dials
+/// (I2411). Not the accidental bind [`bind`] warns about: the repository's mesh declaration
+/// asked for it, and a caller there is held to the remote-caller rule like any other
+/// non-loopback caller (I2123).
+pub fn bind_private(ip: std::net::Ipv4Addr, port: u16) -> Result<Bound> {
+    let server = Arc::new(Server::http((ip, port)).map_err(|e| Error::Http {
+        reason: format!("cannot bind {ip}:{port}: {e}"),
+    })?);
+    let address = format!("{ip}:{port}");
+    tracing::info!(
+        address = %address,
+        "bound {address} for the mesh: the declaration is enabled and lists this machine, so trusted peers on this network can dial it; a caller here reads, and changes nothing it cannot authenticate"
+    );
+    Ok(Bound { server, address })
+}
+
 /// Bind `host:port`, and when that port is taken bind a free one instead, saying so on
 /// stderr. For a server whose port is a convenience rather than a contract.
 pub fn bind_or_fallback(host: &str, port: u16) -> Result<Bound> {

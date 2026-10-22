@@ -27,6 +27,8 @@ pub(crate) const STOP_PEER_GRACE: Duration = Duration::from_secs(2);
 /// A running shared server.
 pub struct SharedServer {
     running: Running,
+    /// The private listeners beside loopback, when the mesh widened this server (I2411).
+    peers: Vec<Running>,
     endpoint: Arc<McpEndpoint>,
     lease: Lease,
     /// Set by [`SharedServer::stop`]; the reader thread ends at its next tick.
@@ -41,9 +43,44 @@ pub struct SharedServer {
     owner_answers: Arc<AtomicBool>,
 }
 
+/// The private listeners a mesh-enabled primary server binds beside loopback (I2411): one
+/// per private address of this machine (RFC 1918 and the tailnet's 100.64.0.0/10), on the
+/// loopback's port. Only when the declaration is enabled and lists this machine: a machine
+/// its declaration closes neither announces nor dials, so it listens on loopback alone. No
+/// public address is ever bound, because none is asked for; an address that will not bind
+/// is skipped and said, and the server serves on the rest.
+fn mesh_listeners(ctx: &Arc<Context>, port: u16) -> Vec<server::Bound> {
+    let Some(Ok(config)) = crate::capability::builtin::mesh::declaration(ctx) else {
+        return Vec::new();
+    };
+    if !config.enabled {
+        return Vec::new();
+    }
+    let Some(path) = crate::mesh::default_identity_path() else {
+        return Vec::new();
+    };
+    let Ok(identity) = crate::mesh::NodeIdentity::load_or_create(&path) else {
+        return Vec::new();
+    };
+    if crate::mesh::manager::closed_to(&config, &identity.public.public_key).is_some() {
+        return Vec::new();
+    }
+    crate::mesh::address::private_addresses()
+        .into_iter()
+        .filter_map(|ip| match server::bind_private(ip, port) {
+            Ok(bound) => Some(bound),
+            Err(e) => {
+                tracing::warn!("{e}; peers on that network cannot dial this server");
+                None
+            }
+        })
+        .collect()
+}
+
 /// Activate the mesh from the repository's declaration, when there is one and it is
-/// enabled. Every failure is a reason on `mesh.status`, never a failed server.
-fn activate_mesh(ctx: &Arc<Context>, version: &str, url: &str) {
+/// enabled. Every failure is a reason on `mesh.status`, never a failed server. `extra` are
+/// the private listeners bound beside `url` ([`mesh_listeners`]), advertised with it.
+fn activate_mesh(ctx: &Arc<Context>, version: &str, url: &str, extra: &[String]) {
     let resolved = crate::capability::builtin::mesh::resolved_declaration(ctx);
     if !resolved.narrowed.is_empty() {
         // obeyed as narrowed; `mesh doctor` fails its `trust-root` check with the same lines
@@ -85,7 +122,13 @@ fn activate_mesh(ctx: &Arc<Context>, version: &str, url: &str) {
     // when it is bound to all of them. A loopback bind is reachable from this machine
     // only, and `mesh doctor` says so.
     let bound = url.trim_start_matches("http://").trim_end_matches('/');
-    let endpoints = crate::mesh::address::advertised_endpoints(bound);
+    let mut endpoints = crate::mesh::address::advertised_endpoints(bound);
+    // the private listeners are bound, so they are advertised; nothing unbound ever is
+    for e in extra {
+        if !endpoints.contains(e) {
+            endpoints.push(e.clone());
+        }
+    }
     let root = std::path::Path::new(&ctx.index.repository.root);
     // One runtime per checkout, and one repository identity per repository on every
     // machine — derived from content or declared, never from a path.
@@ -178,6 +221,7 @@ impl SharedServer {
         declared_by: Option<&str>,
         lease: Lease,
         share_dir: Option<&std::path::Path>,
+        widen: bool,
     ) -> Result<Self> {
         // Three ways to arrive at a socket, and they are not interchangeable: a canonical
         // object declared this address (bind it, say which object said so), the port is a
@@ -200,7 +244,26 @@ impl SharedServer {
         // the activated runtime. Never blocking: providers open sockets on their own
         // threads, and a declaration that is absent, disabled or malformed leaves the
         // runtime inactive with the reason `mesh.status` reports.
-        activate_mesh(&ctx_for_mesh, version, &url);
+        // A primary checkout's server on the default host widens for the mesh (I2411): the
+        // private listeners bind before the mesh is told where it is reachable, so what it
+        // advertises is what is bound.
+        let peers_bound = if widen {
+            let bound_port = bound
+                .address()
+                .rsplit(':')
+                .next()
+                .and_then(|p| p.parse().ok())
+                .unwrap_or(port);
+            mesh_listeners(&ctx_for_mesh, bound_port)
+        } else {
+            Vec::new()
+        };
+        let extra: Vec<String> = peers_bound
+            .iter()
+            .map(|b| b.address().to_string())
+            .collect();
+        activate_mesh(&ctx_for_mesh, version, &url, &extra);
+        let peer_router = router.clone();
         // what it serves is read off the resolution, so this line cannot name a route the
         // process does not have or miss one it does
         let surfaces = router.served()?.summary(&url);
@@ -210,6 +273,10 @@ impl SharedServer {
         let running = start_published(bound, router, || lease.publish(&url)).inspect_err(|_| {
             ctx_for_mesh.mesh.stop();
         })?;
+        let peers: Vec<Running> = peers_bound
+            .into_iter()
+            .map(|b| b.start(peer_router.clone()))
+            .collect();
         // The server's own reader: every REAP_INTERVAL it forgets the HTTP sessions that
         // stopped pinging — on every path, not only while the owner waits for peers to
         // leave, so that a dead peer never stays `attached` on the board — and it checks
@@ -291,6 +358,7 @@ impl SharedServer {
         crate::lease::answer_stop_requests();
         Ok(SharedServer {
             running,
+            peers,
             endpoint,
             lease,
             stopping,
@@ -397,6 +465,9 @@ impl SharedServer {
         self.stopping.store(true, Ordering::SeqCst);
         self.endpoint.close_all();
         self.running.stop();
+        for peer in self.peers {
+            peer.stop();
+        }
         self.lease.release();
         self.mesh.stop();
         tracing::info!("shared server stopped");
@@ -500,6 +571,7 @@ mod tests {
             None,
             lease,
             None,
+            false,
         )
         .is_err());
     }
@@ -557,6 +629,7 @@ mod tests {
             None,
             lease,
             None,
+            false,
         )
         .unwrap();
         (fixture, shared)
