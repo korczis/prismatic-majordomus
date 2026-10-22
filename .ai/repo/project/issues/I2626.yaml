@@ -1,0 +1,30 @@
+id: I2626
+milestone: concurrent-sessions-are-served
+title: "An advisor's status says what was measured, and an account without credit is not a rate limit"
+slug: present-is-not-answering
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Make the advisor status distinguish `present` from `starts`, with an optional local probe, and classify an exhausted account as a standing failure with the cooldown of an authentication failure."
+why: "Observed on 2026-10-13 in prismatic-platform under majordomus 0.22.0 (docs/ADOPTION_CONCURRENT_SESSIONS.md, H06); read again on master e506c041a4. `gemini` was `available — executable gemini on PATH`; the executable was a version-manager shim that exits `No version is set for command gemini` inside the repository. `chatgpt` was `available — credential variable set`; the account had no credit and answered HTTP 429 `insufficient_quota`, which a status of `rate_limited` would retry after a minute."
+current_state: "reasoning/availability.rs measures presence only, by design (ADR 0032: nothing over the network). scripts/lib/advisors/contract.mjs:43 maps every HTTP 429 to `rate_limited`, whatever its body says; scripts/lib/advisors/process.mjs:9 reads `quota exceeded` as a rate limit as well."
+desired_state: "`reasoning advisors --probe` runs each CLI advisor's version command in the repository and reports `present, does not start` with the first line of its error; HTTP 429 with an exhausted-quota body is recorded as `auth_failed`; the default status wording says `present, not probed`."
+scope:
+  - "apps/majordomus-cli/src/reasoning/availability.rs"
+  - "apps/majordomus-cli/src/commands"
+  - "scripts/lib/advisors"
+  - "docs/REASONING.md"
+  - "test/cases"
+depends_on: []
+acceptance_criteria:
+  - "An executable on PATH that exits non-zero for `--version` in the repository is reported as not starting, with the reason"
+  - "A 429 whose body names an exhausted quota opens the long cooldown"
+  - "Without --probe nothing is executed"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "advisor_probe_case"
+  - "quota_is_not_rate_limit_test"
+created_at: 2026-10-13
+updated_at: 2026-10-13

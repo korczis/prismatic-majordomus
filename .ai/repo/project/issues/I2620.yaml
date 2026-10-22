@@ -1,0 +1,32 @@
+id: I2620
+milestone: concurrent-sessions-are-served
+title: "A file the skeleton seeded is compared with the skeleton it came from, and a refresh is a three-way proposal"
+slug: a-seeded-file-knows-its-skeleton
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make an upgraded tool say which layer files it seeded differ from the current skeleton, and offer the difference as a three-way proposal instead of leaving it to a hand copy."
+why: "Observed on 2026-10-13 in prismatic-platform under majordomus 0.22.0 (docs/ADOPTION_CONCURRENT_SESSIONS.md, H01); read again on master e506c041a4. After the upgrade `init --extend` printed `nothing to add; .ai/ already carries every file the skeleton seeds` while six seeded files differed from the 0.22.0 skeleton. `.ai/repo/knowledge/sources.yaml` lacked seven discovery classes (context, gap, critique, intent, candidates, domain, derive-offload), so objects of those kinds were on disk and in no index; a day earlier the missing class `mesh-declaration` had kept the mesh off however it was declared. Two sessions then copied skeleton files by hand, independently."
+current_state: "lib/init.sh:158 reports only absent files. lib/doctor.sh compares the vendored rules with the distribution and nothing else of the skeleton. No record says which skeleton revision a layer file was seeded from."
+desired_state: "The layer records the skeleton revision it was last reconciled with; `doctor` names every seeded file whose skeleton moved since, split into `skeleton moved, file untouched` (safe to take) and `both moved` (a proposal); a missing discovery class is a finding that names the kinds it leaves unindexed; one command writes the safe set and prints the rest as a diff."
+scope:
+  - "lib/init.sh"
+  - "lib/doctor.sh"
+  - "lib/update.sh"
+  - "share/skeleton"
+  - "apps/majordomus-cli/src/discovery"
+  - "docs/ADOPTION.md"
+  - "test/cases"
+depends_on: []
+acceptance_criteria:
+  - "A layer seeded by an older skeleton reports each seeded file whose skeleton text moved, by class, with the revision it was seeded from"
+  - "A discovery class the skeleton declares and the layer lacks is reported with the kinds and the count of files it leaves unread"
+  - "The refresh never overwrites a file the repository changed; it prints the three-way difference and exits with the drift code"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "skeleton_drift_case"
+  - "missing_discovery_class_case"
+created_at: 2026-10-13
+updated_at: 2026-10-13

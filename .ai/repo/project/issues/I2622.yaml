@@ -1,0 +1,34 @@
+id: I2622
+milestone: concurrent-sessions-are-served
+title: "A command that writes tracked layer paths reads the claims on them first"
+slug: a-writer-reads-the-claims-on-what-it-writes
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make every command that writes tracked paths derive its write set and read the board and mesh claims on it before writing: report an advisory overlap, refuse an exclusive one."
+why: "Observed on 2026-10-13 in prismatic-platform under majordomus 0.22.0 (docs/ADOPTION_CONCURRENT_SESSIONS.md, H03); read again on master e506c041a4. A peer had announced `.ai/repo/rules/vendor`, `.ai/repo/providers`, AGENTS.md and CLAUDE.md on the checkout's board. Another session of the same checkout then ran `rules vendor update`, `update` and `recover episodes` there; each wrote the claimed paths and none said a claim existed. The collision surfaced forty-five minutes later, when a person asked for `mesh peers`."
+current_state: "lib/update.sh, lib/rules.sh, lib/init.sh and lib/recover.sh read no claim. Overlap is computed only inside `peers.announce` and `mesh claim`, at the moment a peer speaks."
+desired_state: "A writing command asks the checkout's server, when one is ready, for the claims meeting its write set; an advisory overlap is one line naming the peer and its intent before the write; an exclusive claim held by another runtime refuses with exit 15; no server is an ordinary answer and says the claims were not read."
+scope:
+  - "lib/update.sh"
+  - "lib/rules.sh"
+  - "lib/init.sh"
+  - "lib/recover.sh"
+  - "lib/common.sh"
+  - "apps/majordomus-cli/src/capability/builtin"
+  - "docs/MESH.md"
+  - "docs/MCP.md"
+  - "test/cases"
+depends_on: []
+acceptance_criteria:
+  - "With a foreign advisory claim on a projection target, `update` names the claim and its holder before writing"
+  - "With a foreign exclusive claim, `rules vendor update` refuses and writes nothing"
+  - "Without a server the command says the claims were not read, once"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "writer_reads_claims_case"
+  - "exclusive_claim_refuses_writer_case"
+created_at: 2026-10-13
+updated_at: 2026-10-13

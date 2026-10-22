@@ -1,0 +1,31 @@
+id: I2629
+milestone: concurrent-sessions-are-served
+title: "A diagnostic class is said once per command, and an example environment file is not a tracked secret"
+slug: a-diagnostic-class-is-said-once
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Summarise repeated diagnostics per code on every command that is not `doctor`, and stop reporting template environment files as secrets."
+why: "Observed on 2026-10-13 in prismatic-platform under majordomus 0.22.0 (docs/ADOPTION_CONCURRENT_SESSIONS.md, H09); read again on master e506c041a4. Every invocation of the executable in this repository printed about forty `WARN discovered by class 'readme' but out of the repository scope` lines and four `a secret is tracked (.env.*)` lines for `.env.example`, `.env.local.example`, `.env.development.template` and `.env.example.ipinfo` before its answer. The session filtered standard error in every call of the day, which also hides a warning that matters."
+current_state: "apps/majordomus-cli/src/scope.rs:716 emits one warning per path on every index build; the secret reason matches `.env.*` by name. I2598 covers the flood of `plan` only."
+desired_state: "A command prints one line per diagnostic code with its count and the command that lists them; `doctor` and `--verbose` print every path; a file named as an example or a template of an environment file is classified by a rule the scope declares, not as a secret."
+scope:
+  - "apps/majordomus-cli/src/scope.rs"
+  - "apps/majordomus-cli/src/app.rs"
+  - "apps/majordomus-cli/src/discovery"
+  - "share/skeleton/ai/repo/scope.yaml"
+  - "docs/ADOPTION.md"
+  - "test/cases"
+depends_on: []
+acceptance_criteria:
+  - "A repository with forty out-of-scope documents prints one summary line on `mesh status`"
+  - "`.env.example` is not reported as a secret; `.env.production` is"
+  - "`doctor` still names every path"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "diagnostic_summary_case"
+  - "example_env_is_not_a_secret_test"
+created_at: 2026-10-13
+updated_at: 2026-10-13

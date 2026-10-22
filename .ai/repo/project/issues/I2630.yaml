@@ -1,0 +1,27 @@
+id: I2630
+milestone: concurrent-sessions-are-served
+title: "mesh verify says when nodes are discovered and trusted and none is linked, and why"
+slug: discovered-is-not-linked
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Make `mesh verify` and `mesh status` name the gap between nodes discovered and peers linked, with the reason each trusted node is not a peer."
+why: "Observed on 2026-10-13 in prismatic-platform under majordomus 0.22.0 (docs/ADOPTION_CONCURRENT_SESSIONS.md, H11); read again on master e506c041a4. `mesh status` reported `nodes 10 (9 trusted, 10 present)` and `mesh doctor` `12 node(s) known, 11 trusted`; `mesh verify` reported `0 connected of 0 linked peer(s); 0 seed(s) declared` and the verdict `cooperation verified`. A reader takes the two as one healthy mesh; nothing crossed between any two runtimes."
+current_state: "mesh/cooperation.rs:3323 fails the `links` check only when seeds are declared and none is connected. Discovery and cooperation are reported by different commands with no line joining them."
+desired_state: "`verify` counts trusted present nodes that are not linked and gives the reason per node (another repository, loopback endpoint, protocol range, never dialled); with trusted nodes of the same repository present and none linked the verdict is `verified locally, linked to nobody`."
+scope:
+  - "apps/majordomus-cli/src/mesh/cooperation.rs"
+  - "apps/majordomus-cli/src/mesh"
+  - "docs/MESH.md"
+  - "test/cases"
+depends_on: []
+acceptance_criteria:
+  - "With trusted nodes of the same repository discovered and none linked, the verdict is not the unqualified `cooperation verified`"
+  - "Each unlinked trusted node carries one reason"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "discovered_not_linked_case"
+created_at: 2026-10-13
+updated_at: 2026-10-13

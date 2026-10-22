@@ -1,0 +1,31 @@
+id: I2627
+milestone: concurrent-sessions-are-served
+title: "The distribution carries what it takes to consult an advisor the catalogue names"
+slug: the-distribution-can-consult
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Ship the advisor driver and adapters in the packaged distribution, behind one command, so that an adopter's consultation is the tool's and not a hand-written curl."
+why: "Observed on 2026-10-13 in prismatic-platform under majordomus 0.22.0 (docs/ADOPTION_CONCURRENT_SESSIONS.md, H07); read again on master e506c041a4. share/advisors.yaml in the installed 0.22.0 names an adapter per advisor (`scripts/lib/advisors/<adapter>.mjs`); the installed tree has `bin`, `lib`, `libexec` and `share` and no adapter. The session wrote its own brief, called `codex exec`, `gemini -p` and the vendor's HTTP API by hand, and typed the outcomes into `reasoning record`."
+current_state: "scripts/lib/advisors/{driver,contract,codex-exec,gemini-cli,openai-chat,ollama-chat,lmstudio-chat,mesh-review}.mjs exist in the source tree only; share/distribution.yaml does not package them; no CLI command runs a consultation."
+desired_state: "`majordomus reasoning consult <plan> <advisor>` builds the question from the assessment, runs the adapter, normalises the answer and records the consultation; the adapters are packaged, or the catalogue marks an advisor whose adapter the distribution does not carry as `not_packaged`."
+scope:
+  - "share/distribution.yaml"
+  - "scripts/lib/advisors"
+  - "apps/majordomus-cli/src/commands"
+  - "apps/majordomus-cli/src/reasoning"
+  - "docs/REASONING.md"
+  - "docs/DISTRIBUTION.md"
+  - "test/cases"
+depends_on:
+  - I2625
+acceptance_criteria:
+  - "In an installed distribution a planned consultation of a CLI advisor runs and is recorded by one command"
+  - "An advisor whose adapter is absent from the distribution is never `available`"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "packaged_consultation_case"
+created_at: 2026-10-13
+updated_at: 2026-10-13

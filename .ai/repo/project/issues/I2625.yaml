@@ -1,0 +1,28 @@
+id: I2625
+milestone: concurrent-sessions-are-served
+title: "A second plan for an assessment does not select the advisor whose consultation for it just failed"
+slug: a-replan-does-not-ask-who-just-failed
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make the plan of an assessment exclude every advisor whose consultation for that assessment already ended without completing, and fill the budget from the next advisors."
+why: "Observed on 2026-10-13 in prismatic-platform under majordomus 0.22.0 (docs/ADOPTION_CONCURRENT_SESSIONS.md, H05); read again on master e506c041a4. The plan selected gemini and chatgpt and excluded codex, ollama and lmstudio as `the budget was spent`. gemini answered HTTP 503 and chatgpt HTTP 429 (no credit); both were recorded. A second plan for the same assessment selected the same two and excluded the same three. The store refuses a consultation of an advisor no plan selected, so the two reviews that did happen (codex, and a second session) could be cited only as prior external opinions and the conclusion reads `0 independent review(s)`."
+current_state: "reasoning/policy.rs PlanRequest carries nothing about the assessment's own consultations; reasoning/availability.rs opens a circuit only after FAILURES_TO_OPEN consecutive transient failures, and `error` is not transient; reasoning/store.rs:667 refuses an unselected advisor."
+desired_state: "The store passes the advisors already consulted for the assessment without completion; the policy excludes each with the reason `already asked for this assessment: <status>` and selects from the rest; the circuit's thresholds are unchanged."
+scope:
+  - "apps/majordomus-cli/src/reasoning/policy.rs"
+  - "apps/majordomus-cli/src/reasoning/store.rs"
+  - "docs/REASONING.md"
+  - "test/cases"
+depends_on: []
+acceptance_criteria:
+  - "After one failed consultation a second plan of the same assessment selects a different advisor when one is available"
+  - "The excluded advisor carries the status its consultation ended with"
+  - "A plan of another assessment is unaffected by the first one's single failure"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "replan_excludes_failed_advisor_test"
+created_at: 2026-10-13
+updated_at: 2026-10-13

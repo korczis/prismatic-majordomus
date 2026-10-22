@@ -1,0 +1,28 @@
+id: I2633
+milestone: concurrent-sessions-are-served
+title: "doctor and watch say where their time went when they pass their budget"
+slug: doctor-says-where-its-time-went
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Make the budget warning of `doctor` and `watch` name the three slowest checks with their time, so that a budget overrun is a finding somebody can act on."
+why: "Observed on 2026-10-13 in prismatic-platform under majordomus 0.22.0 (docs/ADOPTION_CONCURRENT_SESSIONS.md, H10); read again on master e506c041a4. `doctor` took 92 to 110 seconds and `watch` 80 seconds against a budget of 40 seconds in an umbrella repository of about ninety applications; each printed one WARN with the total. Three doctor runs in one session cost five minutes and said nothing about where."
+current_state: "lib/doctor.sh reports the wall time against benchmark.budget.doctor_ms; MJ_TIMING=1 prints per-check times only when asked."
+desired_state: "Over budget, the warning carries the three slowest checks and their share; the per-check times are recorded where `bench` reads them, so the budget of a repository is derived from its own runs."
+scope:
+  - "lib/doctor.sh"
+  - "lib/watch.sh"
+  - "lib/bench.sh"
+  - "docs/ADOPTION.md"
+  - "test/cases"
+depends_on: []
+acceptance_criteria:
+  - "A doctor run over its budget names its three slowest checks"
+  - "The recorded per-check times are read by bench"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "doctor_time_attribution_case"
+created_at: 2026-10-13
+updated_at: 2026-10-13

@@ -1,0 +1,30 @@
+id: concurrent-sessions-are-served
+title: "Concurrent sessions are served: what several sessions on one layer met in a day is derived by the tool, not agreed by hand"
+slug: concurrent-sessions-are-served
+order: 117
+priority: p1
+problem: "On 2026-10-13 majordomus 0.22.0 ran in prismatic-platform with several sessions attached to one checkout and its worktrees. Two sessions refreshed the same tracked layer files at the same time, one of them against its own announcement; the board reported no overlap because it compares what peers say, not what their checkouts hold; the commands that wrote the files read no claim; the owner's answer, that the peers agree among themselves with an independent review, took five mechanisms joined by hand, and the advisors the plan chose both failed while the ones that answered could not be counted. Fourteen findings were recorded (docs/ADOPTION_CONCURRENT_SESSIONS.md); all are present on master e506c041a4."
+outcome: "What a session touches, what it collides with and how a collision ends are derived from the checkouts, the ledger and the reasoning records, and stated once: a writer reads the claims on what it writes, an overlap has an identity and a settlement that cites its review, a second plan asks an advisor that can answer, and an upgraded layer says what its skeleton changed. Each fix carries a case that fails without it, its derived files regenerated and its page of the documentation corrected."
+scope:
+  - "lib"
+  - "apps/majordomus-cli/src"
+  - "share"
+  - "scripts/lib/advisors"
+  - "docs"
+  - "test/cases"
+non_scope:
+  - "The adopting repository itself: it is the evidence, read only"
+  - "I2586, I2587, I2588 and I2590 of a-second-adopter-is-served, which the same day observed here as well; this milestone cites them and does not repeat them"
+  - "Encrypting the mesh transport or serving beyond loopback by default"
+  - "Accepting any ADR these issues propose; acceptance is the owner's act"
+acceptance_criteria:
+  - "Every issue of this milestone is DONE or CANCELLED with its reason"
+  - "No overlap is computed from an announcement alone"
+  - "No fix decides by the identity of the repository it runs in"
+validation:
+  - "bin/majordomus plan validate"
+  - "scripts/derive-check"
+evidence_required:
+  - "findings_recorded"
+created_at: 2026-10-13
+updated_at: 2026-10-13

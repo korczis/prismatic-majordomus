@@ -1,0 +1,37 @@
+id: I2624
+milestone: concurrent-sessions-are-served
+title: "An overlap is an object, and the peers settle it with an independent review before the owner is asked"
+slug: an-overlap-is-settled-by-the-peers
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Give an overlap between two peers an identity and a lifecycle, and make its resolution a record that cites a reasoning conclusion, so that two sessions settle it themselves and the owner is asked only for what is the owner's."
+why: "Observed on 2026-10-13 in prismatic-platform under majordomus 0.22.0 (docs/ADOPTION_CONCURRENT_SESSIONS.md, H16); read again on master e506c041a4. The owner's answer to the collision of H03 was `agree among yourselves, use an independent AI or their pool for the assessment`. Doing so took five separate mechanisms joined by hand: a board announcement, a reasoning assessment, two consultations outside any plan, a mesh handover and a patch file under /private/tmp. Nothing linked the overlap to the conclusion that settled it, and the other peer learns of it only by reading the board."
+current_state: "Overlaps are a list inside the answer of `peers.announce` and `mesh state`; they have no id and no end. `mesh review request` takes a branch, commit or pull request. No rule states who settles an overlap."
+desired_state: "A rule states it: an overlap of tracked paths is settled by its peers; from `material` up the settlement cites a reasoning conclusion with at least one completed independent consultation; the owner is asked for consent, credentials and intent, not for arbitration. An overlap derived from I2623 has an id; `mesh review request` accepts it as a subject; its resolution names which checkout lands, what the other reverses and the patch it hands over; the workflow is one page of the documentation and one skill."
+scope:
+  - ".ai/repo/rules/project"
+  - "share/standard/majordomus/rules"
+  - "share/skeleton/ai/repo/workflows"
+  - "apps/majordomus-cli/src/mesh"
+  - "apps/majordomus-cli/src/reasoning"
+  - "apps/majordomus-cli/src/capability/builtin"
+  - "docs/MESH.md"
+  - "docs/REASONING.md"
+  - "test/cases"
+depends_on:
+  - I2623
+acceptance_criteria:
+  - "An overlap has an id that is the same on every linked runtime"
+  - "A resolution without a cited conclusion is refused for a material overlap, and names the missing record"
+  - "The resolved overlap is shown to the other peer on its next context read, with the patch path"
+  - "The page of the documentation states the three things only the owner decides"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "overlap_identity_case"
+  - "overlap_resolution_case"
+  - "settlement_workflow_page"
+created_at: 2026-10-13
+updated_at: 2026-10-13

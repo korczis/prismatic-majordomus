@@ -1,0 +1,28 @@
+id: I2628
+milestone: concurrent-sessions-are-served
+title: "A server that became ready after the start event gave up is not a standing doctor failure"
+slug: a-start-that-later-succeeded-is-not-a-failure
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Derive the start event's wait from this checkout's measured start-up and let a later ready server supersede the logged failure, so that no person deletes a file under the local state."
+why: "Observed on 2026-10-13 in prismatic-platform under majordomus 0.22.0 (docs/ADOPTION_CONCURRENT_SESSIONS.md, H08); read again on master e506c041a4. The start event logged `the server did not converge: no server became ready within 20 second(s)`; the same server was ready half a minute later and served the whole session. `doctor` failed on the log line for the rest of the day with the remedy `cat .ai/local/session-contexts/.session-context.log   # then remove it once understood`."
+current_state: "lib/capture.sh:1655 appends to the log on a failed `serve ensure`; lib/session_context.sh:475 fails `doctor` while the file has a line; nothing clears it. The wait is a constant while the index of a large repository takes over ten seconds to build."
+desired_state: "The finding is derived: a logged start failure is a failure only while no server of that checkout became ready after it; the wait is the checkout's last measured start-up plus a margin; the line stays as history and is reported as superseded."
+scope:
+  - "lib/capture.sh"
+  - "lib/session_context.sh"
+  - "apps/majordomus-cli/src/commands/serve.rs"
+  - "docs/MCP.md"
+  - "test/cases"
+depends_on: []
+acceptance_criteria:
+  - "A start failure followed by a ready server of the same checkout is reported as superseded and does not fail doctor"
+  - "The second start of a checkout waits at least as long as its first one took"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "superseded_start_failure_case"
+created_at: 2026-10-13
+updated_at: 2026-10-13

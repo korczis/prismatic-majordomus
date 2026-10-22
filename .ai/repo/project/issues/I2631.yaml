@@ -1,0 +1,29 @@
+id: I2631
+milestone: concurrent-sessions-are-served
+title: "start names the uncommitted changes of the checkout that the task did not make"
+slug: start-names-what-is-not-yours
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Make `start` read the working tree and name the changes no episode of this worker made, so that a task that can never finish there is refused or moved before it begins."
+why: "Observed on 2026-10-13 in prismatic-platform under majordomus 0.22.0 (docs/ADOPTION_CONCURRENT_SESSIONS.md, H13); read again on master e506c041a4. A task scoped to one directory was started in a checkout that held another worker's uncommitted changes. `check` reported sixty-eight scope findings for files the task never touched, `finish` could not pass, and the push gate of the checkout stayed blocked. The adopter wrote a project rule for it (`project.task-in-own-checkout`), whose text says `Nothing warns at start`."
+current_state: "lib/start.sh records `mj_git_dirty` and compares nothing; lib/finish.sh compares every changed file with the scope."
+desired_state: "`start` lists the dirty paths outside the scope with the episode that last touched each, when the ledger knows; with any, it prints the worktree command and refuses unless `--here` is given, which is recorded on the task."
+scope:
+  - "lib/start.sh"
+  - "lib/finish.sh"
+  - "lib/common.sh"
+  - "share/standard/majordomus/rules"
+  - "docs/ADOPTION.md"
+  - "test/cases"
+depends_on: []
+acceptance_criteria:
+  - "In a checkout with a foreign uncommitted change outside the scope, `start` names it and refuses without --here"
+  - "A task started with --here does not count the paths named at its start against its scope"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "start_names_foreign_changes_case"
+created_at: 2026-10-13
+updated_at: 2026-10-13

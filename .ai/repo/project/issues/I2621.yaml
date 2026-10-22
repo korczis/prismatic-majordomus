@@ -1,0 +1,28 @@
+id: I2621
+milestone: concurrent-sessions-are-served
+title: "A vendored package is named by its content, not by a label two different packages share"
+slug: a-package-is-named-by-its-content
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Make `rules vendor status` and `doctor` identify the vendored package and the distribution's by a digest of their content, so that two packages that differ never print the same name."
+why: "Observed on 2026-10-13 in prismatic-platform under majordomus 0.22.0 (docs/ADOPTION_CONCURRENT_SESSIONS.md, H02); read again on master e506c041a4. `rules vendor status` printed `vendored: 1 (0.6.0)`, `distribution: 1 (0.6.0)` and `the distribution ships a different package`. The label was the same on both sides; only `vendor diff` showed that one rule's text had changed."
+current_state: "lib/rules.sh:437 mj_rules_manifest_rev prints `version (source_revision)` of the manifest; the package's content changed between releases without either field moving."
+desired_state: "The status names each side by the digest the manifest's entries already carry, lists the rules that differ by id, and the release gate refuses a package whose content changed while its revision did not."
+scope:
+  - "lib/rules.sh"
+  - "lib/doctor.sh"
+  - "share/standard"
+  - "scripts"
+  - "test/cases"
+depends_on: []
+acceptance_criteria:
+  - "Two packages with one differing rule print two different identities and name the rule"
+  - "A change to share/standard without a moved revision fails a gate that names the file"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "package_identity_case"
+created_at: 2026-10-13
+updated_at: 2026-10-13
