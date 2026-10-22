@@ -962,9 +962,41 @@ jobs:
       - name: the Cockpit stylesheet in sync
         if: needs.plan.outputs.cockpit_assets == 'true'
         run: scripts/ci/timed --bound 2700 cockpit-assets "cockpit-assets --check" timings.tsv scripts/cockpit-assets --check
+      # The scenario cache (I2867): the generation below reuses a passing scenario's evidence
+      # when its tool key matches, and a runner starts with no store. The key is lib/usecase.sh's
+      # own mj_uc_tool_key, asked rather than spelled again here, so the two cannot disagree. It
+      # is empty when the job has no MAJORDOMUS_BIN or the tree is not clean, and nothing is then
+      # restored or saved. The store is outside the checkout: an untracked file in it would make
+      # the tree unclean and the key empty. Restored by the exact key only, since another tool's
+      # entries can never match; saved only by a push to master, so a branch never seeds what
+      # master reads, and not after an exact hit, because a cache key is written once.
+      - name: the scenario cache's key
+        id: uc-key
+        if: needs.plan.outputs.site_build == 'true'
+        run: |
+          echo "MJ_UC_CACHE_DIR=$RUNNER_TEMP/use-case-cache" >> "$GITHUB_ENV"
+          key="$(bash -c 'set -eu; MJ_BIN_DIR="$PWD/bin"; MJ_LIB_DIR="$MJ_BIN_DIR/../lib"; MJ_TMP_ROOT_DEFER=1
+            . "$MJ_LIB_DIR/common.sh"; mj_require_repo; . "$MJ_LIB_DIR/usecase.sh"; mj_uc_paths; mj_uc_tool_key')" || key=""
+          echo "key=$key" >> "$GITHUB_OUTPUT"
+          if [ -n "$key" ]; then echo "scenario cache key $key"; else echo "no scenario cache key: every scenario runs"; fi
+      - name: the scenario cache, restored
+        id: uc-restore
+        if: steps.uc-key.outputs.key != ''
+        timeout-minutes: 5
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/use-case-cache
+          key: use-case-cache-${{ steps.uc-key.outputs.key }}
       - name: derived site data in sync
         if: needs.plan.outputs.site_build == 'true'
         run: scripts/ci/timed --bound 2700 site-build "generate-site-data --check" timings.tsv scripts/generate-site-data --check
+      - name: the scenario cache, saved
+        if: steps.uc-key.outputs.key != '' && steps.uc-restore.outputs.cache-hit != 'true' && github.event_name == 'push' && github.ref == 'refs/heads/master'
+        timeout-minutes: 5
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ runner.temp }}/use-case-cache
+          key: use-case-cache-${{ steps.uc-key.outputs.key }}
       # The crate's Rust API reference, produced the one way it is produced everywhere
       # (.github/actions/rustdoc: the rust gate's own rustdoc step and its handoff). The build
       # below composes it at /rustdoc and refuses without it, and the check after it asserts

@@ -36,7 +36,9 @@ drive() {   # drive <usecase.sh to load> <cache dir>: prints "key=<0|1> calls=<n
     . "$lib"
     # shellcheck disable=SC2034  # these globals are read by the sourced lib/usecase.sh
     { MJ_ROOT="$R"; MJ_LIB_DIR="$R/bin/../lib"
-      MJ_UC_DIR="$R/.ai/repo/use-cases"; MJ_AI_LOCAL_DIR="$dir"; }
+      MJ_UC_DIR="$R/.ai/repo/use-cases"; MJ_AI_LOCAL_DIR="$dir"
+      # a store per run: the clone's shared one (I2867, case 3840) would carry run 1 into 2
+      MJ_UC_CACHE_DIR="$dir/cache/use-cases"; }
     MAJORDOMUS_BIN="$T/bin.fixture"; export MAJORDOMUS_BIN
     calls=0
     mj_uc_run_one() { calls=$((calls + 1)); printf '{"evidence":"run %s"}\n' "$calls" > "$2"; }
