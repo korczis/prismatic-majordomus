@@ -346,6 +346,7 @@ fn map_error(e: CooperationError) -> CapabilityError {
             CapabilityError::Refused(format!("{}: {m}", RefusalCode::FeatureUnsupported.as_str()))
         }
         CooperationError::Invalid(m) => CapabilityError::InvalidInput(m),
+        CooperationError::RateBound(m) => CapabilityError::Refused(format!("rate_bound: {m}")),
     }
 }
 
@@ -1394,6 +1395,106 @@ fn mesh_review_withdraw(
         .map_err(map_error)
 }
 
+// ---------------------------------------------------------------- mesh.notice.* (I2874)
+
+#[derive(Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+/// The input of `mesh.notice.publish`.
+pub struct NoticePublishInput {
+    /// The publishing session of this runtime; the calling MCP session's own when omitted.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub session: Option<String>,
+    /// What it was done to, one line: `worktree-cleanup`, `disk-prune`.
+    pub subject: String,
+    /// What was done, a sentence: a whole run, never one item of it.
+    pub text: String,
+    /// The bytes it reclaimed, when it reclaimed any.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub bytes: Option<u64>,
+}
+
+impl BenchmarkCases for NoticePublishInput {
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        vec![NamedCase::new(
+            "a-run",
+            NoticePublishInput {
+                session: Some("bench".into()),
+                subject: "worktree-cleanup".into(),
+                text: "0 removed".into(),
+                bytes: None,
+            },
+        )]
+    }
+}
+
+fn mesh_notice_publish(
+    ctx: &Context,
+    input: NoticePublishInput,
+) -> Result<Written, CapabilityError> {
+    let c = cooperation(ctx)?;
+    let session = session_of(ctx, input.session)?;
+    c.publish_notice(&session, input.subject, input.text, input.bytes)
+        .map_err(map_error)
+}
+
+/// The most notices `mesh.notices` answers for one runtime.
+pub const NOTICES_PER_RUNTIME_MAX: usize = 64;
+
+#[derive(Debug, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+/// The input of `mesh.notices`.
+pub struct NoticesInput {
+    /// The newest this many of each runtime, up to 64 (the default).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub per_runtime: Option<usize>,
+}
+
+impl BenchmarkCases for NoticesInput {
+    // the cases are also the operation's OpenAPI examples, so one names the parameter
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        vec![
+            NamedCase::new("default", NoticesInput::default()),
+            NamedCase::new(
+                "the-newest-eight",
+                NoticesInput {
+                    per_runtime: Some(8),
+                },
+            ),
+        ]
+    }
+}
+
+/// The answer of `mesh.notices`.
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct NoticesAnswer {
+    /// Whether cooperation runs.
+    pub active: bool,
+    /// Why not.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reason: Option<String>,
+    /// The notices, in causal order.
+    pub notices: Vec<crate::mesh::state::NoticeView>,
+}
+
+fn mesh_notices(ctx: &Context, input: NoticesInput) -> Result<NoticesAnswer, CapabilityError> {
+    let per_runtime = input
+        .per_runtime
+        .unwrap_or(NOTICES_PER_RUNTIME_MAX)
+        .min(NOTICES_PER_RUNTIME_MAX);
+    let Some(c) = ctx.mesh.cooperation() else {
+        return Ok(NoticesAnswer {
+            active: false,
+            reason: ctx.mesh.cooperation_status().reason,
+            notices: Vec::new(),
+        });
+    };
+    Ok(NoticesAnswer {
+        active: true,
+        reason: None,
+        notices: c.notices(per_runtime),
+    })
+}
+
 // ---------------------------------------------------------------- mesh.link.*
 
 impl BenchmarkCases for Signed {
@@ -1775,6 +1876,32 @@ pub fn module() -> ModuleDescriptor {
                 handler: mesh_review_withdraw,
             },
             capability! {
+                id: "mesh.notice.publish",
+                kind: CapabilityKind::Command,
+                title: "Say on the mesh what a session did",
+                description: "Publish one notice (I2874): what a session of this runtime did, as a one-line subject (`worktree-cleanup`, `disk-prune`) up to 256 bytes, a sentence of text up to 1 KiB and the bytes it reclaimed, each free-text field redacted before it is signed. Replicated to every linked runtime and kept for the stream's life, so a session publishes at most one a minute and says a whole run in one; a second inside the minute is refused with the time left. A runtime older than the kind relays it without reading it, and no runtime folds it into the digested state. Writes this runtime's journal only.",
+                input: NoticePublishInput,
+                output: Written,
+                stability: Stability::Experimental,
+                exposure: Exposure { mcp: mcp("majordomus_mesh_notice_publish"), http: post("/api/v1/mesh/notices"), cli: None },
+                tags: ["mesh", "coordination", "cooperation"],
+                benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::TransientState },
+                handler: mesh_notice_publish,
+            },
+            capability! {
+                id: "mesh.notices",
+                title: "What sessions on every machine said they did",
+                description: "The notices of every runtime this one holds, in causal order, the newest `per_runtime` (at most 64, the default) of each: the publishing session, the subject, the text, the bytes reclaimed, the writer's clock and the Lamport stamp. Kept apart from mesh.state, whose digest never counts a notice as more than an opaque event, so runtimes of different ages agree on it.",
+                input: NoticesInput,
+                output: NoticesAnswer,
+                stability: Stability::Experimental,
+                exposure: Exposure { mcp: mcp("majordomus_mesh_notices"), http: get("/api/v1/mesh/notices"), cli: None },
+                tags: ["mesh", "coordination", "cooperation"],
+                handler: mesh_notices,
+            }
+            // the mesh's working state, not the repository's: a loopback caller only (ADR 0220)
+            .reads_only_locally(),
+            capability! {
                 id: "mesh.link.hello",
                 kind: CapabilityKind::Command,
                 title: "Open a link (the handshake)",
@@ -1925,6 +2052,16 @@ mod tests {
                 Some("majordomus_mesh_review_withdraw"),
                 "/api/v1/mesh/reviews/withdraw",
             ),
+            (
+                "mesh.notice.publish",
+                Some("majordomus_mesh_notice_publish"),
+                "/api/v1/mesh/notices",
+            ),
+            (
+                "mesh.notices",
+                Some("majordomus_mesh_notices"),
+                "/api/v1/mesh/notices",
+            ),
             ("mesh.link.hello", None, HELLO_PATH),
             ("mesh.link.sync", None, SYNC_PATH),
         ];
@@ -1969,6 +2106,7 @@ mod tests {
             "mesh.peer",
             "mesh.state",
             "mesh.events",
+            "mesh.notices",
         ];
         for e in module().capabilities {
             let c = &e.capability;

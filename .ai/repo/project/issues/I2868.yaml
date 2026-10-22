@@ -1,0 +1,38 @@
+id: I2868
+milestone: a-derive-does-only-the-work-its-inputs-changed
+title: "A scenario cache key names the generation of the executable, so separate builds of the same sources share it"
+slug: the-scenario-cache-is-keyed-by-generation
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Key the scenario cache by the generation of the executable that runs the scenarios, the digest of the crate sources it was built from, instead of by its bytes, and only when that generation is the tree's own, so that every build of the same sources under the same toolchain pin reads the entries any of them wrote."
+why: "I2867 found, after the shared store was built, that mj_uc_tool_key hashed the bytes of MAJORDOMUS_BIN, and build.rs stamps MAJORDOMUS_COMMIT and MAJORDOMUS_DIRTY into them. Two builds of identical sources in two checkouts, or at two commits that touched no crate source, therefore never shared a key, and every CI build was a new tool whose store held nothing. The shared store only hit where checkouts ran the same executable file. The generation is what the executable is; the commit is only where it was built."
+current_state: "mj_uc_tool_key hashes the executable's bytes with the blob ids of every tracked tool file. distribution build reports version, target, profile, commit and lifecycle contract, and no generation. The validate site job restores and saves the store by that key, but sets no MAJORDOMUS_BIN, so its key is empty."
+desired_state: "distribution build reports generation (crate::GENERATION) and tree_generation (generation::crate_generation over the crate of the repository it is asked in, the one definition generate uses). mj_uc_tool_key asks the executable once and keys by the generation only when the two are equal; an executable of another generation, or one that reports none, gives no key and every scenario runs. The tracked blob ids in the key cover the crate sources and rust-toolchain.toml. Every other refusal is unchanged."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/distribution.rs"
+  - "lib/usecase.sh"
+  - ".github/workflows/validate.yml"
+  - "test/cases/3841_a_scenario_cache_key_is_the_tools_generation.sh"
+  - "test/cases/3840_a_scenario_cache_is_shared_by_every_checkout.sh"
+  - "test/cases/3836_a_repeated_scenario_is_read_from_its_cache.sh"
+  - ".ai/repo/project/issues/I2868.yaml"
+non_scope:
+  - "A MAJORDOMUS_BIN for the validate site job: the rust job's executable artifact would serve, but needs rust would start the site job only after the whole rust job, and building one in the site job costs the minutes the cache saves; the steps stay dormant with an empty key until that trade is decided"
+  - "A shell copy of the generation digest: the executable answers both sides, so the digest keeps one definition"
+  - "Narrowing the key to the files a scenario exercises"
+depends_on:
+  - I2867
+  - I3320
+acceptance_criteria:
+  - "Two executables that differ in bytes and report the same generation, equal to the tree's, give one key, and entries written through one are read through the other"
+  - "A committed one-line change to a crate source, with an executable built from it, gives another key"
+  - "An executable whose generation is not the tree's, or that reports none, gives no key and every scenario runs"
+  - "The real executable reports a 64-digit generation, a tree generation that a one-line crate change moves, and none for a repository without a crate"
+validation:
+  - "bin/majordomus plan validate"
+  - "bash test/run.sh 3841_a_scenario_cache_key_is_the_tools_generation 3840_a_scenario_cache_is_shared_by_every_checkout 3836_a_repeated_scenario_is_read_from_its_cache"
+evidence_required:
+  - "shared_key_across_builds_case"
+created_at: 2026-10-21
+updated_at: 2026-10-21

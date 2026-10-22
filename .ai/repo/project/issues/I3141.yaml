@@ -21,13 +21,14 @@ scope:
   - "docs/generated/cli.yaml"
 non_scope:
   - "session start, checkpoint and handover (I3142, I3144)"
-  - "The executable-resolution contract itself (I3320)"
+  - "The executable-resolution contract itself (I3320, which declared it and wired it into the steps that already ran the executable)"
 depends_on:
   - "I3320"
 serves:
   - "a-session-record-says-what-it-served#close-has-one-writer"
 acceptance_criteria:
   - "case 220 passes unchanged against the new closer"
+  - "Inherited from I3320 (a3, 2026-10-21): session close resolves the executable through mj_rust_lifecycle first; with MAJORDOMUS_BIN pointing at nothing, or at an executable reporting an older lifecycle contract, the close writes provider.event.failed naming the cause, the episode stays open, no shell writer runs, the hook exits 0 and a hand-run close exits 12 with the cause on stderr"
   - "Exit codes and machine output of session close are unchanged"
   - "No close logic remains in lib/session.sh"
   - "bin/majordomus hands session close to the executable by reading the generated docs/generated/cli.yaml at run time, as every delegated path is (rule project.commands-are-projections, bin/majordomus:100-103); no delegation line is generated into or hand-written in bin/majordomus"
@@ -38,4 +39,4 @@ validation:
 evidence_required:
   - "case_close_asks_the_domain"
 created_at: 2026-10-18
-updated_at: 2026-10-18
+updated_at: 2026-10-21
