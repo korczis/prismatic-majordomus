@@ -864,6 +864,188 @@ fn paths(scope: &[String], required: bool) -> Result<(), String> {
     Ok(())
 }
 
+/// What a field of an event body may carry, decided before the body is signed.
+///
+/// An event body is replicated in clear to every linked runtime and kept in every journal
+/// that hears it, so a field is a decision about what leaves this machine. Every field of
+/// every [`EventBody`] kind is listed in [`EVENT_FIELDS`] with its rule, and a field that is
+/// not listed fails the test that compares the list with the type — adding a field to the
+/// wire is a decision somebody writes down, never a side effect of a struct change.
+///
+/// ```
+/// use majordomus_cli::mesh::journal::{FieldRule, EVENT_FIELDS};
+///
+/// let rule = |kind: &str, field: &str| {
+///     EVENT_FIELDS.iter().find(|(k, f, _)| *k == kind && *f == field).map(|(_, _, r)| *r)
+/// };
+/// assert_eq!(rule("review_requested", "subject"), Some(FieldRule::Redacted));
+/// assert_eq!(rule("claim_acquired", "scope"), Some(FieldRule::Paths));
+/// assert_eq!(rule("session_opened", "info.intent"), Some(FieldRule::Redacted));
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FieldRule {
+    /// An identifier: 1-64 of `[A-Za-z0-9._:#-]`, nothing a credential fits in.
+    Ident,
+    /// One bounded line naming something (a branch, a head, an issue): validated, not
+    /// rewritten, because what it names must stay what it is.
+    Line,
+    /// Free text a person or a worker wrote: passed through
+    /// [`crate::redaction::redact_secrets`] before it is signed.
+    Redacted,
+    /// Repository-relative paths, validated.
+    Paths,
+    /// One of a closed set of words.
+    Enum,
+    /// A digest computed from another field.
+    Digest,
+    /// A boolean.
+    Flag,
+}
+
+/// Every field of every [`EventBody`] kind, as `(kind, field, rule)`; a nested field is
+/// written `object.field`. The type's own serialized shape is held to this list in both
+/// directions by `every_event_body_field_is_listed`, and every [`FieldRule::Redacted`]
+/// field is proven redacted by `every_redacted_field_is_redacted_before_signing`.
+pub const EVENT_FIELDS: &[(&str, &str, FieldRule)] = &[
+    ("session_opened", "info.session", FieldRule::Ident),
+    ("session_opened", "info.client", FieldRule::Line),
+    ("session_opened", "info.worker", FieldRule::Redacted),
+    ("session_opened", "info.intent", FieldRule::Redacted),
+    ("session_opened", "info.task", FieldRule::Line),
+    ("session_opened", "info.issue", FieldRule::Line),
+    ("session_opened", "info.milestone", FieldRule::Line),
+    ("session_opened", "info.checkout", FieldRule::Line),
+    ("session_opened", "info.branch", FieldRule::Line),
+    ("session_opened", "info.head", FieldRule::Line),
+    ("session_opened", "info.dirty", FieldRule::Flag),
+    ("session_opened", "info.context", FieldRule::Line),
+    ("session_closed", "session", FieldRule::Ident),
+    ("claim_acquired", "claim", FieldRule::Ident),
+    ("claim_acquired", "session", FieldRule::Ident),
+    ("claim_acquired", "scope", FieldRule::Paths),
+    ("claim_acquired", "intent", FieldRule::Redacted),
+    ("claim_acquired", "mode", FieldRule::Enum),
+    ("claim_acquired", "issue", FieldRule::Line),
+    ("claim_released", "claim", FieldRule::Ident),
+    ("handover_published", "handover.id", FieldRule::Digest),
+    ("handover_published", "handover.task", FieldRule::Line),
+    ("handover_published", "handover.issue", FieldRule::Line),
+    ("handover_published", "handover.milestone", FieldRule::Line),
+    ("handover_published", "handover.branch", FieldRule::Line),
+    ("handover_published", "handover.head", FieldRule::Line),
+    ("handover_published", "handover.created_at", FieldRule::Line),
+    ("handover_published", "handover.name", FieldRule::Redacted),
+    ("handover_published", "handover.body", FieldRule::Redacted),
+    ("handover_consumed", "handover", FieldRule::Ident),
+    ("handover_consumed", "session", FieldRule::Ident),
+    ("review_requested", "review", FieldRule::Ident),
+    ("review_requested", "session", FieldRule::Ident),
+    ("review_requested", "subject", FieldRule::Redacted),
+    ("review_requested", "scope", FieldRule::Paths),
+    ("review_requested", "issue", FieldRule::Line),
+    ("review_requested", "reviewer", FieldRule::Line),
+    ("review_requested", "body", FieldRule::Redacted),
+    ("review_answered", "request", FieldRule::Line),
+    ("review_answered", "session", FieldRule::Ident),
+    ("review_answered", "verdict", FieldRule::Enum),
+    ("review_answered", "note", FieldRule::Redacted),
+    ("review_withdrawn", "request", FieldRule::Line),
+    ("review_withdrawn", "session", FieldRule::Ident),
+    ("review_withdrawn", "note", FieldRule::Redacted),
+];
+
+impl EventBody {
+    /// The body with every [`FieldRule::Redacted`] field passed through
+    /// [`crate::redaction::redact_secrets`]: what an append signs. A handover is the
+    /// exception that proves the rule — its id is the digest of its body, so a body that
+    /// still carries a credential shape is refused by [`Journal::append_own`] rather than
+    /// rewritten under the id its publisher computed; `mesh handover publish` redacts it
+    /// before it is digested.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::journal::{EventBody, SessionInfo};
+    ///
+    /// // assembled at run time, so that no committed file carries a credential's shape
+    /// let token = format!("{}{}", "ghp_", "a".repeat(24));
+    /// let asked = EventBody::ReviewRequested { review: "r1".into(), session: "s1".into(),
+    ///     subject: format!("push with {token}"), scope: vec![], issue: None, reviewer: None,
+    ///     body: None };
+    /// let EventBody::ReviewRequested { subject, .. } = asked.redacted() else { unreachable!() };
+    /// assert_eq!(subject, "push with [redacted:github-token]");
+    /// ```
+    pub fn redacted(self) -> EventBody {
+        let redact = |text: String| crate::redaction::redact_secrets(&text).text;
+        let redact_option = |value: Option<String>| value.map(&redact);
+        match self {
+            EventBody::SessionOpened { mut info } => {
+                info.worker = redact_option(info.worker);
+                info.intent = redact_option(info.intent);
+                EventBody::SessionOpened { info }
+            }
+            EventBody::ClaimAcquired {
+                claim,
+                session,
+                scope,
+                intent,
+                mode,
+                issue,
+            } => EventBody::ClaimAcquired {
+                claim,
+                session,
+                scope,
+                intent: redact_option(intent),
+                mode,
+                issue,
+            },
+            EventBody::HandoverPublished { mut handover } => {
+                handover.name = redact_option(handover.name);
+                handover.body = redact(handover.body);
+                EventBody::HandoverPublished { handover }
+            }
+            EventBody::ReviewRequested {
+                review,
+                session,
+                subject,
+                scope,
+                issue,
+                reviewer,
+                body,
+            } => EventBody::ReviewRequested {
+                review,
+                session,
+                subject: redact(subject),
+                scope,
+                issue,
+                reviewer,
+                body: redact_option(body),
+            },
+            EventBody::ReviewAnswered {
+                request,
+                session,
+                verdict,
+                note,
+            } => EventBody::ReviewAnswered {
+                request,
+                session,
+                verdict,
+                note: redact_option(note),
+            },
+            EventBody::ReviewWithdrawn {
+                request,
+                session,
+                note,
+            } => EventBody::ReviewWithdrawn {
+                request,
+                session,
+                note: redact_option(note),
+            },
+            other @ (EventBody::SessionClosed { .. }
+            | EventBody::ClaimReleased { .. }
+            | EventBody::HandoverConsumed { .. }) => other,
+        }
+    }
+}
+
 /// One event as the wire and the store carry it. The body is kept as JSON so that an
 /// event of an unknown kind survives storage and relay byte-for-byte; [`MeshEvent::body`]
 /// interprets it.
@@ -1663,6 +1845,15 @@ impl Journal {
     /// assert_eq!(j.events().len(), 2, "and nothing was written");
     /// ```
     pub fn append_own(&self, body: EventBody) -> Result<MeshEvent, MeshError> {
+        // Free text is redacted before anything is signed: the body leaves this machine in
+        // clear. A handover is refused instead, since its id is the digest of its body.
+        let redacted = body.clone().redacted();
+        if matches!(body, EventBody::HandoverPublished { .. }) && redacted != body {
+            return Err(MeshError::Protocol(
+                "a handover carries a credential shape: publish it through `mesh handover publish`, which redacts the body before it is digested".into(),
+            ));
+        }
+        let body = redacted;
         body.validate().map_err(MeshError::Protocol)?;
         let body = serde_json::to_value(&body).map_err(|e| MeshError::Protocol(e.to_string()))?;
         let mut inner = self.inner.lock().expect("journal lock");
@@ -3987,6 +4178,180 @@ mod tests {
             };
             let r = b.ingest(&[event], &accept_all);
             proptest::prop_assert_eq!(r.accepted, 0);
+        }
+    }
+
+    /// The `$ref` a property schema points at, written directly or wrapped in `allOf`.
+    fn reference(schema: &Value) -> Option<&str> {
+        schema["$ref"].as_str().or_else(|| {
+            schema["allOf"]
+                .as_array()
+                .and_then(|all| all.iter().find_map(|s| s["$ref"].as_str()))
+        })
+    }
+
+    /// Every leaf field of an object schema, nested objects written `object.field`.
+    fn leaves(schema: &Value, defs: &Value, prefix: &str, out: &mut Vec<String>) {
+        let Some(properties) = schema["properties"].as_object() else {
+            return;
+        };
+        for (name, property) in properties {
+            if prefix.is_empty() && name == "kind" {
+                continue;
+            }
+            let path = if prefix.is_empty() {
+                name.clone()
+            } else {
+                format!("{prefix}.{name}")
+            };
+            let nested = reference(property)
+                .and_then(|r| r.rsplit('/').next())
+                .map(|def| &defs[def])
+                .filter(|def| def["properties"].is_object());
+            match nested {
+                Some(def) => leaves(def, defs, &path, out),
+                None => out.push(path),
+            }
+        }
+    }
+
+    #[test]
+    fn every_event_body_field_is_listed() {
+        let schema = serde_json::to_value(schemars::schema_for!(EventBody)).unwrap();
+        let defs = &schema["$defs"];
+        let variants = schema["oneOf"]
+            .as_array()
+            .expect("EventBody is a tagged union");
+        let mut actual = BTreeSet::new();
+        for variant in variants {
+            let tag = &variant["properties"]["kind"];
+            let kind = tag["const"]
+                .as_str()
+                .or_else(|| tag["enum"][0].as_str())
+                .expect("every variant carries its kind");
+            let mut fields = Vec::new();
+            leaves(variant, defs, "", &mut fields);
+            actual.extend(fields.into_iter().map(|f| (kind.to_string(), f)));
+        }
+        assert_eq!(
+            variants.len(),
+            KNOWN_KINDS.len(),
+            "the schema walk found every kind, or it proves nothing"
+        );
+        let listed: BTreeSet<(String, String)> = EVENT_FIELDS
+            .iter()
+            .map(|(k, f, _)| (k.to_string(), f.to_string()))
+            .collect();
+        assert_eq!(listed.len(), EVENT_FIELDS.len(), "a field is listed once");
+        let unlisted: Vec<_> = actual.difference(&listed).collect();
+        assert!(
+            unlisted.is_empty(),
+            "an event body field nobody listed reaches every linked runtime in clear: add it to EVENT_FIELDS with its rule: {unlisted:?}"
+        );
+        let stale: Vec<_> = listed.difference(&actual).collect();
+        assert!(
+            stale.is_empty(),
+            "EVENT_FIELDS lists fields the type does not have: {stale:?}"
+        );
+    }
+
+    /// One body of `kind`, every required field filled with a valid value.
+    fn body_of(kind: &str) -> EventBody {
+        let body = "# Objective\nship\n".to_string();
+        match kind {
+            "session_opened" => EventBody::SessionOpened {
+                info: SessionInfo::named("s1", "cli"),
+            },
+            "claim_acquired" => EventBody::ClaimAcquired {
+                claim: "c1".into(),
+                session: "s1".into(),
+                scope: vec!["docs".into()],
+                intent: None,
+                mode: ClaimMode::default(),
+                issue: None,
+            },
+            "handover_published" => EventBody::HandoverPublished {
+                handover: HandoverBody {
+                    id: HandoverBody::digest_of(&body),
+                    task: None,
+                    issue: None,
+                    milestone: None,
+                    branch: None,
+                    head: None,
+                    created_at: None,
+                    name: None,
+                    body,
+                },
+            },
+            "review_requested" => EventBody::ReviewRequested {
+                review: "r1".into(),
+                session: "s1".into(),
+                subject: "PR 1".into(),
+                scope: vec![],
+                issue: None,
+                reviewer: None,
+                body: None,
+            },
+            "review_answered" => EventBody::ReviewAnswered {
+                request: "s/r1".into(),
+                session: "s2".into(),
+                verdict: "commented".into(),
+                note: None,
+            },
+            "review_withdrawn" => EventBody::ReviewWithdrawn {
+                request: "s/r1".into(),
+                session: "s1".into(),
+                note: None,
+            },
+            other => panic!("no body of {other} has a redacted field"),
+        }
+    }
+
+    #[test]
+    fn every_redacted_field_is_redacted_before_signing() {
+        // assembled at run time, so that no committed file carries a credential's shape
+        let token = format!("{}{}", "ghp_", "a".repeat(24));
+        let redacted: Vec<_> = EVENT_FIELDS
+            .iter()
+            .filter(|(_, _, rule)| *rule == FieldRule::Redacted)
+            .collect();
+        assert!(
+            redacted.len() >= 9,
+            "the list names the free text: {redacted:?}"
+        );
+        for (kind, field, _) in redacted {
+            let mut value = serde_json::to_value(body_of(kind)).unwrap();
+            let (object, leaf) = match field.split_once('.') {
+                Some((object, leaf)) => (&mut value[object], leaf),
+                None => (&mut value, *field),
+            };
+            object[leaf] = Value::String(format!("see {token} here"));
+            if *kind == "handover_published" {
+                let text = value["handover"]["body"].as_str().unwrap().to_string();
+                value["handover"]["id"] = Value::String(HandoverBody::digest_of(&text));
+            }
+            let body: EventBody = serde_json::from_value(value).unwrap();
+            let j = journal("0000000000000001");
+            let appended = j.append_own(body);
+            if *kind == "handover_published" {
+                // its id is the digest of its body: refused, never rewritten under that id
+                assert!(
+                    appended.is_err(),
+                    "{kind}.{field} with a credential was signed"
+                );
+                assert!(j.events().is_empty());
+                continue;
+            }
+            let event = appended.unwrap_or_else(|e| panic!("{kind}.{field}: {e}"));
+            let wire = serde_json::to_string(&event).unwrap();
+            assert!(
+                !wire.contains(&token),
+                "{kind}.{field} carried a credential: {wire}"
+            );
+            assert!(
+                wire.contains("[redacted:github-token]"),
+                "{kind}.{field}: {wire}"
+            );
         }
     }
 }

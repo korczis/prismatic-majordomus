@@ -12,7 +12,11 @@
 //! and MCP tool refusal (`mcp::surface::Surface::call_from`), the request fields the server
 //! logs (`http::router::Router::foreign_origin`, `http::server::answer_http`), and a
 //! handover body before it is signed into the mesh journal and replicated in clear
-//! (`mesh::handover::to_body`). Two records use it to find a credential rather than to send
+//! (`mesh::handover::to_body`), every free-text field of a mesh event body before the event is
+//! signed (`mesh::journal::EventBody::redacted`, the fields its `EVENT_FIELDS` marks
+//! redacted), and every line the process logs (`logging::redact_line`, so a credential in any
+//! tracing field never reaches `server.log`). Two records use it to find a
+//! credential rather than to send
 //! one: `continuity::record::portability` refuses a continuity record that carries one, and
 //! `reasoning::store::redact` takes it out of a reasoning record before the record is kept.
 //! These are all of its callers; `no_answer_carries_a_credential` holds this list to the code

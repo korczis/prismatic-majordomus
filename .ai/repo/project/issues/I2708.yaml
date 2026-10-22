@@ -8,9 +8,8 @@ parallel_safe: false
 objective: "Make scripts/ci/mesh-check refuse an EventBody field absent from an allow-list, add a redaction layer for every tracing field, and pass review bodies through the redactor."
 why: "Split from I2161 on 2026-10-14. I2161 passed every HTTP error body, JSON-RPC error, MCP tool refusal, logged request field and handover body through redaction::redact_secrets, and its desired_state said 'Not done here' of an allow-list in scripts/ci/mesh-check that refuses an EventBody field nobody listed, a redaction layer for every tracing field, and review bodies, while its acceptance criteria still required the allow-list, so it could never close. The mesh replicates event bodies in clear over plain HTTP; a field added to EventBody reaches every linked runtime without anyone deciding it may. Pack invariant 9."
 current_state: "EventBody (apps/majordomus-cli/src/mesh/journal.rs) is replicated as it is declared; scripts/ci/mesh-check holds the mesh to one subsystem and lists no EventBody field. Logging (apps/majordomus-cli/src/logging.rs) has no redaction layer: only the request fields the router logs are redacted at the call site (apps/majordomus-cli/src/http/router.rs). A handover body is redacted before it is signed (apps/majordomus-cli/src/mesh/handover.rs); a review's subject and verdict are not."
-desired_state: "scripts/ci/mesh-check reads the fields of every EventBody variant and fails on one that its allow-list does not name, and the allow-list says for each listed field whether it is redacted before signing; every tracing field passes redaction::redact_secrets in one layer; a review's subject and verdict are redacted before they are signed into the journal."
+desired_state: "journal::EVENT_FIELDS lists every field of every EventBody kind with its rule (ident, line, redacted, paths, enum, digest, flag), and a test that walks the type's JSON schema, nested objects included, fails on a field the list does not name and on a listed field the type does not have; every redacted field passes redaction::redact_secrets in EventBody::redacted before Journal::append_own signs it, and a handover still carrying a credential shape is refused there, since its id is the digest of its body; every tracing record passes redaction::redact_secrets in one writer (logging::Redacting); a review's subject, body and notes are redacted before they are signed, and its verdict is one of three words. The allow-list is held by a test of the type rather than by scripts/ci/mesh-check: a grep of the source cannot see the fields of SessionInfo and HandoverBody inside the enum, the schema can (decided 2026-10-14 by the convergence worker conv-mesh)."
 scope:
-  - "scripts/ci/mesh-check"
   - "apps/majordomus-cli/src/mesh/journal.rs"
   - "apps/majordomus-cli/src/mesh/cooperation.rs"
   - "apps/majordomus-cli/src/logging.rs"
@@ -23,13 +22,15 @@ non_scope:
 depends_on:
   - I2161
 acceptance_criteria:
-  - "An EventBody field added without an allow-list entry fails scripts/ci/mesh-check"
+  - "An EventBody field added without an allow-list entry fails cargo test --lib mesh::journal::tests::every_event_body_field_is_listed"
   - "A credential-shaped value in any tracing field is absent from server.log"
   - "A review whose subject or verdict carries a credential shape is redacted or refused before it is signed into the journal"
 validation:
   - "bin/majordomus plan validate"
   - "scripts/ci/mesh-check"
+  - "cargo test --lib mesh::journal logging"
   - "cargo test --test redaction"
+  - "cargo test --test no_answer_carries_a_credential"
 evidence_required:
   - "eventbody_allowlist_case"
 created_at: 2026-10-14
