@@ -1,0 +1,31 @@
+id: I3118
+milestone: a-claim-stands-only-on-its-evidence
+title: "The edit guard's contract names every case it lets through, and each row has a test"
+slug: the-guard-states-what-it-lets-through
+priority: p1
+profile: implementation
+objective: "Write the guard's decision table into docs (server unanswered, policy off, path outside the checkout, local state, no-file tool, own claim, task scope, another session's claim). Make guard.rs tests table-driven over it. Public text calls the guard blocking only for the rows that block."
+why: "On 2026-10-08 (c199#27) the owner's audit asked for an explicit fail-open versus fail-closed policy; the PR that wired the guard admits that writes pass when the server does not answer. On 2026-10-16 (c280#2) an audit found it described as if every unauthorised edit were blocked. This is a public-text-true fix about master's guard and does not wait on I2735 or I2289 (both BLOCKED); I2735 adds rows to the table when it lands. It extends milestone failure-is-visible. Sources: chatgpt-majordomus:c199#27, chatgpt-majordomus:c280#2."
+current_state: "I2735 desired_state lists the let-through cases. apps/majordomus-cli/src/guard.rs implements them. A search of docs/ for fail-open finds nothing about the guard."
+desired_state: "One table in the docs; the guard's unit tests iterate it; the mesh guarantee text cites it."
+scope:
+  - "apps/majordomus-cli/src/guard.rs"
+  - "docs/MESH.md"
+  - "docs/CLAIMS.yaml"
+  - ".ai/repo/rules/project/work-is-claimed-before-it-is-built.v1.md"
+non_scope:
+  - "Changing fail-open to fail-closed (open question for the owner)"
+serves:
+  - "a-claim-stands-only-on-its-evidence#public-text-true"
+acceptance_criteria:
+  - "Every row of the table has a test of the same name"
+  - "No public sentence says every unclaimed edit is refused"
+  - "The table states the decisions guard.rs makes on master at the commit the issue starts from; I2735 adds rows when it lands"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib guard"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test guard_hook"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 3069_an_edit_no_claim_covers_is_refused"
+evidence_required:
+  - "guard_contract_table_tested"
+created_at: 2026-10-18
+updated_at: 2026-10-18

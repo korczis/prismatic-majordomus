@@ -1,0 +1,63 @@
+id: a-prompt-reaches-the-work-it-serves
+title: "A captured prompt is matched to its existing intent and recorded on the task that follows, joined to its outcome and evidence, shown on /ui and the Cockpit, read only on its own machine and never published"
+slug: a-prompt-reaches-the-work-it-serves
+order: 211
+priority: p1
+problem: "Provider hooks archive prompts and draw episode boundaries, but they reconcile nothing. A prompt is matched to no existing intent: intents.propose refuses only an existing id (apps/majordomus-cli/src/capability/builtin/intents.rs:585-591), and the primary checkout holds untracked intents whose ids are slugs of pasted prompts. Dedup checks the bare prompt id over today's files only, with no lock (lib/capture.sh:563-570). No task records the prompt it followed (lib/start.sh:158-160), and no Rust code reads the archive. Every read is served to a caller beyond loopback (capability/model.rs:708-710, ADR 0126). The snapshots reach gh-pages after the privacy gates have run (.github/workflows/pages.yml:479-481 before the snapshot steps)."
+outcome: "The first vertical slice of the pack, with the privacy gates landed before the first reader of the prompt archive: UserPromptSubmit, then capture with a namespaced idempotency key, a deterministic match against existing intents, the task that records the prompt it followed (the validated state change, through the task lifecycle that owns it), that task's outcome and verify command, the evidence state of the criterion it serves, and the matched intent's knowledge on /ui/idd and the Cockpit, pushed on the live channel."
+current_state: "Capture is verified: .claude/settings.json wires UserPromptSubmit, and lib/capture.sh redacts before any write. devcontext/select.rs scores term share with named terms. The I2789 standing panel on /ui/idd shows each unmet criterion with its evidence state and serving issues (landed, ui/idd.rs). I3251 plans the brief and I3254 the duplicate refusal at proposal. I3220 plans frames for writes made through capabilities. None of the issues below has landed."
+desired_state: "I3406, I3434, I3432, I3408, I3411, I3433, I3435, I3409 and I3430 have landed, each as one pull request, each reusing the capture archive, the ledger, the task lifecycle, devcontext, intents.binding, the entity relations, ADR 0126's remote refusal and the snapshot exporter."
+scope:
+  - "lib/capture.sh"
+  - "lib/start.sh"
+  - "share/events.yaml"
+  - "test/cases/29_prompt_capture.sh"
+  - "test/cases/280_capture_status_states_its_denominator.sh"
+  - "test/cases/960_a_task_starts_bound_to_what_it_serves.sh"
+  - "test/cases/181_local_is_never_published.sh"
+  - ".github/workflows/pages.yml"
+  - "scripts/site-deploy"
+  - "apps/majordomus-cli/src/capability/model.rs"
+  - "apps/majordomus-cli/tests/remote_callers.rs"
+  - "apps/majordomus-cli/src/web/report/snapshot.rs"
+  - "apps/majordomus-cli/src/capability/readings.rs"
+  - "apps/majordomus-cli/src/ui/source.rs"
+  - "apps/majordomus-cli/src/ui/view.rs"
+  - "apps/majordomus-cli/src/cockpit/pages.rs"
+  - "apps/majordomus-cli/src/devcontext"
+  - "apps/majordomus-cli/src/devcontext/mod.rs"
+  - "apps/majordomus-cli/src/capability/builtin/intents.rs"
+  - "apps/majordomus-cli/src/ui/intent.rs"
+  - "apps/majordomus-cli/src/ui/idd.rs"
+  - "apps/majordomus-cli/src/cockpit/intents.rs"
+  - "apps/majordomus-cli/tests/intent.rs"
+  - "docs/MAJORDOMUS_UI.md"
+  - "docs/CAPABILITIES.md"
+non_scope:
+  - "Any model call in a hook or in the matcher"
+  - "Proposing, amending or promoting an intent (I3254, milestone an-outcome-becomes-a-reviewed-plan)"
+  - "Hook latency budgets (I3304)"
+  - "Codex prompt capture (I3410 under a-provider-carries-the-contract-natively)"
+  - "Monitor or mesh publication of matches"
+  - "A stored match record (the match and the slice are derived on read)"
+  - "Authenticating remote callers"
+acceptance_criteria:
+  - "The criteria a-replayed-event-is-one-change, a-private-read-stays-on-this-machine, a-prompt-meets-the-existing-intent, a-task-names-the-prompt-it-followed, the-slice-is-one-identity, the-intent-shows-what-it-knows and nothing-private-is-published are rewritten to evidence: test naming the proof each issue wrote"
+  - "majordomus intent validate and majordomus plan validate report no finding for these records"
+  - "No issue of this milestone adds a store, an event bus, an intent table or a peer identity"
+validation:
+  - "majordomus plan validate"
+evidence_required: []
+depends_on:
+  - "an-outcome-becomes-a-reviewed-plan"
+  - "every-surface-follows-what-changed"
+  - "an-entity-says-how-it-is-known-and-what-it-affects"
+risks:
+  - "I3408 and I3409 add the first reader of the private prompt archive; I3434, I3432 and I3433 land before I3408 and I3409 so that neither a remote caller nor a snapshot can carry a match"
+  - "I3408 waits on I3251, I3409 on I3431 (which waits on I3220), and I3430 on I3412 and I3431; I3406, I3434 and I3432 are wave 0 and need nothing"
+  - "lib/capture.sh is edited by I3406, I3411, I3410, I3143, I3303 and I3304; land in depends_on order and merge master between them; if I3304 moves the write path out of lib/capture.sh first, I3406's scope is re-recorded before it starts"
+  - "The cause of shared prompt ids (redelivery versus an id a provider reuses on resume) is uncertain; I3406 never deletes a record and writes a known key with different text as a counted collision"
+  - "Term matching answers unmatched for a prompt in a language no record uses, which is correct and may read as a miss"
+  - "When I3273 lands, its reconciliation of this campaign must classify the segments these records came from as existing; the campaign references in sources are what it reads"
+created_at: 2026-10-19
+updated_at: 2026-10-19

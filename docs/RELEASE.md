@@ -593,6 +593,7 @@ reads that one answer:
 | MCP | the tool `majordomus_release_currency` |
 | Brief | the `release` line and section, read without the version |
 | Doctor | `clone release`: OK current, WARN owed, WARN overdue, INFO unknown |
+| UI | `/ui/delivery`: the hero's "Since then" tile and the panel "Is the trunk released?", read without the version, which the hero reads from `release.version` |
 
 It reads git and the clock when it is asked, and never enters committed derived data. The
 answer is made of three readings:
@@ -613,8 +614,19 @@ answer is made of three readings:
     made after it landed, or a reflog that was expired). A commit lands no earlier than it is
     made, so this wait is an upper bound, and the answer says "at most".
 
-  Reading the forge's own record of the landing, from the observation `prs refresh` keeps,
-  is planned (I3076). `release.currency` itself never reaches the network (SECURITY.md).
+  The forge's own record of the landing, its `mergedAt`, is not read (I3076). It was weighed
+  on 2026-10-21 and measured. `prs refresh` is the executor's hot path, and it never lists
+  merged pull requests (`tests/integration_merged_branches.rs`). Reading the newest hundred
+  of them took 1.11 s. This clone's reflog saw each of the last four landings 12 to 94 s
+  after the forge's `mergedAt`, against a threshold of six hours. The reflog of a
+  remote-tracking ref lives in the common git directory, so every worktree of a clone reads
+  the same one.
+
+  A fresh clone, such as a CI runner or a new host, holds no reflog of its remote-tracking
+  trunk, because `git clone` writes none for it. There the commit time is the only reading,
+  and the answer gives it as one: `landed_at: commit` and a wait of at most the commit's age,
+  never a zero. A forge record would not reach such a clone either, because no `prs refresh` ran
+  in it. `release.currency` itself never reaches the network (SECURITY.md).
 
 The stance:
 - **Current:** nothing has landed past the release.

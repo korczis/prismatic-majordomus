@@ -22,4 +22,16 @@ validation:
 evidence_required:
   - "offload_run_dir_test"
 created_at: 2026-10-18
-updated_at: 2026-10-18
+updated_at: 2026-10-20T15:30:47Z
+started_at: 2026-10-20T15:29:44Z
+started_event: sha256:f485dc83f21463867bccc203742a6dea0d4c8211d1409a2ec340e0b0d0f8c674
+completed_at: 2026-10-20T15:30:47Z
+completed_event: sha256:03a052b6cee41e030f8b922aa6eaa719b9cdf598275ed3c7801c230432551eba
+evidence:
+  - covers: offload_run_dir_test
+    type: ci
+    command: "cargo test --lib -- offload::run::tests::a_remote_derive_builds_only_inside_its_run_directory_and_removes_it"
+    result: "ok in validate run 39192952944, job rust (2) 117890228077 (3482 passed, 0 failed), every job green at master dd4c0a87cba, which contains the fix a4c19d60f0c"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39192952944/job/117890228077"
+    commit: 9a5a9b77520bbe9504b04ff89235a6f232377788
+    recorded_at: 2026-10-20T15:30:27Z

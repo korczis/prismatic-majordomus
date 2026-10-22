@@ -1,0 +1,46 @@
+id: I3407
+milestone: an-entity-says-how-it-is-known-and-what-it-affects
+title: "What a set of paths affects in the plan is derived from the index: the issues whose scope covers them, what those issues serve and their incoming edges, each with its relation, and nothing is rescanned"
+slug: what-a-change-affects-is-derived
+priority: p1
+profile: implementation
+objective: "Add a read-only capability, entity.affected, to the existing entity module. Given repository paths, it answers the entities they touch, each with a reason: the issues whose scope covers a path (reusing intent_binding's covers), the milestones and intents those issues serve, and the incoming entity edges of each reached object. Depth (default 2) and count (default 500) are declared inputs, so a test can drive both past their bounds. The order is canonical, and a path that nothing names is answered as unaffected rather than omitted."
+why: "The owner's 2026-10-19 Cognitive Fabric pack asks that affected entities be computed from the existing dependencies and git diffs, and that a git-only change reconcile only the impacted graph (campaigns/prismatic-way-cognitive-fabric-prompt-pack/prompts/02_EVENTS_INTENTS.md, scenario C of prompts/00_MASTER.md, and the verification/ACCEPTANCE.md row on a git-only change)."
+current_state: "apps/majordomus-cli/src/entity.rs:417 answers one-hop edges for one object. graph.rs:1239-1387 declares no issue-scope or serves relation. intent_binding.rs:770 matches paths to issue scope only inside binding. trace.commit attributes a commit by branch only (capability/builtin/trace.rs:269-271). The perf counters repository_scans and index_builds exist (apps/majordomus-cli/src/perf.rs:40-60). Nothing composes these."
+desired_state: "entity.affected composes the existing resolvers over the index already loaded, and reads no .ai file itself. The same input in any order gives a byte-identical answer."
+scope:
+  - "apps/majordomus-cli/src/entity.rs"
+  - "apps/majordomus-cli/src/capability/builtin/entity.rs"
+  - "apps/majordomus-cli/src/intent_binding.rs"
+  - "apps/majordomus-cli/tests/objects.rs"
+  - "docs/generated/registry.json"
+  - "docs/generated/registry.yaml"
+  - "docs/generated/openapi.json"
+  - "docs/generated/openapi.yaml"
+  - "docs/generated/modules/entity.md"
+  - "site/data/generated/openapi.json"
+  - "site/data/registry/registry.json"
+non_scope:
+  - "Records whose references name a path, and revision-range input (I3412)"
+  - "Writing any record or link"
+  - "Adding relations to graph::RELATIONS"
+  - "Choosing CI cases (I3238) or derive inputs"
+  - "A filesystem watcher"
+depends_on:
+  - "I3427"
+serves:
+  - "a-change-reconciles-what-it-affects#what-a-change-affects-is-derived"
+acceptance_criteria:
+  - "For a synthetic repository, a path under one issue's scope answers that issue, its milestone and the intent it serves, each with its relation"
+  - "Shuffled input paths give byte-identical output"
+  - "A depth or count past its bound is truncated and says so"
+  - "repository_scans and index_builds read the same before and after a call"
+  - "The capability projects to the command line, HTTP and MCP from its one declaration"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test objects"
+  - "bin/majordomus-cli generate --check"
+  - "majordomus capabilities describe entity.affected"
+evidence_required:
+  - "test_what_a_change_affects_is_derived"
+created_at: 2026-10-19
+updated_at: 2026-10-19

@@ -643,7 +643,9 @@ fn raws(index: &Index) -> (PlanProject, Vec<PlanMilestoneRaw>, Vec<PlanIssueRaw>
     (header, milestones, issues)
 }
 
-fn priority_rank(p: &str) -> u8 {
+/// A priority's rank, lowest first: the order [`Plan::next_ready`] takes issues in, and the
+/// one every reader that ranks issues the way the plan does uses (I2917).
+pub(crate) fn priority_rank(p: &str) -> u8 {
     match p {
         "p0" => 0,
         "p1" => 1,

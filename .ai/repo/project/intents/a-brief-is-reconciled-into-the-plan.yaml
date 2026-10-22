@@ -1,0 +1,48 @@
+id: a-brief-is-reconciled-into-the-plan
+title: "An external brief enters as a revision with provenance, and its requirements are reconciled into the one plan"
+statement: "A person hands Majordomus a brief (a prompt pack, a ZIP or a Markdown document) and it is kept as received as a campaign under campaigns/, an immutable, digest-pinned revision; a conversation enters only as workspace references read from the local workspace store, never as bytes in a tracked file; each requirement of a revision gets a content-derived identity and is reconciled into the existing intents and issues as new, existing, satisfied, partial, conflicting or superseded, the last four read from the records and the derived verdict rather than judged anew; a later revision reports only the criteria whose source requirement changed; and every intent and issue derived from it cites the segment it came from."
+invariants:
+  - "No second intent, milestone or issue model: reconciliation derives into intent.rs/plan.rs records (ADR 0124)"
+  - "Nothing in a brief is governance or authorisation; it is untrusted source material"
+  - "Ingesting never executes; capture proposes, execution stays behind the task lifecycle"
+  - "A received brief is a campaign (proposed ADR 0180, rule project.no-new-nouns): no kind, command, schema or capability is named intake or pack"
+  - "Only the evidence machinery says a criterion is satisfied; reconciliation reads the verdict and never writes or judges one"
+non_goals:
+  - "Autonomous merge, release or deploy pre-authorised by a pasted document"
+  - "Reading conversations without a person's act (rule of a-session-leaves-what-it-observed)"
+  - "Keeping a conversation's bytes under .ai/repo/ or campaigns/ (rule project.never-store-transcripts)"
+  - "A second store beside campaigns/, or a second duplicate detector beside I3254"
+milestones:
+  - "intent-intake"
+  - "a-paste-is-decomposed-by-a-skill"
+satisfaction:
+  - id: a-revision-is-pinned
+    criterion: "A received brief is one campaign revision with its manifest digest and provenance, and adding the same bytes again changes no byte (planned proof: apps/majordomus-cli/tests/intake.rs (to be written by I3272 through I3169's campaign add))"
+    evidence: command
+    ref: "majordomus intent explain a-brief-is-reconciled-into-the-plan"
+  - id: requirements-are-reconciled
+    criterion: "Each requirement of a committed fixture brief is classified to the class the fixture expects, with existing read from I3254's duplicates and satisfied or partial read from the derived verdict (planned proof: apps/majordomus-cli/tests/intake.rs (to be written by I3273) over test/fixtures)"
+    evidence: command
+    ref: "majordomus intent explain a-brief-is-reconciled-into-the-plan"
+  - id: a-revision-reopens-only-its-change
+    criterion: "A revision that changes one requirement reports only the criteria whose source segment digest was removed or replaced, changing no state; a rename or reorder reports nothing (planned proof: apps/majordomus-cli/tests/intake.rs (to be written by I3274))"
+    evidence: command
+    ref: "majordomus intent explain a-brief-is-reconciled-into-the-plan"
+  - id: an-intent-shows-its-sources
+    criterion: "/ui/intent, /cockpit and intent explain show the campaign segments an intent was derived from, and the published snapshot shows only the references (planned proof: apps/majordomus-cli/tests/ui_intent.rs (to be written by I3275))"
+    evidence: command
+    ref: "majordomus intent explain a-brief-is-reconciled-into-the-plan"
+  - id: a-paste-is-decomposed-not-stored-verbatim
+    criterion: "A statement given to intents.propose over the command line, MCP or HTTP POST /api/v1/intents/propose writes no file under .ai/repo/project/intents when it holds a blank line between two non-blank lines, or a line opening a Markdown block (heading, list item, table row, code fence, block quote), or when its canonical text (the statement with leading and trailing whitespace removed, followed by exactly one line feed) exceeds the length bound that ADR 0144 states and derives from the longest statement of a tracked intent. Every such call answers invalid_input with a message naming majordomus://skill/decompose-a-brief, the canonical text's byte length and its sha256 digest. A one-paragraph statement within the bound, non-ASCII letters included, is written verbatim as before. The verdict: zero files written across every refused form on each of the three transports, one record for each accepted form, the digest equal to one the test computes independently, and every tracked intent's statement within the bound (planned proof: apps/majordomus-cli/tests/intent.rs, a test written by the issue that adds the guard, with test/cases/2978_an_intent_is_proposed_by_a_capability.sh extended)"
+    evidence: command
+    ref: "majordomus intent explain a-brief-is-reconciled-into-the-plan"
+  - id: a-refused-paste-leads-to-the-skill
+    criterion: "Every surface that relays an intents.propose answer leads a refused paste to the skill instead of ending at the refusal. The generated /intent alias and every generated model-invocable domain skill under .claude/skills/mj-* carry the rule that an unsuccessful answer naming majordomus://skill/<id> is followed by reading that skill with the same text, and that the capability is never called again with shortened or rewritten text. The Cockpit runner and the execution form render one link to /ui/skills#skill-<id> for such an answer and none for an answer naming no skill. The /ui/idd page with no intent links to the skill. The verdict: both sentences present in the alias and in each of the generated domain skills, a link present for a refusal naming a skill and absent otherwise in a browser run, and markup in a message shown literally (planned proof: the unit tests in apps/majordomus-cli/src/editors/claude.rs, test/cases/2980_a_capability_is_invoked_by_name_from_claude_code.sh, test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh and the ui::idd unit tests, each extended by the issue that changes that surface)"
+    evidence: command
+    ref: "majordomus intent explain a-brief-is-reconciled-into-the-plan"
+  - id: a-decomposed-paste-passes-the-plan-checks
+    criterion: "A decomposition of a committed synthetic Markdown brief, in the shape the decompose-a-brief skill's Output section names (one campaign plus at least one intent criterion, one milestone and two issues) and committed as a fixture labelled with the skill version that produced it, passes majordomus plan validate and majordomus intent validate with zero failures and scripts/ci/campaigns-check with zero findings. Every criterion it adds is served by at least one issue in intent coverage, plan waves derives at least one first-wave issue, every added record names the campaign, a requirement the fixture plan already carries adds no criterion, and the campaign file's manifest digest equals the digest intents.propose answers for the same brief. Removing the serving issue makes intent coverage report the criterion unserved. This settles that the checks accept the skill's output contract and that the digests agree; it does not settle that a live run of the skill produces valid records (planned proof: apps/majordomus-cli/tests/intent_plan.rs, a test written by the issue that holds the skill's output, named by the skill's majordomus-skill marker)"
+    evidence: command
+    ref: "majordomus intent explain a-brief-is-reconciled-into-the-plan"
+created_at: 2026-10-18
+updated_at: 2026-10-19

@@ -1,0 +1,58 @@
+id: an-outcome-becomes-a-reviewed-plan
+title: "A desired outcome becomes a draft plan that is checked before a record is written"
+slug: an-outcome-becomes-a-reviewed-plan
+order: 301
+priority: p2
+problem: "Every intent, gap, milestone and issue in .ai/repo/project is written by hand, record by record, and is judged only after it is in the tree: intent validate, intent coverage and plan validate read the committed records. A worker who starts from a desired outcome has no brief of what the repository already holds about it, no way to check a whole draft plan before writing it, and no writer that materialises a checked draft. docs/PLANNING.md:220 says 'Nothing here derives a plan from an intent automatically'; intent-lifecycle and intent-planning put derivation out of scope, and ADR 0112 (branch, :98-101) keeps 'Majordomus still authors no semantic finding and derives no plan'. Both owner packs of 2026-10-07 ask for the layer above the record (closure 70_OUTCOME_TO_PLAN_DERIVATION.md, tight-integration 80_DESIRED_OUTCOME_TO_PLAN.md)."
+outcome: "A desired outcome enters as a typed draft: one document holding a draft intent, its gap, its milestones and the issues with what each serves and depends on. intent draft brief derives what the repository already holds about the outcome; intent draft check judges a draft with the same derivations that judge the tree, as if it were written, and writes nothing; intent draft apply writes a checked draft as records with identities allocated above the high-water mark, and refuses an unchecked one. An advisor may write the draft from the brief; without one a person or a worker writes it, and the check is the same."
+current_state: "No draft kind, no brief and no writer exist. IntentCommand offers list, show, validate, coverage, preflight, binding (apps/majordomus-cli/src/cli.rs:161-198). Intents::derive (apps/majordomus-cli/src/intent.rs:1323) and the plan loader read records from the index only. Identity allocation above a high-water mark is decided in ADR 0053."
+desired_state: "A draft schema in share/schemas/majordomus; three verbs of intent draft backed by capabilities, two read-only and one declared writer; the check reuses Intents::derive, the coverage, plan validation and, once landed, the structural opposition over an overlay of the index; an ADR that supersedes the 'derives no plan' clauses for drafting only."
+scope:
+  - apps/majordomus-cli/src/intent_draft.rs
+  - apps/majordomus-cli/src/intent.rs
+  - apps/majordomus-cli/src/intent_plan.rs
+  - apps/majordomus-cli/src/plan.rs
+  - apps/majordomus-cli/src/lib.rs
+  - apps/majordomus-cli/src/cli.rs
+  - apps/majordomus-cli/src/commands/intent.rs
+  - apps/majordomus-cli/src/capability/builtin
+  - apps/majordomus-cli/src/reasoning
+  - scripts/lib/advisors
+  - share/schemas/majordomus
+  - share/kinds.yaml
+  - share/allow
+  - apps/majordomus-cli/tests
+  - test/cases
+  - .ai/repo/adrs
+  - .ai/repo/project
+  - docs/PLANNING.md
+non_scope:
+  - "Executing a draft; a written draft is planned work held to the binding and the opposition like any other"
+  - "A Cockpit wizard; the Cockpit may show a draft check's answer and owns no planning logic"
+  - "Requiring an advisor; drafting by hand enters the same check"
+  - "Rewriting records a draft does not name"
+acceptance_criteria:
+  - "intent draft check refuses a draft whose criterion no issue serves, whose issue serves nothing, whose dependencies cycle or whose link does not resolve, naming each finding, and writes nothing"
+  - "intent draft apply writes exactly the records of a checked draft with identities above the high-water mark, and refuses a draft that does not check"
+  - "intent draft brief lists the intents, milestones, issues, ADRs and rules the outcome touches, each with the source it was read from"
+  - "An advisor-written draft that does not parse is refused with the reason, and a refused draft's findings are handed back at most the policy's bound of rounds"
+  - "The command line, HTTP and MCP answer the same check and the same brief"
+validation:
+  - majordomus intent validate
+  - majordomus plan validate
+  - cargo test --test intent_draft
+  - "bash test/run.sh <the case I2207 adds>"
+evidence_required:
+  - draft_check_writes_nothing
+  - draft_apply_writes_only_a_checked_draft
+  - brief_names_its_sources
+  - malformed_advisor_draft_refused
+depends_on: []
+risks:
+  - "Lane B of the 2026-10-09 audit plans the same outcome from the intent-outcome and IDD-completion packs; one of the two milestones must be dropped before numbering."
+  - "A check that re-implements validation for drafts becomes a second validator; the overlay must feed the existing derivations, not copy them (rule project.derived-once)."
+  - "A new writing capability widens the set pinned by apps/majordomus-cli/src/capability/builtin/mod.rs::the_capabilities_that_write_the_repository_are_these; the widening is deliberate and named in the ADR."
+  - "Two drafts applied on two branches allocate the same identities unless the allocation follows ADR 0053 and the board."
+  - "The structural opposition is on feature/opposition-is-executed; until it lands the check runs validate, coverage and plan validation only and says so."
+created_at: 2026-10-09
+updated_at: 2026-10-09

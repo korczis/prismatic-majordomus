@@ -7,7 +7,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import assert from 'node:assert/strict';
 
-import { breakpointsFromCss, commonPrefix, criticalWidths, discoverPages, tierPages, viewports, REFLOW_FLOOR } from './ui-discover.mjs';
+import { breakpointsFromCss, commonPrefix, criticalWidths, discoverPages, languageSample, tierPages, viewports, REFLOW_FLOOR } from './ui-discover.mjs';
 import { alignCells, escapes, nameTaskCheckboxes, normalise, normaliseRendered, plainClasses, scan, scrollingTags, textOf } from './ui-static.mjs';
 import { contrast, enforce, measure, raise, MINIMUM } from './ui-contrast.mjs';
 import { sample, siblingFamilies } from './ui-routes.mjs';
@@ -15,6 +15,44 @@ import { compare, cut, fragment, GENERATED, VERSION_SLOT } from './ui-navbar.mjs
 
 const tests = [];
 const test = (name, fn) => tests.push([name, fn]);
+
+// ------------------------------------------------------------------ language copies
+test('a language copy is sampled per section at the root and under a mount alike', () => {
+  const site = mkdtempSync(join(tmpdir(), 'mj-lang-'));
+  try {
+    mkdirSync(join(site, 'i18n'));
+    mkdirSync(join(site, 'public'));
+    writeFileSync(join(site, 'i18n', 'languages.json'), JSON.stringify({ source: 'en', languages: ['en', 'cs'] }));
+    const keep = languageSample(join(site, 'public'));
+    const routes = [
+      '/docs/guarantees/a/', '/docs/guarantees/b/',
+      '/docs/cs/guarantees/a/', '/docs/cs/guarantees/b/', '/docs/cs/guarantees/c/', '/docs/cs/adrs/x/',
+      '/cs/', '/cs/roadmap/', '/cs/roadmap/now/',
+    ];
+    assert.deepEqual(routes.filter(keep), [
+      '/docs/guarantees/a/', '/docs/guarantees/b/',
+      '/docs/cs/guarantees/a/', '/docs/cs/adrs/x/',
+      '/cs/', '/cs/roadmap/', '/cs/roadmap/now/',
+    ], 'the source keeps every page; a copy keeps the first of each section at each depth, mounted or not');
+  } finally {
+    rmSync(site, { recursive: true, force: true });
+  }
+});
+
+test('a directory with no i18n beside it is sampled by the repository\'s declaration', () => {
+  // the served documentation is built into target/web/docs: nothing beside it declares the
+  // languages, and a sampler that knew none kept every page of every copy
+  const web = mkdtempSync(join(tmpdir(), 'mj-web-'));
+  try {
+    mkdirSync(join(web, 'docs'));
+    const keep = languageSample(join(web, 'docs'));
+    const routes = ['/docs/cs/guarantees/', '/docs/cs/guarantees/a/', '/docs/cs/guarantees/b/', '/docs/guarantees/b/'];
+    assert.deepEqual(routes.filter(keep), ['/docs/cs/guarantees/', '/docs/cs/guarantees/a/', '/docs/guarantees/b/'],
+      'the copy is still sampled: its index and its first record page, every source page');
+  } finally {
+    rmSync(web, { recursive: true, force: true });
+  }
+});
 
 // ------------------------------------------------------------------ route sampling
 test('dozens of sibling families that differ in one segment are one renderer, sampled once', () => {
@@ -351,11 +389,13 @@ const builtPage = (origin) => `<html><body><a href="#main">skip</a>
 <!-- a comment of the build -->
 <a href="#site-map-1">All 9 pages</a></nav><main><nav aria-label="Other">x</nav></main></body></html>`;
 
-test('the bar is cut out of a built page as the one Main landmark, and nothing after it', () => {
+test('the bar is cut out of a built page as its first nav, by its place, and nothing after it', () => {
   const bar = cut(builtPage('https://example.test'));
   assert.ok(bar.startsWith('<nav class="sticky" aria-label="Main">') && bar.endsWith('</nav>'));
   assert.ok(!bar.includes('Other'));
-  assert.equal(cut('<html><nav aria-label="Other"></nav></html>'), null);
+  // found by its place, not its label: a translated page renames the landmark
+  assert.ok(cut('<html><body><nav aria-label="Primary">x</nav><nav aria-label="Other"></nav></body></html>').includes('Primary'));
+  assert.equal(cut('<html><body><p>no bar</p></body></html>'), null);
 });
 
 test('the copy leaves the version to the executable, drops the build\'s comments and leads the site map to the site', () => {

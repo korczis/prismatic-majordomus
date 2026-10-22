@@ -1,0 +1,52 @@
+id: an-inference-names-its-source-and-budget
+title: "Every inference a decision rests on names its model and source, stays inside a declared budget, counts independent sources rather than answers, and is never reached from a hook path"
+slug: an-inference-names-its-source-and-budget
+order: 214
+priority: p1
+problem: "majordomus reasoning plans, consults, records and settles disagreement by experiment, but six gaps remain. A consultation records no model (apps/majordomus-cli/src/reasoning/record.rs:414-460). Selection counts one adapter as one source (policy.rs:355-358) while the conclusion counts distinct advisor ids (store.rs:789-793), so two peers through the one mesh-review adapter count as two independent reviews. A mesh peer is asked a subject line without the evidence (scripts/lib/advisors/mesh-review.mjs:31-35). Reuse has no validity window (store.rs:446-497). The only budget is an advisor count (policy.rs:341), and advisor usage never reaches economics. Nothing refuses a hook path that reaches a model."
+outcome: "Each consultation is attributable, and independence is counted by a defined source. Peer critique reviews the evidence. A spent budget decides locally and says so, and consultation usage is economics data with its class. The pack's routing levels are documented as the existing plan outcomes. Hook closures are checked to reach no model. Reuse holds only while its evidence holds, and a poisoned answer stays data."
+current_state: "Verified by code and tests: six reasoning capabilities (capability/builtin/reasoning.rs:563-668); zero advisors in CI; offline and local fallback; circuit breaker, timeout and rate limit; disagreement settled by evidence (cases 730-736). Also verified: mesh trust, partition conflict, reconnect and expiry (mesh_cooperation.rs:474,494,716; mesh/state.rs:962)."
+desired_state: "I3418 to I3426 have landed as nine pull requests that extend the reasoning, advisor transport and economics files, with no new store, setting tree, noun or peer identity."
+scope:
+  - "apps/majordomus-cli/src/reasoning/policy.rs"
+  - "apps/majordomus-cli/src/reasoning/record.rs"
+  - "apps/majordomus-cli/src/reasoning/store.rs"
+  - "apps/majordomus-cli/src/reasoning/state.rs"
+  - "apps/majordomus-cli/src/reasoning/check.rs"
+  - "apps/majordomus-cli/src/capability/builtin/reasoning.rs"
+  - "apps/majordomus-cli/src/capability/builtin/economics.rs"
+  - "apps/majordomus-cli/src/economics/model.rs"
+  - "apps/majordomus-cli/src/economics/report.rs"
+  - "apps/majordomus-cli/tests/economics.rs"
+  - "apps/majordomus-cli/tests/reasoning_mesh.rs"
+  - "scripts/advisor-consult"
+  - "scripts/lib/advisors/contract.mjs"
+  - "scripts/lib/advisors/contract.test.mjs"
+  - "scripts/lib/advisors/mesh-review.mjs"
+  - "scripts/lib/advisors/ollama-chat.mjs"
+  - "scripts/lib/advisors/lmstudio-chat.mjs"
+  - "scripts/lib/advisors/openai-chat.mjs"
+  - "docs/REASONING.md"
+  - "docs/ECONOMICS.md"
+non_scope:
+  - "Running or observing local models (the local-inference work, unmerged on feature/a-local-runtime-is-observed)"
+  - "A tier field or any other new noun (rule project.no-new-nouns)"
+  - "Mesh work assignment (I3198, I3199)"
+  - "Provider session usage and price lists (declared by I3292 and I3295; this milestone only reads them)"
+  - "Replacing the mesh-review poll with the pushed channel (unmerged on feature/the-blackboard-is-pushed)"
+  - "Fairness scheduling across tasks without measured contention"
+acceptance_criteria:
+  - "The six reasoning criteria of the intent are rewritten to evidence: test"
+  - "majordomus reasoning check is clean on this repository, and cases 730 to 736 pass with their intent unchanged"
+  - "No advisor, model or vendor literal enters the provider-independent reasoning files"
+validation:
+  - "majordomus plan validate"
+evidence_required: []
+depends_on:
+  - "every-sessions-usage-is-observed"
+risks:
+  - "I3421 waits on I3295 and I3422 on I3292; I3424, I3426, I3418, I3419, I3423, I3425 and I3420 land first"
+  - "feature/a-local-runtime-is-observed touches no file under apps/majordomus-cli/src/reasoning or scripts/lib/advisors. It changes models/mod.rs (models.route), models/observed.rs, builtin/models.rs and scripts/lib/inference. I3423's mapping must name models.route's choice as it stands when I3423 lands, and I3424's transport pattern names scripts/lib/inference for when that directory lands"
+  - "Records already stored carry no model or session; I3418 reads them as absent with a reason and never rewrites them"
+created_at: 2026-10-19
+updated_at: 2026-10-19
