@@ -1200,7 +1200,9 @@ provenance:
 | `provenance.derived_from` | no | typed references: `decision:`, `session:`, `commit:`, `issue:`, `file:`, `test:` |
 
 Unknown keys are errors. The body carries non-empty level-two sections `## Context`,
-`## Decision` and `## Consequences`; `## Alternatives rejected` is optional.
+`## Decision` and `## Consequences`; `## Alternatives rejected` is optional. A level-one
+heading that numbers the decision, `# <n>. <title>` as `adr propose` writes it, carries the
+identity's number, and `adr check` reports one that numbers another decision.
 
 **`propose` never writes `accepted`.** It writes `status: proposed` and has no flag that
 says otherwise, because acceptance is the person's act: a tool that can write `accepted`

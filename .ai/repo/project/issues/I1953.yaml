@@ -7,7 +7,7 @@ profile: implementation
 parallel_safe: false
 objective: "Add the evidence.subject, evidence.coverage, evidence.runs and evidence.run capabilities, so that the CLI, HTTP and MCP answer by subject from the one authority and read supplementary records only through the monotone rule (ADR 0087 decision 3)."
 why: "Only claims and rules can be asked about today. A feature, a command, a capability, an MCP tool and a use case have no answer, although each is what a reader of the site or the Cockpit is looking at."
-current_state: "evidence show, evidence claim and evidence proves answer by claim; rules answers by rule; nothing answers for any other subject, and nothing lists run or coverage records."
+current_state: "Slice 1 delivered evidence.subject and evidence.coverage, declared once in the evidence module and served over the CLI (evidence subject <key>, evidence coverage), HTTP and MCP: every subject kind of the index answers through the index's own judge at the working tree or a presented commit, an unknown subject is a not-found that exits 13 and names where the subjects are listed, and coverage is read from run records (the local run directory, or a run record or CI artifact directory named inside the checkout) and shown current only for its own commit on a clean tree. Case 508 and tests/evidence.rs hold them. Waiting for I1957's local run index: evidence runs, evidence run <id>, and supplementary records applied to a subject's verdict through the monotone rule (case 509)."
 desired_state: "majordomus evidence subject <key>, evidence coverage, evidence runs and evidence run <id> exist as declared capabilities served over the CLI, HTTP and MCP tool calls; an unknown subject exits 13; supplementary records are listed beside the verdict and applied only through the monotone rule."
 scope:
   - apps/majordomus-cli/src/capability/builtin/evidence.rs
@@ -20,6 +20,7 @@ scope:
   - docs/EVIDENCE.md
   - docs/HOW_IT_WORKS.md
   - docs/README.md
+  - docs/SURFACES.md
   - docs/CLAIMS.yaml
   - docs/claims
   - .ai/repo/features/evidence.md
@@ -42,4 +43,4 @@ evidence_required:
   - answers_by_subject
   - supplementary_only_weakens
 created_at: 2026-09-26
-updated_at: 2026-09-26
+updated_at: 2026-10-22

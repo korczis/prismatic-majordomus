@@ -279,7 +279,7 @@ fn enclosing_fns(lines: &[&str], index: usize) -> Vec<String> {
 
 /// The redaction module's documentation names only callers that exist, and every caller
 /// that exists: each item it names resolves in the crate, and each function of the crate
-/// that calls `redact_secrets` or `public_text` is one it names (I2161).
+/// that calls `redact_secrets` or `public_text` is one it names (I2161, I1955).
 #[test]
 fn the_redaction_module_names_only_and_all_of_its_callers() {
     let src = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src");
@@ -319,7 +319,7 @@ fn the_redaction_module_names_only_and_all_of_its_callers() {
                     callers.push((within, path.clone()));
                 }
                 if code.contains("redaction::public_text(") {
-                    publishers.push(format!("{}:{}", path.display(), i + 1));
+                    publishers.push((enclosing_fns(&lines, i), path.clone()));
                 }
             }
         }
@@ -335,9 +335,20 @@ fn the_redaction_module_names_only_and_all_of_its_callers() {
             file.display()
         );
     }
-    // and the module says nothing calls `public_text` yet (I1955 wires it)
+    // and the one rule for published text has the caller the module names: the evidence
+    // publication (I1955), and no other
     assert!(
-        publishers.is_empty(),
-        "`public_text` is called at {publishers:?}: the module documentation says nothing does"
+        !publishers.is_empty(),
+        "nothing calls `public_text`: the scan is broken, or the evidence publication lost it"
     );
+    for (within, file) in &publishers {
+        assert!(
+            named
+                .iter()
+                .any(|(item, f)| f == file && within.contains(item)),
+            "{} in {} calls `public_text` and the module documentation of redaction.rs does not name it",
+            within.join(" in "),
+            file.display()
+        );
+    }
 }

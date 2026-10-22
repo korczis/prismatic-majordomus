@@ -1,0 +1,40 @@
+id: I3865
+milestone: public-proof
+title: "An article explains in both languages how knowledge is derived at an episode's end and promoted by a person"
+slug: knowledge-is-derived-a-person-promotes-it
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Publish site/content-src/knowledge-is-derived-a-person-promotes-it.md, an English article on the knowledge subsystem (ADR 0091). It covers the one knowledge kind with no memory service, what a record asserts and never carries, the table of what is derived from which ledger line, the determinism of a record's id and date, the observations of ADR 0118, the two moments the deriver runs, the trunk's outbox, the promotion and rejection acts, the measured queue, provenance that outlives the files it cites, and the rules that report a stopped writer and refuse a broken record. Its time-bound statement is dated. Every statement is one that ADR 0091, 0118 or 0010, docs/KNOWLEDGE.md or the vendored knowledge rules state on master, and no count is typed by hand. site/content-src/znalost-odvodi-nastroj-povysi-clovek.md is its Czech translation, naming translated_from and its source's digest. site/data/nav.toml lists both. Both relate the continuity, rule-proof and derivation articles, each of which names them back in its own language."
+why: "The owner asked on 2026-10-19 that the site's articles be developed and interlinked in every language. What a coding session learned usually dies with its conversation, and no article tells a reader how Majordomus keeps it without storing the conversation or letting a machine vouch for it."
+current_state: "No article explains how knowledge is derived and promoted. The article groups relate each other, and none of them names it."
+desired_state: "/knowledge-is-derived-a-person-promotes-it/ and /znalost-odvodi-nastroj-povysi-clovek/ are built, are counterparts of each other, are listed in the navigation, and are related both ways with three other groups. Check 21 and check 19 pass, with the translation at its source's digest."
+scope:
+  - ".ai/repo/project/issues/I3865.yaml"
+  - "site/content-src/knowledge-is-derived-a-person-promotes-it.md"
+  - "site/content-src/znalost-odvodi-nastroj-povysi-clovek.md"
+  - "site/content-src/a-session-ends-the-work-does-not.md"
+  - "site/content-src/session-skonci-prace-ne.md"
+  - "site/content-src/a-rule-is-proven-by-what-it-refuses.md"
+  - "site/content-src/pravidlo-se-dokazuje-odmitnutim.md"
+  - "site/content-src/written-once-derived-everywhere.md"
+  - "site/content-src/napsano-jednou-odvozeno-vsude.md"
+  - "site/data/nav.toml"
+  - "scripts/ci/english-only-allow.txt"
+non_scope:
+  - "Changing the deriver, the promotion acts or the knowledge rules"
+depends_on:
+  - "I3863"
+acceptance_criteria:
+  - "Both articles are built, declare each other in [extra.translations], and the Czech one records translated_from = knowledge-is-derived-a-person-promotes-it/ and the digest check 21 computes of its source"
+  - "Each statement is one a record or manual on master states, and check 19 finds no count typed by hand"
+  - "scripts/site-check --articles passes the tree, counting the new related links"
+validation:
+  - "majordomus plan validate"
+  - "scripts/site-check --articles site/content-src site/data/nav.toml site/config.toml"
+  - "scripts/site-check --prose-figures site/content-src"
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3389_related_articles_answer_each_other_in_every_language"
+evidence_required: []
+serves: []
+created_at: 2026-10-22
+updated_at: 2026-10-22

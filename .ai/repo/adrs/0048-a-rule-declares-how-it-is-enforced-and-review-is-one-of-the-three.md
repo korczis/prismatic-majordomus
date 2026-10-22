@@ -61,10 +61,10 @@ of ten blocking rules that named nothing at all.
 
 Measured when that baseline was worked through, which is where this decision comes from:
 
-- **Six of the ten already had executable proof.** `apps/majordomus-cli/tests/quality.rs`
+- **Four of the ten already had executable proof.** `apps/majordomus-cli/tests/quality.rs`
   proved `project.operation-transport-parity`; `test/cases/99_adr.sh` proved
   `majordomus.decision-threshold`. The proof existed and was named in prose that nothing
-  reads. The migration for these six was moving a path from English into YAML.
+  reads. The migration for these four was moving a path from English into YAML.
 - **Two could have proof and did not.** `project.english-only` and
   `project.finding-carries-reproduce` both said "Review." and nothing more.
 - **Four could not have proof, and will not be able to.** `project.clean-room` is about the

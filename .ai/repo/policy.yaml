@@ -170,6 +170,22 @@ knowledge:
   candidate_max_age_minutes: 20160       # 14d: a candidate this old was not reviewed, it was
                                          # ignored; doctor names it
 
+# The evidence the coverage matrix (`health.coverage`, I1011) holds each executable
+# capability to. A capability requires the columns of every rule whose kind and stability
+# match it; a column no rule requires is still reported, and is never a gap. Columns:
+# exposed, documented, tested, enforced, benchmarked.
+coverage:
+  require:
+    - columns: [exposed]
+    # declared behaviourally verified: a test must reach it, or the declaration is a claim
+    - stability: behaviorally_verified
+      columns: [tested]
+    # the benchmark projection times every executable capability that is not planned
+    - stability: implemented
+      columns: [benchmarked]
+    - stability: behaviorally_verified
+      columns: [benchmarked]
+
 # `majordomus bench` samples every public command this many times after the warm-up runs;
 # `bench --check` refuses a regression larger than these fractions of the baseline's
 # p50, p95 and p99; doctor and watch report their own wall time against these budgets

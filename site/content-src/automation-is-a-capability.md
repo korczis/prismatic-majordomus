@@ -4,7 +4,7 @@ description = "This repository's own automation lived in shell, and every recurr
 template = "page.html"
 [extra]
 lang = "en"
-related = ["written-once-derived-everywhere/", "the-bet-on-a-layer/", "proof-carrying-documentation/"]
+related = ["written-once-derived-everywhere/", "the-bet-on-a-layer/", "proof-carrying-documentation/", "a-rule-is-proven-by-what-it-refuses/"]
 [extra.translations]
 cs = "automatizace-je-schopnost/"
 +++
