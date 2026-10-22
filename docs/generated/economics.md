@@ -37,10 +37,9 @@ At least 30 valid matched pairs; at least 4 task categories with 5 valid pairs e
 
 | suite | kind | freshness | runs | valid pairs | attempted | control failed | treatment failed | both failed | other | revisions | harness | models |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| context | context | stale | 9 | 0 | 0 | 0 | 0 | 0 | 0 | `1cc12af61de4` `487cedf6f5a3` `78f09f8af8e3` `79bb4e3c18a9` `8183164ade2d` `8d4486c1a9df` `94c515480804` `a588b8eb5fac` `d446499470fe` |  |  |
+| context | context | current | 10 | 0 | 0 | 0 | 0 | 0 | 0 | `1cc12af61de4` `487cedf6f5a3` `78f09f8af8e3` `79bb4e3c18a9` `8183164ade2d` `8d4486c1a9df` `94c515480804` `a588b8eb5fac` `c453f536afaf` `d446499470fe` |  |  |
 | pilot | live | no evidence | 0 | 0 | 0 | 0 | 0 | 0 | 0 |  |  |  |
 
-- `context`: 1 record(s) were measured against inputs that have changed since: .ai/repo/benchmarks/economics/methodology.yaml, .ai/repo/benchmarks/economics/suites/context.yaml, apps/majordomus-cli/src/devcontext, .ai/repo/knowledge/sources.yaml
 
 ## Metrics
 
@@ -57,8 +56,8 @@ At least 30 valid matched pairs; at least 4 task categories with 5 valid pairs e
 | `completion_rate.majordomus` | not measured | not measured | derived from observed | 0 | — | not a quality score: a run passes the gates or it does not |
 | `tokens_per_completed_task.majordomus` | not measured | not measured | observed | 0 | — |  |
 | `transcript_resume_avoided.majordomus` | not measured | not measured | counterfactual from observed | 0 | — | not a saving of Majordomus: both arms start the next session fresh; this is the modelled cost of resuming a transcript instead |
-| `context_reduction_ratio` | +97.9% | measured | derived from counted | 315 | 95%: +97.9% to +98.0% | not total token savings: it says what the compiler selected from what it found relevant, not what a session consumed, and a session remains free to read anything |
-| `context_cost_model_error` | -1.6% | measured | derived from counted | 315 | — | not a saving: it says how far the budget's unit is from counted tokens |
+| `context_reduction_ratio` | +98.0% | measured | derived from counted | 888 | 95%: +97.9% to +98.0% | not total token savings: it says what the compiler selected from what it found relevant, not what a session consumed, and a session remains free to read anything |
+| `context_cost_model_error` | +2.8% | measured | derived from counted | 888 | — | not a saving: it says how far the budget's unit is from counted tokens |
 
 Formulas and warnings:
 
@@ -79,11 +78,7 @@ Formulas and warnings:
   - interval: percentile bootstrap of the median, each value resampled independently with replacement; 10000 resamples, seed 20260924.
   - tokens counted with o200k_base (tiktoken-rs 0.12.0), which is not the tokenizer of every model
   - the candidates are what the compiler's own graph walk judged relevant; a worker without the compiler would not necessarily have read them, so this ratio describes the selection, not a session's saving
-  - stale: a measured mechanism changed since this record
-  - dirty: this record was measured from a working tree with uncommitted changes
 - `context_cost_model_error`: counted selected tokens / the compiler's own estimate of them - 1, over all seeds.
-  - stale: a measured mechanism changed since this record
-  - dirty: this record was measured from a working tree with uncommitted changes
 
 ## Pairs
 
@@ -112,7 +107,7 @@ Every declared pair, valid or not. Tokens are the provider-reported totals of ev
 
 ## Context selection (deterministic)
 
-At revision `79bb4e3c18a9`, 315 seeds (the issues of this repository's plan) were compiled by `majordomus devcontext` under its default budget of 24000 (bytes-over-four) tokens. Counted with o200k_base (tiktoken-rs 0.12.0): 396047691 candidate tokens (files the compiler judged relevant), 7857785 selected; 396047691 tokens reached in all. The compiler's own estimate of the selected tokens was 7982840; 192 seed(s) exceed the budget when counted.
+At revision `c453f536afaf`, 888 seeds (the issues of this repository's plan) were compiled by `majordomus devcontext` under its default budget of 24000 (bytes-over-four) tokens. Counted with o200k_base (tiktoken-rs 0.12.0): 1038352684 candidate tokens (files the compiler judged relevant), 25521945 selected; 1038352684 tokens reached in all. The compiler's own estimate of the selected tokens was 24833303; 730 seed(s) exceed the budget when counted.
 
 This is context *selection*, not total token savings: it says what the compiler put in front of a worker out of what it found relevant, not what a session consumed.
 
@@ -129,6 +124,7 @@ This is context *selection*, not total token savings: it says what the compiler 
 | context | 1 | `487cedf6f5a3` | 2026-10-04T02:41:01Z | `context_reduction_ratio` | +97.4% | 244 |
 | context | 1 | `d446499470fe` | 2026-10-06T19:36:53Z | `context_reduction_ratio` | +97.5% | 257 |
 | context | 1 | `79bb4e3c18a9` | 2026-10-11T18:48:45Z | `context_reduction_ratio` | +97.9% | 315 |
+| context | 1 | `c453f536afaf` | 2026-10-22T19:41:14Z | `context_reduction_ratio` | +98.0% | 888 |
 
 ## Hypotheses
 
