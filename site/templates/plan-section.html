@@ -115,8 +115,8 @@
   </div>
 
   <h2 class="mt-12 text-2xl font-bold tracking-tight text-heading">The graph</h2>
-  <p class="mt-2 max-w-3xl text-sm text-body">Generated from the same edges the command reads, by <code class="font-mono text-heading">majordomus plan graph</code>. No diagram on this site is drawn by hand.</p>
-  {{ <plan_graph mermaid={plan.mermaid} caption="Every issue, every dependency" name="plan" /> }}
+  <p class="mt-2 max-w-3xl text-sm text-body">Generated from the same edges the command reads, by <code class="font-mono text-heading">majordomus plan graph</code>. No diagram on this site is drawn by hand. A node is a milestone and an arrow counts the issues of one that wait on issues of another; each milestone's page draws its own issues.</p>
+  {{ <plan_graph mermaid={plan.milestone_mermaid} caption="Every milestone, and the dependencies between them" name="plan-milestones" /> }}
   <p class="mt-2 text-sm text-body"><a href="{{ get_url(path="/plan/dag/", trailing_slash=true) }}" class="text-fg-brand underline">The graph on its own page</a>, with the edge list.</p>
 
   {%- if plan.findings | length > 0 %}
