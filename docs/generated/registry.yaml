@@ -185,6 +185,12 @@ modules:
     stability: behaviorally_verified
     source: builtin
     capabilities: 3
+  - id: layout
+    title: Layer layout
+    description: "The boundary between the layer's tracked and local halves, checked against the layouts their contracts declare: what lives where, and what must never appear there (I1102)."
+    stability: behaviorally_verified
+    source: builtin
+    capabilities: 1
   - id: lifecycle
     title: Session lifecycle
     description: "The episode lifecycle as an operator sees it: every open episode of this checkout's store rather than only the one the pointer follows, the episodes that can no longer close themselves, the commit this process is answering about against the commit the repository is on, what each provider's adapter declares it can do, and the tracked records a clone receives. Read from the local half of the layer and from the index; written by nothing here."
@@ -12226,6 +12232,21 @@ capabilities:
                 items:
                   type: string
                 description: "Subtrees below this one that owe nothing: carried, not authored here."
+              layout_lifecycle:
+                type:
+                  - string
+                  - "null"
+                description: "The lifecycle of what lives here, when the contract declares its layout (I2870)."
+              layout_holds:
+                type: array
+                items:
+                  type: string
+                description: "The kinds the directory holds, when the contract says."
+              layout_excludes:
+                type: array
+                items:
+                  type: string
+                description: "Lifecycles or kinds that must never appear here, when the contract says."
             required:
               - id
               - path
@@ -31022,6 +31043,102 @@ capabilities:
       cancellable: false
       concurrency: unrestricted
     source_path: apps/majordomus-cli/src/capability/builtin/knowledge_base.rs
+  - id: layout.check
+    module: layout
+    kind: query
+    title: Refuse a misplaced artifact
+    description: "Every path a declared layout excludes, named with the contract it violates: a tracked file under the tracked half that git's ignore rules match (state that does not travel, under a contract that excludes cache or runtime), and a file under the local half that is a byte copy of a tracked canonical file or declares the schema of a kind share/kinds.yaml calls canonical (under the manifest's `local.excludes: [canonical]`). Only what a contract declares is judged. Reads git and the local half's files; no build and no network."
+    input:
+      name: Empty
+      schema:
+        type: object
+        additionalProperties: false
+        description: No input.
+        title: Empty
+    output:
+      name: LayoutReport
+      schema:
+        type: object
+        properties:
+          measured:
+            type: boolean
+            description: "Whether the halves could be read at all. `false` is not a pass."
+          reason:
+            type:
+              - string
+              - "null"
+            description: "Why they could not, when they could not."
+          checked:
+            type: integer
+            format: uint
+            minimum: 0
+            description: How many paths were judged.
+          findings:
+            type: array
+            items:
+              "$ref": "#/$defs/LayoutFinding"
+            description: "Every path a contract excludes, in canonical order. Empty is the passing answer."
+          passes:
+            type: boolean
+            description: "`true` when the halves were read and nothing was found."
+        required:
+          - measured
+          - checked
+          - findings
+          - passes
+        description: The answer of the layout check.
+        title: LayoutReport
+        "$defs":
+          LayoutFinding:
+            type: object
+            properties:
+              path:
+                type: string
+                description: "The path, repository-relative."
+              contract:
+                type: string
+                description: "The contract it violates: a context document's id, or `manifest local`."
+              excludes:
+                type: string
+                description: What the contract excludes that this path is.
+              reason:
+                type: string
+                description: "What the path was found to be, and how."
+            required:
+              - path
+              - contract
+              - excludes
+              - reason
+            description: One path a contract excludes.
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::layout
+    exposure:
+      mcp:
+        tool: majordomus_layout_check
+      http:
+        method: GET
+        path: /api/v1/layout/check
+      cli:
+        path:
+          - layout
+          - check
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - layout
+      - governance
+      - two-folder
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/layout.rs
   - id: lifecycle.closed
     module: lifecycle
     kind: query
@@ -40803,6 +40920,11 @@ capabilities:
             format: uint64
             minimum: 0
             description: "Enumerations of the repository's declared sources."
+          repository_discoveries:
+            type: integer
+            format: uint64
+            minimum: 0
+            description: Manifests read and parsed to discover a repository.
           index_builds:
             type: integer
             format: uint64
@@ -40870,6 +40992,7 @@ capabilities:
             description: Phase totals by phase name.
         required:
           - repository_scans
+          - repository_discoveries
           - index_builds
           - registry_builds
           - schema_generations

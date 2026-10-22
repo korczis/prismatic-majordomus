@@ -67,7 +67,9 @@ pub fn run(args: ServeArgs) -> Result<u8> {
     let layer = layer_args(&args.repo)?;
     match &args.command {
         None => serve(&args, &repo),
-        Some(ServeCommand::Status { checkouts, format }) => status(&args, *checkouts, *format),
+        Some(ServeCommand::Status { checkouts, format }) => {
+            status(&args, &repo, *checkouts, *format)
+        }
         Some(ServeCommand::Ensure {
             port,
             idle,
@@ -112,7 +114,7 @@ fn serve(args: &ServeArgs, repo: &Repository) -> Result<u8> {
     // the lease is kept young while the layer loads, so that a peer waiting on it never
     // mistakes a slow start for an abandoned one
     lease.keep_alive();
-    let app = App::load(&args.repo)?;
+    let app = App::load_from(&args.repo, repo.clone())?;
     // The address: the local default, or the one a deployment object declares. The port is
     // never typed twice — the object states it once and the process and the image both
     // read that one.
@@ -265,8 +267,13 @@ const STOP_POLL: Duration = Duration::from_millis(100);
 /// The flag is the capability's input field and nothing else: it is serialised into the
 /// same JSON whether the question travels over the loopback socket or is executed here, so
 /// `--checkouts this` costs one lease read and one probe on either path.
-fn status(args: &ServeArgs, checkouts: Checkouts, format: OutputFormat) -> Result<u8> {
-    let app = App::load(&args.repo)?;
+fn status(
+    args: &ServeArgs,
+    repo: &Repository,
+    checkouts: Checkouts,
+    format: OutputFormat,
+) -> Result<u8> {
+    let app = App::load_from(&args.repo, repo.clone())?;
     let ctx = &app.context;
     let id = cli_capability(ctx, &["serve", "status"])?;
     let input = json!({ "checkouts": checkouts });

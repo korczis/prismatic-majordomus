@@ -524,6 +524,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:layout.check",
+      "path": "/evidence/capabilities/layout-check/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:lifecycle.closed",
       "path": "/evidence/capabilities/lifecycle-closed/"
     },
@@ -2854,6 +2859,11 @@
     },
     {
       "kind": "command",
+      "subject": "command:layout check",
+      "path": "/evidence/commands/layout-check/"
+    },
+    {
+      "kind": "command",
       "subject": "command:mcp",
       "path": "/evidence/commands/mcp/"
     },
@@ -4993,6 +5003,18 @@
       "members": [
         "claim:knowledge-served-on-every-surface",
         "command:knowledge status"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:layout.check": {
+      "kind": "capability",
+      "id": "layout.check",
+      "page": "/evidence/capabilities/layout-check/",
+      "programs": [],
+      "members": [
+        "command:layout check"
       ],
       "routes": [],
       "mechanisms": [],
@@ -15008,6 +15030,12 @@
           "category": "e2e"
         },
         {
+          "via": "behaviour",
+          "test": "suite:3405_a_misplaced_artifact_is_refused",
+          "path": "test/cases/3405_a_misplaced_artifact_is_refused.sh",
+          "category": "e2e"
+        },
+        {
           "via": "negative",
           "test": "suite:01_init",
           "path": "test/cases/01_init.sh",
@@ -15435,6 +15463,25 @@
       "kind": "command",
       "id": "knowledge status",
       "page": "/evidence/commands/knowledge-status/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:layout check": {
+      "kind": "command",
+      "id": "layout check",
+      "page": "/evidence/commands/layout-check/",
       "programs": [
         "native"
       ],
@@ -17858,6 +17905,12 @@
           "via": "behaviour",
           "test": "suite:33_event_registry",
           "path": "test/cases/33_event_registry.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:3405_a_misplaced_artifact_is_refused",
+          "path": "test/cases/3405_a_misplaced_artifact_is_refused.sh",
           "category": "e2e"
         },
         {
@@ -20528,6 +20581,18 @@
       "programs": [],
       "members": [
         "capability:knowledge_base.status"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_layout_check": {
+      "kind": "mcp",
+      "id": "majordomus_layout_check",
+      "alias_of": "capability:layout.check",
+      "programs": [],
+      "members": [
+        "capability:layout.check"
       ],
       "routes": [],
       "mechanisms": [],
@@ -28374,6 +28439,7 @@
     "crate:cov_worktree_hooks_git_refuses",
     "crate:dashboard",
     "crate:directories",
+    "crate:discovery_has_its_owners",
     "crate:economics",
     "crate:editors",
     "crate:engine",
