@@ -34,13 +34,22 @@
 //! hearing from it fails it rather than showing it running for ever. With no server, the
 //! run says on stderr that nothing else can see it. A run never starts a server.
 //!
-//! What it is not: a job system. There is no durable queue, no retry, no schedule and no
-//! execution that outlives the process that accepted it. The store says so — its limits
-//! are typed and its behaviour at each limit is defined — and [`store::Limits`] is where a
-//! durable store would be substituted, because nothing above it names a `Mutex`.
+//! A server's executions outlive it (ADR 0222). `majordomus serve` builds its store over a
+//! [`Journal`] under `.ai/local/state/executions/`: every execution and every event is
+//! written down before anybody is shown it, and a server that starts folds the journal
+//! back, so a browser that reconnects after a restart reads the same execution at the same
+//! cursor. A restart never runs anything again: an execution the stopped process was
+//! running is recovered failed with the code `interrupted`, and one another process reports
+//! is recovered as reported and continues when that process reports again. A command that
+//! runs once keeps its store in memory.
+//!
+//! What it is not: a job system. There is no retry and no schedule; an unknown outcome is
+//! never a reason to repeat a mutation. The store's limits are typed and its behaviour at
+//! each limit is defined, and a forgotten execution's journal is archived, never deleted.
 
 pub mod engine;
 pub mod event;
+pub mod journal;
 pub mod model;
 pub mod redact;
 pub mod sink;
@@ -48,6 +57,7 @@ pub mod store;
 
 pub use engine::{ExecutionEngine, SubmitError};
 pub use event::{EventPayload, ExecutionEvent, PROTOCOL_VERSION};
+pub use journal::Journal;
 pub use model::{
     Actor, ActorKind, Execution, ExecutionDiagnostic, ExecutionError, ExecutionId, ExecutionState,
     LogStream, ProgressView, RepositoryRef, StepState, StepView,

@@ -104,10 +104,20 @@ impl Default for ExecutionEngine {
 }
 
 impl ExecutionEngine {
-    /// An engine with these limits.
+    /// An engine with these limits, its store in memory only.
     pub fn new(limits: Limits) -> Self {
+        Self::over(ExecutionStore::new(limits))
+    }
+
+    /// An engine whose executions are written to `journal` and recovered from it: a
+    /// server's (ADR 0222).
+    pub fn journaled(limits: Limits, journal: crate::execution::Journal) -> Self {
+        Self::over(ExecutionStore::journaled(limits, journal))
+    }
+
+    fn over(store: ExecutionStore) -> Self {
         ExecutionEngine {
-            store: Arc::new(ExecutionStore::new(limits)),
+            store: Arc::new(store),
             inner: Mutex::new(Inner {
                 queue: VecDeque::new(),
                 running: 0,
