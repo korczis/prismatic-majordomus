@@ -43,6 +43,7 @@ pub(crate) fn session(c: &Cooperation, session: &str, worker: &str, intent: &str
         head: None,
         dirty: None,
         context: None,
+        ..SessionInfo::default()
     })
     .unwrap();
 }

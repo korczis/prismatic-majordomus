@@ -374,6 +374,16 @@ pub struct SessionInfo {
     /// The context revision the session works from (a digest the context compiler names).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub context: Option<String>,
+    /// The client process the session belongs to, on the machine of the runtime holding it.
+    /// A client that crashes never says goodbye, so this is what lets that runtime close the
+    /// session for it once the process is gone (I3810).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub client_pid: Option<u32>,
+    /// When that process started, as the machine's process table reports it. Compared only
+    /// for equality and only on that machine, so a pid the system handed to another process
+    /// is never taken for the client, and no two clocks are ever compared.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub client_started: Option<String>,
 }
 
 impl SessionInfo {

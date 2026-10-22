@@ -841,6 +841,13 @@ pub struct SessionInput {
     /// The context revision it works from.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub context: Option<String>,
+    /// The client process the session belongs to, on this machine: the runtime closes the
+    /// session once that process has ended (I3810).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub client_pid: Option<u32>,
+    /// When that process started, as this machine's process table reports it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub client_started: Option<String>,
 }
 
 impl BenchmarkCases for SessionInput {
@@ -859,6 +866,8 @@ impl BenchmarkCases for SessionInput {
                 head: None,
                 dirty: None,
                 context: None,
+                client_pid: None,
+                client_started: None,
             },
         )]
     }
@@ -880,6 +889,8 @@ fn mesh_session_open(ctx: &Context, input: SessionInput) -> Result<Written, Capa
         head: input.head,
         dirty: input.dirty,
         context: input.context,
+        client_pid: input.client_pid,
+        client_started: input.client_started,
     })
     .map_err(map_error)
 }
