@@ -87,6 +87,9 @@ pub fn run(args: MeshArgs) -> Result<u8> {
             if let Some(after) = a.after {
                 pairs.push(format!("after={after}"));
             }
+            if let Some(cursor) = &a.cursor {
+                pairs.push(format!("cursor={}", encode(cursor)));
+            }
             if let Some(limit) = a.limit {
                 pairs.push(format!("limit={limit}"));
             }
@@ -1090,6 +1093,9 @@ fn render_events(v: &Value) -> String {
         "events     {} (lamport {})",
         v["count"], v["lamport"]
     ));
+    if let Some(cursor) = v["cursor"].as_str() {
+        out.push_str(&format!("\nnext       --cursor {cursor}"));
+    }
     out
 }
 
