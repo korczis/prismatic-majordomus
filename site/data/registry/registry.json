@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.6"
   },
   "registry": {
-    "fingerprint": "59ba6226a440be30659b28e3f3af8afc9f3900a7355d05827dd56169114f6519",
+    "fingerprint": "5e5143dcda5c51d62287e101911aa6779945be4f789e7196ea79d66f7d2bc7ca",
     "summary": {
-      "total": 3310,
+      "total": 3311,
       "builtin": 209,
-      "declarative": 3101,
+      "declarative": 3102,
       "by_kind": {
         "command": 32,
         "query": 177,
-        "resource": 3101
+        "resource": 3102
       },
       "by_stability": {
         "behaviorally_verified": 143,
         "experimental": 56,
-        "implemented": 3111
+        "implemented": 3112
       },
       "mcp_tools": 198,
-      "mcp_resources": 3156,
+      "mcp_resources": 3157,
       "http_routes": 203,
       "cli_commands": 113,
       "modules": 92,
@@ -86374,7 +86374,7 @@
         "title": "intent",
         "description": "Declarative objects of kind 'intent' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 35,
+        "capabilities": 36,
         "capability_ids": []
       },
       {
@@ -87091,7 +87091,7 @@
     ]
   },
   "index": {
-    "fingerprint": "8e2239f534f08ebe032b29d641dfd38509abe6fc3bf2a0c6e464f3e2f4207b03",
+    "fingerprint": "ca2b8b854a846a0f3015053d692feca6b5123b8ce5dae5da0f8550b67a87a356",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -87130,7 +87130,7 @@
       "feature": 29,
       "gap": 4,
       "implementation": 52,
-      "intent": 35,
+      "intent": 36,
       "issue": 893,
       "knowledge": 58,
       "mesh-declaration": 1,
@@ -97991,6 +97991,17 @@
         "section": "project",
         "source_class": "intent",
         "bytes": 3932
+      },
+      {
+        "uri": "majordomus://intent/every-capability-has-one-owner-and-the-cli-never-builds",
+        "kind": "intent",
+        "identity": "every-capability-has-one-owner-and-the-cli-never-builds",
+        "title": "Every capability has one canonical implementation owner, and no ordinary command does undeclared expensive work such as an implicit build",
+        "description": "The owner, 2026-10-22, pasting an architecture review (Why are we still not really the MJ Way?): the principles are ahead of their enforcement. The Rust control plane grows, but a large part of behaviour still lives in a second implementation: bin/majordomus is a Bash program loading lib/*.sh (session, finish, gates, rules, plan, handover, knowledge, derive, doctor, start among 48 entries), two programs share the name majordomus, bin/majordomus-cli may start cargo build when its executable is missing or stale, launchers differ in their fallback rules, and scripts/shell-coverage measures the shell half without gating it. Every capability must have one canonical implementation owner (Rust for types, I/O, processes, ledger, transports, storage, caching, security, CLI and runtime; Rhai for declarative orchestration, policy, recipes and hooks over typed capabilities; Python only as an optional isolated worker; shell only as thin, declared interoperability adapters), every other representation is typed, generated or a bounded adapter, every legacy implementation carries a measured migration obligation, and no synchronous initialization performs undeclared expensive work. The rule is enforced by executable fitness functions over one machine-readable inventory, not by another doctrine document. Migration goes in vertical slices (CLI entry, command dispatch, lifecycle, evidence, gates first), each with characterization tests, equal behaviour and exit codes, measurement, rollback and removal of the replaced code; no mass rewrite.",
+        "path": ".ai/repo/project/intents/every-capability-has-one-owner-and-the-cli-never-builds.yaml",
+        "section": "project",
+        "source_class": "intent",
+        "bytes": 2640
       },
       {
         "uri": "majordomus://intent/every-card-unfolds-into-what-it-summarises",
@@ -120950,7 +120961,7 @@
       "identity": [
         "id"
       ],
-      "objects": 35
+      "objects": 36
     },
     {
       "name": "issue",

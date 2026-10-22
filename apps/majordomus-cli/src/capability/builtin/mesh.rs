@@ -1736,6 +1736,11 @@ mod tests {
                 "/api/v1/mesh/doctor",
             ),
             (
+                "mesh.build_cache.key",
+                Some("majordomus_mesh_build_cache_key"),
+                "/api/v1/mesh/build-cache/key",
+            ),
+            (
                 "mesh.firewall",
                 Some("majordomus_mesh_firewall"),
                 "/api/v1/mesh/firewall",
@@ -1860,6 +1865,7 @@ mod tests {
             "mesh.nodes",
             "mesh.identity",
             "mesh.doctor",
+            "mesh.build_cache.key",
             "mesh.firewall",
             "mesh.cooperation",
             "mesh.peers",

@@ -21916,6 +21916,25 @@
         }
       },
       {
+        "id": "majordomus://intent/every-capability-has-one-owner-and-the-cli-never-builds",
+        "kind": "intent",
+        "label": "every-capability-has-one-owner-and-the-cli-never-builds",
+        "summary": "Every capability has one canonical implementation owner, and no ordinary command does undeclared expensive work such as an implicit build",
+        "route": "/cockpit/objects/intent/every-capability-has-one-owner-and-the-cli-never-builds",
+        "source": ".ai/repo/project/intents/every-capability-has-one-owner-and-the-cli-never-builds.yaml",
+        "facts": {
+          "created_at": "2026-10-22",
+          "milestones": [],
+          "non_goals": [
+            "A blanket ban of .sh files",
+            "A mass rewrite of lib/*.sh in one change",
+            "One latency budget for help and for serve, build or deploy"
+          ],
+          "satisfaction": [],
+          "updated_at": "2026-10-22"
+        }
+      },
+      {
         "id": "majordomus://intent/every-card-unfolds-into-what-it-summarises",
         "kind": "intent",
         "label": "every-card-unfolds-into-what-it-summarises",
@@ -109792,6 +109811,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://intent/every-capability-has-one-owner-and-the-cli-never-builds",
+        "target": "kind:intent",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://intent/every-card-unfolds-into-what-it-summarises",
         "target": "kind:intent",
         "kind": "is_a"
@@ -134128,8 +134152,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3764,
-      "edges": 8706,
+      "nodes": 3765,
+      "edges": 8707,
       "acyclic": false,
       "truncated": false
     }

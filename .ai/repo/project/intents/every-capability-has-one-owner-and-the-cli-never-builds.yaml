@@ -1,0 +1,16 @@
+id: every-capability-has-one-owner-and-the-cli-never-builds
+title: "Every capability has one canonical implementation owner, and no ordinary command does undeclared expensive work such as an implicit build"
+statement: "The owner, 2026-10-22, pasting an architecture review (Why are we still not really the MJ Way?): the principles are ahead of their enforcement. The Rust control plane grows, but a large part of behaviour still lives in a second implementation: bin/majordomus is a Bash program loading lib/*.sh (session, finish, gates, rules, plan, handover, knowledge, derive, doctor, start among 48 entries), two programs share the name majordomus, bin/majordomus-cli may start cargo build when its executable is missing or stale, launchers differ in their fallback rules, and scripts/shell-coverage measures the shell half without gating it. Every capability must have one canonical implementation owner (Rust for types, I/O, processes, ledger, transports, storage, caching, security, CLI and runtime; Rhai for declarative orchestration, policy, recipes and hooks over typed capabilities; Python only as an optional isolated worker; shell only as thin, declared interoperability adapters), every other representation is typed, generated or a bounded adapter, every legacy implementation carries a measured migration obligation, and no synchronous initialization performs undeclared expensive work. The rule is enforced by executable fitness functions over one machine-readable inventory, not by another doctrine document. Migration goes in vertical slices (CLI entry, command dispatch, lifecycle, evidence, gates first), each with characterization tests, equal behaviour and exit codes, measurement, rollback and removal of the replaced code; no mass rewrite."
+invariants:
+  - "An ordinary command never starts a build: an explicit build or update is its own command, and a missing or stale executable fails fast or uses a verified compatible fallback"
+  - "One canonical command graph owns the public CLI identity, dispatch, help, completion and aliases"
+  - "No new shell domain logic; existing shell domain logic carries a measured migration obligation; thin adapters are declared"
+  - "The inventory of capabilities, owners, languages, consumers, dependencies, portability, budgets and migration state is generated once and every audit, gate, plan wave, Cockpit view and document derives from it"
+non_goals:
+  - "A blanket ban of .sh files"
+  - "A mass rewrite of lib/*.sh in one change"
+  - "One latency budget for help and for serve, build or deploy"
+milestones: []
+satisfaction: []
+created_at: 2026-10-22
+updated_at: 2026-10-22
