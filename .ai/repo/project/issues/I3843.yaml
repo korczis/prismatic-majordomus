@@ -1,0 +1,51 @@
+id: I3843
+milestone: a-visitor-understands-and-checks-majordomus
+title: "The homepage title says the product sentence as declared, and in Czech on the Czech homepage"
+slug: the-homepage-title-says-the-sentence-in-every-language
+priority: p2
+profile: implementation
+objective: "Render the homepage <title> from project.tagline without lowercasing it, have homepage-check hold the built title to the declared sentence, and give the Czech translation memory the sentence's title, description and og:description segments, keyed from a build's missing.json and proved with site-translate reach."
+why: "After train 3a went live on 2026-10-22 (76c57859663), majordomus.dev's <title> read 'Prismatic Majordomus — your ai agents say the work is done. majordomus makes them prove it'. base.html:27 has lowercased the tagline since 2026-09-04, when it was a phrase; I3134 made it the owner's sentence, with proper nouns. /cs/ carried the same title and an English og:description, while every other Czech page translates both, because the sentence's segments postdate the Czech memory."
+current_state: "site/templates/base.html:27 renders project.tagline | lower | trim_end; homepage-check's sentence check reads project.json, README, config.toml, the social card and LAUNCH.md, but not the built title; site/i18n/cs/memory has no entry for the title or description segments of the sentence."
+desired_state: "The homepage title is '<name> — <the declared sentence>' in the sentence's own case; homepage-check fails a built title that says the sentence in any other form; /cs/ shows the title, description and og:description in Czech."
+scope:
+  - "site/templates/base.html"
+  - "scripts/ci/homepage-check"
+  - "test/cases/333_homepage_narrative.sh"
+  - "site/i18n/cs/memory"
+  - ".ai/repo/project/issues/I3843.yaml"
+non_scope:
+  - "The wording of the sentence, which is the owner's"
+  - "Titles of pages other than the homepage, which carry their own page title"
+  - "The three homepage segments whose key changes every build because they carry a commit id, a version or a date ('inferred at <t1>a8d7dec</t1>', 'read once at this site's commit', the release record line): I3758 makes digits a placeholder, and a short commit id needs the same treatment"
+  - "The rest of /cs/'s missing segments, which I3753 owns"
+depends_on:
+  - "I3134"
+serves:
+  - "a-visitor-understands-and-checks-majordomus#the-copy-says-only-what-is-proved"
+acceptance_criteria:
+  - "The built homepage title contains the declared sentence in its declared case"
+  - "homepage-check fails when the built title lowercases or rewords the sentence"
+  - "The Czech homepage's title, description and og:description are Czech, and site-translate reach names the page each new key reaches"
+validation:
+  - "scripts/ci/homepage-check"
+  - "bash test/run.sh 333_homepage_narrative"
+  - "scripts/site-translate reach --lang cs --against origin/master"
+evidence_required:
+  - "title_keeps_the_sentence"
+  - "czech_title_translated"
+created_at: 2026-10-22
+updated_at: 2026-10-22T05:42:22Z
+evidence:
+  - covers: title_keeps_the_sentence
+    type: test
+    command: "scripts/site-build && scripts/ci/homepage-check && bash test/run.sh 333_homepage_narrative"
+    result: "local build at 76c57859663 + this patch: built title in the sentence's case; homepage-check ok; cases 333, 3590, 3732, 406, 543, 544 ok; a mutation of the title check makes 333 fail"
+    commit: 76c578596631b290f9291691b388f359fbce97ae
+    recorded_at: 2026-10-22T05:42:05Z
+  - covers: czech_title_translated
+    type: test
+    command: "scripts/site-translate reach --lang cs --against origin/master && scripts/site-build"
+    result: "10 cs keys admitted, each reaching a page (reach: 0 reaching none); the rebuilt /cs/ title, description and og:description read 'Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat'"
+    commit: 76c578596631b290f9291691b388f359fbce97ae
+    recorded_at: 2026-10-22T05:42:22Z

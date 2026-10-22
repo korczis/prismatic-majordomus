@@ -72,7 +72,7 @@ fresh() {
   printf '%s\n' '{"scenarios":[{"use_case":"a","route":"/use-cases/a/"}],"walkthrough":[{"label":"init"}]}' > "$F/site/data/generated/terminal.json"
   printf '<html><head><title>a</title></head><body>a</body></html>\n' > "$F/site/public/use-cases/a/index.html"
   cat > "$F/site/public/index.html" <<'HTML'
-<html><head><title>home</title><script defer src="https://x.test/js/app.js"></script></head><body><main>
+<html><head><title>Fixture — Keep the work moving</title><script defer src="https://x.test/js/app.js"></script></head><body><main>
 <section id="hero"><h1>t</h1><a href="/features/good/">good</a>
 <div data-hero-scenarios><a href="/challenge/" data-scenario="challenge">c</a><a href="/use-cases/a/" data-scenario="a">a</a></div>
 <ul data-node-features="step:init"><li><a href="/features/good/" data-feature="good">good</a></li></ul>
@@ -347,6 +347,8 @@ promise_finding 10 "site/data/manifesto.toml:2 names feature 'draft' \('Deployme
 # sentence, the hero offers what the recorded refusals derive, a node names what the model derives
 fresh; printf '# m\n\n**Keep the work going**\n' > "$F/README.md"
 expect_finding 10 "README.md's bold line says 'Keep the work going'" "a README saying it in other words"
+fresh; sed -i.bak 's#<title>Fixture — Keep the work moving</title>#<title>Fixture — keep the work moving</title>#' "$F/site/public/index.html"
+expect_finding 10 "the homepage title says 'Fixture — keep the work moving', not the declared sentence" "a title that lowercases the sentence"
 fresh; sed -i.bak 's#<a href="/use-cases/a/" data-scenario="a">a</a>##' "$F/site/public/index.html"
 expect_finding 10 "the hero offers \\[\\], terminal.json's recorded refusals derive \\['a'\\]" "a recorded refusal not offered"
 fresh; sed -i.bak 's#<li><a href="/features/good/" data-feature="good">good</a></li>##' "$F/site/public/index.html"
