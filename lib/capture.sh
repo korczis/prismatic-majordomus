@@ -560,14 +560,30 @@ mj_capture_write() {
   # is captured, because losing a real prompt is the worse of the two mistakes.
   mj_capture_is_person "$provider" "$v_source" "$v_text" || return 0
 
-  # Idempotence is the provider's own prompt identity, not the name: a hook delivered
-  # twice, or a run retried, must not become a second record. The scan is the current
-  # day's files, which is bounded and is the window a redelivery falls in; a redelivery
-  # days later is not a case this claims to cover.
-  local day id_plain
-  day="$(date -u +%Y%m%d)"
+  # Idempotence is the provider's own prompt identity, namespaced by the provider: a hook
+  # delivered twice, a run retried or a session resumed must not become a second record,
+  # and two providers that happen to number their prompts alike are two prompts. The key is
+  # therefore provider plus prompt id, and the check and the write sit inside one critical
+  # section under a lock named for that key, because two deliveries of one prompt arrive
+  # together often enough that a check-then-write without one writes both (the session
+  # close learned this first: lib/common.sh, mutual exclusion). The lock never refuses: a
+  # bounded wait that expires proceeds without it, which narrows the guarantee and loses no
+  # prompt. It lives with the other locks under the state directory, so nothing is ever
+  # left beside the archive.
+  #
+  # The scan is the record's own UTC day and the day before, so a redelivery across
+  # midnight is caught and the hook never reads more than two day-globs. A redelivery later
+  # than that is written, and `capture status` counts it over the whole archive, off the
+  # hook path. A known key whose text differs is not a redelivery: it is written, never
+  # dropped, and counted there as a key collision.
+  local id_plain lock
   id_plain="$(mj_capture_ident "$v_id")"
-  if [ -n "$id_plain" ] && [ -n "$(grep -lF "\"id\": $v_id," "$dir/$day"*.json 2>/dev/null | head -n 1)" ]; then return 0; fi
+  if [ -n "$id_plain" ]; then
+    lock="$(printf '%s\t%s' "$provider" "$v_id" | cksum)"
+    lock="$MJ_STATE_DIR/locks/capture-prompt.$provider.${lock%% *}"
+    mj_lock_take "$lock" || true
+    if mj_capture_known "$dir" "$provider" "$v_id" "$v_text"; then mj_lock_release; return 0; fi
+  fi
 
   # The name is the second it was captured in, then the opening of the prompt, so the
   # directory reads as a list of what was asked and when.
@@ -578,7 +594,10 @@ mj_capture_write() {
   stamp="$(date -u +%Y%m%d%H%M%S)"
   file="$dir/$stamp-$slug.json"
   # two prompts in one second whose openings agree are still two prompts
-  while [ -e "$file" ]; do file="$dir/$stamp-$slug-$n.json"; n=$((n + 1)); [ "$n" -gt 99 ] && return 0; done
+  while [ -e "$file" ]; do
+    file="$dir/$stamp-$slug-$n.json"; n=$((n + 1))
+    [ "$n" -gt 99 ] && { mj_lock_release; return 0; }
+  done
 
   # The identity, resolved now because now is the only moment it is still resolvable. The
   # provider session the payload names is turned into the canonical episode id through the
@@ -596,7 +615,10 @@ mj_capture_write() {
     "$v_source" "$v_cwd" \
     "\"$(mj_json_esc "$MJ_ROOT")\"" "\"$(mj_json_esc "$(mj_git_branch)")\"" "\"$(mj_git_head)\"" "$v_text" \
     ${kinds:+"$(printf 'redacted\t"%s"' "$kinds")"} > "$file" \
-    || { mj_err "capture prompt: cannot write $file"; return "$MJ_EX_INTERNAL"; }
+    || { mj_lock_release; mj_err "capture prompt: cannot write $file"; return "$MJ_EX_INTERNAL"; }
+  # the record is on disk, so the next delivery of this key finds it: the section ends here,
+  # and the renderings are built outside it
+  mj_lock_release
   mj_capture_secure_file "$file"
 
   # The record exists now, so the prompt is safe whatever happens next. A rendering that
@@ -605,6 +627,79 @@ mj_capture_write() {
   # reports on its own terms and `capture render` repairs from the record still sitting here.
   mj_capture_render_one "$file" || true
   return 0
+}
+
+# mj_capture_known DIR PROVIDER RAW-ID RAW-TEXT -> 0 when a record of this key and this text
+# is already in the archive on today's UTC day or the day before, 1 otherwise.
+#
+# The members are matched as whole lines, because every record this writes is in the shape
+# mj_capture_emit prints and a substring of a prompt's text must never pass for an identity.
+# A record whose body retention has taken is compared by the digest retention kept. Anything
+# that cannot be compared is answered 1, so the doubtful case writes: a second record is
+# counted by `capture status`, and a dropped prompt is not counted by anything.
+mj_capture_known() {
+  local dir="$1" provider="$2" id="$3" text="$4" today prev
+  today="$(date -u +%Y%m%d)"
+  prev="$(mj_capture_cutoff 1)"; prev="${prev%??????}"
+  grep -lxF -- "  \"id\": $id," "$dir/$today"*.json "$dir/$prev"*.json 2>/dev/null | {
+    while IFS= read -r f; do
+      grep -qxF -- "  \"provider\": \"$provider\"," "$f" 2>/dev/null || continue
+      held="$(awk 'index($0, "  \"text\": ") == 1 { print substr($0, 11); exit }' "$f" 2>/dev/null)"
+      held="${held%,}"
+      [ "$held" = "$text" ] && exit 0
+      [ "$held" = null ] || continue
+      digest="$(awk 'index($0, "  \"pruned_sha256\": \"") == 1 {
+        v = substr($0, 21); sub(/",?$/, "", v); print v; exit }' "$f" 2>/dev/null)"
+      if [ -z "$digest" ] || ! mj_sha256_tool >/dev/null 2>&1; then continue; fi
+      [ "$(printf '%s' "$text" | mj_sha256_hex /dev/stdin | cut -c1-16)" = "$digest" ] && exit 0
+    done
+    exit 1; }
+}
+
+# mj_capture_archive DIR -> "records unkeyed duplicates collisions", over every record.
+#
+# The question the hook cannot afford to ask, asked where it costs nothing: `capture status`.
+# An identity is a provider and its prompt id; it is a duplicate when more than one record
+# holds it, which is what a redelivery outside the hook's two-day window leaves, and a key
+# collision when those records do not hold the same text. Every key collision is also a
+# duplicate. Text is compared between records that still hold their body, and between the
+# digests retention kept for those that do not; a body is never compared with a digest,
+# because that would need a hash per record and this answers off the hook path, not off the
+# clock. A record with no id, or one in a shape whose members are not one per line (written
+# before the records were pretty printed, and reformatted by `capture render`), has no
+# readable key and is counted as unkeyed rather than silently left out of the denominator.
+mj_capture_archive() {
+  local dir="$1"
+  [ -d "$dir" ] || { printf '0 0 0 0\n'; return 0; }
+  find "$dir" -maxdepth 1 -name '*.json' -exec awk '
+    function flush() {
+      if (f == "") return
+      if (p == "" || i == "" || i == "null") print "U"
+      else print "K\t" p "\t" i "\t" t
+      f = ""; p = ""; i = ""; t = ""
+    }
+    FNR == 1 { flush(); f = FILENAME }
+    index($0, "  \"provider\": ") == 1 { p = substr($0, 15); sub(/,$/, "", p) }
+    index($0, "  \"id\": ") == 1       { i = substr($0, 9);  sub(/,$/, "", i) }
+    index($0, "  \"text\": ") == 1 {
+      v = substr($0, 11); sub(/,$/, "", v); if (v != "null") t = "T" v }
+    index($0, "  \"pruned_sha256\": ") == 1 {
+      if (t == "") { v = substr($0, 20); sub(/,$/, "", v); t = "S" v } }
+    END { flush() }' {} + 2>/dev/null \
+  | awk -F'\t' '
+    $1 == "U" { n++; u++; next }
+    $1 == "K" {
+      n++; k = $2 "\t" $3; c[k]++
+      if ($4 == "") next
+      s = substr($4, 1, 1)
+      if (!((s, k) in first)) first[s, k] = $4
+      else if (first[s, k] != $4) diff[k] = 1
+    }
+    END {
+      for (k in c) if (c[k] > 1) d++
+      for (k in diff) x++
+      printf "%d %d %d %d\n", n, u, d, x
+    }'
 }
 
 # The record itself: one member per line, in the order MJ_CAPTURE_FIELDS declares. Pretty
@@ -2417,7 +2512,7 @@ mj_capture_config() {
 mj_capture_status() {
   [ $# = 0 ] || mj_die "$MJ_EX_USAGE" "capture status: unknown option $1"
   mj_require_installed
-  local p a line state reason cap first=1
+  local p a line state reason cap first=1 an au ad ax
   if [ "$MJ_JSON" = 1 ]; then
     printf '{"schema":"%s","providers":[' "$MJ_CAPTURE_SCHEMA"
     for p in $(mj_capture_reported_providers); do
@@ -2439,7 +2534,15 @@ mj_capture_status() {
       [ "$first" = 1 ] || printf ','; first=0
       printf '"%s"' "$p"
     done
-    printf ']}\n'; return 0
+    printf ']'
+    # The archive's own idempotence, over every record and not the hook's two-day window,
+    # with the records it was counted over beside it (mj_capture_archive).
+    read -r an au ad ax <<EOF
+$(mj_capture_archive "$(mj_capture_dir)")
+EOF
+    printf ',"archive":{"records":%s,"unkeyed":%s,"duplicate_identities":%s,"key_collisions":%s}' \
+      "${an:-0}" "${au:-0}" "${ad:-0}" "${ax:-0}"
+    printf '}\n'; return 0
   fi
   # The prompt aspect keeps the provider's own name in the first column and the lifecycle
   # aspect is suffixed, because they are two wirings of one provider and a reader looking
@@ -2465,6 +2568,13 @@ mj_capture_status() {
   # reader counting adapters against `share/providers.yaml` is told the answer rather than
   # left to infer it (project.a-verdict-states-its-subject).
   mj_capture_unadapted
+  # and the archive: how many identities more than one record holds, and how many of those
+  # disagree about the text, over every record and with that denominator stated
+  read -r an au ad ax <<EOF
+$(mj_capture_archive "$(mj_capture_dir)")
+EOF
+  printf '%-22s %-12s %s record(s), %s unkeyed: %s %s, %s key collision(s)\n' "(archive)" "n/a" \
+    "${an:-0}" "${au:-0}" "${ad:-0}" "identity(ies) held by more than one record" "${ax:-0}"
 }
 
 # Every provider the distribution declares that this table has no adapter for, in the

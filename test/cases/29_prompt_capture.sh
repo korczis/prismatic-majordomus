@@ -253,6 +253,127 @@ printf '{"prompt":"injected by something","prompt_id":"n2","prompt_source":"hook
 printf '{"prompt":"no origin declared","prompt_id":"n3"}' | ./.claude/hooks/majordomus-capture
 [ "$(records)" = "$((was + 1))" ] || { echo "    a payload with no declared origin was dropped"; exit 1; }
 
+# ---------------------------------------------------------------- case_a_replayed_prompt_is_one_record
+# The key is the provider plus its prompt id, the check and the write share one critical
+# section, and the scan reaches the day before. What the hook declines to cover — a delivery
+# days late, a known key with other text — is still written, and `capture status` counts it
+# over the whole archive: never dropped and never deleted.
+archive() {  # records unkeyed duplicate_identities key_collisions, read off the json surface
+  "$MJ" --json capture status 2>/dev/null | tail -n 1 | python3 -c '
+import json, sys
+a = json.load(sys.stdin)["archive"]
+print(a["records"], a["unkeyed"], a["duplicate_identities"], a["key_collisions"])'
+}
+deliver() {
+  printf '{"session_id":"s1","prompt_id":"%s","prompt_source":"user","prompt":"%s"}' "$1" "$2" \
+    | ./.claude/hooks/majordomus-capture
+}
+# A record of an earlier UTC day, made by capturing it and moving it there, so it is a record
+# the writer wrote; its renderings are rebuilt under the new name by the repair doctor names.
+plant() {  # DAYS-AGO NEW-STEM SLUG
+  local rec day
+  rec="$(find .ai/local/prompts -maxdepth 1 -name "*-$3.json" | head -n 1)"
+  [ -n "$rec" ] || { echo "    nothing was captured to plant as $3"; ls -1 .ai/local/prompts; exit 1; }
+  day="$(date -u -v-"$1"d +%Y%m%d 2>/dev/null || date -u -d "$1 days ago" +%Y%m%d)"
+  mv "$rec" ".ai/local/prompts/${day}120000-$2.json"
+  rm -f "${rec%.json}.md" "${rec%.json}.yaml"
+  "$MJ" capture render >/dev/null
+}
+
+[ "$(archive)" = "$(records) 0 0 0" ] \
+  || { echo "    a clean archive does not report zero duplicates and collisions: $(archive)"; exit 1; }
+
+# the same payload a hundred times in sequence is one record
+was="$(records)"
+i=0; while [ "$i" -lt 100 ]; do deliver r-seq "replayed in sequence"; i=$((i + 1)); done
+[ "$(records)" = "$((was + 1))" ] \
+  || { echo "    100 sequential deliveries left $(( $(records) - was )) records"; ls -1 .ai/local/prompts; exit 1; }
+
+# Ten at once are one record too, and the lock that serialised them is gone afterwards.
+#
+# Ten deliveries merely started together do not prove the lock: they pass without it. A
+# record's name is the second it was written in and the prompt's opening, so writers that
+# race within one second compute one name, and the last of them overwrites the rest — one
+# file, lock or no lock — while the window between the check and the write is a few
+# milliseconds that writers a second apart do not share. The race is therefore forced: a
+# `git` on PATH holds `symbolic-ref`, which the writer runs only between the check and the
+# write (for the branch the record carries), for three seconds, and the deliveries start
+# 0.3s apart, so they are all in flight at once and span several seconds. Without the
+# section every writer passes the check before the first has written and writes under its
+# own second: several records. With it, the first holds the lock through the window and the
+# rest find its record. Mutation-tested: with `mj_lock_take` removed this assertion fails.
+REALGIT="$(command -v git)"
+[ -n "$REALGIT" ] || { echo "    no git on PATH"; exit 2; }
+mkdir -p "$T/slowgit"
+cat > "$T/slowgit/git" <<SHIM
+#!/bin/sh
+for a in "\$@"; do
+  case "\$a" in symbolic-ref) printf 'held\n' >> "$T/slowgit.log"; sleep 3; break ;; esac
+done
+exec "$REALGIT" "\$@"
+SHIM
+chmod +x "$T/slowgit/git"
+: > "$T/slowgit.log"
+was="$(records)"
+i=0
+while [ "$i" -lt 10 ]; do
+  ( PATH="$T/slowgit:$PATH"; export PATH; deliver r-par "replayed concurrently" ) &
+  sleep 0.3; i=$((i + 1))
+done
+wait
+[ -s "$T/slowgit.log" ] \
+  || { echo "    the forcing never ran: no writer reached the window between check and write"; exit 1; }
+[ "$(records)" = "$((was + 1))" ] \
+  || { echo "    10 concurrent deliveries left $(( $(records) - was )) records"; ls -1 .ai/local/prompts; exit 1; }
+[ -z "$(find .ai/local -name 'capture-prompt.*')" ] \
+  || { echo "    a lock was left behind"; find .ai/local -name 'capture-prompt.*' | sed 's/^/    | /'; exit 1; }
+stray="$(find .ai/local/prompts -mindepth 1 ! -name '*.json' ! -name '*.md' ! -name '*.yaml' ! -name .capture.log)"
+[ -z "$stray" ] || { echo "    something was left beside the archive"; printf '%s\n' "$stray" | sed 's/^/    | /'; exit 1; }
+
+# a prompt recorded on the previous UTC day is a redelivery across midnight, not a new prompt
+deliver r-yday "asked before midnight"
+plant 1 asked-before-midnight-planted asked-before-midnight
+was="$(records)"
+deliver r-yday "asked before midnight"
+[ "$(records)" = "$was" ] \
+  || { echo "    a redelivery on the next UTC day wrote a second record"; ls -1 .ai/local/prompts; exit 1; }
+
+# the same prompt id from two providers is two prompts: the provider is half of the key
+deliver r-shared "asked of two providers"
+shared="$(find .ai/local/prompts -maxdepth 1 -name '*-asked-of-two-providers.json')"
+sed -i.bak 's/^  "provider": "claude-code",$/  "provider": "codex",/' "$shared"; rm -f "$shared.bak"
+grep -qxF '  "provider": "codex",' "$shared" || { echo "    the second provider was not planted"; exit 1; }
+rm -f "${shared%.json}.md" "${shared%.json}.yaml"; "$MJ" capture render >/dev/null
+was="$(records)"
+deliver r-shared "asked of two providers"
+[ "$(records)" = "$((was + 1))" ] \
+  || { echo "    one prompt id from a second provider was taken for a redelivery"; ls -1 .ai/local/prompts; exit 1; }
+
+# a known key carrying other text is written, never dropped, and counted as a collision
+was="$(records)"
+deliver r-seq "the same id with other words"
+[ "$(records)" = "$((was + 1))" ] \
+  || { echo "    a known key with different text was dropped"; ls -1 .ai/local/prompts; exit 1; }
+
+# a delivery three days late is outside the hook's window: it is written, and counted
+deliver r-late "asked three days ago"
+plant 3 asked-three-days-ago-planted asked-three-days-ago
+was="$(records)"
+deliver r-late "asked three days ago"
+[ "$(records)" = "$((was + 1))" ] \
+  || { echo "    a delivery three days late was not written"; ls -1 .ai/local/prompts; exit 1; }
+
+# r-seq (other text) and r-late (late) are each held by two records; only r-seq disagrees
+[ "$(archive)" = "$(records) 0 2 1" ] \
+  || { echo "    capture status miscounts the archive: $(archive), expected $(records) 0 2 1"; exit 1; }
+"$MJ" capture status > "$T/archive.txt" 2>&1 || true
+grep -qE '^\(archive\) +n/a +[0-9]+ record\(s\), 0 unkeyed: 2 identity\(ies\) held by more than one record, 1 key collision\(s\)$' "$T/archive.txt" \
+  || { echo "    the text surface does not state the archive's counts"; sed 's/^/    | /' "$T/archive.txt"; exit 1; }
+# and nothing was deleted to arrive here
+for stem in asked-before-midnight-planted asked-three-days-ago-planted; do
+  [ -n "$(find .ai/local/prompts -maxdepth 1 -name "*-$stem.json")" ] || { echo "    $stem was deleted"; exit 1; }
+done
+
 # ---------------------------------------------------------------- capture deletes nothing
 # Capturing must leave every earlier record exactly where it was: a record is written once
 # and no write path touches another one.

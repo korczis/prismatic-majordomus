@@ -58,7 +58,17 @@ bad = [p for p in d["providers"]
 assert not bad, f"a provider with no capture adapter is reported as wired: {bad}"
 assert all(any(p["provider"] == u for p in d["providers"]) for u in un), \
     "a provider named in the unadapted set has no row of its own"
+# The archive's idempotence counts carry the denominator they were counted over, on this
+# surface as on the text one: how many records were read and how many had no readable key.
+a = d.get("archive")
+assert isinstance(a, dict), "the json surface carries no archive counts"
+for k in ("records", "unkeyed", "duplicate_identities", "key_collisions"):
+    assert isinstance(a.get(k), int) and a[k] >= 0, f"archive.{k} is not a count: {a}"
+assert a["unkeyed"] <= a["records"], f"more unkeyed records than records: {a}"
+assert a["key_collisions"] <= a["duplicate_identities"], \
+    f"a key collision is a duplicate identity, so there cannot be more of them: {a}"
 PY
+expect_grep '^\(archive\) +n/a +[0-9]+ record\(s\), [0-9]+ unkeyed: ' "$out"
 
 # ------------------------------------ the set is derived, not listed: add one and see it
 # A provider declared in the distribution with no lifecycle and no prompt_capture must
