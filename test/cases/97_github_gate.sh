@@ -99,6 +99,44 @@ expect_grep 'FAIL github-check +1 record\(s\) edited'
 expect_exit 10 gate
 expect_grep 'FAIL github-check +1 record\(s\) unmanaged'
 
+# ---------------------------------------------------------------- a pull request's own change
+# A pull request that changes a plan record cannot be projected before it merges, so the
+# gate given the base it merges into reports that record `pending` and refuses only drift
+# that was already there on the base. The base is a commit of this fixture.
+git add -A >/dev/null && git commit -qm "the plan at the base" >/dev/null
+pr_base="$(git rev-parse HEAD)"
+{ "$SYNC" --render I0001 | row 7 'I0001 — Issue I0001' I0001
+  "$SYNC" --render I0002 | row 8 'I0002 — Issue I0002' I0002
+  "$SYNC" --render I0003 | row 9 'I0003 — Issue I0003' I0003; } > "$FX_I"
+printf 'missing 0\nadopt 0\n' > "$BASE"
+prgate() { gate_base="$1"; MJ_ROOT="$PWD" MJ_GH_FIXTURE_ISSUES="$FX_I" MJ_GH_FIXTURE_MILESTONES="$FX_M" \
+  MJ_GH_BASELINE="$BASE" "$GATE" --base "$gate_base"; }
+expect_exit 0 prgate "$pr_base"
+# the pull request moves I0002 and adds I0004: both are its own change
+sed 's/^objective: .*/objective: "Moved by the pull request."/' \
+  .ai/repo/project/issues/I0002.yaml > "$T/i.$$" && mv "$T/i.$$" .ai/repo/project/issues/I0002.yaml
+pj_issue I0004 M000
+git add -A >/dev/null && git commit -qm "the pull request's plan change" >/dev/null
+expect_exit 0 prgate "$pr_base"
+expect_grep 'PEND github-check +1 record\(s\) behind pending'
+expect_grep 'DRIFT  behind +issue I0002'
+expect_grep 'PEND github-check +1 record\(s\) missing pending'
+expect_grep 'github-check: 0 finding'
+# and without a base — the trunk's own run — the same tree is refused exactly as before
+expect_exit 10 gate
+expect_grep 'FAIL github-check +1 record\(s\) behind'
+# a record that drifted on the base, not by the pull request, is refused all the same
+{ "$SYNC" --render I0001 | sed 's/^| status |.*/| status | an older projection |/' \
+    | sed 's/majordomus:begin [0-9a-f]*/majordomus:begin 0000000000000000/' | row 7 'I0001 — Issue I0001' I0001
+  "$SYNC" --render I0003 | row 9 'I0003 — Issue I0003' I0003; } > "$FX_I.held"
+git show "$pr_base:.ai/repo/project/issues/I0002.yaml" > "$T/old.yaml"
+{ cat "$FX_I.held"; } > "$FX_I"
+expect_exit 10 prgate "$pr_base"
+expect_grep 'I0001'
+# a base that does not resolve is not "no base": the gate cannot run
+expect_exit 12 prgate no-such-ref
+expect_grep 'does not resolve'
+
 # --- a gate with no baseline refuses to guess one
 rm -f "$BASE"
 expect_exit 12 gate

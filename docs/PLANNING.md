@@ -469,7 +469,10 @@ canonical id this repository does not have.
 Applying is a deliberate act; agreement is a gate. `scripts/ci/github-check` reads the
 remote on every change that can move either side, refuses the first six states outright,
 and ratchets `missing` and `adopt` against `.ai/repo/ci/github-drift-baseline.txt`, which
-may fall and may never rise. It exists because the detector was written, never called, and
+may fall and may never rise. In a pull request it is given the base it merges into, and a
+`behind` or `state` record the pull request itself changed, or a record new in it, is
+reported `pending` instead: GitHub projects only the trunk, so that change can reach GitHub
+only after the merge, when `scripts/github-sync --apply` runs on the trunk. It exists because the detector was written, never called, and
 the projection decayed to a tenth of the model over five days with every build green
 (`project.github-projection-gated@1`).
 

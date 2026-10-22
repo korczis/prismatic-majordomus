@@ -35,6 +35,19 @@ This is the repository's own stated failure mode — a claim whose evidence is a
 exists rather than a gate that runs — applied to the one subsystem whose entire purpose is
 to stop two records of the same work from disagreeing.
 
+# Amended in place, 2026-10-09
+
+Until this amendment, v1 refused `behind` and `state` on every run, pull requests included.
+That made a pull request which closes or re-measures plan records unmergeable: the adapter
+projects only the trunk, so the pull request's own change was drift until it merged, and the
+gate refused the pull request for it (#820 met it first). The amendment adds one class,
+`pending`: in a pull request, drift on a record the pull request changed or added is
+reported and not refused. Nothing v1 refused on the trunk is refused less.
+
+It is an amendment of v1 rather than a v2 because `project.a-failed-read-is-not-an-empty-answer`,
+in a pull request open at the same time, depends on this rule `@1`. A v2 that carries this
+text follows once that pull request is on the trunk.
+
 # Required behaviour
 
 - A gate reads the remote and fails on drift. It runs on every change that can move the
@@ -43,6 +56,14 @@ to stop two records of the same work from disagreeing.
 - The states that mean new drift, or that a person's text is at stake, are refused from the
   first run and have no tolerance: `behind`, `edited`, `conflict`, `unmanaged`, `state`,
   `milestone`, `closed`.
+- Drift is judged against the trunk the projection serves. In a pull request, a `behind` or
+  `state` drift on a record whose rendering the pull request itself changed, and a record new
+  in it that GitHub does not have yet, is reported as pending and not refused: the adapter
+  projects only the trunk, so the pull request cannot be projected before it merges, and a
+  gate that refused its own change could never pass. The base is rendered by its own
+  adapter; a base that cannot be resolved or rendered makes the gate unusable, never
+  lenient; and the trunk's own run has no base and refuses all of it. Pending drift is
+  applied after the merge, or it is refused on the trunk.
 - The backlog of a projection that stopped being applied is ratcheted against a committed
   baseline rather than tolerated silently. The number may fall and may never rise, and
   writing it is a deliberate act, as it already is for
