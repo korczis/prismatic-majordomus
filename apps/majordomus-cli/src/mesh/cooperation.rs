@@ -281,6 +281,9 @@ struct Outbound {
 struct Inbound {
     link: String,
     counter: u64,
+    /// When this instance last said hello or synced on the link: what tells a second live
+    /// instance of the runtime from a run that has stopped.
+    last_seen: Instant,
 }
 
 struct PeerLink {
@@ -288,7 +291,11 @@ struct PeerLink {
     trust: TrustState,
     proto: u32,
     outbound: Option<Outbound>,
-    inbound: Option<Inbound>,
+    /// The links the peer opened to this runtime, one per instance of it. One per runtime
+    /// was the rule until 2026-10-20, when two server processes of one checkout carried the
+    /// same runtime slot: each hello replaced the other's link, whose next sync was refused
+    /// and said hello again, so every link re-handshook every heartbeat (I3606).
+    inbound: BTreeMap<String, Inbound>,
     last_exchange: Option<Instant>,
     linked_at: String,
     rtt: Option<Duration>,
@@ -310,7 +317,8 @@ struct Refused {
 #[derive(Default)]
 struct Table {
     peers: BTreeMap<String, PeerLink>,
-    inbound_links: BTreeMap<String, String>,
+    /// Each inbound link's runtime key and the instance it was given to.
+    inbound_links: BTreeMap<String, (String, String)>,
     nonces: BTreeMap<(String, String), u64>,
     refused: BTreeMap<String, Refused>,
     workers: BTreeMap<String, Arc<AtomicBool>>,
@@ -1606,7 +1614,7 @@ impl Cooperation {
         table.inbound_links.clear();
         for peer in table.peers.values_mut() {
             peer.outbound = None;
-            peer.inbound = None;
+            peer.inbound.clear();
         }
     }
 
@@ -1777,9 +1785,11 @@ impl Cooperation {
             if verdict.is_trusted() {
                 continue;
             }
-            if let Some(inbound) = peer.inbound.take() {
-                links.push(inbound.link);
-            }
+            links.extend(
+                std::mem::take(&mut peer.inbound)
+                    .into_values()
+                    .map(|i| i.link),
+            );
             peer.outbound = None;
             peer.expired = true;
             peer.trust = verdict;
@@ -2010,6 +2020,7 @@ impl Cooperation {
             }
             let restarts = &self.counters.restarts;
             let reconnects = &self.counters.reconnects;
+            let expiry = self.expiry();
             let peer = table
                 .peers
                 .entry(runtime_key.clone())
@@ -2018,7 +2029,7 @@ impl Cooperation {
                     trust: verdict.clone(),
                     proto,
                     outbound: None,
-                    inbound: None,
+                    inbound: BTreeMap::new(),
                     last_exchange: None,
                     linked_at: rfc3339_now(),
                     rtt: None,
@@ -2029,33 +2040,58 @@ impl Cooperation {
                     restarts: 0,
                     expired: false,
                 });
-            if peer.card.instance != hello.card.instance {
+            // Another instance of this runtime that exchanged within the expiry is alive
+            // beside this one: two server processes carrying one runtime slot (I3606), not a
+            // restart. Each keeps its own link, so neither evicts the other every heartbeat.
+            let beside = peer.inbound.iter().any(|(instance, i)| {
+                *instance != hello.card.instance && i.last_seen.elapsed() <= expiry
+            });
+            let mut dropped = Vec::new();
+            if peer.card.instance != hello.card.instance
+                && !beside
+                && !peer.inbound.contains_key(&hello.card.instance)
+            {
                 // A new run of the same runtime: its old links are dead on both sides.
                 peer.restarts += 1;
                 restarts.fetch_add(1, Ordering::Relaxed);
                 peer.outbound = None;
                 peer.linked_at = rfc3339_now();
-            } else if peer.expired || (peer.handshakes > 0 && peer.inbound.is_some()) {
+                dropped.extend(
+                    std::mem::take(&mut peer.inbound)
+                        .into_values()
+                        .map(|i| i.link),
+                );
+            } else if peer.expired
+                || (peer.handshakes > 0 && peer.inbound.contains_key(&hello.card.instance))
+            {
                 peer.reconnects += 1;
                 reconnects.fetch_add(1, Ordering::Relaxed);
             }
-            if let Some(old) = peer.inbound.take() {
-                table.inbound_links.remove(&old.link);
+            if let Some(old) = peer.inbound.remove(&hello.card.instance) {
+                dropped.push(old.link);
+            }
+            for old in dropped {
+                table.inbound_links.remove(&old);
             }
             let peer = table.peers.get_mut(&runtime_key).expect("inserted above");
             peer.card = hello.card.clone();
             peer.trust = verdict;
             peer.proto = proto;
-            peer.inbound = Some(Inbound {
-                link: link.clone(),
-                counter: 0,
-            });
+            peer.inbound.insert(
+                hello.card.instance.clone(),
+                Inbound {
+                    link: link.clone(),
+                    counter: 0,
+                    last_seen: Instant::now(),
+                },
+            );
             peer.last_exchange = Some(Instant::now());
             peer.handshakes += 1;
             peer.expired = false;
-            table
-                .inbound_links
-                .insert(link.clone(), runtime_key.clone());
+            table.inbound_links.insert(
+                link.clone(),
+                (runtime_key.clone(), hello.card.instance.clone()),
+            );
             table.refused.remove(&format!("inbound:{runtime_key}"));
         }
         self.counters.handshakes_in.fetch_add(1, Ordering::Relaxed);
@@ -2154,7 +2190,7 @@ impl Cooperation {
         };
         let runtime_key = {
             let mut table = self.table.lock().expect("cooperation table");
-            let Some(key) = table.inbound_links.get(&request.link).cloned() else {
+            let Some((key, given_to)) = table.inbound_links.get(&request.link).cloned() else {
                 drop(table);
                 Self::count_refusal(&self.counters.refused_in, RefusalCode::UnknownLink);
                 return LinkReply::refused(
@@ -2166,7 +2202,9 @@ impl Cooperation {
                 .peers
                 .get_mut(&key)
                 .expect("an indexed link has a peer");
-            if peer.card.instance != request.instance {
+            // the link must be the one this instance was given: an instance's link is its own,
+            // and another live instance of the runtime holds a link of its own beside it
+            if given_to != request.instance || !peer.inbound.contains_key(&request.instance) {
                 drop(table);
                 Self::count_refusal(&self.counters.refused_in, RefusalCode::UnknownLink);
                 return LinkReply::refused(
@@ -2182,7 +2220,11 @@ impl Cooperation {
                     Some(key),
                 );
             }
-            let inbound = peer.inbound.as_mut().expect("an indexed link is inbound");
+            let inbound = peer
+                .inbound
+                .get_mut(&request.instance)
+                .expect("checked above");
+            inbound.last_seen = Instant::now();
             if request.counter <= inbound.counter {
                 drop(table);
                 return self.refuse_in(
@@ -2474,7 +2516,7 @@ impl Cooperation {
                 trust: verdict.clone(),
                 proto: welcome.proto,
                 outbound: None,
-                inbound: None,
+                inbound: BTreeMap::new(),
                 last_exchange: None,
                 linked_at: rfc3339_now(),
                 rtt: None,
@@ -2747,7 +2789,7 @@ impl Cooperation {
         let table = self.table.lock().expect("cooperation table");
         let quiet = 3 * self.heartbeat();
         !table.peers.get(key).is_some_and(|p| {
-            p.inbound.is_some() && p.last_exchange.is_some_and(|t| t.elapsed() <= quiet)
+            !p.inbound.is_empty() && p.last_exchange.is_some_and(|t| t.elapsed() <= quiet)
         })
     }
 
@@ -2841,12 +2883,27 @@ impl Cooperation {
         let mut dropped_links = Vec::new();
         let mut gone = Vec::new();
         for (key, peer) in table.peers.iter_mut() {
+            // an instance that stopped while another of the runtime goes on loses its own
+            // link alone; the peer expires only when no instance exchanges any more
+            let stopped: Vec<String> = peer
+                .inbound
+                .iter()
+                .filter(|(_, i)| i.last_seen.elapsed() > expiry)
+                .map(|(instance, _)| instance.clone())
+                .collect();
+            for instance in stopped {
+                if let Some(inbound) = peer.inbound.remove(&instance) {
+                    dropped_links.push(inbound.link);
+                }
+            }
             let age = peer.last_exchange.map(|t| t.elapsed());
             if age.is_some_and(|a| a > expiry) && !peer.expired {
                 peer.expired = true;
-                if let Some(inbound) = peer.inbound.take() {
-                    dropped_links.push(inbound.link);
-                }
+                dropped_links.extend(
+                    std::mem::take(&mut peer.inbound)
+                        .into_values()
+                        .map(|i| i.link),
+                );
                 peer.outbound = None;
                 self.counters.peers_expired.fetch_add(1, Ordering::Relaxed);
                 tracing::warn!(runtime_id = %self.own_key, peer = %key, "mesh link expired: no exchange within the expiry");
@@ -2941,7 +2998,7 @@ impl Cooperation {
                 endpoints: peer.card.endpoints.clone(),
                 state: self.state_of(peer),
                 outbound: peer.outbound.is_some(),
-                inbound: peer.inbound.is_some(),
+                inbound: !peer.inbound.is_empty(),
                 endpoint: peer.outbound.as_ref().map(|o| o.endpoint.clone()),
                 last_exchange_ms: peer.last_exchange.map(|t| t.elapsed().as_millis() as u64),
                 rtt_ms: peer.rtt.map(|d| d.as_millis() as u64),
@@ -4014,10 +4071,30 @@ mod tests {
         repo: &str,
         policy: TrustPolicy,
     ) -> Arc<Cooperation> {
-        let identity = Arc::new(NodeIdentity::ephemeral().unwrap());
+        runtime_as(
+            net,
+            endpoint,
+            repo,
+            policy,
+            Arc::new(NodeIdentity::ephemeral().unwrap()),
+            crate::mesh::repository::runtime_id(endpoint),
+        )
+    }
+
+    /// A runtime with a given node identity and runtime slot: two of these with the same
+    /// pair are two server processes carrying one runtime, as the primary checkout's 55765
+    /// and 8741 did on 2026-10-20.
+    fn runtime_as(
+        net: &Arc<InProcess>,
+        endpoint: &str,
+        repo: &str,
+        policy: TrustPolicy,
+        identity: Arc<NodeIdentity>,
+        slot: String,
+    ) -> Arc<Cooperation> {
         let c = Cooperation::new(CooperationSetup {
             identity,
-            runtime: crate::mesh::repository::runtime_id(endpoint),
+            runtime: slot,
             repository: of_root_commits(&[repo.into()]),
             endpoints: vec![endpoint.into()],
             version: "test".into(),
@@ -4046,6 +4123,96 @@ mod tests {
 
     fn session(name: &str) -> SessionInfo {
         SessionInfo::named(name, "test")
+    }
+
+    /// I3606: two live instances of one runtime, both linked to one peer, each keep their
+    /// own link. Before, every hello replaced the other instance's link, whose next sync was
+    /// refused `unknown_link` and said hello again: on 2026-10-20 every local link of the
+    /// primary checkout showed about 21,670 handshakes and as many reconnects in 32 hours.
+    #[test]
+    fn two_live_instances_of_one_runtime_keep_their_links() {
+        let net = Arc::new(InProcess::default());
+        let a = runtime(&net, "a:1", "root", TrustPolicy::Tofu);
+        // two loads of one identity file: one node key, two instances, as two server processes are
+        let dir = tempfile::tempdir().unwrap();
+        let file = dir.path().join("node.json");
+        let identity = Arc::new(NodeIdentity::load_or_create(&file).unwrap());
+        let twin = Arc::new(NodeIdentity::load_or_create(&file).unwrap());
+        assert_ne!(identity.public.instance_id, twin.public.instance_id);
+        let slot = crate::mesh::repository::runtime_id("b:1");
+        let b1 = runtime_as(
+            &net,
+            "b:1",
+            "root",
+            TrustPolicy::Tofu,
+            Arc::clone(&identity),
+            slot.clone(),
+        );
+        let b2 = runtime_as(&net, "b:2", "root", TrustPolicy::Tofu, twin, slot);
+        assert_eq!(
+            b1.runtime_key(),
+            b2.runtime_key(),
+            "one runtime, two processes"
+        );
+        b1.dial(&["a:1".into()]).expect("the first instance links");
+        b2.dial(&["a:1".into()]).expect("the second instance links");
+        for round in 0..10 {
+            b1.sync_with(a.runtime_key()).unwrap_or_else(|e| {
+                panic!("round {round}: the first instance lost its link: {e:?}")
+            });
+            b2.sync_with(a.runtime_key()).unwrap_or_else(|e| {
+                panic!("round {round}: the second instance lost its link: {e:?}")
+            });
+        }
+        let seen = a
+            .peers()
+            .into_iter()
+            .find(|p| p.runtime == b1.runtime_key())
+            .expect("a sees the runtime");
+        assert_eq!(seen.handshakes, 2, "one hello per instance, none after");
+        assert_eq!((seen.restarts, seen.reconnects), (0, 0));
+    }
+
+    /// A real restart is still a restart: an instance that stopped exchanging past the
+    /// expiry, then a new one, is counted once, and the stopped run's link is gone.
+    #[test]
+    fn a_stopped_instance_then_a_new_one_is_one_restart() {
+        let net = Arc::new(InProcess::default());
+        let a = runtime(&net, "a:1", "root", TrustPolicy::Tofu);
+        // two loads of one identity file: one node key, two instances, as two server processes are
+        let dir = tempfile::tempdir().unwrap();
+        let file = dir.path().join("node.json");
+        let identity = Arc::new(NodeIdentity::load_or_create(&file).unwrap());
+        let twin = Arc::new(NodeIdentity::load_or_create(&file).unwrap());
+        assert_ne!(identity.public.instance_id, twin.public.instance_id);
+        let slot = crate::mesh::repository::runtime_id("b:1");
+        let old = runtime_as(
+            &net,
+            "b:1",
+            "root",
+            TrustPolicy::Tofu,
+            Arc::clone(&identity),
+            slot.clone(),
+        );
+        old.dial(&["a:1".into()]).expect("the first run links");
+        // the test runtimes expire a link after 3 s of silence
+        std::thread::sleep(Duration::from_millis(3_200));
+        let new = runtime_as(&net, "b:2", "root", TrustPolicy::Tofu, twin, slot);
+        new.dial(&["a:1".into()]).expect("the next run links");
+        new.sync_with(a.runtime_key()).expect("the next run syncs");
+        let seen = a
+            .peers()
+            .into_iter()
+            .find(|p| p.runtime == new.runtime_key())
+            .expect("a sees the runtime");
+        assert_eq!(
+            seen.restarts, 1,
+            "a stopped run and a new one are one restart"
+        );
+        assert!(
+            old.sync_with(a.runtime_key()).is_err(),
+            "the stopped run's link is gone"
+        );
     }
 
     #[test]
