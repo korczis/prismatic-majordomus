@@ -313,6 +313,94 @@ pub fn read_only(root: &Path) -> Command {
     cmd
 }
 
+/// One commit of a file's history: its id, its committer date in ISO 8601, and its subject.
+pub type FileCommit = (String, String, String);
+
+/// The commits that changed `path`, newest first and across renames, as [`FileCommit`]s: at
+/// most `bound` of them, with whether more exist (I3314).
+///
+/// `None` when git cannot answer, as in a directory that is no repository or one whose
+/// branch has no commit yet. An empty list is a file no commit has touched. Read through
+/// [`read_only`], so asking moves nothing.
+///
+/// In a shallow clone the boundary commit appears to add every file it holds, which is not
+/// a change anybody made: the list stops before it and says it was cut, so an empty list
+/// that is cut means the commit that last changed the file is not in this clone.
+///
+/// ```
+/// use majordomus_cli::git::file_history;
+/// use std::process::Command;
+///
+/// let dir = tempfile::tempdir().unwrap();
+/// let git = |args: &[&str]| {
+///     let ok = Command::new("git").arg("-C").arg(dir.path()).args(args).status().unwrap();
+///     assert!(ok.success());
+/// };
+/// git(&["init", "-q"]);
+/// git(&["config", "user.email", "t@example.com"]);
+/// git(&["config", "user.name", "t"]);
+/// assert_eq!(file_history(dir.path(), "a.md", 5), None, "no commit, no history");
+/// for n in 1..=3 {
+///     std::fs::write(dir.path().join("a.md"), n.to_string()).unwrap();
+///     git(&["add", "a.md"]);
+///     git(&["commit", "-qm", &format!("change {n}")]);
+/// }
+/// let (commits, cut) = file_history(dir.path(), "a.md", 2).unwrap();
+/// assert_eq!(commits.len(), 2);
+/// assert!(cut, "a third commit exists past the bound");
+/// assert_eq!(commits[0].2, "change 3", "newest first");
+/// assert!(file_history(dir.path(), "never.md", 2).unwrap().0.is_empty());
+/// ```
+pub fn file_history(root: &Path, path: &str, bound: usize) -> Option<(Vec<FileCommit>, bool)> {
+    let out = read_only(root)
+        .args(["log", "--follow", "--no-color"])
+        .arg(format!("--max-count={}", bound + 1))
+        .args(["--format=%H%x1f%cI%x1f%s", "--", path])
+        .output()
+        .ok()?;
+    if !out.status.success() {
+        return None;
+    }
+    let mut commits: Vec<FileCommit> = String::from_utf8_lossy(&out.stdout)
+        .lines()
+        .filter_map(|line| {
+            let mut field = line.splitn(3, '\u{1f}');
+            Some((
+                field.next()?.to_string(),
+                field.next()?.to_string(),
+                field.next().unwrap_or_default().to_string(),
+            ))
+        })
+        .collect();
+    let mut cut = commits.len() > bound;
+    commits.truncate(bound);
+    let boundary = shallow_boundary(root);
+    if let Some(at) = commits.iter().position(|(c, _, _)| boundary.contains(c)) {
+        commits.truncate(at);
+        cut = true;
+    }
+    Some((commits, cut))
+}
+
+/// The commits a shallow clone was cut at, from its `shallow` file; none in a full clone.
+fn shallow_boundary(root: &Path) -> Vec<String> {
+    let Ok(out) = read_only(root)
+        .args([
+            "rev-parse",
+            "--path-format=absolute",
+            "--git-path",
+            "shallow",
+        ])
+        .output()
+    else {
+        return Vec::new();
+    };
+    let path = String::from_utf8_lossy(&out.stdout).trim().to_string();
+    std::fs::read_to_string(path)
+        .map(|text| text.lines().map(str::to_string).collect())
+        .unwrap_or_default()
+}
+
 fn ls_files_with(root: &Path, pathspecs: &[&str]) -> Result<Vec<String>> {
     let out = read_only(root)
         .args(["ls-files", "-z", "--"])
