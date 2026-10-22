@@ -1,0 +1,31 @@
+id: I2866
+milestone: a-derive-does-only-the-work-its-inputs-changed
+title: "Each node of a measured derive reports its fingerprint, cache status and times, and each run its critical path and peak memory"
+slug: a-derive-node-reports-what-it-cost
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Have a measured derive report, per node, its input fingerprint, cache status, run and queue time in milliseconds, outputs and changed-output count; and per run, wall time, CPU time, critical path, subprocess count and peak memory, with cargo overhead apart from the derivation."
+why: "Split from I2521 on 2026-10-21 (3e with a3). These were the 2026-10-18 amendment to I2521's desired state. They are new instrumentation in the crate's bench module, not a measurement of the present derive, and need a build and tests of their own."
+current_state: "scripts/derive records whole-stage durations only (I2521's second slice). Nothing reports per-node fingerprints, cache status or queue time, and no run reports a critical path, subprocess count or peak memory."
+desired_state: "A measured derive's report carries every per-node and per-run field above, and a test pins their presence and units."
+scope:
+  - "apps/majordomus-cli/src/bench"
+  - "scripts/derive"
+  - ".ai/repo/project/issues/I2866.yaml"
+non_scope:
+  - "Changing what any generator writes"
+  - "Budgets or gates on the measured durations"
+depends_on:
+  - "I2521"
+acceptance_criteria:
+  - "Each node of a measured run reports its input fingerprint, cache status, run and queue time in milliseconds, outputs and changed-output count"
+  - "Each run reports wall, CPU, critical path, subprocess count and peak memory, with cargo overhead apart from the derivation"
+  - "A test fails when any of those fields is missing or carries the wrong unit"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml bench"
+evidence_required:
+  - "derive_node_metrics"
+created_at: 2026-10-21
+updated_at: 2026-10-21
