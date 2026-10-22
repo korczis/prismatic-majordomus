@@ -1,18 +1,16 @@
 id: I3017
 milestone: two-folder-integration
-title: "Discovering the repository outside the model is refused, and its cost has a budget"
+title: "Discovering the repository outside the model is refused"
 slug: discovery-outside-the-model-is-refused
 priority: p0
 profile: implementation
 parallel_safe: true
-objective: "A test scans the crate's sources and refuses a Repository::discover or Repository::open outside repository.rs and the declared entry points, naming the file and line; the discovery phase gets a latency budget in .ai/repo/benchmarks/rust/policy.yaml, derived from a measurement, held by bench --check."
+objective: "A test scans the crate's sources and refuses a Repository::discover or Repository::open outside repository.rs and the owners it names, each with its reason, naming the file and line; a second test refuses an owner entry whose call went away. The discovery's cost budget belongs to I1107 (its cost is known), which needs a bench target for discovery that does not exist yet."
 why: "The last slice of I1105, its fourth acceptance criterion (no consumer reads the filesystem for a fact the model carries, proved by a check rather than by review) and the risk it names (the model's cost is measured in the same issue that makes it mandatory). Without the check the next capability re-opens the repository and nobody notices."
 current_state: "Nothing refuses a new discovery; App::load's budget is named in prose (plan.rs) but no number is declared."
-desired_state: "A discovery outside the model fails a test; the discovery's cost has a declared budget."
+desired_state: "A discovery outside the model fails a test that names the file, the line and how to ask the context instead."
 scope:
   - apps/majordomus-cli/tests
-  - apps/majordomus-cli/src/bench
-  - .ai/repo/benchmarks/rust/policy.yaml
 non_scope:
   - "Discovery of facts the model does not carry yet (I1106, I1107)"
 depends_on:
@@ -20,12 +18,10 @@ depends_on:
   - I3016
 acceptance_criteria:
   - "A source scan test fails on a Repository::discover or Repository::open outside the allowed files, naming file and line"
-  - "The discovery phase has a budget in policy.yaml derived from a recorded measurement, and bench --check holds it"
+  - "An owner named in the list whose call went away fails the test, so the list cannot hold a stale entry"
 validation:
   - "cargo test --workspace --all-features"
-  - "majordomus bench --check"
 evidence_required:
   - discovery_guard_test
-  - discovery_budget
 created_at: 2026-10-21
 updated_at: 2026-10-21
