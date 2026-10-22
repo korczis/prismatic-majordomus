@@ -1,0 +1,28 @@
+id: I2846
+milestone: M004
+title: "A hand-pinned budget in a case is reported unless it states its margin"
+slug: a-pinned-budget-states-its-margin
+priority: p2
+profile: implementation
+parallel_safe: true
+depends_on: []
+objective: "Report a literal budget, count or size that a case compares against a product's output without a comment giving its margin and the reason it holds, so a case does not go red only because its subject grew."
+why: "Split from I2716 on 2026-10-21. On 2026-10-14 master 2d226f0836 went red in suite-shard (2): case 130 compared three surfaces against a hand-pinned 4000-token budget, and a fresh init's governance tier grew to 4023 when #1143 added 235 bytes to the seeded scope. I2716's other half, the release-record-cases listing, is on master (scripts/ci/release-record-cases-check, case 3033). Nothing yet finds a pinned budget before it breaks."
+current_state: "A case can compare a product's output against a hand-typed number with no stated margin; the pin is found only when the subject grows past it."
+desired_state: "A scripted capability (ADR 0069) over test/cases reports each literal budget, count or size compared against a product's output that carries no margin comment, names the case and line, and runs in the structure job. A case that holds a deliberate pin states its margin beside it."
+scope:
+  - "test/cases"
+  - ".ai/repo/ci/gates.yaml"
+  - ".ai/repo/automation"
+non_scope:
+  - "Rewriting the existing pins: the first run reports them, and each is either given its margin or derived in its own change."
+acceptance_criteria:
+  - "A case comparing a product's output against a literal number with no margin comment is reported with its file and line"
+  - "The same comparison with a margin comment beside it is not reported"
+  - "The check runs in the structure job"
+validation:
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "pinned_values_are_reported_case"
+created_at: 2026-10-21
+updated_at: 2026-10-21
