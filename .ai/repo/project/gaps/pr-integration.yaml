@@ -1,0 +1,150 @@
+intent: pr-integration
+observed_at: 70d83863b7
+recorded_by: claude-code session fcbeae95, which ran the cases and tests named here on 2026-10-08, and prismatic-majordomus-fa, the integrating session, whose read-only audit of the same day found the partly met rows
+recorded_at: 2026-10-08
+observations:
+  - id: ran-740
+    statement: Run on 2026-10-08 at 70d83863b7 over a clean tree, it passed
+    source: test:test/cases/740_integration_is_visible_where_a_person_looks.sh
+  - id: ran-720
+    statement: Run on 2026-10-08 at 70d83863b7 over a clean tree, it passed
+    source: test:test/cases/720_integration_follows_the_current_master.sh
+  - id: ran-857
+    statement: Run on 2026-10-08 at 70d83863b7 over a clean tree, it passed
+    source: test:test/cases/857_required_checks_are_authoritative.sh
+  - id: ran-858
+    statement: Run on 2026-10-08 at 70d83863b7 over a clean tree, it passed
+    source: test:test/cases/858_reviews_are_authoritative.sh
+  - id: ran-910
+    statement: Run on 2026-10-08 at 70d83863b7 over a clean tree, it passed
+    source: test:test/cases/910_nothing_merges_around_the_integrator.sh
+  - id: ran-executor
+    statement: Run on 2026-10-08 at 70d83863b7 over a clean tree, it passed, 20 tests
+    source: test:apps/majordomus-cli/tests/integration_executor.rs
+  - id: ran-855
+    statement: Run on 2026-10-08 at 70d83863b7 over a clean tree, it passed
+    source: test:test/cases/855_racing_executors_merge_once.sh
+  - id: ran-924
+    statement: Run on 2026-10-08 at 70d83863b7 over a clean tree, it passed
+    source: test:test/cases/924_one_executor_across_machines.sh
+  - id: ran-850
+    statement: Run on 2026-10-08 at 70d83863b7 over a clean tree, it passed
+    source: test:test/cases/850_integration_drains_cycle_by_cycle.sh
+  - id: ran-937
+    statement: Run on 2026-10-08 at 70d83863b7 over a clean tree, it passed
+    source: test:test/cases/937_an_unauthorised_declaration_neither_holds_nor_closes.sh
+  - id: ran-861
+    statement: Run on 2026-10-08 at 70d83863b7 over a clean tree, it passed
+    source: test:test/cases/861_a_successor_that_landed_supersedes.sh
+  - id: ran-merged-branches
+    statement: Run on 2026-10-08 at 70d83863b7 over a clean tree, it passed, 4 tests
+    source: test:apps/majordomus-cli/tests/integration_merged_branches.rs
+  - id: ran-852
+    statement: Run on 2026-10-08 at 70d83863b7 over a clean tree, it passed
+    source: test:test/cases/852_a_dry_run_moves_nothing.sh
+  - id: ran-912
+    statement: Run on 2026-10-08 at 70d83863b7 over a clean tree, it passed
+    source: test:test/cases/912_repair_acts_under_the_lease_and_the_trail.sh
+  - id: audit-read-only
+    statement: A read-only audit by the integrating session against the acceptance items of the owner's mission found 41 of 51 rows met and 10 partly met; met there means the code and a test asserting it exist, nothing was built or run for it
+    source: file:apps/majordomus-cli/src/integration/tests.rs
+  - id: head-pinned-master-not
+    statement: The merge pins the head it decided on and not the master it decided against, so a master that moves before the merge is found by the proof afterwards
+    source: file:apps/majordomus-cli/src/integration/drain.rs
+  - id: halt-is-per-clone
+    statement: The halt after a merge that could not be proved is read from one clone
+    source: file:apps/majordomus-cli/src/integration/drain.rs
+  - id: exclusivity-falls-back
+    statement: Without a mesh the lease reaches one machine, the executor says so and drains, and no policy decides whether it may
+    source: file:apps/majordomus-cli/src/integration/exclusive.rs
+  - id: linkage-unit-tested-only
+    statement: The linkage of a pull request to its issue and milestone is asserted by unit tests only
+    source: file:apps/majordomus-cli/src/integration/mod.rs
+  - id: cases-cover-nothing
+    statement: Every case a criterion names declares that it covers no source, and no claim names them
+    source: file:docs/CLAIMS.yaml
+conditions:
+  - criterion: one-queue-where-a-person-looks
+    state: satisfied
+    because: the case passed; what it does not assert, the linkage to issue and milestone, is I2045
+    observations: [ran-740, linkage-unit-tested-only]
+  - criterion: a-later-session-can-continue
+    state: satisfied
+    because: the case passed, asserting the context section, the derived handover and the trail read from a second worktree
+    observations: [ran-740]
+  - criterion: the-executor-acts-under-its-lease
+    state: satisfied
+    because: the case passed
+    observations: [ran-720]
+  - criterion: required-checks-are-authoritative
+    state: satisfied
+    because: the case passed
+    observations: [ran-857]
+  - criterion: reviews-are-authoritative
+    state: satisfied
+    because: the case passed
+    observations: [ran-858]
+  - criterion: no-merge-route-beside-the-integrator
+    state: satisfied
+    because: the case passed
+    observations: [ran-910]
+  - criterion: a-stale-decision-never-merges
+    state: conflicting
+    because: the test passed and proves the detection after a merge; a master that moves between the decision and the merge is not prevented, and the halt that follows is read by one clone only
+    observations: [ran-executor, head-pinned-master-not, halt-is-per-clone]
+  - criterion: one-executor-on-one-machine
+    state: satisfied
+    because: the case passed
+    observations: [ran-855]
+  - criterion: one-executor-across-machines
+    state: conflicting
+    because: the case passed for a mesh and for saying how far the lease reaches; without a mesh a second machine drains the same base and nothing refuses it
+    observations: [ran-924, exclusivity-falls-back]
+  - criterion: the-queue-is-recomputed-after-each-merge
+    state: satisfied
+    because: the case passed
+    observations: [ran-850]
+  - criterion: closure-needs-a-strong-ground
+    state: satisfied
+    because: the case passed; the property is an example and not yet generated, which is I2046
+    observations: [ran-937]
+  - criterion: a-superseded-pull-request-is-detected
+    state: satisfied
+    because: the case passed
+    observations: [ran-861]
+  - criterion: merged-branches-are-cleaned-by-policy
+    state: satisfied
+    because: the tests passed
+    observations: [ran-merged-branches]
+  - criterion: a-dry-run-moves-nothing
+    state: satisfied
+    because: the case passed
+    observations: [ran-852]
+  - criterion: repair-acts-under-the-lease
+    state: satisfied
+    because: the case passed
+    observations: [ran-912]
+risks:
+  - A passing run on one commit is evidence for that commit; until the cases declare what they cover (I2053) the intent's own verdict reads them as not current after any later commit
+  - The audit's row-by-row table is the integrating session's working paper and is not in this record; its ten partly met rows are the issues of this milestone and of pr-integration-hardening
+work:
+  - id: master-is-pinned-at-the-merge
+    title: The master a decision was taken against is pinned at the merge
+    serves: [a-stale-decision-never-merges]
+    issue: I2041
+  - id: safety-properties-are-generated
+    title: The two safety properties are generated, not exemplified
+    serves: [a-stale-decision-never-merges, closure-needs-a-strong-ground]
+    issue: I2046
+  - id: local-only-exclusivity-is-a-policy
+    title: A lease that reaches one machine only is allowed by policy or refused
+    serves: [one-executor-across-machines]
+    issue: I2042
+  - id: the-halt-reaches-every-executor
+    title: A halt after an unproved merge holds for every executor of the base
+    serves: [a-stale-decision-never-merges]
+    issue: I2050
+  - id: linkage-is-proved-end-to-end
+    title: Issue and milestone linkage is proved through the executable
+    serves: [one-queue-where-a-person-looks]
+    issue: I2045

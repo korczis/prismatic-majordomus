@@ -1,0 +1,26 @@
+id: I2060
+milestone: pr-integration-hardening
+title: A release record is ranked ahead of what waits on it
+slug: a-release-record-goes-first
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "The planner knows that a pull request proposing the record of a published version unblocks the others and ranks it first, giving the reason; no person edits another pull request's state to reorder the queue."
+why: "While a tag is published and its record is not on master, every other pull request fails the release check, yet the planner ranks the record's pull request like any other: on 2026-10-08 it ranked a test ahead of the record of v0.17.0, and the integrating session had to mark the other pull request a draft for one drain to get the record in first."
+current_state: "The rank is described in docs/INTEGRATION.md under The rank and has no term for what a pull request unblocks; plan issue I2054 is the neighbouring defect in the release check itself."
+desired_state: "The planner knows that a pull request proposing the record of a published version unblocks the others and ranks it first, giving the reason; no person edits another pull request's state to reorder the queue."
+scope:
+  - apps/majordomus-cli/src/integration/
+  - apps/majordomus-cli/src/release
+  - docs/INTEGRATION.md
+  - test/cases
+depends_on: []
+acceptance_criteria:
+  - With a published version whose record is proposed by one open pull request, that pull request is the next merge when it is ready, and prs explain says why
+  - The rank stays deterministic, proved by the existing property test extended with such a pull request
+validation:
+  - cd apps/majordomus-cli && cargo test --lib integration
+evidence_required:
+  - a_release_record_is_ranked_first
+created_at: 2026-10-08
+updated_at: 2026-10-08

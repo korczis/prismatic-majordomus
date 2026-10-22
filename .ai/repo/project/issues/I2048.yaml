@@ -1,0 +1,25 @@
+id: I2048
+milestone: pr-integration-hardening
+title: Every rollout stage is gated and recorded
+slug: rollout-stages-are-gated
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Each stage refuses what belongs to the next: a dry run refuses a merge, one merge refuses a second, a bounded drain refuses to run unbounded; the record names the stage the repository is at and what proved the ones before it, read from the trail."
+why: "The rollout has four stages - a dry run, one merge, a bounded drain, a continuous one - and only the fourth is gated; the rollout record names the first only."
+current_state: "tests/integration_rollout.rs and docs/INTEGRATION_ROLLOUT.md; docs/INTEGRATION.md says the gate reads the trail and nothing else."
+desired_state: "Each stage refuses what belongs to the next: a dry run refuses a merge, one merge refuses a second, a bounded drain refuses to run unbounded; the record names the stage the repository is at and what proved the ones before it, read from the trail."
+scope:
+  - apps/majordomus-cli/src/integration/
+  - apps/majordomus-cli/tests/integration_rollout.rs
+  - docs/INTEGRATION_ROLLOUT.md
+depends_on: []
+acceptance_criteria:
+  - Each of the first three stages has a test in which the act of the next stage is refused
+  - The rollout record states the current stage with the trail entries that proved the earlier ones
+validation:
+  - cd apps/majordomus-cli && cargo test --test integration_rollout
+evidence_required:
+  - every_stage_is_gated
+created_at: 2026-10-08
+updated_at: 2026-10-08

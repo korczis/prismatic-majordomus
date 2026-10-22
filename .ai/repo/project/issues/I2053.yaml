@@ -1,0 +1,42 @@
+id: I2053
+milestone: pr-integration
+title: The evidence of the intent stays current
+slug: the-evidence-stays-current
+priority: p2
+profile: implementation
+parallel_safe: false
+serves:
+  - pr-integration#one-queue-where-a-person-looks
+  - pr-integration#a-later-session-can-continue
+  - pr-integration#the-executor-acts-under-its-lease
+  - pr-integration#required-checks-are-authoritative
+  - pr-integration#reviews-are-authoritative
+  - pr-integration#no-merge-route-beside-the-integrator
+  - pr-integration#a-stale-decision-never-merges
+  - pr-integration#one-executor-on-one-machine
+  - pr-integration#one-executor-across-machines
+  - pr-integration#the-queue-is-recomputed-after-each-merge
+  - pr-integration#closure-needs-a-strong-ground
+  - pr-integration#a-superseded-pull-request-is-detected
+  - pr-integration#merged-branches-are-cleaned-by-policy
+  - pr-integration#a-dry-run-moves-nothing
+  - pr-integration#repair-acts-under-the-lease
+objective: "Each case and test a criterion names declares the sources it covers, so its evidence goes stale when the subsystem changes and not otherwise, and a recorded run exists."
+why: "Every case the criteria name declares that it covers nothing, and no claim names them, so each is current only for a run at the checkout's own commit: the verdict reads unsatisfied after any unrelated commit however sound the subsystem is."
+current_state: "The cases carry the line majordomus-covers none; docs/CLAIMS.yaml names none of them."
+desired_state: "Each case and test a criterion names declares the sources it covers, so its evidence goes stale when the subsystem changes and not otherwise, and a recorded run exists."
+scope:
+  - test/cases
+  - apps/majordomus-cli/tests
+  - docs/CLAIMS.yaml
+  - docs/claims
+depends_on: []
+acceptance_criteria:
+  - Each named case declares the integration sources it covers
+  - intent show pr-integration reads current for a criterion after an unrelated commit and stale after a change under the integration module
+validation:
+  - majordomus intent show pr-integration
+evidence_required:
+  - evidence_goes_stale_only_with_its_subject
+created_at: 2026-10-08
+updated_at: 2026-10-08

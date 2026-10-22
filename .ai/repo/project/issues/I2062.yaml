@@ -1,0 +1,26 @@
+id: I2062
+milestone: pr-integration-hardening
+title: A repository with no release baseline is told why it cannot compose a batch
+slug: composing-without-a-release-baseline
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "The composition plan says before anything is merged that the repository has no release baseline and that a batch cannot be composed until one exists, naming the command that establishes it; or a batch in such a repository is composed without a bump and says so."
+why: "Composing a batch takes one version bump, and the bump refuses in a repository whose public contract cannot be measured because it has no release baseline. Such a repository cannot compose at all, and learns it from the bump's refusal in the middle of a composition."
+current_state: "Found on 2026-10-08 while building the composer on feature/a-batch-is-composed-and-names-its-members: the bump taken by the composed tree refuses without a baseline."
+desired_state: "The composition plan says before anything is merged that the repository has no release baseline and that a batch cannot be composed until one exists, naming the command that establishes it; or a batch in such a repository is composed without a bump and says so."
+scope:
+  - apps/majordomus-cli/src/integration/
+  - apps/majordomus-cli/src/release
+  - apps/majordomus-cli/tests
+  - docs/INTEGRATION.md
+depends_on: [I2052]
+acceptance_criteria:
+  - In a fixture with no release baseline, the composition plan names the missing baseline and merges nothing
+  - The document says what a repository needs before it can compose
+validation:
+  - cd apps/majordomus-cli && cargo test --lib integration
+evidence_required:
+  - composing_without_a_baseline_is_explained
+created_at: 2026-10-08
+updated_at: 2026-10-08

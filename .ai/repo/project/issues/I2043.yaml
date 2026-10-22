@@ -1,0 +1,26 @@
+id: I2043
+milestone: pr-integration-hardening
+title: Starvation is visible
+slug: starvation-is-visible
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "A reader sees how long each pull request has been ready, how often it was passed over and why, and a declared bound after which that is a finding."
+why: "A pull request passed over has no recorded reason for the skip, its wait count resets when it leaves the actionable lane, and there is no age for how long it has been ready."
+current_state: "wait.rs lines 22 and 53-61."
+desired_state: "A reader sees how long each pull request has been ready, how often it was passed over and why, and a declared bound after which that is a finding."
+scope:
+  - apps/majordomus-cli/src/integration/wait.rs
+  - apps/majordomus-cli/src/commands/prs.rs
+  - test/cases
+depends_on: []
+acceptance_criteria:
+  - A skip records its reason
+  - The wait of a pull request survives a change of lane
+  - A pull request ready longer than the declared bound is a finding in prs status, proved by a case
+validation:
+  - cd apps/majordomus-cli && cargo test --lib integration::wait
+evidence_required:
+  - starvation_is_reported
+created_at: 2026-10-08
+updated_at: 2026-10-08

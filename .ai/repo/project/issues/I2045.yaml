@@ -1,0 +1,25 @@
+id: I2045
+milestone: pr-integration
+title: Issue and milestone linkage is proved through the executable
+slug: linkage-is-proved-end-to-end
+priority: p2
+profile: implementation
+parallel_safe: false
+serves:
+  - pr-integration#one-queue-where-a-person-looks
+objective: "A case drives the built executable over a fixture and reads the linkage from the command line and one other surface."
+why: "How a pull request is linked to its issue and milestone is covered by unit tests only, so no surface is held to showing it."
+current_state: "link_issues is at mod.rs line 1078 and its tests are unit tests at mod.rs lines 1966 and 1996."
+desired_state: "A case drives the built executable over a fixture and reads the linkage from the command line and one other surface."
+scope:
+  - apps/majordomus-cli/src/integration/mod.rs
+  - test/cases
+depends_on: []
+acceptance_criteria:
+  - A case asserts the issue and the milestone of a pull request through the command line and through HTTP or the Cockpit, and fails when the linkage is removed
+validation:
+  - bash test/run.sh 740_integration_is_visible_where_a_person_looks
+evidence_required:
+  - linkage_proved_through_the_executable
+created_at: 2026-10-08
+updated_at: 2026-10-08

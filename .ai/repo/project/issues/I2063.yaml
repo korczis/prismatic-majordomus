@@ -1,0 +1,27 @@
+id: I2063
+milestone: pr-integration-hardening
+title: The batch gate says it cannot run where it cannot ask the forge
+slug: the-batch-gate-without-a-forge
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "A gate that could not ask the forge is reported as not run, by name, where the result of the run is read, and is never counted with the gates that passed; the document lists the gates that need the forge."
+why: "The gate that refuses an unnamed composed branch has to know which pull requests are open, which only the forge can say. In a run without a token it answers that it cannot run. That is right, and it means a run without a token has not checked the branch; nothing tells a reader of that run which of its gates were in that state."
+current_state: "The batch gate and the github projection gate both exit as unusable without a token; the CI summary lists them with the others."
+desired_state: "A gate that could not ask the forge is reported as not run, by name, where the result of the run is read, and is never counted with the gates that passed; the document lists the gates that need the forge."
+scope:
+  - scripts/ci
+  - .ai/repo/ci
+  - apps/majordomus-cli/src/gates
+  - docs
+  - test/cases
+depends_on: [I2052]
+acceptance_criteria:
+  - A run without a token shows each gate that needed the forge as not run, with the reason, in the summary a person reads
+  - A case proves that such a gate is not counted as passing
+validation:
+  - bash test/run.sh 97_github_gate
+evidence_required:
+  - a_gate_without_its_forge_is_named
+created_at: 2026-10-08
+updated_at: 2026-10-08

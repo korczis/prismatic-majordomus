@@ -1,0 +1,27 @@
+id: I2041
+milestone: pr-integration
+title: The master a decision was taken against is pinned at the merge
+slug: master-is-pinned-at-the-merge
+priority: p2
+profile: implementation
+parallel_safe: false
+serves:
+  - pr-integration#a-stale-decision-never-merges
+objective: "A merge whose master moved since the decision does not happen; or, where the forge offers no way to pin a base, the window that remains is stated with its bound where a reader of the subsystem finds it."
+why: "This is the hole in the criterion it serves: the merge passes the head it decided on to the forge and not the master it decided against, so a decision made stale by a master that moved between the decision and the merge still merges, and the move is found afterwards."
+current_state: "drain.rs lines 1953-1969 pass --match-head-commit only; the move is detected by the proof after the merge (tests/integration_executor.rs, a merge onto a master that moved holds the next drain)."
+desired_state: "A merge whose master moved since the decision does not happen; or, where the forge offers no way to pin a base, the window that remains is stated with its bound where a reader of the subsystem finds it."
+scope:
+  - apps/majordomus-cli/src/integration/drain.rs
+  - apps/majordomus-cli/tests/integration_executor.rs
+  - docs/INTEGRATION.md
+depends_on: []
+acceptance_criteria:
+  - A test moves master between the decision and the merge and no merge is made, or the forge is shown to offer no pin and the document states the window and its bound
+  - The detection after the merge still holds
+validation:
+  - cd apps/majordomus-cli && cargo test --test integration_executor
+evidence_required:
+  - a_moved_master_prevents_the_merge
+created_at: 2026-10-08
+updated_at: 2026-10-08

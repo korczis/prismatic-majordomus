@@ -6,23 +6,23 @@
     "version": "0.18.0"
   },
   "registry": {
-    "fingerprint": "2407f2953e6b3492b1e382cbc94bb6c228a4764df336f5f9f4ded3dbbab0c153",
+    "fingerprint": "9f0247532f111a2d3d11164130cea13ff9244261e95f43b445bb47230fc0cad9",
     "summary": {
-      "total": 2086,
+      "total": 2105,
       "builtin": 184,
-      "declarative": 1902,
+      "declarative": 1921,
       "by_kind": {
         "command": 26,
         "query": 158,
-        "resource": 1902
+        "resource": 1921
       },
       "by_stability": {
         "behaviorally_verified": 132,
         "experimental": 44,
-        "implemented": 1910
+        "implemented": 1929
       },
       "mcp_tools": 177,
-      "mcp_resources": 1956,
+      "mcp_resources": 1975,
       "http_routes": 181,
       "cli_commands": 101,
       "modules": 86,
@@ -75114,7 +75114,7 @@
         "title": "critique",
         "description": "Declarative objects of kind 'critique' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 2,
+        "capabilities": 3,
         "capability_ids": []
       },
       {
@@ -75396,7 +75396,7 @@
         "title": "gap",
         "description": "Declarative objects of kind 'gap' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 2,
+        "capabilities": 3,
         "capability_ids": []
       },
       {
@@ -75478,7 +75478,7 @@
         "title": "intent",
         "description": "Declarative objects of kind 'intent' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 3,
+        "capabilities": 4,
         "capability_ids": []
       },
       {
@@ -75526,7 +75526,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 262,
+        "capabilities": 276,
         "capability_ids": []
       },
       {
@@ -75639,7 +75639,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 25,
+        "capabilities": 27,
         "capability_ids": []
       },
       {
@@ -76151,7 +76151,7 @@
     ]
   },
   "index": {
-    "fingerprint": "d3b9081159f4b1ad50e7fdbd4a1456e6d8dc1ac0469bfeae0a8634ca33075d25",
+    "fingerprint": "d8123c92f447114d1d79b7b92f311957f199802f556640d753decd468c80e6ba",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -76181,19 +76181,19 @@
       "claim": 237,
       "command": 31,
       "context": 36,
-      "critique": 2,
+      "critique": 3,
       "deployment": 1,
       "distribution-model": 1,
       "document": 327,
       "domain": 6,
       "feature": 27,
-      "gap": 2,
+      "gap": 3,
       "implementation": 51,
-      "intent": 3,
-      "issue": 262,
+      "intent": 4,
+      "issue": 276,
       "knowledge": 1,
       "mesh-declaration": 1,
-      "milestone": 25,
+      "milestone": 27,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -80990,6 +80990,17 @@
         "bytes": 2928
       },
       {
+        "uri": "majordomus://critique/pr-integration",
+        "kind": "critique",
+        "identity": "pr-integration",
+        "title": "pr-integration",
+        "description": "70d83863b7",
+        "path": ".ai/repo/project/critiques/pr-integration.yaml",
+        "section": "project",
+        "source_class": "critique",
+        "bytes": 9825
+      },
+      {
         "uri": "majordomus://deployment/majordomus",
         "kind": "deployment",
         "identity": "majordomus",
@@ -84513,6 +84524,17 @@
         "bytes": 2478
       },
       {
+        "uri": "majordomus://gap/pr-integration",
+        "kind": "gap",
+        "identity": "pr-integration",
+        "title": "pr-integration",
+        "description": "70d83863b7",
+        "path": ".ai/repo/project/gaps/pr-integration.yaml",
+        "section": "project",
+        "source_class": "gap",
+        "bytes": 7783
+      },
+      {
         "uri": "majordomus://implementation/bin/majordomus",
         "kind": "implementation",
         "identity": "bin/majordomus",
@@ -84952,6 +84974,17 @@
         "section": "project",
         "source_class": "intent",
         "bytes": 2325
+      },
+      {
+        "uri": "majordomus://intent/pr-integration",
+        "kind": "intent",
+        "identity": "pr-integration",
+        "title": "Pull requests reach the trunk one at a time, each provably safe against the trunk as it stands",
+        "description": "Every open pull request is observed, classified and ranked by one derivation; the next one that is provably safe against the current master is merged by one executor under a lease, never around a required check, a required review or the branch protection; the queue is recomputed after every merge; a pull request is closed only on strong, named evidence; and every act is recorded where every surface and every later session can read it.",
+        "path": ".ai/repo/project/intents/pr-integration.yaml",
+        "section": "project",
+        "source_class": "intent",
+        "bytes": 6289
       },
       {
         "uri": "majordomus://issue/I0001",
@@ -87836,6 +87869,160 @@
         "bytes": 2091
       },
       {
+        "uri": "majordomus://issue/I2040",
+        "kind": "issue",
+        "identity": "I2040",
+        "title": "One classifier decides a disposition",
+        "description": "What the executor learned is an observation the classifier reads; every disposition a surface shows is the classifier's own answer, and a pull request with no next step says why.",
+        "path": ".ai/repo/project/issues/I2040.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1334
+      },
+      {
+        "uri": "majordomus://issue/I2041",
+        "kind": "issue",
+        "identity": "I2041",
+        "title": "The master a decision was taken against is pinned at the merge",
+        "description": "A merge whose master moved since the decision does not happen; or, where the forge offers no way to pin a base, the window that remains is stated with its bound where a reader of the subsystem finds it.",
+        "path": ".ai/repo/project/issues/I2041.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1747
+      },
+      {
+        "uri": "majordomus://issue/I2042",
+        "kind": "issue",
+        "identity": "I2042",
+        "title": "A lease that reaches one machine only is allowed by policy or refused",
+        "description": "A policy key says whether a drain may proceed on a lease that reaches this machine only; where it may not, the drain refuses and names the key.",
+        "path": ".ai/repo/project/issues/I2042.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1702
+      },
+      {
+        "uri": "majordomus://issue/I2043",
+        "kind": "issue",
+        "identity": "I2043",
+        "title": "Starvation is visible",
+        "description": "A reader sees how long each pull request has been ready, how often it was passed over and why, and a declared bound after which that is a finding.",
+        "path": ".ai/repo/project/issues/I2043.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1218
+      },
+      {
+        "uri": "majordomus://issue/I2044",
+        "kind": "issue",
+        "identity": "I2044",
+        "title": "Work on the forge is bounded and asked cheapest first",
+        "description": "Every subprocess that asks the forge has a bound and a named failure when it is exceeded; a refresh asks the expensive questions only of what the cheap read left open.",
+        "path": ".ai/repo/project/issues/I2044.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1375
+      },
+      {
+        "uri": "majordomus://issue/I2045",
+        "kind": "issue",
+        "identity": "I2045",
+        "title": "Issue and milestone linkage is proved through the executable",
+        "description": "A case drives the built executable over a fixture and reads the linkage from the command line and one other surface.",
+        "path": ".ai/repo/project/issues/I2045.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1216
+      },
+      {
+        "uri": "majordomus://issue/I2046",
+        "kind": "issue",
+        "identity": "I2046",
+        "title": "The two safety properties are generated, not exemplified",
+        "description": "Both are property tests over generated observations, plans and closure candidates.",
+        "path": ".ai/repo/project/issues/I2046.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1310
+      },
+      {
+        "uri": "majordomus://issue/I2047",
+        "kind": "issue",
+        "identity": "I2047",
+        "title": "A blocking rule whose governing decision is not accepted is reported",
+        "description": "A gate reports every blocking rule whose governing ADR is not accepted, with a baseline that may only shrink.",
+        "path": ".ai/repo/project/issues/I2047.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1423
+      },
+      {
+        "uri": "majordomus://issue/I2048",
+        "kind": "issue",
+        "identity": "I2048",
+        "title": "Every rollout stage is gated and recorded",
+        "description": "Each stage refuses what belongs to the next: a dry run refuses a merge, one merge refuses a second, a bounded drain refuses to run unbounded; the record names the stage the repository is at and what proved the ones before it, read from the trail.",
+        "path": ".ai/repo/project/issues/I2048.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1552
+      },
+      {
+        "uri": "majordomus://issue/I2049",
+        "kind": "issue",
+        "identity": "I2049",
+        "title": "The documented commands of integration are proved",
+        "description": "Each command the document tells a reader to run is in a fence the gate reads, with a proof, or is marked with its reason.",
+        "path": ".ai/repo/project/issues/I2049.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1138
+      },
+      {
+        "uri": "majordomus://issue/I2050",
+        "kind": "issue",
+        "identity": "I2050",
+        "title": "A halt after an unproved merge holds for every executor of the base",
+        "description": "The halt lives where every executor of the base reads its lease: with a mesh, in the claim the machines share; without one, the document says the halt reaches this clone only and the policy of I2042 decides whether a drain may run at all.",
+        "path": ".ai/repo/project/issues/I2050.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1696
+      },
+      {
+        "uri": "majordomus://issue/I2051",
+        "kind": "issue",
+        "identity": "I2051",
+        "title": "A branch composed of several pull requests is named as one and attributed",
+        "description": "The queue recognises a head that merges other open pull requests' heads, names the members it carries, and holds it as a person's decision as ADR 0101 says; a failed check on it is reported with the members it may belong to.",
+        "path": ".ai/repo/project/issues/I2051.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1696
+      },
+      {
+        "uri": "majordomus://issue/I2052",
+        "kind": "issue",
+        "identity": "I2052",
+        "title": "A batch is a typed composition that names its members",
+        "description": "A batch is declared, composed and landed through the subsystem, names each member and its head, and a failure is attributed to a member; the rule and the decision say so in the same change.",
+        "path": ".ai/repo/project/issues/I2052.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1733
+      },
+      {
+        "uri": "majordomus://issue/I2053",
+        "kind": "issue",
+        "identity": "I2053",
+        "title": "The evidence of the intent stays current",
+        "description": "Each case and test a criterion names declares the sources it covers, so its evidence goes stale when the subsystem changes and not otherwise, and a recorded run exists.",
+        "path": ".ai/repo/project/issues/I2053.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2157
+      },
+      {
         "uri": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "identity": "start-here",
@@ -88044,6 +88231,28 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 2652
+      },
+      {
+        "uri": "majordomus://milestone/pr-integration",
+        "kind": "milestone",
+        "identity": "pr-integration",
+        "title": "Integration is held to the mission that asked for it",
+        "description": "The mission's acceptance is an intent whose criteria name the cases that prove them, and each partly met item that weakens a criterion is an issue serving it.",
+        "path": ".ai/repo/project/milestones/pr-integration.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 1522
+      },
+      {
+        "uri": "majordomus://milestone/pr-integration-hardening",
+        "kind": "milestone",
+        "identity": "pr-integration-hardening",
+        "title": "What the integration mission asks for and no test yet proves",
+        "description": "Each is done with a case, and the intent pr-integration gains a criterion naming that case in the same change.",
+        "path": ".ai/repo/project/milestones/pr-integration-hardening.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 1501
       },
       {
         "uri": "majordomus://milestone/public-proof",
@@ -96633,7 +96842,7 @@
       "identity": [
         "intent"
       ],
-      "objects": 2
+      "objects": 3
     },
     {
       "name": "deployment",
@@ -96689,7 +96898,7 @@
       "identity": [
         "intent"
       ],
-      "objects": 2
+      "objects": 3
     },
     {
       "name": "implementation",
@@ -96706,7 +96915,7 @@
       "identity": [
         "id"
       ],
-      "objects": 3
+      "objects": 4
     },
     {
       "name": "issue",
@@ -96716,7 +96925,7 @@
       "identity": [
         "id"
       ],
-      "objects": 262
+      "objects": 276
     },
     {
       "name": "knowledge",
@@ -96746,7 +96955,7 @@
       "identity": [
         "id"
       ],
-      "objects": 25
+      "objects": 27
     },
     {
       "name": "moment",

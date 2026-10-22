@@ -1,0 +1,28 @@
+id: I2050
+milestone: pr-integration
+title: A halt after an unproved merge holds for every executor of the base
+slug: the-halt-reaches-every-executor
+priority: p2
+profile: implementation
+parallel_safe: false
+serves:
+  - pr-integration#a-stale-decision-never-merges
+objective: "The halt lives where every executor of the base reads its lease: with a mesh, in the claim the machines share; without one, the document says the halt reaches this clone only and the policy of I2042 decides whether a drain may run at all."
+why: "After a merge that could not be proved the executor halts, and the halt is read from one clone. Worktrees of that clone share it; another clone or another machine drains on, which is the criterion failing exactly where it matters."
+current_state: "drain.rs line 1211 reads the halt from the clone."
+desired_state: "The halt lives where every executor of the base reads its lease: with a mesh, in the claim the machines share; without one, the document says the halt reaches this clone only and the policy of I2042 decides whether a drain may run at all."
+scope:
+  - apps/majordomus-cli/src/integration/drain.rs
+  - apps/majordomus-cli/src/integration/exclusive.rs
+  - apps/majordomus-cli/tests/integration_across_machines.rs
+  - docs/INTEGRATION.md
+depends_on: [I2042]
+acceptance_criteria:
+  - With a mesh, a second machine refuses to drain while the first is halted, and an acknowledgement is seen by both
+  - Without a mesh, the reach of the halt is stated by the command that halts
+validation:
+  - cd apps/majordomus-cli && cargo test --test integration_across_machines
+evidence_required:
+  - the_halt_reaches_every_executor
+created_at: 2026-10-08
+updated_at: 2026-10-08

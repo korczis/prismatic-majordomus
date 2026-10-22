@@ -1,0 +1,32 @@
+id: I2052
+milestone: pr-integration-hardening
+title: A batch is a typed composition that names its members
+slug: a-batch-names-its-members
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "A batch is declared, composed and landed through the subsystem, names each member and its head, and a failure is attributed to a member; the rule and the decision say so in the same change."
+why: "The owner decided on 2026-10-08 that a batch may exist as a typed capability with attributability. Rule project.integration-follows-the-current-master v3 and ADR 0101 forbid it as they stand."
+current_state: "ADR 0114 is not written; the rule says one at a time and holds no plan across a merge."
+desired_state: "A batch is declared, composed and landed through the subsystem, names each member and its head, and a failure is attributed to a member; the rule and the decision say so in the same change."
+scope:
+  - apps/majordomus-cli/src/integration/
+  - apps/majordomus-cli/src/capability/builtin
+  - apps/majordomus-cli/tests
+  - test/cases
+  - .ai/repo/rules/project
+  - .ai/repo/adrs
+  - docs
+depends_on: [I2051]
+acceptance_criteria:
+  - ADR 0114 is written as proposed and amends the rejected alternative of ADR 0101
+  - The rule is revised in the same change, and until the owner accepts ADR 0114 the executor composes no batch
+  - A red check of a batch names the member it belongs to, proved by a case
+  - The intent pr-integration gains a criterion naming that case
+validation:
+  - majordomus intent validate
+evidence_required:
+  - a_batch_is_typed_and_attributable
+risk: "Whether ADR 0114 is accepted is the owner's act. This issue is owned by the integrating session."
+created_at: 2026-10-08
+updated_at: 2026-10-08
