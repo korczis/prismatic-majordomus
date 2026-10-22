@@ -217,13 +217,15 @@ END {
   }
 
   # --- milestone status
+  # every milestone's issues, in id order, listed once: a scan of every issue for every
+  # milestone, here and in each count, was a quadratic share of every load (I0820)
+  for (j = 1; j <= inum; j++) { iid = iids[j]; mid = it[iid, "milestone"]; missue[mid, ++missuen[mid]] = iid }
   for (i = 1; i <= mn; i++) {
     id = mids[i]
     tot = 0
     delete cnt
-    for (j = 1; j <= inum; j++) {
-      iid = iids[j]
-      if (it[iid, "milestone"] != id) continue
+    for (j = 1; j <= missuen[id]; j++) {
+      iid = missue[id, j]
       tot++
       cnt[status[iid]]++
     }
@@ -307,16 +309,41 @@ END {
 
   # --- scope conflict: two issues that could run together but touch the same paths.
   #     Reported conservatively — an uncertain overlap serialises rather than races.
-  for (i = 1; i <= inum; i++) for (j = i + 1; j <= inum; j++) {
-    a = iids[i]; b = iids[j]
+  #     Two entries overlap when they are equal or one is a directory above the other
+  #     (trailing slashes and a leading ./ normalised, so that a hand-written entry cannot
+  #     silently miss). Only the issues that could run are paired, each with the later ones
+  #     of its own wave in id order, and each issue's entries are indexed once: its entries,
+  #     and every directory above one. An entry of a then overlaps b when b's index holds it
+  #     (equal, or above an entry of b), or b's entries hold a directory above it. Comparing
+  #     every entry of every pair of every issue was most of the engine's time (I0820).
+  #     The wave is compared as a number, as `wave[a] != wave[b]` did: an issue in a cycle
+  #     has no wave, which compares equal to wave 0.
+  cn = 0
+  for (i = 1; i <= inum; i++) {
+    a = iids[i]
     if (status[a] != "READY" && status[a] != "ACTIVE") continue
-    if (status[b] != "READY" && status[b] != "ACTIVE") continue
-    if (wave[a] != wave[b]) continue
-    for (x = 1; x <= scpn[a]; x++) for (y = 1; y <= scpn[b]; y++)
-      if (overlap(scp[a, x], scp[b, y])) {
-        finding("WARN", "scope_conflict", a, "shares " scp[a, x] " with " b "; they may not run concurrently")
-        x = scpn[a] + 1; break
+    cand[++cn] = a; w = wave[a] + 0
+    wmem[w, ++wmemn[w]] = a; wpos[a] = wmemn[w]
+    for (x = 1; x <= scpn[a]; x++) {
+      v = scp[a, x]; sub(/^\.\//, "", v); sub(/\/+$/, "", v)
+      sent[a, x] = v; sown[a, v] = 1; sidx[a, v] = 1; sancn[a, x] = 0
+      for (k = 1; k <= length(v); k++) if (substr(v, k, 1) == "/") {
+        up = substr(v, 1, k - 1); sidx[a, up] = 1; sanc[a, x, ++sancn[a, x]] = up }
+    }
+  }
+  for (i = 1; i <= cn; i++) {
+    a = cand[i]; w = wave[a] + 0
+    for (j = wpos[a] + 1; j <= wmemn[w]; j++) {
+      b = wmem[w, j]
+      for (x = 1; x <= scpn[a]; x++) {
+        hit = ((b, sent[a, x]) in sidx)
+        for (k = 1; !hit && k <= sancn[a, x]; k++) hit = ((b, sanc[a, x, k]) in sown)
+        if (hit) {
+          finding("WARN", "scope_conflict", a, "shares " scp[a, x] " with " b "; they may not run concurrently")
+          break
+        }
       }
+    }
   }
 
   # --- the active milestone: the lowest-ranked unblocked milestone that is ACTIVE, else the
@@ -392,9 +419,8 @@ END {
 # nowhere else, and computed again after the gate, which changes statuses underneath it.
 function mcounts(id,   j, iid, tot, v, nsv, sv, cnt, out) {
   tot = 0
-  for (j = 1; j <= inum; j++) {
-    iid = iids[j]
-    if (it[iid, "milestone"] != id) continue
+  for (j = 1; j <= missuen[id]; j++) {
+    iid = missue[id, j]
     tot++; cnt[status[iid]]++
   }
   out = "total=" tot ",required=" (tot - (cnt["CANCELLED"] + 0))
@@ -406,17 +432,6 @@ function mcounts(id,   j, iid, tot, v, nsv, sv, cnt, out) {
 function finding(level, code, subject, message) {
   vrec[++vn] = "V" OFS level OFS code OFS subject OFS message
   if (level == "FAIL") vfail++
-}
-
-# does path a contain path b, or the reverse? Trailing slashes and ./ are normalised so
-# that a hand-written scope entry cannot silently miss an overlap.
-function overlap(a, b) {
-  sub(/^\.\//, "", a); sub(/\/+$/, "", a)
-  sub(/^\.\//, "", b); sub(/\/+$/, "", b)
-  if (a == b) return 1
-  if (index(b, a "/") == 1) return 1
-  if (index(a, b "/") == 1) return 1
-  return 0
 }
 
 # insertion sort: the edge list is small and awk 3.2-era has no asort()
