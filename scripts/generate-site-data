@@ -156,6 +156,7 @@ for f in "$ROOT"/share/skeleton/profiles/*.yaml "$ROOT"/share/standard/majordomu
          "$ROOT"/share/schemas/*/*.proto "$ROOT"/share/schemas/*/*.schema.json \
          "$ROOT"/share/schemas/*/*/*.proto "$ROOT"/share/schemas/*/*/*.schema.json \
          "$ROOT/$PJ"/project.yaml "$ROOT/$PJ"/milestones/*.yaml \
+         "$ROOT/$PJ"/intents/*.yaml \
          "$ROOT/$PJ"/issues/*.yaml; do
   case "$f" in */docs/SITE_CLAIMS.md|*/docs/PLAN_STATUS.md|*/docs/PAGES_STATUS.md) continue ;; esac   # written by this script; never its own input
   INPUTS="$INPUTS
@@ -1873,6 +1874,40 @@ else
 fi
 
 mj_phase_end "gen:plan.json_the_execution_mode" "$GEN_T0"
+# ---------------------------------------------------------------- intents.json (what the work is for)
+GEN_T0="$(mj_phase_begin "gen:intents.json")"
+# The intents are typed records under the project's intents section, and the one reader of
+# them is the executable: `intent list` is what the API, MCP, the Cockpit and the UI answer
+# from, so the site asks the same question rather than parsing the records a second way.
+#
+# What is projected is what the records and the plan decide: the statement, the invariants,
+# the non-goals, what governs it, the milestones that realise it with the status the plan
+# derives for each, and every satisfaction criterion with the evidence that settles it and
+# the command that reproduces it. What is NOT projected is the stage and which criteria are
+# met. Both follow the evidence ledger, and evidence goes stale when a file its test names
+# changes — a file this script does not list among its inputs. A site that printed "met"
+# would be right on the commit it was generated from and silently wrong on the next one,
+# with a fingerprint that still matched. The pages say where the live answer is instead.
+mj_tool_read "$STAGE/intents.raw.json" "the intents" intent list --format json
+jq --arg src "$PJ/intents/" '
+  {schema: 1, source: $src, contract: "share/schemas/majordomus/intent/intent.v1.schema.json",
+   count: (.intents | length),
+   intents: [ .intents[] | {
+     id, title, statement,
+     path: (.source // ($src + .id + ".yaml")),
+     route: ("/intents/" + .id + "/"),
+     invariants: (.invariants // []),
+     non_goals: (.non_goals // []),
+     governance: (.governance // []),
+     milestones: [ (.milestones // [])[] | {id, resolved, status: (.status // "")} ],
+     criteria: [ (.satisfaction // [])[] | {id, criterion, evidence, ref: (.ref // ""), reproduce: (.reproduce // "")} ]
+   } ]}' "$STAGE/intents.raw.json" > "$OUT/intents.json"
+# a milestone an intent names is a page of the plan or the build fails: the intent page links
+# it, and `intent validate` refuses the same record for the same reason
+for bad in $(jq -r --slurpfile plan "$OUT/plan.json" '
+    [$plan[0].milestones[].id] as $ids | .intents[] | .id as $i | .milestones[] | select(.resolved and (.id | IN($ids[]) | not)) | "\($i):\(.id)"' "$OUT/intents.json"); do
+  echo "generate-site-data: intent ${bad%%:*} names milestone ${bad#*:}, which the plan's projection does not hold" >&2; exit 10; done
+mj_phase_end "gen:intents.json" "$GEN_T0"
 # ---------------------------------------------------------------- source.json
 GEN_T0="$(mj_phase_begin "gen:source.json")"
 HASH="$(mj_site_inputs_hash)"
@@ -1978,6 +2013,14 @@ i=0; jq -r '.skills[] | [.id, .title, .description, .status, .version, .path] | 
     mj_record_body "$ROOT/$path" | project_links "$path" | awk -f "$ROOT/scripts/lib/project-markdown.awk" \
       | awk '/^```/ { fence = !fence } !fence && /^#+ / { $0 = "#" $0 } { print }'
     printf '{%% endraw %%}\n'; } > "$CONTENT_ROOT/skills/$id.md"; done
+# one page per intent: the front matter carries what the listing needs and the template reads
+# the rest from intents.json; the directory is replaced whole so a withdrawn intent leaves no
+# page behind
+rm -rf "$CONTENT_ROOT/intents"
+mk_section intents "Intents" "What the work is for. Every intent is a typed record: a statement, its invariants, the milestones that realise it and the criteria that would satisfy it, each naming the evidence that settles it. Every page here is derived from the record through the command the API answers from." intents-section.html intent.html 12
+i=0; jq -r '.intents[] | [.id, .title, .statement, .path] | @tsv' "$OUT/intents.json" | while IFS="$MJ_TAB" read -r id title statement path; do i=$((i+1))
+  jstr_to L1 "$title"; jstr_to L2 "$id"; jstr_to L3 "$path"; jstr_to L4 "$statement"
+  printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nid = %s\nsource = %s\n+++\n' "$L1" "$L4" "$i" "$L2" "$L3" > "$CONTENT_ROOT/intents/$id.md"; done
 # ---------------------------------------------------------------- entities.json and one page per entity
 GEN_T0="$(mj_phase_begin "gen:entities")"
 # Every object of the layer's index that this site publishes as a page of its own.
