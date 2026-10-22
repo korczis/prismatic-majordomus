@@ -105,7 +105,9 @@ pub struct ReleasesReport {
     pub releases: Vec<ReleaseView>,
 }
 
-/// What this executable is: enough to tell two builds apart without asking a repository.
+/// What this executable is: enough to tell two builds apart without asking a repository,
+/// and the one question it answers about the repository it was asked in — whether it was
+/// built from that tree's crate.
 #[derive(Debug, Clone, Serialize, JsonSchema)]
 pub struct BuildReport {
     /// The version of the crate this executable was built from.
@@ -116,6 +118,22 @@ pub struct BuildReport {
     pub profile: String,
     /// The commit, or `unknown` when it was built outside a work tree.
     pub commit: String,
+    /// The digest of the crate sources it was built from, [`crate::GENERATION`], or `unknown`
+    /// when the build could not read them. What it *is*, unlike the version (what it calls
+    /// itself) or the commit (where it was built, which two builds of identical sources do not
+    /// share): equal generations are the same executable, whichever checkout built them.
+    pub generation: String,
+    /// The generation of the crate in the repository it was asked in, taken the way
+    /// `majordomus generate` takes it: equal to `generation` means this executable was built
+    /// from that tree's sources. `None` where the repository carries no crate — an installed
+    /// release in a foreign repository, which nothing compares. The scenario cache keys its
+    /// entries by `generation` only when the two agree (I2868), because one definition of the
+    /// digest answers both sides and no shell copy of it can drift.
+    pub tree_generation: Option<String>,
+    /// The lifecycle contract it implements, [`crate::LIFECYCLE_CONTRACT`]: what a lifecycle
+    /// step compares against the number its own tree declares. An executable that reports
+    /// none was built before the contract existed.
+    pub lifecycle_contract: u32,
     /// The target of the model this build matches, when the model declares one for the triple.
     pub distribution_target: Option<String>,
 }
@@ -306,11 +324,19 @@ fn build(ctx: &Context, _: Empty) -> Result<BuildReport, CapabilityError> {
         .as_ref()
         .and_then(|m| m.targets.iter().find(|t| t.rust_target == crate::TARGET))
         .map(|t| t.id.clone());
+    // the one reading of the repository this report makes, and the same function the
+    // generation guard of `generate` calls, so the shell never restates the digest
+    let crate_dir =
+        std::path::Path::new(&ctx.index.repository.root).join(crate::capability::model::CRATE_DIR);
+    let tree_generation = crate::generation::crate_generation(&crate_dir);
     Ok(BuildReport {
         version: crate::VERSION.to_string(),
         target: crate::TARGET.to_string(),
         profile: crate::PROFILE.to_string(),
         commit: crate::COMMIT.to_string(),
+        generation: crate::GENERATION.to_string(),
+        tree_generation,
+        lifecycle_contract: crate::LIFECYCLE_CONTRACT,
         distribution_target,
     })
 }
@@ -585,7 +611,7 @@ pub fn module() -> ModuleDescriptor {
             capability! {
                 id: "distribution.build",
                 title: "This build",
-                description: "What this executable is: the version of the crate it was built from, the Rust target triple, the profile, and the commit — all compiled in at build time, so an installed binary answers without a repository, a toolchain or git.",
+                description: "What this executable is: the version of the crate it was built from, the Rust target triple, the profile, the commit, the generation (the digest of the crate sources it was built from) and the lifecycle contract it implements — all compiled in at build time, so an installed binary answers without a repository, a toolchain or git — and the generation of the crate in the repository it was asked in, when that repository carries one.",
                 input: Empty,
                 output: BuildReport,
                 stability: Stability::BehaviorallyVerified,

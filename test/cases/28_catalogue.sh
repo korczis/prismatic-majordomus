@@ -93,5 +93,19 @@ expect_exit 10 "$MJ" doctor
 expect_grep "FAIL use-case .* runs 'watch', which the use case does not list under commands"
 restore
 
+# 8. a front-matter key the schema does not declare, and a body without its # Outcome. The
+#    loader reads every use case in one pass and records each file's keys and headings
+#    (I0820); these prove that what it recorded is what is judged.
+awk '{ print } /^status: active$/ { print "flavour: vanilla" }' "$T/uc.orig" > "$UC"
+took "$UC" "flavour: vanilla"
+expect_exit 10 "$MJ" doctor
+expect_grep "FAIL use-case +adopt-an-existing-repository — unknown key\(s\): flavour"
+restore
+sed 's/^# Outcome$/# Afterwards/' "$T/uc.orig" > "$UC"
+took "$UC" "# Afterwards"
+expect_exit 10 "$MJ" doctor
+expect_grep "FAIL use-case +adopt-an-existing-repository — body has no '# Outcome' heading"
+restore
+
 # healthy again after every mutation is reverted
 expect_exit 0 "$MJ" doctor
