@@ -204,6 +204,21 @@ kinds:
       field: schema
       supported: ["session-context/v1"]
 
+  # What a provider reported about the execution of one task, under the checkout-local half
+  # of the layer (.ai/local/state/telemetry/). Declared for the same reason session-context
+  # is: so the kind a record names is one this distribution knows and its contract can be
+  # found. No source class discovers it — the numbers belong to one machine's work and are
+  # never tracked. The contract is the whole point of the kind: every fact names who reported
+  # it, and a fact nobody reported is a value with a reason, never a missing key or a zero.
+  telemetry:
+    format: yaml
+    # the identity fixes the path: share/schemas/majordomus/telemetry/telemetry.v1.schema.json
+    schema: majordomus.telemetry/v1
+    identity: [task_id]
+    schema_version:
+      field: schema
+      supported: [telemetry/v1]
+
   adr:
     format: markdown
     front_matter: required

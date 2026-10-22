@@ -891,7 +891,7 @@ about and refuses nothing. `queued` is reported by
 name, never accepted as a pass and never refused: a verdict that never arrived and a verdict
 that said pass are different facts, and on 2026-09-10 this repository's trunk carried three
 branch-breaking defects overnight because they looked identical
-(`majordomus.never-reported-is-not-green`).
+(`project.never-reported-is-not-green`).
 
 The whole judgement — every gate, the plan that selected it, which obligations the change
 implies, and the twenty-two questions of the done invariant with the source that answered

@@ -18,6 +18,12 @@
 #                                   navigation and hero link of its homepage resolves, and a link
 #                                   with a #fragment names an element its page carries (I3008).
 #                                   The scan a case runs on a fixture. Exit 0, 10 findings, 12 missing.
+#   scripts/site-check --casefold PUBLIC_DIR|LISTING
+#                                   check 13l alone, over a built public directory with every
+#                                   composed snapshot in it, or a file listing its paths one per
+#                                   line (a case-insensitive disk cannot hold the clash a case
+#                                   needs): no two paths differ only in case (I3447). Exit 0, 10
+#                                   findings, 12 missing.
 #   scripts/site-check --prose-figures <dir>
 #                                   check 19 alone, over every *.md and *.toml under <dir>, with
 #                                   no built site: the scan a case runs on a fixture. Exit 0 when
@@ -25,9 +31,11 @@
 #   scripts/site-check --articles CONTENT_DIR NAV_TOML CONFIG_TOML
 #                                   check 21 alone, over the front matter of every *.md under
 #                                   CONTENT_DIR, with no built site: every article reads in every
-#                                   language the site declares, its counterparts name it back, and
-#                                   every translation matches its source's digest. The scan a case
-#                                   runs on a fixture. Exit 0 clean, 10 findings, 12 missing.
+#                                   language the site declares, its counterparts name it back,
+#                                   every translation matches its source's digest, and the articles
+#                                   it names as related name it back in its reader's language. The
+#                                   scan a case runs on a fixture. Exit 0 clean, 10 findings, 12
+#                                   missing.
 set -eu
 SYNC=1
 if [ "${1:-}" = --no-sync ]; then SYNC=0; shift; fi
@@ -99,6 +107,31 @@ roadmap_complete() { # page data-dir build-json
   [ "$rbad" = 0 ] || return 1
   echo "OK   roadmap      /roadmap/ draws all $(printf '%s\n' "$ms" | grep -c .) milestone(s) of plan.json in the graph's order, every issue under its milestone, observed at ${seen:0:11}"
 }
+# 13l as a function, so a case can hold it on a fixture (--casefold) and the full run calls the
+# same rule: no two paths of the publication are equal once case is folded (I3447). A
+# case-insensitive filesystem, the default on a Mac, cannot hold both, so the archive of a
+# publication that carries them does not extract there and a deploy from such a disk silently
+# keeps one. Every path is read, the composed snapshots included, and each clash names both.
+# Reports through the caller's ok and bad.
+casefold_unique() { # public-dir | listing-file (one path per line, for a case on a Mac)
+  local src="$1" paths clashes n
+  if [ -d "$src" ]; then paths="$(cd "$src" && find . -mindepth 1 | sed 's#^\./##')"
+  else paths="$(sed 's#^\./##; s#^/##' "$src")"; fi
+  n="$(printf '%s\n' "$paths" | grep -c . || true)"
+  clashes="$(printf '%s\n' "$paths" | grep . | LC_ALL=C sort \
+    | awk '{ k = tolower($0)
+             # a clash below one already reported is the same clash: report the topmost only
+             for (p = k; sub(/\/[^\/]*$/, "", p); ) if (p in clashed) next
+             if (k in seen) { print seen[k] "\t" $0; clashed[k] = 1 } else seen[k] = $0 }')"
+  if [ -n "$clashes" ]; then
+    while IFS="$(printf '\t')" read -r a b; do
+      bad casefold "/$a and /$b differ only in case; a case-insensitive filesystem holds one of them"
+    done <<< "$clashes"
+  else
+    ok casefold "$n published path(s), none equal to another once case is folded"
+  fi
+}
+
 # 13d as a function, so a case can hold it on a fixture (--nav) and the full run calls the same
 # rule: every navigation and hero link of the homepage resolves, and a link with a fragment
 # names an element its page carries (I3008). Reports through the caller's ok and bad.
@@ -132,10 +165,12 @@ nav_resolves() { # public-dir config-toml
 # is a page whose [extra] declares a lang, and a page that declares none is skipped. A page
 # names its counterparts in [extra.translations] (lang = "route/", any number of languages,
 # also written inline or as dotted keys), or in the two-language form [extra] alternate and
-# alternate_lang, which is read as a table of one entry. Prints, separated by \037:
-#   F <finding>                                        a counterpart that is not one
+# alternate_lang, which is read as a table of one entry. An article names the articles related
+# to it in [extra] related, an array of the same routes on one line (I3074). Prints, separated
+# by \037:
+#   F <finding>                                        a counterpart or a related article that is not one
 #   D <shown> <source file> <shown source> <digest>    a translation whose digest the caller recomputes
-#   N <articles> <listed> <languages> <language count> the summary
+#   N <articles> <listed> <languages> <language count> <related links>   the summary
 # The languages the site declares are config.toml's default_language and every lang a page
 # declares, so a language is declared once, by the page written in it.
 article_rows() { # content-dir nav-toml config-toml shown file...
@@ -201,6 +236,12 @@ article_rows() { # content-dir nav-toml config-toml shown file...
         next
       }
       if (tbl == "extra" && k ~ /^translations\./) { setkv(f, "extra.translations", unq(substr(k, 14)), val(v)); next }
+      if (tbl == "extra" && k == "related") {
+        if (v !~ /^\[[^]]*\][ \t\r]*(#.*)?$/) { F(show(f) " writes [extra] related other than as one array of routes on one line"); next }
+        sub(/^\[/, "", v); sub(/\][ \t\r]*(#.*)?$/, "", v); n = split(v, parts, ",")
+        for (i = 1; i <= n; i++) { p = unq(parts[i]); if (p != "") { nr[f]++; rp[f, nr[f]] = p } }
+        next
+      }
       setkv(f, tbl, k, val(v))
     }
     END {
@@ -265,7 +306,45 @@ article_rows() { # content-dir nav-toml config-toml shown file...
         if (from[s] != "" || dig[s] != "") { F(show(f) " is translated from " show(s) ", which is itself a translation; the original carries no digest"); continue }
         printf "D%s%s%s%s%s%s%s%s\n", US, show(f), US, s, US, show(s), US, dig[f]
       }
-      printf "N%s%d%s%d%s%s%s%d\n", US, narts, US, nlisted, US, langs, US, nl
+      # the articles an article names as related (I3074), each one a group of counterparts read
+      # by its first member: a page of another group, in the language of the article where that
+      # group has one, which names the article or one of its counterparts back; every member of a
+      # group relates the same groups; and once the site relates any article, every article the
+      # navigation lists names one
+      for (i = 1; i <= nf; i++) { f = files[i]; if (lang[f] != "") { split(g[f], gw, " "); gid[f] = gw[1] } }
+      for (i = 1; i <= nf; i++) {
+        f = files[i]; if (!nr[f]) continue
+        if (lang[f] == "") { F(show(f) " names related articles and declares no lang; only an article names them"); continue }
+        relating = 1; named = " "
+        for (j = 1; j <= nr[f]; j++) {
+          p = rp[f, j]; t = at_route(p)
+          if (index(named, " " route(p) " ")) { F(show(f) " lists " p " twice as related"); continue }
+          named = named route(p) " "
+          if (t == "") { F(show(f) " names " p " as related, and no page under " shown " is at that route"); continue }
+          if (lang[t] == "") { F(show(f) " names " show(t) " as related, and " show(t) " declares no lang, so it is no article"); continue }
+          if (t == f) { F(show(f) " names itself as related"); continue }
+          if (gid[t] == gid[f]) { F(show(f) " names " show(t) " as related, and " show(t) " is one of its own counterparts"); continue }
+          if (lang[t] != lang[f] && ((t SUBSEP lang[f]) in vt))
+            F(show(f) " names " show(t) " as related, which is written in " lang[t] "; its " lang[f] " counterpart " show(vt[t, lang[f]]) " is the one to name")
+          rg[f] = rg[f] " " gid[t]; nrel++; back = 0
+          for (k = 1; k <= nr[t]; k++) { u = at_route(rp[t, k]); if (u != "" && lang[u] != "" && gid[u] == gid[f]) back = 1 }
+          if (!back) F(show(f) " names " show(t) " as related, and " show(t) " names neither it nor any of its counterparts back")
+        }
+        rg[f] = sortw(rg[f])
+      }
+      for (i = 1; i <= nf; i++) {
+        f = files[i]; if (lang[f] == "") continue
+        n = split(vl[f], ks, " ")
+        for (j = 1; j <= n; j++) {
+          t = vt[f, ks[j]]
+          if (f < t && rg[f] != rg[t]) F(show(f) " and its " ks[j] " counterpart " show(t) " relate different articles: " show(f) " [" rg[f] "], " show(t) " [" rg[t] "]")
+        }
+      }
+      if (relating) for (i = 1; i <= nf; i++) {
+        f = files[i]
+        if (lang[f] != "" && (rt[f] in listed) && !nr[f]) F(show(f) " is an article the navigation lists and names no related article, and the site relates its articles")
+      }
+      printf "N%s%d%s%d%s%s%s%d%s%d\n", US, narts, US, nlisted, US, langs, US, nl, US, nrel
     }' "$config" "$nav" "$@"
 }
 # The digest a translation records of its source: SHA-256 of the source's bytes after the
@@ -286,16 +365,21 @@ source_body_digest() { # file -> hex digest
 # listed twice; an article the navigation lists with no counterpart in a language the site
 # declares; and a translation whose source is not a counterpart, is itself a translation, or has
 # changed since the digest it records. A stale digest is never rewritten here: the re-sync is the
-# translator's act, so the finding prints the digest to record once it is done. Reports through
+# translator's act, so the finding prints the digest to record once it is done. Of the articles
+# an article names as related (I3074), refused: a route that is no page or no article, the
+# article itself or one of its counterparts, a route listed twice, a page in another language
+# where its group has one in the article's own, a related article that names neither the article
+# nor any of its counterparts back, two counterparts that relate different articles, and, once
+# the site relates any article, an article the navigation lists that names none. Reports through
 # the caller's ok and bad.
 article_counterparts() { # content-dir nav-toml config-toml shown
-  local dir="${1%/}" nav="$2" config="$3" shown="${4%/}" kind a b c d sum before="$fails"
-  local fresh=0 narts=0 nlisted=0 langs="" nl=0 mds=()
+  local dir="${1%/}" nav="$2" config="$3" shown="${4%/}" kind a b c d e sum before="$fails"
+  local fresh=0 narts=0 nlisted=0 langs="" nl=0 nrel=0 related="" mds=()
   while IFS= read -r f; do mds+=("$f"); done < <(find "$dir" -type f -name '*.md' | LC_ALL=C sort)
-  while IFS=$'\037' read -r kind a b c d; do
+  while IFS=$'\037' read -r kind a b c d e; do
     case "$kind" in
       F) bad articles "$a" ;;
-      N) narts="$a"; nlisted="$b"; langs="$c"; nl="$d" ;;
+      N) narts="$a"; nlisted="$b"; langs="$c"; nl="$d"; nrel="${e:-0}" ;;
       D)
         sum="$(source_body_digest "$b")" && [ -n "$sum" ] || { bad articles "$a: no digest of $c could be computed ($MJ_SHA256_MISSING)"; continue; }
         if [ "$sum" = "$d" ]; then fresh=$((fresh + 1))
@@ -304,14 +388,22 @@ article_counterparts() { # content-dir nav-toml config-toml shown
     esac
   done < <(article_rows "$dir" "$nav" "$config" "$shown" ${mds[@]+"${mds[@]}"})
   [ "$fails" = "$before" ] || return 0
-  if [ "$nl" -lt 2 ]; then ok articles "the site declares one language ($langs); none of its $narts article(s) owes a counterpart"
-  else ok articles "every article the navigation lists ($nlisted of $narts) reads in every language the site declares ($langs), every counterpart names it back, and $fresh translation(s) match their source's digest"; fi
+  [ "$nrel" -gt 0 ] && related="; $nrel related link(s) are answered back, each in its reader's language"
+  if [ "$nl" -lt 2 ]; then ok articles "the site declares one language ($langs); none of its $narts article(s) owes a counterpart$related"
+  else ok articles "every article the navigation lists ($nlisted of $narts) reads in every language the site declares ($langs), every counterpart names it back, and $fresh translation(s) match their source's digest$related"; fi
 }
 if [ "${1:-}" = --roadmap ]; then
   [ $# -ge 3 ] || { echo "site-check: --roadmap PAGE DATA_DIR [BUILD_JSON]" >&2; exit 2; }
   [ -f "$2" ] && [ -f "$3/plan.json" ] && [ -f "$3/roadmap.json" ] \
     || { echo "site-check: --roadmap needs a built page and a data directory with plan.json and roadmap.json" >&2; exit 12; }
   roadmap_complete "$2" "$3" "${4:-$(dirname "$3")/build.json}" && exit 0
+  exit 10
+fi
+if [ "${1:-}" = --casefold ]; then
+  [ -d "${2:-}" ] || [ -f "${2:-}" ] || { echo "site-check: --casefold needs a built public directory, or a file listing its paths" >&2; exit 12; }
+  fails=0; ok() { printf 'OK   %-12s %s\n' "$1" "$2"; }; bad() { printf 'FAIL %-12s %s\n' "$1" "$2"; fails=$((fails + 1)); }
+  casefold_unique "$2"
+  [ "$fails" = 0 ] && exit 0
   exit 10
 fi
 if [ "${1:-}" = --nav ]; then
@@ -1197,6 +1289,8 @@ if [ -f "$PUB/build.json" ]; then
   grep -qF "$(jq -r .commit "$bj" | cut -c1-12)" "$PUB/index.html" || { bad build "the homepage footer does not carry the built commit"; bbad=1; }
   [ "$bbad" = 0 ] && ok build "/build.json: commit ${head_commit:0:12}$([ "$(jq -r .dirty "$bj")" = true ] && printf ' (dirty tree)'), input hash $(jq -r .source_hash "$bj" | cut -c1-12), registry fingerprint $(jq -r .registry_fingerprint "$bj" | cut -c1-12)"
 else bad build "site/public/build.json missing (site-build writes it)"; fi
+# 13l. no two published paths differ only in case, the composed snapshots included (I3447)
+casefold_unique "$PUB"
 # 13b. every tile has a page: profiles, claims, statuses, responsibilities, commands
 for slug in $(jq -r '.profiles[].slug' "$SITE/data/generated/profiles.json"); do [ -f "$PUB/profiles/$slug/index.html" ] || bad tiles "no page for profile $slug"; done
 for id in $(jq -r '.claims[].id' "$SITE/data/generated/capabilities.json"); do [ -f "$PUB/guarantees/$id/index.html" ] || bad tiles "no page for claim $id"; done
@@ -1253,9 +1347,26 @@ PJ="$SITE/data/generated/plan.json"
 for id in $(jq -r '.milestones[].id, .issues[].id' "$PJ"); do
   [ -f "$PUB/plan/$(printf '%s' "$id" | tr 'A-Z' 'a-z')/index.html" ] || bad tiles "no page for plan record $id"
 done
-# the diagram is HTML, so its arrows are escaped; compare against what the browser receives
-jq -r '.edges[] | .from + " --&gt; " + .to' "$PJ" > "$PAGEROWS.found"; while read -r e; do
-  grep -qF -- "$e" "$PUB/plan/dag/index.html" || bad tiles "edge ${e/--&gt;/-->} is in plan.json but not in the rendered graph"
+# Where each edge is drawn (I3841): /plan/dag/ draws the milestone graph, one counted arrow per
+# pair of milestones an issue dependency crosses, and lists the issues behind each arrow; a
+# milestone's page draws the edges between its own issues. Every edge of plan.json is checked on
+# the page that owns it. The diagram is HTML, so its arrows are escaped; compare against what the
+# browser receives.
+jq -r 'def node: "M_" + gsub("[^A-Za-z0-9]"; "_");
+  .milestone_edges[] | (.from | node) + " --&gt;|" + (.count | tostring) + "| " + (.to | node)' "$PJ" > "$PAGEROWS.found"
+while read -r e; do
+  grep -qF -- "$e" "$PUB/plan/dag/index.html" || bad tiles "milestone edge ${e/--&gt;/-->} is in plan.json but not in the graph /plan/dag/ draws"
+done < "$PAGEROWS.found"
+jq -r '(.issues | map({key: .id, value: .milestone}) | from_entries) as $of
+  | .edges[] | [.from, .to, $of[.from], $of[.to]] | @tsv' "$PJ" > "$PAGEROWS.found"
+while IFS="$MJ_TAB" read -r from to mfrom mto; do
+  if [ "$mfrom" = "$mto" ]; then
+    page="$PUB/plan/$(printf '%s' "$mfrom" | tr 'A-Z' 'a-z')/index.html"
+    grep -qF -- "$from --&gt; $to" "$page" || bad tiles "edge $from --> $to is in plan.json but not in the graph milestone $mfrom's page draws"
+  else
+    grep -qE -- ">$from</a> → <a href=\"[^\"]*\" class=\"[^\"]*\">$to</a>" "$PUB/plan/dag/index.html" \
+      || bad tiles "edge $from --> $to crosses $mfrom and $mto and is not listed on /plan/dag/"
+  fi
 done < "$PAGEROWS.found"
 for id in $(jq -r '.issues[] | select(.status=="READY") | .id' "$PJ"); do
   grep -qF "plan/$(printf '%s' "$id" | tr 'A-Z' 'a-z')/" "$PUB/plan/index.html" || bad tiles "READY issue $id is not linked from /plan/"
@@ -1801,6 +1912,8 @@ relay_check search "$ROOT/scripts/lib/search-check.mjs" "OK   search       " "FA
 # counterpart a page names and scripts/ci/link-check holds each to a built page; what neither
 # can see is the other direction (A names B and B does not name A), a counterpart in the wrong
 # language, an article with no counterpart at all, or a translation its source has moved past.
+# It holds the articles an article names as related the same way (I3074): templates/page.html
+# draws them, and only this check sees one that does not answer back or speaks another language.
 # The rule is article_counterparts, above, read from site/content-src so it needs no build, and
 # `--articles <dir> <nav.toml> <config.toml>` runs it alone.
 article_counterparts "$SITE/content-src" "$SITE/data/nav.toml" "$SITE/config.toml" site/content-src

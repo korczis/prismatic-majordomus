@@ -27,11 +27,14 @@ flowchart LR
   plan --&gt; rust["rust"]
   plan --&gt; coverage["coverage"]
   plan --&gt; bench["bench (macOS)"]
-  plan --&gt; site["site"]
-  plan --&gt; interactions["interactions"]
+  plan --&gt; site["site&lt;br&gt;the build, once"]
+  site --&gt; probeshards["site-probe-shard ×6&lt;br&gt;a stride of the routes each"]
+  probeshards --&gt; probe["site-probe&lt;br&gt;every route exactly once"]
+  site --&gt; ishards["interaction-probe-shard ×6&lt;br&gt;a stride of the pages each"]
+  ishards --&gt; interactions["interactions&lt;br&gt;every page exactly once"]
   plan --&gt; ui["ui"]
   plan --&gt; macos["macos"]
-  structure &amp; suite &amp; rust &amp; coverage &amp; bench &amp; site &amp; interactions &amp; ui &amp; macos --&gt; ci["ci&lt;br&gt;the verdict; the one&lt;br&gt;required status"]
+  structure &amp; suite &amp; rust &amp; coverage &amp; bench &amp; site &amp; probe &amp; interactions &amp; ui &amp; macos --&gt; ci["ci&lt;br&gt;the verdict; the one&lt;br&gt;required status"]
 </pre>
 
 
@@ -268,6 +271,48 @@ are measured at a time; the findings are rendered in route order whatever the or
 processes finished in, and a finding still names the route, the width, the assertion and
 what was measured. The homepage behaviour checks (the mobile menu, the dropdown, the theme
 toggle) are unchanged. `--quick` remains the local sample.
+
+In CI the sweep is split in six (I2841). As one step of the site job it took 35-37 minutes,
+which held that job at 46-50 of its 50 minutes until one run was cancelled at its bound. The
+Czech copies then doubled the routes, and run 39317142394 stopped the single step at its
+2700 s bound. The `site-probe-shard` jobs now run side by side after the site job's build:
+
+- each one gets the files that build generated and git ignores (artifact `site-probe-inputs`);
+- each runs its own Zola build;
+- each measures `SITE_PROBE_SHARD=K/6`: every sixth route of the sorted list, starting from
+  the Kth. A stride rather than six blocks, so the expensive sections are spread across shards;
+- each writes the routes it measured (`SITE_PROBE_REPORT`).
+
+The homepage behaviour and the command routes are shard 1's, so each is reported once.
+
+The `site-probe` job is the gate's. It asks `scripts/site-probe --verify-report` whether the
+reports are shards 1..6, each once, and whether together they hold every route of the site,
+each once. Only then, and only if every shard passed, does it write the gate's receipt.
+
+Case 3602 holds the partition, the fan-in and the wiring, whatever the number of shards.
+Reproduce one shard locally with `SITE_PROBE_SHARD=2/6 SITE_PROBE_JOBS=4 scripts/site-probe`, or
+see which routes it holds with `scripts/site-probe --partition 2/6 < routes.txt`.
+
+## The interaction probe
+
+`scripts/interaction-probe` drives every control on every page with the behaviour spec that
+claims it (`project.every-link-and-control-is-tested`). As one job it rebuilt the site and drove
+every page in one step. That step reached page 1850 of 1865 at its 2400 s bound on 2026-10-12.
+After the Czech copies doubled the pages, run 39317142394 stopped it at 3300 s.
+
+Since I3602 it is split in six like the site probe, and cut by the same rule:
+
+- the site job packs its build without the composed surfaces (artifact `interaction-probe-site`,
+  about 26 MB; the mounts come from the topology);
+- each `interaction-probe-shard` job drives `MJ_PROBE_SHARD=K/6`, the stride
+  `scripts/site-probe --partition K/6` gives for the sorted pages, and writes them to
+  `MJ_PROBE_REPORT`;
+- the `interactions` job keeps the gate. It runs `scripts/site-probe --verify-report` over the
+  six reports and writes the receipt only if they are every page once and every shard passed.
+
+No page is sampled, the Czech copies included. A finding still fails the shard that drove the
+page and names the page and the spec. Case 3603 drives three shards of a fixture site in a
+browser. Reproduce one CI shard with `MJ_PROBE_SHARD=2/6 MJ_PROBE_JOBS=4 scripts/interaction-probe`.
 
 ## Caches and artifacts
 

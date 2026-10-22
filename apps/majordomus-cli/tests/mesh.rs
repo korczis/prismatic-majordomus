@@ -567,12 +567,13 @@ fn a_registration_learns_only_the_trusted_nodes_of_its_own_repository() {
     let key = |name: &str| {
         NodeIdentity::load_or_create(&dir.path().join(format!("{name}.json"))).unwrap()
     };
-    let (hub_id, trusted_id, stranger_id, caller_id, other_id) = (
+    let (hub_id, trusted_id, stranger_id, caller_id, other_id, untrusted_id) = (
         key("hub"),
         key("trusted"),
         key("stranger"),
         key("caller"),
         key("other"),
+        key("untrusted"),
     );
     let mut config = MeshConfig {
         schema: "mesh/v1".into(),
@@ -588,12 +589,16 @@ fn a_registration_learns_only_the_trusted_nodes_of_its_own_repository() {
         trust: Default::default(),
         cooperation: Default::default(),
     };
-    // the hub lists its own key beside the trusted node's: a machine its trust list does not
-    // name keeps its mesh closed and admits nobody
+    // the hub lists its own key beside the trusted nodes': a machine its trust list does not
+    // name keeps its mesh closed and admits nobody. The two callers are trusted too; what an
+    // untrusted caller learns is asked of `untrusted` below (ADR 0220 decision 5, I3826)
     config.trust.allow = vec![
         hub_id.public.public_key.clone(),
         trusted_id.public.public_key.clone(),
+        caller_id.public.public_key.clone(),
+        other_id.public.public_key.clone(),
     ];
+    let hub_id_pk = hub_id.public.public_key.clone();
     let hub = MeshRuntime::new();
     hub.activate(&config, hub_id, vec!["127.0.0.1:1".into()], vec![], "test")
         .unwrap();
@@ -624,18 +629,53 @@ fn a_registration_learns_only_the_trusted_nodes_of_its_own_repository() {
     assert!(!refused.accepted);
     assert!(refused.candidates.is_empty(), "{:?}", refused.candidates);
 
-    // a caller of r1 learns the hub and the trusted node, not the stranger
+    // the keys an answer names, in a stable order
+    let learned = |candidates: &[majordomus_cli::mesh::protocol::Envelope]| {
+        let mut keys: Vec<String> = candidates.iter().map(|c| c.adv.pk.clone()).collect();
+        keys.sort();
+        keys
+    };
+    let sorted = |keys: &[&String]| {
+        let mut keys: Vec<String> = keys.iter().map(|k| (*k).clone()).collect();
+        keys.sort();
+        keys
+    };
+
+    // a trusted caller of r1 learns the hub and the trusted nodes of r1, itself among them,
+    // and never the stranger
     let same = hub.register(&envelope(&caller_id, &["r1"], 4), "test");
     assert!(same.accepted);
-    let keys: Vec<String> = same.candidates.iter().map(|c| c.adv.pk.clone()).collect();
-    assert_eq!(keys.len(), 2, "{keys:?}");
-    assert!(keys.contains(&trusted_id.public.public_key));
-    assert!(!keys.contains(&stranger_id.public.public_key));
+    assert_eq!(
+        learned(&same.candidates),
+        sorted(&[
+            &hub_id_pk,
+            &trusted_id.public.public_key,
+            &caller_id.public.public_key
+        ]),
+    );
 
-    // a caller of another repository learns the hub alone
+    // a trusted caller of another repository learns the hub and itself, no node of r1
     let other = hub.register(&envelope(&other_id, &["r2"], 5), "test");
     assert!(other.accepted);
-    assert_eq!(other.candidates.len(), 1, "{:?}", other.candidates);
+    assert_eq!(
+        learned(&other.candidates),
+        sorted(&[&hub_id_pk, &other_id.public.public_key]),
+    );
+
+    // a caller of r1 whose key nobody trusts is answered, and learns the hub alone: who
+    // trusts whom is told only to those trusted (ADR 0220 decision 5, I3826)
+    let unknown = hub.register(&envelope(&untrusted_id, &["r1"], 6), "test");
+    assert!(unknown.accepted);
+    let keys: Vec<String> = unknown
+        .candidates
+        .iter()
+        .map(|c| c.adv.pk.clone())
+        .collect();
+    assert_eq!(
+        keys,
+        vec![hub_id_pk.clone()],
+        "an untrusted caller learned {keys:?}"
+    );
     hub.stop();
 }
 

@@ -252,7 +252,8 @@ pub enum RegisterError {
 }
 
 /// One registration round-trip: present `envelope` to the rendezvous at `endpoint` and read
-/// its answer. Plain HTTP through the same minimal client the MCP bridge uses, with the
+/// its answer, through the same minimal client the MCP bridge uses: over TLS to an `https://`
+/// hub, in cleartext only to a hub whose address is not public (ADR 0220), with the
 /// reply held at most at [`MAX_REGISTER_ANSWER`] and its candidates at
 /// [`MAX_ANSWER_CANDIDATES`]: a rendezvous is somebody else's process, and what it answers
 /// costs this one a bounded buffer and a bounded wait whatever it sends (I2704).
@@ -468,6 +469,19 @@ mod tests {
         );
         assert!(provider.status().sent >= 1);
         stop.store(true, std::sync::atomic::Ordering::SeqCst);
+    }
+
+    /// A hub declared in cleartext at a public address is never sent the envelope: the
+    /// registration fails at once, naming the address and the correction.
+    #[test]
+    fn a_public_cleartext_hub_is_refused_before_the_envelope_is_sent() {
+        let identity = crate::mesh::identity::NodeIdentity::ephemeral().unwrap();
+        let envelope = crate::mesh::protocol::advertise(&identity, 1, &[], &[], &[], "test");
+        let error = register("http://203.0.113.5:8791", &envelope)
+            .unwrap_err()
+            .to_string();
+        assert!(error.contains("203.0.113.5 is a public address"), "{error}");
+        assert!(error.contains("use https://203.0.113.5:8791"), "{error}");
     }
 
     #[test]

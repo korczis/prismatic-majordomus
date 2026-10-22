@@ -33,8 +33,9 @@ that disappears stops holding anything, everywhere, on its own.
 
 **It is not** a lock service with strong consistency (a partition lets both sides claim; the
 conflict is named after healing), a file synchroniser (git owns source), a remote execution
-facility (nothing a peer sends runs anything), an encrypted transport (there is no TLS in the
-executable), or a WAN federation (no NAT traversal; rendezvous and seeds need reachable
+facility (nothing a peer sends runs anything), an encrypted transport (only an `https://` hub
+or seed is reached over TLS; discovery and links to advertised addresses are cleartext, kept off
+public networks), or a WAN federation (no NAT traversal; rendezvous and seeds need reachable
 addresses).
 
 ## The shape
@@ -88,6 +89,13 @@ flowchart TD
 </div>
 
 
+A hosted hub has no disk that outlives a boot, so a key minted there would make it a new,
+untrusted node at every restart. `majordomus serve --node-seed-env VAR` takes the node key from
+the 64-hex-digit seed in that environment variable instead (a secret of the platform), writes
+nothing to `node.json`, and keeps one node id across every boot; with the variable unset or
+malformed the mesh stays off and its reason names the variable, never the value (ADR 0220,
+I3826). The seed's public key is what `trust.allow` lists for the hub.
+
 An address, a port, a host name or a PID is never identity. Two worktrees of one machine
 share the node key and are two runtimes; a restarted server keeps its runtime and changes
 its instance, so its peers list it once with `restarts` counted.
@@ -115,7 +123,11 @@ a mixed fleet shows the mismatch instead of going quiet.
 Multicast sockets are bound with `SO_REUSEADDR` and `SO_REUSEPORT`, so every runtime of a
 machine hears the group. A server bound to `0.0.0.0` advertises its interfaces' addresses,
 physical and overlay interfaces before container bridges; a server bound to loopback
-advertises loopback, which only its own machine can dial.
+advertises loopback, which only its own machine can dial. A server behind a platform's router
+dials nobody at its interface addresses, so `serve --advertise URL` advertises that one public
+URL instead; `mesh.status` lists what a node advertises as `advertised`. The Gigalixir
+deployment's generated Procfile passes both `--advertise` and `--node-seed-env` from the
+deployment object (ADR 0219, ADR 0220).
 
 ## Trust
 
@@ -203,10 +215,19 @@ counted in `refused_in`/`refused_out` and listed with its detail on `mesh.cooper
 ## Transport
 
 The link protocol posts `Signed` messages through `LinkTransport`. The shared server's
-transport is plain HTTP/1.1 through the crate's one minimal client (ADR 0032: no HTTP client
-dependency, no TLS, no async runtime); unit tests put runtimes behind an in-process transport
-that runs the same protocol. Authenticity is the protocol's; confidentiality is the network's
-— run links on a private network or an overlay (a tailnet, WireGuard).
+transport is HTTP/1.1 through the crate's one minimal client (ADR 0032: no HTTP client
+dependency, no async runtime); unit tests put runtimes behind an in-process transport that runs
+the same protocol. An endpoint written `https://host[:port]` — a rendezvous hub or a seed, by
+host name or address — is reached over TLS (rustls with the ring provider), the certificate
+verified against the Mozilla roots compiled into the executable and the host name checked
+against it; a certificate that does not verify is refused naming the endpoint, before any byte
+of the request is sent. An `http://` endpoint, and an advertised `host:port` a link dials, is
+cleartext, and the client sends it only when every address the host resolves to is loopback,
+RFC 1918 private, link-local, `100.64.0.0/10` (a tailnet) or IPv6 unique-local: a public address
+is refused before the connection, with the correction `use https://` (ADR 0220). `mesh doctor`
+reports the same verdict for every declared hub and seed as its `transport` check, without
+dialing. Authenticity is the protocol's; confidentiality is TLS's for an `https://` endpoint and
+the network's otherwise — run links on a private network or an overlay (a tailnet, WireGuard).
 
 ## Presence, heartbeats and expiry
 
@@ -337,7 +358,7 @@ releases, the lanes that repair conflicting branches, and the workers. A seat is
 holding its exclusive claim, so it is subject to everything above: it is refused to a second
 session while it is held, it moves when the claim is released, and it falls vacant when its
 holder stops beating. Which seats there are and which scope each one claims is
-[rule `project.the-cooperation-model-is-the-owners-word`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v1.md)
+[rule `project.the-cooperation-model-is-the-owners-word`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md)
 (ADR 0167), the one record of it; this document does not copy the table. The Mesh screen of
 the UI (`/ui/mesh`) asks `mesh.state` for the live claims and draws who holds each seat now.
 
@@ -359,14 +380,20 @@ Every server restart is a new stream, so a journal that kept everything would gr
 bound and a machine would fill its 64-stream quota by running. Compaction drops the streams
 nothing needs any more. Each runtime runs it on its own, every sixty heartbeats (five minutes
 at the defaults), and only when its journal holds more than 20 000 events or 768 streams or
-when one node holds 48 streams — then that node's streams alone are due. A stream can go only
+when one node holds 48 streams or 15 000 events — then that node's streams alone are due. A
+node's own crowding matters because the journal-wide bound is no larger than one node's quota
+of 20 000 events: a machine alone fills its quota before the journal is over its bound, and past
+the quota every event of that machine is refused, a claim's release among them. A stream can go only
 when it has been silent for longer than the expiry plus 15 minutes, measured on the local
 clock from the last beat heard or, for a stream never heard beating, from when the journal
 learned of it (so the streams a restart reloads are not taken for dead at once). A runtime
 never drops its own stream. Of the streams that could go, one stays while:
 
 - **it published a handover nobody has taken** — for at most a day past those 15 minutes
-  (`HANDOVER_RETENTION`). A handover is continuity meant to outlive the run that wrote it;
+  (`HANDOVER_RETENTION`), counted on the local clock or from the handover's signed
+  publication time, whichever lapses first: the local count restarts with every server, so on
+  its own a machine whose servers never live a day would keep a dead stream for ever. A
+  handover is continuity meant to outlive the run that wrote it;
   the day bounds how much of its node's quota a machine's untaken handovers can hold. A
   handover somebody has taken keeps nothing. A lapsed one is still its author's record, and
   `mesh handover publish` offers it again under the same id.
@@ -519,6 +546,8 @@ referenced artifact a peer materialises.
 | a peer's process is killed | its links go degraded → unreachable → expired; its stream stops beating; its sessions and claims expire | on restart it is the same runtime, new instance; it re-handshakes into one table row and syncs; its previous run's claims stay expired |
 | the network partitions | each side expires the other's streams and may claim what the other held | on healing, one round each way; concurrent exclusive claims resolve to one named winner; digests agree |
 | a peer restarts while linked | the answerer refuses the old link id as `unknown_link`; the dialer says hello again | the table row is kept, `restarts` counts |
+| one machine's dead streams fill its node's event quota | every later event of that machine is refused as `capacity` — claims, releases, closes; `mesh verify`'s `rejections` check fails naming `capacity`; the node is due for compaction at three quarters of its quota, and a dead stream's untaken handover lapses by its signed publication time, so a restart does not renew it | once the dead streams go, the refused events are offered again and accepted; the release arrives and the claim reads released everywhere (I2825) |
+| two processes speak for one checkout (a server older than v0.27.0 that never left the mesh when another took its lease) | every peer that hears both replaces one link with the other each round, and `unknown_link: … previous instance` repeats; `mesh verify`'s `instances` check fails naming both instances | stopping the process the lease does not name ends the flapping; the lease's holder is the checkout's one runtime |
 | a relay dies in a line A–B–C | A and C expire each other's streams through lost beats | when B returns, marks re-align and nothing is duplicated |
 | hostile or broken input | typed refusal, counted, listed; the runtime keeps serving | nothing enters the journal |
 | a crash tears the journal file, or the disk refuses an append | an append writes a missing newline first and syncs; a failed append is counted (`write_failures`) and its operation answers `"durability": "not_durable"` — never acknowledged as durable, and `mesh claim`, `mesh session open` and the other writes print `NOT DURABLE`; a line that does not read on reload is counted (`unreadable`), and `mesh doctor` fails its `journal` check; compaction writes a synced file and renames it over the old one; the file is the owner's alone (0600) | every complete event reloads, the event after a torn line reads, and an event that did not reach the disk is still replicated from memory and from peers |
@@ -555,7 +584,9 @@ What the mesh defends against, and how:
 | a hostile handover consumed here | every front-matter field is single-line at ingest; the record's file name keeps only timestamp digits, hex and `[A-Za-z0-9_-]`, and a path outside the handovers directory is refused |
 | a host on the network posting claims, sessions, handovers or reviews for this node to sign | a request from an address that is not loopback runs only a capability that reads or whose input is a signed message (`mesh.link.hello`, `mesh.link.sync`, `mesh.register`); every other route answers 403 `forbidden` before its handler runs (ADR 0126) |
 | a web page driving the server (DNS rebinding) | a state-changing request from a browser is accepted only from the server's own origin and only when addressed by an IP literal or `localhost` |
-| a registration that maps the mesh | a refused registration is answered with the refusal alone; an admitted one learns the hub and the trusted nodes of its own repositories, never observed strangers or another repository (I2133) |
+| a registration that maps the mesh | a refused registration is answered with the refusal alone; an admitted one learns the hub and, only when its own key is trusted, the trusted nodes of its own repositories, never observed strangers or another repository (I2133, I3826) |
+| a remote reader of the mesh's working state | the capabilities that show it (`mesh.status`, `mesh.state`, `mesh.peers`, `mesh.peer`, `mesh.nodes`, `mesh.events`, `mesh.cooperation`, `mesh.doctor`, `mesh.firewall`, `peers.list`, `monitor.stream`) are declared local-only and answer 403 `forbidden` to a caller beyond loopback, and so do `/ui/mesh` and `/cockpit/{mesh,peers,monitor}`; liveness, the repository's reads, `mesh.identity` and the signed-input routes (`mesh.register`, `mesh.link.*`) stay open (ADR 0220 decision 4, I3826) |
+| a remote reader of what this process runs | the live channel's upgrade (`/events`), `executions.list`, `executions.get`, `executions.events`, `executions.demonstrate` and `/cockpit/executions` answer a caller beyond loopback 403 `forbidden`: an execution of a local-only read must not leak through the channel that reports it (I3842) |
 | a stranger's hellos | the replay cache and the refusal list hold only what a trusted key of this repository sent, or are capped |
 | a stale peer holding a scope forever | claims live only while the holder's beat rises |
 | publishing arbitrary files | handover publication reads only `.ai/local/state/handovers/` |
@@ -566,9 +597,10 @@ What the mesh defends against, and how:
 
 What it does not defend against: an observer on the network sees that a Majordomus runs, its
 advertisements and — for linked peers — session intents, claim scopes, review subjects and
-published handover bodies, because nothing is encrypted; run it on a private network or an
-overlay. A holder of an allowed node key is that node. A compromised trusted peer can publish
-misleading claims and handovers under its own identity — they are attributed to it and expire
+published handover bodies, because nothing but a request to an `https://` hub or seed is
+encrypted; run it on a private network or an overlay. A holder of an allowed node key is that
+node. A compromised trusted peer can publish misleading claims and handovers under its own
+identity — they are attributed to it and expire
 with it, but they are believed until then. The default — no declaration, or `enabled: false` —
 exists for environments where presence disclosure is unacceptable.
 
@@ -657,9 +689,10 @@ answers requests, exactly as one with none (`mesh status` shows the `rendezvous`
 
 **What travels.** What the security model above says: advertisements on the local segment and
 to the hubs; to linked runtimes of the owner's machines, session metadata, claim scopes, review
-subjects and published handover bodies. Nothing is encrypted; every hub address is on the
-private network or the tailnet, and `test/cases/491_the_mesh_is_on_here.sh` refuses a
-declaration that names a public one.
+subjects and published handover bodies. Nothing is encrypted but a request to an `https://`
+hub; every hub address is on the private network or the tailnet, the client refuses cleartext
+to a public one, and `test/cases/491_the_mesh_is_on_here.sh` refuses a declaration that names
+a public one.
 
 **Adding a machine.** Run `majordomus mesh identity` there, add the key under `trust.allow` with
 a comment naming the machine and its node id to the trust row of the table above, and commit
