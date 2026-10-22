@@ -46,3 +46,33 @@ pub(crate) fn session(c: &Cooperation, session: &str, worker: &str, intent: &str
     })
     .unwrap();
 }
+
+/// A server on the loopback address that answers `/` as the leaseholder of `id` and every
+/// other path with `body`, for as many requests as are made.
+pub(crate) fn http_stub(id: String, body: &'static str) -> String {
+    use std::io::{BufRead, BufReader, Write};
+    let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let url = format!("http://{}", listener.local_addr().unwrap());
+    std::thread::spawn(move || {
+        for stream in listener.incoming().flatten() {
+            let mut reader = BufReader::new(&stream);
+            let mut request = String::new();
+            let _ = reader.read_line(&mut request);
+            let mut line = String::new();
+            while reader.read_line(&mut line).is_ok_and(|n| n > 2) {
+                line.clear();
+            }
+            let answer = if request.starts_with("GET / ") {
+                serde_json::json!({ "name": "majordomus", "repository_id": id }).to_string()
+            } else {
+                body.to_string()
+            };
+            let _ = write!(
+                &stream,
+                "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{answer}",
+                answer.len()
+            );
+        }
+    });
+    url
+}
