@@ -31,9 +31,10 @@ unquiet() {
 mkdir -p "$T/cases"
 printf '%s\n' "printf 'enabled: true\\nmulticast:\\n  enabled: false\\ntailscale:\\n  enabled: false\\n'" > "$T/cases/1_quiet.sh"
 printf '%s\n' "printf 'enabled: true\\nmulticast:\\n  enabled: false\\ntrust:\\n  policy: tofu\\n'" > "$T/cases/2_loud.sh"
-# one argument per line, so that this file's own text holds neither form
-printf '%s\n' 'cat <<EOF' 'enabled: true' 'multicast:' '  enabled: false' 'tailscale:' '  enabled: false' EOF > "$T/cases/3_quiet_heredoc.sh"
-printf '%s\n' 'cat <<EOF' 'enabled: true' 'multicast:' '  enabled: false' 'trust:' '  policy: tofu' EOF > "$T/cases/4_loud_heredoc.sh"
+# one argument per line, so that this file's own text holds neither form, and no
+# here-document opener either: case 413 reads one in a quoted string as a heredoc
+printf '%s\n' 'enabled: true' 'multicast:' '  enabled: false' 'tailscale:' '  enabled: false' > "$T/cases/3_quiet_heredoc.sh"
+printf '%s\n' 'enabled: true' 'multicast:' '  enabled: false' 'trust:' '  policy: tofu' > "$T/cases/4_loud_heredoc.sh"
 [ "$(unquiet "$T/cases" | tr '\n' ' ')" = "2_loud.sh 4_loud_heredoc.sh " ] \
   || { echo "    the check did not name the case that leaves the tailnet on: $(unquiet "$T/cases")"; exit 1; }
 
