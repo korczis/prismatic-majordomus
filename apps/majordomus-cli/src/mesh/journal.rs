@@ -530,8 +530,9 @@ impl HandoverBody {
 /// never breaks an older one's replication.
 ///
 /// The vocabulary is small on purpose: everything the mesh coordinates is a session, a
-/// claim, a handover or a review, and an event that would need a ninth kind is a feature
-/// that has not been agreed. The `kind` tag is what goes on the wire, so it is protocol —
+/// claim, a handover or a review, and what a seat did is said in a notice (I2874, agreed
+/// with the journal's owner on 2026-10-21); an event that would need an eleventh kind is a
+/// feature that has not been agreed. The `kind` tag is what goes on the wire, so it is protocol —
 /// two executables of different ages read the same word for the same event.
 ///
 /// ```
@@ -637,7 +638,30 @@ pub enum EventBody {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         note: Option<String>,
     },
+    /// A session said what it did: one run of a worktree cleanup or a disk prune, say, with
+    /// the bytes it gave back (I2874). Folded outside the digested state
+    /// ([`crate::mesh::state::fold_notices`]), and permanent for its stream's life like
+    /// every event, so a seat writes one per run, never one per item.
+    NoticePublished {
+        /// The publishing session within the stream.
+        session: String,
+        /// What it was done to: `worktree-cleanup`, `disk-prune`. One line, up to
+        /// [`NOTICE_SUBJECT_MAX`] bytes.
+        subject: String,
+        /// What was done, up to [`NOTICE_TEXT_MAX`] bytes.
+        text: String,
+        /// The bytes it reclaimed, when it reclaimed any.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        bytes: Option<u64>,
+    },
 }
+
+/// The most a notice's subject carries: one line naming what was done to.
+pub const NOTICE_SUBJECT_MAX: usize = 256;
+
+/// The most a notice's text carries. Every notice stays in its stream for the stream's life
+/// and counts against the node's event quota, so this is a sentence, not a report.
+pub const NOTICE_TEXT_MAX: usize = 1024;
 
 /// The most a review request's body, or a requester's result note, carries: room for the
 /// evidence a reviewer needs without a second channel, and far under the link's bound.
@@ -655,6 +679,7 @@ pub const KNOWN_KINDS: &[&str] = &[
     "review_requested",
     "review_answered",
     "review_withdrawn",
+    "notice_published",
 ];
 
 impl EventBody {
@@ -682,6 +707,7 @@ impl EventBody {
             EventBody::ReviewRequested { .. } => "review_requested",
             EventBody::ReviewAnswered { .. } => "review_answered",
             EventBody::ReviewWithdrawn { .. } => "review_withdrawn",
+            EventBody::NoticePublished { .. } => "notice_published",
         }
     }
 
@@ -839,6 +865,21 @@ impl EventBody {
                     text("note", v, REVIEW_BODY_MAX)?;
                 }
                 Ok(())
+            }
+            // checked here and not only where it is published, so a peer that sends a notice
+            // out of bounds is refused at ingest
+            EventBody::NoticePublished {
+                session,
+                subject,
+                text: said,
+                ..
+            } => {
+                ident("session", session)?;
+                if subject.trim().is_empty() {
+                    return Err("a notice names what it was done to".into());
+                }
+                line("subject", subject, NOTICE_SUBJECT_MAX)?;
+                text("text", said, NOTICE_TEXT_MAX)
             }
         }
     }
@@ -3454,6 +3495,41 @@ mod tests {
         bad.body = serde_json::json!({"kind": "claim_acquired", "claim": "c", "session": "s", "scope": ["/etc/passwd"]});
         bad.sig = a.identity.sign(&bad.signing_bytes());
         let r = b.ingest(&[bad], &accept_all);
+        assert_eq!(r.rejected.get(&Rejection::Bounds), Some(&1));
+    }
+
+    #[test]
+    fn a_notice_out_of_bounds_is_refused_when_published_and_when_a_peer_sends_it() {
+        let notice = |subject: &str, text: String| EventBody::NoticePublished {
+            session: "s1".into(),
+            subject: subject.into(),
+            text,
+            bytes: Some(1),
+        };
+        let a = journal("0000000000000001");
+        assert!(a
+            .append_own(notice("worktree-cleanup", "2 removed".into()))
+            .is_ok());
+        for (subject, text) in [
+            ("", "x".to_string()),
+            ("two\nlines", "x".to_string()),
+            ("worktree-cleanup", "y".repeat(NOTICE_TEXT_MAX + 1)),
+            (&"s".repeat(NOTICE_SUBJECT_MAX + 1), "x".to_string()),
+        ] {
+            assert!(
+                a.append_own(notice(subject, text)).is_err(),
+                "{subject:?} was signed"
+            );
+        }
+        assert_eq!(a.events().len(), 1, "nothing out of bounds was signed");
+
+        // a peer's notice is checked at ingest, not trusted because it is signed
+        let b = journal("0000000000000002");
+        let mut long = opened(&a, "s9");
+        long.body = serde_json::json!({"kind": "notice_published", "session": "s9",
+            "subject": "disk-prune", "text": "z".repeat(NOTICE_TEXT_MAX + 1)});
+        long.sig = a.identity.sign(&long.signing_bytes());
+        let r = b.ingest(&[long], &accept_all);
         assert_eq!(r.rejected.get(&Rejection::Bounds), Some(&1));
     }
 

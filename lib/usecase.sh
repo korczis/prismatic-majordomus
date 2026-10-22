@@ -66,9 +66,12 @@ USAGE
 
 # ---------------------------------------------------------------- loading
 mj_uc_paths() {
-  MJ_UC_DIR="$MJ_AI_DIR/$(mj_man sections.use-cases)"; MJ_AP_DIR="$MJ_AI_DIR/$(mj_man sections.applications)"
-  [ -n "$(mj_man sections.use-cases)" ] || MJ_UC_DIR=""
-  [ -n "$(mj_man sections.applications)" ] || MJ_AP_DIR=""
+  # each section asked of the manifest once, not once for the path and again for the test
+  local uc ap
+  uc="$(mj_man sections.use-cases)"; ap="$(mj_man sections.applications)"
+  MJ_UC_DIR="$MJ_AI_DIR/$uc"; MJ_AP_DIR="$MJ_AI_DIR/$ap"
+  [ -n "$uc" ] || MJ_UC_DIR=""
+  [ -n "$ap" ] || MJ_AP_DIR=""
   MJ_UC_EVIDENCE="$MJ_AI_LOCAL_DIR/evidence/use-cases"
 }
 
@@ -111,39 +114,150 @@ mj_uc_flat() {
   printf '%s' "$tmp"
 }
 
-# load every use case and application once: MJ_UC_FILE_<i>, MJ_UC_FLAT_<i>, MJ_UC_ID_<i>;
+# load every use case and application once: MJ_UC_FILE_<i>, the fields as MJUC<i>__<key>,
+# the front-matter keys as MJ_UC_KEYS_<i> and the body's headings as MJ_UC_HEADS_<i>; the
 # same for applications with AP. Order is the sorted file order, which is stable.
+#
+# All of it is three awk passes over the whole catalogue, not a dozen processes per file:
+# per file, the loader used to run mj_uc_flat (front matter, two flattenings, the scenario
+# section, a sed), an awk for the kind and another for the variables, and the validator
+# then read every body again — about ten processes a file, which made the catalogue the
+# slowest validator of doctor (I0820). The passes are the same readers in the same order:
+#   1. one awk splits every file the way mj_record_front, mj_uc_scenario_yaml and
+#      mj_record_body do, into <n>.yaml files and one line of facts per file;
+#   2. mj_yaml_flatten_many flattens all of them, with the parser mj_uc_flat uses, so a
+#      front matter that does not parse is a use case without fields, as before, and a
+#      scenario that stops parsing keeps the lines read before the error, as the pipe did;
+#   3. one awk turns the flat lines into the name<TAB>value lines mj_yload emits, skipping
+#      a context document the way the loader did, and mj_yassign assigns them.
+# mj_uc_flat stays the reader of one file (scripts/generate-site-data); this is the same
+# reading for all of them at once.
 mj_uc_load() {
   [ "$MJ_UC_LOADED" = 1 ] && return 0
   mj_uc_paths
-  local f i=0 j=0 flat
-  MJ_UC_IDS=""; MJ_AP_IDS=""
+  local f nuc=0 tmp i k
+  MJ_UC_IDS=""; MJ_AP_IDS=""; MJ_UC_N=0; MJ_AP_N=0; MJ_UC_CATS=""
+  set --
   if [ -n "$MJ_UC_DIR" ] && [ -d "$MJ_UC_DIR" ]; then
-    for f in "$MJ_UC_DIR"/*.md; do
-      [ -f "$f" ] || continue
-      flat="$(mj_uc_flat "$f")" || flat=""
-      # a context document beside the use cases (the section's README) is not a use case
-      [ -n "$flat" ] && [ "$(mj_yget "$flat" kind)" = context ] && { rm -f "$flat"; continue; }
-      printf -v "MJ_UC_FILE_$i" '%s' "$f"; printf -v "MJ_UC_FLAT_$i" '%s' "$flat"
-      # every field becomes a variable once; the readers below are expansions, not processes
-      [ -n "$flat" ] && mj_yload "$flat" "MJUC$i"
-      MJ_UC_IDS="$MJ_UC_IDS $(mj_uc_v "$i" id)"
-      i=$((i+1))
-    done
+    for f in "$MJ_UC_DIR"/*.md; do [ -f "$f" ] && set -- "$@" "$f"; done
   fi
-  MJ_UC_N=$i
+  nuc=$#
   if [ -n "$MJ_AP_DIR" ] && [ -d "$MJ_AP_DIR" ]; then
-    for f in "$MJ_AP_DIR"/*.md; do
-      [ -f "$f" ] || continue
-      flat="$(mj_uc_flat "$f")" || flat=""
-      [ -n "$flat" ] && [ "$(mj_yget "$flat" kind)" = context ] && { rm -f "$flat"; continue; }
-      printf -v "MJ_AP_FILE_$j" '%s' "$f"; printf -v "MJ_AP_FLAT_$j" '%s' "$flat"
-      [ -n "$flat" ] && mj_yload "$flat" "MJAP$j"
-      MJ_AP_IDS="$MJ_AP_IDS $(mj_ap_v "$j" id)"
-      j=$((j+1))
-    done
+    for f in "$MJ_AP_DIR"/*.md; do [ -f "$f" ] && set -- "$@" "$f"; done
   fi
-  MJ_AP_N=$j
+  if [ $# -gt 0 ]; then
+    tmp="$(mktemp -d "${TMPDIR:-/tmp}/mj.ucl.XXXXXX")"
+    # 1. split: front matter (f<n>.yaml), scenario section (s<n>.yaml), and per file
+    #    "<n> uc|ap <path> <front?> <scenario?> <headings>" in argument order. A part is
+    #    written only when it has a non-empty line: the readers it replaces captured the
+    #    part in a command substitution and skipped it when that was empty. The facts are
+    #    printed for every argument from ARGV, so an empty file is a use case still.
+    awk -v d="$tmp" -v nuc="$nuc" '
+      function flush() {
+        if (cur == "") return
+        if (fstate != 2 && fne) { printf "%s", front > (d "/f" n ".yaml"); close(d "/f" n ".yaml"); hasf[n] = 1 }
+        if (sne) { printf "%s", scen > (d "/s" n ".yaml"); close(d "/s" n ".yaml"); hass[n] = 1 }
+        heads[n] = hd
+      }
+      # a file that cannot be opened is dropped from the reading, not fatal to it: it is a
+      # use case whose front matter does not parse, as it was when each file had its awk
+      BEGIN {
+        for (a = 1; a < ARGC; a++) {
+          path[a] = ARGV[a]; num[ARGV[a]] = a
+          if ((getline l < path[a]) < 0) ARGV[a] = ""
+          close(path[a])
+        }
+      }
+      FNR == 1 {
+        flush(); cur = FILENAME; n = num[FILENAME]
+        front = ""; fne = 0; scen = ""; sne = 0; sec = 0; fence = 0; sdone = 0; c = 0; hd = ""
+        fstate = ($0 == "---") ? 1 : 2
+      }
+      {
+        # mj_record_front: a first line of --- opens it, the next --- closes it (state 3)
+        if (FNR > 1 && fstate == 1) { if ($0 == "---") fstate = 3; else { front = front $0 "\n"; if ($0 != "") fne = 1 } }
+        # mj_record_body: everything after the second --- line, searched for its headings
+        if (c >= 2) {
+          if (index($0, "# Situation")) hd = hd "<# Situation>"
+          if (index($0, "# Scenario")) hd = hd "<# Scenario>"
+          if (index($0, "# Outcome")) hd = hd "<# Outcome>"
+          if (index($0, "# Context")) hd = hd "<# Context>"
+        }
+        if ($0 ~ /^---$/) c++
+        # mj_uc_scenario_yaml, rule for rule, until it would have exited
+        if (!sdone) {
+          if ($0 ~ /^# Scenario[ \t]*$/) sec = 1
+          else if (sec && $0 ~ /^```yaml[ \t]*$/) fence = 1
+          else if (sec && fence && $0 ~ /^```[ \t]*$/) sdone = 1
+          else if (sec && fence) { scen = scen $0 "\n"; if ($0 != "") sne = 1 }
+          else if (sec && $0 ~ /^# /) sdone = 1
+        }
+      }
+      END {
+        flush()
+        for (a = 1; a < ARGC; a++)
+          printf "%s\t%s\t%s\t%s\t%s\t%s\n", a, (a <= nuc ? "uc" : "ap"), path[a], hasf[a] + 0, hass[a] + 0, heads[a]
+      }' "$@" > "$tmp/files"
+    # 2. flatten every part in one process; <tmp>/f<n> and s<n>, failures in <tmp>/.errors.
+    #    The taxonomy rides along (<tmp>/taxonomy): its categories are what the validator
+    #    measures a use case's category against, and flattening it was four processes more.
+    set -- "$tmp"/*.yaml
+    [ -f "$1" ] || set --
+    [ -n "$MJ_UC_DIR" ] && [ -f "$MJ_UC_DIR/taxonomy.yaml" ] && set -- "$@" "$MJ_UC_DIR/taxonomy.yaml"
+    if [ $# -gt 0 ]; then mj_yaml_flatten_many "$tmp" "$@" || true; fi
+    # 3. the variables, as mj_yload names them, plus the file, the keys the unknown-key
+    #    check reads (the front matter's, less any under scenario., as the grep dropped)
+    #    and the headings; a front matter in .errors leaves the file without fields
+    awk -F'\t' -v d="$tmp" '
+      function emit(p, l,   e, k, v) {
+        e = index(l, "="); k = e ? substr(l, 1, e - 1) : l; v = e ? substr(l, e + 1) : l
+        if (k !~ /^[A-Za-z0-9_.-]+$/) return
+        gsub(/-/, "___", k); gsub(/\./, "__", k)
+        printf "%s__%s\t%s\n", p, k, v
+      }
+      BEGIN { while ((getline l < (d "/.errors")) > 0) { split(l, er, "\t"); bad[er[1]] = 1 } }
+      {
+        nf = 0; kind = ""; kinded = 0; fok = 0
+        if ($4 == 1 && !(("f" $1) in bad)) {
+          fok = 1
+          while ((getline l < (d "/f" $1)) > 0) {
+            fl[++nf] = l
+            if (!kinded && index(l, "kind=") == 1) { kind = substr(l, 6); kinded = 1 }
+          }
+          close(d "/f" $1)
+        }
+        # a context document beside the use cases (the section README) is not a use case
+        if (kind == "context") next
+        if ($2 == "uc") { i = nu++; p = "MJUC" i; fv = "MJ_UC_FILE_" i; kv = "MJ_UC_KEYS_" i; hv = "MJ_UC_HEADS_" i }
+        else { i = na++; p = "MJAP" i; fv = "MJ_AP_FILE_" i; kv = "MJ_AP_KEYS_" i; hv = "MJ_AP_HEADS_" i }
+        printf "%s\t%s\n", fv, $3
+        keys = ""
+        for (x = 1; x <= nf; x++) {
+          emit(p, fl[x])
+          if (fl[x] !~ /^scenario\./) { k = fl[x]; sub(/=.*/, "", k); keys = keys (keys == "" ? "" : " ") k }
+        }
+        printf "%s\t%s\n%s\t%s\n", kv, keys, hv, $6
+        if (fok && $5 == 1) {
+          while ((getline l < (d "/s" $1)) > 0) emit(p, "scenario." l)
+          close(d "/s" $1)
+        }
+      }
+      # the categories, each followed by a space as `tr` left them; a taxonomy that does
+      # not parse has none, as mj_uc_categories had none
+      END {
+        printf "MJ_UC_N\t%d\nMJ_AP_N\t%d\n", nu, na
+        cats = ""
+        if (!("taxonomy" in bad))
+          while ((getline l < (d "/taxonomy")) > 0)
+            if (l ~ /^categories\.[0-9]+\.id=/) cats = cats substr(l, index(l, "=") + 1) " "
+        printf "MJ_UC_CATS\t%s\n", cats
+      }' "$tmp/files" > "$tmp/vars"
+    # a regular file, not a pipe: read then takes a buffer at a time instead of a byte
+    mj_yassign < "$tmp/vars"
+    rm -rf "$tmp"
+  fi
+  i=0; while [ "$i" -lt "$MJ_UC_N" ]; do k="MJUC${i}__id"; MJ_UC_IDS="$MJ_UC_IDS ${!k:-}"; i=$((i+1)); done
+  i=0; while [ "$i" -lt "$MJ_AP_N" ]; do k="MJAP${i}__id"; MJ_AP_IDS="$MJ_AP_IDS ${!k:-}"; i=$((i+1)); done
   MJ_UC_LOADED=1
 }
 mj_uc_v()    { mj_yv "MJUC$1" "$2"; }
@@ -179,14 +293,18 @@ mj_ap_file() { local n="MJ_AP_FILE_$1"; printf '%s' "${!n}"; }
 # the lookup quadratic in subshells
 mj_uc_index() { local i=0 MJ_V; while [ "$i" -lt "$MJ_UC_N" ]; do mj_uc_get "$i" id; [ "$MJ_V" = "$1" ] && { printf '%s' "$i"; return 0; }; i=$((i+1)); done; return 1; }
 mj_ap_index() { local j=0 MJ_V; while [ "$j" -lt "$MJ_AP_N" ]; do mj_ap_get "$j" id; [ "$MJ_V" = "$1" ] && { printf '%s' "$j"; return 0; }; j=$((j+1)); done; return 1; }
-# the categories of the taxonomy, one id per line
-mj_uc_categories() {
-  local t="$MJ_UC_DIR/taxonomy.yaml" flat
-  [ -f "$t" ] || return 0
-  flat="$(mktemp "${TMPDIR:-/tmp}/mj.tax.XXXXXX")"
-  mj_yaml_flatten "$t" > "$flat" 2>/dev/null || { rm -f "$flat"; return 0; }
-  awk -F= '/^categories\.[0-9]+\.id=/ { print substr($0, index($0, "=") + 1) }' "$flat"
-  rm -f "$flat"
+# The same lookups for a caller that asks them in a loop, answered in this shell: the index
+# in MJ_I, and a list in MJ_V joined by newlines exactly as $(mj_uc_list ...) captured it.
+# The validator asked each of them once per reference through a command substitution, a
+# subshell apiece, which was most of what it cost per use case (I0820). The taxonomy's
+# categories are read by mj_uc_load (MJ_UC_CATS).
+mj_uc_index_v() { local i=0 k; while [ "$i" -lt "$MJ_UC_N" ]; do k="MJUC${i}__id"; [ "${!k:-}" = "$1" ] && { MJ_I=$i; return 0; }; i=$((i+1)); done; return 1; }
+mj_ap_index_v() { local j=0 k; while [ "$j" -lt "$MJ_AP_N" ]; do k="MJAP${j}__id"; [ "${!k:-}" = "$1" ] && { MJ_I=$j; return 0; }; j=$((j+1)); done; return 1; }
+mj_uc_vlist() { # prefix field
+  local i=0 k n nl='
+'
+  k="${2//-/___}"; k="${k//./__}"; MJ_V=""
+  while n="$1__${k}__$i"; [ -n "${!n:-}" ]; do MJ_V="${MJ_V:+$MJ_V$nl}${!n}"; i=$((i+1)); done
 }
 # the commands a scenario runs, one per line, in order. The walk is over step ids, not
 # over `run.0`: an obligation step has no command, and a loop that stopped at the first
@@ -210,10 +328,12 @@ mj_uc_active() { local k="MJUC${1}__status"; [ "${!k:-}" = active ]; }
 # the fixture directory the scenarios draw setup scripts and stdin bodies from: the
 # repository's own when it has one, otherwise the distribution's (a managed repository
 # uses the tool's prepared states)
-mj_uc_fixture_dir() {
-  if [ -d "$MJ_ROOT/test/fixtures/commands/setup" ]; then printf '%s' "$MJ_ROOT/test/fixtures/commands"
-  else printf '%s' "$MJ_BIN_DIR/../test/fixtures/commands"; fi
+# (in MJ_V, for a caller that would otherwise pay a subshell for it)
+mj_uc_fixture_dir_v() {
+  if [ -d "$MJ_ROOT/test/fixtures/commands/setup" ]; then MJ_V="$MJ_ROOT/test/fixtures/commands"
+  else MJ_V="$MJ_BIN_DIR/../test/fixtures/commands"; fi
 }
+mj_uc_fixture_dir() { local MJ_V; mj_uc_fixture_dir_v; printf '%s' "$MJ_V"; }
 
 # ---------------------------------------------------------------- the command
 mj_cmd_usecase() {
@@ -288,22 +408,51 @@ mj_uc_cmd_show() {
 # command print the same lines. Returns the number of failures in MJ_UC_BAD.
 MJ_UC_BAD=0
 mj_uc_bad() { mj_doctrine_fail use-case "$1" "$2" "${3:-}"; MJ_UC_BAD=$((MJ_UC_BAD+1)); }
+# Everything per use case is answered in this shell from what mj_uc_load assigned: the
+# lists, indexes, body headings and scenario mode are expansions, and the unknown-key check
+# is one grep over every use case's keys, since whether a key is unknown does not depend
+# on the file it is in. The universes a reference may name are one grep and one awk over
+# the four files they come from. What it reports, in what order, is what the per-reference
+# subshells reported (I0820, case 28).
 mj_uc_validate_all() {
-  local i j id f base ref k cats cmds dispatch fix stdin_dir body claims resp sid seen="" cmd_list found cmd unk flatn sids st
+  local i j id f base ref k cats cmds dispatch fix stdin_dir claims resp sid seen="" cmd_list found cmd unk sids st
+  local n u tools allk unknown="" obl_ids="" acc nl='
+'
   MJ_UC_BAD=0
   mj_uc_load
-  # the universes a reference may name, each one string tested with a pattern, no process
-  cats=" $(mj_uc_categories | tr '\n' ' ') "
-  dispatch=" $(grep -oE '^  [a-z|-]+\)$' "$MJ_BIN_DIR/majordomus" | tr -d ' )' | tr '|\n' '  ') "
-  fix="$(mj_uc_fixture_dir)"; stdin_dir="$fix/stdin"
-  claims=" $(grep -E '^  - id: ' "$MJ_ROOT/docs/CLAIMS.yaml" 2>/dev/null | sed 's/^  - id: //' | tr '\n' ' ') "
-  resp=" $(grep -E '^  - id: ' "$MJ_ROOT/docs/RESPONSIBILITIES.yaml" 2>/dev/null | sed 's/^  - id: //' | tr '\n' ' ') "
-  local tools=""
-  [ -f "$MJ_ROOT/docs/generated/registry.json" ] && tools=" $(grep -o '"tool": *"[a-z_]*"' "$MJ_ROOT/docs/generated/registry.json" | sed 's/.*"\([a-z_]*\)"$/\1/' | tr '\n' ' ') "
+  # the universes a reference may name, each one string tested with a pattern. Each is
+  # built as the grep | sed | tr pipelines built it, a space after every entry and one
+  # more on each side, because an empty reference is matched against exactly that string.
+  cats=" $MJ_UC_CATS "
+  mj_uc_fixture_dir_v; fix="$MJ_V"; stdin_dir="$fix/stdin"
+  # The registry is megabytes of JSON, which grep scans an order of magnitude faster than
+  # awk reads it, so grep still finds the tools and the awk only takes them off stdin;
+  # absent, it is no universe at all and the MCP references are not checked.
+  local reg="$MJ_ROOT/docs/generated/registry.json"
+  u="$(grep -o '"tool": *"[a-z_]*"' "$reg" 2>/dev/null | awk -v bin="$MJ_BIN_DIR/majordomus" \
+      -v cl="$MJ_ROOT/docs/CLAIMS.yaml" -v rs="$MJ_ROOT/docs/RESPONSIBILITIES.yaml" '
+    { sub(/"$/, ""); sub(/.*"/, ""); too = too $0 " " }
+    END {
+      while ((getline l < bin) > 0) if (l ~ /^  [a-z|-]+\)$/) { gsub(/[ )]/, "", l); gsub(/\|/, " ", l); dis = dis l " " }
+      while ((getline l < cl) > 0) if (l ~ /^  - id: /) cla = cla substr(l, 9) " "
+      while ((getline l < rs) > 0) if (l ~ /^  - id: /) res = res substr(l, 9) " "
+      # a line after the four, so that the last of them keeps its newline in $(...)
+      printf "%s\n%s\n%s\n%s\n.", dis, cla, res, too
+    }')"
+  { IFS= read -r dispatch; IFS= read -r claims; IFS= read -r resp; IFS= read -r tools; } <<< "$u"
+  dispatch=" $dispatch "; claims=" $claims "; resp=" $resp "
+  if [ -f "$reg" ]; then tools=" $tools "; else tools=""; fi
+  # the rules' ids once; mj_doc_index answered the same question by a walk per reference
+  local doc_ids
+  doc_ids="$nl$(mj_doc_ids)$nl"
   [ -f "$MJ_UC_DIR/taxonomy.yaml" ] || mj_uc_bad "$(mj_rel "$MJ_UC_DIR")/taxonomy.yaml" "absent; the categories use cases are filed under are declared there" "majordomus init --extend"
+  # keys the schema does not declare, decided once for the keys of every use case
+  allk=""; i=0
+  while [ "$i" -lt "$MJ_UC_N" ]; do n="MJ_UC_KEYS_$i"; [ -z "${!n:-}" ] || allk="$allk${!n// /$nl}$nl"; i=$((i+1)); done
+  [ -z "$allk" ] || unknown="$nl$(grep -vE -f <(grep -v '^#' "$MJ_ALLOW_DIR/use-case.txt") <<< "${allk%"$nl"}" || true)$nl"
   i=0
   while [ "$i" -lt "$MJ_UC_N" ]; do
-    f="$(mj_uc_file "$i")"; base="${f##*/}"; base="${base%.md}"; mj_uc_get "$i" id; id="$MJ_V"
+    n="MJ_UC_FILE_$i"; f="${!n}"; base="${f##*/}"; base="${base%.md}"; mj_uc_get "$i" id; id="$MJ_V"
     if [ -z "$id" ]; then mj_uc_bad "$(mj_rel "$f")" "front matter does not parse or declares no id" "majordomus usecase validate"; i=$((i+1)); continue; fi
     [ "$id" = "$base" ] || mj_uc_bad "$(mj_rel "$f")" "id '$id' is not the file name" "mv $(mj_rel "$f") $(mj_rel "$MJ_UC_DIR")/$id.md"
     case " $seen " in *" $id "*) mj_uc_bad "$id" "declared twice" "majordomus usecase list" ;; esac; seen="$seen $id"
@@ -314,32 +463,39 @@ mj_uc_validate_all() {
     # keys the schema does not declare: the allow-list is generated from the schema, and
     # covers the front matter only. The scenario the loader folded in under `scenario.`
     # came from the body, where the section list is what governs it, so it is dropped here
-    # rather than measured against a list that deliberately no longer mentions it.
-    flatn="MJ_UC_FLAT_$i"
-    unk="$(grep -v '^scenario\.' "${!flatn}" 2>/dev/null | mj_yaml_unknown_keys /dev/stdin "$MJ_ALLOW_DIR/use-case.txt" || true)"
-    [ -z "$unk" ] || mj_uc_bad "$id" "unknown key(s): $(printf '%s' "$unk" | tr '\n' ' ')" "share/schemas/majordomus/use-case/use-case.v1.proto"
+    # rather than measured against a list that deliberately no longer mentions it (the
+    # loader leaves those keys out of MJ_UC_KEYS_<i>).
+    n="MJ_UC_KEYS_$i"; unk=""
+    for k in ${!n:-}; do case "$unknown" in *"$nl$k$nl"*) unk="$unk$k " ;; esac; done
+    [ -z "$unk" ] || mj_uc_bad "$id" "unknown key(s): ${unk% }" "share/schemas/majordomus/use-case/use-case.v1.proto"
     mj_uc_get "$i" category; case "$cats" in *" $MJ_V "*) ;; *) mj_uc_bad "$id" "category '$MJ_V' is not in taxonomy.yaml" "$(mj_rel "$MJ_UC_DIR")/taxonomy.yaml" ;; esac
-    cmd_list="$(mj_uc_list "$i" commands)"
+    mj_uc_vlist "MJUC$i" commands; cmd_list="$MJ_V"
     [ -n "$cmd_list" ] || mj_uc_bad "$id" "names no command; a use case that runs nothing is a description" ""
     for ref in $cmd_list; do case "$dispatch" in *" $ref "*) ;; *) mj_uc_bad "$id" "names command '$ref', which bin/majordomus does not dispatch" "majordomus --help" ;; esac; done
-    for ref in $(mj_uc_list "$i" doctrines); do mj_doc_index "$ref" >/dev/null || mj_uc_bad "$id" "names doctrine '$ref', which no rule declares" "majordomus doctrine list"; done
-    for ref in $(mj_uc_list "$i" claims); do case "$claims" in *" $ref "*) ;; *) mj_uc_bad "$id" "names claim '$ref', which docs/CLAIMS.yaml does not have" "grep -n 'id: ' docs/CLAIMS.yaml" ;; esac; done
-    for ref in $(mj_uc_list "$i" responsibilities); do case "$resp" in *" $ref "*) ;; *) mj_uc_bad "$id" "names responsibility '$ref', which docs/RESPONSIBILITIES.yaml does not have" "" ;; esac; done
-    for ref in $(mj_uc_list "$i" applications); do
-      j="$(mj_ap_index "$ref")" || { mj_uc_bad "$id" "names application '$ref', which does not exist" "ls $(mj_rel "$MJ_AP_DIR")"; continue; }
-      case " $(mj_ap_list "$j" use_cases | tr '\n' ' ') " in *" $id "*) ;; *) mj_uc_bad "$id" "names application '$ref', which does not name it back" "$(mj_rel "$(mj_ap_file "$j")")" ;; esac
+    mj_uc_vlist "MJUC$i" doctrines
+    for ref in $MJ_V; do case "$doc_ids" in *"$nl$ref$nl"*) ;; *) mj_uc_bad "$id" "names doctrine '$ref', which no rule declares" "majordomus doctrine list" ;; esac; done
+    mj_uc_vlist "MJUC$i" claims
+    for ref in $MJ_V; do case "$claims" in *" $ref "*) ;; *) mj_uc_bad "$id" "names claim '$ref', which docs/CLAIMS.yaml does not have" "grep -n 'id: ' docs/CLAIMS.yaml" ;; esac; done
+    mj_uc_vlist "MJUC$i" responsibilities
+    for ref in $MJ_V; do case "$resp" in *" $ref "*) ;; *) mj_uc_bad "$id" "names responsibility '$ref', which docs/RESPONSIBILITIES.yaml does not have" "" ;; esac; done
+    mj_uc_vlist "MJUC$i" applications
+    for ref in $MJ_V; do
+      mj_ap_index_v "$ref" || { mj_uc_bad "$id" "names application '$ref', which does not exist" "ls $(mj_rel "$MJ_AP_DIR")"; continue; }
+      j="$MJ_I"; mj_uc_vlist "MJAP$j" use_cases; acc="${MJ_V:+$MJ_V$nl}"
+      case " ${acc//$nl/ } " in *" $id "*) ;; *) n="MJ_AP_FILE_$j"; mj_uc_bad "$id" "names application '$ref', which does not name it back" "$(mj_rel "${!n}")" ;; esac
     done
     if [ -n "$tools" ]; then
-      for ref in $(mj_uc_list "$i" mcp_tools); do case "$tools" in *" $ref "*) ;; *) mj_uc_bad "$id" "names MCP tool '$ref', which the registry does not project" "docs/generated/registry.json" ;; esac; done
+      mj_uc_vlist "MJUC$i" mcp_tools
+      for ref in $MJ_V; do case "$tools" in *" $ref "*) ;; *) mj_uc_bad "$id" "names MCP tool '$ref', which the registry does not project" "docs/generated/registry.json" ;; esac; done
     fi
-    # the body carries the sections a reader expects
-    body="$(mj_record_body "$f")"
-    for k in "# Situation" "# Scenario" "# Outcome"; do case "$body" in *"$k"*) ;; *) mj_uc_bad "$id" "body has no '$k' heading" "" ;; esac; done
+    # the body carries the sections a reader expects (the loader recorded which it has)
+    n="MJ_UC_HEADS_$i"
+    for k in "# Situation" "# Scenario" "# Outcome"; do case "${!n:-}" in *"<$k>"*) ;; *) mj_uc_bad "$id" "body has no '$k' heading" "" ;; esac; done
     # the scenario: setup exists, stdin bodies exist, every step names a declared command,
     # step ids are unique, every step expects an exit code
     if mj_uc_has_scenario "$i"; then
       local mode obl wrk
-      mode="$(mj_uc_mode "$i")"
+      n="MJUC${i}__scenario__mode"; mode="${!n:-fixture}"
       case "$mode" in
         fixture)
           mj_uc_get "$i" scenario.setup
@@ -372,10 +528,12 @@ mj_uc_validate_all() {
           [ -z "$cmd" ] || mj_uc_bad "$id" "step '$sid' both runs '$cmd' and asserts obligation '$obl'; a step is one or the other" ""
           [ "$mode" = live ] || mj_uc_bad "$id" "step '$sid' asserts obligation '$obl' in a fixture scenario; a disposable repository owes nothing" "mode: live"
           mj_obligations_load 2>/dev/null || true
-          mj_obligation_known "$obl" || mj_uc_bad "$id" "step '$sid' asserts obligation '$obl', which share/obligations.yaml does not declare" "majordomus evidence --help"
+          # the vocabulary's ids once, matched as `grep -Fx` matched them, one line each
+          [ -n "$obl_ids" ] || obl_ids="$nl$(mj_obligation_ids)$nl"
+          case "$obl_ids" in *"$nl$obl$nl"*) ;; *) mj_uc_bad "$id" "step '$sid' asserts obligation '$obl', which share/obligations.yaml does not declare" "majordomus evidence --help" ;; esac
         else
           [ -n "$cmd" ] || mj_uc_bad "$id" "step '$sid' runs nothing" ""
-          case " $(printf '%s' "$cmd_list" | tr '\n' ' ') " in *" $cmd "*) ;; *) mj_uc_bad "$id" "step '$sid' runs '$cmd', which the use case does not list under commands" "" ;; esac
+          case " ${cmd_list//$nl/ } " in *" $cmd "*) ;; *) mj_uc_bad "$id" "step '$sid' runs '$cmd', which the use case does not list under commands" "" ;; esac
           mj_uc_get "$i" "scenario.steps.$k.expect.exit"; case "$MJ_V" in ''|*[!0-9]*) mj_uc_bad "$id" "step '$sid' expects no exit code" "" ;; esac
           mj_uc_get "$i" "scenario.steps.$k.stdin"; found="$MJ_V"
           [ -z "$found" ] || [ -f "$stdin_dir/$found" ] || mj_uc_bad "$id" "step '$sid' names stdin '$found', which $(mj_rel "$stdin_dir")/ does not have" ""
@@ -405,17 +563,20 @@ mj_uc_validate_all() {
   # applications: mutual references, both lists present
   j=0
   while [ "$j" -lt "$MJ_AP_N" ]; do
-    f="$(mj_ap_file "$j")"; mj_ap_get "$j" id; id="$MJ_V"
+    n="MJ_AP_FILE_$j"; f="${!n}"; mj_ap_get "$j" id; id="$MJ_V"
     [ -n "$id" ] || { mj_uc_bad "$(mj_rel "$f")" "application front matter does not parse or declares no id" ""; j=$((j+1)); continue; }
     base="${f##*/}"; [ "$id" = "${base%.md}" ] || mj_uc_bad "$id" "application id is not the file name" ""
     mj_ap_get "$j" fits_when.0; [ -n "$MJ_V" ] || mj_uc_bad "$id" "application declares no fits_when" ""
     mj_ap_get "$j" does_not_fit_when.0; [ -n "$MJ_V" ] || mj_uc_bad "$id" "application declares no does_not_fit_when; a catalogue that only lists fits is marketing" ""
-    for ref in $(mj_ap_list "$j" use_cases); do
-      k="$(mj_uc_index "$ref")" || { mj_uc_bad "$id" "application names use case '$ref', which does not exist" ""; continue; }
-      mj_uc_has "$k" applications "$id" || mj_uc_bad "$id" "application names use case '$ref', which does not name it back" ""
+    mj_uc_vlist "MJAP$j" use_cases
+    for ref in $MJ_V; do
+      mj_uc_index_v "$ref" || { mj_uc_bad "$id" "application names use case '$ref', which does not exist" ""; continue; }
+      mj_uc_has "$MJ_I" applications "$id" || mj_uc_bad "$id" "application names use case '$ref', which does not name it back" ""
     done
-    for ref in $(mj_ap_list "$j" doctrines); do mj_doc_index "$ref" >/dev/null || mj_uc_bad "$id" "application names doctrine '$ref', which no rule declares" ""; done
-    case "$(mj_record_body "$f")" in *"# Context"*) ;; *) mj_uc_bad "$id" "application body has no '# Context' heading" "" ;; esac
+    mj_uc_vlist "MJAP$j" doctrines
+    for ref in $MJ_V; do case "$doc_ids" in *"$nl$ref$nl"*) ;; *) mj_uc_bad "$id" "application names doctrine '$ref', which no rule declares" "" ;; esac; done
+    n="MJ_AP_HEADS_$j"
+    case "${!n:-}" in *"<# Context>"*) ;; *) mj_uc_bad "$id" "application body has no '# Context' heading" "" ;; esac
     j=$((j+1))
   done
   return 0
@@ -754,14 +915,51 @@ mj_uc_run_live() { # index, evidence-file
 # A scenario's evidence is a function of its use case, its fixture and the tool that runs it,
 # and of nothing a records commit changes. Every derive used to execute every scenario again,
 # records-only commits included, and that was 60% of a site generation (catalogue.json, 1406 of
-# 2334 s, measured on 2026-10-21). A PASSING run is now kept beside the evidence and reused
-# when its key matches: the executable's own bytes (the binary MAJORDOMUS_BIN names), the blob
-# ids of every tracked file the tool is made of, and the use case's own file. Anything the key
-# cannot vouch for runs as before: no MAJORDOMUS_BIN, a tree that is not this tool's own source,
-# an uncommitted change outside the record paths, a failed run (never cached), --keep, or
-# MJ_UC_CACHE=0. The reused file is the very evidence that run wrote, so the site data built
-# from it is byte-identical, which `generate-site-data --check` proves.
+# 2334 s, measured on 2026-10-21). A PASSING run is now kept and reused when its key matches:
+# the generation of the executable MAJORDOMUS_BIN names, the blob ids of every tracked file the
+# tool is made of, and the use case's own file. Anything the key cannot vouch for runs as
+# before: no MAJORDOMUS_BIN, a tree that is not this tool's own source, an uncommitted change
+# outside the record paths, an executable that is not of this tree's generation, a failed run
+# (never cached), --keep, or MJ_UC_CACHE=0. The reused file is the very evidence that run
+# wrote, so the site data built from it is byte-identical, which `generate-site-data --check`
+# proves.
+#
+# THE EXECUTABLE BY ITS GENERATION (I2868). The key hashed the executable's bytes, and those
+# carry where it was built: build.rs compiles in the commit and the dirty flag, so two builds of
+# identical sources never shared a key, and every CI build, which starts from no workspace
+# crate, was a new tool whose store held nothing. What the executable *is* is its generation,
+# the digest of the crate sources it was built from, which `distribution build` reports beside
+# the same digest taken over this tree's crate (`tree_generation`, by the one definition
+# `majordomus generate` uses; the shell does not restate it). The two must be equal or there
+# is no key: an executable built from other sources may behave otherwise, and a key that named
+# it by this tree would serve its evidence as this tree's. One that reports no generation
+# predates the question and gets no key. The tracked blob ids cover the crate's sources and the
+# toolchain pin (rust-toolchain.toml, which the generation does not read and no exclusion below
+# removes), so equal keys mean the same sources under the same pinned compiler.
+#
+# ONE STORE PER CLONE (I2867). The store was $MJ_AI_LOCAL_DIR/cache/use-cases, one per checkout,
+# and every train, repair lane and fresh worktree derives in a checkout of its own: each paid
+# the whole fill again (797 of 952 s of a generation in a fresh worktree, 56 s with the entries
+# present, measured on 2026-10-21) for a tool an earlier checkout had already run. It now lives
+# under git's common directory, which the primary checkout and every linked worktree of the
+# clone share. Sharing is safe because the key is content-addressed: an entry can only be read
+# by a tree whose tool has the same sources. MJ_UC_CACHE_DIR names another store (CI restores
+# one there by the tool key); a git that cannot name its common directory keeps the old
+# per-checkout store.
+#
+# Readers only ever see whole entries: a write goes to a temporary file in the store itself,
+# on the same filesystem, and is renamed into place, which is atomic. Several checkouts write
+# at once, so no write removes another key's entry for its use case (the per-checkout store
+# did, and two worktrees deriving different tools would have evicted each other on every run).
+# The store is bounded instead, after each write: at most MJ_UC_CACHE_KEEP entries per use case,
+# the most recently used first (a hit refreshes its entry's time), and nothing unused for
+# MJ_UC_CACHE_DAYS days. Four is the tools that are live at once on one clone (master, a train
+# top, a repair lane, the branch being worked on); fourteen days outlives any of them, and an
+# entry costs about 10 KB, so the bound holds a clone's store near 2 MB. A sweep removes only
+# the files it listed and ignores what another writer removed first.
 MJ_UC_CACHE_EXCLUDE=".ai/repo/project .ai/repo/knowledge site docs test/cases"
+MJ_UC_CACHE_KEEP="${MJ_UC_CACHE_KEEP:-4}"
+MJ_UC_CACHE_DAYS="${MJ_UC_CACHE_DAYS:-14}"
 mj_uc_tool_key() { # prints the key of the tool the scenarios run, or nothing
   [ "${MJ_UC_CACHE:-1}" = 1 ] || return 0
   [ -n "${MAJORDOMUS_BIN:-}" ] && [ -f "$MAJORDOMUS_BIN" ] || return 0
@@ -772,15 +970,78 @@ mj_uc_tool_key() { # prints the key of the tool the scenarios run, or nothing
     && [ "$(cd "$MJ_LIB_DIR" 2>/dev/null && pwd -P)" = "$(cd "$MJ_ROOT/lib" && pwd -P)" ] \
     || return 0
   git -C "$MJ_ROOT" rev-parse --verify -q HEAD >/dev/null 2>&1 || return 0
-  local p list
+  local p list generation
   set -- .
   for p in $MJ_UC_CACHE_EXCLUDE "$(mj_rel "$MJ_UC_DIR")"; do set -- "$@" ":(exclude)$p"; done
   # an uncommitted change to the tool is in no key: then nothing is reused
   [ -z "$(git -C "$MJ_ROOT" status --porcelain --untracked-files=all -- "$@" 2>/dev/null)" ] || return 0
+  # asked last, because it is the one question that runs the executable
+  generation="$(mj_uc_tool_generation)"
+  [ -n "$generation" ] || return 0
   list="$(mktemp "${TMPDIR:-/tmp}/mj-uckey.XXXXXX")"
-  { mj_sha256 "$MAJORDOMUS_BIN"; git -C "$MJ_ROOT" ls-files -s -- "$@"; } > "$list" 2>/dev/null \
-    && mj_sha256 "$list"
+  { printf 'generation %s\n' "$generation"; git -C "$MJ_ROOT" ls-files -s -- "$@"; } \
+    > "$list" 2>/dev/null && mj_sha256 "$list"
   rm -f "$list"
+}
+
+# The generation of MAJORDOMUS_BIN when it is the generation of this tree's crate, or nothing.
+# The executable is asked at most once per shell, path and tree: the question costs it an index
+# build, and its answer is a property of the file and the sources, which a run does not move.
+MJ_UC_GENERATION_OF=""; MJ_UC_GENERATION=""
+mj_uc_tool_generation() {
+  local asked="$MAJORDOMUS_BIN $MJ_ROOT" out ours theirs
+  if [ "$MJ_UC_GENERATION_OF" != "$asked" ]; then
+    out="$(
+      # the share the executable reads, as mj_rust_share names it, when this tree's lib carries
+      # that function; a fixture's lib does not, and its stand-in reads no share
+      if [ -f "$MJ_LIB_DIR/rust_bin.sh" ]; then
+        # shellcheck source=rust_bin.sh
+        . "$MJ_LIB_DIR/rust_bin.sh"
+        share="$(mj_rust_share "$MJ_ROOT")"
+        if [ -n "$share" ]; then export MAJORDOMUS_SHARE="$share"; fi
+      fi
+      "$MAJORDOMUS_BIN" distribution build --repo "$MJ_ROOT" --format json 2>/dev/null
+    )" || out=""
+    # a quote before the name, so that tree_generation is never read as generation; a build
+    # that could not read its sources says `unknown`, which is no generation of anything, and
+    # two answers to one name are two lines, which equal nothing and give no key
+    ours="$(printf '%s\n' "$out" | sed -n 's/.*"generation": *"\([0-9a-f]\{64\}\)".*/\1/p')"
+    theirs="$(printf '%s\n' "$out" | sed -n 's/.*"tree_generation": *"\([0-9a-f]\{64\}\)".*/\1/p')"
+    MJ_UC_GENERATION=""
+    if [ -n "$ours" ] && [ "$ours" = "$theirs" ]; then MJ_UC_GENERATION="$ours"; fi
+    MJ_UC_GENERATION_OF="$asked"
+  fi
+  printf '%s' "$MJ_UC_GENERATION"
+}
+
+mj_uc_cache_dir() { # the store this checkout reads and writes
+  local common=""
+  if [ -n "${MJ_UC_CACHE_DIR:-}" ]; then printf '%s' "$MJ_UC_CACHE_DIR"; return 0; fi
+  # absolute (git 2.31), because a linked worktree's answer is otherwise relative to where git
+  # was asked from; an older git echoes the option back, which names no directory
+  common="$(git -C "$MJ_ROOT" rev-parse --path-format=absolute --git-common-dir 2>/dev/null)" || common=""
+  if [ -n "$common" ] && [ -d "$common" ]; then printf '%s/majordomus/use-case-cache' "$common"
+  else printf '%s/cache/use-cases' "$MJ_AI_LOCAL_DIR"; fi
+}
+
+mj_uc_cache_put() { # evidence-file, entry, store, use-case id: one whole entry, then the bound
+  local out="$1" hit="$2" dir="$3" id="$4" tmp keep="$MJ_UC_CACHE_KEEP" days="$MJ_UC_CACHE_DAYS"
+  case "$keep" in ''|*[!0-9]*|0) keep=4 ;; esac
+  case "$days" in ''|*[!0-9]*) days=14 ;; esac
+  mkdir -p "$dir" 2>/dev/null || return 0
+  # in the store itself, so the rename is on one filesystem and atomic; the name ends in no
+  # .json, so no reader and no per-use-case sweep takes it for an entry
+  tmp="$(mktemp "$dir/.writing.$id.XXXXXX" 2>/dev/null)" || return 0
+  { cp "$out" "$tmp" && mv -f "$tmp" "$hit"; } 2>/dev/null || { rm -f "$tmp"; return 0; }
+  # the use case's entries, most recently used first, past the bound; the one just written
+  # counts first and is never removed, even when another shares its second
+  # shellcheck disable=SC2012  # an entry is <id>.<hex>.json, nothing ls could mangle
+  ls -t "$dir/$id".*.json 2>/dev/null | awk -v hit="$hit" -v keep="$keep" \
+    '$0 != hit { n++; if (n + 1 > keep) print }' | while IFS= read -r e; do rm -f "$e" 2>/dev/null || :; done
+  # what nobody used for $days days, and a writer's temporary file an hour after it died
+  find "$dir" -maxdepth 1 -type f \( -name '*.json' -mtime +"$days" -o -name '.writing.*' -mmin +60 \) \
+    -exec rm -f {} + 2>/dev/null || :
+  return 0
 }
 
 mj_uc_run_cached() { # index, evidence-file, keep: a cached passing run of the same key, or a run
@@ -788,12 +1049,12 @@ mj_uc_run_cached() { # index, evidence-file, keep: a cached passing run of the s
   [ -n "${MJ_UC_TOOL_KEY:-}" ] && [ "$keep" = 0 ] || { mj_uc_run_one "$@"; return; }
   id="$(mj_uc_v "$i" id)"; f="$(mj_uc_file "$i")"
   key="$(printf '%s %s' "$MJ_UC_TOOL_KEY" "$(mj_sha256 "$f")" | mj_sha256_hex)"
-  dir="$MJ_AI_LOCAL_DIR/cache/use-cases"; hit="$dir/$id.$key.json"
-  if [ -s "$hit" ]; then cp "$hit" "$out"; return 0; fi
+  dir="$(mj_uc_cache_dir)"; hit="$dir/$id.$key.json"
+  # an entry a sweep removed between the test and the copy is a miss, never a failure; a hit
+  # is a use, and the bound keeps what is used
+  if [ -s "$hit" ] && cp "$hit" "$out" 2>/dev/null; then touch "$hit" 2>/dev/null || :; return 0; fi
   mj_uc_run_one "$@" || rc=$?
-  if [ "$rc" = 0 ] && [ -s "$out" ]; then
-    mkdir -p "$dir" && rm -f "$dir/$id".*.json && cp "$out" "$hit.tmp.$$" && mv "$hit.tmp.$$" "$hit"
-  fi
+  if [ "$rc" = 0 ] && [ -s "$out" ]; then mj_uc_cache_put "$out" "$hit" "$dir" "$id"; fi
   return "$rc"
 }
 

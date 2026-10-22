@@ -32,6 +32,7 @@ pub mod devcontext;
 pub mod devtask;
 pub mod diagram;
 pub mod discovery;
+pub(crate) mod disk;
 pub(crate) mod distribution;
 pub mod economics;
 pub(crate) mod editors;
@@ -52,6 +53,7 @@ pub mod index;
 pub(crate) mod integration;
 pub mod intent;
 pub mod intent_binding;
+pub mod intent_draft;
 pub mod intent_plan;
 pub mod intent_realization;
 pub mod intent_review;
@@ -134,6 +136,19 @@ pub const DIRTY: Option<bool> = match option_env!("MAJORDOMUS_DIRTY") {
     },
     None => None,
 };
+
+/// The lifecycle contract this executable implements: what the shell's lifecycle steps (the
+/// provider event adapters, and from I3141 the episode's opener and closer) may ask of it.
+///
+/// Declared here and nowhere else. The executable reports it through `distribution build`, and
+/// `lib/rust_bin.sh` reads the number this declaration states in the tree it runs from, so a
+/// lifecycle step can tell an executable built before the contract it needs — one handed over
+/// through `MAJORDOMUS_BIN`, which no mtime judges — from one that implements it, and say so
+/// instead of running it (I3320). [`GENERATION`] is not that question: every edit of the crate
+/// moves it, and an executable one commit behind its tree still implements the same lifecycle.
+///
+/// Raise it when a lifecycle step starts to need behaviour an older executable does not have.
+pub const LIFECYCLE_CONTRACT: u32 = 1;
 
 /// The generation this executable was built from: the digest `generation::crate_generation`
 /// takes over the crate sources, compiled in by `build.rs`, or `unknown` when the build

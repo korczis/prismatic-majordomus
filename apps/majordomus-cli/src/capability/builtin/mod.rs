@@ -46,6 +46,7 @@ pub(crate) mod design;
 pub(crate) mod devcontext;
 pub mod devtask;
 pub(crate) mod directories;
+pub mod disk;
 pub(crate) mod distribution;
 pub mod economics;
 pub(crate) mod editors;
@@ -218,6 +219,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         perf,
         plan,
         recover,
+        disk,
         directories,
         devcontext,
         artifacts,

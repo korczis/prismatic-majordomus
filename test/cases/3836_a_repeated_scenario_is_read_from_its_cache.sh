@@ -23,7 +23,15 @@ printf 'tool\n' > "$R/lib/tool.sh"
 git -C "$R" init -q && git -C "$R" add -A \
   && git -C "$R" -c user.email=case@example.invalid -c user.name=case commit -qm fixture \
   || { echo "    could not build the fixture tree"; exit 1; }
-printf 'executable bytes\n' > "$T/bin.fixture"
+# a stand-in executable of the fixture tree's generation: the key names what `distribution
+# build` reports (I2868, case 3841), not the executable's bytes
+cat > "$T/bin.fixture" <<'SH'
+#!/usr/bin/env bash
+[ "$1 $2" = "distribution build" ] || exit 2
+g=0000000000000000000000000000000000000000000000000000000000000001
+printf '{\n  "generation": "%s",\n  "tree_generation": "%s"\n}\n' "$g" "$g"
+SH
+chmod +x "$T/bin.fixture"
 printf 'use case\n' > "$T/demo.md"
 
 drive() {   # drive <usecase.sh to load> <cache dir>: prints "key=<0|1> calls=<n> entries=<n> same=<yes|no>"
@@ -36,7 +44,9 @@ drive() {   # drive <usecase.sh to load> <cache dir>: prints "key=<0|1> calls=<n
     . "$lib"
     # shellcheck disable=SC2034  # these globals are read by the sourced lib/usecase.sh
     { MJ_ROOT="$R"; MJ_LIB_DIR="$R/bin/../lib"
-      MJ_UC_DIR="$R/.ai/repo/use-cases"; MJ_AI_LOCAL_DIR="$dir"; }
+      MJ_UC_DIR="$R/.ai/repo/use-cases"; MJ_AI_LOCAL_DIR="$dir"
+      # a store per run: the clone's shared one (I2867, case 3840) would carry run 1 into 2
+      MJ_UC_CACHE_DIR="$dir/cache/use-cases"; }
     MAJORDOMUS_BIN="$T/bin.fixture"; export MAJORDOMUS_BIN
     calls=0
     mj_uc_run_one() { calls=$((calls + 1)); printf '{"evidence":"run %s"}\n' "$calls" > "$2"; }

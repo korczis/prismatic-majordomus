@@ -119,6 +119,98 @@ mj_rust_stale() {
   [ -n "$mj_st_newer" ]
 }
 
+# mj_rust_lifecycle <tool-root> <repository-root>
+#
+# The executable a lifecycle step runs, judged before it runs (I3320): its path on stdout and
+# 0, or one line on stderr naming why it cannot be run and 12, the code a missing executable
+# already exits with. The causes, each the first words of that line:
+#
+#   absent       nothing executable where the resolution points
+#   stale        older than its crate's sources (mj_rust_stale), or implementing an older
+#                lifecycle contract than the one this tree declares
+#   unanswering  it did not say which contract it implements
+#
+# The contract is declared once, `LIFECYCLE_CONTRACT` in the crate's lib.rs, and the executable
+# reports the one it was built with through `distribution build`. Unlike mj_rust_stale, this
+# judges an explicit MAJORDOMUS_BIN too: an executable handed over from an older revision is
+# newer than every source and still closes with the old semantics, and only the number tells.
+# A tree without the crate (an installed release) declares nothing to compare with: the
+# executable it ships is its own.
+#
+# Never a build and never the installed release in its place: a lifecycle step that cannot
+# run its executable says so where health reads it, and runs no other writer instead.
+# What an executable reports is kept per path, size and mtime under
+# ${XDG_CACHE_HOME:-$HOME/.cache}/majordomus/, because the question costs an index build and
+# its answer is a property of the file.
+mj_rust_lifecycle() {
+  mj_rl_root="$1"
+  mj_rl_repo="${2:-$1}"
+  mj_rl_bin="$(mj_rust_bin "$mj_rl_root")"
+  if [ ! -x "$mj_rl_bin" ]; then
+    printf 'absent: %s is not an executable (run `just build`, or name one with MAJORDOMUS_BIN)\n' \
+      "$mj_rl_bin" >&2
+    return 12
+  fi
+  if mj_rust_stale "$mj_rl_root" "$mj_rl_bin"; then
+    printf 'stale: %s is older than the sources of its crate (run `just build`)\n' "$mj_rl_bin" >&2
+    return 12
+  fi
+  mj_rl_need="$(mj_rust_lifecycle_declared "$mj_rl_root")"
+  if [ -z "$mj_rl_need" ]; then
+    printf '%s\n' "$mj_rl_bin"
+    return 0
+  fi
+  if ! mj_rl_have="$(mj_rust_lifecycle_reported "$mj_rl_bin" "$mj_rl_repo")"; then
+    printf 'unanswering: %s did not say which lifecycle contract it implements (`distribution build` failed)\n' \
+      "$mj_rl_bin" >&2
+    return 12
+  fi
+  if [ "$mj_rl_have" -lt "$mj_rl_need" ]; then
+    printf 'stale: %s implements lifecycle contract %s; this tree declares %s (rebuild it, or name a current one with MAJORDOMUS_BIN)\n' \
+      "$mj_rl_bin" "$mj_rl_have" "$mj_rl_need" >&2
+    return 12
+  fi
+  printf '%s\n' "$mj_rl_bin"
+}
+
+# The lifecycle contract the tree at <tool-root> declares: the number its crate's lib.rs
+# states, read from the declaration itself so that there is no second copy to drift. Empty
+# when the tree carries no crate, or a crate from before the contract.
+mj_rust_lifecycle_declared() {
+  [ -f "$1/apps/majordomus-cli/src/lib.rs" ] || return 0
+  sed -n 's/^pub const LIFECYCLE_CONTRACT: u32 = \([0-9][0-9]*\);$/\1/p' \
+    "$1/apps/majordomus-cli/src/lib.rs" | head -n 1
+}
+
+# The lifecycle contract <executable> reports, asked in <repository-root>: 0 for one built
+# before it reported any, and false when it does not answer at all.
+mj_rust_lifecycle_reported() {
+  mj_rlr_bin="$1"
+  mj_rlr_key="$(stat -c '%s:%Y' "$mj_rlr_bin" 2>/dev/null || stat -f '%z:%m' "$mj_rlr_bin" 2>/dev/null || true)"
+  mj_rlr_cache="${XDG_CACHE_HOME:-$HOME/.cache}/majordomus/lifecycle-contract"
+  if [ -n "$mj_rlr_key" ] && [ -r "$mj_rlr_cache" ]; then
+    mj_rlr_hit="$(awk -F '\t' -v p="$mj_rlr_bin" -v k="$mj_rlr_key" \
+      '$1 == p && $2 == k { print $3; exit }' "$mj_rlr_cache" 2>/dev/null || true)"
+    if [ -n "$mj_rlr_hit" ]; then printf '%s\n' "$mj_rlr_hit"; return 0; fi
+  fi
+  mj_rlr_share="$(mj_rust_share "$2")"
+  mj_rlr_out="$(
+    if [ -n "$mj_rlr_share" ]; then export MAJORDOMUS_SHARE="$mj_rlr_share"; fi
+    "$mj_rlr_bin" distribution build --repo "$2" --format json 2>/dev/null
+  )" || return 1
+  case "$mj_rlr_out" in *'"version"'*) ;; *) return 1 ;; esac
+  mj_rlr_have="$(printf '%s\n' "$mj_rlr_out" \
+    | sed -n 's/.*"lifecycle_contract": *\([0-9][0-9]*\).*/\1/p' | head -n 1)"
+  : "${mj_rlr_have:=0}"
+  if [ -n "$mj_rlr_key" ] && mkdir -p "$(dirname "$mj_rlr_cache")" 2>/dev/null; then
+    { awk -F '\t' -v p="$mj_rlr_bin" '$1 != p' "$mj_rlr_cache" 2>/dev/null || true
+      printf '%s\t%s\t%s\n' "$mj_rlr_bin" "$mj_rlr_key" "$mj_rlr_have"
+    } > "$mj_rlr_cache.$$" 2>/dev/null && mv -f "$mj_rlr_cache.$$" "$mj_rlr_cache" 2>/dev/null \
+      || rm -f "$mj_rlr_cache.$$" 2>/dev/null
+  fi
+  printf '%s\n' "$mj_rlr_have"
+}
+
 # mj_rust_installed <repository-root>
 #
 # The executable of the installed release, for the caller that is a client waiting on a

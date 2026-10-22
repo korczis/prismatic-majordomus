@@ -81,3 +81,18 @@ expect_exit 0 "$MJ" plan validate
 expect_grep 'shares src/shared with I0013'
 expect_exit 0 "$MJ" plan waves
 expect_grep 'serialised by scope overlap'
+
+# --- the overlap holds the other way round, through a leading ./ and a trailing slash, and
+#     a path that only begins with the same letters is a sibling, not an overlap. The engine
+#     answers from an index of each issue's entries and the directories above them, so each
+#     direction is asserted rather than assumed (I0820).
+sed 's#^  - src/shared$#  - ./src/shared/inner/#' .ai/repo/project/issues/I0012.yaml > /tmp/a.$$ && mv /tmp/a.$$ .ai/repo/project/issues/I0012.yaml
+sed 's#^  - src/shared/inner$#  - src/shared/#' .ai/repo/project/issues/I0013.yaml > /tmp/b.$$ && mv /tmp/b.$$ .ai/repo/project/issues/I0013.yaml
+grep -qx '  - ./src/shared/inner/' .ai/repo/project/issues/I0012.yaml && grep -qx '  - src/shared/' .ai/repo/project/issues/I0013.yaml \
+  || { echo "    the probe did not take: the scope entries were not rewritten"; exit 1; }
+expect_exit 0 "$MJ" plan validate
+expect_grep 'shares \./src/shared/inner/ with I0013'
+sed 's#^  - src/shared/$#  - src/sharedX#' .ai/repo/project/issues/I0013.yaml > /tmp/b.$$ && mv /tmp/b.$$ .ai/repo/project/issues/I0013.yaml
+grep -qx '  - src/sharedX' .ai/repo/project/issues/I0013.yaml || { echo "    the probe did not take: src/sharedX"; exit 1; }
+expect_exit 0 "$MJ" plan validate
+expect_no_grep 'shares'

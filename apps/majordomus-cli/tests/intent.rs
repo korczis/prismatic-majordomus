@@ -931,3 +931,203 @@ fn governance_claims_files_and_deployments_resolve_against_the_repository_itself
     assert_eq!(state("it-is-deployed"), "not_derivable");
     assert_eq!(state("it-is-deployed-nowhere"), "unresolved");
 }
+
+/// `intent draft gap` as the text a worker saves, asserted to have succeeded.
+fn drafted(f: &Fixture) -> String {
+    let (code, out, err) = run_in(&f.root(), &["intent", "draft", "gap", "fixture-intent"], "");
+    assert_eq!(code, 0, "{out}\n{err}");
+    out
+}
+
+/// Record one run of the fixture's case at HEAD, against the source in the tree, and commit
+/// the ledger; the commit the run was recorded at.
+fn record_at_head(f: &Fixture, outcome: Outcome) -> String {
+    let id = TestId::of("test/cases/00_x.sh").unwrap();
+    let head = f.git(&["rev-parse", "HEAD"]).trim().to_string();
+    let mut ledger = Ledger::empty();
+    ledger.merge([Execution {
+        test: id.as_string(),
+        runner: Runner::Suite,
+        source: id.source(),
+        outcome,
+        seconds: 1,
+        commit: head.clone(),
+        working_tree: "clean".into(),
+        digest: digest_of(&std::fs::read(f.path(&id.source())).unwrap()),
+        at: "2026-10-21T00:00:00Z".into(),
+        origin: Origin::Local,
+        command: id.reproduce(),
+        run: None,
+    }]);
+    ledger.save(&f.root()).unwrap();
+    f.commit("record a run");
+    head
+}
+
+/// The evidence half of a gap is drafted from the ledger (I3246): the criterion's condition
+/// follows the evidence state at HEAD by the table of `intent_draft` and cites the
+/// observation of what was read; the record, saved, passes `intent validate`'s gap checks;
+/// and a draft writes nothing and is the same bytes at one commit.
+#[test]
+fn test_the_gap_is_drafted_from_the_ledger() {
+    let f = Fixture::new();
+    let gap = |f: &Fixture| -> Value {
+        let (code, v) = cli_json(f, &["intent", "draft", "gap", "fixture-intent"]);
+        assert_eq!(code, 0, "{v:#}");
+        v
+    };
+
+    // (e) nothing is written, and two drafts at one commit are the same bytes
+    let before = f.snapshot();
+    let one = drafted(&f);
+    let two = drafted(&f);
+    assert_eq!(one, two, "two drafts at one commit differ");
+    assert_eq!(f.snapshot(), before, "a draft changed the repository");
+    let head = f.git(&["rev-parse", "HEAD"]).trim().to_string();
+    assert!(
+        one.starts_with(&format!("intent: fixture-intent\nobserved_at: {head}\n")),
+        "{one}"
+    );
+
+    // (a) no execution: the criterion is missing, and cites what the ledger did not hold
+    let v = gap(&f);
+    assert_eq!(v["observed_at"], head);
+    assert_eq!(
+        v["recorded_by"],
+        format!("majordomus {}", majordomus_cli::VERSION)
+    );
+    assert_eq!(v["risks"], json!([]));
+    assert_eq!(v["work"], json!([]));
+    let observation = &v["observations"][0];
+    assert_eq!(observation["id"], "the-case-passes-evidence");
+    assert_eq!(observation["source"], "test:test/cases/00_x.sh");
+    assert!(
+        observation["statement"]
+            .as_str()
+            .unwrap()
+            .contains("no execution"),
+        "{observation}"
+    );
+    assert_eq!(
+        v["conditions"],
+        json!([{
+            "criterion": "the-case-passes",
+            "state": "missing",
+            "because": "the evidence is not_run: no recorded run counts for it",
+            "observations": ["the-case-passes-evidence"],
+        }])
+    );
+
+    // (b) a passing run at HEAD: satisfied, and the observation names that execution
+    let ran_at = record_at_head(&f, Outcome::Pass);
+    let v = gap(&f);
+    assert_eq!(v["conditions"][0]["state"], "satisfied", "{v:#}");
+    let statement = v["observations"][0]["statement"].as_str().unwrap();
+    assert_eq!(
+        statement,
+        format!("ledger: suite:00_x passed at {ran_at} (2026-10-21T00:00:00Z, runner suite)")
+    );
+
+    // (c) a failing run is missing work, and a contradiction once the serving issue is DONE
+    let failed_at = record_at_head(&f, Outcome::Fail);
+    let v = gap(&f);
+    assert_eq!(v["conditions"][0]["state"], "missing", "{v:#}");
+    assert!(v["observations"][0]["statement"]
+        .as_str()
+        .unwrap()
+        .contains(&format!("failed at {failed_at}")));
+    for (transition, to) in [("start", "ACTIVE"), ("done", "DONE")] {
+        if transition == "done" {
+            let rel = ".ai/repo/project/issues/I0001.yaml";
+            let record = std::fs::read_to_string(f.path(rel)).unwrap();
+            f.write(
+                rel,
+                &format!(
+                    "{record}evidence:\n  - covers: proof\n    type: test\n    command: \"bash \
+                     test/cases/00_x.sh\"\n    result: \"ok\"\n    commit: abc\n    recorded_at: \
+                     2026-09-15T00:00:00Z\n"
+                ),
+            );
+        }
+        let moved = tool(
+            &f,
+            "majordomus_plan_transition",
+            json!({ "issue": "I0001", "transition": transition }),
+        );
+        assert_eq!(moved["to"], to, "{moved}");
+    }
+    f.commit("the serving issue is DONE");
+    let v = gap(&f);
+    let condition = &v["conditions"][0];
+    assert_eq!(condition["state"], "conflicting", "{v:#}");
+    assert!(
+        condition["because"].as_str().unwrap().contains("I0001"),
+        "{condition}"
+    );
+    assert_eq!(
+        condition["observations"],
+        json!(["the-case-passes-evidence"])
+    );
+
+    // (d) the draft, saved and committed, passes the gap checks and the index unchanged
+    let record = ".ai/repo/project/gaps/fixture-intent.yaml";
+    f.write(record, &drafted(&f));
+    f.commit("the drafted gap");
+    let (_, validation) = cli_json(&f, &["intent", "validate"]);
+    let gap_findings: Vec<&Value> = validation["findings"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|x| {
+            let code = x["code"].as_str().unwrap_or("");
+            ["gap_", "observation_", "condition_"]
+                .iter()
+                .any(|p| code.starts_with(p))
+        })
+        .collect();
+    assert!(gap_findings.is_empty(), "{gap_findings:#?}");
+    let (_, inspected, _) = common::inspect(&f.root(), &[]);
+    let about: Vec<Value> = common::diagnostics(&inspected)
+        .into_iter()
+        .filter(|d| d["path"] == record)
+        .collect();
+    assert!(about.is_empty(), "{about:#?}");
+
+    // (e) again at the new commit; and a tree that is not its commit is the one risk
+    let before = f.snapshot();
+    assert_eq!(drafted(&f), drafted(&f));
+    assert_eq!(f.snapshot(), before, "a draft changed the repository");
+    f.write("README.md", "# Fixture\n\nAn edit nobody committed.\n");
+    let v = gap(&f);
+    assert_eq!(v["risks"].as_array().unwrap().len(), 1, "{v:#}");
+    assert_eq!(
+        v["observed_at"],
+        f.git(&["rev-parse", "HEAD"]).trim(),
+        "still the commit, with the difference named as a risk"
+    );
+}
+
+/// The draft is one capability: the command line, HTTP and MCP answer the same value, and an
+/// intent the repository does not hold is not found on every surface.
+#[test]
+fn the_command_line_http_and_mcp_draft_the_same_gap() {
+    let f = Fixture::new();
+    let (code, cli) = cli_json(&f, &["intent", "draft", "gap", "fixture-intent"]);
+    assert_eq!(code, 0, "{cli:#}");
+    let mcp = tool(
+        &f,
+        "majordomus_intent_draft_gap",
+        json!({ "intent": "fixture-intent" }),
+    );
+    let served = Served::start(&f.root(), &[]);
+    let (status, http) = served.get("/api/v1/intents/draft/gap?intent=fixture-intent");
+    assert_eq!(status, 200, "{http:#}");
+    assert_eq!(cli, http, "the command line and HTTP disagree");
+    assert_eq!(cli, mcp, "the command line and MCP disagree");
+
+    let (status, _) = served.get("/api/v1/intents/draft/gap?intent=absent");
+    assert_eq!(status, 404);
+    let (code, _, err) = run_in(&f.root(), &["intent", "draft", "gap", "absent"], "");
+    assert_eq!(code, 12, "{err}");
+    assert!(err.contains("no intent 'absent'"), "{err}");
+}

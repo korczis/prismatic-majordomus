@@ -32,6 +32,8 @@ MJ_CTXD_PROBLEMS=""    # class <TAB> subject <TAB> message <TAB> reproduce
 MJ_CTXD_LOADED=0
 MJ_CTXD_COUNT=0
 MJ_CTXD_TAB="$(printf '\t')"
+MJ_CTXD_NL='
+'
 
 mj_ctxd_tree()      { mj_rel "$MJ_AI_DIR"; }
 mj_ctxd_cleanup()   { rm -f "${MJ_CTXD_FLAT:-}" "${MJ_CTXD_PROBLEMS:-}" 2>/dev/null; }
@@ -40,14 +42,34 @@ mj_ctxd_problem()   { printf '%s\t%s\t%s\t%s\n' "$1" "$2" "$3" "${4:-}" >> "$MJ_
 mj_ctxd()           { mj_yv ctxd "docs.$1.$2"; }
 mj_ctxd_list()      { mj_yvlist ctxd "docs.$1.$2"; }
 mj_ctxd_problems()  { [ -s "$MJ_CTXD_PROBLEMS" ]; }
+# The same two readings for a caller in this shell, without the command substitution that
+# forks it: MJ_V is set to the value, or to the items one per line, and is empty when absent.
+mj_ctxd_get() { local k="ctxd__docs__$1__${2//-/___}"; k="${k//./__}"; MJ_V="${!k:-}"; }
+mj_ctxd_getlist() {
+  local k="ctxd__docs__$1__${2//-/___}" i=0 n; k="${k//./__}"; MJ_V=""
+  while n="${k}__$i"; [ -n "${!n:-}" ]; do MJ_V="$MJ_V${!n}$MJ_CTXD_NL"; i=$((i + 1)); done
+}
+# the index of the document with id $2, into the variable named $1, or 1
+mj_ctxd_index_into() {
+  local _i=0 _k
+  while [ "$_i" -lt "$MJ_CTXD_COUNT" ]; do
+    _k="ctxd__docs__${_i}__id"; [ "${!_k:-}" = "$2" ] && { printf -v "$1" '%s' "$_i"; return 0; }
+    _i=$((_i + 1))
+  done
+  return 1
+}
 
 # the file conventions the manifest declares: names that must carry the contract
 mj_ctxd_conventions() { mj_ylist "$MJ_MAN_FLAT" context.documents 2>/dev/null; }
 # the provider names the policy's projections declare, space-separated
+# projections.0.provider, projections.1.provider ... up to the first absent or empty one, the
+# first line of each key winning as mj_pol reads it; one pass, not two lookups per projection
 mj_ctxd_providers() {
-  local j=0 out=""
-  while [ -n "$(mj_pol "projections.$j.provider")" ]; do out="$out $(mj_pol "projections.$j.provider")"; j=$((j + 1)); done
-  printf '%s' "${out# }"
+  [ -n "${MJ_POL_FLAT:-}" ] || return 0
+  awk '/^projections\.[0-9]+\.provider=/ { k = substr($0, 1, index($0, "=") - 1)
+      if (!(k in v)) v[k] = substr($0, index($0, "=") + 1) }
+    END { for (j = 0; v["projections." j ".provider"] != ""; j++) out = out " " v["projections." j ".provider"]
+      printf "%s", substr(out, 2) }' "$MJ_POL_FLAT"
 }
 # the index of the document with id $1, or 1
 mj_ctxd_index() {
@@ -69,11 +91,9 @@ mj_ctxd_index_at() {
 mj_ctxd_files() {
   local tree local_rel
   tree="$(mj_ctxd_tree)"; local_rel="$(mj_rel "$MJ_AI_LOCAL_DIR")"
+  # the local half dropped by one awk, not a shell loop that reads the pipe a byte at a time
   ( cd "$MJ_ROOT" && find "$tree" -name '*.md' -type f -print 2>/dev/null ) \
-    | LC_ALL=C sort | while IFS= read -r f; do
-        case "$f" in "$local_rel"/*) continue ;; esac
-        printf '%s\n' "$f"
-      done
+    | LC_ALL=C sort | MJ_CTXD_LOCAL="$local_rel/" awk 'index($0, ENVIRON["MJ_CTXD_LOCAL"]) != 1'
 }
 
 # Every subtree a contract exempts (children.exempt), one repository-relative path per
@@ -99,120 +119,150 @@ EOF
   return 1
 }
 
-# ---------------------------------------------------------------- one file
-# mj_ctxd_scan REL N -> 0 with docs.N.* appended to the flat record, 2 when the file is not
-# a context document (no front matter, or another kind), 1 with a problem recorded.
+# ---------------------------------------------------------------- the files
+# mj_ctxd_scan CONV PROVIDERS: every Markdown file under the tree read, and every context
+# document among them appended to the flat record as docs.N.*, in file order. A file that
+# is not a context document is passed over; one that claims to be and is not is a problem.
+#
+# The files are read in a fixed number of processes whatever their number: one awk splits
+# off every front matter that could be a context document, one flattens them all, and one
+# validates every document against the contract. The per-file shape this replaced cost a
+# mktemp, a split, a flattener and a validator per document, and its outcome is kept here
+# step for step; only a front matter that does not parse is flattened again on its own, to
+# name the line, because that is a failure and not the common case (I0820).
+#
+# Which files could be documents is the question the stages themselves ask: a file whose
+# first line is not `---` has no front matter, and one whose front matter declares neither
+# `kind: context` nor a `context/` schema in its first two hundred lines is another kind. In
+# both cases nothing is recorded — unless the manifest names the file as a context document,
+# which is the case that must still be reported, so those are never passed over.
 mj_ctxd_scan() {
-  local rel="$1" n="$2" f="$MJ_ROOT/$1" conv="$3" providers="$4" base dir depth st tmp
-  base="${rel##*/}"
-  # Most files under the tree are not context documents, and reading each one cost four
-  # processes to establish that: a mktemp, the front-matter split, the flattener and the
-  # validator. The front matter is small and this shell can read it, so the question "could
-  # this file be a context document at all" is answered here, without a process, and only a
-  # file that could be goes on to the stages below.
-  #
-  # The test is the one the stages themselves apply: a file whose first line is not `---`
-  # has no front matter, and one whose front matter declares neither `kind: context` nor a
-  # `context/` schema is another kind. In both cases the stages return 2 without recording
-  # anything — unless the manifest names the file as a context document, which is the case
-  # that must still be reported, so those are never skipped.
-  case " $conv " in
-    *" $base "*) ;;
-    *)
-      local l lines=0 declares=0 opened=0
-      while IFS= read -r l || [ -n "$l" ]; do
-        lines=$((lines + 1))
-        if [ "$lines" = 1 ]; then
-          [ "$l" = "---" ] || break
-          opened=1; continue
-        fi
-        [ "$l" = "---" ] && break
-        case "$l" in kind:\ context|"kind: context "*|schema:\ context/*) declares=1; break ;; esac
-        [ "$lines" -gt 200 ] && break
-      done < "$f"
-      [ "$opened" = 1 ] && [ "$declares" = 1 ] || return 2
-      ;;
-  esac
-  tmp="$(mktemp "${TMPDIR:-/tmp}/mj.ctxd.XXXXXX")"
-  # stage 1: the front matter, or exit 2 (none) / 4 (never closes)
-  awk 'NR == 1 && $0 != "---" { exit 2 }
-       NR > 1 && $0 == "---" { c = 1; exit }
-       NR > 1 { n++; print }
-       END { if (!c) exit (n ? 4 : 2); if (!n) exit 2 }' "$f" > "$tmp.fm"; st=$?
-  case "$st" in
-    0) ;;
-    4) rm -f "$tmp" "$tmp.fm"; mj_ctxd_problem invalid-front-matter "$rel" "front matter never closes (no second ---)" "head -n 20 '$rel'"; return 1 ;;
-    *) rm -f "$tmp" "$tmp.fm"
-       case " $conv " in *" $base "*) mj_ctxd_problem invalid-front-matter "$rel" "carries no front matter, and the manifest names $base as a context document (context.documents)" "head -n 5 '$rel'"; return 1 ;; esac
-       return 2 ;;
-  esac
-  if ! mj_yaml_flatten "$tmp.fm" > "$tmp" 2>/dev/null; then
-    local declares=0; grep -qE '^(schema: context/|kind: context$)' "$tmp.fm" && declares=1
-    rm -f "$tmp" "$tmp.fm"
-    case " $conv " in *" $base "*) declares=1 ;; esac
-    [ "$declares" = 1 ] && { mj_ctxd_problem invalid-front-matter "$rel" "front matter does not parse: $(mj_yaml_flatten "$f" 2>&1 >/dev/null | sed 's/^ERROR://' | head -n 1)" "head -n 20 '$rel'"; return 1; }
-    return 2
-  fi
-  rm -f "$tmp.fm"
-  # two keys of a small flat file, read in this shell: an awk per key was two processes
-  # per document, and the scan visits every document of the layer
-  local kind="" schema="" line
-  while IFS= read -r line; do
-    case "$line" in kind=*) [ -n "$kind" ] || kind="${line#kind=}" ;; schema=*) [ -n "$schema" ] || schema="${line#schema=}" ;; esac
-  done < "$tmp"
-  if [ "$kind" != context ] && [ "${schema%%/*}" != context ]; then
-    rm -f "$tmp"
-    case " $conv " in *" $base "*) mj_ctxd_problem invalid-front-matter "$rel" "front matter is not the context contract (kind '${kind:-absent}'), and the manifest names $base as a context document" "head -n 20 '$rel'"; return 1 ;; esac
-    return 2
-  fi
-  if [ "$schema" != "$MJ_CTXD_SCHEMA" ]; then
-    rm -f "$tmp"; mj_ctxd_problem unsupported-schema "$rel" "schema '${schema:-absent}' is not $MJ_CTXD_SCHEMA (this executable reads $MJ_CTXD_SCHEMA)" "head -n 3 $rel"; return 1
-  fi
-  dir="${rel%/*}"; [ "$dir" = "$rel" ] && dir="."
-  local rest slashes; rest="x${dir#"$(mj_ctxd_tree)"}"; slashes="${rest//[!\/]/}"; depth="${#slashes}"
-  local reason
-  reason="$(awk -v n="$n" -v file="$rel" -v dir="$dir" -v depth="$depth" -v provs=" $providers " -v flat="$MJ_CTXD_FLAT" '
-    function fail(m) { print m; exit 1 }
-    FNR == NR { if ($0 !~ /^#/ && $0 != "") pat[++np] = $0; next }   # the allow-list banner is comments
+  local conv="$1" providers="$2" tree work rel st decl m base k=0 bad=" " line kind schema
+  local dir rest slashes depth reason total fms=() rels=() pc=() ps=() pm=() pr=()
+  tree="$(mj_ctxd_tree)"
+  work="$(mktemp -d "${TMPDIR:-/tmp}/mj.ctxd.scan.XXXXXX")"
+  mkdir -p "$work/fm" "$work/flat"
+  mj_ctxd_files > "$work/files"
+  # stage 1: per candidate "<rel> TAB <status> TAB <declares in the front matter> TAB <m>",
+  # status 0 with the front matter written to fm/<m>.yaml, 2 none, 4 never closes
+  ( cd "$MJ_ROOT" && MJ_CTXD_CONV=" $conv " awk -v work="$work" '
+    BEGIN { FS = "\n"; conv = ENVIRON["MJ_CTXD_CONV"] }
     {
-      eq = index($0, "="); if (eq == 0) next
-      k = substr($0, 1, eq - 1); v = substr($0, eq + 1)
-      nl++; keys[nl] = k; vals[nl] = v
-      if (!(k in first)) first[k] = v
-    }
-    END {
+      rel = $0; base = rel; sub(/.*\//, "", base); cn = index(conv, " " base " ") > 0
+      lines = 0; closed = 0; n = 0; declares = 0; fmdecl = 0; pass = 0
+      while ((r = (getline line < rel)) > 0) {
+        lines++
+        if (lines == 1) { if (line != "---") break; continue }
+        if (line == "---") { closed = 1; break }
+        fm[++n] = line
+        if (line ~ /^(schema: context\/|kind: context$)/) fmdecl = 1
+        if (!cn && !declares && lines <= 201 && (line == "kind: context" || index(line, "kind: context ") == 1 || index(line, "schema: context/") == 1)) declares = 1
+        if (!cn && !declares && lines >= 201) { pass = 1; break }
+      }
+      close(rel)
+      if (pass || !(cn || declares)) next
+      st = (lines == 0 || n == 0) ? 2 : (closed ? 0 : 4)
+      if (st == 0) {
+        f = work "/fm/" (++m) ".yaml"
+        for (i = 1; i <= n; i++) print fm[i] > f
+        close(f)
+      }
+      printf "%s\t%s\t%s\t%s\n", rel, st, fmdecl, (st == 0 ? m : 0)
+    }' "$work/files" ) > "$work/cand"
+  # stage 2: every front matter flattened by one process, failures listed by number
+  while IFS="$MJ_TAB" read -r rel st decl m; do
+    [ "$st" = 0 ] && fms+=("$work/fm/$m.yaml")
+  done < "$work/cand"
+  [ "${#fms[@]}" -gt 0 ] && mj_yaml_flatten_many "$work/flat" --numbered "${fms[@]}"
+  if [ -f "$work/flat/.errors" ]; then
+    while IFS="$MJ_TAB" read -r m line; do bad="$bad$m "; done < "$work/flat/.errors"
+  fi
+  # stage 3: the decisions each file's own stages made, in file order. A problem is kept
+  # as its four fields; what survives these stages goes to the contract check below.
+  : > "$work/pending"
+  while IFS="$MJ_TAB" read -r rel st decl m; do
+    k=$((k + 1)); base="${rel##*/}"; rels[k]="$rel"; pc[k]=""
+    case "$st" in
+      0) ;;
+      4) mj_ctxd_scan_problem "$k" invalid-front-matter "$rel" "front matter never closes (no second ---)" "head -n 20 '$rel'"; continue ;;
+      *) case " $conv " in *" $base "*) mj_ctxd_scan_problem "$k" invalid-front-matter "$rel" "carries no front matter, and the manifest names $base as a context document (context.documents)" "head -n 5 '$rel'" ;; esac
+         continue ;;
+    esac
+    case "$bad" in
+      *" $m "*)
+        case " $conv " in *" $base "*) decl=1 ;; esac
+        [ "$decl" = 1 ] && mj_ctxd_scan_problem "$k" invalid-front-matter "$rel" "front matter does not parse: $(mj_yaml_flatten "$MJ_ROOT/$rel" 2>&1 >/dev/null | sed 's/^ERROR://' | head -n 1)" "head -n 20 '$rel'"
+        continue ;;
+    esac
+    # two keys of a small flat file, read in this shell
+    kind=""; schema=""
+    while IFS= read -r line; do
+      case "$line" in kind=*) [ -n "$kind" ] || kind="${line#kind=}" ;; schema=*) [ -n "$schema" ] || schema="${line#schema=}" ;; esac
+    done < "$work/flat/$m"
+    if [ "$kind" != context ] && [ "${schema%%/*}" != context ]; then
+      case " $conv " in *" $base "*) mj_ctxd_scan_problem "$k" invalid-front-matter "$rel" "front matter is not the context contract (kind '${kind:-absent}'), and the manifest names $base as a context document" "head -n 20 '$rel'" ;; esac
+      continue
+    fi
+    if [ "$schema" != "$MJ_CTXD_SCHEMA" ]; then
+      mj_ctxd_scan_problem "$k" unsupported-schema "$rel" "schema '${schema:-absent}' is not $MJ_CTXD_SCHEMA (this executable reads $MJ_CTXD_SCHEMA)" "head -n 3 $rel"; continue
+    fi
+    dir="${rel%/*}"; [ "$dir" = "$rel" ] && dir="."
+    rest="x${dir#"$tree"}"; slashes="${rest//[!\/]/}"; depth="${#slashes}"
+    printf '%s\t%s\t%s\t%s\t%s\n' "$k" "$work/flat/$m" "$rel" "$dir" "$depth" >> "$work/pending"
+  done < "$work/cand"
+  total="$k"
+  # stage 4: the contract, for every document that reached it, in file order. A document
+  # that passes takes the next index; one that fails is reported as "<k> TAB <reason>".
+  awk -F'\t' -v n="$MJ_CTXD_COUNT" -v provs=" $providers " -v flat="$MJ_CTXD_FLAT" -v allow="$MJ_ALLOW_DIR/context.txt" '
+    BEGIN { while ((getline line < allow) > 0) if (line !~ /^#/ && line != "") pat[++np] = line   # the allow-list banner is comments
+            close(allow) }
+    function check(   i, p, ok, bad, nreq, req) {
       bad = ""
       for (i = 1; i <= nl; i++) {
         ok = 0; for (p = 1; p <= np; p++) if (keys[i] ~ pat[p]) { ok = 1; break }
         if (!ok) bad = (bad == "" ? keys[i] : bad " " keys[i])
       }
-      if (bad != "") fail("unknown-key: front-matter key(s) nothing reads: " bad)
+      if (bad != "") return "unknown-key: front-matter key(s) nothing reads: " bad
       nreq = split("schema id kind title description status scope composition order", req, " ")
-      for (i = 1; i <= nreq; i++) if (first[req[i]] == "") fail("invalid-front-matter: lacks " req[i])
-      if (first["providers.0"] == "") fail("invalid-front-matter: lacks providers (write providers: [\"*\"] for every provider)")
-      if (first["kind"] != "context") fail("invalid-front-matter: kind is " first["kind"] ", not context")
-      if (first["id"] !~ /^[a-z][a-z0-9-]*(\.[a-z0-9-]+)*$/) fail("invalid-front-matter: id \047" first["id"] "\047 is not a lower-case dotted identifier")
-      if (first["status"] != "active" && first["status"] != "deprecated") fail("invalid-front-matter: status \047" first["status"] "\047 is neither active nor deprecated")
-      if (first["scope"] != "directory" && first["scope"] != "subtree" && first["scope"] != "explicit") fail("invalid-front-matter: scope \047" first["scope"] "\047 is not directory, subtree or explicit")
-      if (first["composition"] != "extend" && first["composition"] != "replace" && first["composition"] != "final") fail("invalid-front-matter: composition \047" first["composition"] "\047 is not extend, replace or final")
-      if (first["order"] !~ /^-?[0-9]+$/) fail("invalid-front-matter: order \047" first["order"] "\047 is not an integer")
-      if (first["scope"] == "explicit" && first["paths.0"] == "") fail("invalid-front-matter: scope explicit names no paths")
-      if (first["scope"] != "explicit" && first["paths.0"] != "") fail("invalid-front-matter: paths are for scope explicit only (scope is " first["scope"] ")")
-      if (first["composition"] == "replace" && first["supersedes.0"] == "") fail("invalid-front-matter: composition replace names nothing in supersedes")
-      if (first["composition"] != "replace" && first["supersedes.0"] != "") fail("invalid-front-matter: supersedes is for composition replace only (composition is " first["composition"] ")")
+      for (i = 1; i <= nreq; i++) if (first[req[i]] == "") return "invalid-front-matter: lacks " req[i]
+      if (first["providers.0"] == "") return "invalid-front-matter: lacks providers (write providers: [\"*\"] for every provider)"
+      if (first["kind"] != "context") return "invalid-front-matter: kind is " first["kind"] ", not context"
+      if (first["id"] !~ /^[a-z][a-z0-9-]*(\.[a-z0-9-]+)*$/) return "invalid-front-matter: id \047" first["id"] "\047 is not a lower-case dotted identifier"
+      if (first["status"] != "active" && first["status"] != "deprecated") return "invalid-front-matter: status \047" first["status"] "\047 is neither active nor deprecated"
+      if (first["scope"] != "directory" && first["scope"] != "subtree" && first["scope"] != "explicit") return "invalid-front-matter: scope \047" first["scope"] "\047 is not directory, subtree or explicit"
+      if (first["composition"] != "extend" && first["composition"] != "replace" && first["composition"] != "final") return "invalid-front-matter: composition \047" first["composition"] "\047 is not extend, replace or final"
+      if (first["order"] !~ /^-?[0-9]+$/) return "invalid-front-matter: order \047" first["order"] "\047 is not an integer"
+      if (first["scope"] == "explicit" && first["paths.0"] == "") return "invalid-front-matter: scope explicit names no paths"
+      if (first["scope"] != "explicit" && first["paths.0"] != "") return "invalid-front-matter: paths are for scope explicit only (scope is " first["scope"] ")"
+      if (first["composition"] == "replace" && first["supersedes.0"] == "") return "invalid-front-matter: composition replace names nothing in supersedes"
+      if (first["composition"] != "replace" && first["supersedes.0"] != "") return "invalid-front-matter: supersedes is for composition replace only (composition is " first["composition"] ")"
       if (first["children.require_contract"] != "") {
-        if (first["children.require_contract"] != "true" && first["children.require_contract"] != "false") fail("invalid-front-matter: children.require_contract \047" first["children.require_contract"] "\047 is neither true nor false")
-        if (first["scope"] != "subtree") fail("invalid-front-matter: children.require_contract states what descendants owe and is for scope subtree only (scope is " first["scope"] ")")
+        if (first["children.require_contract"] != "true" && first["children.require_contract"] != "false") return "invalid-front-matter: children.require_contract \047" first["children.require_contract"] "\047 is neither true nor false"
+        if (first["scope"] != "subtree") return "invalid-front-matter: children.require_contract states what descendants owe and is for scope subtree only (scope is " first["scope"] ")"
       }
       if (first["children.exempt.0"] != "") {
-        if (first["scope"] != "subtree") fail("invalid-front-matter: children.exempt names subtrees below this document and is for scope subtree only (scope is " first["scope"] ")")
+        if (first["scope"] != "subtree") return "invalid-front-matter: children.exempt names subtrees below this document and is for scope subtree only (scope is " first["scope"] ")"
       }
       for (i = 1; i <= nl; i++) {
         if (keys[i] ~ /^providers\.[0-9]+$/ && vals[i] != "*" && index(provs, " " vals[i] " ") == 0)
-          fail("unknown-provider: provider \047" vals[i] "\047 is not one the policy projects (have:" provs ")")
+          return "unknown-provider: provider \047" vals[i] "\047 is not one the policy projects (have:" provs ")"
         if (keys[i] ~ /^audience\.[0-9]+$/ && vals[i] != "human" && vals[i] != "agent")
-          fail("invalid-front-matter: audience \047" vals[i] "\047 is neither human nor agent")
+          return "invalid-front-matter: audience \047" vals[i] "\047 is neither human nor agent"
       }
+      return ""
+    }
+    {
+      k = $1; src = $2; file = $3; dir = $4; depth = $5
+      nl = 0; delete keys; delete vals; delete first
+      while ((getline line < src) > 0) {
+        eq = index(line, "="); if (eq == 0) continue
+        key = substr(line, 1, eq - 1); v = substr(line, eq + 1)
+        nl++; keys[nl] = key; vals[nl] = v
+        if (!(key in first)) first[key] = v
+      }
+      close(src)
+      reason = check()
+      if (reason != "") { print k "\t" reason; next }
       nout = split("id title description status scope composition order", out, " ")
       for (i = 1; i <= nout; i++) print "docs." n "." out[i] "=" first[out[i]] >> flat
       print "docs." n ".path=" file >> flat
@@ -221,16 +271,26 @@ mj_ctxd_scan() {
       if (first["children.require_contract"] != "") print "docs." n ".children_require_contract=" first["children.require_contract"] >> flat
       has_aud = 0
       for (i = 1; i <= nl; i++) if (keys[i] ~ /^(paths|providers|audience|supersedes|tracks)\.[0-9]+$/) { print "docs." n "." keys[i] "=" vals[i] >> flat; if (keys[i] ~ /^audience/) has_aud = 1 }
-      for (i = 1; i <= nl; i++) if (keys[i] ~ /^children\.exempt\.[0-9]+$/) { sub(/^children\./, "children_", keys[i]); print "docs." n "." keys[i] "=" vals[i] >> flat }
+      for (i = 1; i <= nl; i++) if (keys[i] ~ /^children\.exempt\.[0-9]+$/) { key = keys[i]; sub(/^children\./, "children_", key); print "docs." n "." key "=" vals[i] >> flat }
       if (!has_aud) { print "docs." n ".audience.0=human" >> flat; print "docs." n ".audience.1=agent" >> flat }
-    }' "$MJ_ALLOW_DIR/context.txt" "$tmp")"
-  st=$?
-  rm -f "$tmp"
-  if [ "$st" != 0 ]; then
-    mj_ctxd_problem "${reason%%:*}" "$rel" "${reason#*: }" "head -n 20 '$rel'"; return 1
-  fi
+      print k "\t"; n++
+    }' "$work/pending" > "$work/checked"
+  while IFS= read -r line; do
+    k="${line%%"$MJ_TAB"*}"; reason="${line#*"$MJ_TAB"}"
+    if [ -z "$reason" ]; then MJ_CTXD_COUNT=$((MJ_CTXD_COUNT + 1)); continue; fi
+    mj_ctxd_scan_problem "$k" "${reason%%:*}" "${rels[k]}" "${reason#*: }" "head -n 20 '${rels[k]}'"
+  done < "$work/checked"
+  # every problem in file order, as when the files were read one at a time
+  k=1
+  while [ "$k" -le "$total" ]; do
+    [ -z "${pc[k]:-}" ] || mj_ctxd_problem "${pc[k]}" "${ps[k]}" "${pm[k]}" "${pr[k]}"
+    k=$((k + 1))
+  done
+  rm -rf "$work"
   return 0
 }
+# a problem of the k-th candidate, held until every candidate has been decided
+mj_ctxd_scan_problem() { pc[$1]="$2"; ps[$1]="$3"; pm[$1]="$4"; pr[$1]="$5"; }
 
 # ---------------------------------------------------------------- the tree
 # Load every document once. Problems are collected, never fatal here: validate reports them
@@ -253,10 +313,7 @@ mj_ctxd_load() {
     mj_ctxd_problem refused-path "$f" "is a symbolic link; the tree is read literally and links are not followed" "ls -l '$f'"
   done < <(cd "$MJ_ROOT" && find "$(mj_ctxd_tree)" -type l -print 2>/dev/null | LC_ALL=C sort)
   mj_phase_end ctxd:links "$t0"; t0="$(mj_phase_begin ctxd:scan)"
-  while IFS= read -r f; do
-    [ -n "$f" ] || continue
-    if mj_ctxd_scan "$f" "$MJ_CTXD_COUNT" "$conv" "$providers"; then MJ_CTXD_COUNT=$((MJ_CTXD_COUNT + 1)); fi
-  done < <(mj_ctxd_files)
+  mj_ctxd_scan "$conv" "$providers"
   mj_phase_end ctxd:scan "$t0"; t0="$(mj_phase_begin ctxd:load)"
   # every field of every document becomes a variable once; the cross checks and every
   # later reader expand them instead of running one awk per field
@@ -269,7 +326,7 @@ mj_ctxd_load() {
 
 mj_ctxd_cross_check() {
   local noglob=0; case "$-" in *f*) noglob=1 ;; esac; set -f   # list values such as "*" are words, not globs
-  local i j id other p rel tree
+  local i j id other p rel tree dir MJ_V unmatched
   tree="$(mj_ctxd_tree)"
   # one id, one file
   awk -F= '/^docs\.[0-9]+\.id=/ { print $2 }' "$MJ_CTXD_FLAT" | LC_ALL=C sort | uniq -d | while IFS= read -r id; do
@@ -277,38 +334,49 @@ mj_ctxd_cross_check() {
          | while IFS= read -r j; do printf '%s ' "$(mj_ctxd "$j" path)"; done)"
     mj_ctxd_problem duplicate-id "$id" "claimed by two files: ${p% }" "grep -rln '^id: $id$' $tree"
   done
+  # Every field below is read by expansion, not by a command substitution: the checks read
+  # each document several times, and a fork per reading was most of their time (I0820).
+  mj_ctxd_untracked_specs unmatched
   i=0
   while [ "$i" -lt "$MJ_CTXD_COUNT" ]; do
-    rel="$(mj_ctxd "$i" path)"
+    mj_ctxd_get "$i" path; rel="$MJ_V"; mj_ctxd_get "$i" dir; dir="$MJ_V"
     # explicit paths exist, are directories, and lie inside the tree
-    for p in $(mj_ctxd_list "$i" paths); do
-      if ! other="$(mj_norm_path "$p")"; then mj_ctxd_problem broken-reference "$rel" "paths entry '$p' is not a repository-relative path" "head -n 20 '$rel'"; continue; fi
+    mj_ctxd_getlist "$i" paths
+    for p in $MJ_V; do
+      if ! mj_norm_path_into other "$p"; then mj_ctxd_problem broken-reference "$rel" "paths entry '$p' is not a repository-relative path" "head -n 20 '$rel'"; continue; fi
       mj_path_contains "$tree" "$other" || { mj_ctxd_problem broken-reference "$rel" "paths entry '$p' lies outside the tree $tree/" "head -n 20 '$rel'"; continue; }
       [ -d "$MJ_ROOT/$other" ] || mj_ctxd_problem broken-reference "$rel" "paths entry '$p' is not a directory in this repository" "ls -d '$p'"
     done
     # an exempted subtree exists and lies inside the scope of the document that exempts it:
     # a contract may release the directories it governs and no others, or the narrowing
     # rule could be escaped by exempting a subtree from the side
-    for p in $(mj_ctxd_list "$i" children_exempt); do
-      if ! other="$(mj_norm_path "$p")"; then mj_ctxd_problem broken-reference "$rel" "children.exempt entry '$p' is not a repository-relative path" "head -n 20 '$rel'"; continue; fi
-      mj_path_contains "$(mj_ctxd "$i" dir)" "$other" || { mj_ctxd_problem illegal-override "$rel" "children.exempt entry '$p' lies outside the subtree this document governs ($(mj_ctxd "$i" dir)/); a contract releases the directories it governs and no others" "majordomus context explain $other"; continue; }
-      [ "$other" = "$(mj_ctxd "$i" dir)" ] && { mj_ctxd_problem illegal-override "$rel" "children.exempt entry '$p' is this document's own directory; write children.require_contract: false to exempt the whole subtree" "head -n 20 '$rel'"; continue; }
+    mj_ctxd_getlist "$i" children_exempt
+    for p in $MJ_V; do
+      if ! mj_norm_path_into other "$p"; then mj_ctxd_problem broken-reference "$rel" "children.exempt entry '$p' is not a repository-relative path" "head -n 20 '$rel'"; continue; fi
+      mj_path_contains "$dir" "$other" || { mj_ctxd_problem illegal-override "$rel" "children.exempt entry '$p' lies outside the subtree this document governs ($dir/); a contract releases the directories it governs and no others" "majordomus context explain $other"; continue; }
+      [ "$other" = "$dir" ] && { mj_ctxd_problem illegal-override "$rel" "children.exempt entry '$p' is this document's own directory; write children.require_contract: false to exempt the whole subtree" "head -n 20 '$rel'"; continue; }
       [ -d "$MJ_ROOT/$other" ] || mj_ctxd_problem broken-reference "$rel" "children.exempt entry '$p' is not a directory in this repository" "ls -d '$p'"
     done
     # every tracked pathspec covers at least one file the index knows
-    for p in $(mj_ctxd_list "$i" tracks); do
-      [ -n "$(mj_git ls-files -- "$p" 2>/dev/null | head -n 1)" ] \
-        || mj_ctxd_problem broken-reference "$rel" "tracks '$p', which matches no tracked file" "git ls-files -- '$p'"
+    mj_ctxd_getlist "$i" tracks
+    for p in $MJ_V; do
+      case "$unmatched" in *"$MJ_CTXD_NL$p$MJ_CTXD_NL"*)
+        mj_ctxd_problem broken-reference "$rel" "tracks '$p', which matches no tracked file" "git ls-files -- '$p'" ;;
+      esac
     done
     # supersedes: the target exists, is a proper ancestor-scope document, and is not final
-    for id in $(mj_ctxd_list "$i" supersedes); do
-      if ! j="$(mj_ctxd_index "$id")"; then mj_ctxd_problem broken-reference "$rel" "supersedes '$id', which no document declares" "majordomus context list"; continue; fi
+    mj_ctxd_getlist "$i" supersedes
+    for id in $MJ_V; do
+      if ! mj_ctxd_index_into j "$id"; then mj_ctxd_problem broken-reference "$rel" "supersedes '$id', which no document declares" "majordomus context list"; continue; fi
       [ "$j" = "$i" ] && { mj_ctxd_problem cycle "$rel" "supersedes itself" "head -n 20 '$rel'"; continue; }
-      if ! mj_path_contains "$(mj_ctxd "$j" dir)" "$(mj_ctxd "$i" dir)"; then
-        mj_ctxd_problem broken-reference "$rel" "supersedes '$id' at $(mj_ctxd "$j" path), which is not in its ancestor chain; a document may only supersede what applies above it" "majordomus context explain $(mj_ctxd "$i" dir)"; continue
+      mj_ctxd_get "$j" dir
+      if ! mj_path_contains "$MJ_V" "$dir"; then
+        mj_ctxd_get "$j" path
+        mj_ctxd_problem broken-reference "$rel" "supersedes '$id' at $MJ_V, which is not in its ancestor chain; a document may only supersede what applies above it" "majordomus context explain $dir"; continue
       fi
-      [ "$(mj_ctxd "$j" composition)" = final ] \
-        && mj_ctxd_problem illegal-override "$rel" "supersedes '$id', which is final; no descendant may weaken it" "majordomus context explain $(mj_ctxd "$i" dir)"
+      mj_ctxd_get "$j" composition
+      [ "$MJ_V" = final ] \
+        && mj_ctxd_problem illegal-override "$rel" "supersedes '$id', which is final; no descendant may weaken it" "majordomus context explain $dir"
     done
     i=$((i + 1))
   done
@@ -316,6 +384,41 @@ mj_ctxd_cross_check() {
   mj_ctxd_coverage
   [ "$noglob" = 1 ] || set +f
   return 0
+}
+
+# Every `tracks` pathspec of every document that matches no file the index knows, each
+# between newlines, so that membership is one pattern match. Git is asked once for all of
+# them rather than once per pathspec: `ls-files --error-unmatch` names every pathspec of the
+# call that matched nothing, and the index is still what answers, so an untracked file never
+# satisfies one (I0820). A pathspec with magic (`:(exclude)...`) is asked on its own, because
+# an exclusion would apply to every other pathspec of the call, and so is every pathspec when
+# the call fails for another reason than a pathspec that matched nothing.
+mj_ctxd_untracked_specs() { # <variable to set>
+  local i=0 p err rc specs=() single=() out="$MJ_CTXD_NL" line MJ_V
+  while [ "$i" -lt "$MJ_CTXD_COUNT" ]; do
+    mj_ctxd_getlist "$i" tracks
+    for p in $MJ_V; do case "$p" in :*) single+=("$p") ;; *) specs+=("$p") ;; esac; done
+    i=$((i + 1))
+  done
+  if [ "${#specs[@]}" -gt 0 ]; then
+    err="$(LC_ALL=C mj_git ls-files --error-unmatch -- "${specs[@]}" 2>&1 >/dev/null)" && rc=0 || rc=$?
+    case "$rc" in
+      0) ;;
+      1) while IFS= read -r line; do
+           case "$line" in "error: pathspec '"*"' did not match any file(s) known to git")
+             line="${line#"error: pathspec '"}"; out="$out${line%"' did not match any file(s) known to git"}$MJ_CTXD_NL" ;;
+           esac
+         done <<EOF
+$err
+EOF
+         ;;
+      *) single+=("${specs[@]}") ;;
+    esac
+  fi
+  for p in ${single[@]+"${single[@]}"}; do
+    [ -n "$(mj_git ls-files -- "$p" 2>/dev/null | head -n 1)" ] || out="$out$p$MJ_CTXD_NL"
+  done
+  printf -v "$1" '%s' "$out"
 }
 
 # the index of a document whose directory is $1, or 1
@@ -329,13 +432,13 @@ mj_ctxd_index_for_dir() {
 # above it ($2 = strict skips a declaration in the directory itself), as "<value><TAB><path>".
 # Empty when nothing declares it, which the caller reads as the default: a contract is owed.
 mj_ctxd_require_at() {
-  local dir="$1" strict="${2:-0}" i=0 val ddir d best_depth=-1 best_val="" best_path=""
+  local dir="$1" strict="${2:-0}" i=0 val ddir d best_depth=-1 best_val="" best_path="" MJ_V
   while [ "$i" -lt "$MJ_CTXD_COUNT" ]; do
-    val="$(mj_ctxd "$i" children_require_contract)"
-    ddir="$(mj_ctxd "$i" dir)"
+    mj_ctxd_get "$i" children_require_contract; val="$MJ_V"
+    mj_ctxd_get "$i" dir; ddir="$MJ_V"
     if [ -n "$val" ] && mj_path_contains "$ddir" "$dir" && { [ "$strict" = 0 ] || [ "$ddir" != "$dir" ]; }; then
-      d="$(mj_ctxd "$i" depth)"
-      if [ "$d" -gt "$best_depth" ]; then best_depth="$d"; best_val="$val"; best_path="$(mj_ctxd "$i" path)"; fi
+      mj_ctxd_get "$i" depth; d="$MJ_V"
+      if [ "$d" -gt "$best_depth" ]; then best_depth="$d"; best_val="$val"; mj_ctxd_get "$i" path; best_path="$MJ_V"; fi
     fi
     i=$((i + 1))
   done
@@ -391,16 +494,19 @@ mj_ctxd_directories() {
 # contract that governs the subtree (children.require_contract: false), never by a list at
 # the root: it moves with the tree it describes. ADR 0011.
 mj_ctxd_coverage() {
-  local tree local_rel d gov val path i
+  local tree local_rel d gov val path i dir MJ_V
   tree="$(mj_ctxd_tree)"; local_rel="$(mj_rel "$MJ_AI_LOCAL_DIR")"
   # narrowing only: false may become true below, true may not become false
   i=0
   while [ "$i" -lt "$MJ_CTXD_COUNT" ]; do
-    if [ "$(mj_ctxd "$i" children_require_contract)" = false ]; then
-      gov="$(mj_ctxd_require_at "$(mj_ctxd "$i" dir)" 1)"; val="${gov%%"$MJ_CTXD_TAB"*}"; path="${gov#*"$MJ_CTXD_TAB"}"
-      [ "$val" = true ] && mj_ctxd_problem illegal-override "$(mj_ctxd "$i" path)" \
+    mj_ctxd_get "$i" children_require_contract
+    if [ "$MJ_V" = false ]; then
+      mj_ctxd_get "$i" dir; dir="$MJ_V"
+      gov="$(mj_ctxd_require_at "$dir" 1)"; val="${gov%%"$MJ_CTXD_TAB"*}"; path="${gov#*"$MJ_CTXD_TAB"}"
+      mj_ctxd_get "$i" path
+      [ "$val" = true ] && mj_ctxd_problem illegal-override "$MJ_V" \
         "declares children.require_contract: false under $path, which requires one; a descendant may narrow an inherited constraint, never weaken it" \
-        "majordomus context explain $(mj_ctxd "$i" dir)"
+        "majordomus context explain $dir"
     fi
     i=$((i + 1))
   done
