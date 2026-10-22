@@ -1067,7 +1067,6 @@ metrics:
     warnings:
       - "tokens counted with o200k_base (tiktoken-rs 0.12.0), which is not the tokenizer of every model"
       - "the candidates are what the compiler's own graph walk judged relevant; a worker without the compiler would not necessarily have read them, so this ratio describes the selection, not a session's saving"
-      - "stale: a measured mechanism changed since this record"
   - id: context_cost_model_error
     title: "Error of the compiler's bytes-over-four cost model"
     class: derived
@@ -1968,16 +1967,14 @@ metrics:
       - I3839
       - I3841
       - I3842
-    warnings:
-      - "stale: a measured mechanism changed since this record"
+    warnings: []
 suites:
   - id: context
     kind: context
     version: 1
     title: "Context selection, counted"
-    freshness: stale
-    freshness_detail: "1 record(s) were measured against inputs that have changed since: .ai/repo/benchmarks/economics/methodology.yaml, .ai/repo/benchmarks/economics/suites/context.yaml, apps/majordomus-cli/src/devcontext, .ai/repo/knowledge/sources.yaml"
-    runs: 10
+    freshness: current
+    runs: 11
     pairs:
       declared: 0
       attempted: 0
@@ -1997,6 +1994,7 @@ suites:
       - a588b8eb5facf487dfae08d6204e583eb1e1f25d
       - c453f536afafb9d22a7f6501b7ff10f0307dc8a0
       - d446499470fecdc3454c1d04297bf3f4b706b5ec
+      - f48de8a909081bf8e265a1afc04fceabe7b2a08b
     harnesses: []
     models_reported: []
   - id: pilot
@@ -2132,8 +2130,8 @@ pairs:
       - the control run is not recorded
 segments: []
 context:
-  revision: c453f536afafb9d22a7f6501b7ff10f0307dc8a0
-  measured_at: "2026-10-22T19:41:14Z"
+  revision: f48de8a909081bf8e265a1afc04fceabe7b2a08b
+  measured_at: "2026-10-22T22:31:00Z"
   tokenizer:
     encoding: o200k_base
     implementation: tiktoken-rs 0.12.0
@@ -2215,6 +2213,13 @@ history:
     methodology: 1
     revision: c453f536afafb9d22a7f6501b7ff10f0307dc8a0
     at: "2026-10-22T19:41:14Z"
+    metric: context_reduction_ratio
+    value: 0.979701046392
+    n: 888
+  - suite: context
+    methodology: 1
+    revision: f48de8a909081bf8e265a1afc04fceabe7b2a08b
+    at: "2026-10-22T22:31:00Z"
     metric: context_reduction_ratio
     value: 0.979701046392
     n: 888
