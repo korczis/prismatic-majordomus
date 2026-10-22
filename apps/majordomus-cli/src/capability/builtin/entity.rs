@@ -433,6 +433,81 @@ pub struct EntityView {
     /// does not declare this kind; a kind declared as not published carries the reason.
     #[serde(default)]
     pub documentation: Option<Documentation>,
+    /// The commits that changed its file, read from git when it is read and never stored in
+    /// the index (I3314).
+    #[serde(default)]
+    pub history: History,
+}
+
+/// How many commits an entity's history lists before it says it was cut.
+pub const HISTORY_BOUND: usize = 20;
+
+/// The commits that changed an object's file, newest first (I3314). An object that is one
+/// member of a collection file has the file's history.
+#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
+pub struct History {
+    /// Whether a history applies. False when git cannot answer for the file or no commit
+    /// has touched it yet; `reason` says which. Never an empty history that reads as none.
+    pub applicable: bool,
+    /// Why no history applies, when none does.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reason: Option<String>,
+    /// The commit that last changed the file: the first of `commits`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub last: Option<HistoryCommit>,
+    /// The commits that changed it, newest first, at most `bound`.
+    #[serde(default)]
+    pub commits: Vec<HistoryCommit>,
+    /// The most commits listed.
+    pub bound: usize,
+    /// Whether more commits changed the file than `bound` lets through.
+    pub cut: bool,
+}
+
+/// One commit of a history.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct HistoryCommit {
+    /// The full commit id.
+    pub commit: String,
+    /// The committer date, ISO 8601.
+    pub date: String,
+    /// The first line of its message.
+    pub subject: String,
+}
+
+/// The history of `o`'s file in the repository at `root`.
+fn history(root: &std::path::Path, o: &Object) -> History {
+    let not = |reason: &str| History {
+        reason: Some(reason.to_string()),
+        bound: HISTORY_BOUND,
+        ..History::default()
+    };
+    let Some((commits, cut)) = crate::git::file_history(root, &o.provenance.path, HISTORY_BOUND)
+    else {
+        return not("git cannot answer for this file: no repository, or no commit on this branch");
+    };
+    if commits.is_empty() && cut {
+        return not("this clone is shallow: the commit that last changed this file is not in it");
+    }
+    if commits.is_empty() {
+        return not("no commit has changed this file yet");
+    }
+    let commits: Vec<HistoryCommit> = commits
+        .into_iter()
+        .map(|(commit, date, subject)| HistoryCommit {
+            commit,
+            date,
+            subject,
+        })
+        .collect();
+    History {
+        applicable: true,
+        reason: None,
+        last: commits.first().cloned(),
+        commits,
+        bound: HISTORY_BOUND,
+        cut,
+    }
 }
 
 fn subject<'a>(ctx: &'a Context, input: &EntityInput) -> Result<&'a Object, CapabilityError> {
@@ -477,6 +552,7 @@ fn objects_entity(ctx: &Context, input: EntityInput) -> Result<EntityView, Capab
         // without a site has none
         documentation: Publication::read(std::path::Path::new(&ctx.index.repository.root))
             .and_then(|p| p.documentation(&o.kind, &entity::slug(&o.identity))),
+        history: history(std::path::Path::new(&ctx.index.repository.root), o),
     })
 }
 

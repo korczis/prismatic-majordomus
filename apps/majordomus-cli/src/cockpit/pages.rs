@@ -7514,6 +7514,37 @@ pub fn entity(ctx: &Context, kind: &str, slug: &str) -> Page {
         ),
     };
 
+    // the commits that changed the file, as entity.show read them from git (I3314): a file
+    // with none says why, and a list cut at the bound says so
+    let h = &view.history;
+    let history_card = if !h.applicable {
+        card(
+            "Where it changed",
+            nothing(h.reason.as_deref().unwrap_or("No history applies.")),
+        )
+    } else {
+        let mut body = el("div").child(table(
+            &["Commit", "Date", "Subject"],
+            h.commits
+                .iter()
+                .map(|c| {
+                    row(vec![
+                        cell(mono(&c.commit[..12.min(c.commit.len())])),
+                        cell(mono(&c.date)),
+                        text_cell(&c.subject),
+                    ])
+                })
+                .collect(),
+        ));
+        if h.cut {
+            body = body.child(el("p").class("mj-note").text(format!(
+                "The {} most recent commits; older ones changed it too: git log --follow -- {}",
+                h.bound, view.provenance.path
+            )));
+        }
+        card("Where it changed", body)
+    };
+
     Page::new(
         Area::Objects,
         view.identity.clone(),
@@ -7529,6 +7560,7 @@ pub fn entity(ctx: &Context, kind: &str, slug: &str) -> Page {
             .child(card("What can be said about it", evidence_body))
             .child(relations_card)
             .child(surfaces_card)
+            .child(history_card)
             .child(metadata)
             .child(details("The file as it is", pre(&view.content))),
     )
