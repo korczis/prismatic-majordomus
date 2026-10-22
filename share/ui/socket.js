@@ -24,6 +24,20 @@ const FIRST_DELAY_MS = 500;
 /** The longest wait between attempts; a browser tab left open must not become a heater. */
 const MAX_DELAY_MS = 30_000;
 
+/** How many attempts in a row may fail before the channel stops trying and reads offline:
+ * about two minutes of backoff, after which the page says to reload (I1017). */
+export const MAX_ATTEMPTS = 8;
+
+/**
+ * The wait before attempt `attempt` (0 is the first retry): exponential, capped at
+ * MAX_DELAY_MS, with jitter in its upper half so that many tabs do not knock together.
+ * `random` is a number in [0, 1).
+ */
+export function backoff(attempt, random = Math.random()) {
+  const base = Math.min(FIRST_DELAY_MS * 2 ** attempt, MAX_DELAY_MS);
+  return base / 2 + random * (base / 2);
+}
+
 /** How many heartbeat intervals of silence make a channel dead rather than quiet. */
 const SILENT_HEARTBEATS = 2.5;
 
@@ -155,7 +169,6 @@ export function follow(path, handlers) {
     arm();
     ws.addEventListener('open', () => {
       if (socket !== ws) return;
-      attempt = 0;
       announce(LIVE);
       arm();
     });
@@ -180,6 +193,10 @@ export function follow(path, handlers) {
         return;
       }
       if (frame.type === 'stream.ready') {
+        // the backoff starts over only once the server has spoken the protocol: one that
+        // accepts every connection and drops it at once would otherwise be asked again
+        // every half second, forever
+        attempt = 0;
         const data = frame.data || {};
         if (Number(data.heartbeat_seconds) > 0) heartbeat = Number(data.heartbeat_seconds);
         rebase = data.truncated === true;
@@ -226,10 +243,14 @@ export function follow(path, handlers) {
       announce(OFFLINE);
       return;
     }
+    // a bounded loop: past the last attempt the page shows what it last knew and says so
+    if (attempt >= MAX_ATTEMPTS) {
+      closed = true;
+      announce(OFFLINE);
+      return;
+    }
     announce(RECONNECTING);
-    // exponential, capped, with jitter so that many tabs do not knock together
-    const base = Math.min(FIRST_DELAY_MS * 2 ** attempt, MAX_DELAY_MS);
-    const wait = base / 2 + Math.random() * (base / 2);
+    const wait = backoff(attempt);
     attempt += 1;
     setTimeout(() => {
       if (handlers.resync) handlers.resync('reconnect');
