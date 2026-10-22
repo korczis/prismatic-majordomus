@@ -71,7 +71,9 @@ impl Node {
 
     fn declare(&self, repository: &str, allow: &[&str], seeds: &[&Served]) {
         let mut yaml = String::from(
-            "schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\nmulticast:\n  enabled: false\ntrust:\n  policy: deny_unknown\n  allow:\n",
+            // the tailnet stays quiet: a fixture on a machine that runs Tailscale would
+            // otherwise register with the real hubs of the tailnet and meet its siblings there
+            "schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\nmulticast:\n  enabled: false\ntailscale:\n  enabled: false\ntrust:\n  policy: deny_unknown\n  allow:\n",
         );
         for key in allow {
             yaml.push_str(&format!("    - {key}\n"));
@@ -629,8 +631,39 @@ fn three_runtimes_in_a_line_converge_through_the_middle_without_loops() {
         assert_eq!(newest["events"][0], events["events"][2], "{newest}");
         assert_eq!(newest["events"][1], events["events"][3], "{newest}");
         assert_eq!(newest["lamport"], events["lamport"], "{newest}");
-        let first = s.get("/api/v1/mesh/events?limit=2").1;
+        let first = s.get("/api/v1/mesh/events?after=0&limit=2").1;
         assert_eq!(first["events"][0], events["events"][0], "{first}");
+        // The default walk is by arrival: resumed from the cursor each page answers, it
+        // returns the same four events, each once, whatever order they arrived in (I2733).
+        let identity = |e: &Value| format!("{}/{}", e["stream"], e["seq"]);
+        let mut walked = Vec::new();
+        let mut cursor: Option<String> = None;
+        loop {
+            let page = match &cursor {
+                None => s.get("/api/v1/mesh/events?limit=1").1,
+                Some(c) => s.get(&format!("/api/v1/mesh/events?limit=1&cursor={c}")).1,
+            };
+            cursor = Some(
+                page["cursor"]
+                    .as_str()
+                    .expect("a cursor walk answers one")
+                    .into(),
+            );
+            let list = page["events"].as_array().cloned().unwrap_or_default();
+            if list.is_empty() {
+                break;
+            }
+            walked.extend(list.iter().map(identity));
+        }
+        let mut held: Vec<_> = events["events"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(identity)
+            .collect();
+        walked.sort();
+        held.sort();
+        assert_eq!(walked, held, "every event once over the walk");
     }
 
     // Quiet rounds carry nothing further: replication stopped rather than looping.

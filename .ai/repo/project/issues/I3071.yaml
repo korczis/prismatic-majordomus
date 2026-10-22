@@ -7,20 +7,26 @@ profile: implementation
 parallel_safe: false
 serves:
   - a-version-follows-every-session#shown
-objective: "Read release.currency on /ui/delivery as one more source. Show a KPI with the stance (current, owed, overdue), the count of landed commits past the last release, the oldest one's age and the required version. The answer links to the capability's route, like every other value on the screen. The published UI snapshot shows it only as read at the snapshot's revision and says so."
+objective: "Read release.currency on /ui/delivery as one more source, asked without the version, because the hero's Next reads release.version and one screen names one next version. The hero gains a Since then tile with the stance (current, owed, overdue or unknown). A panel, Is the trunk released?, shows the answer's sentence, the count of landed commits and landings, the wait and how it was dated (as this clone saw it land, or at most from the commit time), and the release it is measured from. Its source line leads to the capability's API route and technical view, like every other value on the screen. The panel says that a published snapshot shows it as read when the snapshot was built. Case 3471 serves the screen over a fixture and holds it to the answer, and the intent's criterion shown names that case."
 why: "The delivery screen is where a person checks whether work reached the public. Release debt is the step between merged and published that it does not show."
 current_state: "/ui/delivery shows integration and deployment facts and no release debt."
 desired_state: "/ui/delivery says whether the trunk has been released, from the same answer the brief and doctor read."
 scope:
   - "apps/majordomus-cli/src/ui/delivery.rs"
   - "docs/MAJORDOMUS_UI.md"
+  - "docs/RELEASE.md"
+  - ".ai/repo/project/intents/a-version-follows-every-session.yaml"
+  - ".ai/repo/rules/project/land-and-publish.v1.md"
+  - "test/cases/3471_the_delivery_screen_shows_what_waits_for_a_release.sh"
 depends_on:
   - "I3070"
 acceptance_criteria:
-  - "/ui/delivery shows release.currency's stance, count, age and required version, and its value leads to the capability's route"
+  - "/ui/delivery shows release.currency's stance, its sentence, its counts, its wait and how it was dated, and the release it is measured from, each equal to what release.currency answers, and its source line leads to the capability's API route and technical view"
+  - "The screen names one next version, the hero's, read from release.version"
 validation:
   - "bin/majordomus plan validate"
+  - "bash test/run.sh 3471_the_delivery_screen_shows_what_waits_for_a_release"
 evidence_required:
-  - "case_delivery_shows_release_currency"
+  - "case_the_delivery_screen_shows_what_waits_for_a_release"
 created_at: 2026-10-19
 updated_at: 2026-10-19

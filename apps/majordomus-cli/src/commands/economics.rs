@@ -18,7 +18,7 @@ use crate::capability::CapabilityError;
 use crate::cli::{
     EconomicsArgs, EconomicsCheckArgs, EconomicsCommand, EconomicsExplainArgs,
     EconomicsMeasureArgs, EconomicsReferencesArgs, EconomicsRunArgs, EconomicsRunsArgs,
-    EconomicsSummaryArgs, OutputFormat, RepoArgs,
+    EconomicsSummaryArgs, EconomicsTasksArgs, OutputFormat, RepoArgs,
 };
 use crate::economics::claims::EconomicsCheckReport;
 use crate::economics::model::{
@@ -26,6 +26,7 @@ use crate::economics::model::{
 };
 use crate::economics::report::{amount, interval_text, words};
 use crate::economics::stats::percent_text;
+use crate::economics::tasks::{TaskEconomicsList, TaskEconomicsState};
 use crate::economics::{self, runner};
 use crate::error::{Error, Result};
 
@@ -40,6 +41,7 @@ pub fn run(args: EconomicsArgs) -> Result<u8> {
         EconomicsCommand::Explain(a) => explain(a),
         EconomicsCommand::Runs(a) => runs(a),
         EconomicsCommand::Check(a) => check(a),
+        EconomicsCommand::Tasks(a) => tasks(a),
         EconomicsCommand::Measure(a) => measure(a),
         EconomicsCommand::Run(a) => live(a),
         EconomicsCommand::References(a) => references(a),
@@ -414,6 +416,55 @@ fn runs(a: EconomicsRunsArgs) -> Result<u8> {
     for d in &l.diagnostics {
         writeln!(out, "WARN {d}").map_err(Error::Transport)?;
     }
+    Ok(0)
+}
+
+fn tasks(a: EconomicsTasksArgs) -> Result<u8> {
+    let value = ask(
+        &a.repo,
+        &["economics", "tasks"],
+        json!({ "since": a.since, "until": a.until }),
+    )?;
+    if let OutputFormat::Json = a.format {
+        print_json(&value)?;
+        return Ok(0);
+    }
+    let l: TaskEconomicsList = read(&value, "economics.tasks")?;
+    let mut out = std::io::stdout().lock();
+    writeln!(
+        out,
+        "{} task(s) from {} ledger file(s)",
+        l.count,
+        l.ledgers.len()
+    )
+    .map_err(Error::Transport)?;
+    for t in &l.tasks {
+        writeln!(
+            out,
+            "  {:<24} {:<8} {:<12} {:>8}  {} refusal(s)  {} episode(s)  {}",
+            t.task_id,
+            match t.state {
+                TaskEconomicsState::Finished => "finished",
+                TaskEconomicsState::Open => "open",
+            },
+            t.outcome,
+            t.wall_seconds
+                .map(|s| format!("{s}s"))
+                .unwrap_or_else(|| "—".into()),
+            t.refusals,
+            t.episodes.len(),
+            t.issue.as_deref().unwrap_or("")
+        )
+        .map_err(Error::Transport)?;
+    }
+    for u in &l.unread {
+        writeln!(out, "NOT READ {}: {}", u.checkout, u.reason).map_err(Error::Transport)?;
+    }
+    writeln!(
+        out,
+        "interventions, CI reruns, spend and acceptance are not observed yet; each record names its supplier"
+    )
+    .map_err(Error::Transport)?;
     Ok(0)
 }
 

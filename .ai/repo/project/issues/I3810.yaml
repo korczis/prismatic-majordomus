@@ -1,0 +1,45 @@
+id: I3810
+milestone: mesh-journal-converges
+title: "A mesh session whose client process has ended is closed by the runtime that holds it"
+slug: a-gone-clients-mesh-session-is-closed
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "A mesh session names the client process it belongs to (its process id and start time, read by the hook that opens it on the same machine), and the runtime that holds the session closes it (SessionClosed, once) when that process no longer exists, so the session's claims end by the fold's existing rule (\"its session closed\") instead of being held for as long as the runtime beats. Implemented by f8 (779cc015), holder of mesh-journal-converges, under claim c-7fcc9fbf8956."
+why: "On 2026-10-21 dev-03 found exclusive claim c-e75ccd4c731d (node 5d81b5c9, I2720 scope, refs/heads/feature/self-update-wraps-the-installer) reading held, and nobody could release it: other runtimes are refused not_own and the holder is not reachable. The fold showed its stream live (beat 5 s before) and its session claude-code-9ab8a13c active, although its client had gone. A provider session joins the mesh once, in its start hook (lib/capture.sh mj_capture_mesh_join), and leaves in its end hook; a client that crashes or is killed never runs the end hook, and nothing else ties the session to its client: connection episodes are attached under a client-chosen id with provider `generic` and never under the mesh session's id, so a reaped episode cannot say which mesh session it carried. On a long-lived runtime such a session is active for ever, and its exclusive claims block every other worker."
+current_state: "mesh.session.open records the session's client, branch, head, task and intent, and nothing about the process it belongs to. The session ends only by an explicit `mesh session close` or when its runtime stops beating."
+desired_state: "The start hook passes the client process's id and start time to `mesh session open`, and the session carries them (optional fields, so a session opened without them behaves as today). The runtime holding a session checks, on its own machine and its own clock, whether that process still exists with that start time, and appends SessionClosed once when it does not; a process id reused by another process is not mistaken for the client. The fold, admission and other runtimes are unchanged. I3798 reads the same fields to re-open a predecessor's live sessions after a takeover."
+scope:
+  - "apps/majordomus-cli/src/mesh/journal.rs"
+  - "apps/majordomus-cli/src/mesh/cooperation.rs"
+  - "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/src/commands/mesh.rs"
+  - "apps/majordomus-cli/src/monitor/testing.rs"
+  - "apps/majordomus-cli/tests/mesh_cooperation.rs"
+  - "lib/capture.sh"
+  - ".ai/repo/ci/mesh-event-fields.yaml"
+  - "docs/MESH.md"
+  - "docs/generated"
+  - "site/data/generated"
+  - "site/data/registry"
+  - "site/i18n/cs/memory"
+non_scope:
+  - "A claim surviving a lease takeover, which is I3798"
+  - "Review requests that never lapse, which is I3608"
+  - "Sessions of the board projection (board-pN), which already close when their peer detaches"
+depends_on: []
+acceptance_criteria:
+  - "A session whose recorded client process has ended is closed once by its runtime, and its exclusive claim then reads expired (its session closed) on every runtime"
+  - "A session whose client process is alive stays open, and so do its claims"
+  - "A process id reused by a different process (another start time) does not keep the session open"
+  - "A session opened without a client process behaves exactly as before"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --lib mesh::cooperation"
+  - "cargo test --lib mesh::journal"
+  - "cargo test --test mesh_cooperation"
+evidence_required:
+  - "a_gone_clients_mesh_session_is_closed_test"
+created_at: 2026-10-21
+updated_at: 2026-10-21

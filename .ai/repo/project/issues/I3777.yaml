@@ -1,0 +1,29 @@
+id: I3777
+milestone: "public-proof"
+title: "site-check refuses a translation-memory entry the build can no longer reach because it is keyed the old way"
+slug: an-unkeyed-memory-entry-is-refused
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Make the translation memory's key form a checked invariant rather than a step a train composer must remember: scripts/site-check refuses any entry of site/i18n/<lang>/memory whose English still carries a whole-element value inside a <tN>…</tN> pair (the form I3758 turned into a void <tN/>), naming the entry and the remedy, scripts/site-translate rekey."
+why: "I3758 (2026-10-22) changed how a commit id, a version or a date that is a whole inline element is keyed, and shipped scripts/site-translate rekey to move the existing memory. A row of a later train that imports memory written before the rule, or written by a translator from an old missing.json, adds entries no build can reach again. The train-4 order file carries a manual rekey step before the derive (a3), and a manual step is forgotten sooner or later."
+current_state: "scripts/site-translate rekey (I3758) moves such entries and is idempotent, but nothing runs it unless a person does, and scripts/site-check does not read the memory's key form."
+desired_state: "scripts/site-check reads every memory entry and refuses one that rekeyValues (scripts/lib/site-i18n.mjs) would still move, with its key, the value and the remedy; a clean memory passes; the pages-and-deploy path that runs site-check therefore refuses such a memory before it is published."
+scope:
+  - "scripts/site-check"
+  - "scripts/lib/site-i18n.mjs"
+  - "test/cases"
+  - ".ai/repo/project/issues/I3777.yaml"
+non_scope:
+  - "Rewriting the memory inside scripts/derive or site-build: the memory is source, and the derive must not edit it"
+  - "Choosing between two translations that rekey merges into one key; rekey names them, a translator decides"
+acceptance_criteria:
+  - "site-check fails on a memory holding an entry whose English carries a whole-element value inside a <tN>…</tN> pair, naming the entry's key, the value and scripts/site-translate rekey"
+  - "site-check passes on the memory after scripts/site-translate rekey"
+  - "Negative: removing the check lets the fixture's old-form entry pass, and its case turns red"
+validation:
+  - "majordomus plan validate"
+evidence_required:
+  - "test_an_unkeyed_memory_entry_is_refused"
+depends_on:
+  - I3758

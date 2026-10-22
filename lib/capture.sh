@@ -1718,8 +1718,10 @@ mj_capture_mesh_join() {
   share="$(mj_rust_share "$MJ_ROOT")"
   [ -n "$share" ] && export MAJORDOMUS_SHARE="$share"
   id="$(mj_capture_mesh_session "$provider" "$psession")"
+  # --client-pid auto: the client that ran this hook, so that its end closes the session even
+  # when it never fires its end event (I3810)
   set -- mesh session open --repo "$MJ_ROOT" --session "$id" --client "$provider" \
-    --branch "$(mj_git_branch)" --head "$(mj_git_head)" --format json
+    --branch "$(mj_git_branch)" --head "$(mj_git_head)" --client-pid auto --format json
   if mj_load_current && [ "$(mj_cur outcome)" = active ]; then
     set -- "$@" --task "$(mj_cur id)" --intent "$(mj_cur task)"
   fi
