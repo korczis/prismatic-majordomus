@@ -31,4 +31,19 @@ evidence_required:
   - "newer_client_replaces_older_server_test"
   - "older_client_told_test"
 created_at: 2026-10-09
-updated_at: 2026-10-09
+updated_at: 2026-10-14T19:23:10Z
+evidence:
+  - covers: newer_client_replaces_older_server_test
+    type: test
+    command: "cargo test --test serve_lifecycle -- newer_client_replaces_older_server_test an_older_client_leaves_a_newer_server_alone_and_says_so (apps/majordomus-cli, aarch64-apple-darwin, the second MacBook, detached worktree at origin/master)"
+    result: "2 passed, 0 failed on master 97c4521f91a8e096d84eb9e552c9590b512309a5; delivered by 383309ae06c (2026-10-10)"
+    artifact: "97c4521f91a8e096d84eb9e552c9590b512309a5"
+    commit: 97c4521f91a8e096d84eb9e552c9590b512309a5
+    recorded_at: 2026-10-14T19:22:50Z
+  - covers: older_client_told_test
+    type: test
+    command: "cargo test --lib older_client_told (apps/majordomus-cli, aarch64-apple-darwin, the second MacBook, detached worktree at origin/master)"
+    result: "commands::mcp::tests::older_client_told_test: 1 passed, 0 failed on master 97c4521f91a8e096d84eb9e552c9590b512309a5"
+    artifact: "97c4521f91a8e096d84eb9e552c9590b512309a5"
+    commit: 97c4521f91a8e096d84eb9e552c9590b512309a5
+    recorded_at: 2026-10-14T19:23:10Z
