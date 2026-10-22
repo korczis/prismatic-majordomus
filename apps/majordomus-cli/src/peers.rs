@@ -411,6 +411,7 @@ impl PeerBoard {
                 claims: BTreeMap::new(),
             },
         );
+        crate::change::BLACKBOARD.advance();
         PeerId::new(seq)
     }
 
@@ -418,6 +419,7 @@ impl PeerBoard {
     pub fn identify(&self, id: &PeerId, client: ClientInfo) {
         if let Some(s) = self.lock().get_mut(&id.seq()) {
             s.client = client;
+            crate::change::BLACKBOARD.advance();
             s.last_seen = Instant::now();
         }
     }
@@ -477,6 +479,20 @@ impl PeerBoard {
     /// assert_eq!(named.peer.claims[1].name.as_deref(), Some("worker-a"));
     /// ```
     pub fn announce_claim(
+        &self,
+        id: &PeerId,
+        claim: Option<&str>,
+        intent: &str,
+        scope: Vec<String>,
+    ) -> Option<Announced> {
+        let announced = self.announce_locked(id, claim, intent, scope);
+        if announced.is_some() {
+            crate::change::BLACKBOARD.advance();
+        }
+        announced
+    }
+
+    fn announce_locked(
         &self,
         id: &PeerId,
         claim: Option<&str>,
@@ -556,6 +572,11 @@ impl PeerBoard {
     /// assert_eq!(listed[0].announcement.as_ref().unwrap().intent, "the ordering rule");
     /// ```
     pub fn detach(&self, id: &PeerId) {
+        self.detach_locked(id);
+        crate::change::BLACKBOARD.advance();
+    }
+
+    fn detach_locked(&self, id: &PeerId) {
         let mut slots = self.lock();
         match slots.get_mut(&id.seq()) {
             Some(s) if !s.claims.is_empty() => s.departed = true,

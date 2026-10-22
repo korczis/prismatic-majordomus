@@ -1,0 +1,30 @@
+id: I2998
+milestone: peer-blackboard
+title: "/cockpit/peers renders the blackboard and follows it live"
+slug: the-cockpit-peers-page-follows-the-blackboard
+priority: p1
+profile: implementation
+parallel_safe: false
+serves:
+  - the-peer-blackboard-is-one-reality#every-surface-reads-it
+objective: "Render /cockpit/peers from blackboard.snapshot instead of peers.list: every worker on every board and linked machine, its claims, the conflicts, the waiting reviews and handovers, and every source. Follow /events?follow=blackboard&frames=snapshot through the one socket client (share/cockpit/socket.js), as /ui/peers does. The page's state line says live, reconnecting or offline truthfully. /ui/peers and /cockpit/peers then render the same projection, and neither joins a fact of its own."
+why: "The milestone's invariant is that every surface that shows peers reads the one projection. /cockpit/peers still reads peers.list once: one checkout's boards, nothing of the mesh, never updated."
+current_state: "cockpit/pages.rs peers() asks peers.list and renders it once."
+desired_state: "/cockpit/peers shows what /ui/peers shows, from the same frames, and is pushed a change within a second on this machine."
+scope:
+  - "apps/majordomus-cli/src/cockpit/pages.rs"
+  - "share/cockpit/socket.js"
+  - "docs/BLACKBOARD.md"
+  - "docs/COCKPIT.md"
+depends_on:
+  - "I2983"
+acceptance_criteria:
+  - "/cockpit/peers lists a worker announced over MCP with its intent and claim, and a mesh session of a linked runtime, from blackboard.snapshot"
+  - "A second announcement reaches an open /cockpit/peers without a reload, and the page says live"
+  - "No cockpit or ui page that shows peers asks peers.list or mesh.state for them directly"
+validation:
+  - "majordomus plan validate"
+evidence_required:
+  - "case_cockpit_peers_follows_the_blackboard"
+created_at: 2026-10-19
+updated_at: 2026-10-19

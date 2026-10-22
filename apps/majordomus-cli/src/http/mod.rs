@@ -8,6 +8,7 @@
 
 pub mod deadline;
 pub mod events;
+pub mod follow;
 pub mod mcp;
 pub mod openapi;
 pub mod router;
