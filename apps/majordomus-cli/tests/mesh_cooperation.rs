@@ -37,6 +37,11 @@ use majordomus_cli::mesh::link::{sign, Domain, Hello, RuntimeCard, HELLO_PATH, S
 
 const HEARTBEAT: u64 = 1;
 const EXPIRY: u64 = 4;
+/// Sync rounds two linked runtimes are given to agree once they hold the same events: one
+/// round carries each side's events to the other, and the rest absorb a round in which one
+/// side's beat reached the other late. Ten is what the former ten-second bound allowed at
+/// one round per heartbeat.
+const CONVERGENCE_ROUNDS: u64 = 10;
 
 /// One node: a checkout, a state directory holding its key, and its public key.
 struct Node {
@@ -126,6 +131,42 @@ fn wait_until<F: FnMut() -> bool>(what: &str, timeout: Duration, mut check: F) {
         std::thread::sleep(Duration::from_millis(150));
     }
     panic!("timed out after {timeout:?} waiting for: {what}");
+}
+
+/// Sync rounds a runtime has completed over its links, as the dialer and as the answerer.
+fn rounds(s: &Served) -> u64 {
+    let counters = &s.get("/api/v1/mesh/cooperation").1["counters"];
+    counters["syncs_out"].as_u64().unwrap_or(0) + counters["syncs_in"].as_u64().unwrap_or(0)
+}
+
+/// Wait for `check` for at most `budget` sync rounds of `s`, counted from now.
+///
+/// A bound on what replication has to do is a number of rounds, not of seconds: on a loaded
+/// machine every round of the runtime under test is late, and a wall-clock bound written for
+/// an idle one expires while the runtimes are still doing exactly what they should, only
+/// slower (a run at load ~45 failed this file's convergence bound). Counting the runtime's own rounds stretches
+/// the bound with the runtime. A runtime that completes no rounds at all is still caught: one
+/// round may take no longer than the declared expiry, because a link silent for longer than
+/// that has expired, so `budget` expiries of wall time is the backstop for a hang.
+fn wait_rounds<F: FnMut() -> bool>(what: &str, s: &Served, budget: u64, mut check: F) {
+    let start = rounds(s);
+    let backstop = Duration::from_secs(EXPIRY * budget) * patience();
+    let deadline = Instant::now() + backstop;
+    loop {
+        // the rounds are read before the check, so a round finishing during it is not counted
+        // against a check that might have seen its result
+        let done = rounds(s).saturating_sub(start);
+        if check() {
+            return;
+        }
+        if done >= budget {
+            panic!("{what}: not within {budget} sync rounds ({done} completed)");
+        }
+        if Instant::now() >= deadline {
+            panic!("{what}: {done} of {budget} sync rounds completed within {backstop:?}");
+        }
+        std::thread::sleep(Duration::from_millis(150));
+    }
 }
 
 fn peers(s: &Served) -> Vec<Value> {
@@ -354,7 +395,7 @@ fn two_runtimes_link_and_share_sessions_claims_reviews_and_a_handover() {
     });
 
     // One state, two runtimes.
-    wait_until("the digests agree", Duration::from_secs(10), || {
+    wait_rounds("the digests agree", &sa, CONVERGENCE_ROUNDS, || {
         state(&sa)["digest"] == state(&sb)["digest"]
     });
 
@@ -521,7 +562,18 @@ fn a_killed_runtime_expires_and_its_restart_reconnects_as_the_same_runtime() {
     assert_eq!(status, 422, "B's live claim excludes A");
 
     // Crash B: no shutdown, no release.
+    //
+    // A expires the link `EXPIRY` after its last exchange with B, not after the kill: on a
+    // loaded machine that exchange can be seconds old when B dies, so a bound counted from the
+    // kill alone is a guess about the load. A tells how long it has been silent; the moment
+    // is taken before asking, so `silent` can only understate the time already served.
     let killed_at = Instant::now();
+    let silent = peers(&sa)
+        .iter()
+        .find(|p| p["runtime"] == json!(rb))
+        .and_then(|p| p["last_exchange_ms"].as_u64())
+        .map(Duration::from_millis)
+        .expect("A reports its last exchange with B");
     crash(sb);
     wait_until(
         "A expires B's link",
@@ -532,14 +584,17 @@ fn a_killed_runtime_expires_and_its_restart_reconnects_as_the_same_runtime() {
                 .any(|p| p["runtime"] == json!(rb) && p["state"] == json!("expired"))
         },
     );
+    // `last_exchange_ms` is truncated to the millisecond, which is the one millisecond allowed
+    assert!(
+        silent + killed_at.elapsed() + Duration::from_millis(1) >= Duration::from_secs(EXPIRY),
+        "expiry is the declared expiry after the last exchange, not an instant guess: \
+         silent {silent:?} before the kill, expired {:?} after it",
+        killed_at.elapsed()
+    );
     wait_until(
         "B's claim expires at A",
         Duration::from_secs(EXPIRY + 8),
         || claims_in(&sa, "expired").len() == 1,
-    );
-    assert!(
-        killed_at.elapsed() >= Duration::from_secs(EXPIRY - 1),
-        "expiry is the declared expiry, not an instant guess"
     );
     let (status, reclaimed) = post(
         &sa,
@@ -563,13 +618,20 @@ fn a_killed_runtime_expires_and_its_restart_reconnects_as_the_same_runtime() {
         listed[0]["restarts"].as_u64().unwrap_or(0) >= 1,
         "{listed:?}"
     );
-    // B's previous claim stays expired: a restart resurrects no ownership.
-    wait_until(
+    // B's previous claim stays expired: a restart resurrects no ownership. The state judged is
+    // the one that agreed with A's, not a later reading that may have been taken while one
+    // side's view of the other's beat had gone stale on a loaded machine.
+    let mut at_b = Value::Null;
+    wait_rounds(
         "the state converges after the restart",
-        Duration::from_secs(10),
-        || state(&sa)["digest"] == state(&sb)["digest"],
+        &sa,
+        CONVERGENCE_ROUNDS,
+        || {
+            let here = state(&sa);
+            at_b = state(&sb);
+            here["digest"] == at_b["digest"]
+        },
     );
-    let at_b = state(&sb);
     let held: Vec<&Value> = at_b["claims"]
         .as_array()
         .unwrap()
@@ -614,7 +676,8 @@ fn three_runtimes_in_a_line_converge_through_the_middle_without_loops() {
         Duration::from_secs(15),
         || claims_in(&sc, "held").len() == 2 && claims_in(&sa, "held").len() == 2,
     );
-    wait_until("three digests agree", Duration::from_secs(10), || {
+    // A links to B only, so A's rounds are the line's; B's and C's run beside them.
+    wait_rounds("three digests agree", &sa, CONVERGENCE_ROUNDS, || {
         let d = state(&sa)["digest"].clone();
         d == state(&sb)["digest"] && d == state(&sc)["digest"]
     });
