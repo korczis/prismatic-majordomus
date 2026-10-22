@@ -174,6 +174,22 @@ ${f#"$ROOT"/}"; done
 # generator's inputs derives them from here rather than keeping a second list that goes
 # stale the moment a new canonical input is added — which is how it went stale before.
 if [ "${1:-}" = --inputs ]; then printf '%s\n' $INPUTS | sed '/^$/d'; exit 0; fi
+# The commit a generation observes for delivery.json. An offloaded derive runs on a
+# throwaway input commit (a stash snapshot, or a merge in progress written by commit-tree)
+# that never reaches origin, and observing it made every offloaded branch red in CI's
+# --check (#1759, I3836). The offload names the worktree's HEAD in MJ_DERIVE_OBSERVE, and a
+# generation observes that commit when it is an ancestor of the tree it runs in; anything
+# else observes HEAD as before. --delivery-at prints it and exits, which is how case 3846
+# reads it without a generation.
+delivery_observe() {
+  if [ -n "${MJ_DERIVE_OBSERVE:-}" ] \
+    && git -C "$ROOT" merge-base --is-ancestor "$MJ_DERIVE_OBSERVE" HEAD 2>/dev/null; then
+    git -C "$ROOT" rev-parse "$MJ_DERIVE_OBSERVE^{commit}"
+  else
+    git -C "$ROOT" rev-parse HEAD
+  fi
+}
+if [ "${1:-}" = --delivery-at ]; then delivery_observe; exit 0; fi
 for f in $INPUTS; do [ -f "$ROOT/$f" ] || { echo "generate-site-data: canonical input missing: $f" >&2; exit 12; }; done
 # The fingerprint of the canonical inputs: one line "<path> <hash>" per input in the list's
 # own order, hashed. One hashing process for the whole list rather than one per file — the
@@ -1966,7 +1982,8 @@ if [ "$CHECK" = 1 ] && [ -f "$DELIVERY_COMMITTED" ]; then
     DELIVERY_AT=""
   fi
 fi
-[ -n "$DELIVERY_AT" ] || DELIVERY_AT="$(git -C "$ROOT" rev-parse HEAD)"
+# Otherwise the commit delivery_observe names (the worktree's HEAD for an offloaded derive).
+[ -n "$DELIVERY_AT" ] || DELIVERY_AT="$(delivery_observe)"
 mj_tool_read "$STAGE/delivery.raw.json" "the issues' delivery" --json plan delivery --at "$DELIVERY_AT"
 jq . "$STAGE/delivery.raw.json" > "$OUT/delivery.json"
 if [ "$CHECK" = 0 ] && [ -f "$DELIVERY_COMMITTED" ]; then
