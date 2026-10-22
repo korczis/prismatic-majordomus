@@ -17320,6 +17320,27 @@
                     "type": "string"
                   },
                   "description": "Subtrees below this one that owe nothing: carried, not authored here."
+                },
+                "layout_lifecycle": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The lifecycle of what lives here, when the contract declares its layout (I2870)."
+                },
+                "layout_holds": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The kinds the directory holds, when the contract says."
+                },
+                "layout_excludes": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Lifecycles or kinds that must never appear here, when the contract says."
                 }
               },
               "required": [
@@ -57623,6 +57644,12 @@
               "minimum": 0,
               "description": "Enumerations of the repository's declared sources."
             },
+            "repository_discoveries": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0,
+              "description": "Manifests read and parsed to discover a repository."
+            },
             "index_builds": {
               "type": "integer",
               "format": "uint64",
@@ -57705,6 +57732,7 @@
           },
           "required": [
             "repository_scans",
+            "repository_discoveries",
             "index_builds",
             "registry_builds",
             "schema_generations",

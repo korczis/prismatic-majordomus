@@ -18,6 +18,7 @@ const REQUESTS: usize = 200;
 fn startup_work(snapshot: &Value) -> Vec<(String, u64)> {
     [
         "repository_scans",
+        "repository_discoveries",
         "index_builds",
         "registry_builds",
         "schema_generations",
@@ -83,6 +84,10 @@ fn hundreds_of_mcp_requests_rebuild_nothing() {
         .clone();
     let baseline = startup_work(&before);
     assert_eq!(before["repository_scans"], 1, "one scan at startup");
+    assert_eq!(
+        before["repository_discoveries"], 1,
+        "one manifest read at startup, however many times the repository was asked for"
+    );
     assert_eq!(before["index_builds"], 1);
     assert_eq!(before["registry_builds"], 1);
     assert!(before["schema_generations"].as_u64().unwrap() > 0);

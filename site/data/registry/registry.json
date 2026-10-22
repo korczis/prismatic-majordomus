@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.2"
   },
   "registry": {
-    "fingerprint": "c83bd8bda754ac4f405a227ff570ae9fa6b33f3a4992632f4ee3acee49653e09",
+    "fingerprint": "a7c0fdc9067bb708c4e1c01159e78a4567aff473ca56f15a0bce616118c2a6cc",
     "summary": {
-      "total": 3161,
+      "total": 3169,
       "builtin": 206,
-      "declarative": 2955,
+      "declarative": 2963,
       "by_kind": {
         "command": 31,
         "query": 175,
-        "resource": 2955
+        "resource": 2963
       },
       "by_stability": {
         "behaviorally_verified": 142,
         "experimental": 55,
-        "implemented": 2964
+        "implemented": 2972
       },
       "mcp_tools": 196,
-      "mcp_resources": 3010,
+      "mcp_resources": 3018,
       "http_routes": 201,
       "cli_commands": 111,
       "modules": 92,
@@ -16882,6 +16882,27 @@
                       "type": "string"
                     },
                     "description": "Subtrees below this one that owe nothing: carried, not authored here."
+                  },
+                  "layout_lifecycle": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The lifecycle of what lives here, when the contract declares its layout (I2870)."
+                  },
+                  "layout_holds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The kinds the directory holds, when the contract says."
+                  },
+                  "layout_excludes": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Lifecycles or kinds that must never appear here, when the contract says."
                   }
                 },
                 "required": [
@@ -57185,6 +57206,12 @@
                 "minimum": 0,
                 "description": "Enumerations of the repository's declared sources."
               },
+              "repository_discoveries": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0,
+                "description": "Manifests read and parsed to discover a repository."
+              },
               "index_builds": {
                 "type": "integer",
                 "format": "uint64",
@@ -57267,6 +57294,7 @@
             },
             "required": [
               "repository_scans",
+              "repository_discoveries",
               "index_builds",
               "registry_builds",
               "schema_generations",
@@ -85404,7 +85432,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 802,
+        "capabilities": 810,
         "capability_ids": []
       },
       {
@@ -86070,7 +86098,7 @@
     ]
   },
   "index": {
-    "fingerprint": "49ca0ee4bed48517c62f1d1db7c0e978abc0ef223ae889f15dbdce230e5b5dee",
+    "fingerprint": "3eb7b338cc44170893b17cf1b056b7a91c3ff29e25c5d0d494e985dbe6220149",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -86110,7 +86138,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 33,
-      "issue": 802,
+      "issue": 810,
       "knowledge": 50,
       "mesh-declaration": 1,
       "milestone": 100,
@@ -91828,7 +91856,7 @@
         "description": "The tracked half of the layer and what each section under it is for.",
         "path": ".ai/repo/README.md",
         "source_class": "context",
-        "bytes": 2402
+        "bytes": 2462
       },
       {
         "uri": "majordomus://context/ai.repo.adrs",
@@ -98818,7 +98846,7 @@
         "path": ".ai/repo/project/issues/I1102.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2178
+        "bytes": 2908
       },
       {
         "uri": "majordomus://issue/I1103",
@@ -98851,7 +98879,7 @@
         "path": ".ai/repo/project/issues/I1105.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2071
+        "bytes": 2111
       },
       {
         "uri": "majordomus://issue/I1106",
@@ -102176,6 +102204,50 @@
         "bytes": 3647
       },
       {
+        "uri": "majordomus://issue/I2870",
+        "kind": "issue",
+        "identity": "I2870",
+        "title": "The layer's layout is declared as typed data: what each half holds, excludes, and the lifecycle of its contents",
+        "description": "A versioned layout declaration, defined in a .proto beside context/v1 and projected to JSON Schema by majordomus generate, states for `.ai/repo` and `.ai/local` and each of their directories what it holds, what it must never hold, and the lifecycle of its contents in I1101's vocabulary (canonical, derived, generated, cache, runtime, accidental). The declaration describes the tree as it is today. The local half, which carries no tracked contract of its own, is declared in the manifest's `local:` block; its Rust type and the hand-written manifest schema are held in step by a test, until I2873 generates that schema from typed sections.",
+        "path": ".ai/repo/project/issues/I2870.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2602
+      },
+      {
+        "uri": "majordomus://issue/I2871",
+        "kind": "issue",
+        "identity": "I2871",
+        "title": "A file in the half whose contract excludes it is refused, naming the path and the contract",
+        "description": "A check reads I2870's declaration, walks the layer and refuses every path that a contract excludes — control-plane state under .ai/repo, authored knowledge under .ai/local — with '<path> violates <contract>'. doctor reports it and a gate runs it; update's write path takes the mj_norm_path guard I1101 found missing.",
+        "path": ".ai/repo/project/issues/I2871.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1702
+      },
+      {
+        "uri": "majordomus://issue/I2872",
+        "kind": "issue",
+        "identity": "I2872",
+        "title": "The skeleton a new repository receives is derived from the layout declaration",
+        "description": "init seeds a new repository from I2870's declaration instead of lib/init.sh's hand-written list of files, and a derive-check proves share/skeleton's manifest and directory contracts agree with the declaration, so the skeleton cannot drift from the layer it seeds.",
+        "path": ".ai/repo/project/issues/I2872.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1602
+      },
+      {
+        "uri": "majordomus://issue/I2873",
+        "kind": "issue",
+        "identity": "I2873",
+        "title": "The manifest schema is generated from typed sections",
+        "description": "Manifest.sections becomes a typed struct, one documented optional path per section the layer knows, and share/schemas/majordomus/manifest/manifest.v1.schema.json is generated from the manifest's Rust types by majordomus generate (as the graph schema is), so the section list, its descriptions and the closed shape live in one place and the hand-written schema goes away.",
+        "path": ".ai/repo/project/issues/I2873.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1948
+      },
+      {
         "uri": "majordomus://issue/I2882",
         "kind": "issue",
         "identity": "I2882",
@@ -102636,6 +102708,50 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 2698
+      },
+      {
+        "uri": "majordomus://issue/I3014",
+        "kind": "issue",
+        "identity": "I3014",
+        "title": "The repository is found once per process, and a counter proves it",
+        "description": "Repository::open, which Repository::discover ends in, answers from one process-wide cell keyed by the root: the first open reads and parses .ai/manifest.yaml, every later open of the same root answers from what was read while the manifest's length and modification time are unchanged, and an edited manifest is read again. perf gains a repository_discoveries counter, bumped only by a real walk, listed in startup_work, and tests/hot_path.rs asserts it is 1 after startup.",
+        "path": ".ai/repo/project/issues/I3014.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2110
+      },
+      {
+        "uri": "majordomus://issue/I3015",
+        "kind": "issue",
+        "identity": "I3015",
+        "title": "serve and mcp discover the repository once, through the shared model",
+        "description": "majordomus serve and majordomus mcp take the repository App::load discovered instead of discovering it again (commands/serve.rs and commands/mcp.rs today discover beside App::load), and env, web and guard read the same cell, so every entry point of the executable pays one discovery.",
+        "path": ".ai/repo/project/issues/I3015.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1655
+      },
+      {
+        "uri": "majordomus://issue/I3016",
+        "kind": "issue",
+        "identity": "I3016",
+        "title": "A capability reads the repository from its context, never by opening it again",
+        "description": "The capability Context carries the Arc<Repository> the process discovered, and the capabilities that call Repository::open on a root they already hold (environment, commit, brief, intents, knowledge_base, release, server, continuity, intent_binding, guard, integration::allocate) read it from the context instead, so a capability call reads no manifest.",
+        "path": ".ai/repo/project/issues/I3016.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1663
+      },
+      {
+        "uri": "majordomus://issue/I3017",
+        "kind": "issue",
+        "identity": "I3017",
+        "title": "Discovering the repository outside the model is refused, and its cost has a budget",
+        "description": "A test scans the crate's sources and refuses a Repository::discover or Repository::open outside repository.rs and the declared entry points, naming the file and line; the discovery phase gets a latency budget in .ai/repo/benchmarks/rust/policy.yaml, derived from a measurement, held by bench --check.",
+        "path": ".ai/repo/project/issues/I3017.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1814
       },
       {
         "uri": "majordomus://issue/I3018",
@@ -118401,7 +118517,7 @@
       "identity": [
         "id"
       ],
-      "objects": 802
+      "objects": 810
     },
     {
       "name": "knowledge",

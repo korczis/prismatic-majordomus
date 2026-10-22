@@ -29539,7 +29539,11 @@
           ],
           "created_at": "2026-09-06",
           "depends_on": [
-            "I1101"
+            "I1101",
+            "I2870",
+            "I2871",
+            "I2872",
+            "I2873"
           ],
           "desired_state": "The layout is a schema-backed declaration; a check reads it and refuses a path that contradicts it.",
           "evidence_required": [
@@ -29554,13 +29558,12 @@
           "parallel_safe": true,
           "priority": "p0",
           "profile": "deep-work",
-          "risk": "A layout schema can become a second description of the tree it describes. It declares intent and lifecycle; the tree remains what discovery finds.",
           "scope": [
             "share/schemas",
             "share/skeleton"
           ],
           "slug": "canonical-two-folder-layout",
-          "updated_at": "2026-09-06",
+          "updated_at": "2026-10-21",
           "validation": [
             "cargo test --workspace --all-features",
             "bin/majordomus doctor"
@@ -29671,7 +29674,11 @@
           ],
           "created_at": "2026-09-06",
           "depends_on": [
-            "I1101"
+            "I1101",
+            "I3014",
+            "I3015",
+            "I3016",
+            "I3017"
           ],
           "desired_state": "One discovery produces one typed value; consumers hold it rather than the filesystem.",
           "evidence_required": [
@@ -29692,7 +29699,7 @@
             "apps/majordomus-cli/src/discovery"
           ],
           "slug": "repository-model-spine",
-          "updated_at": "2026-09-06",
+          "updated_at": "2026-10-21",
           "validation": [
             "cargo test --workspace --all-features",
             "majordomus perf"
@@ -44075,6 +44082,178 @@
         }
       },
       {
+        "id": "majordomus://issue/I2870",
+        "kind": "issue",
+        "label": "I2870",
+        "summary": "The layer's layout is declared as typed data: what each half holds, excludes, and the lifecycle of its contents",
+        "route": "/cockpit/objects/issue/i2870",
+        "source": ".ai/repo/project/issues/I2870.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A layout declaration names, for .ai/repo, .ai/local and each of their directories, what it holds, what it excludes and its lifecycle, typed and versioned",
+            "The context schema is generated from its proto and generate --check holds it; a test holds the manifest's Rust type and its hand-written schema in step for the new local fields"
+          ],
+          "created_at": "2026-10-21",
+          "depends_on": [
+            "I1101"
+          ],
+          "desired_state": "One declaration, typed and versioned, names the contents of every directory of both halves; its schema is generated.",
+          "evidence_required": [
+            "layout_declared"
+          ],
+          "milestone": "two-folder-integration",
+          "non_scope": [
+            "Where control-plane state lives in the end (.ai/local or .majordomus/): the owner's open question on I1102",
+            "Refusing a misplaced file (I2871) and deriving the skeleton (I2872)",
+            "Generating the manifest schema from typed sections (I2873): today's open sections map would loosen it"
+          ],
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "share/schemas",
+            "apps/majordomus-cli/src/repository.rs",
+            "apps/majordomus-cli/src/proto",
+            ".ai/repo/project/issues/I2870.yaml"
+          ],
+          "slug": "the-layout-is-declared",
+          "updated_at": "2026-10-21",
+          "validation": [
+            "cargo test --workspace --all-features",
+            "majordomus generate --check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2871",
+        "kind": "issue",
+        "label": "I2871",
+        "summary": "A file in the half whose contract excludes it is refused, naming the path and the contract",
+        "route": "/cockpit/objects/issue/i2871",
+        "source": ".ai/repo/project/issues/I2871.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A file a contract excludes is refused, naming the path and the contract; a negative case places one in each half",
+            "update writes no path outside the repository root (the mj_norm_path guard)"
+          ],
+          "created_at": "2026-10-21",
+          "current_state": "doctor checks .ai/local is git-ignored and nothing in it is tracked; scripts/ci/local-never-published keeps local out of the site; nothing reads a contract to judge a path.",
+          "depends_on": [
+            "I2870"
+          ],
+          "desired_state": "A misplaced file fails a check that names the path and the contract it violates.",
+          "evidence_required": [
+            "boundary_checked"
+          ],
+          "milestone": "two-folder-integration",
+          "non_scope": [
+            "Moving content between halves (I1109 and the migration issues)"
+          ],
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src",
+            "lib/doctor.sh",
+            "lib/common.sh",
+            "test/cases",
+            ".ai/repo/project/issues/I2871.yaml"
+          ],
+          "slug": "a-misplaced-artifact-is-refused",
+          "updated_at": "2026-10-21",
+          "validation": [
+            "cargo test --workspace --all-features",
+            "bin/majordomus doctor"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2872",
+        "kind": "issue",
+        "label": "I2872",
+        "summary": "The skeleton a new repository receives is derived from the layout declaration",
+        "route": "/cockpit/objects/issue/i2872",
+        "source": ".ai/repo/project/issues/I2872.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "init's seeded tree is derived from the declaration, not from a second list",
+            "A check fails when share/skeleton and the declaration disagree; the skeleton's manifest carries `releases`"
+          ],
+          "created_at": "2026-10-21",
+          "current_state": "share/skeleton is 41 hand-written files; lib/init.sh copies them through a hard-coded list and creates the local directories itself; no generator or check covers it.",
+          "depends_on": [
+            "I2870"
+          ],
+          "desired_state": "The skeleton is derived from the declaration, and a check fails when they disagree.",
+          "evidence_required": [
+            "skeleton_derived"
+          ],
+          "milestone": "two-folder-integration",
+          "non_scope": [
+            "Adopting an existing repository (the adopter milestones)"
+          ],
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "share/skeleton",
+            "lib/init.sh",
+            "apps/majordomus-cli/src",
+            "scripts",
+            ".ai/repo/project/issues/I2872.yaml"
+          ],
+          "slug": "the-skeleton-is-derived",
+          "updated_at": "2026-10-21",
+          "validation": [
+            "cargo test --workspace --all-features",
+            "scripts/derive-check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2873",
+        "kind": "issue",
+        "label": "I2873",
+        "summary": "The manifest schema is generated from typed sections",
+        "route": "/cockpit/objects/issue/i2873",
+        "source": ".ai/repo/project/issues/I2873.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Manifest.sections is a typed struct and every reader of a section reads its field",
+            "manifest.v1.schema.json is generated from the Rust types, keeps the closed section list and its descriptions, and generate --check holds it"
+          ],
+          "created_at": "2026-10-21",
+          "current_state": "manifest.v1.schema.json is hand-written; Manifest.sections is a BTreeMap<String, String>; the two describe the section list twice.",
+          "depends_on": [
+            "I2870",
+            "I1980"
+          ],
+          "desired_state": "The sections are typed once; the schema is generated from them and generate --check holds it.",
+          "evidence_required": [
+            "manifest_schema_generated"
+          ],
+          "milestone": "two-folder-integration",
+          "non_scope": [
+            "New sections or layout fields (I2870, I1980)"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/repository.rs",
+            "apps/majordomus-cli/src/generate.rs",
+            "share/schemas/majordomus/manifest",
+            ".ai/repo/project/issues/I2873.yaml"
+          ],
+          "slug": "the-manifest-schema-is-generated",
+          "updated_at": "2026-10-21",
+          "validation": [
+            "cargo test --workspace --all-features",
+            "majordomus generate --check"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I2882",
         "kind": "issue",
         "label": "I2882",
@@ -45874,6 +46053,174 @@
           ],
           "verified_at": "2026-10-19T10:08:31Z",
           "verified_event": "sha256:b7fe6c0d1a2bfff1f8ae10e586dc8ccc750e716fff9374d7c2b0fd165a79e253"
+        }
+      },
+      {
+        "id": "majordomus://issue/I3014",
+        "kind": "issue",
+        "label": "I3014",
+        "summary": "The repository is found once per process, and a counter proves it",
+        "route": "/cockpit/objects/issue/i3014",
+        "source": ".ai/repo/project/issues/I3014.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A second open of the same root reads no manifest and an edited one is read again, proved by a unit test that makes the manifest unreadable after the first open",
+            "perf reports repository_discoveries, it is listed in startup_work, and tests/hot_path.rs asserts it is 1 after startup"
+          ],
+          "created_at": "2026-10-21",
+          "current_state": "Repository { root, manifest } (apps/majordomus-cli/src/repository.rs) is built anew by every discover and open; perf counts repository_scans (the file walk) but not discoveries.",
+          "depends_on": [],
+          "desired_state": "One discovery per root per process, counted; the counter is a startup-work counter the hot-path test holds at 1.",
+          "evidence_required": [
+            "discovered_once_counter"
+          ],
+          "milestone": "two-folder-integration",
+          "non_scope": [
+            "Rewiring serve, mcp or the capabilities (I3015, I3016)",
+            "Caching environment, provider or service facts (I1107)"
+          ],
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/repository.rs",
+            "apps/majordomus-cli/src/perf.rs",
+            "apps/majordomus-cli/tests/hot_path.rs"
+          ],
+          "slug": "the-repository-is-found-once-per-process",
+          "updated_at": "2026-10-21",
+          "validation": [
+            "cargo test --workspace --all-features"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3015",
+        "kind": "issue",
+        "label": "I3015",
+        "summary": "serve and mcp discover the repository once, through the shared model",
+        "route": "/cockpit/objects/issue/i3015",
+        "source": ".ai/repo/project/issues/I3015.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "After serve's startup and after an MCP initialize, repository_discoveries is 1, asserted in tests/hot_path.rs",
+            "The discovery phase is timed at every entry point that discovers"
+          ],
+          "created_at": "2026-10-21",
+          "current_state": "serve.rs and mcp.rs call Repository::discover and then App::load, which discovers again.",
+          "depends_on": [
+            "I3014"
+          ],
+          "desired_state": "One discovery at each entry point, measured where it happens.",
+          "evidence_required": [
+            "one_discovery_at_every_entry"
+          ],
+          "milestone": "two-folder-integration",
+          "non_scope": [
+            "The capabilities' Repository::open calls (I3016)"
+          ],
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/commands/serve.rs",
+            "apps/majordomus-cli/src/commands/mcp.rs",
+            "apps/majordomus-cli/src/commands/env.rs",
+            "apps/majordomus-cli/src/commands/web.rs",
+            "apps/majordomus-cli/src/commands/guard.rs",
+            "apps/majordomus-cli/src/app.rs",
+            "apps/majordomus-cli/tests/hot_path.rs"
+          ],
+          "slug": "serve-and-mcp-discover-once",
+          "updated_at": "2026-10-21",
+          "validation": [
+            "cargo test --workspace --all-features"
+          ],
+          "why": "The second slice of I1105. The 2026-10-20 survey counted two discoveries at the startup of serve, serve status and mcp, and only App::load's discovery is timed, so the others are never measured."
+        }
+      },
+      {
+        "id": "majordomus://issue/I3016",
+        "kind": "issue",
+        "label": "I3016",
+        "summary": "A capability reads the repository from its context, never by opening it again",
+        "route": "/cockpit/objects/issue/i3016",
+        "source": ".ai/repo/project/issues/I3016.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "No capability calls Repository::open; the context carries the repository",
+            "A served capability call bumps repository_discoveries by nothing, asserted in tests/hot_path.rs"
+          ],
+          "created_at": "2026-10-21",
+          "current_state": "Context holds the index, whose repository root is a String; capabilities re-open the repository from it.",
+          "depends_on": [
+            "I3014"
+          ],
+          "desired_state": "Context.repository is the discovered model; Repository::open is not called by a capability.",
+          "evidence_required": [
+            "capabilities_read_the_context"
+          ],
+          "milestone": "two-folder-integration",
+          "non_scope": [
+            "The 117 lines that rebuild paths from index.repository.root (I1106, the registries as views of the model)"
+          ],
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability",
+            "apps/majordomus-cli/src/integration/allocate.rs",
+            "apps/majordomus-cli/src/repository.rs"
+          ],
+          "slug": "a-capability-reads-the-repository-from-its-context",
+          "updated_at": "2026-10-21",
+          "validation": [
+            "cargo test --workspace --all-features"
+          ],
+          "why": "The third slice of I1105. The 2026-10-20 survey found twelve Repository::open calls inside capabilities, each re-reading the manifest on every request the server answers."
+        }
+      },
+      {
+        "id": "majordomus://issue/I3017",
+        "kind": "issue",
+        "label": "I3017",
+        "summary": "Discovering the repository outside the model is refused, and its cost has a budget",
+        "route": "/cockpit/objects/issue/i3017",
+        "source": ".ai/repo/project/issues/I3017.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A source scan test fails on a Repository::discover or Repository::open outside the allowed files, naming file and line",
+            "The discovery phase has a budget in policy.yaml derived from a recorded measurement, and bench --check holds it"
+          ],
+          "created_at": "2026-10-21",
+          "current_state": "Nothing refuses a new discovery; App::load's budget is named in prose (plan.rs) but no number is declared.",
+          "depends_on": [
+            "I3015",
+            "I3016"
+          ],
+          "desired_state": "A discovery outside the model fails a test; the discovery's cost has a declared budget.",
+          "evidence_required": [
+            "discovery_guard_test",
+            "discovery_budget"
+          ],
+          "milestone": "two-folder-integration",
+          "non_scope": [
+            "Discovery of facts the model does not carry yet (I1106, I1107)"
+          ],
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/tests",
+            "apps/majordomus-cli/src/bench",
+            ".ai/repo/benchmarks/rust/policy.yaml"
+          ],
+          "slug": "discovery-outside-the-model-is-refused",
+          "updated_at": "2026-10-21",
+          "validation": [
+            "cargo test --workspace --all-features",
+            "majordomus bench --check"
+          ]
         }
       },
       {
@@ -107391,6 +107738,26 @@
       },
       {
         "source": "majordomus://issue/I1102",
+        "target": "majordomus://issue/I2870",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I1102",
+        "target": "majordomus://issue/I2871",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I1102",
+        "target": "majordomus://issue/I2872",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I1102",
+        "target": "majordomus://issue/I2873",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I1102",
         "target": "majordomus://milestone/two-folder-integration",
         "kind": "belongs_to"
       },
@@ -107432,6 +107799,26 @@
       {
         "source": "majordomus://issue/I1105",
         "target": "majordomus://issue/I1101",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I1105",
+        "target": "majordomus://issue/I3014",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I1105",
+        "target": "majordomus://issue/I3015",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I1105",
+        "target": "majordomus://issue/I3016",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I1105",
+        "target": "majordomus://issue/I3017",
         "kind": "depends_on"
       },
       {
@@ -111510,6 +111897,71 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2870",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2870",
+        "target": "majordomus://issue/I1101",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2870",
+        "target": "majordomus://milestone/two-folder-integration",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2871",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2871",
+        "target": "majordomus://issue/I2870",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2871",
+        "target": "majordomus://milestone/two-folder-integration",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2872",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2872",
+        "target": "majordomus://issue/I2870",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2872",
+        "target": "majordomus://milestone/two-folder-integration",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I2873",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2873",
+        "target": "majordomus://issue/I1980",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2873",
+        "target": "majordomus://issue/I2870",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2873",
+        "target": "majordomus://milestone/two-folder-integration",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I2882",
         "target": "kind:issue",
         "kind": "is_a"
@@ -111942,6 +112394,66 @@
       {
         "source": "majordomus://issue/I3010",
         "target": "majordomus://milestone/surfaces-never-disagree",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3014",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3014",
+        "target": "majordomus://milestone/two-folder-integration",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3015",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3015",
+        "target": "majordomus://issue/I3014",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3015",
+        "target": "majordomus://milestone/two-folder-integration",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3016",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3016",
+        "target": "majordomus://issue/I3014",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3016",
+        "target": "majordomus://milestone/two-folder-integration",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3017",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3017",
+        "target": "majordomus://issue/I3015",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3017",
+        "target": "majordomus://issue/I3016",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3017",
+        "target": "majordomus://milestone/two-folder-integration",
         "kind": "belongs_to"
       },
       {
@@ -127651,8 +128163,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3608,
-      "edges": 8393,
+      "nodes": 3616,
+      "edges": 8426,
       "acyclic": false,
       "truncated": false
     }
