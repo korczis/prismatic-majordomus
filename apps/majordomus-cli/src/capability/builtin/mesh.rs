@@ -178,28 +178,52 @@ fn mesh_enrol(ctx: &Context, _: Empty) -> Result<MeshEnrolment, CapabilityError>
     let identity = NodeIdentity::load_or_create(&identity_path)
         .map_err(|e| CapabilityError::Refused(e.to_string()))?;
     let key = identity.public.public_key.clone();
-    let text = std::fs::read_to_string(&path)
+    // read, edit and write as one step: the index has read and parsed this declaration
+    // already, so in practice only the write can fail, and every failure names the file
+    let added = std::fs::read_to_string(&path)
+        .map_err(io_reason)
+        .and_then(|text| crate::mesh::enrol::enrol(&text, &key, &machine_label(&identity.public)))
+        .and_then(|edited| write_enrolled(&path, edited))
         .map_err(|e| CapabilityError::Internal(format!("{relative}: {e}")))?;
-    match crate::mesh::enrol::enrol(&text, &key, &machine_label(&identity.public)) {
-        Ok(None) => Ok(MeshEnrolment {
+    Ok(if added {
+        MeshEnrolment {
+            next: format!(
+                "commit {relative}, so every machine that pulls it trusts this one; restart this checkout's server (`majordomus serve stop`, then `majordomus serve ensure`) to open the mesh here"
+            ),
+            path: relative,
+            key,
+            added: true,
+        }
+    } else {
+        MeshEnrolment {
             path: relative,
             key,
             added: false,
             next: "nothing: this machine's key is listed already".into(),
-        }),
-        Ok(Some(enrolled)) => {
-            std::fs::write(&path, enrolled)
-                .map_err(|e| CapabilityError::Internal(format!("{relative}: {e}")))?;
-            Ok(MeshEnrolment {
-                next: format!(
-                    "commit {relative}, so every machine that pulls it trusts this one; restart this checkout's server (`majordomus serve stop`, then `majordomus serve ensure`) to open the mesh here"
-                ),
-                path: relative,
-                key,
-                added: true,
-            })
         }
-        Err(e) => Err(CapabilityError::Refused(format!("{relative}: {e}"))),
+    })
+}
+
+/// Write an enrolled declaration over `path`: whether a key was added, `false` when the
+/// declaration listed it already and nothing was written.
+fn write_enrolled(path: &std::path::Path, edited: Option<String>) -> Result<bool, String> {
+    match edited {
+        None => Ok(false),
+        Some(text) => std::fs::write(path, text).map(|()| true).map_err(io_reason),
+    }
+}
+
+/// An I/O failure as the reason a capability gives.
+fn io_reason(e: std::io::Error) -> String {
+    e.to_string()
+}
+
+/// How a cursor the reader cannot use is refused: one of another run is stale, and one that
+/// is not a cursor is invalid input.
+fn cursor_refusal(e: CursorError) -> CapabilityError {
+    match e {
+        CursorError::Stale { .. } => CapabilityError::Refused(e.to_string()),
+        CursorError::Malformed(_) => CapabilityError::InvalidInput(e.to_string()),
     }
 }
 
@@ -883,19 +907,13 @@ fn mesh_events(ctx: &Context, input: MeshEventsInput) -> Result<EventList, Capab
         (c.journal().events_after(after, limit), None)
     } else {
         let from = match &input.cursor {
-            Some(text) => Some(
-                text.parse::<Cursor>()
-                    .map_err(|e| CapabilityError::InvalidInput(e.to_string()))?,
-            ),
+            Some(text) => Some(text.parse::<Cursor>().map_err(cursor_refusal)?),
             None => None,
         };
-        let (events, next) =
-            c.journal()
-                .events_since(from.as_ref(), limit)
-                .map_err(|e| match e {
-                    CursorError::Stale { .. } => CapabilityError::Refused(e.to_string()),
-                    CursorError::Malformed(_) => CapabilityError::InvalidInput(e.to_string()),
-                })?;
+        let (events, next) = c
+            .journal()
+            .events_since(from.as_ref(), limit)
+            .map_err(cursor_refusal)?;
         (events, Some(next))
     };
     Ok(EventList {

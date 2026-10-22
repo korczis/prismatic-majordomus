@@ -308,3 +308,36 @@ impl CounterSnapshot {
         ]
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// A new set of counters reads zero everywhere, with one zero total for every phase,
+    /// each under its serialised name.
+    #[test]
+    fn new_counters_read_zero_with_every_phase_named() {
+        let s = Counters::new().snapshot();
+        assert!(s.startup_work().iter().all(|(_, n)| *n == 0), "{s:?}");
+        assert_eq!(
+            (
+                s.graph_builds,
+                s.executions,
+                s.handler_invocations,
+                s.cache_hits,
+                s.cache_misses,
+                s.cache_evictions
+            ),
+            (0, 0, 0, 0, 0, 0)
+        );
+        assert_eq!(s.phases.len(), Phase::ALL.len());
+        for p in Phase::ALL {
+            assert!(s.phases.contains_key(p.name()), "{} is missing", p.name());
+        }
+        let zero = PhaseTotals {
+            count: 0,
+            total_nanos: 0,
+        };
+        assert!(s.phases.values().all(|t| *t == zero), "{:?}", s.phases);
+    }
+}

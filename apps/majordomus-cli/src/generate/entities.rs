@@ -424,6 +424,67 @@ mod tests {
         assert_eq!(first["referenced_by"][0]["label"], "adr-0002");
     }
 
+    /// A line that names a key and assigns it nothing is skipped as the shell's awk skips
+    /// it, and a declaration that names no kind at all is refused rather than projected.
+    #[test]
+    fn a_key_without_a_value_is_skipped_and_a_declaration_of_no_kind_is_refused() {
+        let kinds = publication_kinds("[[kinds]]\nkind = \"adr\"\ntitle Decisions\n").unwrap();
+        assert_eq!(kinds.len(), 1);
+        assert_eq!(
+            kinds[0].keys().collect::<Vec<_>>(),
+            ["kind"],
+            "the line without `=` is no member"
+        );
+        let Err(Error::Protocol { reason }) = projection(&graph(), "# nothing declared\n") else {
+            panic!("a declaration of no kind was projected");
+        };
+        assert!(reason.contains("declares no kind"), "{reason}");
+        assert!(reason.contains(crate::entity::PUBLICATION), "{reason}");
+    }
+
+    /// A node without a route has no slug, an entity kind declared without a route has no
+    /// directory, and a reference to a node whose kind is not declared has no public page.
+    #[test]
+    fn what_is_not_declared_or_has_no_route_has_no_public_address() {
+        let declaration = "[[kinds]]\nkind = \"adr\"\nprojection = \"entity\"\n";
+        let graph = json!({ "graph": {
+            "nodes": [
+                {"id": "adr:0001", "kind": "adr", "label": "adr-0001"},
+                {"id": "skill:x", "kind": "skill", "label": "x"},
+            ],
+            "edges": [
+                {"source": "adr:0001", "target": "skill:x", "kind": "names"},
+            ],
+        }});
+        let doc = projection(&graph, declaration).unwrap();
+        assert_eq!(
+            doc["kinds"][0]["dir"],
+            Value::Null,
+            "no route, no directory"
+        );
+        let adr = &doc["entities"][0];
+        assert_eq!(adr["slug"], Value::Null, "no route, no slug");
+        let skill = &adr["references"][0];
+        assert_eq!(skill["label"], "x");
+        assert_eq!(skill["external"], false, "the node is the repository's own");
+        assert_eq!(
+            skill["route"],
+            Value::Null,
+            "a kind the declaration does not name"
+        );
+    }
+
+    /// Only a lower-case kind before the first colon is a prefix: an id without one, or one
+    /// that starts with the colon, is its own label.
+    #[test]
+    fn an_id_without_a_kind_prefix_is_its_own_label() {
+        assert_eq!(without_kind_prefix("adr:0001"), "0001");
+        assert_eq!(without_kind_prefix("rule-set:a:b"), "a:b");
+        assert_eq!(without_kind_prefix("README.md"), "README.md");
+        assert_eq!(without_kind_prefix(":bare"), ":bare");
+        assert_eq!(without_kind_prefix("no-colon"), "no-colon");
+    }
+
     /// The port against the shell it replaces, over this repository's own committed files:
     /// the graph and the declaration the last derive read, and the entities.json it wrote.
     #[test]
@@ -452,5 +513,13 @@ mod tests {
                 shell.lines().nth(at).unwrap_or("(end)")
             );
         }
+    }
+
+    /// A declaration that does not read refuses the projection with its own reason, before
+    /// any node is looked at.
+    #[test]
+    fn a_declaration_that_does_not_read_refuses_the_projection() {
+        let refused = projection(&serde_json::json!({}), "[[kinds]]\nkind = unquoted\n");
+        assert!(refused.is_err());
     }
 }

@@ -932,3 +932,102 @@ fn enrolment_lists_this_machines_key_once_and_opens_the_mesh_here() {
     let (_, doctor) = mj(&["mesh", "doctor", "--format", "json"]);
     assert_eq!(trust(&doctor)["ok"], json!(true), "{doctor}");
 }
+
+/// `mesh enrol` in `f` under `env` (a `None` removes the variable): the exit code, stdout
+/// and stderr.
+fn enrol_in(f: &Fixture, env: &[(&str, Option<&std::path::Path>)]) -> (i32, String, String) {
+    let mut command = common::majordomus();
+    command
+        .args([
+            "mesh",
+            "enrol",
+            "--format",
+            "json",
+            "--discovery",
+            "filesystem",
+        ])
+        .current_dir(f.root())
+        .env("MAJORDOMUS_SHARE", common::dist_share());
+    for (name, value) in env {
+        match value {
+            Some(value) => command.env(name, value),
+            None => command.env_remove(name),
+        };
+    }
+    let out = command.output().unwrap();
+    (
+        out.status.code().unwrap_or(-1),
+        String::from_utf8_lossy(&out.stdout).to_string(),
+        String::from_utf8_lossy(&out.stderr).to_string(),
+    )
+}
+
+const SEEDED: &str = "schema: mesh/v1\nkind: mesh-declaration\nid: mesh\nenabled: true\ntrust:\n  policy: deny_unknown\n  allow: []\n";
+
+/// With nowhere to keep this machine's identity, or a state directory that cannot hold
+/// one, enrolment is refused with the reason and the declaration is left as it was.
+#[test]
+fn enrolment_without_a_place_for_the_identity_is_refused_and_writes_nothing() {
+    let f = Fixture::new();
+    f.write(".ai/repo/mesh/mesh.yaml", SEEDED);
+
+    let (code, out, err) = enrol_in(&f, &[("HOME", None), ("XDG_STATE_HOME", None)]);
+    assert_ne!(code, 0, "{out}");
+    assert!(
+        err.contains("no HOME and no XDG_STATE_HOME: nowhere to keep this machine's node identity"),
+        "{err}"
+    );
+
+    // a state directory that is a file: the identity cannot be created under it
+    let blocker = f.root().join("blocker");
+    std::fs::write(&blocker, "a file, not a directory").unwrap();
+    let (code, out, err) = enrol_in(&f, &[("XDG_STATE_HOME", Some(&blocker))]);
+    assert_ne!(code, 0, "{out}");
+    assert!(err.contains("refused"), "{err}");
+
+    assert_eq!(
+        std::fs::read_to_string(f.path(".ai/repo/mesh/mesh.yaml")).unwrap(),
+        SEEDED
+    );
+}
+
+/// A machine whose host name cannot be read is still enrolled: its allowlist entry is
+/// named "this machine" beside its node id and platform.
+#[test]
+fn enrolment_names_a_machine_without_a_readable_host_name_this_machine() {
+    let f = Fixture::new();
+    f.write(".ai/repo/mesh/mesh.yaml", SEEDED);
+    let state = f.root().join("xdg-state");
+    // no `hostname` on an empty PATH
+    let empty = f.root().join("empty-path");
+    std::fs::create_dir_all(&empty).unwrap();
+    let (code, out, err) = enrol_in(
+        &f,
+        &[("XDG_STATE_HOME", Some(&state)), ("PATH", Some(&empty))],
+    );
+    assert_eq!(code, 0, "{out}\n{err}");
+    let written = std::fs::read_to_string(f.path(".ai/repo/mesh/mesh.yaml")).unwrap();
+    let label = format!(
+        " — this machine ({} {})\n",
+        std::env::consts::OS,
+        std::env::consts::ARCH
+    );
+    assert!(written.contains(&label), "{written}");
+}
+
+/// A declaration that cannot be written is an internal error naming it, and the file
+/// keeps what it held.
+#[cfg(unix)]
+#[test]
+fn a_declaration_that_cannot_be_written_is_an_error_and_stays_as_it_was() {
+    use std::os::unix::fs::PermissionsExt;
+    let f = Fixture::new();
+    f.write(".ai/repo/mesh/mesh.yaml", SEEDED);
+    let declaration = f.path(".ai/repo/mesh/mesh.yaml");
+    std::fs::set_permissions(&declaration, std::fs::Permissions::from_mode(0o444)).unwrap();
+    let state = f.root().join("xdg-state");
+    let (code, out, err) = enrol_in(&f, &[("XDG_STATE_HOME", Some(&state))]);
+    assert_ne!(code, 0, "{out}");
+    assert!(err.contains("internal: .ai/repo/mesh/mesh.yaml"), "{err}");
+    assert_eq!(std::fs::read_to_string(&declaration).unwrap(), SEEDED);
+}

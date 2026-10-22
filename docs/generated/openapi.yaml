@@ -43499,7 +43499,7 @@ components:
           description: "The episode's session id."
         provider:
           type: string
-          description: "The provider that ran the episode, when the ledger names it."
+          description: "The provider that ran the episode, when the ledger names it. Left out of the answer\nwhen it does not, so it reads back as empty: without `default` the text form, which\nreads the capability's JSON, refused every episode whose provider is unknown."
         first_at:
           type: string
           description: "The time of the episode's first line about the task."
@@ -43513,7 +43513,6 @@ components:
           description: "How many of the episode's lines are about the task."
       required:
         - session
-        - provider
         - first_at
         - last_at
         - lines

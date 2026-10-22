@@ -581,4 +581,23 @@ mod tests {
         ids.dedup();
         assert_eq!(ids.len(), listed.len());
     }
+
+    /// A source's wire word is the word its serialised form carries, so a sighting listed
+    /// by `as_str` and one read back from JSON name the same source, the tailnet included.
+    #[test]
+    fn every_source_word_is_its_serialised_name() {
+        for source in [
+            MeshSource::UdpMulticast,
+            MeshSource::UdpBroadcast,
+            MeshSource::Rendezvous,
+            MeshSource::Tailscale,
+            MeshSource::Synthetic,
+        ] {
+            assert_eq!(
+                serde_json::to_value(source).unwrap(),
+                serde_json::json!(source.as_str())
+            );
+        }
+        assert_eq!(MeshSource::Tailscale.as_str(), "tailscale");
+    }
 }

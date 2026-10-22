@@ -756,6 +756,39 @@ mod tests {
         assert!(refused(&notification, &rejected).is_none());
     }
 
+    /// When no lease can be taken the client is served alone, and when the layer does not
+    /// load either, that error is the answer rather than the election's.
+    #[test]
+    fn a_failed_election_over_a_layer_that_does_not_load_answers_the_layers_error() {
+        use clap::Parser;
+        let fixture = crate::synthetic::SyntheticRepository::small().unwrap();
+        let root = fixture.root().canonicalize().unwrap();
+        let repo = Repository::discover(&root).unwrap();
+        // the lease's directory cannot be made where a file stands in its way
+        let blocked = root.join(repo.local_path()).join("state");
+        std::fs::create_dir_all(blocked.parent().unwrap()).unwrap();
+        std::fs::write(&blocked, b"not a directory").unwrap();
+        assert!(lease::elect(&repo).is_err());
+
+        let missing = root.join("no-share-here");
+        let cli = crate::cli::Cli::try_parse_from([
+            "majordomus",
+            "mcp",
+            "--repo",
+            root.to_str().unwrap(),
+            "--share",
+            missing.to_str().unwrap(),
+        ])
+        .unwrap();
+        let crate::cli::Command::Mcp(args) = cli.command else {
+            panic!("not the mcp command")
+        };
+        match Session::open(args, repo) {
+            Err(e) => assert!(matches!(e, Error::ShareNotFound { .. }), "{e:?}"),
+            Ok(_) => panic!("a session was opened over a layer that does not load"),
+        }
+    }
+
     #[test]
     fn a_diagnostic_is_introduced_by_the_verdict_word_of_its_severity() {
         assert_eq!(level(Severity::Error), "FAIL");

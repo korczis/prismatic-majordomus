@@ -486,4 +486,29 @@ mod tests {
         assert!(some.fields.len() < all.fields.len());
         assert!(some.fields.iter().all(|f| f.field.starts_with("project.")));
     }
+
+    /// The snapshot and the preflight re-read the repository they answer for; once its
+    /// manifest is gone, each says it could not be re-read rather than answering from the
+    /// index it was loaded with.
+    #[test]
+    fn a_repository_that_cannot_be_re_read_is_an_internal_error() {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a repository");
+        let ctx = repo.context().expect("a context");
+        std::fs::remove_file(repo.root().join(crate::repository::MANIFEST))
+            .expect("the manifest removed");
+        let said = |r: Result<(), CapabilityError>| match r {
+            Err(CapabilityError::Internal(m)) => m,
+            other => panic!("not an internal error: {other:?}"),
+        };
+        let snapshot = said(snapshot(&ctx, EnvironmentInput::default()).map(|_| ()));
+        assert!(
+            snapshot.contains("the repository could not be re-read"),
+            "{snapshot}"
+        );
+        let preflight = said(preflight(&ctx, PreflightInput::default()).map(|_| ()));
+        assert!(
+            preflight.contains("the repository could not be re-read"),
+            "{preflight}"
+        );
+    }
 }

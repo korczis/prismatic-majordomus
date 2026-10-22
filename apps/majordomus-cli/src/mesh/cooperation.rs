@@ -3562,15 +3562,12 @@ impl Cooperation {
             .collect();
         ended
             .into_iter()
-            .filter(|session| match self.close_session(session) {
-                Ok(_) => {
-                    tracing::info!(runtime_id = %self.own_key, session_id = %session, "mesh session closed: its client process has ended");
-                    true
-                }
-                Err(e) => {
-                    tracing::warn!(runtime_id = %self.own_key, session_id = %session, error = %e, "a session whose client ended could not be closed");
-                    false
-                }
+            .filter(|session| {
+                // a session the supervisor found is one the state holds under that name, so
+                // closing it is not refused; what it answered is logged either way
+                let closed = self.close_session(session);
+                tracing::info!(runtime_id = %self.own_key, session_id = %session, closed = closed.is_ok(), error = ?closed.as_ref().err(), "a mesh session whose client process has ended");
+                closed.is_ok()
             })
             .collect()
     }
@@ -4203,10 +4200,8 @@ pub fn process_facts(pid: u32) -> Option<ProcessFacts> {
         .env("LC_ALL", "C")
         .args(["-o", "ppid=,lstart=,comm=", "-p", &pid.to_string()])
         .output()
-        .ok()?;
-    if !out.status.success() {
-        return None;
-    }
+        .ok()
+        .filter(|out| out.status.success())?;
     parse_process_line(&String::from_utf8_lossy(&out.stdout))
 }
 
@@ -4662,6 +4657,78 @@ mod tests {
             })
         };
         assert_eq!(client_of(50, &shells), None);
+    }
+
+    /// A line whose parent is not a number is no process, and a walk finds no client when
+    /// the table lacks where it starts, lacks a process on the way, or never ends.
+    #[test]
+    fn a_walk_with_a_gap_or_without_an_end_finds_no_client() {
+        assert_eq!(
+            parse_process_line("init Tue Oct  1 04:23:01 2026 /sbin/launchd"),
+            None
+        );
+        let table = |pid: u32| {
+            (pid == 50).then(|| ProcessFacts {
+                ppid: 40,
+                started: "start of 50".into(),
+                command: "bash".into(),
+            })
+        };
+        assert_eq!(client_of(7, &table), None, "the start is not in the table");
+        assert_eq!(
+            client_of(50, &table),
+            None,
+            "its parent is not in the table"
+        );
+        let looping = |pid: u32| {
+            Some(ProcessFacts {
+                ppid: if pid == 60 { 61 } else { 60 },
+                started: format!("start of {pid}"),
+                command: "/bin/sh".into(),
+            })
+        };
+        assert_eq!(
+            client_of(60, &looping),
+            None,
+            "two shells that parent each other"
+        );
+    }
+
+    /// The client of this test process is an ancestor read from this machine's process
+    /// table: never this process itself, and named with the start `ps` reports for it.
+    #[test]
+    fn the_client_of_this_process_is_an_ancestor_named_with_its_start() {
+        if let Some((pid, started)) = client_process() {
+            assert_ne!(pid, std::process::id());
+            assert_eq!(process_facts(pid).map(|p| p.started), Some(started));
+        }
+    }
+
+    /// The supervisor closes a session whose client has ended on its own, every twelfth
+    /// beat, with nobody asking it to.
+    #[test]
+    fn the_supervisor_closes_a_session_whose_client_has_ended() {
+        let net = Arc::new(InProcess::default());
+        let a = runtime(&net, "a:1", "root", TrustPolicy::Tofu);
+        a.open_session(SessionInfo {
+            client_pid: Some(std::process::id()),
+            client_started: Some("Mon Jan  1 00:00:00 1990".into()),
+            ..SessionInfo::named("ended", "claude-code")
+        })
+        .unwrap();
+        let closed = |c: &Cooperation| {
+            c.state().sessions.iter().any(|s| {
+                s.info.session == "ended" && s.state == crate::mesh::state::SessionState::Closed
+            })
+        };
+        assert!(!closed(&a));
+        a.start();
+        let deadline = Instant::now() + Duration::from_secs(40);
+        while !closed(&a) && Instant::now() < deadline {
+            std::thread::sleep(Duration::from_millis(100));
+        }
+        a.stop();
+        assert!(closed(&a), "{:?}", a.state().sessions);
     }
 
     #[test]

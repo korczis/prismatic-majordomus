@@ -2757,9 +2757,13 @@ impl Journal {
             if page.len() >= limit {
                 break;
             }
-            if let Some(event) = inner.streams.get(stream).and_then(|l| l.events.get(seq)) {
-                page.push(event.clone());
-            }
+            page.extend(
+                inner
+                    .streams
+                    .get(stream)
+                    .and_then(|l| l.events.get(seq))
+                    .cloned(),
+            );
             last = arrival;
         }
         page.sort_by_cached_key(causal_key);
@@ -4021,6 +4025,52 @@ mod tests {
             "the kept event, not an empty page for the dropped one"
         );
         assert_eq!(page[0].stream, b.own);
+    }
+
+    /// A cursor written out reads back as the same run and arrival; anything that is not
+    /// sixteen lowercase hex digits, a colon and a number is malformed, and every refusal
+    /// names what was given and what to do instead.
+    #[test]
+    fn a_cursor_reads_back_as_written_and_every_refusal_says_why() {
+        let j = journal("0000000000000001");
+        opened(&j, "s1");
+        opened(&j, "s2");
+        let head = j.head_cursor();
+        assert_eq!(head.arrival(), 2);
+        let back: Cursor = head.to_string().parse().unwrap();
+        assert_eq!(back, head);
+        assert!(j.events_since(Some(&back), 10).unwrap().0.is_empty());
+
+        for bad in [
+            "",
+            "0123456789abcdef",
+            "0123456789abcde:1",
+            "0123456789abcdeg:1",
+            "0123456789ABCDEF:1",
+            "0123456789abcdef:",
+            "0123456789abcdef:-1",
+        ] {
+            let e = bad.parse::<Cursor>().expect_err(bad);
+            assert_eq!(e, CursorError::Malformed(bad.into()));
+            let said = e.to_string();
+            assert!(
+                said.contains(&format!("'{bad}'")) && said.contains("<16 hex digits>:<arrival>"),
+                "{said}"
+            );
+        }
+
+        let stale = CursorError::Stale {
+            issued_by: "0000000000000001".into(),
+            current: "0000000000000002".into(),
+        };
+        let said = stale.to_string();
+        assert!(said.starts_with("stale_cursor:"), "{said}");
+        assert!(
+            said.contains("issued by run 0000000000000001")
+                && said.contains("this is run 0000000000000002"),
+            "{said}"
+        );
+        assert!(said.contains("from a Lamport stamp with after"), "{said}");
     }
 
     /// Pull every event `from` holds that `into` lacks, as one sync round does.

@@ -205,22 +205,24 @@ pub fn check(repository: &Repository, index: &Index, kinds: &KindSchema) -> Layo
     let tracked_half = format!(".ai/{}", manifest.repo.path.trim_end_matches('/'));
     let local_half = format!(".ai/{}", manifest.local.path.trim_end_matches('/'));
 
-    let tracked = match git_lines(root, &["ls-files", "-s", "--", &tracked_half]) {
-        Ok(lines) => lines,
-        Err(e) => return LayoutReport::unmeasured(e),
-    };
-    let ignored = match git_lines(
-        root,
-        &[
-            "ls-files",
-            "-c",
-            "-i",
-            "--exclude-standard",
-            "--",
-            &tracked_half,
-        ],
-    ) {
-        Ok(lines) => lines,
+    // the tracked half with its blob ids, then which of it git's ignore rules match: both
+    // listings or neither, so a half-read tree is never judged
+    let listed = git_lines(root, &["ls-files", "-s", "--", &tracked_half]).and_then(|tracked| {
+        git_lines(
+            root,
+            &[
+                "ls-files",
+                "-c",
+                "-i",
+                "--exclude-standard",
+                "--",
+                &tracked_half,
+            ],
+        )
+        .map(|ignored| (tracked, ignored))
+    });
+    let (tracked, ignored) = match listed {
+        Ok(lists) => lists,
         Err(e) => return LayoutReport::unmeasured(e),
     };
 
@@ -249,14 +251,8 @@ pub fn check(repository: &Repository, index: &Index, kinds: &KindSchema) -> Layo
     let mut checked = tracked.len();
     if manifest.local.excludes.iter().any(|e| e == "canonical") {
         // the tracked half's blobs, by id: a local file with one of these ids is that file
-        let blobs: BTreeMap<String, String> = tracked
-            .iter()
-            .filter_map(|l| {
-                let (meta, path) = l.split_once('\t')?;
-                let blob = meta.split_whitespace().nth(1)?;
-                Some((blob.to_string(), path.to_string()))
-            })
-            .collect();
+        let blobs: BTreeMap<String, String> =
+            tracked.iter().filter_map(|l| staged_blob(l)).collect();
         let canonical: BTreeSet<String> = kinds
             .kinds()
             .filter(|(_, k)| k.lifecycle.unwrap_or(Lifecycle::Canonical) == Lifecycle::Canonical)
@@ -365,70 +361,60 @@ fn local_files(dir: &Path) -> Vec<PathBuf> {
             continue;
         };
         for e in entries.flatten() {
-            let Ok(t) = e.file_type() else { continue };
             let p = e.path();
-            if t.is_dir() {
-                stack.push(p);
-            } else if t.is_file()
-                && p.extension()
-                    .is_some_and(|x| x == "md" || x == "yaml" || x == "yml")
-                && e.metadata().is_ok_and(|m| m.len() > 0)
-            {
-                out.push(p);
+            match e.file_type() {
+                Ok(t) if t.is_dir() => stack.push(p),
+                Ok(t)
+                    if t.is_file()
+                        && p.extension()
+                            .is_some_and(|x| x == "md" || x == "yaml" || x == "yml")
+                        && e.metadata().is_ok_and(|m| m.len() > 0) =>
+                {
+                    out.push(p)
+                }
+                // another kind of file, or one whose type cannot be read: not a record
+                _ => {}
             }
         }
     }
     out
 }
 
-/// git's blob id of each file, in order, from one `git hash-object` over all of them.
+/// How many paths one `git hash-object` is handed, so that the argument list stays far
+/// below any platform's limit however many local files there are.
+const HASH_CHUNK: usize = 256;
+
+/// git's blob id of each file, in order. The paths are arguments, never lines of input: git
+/// prints one id per path it is given or fails, so the ids pair with the files one to one,
+/// whatever characters a file name holds.
 fn hash_objects(root: &Path, files: &[PathBuf]) -> Result<Vec<String>, String> {
-    if files.is_empty() {
-        return Ok(Vec::new());
-    }
-    use std::io::Write as _;
-    let mut child = Command::new("git")
-        .arg("-C")
-        .arg(root)
-        .args(["hash-object", "--no-filters", "--stdin-paths"])
-        .stdin(std::process::Stdio::piped())
-        .stdout(std::process::Stdio::piped())
-        .stderr(std::process::Stdio::piped())
-        .spawn()
-        .map_err(|e| format!("git hash-object could not start: {e}"))?;
-    {
-        let mut stdin = child.stdin.take().ok_or("git hash-object took no input")?;
-        for f in files {
-            writeln!(stdin, "{}", f.display())
-                .map_err(|e| format!("git hash-object refused a path: {e}"))?;
-        }
-    }
-    let out = child
-        .wait_with_output()
-        .map_err(|e| format!("git hash-object did not finish: {e}"))?;
-    if !out.status.success() {
-        return Err(format!(
-            "git hash-object failed: {}",
-            String::from_utf8_lossy(&out.stderr).trim()
-        ));
-    }
-    let ids: Vec<String> = String::from_utf8_lossy(&out.stdout)
-        .lines()
-        .map(str::to_string)
-        .collect();
-    if ids.len() != files.len() {
-        return Err(format!(
-            "git hash-object answered {} id(s) for {} file(s)",
-            ids.len(),
-            files.len()
-        ));
+    let mut ids = Vec::with_capacity(files.len());
+    for chunk in files.chunks(HASH_CHUNK) {
+        let paths: Vec<String> = chunk.iter().map(|f| f.display().to_string()).collect();
+        let mut args = vec!["hash-object", "--no-filters", "--"];
+        args.extend(paths.iter().map(String::as_str));
+        ids.extend(git_lines(root, &args)?);
     }
     Ok(ids)
 }
 
+/// The tracked path and its blob id, from one line of `git ls-files -s`
+/// (`<mode> <blob> <stage>\t<path>`); none from a line of another shape.
+fn staged_blob(line: &str) -> Option<(String, String)> {
+    let (meta, path) = line.split_once('\t')?;
+    let blob = meta.split_whitespace().nth(1)?;
+    Some((blob.to_string(), path.to_string()))
+}
+
 /// The lines git prints for `args` at `root`.
 fn git_lines(root: &Path, args: &[&str]) -> Result<Vec<String>, String> {
-    let out = Command::new("git")
+    program_lines("git", root, args)
+}
+
+/// The lines `program`, a git, prints for `args` at `root`: the seam a test names a program
+/// that cannot start through.
+fn program_lines(program: &str, root: &Path, args: &[&str]) -> Result<Vec<String>, String> {
+    let out = Command::new(program)
         .arg("-C")
         .arg(root)
         .args(args)
@@ -577,5 +563,192 @@ mod tests {
         assert!(!report.passes);
         assert_eq!(report.checked, 0);
         assert!(report.reason.unwrap().contains("ls-files"));
+    }
+
+    /// Findings are listed by path and, where two contracts refuse one path, by contract,
+    /// whatever order the walk found them in.
+    #[test]
+    fn findings_are_ordered_by_path_and_then_by_contract() {
+        let at = |path: &str, contract: &str| LayoutFinding {
+            path: path.into(),
+            contract: contract.into(),
+            excludes: "canonical".into(),
+            reason: "a copy".into(),
+        };
+        let found = vec![
+            at(".ai/local/b.md", "manifest local"),
+            at(".ai/local/a.md", "ai.repo"),
+            at(".ai/local/a.md", "ai.local"),
+        ];
+        let report = LayoutReport::of(true, None, 3, found);
+        let order: Vec<(&str, &str)> = report
+            .findings
+            .iter()
+            .map(|f| (f.path.as_str(), f.contract.as_str()))
+            .collect();
+        assert_eq!(
+            order,
+            [
+                (".ai/local/a.md", "ai.local"),
+                (".ai/local/a.md", "ai.repo"),
+                (".ai/local/b.md", "manifest local"),
+            ]
+        );
+    }
+
+    /// A context document under the tracked half that declares a layout.
+    fn contract(repo: &SyntheticRepository, dir: &str, id: &str, excludes: &str) {
+        let path = repo.root().join(dir).join("README.md");
+        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+        let text = format!(
+            "---\nschema: context/v1\nid: {id}\nkind: context\ntitle: {id}\n\
+             description: The {id} section.\nstatus: active\nscope: subtree\n\
+             providers: [\"*\"]\naudience: [human, agent]\ncomposition: extend\n\
+             order: 20\nlayout:\n  lifecycle: canonical\n  excludes: [{excludes}]\n---\n\n\
+             # {id}\n"
+        );
+        std::fs::write(path, text).unwrap();
+    }
+
+    /// A tracked file git's ignore rules match is refused under the nearest contract that
+    /// excludes cache or runtime, and only there: not under a contract that excludes
+    /// something else, and not where no contract declares a layout.
+    #[test]
+    fn a_tracked_file_the_ignore_rules_match_is_refused_only_where_a_layout_excludes_it() {
+        let repo = SyntheticRepository::small().unwrap();
+        let sources = repo.root().join(".ai/repo/knowledge/sources.yaml");
+        let text = std::fs::read_to_string(&sources).unwrap().replacen(
+            "sources:\n",
+            "sources:\n  - id: context\n    kind: context\n    discovery: vcs\n    \
+             pathspec: ':(glob).ai/**/README.md'\n    required: false\n",
+            1,
+        );
+        std::fs::write(&sources, text).unwrap();
+        contract(&repo, ".ai/repo/state", "ai.state", "runtime");
+        contract(&repo, ".ai/repo/profiles", "ai.profiles", "canonical");
+        for rel in [
+            ".ai/repo/state/deep/now.state",
+            ".ai/repo/profiles/stray.state",
+            ".ai/repo/stray.state",
+        ] {
+            std::fs::create_dir_all(repo.root().join(rel).parent().unwrap()).unwrap();
+            std::fs::write(repo.root().join(rel), "pid: 42\n").unwrap();
+        }
+        git(repo.root(), &["init", "-q"]);
+        git(repo.root(), &["add", ".ai"]);
+        std::fs::write(repo.root().join(".gitignore"), "*.state\n").unwrap();
+
+        let report = checked(&repo);
+        assert!(report.measured, "{:?}", report.reason);
+        assert!(!report.passes);
+        assert_eq!(report.findings.len(), 1, "{:?}", report.findings);
+        let f = &report.findings[0];
+        assert_eq!(f.path, ".ai/repo/state/deep/now.state");
+        assert_eq!(f.contract, "ai.state");
+        assert_eq!(f.excludes, "runtime");
+        assert!(
+            f.reason.contains("git's ignore rules match it"),
+            "{}",
+            f.reason
+        );
+    }
+
+    /// A local half that does not exist holds nothing to refuse: the check passes, having
+    /// judged the tracked half alone, without asking git to hash anything.
+    #[test]
+    fn an_absent_local_half_passes_having_judged_the_tracked_half() {
+        let repo = layer(true);
+        assert!(!repo.root().join(".ai/local").exists());
+
+        let report = checked(&repo);
+        assert!(report.passes, "{:?} {:?}", report.reason, report.findings);
+        let tracked = git_lines(repo.root(), &["ls-files", "--", ".ai/repo"]).unwrap();
+        assert_eq!(report.checked, tracked.len());
+        assert_eq!(hash_objects(repo.root(), &[]), Ok(Vec::new()));
+    }
+
+    /// A local file git cannot hash — one nobody may read — leaves the check unmeasured,
+    /// never passing.
+    #[cfg(unix)]
+    #[test]
+    fn a_local_file_git_cannot_hash_leaves_the_check_unmeasured() {
+        use std::os::unix::fs::PermissionsExt;
+        let repo = layer(true);
+        local(&repo, "notes/sealed.md", b"a note\n");
+        let sealed = repo.root().join(".ai/local/notes/sealed.md");
+        std::fs::set_permissions(&sealed, std::fs::Permissions::from_mode(0o000)).unwrap();
+
+        let report = checked(&repo);
+        std::fs::set_permissions(&sealed, std::fs::Permissions::from_mode(0o644)).unwrap();
+        assert!(!report.measured);
+        assert!(!report.passes);
+        let reason = report.reason.unwrap();
+        assert!(
+            reason.contains("git hash-object") && reason.contains("failed"),
+            "{reason}"
+        );
+    }
+
+    /// A file name holding a line break is one path, hashed as that file: the paths reach
+    /// git as arguments, never as lines it would split.
+    #[test]
+    fn a_file_name_with_a_line_break_is_hashed_as_one_file() {
+        let dir = tempfile::tempdir().unwrap();
+        let odd = dir.path().join("one\ntwo.md");
+        std::fs::write(&odd, "two\n").unwrap();
+        let plain = dir.path().join("two.md");
+        std::fs::write(&plain, "two\n").unwrap();
+
+        let ids = hash_objects(dir.path(), &[odd, plain]).unwrap();
+        assert_eq!(ids.len(), 2, "{ids:?}");
+        assert_eq!(ids[0], ids[1], "the same bytes are the same blob");
+    }
+
+    /// Only a `git ls-files -s` line of its own shape names a blob and a path.
+    #[test]
+    fn a_staged_line_names_its_blob_and_its_path() {
+        assert_eq!(
+            staged_blob("100644 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 0\t.ai/repo/a.md"),
+            Some((
+                "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391".to_string(),
+                ".ai/repo/a.md".to_string()
+            ))
+        );
+        assert_eq!(staged_blob("no tab here"), None);
+        assert_eq!(staged_blob("100644\t.ai/repo/a.md"), None);
+    }
+
+    /// A git that cannot start is said as such, and nothing is listed.
+    #[test]
+    fn a_git_that_cannot_start_is_said() {
+        let dir = tempfile::tempdir().unwrap();
+        let missing = dir.path().join("no-such-git");
+        let err = program_lines(missing.to_str().unwrap(), dir.path(), &["status"]).unwrap_err();
+        assert!(err.starts_with("git could not start"), "{err}");
+    }
+
+    /// A declared schema is read only from a file that exists, fits the head budget and is
+    /// text; from anything else nothing is read, and the file is judged by its bytes alone.
+    #[test]
+    fn a_schema_is_read_only_from_a_small_text_file() {
+        let dir = tempfile::tempdir().unwrap();
+        let small = dir.path().join("small.yaml");
+        std::fs::write(&small, "schema: 'majordomus.issue/v1'\nid: I1\n").unwrap();
+        assert_eq!(
+            declared_schema(&small).as_deref(),
+            Some("majordomus.issue/v1")
+        );
+
+        assert_eq!(declared_schema(&dir.path().join("missing.yaml")), None);
+
+        let large = dir.path().join("large.yaml");
+        let mut body = b"schema: majordomus.issue/v1\n".to_vec();
+        body.resize(HEAD_BYTES as usize + 1, b'#');
+        std::fs::write(&large, body).unwrap();
+        assert_eq!(declared_schema(&large), None, "larger than the head budget");
+
+        let binary = dir.path().join("binary.yaml");
+        std::fs::write(&binary, b"schema: majordomus.issue/v1\n\xff\xfe\n").unwrap();
+        assert_eq!(declared_schema(&binary), None, "not UTF-8");
     }
 }

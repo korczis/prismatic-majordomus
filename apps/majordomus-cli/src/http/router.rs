@@ -587,13 +587,10 @@ impl Router {
             Ok(resolution) => &resolution.ctx,
             Err(reason) => return Some(Err(Response::error(500, "internal", reason))),
         };
-        // the blackboard on the same channel: a read of `blackboard.snapshot`, so a caller
-        // beyond loopback may follow it exactly when it may read it (ADR 0126)
+        // the blackboard on the same channel: a read of `blackboard.snapshot`, followed only
+        // where that capability is served (a remote caller was refused above, I3842)
         if let Some(follow) = events::accept_follow(ctx, req) {
-            let admitted = ctx
-                .registry
-                .get("blackboard.snapshot")
-                .is_some_and(|c| !req.is_remote() || c.execution.admits_remote());
+            let admitted = ctx.registry.get("blackboard.snapshot").is_some();
             if !admitted {
                 let e = CapabilityError::remote("blackboard.snapshot");
                 return Some(Err(error_response(403, e.code(), &e.to_string())));
@@ -1462,6 +1459,51 @@ mod tests {
         )) {
             Some(Err(r)) => assert_eq!(r.status, 403, "{}", r.body.text()),
             Some(Ok(_)) => panic!("a caller beyond loopback followed what it may not read"),
+            None => panic!("an upgrade that follows the blackboard was not recognised"),
+        }
+    }
+
+    /// A server whose registry does not declare the blackboard has nothing to follow: even
+    /// a page of its own, on loopback, is refused it and told which read is missing.
+    #[test]
+    fn a_registry_without_the_blackboard_refuses_to_follow_it_on_loopback() {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a synthetic repository");
+        let modules = crate::capability::builtin::modules()
+            .into_iter()
+            .filter(|m| m.id.as_str() != "blackboard")
+            .collect();
+        let registry = crate::capability::CapabilityRegistry::builder()
+            .with_modules(modules)
+            .build()
+            .unwrap();
+        let ctx = Context::new(Arc::new(repo.index().unwrap()), Arc::new(registry));
+        let router = Router::new(Arc::new(ctx), "test").with_ui(None);
+        let upgrade = Request::parse_target(
+            "GET",
+            &format!("{}?follow=blackboard", events::PATH),
+            Vec::new(),
+        )
+        .with_headers(vec![
+            ("Upgrade".into(), "websocket".into()),
+            ("Connection".into(), "Upgrade".into()),
+            ("Sec-WebSocket-Version".into(), "13".into()),
+            ("Host".into(), "127.0.0.1:8741".into()),
+            (
+                "Sec-WebSocket-Key".into(),
+                "dGhlIHNhbXBsZSBub25jZQ==".into(),
+            ),
+        ])
+        .with_remote(Some("127.0.0.1".parse().unwrap()));
+        match router.websocket(&upgrade) {
+            Some(Err(r)) => {
+                assert_eq!(r.status, 403, "{}", r.body.text());
+                assert!(
+                    r.body.text().contains("blackboard.snapshot"),
+                    "{}",
+                    r.body.text()
+                );
+            }
+            Some(Ok(_)) => panic!("a blackboard nobody declared was followed"),
             None => panic!("an upgrade that follows the blackboard was not recognised"),
         }
     }

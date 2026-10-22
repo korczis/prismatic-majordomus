@@ -205,8 +205,10 @@ pub enum TaskEconomicsState {
 pub struct TaskEconomicsEpisode {
     /// The episode's session id.
     pub session: String,
-    /// The provider that ran the episode, when the ledger names it.
-    #[serde(skip_serializing_if = "String::is_empty")]
+    /// The provider that ran the episode, when the ledger names it. Left out of the answer
+    /// when it does not, so it reads back as empty: without `default` the text form, which
+    /// reads the capability's JSON, refused every episode whose provider is unknown.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
     pub provider: String,
     /// The time of the episode's first line about the task.
     pub first_at: String,
@@ -485,18 +487,20 @@ pub fn fold(sources: Vec<TaskEconomicsSource>, q: &TaskEconomicsQuery) -> TaskEc
                     .iter()
                     .filter(|e| e.session.as_deref() == Some(ep.session.as_str()))
                     .collect();
-                let (Some(first), Some(last)) = (mine.first(), mine.last()) else {
-                    continue;
-                };
-                if !r.episodes.iter().any(|x| x.session == ep.session) {
-                    r.episodes.push(TaskEconomicsEpisode {
-                        session: ep.session.clone(),
-                        provider: ep.provider.clone(),
-                        first_at: first.ts.clone(),
-                        last_at: last.ts.clone(),
-                        lines: mine.len(),
-                    });
-                }
+                // an episode is listed once, across checkouts, spanning its first and last line
+                let known = r.episodes.iter().any(|x| x.session == ep.session);
+                let episode =
+                    mine.first()
+                        .zip(mine.last())
+                        .filter(|_| !known)
+                        .map(|(first, last)| TaskEconomicsEpisode {
+                            session: ep.session.clone(),
+                            provider: ep.provider.clone(),
+                            first_at: first.ts.clone(),
+                            last_at: last.ts.clone(),
+                            lines: mine.len(),
+                        });
+                r.episodes.extend(episode);
             }
         }
     }
@@ -623,4 +627,164 @@ pub fn tasks(root: &Path, q: &TaskEconomicsQuery) -> TaskEconomicsList {
     let mut list = fold(sources, q);
     list.unread = unread;
     list
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// One ledger line of `task`, as `mj_ledger_append` writes it.
+    fn line(ts: &str, event: &str, session: &str, task: &str) -> String {
+        format!(
+            r#"{{"ts":"{ts}","event":"{event}","head":"h","branch":"b","by":"me","session":"{session}","task_id":"{task}"}}"#
+        )
+    }
+
+    fn source(checkout: &str, lines: &[String]) -> TaskEconomicsSource {
+        TaskEconomicsSource::parse(checkout, "ledger.jsonl", &lines.join("\n"))
+    }
+
+    fn ids(list: &TaskEconomicsList) -> Vec<&str> {
+        list.tasks.iter().map(|t| t.task_id.as_str()).collect()
+    }
+
+    /// A parsed source names its checkout and its one file, keeps every line that reads as an
+    /// entry, and counts the rest as skipped rather than dropping them silently.
+    #[test]
+    fn a_parsed_source_names_its_checkout_and_counts_what_it_skipped() {
+        let text = format!(
+            "{}\nnot json\n\n",
+            line("2026-10-21T10:00:00Z", "task.started", "s-1", "t-1")
+        );
+        let s = TaskEconomicsSource::parse("repo", "ledger.jsonl", &text);
+        assert_eq!(s.checkout, "repo");
+        assert_eq!(s.entries.len(), 1);
+        assert_eq!(s.entries[0].event, "task.started");
+        assert_eq!(
+            s.ledgers,
+            [TaskEconomicsLedger {
+                checkout: "repo".into(),
+                path: "ledger.jsonl".into(),
+                lines: 1,
+                skipped: 1,
+            }]
+        );
+    }
+
+    /// A window filters by start: a task with no start line is answered only without one, and
+    /// the upper bound keeps a task started before it and drops one started at it.
+    #[test]
+    fn a_window_reads_the_start_and_answers_no_task_without_one() {
+        let s = source(
+            "repo",
+            &[
+                line(
+                    "2026-10-21T10:00:00Z",
+                    "task.finished",
+                    "s-1",
+                    "t-unstarted",
+                ),
+                line("2026-10-21T09:00:00Z", "task.started", "s-1", "t-early"),
+                line("2026-10-21T12:00:00Z", "task.started", "s-1", "t-late"),
+            ],
+        );
+        let all = fold(vec![s.clone()], &TaskEconomicsQuery::default());
+        assert_eq!(all.count, 3, "no window answers every task");
+        let unstarted = all
+            .tasks
+            .iter()
+            .find(|t| t.task_id == "t-unstarted")
+            .unwrap();
+        assert_eq!(unstarted.started_at, None);
+        assert_eq!(unstarted.state, TaskEconomicsState::Finished);
+        assert_eq!(unstarted.wall_seconds, None, "no start, no wall time");
+        let until = TaskEconomicsQuery {
+            since: None,
+            until: Some("2026-10-21T12:00:00Z".into()),
+        };
+        let early = fold(vec![s], &until);
+        assert_eq!(ids(&early), ["t-early"], "{early:#?}");
+        assert_eq!(early.window, until, "the window is answered as given");
+    }
+
+    /// An open task's time runs to its last refusal, and a task that only ever refused reads
+    /// active, never with an empty outcome.
+    #[test]
+    fn an_open_task_ends_at_its_last_refusal_and_reads_active() {
+        let s = source(
+            "repo",
+            &[
+                line("2026-10-21T10:00:00Z", "task.started", "s-1", "t-1"),
+                line("2026-10-21T10:10:00Z", "task.refused", "s-1", "t-1"),
+                line("2026-10-21T10:30:00Z", "task.refused", "s-1", "t-1"),
+                line("2026-10-21T11:00:00Z", "task.refused", "s-1", "t-2"),
+            ],
+        );
+        let list = fold(vec![s], &TaskEconomicsQuery::default());
+        let t1 = &list.tasks.iter().find(|t| t.task_id == "t-1").unwrap();
+        assert_eq!(t1.state, TaskEconomicsState::Open);
+        assert_eq!(t1.ended_at.as_deref(), Some("2026-10-21T10:30:00Z"));
+        assert_eq!(t1.wall_seconds, Some(1800), "start to the last refusal");
+        assert_eq!(t1.refusals, 2);
+        let t2 = &list.tasks.iter().find(|t| t.task_id == "t-2").unwrap();
+        assert_eq!(t2.outcome, "active", "a refusal alone sets no outcome");
+        assert_eq!(t2.state, TaskEconomicsState::Open);
+    }
+
+    /// A task met in three checkouts is one record: it starts at its earliest start, a finish
+    /// in one checkout is not undone by another that has none, its refusals add up, and one
+    /// session seen in every checkout is one episode.
+    #[test]
+    fn a_task_in_several_checkouts_keeps_its_earliest_start_and_its_finish() {
+        let finished = source(
+            "a",
+            &[
+                line("2026-10-21T10:00:00Z", "task.started", "s-1", "t-1"),
+                line("2026-10-21T11:00:00Z", "task.finished", "s-1", "t-1"),
+            ],
+        );
+        let earlier = source(
+            "b",
+            &[
+                line("2026-10-21T09:00:00Z", "task.started", "s-1", "t-1"),
+                line("2026-10-21T09:30:00Z", "task.refused", "s-1", "t-1"),
+            ],
+        );
+        let later = source(
+            "c",
+            &[line("2026-10-21T12:00:00Z", "task.started", "s-1", "t-1")],
+        );
+        let list = fold(
+            vec![finished, earlier, later],
+            &TaskEconomicsQuery::default(),
+        );
+        assert_eq!(list.count, 1, "{list:#?}");
+        assert_eq!(list.ledgers.len(), 3);
+        let t = &list.tasks[0];
+        assert_eq!(t.checkout, "a", "the first checkout that met it");
+        assert_eq!(t.started_at.as_deref(), Some("2026-10-21T09:00:00Z"));
+        assert_eq!(t.state, TaskEconomicsState::Finished);
+        assert_eq!(t.ended_at.as_deref(), Some("2026-10-21T11:00:00Z"));
+        assert_eq!(t.wall_seconds, Some(7200));
+        assert_eq!(t.refusals, 1);
+        assert_eq!(t.episodes.len(), 1, "one session is one episode");
+        assert_eq!(t.episodes[0].first_at, "2026-10-21T10:00:00Z");
+    }
+
+    /// An episode whose provider the ledger does not name serialises without the field and
+    /// reads back as itself, as the text form reads it.
+    #[test]
+    fn an_episode_with_no_provider_reads_back_as_itself() {
+        let episode = TaskEconomicsEpisode {
+            session: "s-1".into(),
+            provider: String::new(),
+            first_at: "2026-10-21T10:00:00Z".into(),
+            last_at: "2026-10-21T10:05:00Z".into(),
+            lines: 1,
+        };
+        let json = serde_json::to_value(&episode).unwrap();
+        assert!(json.get("provider").is_none(), "{json}");
+        let back: TaskEconomicsEpisode = serde_json::from_value(json).unwrap();
+        assert_eq!(back, episode);
+    }
 }

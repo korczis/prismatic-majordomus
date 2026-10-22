@@ -429,19 +429,25 @@ fn tasks(a: EconomicsTasksArgs) -> Result<u8> {
         print_json(&value)?;
         return Ok(0);
     }
-    let l: TaskEconomicsList = read(&value, "economics.tasks")?;
-    let mut out = std::io::stdout().lock();
-    writeln!(
-        out,
-        "{} task(s) from {} ledger file(s)",
+    // the whole text is rendered before a byte is written, so a reply that cannot be read and
+    // an output that cannot be written are one failure of the command
+    read::<TaskEconomicsList>(&value, "economics.tasks")
+        .map(|l| tasks_text(&l))
+        .and_then(|text| write!(std::io::stdout().lock(), "{text}").map_err(Error::Transport))?;
+    Ok(0)
+}
+
+/// The text form of `economics tasks`: one line per task, one per checkout not read, and what
+/// is not observed yet.
+fn tasks_text(l: &TaskEconomicsList) -> String {
+    let mut text = format!(
+        "{} task(s) from {} ledger file(s)\n",
         l.count,
         l.ledgers.len()
-    )
-    .map_err(Error::Transport)?;
+    );
     for t in &l.tasks {
-        writeln!(
-            out,
-            "  {:<24} {:<8} {:<12} {:>8}  {} refusal(s)  {} episode(s)  {}",
+        text.push_str(&format!(
+            "  {:<24} {:<8} {:<12} {:>8}  {} refusal(s)  {} episode(s)  {}\n",
             t.task_id,
             match t.state {
                 TaskEconomicsState::Finished => "finished",
@@ -454,18 +460,13 @@ fn tasks(a: EconomicsTasksArgs) -> Result<u8> {
             t.refusals,
             t.episodes.len(),
             t.issue.as_deref().unwrap_or("")
-        )
-        .map_err(Error::Transport)?;
+        ));
     }
     for u in &l.unread {
-        writeln!(out, "NOT READ {}: {}", u.checkout, u.reason).map_err(Error::Transport)?;
+        text.push_str(&format!("NOT READ {}: {}\n", u.checkout, u.reason));
     }
-    writeln!(
-        out,
-        "interventions, CI reruns, spend and acceptance are not observed yet; each record names its supplier"
-    )
-    .map_err(Error::Transport)?;
-    Ok(0)
+    text.push_str("interventions, CI reruns, spend and acceptance are not observed yet; each record names its supplier\n");
+    text
 }
 
 fn check(a: EconomicsCheckArgs) -> Result<u8> {

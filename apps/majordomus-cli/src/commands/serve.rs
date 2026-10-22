@@ -1357,6 +1357,43 @@ mod tests {
         );
     }
 
+    /// `serve` and `serve status` over a share that is not there: the layer does not load,
+    /// that is the answer, and the server elected on the way gives its lease back.
+    #[test]
+    fn a_layer_that_does_not_load_is_the_answer_of_serve_and_of_its_status() {
+        use clap::Parser;
+        let (_dir, root) = layer_only();
+        let missing = root.join("no-share-here");
+        let parsed = |tail: &[&str]| {
+            let mut argv = vec![
+                "majordomus",
+                "serve",
+                "--repo",
+                root.to_str().unwrap(),
+                "--share",
+                missing.to_str().unwrap(),
+            ];
+            argv.extend_from_slice(tail);
+            let cli = crate::cli::Cli::try_parse_from(argv).unwrap();
+            let crate::cli::Command::Serve(args) = cli.command else {
+                panic!("not the serve command")
+            };
+            args
+        };
+        for tail in [&[][..], &["status"][..]] {
+            let err = run(parsed(tail)).expect_err("a share that is not there loads no layer");
+            assert!(
+                matches!(err, Error::ShareNotFound { .. }),
+                "{tail:?}: {err:?}"
+            );
+        }
+        let repo = Repository::discover(&root).unwrap();
+        assert!(
+            !lease::lease_path(&repo).exists(),
+            "the lease of a server whose layer never loaded is released"
+        );
+    }
+
     #[test]
     fn a_relative_share_reaches_the_started_server_absolute() {
         let repo = RepoArgs {

@@ -81,6 +81,7 @@ pub fn module() -> ModuleDescriptor {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::synthetic::SyntheticRepository;
 
     /// The declaration is the only place these names exist; a refactor that dropped an
     /// exposure would still compile, and this is the assertion that would not.
@@ -101,5 +102,38 @@ mod tests {
         );
         assert_eq!(exposure.http.as_ref().unwrap().path, "/api/v1/layout/check");
         assert_eq!(exposure.cli.as_ref().unwrap().path, ["layout", "check"]);
+    }
+
+    /// A repository whose manifest is gone by the time the gate runs is an internal error
+    /// naming the re-read, never an answer about a tree nobody could read.
+    #[test]
+    fn a_repository_that_cannot_be_re_read_is_refused() {
+        let repo = SyntheticRepository::small().unwrap();
+        let ctx = repo.context().unwrap();
+        std::fs::remove_file(repo.root().join(".ai/manifest.yaml")).unwrap();
+
+        let err = check(&ctx, Empty {}).unwrap_err();
+        assert!(
+            matches!(&err, CapabilityError::Internal(m) if m.contains("could not be re-read")),
+            "{err:?}"
+        );
+    }
+
+    /// Kinds that do not parse — the distribution's or the repository's own — are an
+    /// internal error naming the kinds, never an answer judged without them.
+    #[test]
+    fn kinds_that_do_not_parse_are_refused() {
+        let repo = SyntheticRepository::small().unwrap();
+        let ctx = repo.context().unwrap();
+        let broken = "kinds: [unclosed\n";
+        std::fs::create_dir_all(repo.root().join("share")).unwrap();
+        std::fs::write(repo.root().join("share/kinds.yaml"), broken).unwrap();
+        std::fs::write(repo.root().join(".ai/repo/knowledge/kinds.yaml"), broken).unwrap();
+
+        let err = check(&ctx, Empty {}).unwrap_err();
+        assert!(
+            matches!(&err, CapabilityError::Internal(m) if m.contains("kinds could not be read")),
+            "{err:?}"
+        );
     }
 }

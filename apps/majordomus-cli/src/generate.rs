@@ -3713,4 +3713,157 @@ mod tests {
             other => panic!("{other:?}"),
         }
     }
+
+    /// A synthetic repository that publishes its rules as entity pages, with the arguments
+    /// an app is loaded from.
+    fn publishing_rules() -> (crate::synthetic::SyntheticRepository, crate::cli::RepoArgs) {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let declaration = repo.root().join(crate::entity::PUBLICATION);
+        std::fs::create_dir_all(declaration.parent().unwrap()).unwrap();
+        std::fs::write(
+            &declaration,
+            "[[kinds]]\nkind = \"rule\"\nprojection = \"entity\"\nroute = \"/rules/\"\n",
+        )
+        .unwrap();
+        let args = crate::cli::RepoArgs {
+            repo: Some(repo.root().to_path_buf()),
+            share: Some(crate::synthetic::crate_share()),
+            discovery: crate::cli::DiscoveryMode::Filesystem,
+            ..Default::default()
+        };
+        (repo, args)
+    }
+
+    /// The entities target alone plans the entity projection and not the graph it is read
+    /// from; a repository that declares no publication plans nothing for it.
+    #[test]
+    fn the_entities_target_plans_the_projection_and_not_the_graph() {
+        let (repo, args) = publishing_rules();
+        let app = crate::app::App::load(&args).unwrap();
+        let planned = plan(&app, &[Target::Entities]).unwrap();
+        let paths: Vec<&str> = planned.iter().map(|a| a.path.as_str()).collect();
+        assert!(!paths.contains(&"docs/generated/graph.json"), "{paths:?}");
+        let entities = planned
+            .iter()
+            .find(|a| a.path == format!("{OUT_DIR}/entities.json"))
+            .expect("the entity projection is planned");
+        assert_eq!(entities.document, "entities");
+        assert_eq!(entities.format, ArtifactFormat::Json);
+        let doc: serde_json::Value = serde_json::from_str(&entities.content).unwrap();
+        assert_eq!(doc["kinds"][0]["kind"], "rule");
+        assert_eq!(doc["kinds"][0]["count"], repo.shape.rules);
+
+        // a declaration that names no kind refuses the target rather than plan an empty one
+        std::fs::write(repo.root().join(crate::entity::PUBLICATION), "# no kind\n").unwrap();
+        let app = crate::app::App::load(&args).unwrap();
+        assert!(plan(&app, &[Target::Entities]).is_err(), "a declaration of no kind");
+
+        std::fs::remove_file(repo.root().join(crate::entity::PUBLICATION)).unwrap();
+        let app = crate::app::App::load(&args).unwrap();
+        let planned = plan(&app, &[Target::Entities]).unwrap();
+        assert!(
+            planned.iter().all(|a| a.document != "entities"),
+            "no declaration, no projection"
+        );
+    }
+
+    /// A rule that depends on a rule nobody declared refuses the entities target as it
+    /// refuses the graph: the projection is read off a graph short of that edge.
+    #[test]
+    fn an_unresolved_relation_refuses_the_entities_target() {
+        let (repo, args) = publishing_rules();
+        let rule = repo.root().join(".ai/repo/rules/project/rule-0.v1.md");
+        let text = std::fs::read_to_string(&rule).unwrap();
+        std::fs::write(
+            &rule,
+            text.replace("depends_on: []", "depends_on: [project.imaginary]"),
+        )
+        .unwrap();
+        let app = crate::app::App::load(&args).unwrap();
+        match plan(&app, &[Target::Entities]) {
+            Err(Error::UnresolvedRelation { findings }) => {
+                assert!(
+                    findings.iter().any(|f| f.contains("project.imaginary")),
+                    "{findings:?}"
+                );
+            }
+            other => panic!("{other:?}"),
+        }
+    }
+
+    /// The entity projection is absent without a declaration, refused over a graph that is
+    /// not JSON, a declaration of no kind or a machine path, and otherwise stamped after
+    /// its `source` with the header and the generator.
+    #[test]
+    fn the_entity_projection_is_stamped_after_its_source_or_refused() {
+        let root = tempfile::tempdir().unwrap();
+        // built with json! rather than a raw string: scripts/rust-coverage finds the end of a
+        // test module by its braces, and braces in a multi-line raw string misled it
+        let graph = serde_json::json!({"graph": {"nodes": [
+            {"id": "adr:0001", "kind": "adr", "label": "adr-0001", "status": "accepted",
+             "route": "/cockpit/objects/adr/adr-0001", "source": ".ai/repo/adrs/0001.md"}
+        ], "edges": []}})
+        .to_string();
+        let graph = graph.as_str();
+        assert_eq!(
+            entities_document(root.path(), graph, "9.9.9").unwrap(),
+            None
+        );
+
+        let declaration = root.path().join(crate::entity::PUBLICATION);
+        std::fs::create_dir_all(declaration.parent().unwrap()).unwrap();
+        std::fs::write(&declaration, "# no kind yet\n").unwrap();
+        let Err(Error::Protocol { reason }) = entities_document(root.path(), graph, "9.9.9") else {
+            panic!("a declaration of no kind was projected");
+        };
+        assert!(reason.contains("declares no kind"), "{reason}");
+
+        std::fs::write(
+            &declaration,
+            "[[kinds]]\nkind = \"adr\"\nprojection = \"entity\"\nroute = \"/adrs/\"\n",
+        )
+        .unwrap();
+        let Err(Error::Protocol { reason }) = entities_document(root.path(), "{", "9.9.9") else {
+            panic!("a graph that is not JSON was projected");
+        };
+        assert!(reason.contains("does not parse as JSON"), "{reason}");
+
+        let rendered = entities_document(root.path(), graph, "9.9.9")
+            .unwrap()
+            .expect("a declaration projects");
+        assert!(rendered.ends_with("}\n"), "rendered as jq prints it");
+        let doc: serde_json::Value = serde_json::from_str(&rendered).unwrap();
+        let keys: Vec<&str> = doc
+            .as_object()
+            .unwrap()
+            .keys()
+            .map(String::as_str)
+            .collect();
+        assert_eq!(
+            keys,
+            [
+                "schema",
+                "source",
+                "generated",
+                "generator",
+                "kinds",
+                "catalogue",
+                "entities"
+            ],
+            "the provenance follows the source"
+        );
+        assert_eq!(doc["generator"], "majordomus-cli 9.9.9");
+        assert!(doc["generated"]
+            .as_str()
+            .is_some_and(|g| g.contains(crate::entity::PUBLICATION)));
+
+        let leak = graph.replace(
+            ".ai/repo/adrs/0001.md",
+            &format!("{}someone/0001.md", "/Users/"),
+        );
+        let Err(Error::Http { reason }) = entities_document(root.path(), &leak, "9.9.9") else {
+            panic!("a machine path was projected");
+        };
+        assert!(reason.contains("/Users/"), "{reason}");
+    }
 }

@@ -815,4 +815,68 @@ mod tests {
         assert!(claimed(&json!({"title": "x"})).is_empty());
         assert!(claimed(&Value::Null).is_empty());
     }
+
+    /// A file whose last change lies past a shallow clone's boundary has no history, and the
+    /// reason says the clone is shallow rather than that no commit has touched the file.
+    #[test]
+    fn a_history_cut_by_a_shallow_clone_says_the_clone_is_shallow() {
+        let full = tempfile::tempdir().unwrap();
+        let git = |dir: &std::path::Path, args: &[&str]| {
+            let out = std::process::Command::new("git")
+                .arg("-C")
+                .arg(dir)
+                .args(args)
+                .output();
+            assert!(out.unwrap().status.success(), "git {args:?}");
+        };
+        git(full.path(), &["init", "-q"]);
+        git(full.path(), &["config", "user.email", "t@example.com"]);
+        git(full.path(), &["config", "user.name", "t"]);
+        for name in ["a.md", "b.md"] {
+            std::fs::write(full.path().join(name), name).unwrap();
+            git(full.path(), &["add", name]);
+            git(full.path(), &["commit", "-qm", &format!("add {name}")]);
+        }
+        let parent = tempfile::tempdir().unwrap();
+        let shallow = parent.path().join("shallow");
+        let source = format!("file://{}", full.path().display());
+        let clone = [
+            "clone",
+            "-q",
+            "--depth",
+            "1",
+            source.as_str(),
+            shallow.to_str().unwrap(),
+        ];
+        git(parent.path(), &clone);
+        let o = Object {
+            kind: "document".into(),
+            identity: "a.md".into(),
+            uri: "majordomus://document/a.md".into(),
+            title: None,
+            description: None,
+            metadata: Value::Null,
+            body: String::new(),
+            content: String::new(),
+            media_type: "text/markdown",
+            provenance: crate::model::Provenance {
+                path: "a.md".into(),
+                directory: ".".into(),
+                source_class: "document".into(),
+                section: None,
+                bytes: 0,
+                member: None,
+            },
+        };
+
+        let h = history(&shallow, &o);
+        assert!(!h.applicable);
+        assert!(h.commits.is_empty() && h.last.is_none(), "{h:?}");
+        assert_eq!(h.bound, HISTORY_BOUND);
+        assert!(
+            h.reason.as_deref().is_some_and(|r| r.contains("shallow")),
+            "{h:?}"
+        );
+        assert!(history(full.path(), &o).applicable, "the full clone has it");
+    }
 }

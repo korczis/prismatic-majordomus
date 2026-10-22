@@ -112,11 +112,17 @@ pub fn enrol(text: &str, key: &str, label: &str) -> Result<Option<String>, Strin
 
     let mut after = lines.join("\n");
     after.push('\n');
-    let parsed = parse(&after)?;
+    verified(after, key).map(Some)
+}
+
+/// `edited`, when it parses back as a declaration that lists `key`; otherwise why it does
+/// not, and nothing is written (ADR 0221: an edit that would not read back is refused).
+fn verified(edited: String, key: &str) -> Result<String, String> {
+    let parsed = parse(&edited)?;
     if !parsed.trust.allow.iter().any(|k| k == key) {
         return Err("the edited declaration does not list the key; nothing was changed".into());
     }
-    Ok(Some(after))
+    Ok(edited)
 }
 
 fn parse(text: &str) -> Result<MeshConfig, String> {
@@ -185,5 +191,32 @@ mod tests {
     fn a_bad_key_or_an_unreadable_declaration_is_refused() {
         assert!(enrol(HEAD, "not-a-key", "x").is_err());
         assert!(enrol("schema: mesh/v1\nkind: other\n", KEY, "x").is_err());
+    }
+
+    /// A document that parses but declares another kind or another schema version is not
+    /// a mesh declaration: refused with both named, and nothing is edited.
+    #[test]
+    fn a_document_of_another_kind_or_version_is_refused_naming_both() {
+        let other_kind = HEAD.replace("kind: mesh-declaration", "kind: other");
+        let why = enrol(&other_kind, KEY, "x").unwrap_err();
+        assert_eq!(why, "not a mesh declaration: schema mesh/v1, kind other");
+        let other_version = HEAD.replace("schema: mesh/v1", "schema: mesh/v2");
+        let why = enrol(&other_version, KEY, "x").unwrap_err();
+        assert!(why.contains("schema mesh/v2"), "{why}");
+    }
+
+    /// An edit is written only when it reads back as a declaration listing the key: one that
+    /// does not parse, or that lost the key, is refused.
+    #[test]
+    fn an_edit_that_does_not_read_back_with_the_key_is_refused() {
+        let key = "ab".repeat(32);
+        let listing = format!(
+            "schema: mesh/v1\nkind: mesh-declaration\nid: m\nenabled: true\ntrust:\n  policy: deny_unknown\n  allow:\n    - {key}\n"
+        );
+        assert_eq!(verified(listing.clone(), &key), Ok(listing));
+        assert!(verified("schema: [broken\n".into(), &key).is_err());
+        let without = "schema: mesh/v1\nkind: mesh-declaration\nid: m\nenabled: true\ntrust:\n  policy: deny_unknown\n  allow: []\n";
+        let refused = verified(without.into(), &key).unwrap_err();
+        assert!(refused.contains("does not list the key"), "{refused}");
     }
 }

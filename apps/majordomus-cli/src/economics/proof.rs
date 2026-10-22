@@ -847,9 +847,7 @@ fn validate(root: &Path, map: &Map<String, Value>) -> Result<ProofPlan, Vec<Econ
                 ),
             ));
             // the test's own fields are still judged, without the protocol that cannot be read
-            if let Some(test) = raw.as_object_mut() {
-                test.remove("protocol");
-            }
+            let _ = raw.as_object_mut().map(|test| test.remove("protocol"));
         }
         match serde_json::from_value::<ProofTest>(raw.clone()) {
             Ok(test) => {
@@ -1063,5 +1061,115 @@ fn check_test(
                 refuse("window_invalid", problems.join("; "));
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    /// A protocol that is not a mapping has no `registered_digest` to leave out, so it
+    /// digests exactly as written.
+    #[test]
+    fn a_protocol_that_is_not_a_mapping_digests_as_written() {
+        for value in [json!(null), json!([1, 2]), json!("registered_digest")] {
+            assert_eq!(protocol_digest(&value), digest(&value), "{value}");
+        }
+    }
+
+    /// Only a record that counts counts, and it alone has no reason; every other verdict
+    /// names what stopped it in words a person reads.
+    #[test]
+    fn only_a_counting_record_counts_and_every_other_says_why() {
+        assert!(ProofCount::Counts.counts());
+        assert_eq!(ProofCount::Counts.reason(), None);
+        let refused = [
+            (ProofCount::NoProtocol, "no registered protocol"),
+            (
+                ProofCount::OtherProtocol {
+                    carried: "sha256:a".into(),
+                    registered: "sha256:b".into(),
+                },
+                "recorded under protocol sha256:a, and the test registers sha256:b",
+            ),
+            (
+                ProofCount::BeforeRegistration {
+                    recorded_at: "2026-10-19T00:00:00Z".into(),
+                    registered_at: "2026-10-20T00:00:00Z".into(),
+                },
+                "not after 2026-10-20T00:00:00Z",
+            ),
+            (
+                ProofCount::UnreadableTime {
+                    time: "soon".into(),
+                },
+                "\"soon\" is not a time",
+            ),
+        ];
+        for (count, words) in refused {
+            assert!(!count.counts(), "{count:?}");
+            let reason = count.reason().unwrap();
+            assert!(reason.contains(words), "{reason}");
+        }
+    }
+
+    /// A long magic with no closing parenthesis is no magic: the whole pathspec is the
+    /// pattern, and it neither excludes nor narrows.
+    #[test]
+    fn an_unclosed_long_magic_is_read_as_a_plain_pattern() {
+        let p = Pathspec::parse(":(exclude.ai");
+        assert_eq!(p.pattern, ":(exclude.ai");
+        assert!(!p.exclude && !p.literal && !p.icase);
+        assert!(!p.selects_plan(true), "it names no path above the plan");
+    }
+
+    /// `**/` also matches no directory, a class matches single bytes and may be negated, and
+    /// a `[` that opens no class is a literal byte.
+    #[test]
+    fn wildmatch_reads_double_stars_classes_and_literal_brackets() {
+        let plan = PLAN.as_bytes();
+        assert!(wildmatch(b"**/.ai/repo/benchmarks/proof-plan.yaml", plan));
+        assert!(wildmatch(b".ai/repo/benchmarks/[op]roof-plan.yaml", plan));
+        assert!(!wildmatch(b".ai/repo/benchmarks/[xy]roof-plan.yaml", plan));
+        assert!(wildmatch(b".ai/repo/benchmarks/[!0-9]roof-plan.yaml", plan));
+        assert!(!wildmatch(
+            b".ai/repo/benchmarks/[^a-z]roof-plan.yaml",
+            plan
+        ));
+        assert!(wildmatch(b"a[b", b"a[b"), "an unclosed [ is itself");
+        assert!(!wildmatch(b"a[b", b"axb"));
+        assert!(wildmatch(b"[]x", b"[]x"), "an empty class is no class");
+    }
+
+    /// A suite that declares no freshness inputs is not judged against the plan; one whose
+    /// inputs select every file is.
+    #[test]
+    fn a_suite_without_freshness_inputs_does_not_reach_the_plan() {
+        let dir = tempfile::tempdir().unwrap();
+        let suites = dir.path().join(super::super::DIR).join("suites");
+        std::fs::create_dir_all(&suites).unwrap();
+        std::fs::write(
+            suites.join("plain.yaml"),
+            "schema: economics-suite/v1\nid: plain\n",
+        )
+        .unwrap();
+        std::fs::write(
+            suites.join("wide.yaml"),
+            "schema: economics-suite/v1\nid: wide\nfreshness_inputs:\n  - \".\"\n",
+        )
+        .unwrap();
+        let plan = dir.path().join(PLAN);
+        std::fs::write(&plan, "schema: proof-plan/v1\ntests: []\n").unwrap();
+        let reaching: Vec<String> = load(dir.path())
+            .unwrap_err()
+            .into_iter()
+            .filter(|f| f.kind == "plan_is_freshness_input")
+            .map(|f| f.path)
+            .collect();
+        assert_eq!(
+            reaching,
+            [format!("{}/suites/wide.yaml", super::super::DIR)]
+        );
     }
 }

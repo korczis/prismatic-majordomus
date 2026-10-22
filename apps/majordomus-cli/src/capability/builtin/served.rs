@@ -889,6 +889,108 @@ mod tests {
         );
     }
 
+    /// A committed layer that declares the deployment `hosted`, answering at `url`.
+    fn hosted_at(url: &str) -> crate::synthetic::SyntheticRepository {
+        use crate::deploy::slug::testing::{commit, init, object_yaml, write_object};
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        init(repo.root(), &[]);
+        let sources = repo.root().join(".ai/repo/knowledge/sources.yaml");
+        let mut text = std::fs::read_to_string(&sources).unwrap();
+        text.push_str(
+            "  - id: deployment\n    kind: deployment\n    discovery: vcs\n    \
+             pathspec: ':(glob).ai/repo/deployments/*.yaml'\n    required: false\n",
+        );
+        std::fs::write(&sources, text).unwrap();
+        let yaml = object_yaml("hosted", &["docs"], true)
+            .replace("https://hosted-app.gigalixirapp.com", url);
+        write_object(repo.root(), ".ai/repo/deployments/hosted.yaml", &yaml);
+        commit(repo.root(), "the layer");
+        repo
+    }
+
+    /// A loopback port nothing listens on: bound by the system's choice, then let go.
+    fn closed_port() -> u16 {
+        std::net::TcpListener::bind("127.0.0.1:0")
+            .unwrap()
+            .local_addr()
+            .unwrap()
+            .port()
+    }
+
+    /// I3822: a named deployment object is observed where it says it answers, at the route
+    /// that reports its commit, unless the caller names the address and the identity; with
+    /// no address from anywhere, the refusal names every place one could have come from.
+    #[test]
+    fn an_observation_is_addressed_by_its_object_unless_the_caller_names_it() {
+        let base = format!("https://127.0.0.1:{}", closed_port());
+        let repo = hosted_at(&base);
+        let ctx = repo.context().unwrap();
+        let input =
+            |url: Option<&str>, identity: Option<&str>, deployment: Option<&str>| ObserveInput {
+                deployment: deployment.map(str::to_string),
+                url: url.map(str::to_string),
+                identity: identity.map(str::to_string),
+                commit: None,
+                timeout_seconds: Some(1),
+                dry_run: true,
+            };
+
+        let by_object = observe(&ctx, input(None, None, Some("hosted"))).unwrap();
+        assert_eq!(by_object.observation.url, format!("{base}/api/v1/live"));
+        assert_eq!(by_object.observation.deployment, "hosted");
+        assert_eq!(
+            by_object.observation.judgement.verdict,
+            ServedVerdict::Unreachable
+        );
+        assert_eq!(by_object.recorded, None, "a dry run records nothing");
+
+        let elsewhere = format!("https://127.0.0.1:{}", closed_port());
+        let named = observe(
+            &ctx,
+            input(Some(&elsewhere), Some("build.json"), Some("hosted")),
+        )
+        .unwrap();
+        assert_eq!(named.observation.url, format!("{elsewhere}/build.json"));
+
+        match observe(&ctx, input(None, None, None)) {
+            Err(CapabilityError::InvalidInput(m)) => {
+                assert!(m.contains("no deployment object with a provider"), "{m}");
+                assert!(m.contains("site/config.toml names no base_url"), "{m}");
+            }
+            other => panic!("an observation with no address was made: {other:?}"),
+        }
+    }
+
+    /// I3822: the standing of a deployment the layer declares carries the status its newest
+    /// observation derives, and a name no object carries has none.
+    #[test]
+    fn a_declared_deployment_stands_at_the_status_its_observation_derives() {
+        use crate::deploy::Status;
+        let repo = hosted_at(&format!("https://127.0.0.1:{}", closed_port()));
+        let ctx = repo.context().unwrap();
+        let head = resolve(repo.root(), "HEAD").unwrap();
+        for name in ["hosted", "pages"] {
+            served::append(repo.root(), &record(name, &head, ServedVerdict::Served)).unwrap();
+        }
+        let s = show(
+            &ctx,
+            ShowInput {
+                commit: None,
+                deployment: None,
+            },
+        )
+        .unwrap();
+        let standing: Vec<_> = s
+            .deployments
+            .iter()
+            .map(|d| (d.deployment.as_str(), d.status))
+            .collect();
+        assert_eq!(
+            standing,
+            [("hosted", Some(Status::Active)), ("pages", None)]
+        );
+    }
+
     /// A process that cannot tell how it was built answers `dirty: null`; that proves no
     /// commit, and the reason says so rather than calling the value not a boolean.
     #[test]

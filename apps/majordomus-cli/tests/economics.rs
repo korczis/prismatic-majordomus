@@ -2171,3 +2171,132 @@ fn test_task_economics_reads_every_checkout() {
     assert!(list.unread[0].checkout.ends_with("third"));
     assert!(list.unread[0].reason.contains("no ledger"));
 }
+
+/// The text reading names each task with its state, outcome, wall time, refusals, episodes
+/// and issue, then every checkout it did not read and why (one with no ledger, one git marks
+/// prunable), then what nothing observes yet.
+#[test]
+fn test_task_economics_text_names_every_task_and_every_unread_checkout() {
+    use majordomus_cli::economics::tasks::{self, TaskEconomicsQuery};
+    let f = Fixture::new();
+    f.write(
+        ".ai/local/state/ledger.jsonl",
+        &ledger(&[
+            // each episode names its provider at its start, as every episode does since ADR 0075
+            ledger_line(
+                "2026-10-21T09:59:00Z",
+                "session.started",
+                "s-1",
+                "",
+                r#","provider":"claude-code""#,
+            ),
+            ledger_line(
+                "2026-10-21T11:59:00Z",
+                "session.started",
+                "s-2",
+                "",
+                r#","provider":"codex""#,
+            ),
+            ledger_line(
+                "2026-10-21T10:00:00Z",
+                "task.started",
+                "s-1",
+                "t-done",
+                r#","issue":"I3376""#,
+            ),
+            ledger_line(
+                "2026-10-21T11:00:00Z",
+                "task.finished",
+                "s-1",
+                "t-done",
+                r#","outcome":"completed""#,
+            ),
+            ledger_line("2026-10-21T12:00:00Z", "task.started", "s-2", "t-open", ""),
+        ]),
+    );
+    let empty = f.parent().join("repo-wt").join("empty");
+    let gone = f.parent().join("repo-wt").join("gone");
+    for (branch, path) in [("empty", &empty), ("gone", &gone)] {
+        f.git(&[
+            "worktree",
+            "add",
+            "-q",
+            "-b",
+            branch,
+            path.to_str().unwrap(),
+        ]);
+    }
+    std::fs::remove_dir_all(&gone).unwrap();
+
+    let list = tasks::tasks(&f.root(), &TaskEconomicsQuery::default());
+    let unread: Vec<(&str, &str)> = list
+        .unread
+        .iter()
+        .map(|u| (u.checkout.as_str(), u.reason.as_str()))
+        .collect();
+    assert_eq!(unread.len(), 2, "{unread:?}");
+    assert!(
+        unread
+            .iter()
+            .any(|(c, r)| c.ends_with("gone") && r.starts_with("git marks it prunable: ")),
+        "{unread:?}"
+    );
+    assert!(
+        unread
+            .iter()
+            .any(|(c, r)| c.ends_with("empty") && *r == "no ledger under .ai/local/state"),
+        "{unread:?}"
+    );
+
+    let (code, out, err) = run_in(&f.root(), &["economics", "tasks"], "");
+    assert_eq!(code, 0, "{err}");
+    let lines: Vec<String> = out
+        .lines()
+        .map(|l| l.split_whitespace().collect::<Vec<_>>().join(" "))
+        .collect();
+    assert_eq!(lines.len(), 6, "{out}");
+    assert_eq!(lines[0], "2 task(s) from 1 ledger file(s)");
+    assert_eq!(
+        lines[1],
+        "t-done finished completed 3600s 0 refusal(s) 1 episode(s) I3376"
+    );
+    assert_eq!(
+        lines[2], "t-open open active — 0 refusal(s) 1 episode(s)",
+        "an open task has no wall time and names no issue"
+    );
+    assert!(
+        lines[3..5].iter().all(|l| l.starts_with("NOT READ ")),
+        "{out}"
+    );
+    assert!(lines[3..5].iter().any(|l| l.contains("prunable")), "{out}");
+    assert!(lines[5].starts_with("interventions, CI reruns, spend and acceptance"));
+}
+
+/// The command fails rather than printing an empty reading: outside a repository it names
+/// the missing repository, and a standard output nobody reads is a transport failure, never
+/// a success with the answer lost.
+#[test]
+fn test_task_economics_command_fails_outside_a_repository_and_on_a_closed_output() {
+    let elsewhere = Fixture::plain_dir();
+    let (code, out, err) = run_in(&elsewhere.root(), &["economics", "tasks"], "");
+    assert_eq!(code, 12, "{err}");
+    assert!(out.is_empty(), "{out}");
+
+    let f = Fixture::new();
+    let (reader, writer) = std::io::pipe().unwrap();
+    drop(reader);
+    let status = common::majordomus()
+        .args(["economics", "tasks", "--format", "json"])
+        .current_dir(f.root())
+        .env("MAJORDOMUS_SHARE", common::dist_share())
+        .stdin(Stdio::null())
+        .stdout(writer)
+        .stderr(Stdio::null())
+        .status()
+        .unwrap();
+    assert_eq!(
+        status.code(),
+        Some(13),
+        "a broken pipe is a transport error"
+    );
+}

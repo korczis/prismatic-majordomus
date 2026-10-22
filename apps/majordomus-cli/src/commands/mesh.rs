@@ -1878,6 +1878,20 @@ mod tests {
         );
     }
 
+    /// A page of a walk by cursor ends with the cursor to pass back, written as the flag
+    /// that resumes the walk exactly after this page.
+    #[test]
+    fn a_cursor_page_ends_with_the_flag_that_resumes_the_walk() {
+        let text = render_events(&json!({
+            "active": true, "count": 0, "lamport": 3, "cursor": "00000000000000aa:7",
+            "events": [],
+        }));
+        assert!(
+            text.ends_with("events     0 (lamport 3)\nnext       --cursor 00000000000000aa:7"),
+            "{text}"
+        );
+    }
+
     #[test]
     fn an_event_of_a_kind_this_executable_does_not_know_is_shown_rather_than_dropped() {
         let text = render_events(&json!({

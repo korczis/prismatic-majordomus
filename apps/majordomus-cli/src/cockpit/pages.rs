@@ -8514,6 +8514,42 @@ mod tests {
         assert!(html.contains("mesh.peers"), "{html}");
         assert!(html.contains("did not answer"), "{html}");
     }
+
+    /// Where an entity changed: the page says why there is nothing to list where git cannot
+    /// answer, and says the list was cut, with the command that lists the rest, once more
+    /// commits changed the file than the bound lets through.
+    #[test]
+    fn the_history_card_says_why_it_is_empty_and_when_it_was_cut() {
+        use crate::deploy::slug::testing::{commit, init};
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let ctx = repo.context().unwrap();
+        let rule = ctx
+            .index
+            .objects
+            .iter()
+            .find(|o| o.provenance.path.ends_with("rule-0.v1.md"))
+            .expect("rule 0")
+            .clone();
+        let slug = crate::entity::slug(&rule.identity);
+        let page = entity(&ctx, &rule.kind, &slug);
+        assert_eq!(page.status, 200);
+        let html = page.main.render();
+        assert!(html.contains("git cannot answer for this file"), "{html}");
+
+        init(repo.root(), &[]);
+        let bound = crate::capability::builtin::entity::HISTORY_BOUND;
+        for i in 0..=bound {
+            repo.touch_rule(0, &format!("change {i}")).unwrap();
+            commit(repo.root(), &format!("change {i}"));
+        }
+        let ctx = repo.context().unwrap();
+        let html = entity(&ctx, &rule.kind, &slug).main.render();
+        let note = format!(
+            "The {bound} most recent commits; older ones changed it too: git log --follow -- {}",
+            rule.provenance.path
+        );
+        assert!(html.contains(&note), "{html}");
+    }
 }
 
 #[cfg(test)]

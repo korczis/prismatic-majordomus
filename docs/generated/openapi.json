@@ -62776,7 +62776,7 @@
           },
           "provider": {
             "type": "string",
-            "description": "The provider that ran the episode, when the ledger names it."
+            "description": "The provider that ran the episode, when the ledger names it. Left out of the answer\nwhen it does not, so it reads back as empty: without `default` the text form, which\nreads the capability's JSON, refused every episode whose provider is unknown."
           },
           "first_at": {
             "type": "string",
@@ -62795,7 +62795,6 @@
         },
         "required": [
           "session",
-          "provider",
           "first_at",
           "last_at",
           "lines"

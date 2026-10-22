@@ -575,4 +575,44 @@ mod tests {
         assert!(refused.to_string().contains("install `just`"), "{refused}");
         assert!(!root.join(".agents").exists(), "nothing is half-written");
     }
+
+    /// `generate entities` writes the entity projection and not the graph it is read from,
+    /// and a check right after it finds the projection in sync.
+    #[test]
+    fn generate_entities_writes_the_projection_alone() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let declaration = repo.root().join(crate::entity::PUBLICATION);
+        std::fs::create_dir_all(declaration.parent().unwrap()).unwrap();
+        std::fs::write(
+            &declaration,
+            "[[kinds]]\nkind = \"rule\"\nprojection = \"entity\"\nroute = \"/rules/\"\n",
+        )
+        .unwrap();
+        let out = tempfile::tempdir().unwrap();
+        let entities = |check: bool| {
+            super::run(crate::cli::GenerateArgs {
+                repo: crate::cli::RepoArgs {
+                    repo: Some(repo.root().to_path_buf()),
+                    discovery: crate::cli::DiscoveryMode::Filesystem,
+                    strict: false,
+                    share: Some(crate::synthetic::crate_share()),
+                },
+                target: crate::cli::GenerateTarget::Entities,
+                check,
+                out: Some(out.path().to_path_buf()),
+            })
+        };
+        assert_eq!(entities(false).unwrap(), 0);
+        let generated = out.path().join("docs/generated");
+        let doc: serde_json::Value = serde_json::from_str(
+            &std::fs::read_to_string(generated.join("entities.json")).unwrap(),
+        )
+        .unwrap();
+        assert_eq!(doc["kinds"][0]["kind"], "rule");
+        assert!(
+            !generated.join("graph.json").exists(),
+            "the graph is not a target"
+        );
+        assert_eq!(entities(true).unwrap(), 0, "what was written is in sync");
+    }
 }
