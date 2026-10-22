@@ -1858,12 +1858,12 @@ if mj_project_load; then
   # /map/ and /evidence/ already use rather than adding a third picture of a dependency graph.
   jq '{schema: 1,
        source: ".ai/repo/project/milestones/",
-       edge_kinds: {requires: "the target cannot begin until the source is accepted"},
+       edge_kinds: {unblocks: "the source unblocks the target: the target cannot begin until the source is accepted"},
        nodes: [.milestones[] | {id: .id, kind: "milestone",
                                 label: (if .released_in == "unreleased" then .id else .released_in + "  " + .id end),
                                 status: .status, route: ("/plan/" + (.id | ascii_downcase) + "/"),
                                 external: false, summary: .title}],
-       edges: [.milestones[] | . as $m | $m.depends_on[] | {source: ., target: $m.id, kind: "requires"}]}' \
+       edges: [.milestones[] | . as $m | $m.depends_on[] | {source: ., target: $m.id, kind: "unblocks"}]}' \
     "$OUT/roadmap.json" > "$OUT/roadmap-graph.json"
   [ -s "$OUT/roadmap.json" ] || { echo "generate-site-data: the roadmap projection produced nothing" >&2; exit 13; }
   # The gate the engine enforces: a milestone whose dependencies are not all DONE is BLOCKED,
