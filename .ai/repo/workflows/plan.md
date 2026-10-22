@@ -11,6 +11,7 @@ dependencies; there is no status field to set, and writing one is an unknown key
 | you begin it | `majordomus plan start <id>` — refused unless it is READY |
 | you have proof | `majordomus plan evidence <id> --covers <token> --type test --command "<cmd>" --result "<what it showed>"` |
 | it is finished | `majordomus plan done <id>` — refused while a required token is uncovered |
+| a pasted brief, report or prompt pack must become work | follow `majordomus://skill/decompose-a-brief` — keep it as a campaign, map it onto the plan, draft only what is new |
 
 Take something else only when it is a blocker, when it invalidates an assumption the
 milestone rests on, or when a person reprioritised. Not because it looked more useful.

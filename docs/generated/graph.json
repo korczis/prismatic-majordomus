@@ -72745,6 +72745,42 @@
         }
       },
       {
+        "id": "majordomus://skill/decompose-a-brief",
+        "kind": "skill",
+        "label": "decompose-a-brief",
+        "summary": "Decompose a pasted brief into the plan",
+        "route": "/cockpit/objects/skill/decompose-a-brief",
+        "source": ".ai/repo/skills/decompose-a-brief/SKILL.md",
+        "status": "active",
+        "facts": {
+          "inputs": [
+            "the pasted text, exactly as it was given, and the digest and byte length intents.propose answered for it when the paste arrived through that capability",
+            "a checkout on a branch of its own for the records, with a task open whose scope names the records and the projections it will write",
+            "the board and the mesh, read before any identity is taken"
+          ],
+          "outputs": [
+            "the paste kept as received as one campaign under campaigns/, cited by reference, or the reason it was not kept and what the person was asked",
+            "a mapping in which every requirement of the paste has exactly one disposition, with the record that carries it",
+            "new or extended intents, criteria, milestones and issues that cite the campaign, pass every plan and intent check, and carry a critique whose blocking findings are all resolved",
+            "the first wave offered on the mesh without its scope being claimed, a handover, and a report by verification state"
+          ],
+          "related": [
+            "implement",
+            "evolve",
+            "report-verification-state",
+            "repo-review"
+          ],
+          "tags": [
+            "planning",
+            "intent",
+            "campaign",
+            "reuse",
+            "critique",
+            "mesh"
+          ]
+        }
+      },
+      {
         "id": "majordomus://skill/deploy-site",
         "kind": "skill",
         "label": "deploy-site",
@@ -112503,6 +112539,31 @@
         "kind": "related_to"
       },
       {
+        "source": "majordomus://skill/decompose-a-brief",
+        "target": "kind:skill",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://skill/decompose-a-brief",
+        "target": "majordomus://skill/evolve",
+        "kind": "related_to"
+      },
+      {
+        "source": "majordomus://skill/decompose-a-brief",
+        "target": "majordomus://skill/implement",
+        "kind": "related_to"
+      },
+      {
+        "source": "majordomus://skill/decompose-a-brief",
+        "target": "majordomus://skill/repo-review",
+        "kind": "related_to"
+      },
+      {
+        "source": "majordomus://skill/decompose-a-brief",
+        "target": "majordomus://skill/report-verification-state",
+        "kind": "related_to"
+      },
+      {
         "source": "majordomus://skill/deploy-site",
         "target": "kind:skill",
         "kind": "is_a"
@@ -119334,8 +119395,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3470,
-      "edges": 7977,
+      "nodes": 3471,
+      "edges": 7982,
       "acyclic": false,
       "truncated": false
     }
