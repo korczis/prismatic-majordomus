@@ -3,8 +3,9 @@ schema: adr/v1
 id: adr-0172
 kind: adr
 title: A client always gets a server, and a session that is opened starts by joining the cluster
-status: proposed
-date: 2026-10-17
+status: superseded
+date: 2026-10-22
+superseded_by: adr-0222
 tags:
   - coordination
   - mesh

@@ -1,0 +1,30 @@
+id: ordinary-commands-never-build
+title: "No ordinary command builds: every entry path fails fast or answers through a release of the same generation"
+slug: ordinary-commands-never-build
+order: 182
+priority: p0
+problem: "On 2026-10-22 a pre-push sat forty minutes in one gate and timed out at ninety, queued behind the shared build lock with the tree's executable already built: nine gates run cargo run and ignore MAJORDOMUS_BIN, and at least seven other entry paths build implicitly or pass silently on a stale executable. ADR 0222 (accepted the same day, superseding ADR 0172) decides that only an explicit build builds."
+outcome: "Every entry path and every gate calls the tree's executable, a missing or stale one fails fast naming the explicit build or answers through a release whose generation matches, and no caller passes silently."
+current_state: "Measured on master 2034d4a3f0b: bin/majordomus-cli rebuilds a stale executable for every caller; nine gates in .ai/repo/ci/gates.yaml run cargo run; test/lib.sh runs a raw cargo build; the edit guard passes on exit 12; mj_rust_installed accepts a release on --version alone."
+desired_state: "A case counts zero cargo invocations across every path with the executable missing and stale, and a mismatched release is refused."
+scope:
+  - "bin/majordomus-cli"
+  - "bin/majordomus-mcp"
+  - "lib/rust_bin.sh"
+  - "test/lib.sh"
+  - ".ai/repo/ci/gates.yaml"
+  - ".claude/hooks/majordomus-edit-guard"
+  - "apps/majordomus-cli/src/command_graph/bridge.rs"
+non_scope:
+  - "Migrating lib/*.sh domain logic (intent repository-automation-is-typed)"
+acceptance_criteria:
+  - "Every criterion of intent every-capability-has-one-owner-and-the-cli-never-builds that names this milestone's issues has its proof in the tree"
+validation:
+  - "majordomus plan validate"
+  - "majordomus intent validate"
+evidence_required: []
+depends_on: []
+risks:
+  - "A client that relied on the hidden rebuild now sees exit 12: the message names the one command to run"
+created_at: 2026-10-22
+updated_at: 2026-10-22

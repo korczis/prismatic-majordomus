@@ -9,11 +9,12 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 160,
+      "count": 161,
       "dir": "adrs",
       "statuses": [
         "accepted",
-        "proposed"
+        "proposed",
+        "superseded"
       ]
     },
     {
@@ -37,7 +38,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 160
+      "count": 161
     },
     {
       "kind": "application",
@@ -93,7 +94,7 @@
       "route": null,
       "title": null,
       "reason": "A critique is the adversarial pass over one intent's plan, written by a worker, and work started under the intent without it or with a blocking finding open fails intent validation (ADR 0073). It is planning state of this repository; what the plan became is published on /plan/.",
-      "count": 31
+      "count": 32
     },
     {
       "kind": "deployment",
@@ -173,7 +174,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 893
+      "count": 894
     },
     {
       "kind": "knowledge",
@@ -197,7 +198,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 102
+      "count": 103
     },
     {
       "kind": "moment",
@@ -10116,7 +10117,7 @@
       "slug": "adr-0172",
       "cockpit": "/cockpit/objects/adr/adr-0172",
       "title": "A client always gets a server, and a session that is opened starts by joining the cluster",
-      "status": "proposed",
+      "status": "superseded",
       "tags": [
         "coordination",
         "mesh",
@@ -10189,7 +10190,22 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0222",
+          "kind": "adr",
+          "route": "/adrs/adr-0222/",
+          "external": false
+        },
+        {
+          "edge": "supersedes",
+          "label": "adr-0222",
+          "kind": "adr",
+          "route": "/adrs/adr-0222/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -14225,6 +14241,80 @@
         {
           "edge": "put_in_force",
           "label": "test/cases/491_the_mesh_is_on_here.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0222",
+      "identity": "adr-0222",
+      "slug": "adr-0222",
+      "cockpit": "/cockpit/objects/adr/adr-0222",
+      "title": "No ordinary command builds; a missing or stale executable fails fast or answers through a release of the same generation, and only an explicit build builds",
+      "status": "accepted",
+      "tags": [
+        "launcher",
+        "build",
+        "enforcement"
+      ],
+      "source": ".ai/repo/adrs/0222-no-ordinary-command-builds.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": ".ai/repo/ci/gates.yaml",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0172",
+          "kind": "adr",
+          "route": "/adrs/adr-0172/",
+          "external": false
+        },
+        {
+          "edge": "supersedes",
+          "label": "adr-0172",
+          "kind": "adr",
+          "route": "/adrs/adr-0172/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "bin/majordomus-cli",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "lib/rust_bin.sh",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "every-capability-has-one-owner-and-the-cli-never-builds",
+          "kind": "intent",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/3177_a_client_always_gets_a_server.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/3221_a_bare_session_start_joins_the_cluster.sh",
           "kind": "test",
           "route": null,
           "external": false

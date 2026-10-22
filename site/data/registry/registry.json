@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.6"
   },
   "registry": {
-    "fingerprint": "5e5143dcda5c51d62287e101911aa6779945be4f789e7196ea79d66f7d2bc7ca",
+    "fingerprint": "17793ba845461dcaff43424f0fa30c63ab43cca0c8455a487aa21eaa88f28ac4",
     "summary": {
-      "total": 3311,
+      "total": 3315,
       "builtin": 209,
-      "declarative": 3102,
+      "declarative": 3106,
       "by_kind": {
         "command": 32,
         "query": 177,
-        "resource": 3102
+        "resource": 3106
       },
       "by_stability": {
         "behaviorally_verified": 143,
         "experimental": 56,
-        "implemented": 3112
+        "implemented": 3116
       },
       "mcp_tools": 198,
-      "mcp_resources": 3157,
+      "mcp_resources": 3161,
       "http_routes": 203,
       "cli_commands": 113,
       "modules": 92,
@@ -85799,7 +85799,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 160,
+        "capabilities": 161,
         "capability_ids": []
       },
       {
@@ -85973,7 +85973,7 @@
         "title": "critique",
         "description": "Declarative objects of kind 'critique' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 31,
+        "capabilities": 32,
         "capability_ids": []
       },
       {
@@ -86423,7 +86423,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 893,
+        "capabilities": 894,
         "capability_ids": []
       },
       {
@@ -86540,7 +86540,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 102,
+        "capabilities": 103,
         "capability_ids": []
       },
       {
@@ -87091,7 +87091,7 @@
     ]
   },
   "index": {
-    "fingerprint": "ca2b8b854a846a0f3015053d692feca6b5123b8ce5dae5da0f8550b67a87a356",
+    "fingerprint": "efbdd3751b550f070ca53095c3ebbcc1e9610971c14f1d863eb839679b67b7df",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -87114,14 +87114,14 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 160,
+      "adr": 161,
       "application": 5,
       "area": 9,
       "audience": 8,
       "claim": 250,
       "command": 31,
       "context": 39,
-      "critique": 31,
+      "critique": 32,
       "deployment": 1,
       "derive-offload": 1,
       "distribution-model": 1,
@@ -87131,10 +87131,10 @@
       "gap": 4,
       "implementation": 52,
       "intent": 36,
-      "issue": 893,
+      "issue": 894,
       "knowledge": 58,
       "mesh-declaration": 1,
-      "milestone": 102,
+      "milestone": 103,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -89102,7 +89102,7 @@
         "path": ".ai/repo/adrs/0172-a-client-always-gets-a-server-and-a-session-starts-by-joining.md",
         "section": "adrs",
         "source_class": "adr",
-        "bytes": 7484,
+        "bytes": 7510,
         "tags": [
           "coordination",
           "mesh",
@@ -89743,6 +89743,22 @@
           "mesh-runtime",
           "deployment",
           "security"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0222",
+        "kind": "adr",
+        "identity": "adr-0222",
+        "title": "No ordinary command builds; a missing or stale executable fails fast or answers through a release of the same generation, and only an explicit build builds",
+        "description": "No ordinary command builds; a missing or stale executable fails fast or answers through a release of the same generation, and only an explicit build builds",
+        "path": ".ai/repo/adrs/0222-no-ordinary-command-builds.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 4001,
+        "tags": [
+          "launcher",
+          "build",
+          "enforcement"
         ]
       },
       {
@@ -93443,6 +93459,17 @@
         "bytes": 17265
       },
       {
+        "uri": "majordomus://critique/every-capability-has-one-owner-and-the-cli-never-builds",
+        "kind": "critique",
+        "identity": "every-capability-has-one-owner-and-the-cli-never-builds",
+        "title": "every-capability-has-one-owner-and-the-cli-never-builds",
+        "description": "2034d4a3f0b",
+        "path": ".ai/repo/project/critiques/every-capability-has-one-owner-and-the-cli-never-builds.yaml",
+        "section": "project",
+        "source_class": "critique",
+        "bytes": 8174
+      },
+      {
         "uri": "majordomus://critique/every-sessions-usage-is-observed",
         "kind": "critique",
         "identity": "every-sessions-usage-is-observed",
@@ -94383,7 +94410,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 771186
+        "bytes": 778653
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -97996,12 +98023,12 @@
         "uri": "majordomus://intent/every-capability-has-one-owner-and-the-cli-never-builds",
         "kind": "intent",
         "identity": "every-capability-has-one-owner-and-the-cli-never-builds",
-        "title": "Every capability has one canonical implementation owner, and no ordinary command does undeclared expensive work such as an implicit build",
-        "description": "The owner, 2026-10-22, pasting an architecture review (Why are we still not really the MJ Way?): the principles are ahead of their enforcement. The Rust control plane grows, but a large part of behaviour still lives in a second implementation: bin/majordomus is a Bash program loading lib/*.sh (session, finish, gates, rules, plan, handover, knowledge, derive, doctor, start among 48 entries), two programs share the name majordomus, bin/majordomus-cli may start cargo build when its executable is missing or stale, launchers differ in their fallback rules, and scripts/shell-coverage measures the shell half without gating it. Every capability must have one canonical implementation owner (Rust for types, I/O, processes, ledger, transports, storage, caching, security, CLI and runtime; Rhai for declarative orchestration, policy, recipes and hooks over typed capabilities; Python only as an optional isolated worker; shell only as thin, declared interoperability adapters), every other representation is typed, generated or a bounded adapter, every legacy implementation carries a measured migration obligation, and no synchronous initialization performs undeclared expensive work. The rule is enforced by executable fitness functions over one machine-readable inventory, not by another doctrine document. Migration goes in vertical slices (CLI entry, command dispatch, lifecycle, evidence, gates first), each with characterization tests, equal behaviour and exit codes, measurement, rollback and removal of the replaced code; no mass rewrite.",
+        "title": "No ordinary command does undeclared expensive work: no entry path builds implicitly, and every caller declares what a missing or stale executable means",
+        "description": "The owner, 2026-10-22, pasting an architecture review (Why are we still not really the MJ Way?): the principles are ahead of their enforcement. Its migration half (one owner per command path, the domain-shell ratchet, parity before deletion, Rhai orchestrating typed capabilities) is already intent repository-automation-is-typed, and this intent serves it rather than restating it. What is new here, measured by the critique of 2026-10-22: at least eight entry paths can start a cargo build or pass silently on a missing or stale executable (bin/majordomus handing words to bin/majordomus-cli, lib/plan.sh, every just recipe through the bridge, the git hooks, bin/majordomus-mcp, test/lib.sh with a raw cargo build outside the disk floor and lock, and the edit guard failing open), nine pre-push and CI gates in .ai/repo/ci/gates.yaml that run `cargo run --manifest-path apps/majordomus-cli/Cargo.toml` and ignore MAJORDOMUS_BIN (measured 2026-10-22: a pre-push's skills-verify step waited 40 minutes on the shared build lock with the tree's executable already built), and an installed-release fallback is accepted on a version string alone. Every ordinary command fails fast or answers through a fallback whose build generation matches the tree; only an explicit build builds; each caller class (hook gate, provider hook, mcp, entry, person) declares refuse, skip with a recorded line, or verified fallback, and none passes silently. Ownership of every command path is a generated projection joining the capability registry, the command graph and .ai/repo/automation/inventory.jsonl, never a second registry. Each migration slice records its measurement before and after.",
         "path": ".ai/repo/project/intents/every-capability-has-one-owner-and-the-cli-never-builds.yaml",
         "section": "project",
         "source_class": "intent",
-        "bytes": 2640
+        "bytes": 4552
       },
       {
         "uri": "majordomus://intent/every-card-unfolds-into-what-it-summarises",
@@ -104953,7 +104980,7 @@
         "path": ".ai/repo/project/issues/I3180.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1938
+        "bytes": 2373
       },
       {
         "uri": "majordomus://issue/I3181",
@@ -108047,6 +108074,17 @@
         "bytes": 2790
       },
       {
+        "uri": "majordomus://issue/I3957",
+        "kind": "issue",
+        "identity": "I3957",
+        "title": "No entry path or gate builds: the launcher, the gates, the test harness and the just bridge call the tree's executable and fail fast or use a release of the same generation",
+        "description": "Change bin/majordomus-cli so a missing or stale executable exits 12 naming the explicit build for every caller, or answers through the installed release only when its build generation matches the tree; make the nine cargo-run gates of .ai/repo/ci/gates.yaml, test/lib.sh and the just bridge call the tree's executable; make the edit guard and the pre-commit guard declare their outcome instead of passing silently.",
+        "path": ".ai/repo/project/issues/I3957.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2862
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -109688,6 +109726,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 2267
+      },
+      {
+        "uri": "majordomus://milestone/ordinary-commands-never-build",
+        "kind": "milestone",
+        "identity": "ordinary-commands-never-build",
+        "title": "No ordinary command builds: every entry path fails fast or answers through a release of the same generation",
+        "description": "Every entry path and every gate calls the tree's executable, a missing or stale one fails fast naming the explicit build or answers through a release whose generation matches, and no caller passes silently.",
+        "path": ".ai/repo/project/milestones/ordinary-commands-never-build.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 2038
       },
       {
         "uri": "majordomus://milestone/prismatic-lumen",
@@ -120808,7 +120857,7 @@
       "identity": [
         "id"
       ],
-      "objects": 160
+      "objects": 161
     },
     {
       "name": "application",
@@ -120878,7 +120927,7 @@
       "identity": [
         "intent"
       ],
-      "objects": 31
+      "objects": 32
     },
     {
       "name": "deployment",
@@ -120971,7 +121020,7 @@
       "identity": [
         "id"
       ],
-      "objects": 893
+      "objects": 894
     },
     {
       "name": "knowledge",
@@ -121001,7 +121050,7 @@
       "identity": [
         "id"
       ],
-      "objects": 102
+      "objects": 103
     },
     {
       "name": "moment",

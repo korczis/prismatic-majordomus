@@ -1,16 +1,32 @@
 id: every-capability-has-one-owner-and-the-cli-never-builds
-title: "Every capability has one canonical implementation owner, and no ordinary command does undeclared expensive work such as an implicit build"
-statement: "The owner, 2026-10-22, pasting an architecture review (Why are we still not really the MJ Way?): the principles are ahead of their enforcement. The Rust control plane grows, but a large part of behaviour still lives in a second implementation: bin/majordomus is a Bash program loading lib/*.sh (session, finish, gates, rules, plan, handover, knowledge, derive, doctor, start among 48 entries), two programs share the name majordomus, bin/majordomus-cli may start cargo build when its executable is missing or stale, launchers differ in their fallback rules, and scripts/shell-coverage measures the shell half without gating it. Every capability must have one canonical implementation owner (Rust for types, I/O, processes, ledger, transports, storage, caching, security, CLI and runtime; Rhai for declarative orchestration, policy, recipes and hooks over typed capabilities; Python only as an optional isolated worker; shell only as thin, declared interoperability adapters), every other representation is typed, generated or a bounded adapter, every legacy implementation carries a measured migration obligation, and no synchronous initialization performs undeclared expensive work. The rule is enforced by executable fitness functions over one machine-readable inventory, not by another doctrine document. Migration goes in vertical slices (CLI entry, command dispatch, lifecycle, evidence, gates first), each with characterization tests, equal behaviour and exit codes, measurement, rollback and removal of the replaced code; no mass rewrite."
+title: "No ordinary command does undeclared expensive work: no entry path builds implicitly, and every caller declares what a missing or stale executable means"
+statement: "The owner, 2026-10-22, pasting an architecture review (Why are we still not really the MJ Way?): the principles are ahead of their enforcement. Its migration half (one owner per command path, the domain-shell ratchet, parity before deletion, Rhai orchestrating typed capabilities) is already intent repository-automation-is-typed, and this intent serves it rather than restating it. What is new here, measured by the critique of 2026-10-22: at least eight entry paths can start a cargo build or pass silently on a missing or stale executable (bin/majordomus handing words to bin/majordomus-cli, lib/plan.sh, every just recipe through the bridge, the git hooks, bin/majordomus-mcp, test/lib.sh with a raw cargo build outside the disk floor and lock, and the edit guard failing open), nine pre-push and CI gates in .ai/repo/ci/gates.yaml that run `cargo run --manifest-path apps/majordomus-cli/Cargo.toml` and ignore MAJORDOMUS_BIN (measured 2026-10-22: a pre-push's skills-verify step waited 40 minutes on the shared build lock with the tree's executable already built), and an installed-release fallback is accepted on a version string alone. Every ordinary command fails fast or answers through a fallback whose build generation matches the tree; only an explicit build builds; each caller class (hook gate, provider hook, mcp, entry, person) declares refuse, skip with a recorded line, or verified fallback, and none passes silently. Ownership of every command path is a generated projection joining the capability registry, the command graph and .ai/repo/automation/inventory.jsonl, never a second registry. Each migration slice records its measurement before and after."
 invariants:
-  - "An ordinary command never starts a build: an explicit build or update is its own command, and a missing or stale executable fails fast or uses a verified compatible fallback"
-  - "One canonical command graph owns the public CLI identity, dispatch, help, completion and aliases"
-  - "No new shell domain logic; existing shell domain logic carries a measured migration obligation; thin adapters are declared"
-  - "The inventory of capabilities, owners, languages, consumers, dependencies, portability, budgets and migration state is generated once and every audit, gate, plan wave, Cockpit view and document derives from it"
+  - "An ordinary command never starts a build; an explicit build or update is its own command"
+  - "A fallback executable is used only when its build generation matches the tree (rule project.a-tool-that-cannot-match-the-tree-refuses); a version string is not a build"
+  - "No caller passes silently on a missing or stale executable"
+  - "Ownership is a projection of the existing registries (rule project.no-new-nouns, ADR 0069); only disposition, exemption and migration obligation stay hand-written"
+  - "The migration itself is intent repository-automation-is-typed: its criteria are served there, not restated here"
+  - "ADR 0222 (accepted 2026-10-22, superseding ADR 0172) is the decision this intent realises; I3180 is cancelled"
 non_goals:
   - "A blanket ban of .sh files"
   - "A mass rewrite of lib/*.sh in one change"
-  - "One latency budget for help and for serve, build or deploy"
-milestones: []
-satisfaction: []
+  - "One latency budget for help and for serve, build or deploy (a per-path --help budget is a later slice, ADR 0196)"
+  - "Python as a portable layer (ADR 0069) unless an amendment admits it"
+milestones:
+  - "ordinary-commands-never-build"
+satisfaction:
+  - id: no-ordinary-command-builds
+    criterion: "Every command path without a declared toolchain requirement, invoked with --help and with one read-only call through bin/majordomus, bin/majordomus-cli, bin/majordomus-mcp, the just bridge and each git hook, with the executable missing and then stale, calls cargo zero times and either exits 12 naming the explicit build or answers through a named, generation-verified fallback; test/lib.sh and every gate in .ai/repo/ci/gates.yaml are held to the same rule (planned proof: a case extending the stand-in-cargo fixtures of cases 3831 and 3177)"
+    evidence: command
+    ref: "majordomus intent explain every-capability-has-one-owner-and-the-cli-never-builds"
+  - id: fallback-is-generation-verified
+    criterion: "An installed release whose build generation differs from the tree is refused and one whose generation matches is used (planned proof: a case beside test/cases/33_stale_executable.sh)"
+    evidence: command
+    ref: "majordomus intent explain every-capability-has-one-owner-and-the-cli-never-builds"
+  - id: every-caller-declares-its-outcome
+    criterion: "Each caller class declares refuse, skip with a recorded line or verified fallback for a missing or stale executable, and a caller that would pass silently fails a gate (planned proof: a case driving the edit guard and the pre-commit guard with a stale executable)"
+    evidence: command
+    ref: "majordomus intent explain every-capability-has-one-owner-and-the-cli-never-builds"
 created_at: 2026-10-22
 updated_at: 2026-10-22

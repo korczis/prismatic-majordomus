@@ -8040,9 +8040,9 @@
         "summary": "A client always gets a server, and a session that is opened starts by joining the cluster",
         "route": "/cockpit/objects/adr/adr-0172",
         "source": ".ai/repo/adrs/0172-a-client-always-gets-a-server-and-a-session-starts-by-joining.md",
-        "status": "proposed",
+        "status": "superseded",
         "facts": {
-          "date": "2026-10-17",
+          "date": "2026-10-22",
           "related": [
             "file:.ai/repo/adrs/0161-a-mesh-node-follows-the-published-release.md",
             "file:.ai/repo/adrs/0043-entering-the-repository-brings-its-runtime-up.md",
@@ -8054,6 +8054,7 @@
             "test:test/cases/3177_a_client_always_gets_a_server.sh",
             "test:test/cases/3221_a_bare_session_start_joins_the_cluster.sh"
           ],
+          "superseded_by": "adr-0222",
           "tags": [
             "coordination",
             "mesh",
@@ -9280,6 +9281,35 @@
             "mesh-runtime",
             "deployment",
             "security"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0222",
+        "kind": "adr",
+        "label": "adr-0222",
+        "summary": "No ordinary command builds; a missing or stale executable fails fast or answers through a release of the same generation, and only an explicit build builds",
+        "route": "/cockpit/objects/adr/adr-0222",
+        "source": ".ai/repo/adrs/0222-no-ordinary-command-builds.md",
+        "status": "accepted",
+        "facts": {
+          "date": "2026-10-22",
+          "related": [
+            "file:.ai/repo/adrs/0172-a-client-always-gets-a-server-and-a-session-starts-by-joining.md",
+            "file:.ai/repo/project/intents/every-capability-has-one-owner-and-the-cli-never-builds.yaml",
+            "file:bin/majordomus-cli",
+            "file:lib/rust_bin.sh",
+            "file:.ai/repo/ci/gates.yaml",
+            "test:test/cases/3177_a_client_always_gets_a_server.sh",
+            "test:test/cases/3221_a_bare_session_start_joins_the_cluster.sh"
+          ],
+          "supersedes": [
+            "adr-0172"
+          ],
+          "tags": [
+            "launcher",
+            "build",
+            "enforcement"
           ]
         }
       },
@@ -16067,6 +16097,18 @@
         }
       },
       {
+        "id": "majordomus://critique/every-capability-has-one-owner-and-the-cli-never-builds",
+        "kind": "critique",
+        "label": "every-capability-has-one-owner-and-the-cli-never-builds",
+        "summary": "every-capability-has-one-owner-and-the-cli-never-builds",
+        "route": "/cockpit/objects/critique/every-capability-has-one-owner-and-the-cli-never-builds",
+        "source": ".ai/repo/project/critiques/every-capability-has-one-owner-and-the-cli-never-builds.yaml",
+        "facts": {
+          "intent": "every-capability-has-one-owner-and-the-cli-never-builds",
+          "reviewed_at": "2034d4a3f0b"
+        }
+      },
+      {
         "id": "majordomus://critique/every-sessions-usage-is-observed",
         "kind": "critique",
         "label": "every-sessions-usage-is-observed",
@@ -21919,18 +21961,28 @@
         "id": "majordomus://intent/every-capability-has-one-owner-and-the-cli-never-builds",
         "kind": "intent",
         "label": "every-capability-has-one-owner-and-the-cli-never-builds",
-        "summary": "Every capability has one canonical implementation owner, and no ordinary command does undeclared expensive work such as an implicit build",
+        "summary": "No ordinary command does undeclared expensive work: no entry path builds implicitly, and every caller declares what a missing or stale executable means",
         "route": "/cockpit/objects/intent/every-capability-has-one-owner-and-the-cli-never-builds",
         "source": ".ai/repo/project/intents/every-capability-has-one-owner-and-the-cli-never-builds.yaml",
         "facts": {
           "created_at": "2026-10-22",
-          "milestones": [],
+          "invariants": [
+            "An ordinary command never starts a build; an explicit build or update is its own command",
+            "A fallback executable is used only when its build generation matches the tree (rule project.a-tool-that-cannot-match-the-tree-refuses); a version string is not a build",
+            "No caller passes silently on a missing or stale executable",
+            "Ownership is a projection of the existing registries (rule project.no-new-nouns, ADR 0069); only disposition, exemption and migration obligation stay hand-written",
+            "The migration itself is intent repository-automation-is-typed: its criteria are served there, not restated here",
+            "ADR 0222 (accepted 2026-10-22, superseding ADR 0172) is the decision this intent realises; I3180 is cancelled"
+          ],
+          "milestones": [
+            "ordinary-commands-never-build"
+          ],
           "non_goals": [
             "A blanket ban of .sh files",
             "A mass rewrite of lib/*.sh in one change",
-            "One latency budget for help and for serve, build or deploy"
+            "One latency budget for help and for serve, build or deploy (a per-path --help budget is a later slice, ADR 0196)",
+            "Python as a portable layer (ADR 0069) unless an amendment admits it"
           ],
-          "satisfaction": [],
           "updated_at": "2026-10-22"
         }
       },
@@ -50911,6 +50963,7 @@
             "The shell returns in its banner budget while the build runs",
             "A build below the disk floor is refused and named"
           ],
+          "cancelled": true,
           "created_at": "2026-10-18",
           "depends_on": [
             "I3179"
@@ -63884,6 +63937,53 @@
         }
       },
       {
+        "id": "majordomus://issue/I3957",
+        "kind": "issue",
+        "label": "I3957",
+        "summary": "No entry path or gate builds: the launcher, the gates, the test harness and the just bridge call the tree's executable and fail fast or use a release of the same generation",
+        "route": "/cockpit/objects/issue/i3957",
+        "source": ".ai/repo/project/issues/I3957.yaml",
+        "facts": {
+          "created_at": "2026-10-22",
+          "current_state": "Measured on master 2034d4a3f0b: see milestone ordinary-commands-never-build.",
+          "depends_on": [],
+          "desired_state": "Zero cargo invocations from any ordinary path with the executable missing or stale; a mismatched release refused; no silent pass.",
+          "evidence_required": [
+            "zero_cargo_case"
+          ],
+          "milestone": "ordinary-commands-never-build",
+          "non_scope": [
+            "Migrating shell domain logic"
+          ],
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "bin/majordomus-cli",
+            "bin/majordomus-mcp",
+            "lib/rust_bin.sh",
+            "test/lib.sh",
+            ".ai/repo/ci/gates.yaml",
+            ".claude/hooks/majordomus-edit-guard",
+            ".githooks/",
+            "apps/majordomus-cli/src/command_graph/bridge.rs",
+            ".ai/repo/project/intents/every-capability-has-one-owner-and-the-cli-never-builds.yaml",
+            "test/cases/3958_no_entry_path_or_gate_builds.sh"
+          ],
+          "serves": [
+            "every-capability-has-one-owner-and-the-cli-never-builds#no-ordinary-command-builds",
+            "every-capability-has-one-owner-and-the-cli-never-builds#fallback-is-generation-verified",
+            "every-capability-has-one-owner-and-the-cli-never-builds#every-caller-declares-its-outcome"
+          ],
+          "slug": "no-entry-path-or-gate-builds",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=2 bash test/run.sh 3958_no_entry_path_or_gate_builds"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -68328,6 +68428,46 @@
           "updated_at": "2026-10-18",
           "validation": [
             "majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/ordinary-commands-never-build",
+        "kind": "milestone",
+        "label": "ordinary-commands-never-build",
+        "summary": "No ordinary command builds: every entry path fails fast or answers through a release of the same generation",
+        "route": "/cockpit/objects/milestone/ordinary-commands-never-build",
+        "source": ".ai/repo/project/milestones/ordinary-commands-never-build.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every criterion of intent every-capability-has-one-owner-and-the-cli-never-builds that names this milestone's issues has its proof in the tree"
+          ],
+          "created_at": "2026-10-22",
+          "depends_on": [],
+          "desired_state": "A case counts zero cargo invocations across every path with the executable missing and stale, and a mismatched release is refused.",
+          "evidence_required": [],
+          "non_scope": [
+            "Migrating lib/*.sh domain logic (intent repository-automation-is-typed)"
+          ],
+          "order": 182,
+          "priority": "p0",
+          "risks": [
+            "A client that relied on the hidden rebuild now sees exit 12: the message names the one command to run"
+          ],
+          "scope": [
+            "bin/majordomus-cli",
+            "bin/majordomus-mcp",
+            "lib/rust_bin.sh",
+            "test/lib.sh",
+            ".ai/repo/ci/gates.yaml",
+            ".claude/hooks/majordomus-edit-guard",
+            "apps/majordomus-cli/src/command_graph/bridge.rs"
+          ],
+          "slug": "ordinary-commands-never-build",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "majordomus plan validate",
+            "majordomus intent validate"
           ]
         }
       },
@@ -101661,6 +101801,51 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0222",
+        "target": "file:.ai/repo/ci/gates.yaml",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0222",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0222",
+        "target": "majordomus://adr/adr-0172",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0222",
+        "target": "majordomus://adr/adr-0172",
+        "kind": "supersedes"
+      },
+      {
+        "source": "majordomus://adr/adr-0222",
+        "target": "majordomus://implementation/bin/majordomus-cli",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0222",
+        "target": "majordomus://implementation/lib/rust_bin.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0222",
+        "target": "majordomus://intent/every-capability-has-one-owner-and-the-cli-never-builds",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0222",
+        "target": "majordomus://test/test/cases/3177_a_client_always_gets_a_server.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0222",
+        "target": "majordomus://test/test/cases/3221_a_bare_session_start_joins_the_cluster.sh",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://application/ci-gated-project",
         "target": "kind:application",
         "kind": "is_a"
@@ -107432,6 +107617,11 @@
       },
       {
         "source": "majordomus://critique/entry-proves-what-it-handed",
+        "target": "kind:critique",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://critique/every-capability-has-one-owner-and-the-cli-never-builds",
         "target": "kind:critique",
         "kind": "is_a"
       },
@@ -122916,6 +123106,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3957",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3957",
+        "target": "majordomus://milestone/ordinary-commands-never-build",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -123709,6 +123909,11 @@
         "source": "majordomus://milestone/operation-convergence",
         "target": "majordomus://milestone/cost-per-accepted-outcome",
         "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://milestone/ordinary-commands-never-build",
+        "target": "kind:milestone",
+        "kind": "is_a"
       },
       {
         "source": "majordomus://milestone/prismatic-lumen",
@@ -134152,8 +134357,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3765,
-      "edges": 8707,
+      "nodes": 3769,
+      "edges": 8720,
       "acyclic": false,
       "truncated": false
     }

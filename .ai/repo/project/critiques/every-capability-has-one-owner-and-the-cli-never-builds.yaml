@@ -1,0 +1,97 @@
+intent: every-capability-has-one-owner-and-the-cli-never-builds
+reviewed_at: 2034d4a3f0b
+reviewed_by: "claude-code Plan subagent (read-only, fresh context, opus) dispatched by session 877e4b89 over the proposed intent on branch feature/the-mesh-cache-serves-every-build, read against master 2034d4a3f0b; resolved by the author the same day. Read only: nothing was run. Disposition: 7 of 11 findings are blocking; the owner settled ADR 0172 (superseded by ADR 0222) and I3180 (cancelled) the same day, so every blocking finding this intent owns is planned against I3957; the two owned by intent repository-automation-is-typed (its ratchet I3155 and its one-owner derivation I3156) stay open here with that reason, and the non-blocking ones stay open with theirs."
+findings:
+  - id: build-paths-are-understated
+    class: missed_requirement
+    subject: "every-capability-has-one-owner-and-the-cli-never-builds"
+    finding: "The statement named one entry point; at least seven reach a build or a silent no-build: bin/majordomus:293 and :280 hand words to bin/majordomus-cli; lib/plan.sh:71; every just recipe via command_graph/bridge.rs:208; git hooks rebuild a stale executable (bin/majordomus-cli:63-65); bin/majordomus-mcp rebuilds a stale one (:46-57, :81-110); test/lib.sh:171 runs a raw cargo build outside mj_cargo_bounded; .claude/hooks/majordomus-edit-guard:13 fails open on exit 12."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3957
+      because: "Accepted. The intent is rewritten around all seven paths (criterion no-ordinary-command-builds names each). It becomes planned with the first slice's issue once the owner settles ADR 0172 and I3180 (finding no-build-contradicts-records-in-force)."
+  - id: lib-figures-are-not-the-trees
+    class: unproven_assumption
+    subject: "every-capability-has-one-owner-and-the-cli-never-builds"
+    finding: "lib/ is 42 .sh and 6 .awk files; gates.sh and derive.sh are helpers, not commands; lib/*.sh is 25,605 lines today against 18,363 at c386b227af9 (ADR 0069), +39% under the inventory gate."
+    blocking: false
+    resolution:
+      state: open
+      because: "Accepted as the measured baseline; it belongs to the domain-shell ratchet of repository-automation-is-typed (I3155), which this intent now serves rather than restates."
+  - id: the-existing-ratchet-counts-records-not-logic
+    class: insufficient_work
+    subject: "every-capability-has-one-owner-and-the-cli-never-builds"
+    finding: "Gate shell-inventory refuses only undeclared units; lib/rust_bin.sh (class C, keep minimal) grew 934 lines and holds briefing renderers; lib/knowledge.sh grew 1637; I3155 counts class-A units and lines only and has not landed."
+    blocking: true
+    resolution:
+      state: open
+      because: "Accepted. The ratchet is I3155's (repository-automation-is-typed#domain-shell-ratchet); the finding is to be handed to I3155's owner as a widening (functions and lines per unit for A, B and C, a budget on C units) rather than a second ratchet here."
+  - id: duplicates-repository-automation-is-typed
+    class: unnecessary_work
+    subject: "every-capability-has-one-owner-and-the-cli-never-builds"
+    finding: "Most of the intent was already planned under repository-automation-is-typed (I3154-I3161, ADR 0069, ADR 0184) and the launcher work under I3831, I3839, I3180."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3957
+      because: "Accepted. The intent is narrowed to what is new (no implicit build on any entry path, a generation-verified fallback, declared caller outcomes, a help budget); its fifth invariant hands the migration to repository-automation-is-typed."
+  - id: an-inventory-is-a-second-registry
+    class: regression_risk
+    subject: "every-capability-has-one-owner-and-the-cli-never-builds"
+    finding: "One machine-readable inventory collides with project.no-new-nouns and ADR 0069:100-104; the registry, the command graph and automation/inventory.jsonl already hold the facts; Python as a layer is rejected by ADR 0069:115-116."
+    blocking: true
+    resolution:
+      state: open
+      because: "Accepted. The invariant now says ownership is a projection joining the three existing sources, and Python is a non-goal unless ADR 0069 is amended."
+  - id: no-build-contradicts-records-in-force
+    class: regression_risk
+    subject: "every-capability-has-one-owner-and-the-cli-never-builds"
+    finding: "ADR 0003:71-73 and ADR 0172:51-60 rebuild a stale executable and allow the installed-release fallback for mcp only; rule a-tool-that-cannot-match-the-tree-refuses keeps the derivation's own build; I3831's acceptance and its code disagree; I3180 plans a background build on entry against rules entry-converges v2 and envrc-is-an-adapter v2."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3957
+      because: "Settled by the owner on 2026-10-22: ADR 0172 is superseded by ADR 0222, I3180 is cancelled; I3957 implements it and amends cases 3177, 3221 and 3831 with ADR 0222's reason. ADR 0003's launcher sentence is read through ADR 0222."
+  - id: compatible-fallback-and-fail-fast-are-undefined
+    class: unproven_assumption
+    subject: "every-capability-has-one-owner-and-the-cli-never-builds"
+    finding: "mj_rust_installed (lib/rust_bin.sh:135-143) checks only location and --version; the only compatibility check is the build-generation guard (exit 15); the pre-commit guard blocks on exit 12 while the edit guard passes silently."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3957
+      because: "Accepted. Criteria fallback-is-generation-verified and every-caller-declares-its-outcome now carry it; they become planned with the first slice."
+  - id: no-provable-satisfaction-or-first-slice
+    class: delivery_verification
+    subject: "every-capability-has-one-owner-and-the-cli-never-builds"
+    finding: "The intent had no criteria and no milestone; seven provable criteria and a first vertical slice were proposed."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3957
+      because: "Accepted in part: the four criteria that are new here are written; the ownership, ratchet and parity criteria are served by repository-automation-is-typed. The first slice (no-ordinary-command-builds plus fallback-is-generation-verified over bin/majordomus-cli, lib/rust_bin.sh, test/lib.sh and the bridge) is planned once the owner decision is in."
+  - id: migration-order-is-unsafe-as-written
+    class: regression_risk
+    subject: "every-capability-has-one-owner-and-the-cli-never-builds"
+    finding: "bin/majordomus ships in every archive and should collapse last; lifecycle has no mutating Rust half yet; the safe order is launcher no-build, ownership derivation, evidence, gates, plan, lifecycle per capability, bin/majordomus last."
+    blocking: false
+    resolution:
+      state: open
+      because: "Accepted as the order to propose to repository-automation-is-typed's owner; this intent's own first slice is the launcher no-build, which the order puts first."
+  - id: the-graph-does-not-own-dispatch-by-design
+    class: unproven_assumption
+    subject: "every-capability-has-one-owner-and-the-cli-never-builds"
+    finding: "The command graph is composed from three declarations (rule commands-are-projections, ADRs 0020, 0027); ADR 0184 forbids generating bin/majordomus's dispatch; identity, completion and aliases already come from the graph."
+    blocking: false
+    resolution:
+      state: open
+      because: "Accepted: the invariant claiming one graph owns dispatch is dropped; dispatch converges as each path moves to Rust under repository-automation-is-typed."
+  - id: shell-coverage-cannot-be-a-global-gate
+    class: delivery_verification
+    subject: "every-capability-has-one-owner-and-the-cli-never-builds"
+    finding: "scripts/shell-coverage measures 7 files by default and its line denominator is an estimate; only function coverage is exact."
+    blocking: false
+    resolution:
+      state: open
+      because: "Accepted: per-slice function coverage of the replaced unit is the measure, to be proposed as I3159's characterization floor."
