@@ -1,0 +1,32 @@
+id: I4005
+milestone: a-session-proceeds-through-the-mesh
+title: "Proceed.step answers one idempotent work order"
+slug: proceed-step-is-one-idempotent-work-order
+priority: p1
+profile: implementation
+parallel_safe: false
+serves:
+  - a-session-proceeds-through-the-mesh#a-fresh-session-finds-the-right-work
+objective: "proceed.step derives one step from intent_realization and the claim-aware plan.next into a work order (do, fan_out, report, next_due_at); the /proceed skill is generated from its .skill() declaration. It builds on the pushed stack feature/proceed-names-the-next-admissible-work (I2972-I2976, I3040, ADR 0177) and writes no second body."
+why: "/proceed names work but does not claim it, fan it out, report it or schedule the next step, and a hand-written skill drifts from the capability."
+current_state: "Not built: this issue is planned by the milestone a-session-proceeds-through-the-mesh and nothing of it exists."
+desired_state: "The acceptance criteria below hold and case 4005 proves them."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin"
+  - "share/skills"
+  - "docs/PROCEED.md"
+  - "test/cases/4005_proceed_step_is_one_idempotent_work_order.sh"
+  - ".ai/repo/project/issues/I4005.yaml"
+depends_on:
+  - "I4003"
+acceptance_criteria:
+  - "Repeating the step at the same state answers the same work order"
+  - "An intent whose realisation is met answers done and schedules nothing (it-stops-when-the-intent-is-met)"
+  - "The /proceed skill of every provider is generated and a hand edit fails generate --check"
+  - "The stack I2972-I2976 and I3040 is extended, not duplicated"
+validation:
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4005_proceed_step_is_one_idempotent_work_order"
+evidence_required:
+  - "case_4005_proceed_step_is_one_idempotent_work_order"
+created_at: 2026-10-23
+updated_at: 2026-10-23
