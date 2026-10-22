@@ -54957,6 +54957,8 @@
         "route": "/cockpit/objects/issue/i3287",
         "source": ".ai/repo/project/issues/I3287.yaml",
         "facts": {
+          "completed_at": "2026-10-22T21:08:22Z",
+          "completed_event": "sha256:1c485bb9b07cd3104148936e8f8f97fbfb3b9d19dc131674dfe9dac3a3aaf2e5",
           "created_at": "2026-10-18",
           "current_state": "share/providers.yaml declares episode and prompts per provider; nothing about usage.",
           "desired_state": "claude-code: otel and stream-json; codex: app-server; gemini: otel; agents/bb: none — each with a citation verified at implementation; product validate refuses a key without evidence.",
@@ -54987,13 +54989,17 @@
             "every-sessions-usage-is-observed#claude-code-usage-recorded"
           ],
           "slug": "a-provider-declares-its-usage-seam",
-          "updated_at": "2026-10-22",
+          "started_at": "2026-10-22T21:07:48Z",
+          "started_event": "sha256:3fc0107f5996fa751036700bc5896db1fc3059c7977253e6de5b053321f6e184",
+          "updated_at": "2026-10-22T21:08:22Z",
           "validation": [
             "majordomus product validate",
             "majordomus generate --check",
             "bash test/run.sh 170_provider_lifecycle_declared",
             "majordomus plan validate"
-          ]
+          ],
+          "verified_at": "2026-10-22T21:08:02Z",
+          "verified_event": "sha256:0cfde906cac90cdcb80b06316f3552d2e85b253cd457a5b5ef0d07c8517f47d7"
         }
       },
       {
