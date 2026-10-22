@@ -374,7 +374,7 @@ fn next(
     input: NextInput,
 ) -> Result<release::landing::LandingDecision, CapabilityError> {
     let root = std::path::Path::new(&ctx.index.repository.root);
-    let repo = crate::repository::Repository::open(root).map_err(|e| {
+    let repo = ctx.repository().map_err(|e| {
         CapabilityError::NotFound(format!("the repository could not be opened: {e}"))
     })?;
     let policy = crate::policy::LoadedPolicy::load(&repo)

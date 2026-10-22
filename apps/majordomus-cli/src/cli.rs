@@ -113,6 +113,8 @@ pub enum Command {
     Entity(EntityArgs),
     /// The repository's shell automation against the tracked migration inventory: every shell unit declared with an exemption, and every exemption naming a unit the tree still has
     Shell(ShellArgs),
+    /// The boundary between the layer's tracked and local halves, checked against the layouts their contracts declare: every path a contract excludes, named with the contract
+    Layout(LayoutArgs),
     /// The tracked tree as token-bounded text shards for a language model's file search: plan what a profile carries and leaves out, build it under tmp/packs/, and verify a written pack against its manifest; never a binary, a worktree, a link or build output
     Pack(PackArgs),
     /// The Dashboard Suite: each page a projection of the capabilities that hold its facts, every card carrying its source capability, the JSON pointer its value was read from, the Cockpit page with the evidence and the command that acts on it
@@ -428,6 +430,41 @@ pub enum ShellCommand {
         #[arg(long)]
         canonical: bool,
     },
+}
+
+#[derive(Debug, Args)]
+/// `majordomus layout`. The output shape is global, so it reads the way a person writes it.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, LayoutArgs, LayoutCommand, OutputFormat};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "layout", "check", "--format", "json"]).unwrap();
+/// let Command::Layout(args) = cli.command else { panic!("not the layout command") };
+/// let args: LayoutArgs = args;
+/// assert!(matches!(args.format, OutputFormat::Json));
+/// assert!(matches!(args.command, LayoutCommand::Check));
+/// ```
+pub struct LayoutArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `check`. Required: the group runs nothing of its own.
+    pub command: LayoutCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus layout`: `check` judges both halves of the layer against
+/// the layouts their contracts declare (I2871).
+pub enum LayoutCommand {
+    /// Refuse every path a declared layout excludes, naming the contract; exit 10 on a finding, 12 when the halves cannot be read
+    Check,
 }
 
 #[derive(Debug, Args)]
@@ -5467,6 +5504,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["shell", "check", "--format", "json"],
             setup: &[],
             expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "layout check",
+        examples: &[ExampleDoc {
+            id: "layout-check-json",
+            title: "Both halves of the layer against their declared layouts",
+            description: "How many paths were judged and every path a declared layout excludes, each named with the contract it violates, as `/checked`, `/findings` and `/passes`. The exit code is the verdict: 0 when the boundary holds, 10 on a finding, and 12 when the halves could not be read, which is not a pass. Only what a contract declares is judged, so a repository whose contracts declare no layout passes with nothing found.",
+            argv: &["layout", "check", "--format", "json"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["\"checked\"", "\"findings\"", "\"passes\""]),
         }],
     },
     CommandExamples {
