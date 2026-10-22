@@ -46,7 +46,7 @@ scan() {
     git ls-files -z -- bin lib scripts share test .github .githooks .claude .just apps justfile \
         site/static/install.sh \
       | tr '\0' '\n' \
-      | grep -vE '\.(md|md\.in|json|svg|png|jpg|ico|lock)$' \
+      | grep -vE '\.(md|md\.in|json|svg|png|jpg|ico|lock|wasm)$' \
       | while IFS= read -r f; do [ -f "$f" ] && printf '%s\0' "$f"; done \
       | xargs -0 awk -v p="$P" -v s="$S" -v exempt="$EXEMPT" '
           BEGIN {
