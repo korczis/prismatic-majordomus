@@ -10,7 +10,7 @@
 //! derivation cannot be inspected.
 
 use std::io::Write;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use serde_json::{json, Value};
 
@@ -143,7 +143,240 @@ pub fn run(args: EvidenceArgs) -> Result<u8> {
             let v = execute(ctx, &["evidence", "stamp"], input)?;
             write_stamp(&mut out, &v, file.as_deref(), args.format).map(|()| 0)
         }
+
+        EvidenceCommand::Subject {
+            key,
+            presented,
+            presented_tree,
+        } => {
+            // an absent revision or tree is the null an optional input reads as absent
+            let input = json!({
+                "subject": key,
+                "presented": presented,
+                "presented_tree": presented_tree,
+            });
+            let v = execute(ctx, &["evidence", "subject"], input)?;
+            answer(&mut out, &v, args.format, subject_text).map(|()| 0)
+        }
+
+        EvidenceCommand::Coverage {
+            from,
+            presented_tree,
+        } => {
+            // a path a person types is read from where they typed it; the capability reads
+            // a relative one against the repository, so it is handed over absolute
+            let from = from.map(|p| std::path::absolute(&p).unwrap_or(p));
+            let input = json!({
+                "from": from.map(|p| p.to_string_lossy().into_owned()),
+                "presented_tree": presented_tree,
+            });
+            let v = execute(ctx, &["evidence", "coverage"], input)?;
+            answer(&mut out, &v, args.format, coverage_text).map(|()| 0)
+        }
+
+        EvidenceCommand::Publish {
+            presented,
+            presented_tree,
+            from,
+            run,
+            out: dir,
+        } => {
+            // paths a person types are read from where they typed them; the capability reads
+            // a relative one against the repository, so each is handed over absolute
+            let absolute = |p: PathBuf| std::path::absolute(&p).unwrap_or(p);
+            let input = json!({
+                "presented": presented,
+                "presented_tree": presented_tree,
+                "from": from.map(absolute).map(|p| p.to_string_lossy().into_owned()),
+                "run": run,
+                "out": absolute(dir).to_string_lossy(),
+            });
+            let v = execute(ctx, &["evidence", "publish"], input)?;
+            answer(&mut out, &v, args.format, publish_text).map(|()| 0)
+        }
     }
+}
+
+/// An answer in the format asked: the document itself, or the text rendering of it.
+fn answer(
+    out: &mut impl Write,
+    v: &Value,
+    format: OutputFormat,
+    text: fn(&mut dyn Write, &Value) -> std::io::Result<()>,
+) -> Result<()> {
+    match format {
+        OutputFormat::Json => writeln!(out, "{}", pretty(v)),
+        OutputFormat::Text => text(out, v),
+    }
+    .map_err(Error::Transport)
+}
+
+/// One subject, one line per fact: what it is, what it was judged at, its verdict and the
+/// totals beside it, then each route, member, mechanism and finding. Rendered into one
+/// string and written once.
+fn subject_text(out: &mut dyn Write, v: &Value) -> std::io::Result<()> {
+    let s = |v: &Value| v.as_str().unwrap_or("?").to_string();
+    let mut lines = vec![format!(
+        "subject      {} ({})",
+        s(&v["subject"]),
+        s(&v["kind"])
+    )];
+    let p = &v["presented"];
+    lines.push(match p["revision"].as_str() {
+        Some("working_tree") => format!("judged at the working tree ({})", s(&p["tree"])),
+        _ => format!(
+            "judged at {} as committed ({})",
+            twelve(p["revision"].as_str().unwrap_or("?")),
+            s(&p["tree"])
+        ),
+    });
+    lines.push(format!("verdict      {}", s(&v["verdict"])));
+    lines.push(format!("             {}", s(&v["meaning"])));
+    let totals: Vec<String> = v["totals"]
+        .as_object()
+        .into_iter()
+        .flatten()
+        .map(|(state, n)| format!("{state} {n}"))
+        .collect();
+    lines.push(format!("totals       {}", totals.join(", ")));
+    for r in v["routes"].as_array().into_iter().flatten() {
+        let what = r["test"].as_str().or(r["path"].as_str()).unwrap_or("-");
+        lines.push(format!(
+            "route        {:<18} {:<10} {what}",
+            s(&r["state"]),
+            s(&r["via"])
+        ));
+        if let Some(d) = r["detail"].as_str() {
+            lines.push(format!("                                           {d}"));
+        }
+    }
+    for m in v["members"].as_array().into_iter().flatten() {
+        lines.push(format!(
+            "member       {:<18} {}",
+            s(&m["state"]),
+            s(&m["subject"])
+        ));
+    }
+    for m in v["mechanisms"].as_array().into_iter().flatten() {
+        lines.push(format!("mechanism    {}", s(m)));
+    }
+    for f in v["subject_findings"].as_array().into_iter().flatten() {
+        lines.push(format!(
+            "finding      {}: {}",
+            s(&f["code"]),
+            s(&f["message"])
+        ));
+    }
+    writeln!(out, "{}", lines.join("\n"))
+}
+
+/// The coverage records, one line each with its state and reason under it, after the line
+/// naming the checkout they were judged against and the source they were read from. Rendered
+/// into one string and written once.
+fn coverage_text(out: &mut dyn Write, v: &Value) -> std::io::Result<()> {
+    let s = |v: &Value| v.as_str().unwrap_or("?").to_string();
+    let p = &v["presented"];
+    let mut lines = vec![match p["commit"].as_str() {
+        Some(c) => format!("judged at {} ({})", twelve(c), s(&p["tree"])),
+        None => format!("judged at no commit: {}", s(&p["reason"])),
+    }];
+    lines.push(format!(
+        "source       {}{}",
+        s(&v["source"]),
+        if v["present"].as_bool().unwrap_or(false) {
+            ""
+        } else {
+            "  (not there: nothing has written a run record to it)"
+        }
+    ));
+    lines.push(format!(
+        "runs         {} read, {} with coverage",
+        v["runs"],
+        v["records"].as_array().map_or(0, Vec::len)
+    ));
+    for r in v["records"].as_array().into_iter().flatten() {
+        let c = &r["coverage"];
+        lines.push(format!(
+            "{:<12} {} at {} ({}) · lines {}% · {}",
+            s(&r["state"]),
+            s(&r["run"]),
+            twelve(c["commit"].as_str().unwrap_or("?")),
+            s(&c["working_tree"]),
+            c["crate"]["lines"]["percent"],
+            s(&r["file"])
+        ));
+        lines.push(format!("             {}", s(&r["reason"])));
+    }
+    for u in v["unread"].as_array().into_iter().flatten() {
+        lines.push(format!(
+            "unread       {} ({})",
+            s(&u["file"]),
+            s(&u["reason"])
+        ));
+    }
+    writeln!(out, "{}", lines.join("\n"))
+}
+
+/// A publication written: its state at the commit it presents, why, each record read with
+/// where it stands and what it capped, the claims' totals, and the file. Rendered into one
+/// string and written once.
+fn publish_text(out: &mut dyn Write, v: &Value) -> std::io::Result<()> {
+    let s = |v: &Value| v.as_str().unwrap_or("?").to_string();
+    let p = &v["publication"];
+    let mut lines = vec![format!(
+        "published    {} at {} ({})",
+        s(&p["state"]),
+        twelve(p["presented"]["commit"].as_str().unwrap_or("?")),
+        s(&p["presented"]["tree"])
+    )];
+    for r in p["reasons"].as_array().into_iter().flatten() {
+        lines.push(format!("             {}", s(r)));
+    }
+    for r in p["records"].as_array().into_iter().flatten() {
+        let behind = match r["commits_between"].as_u64() {
+            Some(n) => format!(
+                ", {n} commit(s) and {} changed file(s) behind",
+                r["changed"].as_array().map_or(0, Vec::len)
+            ),
+            None => String::new(),
+        };
+        lines.push(format!(
+            "record       {:<10} {} at {} ({}){behind}",
+            s(&r["relation"]),
+            s(&r["id"]),
+            twelve(r["commit"].as_str().unwrap_or("?")),
+            s(&r["working_tree"])
+        ));
+        for c in r["capped"].as_array().into_iter().flatten() {
+            lines.push(format!("             caps {}", s(c)));
+        }
+    }
+    let totals: Vec<String> = p["totals"]
+        .as_object()
+        .into_iter()
+        .flatten()
+        .map(|(state, n)| format!("{state} {n}"))
+        .collect();
+    lines.push(format!(
+        "claims       {}: {}",
+        p["claims"].as_array().map_or(0, Vec::len),
+        totals.join(", ")
+    ));
+    for u in p["unread"].as_array().into_iter().flatten() {
+        lines.push(format!(
+            "unread       {} ({})",
+            s(&u["file"]),
+            s(&u["reason"])
+        ));
+    }
+    if p["withheld"].as_u64().unwrap_or(0) > 0 {
+        lines.push(format!(
+            "withheld     {} text(s) the redactor could not make safe",
+            p["withheld"]
+        ));
+    }
+    lines.push(format!("written      {}", s(&v["file"])));
+    writeln!(out, "{}", lines.join("\n"))
 }
 
 /// A measurement written to `file` when one is named, then answered on `out` in `format`;
@@ -897,6 +1130,224 @@ mod tests {
         );
         let bare = render(json!({ "commit": "0123", "working_tree": "dirty" }), None);
         assert_eq!(bare, "stamped      a run at 0123 (dirty)\n");
+    }
+
+    /// A subject prints what it is, what it was judged at, its verdict and totals, then one
+    /// line per route (with its detail under it), member, mechanism and finding.
+    #[test]
+    fn a_subject_prints_one_line_per_part() {
+        let render = |v: Value| {
+            let mut buf = Vec::new();
+            subject_text(&mut buf, &v).unwrap();
+            String::from_utf8(buf).unwrap()
+        };
+        let text = render(json!({
+            "subject": "rule:project.alpha", "kind": "rule",
+            "presented": { "revision": "0123456789abcdef0123456789abcdef01234567", "tree": "dirty" },
+            "verdict": "not_run", "meaning": "nothing ran",
+            "totals": { "not run": 1, "no test": 1 },
+            "routes": [
+                { "via": "rule", "test": "suite:01_a", "state": "not_run", "detail": "never ran" },
+                { "via": "scenario", "state": "not_run" }
+            ],
+            "members": [{ "subject": "claim:a", "state": "proven" }],
+            "mechanisms": ["scripts/gate"],
+            "subject_findings": [{ "code": "dangling_member", "message": "gone" }]
+        }));
+        let lines: Vec<&str> = text.lines().collect();
+        assert_eq!(lines[0], "subject      rule:project.alpha (rule)");
+        assert_eq!(lines[1], "judged at 0123456789ab as committed (dirty)");
+        assert_eq!(lines[2], "verdict      not_run");
+        assert_eq!(lines[4], "totals       not run 1, no test 1");
+        assert!(lines[5].starts_with("route        not_run") && lines[5].ends_with("suite:01_a"));
+        assert!(lines[6].ends_with("never ran"), "{text}");
+        assert!(
+            lines[7].ends_with(" -"),
+            "a route with no test or path: {text}"
+        );
+        assert_eq!(lines[8], "member       proven             claim:a");
+        assert_eq!(lines[9], "mechanism    scripts/gate");
+        assert_eq!(lines[10], "finding      dangling_member: gone");
+
+        let here = render(json!({ "presented": { "revision": "working_tree", "tree": "clean" } }));
+        assert!(
+            here.contains("judged at the working tree (clean)"),
+            "{here}"
+        );
+    }
+
+    /// The coverage lines: the checkout judged against, the source and whether it is there,
+    /// the counts, each record with its reason under it, and what was not read.
+    #[test]
+    fn coverage_prints_each_record_with_its_reason() {
+        let render = |v: Value| {
+            let mut buf = Vec::new();
+            coverage_text(&mut buf, &v).unwrap();
+            String::from_utf8(buf).unwrap()
+        };
+        let text = render(json!({
+            "presented": { "commit": "0123456789abcdef0123456789abcdef01234567", "tree": "clean" },
+            "source": ".ai/local/evidence/runs", "present": true, "runs": 2,
+            "records": [{
+                "run": "r-a", "state": "stale", "reason": "measured elsewhere", "file": "a.json",
+                "coverage": { "commit": "ffffffffffffffffffffffffffffffffffffffff",
+                              "working_tree": "clean", "crate": { "lines": { "percent": 80.0 } } }
+            }],
+            "unread": [{ "file": "m.json", "reason": "not a run record" }]
+        }));
+        let lines: Vec<&str> = text.lines().collect();
+        assert_eq!(
+            lines,
+            [
+                "judged at 0123456789ab (clean)",
+                "source       .ai/local/evidence/runs",
+                "runs         2 read, 1 with coverage",
+                "stale        r-a at ffffffffffff (clean) · lines 80.0% · a.json",
+                "             measured elsewhere",
+                "unread       m.json (not a run record)",
+            ]
+        );
+        let none = render(json!({
+            "presented": { "commit": null, "tree": "unknown", "reason": "no git" },
+            "source": "x", "present": false, "runs": 0, "records": [], "unread": []
+        }));
+        assert!(none.starts_with("judged at no commit: no git\n"), "{none}");
+        assert!(none.contains("(not there: nothing has written"), "{none}");
+    }
+
+    /// `evidence subject` and `evidence coverage` run end to end through the command in
+    /// either format, and an unknown subject is an error of the command.
+    #[test]
+    fn subject_and_coverage_run_through_the_command() {
+        let repo = committed();
+        for format in [OutputFormat::Text, OutputFormat::Json] {
+            let cmd = EvidenceCommand::Subject {
+                key: "capability:evidence.subject".into(),
+                presented: None,
+                presented_tree: None,
+            };
+            assert_eq!(run(evidence(&repo, cmd, format)).unwrap(), 0);
+            let cmd = EvidenceCommand::Coverage {
+                from: None,
+                presented_tree: Some("dirty".into()),
+            };
+            assert_eq!(run(evidence(&repo, cmd, format)).unwrap(), 0);
+        }
+        let cmd = EvidenceCommand::Subject {
+            key: "feature:no-such".into(),
+            presented: Some("HEAD".into()),
+            presented_tree: None,
+        };
+        let err = run(evidence(&repo, cmd, OutputFormat::Text)).unwrap_err();
+        assert_eq!(err.exit_code(), 13, "{err}");
+        assert!(err.to_string().contains("evidence-subjects.json"), "{err}");
+        // a path a person types is resolved where they typed it, then held to the checkout
+        let cmd = EvidenceCommand::Coverage {
+            from: Some(repo.root().join("apps")),
+            presented_tree: None,
+        };
+        assert_eq!(run(evidence(&repo, cmd, OutputFormat::Json)).unwrap(), 0);
+        let cmd = EvidenceCommand::Coverage {
+            from: Some(std::path::PathBuf::from("/")),
+            presented_tree: None,
+        };
+        let err = run(evidence(&repo, cmd, OutputFormat::Json)).unwrap_err();
+        assert!(err.to_string().contains("outside the repository"), "{err}");
+    }
+
+    /// The publication lines: the state at the commit presented, each reason, each record
+    /// with where it stands and what it capped, the totals, what was not read or withheld,
+    /// and the file written.
+    #[test]
+    fn a_publication_prints_its_state_its_records_and_its_file() {
+        let render = |v: Value| {
+            let mut buf = Vec::new();
+            publish_text(&mut buf, &v).unwrap();
+            String::from_utf8(buf).unwrap()
+        };
+        let text = render(json!({
+            "file": "/x/evidence-publication.json",
+            "publication": {
+                "state": "stale",
+                "presented": { "commit": "0123456789abcdef0123456789abcdef01234567", "tree": "clean" },
+                "reasons": ["capped by r-a"],
+                "records": [
+                    { "relation": "ancestor", "id": "r-a", "commit": "ffffffffffffffffffffffffffffffffffffffff",
+                      "working_tree": "clean", "commits_between": 2, "changed": ["a", "b"], "capped": ["c1"] },
+                    { "relation": "unrelated", "id": "r-b", "commit": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+                      "working_tree": "dirty", "changed": [], "capped": [] }
+                ],
+                "claims": [{ "id": "c1" }],
+                "totals": { "stale": 1 },
+                "unread": [{ "file": "manifest.json", "reason": "not a run record" }],
+                "withheld": 1
+            }
+        }));
+        let lines: Vec<&str> = text.lines().collect();
+        assert_eq!(
+            lines,
+            [
+                "published    stale at 0123456789ab (clean)",
+                "             capped by r-a",
+                "record       ancestor   r-a at ffffffffffff (clean), 2 commit(s) and 2 changed file(s) behind",
+                "             caps c1",
+                "record       unrelated  r-b at eeeeeeeeeeee (dirty)",
+                "claims       1: stale 1",
+                "unread       manifest.json (not a run record)",
+                "withheld     1 text(s) the redactor could not make safe",
+                "written      /x/evidence-publication.json",
+            ]
+        );
+    }
+
+    /// `evidence publish` runs end to end through the command in either format, a relative
+    /// destination is read from where it was typed, and one inside the checkout is an error.
+    #[test]
+    fn a_publication_runs_through_the_command() {
+        let repo = committed();
+        let away = tempfile::tempdir().unwrap();
+        for format in [OutputFormat::Text, OutputFormat::Json] {
+            let cmd = EvidenceCommand::Publish {
+                presented: "HEAD".into(),
+                presented_tree: Some("dirty".into()),
+                from: Some(away.path().to_path_buf()),
+                run: Some("pending".into()),
+                out: away.path().join("out"),
+            };
+            assert_eq!(run(evidence(&repo, cmd, format)).unwrap(), 0);
+        }
+        let written = std::fs::read_to_string(
+            away.path()
+                .join("out")
+                .join(crate::evidence::publication::FILE),
+        )
+        .unwrap();
+        assert!(written.contains("\"state\": \"dirty\""), "{written}");
+        let cmd = EvidenceCommand::Publish {
+            presented: "HEAD".into(),
+            presented_tree: None,
+            from: None,
+            run: None,
+            out: repo.root().join("inside"),
+        };
+        let err = run(evidence(&repo, cmd, OutputFormat::Text)).unwrap_err();
+        assert_eq!(err.exit_code(), 13, "{err}");
+        assert!(err.to_string().contains("inside the checkout"), "{err}");
+    }
+
+    /// An answer that cannot be written, in either format, is a transport error.
+    #[test]
+    fn an_unwritable_answer_is_a_transport_error() {
+        let v = json!({ "subject": "claim:a" });
+        for format in [OutputFormat::Json, OutputFormat::Text] {
+            let mut closed = ClosesAfter {
+                lines: 0,
+                held: Vec::new(),
+                refused: 0,
+            };
+            let got = answer(&mut closed, &v, format, subject_text);
+            assert!(matches!(got, Err(Error::Transport(_))), "{got:?}");
+        }
     }
 
     /// A small repository holding one crate integration test, committed.

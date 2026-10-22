@@ -6,7 +6,7 @@ template = "page.html"
 lang = "cs"
 translated_from = "a-session-ends-the-work-does-not/"
 source_digest = "7acb745322bac99c976add6a19a2c5ff919311c2cea550c7631b1a5786152247"
-related = ["teze/", "vsechno-v-jednom-proudu/", "zabrano-driv-nez-se-stavi/", "jedna-vetev-jedno-misto/", "mnoho-stroju-jeden-denik/", "pochybnost-rozhodne-experiment/"]
+related = ["teze/", "vsechno-v-jednom-proudu/", "zabrano-driv-nez-se-stavi/", "jedna-vetev-jedno-misto/", "mnoho-stroju-jeden-denik/", "pochybnost-rozhodne-experiment/", "znalost-odvodi-nastroj-povysi-clovek/"]
 [extra.translations]
 en = "a-session-ends-the-work-does-not/"
 +++

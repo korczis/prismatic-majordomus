@@ -1,0 +1,45 @@
+id: I3864
+milestone: a-claim-stands-only-on-its-evidence
+title: "Published text and the rule-proof records say more about rule enforcement than the gate decides, and seven ADR headings carry another number"
+slug: the-rule-proof-records-say-what-the-gate-decides
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Bring six statements into agreement with the code and with each other. (1) site/content-src/proof-carrying-documentation.md says that every blocking rule carries a validator and that scripts/ci/rule-proof-check is the reader that decides it, and its table marks 'Every blocking rule carries a validator' as verified by that gate's exit 0; its Czech counterpart, dokumentace-kterou-lze-odmitnout.md, says the same. The gate accepts a validator, a test or a reviewed_because, and blocking rules on master name tests alone (project.portable-shell) or a reason alone (project.clean-room) while it passes. What it decides is that every rule names a validator, a test or a reason, and that every path it names is in the tree. (2) The module documentation of apps/majordomus-cli/src/rules/mod.rs says the canonical front matter allows exactly two enforcement shapes and that a blocking rule naming neither is Unproven, while the same module's Mode has three variants, Reviewed among them, ADR 0048 decides three modes, and a rule that gives a reviewed_because is Reviewed. (3) The summary of the rule-proof gate in .ai/repo/ci/gates.yaml says every blocking rule names what proves it and that a blocking rule naming none is new debt; the script asks it of every rule of either class, its header says the class is not an exemption, and its own output says proof is required of every rule of either class. (4) ADR 0048's context counts a baseline of ten blocking rules as six that already had proof, two that could have it and four that could not, which is twelve. (5) Seven ADRs carry an H1 number that is not their own: 0019 reads 15, 0032 reads 25, 0033 reads 22, 0041 reads 40, 0052 reads 41 (already in I3083), 0091 reads 58 and 0124 reads 121. (6) ADR 0188 says the 2026-10-08 audit showed a validator changed to '|| exit 0' passing doctor, while I3111 says the change was made to check.sh, which implements the check command and runs no validator by name."
+why: "On 2026-10-22 a fact-check of the article on how a rule is proven (I3863) against its sources found these places. A reader who follows the article to the proof-carrying documentation meets a guarantee the gate does not give, one who reads the rules module or the gate's summary meets a narrower rule than the one enforced, and one who checks a decision record meets a heading or a count that does not add up."
+current_state: "Each statement is in the tree at master 97391192dbb, as the objective quotes."
+desired_state: "The two articles say what rule-proof-check decides, in their authors' words; the rules module documents three modes; the gate's summary names every rule of either class; ADR 0048's counts add up to the baseline they describe; every ADR heading carries its own number, and majordomus adr check refuses one that does not; and ADR 0188 and I3111 describe the audited mutation the same way."
+scope:
+  - ".ai/repo/project/issues/I3864.yaml"
+  - "site/content-src/proof-carrying-documentation.md"
+  - "site/content-src/dokumentace-kterou-lze-odmitnout.md"
+  - "apps/majordomus-cli/src/rules/mod.rs"
+  - ".ai/repo/ci/gates.yaml"
+  - ".ai/repo/adrs/0019-distribution-is-one-model-and-every-surface-that-ships-the-t.md"
+  - ".ai/repo/adrs/0032-an-external-workspace-is-not-a-provider-the-term-the-depende.md"
+  - ".ai/repo/adrs/0033-an-execution-is-a-watched-capability-call-not-a-second-registry.md"
+  - ".ai/repo/adrs/0041-proof-is-a-recorded-execution-and-inputs-unchanged-is-not-proven.md"
+  - ".ai/repo/adrs/0048-a-rule-declares-how-it-is-enforced-and-review-is-one-of-the-three.md"
+  - ".ai/repo/adrs/0052-the-session-lifecycle-is-the-episodes-not-the-tasks.md"
+  - ".ai/repo/adrs/0091-knowledge-is-derived-at-the-episode-boundary-and-a-person-promotes-it.md"
+  - ".ai/repo/adrs/0124-an-uploaded-prompt-pack-is-a-provenance-tracked-input-artifa.md"
+  - ".ai/repo/adrs/0188-a-rule-s-proof-of-effect-is-a-recorded-refusal-of-its-violation.md"
+  - ".ai/repo/project/issues/I3111.yaml"
+non_scope:
+  - "Implementing the refusal proof of ADR 0188 (I3110, I3111, I3112)"
+depends_on: []
+acceptance_criteria:
+  - "No published sentence says every blocking rule carries a validator, and scripts/site-check passes the two articles"
+  - "The rules module documentation, the gate summary and rule-proof-check state the same population and the same three modes"
+  - "Every ADR's H1 number is its file number, and an ADR whose heading carries another number is refused by a check"
+  - "ADR 0048's context counts and ADR 0188's account of the audit agree with the records they cite"
+validation:
+  - "majordomus plan validate"
+  - "majordomus adr check"
+  - "scripts/ci/rule-proof-check"
+  - "scripts/site-check --articles site/content-src site/data/nav.toml site/config.toml"
+evidence_required: []
+serves:
+  - "a-claim-stands-only-on-its-evidence#public-text-true"
+created_at: 2026-10-22
+updated_at: 2026-10-22

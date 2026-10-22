@@ -120,6 +120,7 @@ docs/RESPONSIBILITIES.yaml
 docs/generated/openapi.json
 docs/generated/registry.json
 docs/generated/graph.json
+docs/generated/entities.json
 site/data/publication.toml
 site/data/registry/why.json
 site/data/registry/why-graph.json
@@ -2102,90 +2103,22 @@ i=0; jq -r '.skills[] | [.id, .title, .description, .status, .version, .path] | 
 GEN_T0="$(mj_phase_begin "gen:entities")"
 # Every object of the layer's index that this site publishes as a page of its own.
 #
-# The canonical input is docs/generated/graph.json — the composed graph the Rust executable
-# writes, whose nodes are the objects and whose edges are the references the one relation
-# table resolves. Nothing is re-read here and no relation is restated: the route on each node
-# is the address the Cockpit serves it at, and the backlinks below are that graph's edges
-# read from the other end.
+# The projection is the executable's: `majordomus generate` (target entities, I1007) writes
+# docs/generated/entities.json from the composed graph — whose nodes are the objects and
+# whose edges are the references the one relation table resolves — under
+# site/data/publication.toml, which declares once, for every kind the index holds, whether it
+# is published as entity pages, by an editorial section, or not at all and why. The rules of
+# that declaration (every kind once, a projection one of entity, section or none) are held
+# where it is read. scripts/ci/entity-check reads the declaration and `majordomus entity
+# kinds` and refuses either direction going stale.
 #
-# Which kinds become pages is declared once, in site/data/publication.toml, for every kind
-# the index holds — as an entity projection, as an editorial section that already publishes
-# it, or as not published with the reason. scripts/ci/entity-check reads that file and
-# `majordomus entity kinds` and refuses either direction going stale.
-GRAPH="$ROOT/docs/generated/graph.json"
-[ -f "$GRAPH" ] || { echo "generate-site-data: $GRAPH is missing; run: majordomus generate" >&2; exit 10; }
-PUB="$ROOT/site/data/publication.toml"
-[ -f "$PUB" ] || { echo "generate-site-data: $PUB is missing; it declares where each kind is published" >&2; exit 10; }
-# the publication declaration as JSON: one object per [[kinds]] table, values unquoted
-awk '
-  /^[[:space:]]*#/ { next }
-  /^\[\[kinds\]\]/ { if (n++) printf "},"; printf "{"; first = 1; next }
-  /^[a-z_]+[[:space:]]*=/ {
-    key = $0; sub(/[[:space:]]*=.*/, "", key)
-    val = $0; sub(/^[a-z_]+[[:space:]]*=[[:space:]]*/, "", val)
-    if (!first) printf ","
-    first = 0
-    if (val ~ /^"/) { printf "\"%s\":%s", key, val } else { printf "\"%s\":%s", key, val }
-  }
-  END { if (n) printf "}" }
-' "$PUB" | sed 's/^/[/; s/$/]/' > "$STAGE/publication.json"
-jq -e 'length > 0' "$STAGE/publication.json" >/dev/null \
-  || { echo "generate-site-data: site/data/publication.toml declares no kind" >&2; exit 10; }
-# every declared kind is spelled once, and a projection is one of the three words
-jq -e '[.[].kind] | (length == (unique | length))' "$STAGE/publication.json" >/dev/null \
-  || { echo "generate-site-data: site/data/publication.toml declares a kind twice" >&2; exit 10; }
-for bad in $(jq -r '.[] | select((.projection | IN("entity","section","none")) | not) | .kind' "$STAGE/publication.json"); do
-  echo "generate-site-data: publication.toml gives kind '$bad' a projection that is not entity, section or none" >&2; exit 10; done
-# entities.json: the published kinds, and every object of them with its references and the
-# references that resolve to it. The backlinks are the forward edges read backwards, which
-# is why nothing declares them.
-jq --slurpfile pub "$STAGE/publication.json" '
-  .graph as $g
-  | $pub[0] as $pubs
-  | ($pubs | map(select(.projection == "entity"))) as $pubkinds
-  | ($pubkinds | map(.kind)) as $kinds
-  | ($pubs | INDEX(.kind)) as $bykind
-  | ($g.nodes | map(select(.external | not)) | INDEX(.id)) as $byid
-  | ($g.edges | map(select(.kind != "is_a"))) as $edges
-  # the public address of a node, which is not its Cockpit route: a kind published as entity
-  # pages has one per object, a kind an editorial section publishes has that section, and a
-  # kind that is not published has none and is shown as plain text rather than a dead link
-  | def public($id):
-      ($byid[$id]) as $n
-      | if $n == null then null
-        else ($bykind[$n.kind]) as $k
-        | if $k == null then null
-          elif $k.projection == "entity" then $k.route + ($n.route | split("/") | last) + "/"
-          elif $k.projection == "section" then $k.route
-          else null end
-        end;
-    def side($id): {label: ($byid[$id].label // ($id | sub("^[a-z-]+:"; ""))),
-                    kind: ($byid[$id].kind // ($id | split(":")[0])),
-                    route: public($id),
-                    external: ($byid[$id] == null)};
-    def entity($n):
-      {kind: $n.kind, id: $n.id, identity: $n.label, slug: ($n.route | split("/") | last),
-       cockpit: $n.route, title: ($n.summary // $n.label), status: $n.status,
-       tags: ($n.facts.tags // []), source: $n.source,
-       references: [ $edges[] | select(.source == $n.id) | {edge: .kind} + side(.target) ],
-       referenced_by: [ $edges[] | select(.target == $n.id) | {edge: .kind} + side(.source) ]};
-    {schema: 1,
-     source: "docs/generated/graph.json",
-     kinds: [ $pubkinds[] as $k
-              | ([$g.nodes[] | select(.kind == $k.kind and (.external | not))]) as $own
-              | $k + {count: ($own | length),
-                      dir: ($k.route | ltrimstr("/") | rtrimstr("/")),
-                      statuses: [ $own[] | .status | select(. != null) ] | unique } ],
-     # every kind the declaration names, with how many objects of it the index holds and
-     # where it is published, or why not: the documentation hub renders this and
-     # /docs/index.json carries it, so neither counts or lists kinds of its own
-     catalogue: ([ $pubs[] as $k
-                  | {kind: $k.kind, projection: $k.projection, route: ($k.route // null),
-                     title: ($k.title // null), reason: ($k.reason // null),
-                     count: ([$g.nodes[] | select(.kind == $k.kind and (.external | not))] | length)} ]
-                | sort_by(.kind)),
-     entities: [ $g.nodes[] | select((.external | not) and (.kind | IN($kinds[]))) | entity(.) ]}
-' "$GRAPH" > "$OUT/entities.json"
+# Nothing is computed here: the file is carried into the site's data as the generator wrote
+# it, less the two provenance members that name the generator rather than the data.
+ENTITIES="$ROOT/docs/generated/entities.json"
+[ -f "$ENTITIES" ] || { echo "generate-site-data: $ENTITIES is missing; run: majordomus generate" >&2; exit 10; }
+jq -e '.schema == 1 and (.kinds | type == "array") and (.catalogue | length > 0)' "$ENTITIES" >/dev/null \
+  || { echo "generate-site-data: $ENTITIES is not the entity projection (schema 1 with kinds and a catalogue); run: majordomus generate" >&2; exit 10; }
+jq 'del(.generated, .generator)' "$ENTITIES" > "$OUT/entities.json"
 # every entity page is a page a document can link to: a decision naming a sibling decision by
 # its file, or a rule naming the decision it cites, links to that page rather than to the file
 jq -r '(.kinds | map({key: .kind, value: .route}) | from_entries) as $r

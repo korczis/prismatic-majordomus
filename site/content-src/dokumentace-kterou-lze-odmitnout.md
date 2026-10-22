@@ -4,7 +4,7 @@ description = "Tvrzení, které nemůže spadnout, je jen dobře naformátovaná
 template = "page.html"
 [extra]
 lang = "cs"
-related = ["teze/", "vlozene-zadani-se-stava-planem/", "vsechno-v-jednom-proudu/", "plan-se-napadne-driv-nez-se-postavi/", "napsano-jednou-odvozeno-vsude/", "mlceni-neni-verdikt/", "automatizace-je-schopnost/", "uspora-se-meri-netvrdi/"]
+related = ["teze/", "vlozene-zadani-se-stava-planem/", "vsechno-v-jednom-proudu/", "plan-se-napadne-driv-nez-se-postavi/", "napsano-jednou-odvozeno-vsude/", "mlceni-neni-verdikt/", "automatizace-je-schopnost/", "uspora-se-meri-netvrdi/", "pravidlo-se-dokazuje-odmitnutim/"]
 [extra.translations]
 en = "proof-carrying-documentation/"
 +++
@@ -93,7 +93,7 @@ claim-proof-check: every guaranteed claim names a test that names it back
 
 Když se tahle stránka builduje, drží matice {{ <cite_figure name="claims_guaranteed" /> }} guaranteed tvrzení a check běží striktně nad každým z nich: baseline výjimek vedle něj obsahuje komentáře a žádné vyjmuté tvrzení. Na seznamu výjimek nestojí nic.
 
-Stejný tvar platí o patro výš, pro pravidla. Pravidlo je tu verzovaný markdown se strojově čitelným blokem, který deklaruje, **jak** je vynucené. Graf objektů repozitáře indexuje {{ <cite_figure name="rule_objects" /> }} dokumentů pravidel; pravidla, která definují, se rozpadají do deterministického pořadí a každé blokující má validátor — rozhoduje o tom `scripts/ci/rule-proof-check`. Jen standardní balík, který zdědí každý repozitář, jenž nástroj přijme, deklaruje {{ <cite_figure name="doctrines_declared" /> }} pravidel, z toho {{ <cite_figure name="doctrines_blocking" /> }} blokujících. Některá pravidla deklarují, že je vynucuje člověk při review — a to je typovaný stav s povinným odůvodněním, ne absence. Ten rozdíl je podstatný: „tohle kontrolujeme okem, protože automat by musel hádat" je obhajitelný inženýrský postoj. „Tohle nikdy nikdo nerozhodl" ve stejném kabátě není.
+Stejný tvar platí o patro výš, pro pravidla. Pravidlo je tu verzovaný markdown se strojově čitelným blokem, který deklaruje, **jak** je vynucené. Graf objektů repozitáře indexuje {{ <cite_figure name="rule_objects" /> }} dokumentů pravidel; pravidla, která definují, se rozpadají do deterministického pořadí a každé jmenuje, co ho dokazuje — validátor, test, nebo důvod, proč ho vynucuje čtenář — a rozhoduje o tom `scripts/ci/rule-proof-check`. Jen standardní balík, který zdědí každý repozitář, jenž nástroj přijme, deklaruje {{ <cite_figure name="doctrines_declared" /> }} pravidel, z toho {{ <cite_figure name="doctrines_blocking" /> }} blokujících. Některá pravidla deklarují, že je vynucuje člověk při review — a to je typovaný stav s povinným odůvodněním, ne absence. Ten rozdíl je podstatný: „tohle kontrolujeme okem, protože automat by musel hádat" je obhajitelný inženýrský postoj. „Tohle nikdy nikdo nerozhodl" ve stejném kabátě není.
 
 ## Co zatím tvrdit nemůžu
 

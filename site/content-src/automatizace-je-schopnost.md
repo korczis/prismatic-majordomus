@@ -6,7 +6,7 @@ template = "page.html"
 lang = "cs"
 translated_from = "automation-is-a-capability/"
 source_digest = "178f3e6409fd546a14f4b0cf31fff193302002cde4b749ef9ed15afb14489f82"
-related = ["napsano-jednou-odvozeno-vsude/", "teze/", "dokumentace-kterou-lze-odmitnout/"]
+related = ["napsano-jednou-odvozeno-vsude/", "teze/", "dokumentace-kterou-lze-odmitnout/", "pravidlo-se-dokazuje-odmitnutim/"]
 [extra.translations]
 en = "automation-is-a-capability/"
 +++

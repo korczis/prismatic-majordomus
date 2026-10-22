@@ -25,10 +25,10 @@
 //! portable shell layer's `lib/doctrine.sh` runs the validators, and `scripts/ci/
 //! rule-proof-check` is the gate. This is the reading all of those project from.
 //!
-//! # The two enforcement modes
+//! # The three enforcement modes
 //!
-//! The canonical front matter allows exactly two shapes, and the distinction is not
-//! cosmetic:
+//! The canonical front matter allows exactly three shapes (ADR 0048), and the distinction
+//! is not cosmetic:
 //!
 //! * **dispatched** — the block names a `validator`, which `lib/doctrine.sh` calls at run
 //!   time. It carries `category`, `exit_code` and `enforced_by` with it; a half-declaration
@@ -36,9 +36,13 @@
 //!   with a missing field.
 //! * **gated** — the block names `tests` and no validator. Nothing dispatches it; the
 //!   behavioural cases are what prove it, and a CI gate is what runs them.
+//! * **reviewed** — the block names `reviewed_because`, the reason nothing executable can
+//!   express the rule, and neither of the above. A person enforces it, and the rule is
+//!   counted apart from every rule a gate proves.
 //!
-//! Either mode names at least one test. A blocking rule that names neither is `Unproven`,
-//! which is the state this module exists to make visible rather than absent.
+//! An executable proof wins: a validator makes a rule dispatched and a test makes it gated,
+//! whatever reason it also gives. A rule that names none of the three is `Unproven`, which
+//! is the state this module exists to make visible rather than absent.
 
 //! # Example
 //!

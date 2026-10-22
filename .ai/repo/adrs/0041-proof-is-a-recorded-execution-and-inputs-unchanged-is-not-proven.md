@@ -34,7 +34,7 @@ provenance:
   origin: authored
 ---
 
-# 40. Proof is a recorded execution, and inputs unchanged is not proven
+# 41. Proof is a recorded execution, and inputs unchanged is not proven
 
 ## Context
 
