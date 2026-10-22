@@ -353,7 +353,9 @@ pub fn module() -> ModuleDescriptor {
                 exposure: Exposure { mcp: mcp("majordomus_peers"), http: get("/api/v1/peers"), cli: None },
                 tags: ["peers", "coordination"],
                 handler: peers_list,
-            },
+            }
+            // the mesh's working state, not the repository's: a loopback caller only (ADR 0220)
+            .reads_only_locally(),
             capability! {
                 id: "peers.announce",
                 kind: CapabilityKind::Command,

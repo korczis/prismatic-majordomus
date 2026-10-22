@@ -23,6 +23,7 @@ use majordomus_cli::environment::preflight::{
     PAGES_REF,
 };
 use majordomus_cli::environment::{resolve, EnvironmentQuery, Inputs};
+use majordomus_cli::rules::RulesVerdict;
 use majordomus_cli::Repository;
 use serde_json::{json, Value};
 
@@ -175,11 +176,26 @@ fn enforcement_is_verified_only_by_proof_at_this_tree() {
         working_tree: "clean".into(),
         rules: 3,
         proven: 3,
+        verdict: Some(RulesVerdict::Proven),
         ..Default::default()
     };
     let mut o = at(HEAD);
     o.rules = RulesObservation::Counted(proven(HEAD));
     assert_eq!(verdict(&o, "verification.enforcement"), Verdict::Verified);
+
+    // the corpus verdict decides, not a recount (I1965): a blocking rule that is only
+    // inputs_unchanged leaves the corpus unproven, however the counts read
+    o.rules = RulesObservation::Counted(RulesTally {
+        verdict: Some(RulesVerdict::Unproven),
+        ..proven(HEAD)
+    });
+    assert_ne!(verdict(&o, "verification.enforcement"), Verdict::Verified);
+    // and a tally cached before it carried the verdict verifies nothing
+    o.rules = RulesObservation::Counted(RulesTally {
+        verdict: None,
+        ..proven(HEAD)
+    });
+    assert_ne!(verdict(&o, "verification.enforcement"), Verdict::Verified);
 
     o.rules = RulesObservation::Cached(proven(OLD));
     assert_eq!(verdict(&o, "verification.enforcement"), Verdict::Stale);
@@ -309,6 +325,7 @@ fn test_evidence_for_another_commit_is_stale_and_for_this_one_verified() {
         total: 6,
         current: 0,
         current_failing: 0,
+        not_run: 0,
         newest_commit: OLD.into(),
         newest_at: "2026-09-12T10:36:18Z".into(),
     };
@@ -317,14 +334,26 @@ fn test_evidence_for_another_commit_is_stale_and_for_this_one_verified() {
         total: 6,
         current: 6,
         current_failing: 0,
+        not_run: 0,
         newest_commit: HEAD.into(),
         newest_at: "2026-09-15T10:00:00Z".into(),
     };
     assert_eq!(verdict(&o, "verification.tests"), Verdict::Verified);
+    // a skip is not run, never a failure: one skipped test leaves the tests unproven, not failed
     o.ledger = LedgerObservation::Read {
         total: 6,
-        current: 6,
+        current: 5,
+        current_failing: 0,
+        not_run: 1,
+        newest_commit: HEAD.into(),
+        newest_at: "2026-09-15T10:00:00Z".into(),
+    };
+    assert_eq!(verdict(&o, "verification.tests"), Verdict::Stale);
+    o.ledger = LedgerObservation::Read {
+        total: 6,
+        current: 5,
         current_failing: 1,
+        not_run: 0,
         newest_commit: HEAD.into(),
         newest_at: "2026-09-15T10:00:00Z".into(),
     };
@@ -641,6 +670,26 @@ fn a_ledger_run_verifies_only_the_tree_it_measured() {
     // the same run, failing
     f.write(".ai/repo/evidence/ledger.json", &ledger(&measured, "fail"));
     assert_eq!(tests(&f), Verdict::Failed);
+
+    // the same run, skipped: not run, which is not a failure (I1965)
+    f.write(".ai/repo/evidence/ledger.json", &ledger(&measured, "skip"));
+    assert_eq!(tests(&f), Verdict::Stale);
+
+    // a pass recorded on a commit HEAD does not contain, with an identical tree, is not
+    // current: the run measured another history (I1965)
+    let side = f
+        .git(&[
+            "commit-tree",
+            "HEAD^{tree}",
+            "-p",
+            "HEAD",
+            "-m",
+            "a side commit",
+        ])
+        .trim()
+        .to_string();
+    f.write(".ai/repo/evidence/ledger.json", &ledger(&side, "pass"));
+    assert_eq!(tests(&f), Verdict::Stale);
 
     // a passing run, and then the tree changes under it
     f.write(".ai/repo/evidence/ledger.json", &ledger(&measured, "pass"));
