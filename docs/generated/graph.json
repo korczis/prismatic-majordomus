@@ -178,6 +178,15 @@
         "status": "query"
       },
       {
+        "id": "capability:compute.verify",
+        "kind": "capability",
+        "label": "compute.verify",
+        "summary": "Whether a browser's result is what the server computes",
+        "route": "/cockpit/capabilities/compute.verify",
+        "source": "apps/majordomus-cli/src/capability/builtin/compute.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:continuity.device",
         "kind": "capability",
         "label": "continuity.device",
@@ -43665,6 +43674,54 @@
             "cargo test --manifest-path apps/majordomus-core/Cargo.toml",
             "cargo test --test portable_core",
             "cargo test --lib generation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I2785",
+        "kind": "issue",
+        "label": "I2785",
+        "summary": "The server recomputes a browser's claimed result with the portable core",
+        "route": "/cockpit/objects/issue/i2785",
+        "source": ".ai/repo/project/issues/I2785.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every fixture case is answered match with the claimed digest and mismatch with one digit changed",
+            "Every invalid fixture row is answered invalid with its reason",
+            "A caller on another host is answered, and the repository and the execution store are unchanged",
+            "An input over 1 MiB is answered invalid without being read"
+          ],
+          "created_at": "2026-10-17",
+          "current_state": "executions.report stores what a reporter says; nothing recomputes a claim.",
+          "depends_on": [
+            "I2784"
+          ],
+          "desired_state": "POST /api/v1/compute/verify and majordomus_compute_verify judge any claimed canonical digest by recomputing it, for every fixture row, writing nothing.",
+          "evidence_required": [
+            "compute_verify_tests"
+          ],
+          "milestone": "browser-compute",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/compute.rs",
+            "apps/majordomus-cli/src/capability/builtin/mod.rs",
+            "apps/majordomus-cli/tests/compute_verify.rs",
+            ".ai/repo/project",
+            "docs",
+            "site",
+            "share"
+          ],
+          "serves": [
+            "a-browser-computes-what-the-server-verifies#the-server-recomputes-a-claim"
+          ],
+          "slug": "the-server-verifies-a-browsers-result",
+          "updated_at": "2026-10-17",
+          "validation": [
+            "majordomus plan validate",
+            "cargo test --lib capability::builtin::compute",
+            "cargo test --test compute_verify"
           ]
         }
       },
@@ -90594,6 +90651,11 @@
         "label": "commit"
       },
       {
+        "id": "module:compute",
+        "kind": "module",
+        "label": "compute"
+      },
+      {
         "id": "module:continuity",
         "kind": "module",
         "label": "continuity"
@@ -91165,6 +91227,21 @@
       },
       {
         "source": "capability:commit.validate",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:compute.verify",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:compute.verify",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:compute.verify",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -116809,6 +116886,21 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2785",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2785",
+        "target": "majordomus://issue/I2784",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I2785",
+        "target": "majordomus://milestone/browser-compute",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I2786",
         "target": "kind:issue",
         "kind": "is_a"
@@ -133584,6 +133676,11 @@
         "kind": "composes"
       },
       {
+        "source": "module:compute",
+        "target": "capability:compute.verify",
+        "kind": "composes"
+      },
+      {
         "source": "module:continuity",
         "target": "capability:continuity.device",
         "kind": "composes"
@@ -134565,8 +134662,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3776,
-      "edges": 8723,
+      "nodes": 3779,
+      "edges": 8730,
       "acyclic": false,
       "truncated": false
     }

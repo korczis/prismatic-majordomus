@@ -205,6 +205,23 @@
       "tool": "majordomus_commit_validate"
     },
     {
+      "api_anchor": "/docs/api/compute/#op-compute-verify",
+      "claims": [],
+      "cli": null,
+      "id": "compute.verify",
+      "kind": "query",
+      "module": "compute",
+      "module_route": "/registry/modules/compute/",
+      "resource": null,
+      "route": "/registry/capabilities/compute-verify/",
+      "slug": "compute-verify",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/compute.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/compute.rs",
+      "tests": [],
+      "title": "Whether a browser's result is what the server computes",
+      "tool": "majordomus_compute_verify"
+    },
+    {
       "api_anchor": "/docs/api/continuity/#op-continuity-device",
       "claims": [],
       "cli": "majordomus continuity device",
@@ -4343,9 +4360,9 @@
     ]
   },
   "counts": {
-    "capabilities": 208,
+    "capabilities": 209,
     "claims": 93,
-    "modules": 58
+    "modules": 59
   },
   "generator": "majordomus-cli 1.0.0-alpha.6",
   "modules": [
@@ -4463,6 +4480,22 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/commit.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/commit.rs",
       "title": "Commit"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "compute.verify",
+          "route": "/registry/capabilities/compute-verify/",
+          "slug": "compute-verify"
+        }
+      ],
+      "claims": [],
+      "id": "compute",
+      "route": "/registry/modules/compute/",
+      "slug": "compute",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/compute.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/compute.rs",
+      "title": "Browser compute"
     },
     {
       "capabilities": [

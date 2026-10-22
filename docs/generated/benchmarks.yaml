@@ -6,20 +6,20 @@ generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark proje
 generator: majordomus-cli 1.0.0-alpha.6
 coverage:
   - scope: direct
-    required: 208
-    covered: 175
+    required: 209
+    covered: 176
     missing: 0
     waived: 33
     inapplicable: 0
   - scope: http
-    required: 202
-    covered: 175
+    required: 203
+    covered: 176
     missing: 0
     waived: 27
     inapplicable: 0
   - scope: mcp
-    required: 197
-    covered: 171
+    required: 198
+    covered: 172
     missing: 0
     waived: 26
     inapplicable: 0
@@ -30,8 +30,8 @@ coverage:
     waived: 0
     inapplicable: 0
   - scope: total
-    required: 621
-    covered: 535
+    required: 624
+    covered: 538
     missing: 0
     waived: 86
     inapplicable: 0
@@ -151,6 +151,16 @@ capabilities:
       - conventional
       - not-conventional
       - merge
+  - id: compute.verify
+    module: compute
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - match
+      - mismatch
   - id: continuity.device
     module: continuity
     kind: command
