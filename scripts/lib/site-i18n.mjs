@@ -207,6 +207,38 @@ export function numberSlots(source) {
 export const fillSlots = (template, values) =>
   template.replace(SLOT, (m, k) => values[Number(k) - 1] ?? m);
 
+// A value a build changes, written as the whole text of an inline element, is data too: the
+// commit a section was read at (<a>76c5785</a>), the version a release record names
+// (<a>v1.0.0-alpha.5</a>) and the date it carries (<time>2026-10-22</time>). Inside a <tN>…</tN>
+// pair its text was part of the key, so every new commit or release re-keyed the sentence around
+// it and the Czech homepage fell back to English on every build (I3758, measured by 33 on
+// 76c57859663). Such an element is a void <tN/>: the translator never sees the value, the page's
+// own element is put back, its link still pointed at the counterpart. A version or a date in
+// running prose is not one of these and stays words.
+const VALUE = /^(?:(?=[0-9a-f]*\d)[0-9a-f]{7,40}|v?\d+(?:\.\d+){1,3}(?:-[0-9A-Za-z.]+)?|\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}(?::\d{2})?Z?)?)$/;
+
+/** Whether an element's whole content is one value a build changes (see VALUE). */
+const valueElement = (html, nd) => INLINE.has(nd.name) && !VOID.has(nd.name)
+  && nd.children.length === 1 && nd.children[0].type === 'text'
+  && VALUE.test(decode(html.slice(nd.children[0].start, nd.children[0].end)).trim());
+
+/** A memory entry written before I3758, with each whole-element value turned into the void
+ *  placeholder the build now keys by, or null when it holds none. The translation must carry
+ *  the same element with the same value, or the entry is left as it is and named. */
+export function rekeyValues(entry, lang) {
+  const pair = /<t(\d+)>([^<]*)<\/t\1>/g;
+  const found = [...entry.en.matchAll(pair)].filter((m) => VALUE.test(decode(m[2]).trim()));
+  if (!found.length) return null;
+  let en = entry.en;
+  let tr = entry[lang];
+  for (const [whole, id] of found) {
+    if (typeof tr !== 'string' || !tr.includes(whole)) return { entry, refused: whole };
+    en = en.replace(whole, `<t${id}/>`);
+    tr = tr.replace(whole, `<t${id}/>`);
+  }
+  return { entry: { ...entry, k: keyOf(en), en, [lang]: tr } };
+}
+
 // One run of inline content: its range, the source a translator sees, and the raw tags each
 // placeholder stands for.
 function runSegment(html, nodes) {
@@ -250,6 +282,13 @@ function runSegment(html, nodes) {
     if (opaque(nd) || VOID.has(nd.name) || nd.closeStart === nd.openEnd && nd.children.length === 0
       && VOID.has(nd.name)) {
       tags.push({ id, whole: html.slice(nd.start, nd.closeEnd) });
+      parts.push(`<t${id}/>`);
+      plain += ' x ';
+      return;
+    }
+    if (valueElement(html, nd)) {
+      tags.push({ id, open: [nd.start, nd.openEnd], close: html.slice(nd.closeStart, nd.closeEnd),
+        inner: html.slice(nd.openEnd, nd.closeStart) });
       parts.push(`<t${id}/>`);
       plain += ' x ';
       return;
@@ -389,7 +428,8 @@ function restore(html, seg, template, rewriteTag) {
     out += escapeText(translation.slice(last, m.index));
     const [, close, id, selfClose] = m;
     const t = byId.get(id);
-    if (selfClose) out += t.whole;
+    if (selfClose && t.inner !== undefined) out += rewriteTag(html.slice(t.open[0], t.open[1])) + t.inner + t.close;
+    else if (selfClose) out += t.whole;
     else if (close) out += t.close;
     else out += rewriteTag(html.slice(t.open[0], t.open[1]));
     last = m.index + m[0].length;
