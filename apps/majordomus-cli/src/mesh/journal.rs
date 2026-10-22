@@ -100,6 +100,12 @@ pub const NODE_COMPACTION_STREAMS: usize = MAX_STREAMS_PER_NODE * 3 / 4;
 /// over something nobody took would otherwise fill its quota with the dead and have every
 /// later run refused. A handover somebody has taken holds nothing. One that lapses is still
 /// its author's record, and publishing it again offers it again under the same id.
+///
+/// The day is counted twice, and either count lapses the offer: on this runtime's clock,
+/// from when it last heard the stream or loaded it, and on the author's, from the signed
+/// time the handover was published. The first alone restarts with every server: on
+/// 2026-10-19 a stream dead for five days, holding 18 521 events for two untaken handovers,
+/// was reloaded by every restart as freshly learned and never lapsed anywhere (I2825).
 pub const HANDOVER_RETENTION: Duration = Duration::from_secs(24 * 60 * 60);
 
 /// The most bytes of the journal file a reload reads: 64 MiB.
@@ -115,6 +121,14 @@ pub const MAX_RELOAD_BYTES: u64 = 64 * 1024 * 1024;
 
 /// The most events (held and pending) one node may occupy.
 pub const MAX_EVENTS_PER_NODE: usize = 20_000;
+
+/// How many events of one node make its dead streams due for compaction: three quarters of
+/// [`MAX_EVENTS_PER_NODE`], for the reason [`NODE_COMPACTION_STREAMS`] gives for streams.
+/// The journal-wide bound ([`MAX_EVENTS`]) is no larger than one node's quota, so a node
+/// alone fills its quota before the journal is over its bound: past the quota every event
+/// of that node is refused, a release among them, and without this nothing would ever
+/// compact the dead streams that fill it (I2825).
+pub const NODE_COMPACTION_EVENTS: usize = MAX_EVENTS_PER_NODE * 3 / 4;
 
 /// The most out-of-order events the whole journal holds at once.
 pub const MAX_PENDING_TOTAL: usize = 4096;
@@ -1439,6 +1453,18 @@ impl StreamLog {
         self.events.keys().next_back().copied().unwrap_or(0)
     }
 
+    /// How long ago, on its author's clock, this stream published its newest handover:
+    /// `now` is unix seconds. `None` when it published none, or when the stamp is ahead of
+    /// `now` (a skewed clock then lapses nothing early; this runtime's own count still runs).
+    fn handover_age(&self, now: u64) -> Option<Duration> {
+        self.events
+            .values()
+            .rev()
+            .find(|e| e.kind() == "handover_published")
+            .and_then(|e| now.checked_sub(e.at))
+            .map(Duration::from_secs)
+    }
+
     /// How long the stream has been silent on this runtime's clock: since its beat last
     /// rose, or — never heard — since the journal learned of it. A reloaded journal learns
     /// every stream at its start, so a restart does not make a running sibling look dead.
@@ -2549,19 +2575,21 @@ impl Journal {
     /// rewritten to what remains. Only dead streams go, so no live claim can lose its
     /// release to compaction.
     ///
-    /// A node that holds [`NODE_COMPACTION_STREAMS`] streams is due on its own, whatever the
-    /// journal's size: its dead streams go by the same rule, the other nodes' stay. One
-    /// machine's worktrees share its key and every server restart is a new stream, so
-    /// without this a machine's own runs would fill its quota and nothing would ever free
-    /// it — the journal-wide bounds are out of one node's reach — and every later run of
-    /// a sibling would be refused here, its claims with it.
+    /// A node that holds [`NODE_COMPACTION_STREAMS`] streams or [`NODE_COMPACTION_EVENTS`]
+    /// events is due on its own, whatever the journal's size: its dead streams go by the same
+    /// rule, the other nodes' stay. One machine's worktrees share its key and every server
+    /// restart is a new stream, so without this a machine's own runs would fill its quota and
+    /// nothing would ever free it — the journal-wide bounds are out of one node's reach — and
+    /// every later event of a sibling would be refused here, its claims and their releases
+    /// with it.
     ///
     /// What makes dropping events safe is what is kept. Only a stream that has been silent
     /// well past its expiry goes, so no claim can lose the release that would have ended it.
     /// A dead stream stays while it holds a published handover nobody has taken, because a
     /// handover is continuity somebody may still be waiting to pick up — for at most
-    /// `handovers` past the retention ([`HANDOVER_RETENTION`] in a running server), or its
-    /// node's quota would fill with the dead. And a dead stream stays while it holds the
+    /// `handovers` past the retention ([`HANDOVER_RETENTION`] in a running server), counted on
+    /// this runtime's clock or from the handover's signed publication time, whichever lapses
+    /// first, or its node's quota would fill with the dead. And a dead stream stays while it holds the
     /// taking of a handover or the answer to a review that stays, so that a handover that is
     /// still offered never looks untaken again and an answered review never opens again.
     /// Who took what and who answered what are read by the fold ([`super::state::fold`]),
@@ -2619,13 +2647,18 @@ impl Journal {
         let mut inner = self.inner.lock().expect("journal lock");
         let total: usize = inner.streams.values().map(|l| l.events.len()).sum();
         let over = force || total > MAX_EVENTS || inner.streams.len() > MAX_STREAMS * 3 / 4;
-        let mut per_node: BTreeMap<&str, usize> = BTreeMap::new();
-        for id in inner.streams.keys() {
-            *per_node.entry(id.node()).or_default() += 1;
+        // streams and events (held and pending, as the quota counts them) per node
+        let mut per_node: BTreeMap<&str, (usize, usize)> = BTreeMap::new();
+        for (id, log) in &inner.streams {
+            let node = per_node.entry(id.node()).or_default();
+            node.0 += 1;
+            node.1 += log.events.len() + log.pending.len();
         }
         let crowded: Vec<String> = per_node
             .into_iter()
-            .filter(|(_, streams)| *streams >= NODE_COMPACTION_STREAMS)
+            .filter(|(_, (streams, events))| {
+                *streams >= NODE_COMPACTION_STREAMS || *events >= NODE_COMPACTION_EVENTS
+            })
             .map(|(node, _)| node.to_string())
             .collect();
         if !over && crowded.is_empty() {
@@ -2641,7 +2674,13 @@ impl Journal {
             })
             .map(|(id, _)| id.clone())
             .collect();
-        let offer_lapsed = |log: &StreamLog| log.silent_for(now) > expiry + retention + handovers;
+        // Either clock lapses the offer: this runtime's restarts with every server, the
+        // author's signed publication time does not (HANDOVER_RETENTION).
+        let lapse = expiry + retention + handovers;
+        let wall = super::protocol::now();
+        let offer_lapsed = |log: &StreamLog| {
+            log.silent_for(now) > lapse || log.handover_age(wall).is_some_and(|age| age > lapse)
+        };
         let dead = unneeded(&inner.streams, due, &offer_lapsed);
         let mut dropped = 0u64;
         for id in dead {
@@ -3836,6 +3875,139 @@ mod tests {
         let dropped = b.compact(Duration::ZERO, Duration::ZERO, HANDOVER_RETENTION, true);
         assert_eq!(dropped, 1, "A's session event goes; the handover stays");
         assert_eq!(b.events().len(), 1);
+    }
+
+    fn published(j: &Journal, text: &str) -> MeshEvent {
+        let body = format!("# Objective\n{text}\n");
+        j.append_own(EventBody::HandoverPublished {
+            handover: HandoverBody {
+                id: HandoverBody::digest_of(&body),
+                task: None,
+                issue: None,
+                milestone: None,
+                branch: None,
+                head: None,
+                created_at: None,
+                name: None,
+                body,
+            },
+        })
+        .unwrap()
+    }
+
+    /// The event as its author would have signed it `age` ago.
+    fn signed_ago(j: &Journal, mut event: MeshEvent, age: Duration) -> MeshEvent {
+        event.at = super::super::protocol::now() - age.as_secs();
+        event.sig = j.identity.sign(&event.signing_bytes());
+        event
+    }
+
+    /// A runtime that reloads a dead stream learns it at that moment, so its own clock says
+    /// the stream has only just fallen silent; restarted daily or more often, as every server
+    /// of a working machine is, it never sees an untaken handover's offer lapse. The signed
+    /// time the handover was published is the clock no restart resets (I2825).
+    #[test]
+    fn a_restart_does_not_renew_an_untaken_handovers_offer() {
+        let (stale, fresh, b) = (
+            journal("0000000000000001"),
+            journal("0000000000000003"),
+            journal("0000000000000002"),
+        );
+        let two_days = Duration::from_secs(2 * 24 * 60 * 60);
+        let old = signed_ago(&stale, published(&stale, "stale"), two_days);
+        assert_eq!(b.ingest(&[old], &accept_all).accepted, 1);
+        b.ingest(&[published(&fresh, "fresh")], &accept_all);
+        // this runtime learned both just now: on its own clock neither offer has lapsed
+        let dropped = b.compact(Duration::ZERO, Duration::ZERO, HANDOVER_RETENTION, true);
+        assert_eq!(
+            dropped, 1,
+            "the handover published two days ago lapses, the fresh one stays"
+        );
+        assert_eq!(b.events().len(), 1);
+        assert_eq!(&b.events()[0].stream, fresh.own_stream());
+        // a stamp ahead of this clock lapses nothing early
+        let future = journal("0000000000000004");
+        let mut ahead = published(&future, "ahead");
+        ahead.at = super::super::protocol::now() + two_days.as_secs();
+        ahead.sig = future.identity.sign(&ahead.signing_bytes());
+        b.ingest(&[ahead], &accept_all);
+        assert_eq!(
+            b.compact(Duration::ZERO, Duration::ZERO, HANDOVER_RETENTION, true),
+            0
+        );
+    }
+
+    /// The deadlock of 2026-10-19 (I2825), reproduced: one dead stream of this machine fills
+    /// the node's event quota, so a sibling server's claim and its release are refused here,
+    /// and the exclusive claim reads held wherever it arrived first. The unforced compaction
+    /// the supervisor runs must free the node by itself: the journal-wide bound equals one
+    /// node's quota and is never passed, so only the node's own crowding can make it due, and
+    /// the dead stream's untaken handover must lapse by its signed age.
+    #[test]
+    fn a_node_full_of_a_dead_stream_frees_itself_and_a_release_then_arrives() {
+        let dir = tempfile::tempdir().unwrap();
+        let key = dir.path().join("node.json");
+        let machine = || Arc::new(NodeIdentity::load_or_create(&key).unwrap());
+        let observer = Journal::open(machine(), "0000000000000001", "repo".into(), None).unwrap();
+        let dead = Journal::open(machine(), "0000000000000002", "repo".into(), None).unwrap();
+        let stale = signed_ago(
+            &dead,
+            published(&dead, "left behind"),
+            2 * HANDOVER_RETENTION,
+        );
+        for i in 1..MAX_EVENTS_PER_NODE {
+            opened(&dead, &format!("board-p{}", i % 3));
+        }
+        let mut events = dead.missing_for(&observer.marks(), usize::MAX);
+        assert_eq!(events.len(), MAX_EVENTS_PER_NODE);
+        assert_eq!((events[0].seq, events[0].kind()), (1, "handover_published"));
+        events[0] = stale;
+        assert_eq!(
+            observer.ingest(&events, &accept_all).accepted,
+            MAX_EVENTS_PER_NODE as u64
+        );
+
+        let sibling = Journal::open(machine(), "0000000000000003", "repo".into(), None).unwrap();
+        sibling
+            .append_own(EventBody::ClaimAcquired {
+                claim: "c1".into(),
+                session: "s1".into(),
+                scope: vec!["apps".into()],
+                intent: None,
+                mode: ClaimMode::Exclusive,
+                issue: None,
+            })
+            .unwrap();
+        sibling
+            .append_own(EventBody::ClaimReleased { claim: "c1".into() })
+            .unwrap();
+        let refused = observer.ingest(
+            &sibling.missing_for(&observer.marks(), usize::MAX),
+            &accept_all,
+        );
+        assert_eq!(
+            refused.rejected[&Rejection::Capacity],
+            2,
+            "the node is full"
+        );
+
+        let dropped = observer.compact(Duration::ZERO, Duration::ZERO, HANDOVER_RETENTION, false);
+        assert_eq!(
+            dropped, MAX_EVENTS_PER_NODE as u64,
+            "the dead stream goes whole"
+        );
+
+        let report = observer.ingest(
+            &sibling.missing_for(&observer.marks(), usize::MAX),
+            &accept_all,
+        );
+        assert_eq!(report.accepted, 2, "{:?}", report.rejected);
+        let state = super::super::state::fold(&observer.events(), &|_| StreamLiveness::Live);
+        assert_eq!(state.claims.len(), 1);
+        assert_eq!(
+            state.claims[0].state,
+            super::super::state::ClaimState::Released
+        );
     }
 
     /// Every worktree of one machine signs with the machine's one key, and every restart of

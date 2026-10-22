@@ -1,18 +1,18 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the provider declarations the distribution ships (share/providers.yaml), the templates beside them, and this repository's policy; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.0.0-alpha.1 -->
+     Generator: majordomus-cli 1.0.0-alpha.6 -->
 # Providers
 
-Every provider the tool ships an adapter for, and what this repository does with each. The set is the templates under `share/providers/`; the title, the client configuration a provider reads and the scratch roots it creates checkouts under are `share/providers.yaml`; the bootstraps are the policy's `projections[]`; whether a client configuration is present and which hooks are wired are facts of this tree. `majordomus product providers`, the MCP tool `majordomus_providers`, `GET /api/v1/product/providers` and the site's provider cards answer from the same value. A document that names providers points here rather than listing them (ADR 0024).
+Every provider the tool ships an adapter for, and what this repository does with each. The set is the templates under `share/providers/`; the title, the client configuration a provider reads and the scratch roots it creates checkouts under and whether its client drives a browser beside this repository's server (`offers.browser`, with the native messaging host a bridge registers) are `share/providers.yaml`; the bootstraps are the policy's `projections[]`; whether a client configuration is present and which hooks are wired are facts of this tree. `majordomus product providers`, the MCP tool `majordomus_providers`, `GET /api/v1/product/providers` and the site's provider cards answer from the same value. A document that names providers points here rather than listing them (ADR 0024).
 
-| provider | title | bootstraps | client configuration | hooks | scratch roots |
-|---|---|---|---|---|---|
-| `agents` | Any tool that reads AGENTS.md | `AGENTS.md` (always loaded) | — | — | — |
-| `bb` | bb | `.bb/AGENTS.md` | — | — | `${BB_DATA_DIR:-~/.bb}/plugins/environment-git-worktree/host-data/worktrees` |
-| `claude-code` | Claude Code | `CLAUDE.md` | `.mcp.json` | `prompt-capture`, `session-lifecycle` | `<primary>/.claude/worktrees` |
-| `codex` | Codex | — | `.codex/config.toml` | — | — |
-| `gemini` | Gemini CLI | `GEMINI.md` | `.gemini/settings.json` | — | — |
-| `generic` | A worker with no convention of its own | — | — | — | — |
+| provider | title | bootstraps | client configuration | hooks | browser | scratch roots |
+|---|---|---|---|---|---|---|
+| `agents` | Any tool that reads AGENTS.md | `AGENTS.md` (always loaded) | — | — | `none` | — |
+| `bb` | bb | `.bb/AGENTS.md` | — | — | `none` | `${BB_DATA_DIR:-~/.bb}/plugins/environment-git-worktree/host-data/worktrees` |
+| `claude-code` | Claude Code | `CLAUDE.md` | `.mcp.json` | `prompt-capture`, `session-lifecycle` | `bridge` (`com.anthropic.claude_code_browser_extension`) | `<primary>/.claude/worktrees` |
+| `codex` | Codex | — | `.codex/config.toml` | — | `none` | — |
+| `gemini` | Gemini CLI | `GEMINI.md` | `.gemini/settings.json` | — | `none` | — |
+| `generic` | A worker with no convention of its own | — | — | — | `none` | — |
 
 6 provider(s).
 

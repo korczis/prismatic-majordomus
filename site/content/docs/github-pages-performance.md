@@ -226,9 +226,56 @@ Two structural rules, both of which the first set of budgets broke and
   to 105, which made the aggregate stricter than the parts it is made of: a run could be
   inside every single phase budget and still breach, with nothing to point at.
 
+A budget is a warning and a step bound is a kill, and the two are tied. A step of `pages.yml`
+named after a warm row (`build`, `check`, `publish`), or a job named after one (`rustdoc`),
+carries a `timeout-minutes` of at least `budget.bound.percent` of that row's budget, and
+`scripts/ci/step-bound-check` refuses a smaller one. `scripts/pages report` names a row NEAR
+when it spent more than `budget.bound.near_percent` of its step's bound, as a warning on the
+run, before the run that crosses it. Until 2026-10-20 nothing tied them: the `check` step kept
+the 3 minutes set while the site was English only and took 167-171 s against them; the Czech
+copy doubled its pages, run 39392245576 was killed at 192 s, `publish` was skipped and the site
+stayed old.
+
+So a change that multiplies the pages — a language copy, a new family of generated pages, a
+newly composed surface — re-derives the warm rows from a measured run of that change, in the
+same pull request, and raises the step bounds with them. The rows are read per step from
+`gh api repos/korczis/prismatic-majordomus/actions/runs/<id>/jobs`, as below; a row nobody
+re-derived reads the old site, and its bound kills the new one.
+
+#### The re-derivation of 2026-10-20
+
+The Czech copy (ADR 0218) doubled what every phase reads. Six runs of `pages.yml` that passed
+`check` with it, 39438897759 to 39485870985 (2026-10-20T14:24Z to 19:43Z); four of them
+published, so `publish` and `controlled` are read from four.
+
+<div class="overflow-x-auto" tabindex="0">
+
+| row | min | median | p90 | max | budget |
+|---|---|---|---|---|---|
+| `checkout-setup` | 18 | 21 | 22 | 25 | 32 |
+| `build` | 200 | 270 | 294 | 314 | 400 |
+| `check` | 296 | 504 | 509 | 517 | 660 |
+| `publish` | 32 | 54 | 54 | 54 | 70 |
+| `rustdoc` | 172 | 179 | 181 | 183 | 230 |
+| **controlled** | **723** | **1011** | **1011** | **1057** | **1398** |
+
+</div>
+
+
+`fingerprint` and `local-check` are not shown apart from the steps that run them and keep 3 s
+each. The `rustdoc` row is now measured (the job, checkout to upload, plus the download of its
+artifact) and replaces the provisional 90. The cold bound keeps its allowances over the warm
+total: 1398 + 105 + 150 = 1653. With `budget.bound.percent` at 150 the bounds follow: `build`
+11 minutes, `check` 18, `publish` 3, the `rustdoc` job 20.
+
+Not all of the growth is the corpus. Twice the pages explains twice the `check`, and it took
+three times; it does not explain eighteen times the `build` (15 s on the English site, run
+39228746039). The budgets describe what the path costs now, so that a breach means a change;
+why the build costs this is the first entry under "Remaining bottlenecks" below.
+
 #### The re-derivation of 2026-09-12
 
-The budgets written when this path was built were never changed after it, and by 2026-09-12
+The set before the one above, over the English site. The budgets written when this path was built were never changed after it, and by 2026-09-12
 they were failing every deployment. They came from
 `.ai/repo/benchmarks/pages/baseline.macos-arm64.json` — a local macOS arm64 laptop, five
 samples, `check` median 9799 ms — over a site of **417 routes**. The site `check` walks is now
@@ -394,6 +441,10 @@ on every run:
 - `verdict`, `controlled`, `budget` and `over` as outputs of the step, for a reader that is not
   a person.
 
+A row near its step bound is reported the same way and never changes the verdict: a
+`::warning` titled "Pages step near its bound", a NEAR line in the job summary, and `near=` in
+the `pages-slo` line and the step's outputs.
+
 This is the same division the publication probe above already makes, and for the same reason: a
 gate on a deployment that has already happened is a gate that gets waived. What refuses a
 publication that never happened is the `pages-live` gate of `.ai/repo/ci/gates.yaml`, on the
@@ -450,14 +501,15 @@ trade is worth revisiting — with the measurement, not with the preference.
 
 ## Remaining bottlenecks, by expected benefit
 
-1. **`site-check`, 46 s of an 86 s controlled path on a runner** (9.7 s of 10.3 s locally, on
-   a laptop, over a site less than half the size). It is the only phase that grows with the
-   corpus: 41 ms per route at 896 routes, 45 ms per route at 1022. Its remaining cost is the
-   per-record loops that shell out to `jq` once per claim, command, capability, use case and
-   plan record. The same treatment that took the per-page loops from 25 s to under a second
-   applies: one `jq` program per family instead of one process per record. Until that lands,
-   the site adding routes is the thing that moves `controlled`, and the budget above is what
-   will say so.
+1. **`build` and `check` with the Czech copy: 270 and 504 s, median, of a 1011 s controlled
+   path** (2026-10-20). `build` was 15 s over the English site, so doubling the pages made it
+   about eighteen times slower, which the corpus does not explain and a profile of
+   `scripts/site-build` should. `check` was 167-171 s and is now three times that. Before the
+   Czech copy its remaining cost was the per-record loops that shell out to `jq` once per
+   claim, command, capability, use case and plan record; the same treatment that took the
+   per-page loops from 25 s to under a second applies: one `jq` program per family instead of
+   one process per record. Until those land, the pages the site adds are what moves
+   `controlled`, and the budget above is what will say so.
 2. **The Actions queue.** On this repository, with several worktrees pushing at once, runs
    have waited minutes for a runner (`gh run list --json createdAt,startedAt`). Nothing in
    these files shortens that. The escalation, if the controlled path is already comfortably
@@ -480,7 +532,9 @@ trade is worth revisiting — with the measurement, not with the preference.
   justified it, in the file, with their numbers — the block there is the worked example. A
   budget derived on a laptop does not bound a runner, and one derived over a site of half the
   size does not bound this one. `controlled` must stay at least the sum of its phases, and
-  every row the run measures must have a key.
+  every row the run measures must have a key. A raised row raises the bound of the step that
+  runs it in the same commit, to at least `budget.bound.percent` of the row, or
+  `scripts/ci/step-bound-check` refuses it.
 - A new timing row — a `row` or `timed` call in `scripts/pages`, or a `printf 'pages\t…'` in
   the workflow — needs a budget key of the same name in the same commit, or it is summed into
   the total while showing an empty budget cell. `test/cases/97_pages_fast_path.sh` refuses

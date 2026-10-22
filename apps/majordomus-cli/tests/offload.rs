@@ -101,6 +101,8 @@ fi
 cp "$CARGO_TARGET_DIR/debug/majordomus" exe-seen.txt
 printf 'derived from: %s\n' "$(cat a.txt)" > generated.txt
 git rev-list --parents -n 1 HEAD | wc -w | tr -d ' ' > parents.txt
+# the commit the derived files may observe (I3836): the worktree's HEAD, not this input
+printf '%s\n' "${MJ_DERIVE_OBSERVE:-}" > observed.txt
 if [ -f DELETE ]; then rm -f a.txt; fi
 if [ -f FAIL ]; then echo "error: the derive broke"; exit 1; fi
 echo "==> derive: done"
@@ -370,6 +372,15 @@ fn a_derive_comes_back_staged_and_uncommitted() {
         head,
         "something was committed"
     );
+    // the input was a stash snapshot no remote holds; the derive is told to observe HEAD,
+    // which the branch carries, so a derived delivery.json can be checked anywhere (I3836)
+    assert_eq!(
+        std::fs::read_to_string(s.join("observed.txt"))
+            .unwrap()
+            .trim(),
+        head.trim(),
+        "the derive was not told to observe the worktree's HEAD"
+    );
     assert!(
         !staged.lines().any(|l| l == "a.txt"),
         "the authored change was staged for the author"
@@ -491,6 +502,7 @@ fn a_merge_in_progress_travels_with_both_parents() {
     std::fs::write(s.join("a.txt"), "master\n").unwrap();
     c.git(&s, &["commit", "-q", "-am", "master side"]);
     c.git(&s, &["push", "-q", "origin", "master"]);
+    let head = c.git(&s, &["rev-parse", "HEAD"]);
     let mut merge = Command::new("git");
     merge.arg("-C").arg(&s).args(["merge", "-q", "topic"]);
     c.env(&mut merge);
@@ -519,6 +531,13 @@ fn a_merge_in_progress_travels_with_both_parents() {
         "3",
         "the input lost its second parent"
     );
+    assert_eq!(
+        std::fs::read_to_string(s.join("observed.txt"))
+            .unwrap()
+            .trim(),
+        head.trim(),
+        "a merge in progress observes its HEAD, not the commit-tree input"
+    );
     assert!(
         s.join(".git/MERGE_HEAD").exists(),
         "the merge was concluded for the author"
@@ -528,6 +547,36 @@ fn a_merge_in_progress_travels_with_both_parents() {
 /// What would travel wrong is refused before anything travels: an untracked file. What
 /// comes back wrong is refused before anything is applied: a deleted tracked file. A derive
 /// that fails says so with its own exit code and keeps the host's worktree.
+/// A worktree whose branch has no commit has no HEAD for the derived files to observe
+/// (I3836): it is refused before anything is snapshot or travels.
+#[test]
+fn a_branch_with_no_commit_is_refused_before_anything_travels() {
+    let c = Cluster::new(&[("u@lundra", 50)]);
+    let d = c.declaration(&["u@lundra"]);
+    let unborn = c.root.join("unborn");
+    std::fs::create_dir_all(&unborn).unwrap();
+    c.git(&unborn, &["init", "-q"]);
+    let out = c.offload(
+        &[
+            "derive",
+            unborn.to_str().unwrap(),
+            "--declaration",
+            d.to_str().unwrap(),
+        ],
+        None,
+    );
+    assert_eq!(out.status.code(), Some(2), "{}", text(&out.stderr));
+    assert!(
+        text(&out.stderr).contains("no commit yet"),
+        "{}",
+        text(&out.stderr)
+    );
+    assert!(
+        !c.root.join("spool").exists(),
+        "something travelled before the refusal"
+    );
+}
+
 #[test]
 fn what_cannot_be_derived_faithfully_is_refused() {
     let c = Cluster::new(&[("u@lundra", 50)]);
