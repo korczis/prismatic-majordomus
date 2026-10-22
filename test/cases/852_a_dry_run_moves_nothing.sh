@@ -68,7 +68,9 @@ rc=0; out="$(proof 2>&1)" || rc=$?
 case "$out" in *"nothing moved"*) ;; *) echo "    the proof did not say nothing moved: $out"; exit 1 ;; esac
 grep -q "WRITE-OR-UNEXPECTED" "$STATE/log" && { echo "    the cycle asked the forge for a write:"; cat "$STATE/log"; exit 1; }
 grep -Eq "^pr (merge|close|edit)" "$STATE/log" && { echo "    the cycle merged, closed or edited"; exit 1; }
-[ ! -e "$W/.ai/local/state/integration/events.jsonl" ] || { echo "    the cycle wrote the audit trail"; exit 1; }
+for trail in "$W/.git/majordomus/integration/events.jsonl" "$W/.ai/local/state/integration/events.jsonl"; do
+  [ ! -e "$trail" ] || { echo "    the cycle wrote the audit trail ($trail)"; exit 1; }
+done
 # the same proof as a document: complete, equal snapshots, and the cycle really ran
 p="$(proof --format json)" || { echo "    the JSON proof failed"; exit 1; }
 [ "$(printf '%s' "$p" | jq -r '.ok')" = true ] || { echo "    the JSON proof is not ok: $p"; exit 1; }

@@ -10,7 +10,7 @@
 //! ```text
 //! remote  every ref origin serves                         git ls-remote origin
 //! forge   every open pull request: number, head, state and labels   gh pr list
-//! trail   the integration audit trail                     .ai/local/state/integration/events.jsonl
+//! trail   the integration audit trail                     <git-common-dir>/majordomus/integration/events.jsonl
 //! lease   the executor's lease files                      <git-common-dir>/majordomus/locks/
 //! local   every local ref outside the two mirrored namespaces
 //! ```
@@ -207,15 +207,26 @@ pub fn snapshot(root: &Path, base: &str) -> Result<Snapshot, String> {
             "number,headRefOid,state,labels",
         ],
     )?)?;
-    let trail_path = super::state_path(root, super::EVENTS_FILE);
-    let trail = match std::fs::read(&trail_path) {
-        Ok(bytes) => vec![
-            format!("lines {}", bytes.iter().filter(|b| **b == b'\n').count()),
-            format!("sha256 {}", crate::policy::sha256_bytes_hex(&bytes)),
-        ],
-        Err(e) if e.kind() == std::io::ErrorKind::NotFound => vec!["absent".into()],
-        Err(e) => return Err(format!("{}: {e}", trail_path.display())),
-    };
+    // the trail lives in the common git directory; a checkout that still has one under
+    // .ai/local is migrated by the first writer. Both are read, neither is moved here, so a
+    // migration the cycle performed would show as movement.
+    let mut trail = Vec::new();
+    for (place, path) in [
+        ("current", super::common_state_path(root, super::EVENTS_FILE)?),
+        ("legacy", super::state_path(root, super::EVENTS_FILE)),
+    ] {
+        match std::fs::read(&path) {
+            Ok(bytes) => trail.push(format!(
+                "{place} lines {} sha256 {}",
+                bytes.iter().filter(|b| **b == b'\n').count(),
+                crate::policy::sha256_bytes_hex(&bytes)
+            )),
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+                trail.push(format!("{place} absent"))
+            }
+            Err(e) => return Err(format!("{}: {e}", path.display())),
+        }
+    }
     let lock = IntegrationLease::path_for(&common_dir(root)?, base);
     let lock_dir = lock.parent().map(Path::to_path_buf).unwrap_or_default();
     let mut lease: Vec<String> = match std::fs::read_dir(&lock_dir) {

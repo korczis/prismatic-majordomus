@@ -79,7 +79,7 @@ case "$out" in *"attempts"*) echo "    a refusal claims to have been retried: $o
 
 # ---------------------------------------------------------------- 3. the merge is not retried
 echo mergebad > "$STATE/mode"; : > "$STATE/log"
-EV="$W/.ai/local/state/integration/events.jsonl"; rm -f "$EV"
+EV="$W/.git/majordomus/integration/events.jsonl"; rm -f "$EV"
 out="$(prs drain --max 1)" || true
 requests="$(asked 'pr merge')"
 decisions="$(grep -c '"action":"merge_attempted"' "$EV" 2>/dev/null || true)"
