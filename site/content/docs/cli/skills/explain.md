@@ -1,7 +1,7 @@
 +++
 title = "majordomus skills explain"
 description = "One skill in full: each naming test and its evidence, its page, its gates, every invocation"
-weight = 227
+weight = 233
 [extra]
 route = "/docs/cli/skills/explain/"
 command = "majordomus skills explain"

@@ -267,6 +267,23 @@ pub struct BriefDeriveSection {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+/// Whether this machine holds the owner's standing approvals (`autonomy.approvals`, I3900):
+/// a machine that lacks them asks for what every other machine was granted.
+pub struct BriefAutonomySection {
+    /// `undeclared` when the repository declares no standing approval; `unread` when the
+    /// declaration or the user settings could not be read.
+    pub state: BriefSectionState,
+    /// `full`, `partial`, `none`, `undeclared` or `unreadable`, as `autonomy.approvals` says.
+    pub parity: String,
+    /// How many declared approvals this machine holds.
+    pub held: usize,
+    /// How many are declared.
+    pub declared: usize,
+    /// The section in words.
+    pub summary: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 /// The answer of `brief.session`: what surrounds one session, in one line and in a few.
 pub struct SessionBrief {
     /// When it was composed, RFC 3339.
@@ -295,6 +312,9 @@ pub struct SessionBrief {
     pub release: BriefReleaseSection,
     /// The derive queue.
     pub derive: BriefDeriveSection,
+    /// The owner's standing approvals on this machine; absent from a server that predates it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub autonomy: Option<BriefAutonomySection>,
 }
 
 // ---------------------------------------------------------------- the handler
@@ -356,7 +376,7 @@ fn brief(ctx: &Context, input: BriefInput) -> Result<SessionBrief, CapabilityErr
     let release = release_section(ctx);
     let derive = derive_section(&root);
     let interval_minutes = interval_minutes(&root);
-    Ok(compose(
+    let mut b = compose(
         crate::ledger::now(),
         interval_minutes,
         origin,
@@ -366,7 +386,63 @@ fn brief(ctx: &Context, input: BriefInput) -> Result<SessionBrief, CapabilityErr
         integration,
         release,
         derive,
-    ))
+    );
+    with_autonomy(&mut b, autonomy_section(ctx, &root));
+    Ok(b)
+}
+
+/// Whether this machine holds the standing approvals the repository declares.
+fn autonomy_section(ctx: &Context, root: &Path) -> BriefAutonomySection {
+    use crate::autonomy::approvals::{judge, Parity};
+    let p = match judge(&crate::autonomy::Facts::observe(root), &ctx.index.objects) {
+        Ok(p) => p,
+        Err(e) => {
+            return BriefAutonomySection {
+                state: BriefSectionState::Unread,
+                parity: "unreadable".into(),
+                held: 0,
+                declared: 0,
+                summary: format!("the standing approvals could not be judged: {e}"),
+            }
+        }
+    };
+    let held = p.approvals.iter().filter(|a| a.held).count();
+    let declared = p.approvals.len();
+    let state = match p.parity {
+        Parity::Undeclared => BriefSectionState::Undeclared,
+        Parity::Unreadable => BriefSectionState::Unread,
+        _ => BriefSectionState::Read,
+    };
+    let parity = serde_json::to_value(p.parity)
+        .ok()
+        .and_then(|v| v.as_str().map(str::to_string))
+        .unwrap_or_default();
+    let summary = match &p.remedy {
+        Some(r) => format!("{parity}: {}; {r}", p.summary),
+        None => format!("{parity}: {}", p.summary),
+    };
+    BriefAutonomySection {
+        state,
+        parity,
+        held,
+        declared,
+        summary,
+    }
+}
+
+/// `b` with the autonomy section: a line among the lines, and in the one line only when
+/// this machine lacks something, because a machine that holds everything needs no word.
+fn with_autonomy(b: &mut SessionBrief, a: BriefAutonomySection) {
+    if a.state != BriefSectionState::Undeclared {
+        b.lines.push(format!("autonomy     {}", a.summary));
+        if a.parity != "full" {
+            b.line.push_str(&format!(
+                " | approvals {}/{} {}",
+                a.held, a.declared, a.parity
+            ));
+        }
+    }
+    b.autonomy = Some(a);
 }
 
 /// Ask the leaseholder over the route the registry declares for this capability.
@@ -912,6 +988,7 @@ fn compose(
         integration,
         release,
         derive,
+        autonomy: None,
     }
 }
 
@@ -1763,6 +1840,42 @@ mod tests {
     }
 
     // ------------------------------------------------ asking the leaseholder
+
+    fn autonomy(parity: &str, held: usize, state: BriefSectionState) -> BriefAutonomySection {
+        BriefAutonomySection {
+            state,
+            parity: parity.into(),
+            held,
+            declared: 8,
+            summary: format!("{parity}: {held} of 8 standing approval(s) held"),
+        }
+    }
+
+    #[test]
+    fn a_machine_that_lacks_approvals_is_said_in_the_line_and_one_that_holds_them_is_not() {
+        let mut b = a_brief();
+        let line = b.line.clone();
+        with_autonomy(&mut b, autonomy("none", 0, BriefSectionState::Read));
+        assert!(b.line.ends_with(" | approvals 0/8 none"), "{}", b.line);
+        assert!(b
+            .lines
+            .iter()
+            .any(|l| l.starts_with("autonomy     none: 0 of 8")));
+
+        let mut b = a_brief();
+        with_autonomy(&mut b, autonomy("full", 8, BriefSectionState::Read));
+        assert_eq!(b.line, line, "a machine that holds everything adds no word");
+        assert!(b.lines.iter().any(|l| l.starts_with("autonomy     full")));
+
+        let mut b = a_brief();
+        let lines = b.lines.len();
+        with_autonomy(
+            &mut b,
+            autonomy("undeclared", 0, BriefSectionState::Undeclared),
+        );
+        assert_eq!((b.line.as_str(), b.lines.len()), (line.as_str(), lines));
+        assert!(b.autonomy.is_some(), "the section is still answered");
+    }
 
     fn a_brief() -> SessionBrief {
         compose(

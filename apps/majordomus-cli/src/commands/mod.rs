@@ -29,6 +29,7 @@
 //! assert!(matches!(cli.command, Command::Quality(_)));
 //! ```
 
+pub(crate) mod autonomy;
 pub(crate) mod bench;
 pub(crate) mod brief;
 pub(crate) mod capabilities;
@@ -119,6 +120,7 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Economics(args) => economics::run(args),
         Command::Entity(args) => entity::run(args),
         Command::Shell(args) => shell::run(args),
+        Command::Autonomy(args) => autonomy::run(args),
         Command::Pack(args) => pack::run(args),
         Command::Dashboard(args) => dashboard::run(args),
         Command::Brief(args) => brief::run(args),

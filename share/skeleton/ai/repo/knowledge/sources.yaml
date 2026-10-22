@@ -205,6 +205,14 @@ sources:
     pathspec: ':(glob).ai/repo/offload/*.yaml'
     required: false
 
+  # The owner's standing approvals (docs/AUTONOMY.md): what every machine's permission
+  # layer is to hold. Without this class `autonomy approvals` finds nothing to compare.
+  - id: autonomy-declaration
+    kind: autonomy-declaration
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/autonomy/*.yaml'
+    required: false
+
   - id: document
     kind: document
     discovery: vcs

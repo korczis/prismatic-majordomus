@@ -240,6 +240,12 @@
           "route": "/docs/cli/shell/"
         },
         {
+          "about": "How much a coding-agent session in this checkout may do unasked, read from the facts: the client's settings layers, the isolation evidence, the profile they support, the decision for one shell command, and what the permission layer actually cost",
+          "command": "majordomus autonomy",
+          "name": "autonomy",
+          "route": "/docs/cli/autonomy/"
+        },
+        {
           "about": "The tracked tree as token-bounded text shards for a language model's file search: plan what a profile carries and leaves out, build it under tmp/packs/, and verify a written pack against its manifest; never a binary, a worktree, a link or build output",
           "command": "majordomus pack",
           "name": "pack",
@@ -34925,6 +34931,872 @@
       "usage": "majordomus shell check [OPTIONS]"
     },
     {
+      "about": "How much a coding-agent session in this checkout may do unasked, read from the facts: the client's settings layers, the isolation evidence, the profile they support, the decision for one shell command, and what the permission layer actually cost",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [
+        {
+          "about": "The settings layers, the isolation evidence and the profile they support, with the recommended permission mode and what refused every stronger profile",
+          "command": "majordomus autonomy status",
+          "name": "status",
+          "route": "/docs/cli/autonomy/status/"
+        },
+        {
+          "about": "What a static permission rule may do with one shell command: exit 0 when it may run unasked, 10 when the client's own permission layer decides, 11 when a person approves it under every profile",
+          "command": "majordomus autonomy explain",
+          "name": "explain",
+          "route": "/docs/cli/autonomy/explain/"
+        },
+        {
+          "about": "Every refusal the permission layer made in this repository's Claude Code transcripts, by kind, reason and tool, with the rate per thousand tool calls",
+          "command": "majordomus autonomy friction",
+          "name": "friction",
+          "route": "/docs/cli/autonomy/friction/"
+        },
+        {
+          "about": "Whether this machine's Claude Code user settings hold the owner's standing approvals declared in .ai/repo/autonomy/: each approval, the environment lines and the declared settings, with the verdict (full, partial, none, undeclared, unreadable)",
+          "command": "majordomus autonomy approvals",
+          "name": "approvals",
+          "route": "/docs/cli/autonomy/approvals/"
+        },
+        {
+          "about": "Write the declared standing approvals that this machine's ~/.claude/settings.json lacks, keeping every other key and entry and a copy of the file as it was; writes nothing when it already holds them",
+          "command": "majordomus autonomy apply",
+          "name": "apply",
+          "route": "/docs/cli/autonomy/apply/"
+        }
+      ],
+      "command": "majordomus autonomy",
+      "depth": 1,
+      "examples": [],
+      "executable": false,
+      "long_about": null,
+      "name": "autonomy",
+      "parent_route": "/docs/cli/",
+      "path": [
+        "majordomus",
+        "autonomy"
+      ],
+      "route": "/docs/cli/autonomy/",
+      "usage": "majordomus autonomy [OPTIONS] <COMMAND>"
+    },
+    {
+      "about": "The settings layers, the isolation evidence and the profile they support, with the recommended permission mode and what refused every stronger profile",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus autonomy",
+          "name": "autonomy",
+          "route": "/docs/cli/autonomy/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus autonomy status",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "autonomy",
+            "status",
+            "--format",
+            "json"
+          ],
+          "command": "majordomus autonomy status --format json",
+          "description": "The Claude Code settings layers with their default mode, rule counts and hooks (never rule text), the isolation evidence with credential variables named and never valued, and the profile the facts support as `/profile` and `/recommended_mode`, with `/refused` naming the fact that refused every stronger profile. Reads only; always exit 0.",
+          "expectation": "exits 0",
+          "id": "autonomy-status-json",
+          "setup": [],
+          "title": "The autonomy this checkout supports, and why no more"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "status",
+      "parent_route": "/docs/cli/autonomy/",
+      "path": [
+        "majordomus",
+        "autonomy",
+        "status"
+      ],
+      "route": "/docs/cli/autonomy/status/",
+      "usage": "majordomus autonomy status [OPTIONS]"
+    },
+    {
+      "about": "What a static permission rule may do with one shell command: exit 0 when it may run unasked, 10 when the client's own permission layer decides, 11 when a person approves it under every profile",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus autonomy",
+          "name": "autonomy",
+          "route": "/docs/cli/autonomy/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The shell command, quoted as one argument",
+          "name": "command",
+          "positional": true,
+          "possible_values": [],
+          "required": true,
+          "takes_value": true,
+          "value_name": "COMMAND"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The profile to judge it under; the checkout's own when absent",
+          "long": "profile",
+          "name": "profile",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Reads only run unasked; Claude Code's `default` mode",
+              "name": "conservative"
+            },
+            {
+              "help": "Reads and quality operations; `acceptEdits`, the profile of an untrusted checkout",
+              "name": "balanced"
+            },
+            {
+              "help": "Also local history; `auto`, once the person accepted the checkout's trust dialog",
+              "name": "trusted"
+            },
+            {
+              "help": "`bypassPermissions` inside a verified container with no credential in reach",
+              "name": "isolated"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PROFILE"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus autonomy explain",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "autonomy",
+            "explain",
+            "cargo test --lib",
+            "--profile",
+            "trusted"
+          ],
+          "command": "majordomus autonomy explain 'cargo test --lib' --profile trusted",
+          "description": "`cargo test` under the trusted profile is a repository-local quality operation: the decision is allow, exit 0.",
+          "expectation": "exits 0",
+          "id": "autonomy-explain-routine",
+          "setup": [],
+          "title": "A repository-local quality operation runs unasked"
+        },
+        {
+          "argv": [
+            "autonomy",
+            "explain",
+            "git reset --hard",
+            "--profile",
+            "isolated"
+          ],
+          "command": "majordomus autonomy explain 'git reset --hard' --profile isolated",
+          "description": "`git reset --hard` is destructive: under every profile, isolated included, the decision is require_approval, exit 11.",
+          "expectation": "exits 11",
+          "id": "autonomy-explain-boundary",
+          "setup": [],
+          "title": "A history rewrite needs a person even inside isolation"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "explain",
+      "parent_route": "/docs/cli/autonomy/",
+      "path": [
+        "majordomus",
+        "autonomy",
+        "explain"
+      ],
+      "route": "/docs/cli/autonomy/explain/",
+      "usage": "majordomus autonomy explain [OPTIONS] <COMMAND>"
+    },
+    {
+      "about": "Every refusal the permission layer made in this repository's Claude Code transcripts, by kind, reason and tool, with the rate per thousand tool calls",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus autonomy",
+          "name": "autonomy",
+          "route": "/docs/cli/autonomy/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [
+            "7"
+          ],
+          "global": false,
+          "help": "How many days back to count, 1 to 90",
+          "long": "since-days",
+          "name": "since_days",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "SINCE_DAYS"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus autonomy friction",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "autonomy",
+            "friction",
+            "--since-days",
+            "1",
+            "--format",
+            "json"
+          ],
+          "command": "majordomus autonomy friction --since-days 1 --format json",
+          "description": "Every refusal in this repository's Claude Code transcripts of the last day, by kind, by the classifier's reason and by tool, with the rate per thousand tool calls. Counts only; a machine with no transcripts answers zero calls and no rate. Always exit 0.",
+          "expectation": "exits 0",
+          "id": "autonomy-friction-day",
+          "setup": [],
+          "title": "What the permission layer cost today"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "friction",
+      "parent_route": "/docs/cli/autonomy/",
+      "path": [
+        "majordomus",
+        "autonomy",
+        "friction"
+      ],
+      "route": "/docs/cli/autonomy/friction/",
+      "usage": "majordomus autonomy friction [OPTIONS]"
+    },
+    {
+      "about": "Whether this machine's Claude Code user settings hold the owner's standing approvals declared in .ai/repo/autonomy/: each approval, the environment lines and the declared settings, with the verdict (full, partial, none, undeclared, unreadable)",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus autonomy",
+          "name": "autonomy",
+          "route": "/docs/cli/autonomy/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus autonomy approvals",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "autonomy",
+            "approvals",
+            "--format",
+            "json"
+          ],
+          "command": "majordomus autonomy approvals --format json",
+          "description": "Each approval .ai/repo/autonomy/ declares, held or missing in ~/.claude/settings.json, the environment lines and settings, and the verdict as `/parity`; a repository that declares none answers `undeclared`. Only what the trunk's committed copy declares is judged. Reads only; always exit 0.",
+          "expectation": "exits 0",
+          "id": "autonomy-approvals-json",
+          "setup": [],
+          "title": "Whether this machine holds the owner's standing approvals"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "approvals",
+      "parent_route": "/docs/cli/autonomy/",
+      "path": [
+        "majordomus",
+        "autonomy",
+        "approvals"
+      ],
+      "route": "/docs/cli/autonomy/approvals/",
+      "usage": "majordomus autonomy approvals [OPTIONS]"
+    },
+    {
+      "about": "Write the declared standing approvals that this machine's ~/.claude/settings.json lacks, keeping every other key and entry and a copy of the file as it was; writes nothing when it already holds them",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus autonomy",
+          "name": "autonomy",
+          "route": "/docs/cli/autonomy/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus autonomy apply",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "autonomy",
+            "apply"
+          ],
+          "command": "majordomus autonomy apply",
+          "description": "A repository whose trunk declares no standing approval has nothing to write, and the command refuses with exit 10 rather than touch the settings; inside an agent session it refuses the same way. Run by the person at a terminal, it writes only the declared approvals that are missing.",
+          "expectation": "exits 10",
+          "id": "autonomy-apply-undeclared",
+          "setup": [],
+          "title": "Nothing is applied where nothing is declared"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "apply",
+      "parent_route": "/docs/cli/autonomy/",
+      "path": [
+        "majordomus",
+        "autonomy",
+        "apply"
+      ],
+      "route": "/docs/cli/autonomy/apply/",
+      "usage": "majordomus autonomy apply [OPTIONS]"
+    },
+    {
       "about": "The tracked tree as token-bounded text shards for a language model's file search: plan what a profile carries and leaves out, build it under tmp/packs/, and verify a written pack against its manifest; never a binary, a worktree, a link or build output",
       "ancestors": [
         {
@@ -38156,10 +39028,10 @@
     }
   ],
   "counts": {
-    "arguments": 1654,
-    "commands": 240,
-    "examples": 243,
-    "runnable": 210
+    "arguments": 1687,
+    "commands": 246,
+    "examples": 249,
+    "runnable": 215
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "1.0.0-alpha.6",

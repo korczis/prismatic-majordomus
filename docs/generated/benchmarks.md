@@ -9,17 +9,21 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 208 | 175 | 0 | 33 |
-| http | 202 | 175 | 0 | 27 |
-| mcp | 197 | 171 | 0 | 26 |
+| direct | 212 | 179 | 0 | 33 |
+| http | 206 | 179 | 0 | 27 |
+| mcp | 201 | 175 | 0 | 26 |
 | system | 14 | 14 | 0 | 0 |
-| total | 621 | 535 | 0 | 86 |
+| total | 633 | 547 | 0 | 86 |
 
 ## Capabilities
 
 | capability | module | kind | cache | direct | mcp | http | cases |
 |---|---|---|---|---|---|---|---|
 | `artifacts.list` | artifacts | query | process, 8 entries, 5s | covered | covered | covered | `all`, `one-encoding` |
+| `autonomy.approvals` | autonomy | query | — | covered | covered | covered | `default` |
+| `autonomy.explain` | autonomy | query | — | covered | covered | covered | `routine`, `boundary` |
+| `autonomy.friction` | autonomy | query | — | covered | covered | covered | `one-day` |
+| `autonomy.status` | autonomy | query | — | covered | covered | covered | `default` |
 | `brief.session` | brief | query | — | covered | covered | covered | `default` |
 | `capabilities.describe` | capabilities | query | process, 512 entries | covered | covered | covered | `repository-info` |
 | `capabilities.list` | capabilities | query | process, 16 entries | covered | covered | covered | `all`, `queries` |

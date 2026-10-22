@@ -53,6 +53,11 @@ as a rule".
    shows that the new rule is present and every existing guard is still wired.
 6. **Memory follows the rule, not the reverse.** A memory may point at the rule; it is never
    the only record of the approval.
+7. **Every machine, not one.** The user settings belong to one machine. The approval is also
+   added to the repository's declaration, `.ai/repo/autonomy/claude-code.yaml` (I3900), in
+   a pull request, so `majordomus autonomy approvals` names every machine that lacks it and
+   `majordomus autonomy apply` brings that machine level. An approval found in a machine's
+   settings and not in the declaration is declared by the next worker that sees it.
 
 For Claude Code this is `autoMode.allow` (described rules, `"$defaults"` kept first) and
 `permissions.allow` (read-only command prefixes) in `~/.claude/settings.json`, edited with

@@ -57,6 +57,10 @@ pub enum LocalReason {
     /// over HTTP or MCP does not share either, so the same question asked over a socket
     /// would be a different question with the same name, which is worse than not asking it.
     SessionLocal,
+    /// The command writes the person's own configuration on this machine, outside the
+    /// repository. It is the person's act: a projection that offered it over a socket would
+    /// let a session grant itself what only the person grants.
+    WritesUserConfiguration,
     /// The command renders, for a person at a terminal, the value the named capability
     /// answers. The operation is in the API; this is its terminal rendering. The domain
     /// logic is shared — the command and the capability read the same resolution — and
@@ -106,6 +110,7 @@ impl LocalReason {
             LocalReason::ProcessLifecycle => "process_lifecycle",
             LocalReason::WritesRepository => "writes_repository",
             LocalReason::SessionLocal => "session_local",
+            LocalReason::WritesUserConfiguration => "writes_user_configuration",
             LocalReason::RendersCapability(_) => "renders_capability",
         }
     }
@@ -328,6 +333,11 @@ pub const LOCAL: &[LocalCommand] = &[
         command: "worktree",
         reason: LocalReason::Alias("worktree status"),
         note: "runs the status of this checkout when no subcommand follows it, so the two are one operation typed two ways.",
+    },
+    LocalCommand {
+        command: "autonomy apply",
+        reason: LocalReason::WritesUserConfiguration,
+        note: "writes the standing approvals .ai/repo/autonomy/ declares into this machine's ~/.claude/settings.json, keeping every other key and a copy of the file as it was; autonomy.approvals is the reading.",
     },
     // ---------------------------------------------------------------- renderings of a capability
     LocalCommand {

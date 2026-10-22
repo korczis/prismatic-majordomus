@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/majordomus/autonomy-declaration/autonomy-declaration.v1.schema.json",
+  "x-majordomus-schema": "majordomus.autonomy-declaration/v1",
+  "title": "Autonomy declaration",
+  "description": "The owner's standing approvals for one agent client, declared once under .ai/repo/autonomy/ for every machine that works on the repository: each approval with its date and the rule exactly as the client's auto-mode classifier reads it, the environment lines the classifier is told, and the few top-level settings beside them. `majordomus autonomy approvals` compares a machine's user settings with it, and `majordomus autonomy apply` writes what that machine lacks. Nothing secret belongs here.",
+  "x-majordomus-allow": "autonomy-declaration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "kind", "id", "client"],
+  "properties": {
+    "schema": {
+      "description": "The format version of this object. A version the tool does not know is refused, never guessed.",
+      "const": "autonomy-declaration/v1"
+    },
+    "kind": { "const": "autonomy-declaration" },
+    "id": {
+      "description": "The declaration's identity within the kind.",
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$"
+    },
+    "client": {
+      "description": "The client whose permission layer reads it.",
+      "enum": ["claude-code"]
+    },
+    "description": { "type": "string" },
+    "settings": {
+      "description": "Top-level settings beside the approvals. Narrow on purpose: nothing that decides a permission mode, a hook or a guard.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "crossSessionInbound": { "enum": ["accept", "hold", "refuse"] }
+      }
+    },
+    "approvals": {
+      "description": "The approvals, oldest first.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "date", "rule"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+          "date": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" },
+          "rule": {
+            "description": "The rule exactly as the classifier reads it, beginning 'Owner standing approval (<date>' and quoting the owner's words.",
+            "type": "string",
+            "pattern": "^Owner standing approval \\("
+          }
+        }
+      }
+    },
+    "environment": {
+      "description": "The lines the auto-mode classifier is told about the environment.",
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    }
+  }
+}
