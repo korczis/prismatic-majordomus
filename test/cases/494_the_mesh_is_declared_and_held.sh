@@ -79,6 +79,8 @@ id: majordomus
 enabled: $1
 multicast:
   enabled: false
+tailscale:
+  enabled: false
 trust:
   policy: deny_unknown
   allow: $allow
