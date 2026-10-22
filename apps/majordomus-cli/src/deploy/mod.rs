@@ -286,6 +286,11 @@ pub struct Build {
     pub profile: String,
     /// The repository-relative paths the build context carries, and the only ones.
     pub inputs: Vec<String>,
+    /// The path dependencies the package compiles against (`apps/majordomus-core`): in the
+    /// build context and in the builder's dependency stage, never in the runtime image,
+    /// since the running process reads none of them. Absent means the package has none.
+    #[serde(default)]
+    pub crates: Vec<String>,
     /// The directory the canonical site pipeline writes; absent means the image serves no
     /// site.
     #[serde(default)]
@@ -692,11 +697,17 @@ impl Deployment {
         }
 
         // --- a build input that does not resolve makes an image out of nothing
-        for (n, input) in self.build.inputs.iter().enumerate() {
+        let inputs = self.build.inputs.iter().map(|i| ("inputs", i));
+        let crates = self.build.crates.iter().map(|c| ("crates", c));
+        let mut seen = std::collections::BTreeMap::new();
+        for (field, input) in inputs.chain(crates) {
+            let n = seen.entry(field).or_insert(0usize);
+            let at = format!("build.{field}.{n}");
+            *n += 1;
             if input.starts_with('/') || input.split('/').any(|s| s == "..") {
                 out.push(Refusal::new(
                     file,
-                    &format!("build.inputs.{n}"),
+                    &at,
                     input,
                     "not a path inside the repository",
                     "give a repository-relative path with no leading slash and no ..",
@@ -704,7 +715,7 @@ impl Deployment {
             } else if !ws.root.join(input).exists() {
                 out.push(Refusal::new(
                     file,
-                    &format!("build.inputs.{n}"),
+                    &at,
                     input,
                     "a path this repository does not have",
                     "correct the path, or remove it from the build context",

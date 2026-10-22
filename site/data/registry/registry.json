@@ -6,7 +6,7 @@
     "version": "1.0.0-alpha.6"
   },
   "registry": {
-    "fingerprint": "07e087b1e7e1efd9ab517770bdf5dca6447267eeda7b7641b9cc666ee5afc517",
+    "fingerprint": "1f4b60f7b9885bf7c05128bbb2e4b08a841ca8760403d7093517b34687aadc05",
     "summary": {
       "total": 3319,
       "builtin": 208,
@@ -11070,6 +11070,14 @@
                     },
                     "description": "The repository-relative paths the build context carries, and the only ones."
                   },
+                  "crates": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The path dependencies the package compiles against (`apps/majordomus-core`): in the\nbuild context and in the builder's dependency stage, never in the runtime image,\nsince the running process reads none of them. Absent means the package has none.",
+                    "default": []
+                  },
                   "site": {
                     "type": [
                       "string",
@@ -11645,6 +11653,14 @@
                       "type": "string"
                     },
                     "description": "The repository-relative paths the build context carries, and the only ones."
+                  },
+                  "crates": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The path dependencies the package compiles against (`apps/majordomus-core`): in the\nbuild context and in the builder's dependency stage, never in the runtime image,\nsince the running process reads none of them. Absent means the package has none.",
+                    "default": []
                   },
                   "site": {
                     "type": [
@@ -86889,7 +86905,7 @@
     ]
   },
   "index": {
-    "fingerprint": "8d4e39ac8fc7ede3e8c676e3964f1f1d655174d87526ecc0902eeddd3a89a19a",
+    "fingerprint": "16b92b7c315d453476bb7b036f2ee262dd826971b9fa7ce5f6f2b7c1bb0c8ac6",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -93453,7 +93469,7 @@
         "path": ".ai/repo/deployments/majordomus.yaml",
         "section": "deployments",
         "source_class": "deployment",
-        "bytes": 3965
+        "bytes": 4147
       },
       {
         "uri": "majordomus://derive-offload/derive",
