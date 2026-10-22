@@ -162,6 +162,18 @@ Nothing under `.majordomus/` that the migration does not recognise is deleted; i
 reported, and the directory stays until you move it by hand. A `.majordomus/bin/majordomus`
 is a tool installation, not project data, and is left alone. See `CLI.md`.
 
+## Measuring an adoption of a repository that is not ours
+
+The proof plan's first trial adopts a repository that was not created or structured around
+Majordomus, following this page literally from the published installer to an accepted
+finish, and records how long each step took and what got in the way. Which repository may
+be adopted, what each adoption records and publishes, and with whose consent, is declared
+before any candidate is measured, in the workflow
+[`foreign-repository-adoption.md`](../.ai/repo/workflows/foreign-repository-adoption.md).
+Its steps are the ones on this page, each with the place its time is observed; nothing is
+pushed to the adopted repository's remote, and a failed adoption is published like any
+other.
+
 ## Removing Majordomus
 
 Delete `.ai/`, the generated projections, and the two hook lines. For a region
