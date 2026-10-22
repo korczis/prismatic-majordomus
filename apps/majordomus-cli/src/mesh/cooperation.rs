@@ -111,7 +111,9 @@ use super::link::{
 };
 use super::registry::{MeshRegistry, NodeRecord, Presence};
 use super::repository::MeshRepositoryIdentity;
-use super::state::{admission_conflicts, fold, ClaimView, CooperationState, HandoverView};
+use super::state::{
+    admission_conflicts, fold, fold_notices, ClaimView, CooperationState, HandoverView, NoticeView,
+};
 use super::trust::{self, TrustState};
 
 /// The most peers one runtime links to.
@@ -737,6 +739,10 @@ pub enum CooperationError {
     /// Out of bounds.
     #[error("{0}")]
     Invalid(String),
+    /// Valid, and too soon: a bound on how often a session may write this (I2874's one
+    /// notice a minute). Refused rather than invalid, because the same call later succeeds.
+    #[error("{0}")]
+    RateBound(String),
 }
 
 /// One verification check: what was checked, whether it holds, the evidence, and — when
@@ -3942,7 +3948,97 @@ impl Cooperation {
             request.into(),
         )
     }
+    /// Publish a notice of what session `session` of this runtime did (I2874): one line of
+    /// subject, a sentence of text, and the bytes it reclaimed. The subject and text are
+    /// redacted before signing, as a review's free text is. A notice is permanent for its
+    /// stream's life and counts against the node's event quota, so one session publishes at
+    /// most one in [`NOTICE_INTERVAL_SECS`]; a second inside it is refused with the time left.
+    ///
+    /// ```
+    /// # use std::sync::Arc;
+    /// # use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
+    /// # use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};
+    /// # use majordomus_cli::mesh::identity::NodeIdentity;
+    /// # use majordomus_cli::mesh::link::HttpTransport;
+    /// # use majordomus_cli::mesh::registry::MeshRegistry;
+    /// # use majordomus_cli::mesh::repository::of_root_commits;
+    /// # let cooperation = Cooperation::new(CooperationSetup {
+    /// #     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: "0000000000000001".into(),
+    /// #     repository: of_root_commits(&["root".into()]), endpoints: vec!["127.0.0.1:9".into()],
+    /// #     version: "doc".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),
+    /// #     journal_path: None, registry: Arc::new(MeshRegistry::new()),
+    /// #     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),
+    /// # }).unwrap();
+    /// cooperation.publish_notice("s1", "worktree-cleanup".into(),
+    ///     "2 removed: feature/a, fix/b".into(), Some(4096)).unwrap();
+    /// let notices = cooperation.notices(64);
+    /// assert_eq!(notices[0].subject, "worktree-cleanup");
+    /// assert_eq!(notices[0].bytes, Some(4096));
+    /// // a second inside the interval is refused, and says when the next may go
+    /// let again = cooperation.publish_notice("s1", "disk-prune".into(), "x".into(), None);
+    /// assert!(again.unwrap_err().to_string().contains("one notice"));
+    /// // the coordinated state is untouched: the notice is counted as opaque
+    /// assert_eq!(cooperation.state().opaque_events, 1);
+    /// ```
+    pub fn publish_notice(
+        &self,
+        session: &str,
+        subject: String,
+        text: String,
+        bytes: Option<u64>,
+    ) -> Result<Written, CooperationError> {
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_secs())
+            .unwrap_or(0);
+        let own = self.journal.own_stream().clone();
+        // the journal is the memory of the bound, so it holds across a restart of the server
+        let last = self
+            .journal
+            .events()
+            .into_iter()
+            .filter(|e| e.stream == own)
+            .filter(|e| {
+                matches!(e.body(), Some(EventBody::NoticePublished { session: s, .. }) if s == session)
+            })
+            .map(|e| e.at)
+            .max();
+        if let Some(at) = last {
+            let since = now.saturating_sub(at);
+            if since < NOTICE_INTERVAL_SECS {
+                return Err(CooperationError::RateBound(format!(
+                    "session {session} published a notice {since} s ago, and a session publishes \
+                     one notice per {NOTICE_INTERVAL_SECS} s: say a whole run in one, or publish \
+                     again in {} s",
+                    NOTICE_INTERVAL_SECS - since
+                )));
+            }
+        }
+        // a notice has no id of its own: its key is its event's position
+        let written = self.write(
+            EventBody::NoticePublished {
+                session: session.into(),
+                subject: redacted(subject),
+                text: redacted(text),
+                bytes,
+            },
+            String::new(),
+        )?;
+        Ok(Written {
+            key: written.event.clone(),
+            ..written
+        })
+    }
+
+    /// The notices of every stream this runtime holds, the newest `per_runtime` of each.
+    pub fn notices(&self, per_runtime: usize) -> Vec<NoticeView> {
+        fold_notices(&self.journal.events(), per_runtime)
+    }
 }
+
+/// The least time between two notices of one session, in seconds: a notice is permanent
+/// for its stream's life, so a seat says a run in one and never a stream of them.
+pub const NOTICE_INTERVAL_SECS: u64 = 60;
 
 /// Free text of a review as it is signed: every credential shape replaced by the marker that
 /// names it, through the one rule set (`redaction::redact_secrets`), as a handover body is.

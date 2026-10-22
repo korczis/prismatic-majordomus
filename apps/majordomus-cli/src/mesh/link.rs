@@ -60,7 +60,7 @@ pub const SYNC_PATH: &str = "/api/v1/mesh/link/sync";
 
 /// What this executable's links can carry. A peer lacking a feature is told so with
 /// [`RefusalCode::FeatureUnsupported`] when an operation needs it of that peer.
-pub const FEATURES: &[&str] = &["sessions", "claims", "handovers", "reviews"];
+pub const FEATURES: &[&str] = &["sessions", "claims", "handovers", "reviews", "notices"];
 
 /// The largest link message, serialized, in bytes: under the HTTP server's one-megabyte
 /// body bound, so the protocol refuses before the transport has to.

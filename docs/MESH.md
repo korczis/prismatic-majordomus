@@ -212,7 +212,7 @@ Two layers, deliberately separate:
 
 Everything cooperative is an event of the journal: `session_opened`, `session_closed`,
 `claim_acquired`, `claim_released`, `handover_published`, `handover_consumed`,
-`review_requested`, `review_answered`, `review_withdrawn`. A person or an agent reads the journal folded, not raw, through `majordomus monitor`
+`review_requested`, `review_answered`, `review_withdrawn`, `notice_published`. A person or an agent reads the journal folded, not raw, through `majordomus monitor`
 (`docs/MONITOR.md`, ADR 0133). It drops a board session's unchanged re-projection on each
 heartbeat, marks what names the reader, and pages with the full causal key rather than the
 Lamport stamp alone. An event carries its stream, a dense sequence, a
@@ -383,6 +383,25 @@ expired ones: it should name them rather than drop them silently. A request may 
 beside its one-line subject: the evidence, the commands and the question. A runtime older
 than the field reads the request without its body, and holds `review_withdrawn` as an opaque
 event it relays but does not fold.
+
+**Notices.** A session says what it did in a notice (`notice_published`, I2874): a one-line
+`subject` of up to 256 bytes (`worktree-cleanup`, `disk-prune`), a `text` of up to 1 KiB and,
+when it reclaimed space, `bytes`. The subject and text are redacted before signing, and a
+notice out of those bounds is refused at publication and, from a peer, at ingest. Publish one
+with `mesh.notice.publish` (`POST /api/v1/mesh/notices`); read them with `mesh.notices`
+(`GET /api/v1/mesh/notices`, the newest 64 of each runtime) or in `majordomus monitor`.
+
+A notice is permanent for its stream's life. The journal never drops a single event, because a
+stream is contiguous by sequence and compaction removes only whole streams that have been
+silent past expiry and retention, so every notice counts against the node's event quota
+(`MAX_EVENTS_PER_NODE`) for as long as its stream lives. A seat therefore publishes one notice
+per run, naming the whole run, and a session may publish at most one a minute; a second inside
+the minute is refused with the time left.
+
+A notice is never part of the digested state. `fold` counts it as an opaque event, as a runtime
+older than the kind does, and notices are folded on their own (`state::fold_notices`), so
+runtimes of different ages that hold the same events print the same digest. The link card's
+`features` lists `notices` on a runtime that reads them.
 
 **Tombstones.** A dropped stream leaves a tombstone: the sequence it reached, advertised as its
 mark so that a peer still holding the stream does not send it again, and the beat it was last
