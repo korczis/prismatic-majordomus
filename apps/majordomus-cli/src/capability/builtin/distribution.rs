@@ -116,6 +116,10 @@ pub struct BuildReport {
     pub profile: String,
     /// The commit, or `unknown` when it was built outside a work tree.
     pub commit: String,
+    /// The lifecycle contract it implements, [`crate::LIFECYCLE_CONTRACT`]: what a lifecycle
+    /// step compares against the number its own tree declares. An executable that reports
+    /// none was built before the contract existed.
+    pub lifecycle_contract: u32,
     /// The target of the model this build matches, when the model declares one for the triple.
     pub distribution_target: Option<String>,
 }
@@ -311,6 +315,7 @@ fn build(ctx: &Context, _: Empty) -> Result<BuildReport, CapabilityError> {
         target: crate::TARGET.to_string(),
         profile: crate::PROFILE.to_string(),
         commit: crate::COMMIT.to_string(),
+        lifecycle_contract: crate::LIFECYCLE_CONTRACT,
         distribution_target,
     })
 }
@@ -585,7 +590,7 @@ pub fn module() -> ModuleDescriptor {
             capability! {
                 id: "distribution.build",
                 title: "This build",
-                description: "What this executable is: the version of the crate it was built from, the Rust target triple, the profile, and the commit — all compiled in at build time, so an installed binary answers without a repository, a toolchain or git.",
+                description: "What this executable is: the version of the crate it was built from, the Rust target triple, the profile, the commit and the lifecycle contract it implements — all compiled in at build time, so an installed binary answers without a repository, a toolchain or git.",
                 input: Empty,
                 output: BuildReport,
                 stability: Stability::BehaviorallyVerified,
