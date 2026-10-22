@@ -3,9 +3,9 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the product features of this repository's layer, resolved against the registry, the index, the catalogue and the topology; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "1.0.0-alpha.1"
+    "version": "1.0.0-alpha.5"
   },
-  "fingerprint": "2b8fcd6c54d87d7a49329cf382169c41cf5840cd6ac1fd0deaabd913326659ed",
+  "fingerprint": "09224bd40f78b53413f358863cbf20b658260928e652b236cc74cd274c0cc58a",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -6884,7 +6884,7 @@
       "kind_refs": [
         {
           "name": "session",
-          "objects": 90
+          "objects": 91
         },
         {
           "name": "prompt",
@@ -7238,11 +7238,11 @@
       "counts": {
         "capabilities": 20,
         "mcp_tools": 20,
-        "mcp_resources": 100,
+        "mcp_resources": 101,
         "http_routes": 20,
         "cli_paths": 8,
         "commands": 7,
-        "objects": 95,
+        "objects": 96,
         "rules": 8,
         "enforced_rules": 7,
         "docs": 2,
@@ -7464,7 +7464,7 @@
         },
         {
           "name": "knowledge",
-          "objects": 50
+          "objects": 58
         },
         {
           "name": "document",
@@ -7741,11 +7741,11 @@
       "counts": {
         "capabilities": 5,
         "mcp_tools": 5,
-        "mcp_resources": 561,
+        "mcp_resources": 569,
         "http_routes": 5,
         "cli_paths": 3,
         "commands": 6,
-        "objects": 558,
+        "objects": 566,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -12190,7 +12190,7 @@
       "kind_refs": [
         {
           "name": "session",
-          "objects": 90
+          "objects": 91
         }
       ],
       "rule_refs": [
@@ -12423,11 +12423,11 @@
       "counts": {
         "capabilities": 0,
         "mcp_tools": 0,
-        "mcp_resources": 90,
+        "mcp_resources": 91,
         "http_routes": 0,
         "cli_paths": 0,
         "commands": 4,
-        "objects": 90,
+        "objects": 91,
         "rules": 4,
         "enforced_rules": 4,
         "docs": 2,
@@ -12661,7 +12661,7 @@
         },
         {
           "name": "release-record",
-          "objects": 33
+          "objects": 35
         }
       ],
       "rule_refs": [
@@ -12829,11 +12829,11 @@
       "counts": {
         "capabilities": 9,
         "mcp_tools": 9,
-        "mcp_resources": 35,
+        "mcp_resources": 37,
         "http_routes": 9,
         "cli_paths": 5,
         "commands": 4,
-        "objects": 34,
+        "objects": 36,
         "rules": 4,
         "enforced_rules": 4,
         "docs": 3,
@@ -13228,7 +13228,7 @@
         },
         {
           "name": "issue",
-          "objects": 800
+          "objects": 873
         },
         {
           "name": "intent",
@@ -13438,11 +13438,11 @@
       "counts": {
         "capabilities": 26,
         "mcp_tools": 26,
-        "mcp_resources": 969,
+        "mcp_resources": 1042,
         "http_routes": 26,
         "cli_paths": 13,
         "commands": 1,
-        "objects": 966,
+        "objects": 1039,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -17351,14 +17351,14 @@
       },
       {
         "id": "issue",
-        "title": "issue (800)",
+        "title": "issue (873)",
         "features": [
           "planning"
         ]
       },
       {
         "id": "knowledge",
-        "title": "knowledge (50)",
+        "title": "knowledge (58)",
         "features": [
           "knowledge"
         ]
@@ -17407,7 +17407,7 @@
       },
       {
         "id": "release-record",
-        "title": "release-record (33)",
+        "title": "release-record (35)",
         "features": [
           "install"
         ]
@@ -17428,7 +17428,7 @@
       },
       {
         "id": "session",
-        "title": "session (90)",
+        "title": "session (91)",
         "features": [
           "continuity",
           "provenance"
@@ -17481,7 +17481,9 @@
         "episode": "none",
         "episode_evidence": "not a product but a class of tools defined by the file they read (agents.md). A convention has no process and no events; the concrete tool's own entry in this file is what says what it can do.",
         "prompts": "none",
-        "prompts_evidence": "as above: a convention hands nothing to anything."
+        "prompts_evidence": "as above: a convention hands nothing to anything.",
+        "browser": "none",
+        "browser_evidence": "as above: a convention drives nothing; the concrete tool reading AGENTS.md has its own row, and that row says whether it drives a browser."
       }
     },
     {
@@ -17502,7 +17504,9 @@
         "episode": "none",
         "episode_evidence": "no conversation-lifecycle hook is published. Searched 2026-09-11: getbb.app; github.com/get-bb/bb docs/ (25 files), plugins/ (31 plugins), README.md; docs/configuration.md ('Repository worktree hooks') and docs/cli-guide-and-skill.md document only .bb-env-setup.sh / .bb-env-teardown.sh, which fire on environment provisioning and removal. docs/provider-plugin-api.md names an internal system/interaction/lifecycle event stream with no external-command contract. The @get-bb/plugin-sdk surface is rendered in-app and not published, so this is an absence of documentation, not a documented absence. ADR 0024 reached the same conclusion: the agent bb runs keeps the hook.",
         "prompts": "none",
-        "prompts_evidence": "same search, same date, same caveat: nothing published hands a prompt to an external command before the model runs. Because bb runs Claude Code and Codex as child processes, each child's own prompt hook fires underneath it — the coverage is the agent's, never bb's."
+        "prompts_evidence": "same search, same date, same caveat: nothing published hands a prompt to an external command before the model runs. Because bb runs Claude Code and Codex as child processes, each child's own prompt hook fires underneath it — the coverage is the agent's, never bb's.",
+        "browser": "none",
+        "browser_evidence": "bb itself ships no browser bridge (searched 2026-10-21: the same docs/ and plugins/ as above name none). The agent bb runs keeps its own: Claude Code under bb has its bridge when the person enabled it, and that is the agent's row, never bb's."
       }
     },
     {
@@ -17527,7 +17531,11 @@
         "episode": "hooks",
         "episode_evidence": "https://code.claude.com/docs/en/hooks — SessionStart (source: startup, resume, clear, compact, fork), SessionEnd (reason: clear, resume, logout, prompt_input_exit, other), PreCompact and PostCompact (trigger: manual, auto). Verified 2026-09-11. This repository's shims are .claude/hooks/majordomus-session-{start,end,compact}.",
         "prompts": "hook",
-        "prompts_evidence": "https://code.claude.com/docs/en/hooks — UserPromptSubmit, 'When you submit a prompt, before Claude processes it'; the raw text arrives as prompt_text. Verified 2026-09-11. The shim is .claude/hooks/majordomus-capture."
+        "prompts_evidence": "https://code.claude.com/docs/en/hooks — UserPromptSubmit, 'When you submit a prompt, before Claude processes it'; the raw text arrives as prompt_text. Verified 2026-09-11. The shim is .claude/hooks/majordomus-capture.",
+        "browser": "bridge",
+        "browser_evidence": "https://code.claude.com/docs/en/chrome — Claude Code connects to the Claude in Chrome extension with `claude --chrome` or `/chrome`, and the browser tools arrive in the same session as mcp__claude-in-chrome__* beside this repository's server from .mcp.json; `/chrome` → Enabled by default makes it the default, and a project cannot turn it on (CLAUDE_CODE_ENABLE_CFC in a project's settings is ignored). The first enable writes the native messaging host com.anthropic.claude_code_browser_extension. Verified 2026-10-21; docs/MCP.md, Claude in the browser.",
+        "browser_host": "com.anthropic.claude_code_browser_extension",
+        "browser_setup": "in Claude Code: /chrome, choose Enabled by default, sign the extension in to the organization /status names, then restart Chrome"
       }
     },
     {
@@ -17541,7 +17549,9 @@
         "episode": "hooks",
         "episode_evidence": "https://learn.chatgpt.com/docs/hooks (canonical; developers.openai.com/codex/hooks 308-redirects to it) — SessionStart (source: startup, resume, clear, compact), SessionEnd, PreCompact and PostCompact; PreCompact can block with continue:false. Configured in ~/.codex/hooks.json or an inline [hooks] table in .codex/config.toml. Verified 2026-09-11. The `notify` key is NOT this: https://learn.chatgpt.com/docs/config-file/config-advanced says it fires 'whenever Codex emits supported events (currently only agent-turn-complete)' — after a turn, never at a session boundary.",
         "prompts": "hook",
-        "prompts_evidence": "https://learn.chatgpt.com/docs/hooks — UserPromptSubmit, 'Runs when a user submits a prompt, before model invocation, and can block the prompt'; the raw text arrives as `prompt` (not `prompt_text`, as Claude Code sends it). Verified 2026-09-11."
+        "prompts_evidence": "https://learn.chatgpt.com/docs/hooks — UserPromptSubmit, 'Runs when a user submits a prompt, before model invocation, and can block the prompt'; the raw text arrives as `prompt` (not `prompt_text`, as Claude Code sends it). Verified 2026-09-11.",
+        "browser": "none",
+        "browser_evidence": "not verified either way, and declared none until it is: on 2026-10-21 OpenAI's ChatGPT for Chrome extension registered a native messaging host on the owner's machine (com.openai.codexextension), but no vendor page was read saying its tools arrive in a Codex CLI session beside a project MCP server. Searching learn.chatgpt.com for that is the open re-verification."
       }
     },
     {
@@ -17561,7 +17571,9 @@
         "episode": "hooks",
         "episode_evidence": "https://github.com/google-gemini/gemini-cli/blob/main/docs/hooks/reference.md and https://geminicli.com/docs/hooks/ — SessionStart (source: startup, resume, clear), SessionEnd (reason: exit, clear, logout, prompt_input_exit, other), PreCompress (trigger: auto, manual). Configured as a hooks block in settings.json. Tracker github.com/google-gemini/gemini-cli/issues/9070 'Comprehensive Hooking System' is closed, 34 of 34. Verified 2026-09-11. Two caveats an adapter must carry: the CLI does not wait for SessionEnd, and PreCompress is advisory and cannot block.",
         "prompts": "hook",
-        "prompts_evidence": "https://github.com/google-gemini/gemini-cli/blob/main/docs/hooks/reference.md — BeforeAgent, 'Fires after a user submits a prompt, but before the agent begins planning'; the raw text arrives as `prompt`. BeforeModel fires later, on the assembled request. Verified 2026-09-11."
+        "prompts_evidence": "https://github.com/google-gemini/gemini-cli/blob/main/docs/hooks/reference.md — BeforeAgent, 'Fires after a user submits a prompt, but before the agent begins planning'; the raw text arrives as `prompt`. BeforeModel fires later, on the assembled request. Verified 2026-09-11.",
+        "browser": "none",
+        "browser_evidence": "not searched: no Gemini CLI browser bridge was looked for on 2026-10-21, when this axis was added for Claude Code. Declared none so that no surface implies one; the search is the open re-verification."
       }
     },
     {
@@ -17574,7 +17586,9 @@
         "episode": "connection",
         "episode_evidence": "ADR 0103 and this repository's own implementation: the episode is opened by episodes.attach over the shared MCP server, kept alive by the client's own traffic, and closed on disconnect or after the idle timeout. Proven end to end over the real transport by test/cases/200_generic_mcp_episode.sh.",
         "prompts": "none",
-        "prompts_evidence": "no vendor documentation is involved: a worker with no convention of its own exposes no event, and the MCP connection cannot stand in. An MCP server receives initialize, tool calls and notifications; the person's prompt is never among them, in any version of the protocol (modelcontextprotocol.io/specification). Declared none rather than left blank so that no surface can imply otherwise."
+        "prompts_evidence": "no vendor documentation is involved: a worker with no convention of its own exposes no event, and the MCP connection cannot stand in. An MCP server receives initialize, tool calls and notifications; the person's prompt is never among them, in any version of the protocol (modelcontextprotocol.io/specification). Declared none rather than left blank so that no surface can imply otherwise.",
+        "browser": "none",
+        "browser_evidence": "no vendor documentation is involved: a worker with no convention of its own is known only through the MCP connection, and an MCP server cannot drive the client's browser (modelcontextprotocol.io/specification: a server is handed tool calls, it makes none on the client's behalf). Declared none rather than left blank."
       }
     }
   ],
@@ -18372,17 +18386,17 @@
     }
   ],
   "telemetry": {
-    "capabilities": 3160,
+    "capabilities": 3262,
     "builtin": 206,
-    "declarative": 2954,
+    "declarative": 3056,
     "modules": 58,
     "mcp_tools": 196,
-    "mcp_resources": 3009,
+    "mcp_resources": 3111,
     "http_routes": 201,
     "cli_commands": 209,
     "shell_commands": 30,
     "kinds": 34,
-    "objects": 2954,
+    "objects": 3056,
     "by_kind": {
       "adr": 158,
       "application": 5,
@@ -18401,21 +18415,21 @@
       "gap": 4,
       "implementation": 52,
       "intent": 33,
-      "issue": 800,
-      "knowledge": 50,
+      "issue": 873,
+      "knowledge": 58,
       "mesh-declaration": 1,
       "milestone": 100,
       "moment": 38,
       "policy": 1,
       "profile": 4,
       "prompt": 5,
-      "release-record": 33,
+      "release-record": 35,
       "rule": 189,
       "scope": 1,
-      "session": 90,
+      "session": 91,
       "skill": 8,
       "taxonomy": 10,
-      "test": 568,
+      "test": 586,
       "use-case": 49,
       "workspace": 1
     },
