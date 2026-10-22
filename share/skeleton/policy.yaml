@@ -37,6 +37,17 @@ intent:
     - id: maintenance
       description: Upkeep no issue covers
 
+# Where this repository keeps its tests, and how one test is run again (ADR 0121). Absent is
+# the tool's own layout — test/cases/*.sh run by test/run.sh, apps/majordomus-cli/tests/*.rs
+# run by cargo — so an intent's `test` criterion naming a test anywhere else names nothing
+# until it is declared here. One root per runner kind; {name} or {path} stand for the test.
+# evidence:
+#   tests:
+#     - runner: suite
+#       root: tests
+#       suffix: _test.sh
+#       run: [sh, "{path}"]
+
 handover:
   required_sections: [Objective, Current State, Next Action]
   retention_max_files: 200

@@ -335,6 +335,51 @@
         }
       }
     },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Where this repository keeps its tests and how one is run again (ADR 0121). Absent is the tool's own layout: test/cases/*.sh run by test/run.sh and apps/majordomus-cli/tests/*.rs run by cargo, so a repository that declares nothing keeps every test identity it had.",
+      "properties": {
+        "tests": {
+          "type": "array",
+          "description": "One root per runner kind. A test under root whose file name ends in suffix is the test <runner>:<name>, name being the file name without the suffix; run is the argv that runs that one test again, {name} or {path} standing for the test.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "runner",
+              "root",
+              "suffix",
+              "run"
+            ],
+            "properties": {
+              "runner": {
+                "type": "string",
+                "enum": [
+                  "suite",
+                  "crate"
+                ]
+              },
+              "root": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9._][A-Za-z0-9._/-]*$"
+              },
+              "suffix": {
+                "type": "string",
+                "pattern": "^[^/]+$"
+              },
+              "run": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "projections": {
       "type": "array",
       "items": {

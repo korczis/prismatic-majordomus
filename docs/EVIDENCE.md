@@ -306,6 +306,31 @@ the terminal prints `current (proven)` or `current (inputs_unchanged)`, and the 
 reads *current · proven* or *current · inputs unchanged* in different colours. A reader who
 needs proof at the revision reads `proof`, never `met`.
 
+## Where the tests are
+
+A test is named by its path, and the path becomes a test identity through the repository's
+declared layout (ADR 0121): the policy's `evidence.tests`, one root per runner kind, each with
+the suffix its test files end in and the argv that runs one test again.
+
+```yaml
+evidence:
+  tests:
+    - runner: suite
+      root: tests
+      suffix: _test.sh
+      run: [sh, "{path}"]
+```
+
+Here `tests/greet_test.sh` is the test `suite:greet`, its source is that file, and every surface
+prints `sh tests/greet_test.sh` as its reproduce line. A repository that declares nothing has the
+tool's own layout — `test/cases/*.sh` run by `test/run.sh`, `apps/majordomus-cli/tests/*.rs` run by
+cargo — so nothing changes where nothing was declared. A prefixed reference (`suite:<name>`,
+`crate:<binary>`) is resolved by its prefix before any root. `intent validate` refuses a path no
+root covers, naming the layout in force and the key to declare; `evidence record` records only
+rows whose test lies under a declared root, and refuses the whole recording when the declaration
+itself is refused (a runner named twice, a root that climbs out, no argv). One flat root per runner
+is the limit today: two directories of one kind, or a nested layout, cannot be expressed yet.
+
 ## The ledger
 
 `.ai/repo/evidence/ledger.json`, tracked, one entry per test: the latest execution.

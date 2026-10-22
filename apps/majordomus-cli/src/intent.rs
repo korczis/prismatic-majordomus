@@ -49,7 +49,7 @@ use serde_json::Value;
 
 use crate::evidence::{
     self, compare, freshness, Comparison, EvidenceReport, Ledger, Presented, ProofState, Recorded,
-    TestId, TreeState,
+    TestId, TestLayout, TreeState,
 };
 use crate::index::Index;
 use crate::intent_plan::{coverage, IntentCoverage, IntentOutline};
@@ -587,6 +587,38 @@ pub trait EvidenceLookup {
     /// # }
     /// ```
     fn test(&self, id: &TestId, scope: &[String]) -> TestStanding;
+    /// Where this repository keeps its tests (ADR 0121); the tool's own layout unless the
+    /// lookup knows a declared one.
+    ///
+    /// ```
+    /// use majordomus_cli::intent::EvidenceLookup;
+    /// # fn demo(ev: &dyn EvidenceLookup) {
+    /// // the test a criterion names, through the layout this repository declares
+    /// let id = ev.layout().of("test/cases/00_x.sh");
+    /// let reproduce = id.as_ref().and_then(|id| ev.layout().reproduce(id));
+    /// assert!(reproduce.is_some() || id.is_none());
+    /// # }
+    /// ```
+    fn layout(&self) -> &TestLayout {
+        TestLayout::builtin()
+    }
+    /// Why the declared layout was refused, when it was: a criterion naming a test cannot be
+    /// judged against a layout the policy got wrong, and saying so beats a silent default.
+    /// `None` for a lookup that knows no declaration, as the example of
+    /// [`EvidenceLookup::layout`] shows.
+    ///
+    /// ```
+    /// use majordomus_cli::intent::EvidenceLookup;
+    /// # fn demo(ev: &dyn EvidenceLookup) {
+    /// // a criterion naming a test is judged only against a layout that was accepted
+    /// if let Some(why) = ev.layout_refusal() {
+    ///     assert!(!why.is_empty(), "a refusal says why");
+    /// }
+    /// # }
+    /// ```
+    fn layout_refusal(&self) -> Option<&str> {
+        None
+    }
     /// What a claim's evidence says, judged as [`IntentEvidenceState::judged`] judges it,
     /// with the claim report's verdict behind it; `None` when no such claim is declared —
     /// which is a refusal, not an unproven claim.
@@ -650,6 +682,8 @@ pub struct RepositoryEvidence<'a> {
     index: &'a Index,
     root: PathBuf,
     ledger: Ledger,
+    layout: TestLayout,
+    layout_refusal: Option<String>,
     claims: std::cell::OnceCell<EvidenceReport>,
     comparisons: std::cell::RefCell<BTreeMap<String, Comparison>>,
 }
@@ -671,10 +705,15 @@ impl<'a> RepositoryEvidence<'a> {
     pub fn load(index: &'a Index) -> crate::error::Result<RepositoryEvidence<'a>> {
         let root = PathBuf::from(&index.repository.root);
         let ledger = Ledger::load(&root)?;
+        let declared = TestLayout::of_repository(&root);
+        let layout = declared.clone().unwrap_or(TestLayout::builtin().clone());
+        let layout_refusal = declared.err();
         Ok(RepositoryEvidence {
             index,
             root,
             ledger,
+            layout,
+            layout_refusal,
             claims: std::cell::OnceCell::new(),
             comparisons: std::cell::RefCell::new(BTreeMap::new()),
         })
@@ -718,7 +757,7 @@ impl<'a> RepositoryEvidence<'a> {
         changed: Option<&BTreeSet<String>>,
     ) -> Option<Vec<String>> {
         let test = id.as_string();
-        let mut inputs = vec![id.source()];
+        let mut inputs = vec![self.layout.source(id).unwrap_or_default()];
         let mut declared = !scope.is_empty();
         let mut push = |p: &String| {
             if !inputs.contains(p) {
@@ -748,8 +787,16 @@ impl<'a> RepositoryEvidence<'a> {
 const PLAN_RECORDS: &str = ".ai/repo/project";
 
 impl EvidenceLookup for RepositoryEvidence<'_> {
+    fn layout(&self) -> &TestLayout {
+        &self.layout
+    }
+
+    fn layout_refusal(&self) -> Option<&str> {
+        self.layout_refusal.as_deref()
+    }
+
     fn test(&self, id: &TestId, scope: &[String]) -> TestStanding {
-        let source = id.source();
+        let source = self.layout.source(id).unwrap_or_default();
         let present = self.root().join(&source).is_file();
         let execution = self.ledger.latest(&id.as_string());
         let Some(e) = execution else {
@@ -1090,24 +1137,36 @@ fn criterion_of(
         IntentEvidenceState::Unresolved
     } else {
         match c.evidence.as_str() {
-            "test" => match test_id(r) {
-                None => unresolved(
+            "test" => match (ev.layout_refusal(), ev.layout().of(r)) {
+                (Some(why), _) => unresolved(
+                    findings,
+                    format!("`{r}` cannot be judged: the policy's test layout is refused: {why}"),
+                ),
+                (None, None) => unresolved(
                     findings,
                     format!(
-                        "`{r}` names no test: give a path under test/cases/ or \
-                         apps/majordomus-cli/tests/, or `suite:<case>` / `crate:<binary>`"
+                        "`{r}` names no test of this repository's layout ({}); declare where \
+                         its tests are under evidence.tests in the policy, or name \
+                         `suite:<case>` / `crate:<binary>` (ADR 0121)",
+                        ev.layout()
+                            .roots
+                            .iter()
+                            .map(|t| format!("{}: {}/*{}", t.runner.prefix(), t.root, t.suffix))
+                            .collect::<Vec<_>>()
+                            .join(", ")
                     ),
                 ),
-                Some(id) => {
+                (None, Some(id)) => {
                     let standing = ev.test(&id, scope);
+                    let source = ev.layout().source(&id).unwrap_or_default();
                     if standing.present {
-                        reproduce = Some(id.reproduce());
+                        reproduce = ev.layout().reproduce(&id);
                         proof = standing.proof;
                         standing.state
                     } else {
                         unresolved(
                             findings,
-                            format!("the test `{r}` is not in the tree ({})", id.source()),
+                            format!("the test `{r}` is not in the tree ({source})"),
                         )
                     }
                 }
@@ -1178,18 +1237,6 @@ fn within(path: &str, scope: &str) -> bool {
         || path
             .strip_prefix(scope)
             .is_some_and(|rest| rest.starts_with('/'))
-}
-
-fn test_id(r: &str) -> Option<TestId> {
-    TestId::of(r).or_else(|| {
-        let (prefix, name) = r.split_once(':')?;
-        let runner = match prefix {
-            "suite" => evidence::Runner::Suite,
-            "crate" => evidence::Runner::Crate,
-            _ => return None,
-        };
-        TestId::named(runner, name)
-    })
 }
 
 fn governance_resolves(g: &str, ev: &dyn EvidenceLookup) -> bool {
@@ -2428,6 +2475,90 @@ mod tests {
     /// longer hidden behind it: with every criterion current and the milestone ACTIVE, the
     /// stage reads `executing` and the verdict reads `satisfied`. The stage expectation is
     /// unchanged; the verdict is what this test now adds.
+    /// ADR 0121: a criterion naming a test is resolved through the layout the lookup
+    /// declares — met under a declared root, with the declared reproduce line; refused,
+    /// naming the layout and the key, where no root covers it; and not judged at all when
+    /// the declaration itself was refused.
+    #[test]
+    fn a_criterion_resolves_its_test_through_the_declared_layout() {
+        struct Adopter {
+            table: Table,
+            layout: TestLayout,
+            refusal: Option<String>,
+        }
+        impl EvidenceLookup for Adopter {
+            fn test(&self, id: &TestId, scope: &[String]) -> TestStanding {
+                self.table.test(id, scope)
+            }
+            fn layout(&self) -> &TestLayout {
+                &self.layout
+            }
+            fn layout_refusal(&self) -> Option<&str> {
+                self.refusal.as_deref()
+            }
+            fn claim(&self, id: &str) -> Option<ClaimStanding> {
+                self.table.claim(id)
+            }
+            fn deployment(&self, id: &str) -> bool {
+                self.table.deployment(id)
+            }
+            fn object(&self, kind: &str, identity: &str) -> bool {
+                self.table.object(kind, identity)
+            }
+            fn file(&self, path: &str) -> bool {
+                self.table.file(path)
+            }
+        }
+        let layout = TestLayout::declared(vec![crate::evidence::TestRoot::new(
+            evidence::Runner::Suite,
+            "tests",
+            "_test.sh",
+            &["sh", "{path}"],
+        )])
+        .unwrap();
+        let p = plan(vec![milestone("m", "ACTIVE")], vec![]);
+        const ADOPTED: (&str, &str, &str) = ("greets", "test", "tests/greet_test.sh");
+        let ev = Adopter {
+            table: Table::new().with_test("suite:greet", IntentEvidenceState::Current),
+            layout: layout.clone(),
+            refusal: None,
+        };
+        let i = Intents::derive(vec![record("x", &["m"], &[ADOPTED])], &p, &ev);
+        assert_eq!(i.intents[0].met, 1, "{:?}", i.findings);
+        let c = &i.intents[0].satisfaction[0];
+        assert_eq!(c.reproduce.as_deref(), Some("sh tests/greet_test.sh"));
+
+        // the tool's own layout does not hold the adopter's test, and says what to declare
+        let tools = Table::new().with_test("suite:greet", IntentEvidenceState::Current);
+        let i = Intents::derive(vec![record("x", &["m"], &[ADOPTED])], &p, &tools);
+        let f = i
+            .findings
+            .iter()
+            .find(|f| f.code == "unresolved_evidence_ref")
+            .unwrap();
+        assert!(f.message.contains("evidence.tests"), "{}", f.message);
+        assert!(
+            f.message.contains("test/cases/*.sh"),
+            "names the layout in force: {}",
+            f.message
+        );
+
+        // a refused declaration judges nothing, and says why
+        let refused = Adopter {
+            table: Table::new(),
+            layout,
+            refusal: Some("evidence.tests names the suite runner twice".into()),
+        };
+        let i = Intents::derive(vec![record("x", &["m"], &[ADOPTED])], &p, &refused);
+        let f = i
+            .findings
+            .iter()
+            .find(|f| f.code == "unresolved_evidence_ref")
+            .unwrap();
+        assert!(f.message.contains("twice"), "{}", f.message);
+        assert_eq!(i.intents[0].met, 0);
+    }
+
     #[test]
     fn evidence_satisfies_nothing_while_a_milestone_is_open() {
         let p = plan(vec![milestone("m", "ACTIVE")], vec![]);
@@ -3095,16 +3226,19 @@ mod tests {
     #[test]
     fn a_named_test_is_a_suite_case_or_a_crate_test_and_no_other_runner() {
         assert_eq!(
-            test_id("suite:1_x"),
+            TestLayout::builtin().of("suite:1_x"),
             TestId::named(evidence::Runner::Suite, "1_x")
         );
         assert_eq!(
-            test_id("crate:intent"),
+            TestLayout::builtin().of("crate:intent"),
             TestId::named(evidence::Runner::Crate, "intent")
         );
-        assert_ne!(test_id("crate:intent"), test_id("suite:intent"));
-        assert_eq!(test_id("pytest:intent"), None);
-        assert_eq!(test_id("no-prefix-at-all"), None);
+        assert_ne!(
+            TestLayout::builtin().of("crate:intent"),
+            TestLayout::builtin().of("suite:intent")
+        );
+        assert_eq!(TestLayout::builtin().of("pytest:intent"), None);
+        assert_eq!(TestLayout::builtin().of("no-prefix-at-all"), None);
 
         // and a criterion naming a crate test is met by that test's current run
         let p = plan(vec![milestone("m", "DONE")], vec![]);

@@ -168,6 +168,29 @@ pub struct Policy {
     /// policy predates the block starts work exactly as it did (ADR 0111).
     #[serde(default)]
     pub intent: IntentPolicy,
+    /// `evidence:` — where this repository keeps its tests and how one is run again (ADR
+    /// 0121). Absent is the tool's own layout, so a repository that declares nothing keeps
+    /// every test identity it had.
+    #[serde(default)]
+    pub evidence: EvidencePolicy,
+}
+
+/// The `evidence:` section: the declared test layout.
+///
+/// ```
+/// use majordomus_cli::policy::EvidencePolicy;
+/// assert!(EvidencePolicy::default().tests.is_empty(), "absent: the built-in layout");
+/// let p: EvidencePolicy = serde_json::from_str(
+///     r#"{"tests": [{"runner": "suite", "root": "tests", "suffix": "_test.sh", "run": ["sh", "{path}"]}]}"#,
+/// )
+/// .unwrap();
+/// assert_eq!(p.tests[0].root, "tests");
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Default, Deserialize, Serialize, JsonSchema)]
+pub struct EvidencePolicy {
+    /// One root per runner kind; empty means the built-in layout.
+    #[serde(default)]
+    pub tests: Vec<crate::evidence::TestRoot>,
 }
 
 /// How strictly a start is held to its binding.

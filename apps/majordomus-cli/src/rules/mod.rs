@@ -1353,6 +1353,8 @@ pub fn report(index: &Index, ledger: &Ledger) -> RulesReport {
     let mut coverage = Coverage::default();
     let mut blocking_states = Vec::new();
 
+    let layout = crate::evidence::TestLayout::of_repository(&root)
+        .unwrap_or(crate::evidence::TestLayout::builtin().clone());
     for def in defs {
         let validator = def.enforcement.validator.as_ref().map(|v| {
             let defined_in = validator_defined_in(&root, v);
@@ -1367,7 +1369,8 @@ pub fn report(index: &Index, ledger: &Ledger) -> RulesReport {
         let mut tests = Vec::new();
         for path in &def.enforcement.tests {
             let present = root.join(path).exists();
-            let id = TestId::of(path);
+            // ADR 0121: a rule names a test where this repository keeps its tests
+            let id = layout.of(path).filter(|_| !path.contains(':'));
             let unit_module = unit_test_module(&root, path);
             let gates = if unit_module {
                 unit_test_gates(&gate_commands)

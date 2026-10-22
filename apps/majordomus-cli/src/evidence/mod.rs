@@ -230,6 +230,20 @@ impl Runner {
             Runner::Crate => "crate",
         }
     }
+
+    /// The runner a prefix names, or `None`: the one inverse of [`Runner::prefix`], so a
+    /// declaration and a reference spell a runner the same way.
+    ///
+    /// ```
+    /// use majordomus_cli::evidence::Runner;
+    /// assert_eq!(Runner::of_prefix("crate"), Some(Runner::Crate));
+    /// assert_eq!(Runner::of_prefix("command"), None);
+    /// ```
+    pub fn of_prefix(prefix: &str) -> Option<Runner> {
+        [Runner::Suite, Runner::Crate]
+            .into_iter()
+            .find(|r| r.prefix() == prefix)
+    }
 }
 
 /// What a run said about one test.
@@ -374,6 +388,236 @@ impl Origin {
     }
 }
 
+/// One declared place a runner's tests live (ADR 0121): a test under `root` whose file name
+/// ends in `suffix` is the test `<runner>:<name>`, `name` being the file name without the
+/// suffix, and `run` is the argv that runs that one test again, with `{name}` or `{path}` in
+/// place of the test.
+///
+/// ```
+/// use majordomus_cli::evidence::{Runner, TestRoot};
+/// let r = TestRoot::new(Runner::Suite, "tests", "_test.sh", &["sh", "{path}"]);
+/// assert_eq!(r.root, "tests");
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct TestRoot {
+    /// Which runner kind the tests under the root belong to.
+    pub runner: Runner,
+    /// The repository-relative directory, without a trailing separator.
+    pub root: String,
+    /// What a test file's name ends in; the rest of the name is the test's.
+    pub suffix: String,
+    /// The argv that runs one test again; `{name}` and `{path}` stand for the test.
+    pub run: Vec<String>,
+}
+
+impl TestRoot {
+    /// A root from its parts, as a declaration or the built-in default spells it.
+    ///
+    /// ```
+    /// use majordomus_cli::evidence::{Runner, TestRoot};
+    /// let r = TestRoot::new(Runner::Crate, "apps/majordomus-cli/tests", ".rs", &["cargo", "test", "--test", "{name}"]);
+    /// assert_eq!(r.run.len(), 4);
+    /// ```
+    pub fn new(runner: Runner, root: &str, suffix: &str, run: &[&str]) -> TestRoot {
+        TestRoot {
+            runner,
+            root: root.trim_end_matches('/').to_string(),
+            suffix: suffix.to_string(),
+            run: run.iter().map(|a| a.to_string()).collect(),
+        }
+    }
+}
+
+/// Where this repository keeps its tests and how one is run again: one root per runner kind
+/// (ADR 0121). The built-in layout is the tool's own — `test/cases/*.sh` run by `test/run.sh`,
+/// `apps/majordomus-cli/tests/*.rs` run by cargo — and a repository that declares nothing
+/// keeps it, so nothing changes where nothing was declared. Every path-to-test mapping and
+/// every reproduce line goes through one layout; a prefixed reference (`suite:<name>`,
+/// `crate:<binary>`) names its runner and is resolved by that prefix before any root.
+///
+/// ```
+/// use majordomus_cli::evidence::{Runner, TestId, TestLayout, TestRoot};
+/// let builtin = TestLayout::builtin();
+/// assert_eq!(builtin.of("test/cases/07_scope.sh").unwrap().as_string(), "suite:07_scope");
+/// assert!(builtin.of("tests/greet_test.sh").is_none(), "not the tool's layout");
+///
+/// let adopter = TestLayout::declared(vec![
+///     TestRoot::new(Runner::Suite, "tests", "_test.sh", &["sh", "{path}"]),
+/// ]).unwrap();
+/// let id = adopter.of("tests/greet_test.sh").unwrap();
+/// assert_eq!(id.as_string(), "suite:greet");
+/// assert_eq!(adopter.source(&id).as_deref(), Some("tests/greet_test.sh"));
+/// assert_eq!(adopter.reproduce(&id).as_deref(), Some("sh tests/greet_test.sh"));
+/// // a runner the declaration does not name has no root here
+/// assert!(adopter.of("apps/majordomus-cli/tests/why.rs").is_none());
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct TestLayout {
+    /// The roots, one per runner kind.
+    pub roots: Vec<TestRoot>,
+}
+
+impl TestLayout {
+    /// The tool's own layout: what every repository that declares nothing gets.
+    ///
+    /// ```
+    /// use majordomus_cli::evidence::TestLayout;
+    /// assert_eq!(TestLayout::builtin().roots.len(), 2);
+    /// ```
+    pub fn builtin() -> &'static TestLayout {
+        static BUILTIN: std::sync::OnceLock<TestLayout> = std::sync::OnceLock::new();
+        BUILTIN.get_or_init(|| TestLayout {
+            roots: vec![
+                TestRoot::new(
+                    Runner::Suite,
+                    "test/cases",
+                    ".sh",
+                    &["bash", "test/run.sh", "{name}"],
+                ),
+                TestRoot::new(
+                    Runner::Crate,
+                    "apps/majordomus-cli/tests",
+                    ".rs",
+                    &["cargo", "test", "--test", "{name}"],
+                ),
+            ],
+        })
+    }
+
+    /// A declared layout, refused when it names a runner twice, gives an empty root or
+    /// suffix, a root that is absolute or climbs out, or no argv to run a test with — each
+    /// refusal says which.
+    ///
+    /// ```
+    /// use majordomus_cli::evidence::{Runner, TestLayout, TestRoot};
+    /// let ok = TestRoot::new(Runner::Suite, "tests", "_test.sh", &["sh", "{path}"]);
+    /// assert!(TestLayout::declared(vec![ok.clone(), ok.clone()]).unwrap_err().contains("twice"));
+    /// assert!(TestLayout::declared(vec![TestRoot { root: "../x".into(), ..ok.clone() }]).is_err());
+    /// assert!(TestLayout::declared(vec![TestRoot { run: vec![], ..ok.clone() }]).is_err());
+    /// assert!(TestLayout::declared(vec![TestRoot { suffix: String::new(), ..ok }]).is_err());
+    /// ```
+    pub fn declared(roots: Vec<TestRoot>) -> Result<TestLayout, String> {
+        let mut seen = Vec::new();
+        for r in &roots {
+            let what = format!(
+                "evidence.tests: the {} root `{}`",
+                r.runner.prefix(),
+                r.root
+            );
+            if seen.contains(&r.runner) {
+                return Err(format!(
+                    "evidence.tests names the {} runner twice; one root per runner",
+                    r.runner.prefix()
+                ));
+            }
+            seen.push(r.runner);
+            if r.root.is_empty()
+                || r.root.starts_with('/')
+                || r.root.split('/').any(|s| s == ".." || s.is_empty())
+            {
+                return Err(format!("{what} is not a repository-relative directory"));
+            }
+            if r.suffix.is_empty() || r.suffix.contains('/') {
+                return Err(format!("{what} has no file-name suffix"));
+            }
+            if r.run.is_empty() || r.run[0].is_empty() {
+                return Err(format!("{what} gives no argv to run a test with"));
+            }
+        }
+        Ok(TestLayout { roots })
+    }
+
+    /// The root a runner has here, if any.
+    fn root_of(&self, runner: Runner) -> Option<&TestRoot> {
+        self.roots.iter().find(|r| r.runner == runner)
+    }
+
+    /// The test a path or a prefixed reference names under this layout, or `None`.
+    ///
+    /// ```
+    /// use majordomus_cli::evidence::TestLayout;
+    /// let l = TestLayout::builtin();
+    /// assert_eq!(l.of("suite:07_scope").unwrap().as_string(), "suite:07_scope");
+    /// assert_eq!(l.of("'test/cases/07_scope.sh'").unwrap().as_string(), "suite:07_scope");
+    /// assert!(l.of("test/cases/sub/x.sh").is_none(), "a name is not a path");
+    /// assert!(l.of("elsewhere:x").is_none());
+    /// ```
+    pub fn of(&self, reference: &str) -> Option<TestId> {
+        let r = reference.trim().trim_matches(|c| c == '\'' || c == '"');
+        if let Some((prefix, name)) = r.split_once(':') {
+            let runner = Runner::of_prefix(prefix)?;
+            return TestId::named(runner, name);
+        }
+        self.roots.iter().find_map(|root| {
+            r.strip_prefix(&root.root)?
+                .strip_prefix('/')?
+                .strip_suffix(&root.suffix)
+                .and_then(|name| TestId::named(root.runner, name))
+        })
+    }
+
+    /// The repository-relative source of a test under this layout; `None` when its runner
+    /// has no root here.
+    ///
+    /// ```
+    /// use majordomus_cli::evidence::{Runner, TestId, TestLayout};
+    /// let id = TestId::named(Runner::Crate, "why").unwrap();
+    /// assert_eq!(TestLayout::builtin().source(&id).as_deref(), Some("apps/majordomus-cli/tests/why.rs"));
+    /// ```
+    pub fn source(&self, id: &TestId) -> Option<String> {
+        self.root_of(id.runner)
+            .map(|r| format!("{}/{}{}", r.root, id.name, r.suffix))
+    }
+
+    /// The command that runs this one test again, from its root's `run`; `None` when its
+    /// runner has no root here.
+    ///
+    /// ```
+    /// use majordomus_cli::evidence::{Runner, TestId, TestLayout};
+    /// let id = TestId::named(Runner::Suite, "84_x").unwrap();
+    /// assert_eq!(TestLayout::builtin().reproduce(&id).as_deref(), Some("bash test/run.sh 84_x"));
+    /// ```
+    pub fn reproduce(&self, id: &TestId) -> Option<String> {
+        let root = self.root_of(id.runner)?;
+        let path = format!("{}/{}{}", root.root, id.name, root.suffix);
+        Some(
+            root.run
+                .iter()
+                .map(|a| a.replace("{name}", &id.name).replace("{path}", &path))
+                .collect::<Vec<_>>()
+                .join(" "),
+        )
+    }
+
+    /// The layout the repository at `root` declares in its policy, or the built-in one when
+    /// it declares none; a declaration that is refused is the error, never a silent default.
+    ///
+    /// ```
+    /// use majordomus_cli::evidence::TestLayout;
+    /// let dir = std::env::temp_dir().join("mj-no-such-repository-for-layout");
+    /// assert_eq!(TestLayout::of_repository(&dir).unwrap(), *TestLayout::builtin());
+    /// ```
+    pub fn of_repository(root: &std::path::Path) -> Result<TestLayout, String> {
+        // a checkout that is no layer has the tool's layout; a layer whose policy cannot be
+        // read is an error, never the default — a failed read is not an empty answer
+        let Ok(repo) = crate::repository::Repository::open(root) else {
+            return Ok(TestLayout::builtin().clone());
+        };
+        let declared = crate::policy::LoadedPolicy::load(&repo)
+            .map_err(|e| {
+                format!("the policy that would declare evidence.tests is unreadable: {e}")
+            })?
+            .policy
+            .evidence
+            .tests;
+        if declared.is_empty() {
+            Ok(TestLayout::builtin().clone())
+        } else {
+            TestLayout::declared(declared)
+        }
+    }
+}
+
 /// The stable identity of a test: the runner that owns it and the name that runner knows
 /// it by.
 ///
@@ -449,13 +693,12 @@ impl TestId {
     /// ```
     pub fn of(path: &str) -> Option<TestId> {
         let path = path.trim().trim_matches(|c| c == '\'' || c == '"');
-        if let Some(rest) = path.strip_prefix("test/cases/") {
-            return TestId::named(Runner::Suite, rest.strip_suffix(".sh")?);
+        // a path only: the prefixed form is TestLayout::of's, and callers that took a path
+        // here never resolved `suite:<name>` through it
+        if path.contains(':') {
+            return None;
         }
-        if let Some(rest) = path.strip_prefix("apps/majordomus-cli/tests/") {
-            return TestId::named(Runner::Crate, rest.strip_suffix(".rs")?);
-        }
-        None
+        TestLayout::builtin().of(path)
     }
 
     /// A test named directly, validated by the same rule [`TestId::of`] applies to a path.
@@ -499,10 +742,7 @@ impl TestId {
     /// );
     /// ```
     pub fn source(&self) -> String {
-        match self.runner {
-            Runner::Suite => format!("test/cases/{}.sh", self.name),
-            Runner::Crate => format!("apps/majordomus-cli/tests/{}.rs", self.name),
-        }
+        TestLayout::builtin().source(self).unwrap_or_default()
     }
 
     /// The exact command that runs this one test, for a reader who wants the proof again
@@ -523,10 +763,7 @@ impl TestId {
     /// );
     /// ```
     pub fn reproduce(&self) -> String {
-        match self.runner {
-            Runner::Suite => format!("bash test/run.sh {}", self.name),
-            Runner::Crate => format!("cargo test --test {}", self.name),
-        }
+        TestLayout::builtin().reproduce(self).unwrap_or_default()
     }
 }
 
@@ -1810,6 +2047,156 @@ fn unsupported(status: &str, state: ProofState, detail: Option<&str>) -> Option<
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// ADR 0121: a declared layout maps a path to a test and back, and its reproduce line is
+    /// the declared argv; a prefixed reference resolves by its prefix; a runner the
+    /// declaration does not name has no root; and every malformed declaration is refused,
+    /// saying which part.
+    #[test]
+    fn a_declared_layout_resolves_reproduces_and_refuses_what_it_must() {
+        let root =
+            |runner, r: &str, suffix: &str, run: &[&str]| TestRoot::new(runner, r, suffix, run);
+        let l = TestLayout::declared(vec![root(
+            Runner::Suite,
+            "tests/",
+            "_test.sh",
+            &["sh", "{path}", "--name={name}"],
+        )])
+        .unwrap();
+        let id = l.of(" 'tests/greet_test.sh' ").unwrap();
+        assert_eq!((id.runner, id.name.as_str()), (Runner::Suite, "greet"));
+        assert_eq!(l.source(&id).as_deref(), Some("tests/greet_test.sh"));
+        assert_eq!(
+            l.reproduce(&id).as_deref(),
+            Some("sh tests/greet_test.sh --name=greet")
+        );
+        assert_eq!(l.of("suite:other").unwrap().as_string(), "suite:other");
+        assert_eq!(l.of("crate:why").unwrap().as_string(), "crate:why");
+        let crate_id = l.of("crate:why").unwrap();
+        assert_eq!(l.source(&crate_id), None, "no crate root here");
+        assert_eq!(l.reproduce(&crate_id), None);
+        assert!(
+            l.of("command:x").is_none(),
+            "a prefix the runners do not know"
+        );
+        assert!(
+            l.of("tests/sub/a_test.sh").is_none(),
+            "a name is not a path"
+        );
+        assert!(l.of("tests/greet.sh").is_none(), "not the declared suffix");
+        assert!(l.of("elsewhere/greet_test.sh").is_none());
+        assert!(
+            l.of("testsx/greet_test.sh").is_none(),
+            "a root is a directory, not a prefix"
+        );
+        assert!(
+            TestId::of("suite:07_scope").is_none(),
+            "TestId::of takes a path only"
+        );
+
+        let ok = root(Runner::Suite, "tests", "_test.sh", &["sh", "{path}"]);
+        for (bad, why) in [
+            (vec![ok.clone(), ok.clone()], "twice"),
+            (
+                vec![TestRoot {
+                    root: String::new(),
+                    ..ok.clone()
+                }],
+                "repository-relative",
+            ),
+            (
+                vec![TestRoot {
+                    root: "/abs".into(),
+                    ..ok.clone()
+                }],
+                "repository-relative",
+            ),
+            (
+                vec![TestRoot {
+                    root: "a/../b".into(),
+                    ..ok.clone()
+                }],
+                "repository-relative",
+            ),
+            (
+                vec![TestRoot {
+                    suffix: String::new(),
+                    ..ok.clone()
+                }],
+                "suffix",
+            ),
+            (
+                vec![TestRoot {
+                    suffix: "x/y".into(),
+                    ..ok.clone()
+                }],
+                "suffix",
+            ),
+            (
+                vec![TestRoot {
+                    run: vec![],
+                    ..ok.clone()
+                }],
+                "argv",
+            ),
+            (
+                vec![TestRoot {
+                    run: vec![String::new()],
+                    ..ok.clone()
+                }],
+                "argv",
+            ),
+        ] {
+            let err = TestLayout::declared(bad).unwrap_err();
+            assert!(err.contains(why), "{why}: {err}");
+        }
+        assert_eq!(Runner::of_prefix("suite"), Some(Runner::Suite));
+        assert_eq!(Runner::of_prefix("deployment"), None);
+    }
+
+    /// The layout of a repository is its policy's declaration, the tool's own layout when it
+    /// declares none, and the refusal when the declaration is wrong — never a silent default.
+    #[test]
+    fn a_repositorys_layout_is_its_declaration_or_the_tools_own() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        std::fs::create_dir_all(root.join(".ai/repo")).unwrap();
+        std::fs::copy(
+            concat!(
+                env!("CARGO_MANIFEST_DIR"),
+                "/../../share/skeleton/ai/manifest.yaml"
+            ),
+            root.join(".ai/manifest.yaml"),
+        )
+        .unwrap();
+        let policy = root.join(".ai/repo/policy.yaml");
+        std::fs::write(&policy, "version: 1\n").unwrap();
+        assert_eq!(
+            TestLayout::of_repository(root).unwrap(),
+            *TestLayout::builtin()
+        );
+        std::fs::write(
+            &policy,
+            "version: 1\nevidence:\n  tests:\n    - runner: suite\n      root: tests\n      suffix: _test.sh\n      run: [sh, \"{path}\"]\n",
+        )
+        .unwrap();
+        let declared = TestLayout::of_repository(root).unwrap();
+        assert_eq!(declared.roots.len(), 1);
+        assert_eq!(declared.roots[0].root, "tests");
+        std::fs::write(
+            &policy,
+            "version: 1\nevidence:\n  tests:\n    - runner: suite\n      root: a\n      suffix: .sh\n      run: [x]\n    - runner: suite\n      root: b\n      suffix: .sh\n      run: [x]\n",
+        )
+        .unwrap();
+        assert!(TestLayout::of_repository(root)
+            .unwrap_err()
+            .contains("twice"));
+        // a policy that cannot be read is the error, never the tool's own layout
+        std::fs::write(&policy, "version: 1\nevidence: [unclosed\n").unwrap();
+        assert!(TestLayout::of_repository(root)
+            .unwrap_err()
+            .contains("unreadable"));
+    }
 
     #[test]
     fn a_case_path_and_a_crate_path_each_name_their_runner() {
