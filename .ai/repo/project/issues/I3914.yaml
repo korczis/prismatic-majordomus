@@ -10,10 +10,7 @@ why: "On 2026-10-22 every landing attempt from a session was refused as Merge Wi
 current_state: "Rule a-standing-approval-is-written-where-permissions-are-read v1 says the worker writes ~/.claude/settings.json; rule the-cooperation-model-is-the-owners-word v2:107-110 says a session hands the owner the text; I2790 is not on master and its non_scope forbids writing settings."
 desired_state: "One rule says the owner writes an approval; the repository lists every standing approval; status names the missing ones per machine; apply, run interactively by the owner, adds them and changes nothing else, and refuses inside a session."
 scope:
-  - ".ai/repo/autonomy"
-  - "apps/majordomus-cli/src/autonomy"
-  - ".ai/repo/rules/project/a-standing-approval-is-written-where-permissions-are-read.v2.md"
-  - "docs/AUTONOMY.md"
+  - ".ai/repo/rules/project/a-standing-approval-is-written-where-permissions-are-read.v1.md"
   - ".ai/repo/project/issues/I3914.yaml"
 acceptance_criteria:
   - "Each declared approval names its date, the owner's words and its bounds"

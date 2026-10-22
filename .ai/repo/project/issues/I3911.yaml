@@ -10,10 +10,11 @@ why: "On 2026-10-22 only the clone on machine 641bdb94 had the five verified mer
 current_state: "drain.rs keeps the trail per clone (events.jsonl) and refuses --continuous below five verified merges since the last verification_failed (drain.rs:1396-1423); the lease is an flock plus an exclusive mesh claim whose scope falls back to integration//master when the clone has no observation (exclusive.rs:289-293)."
 desired_state: "Two clones on two machines read the same trail and the same halt from origin; an expired lease is taken over by another clone after its expiry and not before; the old holder, waking, finds its renewal refused and lands nothing."
 scope:
+  - "apps/majordomus-cli/tests/integration_executor.rs"
+  - "apps/majordomus-cli/tests/integration_trail.rs"
   - "apps/majordomus-cli/src/integration/drain.rs"
   - "apps/majordomus-cli/src/integration/exclusive.rs"
   - "apps/majordomus-cli/src/integration/metrics.rs"
-  - "apps/majordomus-cli/tests/integration_drain.rs"
   - "docs/INTEGRATION.md"
   - "docs/INTEGRATION_ROLLOUT.md"
   - ".ai/repo/project/issues/I3911.yaml"
@@ -24,7 +25,7 @@ acceptance_criteria:
 validation:
   - "bin/majordomus plan validate"
   - "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- integration::"
-  - "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test integration_drain"
+  - "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test integration_executor"
 evidence_required:
   - "state_on_origin"
 depends_on: []

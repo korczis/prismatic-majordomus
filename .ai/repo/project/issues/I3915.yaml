@@ -10,10 +10,9 @@ why: "Trains 3a, 3b and 4 were composed by shell scripts under ~/.cache/mj-e7 an
 current_state: "train.rs reads stacked pull requests and refs/prep only; prs compose was planned in ADR 0167 and never landed; train member order lives in session caches."
 desired_state: "A seat composes a train with one command from its manifest; another seat on another machine composes the same pre-derive tree from the same manifest."
 scope:
+  - "apps/majordomus-cli/tests/integration_executor.rs"
   - "apps/majordomus-cli/src/integration/train.rs"
   - "apps/majordomus-cli/src/commands/prs.rs"
-  - ".ai/repo/integration/trains"
-  - "apps/majordomus-cli/tests/integration_drain.rs"
   - "docs/INTEGRATION.md"
   - ".ai/repo/project/issues/I3915.yaml"
 acceptance_criteria:

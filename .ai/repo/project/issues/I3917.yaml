@@ -10,10 +10,9 @@ why: "On 2026-10-22 an outside reviewer read 384 blocked against 228 ready and 5
 current_state: "index.html:154-158 counts plan.issues by plan.statuses.issue from site/data/generated/plan.json; rule homepage-tells-a-declared-story v1:57-62 requires the counts in the hero's product view; homepage-check product (:904-916) fails when they differ from the plan."
 desired_state: "The hero shows no plan counts; /roadmap shows them; rule v2 and homepage-check agree, and a case refuses plan counts back on the hero."
 scope:
+  - ".ai/repo/rules/project/homepage-tells-a-declared-story.v1.md"
   - "site/templates/index.html"
-  - ".ai/repo/rules/project/homepage-tells-a-declared-story.v2.md"
   - "scripts/ci/homepage-check"
-  - "test/cases"
   - ".ai/repo/project/issues/I3917.yaml"
 acceptance_criteria:
   - "The built homepage hero carries no data-issues count"

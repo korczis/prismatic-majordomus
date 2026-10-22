@@ -10,11 +10,11 @@ why: "On 2026-10-22 the guarded lander was a 60 s loop inside session e7; a mach
 current_state: "Measured on master 2034d4a3f0b at 2026-10-22T14:00Z: prs drain --dry-run answers idle, nothing is ready, 13 pull requests need master brought in first (#1755 #1233 #1238 #1757 #1118 #1301 #1841 #1413 #1754 #1197 #1207 #1839 #1099); #1840 (train 4) is waiting_for_checks. The label policy hold has existed since 2026-10-04 (classify.rs:114), but the label was missing from the repository until 2026-10-22. Rule v2:74 and ADR 0167:110-111 allow --admin --merge, rule v2:92 fast-forwards, ADR 0167:135 speaks of merge-commit parents: no record decides the landing mode."
 desired_state: "A drain lands a green train by a fast-forward and verifies that master equals the decided head; a master that moved refuses the push and the drain decides again; rule v3 and ADR 0167 name prs drain, the fast-forward and no --admin."
 scope:
+  - "apps/majordomus-cli/tests/integration_executor.rs"
+  - ".ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md"
   - "apps/majordomus-cli/src/integration/drain.rs"
   - "apps/majordomus-cli/src/integration/classify.rs"
   - "apps/majordomus-cli/src/integration/train.rs"
-  - "apps/majordomus-cli/tests/integration_drain.rs"
-  - ".ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v3.md"
   - ".ai/repo/adrs/0167-work-moves-through-seats-on-the-mesh-and-lands-in-combined-tops.md"
   - "docs/INTEGRATION.md"
   - ".ai/repo/project/issues/I3910.yaml"
@@ -27,7 +27,7 @@ acceptance_criteria:
 validation:
   - "bin/majordomus plan validate"
   - "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- integration::"
-  - "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test integration_drain"
+  - "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test integration_executor"
 evidence_required:
   - "one_executor"
 depends_on: []

@@ -58085,11 +58085,11 @@
         "I3915"
       ],
       "scope": [
+        "apps/majordomus-cli/tests/integration_executor.rs",
+        ".ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md",
         "apps/majordomus-cli/src/integration/drain.rs",
         "apps/majordomus-cli/src/integration/classify.rs",
         "apps/majordomus-cli/src/integration/train.rs",
-        "apps/majordomus-cli/tests/integration_drain.rs",
-        ".ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v3.md",
         ".ai/repo/adrs/0167-work-moves-through-seats-on-the-mesh-and-lands-in-combined-tops.md",
         "docs/INTEGRATION.md",
         ".ai/repo/project/issues/I3910.yaml"
@@ -58109,7 +58109,7 @@
       "validation": [
         "bin/majordomus plan validate",
         "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- integration::",
-        "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test integration_drain"
+        "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test integration_executor"
       ],
       "evidence_required": [
         "one_executor"
@@ -58137,10 +58137,11 @@
         "I3913"
       ],
       "scope": [
+        "apps/majordomus-cli/tests/integration_executor.rs",
+        "apps/majordomus-cli/tests/integration_trail.rs",
         "apps/majordomus-cli/src/integration/drain.rs",
         "apps/majordomus-cli/src/integration/exclusive.rs",
         "apps/majordomus-cli/src/integration/metrics.rs",
-        "apps/majordomus-cli/tests/integration_drain.rs",
         "docs/INTEGRATION.md",
         "docs/INTEGRATION_ROLLOUT.md",
         ".ai/repo/project/issues/I3911.yaml"
@@ -58158,7 +58159,7 @@
       "validation": [
         "bin/majordomus plan validate",
         "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- integration::",
-        "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test integration_drain"
+        "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test integration_executor"
       ],
       "evidence_required": [
         "state_on_origin"
@@ -58247,10 +58248,10 @@
       ],
       "dependents": [],
       "scope": [
+        "apps/majordomus-cli/tests/integration_executor.rs",
         "apps/majordomus-cli/src/integration",
         "apps/majordomus-cli/src/commands/prs.rs",
         "apps/majordomus-cli/src/cli.rs",
-        "apps/majordomus-cli/tests/integration_drain.rs",
         "docs/INTEGRATION.md",
         ".ai/repo/project/issues/I3913.yaml"
       ],
@@ -58267,7 +58268,7 @@
       "validation": [
         "bin/majordomus plan validate",
         "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- integration::",
-        "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test integration_drain"
+        "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test integration_executor"
       ],
       "evidence_required": [
         "survives_a_restart"
@@ -58297,10 +58298,7 @@
       ],
       "dependents": [],
       "scope": [
-        ".ai/repo/autonomy",
-        "apps/majordomus-cli/src/autonomy",
-        ".ai/repo/rules/project/a-standing-approval-is-written-where-permissions-are-read.v2.md",
-        "docs/AUTONOMY.md",
+        ".ai/repo/rules/project/a-standing-approval-is-written-where-permissions-are-read.v1.md",
         ".ai/repo/project/issues/I3914.yaml"
       ],
       "non_scope": [],
@@ -58346,10 +58344,9 @@
       ],
       "dependents": [],
       "scope": [
+        "apps/majordomus-cli/tests/integration_executor.rs",
         "apps/majordomus-cli/src/integration/train.rs",
         "apps/majordomus-cli/src/commands/prs.rs",
-        ".ai/repo/integration/trains",
-        "apps/majordomus-cli/tests/integration_drain.rs",
         "docs/INTEGRATION.md",
         ".ai/repo/project/issues/I3915.yaml"
       ],
@@ -58439,10 +58436,9 @@
       "blocked_by": [],
       "dependents": [],
       "scope": [
+        ".ai/repo/rules/project/homepage-tells-a-declared-story.v1.md",
         "site/templates/index.html",
-        ".ai/repo/rules/project/homepage-tells-a-declared-story.v2.md",
         "scripts/ci/homepage-check",
-        "test/cases",
         ".ai/repo/project/issues/I3917.yaml"
       ],
       "non_scope": [],
@@ -64221,12 +64217,6 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I1504",
-      "message": "shares test/cases with I3917; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I1504",
       "message": "shares test/cases with I3919; they may not run concurrently"
     },
     {
@@ -66033,12 +66023,6 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I1980",
-      "message": "shares test/cases with I3917; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I1980",
       "message": "shares test/cases with I3919; they may not run concurrently"
     },
     {
@@ -66651,12 +66635,6 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I1990",
-      "message": "shares test/cases with I3917; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I1990",
       "message": "shares test/cases with I3919; they may not run concurrently"
     },
     {
@@ -67186,12 +67164,6 @@
       "code": "scope_conflict",
       "subject": "I1997",
       "message": "shares test/cases with I3916; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I1997",
-      "message": "shares test/cases with I3917; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -68079,12 +68051,6 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I1999",
-      "message": "shares test/cases with I3917; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I1999",
       "message": "shares test/cases with I3919; they may not run concurrently"
     },
     {
@@ -68601,12 +68567,6 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2059",
-      "message": "shares test/cases with I3917; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I2059",
       "message": "shares test/cases with I3919; they may not run concurrently"
     },
     {
@@ -69105,12 +69065,6 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2114",
-      "message": "shares test/cases with I3917; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I2114",
       "message": "shares test/cases with I3919; they may not run concurrently"
     },
     {
@@ -69550,12 +69504,6 @@
       "code": "scope_conflict",
       "subject": "I2115",
       "message": "shares test/cases with I3916; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I2115",
-      "message": "shares test/cases/95_executable_reference.sh with I3917; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -70323,12 +70271,6 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2410",
-      "message": "shares test/cases with I3917; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I2410",
       "message": "shares test/cases with I3919; they may not run concurrently"
     },
     {
@@ -70846,12 +70788,6 @@
       "code": "scope_conflict",
       "subject": "I2411",
       "message": "shares test/cases with I3916; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I2411",
-      "message": "shares test/cases with I3917; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -71398,12 +71334,6 @@
       "code": "scope_conflict",
       "subject": "I2412",
       "message": "shares test/cases with I3916; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I2412",
-      "message": "shares test/cases with I3917; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -73143,12 +73073,6 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2714",
-      "message": "shares test/cases with I3917; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I2714",
       "message": "shares test/cases with I3919; they may not run concurrently"
     },
     {
@@ -73600,12 +73524,6 @@
       "code": "scope_conflict",
       "subject": "I2717",
       "message": "shares test/cases with I3916; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I2717",
-      "message": "shares test/cases with I3917; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -74187,12 +74105,6 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2720",
-      "message": "shares test/cases with I3917; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I2720",
       "message": "shares test/cases with I3919; they may not run concurrently"
     },
     {
@@ -74727,12 +74639,6 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2723",
-      "message": "shares test/cases with I3917; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I2723",
       "message": "shares test/cases with I3919; they may not run concurrently"
     },
     {
@@ -75022,12 +74928,6 @@
       "code": "scope_conflict",
       "subject": "I2747",
       "message": "shares site/config.toml with I3829; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I2747",
-      "message": "shares test/cases/3107_one_highlighter.sh with I3917; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -75388,12 +75288,6 @@
       "code": "scope_conflict",
       "subject": "I2826",
       "message": "shares apps/majordomus-cli/src/capability/builtin/release.rs with I3833; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I2826",
-      "message": "shares test/cases/3341_a_release_carries_its_own_changelog.sh with I3917; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -75964,12 +75858,6 @@
       "code": "scope_conflict",
       "subject": "I2844",
       "message": "shares lib/project.awk with I3763; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I2844",
-      "message": "shares test/cases/3244_a_milestone_title_fits_on_github.sh with I3917; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -77019,7 +76907,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2901",
-      "message": "shares test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh with I3917; they may not run concurrently"
+      "message": "shares .ai/repo/project with I3917; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -87231,7 +87119,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I3004",
-      "message": "shares test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh with I3917; they may not run concurrently"
+      "message": "shares .ai/repo/project with I3917; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -88497,7 +88385,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I3009",
-      "message": "shares test/cases with I3917; they may not run concurrently"
+      "message": "shares site with I3917; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -88719,7 +88607,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I3013",
-      "message": "shares test/cases/3402_a_records_only_plan_skips_the_evidence_job.sh with I3917; they may not run concurrently"
+      "message": "shares site with I3917; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -89312,12 +89200,6 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
-      "subject": "I3060",
-      "message": "shares test/cases/3460_a_session_end_hook_fits_its_budget.sh with I3917; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
       "subject": "I3070",
       "message": "shares .ai/repo/project/intents/a-version-follows-every-session.yaml with I3110; they may not run concurrently"
     },
@@ -89428,12 +89310,6 @@
       "code": "scope_conflict",
       "subject": "I3070",
       "message": "shares apps/majordomus-cli/src/capability/builtin/release.rs with I3833; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I3070",
-      "message": "shares test/cases/3470_the_release_follows_the_work.sh with I3917; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -89672,12 +89548,6 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
-      "subject": "I3095",
-      "message": "shares test/cases/3590_the_site_is_derived_in_every_language.sh with I3917; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
       "subject": "I3110",
       "message": "shares .ai/repo/project/intents with I3113; they may not run concurrently"
     },
@@ -89770,12 +89640,6 @@
       "code": "scope_conflict",
       "subject": "I3110",
       "message": "shares scripts/generate-site-data with I3841; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I3110",
-      "message": "shares test/cases/125_rule_proof.sh with I3917; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -89974,12 +89838,6 @@
       "code": "scope_conflict",
       "subject": "I3116",
       "message": "shares scripts/generate-site-data with I3841; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I3116",
-      "message": "shares test/cases/10_site_data.sh with I3917; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -90214,12 +90072,6 @@
       "code": "scope_conflict",
       "subject": "I3123",
       "message": "shares docs/SCHEMAS.md with I3820; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I3123",
-      "message": "shares test/cases/06_finish.sh with I3917; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -90530,12 +90382,6 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
-      "subject": "I3155",
-      "message": "shares test/cases/365_new_shell_is_refused.sh with I3917; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
       "subject": "I3156",
       "message": "shares docs/COMMANDS.md with I3820; they may not run concurrently"
     },
@@ -90562,12 +90408,6 @@
       "code": "scope_conflict",
       "subject": "I3160",
       "message": "shares .ai/repo/ci/gates.yaml with I3823; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I3160",
-      "message": "shares test/cases/821_a_session_moves_between_machines.sh with I3917; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -90728,12 +90568,6 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
-      "subject": "I3163",
-      "message": "shares test/cases/710_briefing_names_the_candidates.sh with I3917; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
       "subject": "I3166",
       "message": "shares apps/majordomus-cli/src/devcontext with I3171; they may not run concurrently"
     },
@@ -90808,12 +90642,6 @@
       "code": "scope_conflict",
       "subject": "I3167",
       "message": "shares share/allow with I3820; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I3167",
-      "message": "shares test/cases/340_a_brief_is_kept_as_received.sh with I3917; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -91586,12 +91414,6 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
-      "subject": "I3287",
-      "message": "shares test/cases/170_provider_lifecycle_declared.sh with I3917; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
       "subject": "I3298",
       "message": "shares apps/majordomus-cli/src/economics with I3351; they may not run concurrently"
     },
@@ -91730,12 +91552,6 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
-      "subject": "I3304",
-      "message": "shares test/cases/29_prompt_capture.sh with I3917; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
       "subject": "I3307",
       "message": "shares docs/MCP.md with I3820; they may not run concurrently"
     },
@@ -91760,20 +91576,8 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
-      "subject": "I3307",
-      "message": "shares test/cases/940_mcp_says_nothing_its_capability_does_not.sh with I3917; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
       "subject": "I3309",
       "message": "shares .ai/repo/rules/vendor/majordomus/rules/profile-requirements.v1.md with I3820; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I3309",
-      "message": "shares test/cases/16_profiles.sh with I3917; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -92282,12 +92086,6 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
-      "subject": "I3395",
-      "message": "shares test/cases/367_an_intent_is_satisfied_only_by_evidence.sh with I3917; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
       "subject": "I3400",
       "message": "shares site/data/registry/registry.json with I3442; they may not run concurrently"
     },
@@ -92344,12 +92142,6 @@
       "code": "scope_conflict",
       "subject": "I3400",
       "message": "shares site/content/skills with I3841; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I3400",
-      "message": "shares test/cases/391_skills_are_proven_capabilities.sh with I3917; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -92577,12 +92369,6 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I3447",
-      "message": "shares test/cases/3720_no_two_published_paths_differ_only_in_case.sh with I3917; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I3447",
       "message": "shares scripts/site-check with I3918; they may not run concurrently"
     },
     {
@@ -92596,12 +92382,6 @@
       "code": "scope_conflict",
       "subject": "I3448",
       "message": "shares docs/RELEASE.md with I3824; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I3448",
-      "message": "shares test/cases/3721_a_deploy_keeps_every_pre_release_it_serves.sh with I3917; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -92626,12 +92406,6 @@
       "code": "scope_conflict",
       "subject": "I3449",
       "message": "shares scripts/site-check with I3841; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I3449",
-      "message": "shares test/cases/3722_every_surface_names_its_versions_from_one_model.sh with I3917; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -92668,12 +92442,6 @@
       "code": "scope_conflict",
       "subject": "I3750",
       "message": "shares scripts/generate-site-data with I3841; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I3750",
-      "message": "shares test/cases/3723_the_graph_text_reads_each_edge_its_way.sh with I3917; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -92726,12 +92494,6 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
-      "subject": "I3751",
-      "message": "shares test/cases/3724_the_roadmap_says_what_the_plan_holds.sh with I3917; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
       "subject": "I3752",
       "message": "shares docs/generated/graph.json with I3757; they may not run concurrently"
     },
@@ -92774,12 +92536,6 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
-      "subject": "I3752",
-      "message": "shares test/cases/3725_the_ui_is_one_of_the_surfaces.sh with I3917; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
       "subject": "I3753",
       "message": "shares site/i18n/cs/memory with I3757; they may not run concurrently"
     },
@@ -92794,18 +92550,6 @@
       "code": "scope_conflict",
       "subject": "I3753",
       "message": "shares site/i18n/cs/memory with I3829; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I3753",
-      "message": "shares test/cases/3726_the_czech_copy_says_it_right.sh with I3917; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I3756",
-      "message": "shares test/cases/3729_a_snapshot_explains_what_it_cannot_read.sh with I3917; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -92848,12 +92592,6 @@
       "code": "scope_conflict",
       "subject": "I3757",
       "message": "shares docs/generated with I3841; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I3757",
-      "message": "shares test/cases/99_plan_capabilities.sh with I3917; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -93008,12 +92746,6 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
-      "subject": "I3762",
-      "message": "shares test/cases/99_plan_capabilities.sh with I3917; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
       "subject": "I3763",
       "message": "shares docs/PLANNING.md with I3820; they may not run concurrently"
     },
@@ -93034,12 +92766,6 @@
       "code": "scope_conflict",
       "subject": "I3763",
       "message": "shares docs/generated with I3841; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I3763",
-      "message": "shares test/cases/99_plan_capabilities.sh with I3917; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -93188,12 +92914,6 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
-      "subject": "I3767",
-      "message": "shares test/cases/3740_the_ui_language_switch_keeps_the_page.sh with I3917; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
       "subject": "I3769",
       "message": "shares site/templates/index.html with I3820; they may not run concurrently"
     },
@@ -93272,12 +92992,6 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
-      "subject": "I3770",
-      "message": "shares test/cases/3743_a_retired_server_names_the_lease_holder.sh with I3917; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
       "subject": "I3771",
       "message": "shares apps/majordomus-cli/src/mesh/cooperation.rs with I3772; they may not run concurrently"
     },
@@ -93320,12 +93034,6 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
-      "subject": "I3771",
-      "message": "shares test/cases/3744_a_claim_scope_that_is_not_a_path_is_refused.sh with I3917; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
       "subject": "I3772",
       "message": "shares apps/majordomus-cli/src/mesh/cooperation.rs with I3774; they may not run concurrently"
     },
@@ -93352,12 +93060,6 @@
       "code": "scope_conflict",
       "subject": "I3772",
       "message": "shares apps/majordomus-cli/src/mesh/cooperation.rs with I3835; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I3772",
-      "message": "shares test/cases/3745_mesh_link_sync_failures_are_counted.sh with I3917; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -93404,12 +93106,6 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
-      "subject": "I3774",
-      "message": "shares test/cases/3750_every_completed_step_is_announced_on_the_mesh.sh with I3917; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
       "subject": "I3775",
       "message": "shares .gitattributes with I3820; they may not run concurrently"
     },
@@ -93430,12 +93126,6 @@
       "code": "scope_conflict",
       "subject": "I3775",
       "message": "shares site/content/roadmap.md with I3841; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I3775",
-      "message": "shares test/cases/3725_a_hand_written_page_is_never_resolved_as_derived.sh with I3917; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -93531,7 +93221,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I3820",
-      "message": "shares test/cases/84_deployment_contract.sh with I3917; they may not run concurrently"
+      "message": "shares site with I3917; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -93560,12 +93250,6 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
-      "subject": "I3823",
-      "message": "shares test/cases/3823_the_mesh_client_speaks_tls.sh with I3917; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
       "subject": "I3824",
       "message": "shares .ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md with I3830; they may not run concurrently"
     },
@@ -93579,19 +93263,13 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I3824",
-      "message": "shares .ai/repo/adrs/0167-work-moves-through-seats-on-the-mesh-and-lands-in-combined-tops.md with I3910; they may not run concurrently"
+      "message": "shares .ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md with I3910; they may not run concurrently"
     },
     {
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I3824",
       "message": "shares docs/INTEGRATION.md with I3911; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I3824",
-      "message": "shares test/cases/3150_the_cooperation_model_is_one_record.sh with I3917; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -93621,7 +93299,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I3829",
-      "message": "shares test/cases/3829_a_provider_declares_its_browser_bridge.sh with I3917; they may not run concurrently"
+      "message": "shares site with I3917; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -93692,12 +93370,6 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
-      "subject": "I3834",
-      "message": "shares test/cases/3834_a_case_run_removes_its_own_dir.sh with I3917; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
       "subject": "I3836",
       "message": "shares scripts/generate-site-data with I3838; they may not run concurrently"
     },
@@ -93716,18 +93388,6 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
-      "subject": "I3838",
-      "message": "shares test/cases/3848_the_plan_page_fits_the_audit_budget.sh with I3917; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I3841",
-      "message": "shares test/cases/3860_the_plan_graph_is_drawn_by_milestone.sh with I3917; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
       "subject": "I3841",
       "message": "shares scripts/site-check with I3918; they may not run concurrently"
     },
@@ -93735,7 +93395,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I3910",
-      "message": "shares apps/majordomus-cli/src/integration/drain.rs with I3911; they may not run concurrently"
+      "message": "shares apps/majordomus-cli/tests/integration_executor.rs with I3911; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -93754,19 +93414,13 @@
       "code": "scope_conflict",
       "subject": "I3917",
       "message": "shares site/templates/index.html with I3918; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I3917",
-      "message": "shares test/cases with I3919; they may not run concurrently"
     }
   ],
   "findings_by_code": [
     {
       "level": "WARN",
       "code": "scope_conflict",
-      "count": 5132,
+      "count": 5075,
       "examples": [
         {
           "level": "WARN",

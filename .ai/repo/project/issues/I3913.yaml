@@ -10,10 +10,10 @@ why: "The landing loop of 2026-10-20 to 2026-10-22 lived inside an agent session
 current_state: "No launchd or systemd unit for the executor exists; prs drain runs only on demand; I2722 plans the user-unit writer for the hub."
 desired_state: "After install the executor runs and lands the next green head; killing it restarts it; a halt or a refusal leaves it stopped and status says why; uninstall leaves nothing behind."
 scope:
+  - "apps/majordomus-cli/tests/integration_executor.rs"
   - "apps/majordomus-cli/src/integration"
   - "apps/majordomus-cli/src/commands/prs.rs"
   - "apps/majordomus-cli/src/cli.rs"
-  - "apps/majordomus-cli/tests/integration_drain.rs"
   - "docs/INTEGRATION.md"
   - ".ai/repo/project/issues/I3913.yaml"
 acceptance_criteria:
@@ -23,7 +23,7 @@ acceptance_criteria:
 validation:
   - "bin/majordomus plan validate"
   - "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- integration::"
-  - "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test integration_drain"
+  - "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test integration_executor"
 evidence_required:
   - "survives_a_restart"
 depends_on:
