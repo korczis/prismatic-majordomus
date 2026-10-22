@@ -61,6 +61,18 @@ echo "    ok: state git ignores, tracked under the tracked half, is refused, nam
 check --format json > report.json 2>/dev/null || true
 jq -e '.measured == true and .passes == false and (.findings | length) == 1' report.json >/dev/null \
   || { echo "    the JSON report does not say what the text said"; cat report.json; exit 1; }
+# the MCP tool is the same capability: one answer on both transports
+{
+  printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"case3405","version":"0"}}}'
+  printf '%s\n' '{"jsonrpc":"2.0","method":"notifications/initialized"}'
+  printf '%s\n' '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"majordomus_layout_check","arguments":{}}}'
+} > mcp.in
+MAJORDOMUS_SHARE="$ROOT/share" "$RB" mcp --standalone < mcp.in > mcp.out 2>/dev/null \
+  || { echo "    the MCP server did not answer"; exit 1; }
+jq -c 'select(.id == 2) | .result.structuredContent' mcp.out > mcp.json
+[ "$(jq -S -c . mcp.json)" = "$(jq -S -c . report.json)" ] \
+  || { echo "    majordomus_layout_check answers differently from layout check --format json"; diff <(jq -S . mcp.json) <(jq -S . report.json) | head; exit 1; }
+echo "    ok: the MCP tool majordomus_layout_check gives the same report"
 git rm -q --cached .ai/repo/.tmp.scratch && rm .ai/repo/.tmp.scratch && git commit -qm 'scratch gone'
 
 # --- update: a projection target outside the repository is refused before anything is written
