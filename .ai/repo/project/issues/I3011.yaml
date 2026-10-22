@@ -1,0 +1,34 @@
+id: I3011
+milestone: surfaces-never-disagree
+title: "A double-quoted scalar reads its escapes, as the writer wrote them"
+slug: a-double-quoted-scalar-reads-its-escapes
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Both readers of the layer's YAML subset decode a double-quoted scalar's escapes instead of keeping them. src/metadata/yaml.rs reads a double-quoted scalar as the JSON string the writer emits (the writer's own rule: YAML 1.2's double-quoted style takes JSON's escapes), falling back to the text between the quotes when JSON refuses it; mj_yaml_flatten decodes the escapes a line can hold, a backslash-escaped quote, backslash and slash, and keeps any other escape as written. docs/SCHEMAS.md states the rule."
+why: "On 2026-10-19 a fixture for I3002 (case 3402) showed a criterion's command with its escaped quotes still escaped: `echo \\\"held\\\"`. Both readers strip a double-quoted scalar's quotes and keep every backslash, while the writer escapes as JSON, so what is written is not what is read back. On 9904000 the published plan data carries 38 such strings, among them validation commands a reader copies and runs, and knowledge titles, which the schema says are written escaped."
+current_state: "A double-quoted scalar's escapes are kept literally by both readers; 112 escapes in 9904000's records read back wrong."
+desired_state: "What the writer writes reads back unchanged, in both readers, and the site, the UI and the CLI show the text the record means."
+scope:
+  - "apps/majordomus-cli/src/metadata/yaml.rs"
+  - "lib/common.sh"
+  - "test/cases/00_yaml_flatten.sh"
+  - "docs/SCHEMAS.md"
+  - ".ai/repo/project/issues/I3011.yaml"
+  - "docs"
+  - "site"
+non_scope:
+  - "YAML's own escapes beyond JSON's (\\x, \\e, \\N, \\_ and the like), which no canonical file uses"
+  - "A newline in the shell reader, whose output is one line per value"
+depends_on: []
+acceptance_criteria:
+  - "A double-quoted scalar holding an escaped quote, backslash or slash reads back as the character, in yaml.rs and in mj_yaml_flatten"
+  - "Every string the writer renders reads back equal to itself"
+  - "A double-quoted scalar JSON refuses reads as the text between its quotes, as before"
+validation:
+  - "majordomus plan validate"
+  - "cargo test --lib metadata::yaml"
+  - "bash test/run.sh 00_yaml_flatten 128_the_subset_is_a_subset"
+evidence_required: []
+created_at: 2026-10-19
+updated_at: 2026-10-19

@@ -153,10 +153,10 @@ mj_session_context_open() {
     # not inferred, and the identity of a provider's own session is quoted because it is the
     # provider's string and not this tool's.
     [ -n "$provider" ] && printf 'provider: %s\n' "$provider"
-    [ -n "$psession" ] && printf 'provider_session: "%s"\n' "$(printf '%s' "$psession" | sed 's/"/\\"/g')"
+    [ -n "$psession" ] && printf 'provider_session: "%s"\n' "$(mj_yaml_dq "$psession")"
     printf 'branch: %s\nhead: %s\ntask_id: %s\nprofile: %s\n' \
       "$(mj_git_branch)" "$(mj_git_head)" "$task" "$profile"
-    [ -n "$worker" ] && printf 'worker: "%s"\n' "$(printf '%s' "$worker" | sed 's/"/\\"/g')"
+    [ -n "$worker" ] && printf 'worker: "%s"\n' "$(mj_yaml_dq "$worker")"
     printf -- '---\n\n'
     printf '# Opening snapshot of session %s\n\n' "$sid"
     printf 'The context below is the builder'"'"'s output at the moment this episode opened,\n'

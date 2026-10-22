@@ -400,16 +400,16 @@ mj_session_start() {
   now="$(mj_now)"; f="$(mj_session_key_file "${MJ_SESSION_KEY:-}")"; tmp="$f.mj-tmp"
   mkdir -p "$MJ_STATE_DIR" "$(mj_session_open_dir)"
   {
-    printf 'session_id: %s\nstarted_at: %s\nowner: "%s"\n' "$id" "$now" "$(printf '%s' "$owner" | sed 's/"/\\"/g')"
+    printf 'session_id: %s\nstarted_at: %s\nowner: "%s"\n' "$id" "$now" "$(mj_yaml_dq "$owner")"
     # Absent stays absent. A worker identity nobody supplied is not inferred, because an
     # inferred one is indistinguishable from a recorded one the moment it is written down.
-    [ -n "$worker" ] && printf 'worker: "%s"\n' "$(printf '%s' "$worker" | sed 's/"/\\"/g')"
+    [ -n "$worker" ] && printf 'worker: "%s"\n' "$(mj_yaml_dq "$worker")"
     # Who the episode belongs to. Only something running inside a provider's own hook can
     # supply these, and until now they reached the working context and stopped there — so
     # `continuity.state` declared a provider it could never report. The record that decides
     # which episode is whose is the record that has to carry the identity it decides by.
-    [ -n "$provider" ] && printf 'provider: "%s"\n' "$(printf '%s' "$provider" | sed 's/"/\\"/g')"
-    [ -n "$psession" ] && printf 'provider_session: "%s"\n' "$(printf '%s' "$psession" | sed 's/"/\\"/g')"
+    [ -n "$provider" ] && printf 'provider: "%s"\n' "$(mj_yaml_dq "$provider")"
+    [ -n "$psession" ] && printf 'provider_session: "%s"\n' "$(mj_yaml_dq "$psession")"
     printf '# computed from git; never authored\nrepository_id: %s\nworktree: %s\nbranch: %s\nstart_head: %s\nstart_working_tree: %s\n' \
       "$(mj_git_repo_id)" "$MJ_ROOT" "$(mj_git_branch)" "$(mj_git_head)" "$(mj_git_dirty)"
   } > "$tmp"
@@ -577,8 +577,8 @@ mj_session_close() {
     # derived; what remains is what the episode actually wrote.
     mj_changed_files_block
     printf 'session_id: %s\nstarted_at: %s\nclosed_at: %s\noutcome: %s\n' "$sid" "$started" "$closed_at" "$outcome"
-    printf 'title: "%s"\n' "$(printf '%s' "$(mj_session_title "$task" "$sid")" | sed 's/"/\\"/g')"
-    [ -n "$(mj_ses worker)" ] && printf 'worker: "%s"\n' "$(printf '%s' "$(mj_ses worker)" | sed 's/"/\\"/g')"
+    printf 'title: "%s"\n' "$(mj_yaml_dq "$(mj_session_title "$task" "$sid")")"
+    [ -n "$(mj_ses worker)" ] && printf 'worker: "%s"\n' "$(mj_yaml_dq "$(mj_ses worker)")"
     printf 'start_head: %s\nstart_working_tree: %s\n' "$(mj_ses start_head)" "$(mj_ses start_working_tree)"
     mj_session_commits "$(mj_ses start_head)"
     mj_session_refs "$win"

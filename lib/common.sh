@@ -794,10 +794,22 @@ mj_epoch() {
 #   one that validates in five.
 MJ_FLATTEN_AWK='
   function trim(s){ sub(/^[ \t]+/,"",s); sub(/[ \t]+$/,"",s); return s }
-  # inside single quotes YAML has one escape, a doubled quote for one quote
+  # inside single quotes YAML has one escape, a doubled quote for one quote; inside double
+  # quotes the escapes a line can hold, an escaped quote, backslash or slash, read as the
+  # character, in one pass (I3011). Any other escape stands as written: a newline cannot be
+  # one line of this output, and YAML escapes beyond JSON are no part of the subset.
+  function unesc(v,   i, n, c, d, out){
+    n=length(v); out=""
+    for (i=1; i<=n; i++) {
+      c=substr(v,i,1)
+      if (c=="\\" && i<n) { d=substr(v,i+1,1); if (d=="\"" || d=="\\" || d=="/") { out=out d; i++; continue } }
+      out=out c
+    }
+    return out
+  }
   function unq(v){
     if (v ~ /^\047.*\047$/) { v=substr(v,2,length(v)-2); gsub(/\047\047/,"\047",v); return v }
-    if (v ~ /^".*"$/) return substr(v,2,length(v)-2)
+    if (v ~ /^".*"$/) return unesc(substr(v,2,length(v)-2))
     sub(/[ \t]+#.*$/,"",v); return trim(v)
   }
   function join(a,b){ return (a=="" ? b : a "." b) }
@@ -856,6 +868,11 @@ MJ_FLATTEN_AWK='
     if (v=="") { pend[ind]=p; pend[ind+2]=p; ctx[ind+2]=p }
     else emit_val(p,v)
   }'
+# The text of a double-quoted YAML scalar: the backslash escaped first, then the quote, so
+# what both readers decode is the value given, a backslash in it included (I3011). Escaping
+# the quote alone left `\n` in a command to be read back as a newline.
+mj_yaml_dq() { printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g'; }
+
 mj_yaml_flatten() {
   mj_count yaml_flatten
   awk -v outdir="" -v front=0 "$MJ_FLATTEN_AWK" "$1"
@@ -1562,7 +1579,7 @@ mj_publish_record() {
 mj_record_front_matter() {
   local task_id="${1:-none}" profile="${2:-none}" owner="${3:-}"; shift 3 2>/dev/null || true
   printf -- '---\nschema_version: 1\ncreated_at: %s\ntask_id: %s\nprofile: %s\nowner: "%s"\n' \
-    "$(mj_now)" "$task_id" "$profile" "$(printf '%s' "$owner" | sed 's/"/\\"/g')"
+    "$(mj_now)" "$task_id" "$profile" "$(mj_yaml_dq "$owner")"
   printf 'repository_id: %s\nworktree: %s\nbranch: %s\nhead: %s\nworking_tree: %s\nchanged_files:\n' \
     "$(mj_git_repo_id)" "$MJ_ROOT" "$(mj_git_branch)" "$(mj_git_head)" "$(mj_git_dirty)"
   # The work, not the exhaust. This was `git status --porcelain` verbatim, which is the

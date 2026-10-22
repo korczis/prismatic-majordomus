@@ -22,6 +22,11 @@ Conventions:
   sequence. Quote the scalar — both engines strip matching surrounding quotes, so the
   value does not move. `test/cases/128_the_subset_is_a_subset.sh` asks an independent
   parser and fails when a canonical file leaves the language.
+- A quoted scalar reads as YAML reads it. Inside single quotes the one escape is a doubled
+  quote. Inside double quotes the escapes are JSON's, which is what every writer here emits:
+  `\"`, `\\` and `\/` read as the character in both engines, and the Rust engine reads
+  `\n`, `\t` and `\uXXXX` too, where the shell flattener, one line per value, keeps them as
+  written (I3011). YAML's escapes beyond JSON's are no part of the subset.
 - Unknown keys are errors at every level.
 - Identity fields (`repository_id`, `branch`, `head`, `working_tree`, `changed_files`)
   are always computed from git at write time. A worker or a person supplying them is an

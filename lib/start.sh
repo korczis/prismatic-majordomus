@@ -141,13 +141,13 @@ H
   local now; now="$(mj_now)"
   mkdir -p "$MJ_STATE_DIR"
   {
-    printf 'id: %s\ntask: "%s"\nprofile: %s\nowner: "%s"\nscope:\n' "$id" "$(printf '%s' "$task" | sed 's/"/\\"/g')" "$profile" "$owner"
+    printf 'id: %s\ntask: "%s"\nprofile: %s\nowner: "%s"\nscope:\n' "$id" "$(mj_yaml_dq "$task")" "$profile" "$(mj_yaml_dq "$owner")"
     for p in $norm; do printf '  - %s\n' "$p"; done
     if [ -n "$req_norm" ]; then printf 'requires:\n'; for tok in $req_norm; do printf '  - %s\n' "$tok"; done; fi
     # what the worker named, and two pins; never the intent's stage, verdict or criteria
     [ -z "$issue" ]  || printf 'issue: %s\n' "$issue"
     [ -z "$intent" ] || printf 'intent: %s\n' "$intent"
-    if [ -n "$exempt" ]; then printf 'exemption: %s\nexemption_because: "%s"\n' "$exempt" "$(printf '%s' "$because" | sed 's/"/\\"/g')"; fi
+    if [ -n "$exempt" ]; then printf 'exemption: %s\nexemption_because: "%s"\n' "$exempt" "$(mj_yaml_dq "$because")"; fi
     [ -z "$bind_standing" ] || printf 'binding: %s\n' "$bind_standing"
     [ -z "$plan_rev" ]      || printf 'plan_revision: %s\n' "$plan_rev"
     [ -z "$ev_standing" ]   || printf 'evidence_standing: %s\n' "$ev_standing"

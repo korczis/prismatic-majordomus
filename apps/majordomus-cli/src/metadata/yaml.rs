@@ -70,6 +70,11 @@ fn is_key(s: &str) -> Option<(&str, &str)> {
 /// Strip a scalar's matching surrounding quotes. Inside single quotes YAML has exactly one
 /// escape, a doubled quote for one quote (`'the repository''s test'`), and every other
 /// parser reads it that way; keeping the pair published `repository''s` on the site.
+///
+/// A double-quoted scalar is read as the JSON string [`quoted`] writes, so an escaped quote,
+/// backslash, slash or newline reads back as the character it stands for (I3011): keeping
+/// the backslashes published `echo \"held\"` for `echo "held"`. YAML's escapes beyond JSON's
+/// are no part of the subset; a scalar JSON refuses is read as the text between its quotes.
 fn unquote(v: &str) -> Scalar {
     let v = v.trim();
     if v.len() >= 2 && v.starts_with('\'') && v.ends_with('\'') {
@@ -80,7 +85,8 @@ fn unquote(v: &str) -> Scalar {
     }
     if v.len() >= 2 && v.starts_with('"') && v.ends_with('"') {
         return Scalar {
-            text: v[1..v.len() - 1].to_string(),
+            text: serde_json::from_str::<String>(v)
+                .unwrap_or_else(|_| v[1..v.len() - 1].to_string()),
             quoted: true,
         };
     }
@@ -646,10 +652,29 @@ mod tests {
             parse_mapping("a: 'the repository''s test'\nb: \"it''s\"\nc: ''''\nd: ['x''y', z]\n")
                 .unwrap();
         assert_eq!(m["a"], json!("the repository's test"));
-        // the escape is single-quoted YAML's alone; a double-quoted scalar keeps the pair
+        // the doubled quote is single-quoted YAML's escape alone; a double-quoted scalar keeps it
         assert_eq!(m["b"], json!("it''s"));
         assert_eq!(m["c"], json!("'"));
         assert_eq!(m["d"], json!(["x'y", "z"]));
+    }
+
+    /// A double-quoted scalar's escapes read back as the characters the writer escaped, so
+    /// what is written is what is read (I3011); one JSON refuses is read as it stands.
+    #[test]
+    fn a_double_quoted_scalar_reads_its_escapes() {
+        let m = parse_mapping(
+            "a: \"echo \\\"held\\\"\"\nb: \"a \\\\ b \\/ c\"\nc: \"one\\ntwo\"\nd: [\"x\\\"y\", z]\ne: \"\\x41\"\n",
+        )
+        .unwrap();
+        assert_eq!(m["a"], json!("echo \"held\""));
+        assert_eq!(m["b"], json!("a \\ b / c"));
+        assert_eq!(m["c"], json!("one\ntwo"));
+        assert_eq!(m["d"], json!(["x\"y", "z"]));
+        // an escape YAML has and JSON lacks is not the subset's: the text stands as written
+        assert_eq!(m["e"], json!("\\x41"));
+        // and every string the writer renders reads back equal to itself
+        let doc = json!({ "t": "say \"hi\" \\ to C:\\tmp\tand\nback", "u": "it's 100%" });
+        assert_eq!(Value::Object(parse_mapping(&render(&doc)).unwrap()), doc);
     }
 
     #[test]

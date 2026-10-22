@@ -6,23 +6,23 @@
     "version": "0.30.1"
   },
   "registry": {
-    "fingerprint": "ce3c9bccfa0d906af23d8d4f78a43c20a3038762a6237e4a58d0095cd00d3638",
+    "fingerprint": "b51bb14f78bc16a04c42513f3d743270ceb2c66d322134fcbac2b822657e645e",
     "summary": {
-      "total": 2641,
+      "total": 2643,
       "builtin": 206,
-      "declarative": 2435,
+      "declarative": 2437,
       "by_kind": {
         "command": 31,
         "query": 175,
-        "resource": 2435
+        "resource": 2437
       },
       "by_stability": {
         "behaviorally_verified": 142,
         "experimental": 55,
-        "implemented": 2444
+        "implemented": 2446
       },
       "mcp_tools": 196,
-      "mcp_resources": 2490,
+      "mcp_resources": 2492,
       "http_routes": 201,
       "cli_commands": 111,
       "modules": 92,
@@ -85404,7 +85404,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 487,
+        "capabilities": 488,
         "capability_ids": []
       },
       {
@@ -85978,7 +85978,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 562,
+        "capabilities": 563,
         "capability_ids": []
       },
       {
@@ -86070,7 +86070,7 @@
     ]
   },
   "index": {
-    "fingerprint": "c6fa35fd101e053a9eafe79a0d029f3bc299f8e7c9696c6b70ed77cfe0ac1c10",
+    "fingerprint": "283458da66d56acaf1acf5c61d087299e4065a43b4d3d8c462de62265ab9dc49",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -86110,7 +86110,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 5,
-      "issue": 487,
+      "issue": 488,
       "knowledge": 4,
       "mesh-declaration": 1,
       "milestone": 42,
@@ -86124,7 +86124,7 @@
       "session": 90,
       "skill": 8,
       "taxonomy": 10,
-      "test": 562,
+      "test": 563,
       "use-case": 49,
       "workspace": 1
     },
@@ -92447,7 +92447,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 196305
+        "bytes": 200569
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -92528,7 +92528,7 @@
         "title": "File schemas — every file Majordomus reads or writes",
         "path": "docs/SCHEMAS.md",
         "source_class": "document",
-        "bytes": 81007
+        "bytes": 81445
       },
       {
         "uri": "majordomus://document/docs/SCOPE.md",
@@ -95577,7 +95577,7 @@
         "identity": "lib/common.sh",
         "path": "lib/common.sh",
         "source_class": "library",
-        "bytes": 110089
+        "bytes": 110953
       },
       {
         "uri": "majordomus://implementation/lib/context.sh",
@@ -95721,7 +95721,7 @@
         "identity": "lib/knowledge.sh",
         "path": "lib/knowledge.sh",
         "source_class": "library",
-        "bytes": 119951
+        "bytes": 119641
       },
       {
         "uri": "majordomus://implementation/lib/machine_lock.sh",
@@ -95753,7 +95753,7 @@
         "identity": "lib/plan.sh",
         "path": "lib/plan.sh",
         "source_class": "library",
-        "bytes": 29322
+        "bytes": 29265
       },
       {
         "uri": "majordomus://implementation/lib/plan_json.awk",
@@ -95833,7 +95833,7 @@
         "identity": "lib/session.sh",
         "path": "lib/session.sh",
         "source_class": "library",
-        "bytes": 74137
+        "bytes": 74023
       },
       {
         "uri": "majordomus://implementation/lib/session_context.sh",
@@ -95841,7 +95841,7 @@
         "identity": "lib/session_context.sh",
         "path": "lib/session_context.sh",
         "source_class": "library",
-        "bytes": 30632
+        "bytes": 30594
       },
       {
         "uri": "majordomus://implementation/lib/sha256.sh",
@@ -95865,7 +95865,7 @@
         "identity": "lib/start.sh",
         "path": "lib/start.sh",
         "source_class": "library",
-        "bytes": 13370
+        "bytes": 13348
       },
       {
         "uri": "majordomus://implementation/lib/update.sh",
@@ -99211,7 +99211,7 @@
         "path": ".ai/repo/project/issues/I2151.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 5722
+        "bytes": 5723
       },
       {
         "uri": "majordomus://issue/I2156",
@@ -100692,7 +100692,7 @@
         "kind": "issue",
         "identity": "I2813",
         "title": "A published page that answers 503, or does not answer, is asked again before it is called missing",
-        "description": "In scripts/pages verify-ui, ask again every page that answered 503 or did not answer at all (000: a connection refused or timed out), at most MJ_PAGES_RETRIES times (default 4) with a pause that starts at MJ_PAGES_RETRY_SECONDS (default 1) and doubles, and say each retry on stderr (\\\"retried /x: 503 ×2 then 200\\\", \\\"retried /x: 000 ×1 then 200\\\", or \\\"still 503 after N retries\\\"); any other status, and a 503 or 000 that persists, fails exactly as before. Case 3226 holds both halves of each and the 404 that is never retried, against a server of its own.",
+        "description": "In scripts/pages verify-ui, ask again every page that answered 503 or did not answer at all (000: a connection refused or timed out), at most MJ_PAGES_RETRIES times (default 4) with a pause that starts at MJ_PAGES_RETRY_SECONDS (default 1) and doubles, and say each retry on stderr (\"retried /x: 503 ×2 then 200\", \"retried /x: 000 ×1 then 200\", or \"still 503 after N retries\"); any other status, and a 503 or 000 that persists, fails exactly as before. Case 3226 holds both halves of each and the 404 that is never retried, against a server of its own.",
         "path": ".ai/repo/project/issues/I2813.yaml",
         "section": "project",
         "source_class": "issue",
@@ -100879,7 +100879,7 @@
         "kind": "issue",
         "identity": "I2904",
         "title": "An intent whose criteria are met while its milestones hold open issues says so",
-        "description": "When an intent's criteria are all met but its milestones still hold issues that are not DONE, every surface (/ui, /cockpit/intents, the snapshot) says \\\"criteria met; N issue(s) still open\\\", derived from plan.roadmap.",
+        "description": "When an intent's criteria are all met but its milestones still hold issues that are not DONE, every surface (/ui, /cockpit/intents, the snapshot) says \"criteria met; N issue(s) still open\", derived from plan.roadmap.",
         "path": ".ai/repo/project/issues/I2904.yaml",
         "section": "project",
         "source_class": "issue",
@@ -100933,8 +100933,8 @@
         "uri": "majordomus://issue/I2910",
         "kind": "issue",
         "identity": "I2910",
-        "title": "A move on the published workspace reads \\\"live only\\\"",
-        "description": "On the snapshot, render each move control disabled and labelled \\\"live only\\\", with a link to the live route, instead of a control that looks actionable and is not.",
+        "title": "A move on the published workspace reads \"live only\"",
+        "description": "On the snapshot, render each move control disabled and labelled \"live only\", with a link to the live route, instead of a control that looks actionable and is not.",
         "path": ".ai/repo/project/issues/I2910.yaml",
         "section": "project",
         "source_class": "issue",
@@ -100956,7 +100956,7 @@
         "kind": "issue",
         "identity": "I2912",
         "title": "A screen's sources are one disclosure, not a footer per panel",
-        "description": "Fold every panel's source line into one \\\"Sources\\\" disclosure per screen, keeping each capability, its time and its technical-view link.",
+        "description": "Fold every panel's source line into one \"Sources\" disclosure per screen, keeping each capability, its time and its technical-view link.",
         "path": ".ai/repo/project/issues/I2912.yaml",
         "section": "project",
         "source_class": "issue",
@@ -100989,7 +100989,7 @@
         "kind": "issue",
         "identity": "I2915",
         "title": "The workspace speaks in plain words",
-        "description": "Rename the workspace's labels to plain words (\\\"Next issue to start\\\", \\\"What is missing\\\", \\\"Work serving it\\\") and keep capability ids only in the source lines.",
+        "description": "Rename the workspace's labels to plain words (\"Next issue to start\", \"What is missing\", \"Work serving it\") and keep capability ids only in the source lines.",
         "path": ".ai/repo/project/issues/I2915.yaml",
         "section": "project",
         "source_class": "issue",
@@ -101011,7 +101011,7 @@
         "kind": "issue",
         "identity": "I2917",
         "title": "Each intent has one primary action",
-        "description": "Show one primary action per intent (\\\"Start I0702\\\", \\\"Verify …\\\"), derived from plan.next restricted to the intent's issues and the move that issue's status admits; every other move is secondary.",
+        "description": "Show one primary action per intent (\"Start I0702\", \"Verify …\"), derived from plan.next restricted to the intent's issues and the move that issue's status admits; every other move is secondary.",
         "path": ".ai/repo/project/issues/I2917.yaml",
         "section": "project",
         "source_class": "issue",
@@ -101120,7 +101120,7 @@
         "uri": "majordomus://issue/I2966",
         "kind": "issue",
         "identity": "I2966",
-        "title": "A forge setting that could not be read is unknown, never \\\"allows nothing\\\"",
+        "title": "A forge setting that could not be read is unknown, never \"allows nothing\"",
         "description": "Read the repository's merge settings as unknown when the forge's answer does not carry them, and say so in the integration policy, in each held pull request's reason and evidence and in the queue's diagnostics, instead of reporting that the repository allows no merge commit.",
         "path": ".ai/repo/project/issues/I2966.yaml",
         "section": "project",
@@ -101187,7 +101187,7 @@
         "kind": "issue",
         "identity": "I3001",
         "title": "The intent is the page's title, and panels ask questions",
-        "description": "Make the chosen intent's title the page's h1 with \\\"Intent workspace\\\" as the eyebrow, and title the panels as plain questions.",
+        "description": "Make the chosen intent's title the page's h1 with \"Intent workspace\" as the eyebrow, and title the panels as plain questions.",
         "path": ".ai/repo/project/issues/I3001.yaml",
         "section": "project",
         "source_class": "issue",
@@ -101258,6 +101258,17 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 1844
+      },
+      {
+        "uri": "majordomus://issue/I3011",
+        "kind": "issue",
+        "identity": "I3011",
+        "title": "A double-quoted scalar reads its escapes, as the writer wrote them",
+        "description": "Both readers of the layer's YAML subset decode a double-quoted scalar's escapes instead of keeping them. src/metadata/yaml.rs reads a double-quoted scalar as the JSON string the writer emits (the writer's own rule: YAML 1.2's double-quoted style takes JSON's escapes), falling back to the text between the quotes when JSON refuses it; mj_yaml_flatten decodes the escapes a line can hold, a backslash-escaped quote, backslash and slash, and keeps any other escape as written. docs/SCHEMAS.md states the rule.",
+        "path": ".ai/repo/project/issues/I3011.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2430
       },
       {
         "uri": "majordomus://issue/I3020",
@@ -107137,7 +107148,7 @@
         "identity": "test/cases/00_yaml_flatten.sh",
         "path": "test/cases/00_yaml_flatten.sh",
         "source_class": "case",
-        "bytes": 2708
+        "bytes": 3510
       },
       {
         "uri": "majordomus://test/test/cases/01_init.sh",
@@ -109434,6 +109445,14 @@
         "path": "test/cases/3401_a_hero_link_with_a_fragment_resolves_to_its_id.sh",
         "source_class": "case",
         "bytes": 4296
+      },
+      {
+        "uri": "majordomus://test/test/cases/3403_a_quoted_scalar_reads_as_yaml_reads_it.sh",
+        "kind": "test",
+        "identity": "test/cases/3403_a_quoted_scalar_reads_as_yaml_reads_it.sh",
+        "path": "test/cases/3403_a_quoted_scalar_reads_as_yaml_reads_it.sh",
+        "source_class": "case",
+        "bytes": 3290
       },
       {
         "uri": "majordomus://test/test/cases/340_a_brief_is_kept_as_received.sh",
@@ -112350,7 +112369,7 @@
       "identity": [
         "id"
       ],
-      "objects": 487
+      "objects": 488
     },
     {
       "name": "knowledge",
@@ -112502,7 +112521,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 562
+      "objects": 563
     },
     {
       "name": "use-case",

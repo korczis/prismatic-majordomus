@@ -33248,7 +33248,7 @@
           "acceptance_criteria": [
             "A branch whose task scope names only the canonical input it changed passes `finish --check` with the derive's projections of that input committed beside it",
             "A projection committed without any change to its canonical inputs is still refused as outside the scope",
-            "`majordomus scope widen <paths> --because \\\"<reason>\\\"` adds the paths to the active task, keeps its id, and the task record says who widened it, when, and why",
+            "`majordomus scope widen <paths> --because \"<reason>\"` adds the paths to the active task, keeps its id, and the task record says who widened it, when, and why",
             "A path outside both the scope and the declared projection set is refused exactly as before"
           ],
           "created_at": "2026-10-09",
@@ -36969,7 +36969,7 @@
         "source": ".ai/repo/project/issues/I2653.yaml",
         "facts": {
           "acceptance_criteria": [
-            "Every <pre class=\\\"mermaid\\\"> of the built site carries a unique id diagram-<name>, the list of its nodes, and tabindex=0; a build that would publish two diagrams with one id on a page is refused",
+            "Every <pre class=\"mermaid\"> of the built site carries a unique id diagram-<name>, the list of its nodes, and tabindex=0; a build that would publish two diagrams with one id on a page is refused",
             "A node whose id or label is the identity of an object the site has a page for is listed beside the diagram as a link to that page, and scripts/ci/link-check resolves every such link",
             "A link to #diagram-<name>:<node> is refused by scripts/ci/link-check when the diagram does not declare that node",
             "In a browser, the viewer zooms, pans and resets from its toolbar and from the keyboard, copies its own link, and opens the diagram and node a fragment names",
@@ -41032,7 +41032,7 @@
         "source": ".ai/repo/project/issues/I2904.yaml",
         "facts": {
           "acceptance_criteria": [
-            "An intent with met criteria and an open issue in its milestones reads \\\"criteria met; 1 issue(s) still open\\\" on /ui/idd and /cockpit/intents"
+            "An intent with met criteria and an open issue in its milestones reads \"criteria met; 1 issue(s) still open\" on /ui/idd and /cockpit/intents"
           ],
           "created_at": "2026-10-18",
           "current_state": "A verdict of satisfied says nothing about open work.",
@@ -41147,7 +41147,7 @@
             "cargo test --test ui_idd",
             "bash test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh"
           ],
-          "why": "On 2026-10-18 the owner read the published /ui/idd three times and found it unergonomic: \\\"Milestones 41\\\" counts the whole plan, not the intent on the screen."
+          "why": "On 2026-10-18 the owner read the published /ui/idd three times and found it unergonomic: \"Milestones 41\" counts the whole plan, not the intent on the screen."
         }
       },
       {
@@ -41228,19 +41228,19 @@
             "cargo test --lib ui::idd::",
             "scripts/ui audit --only /ui/idd"
           ],
-          "why": "On 2026-10-18 the owner read the published /ui/idd three times and found it unergonomic: \\\"no issue depends on another\\\" and a one-row Waves panel each take a full panel."
+          "why": "On 2026-10-18 the owner read the published /ui/idd three times and found it unergonomic: \"no issue depends on another\" and a one-row Waves panel each take a full panel."
         }
       },
       {
         "id": "majordomus://issue/I2910",
         "kind": "issue",
         "label": "I2910",
-        "summary": "A move on the published workspace reads \\\"live only\\\"",
+        "summary": "A move on the published workspace reads \"live only\"",
         "route": "/cockpit/objects/issue/i2910",
         "source": ".ai/repo/project/issues/I2910.yaml",
         "facts": {
           "acceptance_criteria": [
-            "Every move on a published /ui/idd page is disabled and says \\\"live only\\\""
+            "Every move on a published /ui/idd page is disabled and says \"live only\""
           ],
           "created_at": "2026-10-18",
           "current_state": "An inert control that looks live.",
@@ -41248,7 +41248,7 @@
           "desired_state": "A disabled control that says why and where it works.",
           "evidence_required": [],
           "milestone": "idd-reads-at-a-glance",
-          "objective": "On the snapshot, render each move control disabled and labelled \\\"live only\\\", with a link to the live route, instead of a control that looks actionable and is not.",
+          "objective": "On the snapshot, render each move control disabled and labelled \"live only\", with a link to the live route, instead of a control that looks actionable and is not.",
           "parallel_safe": false,
           "priority": "p1",
           "profile": "implementation",
@@ -41327,7 +41327,7 @@
           "desired_state": "One disclosure per screen.",
           "evidence_required": [],
           "milestone": "idd-reads-at-a-glance",
-          "objective": "Fold every panel's source line into one \\\"Sources\\\" disclosure per screen, keeping each capability, its time and its technical-view link.",
+          "objective": "Fold every panel's source line into one \"Sources\" disclosure per screen, keeping each capability, its time and its technical-view link.",
           "parallel_safe": false,
           "priority": "p2",
           "profile": "implementation",
@@ -41448,7 +41448,7 @@
           "desired_state": "Plain words.",
           "evidence_required": [],
           "milestone": "idd-reads-at-a-glance",
-          "objective": "Rename the workspace's labels to plain words (\\\"Next issue to start\\\", \\\"What is missing\\\", \\\"Work serving it\\\") and keep capability ids only in the source lines.",
+          "objective": "Rename the workspace's labels to plain words (\"Next issue to start\", \"What is missing\", \"Work serving it\") and keep capability ids only in the source lines.",
           "parallel_safe": false,
           "priority": "p1",
           "profile": "implementation",
@@ -41468,7 +41468,7 @@
             "majordomus plan validate",
             "bash test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh"
           ],
-          "why": "On 2026-10-18 the owner read the published /ui/idd three times and found it unergonomic: labels are internal names such as \\\"Plan's next issue\\\" and capability ids in panel headings."
+          "why": "On 2026-10-18 the owner read the published /ui/idd three times and found it unergonomic: labels are internal names such as \"Plan's next issue\" and capability ids in panel headings."
         }
       },
       {
@@ -41528,7 +41528,7 @@
           "desired_state": "One primary action, the rest secondary.",
           "evidence_required": [],
           "milestone": "idd-reads-at-a-glance",
-          "objective": "Show one primary action per intent (\\\"Start I0702\\\", \\\"Verify …\\\"), derived from plan.next restricted to the intent's issues and the move that issue's status admits; every other move is secondary.",
+          "objective": "Show one primary action per intent (\"Start I0702\", \"Verify …\"), derived from plan.next restricted to the intent's issues and the move that issue's status admits; every other move is secondary.",
           "parallel_safe": false,
           "priority": "p1",
           "profile": "implementation",
@@ -41548,7 +41548,7 @@
             "majordomus plan validate",
             "bash test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh"
           ],
-          "why": "On 2026-10-18 the owner read the published /ui/idd three times and found it unergonomic: the only action is a small \\\"done\\\" in the far column, easy to miss."
+          "why": "On 2026-10-18 the owner read the published /ui/idd three times and found it unergonomic: the only action is a small \"done\" in the far column, easy to miss."
         }
       },
       {
@@ -41909,7 +41909,7 @@
         "id": "majordomus://issue/I2966",
         "kind": "issue",
         "label": "I2966",
-        "summary": "A forge setting that could not be read is unknown, never \\\"allows nothing\\\"",
+        "summary": "A forge setting that could not be read is unknown, never \"allows nothing\"",
         "route": "/cockpit/objects/issue/i2966",
         "source": ".ai/repo/project/issues/I2966.yaml",
         "facts": {
@@ -42150,7 +42150,7 @@
           "desired_state": "The intent's own.",
           "evidence_required": [],
           "milestone": "idd-reads-at-a-glance",
-          "objective": "Make the chosen intent's title the page's h1 with \\\"Intent workspace\\\" as the eyebrow, and title the panels as plain questions.",
+          "objective": "Make the chosen intent's title the page's h1 with \"Intent workspace\" as the eyebrow, and title the panels as plain questions.",
           "parallel_safe": false,
           "priority": "p1",
           "profile": "implementation",
@@ -42170,7 +42170,7 @@
             "majordomus plan validate",
             "bash test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh"
           ],
-          "why": "On 2026-10-18 the owner read the published /ui/idd three times and found it unergonomic: \\\"Intent workspace\\\" is the heading of every intent."
+          "why": "On 2026-10-18 the owner read the published /ui/idd three times and found it unergonomic: \"Intent workspace\" is the heading of every intent."
         }
       },
       {
@@ -42392,7 +42392,7 @@
         "source": ".ai/repo/project/issues/I3008.yaml",
         "facts": {
           "acceptance_criteria": [
-            "A hero link to /roadmap/#delivery passes when /roadmap/ carries id=\\\"delivery\\\", and fails naming the element when it does not",
+            "A hero link to /roadmap/#delivery passes when /roadmap/ carries id=\"delivery\", and fails naming the element when it does not",
             "A hero link to an absent page fails as unresolved",
             "Removing the fragment split or the id check each turns case 3401 red"
           ],
@@ -42420,6 +42420,50 @@
           "validation": [
             "majordomus plan validate",
             "bash test/run.sh 3401_a_hero_link_with_a_fragment_resolves_to_its_id"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3011",
+        "kind": "issue",
+        "label": "I3011",
+        "summary": "A double-quoted scalar reads its escapes, as the writer wrote them",
+        "route": "/cockpit/objects/issue/i3011",
+        "source": ".ai/repo/project/issues/I3011.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A double-quoted scalar holding an escaped quote, backslash or slash reads back as the character, in yaml.rs and in mj_yaml_flatten",
+            "Every string the writer renders reads back equal to itself",
+            "A double-quoted scalar JSON refuses reads as the text between its quotes, as before"
+          ],
+          "created_at": "2026-10-19",
+          "current_state": "A double-quoted scalar's escapes are kept literally by both readers; 112 escapes in 9904000's records read back wrong.",
+          "depends_on": [],
+          "desired_state": "What the writer writes reads back unchanged, in both readers, and the site, the UI and the CLI show the text the record means.",
+          "evidence_required": [],
+          "milestone": "surfaces-never-disagree",
+          "non_scope": [
+            "YAML's own escapes beyond JSON's (\\x, \\e, \\N, \\_ and the like), which no canonical file uses",
+            "A newline in the shell reader, whose output is one line per value"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/metadata/yaml.rs",
+            "lib/common.sh",
+            "test/cases/00_yaml_flatten.sh",
+            "docs/SCHEMAS.md",
+            ".ai/repo/project/issues/I3011.yaml",
+            "docs",
+            "site"
+          ],
+          "slug": "a-double-quoted-scalar-reads-its-escapes",
+          "updated_at": "2026-10-19",
+          "validation": [
+            "majordomus plan validate",
+            "cargo test --lib metadata::yaml",
+            "bash test/run.sh 00_yaml_flatten 128_the_subset_is_a_subset"
           ]
         }
       },
@@ -60759,6 +60803,13 @@
         "label": "test/cases/3401_a_hero_link_with_a_fragment_resolves_to_its_id.sh",
         "route": "/cockpit/objects/test/test-cases-3401-a-hero-link-with-a-fragment-resolves-to-its-id-sh",
         "source": "test/cases/3401_a_hero_link_with_a_fragment_resolves_to_its_id.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3403_a_quoted_scalar_reads_as_yaml_reads_it.sh",
+        "kind": "test",
+        "label": "test/cases/3403_a_quoted_scalar_reads_as_yaml_reads_it.sh",
+        "route": "/cockpit/objects/test/test-cases-3403-a-quoted-scalar-reads-as-yaml-reads-it-sh",
+        "source": "test/cases/3403_a_quoted_scalar_reads_as_yaml_reads_it.sh"
       },
       {
         "id": "majordomus://test/test/cases/340_a_brief_is_kept_as_received.sh",
@@ -88511,6 +88562,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3011",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3011",
+        "target": "majordomus://milestone/surfaces-never-disagree",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I3020",
         "target": "kind:issue",
         "kind": "is_a"
@@ -93537,6 +93598,11 @@
       },
       {
         "source": "majordomus://test/test/cases/3401_a_hero_link_with_a_fragment_resolves_to_its_id.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3403_a_quoted_scalar_reads_as_yaml_reads_it.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -98787,8 +98853,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3074,
-      "edges": 6732,
+      "nodes": 3076,
+      "edges": 6735,
       "acyclic": false,
       "truncated": false
     }

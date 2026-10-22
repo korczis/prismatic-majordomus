@@ -569,9 +569,9 @@ mj_plan_evidence() {
     if grep -qE '^evidence:' "$f"; then cat "$f"
     else cat "$f"; printf 'evidence:\n'; fi
     printf -- '  - covers: %s\n    type: %s\n' "$covers" "$etype"
-    [ -n "$ecmd" ] && printf '    command: "%s"\n' "$(printf '%s' "$ecmd" | sed 's/"/\\"/g')"
-    [ -n "$eres" ] && printf '    result: "%s"\n' "$(printf '%s' "$eres" | sed 's/"/\\"/g')"
-    [ -n "$eart" ] && printf '    artifact: "%s"\n' "$(printf '%s' "$eart" | sed 's/"/\\"/g')"
+    [ -n "$ecmd" ] && printf '    command: "%s"\n' "$(mj_yaml_dq "$ecmd")"
+    [ -n "$eres" ] && printf '    result: "%s"\n' "$(mj_yaml_dq "$eres")"
+    [ -n "$eart" ] && printf '    artifact: "%s"\n' "$(mj_yaml_dq "$eart")"
     printf '    commit: %s\n    recorded_at: %s\n' "$(mj_git_head)" "$(mj_now)"
   } > "$tmp"
   cat "$tmp" > "$f"

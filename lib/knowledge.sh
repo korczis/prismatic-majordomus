@@ -1438,12 +1438,6 @@ mj_knowledge_candidate_rows() {
   mj_yaml_flatten_many "$tmp/flat" --numbered --front "$@"
   mj_knowledge_branch_map > "$tmp/branches"
   awk -F'\t' '
-    function unq(s,   i, n, c, out) {
-      # the flattener strips the quotes and keeps the escapes; a listing shows the text
-      n = length(s); out = ""
-      for (i = 1; i <= n; i++) { c = substr(s, i, 1); if (c == "\\" && i < n) { i++; c = substr(s, i, 1) } out = out c }
-      return out
-    }
     # an empty column is written as `-`: a tab is whitespace to the shell, and a reader
     # splitting on it would fold two empty fields into none and shift every column after
     function nz(x) { return (x == "") ? "-" : x }
@@ -1452,7 +1446,7 @@ mj_knowledge_candidate_rows() {
       ep = ""; for (i = 0; (("provenance.derived_from." i) in v); i++) if (v["provenance.derived_from." i] ~ /^session:/) { ep = substr(v["provenance.derived_from." i], 9); break }
       b = (ep in branch) ? branch[ep] : ""
       if (("id" in v) && v["id"] != "")
-        printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", v["id"], nz(v["class"]), nz(v["status"]), nz(v["epistemics"]), nz(v["date"]), nz(ep), nz(b), path[cur], nz(unq(v["title"])), nz(unq(v["about"])), nz(v["route"])
+        printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", v["id"], nz(v["class"]), nz(v["status"]), nz(v["epistemics"]), nz(v["date"]), nz(ep), nz(b), path[cur], nz(v["title"]), nz(v["about"]), nz(v["route"])
       delete v; cur = ""
     }
     FILENAME == map { path[$1] = $2; next }

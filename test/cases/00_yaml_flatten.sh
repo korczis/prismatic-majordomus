@@ -51,6 +51,21 @@ expect_grep "^b=it''s$" qf.txt
 expect_grep "^c='$" qf.txt
 expect_grep "^d\.0=x'y$" qf.txt
 expect_grep '^d\.1=z$' qf.txt
+# inside double quotes an escaped quote, backslash or slash reads as the character, in one
+# pass, so an escaped backslash before a quote stays one backslash (I3011); an escape a line
+# cannot hold (a newline) stands as written. The Rust engine reads the same
+# (metadata::yaml, a_double_quoted_scalar_reads_its_escapes).
+cat > e.yaml <<'E'
+a: "echo \"held\""
+b: "a \\ b \/ c"
+c: "one\ntwo"
+d: "ends in \\"
+E
+mj_yaml_flatten e.yaml > ef.txt
+[ "$(mj_yget ef.txt a)" = 'echo "held"' ] || { echo "    a: $(mj_yget ef.txt a)"; exit 1; }
+[ "$(mj_yget ef.txt b)" = 'a \ b / c' ] || { echo "    b: $(mj_yget ef.txt b)"; exit 1; }
+[ "$(mj_yget ef.txt c)" = 'one\ntwo' ] || { echo "    c: $(mj_yget ef.txt c)"; exit 1; }
+[ "$(mj_yget ef.txt d)" = 'ends in \' ] || { echo "    d: $(mj_yget ef.txt d)"; exit 1; }
 [ "$(mj_ylist flat.txt scope | wc -l | tr -d ' ')" = 2 ]
 # failures
 printf 'a:\n\tb: 1\n' > tab.yaml
