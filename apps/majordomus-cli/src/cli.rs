@@ -2986,10 +2986,10 @@ pub enum ServedCommand {
         /// The commit expected to be served (default HEAD)
         #[arg(long)]
         commit: Option<String>,
-        /// The site's base URL (default: base_url of site/config.toml)
+        /// The base URL (default: the provider URL of the deployment object --deployment names, else base_url of site/config.toml)
         #[arg(long)]
         url: Option<String>,
-        /// The identity file under the base (default build.json)
+        /// The identity under the base (default: that object's liveness route, else build.json)
         #[arg(long)]
         identity: Option<String>,
         /// The name the observation is recorded under (default pages)
