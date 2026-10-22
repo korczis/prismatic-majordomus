@@ -62,6 +62,7 @@ pub(crate) mod integration;
 pub mod intent_realization;
 pub mod intents;
 pub mod knowledge_base;
+pub mod layout;
 pub mod lifecycle;
 pub mod mcp;
 pub(crate) mod mesh;
@@ -212,6 +213,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         mcp,
         session_domain,
         shell,
+        layout,
         pack,
         perf,
         plan,
