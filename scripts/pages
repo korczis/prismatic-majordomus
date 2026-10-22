@@ -1259,7 +1259,7 @@ ui_round() {
       # undecided — the unknown badge, or a source that did not answer — is a publication
       # that shows nothing where it shows itself, and the reader of a snapshot is a process
       # that can decide every figure the screen is allowed to lead with.
-      undecided="$(grep -oE 'class="mj-ui-kpi-label">[^<]*</span><span class="mj-ui-kpi-value">(<span class="mj-badge mj-badge--unknown"|not answered<)' "$VR_WORK/body" \
+      undecided="$(grep -oE 'class="mj-ui-kpi-label">[^<]*</span><span class="mj-ui-kpi-value( mj-ui-kpi-value--text)?">(<span class="mj-badge mj-badge--unknown"|not answered<)' "$VR_WORK/body" \
         | sed -E 's/^class="mj-ui-kpi-label">([^<]*)<.*/\1/' | paste -sd, - || true)"
       if [ -z "$undecided" ]; then vr_line ok "first-screen figures decided"
       else

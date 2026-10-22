@@ -99,7 +99,7 @@ echo "    a stale built_from: refused by name, with the command that shows it"
 
 # (a2) the first screen leads with a figure nothing decided
 site "$A" "$A"
-printf '<span class="mj-ui-kpi"><span class="mj-ui-kpi-label">Repository health</span><span class="mj-ui-kpi-value"><span class="mj-badge mj-badge--unknown">unknown</span></span></span>\n' >> "$W$mount/index.html"
+printf '<span class="mj-ui-kpi"><span class="mj-ui-kpi-label">Repository health</span><span class="mj-ui-kpi-value mj-ui-kpi-value--text"><span class="mj-badge mj-badge--unknown">unknown</span></span></span>\n' >> "$W$mount/index.html"
 expect_exit 10 probe --commit "$A"
 expect_grep "FAIL the first screen of $HTTP_BASE$mount/ leads with figure\(s\) nothing decided \(Repository health\)"
 expect_grep "first-screen figure\(s\) undecided: Repository health\" fail\$"

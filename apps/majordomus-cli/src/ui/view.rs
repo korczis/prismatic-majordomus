@@ -114,18 +114,20 @@ fn hero_of(
 /// One KPI tile of a hero group: a label, the value the reading holds and, as its title,
 /// where the value was read from.
 pub fn kpi(label: &str, reading: &Reading) -> El {
-    kpi_with(label, reading, shown(reading), None)
+    let figure = matches!(reading.state, Availability::Available(Value::Number(_)));
+    kpi_with(label, reading, shown(reading), figure, None)
 }
 
 /// A KPI tile whose value is the length of the list or map at the reading's pointer: the
 /// one count a screen may take of an answer, because it is the answer's own size.
 pub fn kpi_count(label: &str, reading: &Reading) -> El {
-    let value = match &reading.state {
-        Availability::Available(Value::Array(items)) => items.len().to_string(),
-        Availability::Available(Value::Object(map)) => map.len().to_string(),
-        _ => shown(reading),
+    let (value, figure) = match &reading.state {
+        Availability::Available(Value::Array(items)) => (items.len().to_string(), true),
+        Availability::Available(Value::Object(map)) => (map.len().to_string(), true),
+        Availability::Available(Value::Number(_)) => (shown(reading), true),
+        _ => (shown(reading), false),
     };
-    kpi_with(label, reading, value, None)
+    kpi_with(label, reading, value, figure, None)
 }
 
 /// A KPI tile whose value is a state word, drawn with its status.
@@ -134,7 +136,7 @@ pub fn kpi_state(label: &str, reading: &Reading) -> El {
         .text()
         .filter(|w| !w.is_empty())
         .map(|w| word_badge(&w));
-    kpi_with(label, reading, shown(reading), badge)
+    kpi_with(label, reading, shown(reading), false, badge)
 }
 
 /// A KPI tile for a figure this process did not observe, and why: never a `0` and never a
@@ -148,7 +150,7 @@ pub fn kpi_not_observed(label: &str, reason: &str, reading: &Reading) -> El {
             format!("not observed: {reason}; read from {}", reading.cite()),
         )
         .child(el("span").class("mj-ui-kpi-label").text(label))
-        .child(el("span").class("mj-ui-kpi-value").text("not observed"))
+        .child(el("span").class(TEXT_VALUE).text("not observed"))
         .child(el("span").class("mj-ui-kpi-source").text(reading.cite()))
 }
 
@@ -161,14 +163,28 @@ pub fn not_observed(subject: &str, reason: &str) -> El {
         .text(format!(" {subject} was not observed here: {reason}"))
 }
 
-fn kpi_with(label: &str, reading: &Reading, value: String, badge: Option<El>) -> El {
+/// The class of a tile's value that is a figure: one line, in tabular figures.
+const FIGURE_VALUE: &str = "mj-ui-kpi-value";
+
+/// The class of a tile's value written in words (a state, "none", "not observed", a date or
+/// an identifier): it wraps at a phone's width instead of being cut, which only the screen
+/// can tell from a figure, by the reading it drew the value from.
+const TEXT_VALUE: &str = "mj-ui-kpi-value mj-ui-kpi-value--text";
+
+/// A tile: its label, its value as a figure or as words, and the source it was read from.
+fn kpi_with(label: &str, reading: &Reading, value: String, figure: bool, badge: Option<El>) -> El {
+    let class = if figure && badge.is_none() {
+        FIGURE_VALUE
+    } else {
+        TEXT_VALUE
+    };
     el("span")
         .class("mj-ui-kpi")
         .attr("title", format!("read from {}", reading.cite()))
         .child(el("span").class("mj-ui-kpi-label").text(label))
         .child(match badge {
-            Some(b) => el("span").class("mj-ui-kpi-value").child(b),
-            None => el("span").class("mj-ui-kpi-value").text(value),
+            Some(b) => el("span").class(class).child(b),
+            None => el("span").class(class).text(value),
         })
         .child(el("span").class("mj-ui-kpi-source").text(reading.cite()))
 }
@@ -800,6 +816,45 @@ mod tests {
 
     fn reading(value: Value) -> Reading {
         answer(Ok(serde_json::json!({ "v": value }))).read("/v")
+    }
+
+    /// A tile's value is a figure only when the reading held a number or the tile counted a
+    /// list or a map: a figure keeps one line, and every value in words — a state, a string,
+    /// "none", "not answered", "not observed" — is marked to wrap at a phone's width.
+    #[test]
+    fn a_tile_marks_a_value_in_words_and_keeps_a_figure_on_one_line() {
+        let value_class = |tile: El| -> String {
+            let html = tile.render();
+            html.split("<span class=\"mj-ui-kpi-value")
+                .nth(1)
+                .and_then(|rest| rest.split('"').next())
+                .map(|rest| format!("mj-ui-kpi-value{rest}"))
+                .unwrap_or_else(|| panic!("no value: {html}"))
+        };
+        let figure = |tile: El| assert_eq!(value_class(tile), FIGURE_VALUE);
+        let words = |tile: El| assert_eq!(value_class(tile), TEXT_VALUE);
+        figure(kpi("Open", &reading(serde_json::json!(12))));
+        figure(kpi("Share", &reading(serde_json::json!(0.25))));
+        figure(kpi_count("Items", &reading(serde_json::json!([1, 2]))));
+        figure(kpi_count("Keys", &reading(serde_json::json!({ "a": 1 }))));
+        words(kpi(
+            "Stamp",
+            &reading(serde_json::json!("2026-10-19T09:23:30Z")),
+        ));
+        words(kpi("Tree", &reading(serde_json::json!("working_tree"))));
+        words(kpi("Ready", &reading(serde_json::json!(true))));
+        words(kpi("Absent", &answer(Ok(serde_json::json!({}))).read("/v")));
+        words(kpi("Refused", &answer(Err("refused".into())).read("/v")));
+        words(kpi_count(
+            "Items",
+            &answer(Err("refused".into())).read("/v"),
+        ));
+        words(kpi_state("Health", &reading(serde_json::json!("warn"))));
+        words(kpi_not_observed(
+            "Mesh",
+            "no mesh here",
+            &reading(Value::Null),
+        ));
     }
 
     /// A count tile counts the list or the map at its pointer, and says which way it is

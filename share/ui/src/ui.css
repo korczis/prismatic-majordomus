@@ -296,13 +296,22 @@
   .mj-ui-kpi-anchor:hover .mj-ui-kpi-label {
     color: var(--mj-accent);
   }
+  /* A tile's label and a value written in words wrap rather than being cut: the narrowest
+     tile is 9.5rem, and a cut label or word ("not observ…") is not read. A number stays on
+     one line, in tabular figures; the screen marks a value in words with
+     mj-ui-kpi-value--text (ui/view.rs), so the stylesheet never guesses which is which. */
   .mj-ui-kpi-label {
-    @apply truncate text-xs font-medium;
+    @apply text-xs font-medium;
     color: var(--mj-muted);
+    overflow-wrap: anywhere;
   }
   .mj-ui-kpi-value {
-    @apply truncate text-2xl font-semibold leading-tight;
+    @apply truncate text-2xl font-semibold leading-tight tabular-nums;
     color: var(--mj-fg);
+  }
+  .mj-ui-kpi-value--text {
+    @apply whitespace-normal;
+    overflow-wrap: anywhere;
   }
   .mj-ui-kpi-source {
     @apply truncate font-mono text-xs;

@@ -61,9 +61,9 @@ jq -e '[.surfaces[] | select(.mount == "/ui")] | map(.id) | sort == ["ui", "ui-s
 # The process that reads a snapshot is no server: it holds no board and runs no mesh. The
 # figures the dashboard leads with are still decided, every one, and none counts a zero for
 # what nobody asked.
-if grep -oE 'class="mj-ui-kpi-value">(<span class="mj-badge mj-badge--unknown"|not answered<)' "$S/index.html" | grep -q .; then
+if grep -oE 'class="mj-ui-kpi-value( mj-ui-kpi-value--text)?">(<span class="mj-badge mj-badge--unknown"|not answered<)' "$S/index.html" | grep -q .; then
   echo "    the snapshot's dashboard leads with a figure nothing decided:"
-  grep -oE 'class="mj-ui-kpi-label">[^<]*</span><span class="mj-ui-kpi-value">(<span class="mj-badge mj-badge--unknown"|not answered<)' "$S/index.html" | sed 's/^/    | /'
+  grep -oE 'class="mj-ui-kpi-label">[^<]*</span><span class="mj-ui-kpi-value( mj-ui-kpi-value--text)?">(<span class="mj-badge mj-badge--unknown"|not answered<)' "$S/index.html" | sed 's/^/    | /'
   exit 1
 fi
 grep -q 'title="read from health.report /repository"' "$S/index.html" \
