@@ -13,7 +13,9 @@ use crate::cockpit::html::{el, El};
 use crate::cockpit::view::word_badge;
 
 use super::source::{ask_input, Answer};
-use super::view::{more, nothing, object_if, panel, state, table, text, unanswered, value};
+use super::view::{
+    command, more, nothing, object_if, panel, state, table, text, unanswered, value,
+};
 
 /// A claim id as the matrix spells them (`a-finding-names-how-to-see-it-again`): letters,
 /// digits, `-`, `_` and `.`, and nothing a link could carry anything else in.
@@ -179,7 +181,7 @@ pub fn inspector(ctx: &Context, answer: &Answer, id: &str) -> El {
                         if reproduce.is_empty() {
                             el("span").class("mj-ui-dim").text("none")
                         } else {
-                            el("code").class("mj-ui-mono").text(reproduce)
+                            command(&reproduce)
                         },
                     )),
             )
