@@ -168,6 +168,15 @@ Delete `.ai/`, the generated projections, and the two hook lines. For a region
 projection, delete the marked block from the host document; everything around it was
 never touched.
 
+## Measuring an adoption
+
+An adoption that should count as evidence, such as a repository that was not made for
+Majordomus and is adopted to see whether the product holds outside its own walls, follows
+[`.ai/repo/workflows/foreign-repository-adoption.md`](../.ai/repo/workflows/foreign-repository-adoption.md).
+It admits the repository against floors the owner fixed beforehand, times each step above
+from the ledger or the clock, publishes only what the repository's licence or its owner's
+consent allows, and pushes nothing to the adopted repository's remote.
+
 ## What adoption does not require
 
 - no server, account, token, or network access
