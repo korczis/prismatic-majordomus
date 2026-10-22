@@ -63,6 +63,7 @@ pub mod rendezvous;
 pub mod repository;
 pub mod root;
 pub mod state;
+pub mod tailscale;
 pub mod trust;
 
 #[cfg(test)]
