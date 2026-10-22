@@ -6,7 +6,7 @@ carrying the provenance the run itself did not have; a ledger of the latest exec
 test; and one derivation that joins the two and says, per claim, exactly what can honestly
 be said about it. Behaviour as implemented; where this document and the executable
 disagree, the document is wrong and changes in the same commit. The decision is
-[ADR 40](../.ai/repo/adrs/0040-proof-is-a-recorded-execution-and-inputs-unchanged-is-not-proven.md);
+[ADR 41](../.ai/repo/adrs/0041-proof-is-a-recorded-execution-and-inputs-unchanged-is-not-proven.md);
 the rules it serves are `project.no-claim-without-test` and
 `project.never-reported-is-not-green` under
 [`.ai/repo/rules/project/`](../.ai/repo/rules/project/).

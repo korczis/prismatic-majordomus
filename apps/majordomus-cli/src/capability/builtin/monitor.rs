@@ -226,7 +226,9 @@ pub fn module() -> ModuleDescriptor {
                 exposure: Exposure { mcp: mcp("majordomus_monitor"), http: get("/api/v1/monitor"), cli: None },
                 tags: ["monitor", "mesh", "coordination", "observability"],
                 handler: monitor,
-            },
+            }
+            // the mesh's working state, not the repository's: a loopback caller only (ADR 0220)
+            .reads_only_locally(),
         ],
     }
 }

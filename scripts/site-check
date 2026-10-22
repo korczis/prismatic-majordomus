@@ -18,6 +18,12 @@
 #                                   navigation and hero link of its homepage resolves, and a link
 #                                   with a #fragment names an element its page carries (I3008).
 #                                   The scan a case runs on a fixture. Exit 0, 10 findings, 12 missing.
+#   scripts/site-check --casefold PUBLIC_DIR|LISTING
+#                                   check 13l alone, over a built public directory with every
+#                                   composed snapshot in it, or a file listing its paths one per
+#                                   line (a case-insensitive disk cannot hold the clash a case
+#                                   needs): no two paths differ only in case (I3447). Exit 0, 10
+#                                   findings, 12 missing.
 #   scripts/site-check --prose-figures <dir>
 #                                   check 19 alone, over every *.md and *.toml under <dir>, with
 #                                   no built site: the scan a case runs on a fixture. Exit 0 when
@@ -101,6 +107,31 @@ roadmap_complete() { # page data-dir build-json
   [ "$rbad" = 0 ] || return 1
   echo "OK   roadmap      /roadmap/ draws all $(printf '%s\n' "$ms" | grep -c .) milestone(s) of plan.json in the graph's order, every issue under its milestone, observed at ${seen:0:11}"
 }
+# 13l as a function, so a case can hold it on a fixture (--casefold) and the full run calls the
+# same rule: no two paths of the publication are equal once case is folded (I3447). A
+# case-insensitive filesystem, the default on a Mac, cannot hold both, so the archive of a
+# publication that carries them does not extract there and a deploy from such a disk silently
+# keeps one. Every path is read, the composed snapshots included, and each clash names both.
+# Reports through the caller's ok and bad.
+casefold_unique() { # public-dir | listing-file (one path per line, for a case on a Mac)
+  local src="$1" paths clashes n
+  if [ -d "$src" ]; then paths="$(cd "$src" && find . -mindepth 1 | sed 's#^\./##')"
+  else paths="$(sed 's#^\./##; s#^/##' "$src")"; fi
+  n="$(printf '%s\n' "$paths" | grep -c . || true)"
+  clashes="$(printf '%s\n' "$paths" | grep . | LC_ALL=C sort \
+    | awk '{ k = tolower($0)
+             # a clash below one already reported is the same clash: report the topmost only
+             for (p = k; sub(/\/[^\/]*$/, "", p); ) if (p in clashed) next
+             if (k in seen) { print seen[k] "\t" $0; clashed[k] = 1 } else seen[k] = $0 }')"
+  if [ -n "$clashes" ]; then
+    while IFS="$(printf '\t')" read -r a b; do
+      bad casefold "/$a and /$b differ only in case; a case-insensitive filesystem holds one of them"
+    done <<< "$clashes"
+  else
+    ok casefold "$n published path(s), none equal to another once case is folded"
+  fi
+}
+
 # 13d as a function, so a case can hold it on a fixture (--nav) and the full run calls the same
 # rule: every navigation and hero link of the homepage resolves, and a link with a fragment
 # names an element its page carries (I3008). Reports through the caller's ok and bad.
@@ -366,6 +397,13 @@ if [ "${1:-}" = --roadmap ]; then
   [ -f "$2" ] && [ -f "$3/plan.json" ] && [ -f "$3/roadmap.json" ] \
     || { echo "site-check: --roadmap needs a built page and a data directory with plan.json and roadmap.json" >&2; exit 12; }
   roadmap_complete "$2" "$3" "${4:-$(dirname "$3")/build.json}" && exit 0
+  exit 10
+fi
+if [ "${1:-}" = --casefold ]; then
+  [ -d "${2:-}" ] || [ -f "${2:-}" ] || { echo "site-check: --casefold needs a built public directory, or a file listing its paths" >&2; exit 12; }
+  fails=0; ok() { printf 'OK   %-12s %s\n' "$1" "$2"; }; bad() { printf 'FAIL %-12s %s\n' "$1" "$2"; fails=$((fails + 1)); }
+  casefold_unique "$2"
+  [ "$fails" = 0 ] && exit 0
   exit 10
 fi
 if [ "${1:-}" = --nav ]; then
@@ -1251,6 +1289,8 @@ if [ -f "$PUB/build.json" ]; then
   grep -qF "$(jq -r .commit "$bj" | cut -c1-12)" "$PUB/index.html" || { bad build "the homepage footer does not carry the built commit"; bbad=1; }
   [ "$bbad" = 0 ] && ok build "/build.json: commit ${head_commit:0:12}$([ "$(jq -r .dirty "$bj")" = true ] && printf ' (dirty tree)'), input hash $(jq -r .source_hash "$bj" | cut -c1-12), registry fingerprint $(jq -r .registry_fingerprint "$bj" | cut -c1-12)"
 else bad build "site/public/build.json missing (site-build writes it)"; fi
+# 13l. no two published paths differ only in case, the composed snapshots included (I3447)
+casefold_unique "$PUB"
 # 13b. every tile has a page: profiles, claims, statuses, responsibilities, commands
 for slug in $(jq -r '.profiles[].slug' "$SITE/data/generated/profiles.json"); do [ -f "$PUB/profiles/$slug/index.html" ] || bad tiles "no page for profile $slug"; done
 for id in $(jq -r '.claims[].id' "$SITE/data/generated/capabilities.json"); do [ -f "$PUB/guarantees/$id/index.html" ] || bad tiles "no page for claim $id"; done

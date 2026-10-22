@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 158,
+      "count": 160,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 158
+      "count": 160
     },
     {
       "kind": "application",
@@ -93,7 +93,7 @@
       "route": null,
       "title": null,
       "reason": "A critique is the adversarial pass over one intent's plan, written by a worker, and work started under the intent without it or with a blocking finding open fails intent validation (ADR 0073). It is planning state of this repository; what the plan became is published on /plan/.",
-      "count": 29
+      "count": 30
     },
     {
       "kind": "deployment",
@@ -165,7 +165,7 @@
       "route": null,
       "title": null,
       "reason": "An intent's stage and criteria are derived on every read from the plan and the evidence ledger (ADR 0070); a static page would freeze a derivation at the commit the site was built from. The milestones that realise an intent are published on /plan/, and `majordomus intent show` and the Cockpit's /cockpit/intents answer for the intent itself.",
-      "count": 33
+      "count": 34
     },
     {
       "kind": "issue",
@@ -173,7 +173,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 872
+      "count": 888
     },
     {
       "kind": "knowledge",
@@ -197,7 +197,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 100
+      "count": 101
     },
     {
       "kind": "moment",
@@ -285,7 +285,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 586
+      "count": 602
     },
     {
       "kind": "use-case",
@@ -3607,6 +3607,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0203/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0220",
+          "kind": "adr",
+          "route": "/adrs/adr-0220/",
+          "external": false
         }
       ]
     },
@@ -4444,6 +4451,13 @@
           "label": "adr-0202",
           "kind": "adr",
           "route": "/adrs/adr-0202/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0220",
+          "kind": "adr",
+          "route": "/adrs/adr-0220/",
           "external": false
         }
       ]
@@ -7518,6 +7532,20 @@
           "label": "adr-0217",
           "kind": "adr",
           "route": "/adrs/adr-0217/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0219",
+          "kind": "adr",
+          "route": "/adrs/adr-0219/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0220",
+          "kind": "adr",
+          "route": "/adrs/adr-0220/",
           "external": false
         }
       ]
@@ -12516,7 +12544,22 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0219",
+          "kind": "adr",
+          "route": "/adrs/adr-0219/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0220",
+          "kind": "adr",
+          "route": "/adrs/adr-0220/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -13971,6 +14014,225 @@
       "referenced_by": []
     },
     {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0219",
+      "identity": "adr-0219",
+      "slug": "adr-0219",
+      "cockpit": "/cockpit/objects/adr/adr-0219",
+      "title": "A deployment names the provider that hosts it, and every provider file is derived from it",
+      "status": "accepted",
+      "tags": [
+        "deployment",
+        "derivation",
+        "hosting"
+      ],
+      "source": ".ai/repo/adrs/0219-a-deployment-names-its-provider-and-every-provider-file-is-derived.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/deploy/mod.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/deploy/render.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/served.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "share/schemas/majordomus/deployment/deployment.v1.schema.json",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0126",
+          "kind": "adr",
+          "route": "/adrs/adr-0126/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0204",
+          "kind": "adr",
+          "route": "/adrs/adr-0204/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "majordomus",
+          "kind": "deployment",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "I0909",
+          "kind": "issue",
+          "route": "/plan/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "fly-deployment",
+          "kind": "milestone",
+          "route": "/plan/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "majordomus.deployment-contract@2",
+          "kind": "rule",
+          "route": "/rules/majordomus-deployment-contract-2/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/84_deployment_contract.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/86_deployment_projections.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0220",
+          "kind": "adr",
+          "route": "/adrs/adr-0220/",
+          "external": false
+        }
+      ]
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0220",
+      "identity": "adr-0220",
+      "slug": "adr-0220",
+      "cockpit": "/cockpit/objects/adr/adr-0220",
+      "title": "A hosted server is a rendezvous only over TLS, with its key held as a secret and the mesh read only by those it trusts",
+      "status": "accepted",
+      "tags": [
+        "mesh-runtime",
+        "deployment",
+        "security"
+      ],
+      "source": ".ai/repo/adrs/0220-a-hosted-server-is-a-rendezvous-only-over-tls-with-its-key-held-as-a-secret.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/http/router.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/mcp/bridge.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/mesh/address.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/mesh/identity.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/mesh/rendezvous.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0050",
+          "kind": "adr",
+          "route": "/adrs/adr-0050/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0067",
+          "kind": "adr",
+          "route": "/adrs/adr-0067/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0126",
+          "kind": "adr",
+          "route": "/adrs/adr-0126/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0204",
+          "kind": "adr",
+          "route": "/adrs/adr-0204/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0219",
+          "kind": "adr",
+          "route": "/adrs/adr-0219/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "an-authorised-node-connects-from-anywhere",
+          "kind": "intent",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "majordomus",
+          "kind": "mesh-declaration",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/491_the_mesh_is_on_here.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
       "kind": "rule",
       "id": "majordomus://rule/majordomus.adr-integrity@1",
       "identity": "majordomus.adr-integrity@1",
@@ -14055,9 +14317,9 @@
         },
         {
           "edge": "depends_on",
-          "label": "majordomus.deployment-contract@1",
+          "label": "majordomus.deployment-contract@2",
           "kind": "rule",
-          "route": "/rules/majordomus-deployment-contract-1/",
+          "route": "/rules/majordomus-deployment-contract-2/",
           "external": false
         },
         {
@@ -14723,10 +14985,10 @@
     },
     {
       "kind": "rule",
-      "id": "majordomus://rule/majordomus.deployment-contract@1",
-      "identity": "majordomus.deployment-contract@1",
-      "slug": "majordomus-deployment-contract-1",
-      "cockpit": "/cockpit/objects/rule/majordomus-deployment-contract-1",
+      "id": "majordomus://rule/majordomus.deployment-contract@2",
+      "identity": "majordomus.deployment-contract@2",
+      "slug": "majordomus-deployment-contract-2",
+      "cockpit": "/cockpit/objects/rule/majordomus-deployment-contract-2",
       "title": "A deployment is described once, and every artifact built from it is generated from it",
       "status": "active",
       "tags": [
@@ -14734,7 +14996,7 @@
         "schema",
         "projection"
       ],
-      "source": ".ai/repo/rules/vendor/majordomus/rules/deployment-contract.v1.md",
+      "source": ".ai/repo/rules/vendor/majordomus/rules/deployment-contract.v2.md",
       "references": [
         {
           "edge": "depends_on",
@@ -14752,6 +15014,13 @@
         }
       ],
       "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0219",
+          "kind": "adr",
+          "route": "/adrs/adr-0219/",
+          "external": false
+        },
         {
           "edge": "defined_in",
           "label": "deployment-contract-refuses-by-name",
@@ -15771,9 +16040,9 @@
         },
         {
           "edge": "depends_on",
-          "label": "majordomus.deployment-contract@1",
+          "label": "majordomus.deployment-contract@2",
           "kind": "rule",
-          "route": "/rules/majordomus-deployment-contract-1/",
+          "route": "/rules/majordomus-deployment-contract-2/",
           "external": false
         },
         {

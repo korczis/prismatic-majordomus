@@ -101,6 +101,8 @@ fi
 cp "$CARGO_TARGET_DIR/debug/majordomus" exe-seen.txt
 printf 'derived from: %s\n' "$(cat a.txt)" > generated.txt
 git rev-list --parents -n 1 HEAD | wc -w | tr -d ' ' > parents.txt
+# the commit the derived files may observe (I3836): the worktree's HEAD, not this input
+printf '%s\n' "${MJ_DERIVE_OBSERVE:-}" > observed.txt
 if [ -f DELETE ]; then rm -f a.txt; fi
 if [ -f FAIL ]; then echo "error: the derive broke"; exit 1; fi
 echo "==> derive: done"
@@ -370,6 +372,15 @@ fn a_derive_comes_back_staged_and_uncommitted() {
         head,
         "something was committed"
     );
+    // the input was a stash snapshot no remote holds; the derive is told to observe HEAD,
+    // which the branch carries, so a derived delivery.json can be checked anywhere (I3836)
+    assert_eq!(
+        std::fs::read_to_string(s.join("observed.txt"))
+            .unwrap()
+            .trim(),
+        head.trim(),
+        "the derive was not told to observe the worktree's HEAD"
+    );
     assert!(
         !staged.lines().any(|l| l == "a.txt"),
         "the authored change was staged for the author"
@@ -491,6 +502,7 @@ fn a_merge_in_progress_travels_with_both_parents() {
     std::fs::write(s.join("a.txt"), "master\n").unwrap();
     c.git(&s, &["commit", "-q", "-am", "master side"]);
     c.git(&s, &["push", "-q", "origin", "master"]);
+    let head = c.git(&s, &["rev-parse", "HEAD"]);
     let mut merge = Command::new("git");
     merge.arg("-C").arg(&s).args(["merge", "-q", "topic"]);
     c.env(&mut merge);
@@ -518,6 +530,13 @@ fn a_merge_in_progress_travels_with_both_parents() {
             .trim(),
         "3",
         "the input lost its second parent"
+    );
+    assert_eq!(
+        std::fs::read_to_string(s.join("observed.txt"))
+            .unwrap()
+            .trim(),
+        head.trim(),
+        "a merge in progress observes its HEAD, not the commit-tree input"
     );
     assert!(
         s.join(".git/MERGE_HEAD").exists(),
