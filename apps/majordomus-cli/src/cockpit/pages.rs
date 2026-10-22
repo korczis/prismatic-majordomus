@@ -4985,7 +4985,7 @@ fn peers_of(b: &PeerList) -> Page {
             "peers.list",
         ))
         .child(statistic(
-            b.boards.len().to_string(),
+            b.covered.to_string(),
             "checkouts",
             "peers.list",
         ))
@@ -5142,34 +5142,53 @@ fn peers_of(b: &PeerList) -> Page {
         ))
     };
 
+    let listed = table(
+        &["Checkout", "Branch", "Standing", "Server", "Attached"],
+        b.boards
+            .iter()
+            .map(|v| {
+                row(vec![
+                    cell(mono(v.checkout.worktree.display().to_string())),
+                    cell(mono(
+                        v.checkout
+                            .branch
+                            .clone()
+                            .unwrap_or_else(|| "(detached)".into()),
+                    )),
+                    cell(badge(
+                        if v.reason.is_some() { "warn" } else { "ok" },
+                        v.standing.as_str(),
+                    )),
+                    cell(match &v.url {
+                        Some(u) => mono(u),
+                        None => el("span").class("mj-note").text("—"),
+                    }),
+                    cell(el("span").text(v.attached.to_string())),
+                ])
+            })
+            .collect(),
+    );
+    // The checkouts the summary counts rather than lists are said, with their standings, so
+    // the table is never read as every checkout of the repository.
     let boards = card(
         "Checkouts",
-        table(
-            &["Checkout", "Branch", "Standing", "Server", "Attached"],
-            b.boards
+        if b.omitted.is_empty() {
+            el("div").child(listed)
+        } else {
+            let counted = b
+                .omitted
                 .iter()
-                .map(|v| {
-                    row(vec![
-                        cell(mono(v.checkout.worktree.display().to_string())),
-                        cell(mono(
-                            v.checkout
-                                .branch
-                                .clone()
-                                .unwrap_or_else(|| "(detached)".into()),
-                        )),
-                        cell(badge(
-                            if v.reason.is_some() { "warn" } else { "ok" },
-                            v.standing.as_str(),
-                        )),
-                        cell(match &v.url {
-                            Some(u) => mono(u),
-                            None => el("span").class("mj-note").text("—"),
-                        }),
-                        cell(el("span").text(v.attached.to_string())),
-                    ])
-                })
-                .collect(),
-        ),
+                .map(|(standing, n)| format!("{n} {standing}"))
+                .collect::<Vec<_>>()
+                .join(", ");
+            el("div")
+                .child(el("p").class("mj-note").text(format!(
+                    "{} more checkout(s) hold no board — no server, nobody attached ({counted}) — \
+                     and are counted, not listed: peers.list with view full lists every one.",
+                    b.omitted.values().sum::<usize>()
+                )))
+                .child(listed)
+        },
     );
 
     Page::new(
@@ -7847,6 +7866,8 @@ mod tests {
             "count": 0,
             "peers": [],
             "complete": false,
+            "covered": 5,
+            "omitted": { "absent": 3 },
             "boards": [
                 {
                     "id": "repo-a", "worktree": "/work/repo", "branch": "master",
@@ -7862,6 +7883,12 @@ mod tests {
         })));
         assert_eq!(page.status, 200);
         let html = page.main.render();
+        // the checkouts the summary counts are said, so the table is not read as all of them
+        assert!(html.contains(">5<"), "the stat is every checkout covered: {html}");
+        assert!(
+            html.contains("3 more checkout(s) hold no board") && html.contains("(3 absent)"),
+            "{html}"
+        );
         assert!(html.contains("1 checkout(s) could not be asked"), "{html}");
         assert!(html.contains("Boards that could not be asked"), "{html}");
         assert!(html.contains("/work/repo-wt/feature/x"), "{html}");
@@ -7927,6 +7954,7 @@ mod tests {
                 },
             ],
             "complete": true,
+            "covered": 1,
             "boards": [{
                 "id": "repo-a", "worktree": "/work/repo", "branch": "feature/peers",
                 "this_checkout": true, "standing": "ready", "attached": 2,
@@ -7981,7 +8009,7 @@ mod tests {
     #[test]
     fn an_empty_whole_board_says_nobody_is_here() {
         let html = peers_of(&peer_list(json!({
-            "count": 0, "peers": [], "complete": true, "boards": [],
+            "count": 0, "peers": [], "complete": true, "covered": 0, "boards": [],
         })))
         .main
         .render();

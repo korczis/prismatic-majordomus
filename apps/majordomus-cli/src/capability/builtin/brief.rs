@@ -567,7 +567,7 @@ fn peers_section(
     let mut summary = format!(
         "{} attached on {} board(s)",
         attached.len(),
-        list.boards.len()
+        list.covered
     );
     if !list.overlaps.is_empty() {
         summary.push_str(&format!(
@@ -590,7 +590,9 @@ fn peers_section(
     BriefPeersSection {
         state,
         attached: attached.len(),
-        boards: list.boards.len(),
+        // every checkout covered, listed or counted: the summary lists only the ones that
+        // hold a board (peers::PeerView), and a checkout with none is still covered
+        boards: list.covered,
         unread,
         overlaps: list.overlaps.len(),
         superseded,
@@ -1622,6 +1624,7 @@ mod tests {
         at["worktree"] = json!("/elsewhere");
         at["this_checkout"] = json!(false);
         list["boards"].as_array_mut().unwrap().push(unread);
+        list["covered"] = json!(2);
 
         let repo = SyntheticRepository::small().expect("a repository");
         let ctx = canned_context(&repo);

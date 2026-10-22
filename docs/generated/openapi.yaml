@@ -8694,7 +8694,7 @@ paths:
     get:
       operationId: peers.list
       summary: List peers
-      description: "Every worker of this repository: id, the client's own name and version from its initialize, transport, when it attached, when it was last seen, what it announced, and which checkout it is attached to. A server serves one checkout, so the board of a repository worked on through linked worktrees is gathered: this checkout's board out of memory, every other checkout's from the server its lease names, asked for its own board alone. 'boards' says which checkouts were covered and 'complete' whether every one of them could be read, so a short board is never mistaken for an empty repository. 'checkouts: this' reads one board and enumerates, probes and asks nothing else. In-memory on every server; gone with the processes."
+      description: "Every worker of this repository: id, the client's own name and version from its initialize, transport, when it attached, when it was last seen, what it announced, and which checkout it is attached to. A server serves one checkout, so the board of a repository worked on through linked worktrees is gathered: this checkout's board out of memory, every other checkout's from the server its lease names, asked for its own board alone. 'covered' says how many checkouts were covered, 'boards' lists each one with a server, a worker or a board that could not be read (the rest counted in 'omitted'; 'view: full' lists every one), and 'complete' whether every board could be read, so a short board is never mistaken for an empty repository. 'checkouts: this' reads one board and enumerates, probes and asks nothing else. In-memory on every server; gone with the processes."
       tags:
         - peers
       parameters:
@@ -8708,6 +8708,16 @@ paths:
           examples:
             default:
               value: this
+        - name: view
+          in: query
+          required: false
+          schema:
+            "$ref": "#/components/schemas/PeerListView"
+            default: summary
+          description: "How many of the covered checkouts are listed in `boards`. Absent means `summary`: every checkout with a server, a worker, or a board that could not be read, the rest counted in `omitted`; `full` lists every one."
+          examples:
+            default:
+              value: summary
       responses:
         "200":
           description: "List peers: the result."
@@ -32588,20 +32598,42 @@ components:
           items:
             "$ref": "#/components/schemas/Overlap"
           description: "Every pair of peers whose claimed scope meets, each pair once — now across\ncheckouts as well as within one. Empty is the ordinary case, and a reader who sees\nan entry here is looking at two workers about to do the same work."
+        covered:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "How many checkouts the answer covers, listed in `boards` or counted in `omitted` — a\ncount, where the input `checkouts` is a choice of which to cover."
         boards:
           type: array
           items:
             "$ref": "#/components/schemas/BoardView"
-          description: "One entry per checkout the answer covers, reached or not."
+          description: "One entry per checkout the answer lists, reached or not: every covered checkout under\n`view: full`; under the default summary, every one but those `omitted` counts. A board\nthat could not be read is always listed."
+        omitted:
+          type: object
+          additionalProperties:
+            type: integer
+            format: uint
+            minimum: 0
+          description: "The covered checkouts the summary does not list, counted by standing (`absent`,\n`stale`): no server, nobody attached, no board. Empty under `view: full`."
         complete:
           type: boolean
           description: "Whether every board the answer covers was read. `false` when a checkout's server\ncould not be asked, and `BoardView::reason` says which and why — so that \"nobody\nelse is here\" is never reported when the truth is \"I could not ask\"."
       required:
         - count
         - peers
+        - covered
         - boards
         - complete
       description: "The answer of `peers.list`: every worker of this repository, from every checkout's board."
+    PeerListView:
+      oneOf:
+        - type: string
+          const: summary
+          description: "This checkout, every checkout with a worker attached or a server standing, and every\nboard that could not be read; the checkouts with no server and nobody attached are\ncounted in `omitted` by standing."
+        - type: string
+          const: full
+          description: "Every covered checkout, one entry each."
+      description: "How many of the covered checkouts `peers.list` lists one by one — the same two words, and\nthe same default, as the mesh's own `view` (`mesh::page::View`), for the same reason.\n\nOn 2026-10-22 this repository registered 625 checkouts, 601 of them with no server and\nnobody attached, and the default answer was 168 kB: past what an MCP client shows, so\nthe read every worker is told to make before it starts went through a saved file. A\ncheckout with no server holds no board (`ServerStanding::Absent`, or a `Stale` lease that\nnames a process that is gone), so listing it says only that it exists; the summary counts\nthose by standing and lists every other. The evidence is\n`the_summary_counts_only_checkouts_that_hold_no_board` below."
     PeerTree:
       type: object
       properties:

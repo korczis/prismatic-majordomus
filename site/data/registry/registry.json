@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.6"
   },
   "registry": {
-    "fingerprint": "88dad26b6264527f9aa79e5d4a83fcd69629be1b5a78ac5a1fca127fed014dcf",
+    "fingerprint": "5d2ddd4912b7ac43a51a15a592c816b72ca412bd9062ed3f56bd569b9c6b60e4",
     "summary": {
-      "total": 3300,
+      "total": 3302,
       "builtin": 208,
-      "declarative": 3092,
+      "declarative": 3094,
       "by_kind": {
         "command": 32,
         "query": 176,
-        "resource": 3092
+        "resource": 3094
       },
       "by_stability": {
         "behaviorally_verified": 143,
         "experimental": 55,
-        "implemented": 3102
+        "implemented": 3104
       },
       "mcp_tools": 197,
-      "mcp_resources": 3147,
+      "mcp_resources": 3149,
       "http_routes": 202,
       "cli_commands": 112,
       "modules": 92,
@@ -57099,7 +57099,7 @@
         "module": "peers",
         "kind": "query",
         "title": "List peers",
-        "description": "Every worker of this repository: id, the client's own name and version from its initialize, transport, when it attached, when it was last seen, what it announced, and which checkout it is attached to. A server serves one checkout, so the board of a repository worked on through linked worktrees is gathered: this checkout's board out of memory, every other checkout's from the server its lease names, asked for its own board alone. 'boards' says which checkouts were covered and 'complete' whether every one of them could be read, so a short board is never mistaken for an empty repository. 'checkouts: this' reads one board and enumerates, probes and asks nothing else. In-memory on every server; gone with the processes.",
+        "description": "Every worker of this repository: id, the client's own name and version from its initialize, transport, when it attached, when it was last seen, what it announced, and which checkout it is attached to. A server serves one checkout, so the board of a repository worked on through linked worktrees is gathered: this checkout's board out of memory, every other checkout's from the server its lease names, asked for its own board alone. 'covered' says how many checkouts were covered, 'boards' lists each one with a server, a worker or a board that could not be read (the rest counted in 'omitted'; 'view: full' lists every one), and 'complete' whether every board could be read, so a short board is never mistaken for an empty repository. 'checkouts: this' reads one board and enumerates, probes and asks nothing else. In-memory on every server; gone with the processes.",
         "input": {
           "name": "PeerListInput",
           "schema": {
@@ -57109,6 +57109,11 @@
                 "$ref": "#/$defs/Checkouts",
                 "description": "Which checkouts the board covers. Absent means `repository`; `this` is the checkout the call reached and nothing else, and it is what a sibling server is asked so that a gather can never ask back.",
                 "default": "repository"
+              },
+              "view": {
+                "$ref": "#/$defs/PeerListView",
+                "description": "How many of the covered checkouts are listed in `boards`. Absent means `summary`: every checkout with a server, a worker, or a board that could not be read, the rest counted in `omitted`; `full` lists every one.",
+                "default": "summary"
               }
             },
             "description": "What to ask of `peers.list`: how wide the board is.\n\nThe same one field, the same word and the same default as\n`super::server::ServerStatusInput`, because it is the same question asked of the same\nset of checkouts, and a caller should not have to learn it twice.\n\nThe evidence for that is `the_default_board_is_the_repositorys` below rather than a doc\nexample here: this module is `pub(crate)`, so a doc test — which compiles as an external\ncrate — cannot name the type at all.",
@@ -57128,6 +57133,21 @@
                   }
                 ],
                 "description": "Which checkouts a reading of the server status covers.\n\nThe two answers cost differently and that is the whole reason the choice exists: the\nrepository's checkouts are read from git's registry of them and each one costs a lease\nread and a probe, while this checkout alone costs one of each and enumerates nothing.\nThe word each variant serialises to is the word the query parameter, the tool input and\nthe command-line flag all take.\n\n```\nuse majordomus_cli::capability::builtin::server::Checkouts;\nassert_eq!(serde_json::to_value(Checkouts::This).unwrap(), \"this\");\nassert_eq!(serde_json::to_value(Checkouts::Repository).unwrap(), \"repository\");\nassert_eq!(Checkouts::default(), Checkouts::Repository, \"the wide answer is what a caller who says nothing has always got\");\n```"
+              },
+              "PeerListView": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "summary",
+                    "description": "This checkout, every checkout with a worker attached or a server standing, and every\nboard that could not be read; the checkouts with no server and nobody attached are\ncounted in `omitted` by standing."
+                  },
+                  {
+                    "type": "string",
+                    "const": "full",
+                    "description": "Every covered checkout, one entry each."
+                  }
+                ],
+                "description": "How many of the covered checkouts `peers.list` lists one by one — the same two words, and\nthe same default, as the mesh's own `view` (`mesh::page::View`), for the same reason.\n\nOn 2026-10-22 this repository registered 625 checkouts, 601 of them with no server and\nnobody attached, and the default answer was 168 kB: past what an MCP client shows, so\nthe read every worker is told to make before it starts went through a saved file. A\ncheckout with no server holds no board (`ServerStanding::Absent`, or a `Stale` lease that\nnames a process that is gone), so listing it says only that it exists; the summary counts\nthose by standing and lists every other. The evidence is\n`the_summary_counts_only_checkouts_that_hold_no_board` below."
               }
             }
           }
@@ -57168,12 +57188,27 @@
                 },
                 "description": "Every pair of peers whose claimed scope meets, each pair once — now across\ncheckouts as well as within one. Empty is the ordinary case, and a reader who sees\nan entry here is looking at two workers about to do the same work."
               },
+              "covered": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many checkouts the answer covers, listed in `boards` or counted in `omitted` — a\ncount, where the input `checkouts` is a choice of which to cover."
+              },
               "boards": {
                 "type": "array",
                 "items": {
                   "$ref": "#/$defs/BoardView"
                 },
-                "description": "One entry per checkout the answer covers, reached or not."
+                "description": "One entry per checkout the answer lists, reached or not: every covered checkout under\n`view: full`; under the default summary, every one but those `omitted` counts. A board\nthat could not be read is always listed."
+              },
+              "omitted": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0
+                },
+                "description": "The covered checkouts the summary does not list, counted by standing (`absent`,\n`stale`): no server, nobody attached, no board. Empty under `view: full`."
               },
               "complete": {
                 "type": "boolean",
@@ -57183,6 +57218,7 @@
             "required": [
               "count",
               "peers",
+              "covered",
               "boards",
               "complete"
             ],
@@ -86222,7 +86258,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 888,
+        "capabilities": 890,
         "capability_ids": []
       },
       {
@@ -86889,7 +86925,7 @@
     ]
   },
   "index": {
-    "fingerprint": "6abcd36d1e222ec184c9dc96e87d39540e0ebc8bb109643f1e14fa72c4f7c11c",
+    "fingerprint": "c8729d02bd0d0752b7cc8896e3feb71eee705eadf2e7c10f1d2dcf8259960612",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -86929,7 +86965,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 34,
-      "issue": 888,
+      "issue": 890,
       "knowledge": 58,
       "mesh-declaration": 1,
       "milestone": 101,
@@ -94089,7 +94125,7 @@
         "title": "MCP surface — `majordomus mcp`",
         "path": "docs/MCP.md",
         "source_class": "document",
-        "bytes": 80600
+        "bytes": 81230
       },
       {
         "uri": "majordomus://document/docs/MESH.md",
@@ -94170,7 +94206,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 769573
+        "bytes": 773425
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -107757,6 +107793,28 @@
         "bytes": 2703
       },
       {
+        "uri": "majordomus://issue/I3960",
+        "kind": "issue",
+        "identity": "I3960",
+        "title": "The initialize instructions tell the caller about itself before the board, and the board line is bounded",
+        "description": "Bound PeerBoard::summary (each claim's intent cut, at most three claims a peer, the whole line capped, the rest counted with a pointer to majordomus_peers) and move it after the sentences about the caller in the MCP initialize instructions.",
+        "path": ".ai/repo/project/issues/I3960.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2234
+      },
+      {
+        "uri": "majordomus://issue/I3961",
+        "kind": "issue",
+        "identity": "I3961",
+        "title": "peers.list answers a summary by default: checkouts that hold no board are counted, not listed",
+        "description": "Give peers.list a view input (summary by default, full on request), the same words as mesh.peers: the summary lists this checkout, every checkout with a worker or a standing server and every board that could not be read, counts the serverless ones by standing in omitted, and reports every covered checkout in covered; brief and the cockpit read covered.",
+        "path": ".ai/repo/project/issues/I3961.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2736
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -116305,7 +116363,7 @@
         "identity": "test/cases/250_the_board_is_repository_wide.sh",
         "path": "test/cases/250_the_board_is_repository_wide.sh",
         "source_class": "case",
-        "bytes": 17475
+        "bytes": 18069
       },
       {
         "uri": "majordomus://test/test/cases/25_continuity_lifecycle.sh",
@@ -117521,7 +117579,7 @@
         "identity": "test/cases/343_the_cockpit_shows_who_else_is_here.sh",
         "path": "test/cases/343_the_cockpit_shows_who_else_is_here.sh",
         "source_class": "case",
-        "bytes": 5880
+        "bytes": 6232
       },
       {
         "uri": "majordomus://test/test/cases/3460_a_session_end_hook_fits_its_budget.sh",
@@ -120662,7 +120720,7 @@
       "identity": [
         "id"
       ],
-      "objects": 888
+      "objects": 890
     },
     {
       "name": "knowledge",
@@ -155959,7 +156017,7 @@
         "name": "majordomus_peers",
         "id": "peers.list",
         "title": "List peers",
-        "description": "Every worker of this repository: id, the client's own name and version from its initialize, transport, when it attached, when it was last seen, what it announced, and which checkout it is attached to. A server serves one checkout, so the board of a repository worked on through linked worktrees is gathered: this checkout's board out of memory, every other checkout's from the server its lease names, asked for its own board alone. 'boards' says which checkouts were covered and 'complete' whether every one of them could be read, so a short board is never mistaken for an empty repository. 'checkouts: this' reads one board and enumerates, probes and asks nothing else. In-memory on every server; gone with the processes.",
+        "description": "Every worker of this repository: id, the client's own name and version from its initialize, transport, when it attached, when it was last seen, what it announced, and which checkout it is attached to. A server serves one checkout, so the board of a repository worked on through linked worktrees is gathered: this checkout's board out of memory, every other checkout's from the server its lease names, asked for its own board alone. 'covered' says how many checkouts were covered, 'boards' lists each one with a server, a worker or a board that could not be read (the rest counted in 'omitted'; 'view: full' lists every one), and 'complete' whether every board could be read, so a short board is never mistaken for an empty repository. 'checkouts: this' reads one board and enumerates, probes and asks nothing else. In-memory on every server; gone with the processes.",
         "kind": "query",
         "read_only": true,
         "effect": "read",
