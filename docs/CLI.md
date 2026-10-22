@@ -1416,8 +1416,9 @@ search: 2 match(es)
 ## `majordomus knowledge`
 
 A compiler over what this repository already states, and the writer of what an episode
-learned. `sources`, `nodes`, `edges`, `candidates` and `check` are read-only; `derive`,
-`promote` and `reject` write knowledge records and ledger lines, and nothing else.
+learned. `sources`, `nodes`, `edges`, `search`, `show`, `related`, `candidates` and `check`
+are read-only; `derive`, `promote` and `reject` write knowledge records and ledger lines, and
+nothing else.
 
 It is not a wiki, not a database, not a memory service, and not a second place to write
 things down. Every source it reads is a file somebody already maintains, everything it
@@ -1439,6 +1440,22 @@ changes the other.
   claim one identity.
 - `edges [--scope ...] [--type <t>]` derives one edge per stated relationship, with the file
   and the field or line it was observed in.
+- `search <query> [--scope ...]` returns the nodes the query matches, in an order that is a
+  rule rather than a score. A node is placed on the first rung it reaches: `id` (the query is
+  its canonical id), `title` (the query is its title), `title-prefix` (its title begins with
+  the query), `path` (its source path contains the query), `body` (its source file contains
+  the query literally); every comparison ignores case. Within a rung the order is byte order
+  of the id. Each result names the rung it was placed on (`matched`, and `rung` in `--json`),
+  so the reason for the order is in the answer. Nodes carry no tags, so there is no tag rung.
+- `show <id> [--scope ...]` prints one node with its kind, scope, title, source path and
+  content hash. Exits `12` when no node has that id.
+- `related <id> [--scope ...]` prints the edges out of and into one node, each with its type
+  and the file and field or line it was observed in. Exits `12` when no node has that id.
+
+  None of the three writes, and none rebuilds anything: there is no stored index to go
+  stale, so each call compiles what the checkout holds at that moment, exactly as `nodes`
+  does. Case 3037 asserts the ladder, the fields of every result, and that the working tree
+  reads the same after all three.
 - `derive [--episode <id>] [--dry-run] [--json]` derives the knowledge the episode produced
   into candidate records under `.ai/repo/knowledge/candidates/`, from the ledger and git and
   never from a conversation: a recorded decision becomes a `convention`, a resolved question a
