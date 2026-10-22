@@ -1593,9 +1593,17 @@ jobs:
   # and the build of it is GitHub's, and the gate reads that build's own status rather than
   # inferring it from the symptom. The whole history is needed, so `fetch-depth: 0` stays: the
   # gate walks master back to the published commit to decide whether a deploy is owed.
+  #
+  # It starts behind `evidence`, not beside the first wave (I3936). The deploy it waits for is
+  # pages.yml's run of the same push, which queues behind this run's own jobs for the runners:
+  # on master 2034d4a3f0b that run was created at 13:13Z and served at 14:21Z, while this job,
+  # started at 13:49Z, gave up its 1200 s at 14:18Z — and so went eight master runs from
+  # 2026-10-17 to 10-22, each rerun by hand. Behind the heavy jobs the deploy has had their
+  # time; `evidence` also dispatches pages.yml on master's tip. A run whose plan skips
+  # `evidence` judges pages as soon as the plan allows, as before.
   pages:
-    needs: plan
-    if: needs.plan.outputs.pages_live == 'true'
+    needs: [plan, evidence]
+    if: ${{ !cancelled() && needs.plan.outputs.pages_live == 'true' && needs.evidence.result != 'cancelled' }}
     # pages-check's bounded wait for the deploy of this commit (PAGES_CHECK_DEPLOY_WAIT, twenty
     # minutes), its five-minute wait for gh-pages' head to be served, and the checks after them
     timeout-minutes: 35
