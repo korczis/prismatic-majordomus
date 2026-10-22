@@ -211,7 +211,7 @@ impl Repository {
     }
 
     /// Open a directory known to be a root. The manifest is read and parsed once per root in
-    /// a process: a later open of the same root answers from [`OPENED`] while the manifest's
+    /// a process: a later open of the same root answers from `OPENED` while the manifest's
     /// length and modification time are the ones it was read at, so a second consumer pays
     /// one `stat` and an edited manifest is read again (I3014). A manifest that does not
     /// parse is never remembered.

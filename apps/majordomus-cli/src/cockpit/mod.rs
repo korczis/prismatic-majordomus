@@ -98,7 +98,7 @@ const PAGES_WITHOUT_AN_AREA: &[&str] = &[
 /// Every route the dispatcher answers without an identifier in the path, and the area each
 /// one belongs to — `""` for a page that belongs to none, which the sidebar does not carry.
 ///
-/// Derived from the navigation (I1009): every area of [`nav::areas`] is a route under its
+/// Derived from the navigation (I1009): every area of `nav::areas` is a route under its
 /// own id, so the sidebar and this list cannot name different Cockpits, and only the pages
 /// no area names are written down, in `PAGES_WITHOUT_AN_AREA`. The `match` that answers
 /// them is not data a program can read back at run time, so what keeps the two honest is
