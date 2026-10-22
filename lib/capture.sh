@@ -1794,9 +1794,9 @@ mj_capture_mesh_line() {
 # about to stop being reachable is exactly what a checkpoint is for. It is derived, since
 # the worker is not asked anything at this moment and could not answer if it were.
 #
-# It is skipped when there is no active task. A checkpoint is a progress note inside a task,
-# and inventing one outside a task in order to have written something would put a record in
-# the ledger that belongs to no work.
+# It runs whether or not a task is active (ADR 0052): what a compaction is about to discard
+# is worth the same with a task or without one, and the comment at the guard below says what
+# asking for a task used to cost.
 mj_capture_session_compact() {
   local provider="$1" psession="$2" out
   # shellcheck source=checkpoint.sh
@@ -1845,9 +1845,9 @@ mj_capture_session_compact() {
 # not the second — so the next worker inherited an accurate index of a task nobody told it
 # how to continue.
 #
-# It is written only when the task is still active. A task already finished or already
-# handed over has said what it had to say, and a second record restating it would be the
-# accumulation this design refuses.
+# It is written whether or not a task is active (ADR 0052). An active task is marked handed
+# over by it; without one the record stands on its own, so the next worker always has a
+# continuation to resume from.
 # Milliseconds since this event began (MJ_CAPTURE_T0, set where the event is read).
 mj_capture_end_spent() { printf '%s' $(( $(mj_ms) - ${MJ_CAPTURE_T0:-$(mj_ms)} )); }
 # Whether an optional step may still run before the close: true with no budget, otherwise

@@ -318,21 +318,21 @@ never changed.
 `wiring hooks-path` with the exact command that fixes it, and judges the wiring of the
 worktree's own directory — what it will run once fixed — rather than the stale one.
 
-The last step is the one with no mechanism behind it. Creating a worktree is one command;
-removing one is a decision nobody is prompted to make, and `cleanup` deliberately deletes
-nothing — it names what is merged and clean and leaves the act to a person, because a tool
-that removed a worktree on the strength of a merged branch would eventually remove work
-somebody had not finished. The cost is real and was paid here on 2026-09-08, eighteen hours
-after the topology landed: fifteen worktrees between them held 104 GB of Rust `target/`
-directories, nine of those with branches already merged into the trunk, and the volume
-reached 124 MiB free. Nothing in the topology reclaims anything and no budget is declared
-for the container, so the disk is what says stop — and it says it in whatever vocabulary
-the next subsystem to fail happens to use. Three said their content was wrong. See ADR 0021
-for why the mechanism is absent rather than missing.
+The last step had no mechanism behind it when the topology landed. Creating a worktree is
+one command; removing one was a decision nobody was prompted to make, and `cleanup`
+deliberately deleted nothing, because a tool that removed a worktree on the strength of a
+merged branch would eventually remove work somebody had not finished. The cost was paid here
+on 2026-09-08, eighteen hours after the topology landed: fifteen worktrees between them held
+104 GB of Rust `target/` directories, nine of those with branches already merged into the
+trunk, and the volume reached 124 MiB free. The disk said stop, in whatever vocabulary the
+next subsystem to fail happened to use; three said their content was wrong. Since 2026-09-30
+the removal is a command that refuses what it cannot prove, described under Reclaiming below,
+and the amendment of ADR 0021 records the change.
 
-If you hold a worktree whose branch has landed, `worktree cleanup` tells you; `git worktree
-remove <path>` and `git branch -d <branch>` are the two commands, and the `target/`
-directory inside it is usually most of what it costs.
+If you hold a worktree whose branch has landed, `majordomus worktree cleanup` tells you, and
+`majordomus worktree cleanup --remove` removes it unless something in it would be lost. The
+branch stays, and the `target/` directory inside the worktree is usually most of what it
+costs.
 
 ## Enforcement
 
