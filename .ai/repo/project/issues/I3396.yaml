@@ -1,0 +1,49 @@
+id: I3396
+milestone: a-newcomer-reaches-a-first-verified-intent
+title: "A documented command adds a criterion to a proposed intent, and the getting-started page shows the path from a proposal to a satisfied verdict"
+slug: the-first-intent-path-is-documented
+priority: p1
+profile: implementation
+objective: "Add a writing capability intents.criterion (CLI majordomus intent criterion <id> --criterion <text> --verify <name>) that adds one criterion to an existing intent record, refusing an unknown intent, a duplicate id or an unresolvable reference, and writing the file whole or not at all. Add a step to site/templates/getting-started.html between adding Majordomus and the first task: propose an intent, add its criterion, record the verification, read intent explain. Add the same path to docs/ADOPTION.md. Extend case 2978 for the writer."
+why: "T6 of the owner's report of 2026-10-19. intents.propose deliberately writes no criterion (ADR 0144) and no command adds one, so a newcomer would hand-edit YAML; a separate writer keeps the proposal rule and removes the archaeology."
+current_state: "apps/majordomus-cli/src/capability/builtin/intents.rs:15 says intents.propose is the one writer and :590 that it records no criterion; site/templates/getting-started.html:10-32 shows five steps and no intent; grep -n intent docs/ADOPTION.md returns nothing."
+desired_state: "The getting-started page and docs/ADOPTION.md show the path; the writer is served on CLI, HTTP and MCP."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/intents.rs"
+  - "apps/majordomus-cli/src/commands/intent.rs"
+  - "apps/majordomus-cli/tests/intent.rs"
+  - "test/cases/2978_an_intent_is_proposed_by_a_capability.sh"
+  - "site/templates/getting-started.html"
+  - "site/content/getting-started.md"
+  - "docs/ADOPTION.md"
+  - "docs/generated/cli.json"
+  - "docs/generated/cli.md"
+  - "docs/generated/cli.yaml"
+  - "docs/generated/openapi.json"
+  - "docs/generated/openapi.yaml"
+  - "docs/generated/registry.json"
+  - "docs/generated/registry.yaml"
+  - ".ai/repo/mcp-tool-run-baseline.txt"
+non_scope:
+  - "Planning milestones from the page"
+  - "Changing intents.propose"
+depends_on:
+  - "I3395"
+serves:
+  - "the-product-proves-it-pays#a-first-verified-intent-uses-only-documented-commands"
+acceptance_criteria:
+  - "The writer adds one criterion and refuses each invalid input, writing nothing on refusal"
+  - "Every command the new getting-started step shows exists in the CLI reference"
+  - "Case 2978 covers the writer"
+  - "scripts/site-check passes"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test intent"
+  - "bash test/run.sh 2978_an_intent_is_proposed_by_a_capability"
+  - "majordomus generate --check"
+  - "scripts/site-build"
+  - "scripts/site-check"
+evidence_required:
+  - "test_intent_criterion_writer"
+  - "site_getting_started_shows_first_intent"
+created_at: 2026-10-19
+updated_at: 2026-10-19

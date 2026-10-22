@@ -10,9 +10,11 @@
 //! it did not write (I2161): every HTTP error body (`http::router::error_response`, which
 //! `http::router::Response::error` returns), every JSON-RPC error (`mcp::protocol::error`)
 //! and MCP tool refusal (`mcp::surface::Surface::call_from`), the request fields the server
-//! logs (`http::router::Router::foreign_origin`, `http::server::answer_http`), and a
+//! logs (`http::router::Router::foreign_origin`, `http::server::answer_http`), every field of
+//! every event and span the log writes, whoever logged it (`logging::redact`, I2708), a
 //! handover body before it is signed into the mesh journal and replicated in clear
-//! (`mesh::handover::to_body`). Two records use it to find a credential rather than to send
+//! (`mesh::handover::to_body`), and the free text of a review as it is signed
+//! (`mesh::cooperation::redacted`, I2708). Two records use it to find a credential rather than to send
 //! one: `continuity::record::portability` refuses a continuity record that carries one, and
 //! `reasoning::store::redact` takes it out of a reasoning record before the record is kept.
 //! These are all of its callers; `no_answer_carries_a_credential` holds this list to the code

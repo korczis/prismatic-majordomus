@@ -1,0 +1,42 @@
+id: I3413
+milestone: knowledge-is-reconciled-before-it-is-reviewed
+title: "A decision, resolved question or verified task fact already curated or pending from another episode of this checkout is not proposed again, and derive names the record it matched"
+slug: known-knowledge-is-not-proposed-again
+priority: p2
+profile: implementation
+objective: "In mj_knowledge_derive_cmd, before writing a decision, question or task row, compare its evidence digest (the twelve hex characters after the episode in the record id) with the file names under curated/, candidates/ and this checkout's outbox. This is a directory listing; no record is read. A match under another id skips the row and reports it, in text and JSON, as a duplicate of the matched record's id. Observation rows are never skipped this way, because their recurrence is the signal that case 981 and I3165 count. Rejected subjects stay with I3164. knowledge check reports two records that share a digest as a WARN."
+why: "The owner's 2026-10-19 Cognitive Fabric pack asks for duplicates to be detected against existing curated content before candidates are made (campaigns/prismatic-way-cognitive-fabric-prompt-pack/prompts/03_KNOWLEDGE.md). verification/ACCEPTANCE.md proposes zero duplicate canonical entities as a target, not as a current state."
+current_state: "lib/knowledge.sh:1152-1159 builds the id from the episode and a digest. :1334-1337 skip a row only when the same full id is curated or superseded, so the same decision in a second episode becomes a second candidate. The deriver runs inside session close (lib/session.sh:663-669)."
+desired_state: "A known fact gets one record. The skip is deterministic, writes nothing and names its match. A pending candidate held in another checkout's outbox is not visible here, which is stated as a limit."
+scope:
+  - "lib/knowledge.sh"
+  - "test/cases/981_an_observation_becomes_a_grouped_candidate.sh"
+  - "docs/KNOWLEDGE.md"
+  - "site/content/docs/knowledge.md"
+  - ".ai/repo/project/intents"
+non_scope:
+  - "Skipping observations"
+  - "Rejected subjects (I3164)"
+  - "Semantic or model-based similarity"
+  - "Rewriting or merging another episode's file"
+  - "Hand-authored curated notes whose ids are slugs (I3414 relates those)"
+depends_on:
+  - "I3416"
+  - "I3164"
+serves:
+  - "a-change-reconciles-what-it-affects#a-known-fact-is-one-candidate"
+acceptance_criteria:
+  - "A decision recorded in a second episode, identical to a pending candidate of the first, is skipped as a duplicate naming the first record's id, and no file is written"
+  - "The same decision is skipped in the same way against a curated record of another episode"
+  - "An observation identical to an existing one is still written (case 981 unchanged there)"
+  - "A second derivation of the skipping episode still writes nothing"
+  - "knowledge check WARNs, keeping its exit status, when two records share a digest"
+  - "Session close's added time on a fixture is measured and reported, not asserted"
+validation:
+  - "bash test/run.sh 981_an_observation_becomes_a_grouped_candidate 564_knowledge_derivation_is_idempotent"
+  - "majordomus knowledge check"
+  - "majordomus plan validate"
+evidence_required:
+  - "case_known_knowledge_is_not_proposed_again"
+created_at: 2026-10-19
+updated_at: 2026-10-19

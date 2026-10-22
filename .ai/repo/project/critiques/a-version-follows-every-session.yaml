@@ -1,0 +1,85 @@
+intent: a-version-follows-every-session
+reviewed_at: 6d9b6d4459b
+reviewed_by: "claude-code subagent (Plan, read-only, fresh context), dispatched by session 673ab27f with the plan records, I3070's implementation and the I3071 draft, and none of the author's reasoning. It is the same model and operator session as the author, so it is independent of the authoring context but not of its blind spots. Disposition: accept with required changes. Every blocking finding is planned below."
+findings:
+  - id: shown-is-proved-by-a-case-that-never-draws-the-screen
+    class: delivery_verification
+    subject: a-version-follows-every-session#shown
+    finding: "The criterion's ref, test/cases/3470_the_release_follows_the_work.sh, asks release.currency, the brief and doctor and never renders /ui/delivery, so a passing run marks shown met before I3071 lands. I3071's draft screen test only checks that the text release.currency appears, which a KPI's title attribute satisfies without a link, and the table in docs/RELEASE.md of the surfaces that read release.currency does not name the screen."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3071
+      because: "I3071 adds a case that serves /ui/delivery over a fixture like 3470's. The case asserts that the stance, count, wait and version equal what release.currency answers there, and that the panel links the capability. In the same change I3071 retargets the ref of shown to that case, adds the case to the tests of project.land-and-publish and adds the screen to the table in docs/RELEASE.md."
+  - id: the-seat-criterion-is-proved-by-a-case-that-never-finishes
+    class: delivery_verification
+    subject: a-version-follows-every-session#the-seat-releases
+    finding: "The criterion also refs case 3470, which never starts or finishes a task, holds no mesh claim and sees no release run, so a passing 3470 marks the seat's refusal met before I3072 exists, and I3072 names no test path in its scope."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3072
+      because: "I3072 adds its own case and retargets the ref in the same change. The case covers a seat task refused completed past the threshold with the count, the wait and the version or the reason none was decided; the seat finishing while its tag's run is queued or running, and when nothing has landed; and a worker task never refused, including when release.currency is unknown."
+  - id: a-tag-counts-as-released-whatever-its-run-did
+    class: unproven_assumption
+    subject: a-version-follows-every-session#the-seat-releases
+    finding: "release/currency.rs takes any v tag the trunk contains as the release, but release.yml publishes nothing when the tag is not the declared version or no green ci is read in time, and that tag stays. The trunk then reads current, and case 3470 pushes a tag with no run at all, so a run in progress is never what is tested."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3072
+      because: "The finish gate counts a tag as released only while scripts/ci/release-check reads its run as queued or running, or once the run has succeeded. A failed run, or no run past release-check's grace, refuses the seat, and a forge that cannot be read is reported and never counted. The forge stays out of release.currency itself (invariant 4), so the brief, doctor and the screen keep saying that the tag's record has not landed yet."
+  - id: a-landing-is-dated-when-it-was-committed-not-when-it-landed
+    class: unproven_assumption
+    subject: a-version-follows-every-session#measured
+    finding: "landings() dates a landing by the committer time of a first-parent commit, but tops reach master by a fast-forward push: 41 of the 42 first-parent commits of origin/master since 2026-10-15 were committed locally. The 0.30.1 top was composed at 18:58 and its pull request was still being fixed at 23:45, yet its wait counts from 18:58, so a top assembled over six hours reads overdue the moment it lands."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3070
+      because: "Before I3072 refuses on the wait, I3070 dates the oldest landing by when this clone first saw it on the remote-tracking trunk, from that ref's reflog. It falls back to the commit time, and says so, only where the reflog has no entry containing the landing. A fixture whose top is fetched hours after its commits proves it."
+  - id: nothing-joins-a-finishing-task-to-the-seat
+    class: unproven_assumption
+    subject: I3072
+    finding: "A task's mesh claim is advisory under session task-<id> (lib/common.sh mj_mesh_task_claim), and an advisory claim holds no seat (ui/mesh.rs seat_of). The seat is an exclusive claim on release/seat under whichever session made it, and the task record names no such session. Nothing joins a finishing task to the seat, so a gate would either never see a seat or refuse every task of a checkout or machine."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3072
+      because: "I3072 defines the join before it builds the gate. Either the task itself claims release/seat exclusively under task-<id>, or the seat's claim carries the task id in its task field, and the gate reads that join from mesh.state. Its case holds a seat task and a worker task in one checkout, and a seat held on another machine."
+  - id: the-publication-gate-refuses-every-task-and-names-the-site
+    class: regression_risk
+    subject: I3072
+    finding: "mj_validate_publication_currency in lib/gates.sh runs every at-finish gate on every completed finish and refuses on any exit other than 0. It reads exit 10 as the published site not being a projection of the trunk and records the refusal under majordomus.publication-currency. A release gate copied into that shape would refuse every task whenever release.currency is unknown, and would name the wrong cause."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3072
+      because: "The gate is a doctrine of its own with its own validator, policy key and wording. It refuses completed only to a task shown to hold the seat, and that task is also refused on an unknown measurement. A measurement or seat it cannot read refuses no other task. lib/gates.sh, docs/DOCTRINE.md, clause 9 of project.land-and-publish and a finish row in docs/RELEASE.md join I3072's scope."
+  - id: the-panel-says-not-asked-when-it-asked
+    class: regression_risk
+    subject: I3071
+    finding: "The draft asks release.currency with no input, so the version is asked for, but decide_next leaves both next and next_unmeasured empty when nothing has landed or no release was found, and the panel then says not asked. The hero's Next reads release.version, so one screen could show two different next versions."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3071
+      because: "The screen shows one next version: the panel asks with next false and the hero's release.version reading stands. Where nothing waits the panel says why, and the unit fixtures are answers that measure() actually produces."
+  - id: a-vacant-seat-enforces-nothing
+    class: missed_requirement
+    subject: a-version-follows-the-work
+    finding: "Invariant 3 confines refusal to the seat, and the seat falls vacant when its holder stops sending heartbeats. With nobody in the seat, overdue work is only a doctor warning and a word in every session's brief, and neither says whether release/seat is held."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3072
+      because: "Every finish that is not the seat's is told the stance and whether release/seat is held, read from mesh.state, so overdue work with a vacant seat is named at every finish. Refusing other tasks stays a non-goal under invariant 3."
+  - id: no-case-shows-a-version-decided
+    class: delivery_verification
+    subject: a-version-follows-every-session#measured
+    finding: "The criterion says release.currency answers the version the contract requires, but case 3470 only asserts that no version is decided from an unrecorded tag, and the module's test gets next_unmeasured because its fixture publishes no registry."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3076
+      because: "I3076 adds a step to case 3470 over a recorded release whose commit carries a committed registry, as case 743's fixture does, in a checkout at the trunk. The step asserts that next equals what release.version answers there. It rides with the forge's landing time, because the fix of the landing clock stays small at the release seat's word."

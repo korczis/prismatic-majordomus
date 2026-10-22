@@ -1,0 +1,50 @@
+id: I3127
+milestone: a-stranger-adopts-it-unaided
+title: "A clean installation reaches its first refused finish in a foreign repository, and the time and the manual steps are recorded"
+slug: a-clean-install-reaches-a-refused-finish
+priority: p1
+profile: implementation
+objective: "Give scripts/ci/install-check a first-run stage: with the installed release in a throwaway HOME, init a foreign fixture repository and run the steps of .ai/repo/use-cases/catch-an-agent-that-says-it-is-done.md against the installed binary (a worker edits outside scope and claims done, check and finish refuse, the fix lands, finish accepts), recording elapsed seconds per step, the platform, and every command typed that the published site does not document. Run the stage in the validate.yml install job and the release.yml smoke step against the published installer, and keep a pre-merge regression case on case 1024's fixture."
+why: "The owner ordered on 2026-10-12 that outreach waits until a stranger can use the tool unaided, and the 2026-10-13 assessment set the bar at value within minutes on a clean machine. Case 1024 stops at initialize/tools/list, so the product's one differentiator, the refusal, is never proven through an installed release. Critique correction: the challenge scenario already runs in a disposable repository (test/fixtures/commands/setup/challenge.sh through lib/usecase.sh), but an installed release cannot run it, because the archive ships only bin, lib, libexec and share. The 'fixture release and origin stay local' non_scope item applies only to the pre-merge regression case. The criterion's proof is the published-installer stage in the install and release jobs, because the intent's invariant rules out a development build. Proposed in ADR 0206 (Public outreach begins only after a stranger has finished a first task unaided) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c241#2, chatgpt-majordomus:c256#5, chatgpt-majordomus:c269#5, chatgpt-majordomus:c069#2, chatgpt-majordomus:c126#8."
+current_state: "scripts/ci/install-check installs a release and probes the MCP launcher over stdio and HTTP; test/cases/1024_an_installed_release_serves_a_foreign_repository.sh drives it on a fixture release built from this checkout; validate.yml's install job (ubuntu-latest, macos-latest) and release.yml's smoke step already run install-check against the published installer. The challenge scenario catch-an-agent-that-says-it-is-done runs in a disposable repository built by test/fixtures/commands/setup/challenge.sh through lib/usecase.sh, which an installed release cannot run because scripts/release-package ships only bin, lib, libexec and share."
+desired_state: "install-check's first-run stage replays the use case's own steps against the installed binary and writes a JSON receipt per platform with per-step timings and an undocumented-command count read from the published site; the install and release jobs run it, and the regression case holds it before merge."
+scope:
+  - "scripts/ci/install-check"
+  - "docs/ADOPTION.md"
+  - ".github/workflows/validate.yml"
+  - ".github/workflows/release.yml"
+  - ".ai/repo/ci/gates.yaml"
+  - "site/templates/getting-started.html"
+  - "site/data/registry/distribution.json"
+  - ".ai/repo/project/intents"
+non_scope:
+  - "Network access in the pre-merge regression case; its fixture release and origin stay local"
+  - "Changing the challenge scenario this repository publishes"
+  - "The pre-push hook stage of a provider projection (split into its own issue, which depends on this one)"
+  - "The evidence and publication stages of a fresh-clone walk (I3213 composes them on top of this stage)"
+  - "Shipping use cases or fixtures in the release archive (scripts/release-package)"
+depends_on:
+  - "I2162"
+serves:
+  - "a-stranger-adopts-it-unaided#first-refusal-in-ten-minutes"
+acceptance_criteria:
+  - "The case shows check refusing an out-of-scope file, finish refusing over a failing verification, and finish accepting after the fix, all through the installed release"
+  - "The receipt carries elapsed seconds per step, the platform and the count of undocumented commands"
+  - "The case fails when the total exceeds the declared bar or the undocumented count is not zero"
+  - "The first-run stage runs in the validate.yml install job on ubuntu-latest and macos-latest against the published installer, and in the release.yml smoke step against the tag. Each run writes a receipt per platform, and those receipts are named as the proof of first-refusal-in-ten-minutes"
+  - "The fixture case built on case 1024's fixture is only the pre-merge regression test and is not cited as the criterion's proof"
+  - "The scripted bar is recorded as tool overhead per platform and is not presented as a person's ten minutes"
+  - "The documented-command list is read from what the site publishes (site/templates/getting-started.html and install_command in site/data/registry/distribution.json), not declared by the case"
+  - "The stage's steps are read from .ai/repo/use-cases/catch-an-agent-that-says-it-is-done.md and run against the installed binary; no second copy of the scenario is written into install-check"
+  - "In the same change as its case, the intent's criterion first-refusal-in-ten-minutes is re-recorded with the receipts and the regression case as its proof, the case numbered by `scripts/case-numbers next` and announced on the board at start"
+  - "I3127 is the only owner of the install-check refuse-then-accept stage. Before either issue starts, I3213's record depends on I3127 and composes only the evidence and publication stages"
+  - "Work on scripts/ci/install-check starts only on a base that already holds the installer fix 0707822cda55 and the I2829 alpha refusal 9f8baafeea4, once both are on master or the branch is based on them"
+validation:
+  - "bash test/run.sh 1024_an_installed_release_serves_a_foreign_repository"
+  - "majordomus plan validate"
+evidence_required:
+  - "case_first_refusal_in_a_foreign_repository"
+  - "case_first_refusal_regression"
+  - "receipt_first_run_per_platform"
+created_at: 2026-10-18
+updated_at: 2026-10-18

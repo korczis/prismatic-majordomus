@@ -21,8 +21,8 @@ use crate::error::{Error, Result};
 use crate::worktree::{
     migrate, BranchState, CreateRequest, Detail, DirtyState, HooksPath, MigrationAction,
     MigrationOptions, MigrationPlan, RepositoryTopology, Severity, Standing, StatusReport,
-    StepOutcome, Threshold, TopologyDiagnostic, UncommittedReport, WorkStanding, WorktreeService,
-    WorktreeState, EXIT_REFUSED,
+    StepOutcome, Threshold, TopologyDiagnostic, TrunkStanding, UncommittedReport, WorkStanding,
+    WorktreeService, WorktreeState, EXIT_REFUSED,
 };
 
 /// Run `majordomus worktree`.
@@ -96,6 +96,7 @@ pub fn run(args: WorktreeArgs) -> Result<u8> {
             })?;
             uncommitted(svc()?.uncommitted(&threshold), &threshold, format, &mut out)
         }
+        Some(WorktreeCommand::Trunk) => trunk(&svc()?, format, &mut out),
         Some(WorktreeCommand::Branches { without_worktree }) => {
             branches(&svc()?, without_worktree, &mut out)
         }
@@ -384,6 +385,22 @@ fn status(svc: &WorktreeService, format: OutputFormat, out: &mut Out<'_>) -> Res
                     trunk_source_word(s.trunk.source)
                 ),
             )?;
+            let td = &s.trunk_distance;
+            w(
+                out,
+                format!(
+                    "currency    {} {}: {}",
+                    match td.standing {
+                        TrunkStanding::Lagging | TrunkStanding::Stale => "!! ",
+                        _ => "ok ",
+                    },
+                    td.standing.as_str(),
+                    td.message
+                ),
+            )?;
+            if let Some(r) = &td.remedy {
+                w(out, format!("            {r}"))?;
+            }
             for d in wt
                 .diagnostics
                 .iter()
@@ -403,6 +420,24 @@ fn status(svc: &WorktreeService, format: OutputFormat, out: &mut Out<'_>) -> Res
         }
     }
     Ok(if s.canonical { 0 } else { EXIT_REFUSED })
+}
+
+fn trunk(svc: &WorktreeService, format: OutputFormat, out: &mut Out<'_>) -> Result<u8> {
+    let d = svc.trunk_distance();
+    match format {
+        OutputFormat::Json => json(out, &d)?,
+        OutputFormat::Text => {
+            w(out, format!("{}: {}", d.standing.as_str(), d.message))?;
+            if let Some(r) = &d.remedy {
+                w(out, format!("remedy: {r}"))?;
+            }
+        }
+    }
+    Ok(if d.standing == TrunkStanding::Stale {
+        EXIT_REFUSED
+    } else {
+        0
+    })
 }
 
 fn inspect(
@@ -790,9 +825,9 @@ fn create(
             } else {
                 w(out, format!("created {}", report.path))?;
             }
-            match (&report.base, report.branch_created) {
-                (Some(b), true) => w(out, format!("branch  {} (new, from {b})", report.branch))?,
-                _ => w(out, format!("branch  {}", report.branch))?,
+            w(out, branch_line(&report))?;
+            if let Some(warning) = report.start.as_ref().and_then(|s| s.fallback()) {
+                w(out, format!("warning {warning}"))?;
             }
             w(out, report.envrc.describe())?;
             w(out, report.envrc_local.describe())?;
@@ -804,6 +839,23 @@ fn create(
         }
     }
     Ok(0)
+}
+
+/// The line naming the branch, and for a branch this command created, the ref it started
+/// from and the exact commit that ref named.
+fn branch_line(report: &crate::worktree::CreateReport) -> String {
+    let at = report
+        .start_commit
+        .as_deref()
+        .map(|c| format!(" at {c}"))
+        .unwrap_or_default();
+    match (&report.start, &report.base, report.branch_created) {
+        (Some(crate::worktree::StartPoint::RemoteBranch { .. }), Some(b), true) => {
+            format!("branch  {} (from {b}{at}, tracking it)", report.branch)
+        }
+        (_, Some(b), true) => format!("branch  {} (new, from {b}{at})", report.branch),
+        _ => format!("branch  {}", report.branch),
+    }
 }
 
 /// The branch an issue's work happens on: `feature/<id>-<slug>`, from the issue record
@@ -1222,7 +1274,15 @@ mod tests {
     /// Render once with the writer refusing at each line in turn — every write's failure is
     /// a transport error, never a panic or a silent success — and answer the whole text of
     /// the run that was let finish.
-    fn at_every_line(mut render: impl FnMut(&mut Out<'_>) -> Result<u8>) -> String {
+    fn at_every_line(render: impl FnMut(&mut Out<'_>) -> Result<u8>) -> String {
+        let (code, text) = at_every_write(render);
+        assert_eq!(code, 0);
+        text
+    }
+
+    /// [`at_every_line`], answering the exit code of the run that was let finish with its
+    /// text: for a rendering whose answer is a refusal.
+    fn at_every_write(mut render: impl FnMut(&mut Out<'_>) -> Result<u8>) -> (u8, String) {
         for lines in 0..10_000 {
             let mut out = Refusing {
                 lines,
@@ -1230,10 +1290,7 @@ mod tests {
                 text: String::new(),
             };
             match render(&mut out) {
-                Ok(code) => {
-                    assert_eq!(code, 0);
-                    return out.text;
-                }
+                Ok(code) => return (code, out.text),
                 Err(Error::Transport(_)) => {}
                 Err(e) => panic!("a refused write became {e:?}"),
             }
@@ -1376,6 +1433,45 @@ mod tests {
         ));
     }
 
+    /// A create that could not reach the trunk's remote warns, and a reader gone at that
+    /// line is a transport error like any other; each attempt is a new branch, because a
+    /// rerun of the same one would find it made and have nothing to warn about.
+    #[test]
+    fn a_create_that_could_not_fetch_warns_and_a_refused_warning_is_a_transport_error() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let root = tmp.path().canonicalize().expect("canonical tempdir");
+        git(&root, &["init", "-q", "repo"]);
+        let repo = root.join("repo");
+        git(&repo, &["commit", "-q", "--allow-empty", "-m", "root"]);
+        let gone = root.join("gone.git").to_string_lossy().to_string();
+        git(&repo, &["remote", "add", "origin", gone.as_str()]);
+        git(&repo, &["config", "branch.master.remote", "origin"]);
+        let svc = WorktreeService::open(&repo).expect("open the service");
+        for lines in 0..20 {
+            let mut out = Refusing {
+                lines,
+                seen: 0,
+                text: String::new(),
+            };
+            let branch = format!("topic-{lines}");
+            match create(&svc, &branch, None, false, OutputFormat::Text, &mut out) {
+                Ok(code) => {
+                    assert_eq!(code, 0);
+                    assert!(
+                        out.text
+                            .contains("warning could not fetch master from origin"),
+                        "{}",
+                        out.text
+                    );
+                    return;
+                }
+                Err(Error::Transport(_)) => {}
+                Err(e) => panic!("a refused write became {e:?}"),
+            }
+        }
+        panic!("the rendering never finished");
+    }
+
     #[test]
     fn create_migrate_and_repair_say_which_hooks_a_worktree_runs() {
         let (tmp, repo) = hooked();
@@ -1439,5 +1535,65 @@ mod tests {
         let text = at_every_line(|out| repair(&svc, false, OutputFormat::Text, out));
         assert!(text.contains("the primary checkout's"), "{text}");
         assert!(!text.contains("its own"), "{text}");
+    }
+
+    /// `worktree status` and `worktree trunk` render one reading of the distance from the
+    /// remote trunk: a stale checkout is flagged and given its remedy, and `trunk` refuses
+    /// while it stays stale; brought current, both say ok and suggest nothing.
+    #[test]
+    fn status_and_trunk_flag_a_stale_checkout_and_trunk_refuses_it() {
+        use crate::worktree::trunk::fixture;
+        let (repo, _origin) = fixture::layered(6, Some((2, 5)));
+        let svc = WorktreeService::open(repo.root()).expect("open the service");
+        let render = |f: &dyn Fn(&mut Out<'_>) -> Result<u8>| at_every_write(f);
+
+        let (_, text) = render(&|out| status(&svc, OutputFormat::Text, out));
+        assert!(
+            text.contains("\ncurrency    !!  stale: this checkout is 6 commit(s) behind"),
+            "{text}"
+        );
+        assert!(
+            text.contains("\n            git fetch; commit or rescue uncommitted work, then: "),
+            "{text}"
+        );
+        let (code, text) = render(&|out| trunk(&svc, OutputFormat::Text, out));
+        assert_eq!(code, EXIT_REFUSED);
+        assert!(
+            text.starts_with("stale: this checkout is 6 commit(s) behind")
+                && text.contains("\nremedy: git fetch;"),
+            "{text}"
+        );
+        let (code, text) = render(&|out| trunk(&svc, OutputFormat::Json, out));
+        assert_eq!(code, EXIT_REFUSED);
+        let v: Value = serde_json::from_str(&text).expect("json");
+        assert_eq!(
+            (v["standing"].as_str(), v["checkout"]["behind"].as_u64()),
+            (Some("stale"), Some(6))
+        );
+        // the command line reaches the same reading, and the same exit
+        let args = WorktreeArgs {
+            repo: repo_args(repo.root()),
+            command: Some(WorktreeCommand::Trunk),
+            format: OutputFormat::Json,
+        };
+        assert_eq!(run(args).expect("a reading"), EXIT_REFUSED);
+        // and refuses a directory no repository holds before it measures anything
+        let plain = tempfile::tempdir().expect("tempdir");
+        let args = WorktreeArgs {
+            repo: repo_args(plain.path()),
+            command: Some(WorktreeCommand::Trunk),
+            format: OutputFormat::Json,
+        };
+        assert!(matches!(run(args), Err(Error::Refused { .. })));
+
+        fixture::git(repo.root(), &["merge", "-q", "--ff-only", "origin/master"]);
+        let (code, text) = render(&|out| trunk(&svc, OutputFormat::Text, out));
+        assert_eq!(code, 0);
+        assert!(
+            text.starts_with("current: ") && !text.contains("remedy:"),
+            "{text}"
+        );
+        let (_, text) = render(&|out| status(&svc, OutputFormat::Text, out));
+        assert!(text.contains("\ncurrency    ok  current: "), "{text}");
     }
 }

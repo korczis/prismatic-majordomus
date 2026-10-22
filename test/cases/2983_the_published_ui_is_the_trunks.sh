@@ -201,7 +201,7 @@ chmod +x "$S/bin/gh"
 live() {   # <commit the snapshot was read at | none>: the published site, whole but for the UI
   rm -rf "$W"; mkdir -p "$W/releases"
   jq -n --arg c "$PUB" '{schema: 1, commit: $c, dirty: false, release: {version: "0.21.0"}}' > "$W/build.json"
-  printf '<html><body><dl data-trust><div data-trust-key="release" data-release="0.21.0"><dd>0.21.0</dd></div></dl>\n<a href="https://example.invalid/commit/%s">%s</a></body></html>\n' "$PUB" "$PUB" > "$W/index.html"
+  printf '<html><body><dl data-trust><div data-trust-key="release" data-release="0.21.0"><dd>0.21.0</dd></div></dl>\n<footer><a href="https://example.invalid/commit/%s">%s</a></footer></body></html>\n' "$PUB" "$PUB" > "$W/index.html"
   jq -n '{schema: "release/v1", version: "0.21.0", tag: "v0.21.0"}' > "$W/releases/latest.json"
   [ "$1" = none ] || publication_snapshots "$ROOT" "$W" "$1" || { echo "    the stand-in snapshot could not be placed"; exit 1; }
 }

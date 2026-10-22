@@ -7,7 +7,8 @@ longer there, so a chapter cannot keep describing something the repository has r
 removed. What the chapter's own text links to is found automatically and added to this.
 
 Reference syntax: kind:label, where label is the graph's label for that kind
-(doc:docs/MESH.md, feature:mesh, module:mesh, command:finish, adr:0067, rule:project.x, claim:x).
+(doc:docs/MESH.md, feature:mesh, module:mesh, command:finish, adr:0067, rule:project.x, claim:x,
+milestone:x).
 """
 
 SOURCES = {
@@ -85,6 +86,11 @@ SOURCES = {
     "cisla-commity": "doc:docs/COMMIT.md feature:commit module:commit",
     "cisla-adr": "doc:docs/CONCEPTS.md command:adr",
     "cisla-pravidla": "doc:docs/DOCTRINE.md doc:docs/CI.md feature:doctrine feature:ci module:rules module:gates",
+    # Výhled
+    "v-vyhled": "doc:docs/ROADMAP.md doc:docs/DOGFOODING.md doc:docs/ADOPTION_FIRST_RUN.md doc:docs/HANDBOOK.md feature:planning",
+    "v-trh": "doc:docs/PRODUCT.md doc:docs/SURFACES.md doc:docs/EVIDENCE.md doc:docs/ADOPTION.md feature:evidence feature:coordination",
+    "v-realita": "doc:docs/PLANNING.md doc:docs/DOCTRINE.md feature:planning module:plan module:intent_realization command:history milestone:execution-telemetry",
+    "v-tokeny": "doc:docs/ECONOMICS.md feature:economics module:economics adr:0082 claim:token-savings-measured claim:economics-claims-gated claim:telemetry milestone:execution-telemetry",
     # Reference
     "prikazy": "doc:docs/CLI.md doc:docs/COMMANDS.md module:commands command:help",
     "p-prikazy": "doc:docs/CLI.md doc:docs/KNOWLEDGE.md doc:docs/CONTINUITY.md command:knowledge command:session command:handover",

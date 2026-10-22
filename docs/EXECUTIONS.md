@@ -10,17 +10,22 @@ the rules are [`project.execution-events-are-typed`](../.ai/repo/rules/project/e
 and [`project.executions-carry-no-secret`](../.ai/repo/rules/project/executions-carry-no-secret.v1.md);
 the registry it runs on is [`CAPABILITIES.md`](CAPABILITIES.md).
 
-```text
-ONE CANONICAL DECLARATION   capability! { … handler: verify }.cancellable()
-        ↓
-CAPABILITY REGISTRY         the same registry MCP, HTTP, OpenAPI, the CLI and the Cockpit read
-        ↓
-EXECUTION ENGINE            validate · create · queue · run on a worker · catch · complete
-        ↓
-EXECUTION STORE             the snapshot, the retained events, the subscribers — all bounded
-        ↓
-DERIVED PROJECTIONS         the live channel (WebSocket) · executions.get · executions.events
-                            · the Cockpit's Executions pages · `majordomus run` · MCP tools
+```mermaid
+flowchart TD
+  declaration["ONE CANONICAL DECLARATION<br/><small>capability! { … handler: verify }.cancellable()</small>"]
+  registry["CAPABILITY REGISTRY<br/><small>the same registry MCP, HTTP, OpenAPI, the CLI and the Cockpit read</small>"]
+  engine["EXECUTION ENGINE<br/><small>validate · create · queue · run on a worker · catch · complete</small>"]
+  store["EXECUTION STORE<br/><small>the snapshot, the retained events, the subscribers, all bounded</small>"]
+  declaration --> registry --> engine --> store
+  subgraph projections["DERIVED PROJECTIONS"]
+    channel["the live channel<br/><small>WebSocket</small>"]
+    get["executions.get"]
+    events["executions.events"]
+    pages["the Cockpit's Executions pages"]
+    run["majordomus run"]
+    tools["MCP tools"]
+  end
+  store --> projections
 ```
 
 There is no action registry, no action definition and no second implementation of anything.

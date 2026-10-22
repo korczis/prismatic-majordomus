@@ -1,0 +1,41 @@
+id: I3427
+milestone: an-entity-says-how-it-is-known-and-what-it-affects
+title: "Every entity read names how its record says it is known, and never answers verified itself: proof stays the pointer it is"
+slug: an-entity-read-names-how-it-is-known
+priority: p1
+profile: implementation
+objective: "Add an epistemic field holding class and basis to EntityView. One pure function in apps/majordomus-cli/src/entity.rs reads it from the record's own fields. A candidate or proposed status gives proposed. A superseded status or superseded_by gives superseded. Knowledge epistemics inferred gives inferred, and a generated projection gives derived. Anything else is observed. The function never computes verified: an object with a proof keeps the existing ProofRef pointer (entity.rs:181-185), and a surface shows verified only from that capability's answer. docs/SURFACES.md states the vocabulary once, with each older vocabulary's mapping, as the proposed ADR decides."
+why: "The owner's 2026-10-19 Cognitive Fabric pack asks every surface to show one epistemic classification per entity, and forbids a model output from promoting an inferred claim to verified (campaigns/prismatic-way-cognitive-fabric-prompt-pack/prompts/05_SURFACES.md, contracts/ARCHITECTURE.md)."
+current_state: "EntityView (apps/majordomus-cli/src/capability/builtin/entity.rs:395-435) has no class field. Its EvidenceState of unclaimed, dangling or resolved (entity.rs:140-151) says that artefacts exist, never that they ran. The module answers proof by pointer, 'a pointer, never an answer' (entity.rs:181-185). The other vocabularies are IntentLinkProvenance (intent_realization.rs:77-101), FieldProvenance (devtask/mod.rs:93-125), knowledge epistemics (docs/KNOWLEDGE.md:30; knowledge_base.rs:141,441) with superseded_by (knowledge_base.rs:457), and ProofState (evidence/mod.rs)."
+desired_state: "entity.show answers the class and its basis on every surface from one capability. Verified is visible only where the proof capability answers it."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/entity.rs"
+  - "apps/majordomus-cli/src/entity.rs"
+  - "docs/SURFACES.md"
+  - "docs/generated/registry.json"
+  - "docs/generated/registry.yaml"
+  - "docs/generated/openapi.json"
+  - "docs/generated/openapi.yaml"
+  - "docs/generated/modules/entity.md"
+  - "site/data/generated/openapi.json"
+  - "site/data/registry/registry.json"
+non_scope:
+  - "Renaming or removing the older vocabularies"
+  - "Reading crate::evidence or running a proof inside entity.show"
+  - "Any model or advisor call"
+  - "A confidence score"
+serves:
+  - "a-change-reconciles-what-it-affects#an-entity-says-how-it-is-known"
+acceptance_criteria:
+  - "A candidate knowledge record reads proposed, a record with superseded_by reads superseded, a record with epistemics inferred reads inferred, and a tracked record with no other basis reads observed, each with a basis naming its source field"
+  - "No object reads verified from entity.show; a fixture supported only by an advisor reading stays inferred"
+  - "The class is identical across two runs over the same tree"
+  - "bin/majordomus-cli generate --check passes with no projection edited by hand"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib capability::builtin::entity"
+  - "bin/majordomus-cli generate --check"
+  - "majordomus plan validate"
+evidence_required:
+  - "entity_epistemic_class"
+created_at: 2026-10-19
+updated_at: 2026-10-19

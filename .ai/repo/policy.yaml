@@ -292,6 +292,14 @@ enforcement:
     path: bin/majordomus
     args: [finish, --check]
     wired_by: git-hook:pre-push
+  # What CI would find, found first: the plan's structure gates that CI recorded as cheap and
+  # that reach no network, and the suite's fast cases, within a stated bound
+  # (rule project.a-push-runs-what-ci-would-find-first). Doctor refuses a clone whose hook
+  # stops calling it.
+  - name: structure-gates-on-push
+    path: scripts/ci/run-plan
+    args: [--before-push]
+    wired_by: git-hook:pre-push
   # .gitattributes marks the derived artifacts `merge=derived`, but the driver that name
   # resolves to is declared per clone and per worktree. Git says nothing when it is missing:
   # it falls back to the default text merge and conflicts on every generated file, which is
@@ -301,6 +309,15 @@ enforcement:
     path: scripts/merge-derived
     args: []
     wired_by: git-config:merge.derived.driver
+  # `scripts/derive` builds the Rust executable, and with it everything that regenerates
+  # derived data: the pre-commit gate, `majordomus prs repair --apply`, the integration
+  # executor. On a machine without the pinned toolchain each of them fails late, after the
+  # merge and the lock, naming `cargo` and nothing about this repository. Declaring it here
+  # makes doctor — and therefore the pre-commit hook — refuse that clone before it starts.
+  - name: derive-toolchain
+    path: scripts/derive
+    args: []
+    wired_by: toolchain:rust-toolchain.toml
   - name: prompt-capture
     path: bin/majordomus
     args: [capture, prompt]
@@ -353,6 +370,20 @@ commit:
   reference_unresolved: error
   breaking_unexplained: error
 
+# ---------------------------------------------------------------- a checkout and its trunk
+# How far a checkout may drift from the remote trunk (project.a-checkout-serves-the-current-trunk).
+# On 2026-10-16 the primary checkout was 779 commits behind origin/master, its shared server
+# answered every session from that tree, and its local master was the base `worktree create`
+# branched from; nothing reported it. The distance is counted for the checkout's HEAD and for
+# the local trunk branch, as of the last fetch, and judged here: lagging warns, stale fails
+# doctor — and so the commit hook — while a merge that brings the checkout current counts
+# what it brings in. Read by worktree status, server.status, the MCP initialize
+# instructions and doctor; nothing reads a default when these are absent.
+checkout:
+  trunk_distance:
+    warn_behind: 100                     # about a day of this trunk's commits
+    fail_behind: 400                     # several days: what it serves is not the trunk
+
 # ---------------------------------------------------------------- the shared server's lease
 # One server serves a checkout, and a lease file decides which process owns it. These four
 # numbers are what a contest between two processes is judged by, and until 2026-09-15 all
@@ -367,12 +398,16 @@ commit:
 # The values below are the constants they replace, so declaring them changed no behaviour.
 # Changing them here changes behaviour, and test/cases holds that it does — otherwise this
 # would be a constant moved to another file rather than a value the model owns.
+#
+# `idle_seconds` is how long a server started for a checkout no client owns (`serve ensure`,
+# a shell entering the checkout) outlives its last peer; `serve --idle` overrides it (I2701).
 server:
   probe_timeout_seconds: 2
   bind_grace_seconds: 15
   join_timeout_seconds: 20
   busy_grace_seconds: 10
   read_deadline_seconds: 30
+  idle_seconds: 900
 
 projections:
   - provider: agents

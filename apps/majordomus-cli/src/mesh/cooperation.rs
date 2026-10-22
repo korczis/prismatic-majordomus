@@ -100,8 +100,8 @@ use serde::{Deserialize, Serialize};
 use super::config::{CooperationConfig, TrustConfig};
 use super::identity::{node_id_of_key, NodeIdentity};
 use super::journal::{
-    ClaimMode, EventBody, HandoverBody, Journal, JournalTallies, Marks, MeshEvent, Rejection,
-    SessionInfo, StreamId, StreamLiveness, HANDOVER_RETENTION,
+    ClaimMode, Durability, EventBody, HandoverBody, IngestReport, Journal, JournalTallies, Marks,
+    MeshEvent, Rejection, SessionInfo, StreamId, StreamLiveness, HANDOVER_RETENTION,
 };
 use super::link::{
     fresh_token, negotiate, sign, verify_signed, Domain, Hello, LinkRefusal, LinkReply,
@@ -275,6 +275,10 @@ struct Outbound {
     endpoint: String,
     counter: u64,
     remote_marks: Marks,
+    /// What this runtime did with the events of the last round's answer: what
+    /// [`Cooperation::verify`] reads to tell a round that carried nothing from one whose every
+    /// event was refused.
+    last_round: IngestReport,
 }
 
 #[derive(Clone)]
@@ -951,13 +955,14 @@ impl MeshVerifyReport {
 /// #     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),
 /// # }).unwrap();
 /// use majordomus_cli::mesh::cooperation::Written;
-/// use majordomus_cli::mesh::journal::{ClaimMode, SessionInfo};
+/// use majordomus_cli::mesh::journal::{ClaimMode, Durability, SessionInfo};
 ///
 /// let session = SessionInfo::named("s1", "cli");
 /// let written: Written = cooperation
 ///     .claim(&session, vec!["docs".into()], None, ClaimMode::Advisory, None)
 ///     .unwrap();
 /// assert!(written.lamport > 0, "placed against every other runtime's events");
+/// assert_eq!(written.durability, Durability::Memory, "this journal has no file");
 ///
 /// // and the key it returned is how the claim is addressed from here on
 /// cooperation.release(&written.key).unwrap();
@@ -970,6 +975,11 @@ pub struct Written {
     pub event: String,
     /// The event's Lamport stamp.
     pub lamport: u64,
+    /// Whether the event reached this machine's disk: `synced`, `memory` (a journal with no
+    /// file, by configuration), or `not_durable` — held and replicated to peers, not on disk
+    /// here, and not acknowledged as durable. `unknown` from an executable that predates it.
+    #[serde(default)]
+    pub durability: Durability,
 }
 
 /// What a dial or a sync round did not do. The three are kept apart because they are acted
@@ -2495,6 +2505,7 @@ impl Cooperation {
                 endpoint: endpoint.clone(),
                 counter: 0,
                 remote_marks: welcome.marks.clone(),
+                last_round: IngestReport::default(),
             });
             peer.last_exchange = Some(Instant::now());
             peer.rtt = Some(started.elapsed());
@@ -2657,7 +2668,8 @@ impl Cooperation {
                 failed("the sync answer is not the linked peer's answer to this round".into()),
             )));
         }
-        self.journal
+        let round = self
+            .journal
             .ingest(&answer.events, &|e| self.origin_accept(e));
         self.journal.merge_marks(
             &answer.marks,
@@ -2669,6 +2681,7 @@ impl Cooperation {
             if let Some(peer) = table.peers.get_mut(runtime_key) {
                 if let Some(o) = peer.outbound.as_mut() {
                     o.remote_marks = answer.marks;
+                    o.last_round = round;
                 }
                 peer.last_exchange = Some(Instant::now());
                 peer.rtt = Some(started.elapsed());
@@ -3232,6 +3245,7 @@ impl Cooperation {
             impact: (tallies.pending > 0).then(|| "events after a gap are held until the gap arrives; the state lags the stream they belong to".into()),
             remediation: (tallies.pending > 0).then(|| "a peer relays a partial stream: run mesh verify on the peers and compare their marks".into()),
         });
+        checks.push(instances_check(&doubled_runtimes(&self.streams())));
         let refused = self.status().refused;
         let suspicious: Vec<&RefusedView> = refused
             .iter()
@@ -3268,18 +3282,27 @@ impl Cooperation {
         });
 
         let mut peers = Vec::new();
+        // The rounds just run whose answer carried events and had every one refused: the
+        // peer keeps offering what this runtime keeps refusing, and nothing crosses (I2825).
+        let mut storms: Vec<(String, Rejection, u64, u64)> = Vec::new();
         for peer in self.peers() {
             if peer.outbound {
                 let outcome = self.sync_with(&peer.runtime);
                 let after = self.peers().into_iter().find(|p| p.runtime == peer.runtime);
-                let remote = {
+                let (remote, round) = {
                     let table = self.table.lock().expect("cooperation table");
-                    table
+                    let out = table
                         .peers
                         .get(&peer.runtime)
-                        .and_then(|p| p.outbound.as_ref())
-                        .map(|o| o.remote_marks.clone())
+                        .and_then(|p| p.outbound.as_ref());
+                    (
+                        out.map(|o| o.remote_marks.clone()),
+                        out.map(|o| o.last_round.clone()),
+                    )
                 };
+                if let Some(round) = round.filter(|_| outcome.is_ok()) {
+                    storms.extend(storm_of(&peer.runtime, &round));
+                }
                 let converged = remote.map(|remote| {
                     let local = self.journal.marks();
                     local.keys().chain(remote.keys()).all(|s| {
@@ -3323,6 +3346,7 @@ impl Cooperation {
                 });
             }
         }
+        checks.push(rejections_check(&storms));
         // Declared seeds say that peers exist: a runtime with seeds and no connected peer has
         // verified nothing, however clean its local checks are.
         let connected = peers
@@ -3363,14 +3387,15 @@ impl Cooperation {
     // ------------------------------------------------------------------ operations
 
     fn write(&self, body: EventBody, key: String) -> Result<Written, CooperationError> {
-        let event = self
+        let appended = self
             .journal
-            .append_own(body)
+            .append_acknowledged(body)
             .map_err(|e| CooperationError::Invalid(e.to_string()))?;
         Ok(Written {
             key,
-            event: event.id(),
-            lamport: event.lamport,
+            event: appended.event.id(),
+            lamport: appended.event.lamport,
+            durability: appended.durability,
         })
     }
 
@@ -3771,11 +3796,11 @@ impl Cooperation {
             EventBody::ReviewRequested {
                 review: review.clone(),
                 session: session.into(),
-                subject,
+                subject: redacted(subject),
                 scope,
                 issue,
                 reviewer,
-                body,
+                body: body.map(redacted),
             },
             self.own(&review),
         )
@@ -3841,8 +3866,8 @@ impl Cooperation {
             EventBody::ReviewAnswered {
                 request: request.into(),
                 session: session.into(),
-                verdict,
-                note,
+                verdict: redacted(verdict),
+                note: note.map(redacted),
             },
             request.into(),
         )
@@ -3912,11 +3937,21 @@ impl Cooperation {
             EventBody::ReviewWithdrawn {
                 request: request.into(),
                 session: session.into(),
-                note,
+                note: note.map(redacted),
             },
             request.into(),
         )
     }
+}
+
+/// Free text of a review as it is signed: every credential shape replaced by the marker that
+/// names it, through the one rule set (`redaction::redact_secrets`), as a handover body is.
+///
+/// A review's subject, body, verdict and notes are typed by a session and replicated in clear
+/// to every linked runtime, so a pasted credential would otherwise travel with them (I2708).
+/// The entries of `.ai/repo/ci/mesh-event-fields.yaml` that say `redacted` name these fields.
+fn redacted(text: String) -> String {
+    crate::redaction::redact_secrets(&text).text
 }
 
 /// A JSON error as the text a refusal or a round error carries.
@@ -3924,9 +3959,295 @@ fn json_text(error: serde_json::Error) -> String {
     error.to_string()
 }
 
+/// The dominant reason and its count when a round refused events and accepted none, which is
+/// what a peer re-offering what this runtime keeps refusing looks like from one round; `None`
+/// for a round that carried nothing or let anything in. Ties go to the first reason in
+/// [`Rejection`]'s order, so the answer does not depend on the map's iteration.
+fn refused_round(round: &IngestReport) -> Option<(Rejection, u64)> {
+    if round.accepted > 0 || round.rejected_total() == 0 {
+        return None;
+    }
+    round
+        .rejected
+        .iter()
+        .fold(None, |best: Option<(Rejection, u64)>, (r, n)| match best {
+            Some((_, m)) if m >= *n => best,
+            _ => Some((*r, *n)),
+        })
+}
+
+/// The runtimes that beat as more than one instance at once, each with its live instances in
+/// order. A runtime is a checkout's server; a restart is a new instance and the old one falls
+/// silent, so two that beat together are two processes speaking for one checkout. On
+/// 2026-10-19 a 0.21.0 server started on 2026-10-15 still answered for the primary checkout
+/// beside every server that had taken its lease since, and its peers' links flapped between
+/// the two on every round (I2825).
+fn doubled_runtimes(
+    streams: &[(StreamId, StreamLiveness, Option<u64>)],
+) -> Vec<(String, Vec<String>)> {
+    let mut live: BTreeMap<String, Vec<String>> = BTreeMap::new();
+    for (id, liveness, _) in streams {
+        if matches!(liveness, StreamLiveness::Live | StreamLiveness::Own) {
+            live.entry(id.runtime_key())
+                .or_default()
+                .push(id.instance().to_string());
+        }
+    }
+    live.into_iter()
+        .filter(|(_, instances)| instances.len() > 1)
+        .map(|(runtime, mut instances)| {
+            crate::order::canonical_strings(&mut instances);
+            (runtime, instances)
+        })
+        .collect()
+}
+
+/// A rejection reason as its wire word (`capacity`, `untrusted`), the word a counter and a
+/// JSON report carry.
+fn rejection_word(reason: Rejection) -> String {
+    serde_json::to_value(reason)
+        .ok()
+        .and_then(|v| v.as_str().map(String::from))
+        .unwrap_or_default()
+}
+
+/// A round whose every event `runtime` offered was refused: the peer, the dominant reason,
+/// how many it refused, and how many were refused in all. `None` for any other round.
+fn storm_of(runtime: &str, round: &IngestReport) -> Option<(String, Rejection, u64, u64)> {
+    refused_round(round)
+        .map(|(reason, most)| (runtime.to_string(), reason, most, round.rejected_total()))
+}
+
+/// `mesh verify`'s `instances` check over the runtimes that beat as more than one instance
+/// (`doubled_runtimes`): two processes speaking for one checkout (I2825).
+fn instances_check(doubled: &[(String, Vec<String>)]) -> MeshVerifyCheck {
+    MeshVerifyCheck {
+        check: "instances".into(),
+        ok: doubled.is_empty(),
+        detail: if doubled.is_empty() {
+            "every runtime beats as one instance".into()
+        } else {
+            doubled
+                .iter()
+                .map(|(runtime, instances)| {
+                    format!("{runtime} beats as {} instances: {}", instances.len(), instances.join(", "))
+                })
+                .collect::<Vec<_>>()
+                .join("; ")
+        },
+        impact: (!doubled.is_empty()).then(|| {
+            "two processes speak for one checkout: every peer that hears both keeps replacing one link with the other (handshakes rise with reconnects), and each claims and releases in its own stream".into()
+        }),
+        remediation: (!doubled.is_empty()).then(|| {
+            "one of them is a server that never left the mesh when another took its lease — an executable older than v0.27.0 does not: find the checkout's server processes (pgrep -fl 'majordomus (serve|mcp)'), keep the one `majordomus serve status` names, and stop the other by its pid".into()
+        }),
+    }
+}
+
+/// `mesh verify`'s `rejections` check over the rounds whose every event was refused
+/// (`storm_of`): a peer offering what this runtime keeps refusing (I2825).
+fn rejections_check(storms: &[(String, Rejection, u64, u64)]) -> MeshVerifyCheck {
+    let capacity = storms.iter().any(|s| s.1 == Rejection::Capacity);
+    MeshVerifyCheck {
+        check: "rejections".into(),
+        ok: storms.is_empty(),
+        detail: if storms.is_empty() {
+            "no round had its every event refused".into()
+        } else {
+            storms
+                .iter()
+                .map(|(runtime, reason, most, all)| {
+                    format!(
+                        "{runtime}: 0 accepted, {all} refused, {most} of them {}",
+                        rejection_word(*reason)
+                    )
+                })
+                .collect::<Vec<_>>()
+                .join("; ")
+        },
+        impact: (!storms.is_empty()).then(|| {
+            "a peer keeps offering what this runtime refuses: claims, releases and handovers from it stop arriving, and the counters grow without anything crossing".into()
+        }),
+        remediation: (!storms.is_empty()).then(|| {
+            if capacity {
+                "capacity: a node fills its event quota, usually with dead streams of its own machine; count the journal's events per node (jq -r '.stream|split(\"-\")[0]' .ai/local/state/mesh/journal.jsonl | sort | uniq -c), and run an executable that compacts a node at three quarters of its quota (I2825)".into()
+            } else {
+                "read the reason: untrusted or identity means a key this runtime does not trust, version an older or newer executable, clock_ahead a runtime whose clock ran away".into()
+            }
+        }),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn round(accepted: u64, refused: &[(Rejection, u64)]) -> IngestReport {
+        IngestReport {
+            accepted,
+            rejected: refused.iter().copied().collect(),
+            ..IngestReport::default()
+        }
+    }
+
+    /// The storm of 2026-10-19 (I2825): every event a peer offered was refused for capacity,
+    /// 1 207 768 of them against 26 158 received, and mesh verify still said ok.
+    #[test]
+    fn a_round_whose_every_event_is_refused_names_its_dominant_reason() {
+        let storm = round(0, &[(Rejection::Capacity, 40), (Rejection::Untrusted, 2)]);
+        assert_eq!(refused_round(&storm), Some((Rejection::Capacity, 40)));
+        assert_eq!(rejection_word(Rejection::Capacity), "capacity");
+        assert_eq!(rejection_word(Rejection::ClockAhead), "clock_ahead");
+        // a tie goes to the first reason in the enum's order, whatever the map holds
+        let tie = round(0, &[(Rejection::Untrusted, 3), (Rejection::Capacity, 3)]);
+        assert_eq!(refused_round(&tie), Some((Rejection::Untrusted, 3)));
+    }
+
+    /// What `mesh verify` reports for the storm and the flapping, each way: the check fails,
+    /// says which runtime, and names the remediation that fits the reason.
+    #[test]
+    fn verify_names_a_storm_and_a_doubled_runtime() {
+        assert_eq!(storm_of("b", &round(3, &[(Rejection::Capacity, 9)])), None);
+        let storm = storm_of(
+            "b",
+            &round(0, &[(Rejection::Capacity, 40), (Rejection::Untrusted, 2)]),
+        )
+        .expect("every event refused");
+        assert_eq!(storm, ("b".to_string(), Rejection::Capacity, 40, 42));
+
+        let quiet = rejections_check(&[]);
+        assert!(quiet.ok && quiet.impact.is_none() && quiet.remediation.is_none());
+        let capacity = rejections_check(&[storm]);
+        assert!(!capacity.ok);
+        assert_eq!(
+            capacity.detail,
+            "b: 0 accepted, 42 refused, 40 of them capacity"
+        );
+        assert!(capacity.impact.is_some());
+        assert!(capacity.remediation.unwrap().starts_with("capacity:"));
+        let untrusted = rejections_check(&[("c".into(), Rejection::Untrusted, 5, 5)]);
+        assert!(untrusted
+            .remediation
+            .unwrap()
+            .starts_with("read the reason"));
+
+        let one = instances_check(&[]);
+        assert!(one.ok && one.impact.is_none() && one.remediation.is_none());
+        let two = instances_check(&[("n-r".into(), vec!["i1".into(), "i2".into()])]);
+        assert!(!two.ok);
+        assert_eq!(two.detail, "n-r beats as 2 instances: i1, i2");
+        assert!(two.impact.is_some() && two.remediation.unwrap().contains("by its pid"));
+    }
+
+    /// `verify` reads the round it just ran with every peer it dials, and a round that
+    /// refused nothing leaves the rejections check ok (I2825).
+    #[test]
+    fn verify_reads_every_dialled_round_and_a_clean_one_is_no_storm() {
+        use super::super::repository::{of_root_commits, runtime_id};
+        use super::super::trust::TrustPolicy;
+        use std::sync::Weak;
+
+        #[derive(Default)]
+        struct Net(Mutex<BTreeMap<String, Weak<Cooperation>>>);
+        impl LinkTransport for Net {
+            fn post(&self, e: &str, p: &str, m: &Signed) -> Result<LinkReply, String> {
+                let peer = (self.0.lock().unwrap().get(e).and_then(Weak::upgrade))
+                    .ok_or_else(|| format!("{e}: nobody there"))?;
+                Ok(if p == HELLO_PATH {
+                    peer.accept_hello(m)
+                } else {
+                    peer.accept_sync(m)
+                })
+            }
+        }
+        let net = Arc::new(Net::default());
+        let runtime = |endpoint: &str| {
+            let c = Cooperation::new(CooperationSetup {
+                identity: Arc::new(NodeIdentity::ephemeral().unwrap()),
+                runtime: runtime_id(endpoint),
+                repository: of_root_commits(&["root".into()]),
+                endpoints: vec![endpoint.into()],
+                version: "test".into(),
+                config: CooperationConfig::default(),
+                trust: TrustConfig {
+                    policy: TrustPolicy::Tofu,
+                    allow: vec![],
+                },
+                journal_path: None,
+                registry: Arc::new(MeshRegistry::new()),
+                transport: Arc::clone(&net) as Arc<dyn LinkTransport>,
+                board: None,
+                checkout: CheckoutFacts::default(),
+            })
+            .unwrap();
+            net.0
+                .lock()
+                .unwrap()
+                .insert(endpoint.into(), Arc::downgrade(&c));
+            c
+        };
+        let (a, b) = (runtime("a:1"), runtime("b:1"));
+        a.dial(&["b:1".into()]).unwrap();
+        a.journal().beat_own();
+
+        let report = a.verify();
+        assert_eq!(report.peers[0].round_trip, Some(true));
+        let rejections = |r: &MeshVerifyReport| {
+            r.checks
+                .iter()
+                .find(|c| c.check == "rejections")
+                .is_some_and(|c| c.ok)
+        };
+        assert!(rejections(&report), "{:?}", report.checks);
+        assert!(report.ok, "every check held: {:?}", report.checks);
+
+        // A round that did not go through is no evidence of a storm either way.
+        drop(b);
+        let gone = a.verify();
+        assert_eq!(gone.peers[0].round_trip, Some(false));
+        assert!(rejections(&gone), "{:?}", gone.checks);
+    }
+
+    /// The flapping of 2026-10-19 (I2825): the primary checkout's runtime beat as two
+    /// instances, a 0.21.0 server that never left the mesh and the lease's holder.
+    #[test]
+    fn a_runtime_that_beats_as_two_instances_is_named_with_both() {
+        let id = |runtime: char, instance: char| {
+            StreamId::parse(&format!(
+                "{}-{}-{}",
+                "a".repeat(32),
+                runtime.to_string().repeat(16),
+                instance.to_string().repeat(16)
+            ))
+            .unwrap()
+        };
+        let streams = vec![
+            (id('b', '8'), StreamLiveness::Live, Some(900)),
+            (id('b', '7'), StreamLiveness::Own, Some(10)),
+            (id('b', '1'), StreamLiveness::Expired, None),
+            (id('c', '2'), StreamLiveness::Live, Some(40)),
+        ];
+        let doubled = doubled_runtimes(&streams);
+        assert_eq!(
+            doubled.len(),
+            1,
+            "one runtime twice; the expired run is a restart, not a twin"
+        );
+        assert_eq!(doubled[0].0, id('b', '7').runtime_key());
+        assert_eq!(doubled[0].1, vec!["7".repeat(16), "8".repeat(16)]);
+        assert!(doubled_runtimes(&streams[2..]).is_empty());
+    }
+
+    #[test]
+    fn a_round_that_let_anything_in_or_carried_nothing_is_no_storm() {
+        assert_eq!(refused_round(&round(1, &[(Rejection::Capacity, 99)])), None);
+        assert_eq!(refused_round(&round(0, &[])), None, "an idle round");
+        let duplicates = IngestReport {
+            duplicate: 5,
+            ..IngestReport::default()
+        };
+        assert_eq!(refused_round(&duplicates), None, "at-least-once delivery");
+    }
     use crate::mesh::repository::of_root_commits;
     use crate::mesh::trust::TrustPolicy;
     use std::sync::Weak;

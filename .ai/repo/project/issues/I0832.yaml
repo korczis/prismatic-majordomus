@@ -27,4 +27,18 @@ evidence_required:
   - batch_reads
 risk: "The generator shares lib/common.sh, so the flatten cache and the batch loaders apply to it directly."
 created_at: 2026-09-05
-updated_at: 2026-09-05
+updated_at: 2026-10-21T19:29:03Z
+started_at: 2026-10-21T19:26:43Z
+started_event: sha256:8885bf9425b34a90268f0ae7b369768f8ecd9f2e73be413a4007db9959ed566d
+verified_at: 2026-10-21T19:27:06Z
+verified_event: sha256:66b27e2f77004cdd94a749f6e09c5e9e3820b0bb08f481a6947ad9926835dae9
+completed_at: 2026-10-21T19:29:03Z
+completed_event: sha256:99fb7739255980fd3c6b9d2632ecd114fa41b3f348312018fa177ef8757d7a1e
+evidence:
+  - covers: batch_reads
+    type: ci
+    command: "validate run 39645593645 (attempt 2) at master 97391192dbb: suite-shard (2) job 119428809679 ran bash test/run.sh --no-skips; case 3836_a_repeated_scenario_is_read_from_its_cache ok"
+    result: "success"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39645593645"
+    commit: 97391192dbbc85ee34b1f35d9ddec55ba61832d3
+    recorded_at: 2026-10-21T19:28:55Z

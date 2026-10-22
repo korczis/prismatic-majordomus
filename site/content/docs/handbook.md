@@ -67,11 +67,40 @@ the chapter, or keep the name. The rule is
 and the decision is
 [ADR 0149](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/adrs/0149-a-handbook-edition-is-a-declared-locale-tree-built-from-the-tree-it-describes.md).
 
+## The outlook chapters
+
+The part "Výhled" carries the owner's strategic report in the repository: a forecast, a
+comparison with the market, the report measured against what the repository records, and what
+the token economics can and cannot claim. Each statement in it wears one of three tags:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| Tag | What it is | Where it comes from |
+|---|---|---|
+| repository | a fact of this tree | `outlook-data.json`, derived by `handbook/derive_data.py` from the history, `site/data/generated/plan.json`, `.ai/repo/project/intents/`, the committed evidence ledger and `docs/generated/economics.json` |
+| model | an estimate of the report, not a measured figure | `handbook/cs/outlook-model.json`, written once and read by both the captions and the charts |
+| external | a claim of a public source | the source, linked beside the claim |
+
+</div>
+
+
+A repository figure reaches a caption only as a placeholder the build fills, so a figure the
+data no longer has fails the build like any other. The economics chapter follows
+[ADR 0082](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/adrs/0082-token-economics-are-measured-from-matched-runs-and-published-only-past-a-declared-rule.md):
+the context reduction is counted, a total-token saving is unproven until matched runs pass the
+publication rule, and the usage real sessions observe is not recorded in the tree until the
+milestone `execution-telemetry` lands. When the verdict changes, the shape of
+`outlook-data.json` changes with it, and the chapter that states the verdict is rewritten in
+the same change.
+
+The outlook is published the way the handbook is: the page `python3 handbook/build.py` writes
+is published by hand as a Claude Artifact. Its browser test is `handbook/cs/tests/pw-outlook.js`.
+
 ## An edition and the language rule
 
 This repository's working artifacts are English. An edition is content addressed to a reader,
 like a translated page of the site, and
-[`project.english-only`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/rules/project/english-only.v3.md) admits it under three
+[`project.english-only`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/rules/project/english-only.v4.md) admits it under three
 conditions: it is `handbook/<language>/`; its `edition.toml` declares that language; and
 `scripts/ci/english-only-allow.txt` declares it as `edition <directory> <language> <why>`. The
 generator beside the editions is not inside one and stays English.

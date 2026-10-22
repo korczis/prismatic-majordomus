@@ -1,0 +1,35 @@
+id: the-proof-tests-are-registered-before-they-run
+title: "The six proof tests are registered as validated protocols, each frozen by its own digest, and every trial is a typed record that publishes only what its basis permits"
+slug: the-proof-tests-are-registered-before-they-run
+order: 200
+priority: p0
+problem: "The owner's report of 2026-10-19 asks for six proof tests (T1 to T6), each settled by measurement. Nothing registers a test, its arms or trials, strata, minimum sample or decision rule before a run. The token methodology (.ai/repo/benchmarks/economics/methodology.yaml) has hypotheses whose status model.rs:311 says a person sets. Suite freshness binds a suite's runs to its whole input list (suites/pilot.yaml freshness_inputs), so a shared plan file in that list would stale every suite's runs whenever any test is registered. No record type exists for a trial that is not a paired benchmark run (an adoption, a fault injection, a newcomer's first intent), and nothing stops such a record from publishing details that identify a private repository."
+outcome: "A validated proof plan names the six tests. Each protocol is frozen by its own digest; a paired protocol references its suite's registration block by digest. One typed trial record serves T1, T3, T5 and T6, refuses what its protocol does not declare and redacts what its publication basis does not permit."
+current_state: "apps/majordomus-cli/src/economics/mod.rs:43-49 declares claims, context, model, report, runner, stats and usage and nothing for proof tests. git ls-files .ai/repo/benchmarks lists README.md and the economics, observatory, pages and rust subdirectories; no proof-plan.yaml and no trials directory. docs/CLAIMS.yaml:20-28 declares the statuses guaranteed, advisory, planned and rejected and holds no claim about the proof tests."
+desired_state: ".ai/repo/benchmarks/proof-plan.yaml (schema proof-plan/v1) validated by economics::proof; six tests with planned claims; trial records under .ai/repo/benchmarks/trials/<test>/ loaded by one typed loader with redaction classes."
+scope:
+  - "apps/majordomus-cli/src/economics"
+  - "apps/majordomus-cli/src/economics/mod.rs"
+  - "apps/majordomus-cli/tests/economics.rs"
+  - ".ai/repo/benchmarks"
+  - ".ai/repo/benchmarks/README.md"
+  - "docs/CLAIMS.yaml"
+  - "docs/ECONOMICS.md"
+non_scope:
+  - "Computing a verdict (the-proof-scorecard-is-published)"
+  - "Writing any protocol's thresholds, corpus or candidates (each experiment milestone registers its own)"
+  - "Changing methodology version 1's token publication rule"
+  - "A second statistics engine"
+acceptance_criteria:
+  - "The tracked plan validates with exactly six tests and no protocol, and each test settles one planned claim of docs/CLAIMS.yaml"
+  - "Registering a protocol for one test changes no counted record of another test, proven by a fixture"
+  - "A trial record of a repository without a publication basis that carries a name, raw commit id, path or free text is refused"
+validation:
+  - "majordomus plan validate"
+evidence_required: []
+risks:
+  - "A digest beside its protocol can be re-stamped; the guarantee is that a record must carry its own protocol's digest and postdate registered_at, so re-stamping costs the records, not the verdict"
+  - "proof.rs is extended by I3351, I3353 and I3354 in sequence; parallel work on it is ordered by depends_on"
+  - "I3299 also scopes .ai/repo/benchmarks/README.md; whichever lands second merges onto the first"
+created_at: 2026-10-19
+updated_at: 2026-10-19

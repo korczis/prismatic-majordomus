@@ -1,0 +1,33 @@
+id: I3385
+milestone: the-mesh-is-measured-against-one-agent
+title: "A registered suite's primary verdict can be held to a non-inferiority guard, so a speed-up counts only when accepted share is not worse by more than a registered margin"
+slug: a-speed-up-is-held-to-a-quality-guard
+priority: p1
+profile: implementation
+objective: "Let a registration declare a guard outcome (accepted share) with a non-inferiority margin and level. The calculator reports the primary verdict as favourable only when the primary test is favourable and the guard's one-sided bound shows the treatment's accepted share is not lower than the control's by more than the margin; otherwise it reports the guard's result and inconclusive or unfavourable. Use I3366's functions; add the guard's computation to stats.rs."
+why: "T4 of the owner's report of 2026-10-19 asks for a speed-up at controlled quality; a faster arm that accepts less is not a speed-up, so the guard is part of the decision and registered in advance."
+current_state: "No analysis composes outcomes. stats.rs holds no one-sided bound."
+desired_state: "A guarded verdict is computed and shown with the guard's bound."
+scope:
+  - "apps/majordomus-cli/src/economics/stats.rs"
+  - "apps/majordomus-cli/src/economics/mod.rs"
+  - "apps/majordomus-cli/tests/economics.rs"
+  - "docs/ECONOMICS.md"
+non_scope:
+  - "Running anything"
+  - "A guard on any outcome other than accepted share"
+depends_on:
+  - "I3371"
+serves:
+  - "the-product-proves-it-pays#the-mesh-verdict-is-published"
+acceptance_criteria:
+  - "A fixture where the treatment is faster but accepts less beyond the margin is not favourable"
+  - "A fixture inside the margin and faster is favourable"
+  - "The guard's bound and margin are printed beside the verdict"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test economics"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --doc economics::stats"
+evidence_required:
+  - "test_guarded_verdict"
+created_at: 2026-10-19
+updated_at: 2026-10-19

@@ -1,7 +1,7 @@
 +++
 title = "Context locality"
 description = "Context locality"
-weight = 88
+weight = 92
 [extra]
 kind = "rule"
 slug = "project-context-locality-1"

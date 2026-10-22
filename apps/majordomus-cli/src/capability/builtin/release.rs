@@ -107,14 +107,15 @@ impl BenchmarkCases for AnalysisInput {
 /// use majordomus_cli::capability::builtin::release::NextInput;
 /// // nothing named is the landing the executor performs: this branch onto the trunk
 /// let input = NextInput::default();
-/// assert_eq!((input.base(), input.head()), ("origin/master", "HEAD"));
+/// assert_eq!((input.base.as_deref(), input.head()), (None, "HEAD"));
 /// ```
 #[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 #[schemars(rename = "ReleaseNextInput")]
 pub struct NextInput {
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    /// The trunk the landing raises from; `origin/master` when absent.
+    /// The trunk the landing raises from; when absent, the remote-tracking ref of the trunk
+    /// this repository names (its remote's default branch, else its own trunk).
     pub base: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     /// What lands; `HEAD` when absent.
@@ -122,15 +123,23 @@ pub struct NextInput {
 }
 
 impl NextInput {
-    /// The trunk the landing raises from: the ref named, or `origin/master`, which is the
-    /// trunk the integration executor lands on.
+    /// The trunk the landing raises from: the ref named, or the remote-tracking ref of the
+    /// trunk the repository at `root` names — the one rule the delivery report already
+    /// measures features against, never a branch name written here. A repository whose
+    /// trunk cannot be told is refused by name rather than measured against a guess.
     ///
     /// ```
     /// use majordomus_cli::capability::builtin::release::NextInput;
-    /// assert_eq!(NextInput { base: Some("main".into()), head: None }.base(), "main");
+    /// let here = std::path::Path::new(".");
+    /// assert_eq!(NextInput { base: Some("main".into()), head: None }.base(here), Ok("main".into()));
+    /// let nowhere = std::env::temp_dir().join("majordomus-doc-no-repository");
+    /// assert!(NextInput::default().base(&nowhere).is_err());
     /// ```
-    pub fn base(&self) -> &str {
-        self.base.as_deref().unwrap_or("origin/master")
+    pub fn base(&self, root: &std::path::Path) -> Result<String, String> {
+        match self.base.as_deref() {
+            Some(named) => Ok(named.to_string()),
+            None => crate::delivery::revision::trunk_ref(root),
+        }
     }
 
     /// What lands: the ref named, or `HEAD`, which is the branch this checkout is on.
@@ -141,6 +150,44 @@ impl NextInput {
     /// ```
     pub fn head(&self) -> &str {
         self.head.as_deref().unwrap_or("HEAD")
+    }
+}
+
+/// The input of `release.currency`: whether to decide the version as well.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::release::CurrencyInput;
+/// // the version is decided unless the caller says it does not need it
+/// assert!(CurrencyInput::default().next());
+/// assert!(!CurrencyInput { next: Some(false) }.next());
+/// ```
+#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+#[schemars(rename = "ReleaseCurrencyInput")]
+pub struct CurrencyInput {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// Whether to decide the version the public contract requires for the landed work, which
+    /// reads the last release's registry: yes when absent. The brief and doctor say no.
+    pub next: Option<bool>,
+}
+
+impl CurrencyInput {
+    /// Whether the version is to be decided.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::builtin::release::CurrencyInput;
+    /// assert!(CurrencyInput { next: None }.next());
+    /// ```
+    pub fn next(&self) -> bool {
+        self.next.unwrap_or(true)
+    }
+}
+
+impl BenchmarkCases for CurrencyInput {
+    /// None, for the reason [`AnalysisInput`] gives: the answer measures a trunk against the
+    /// releases it published, and a benchmark fixture has published nothing and has no remote.
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        Vec::new()
     }
 }
 
@@ -250,6 +297,25 @@ pub fn module() -> ModuleDescriptor {
                 benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::PublishedHistory },
                 handler: next,
             },
+            capability! {
+                id: CURRENCY_ID,
+                title: "Whether the trunk's landed work is released",
+                description: "How much landed work the trunk holds past the last release, since when, and at which version, measured when asked (I3070). The last release is the newer of the release the layer records and the newest version tag the trunk contains: a tag is pushed before its record lands. Landed work is every commit of the trunk past it except merges and release commits. A landing is a commit of the trunk's first-parent history, and the work has waited since the oldest landing that brought anything but release commits. The stance is current when nothing has landed past the release, owed when work has, and overdue once it has waited longer than six hours. The version the public contract requires is decided by the version selection release.version makes, but only from a recorded release and only in a checkout at the trunk; otherwise the answer says which it is not. Ask with next false to leave the version out, as the brief and doctor do. It reads git and the clock, so it is never committed into derived data.",
+                input: CurrencyInput,
+                output: release::currency::Currency,
+                stability: Stability::Implemented,
+                exposure: Exposure {
+                    mcp: Some(McpExposure {
+                        tool: Some("majordomus_release_currency".into()),
+                        resource: None,
+                    }),
+                    http: get("/api/v1/release/currency"),
+                    cli: None,
+                },
+                tags: ["release", "version", "delivery"],
+                benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::PublishedHistory },
+                handler: currency,
+            },
         ],
     }
 }
@@ -259,6 +325,9 @@ pub const ANALYSIS_ID: &str = "release.analysis";
 
 /// The landing decision, named beside its declaration.
 pub const NEXT_ID: &str = "release.next";
+
+/// Whether the trunk is released, named beside its declaration.
+pub const CURRENCY_ID: &str = "release.currency";
 
 /// The capability's own id. Beside its declaration, so the two cannot drift apart without
 /// the test below noticing; the document carries it so that no page has to enumerate where
@@ -372,8 +441,28 @@ fn next(
         .map_err(|e| CapabilityError::NotFound(format!("the policy could not be read: {e}")))?
         .policy
         .release;
-    release::landing::next_for(root, input.base(), input.head(), &policy)
+    let base = input.base(root).map_err(|e| {
+        CapabilityError::NotFound(format!(
+            "the trunk this landing raises from could not be told: {e}; name it with --base"
+        ))
+    })?;
+    release::landing::next_for(root, &base, input.head(), &policy)
         .map_err(|e| CapabilityError::NotFound(e.to_string()))
+}
+
+/// Whether the trunk's landed work is released, as of now; the version decided unless the
+/// caller said it does not need it.
+fn currency(
+    ctx: &Context,
+    input: CurrencyInput,
+) -> Result<release::currency::Currency, CapabilityError> {
+    let root = std::path::Path::new(&ctx.index.repository.root);
+    let mut answer =
+        release::currency::measure(root, &ctx.index.objects, std::time::SystemTime::now());
+    if input.next() {
+        release::currency::decide_next(&mut answer, root, &ctx.registry, &ctx.index.objects);
+    }
+    Ok(answer)
 }
 
 #[cfg(test)]
@@ -394,6 +483,80 @@ mod tests {
         }
     }
 
+    /// A clone whose remote names `main` as its default branch, and nothing named `master`.
+    fn clone_of_a_main_trunk() -> (tempfile::TempDir, std::path::PathBuf) {
+        let dir = tempfile::tempdir().expect("a temp dir");
+        let git = |cwd: &std::path::Path, args: &[&str]| {
+            let out = std::process::Command::new("git")
+                .current_dir(cwd)
+                .args([
+                    "-c",
+                    "user.name=t",
+                    "-c",
+                    "user.email=t@t",
+                    "-c",
+                    "init.defaultBranch=main",
+                ])
+                .args(args)
+                .output()
+                .expect("git runs");
+            assert!(
+                out.status.success(),
+                "git {args:?}: {}",
+                String::from_utf8_lossy(&out.stderr)
+            );
+        };
+        let origin = dir.path().join("origin.git");
+        let work = dir.path().join("work");
+        std::fs::create_dir_all(&work).expect("the work tree");
+        git(dir.path(), &["init", "-q", "--bare", "origin.git"]);
+        git(&work, &["init", "-q"]);
+        std::fs::write(work.join("a"), "a").expect("a file");
+        git(&work, &["add", "a"]);
+        git(&work, &["commit", "-qm", "a"]);
+        git(
+            &work,
+            &["remote", "add", "origin", origin.to_str().expect("utf-8")],
+        );
+        git(&work, &["push", "-q", "-u", "origin", "main"]);
+        git(&work, &["remote", "set-head", "origin", "main"]);
+        (dir, work)
+    }
+
+    /// No base named: the landing raises from the trunk the repository names. The base was a
+    /// literal `origin/master`, which a repository whose trunk is `main` does not have.
+    #[test]
+    fn an_unnamed_base_is_the_trunk_the_repository_names() {
+        let (_dir, work) = clone_of_a_main_trunk();
+        assert_eq!(NextInput::default().base(&work), Ok("origin/main".into()));
+        let named = NextInput {
+            base: Some("origin/elsewhere".into()),
+            head: None,
+        };
+        assert_eq!(
+            named.base(&work),
+            Ok("origin/elsewhere".into()),
+            "a named base is taken as named"
+        );
+    }
+
+    /// A repository whose trunk cannot be told is refused by name and told how to say it,
+    /// never measured against a branch name that is usually right.
+    #[test]
+    fn a_landing_whose_trunk_cannot_be_told_is_refused() {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a synthetic repository");
+        let ctx = repo.context().expect("a context");
+        match next(&ctx, NextInput::default()) {
+            Err(CapabilityError::NotFound(m)) => {
+                assert!(
+                    m.contains("could not be told") && m.contains("--base"),
+                    "{m}"
+                )
+            }
+            other => panic!("not refused as not found: {other:?}"),
+        }
+    }
+
     /// A policy that cannot be read is refused by name, never taken as no allocation.
     #[test]
     fn a_landing_under_an_unreadable_policy_is_refused() {
@@ -409,6 +572,27 @@ mod tests {
             }
             other => panic!("not refused as not found: {other:?}"),
         }
+    }
+
+    /// The capability answers whether the trunk is released, with or without the version: a
+    /// repository with no remote trunk is not measured, and says so either way.
+    #[test]
+    fn the_currency_answers_with_or_without_the_version() {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a synthetic repository");
+        let ctx = repo.context().expect("a context");
+        assert_eq!(CURRENCY_ID, "release.currency");
+        for next in [None, Some(false)] {
+            let answer = currency(&ctx, CurrencyInput { next }).expect("an answer");
+            assert_eq!(
+                answer.stance,
+                release::currency::Stance::Unknown,
+                "{next:?}"
+            );
+            assert!(answer.summary.contains("trunk"), "{}", answer.summary);
+        }
+        // a benchmark fixture has published nothing and has no remote, so there is nothing to
+        // measure and no case is offered
+        assert!(CurrencyInput::benchmark_cases(&CaseContext { index: &ctx.index }).is_empty());
     }
 
     /// Two capabilities, and every surface that carries them is derived from this
@@ -444,6 +628,11 @@ mod tests {
                 "release.next",
                 "majordomus_release_next",
                 "/api/v1/release/next",
+            ),
+            (
+                "release.currency",
+                "majordomus_release_currency",
+                "/api/v1/release/currency",
             ),
         ];
         let ids: Vec<&str> = m

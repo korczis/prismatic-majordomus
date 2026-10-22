@@ -1,0 +1,31 @@
+id: I3834
+milestone: ci-critical-path
+title: "A case run removes its own scratch dir however it ends: passed, failed, timed out or interrupted"
+slug: a-case-run-removes-its-own-dir
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make test/run.sh remove each case's $TMPDIR/mj-test.* directory and its skip mark when the case passes, fails, times out, or when the runner itself is interrupted or terminated while the case runs (an EXIT, INT, TERM and HUP trap that first stops the case's process group), and keep it only when MJ_TEST_KEEP=1 asks, naming the kept path."
+why: "Orphaned mj-test.* directories were the machine's steady disk drain: 13 GiB of them on 2026-10-21, from runs a pre-push hook or a session had stopped, the largest 3.8 GiB each. run_case removed the directory only on its own normal paths, so a runner stopped between a case's start and its end left the whole fixture behind."
+current_state: "test/run.sh run_case calls rm -rf \"$T\" \"$mark\" after the case returns and after a timeout; no trap covers an interrupted runner; there is no keep flag."
+desired_state: "No case run leaves its scratch dir unless MJ_TEST_KEEP=1 is set, and then the runner prints the kept path."
+scope:
+  - "test/run.sh"
+  - "test/cases/3834_a_case_run_removes_its_own_dir.sh"
+non_scope:
+  - "Sweeping orphans older runs already left (I3832, I3833)"
+  - "A runner killed with SIGKILL, which no trap can see"
+depends_on: []
+acceptance_criteria:
+  - "A passing case leaves no mj-test.* directory in TMPDIR"
+  - "A failing case leaves none"
+  - "A runner terminated with TERM while its case runs exits, and leaves none, and the case's process group is stopped"
+  - "MJ_TEST_KEEP=1 keeps exactly one directory and the runner prints its path"
+  - "Against the runner of master 573df967bb5 the interrupted run leaves its directory, so the case fails there"
+validation:
+  - "bash test/run.sh 3834_a_case_run_removes_its_own_dir 123_case_bound 413_a_skipped_case_is_not_a_proof"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "a_case_run_removes_its_own_dir_test"
+created_at: 2026-10-21
+updated_at: 2026-10-21

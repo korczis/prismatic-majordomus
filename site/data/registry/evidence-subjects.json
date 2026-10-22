@@ -3,7 +3,7 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the claims, rules, features, use cases, commands, documented command-line examples and builtin capabilities this repository declares, and the first coverage and negative headers of its test cases; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.27.0"
+    "version": "1.0.0-alpha.6"
   },
   "route": "/evidence/",
   "kinds": [
@@ -181,6 +181,11 @@
       "kind": "capability",
       "subject": "capability:deploy.observed",
       "path": "/evidence/capabilities/deploy-observed/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:deploy.slug",
+      "path": "/evidence/capabilities/deploy-slug/"
     },
     {
       "kind": "capability",
@@ -759,6 +764,21 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:plan.delivery",
+      "path": "/evidence/capabilities/plan-delivery/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:plan.drift",
+      "path": "/evidence/capabilities/plan-drift/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:plan.flight",
+      "path": "/evidence/capabilities/plan-flight/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:plan.issues",
       "path": "/evidence/capabilities/plan-issues/"
     },
@@ -886,6 +906,11 @@
       "kind": "capability",
       "subject": "capability:release.changelog",
       "path": "/evidence/capabilities/release-changelog/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:release.currency",
+      "path": "/evidence/capabilities/release-currency/"
     },
     {
       "kind": "capability",
@@ -1046,6 +1071,11 @@
       "kind": "capability",
       "subject": "capability:worktree.topology",
       "path": "/evidence/capabilities/worktree-topology/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:worktree.trunk",
+      "path": "/evidence/capabilities/worktree-trunk/"
     },
     {
       "kind": "capability",
@@ -1674,6 +1704,11 @@
     },
     {
       "kind": "claim",
+      "subject": "claim:mcp-client-always-served",
+      "path": "/evidence/claims/mcp-client-always-served/"
+    },
+    {
+      "kind": "claim",
       "subject": "claim:mcp-client-autostart",
       "path": "/evidence/claims/mcp-client-autostart/"
     },
@@ -2004,6 +2039,11 @@
     },
     {
       "kind": "claim",
+      "subject": "claim:release-prerelease-channel",
+      "path": "/evidence/claims/release-prerelease-channel/"
+    },
+    {
+      "kind": "claim",
       "subject": "claim:reproduce-command",
       "path": "/evidence/claims/reproduce-command/"
     },
@@ -2141,6 +2181,11 @@
       "kind": "claim",
       "subject": "claim:session-records",
       "path": "/evidence/claims/session-records/"
+    },
+    {
+      "kind": "claim",
+      "subject": "claim:session-start-prompt",
+      "path": "/evidence/claims/session-start-prompt/"
     },
     {
       "kind": "claim",
@@ -2496,6 +2541,11 @@
       "kind": "command",
       "subject": "command:delivery show",
       "path": "/evidence/commands/delivery-show/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:deploy slug",
+      "path": "/evidence/commands/deploy-slug/"
     },
     {
       "kind": "command",
@@ -2974,6 +3024,16 @@
     },
     {
       "kind": "command",
+      "subject": "command:plan delivery",
+      "path": "/evidence/commands/plan-delivery/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:plan drift",
+      "path": "/evidence/commands/plan-drift/"
+    },
+    {
+      "kind": "command",
       "subject": "command:plan",
       "path": "/evidence/commands/plan/"
     },
@@ -3446,6 +3506,11 @@
       "kind": "command",
       "subject": "command:worktree topology",
       "path": "/evidence/commands/worktree-topology/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:worktree trunk",
+      "path": "/evidence/commands/worktree-trunk/"
     },
     {
       "kind": "command",
@@ -4172,6 +4237,25 @@
       "mechanisms": [],
       "findings": []
     },
+    "capability:deploy.slug": {
+      "kind": "capability",
+      "id": "deploy.slug",
+      "page": "/evidence/capabilities/deploy-slug/",
+      "programs": [],
+      "members": [
+        "command:deploy slug"
+      ],
+      "routes": [
+        {
+          "via": "behaviour",
+          "test": "suite:3821_a_providers_tree_is_assembled_from_the_object",
+          "path": "test/cases/3821_a_providers_tree_is_assembled_from_the_object.sh",
+          "category": "e2e"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "capability:design.contrast": {
       "kind": "capability",
       "id": "design.contrast",
@@ -4567,7 +4651,14 @@
       "page": "/evidence/capabilities/executions-demonstrate/",
       "programs": [],
       "members": [],
-      "routes": [],
+      "routes": [
+        {
+          "via": "behaviour",
+          "test": "suite:3861_a_remote_caller_never_sees_the_executions",
+          "path": "test/cases/3861_a_remote_caller_never_sees_the_executions.sh",
+          "category": "e2e"
+        }
+      ],
       "mechanisms": [],
       "findings": []
     },
@@ -4579,7 +4670,14 @@
       "members": [
         "command:executions events"
       ],
-      "routes": [],
+      "routes": [
+        {
+          "via": "behaviour",
+          "test": "suite:3861_a_remote_caller_never_sees_the_executions",
+          "path": "test/cases/3861_a_remote_caller_never_sees_the_executions.sh",
+          "category": "e2e"
+        }
+      ],
       "mechanisms": [],
       "findings": []
     },
@@ -4591,7 +4689,14 @@
       "members": [
         "command:executions show"
       ],
-      "routes": [],
+      "routes": [
+        {
+          "via": "behaviour",
+          "test": "suite:3861_a_remote_caller_never_sees_the_executions",
+          "path": "test/cases/3861_a_remote_caller_never_sees_the_executions.sh",
+          "category": "e2e"
+        }
+      ],
       "mechanisms": [],
       "findings": []
     },
@@ -4603,7 +4708,14 @@
       "members": [
         "command:executions list"
       ],
-      "routes": [],
+      "routes": [
+        {
+          "via": "behaviour",
+          "test": "suite:3861_a_remote_caller_never_sees_the_executions",
+          "path": "test/cases/3861_a_remote_caller_never_sees_the_executions.sh",
+          "category": "e2e"
+        }
+      ],
       "mechanisms": [],
       "findings": []
     },
@@ -5046,7 +5158,14 @@
       "members": [
         "command:mesh doctor"
       ],
-      "routes": [],
+      "routes": [
+        {
+          "via": "behaviour",
+          "test": "suite:3823_the_mesh_client_speaks_tls",
+          "path": "test/cases/3823_the_mesh_client_speaks_tls.sh",
+          "category": "e2e"
+        }
+      ],
       "mechanisms": [],
       "findings": []
     },
@@ -5252,7 +5371,14 @@
       "page": "/evidence/capabilities/mesh-status/",
       "programs": [],
       "members": [],
-      "routes": [],
+      "routes": [
+        {
+          "via": "behaviour",
+          "test": "suite:3826_a_hosted_hub_is_trusted_and_closed_to_strangers",
+          "path": "test/cases/3826_a_hosted_hub_is_trusted_and_closed_to_strangers.sh",
+          "category": "e2e"
+        }
+      ],
       "mechanisms": [],
       "findings": []
     },
@@ -5472,6 +5598,40 @@
       "kind": "capability",
       "id": "perf.counters",
       "page": "/evidence/capabilities/perf-counters/",
+      "programs": [],
+      "members": [],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:plan.delivery": {
+      "kind": "capability",
+      "id": "plan.delivery",
+      "page": "/evidence/capabilities/plan-delivery/",
+      "programs": [],
+      "members": [
+        "command:plan delivery"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:plan.drift": {
+      "kind": "capability",
+      "id": "plan.drift",
+      "page": "/evidence/capabilities/plan-drift/",
+      "programs": [],
+      "members": [
+        "command:plan drift"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:plan.flight": {
+      "kind": "capability",
+      "id": "plan.flight",
+      "page": "/evidence/capabilities/plan-flight/",
       "programs": [],
       "members": [],
       "routes": [],
@@ -5760,6 +5920,16 @@
       "kind": "capability",
       "id": "release.changelog",
       "page": "/evidence/capabilities/release-changelog/",
+      "programs": [],
+      "members": [],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:release.currency": {
+      "kind": "capability",
+      "id": "release.currency",
+      "page": "/evidence/capabilities/release-currency/",
       "programs": [],
       "members": [],
       "routes": [],
@@ -6125,6 +6295,18 @@
       "programs": [],
       "members": [
         "command:worktree topology"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:worktree.trunk": {
+      "kind": "capability",
+      "id": "worktree.trunk",
+      "page": "/evidence/capabilities/worktree-trunk/",
+      "programs": [],
+      "members": [
+        "command:worktree trunk"
       ],
       "routes": [],
       "mechanisms": [],
@@ -7365,7 +7547,7 @@
           "path": "test/cases/84_deployment_contract.sh",
           "category": "e2e",
           "inputs": [
-            ".ai/repo/rules/vendor/majordomus/rules/deployment-contract.v1.md",
+            ".ai/repo/rules/vendor/majordomus/rules/deployment-contract.v2.md",
             "lib/deployment.sh",
             "test/cases/84_deployment_contract.sh"
           ]
@@ -8974,6 +9156,29 @@
       "mechanisms": [],
       "findings": []
     },
+    "claim:mcp-client-always-served": {
+      "kind": "claim",
+      "id": "mcp-client-always-served",
+      "status": "guaranteed",
+      "page": "/evidence/claims/mcp-client-always-served/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "test": "suite:3177_a_client_always_gets_a_server",
+          "path": "test/cases/3177_a_client_always_gets_a_server.sh",
+          "category": "e2e",
+          "inputs": [
+            "docs/MCP.md",
+            "bin/majordomus-cli",
+            "test/cases/3177_a_client_always_gets_a_server.sh"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "claim:mcp-client-autostart": {
       "kind": "claim",
       "id": "mcp-client-autostart",
@@ -10299,7 +10504,7 @@
           "path": "test/cases/403_published_translation.sh",
           "category": "e2e",
           "inputs": [
-            ".ai/repo/rules/project/english-only.v3.md",
+            ".ai/repo/rules/project/english-only.v4.md",
             "scripts/ci/english-only-check",
             "test/cases/403_published_translation.sh"
           ]
@@ -10486,6 +10691,29 @@
             "docs/DISTRIBUTION.md",
             "scripts/release-record",
             "test/cases/87_release_pipeline.sh"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "claim:release-prerelease-channel": {
+      "kind": "claim",
+      "id": "release-prerelease-channel",
+      "status": "guaranteed",
+      "page": "/evidence/claims/release-prerelease-channel/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "test": "suite:3179_a_prerelease_is_never_published_as_stable",
+          "path": "test/cases/3179_a_prerelease_is_never_published_as_stable.sh",
+          "category": "e2e",
+          "inputs": [
+            "docs/DISTRIBUTION.md",
+            "scripts/release-record",
+            "test/cases/3179_a_prerelease_is_never_published_as_stable.sh"
           ]
         }
       ],
@@ -11115,6 +11343,29 @@
             "docs/SCHEMAS.md",
             "lib/session.sh",
             "test/cases/63_session_records.sh"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "claim:session-start-prompt": {
+      "kind": "claim",
+      "id": "session-start-prompt",
+      "status": "guaranteed",
+      "page": "/evidence/claims/session-start-prompt/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "test": "suite:3221_a_bare_session_start_joins_the_cluster",
+          "path": "test/cases/3221_a_bare_session_start_joins_the_cluster.sh",
+          "category": "e2e",
+          "inputs": [
+            "docs/MCP.md",
+            "share/shell/session-start.sh",
+            "test/cases/3221_a_bare_session_start_joins_the_cluster.sh"
           ]
         }
       ],
@@ -12141,6 +12392,18 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:3113_the_adoption_footprint_is_inventoried",
+          "path": "test/cases/3113_the_adoption_footprint_is_inventoried.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:3460_a_session_end_hook_fits_its_budget",
+          "path": "test/cases/3460_a_session_end_hook_fits_its_budget.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:408_a_receipt_is_provider_neutral",
           "path": "test/cases/408_a_receipt_is_provider_neutral.sh",
           "category": "e2e"
@@ -12328,8 +12591,26 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:2988_a_scope_admits_what_its_derive_wrote",
+          "path": "test/cases/2988_a_scope_admits_what_its_derive_wrote.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:3023_a_knowledge_record_outlives_the_file_it_cites",
           "path": "test/cases/3023_a_knowledge_record_outlives_the_file_it_cites.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:3151_a_task_is_claimed_when_it_starts",
+          "path": "test/cases/3151_a_task_is_claimed_when_it_starts.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:3190_a_scope_of_dot_is_the_repository",
+          "path": "test/cases/3190_a_scope_of_dot_is_the_repository.sh",
           "category": "e2e"
         },
         {
@@ -12402,6 +12683,12 @@
           "via": "negative",
           "test": "suite:25_continuity_lifecycle",
           "path": "test/cases/25_continuity_lifecycle.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:3190_a_scope_of_dot_is_the_repository",
+          "path": "test/cases/3190_a_scope_of_dot_is_the_repository.sh",
           "category": "e2e"
         },
         {
@@ -12813,6 +13100,18 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:3073_context_knowledge_slice",
+          "path": "test/cases/3073_context_knowledge_slice.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:3160_a_scope_entry_is_one_path",
+          "path": "test/cases/3160_a_scope_entry_is_one_path.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:710_briefing_names_the_candidates",
           "path": "test/cases/710_briefing_names_the_candidates.sh",
           "category": "e2e"
@@ -13045,6 +13344,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:3210_a_candidate_cites_its_own_commit",
+          "path": "test/cases/3210_a_candidate_cites_its_own_commit.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:33_event_registry",
           "path": "test/cases/33_event_registry.sh",
           "category": "e2e"
@@ -13088,6 +13393,25 @@
       "kind": "command",
       "id": "delivery show",
       "page": "/evidence/commands/delivery-show/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:deploy slug": {
+      "kind": "command",
+      "id": "deploy slug",
+      "page": "/evidence/commands/deploy-slug/",
       "programs": [
         "native"
       ],
@@ -13411,6 +13735,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:1030_a_derive_machine_has_the_pinned_toolchain",
+          "path": "test/cases/1030_a_derive_machine_has_the_pinned_toolchain.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:130_mesh",
           "path": "test/cases/130_mesh.sh",
           "category": "e2e"
@@ -13479,6 +13809,12 @@
           "via": "behaviour",
           "test": "suite:3036_a_worktree_runs_its_own_hooks",
           "path": "test/cases/3036_a_worktree_runs_its_own_hooks.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:3340_a_fresh_init_leaves_doctor_clean",
+          "path": "test/cases/3340_a_fresh_init_leaves_doctor_clean.sh",
           "category": "e2e"
         },
         {
@@ -13563,6 +13899,12 @@
           "via": "negative",
           "test": "suite:03_update",
           "path": "test/cases/03_update.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:1030_a_derive_machine_has_the_pinned_toolchain",
+          "path": "test/cases/1030_a_derive_machine_has_the_pinned_toolchain.sh",
           "category": "e2e"
         },
         {
@@ -13736,6 +14078,12 @@
       "routes": [
         {
           "via": "behaviour",
+          "test": "suite:1030_a_derive_machine_has_the_pinned_toolchain",
+          "path": "test/cases/1030_a_derive_machine_has_the_pinned_toolchain.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:18_doctrine_wiring",
           "path": "test/cases/18_doctrine_wiring.sh",
           "category": "e2e"
@@ -13744,6 +14092,12 @@
           "via": "behaviour",
           "test": "suite:19_end_to_end",
           "path": "test/cases/19_end_to_end.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:1030_a_derive_machine_has_the_pinned_toolchain",
+          "path": "test/cases/1030_a_derive_machine_has_the_pinned_toolchain.sh",
           "category": "e2e"
         },
         {
@@ -14365,6 +14719,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:2988_a_scope_admits_what_its_derive_wrote",
+          "path": "test/cases/2988_a_scope_admits_what_its_derive_wrote.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:3067_a_task_is_claimed_on_the_mesh",
           "path": "test/cases/3067_a_task_is_claimed_on_the_mesh.sh",
           "category": "e2e"
@@ -14373,6 +14733,12 @@
           "via": "behaviour",
           "test": "suite:3068_a_task_off_the_mesh_is_refused",
           "path": "test/cases/3068_a_task_off_the_mesh_is_refused.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:3151_a_task_is_claimed_when_it_starts",
+          "path": "test/cases/3151_a_task_is_claimed_when_it_starts.sh",
           "category": "e2e"
         },
         {
@@ -14735,6 +15101,18 @@
           "category": "e2e"
         },
         {
+          "via": "behaviour",
+          "test": "suite:3113_the_adoption_footprint_is_inventoried",
+          "path": "test/cases/3113_the_adoption_footprint_is_inventoried.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:3340_a_fresh_init_leaves_doctor_clean",
+          "path": "test/cases/3340_a_fresh_init_leaves_doctor_clean.sh",
+          "category": "e2e"
+        },
+        {
           "via": "negative",
           "test": "suite:01_init",
           "path": "test/cases/01_init.sh",
@@ -14952,6 +15330,24 @@
           "via": "behaviour",
           "test": "suite:3037_a_knowledge_lookup_explains_its_order",
           "path": "test/cases/3037_a_knowledge_lookup_explains_its_order.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:3060_trunk_stays_clean",
+          "path": "test/cases/3060_trunk_stays_clean.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:3063_a_branch_episode_drains_the_outbox",
+          "path": "test/cases/3063_a_branch_episode_drains_the_outbox.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:3210_a_candidate_cites_its_own_commit",
+          "path": "test/cases/3210_a_candidate_cites_its_own_commit.sh",
           "category": "e2e"
         },
         {
@@ -15765,6 +16161,30 @@
       "routes": [
         {
           "via": "behaviour",
+          "test": "suite:3100_an_issue_delivery_is_inferred",
+          "path": "test/cases/3100_an_issue_delivery_is_inferred.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:3101_merged_work_unrecorded_is_drift",
+          "path": "test/cases/3101_merged_work_unrecorded_is_drift.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:3102_a_milestone_version_is_inferred",
+          "path": "test/cases/3102_a_milestone_version_is_inferred.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:3244_a_milestone_title_fits_on_github",
+          "path": "test/cases/3244_a_milestone_title_fits_on_github.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:40_project_model",
           "path": "test/cases/40_project_model.sh",
           "category": "e2e"
@@ -15837,6 +16257,12 @@
         },
         {
           "via": "negative",
+          "test": "suite:3244_a_milestone_title_fits_on_github",
+          "path": "test/cases/3244_a_milestone_title_fits_on_github.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
           "test": "suite:40_project_model",
           "path": "test/cases/40_project_model.sh",
           "category": "e2e"
@@ -15870,6 +16296,44 @@
           "test": "suite:582_the_done_guard_holds_in_both_engines",
           "path": "test/cases/582_the_done_guard_holds_in_both_engines.sh",
           "category": "e2e"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:plan delivery": {
+      "kind": "command",
+      "id": "plan delivery",
+      "page": "/evidence/commands/plan-delivery/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:plan drift": {
+      "kind": "command",
+      "id": "plan drift",
+      "page": "/evidence/commands/plan-drift/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
         }
       ],
       "mechanisms": [],
@@ -16708,6 +17172,12 @@
         },
         {
           "via": "negative",
+          "test": "suite:3590_the_site_is_derived_in_every_language",
+          "path": "test/cases/3590_the_site_is_derived_in_every_language.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
           "test": "suite:403_published_translation",
           "path": "test/cases/403_published_translation.sh",
           "category": "e2e"
@@ -17082,6 +17552,18 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:3060_trunk_stays_clean",
+          "path": "test/cases/3060_trunk_stays_clean.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:3063_a_branch_episode_drains_the_outbox",
+          "path": "test/cases/3063_a_branch_episode_drains_the_outbox.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:494_the_mesh_is_declared_and_held",
           "path": "test/cases/494_the_mesh_is_declared_and_held.sh",
           "category": "e2e"
@@ -17162,6 +17644,18 @@
           "via": "negative",
           "test": "suite:3015_an_unsupervised_repository_exits_12_from_both_tools",
           "path": "test/cases/3015_an_unsupervised_repository_exits_12_from_both_tools.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:3060_trunk_stays_clean",
+          "path": "test/cases/3060_trunk_stays_clean.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:3063_a_branch_episode_drains_the_outbox",
+          "path": "test/cases/3063_a_branch_episode_drains_the_outbox.sh",
           "category": "e2e"
         },
         {
@@ -17352,6 +17846,24 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:3151_a_task_is_claimed_when_it_starts",
+          "path": "test/cases/3151_a_task_is_claimed_when_it_starts.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:3160_a_scope_entry_is_one_path",
+          "path": "test/cases/3160_a_scope_entry_is_one_path.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:3190_a_scope_of_dot_is_the_repository",
+          "path": "test/cases/3190_a_scope_of_dot_is_the_repository.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:32_refusal_lifecycle",
           "path": "test/cases/32_refusal_lifecycle.sh",
           "category": "e2e"
@@ -17390,6 +17902,12 @@
           "via": "negative",
           "test": "suite:16_profiles",
           "path": "test/cases/16_profiles.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:3160_a_scope_entry_is_one_path",
+          "path": "test/cases/3160_a_scope_entry_is_one_path.sh",
           "category": "e2e"
         },
         {
@@ -17443,6 +17961,18 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:3113_the_adoption_footprint_is_inventoried",
+          "path": "test/cases/3113_the_adoption_footprint_is_inventoried.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:3340_a_fresh_init_leaves_doctor_clean",
+          "path": "test/cases/3340_a_fresh_init_leaves_doctor_clean.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:33_event_registry",
           "path": "test/cases/33_event_registry.sh",
           "category": "e2e"
@@ -17476,6 +18006,12 @@
           "via": "behaviour",
           "test": "suite:359_live_scenarios",
           "path": "test/cases/359_live_scenarios.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:3836_a_repeated_scenario_is_read_from_its_cache",
+          "path": "test/cases/3836_a_repeated_scenario_is_read_from_its_cache.sh",
           "category": "e2e"
         },
         {
@@ -18283,6 +18819,25 @@
       "kind": "command",
       "id": "worktree topology",
       "page": "/evidence/commands/worktree-topology/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:worktree trunk": {
+      "kind": "command",
+      "id": "worktree trunk",
+      "page": "/evidence/commands/worktree-trunk/",
       "programs": [
         "native"
       ],
@@ -20593,6 +21148,42 @@
       "mechanisms": [],
       "findings": []
     },
+    "mcp:majordomus_plan_delivery": {
+      "kind": "mcp",
+      "id": "majordomus_plan_delivery",
+      "alias_of": "capability:plan.delivery",
+      "programs": [],
+      "members": [
+        "capability:plan.delivery"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_plan_drift": {
+      "kind": "mcp",
+      "id": "majordomus_plan_drift",
+      "alias_of": "capability:plan.drift",
+      "programs": [],
+      "members": [
+        "capability:plan.drift"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_plan_flight": {
+      "kind": "mcp",
+      "id": "majordomus_plan_flight",
+      "alias_of": "capability:plan.flight",
+      "programs": [],
+      "members": [
+        "capability:plan.flight"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
     "mcp:majordomus_plan_issues": {
       "kind": "mcp",
       "id": "majordomus_plan_issues",
@@ -20936,6 +21527,18 @@
       "programs": [],
       "members": [
         "capability:release.analysis"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_release_currency": {
+      "kind": "mcp",
+      "id": "majordomus_release_currency",
+      "alias_of": "capability:release.currency",
+      "programs": [],
+      "members": [
+        "capability:release.currency"
       ],
       "routes": [],
       "mechanisms": [],
@@ -21349,6 +21952,18 @@
       "mechanisms": [],
       "findings": []
     },
+    "mcp:majordomus_worktree_trunk": {
+      "kind": "mcp",
+      "id": "majordomus_worktree_trunk",
+      "alias_of": "capability:worktree.trunk",
+      "programs": [],
+      "members": [
+        "capability:worktree.trunk"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
     "mcp:majordomus_worktree_uncommitted": {
       "kind": "mcp",
       "id": "majordomus_worktree_uncommitted",
@@ -21727,12 +22342,32 @@
       "routes": [
         {
           "via": "rule",
+          "test": "suite:3820_a_deployment_renders_its_providers_files",
+          "path": "test/cases/3820_a_deployment_renders_its_providers_files.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3820_a_deployment_renders_its_providers_files.sh",
+            ".ai/repo/rules/vendor/majordomus/rules/deployment-contract.v2.md"
+          ]
+        },
+        {
+          "via": "rule",
           "test": "suite:84_deployment_contract",
           "path": "test/cases/84_deployment_contract.sh",
           "category": "e2e",
           "inputs": [
             "test/cases/84_deployment_contract.sh",
-            ".ai/repo/rules/vendor/majordomus/rules/deployment-contract.v1.md"
+            ".ai/repo/rules/vendor/majordomus/rules/deployment-contract.v2.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:86_deployment_projections",
+          "path": "test/cases/86_deployment_projections.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/86_deployment_projections.sh",
+            ".ai/repo/rules/vendor/majordomus/rules/deployment-contract.v2.md"
           ]
         }
       ],
@@ -21849,6 +22484,37 @@
       "programs": [],
       "members": [],
       "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "rule:majordomus.knowledge-graph": {
+      "kind": "rule",
+      "id": "majordomus.knowledge-graph",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:3075_knowledge_validate_judges_the_graph",
+          "path": "test/cases/3075_knowledge_validate_judges_the_graph.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3075_knowledge_validate_judges_the_graph.sh",
+            ".ai/repo/rules/vendor/majordomus/rules/knowledge-graph.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:74_knowledge_edges",
+          "path": "test/cases/74_knowledge_edges.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/74_knowledge_edges.sh",
+            ".ai/repo/rules/vendor/majordomus/rules/knowledge-graph.v1.md"
+          ]
+        }
+      ],
       "mechanisms": [],
       "findings": []
     },
@@ -22340,6 +23006,16 @@
       "routes": [
         {
           "via": "rule",
+          "test": "suite:3102_a_milestone_version_is_inferred",
+          "path": "test/cases/3102_a_milestone_version_is_inferred.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3102_a_milestone_version_is_inferred.sh",
+            ".ai/repo/rules/vendor/majordomus/rules/roadmap-integrity.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
           "test": "suite:49_roadmap_doctrine",
           "path": "test/cases/49_roadmap_doctrine.sh",
           "category": "e2e",
@@ -22556,6 +23232,16 @@
             "test/cases/3068_a_task_off_the_mesh_is_refused.sh",
             ".ai/repo/rules/vendor/majordomus/rules/task-on-the-mesh.v1.md"
           ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:3151_a_task_is_claimed_when_it_starts",
+          "path": "test/cases/3151_a_task_is_claimed_when_it_starts.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3151_a_task_is_claimed_when_it_starts.sh",
+            ".ai/repo/rules/vendor/majordomus/rules/task-on-the-mesh.v1.md"
+          ]
         }
       ],
       "mechanisms": [],
@@ -22677,6 +23363,27 @@
       "mechanisms": [],
       "findings": []
     },
+    "rule:project.a-checkout-serves-the-current-trunk": {
+      "kind": "rule",
+      "id": "project.a-checkout-serves-the-current-trunk",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:3176_a_checkout_serves_the_current_trunk",
+          "path": "test/cases/3176_a_checkout_serves_the_current_trunk.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3176_a_checkout_serves_the_current_trunk.sh",
+            ".ai/repo/rules/project/a-checkout-serves-the-current-trunk.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "rule:project.a-closing-question-is-answered-by-measurement": {
       "kind": "rule",
       "id": "project.a-closing-question-is-answered-by-measurement",
@@ -22764,7 +23471,17 @@
           "category": "e2e",
           "inputs": [
             "test/cases/272_diagrams_are_drawn.sh",
-            ".ai/repo/rules/project/a-diagram-is-drawn-not-typed.v1.md"
+            ".ai/repo/rules/project/a-diagram-is-drawn-not-typed.v2.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:3106_every_published_tree_draws_its_diagrams",
+          "path": "test/cases/3106_every_published_tree_draws_its_diagrams.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3106_every_published_tree_draws_its_diagrams.sh",
+            ".ai/repo/rules/project/a-diagram-is-drawn-not-typed.v2.md"
           ]
         }
       ],
@@ -22912,13 +23629,54 @@
           "category": "e2e",
           "inputs": [
             "test/cases/200_generic_mcp_episode.sh",
-            ".ai/repo/rules/project/a-provider-capability-cites-its-evidence.v1.md"
+            ".ai/repo/rules/project/a-provider-capability-cites-its-evidence.v2.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:3829_a_provider_declares_its_browser_bridge",
+          "path": "test/cases/3829_a_provider_declares_its_browser_bridge.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3829_a_provider_declares_its_browser_bridge.sh",
+            ".ai/repo/rules/project/a-provider-capability-cites-its-evidence.v2.md"
           ]
         }
       ],
       "mechanisms": [
         "scripts/provider-evidence-check"
       ],
+      "findings": []
+    },
+    "rule:project.a-push-runs-what-ci-would-find-first": {
+      "kind": "rule",
+      "id": "project.a-push-runs-what-ci-would-find-first",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:1021_a_push_runs_what_ci_would_find_first",
+          "path": "test/cases/1021_a_push_runs_what_ci_would_find_first.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/1021_a_push_runs_what_ci_would_find_first.sh",
+            ".ai/repo/rules/project/a-push-runs-what-ci-would-find-first.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "rule:project.a-standing-approval-is-written-where-permissions-are-read": {
+      "kind": "rule",
+      "id": "project.a-standing-approval-is-written-where-permissions-are-read",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [],
+      "mechanisms": [],
       "findings": []
     },
     "rule:project.a-tool-that-cannot-match-the-tree-refuses": {
@@ -23008,6 +23766,36 @@
           "category": "e2e",
           "inputs": [
             "test/cases/276_disk_is_bounded.sh",
+            ".ai/repo/rules/project/accumulation-is-measured.v2.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:3080_idle_incremental_sessions_are_pruned",
+          "path": "test/cases/3080_idle_incremental_sessions_are_pruned.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3080_idle_incremental_sessions_are_pruned.sh",
+            ".ai/repo/rules/project/accumulation-is-measured.v2.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:3196_stale_crate_artifacts_are_pruned_under_cargos_lock",
+          "path": "test/cases/3196_stale_crate_artifacts_are_pruned_under_cargos_lock.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3196_stale_crate_artifacts_are_pruned_under_cargos_lock.sh",
+            ".ai/repo/rules/project/accumulation-is-measured.v2.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:3197_idle_private_build_dirs_are_reclaimed",
+          "path": "test/cases/3197_idle_private_build_dirs_are_reclaimed.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3197_idle_private_build_dirs_are_reclaimed.sh",
             ".ai/repo/rules/project/accumulation-is-measured.v2.md"
           ]
         }
@@ -23646,7 +24434,17 @@
           "category": "e2e",
           "inputs": [
             "test/cases/2984_a_handbook_edition_is_built_from_the_tree.sh",
-            ".ai/repo/rules/project/english-only.v3.md"
+            ".ai/repo/rules/project/english-only.v4.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:3590_the_site_is_derived_in_every_language",
+          "path": "test/cases/3590_the_site_is_derived_in_every_language.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3590_the_site_is_derived_in_every_language.sh",
+            ".ai/repo/rules/project/english-only.v4.md"
           ]
         }
       ],
@@ -23820,6 +24618,30 @@
         }
       ],
       "mechanisms": [],
+      "findings": []
+    },
+    "rule:project.every-domain-is-a-skill": {
+      "kind": "rule",
+      "id": "project.every-domain-is-a-skill",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:2980_a_capability_is_invoked_by_name_from_claude_code",
+          "path": "test/cases/2980_a_capability_is_invoked_by_name_from_claude_code.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/2980_a_capability_is_invoked_by_name_from_claude_code.sh",
+            ".ai/repo/rules/project/every-domain-is-a-skill.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [
+        "apps/majordomus-cli/src/editors/claude.rs",
+        "scripts/site-check"
+      ],
       "findings": []
     },
     "rule:project.every-link-and-control-is-tested": {
@@ -24442,6 +25264,16 @@
           "category": "e2e",
           "inputs": [
             "test/cases/104_published_site.sh",
+            ".ai/repo/rules/project/land-and-publish.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:3470_the_release_follows_the_work",
+          "path": "test/cases/3470_the_release_follows_the_work.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3470_the_release_follows_the_work.sh",
             ".ai/repo/rules/project/land-and-publish.v1.md"
           ]
         },
@@ -25070,6 +25902,27 @@
       ],
       "findings": []
     },
+    "rule:project.published-evidence-is-what-ci-recorded": {
+      "kind": "rule",
+      "id": "project.published-evidence-is-what-ci-recorded",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:3178_the_published_ui_reads_the_evidence_ci_recorded",
+          "path": "test/cases/3178_the_published_ui_reads_the_evidence_ci_recorded.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3178_the_published_ui_reads_the_evidence_ci_recorded.sh",
+            ".ai/repo/rules/project/published-evidence-is-what-ci-recorded.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "rule:project.reclaim-only-what-you-own": {
       "kind": "rule",
       "id": "project.reclaim-only-what-you-own",
@@ -25460,6 +26313,16 @@
       "routes": [
         {
           "via": "rule",
+          "test": "suite:3177_a_client_always_gets_a_server",
+          "path": "test/cases/3177_a_client_always_gets_a_server.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3177_a_client_always_gets_a_server.sh",
+            ".ai/repo/rules/project/shared-server-resilience.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
           "test": "suite:90_mcp_shared_server",
           "path": "test/cases/90_mcp_shared_server.sh",
           "category": "e2e",
@@ -25562,6 +26425,57 @@
           "inputs": [
             "test/cases/127_briefing_freshness.sh",
             ".ai/repo/rules/project/the-briefing-is-checked-against-git.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "rule:project.the-cooperation-model-is-the-owners-word": {
+      "kind": "rule",
+      "id": "project.the-cooperation-model-is-the-owners-word",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:2999_delivery_is_expedited_only_where_the_rule_says",
+          "path": "test/cases/2999_delivery_is_expedited_only_where_the_rule_says.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/2999_delivery_is_expedited_only_where_the_rule_says.sh",
+            ".ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:3150_the_cooperation_model_is_one_record",
+          "path": "test/cases/3150_the_cooperation_model_is_one_record.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3150_the_cooperation_model_is_one_record.sh",
+            ".ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:3824_the_bootstrap_says_what_the_cooperation_rule_says",
+          "path": "test/cases/3824_the_bootstrap_says_what_the_cooperation_rule_says.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3824_the_bootstrap_says_what_the_cooperation_rule_says.sh",
+            ".ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:720_integration_follows_the_current_master",
+          "path": "test/cases/720_integration_follows_the_current_master.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/720_integration_follows_the_current_master.sh",
+            ".ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md"
           ]
         }
       ],
@@ -25866,6 +26780,29 @@
       "mechanisms": [],
       "findings": []
     },
+    "rule:project.the-site-is-offered-in-every-language": {
+      "kind": "rule",
+      "id": "project.the-site-is-offered-in-every-language",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:3590_the_site_is_derived_in_every_language",
+          "path": "test/cases/3590_the_site_is_derived_in_every_language.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3590_the_site_is_derived_in_every_language.sh",
+            ".ai/repo/rules/project/the-site-is-offered-in-every-language.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [
+        "scripts/lib/site-i18n-probe.mjs"
+      ],
+      "findings": []
+    },
     "rule:project.the-site-offers-the-release-it-published": {
       "kind": "rule",
       "id": "project.the-site-offers-the-release-it-published",
@@ -25909,6 +26846,21 @@
         "scripts/pages",
         "scripts/site-build",
         "scripts/site-check"
+      ],
+      "findings": []
+    },
+    "rule:project.the-ui-wears-the-sites-navbar": {
+      "kind": "rule",
+      "id": "project.the-ui-wears-the-sites-navbar",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [],
+      "mechanisms": [
+        "scripts/cockpit-assets",
+        "scripts/lib/ui-navbar.mjs",
+        "scripts/lib/ui.test.mjs",
+        "scripts/ui"
       ],
       "findings": []
     },
@@ -27653,8 +28605,11 @@
     "crate:observatory",
     "crate:pack",
     "crate:peer_claims",
+    "crate:plan_delivery",
+    "crate:plan_drift",
     "crate:portable_core",
     "crate:properties",
+    "crate:provider_browser",
     "crate:providers_projection",
     "crate:reasoning_mesh",
     "crate:redaction",
@@ -27669,7 +28624,12 @@
     "crate:session_domain",
     "crate:shared_units",
     "crate:tool_input_schemas",
+    "crate:ui_idd",
+    "crate:ui_idd_evidence",
+    "crate:ui_idd_live",
+    "crate:ui_idd_moves",
     "crate:ui_links",
+    "crate:ui_roadmap",
     "crate:worktree",
     "suite:09_site_mobile_first",
     "suite:1023_a_branch_cannot_widen_the_mesh_trust",
@@ -27729,7 +28689,6 @@
     "suite:279_the_publication_age_is_the_oldest_debt",
     "suite:280_capture_status_states_its_denominator",
     "suite:2978_an_intent_is_proposed_by_a_capability",
-    "suite:2980_a_capability_is_invoked_by_name_from_claude_code",
     "suite:2981_the_cockpit_snapshot_holds_its_routes",
     "suite:2982_two_snapshots_link_what_the_other_holds",
     "suite:2998_evidence_reaches_the_subcommands_the_executable_owns",
@@ -27753,27 +28712,90 @@
     "suite:3035_a_release_names_its_archive_from_the_matrix",
     "suite:303_one_source_serves_two_mounts",
     "suite:3042_the_observatory_asks_again_when_it_is_seen",
+    "suite:3043_site_json_cannot_close_its_script",
+    "suite:3047_a_leak_finding_names_where_it_is",
+    "suite:3048_a_derivation_survives_an_unrelated_merge",
+    "suite:3049_a_second_workers_record_lands_on_the_first_workers_task",
+    "suite:3050_doctor_says_it_checks_governance_only",
+    "suite:3051_an_unlisted_event_field_fails_the_mesh_check",
+    "suite:3053_a_repository_of_n_records_costs_n",
+    "suite:3055_a_derivation_needs_no_history",
+    "suite:3056_every_failure_class_names_its_proof",
     "suite:305_a_command_is_claimed_or_classified",
     "suite:3066_a_session_joins_the_mesh_at_start",
     "suite:3069_an_edit_no_claim_covers_is_refused",
+    "suite:3084_a_case_near_its_budget_is_named",
+    "suite:3103_the_roadmap_draws_every_milestone",
+    "suite:3104_the_ui_roadmap_reads_delivery",
+    "suite:3105_the_homepage_states_no_present_it_does_not_read",
     "suite:310_rustdoc_projection",
+    "suite:3110_a_served_surface_names_its_checkout",
+    "suite:3112_a_publication_that_did_not_arrive_is_a_finding",
+    "suite:3125_the_reaper_asks_cargo_for_the_build_dir",
+    "suite:3131_a_new_worktree_starts_from_the_remote_trunk",
     "suite:318_a_partial_sweep_says_so",
+    "suite:3212_a_prerelease_version_is_bumped_and_ordered",
+    "suite:3220_the_idd_loop_is_walked_in_a_browser",
+    "suite:3222_an_alpha_publishes_beside_the_latest_release",
+    "suite:3223_the_release_smoke_installs_an_alpha_pinned",
+    "suite:3224_a_published_alpha_owes_its_record",
+    "suite:3225_the_installer_takes_an_alpha_only_by_name",
+    "suite:3226_a_pages_503_is_retried_before_a_page_is_called_missing",
+    "suite:3240_the_published_screens_carry_their_slow_panels",
+    "suite:3242_a_claim_newer_than_the_ledger_is_not_yet_recorded",
+    "suite:3245_an_incomplete_run_is_not_the_publications_evidence",
+    "suite:3246_every_file_the_site_generator_reads_is_an_input",
+    "suite:3247_a_derive_records_what_each_stage_cost",
+    "suite:3248_a_pre_push_gate_does_not_wait_on_another_build",
     "suite:330_a_contract_is_the_kind_it_declares",
     "suite:331_knowledge_nodes_is_gated",
+    "suite:3342_a_dry_run_initialises_nothing",
+    "suite:3343_an_unobserved_mesh_is_never_zero",
+    "suite:3362_every_snapshot_read_can_ask_the_forge",
+    "suite:3363_what_mutates_is_said_as_it_is",
+    "suite:3364_a_page_names_the_layout_in_force",
+    "suite:3365_the_readme_exit_codes_are_the_contracts",
+    "suite:3366_a_proof_word_is_earned",
+    "suite:3384_doctor_reads_unpushed_in_one_pass",
+    "suite:3385_doctor_fits_its_budget_in_the_commit_hook",
+    "suite:3389_related_articles_answer_each_other_in_every_language",
+    "suite:3400_a_recorded_commit_link_names_the_history",
+    "suite:3401_a_hero_link_with_a_fragment_resolves_to_its_id",
+    "suite:3402_a_records_only_plan_skips_the_evidence_job",
+    "suite:3407_a_snapshot_page_carries_no_machine_path",
     "suite:343_the_cockpit_shows_who_else_is_here",
     "suite:349_a_step_reports_its_own_time",
     "suite:34_command_fixtures",
+    "suite:3502_every_article_reads_in_every_language",
+    "suite:3503_a_translation_group_agrees_and_keeps_up_with_its_source",
     "suite:350_the_queue_measures_itself",
     "suite:353_the_version_bump_has_an_actor",
     "suite:354_a_lease_contest_is_judged_by_a_declaration",
     "suite:35_future_command",
+    "suite:3602_every_route_is_probed_by_exactly_one_shard",
+    "suite:3603_every_page_is_exercised_by_exactly_one_shard",
     "suite:360_the_crate_boundary_is_measured",
     "suite:365_new_shell_is_refused",
     "suite:366_automation_inventory_agrees_with_the_tree",
+    "suite:3720_no_two_published_paths_differ_only_in_case",
+    "suite:3723_the_graph_text_reads_each_edge_its_way",
+    "suite:3724_the_roadmap_says_what_the_plan_holds",
+    "suite:3726_a_record_holds_no_template_delimiter",
+    "suite:3732_every_languages_homepage_is_held_to_its_budget",
     "suite:373_delivery_is_computed",
+    "suite:3747_a_gated_step_leaves_its_receipt",
+    "suite:3748_a_pages_step_bound_follows_its_budget",
+    "suite:3749_a_full_history_checkout_is_bounded",
     "suite:374_delivery_unknown_is_not_delivered",
     "suite:37_responsibility_surface",
+    "suite:3831_a_hook_never_starts_a_cold_build",
+    "suite:3834_a_case_run_removes_its_own_dir",
+    "suite:3837_a_derive_does_not_run_mid_merge",
+    "suite:3846_an_offload_derive_observes_its_base_commit",
+    "suite:3848_the_plan_page_fits_the_audit_budget",
+    "suite:3849_a_locked_build_never_goes_private_below_the_disk_bound",
     "suite:384_a_deployment_is_evidence",
+    "suite:3860_the_plan_graph_is_drawn_by_milestone",
     "suite:387_no_payload_is_passed_through_argv",
     "suite:390_unresolved_relation_refuses_generation",
     "suite:402_argv_limit",
@@ -27788,6 +28810,7 @@
     "suite:501_verdict_words_are_status_words",
     "suite:503_every_use_case_has_a_feature",
     "suite:504_public_text_is_redacted_once",
+    "suite:529_the_preflight_reads_the_one_verdict",
     "suite:531_an_entity_names_its_public_page",
     "suite:532_the_mcp_reference_links_its_capabilities",
     "suite:533_source_links_name_the_built_commit",
@@ -27820,7 +28843,6 @@
     "suite:73_knowledge_nodes",
     "suite:743_release_version_answers_with_the_contract",
     "suite:744_an_installed_tool_finds_its_own_executable",
-    "suite:74_knowledge_edges",
     "suite:75_knowledge_mutation",
     "suite:760_the_cockpit_route_table_is_what_it_serves",
     "suite:763_a_tag_older_than_the_record_practice_is_a_note",
@@ -27832,7 +28854,6 @@
     "suite:828_a_server_holding_its_lease_is_not_reaped",
     "suite:829_ci_fails_on_a_skip",
     "suite:85_deployment_bind",
-    "suite:86_deployment_projections",
     "suite:870_a_flag_setting_reporter_is_a_reporter",
     "suite:884_a_declared_kind_is_a_kind_the_graph_knows",
     "suite:885_a_replaced_server_stops_calling_itself_ready",

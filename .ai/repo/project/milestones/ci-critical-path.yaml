@@ -1,0 +1,33 @@
+id: ci-critical-path
+title: The critical path from a change to its verdict, and from a merge to its verified deploy, runs under a minute warm
+slug: ci-critical-path
+order: 125
+priority: p1
+problem: "A pull request's required verdict takes hours, not seconds: the behavioural suite runs on four shards of 51-86 minutes each, every documentation or layer change runs all four, and one case alone has cost up to 3468 s on a loaded runner. The suite budget has been raised three times in a week to follow runner load, and on 2026-10-09 the slowest case went 18 s over its 3450 s budget and failed the verdict of a pull request it does not touch (#831, run 37926379104). The owner's mission of 2026-10-08 asks for the change-to-verdict and merge-to-verified-deploy paths under 60 s warm, measured on GitHub, with no enforcement weakened."
+outcome: "The change-to-verdict path runs p50 under 40 s and p95 under 60 s warm, and merge-to-verified-deploy p50 under 45 s and p95 under 60 s, measured on GitHub with warm, partial and cold reported apart, every skip of a gate explained by the repository's own impact model, and no required test removed, skipped or made advisory to reach the number."
+current_state: "No baseline of the two paths is recorded on GitHub. .ai/repo/ci/suite.yaml budgets the suite at 56000 case-seconds and the slowest case at 3450 s, each re-derived from runner load. scripts/ci-plan selects the whole suite for 22 of 28 path classes, and no case declares the paths it reads (the 2026-10-08 measurement: 0 of 409)."
+desired_state: "A measured baseline of both paths is committed before any redesign; each change that shortens them names the measurement it moves; and the budget of a case is never raised to follow runner load again."
+scope:
+  - .ai/repo/project
+  - .ai/repo/ci
+  - .github/workflows
+  - scripts/ci
+  - scripts/ci-plan
+  - test/run.sh
+  - test/cases
+non_scope:
+  - Removing, skipping or making advisory any required test to reach the number
+  - Redesigning anything before the baseline of both paths is measured on GitHub and committed
+  - Local timings as the measure; the number is GitHub's
+acceptance_criteria:
+  - "The baseline of change-to-verdict and merge-to-verified-deploy, warm, partial and cold, is committed with the runs it was measured from"
+  - "Both paths meet the outcome's percentiles over the runs named, and every gate a change skips names the impact rule that skipped it"
+  - "No required test was removed, skipped or made advisory, shown by the gate model's required set before and after"
+validation:
+  - bin/majordomus plan validate
+  - scripts/ci-plan --check
+evidence_required:
+  - baseline_measured_on_github
+  - critical_path_under_a_minute
+created_at: 2026-10-09
+updated_at: 2026-10-09

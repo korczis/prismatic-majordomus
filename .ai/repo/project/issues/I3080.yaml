@@ -1,0 +1,39 @@
+id: I3080
+milestone: public-proof
+title: "An article explains claiming in both languages: claimed before it is built"
+slug: claimed-before-it-is-built
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Publish site/content-src/claimed-before-it-is-built.md, an English article on how the sessions of this repository avoid building one thing twice and taking one number twice. It opens with the two release subsystems of 2026-09-09 and the branch that already carried the path. It covers the peer board as a process's memory and its gathering across checkouts (ADR 0044), and scripts/collision-check --new over every branch, with what it lists as related work and when it refuses to answer (project.work-is-claimed-before-it-is-built). It covers the collision-check gate and the collision:accepted label. On identifiers it covers majordomus adr next, majordomus adr check and the pre-commit hook (ADR 0053), and scripts/case-numbers with its gate and baseline. It covers announcing the identifier as well as the paths, advisory and exclusive claims on the mesh (ADR 0067), and that a claim is not a lock while the task's scope is what refuses. Every statement is one that those ADRs, that rule, scripts/collision-check, scripts/case-numbers, .ai/repo/ci/gates.yaml or the generated bootstrap on master states, and no count is typed by hand. site/content-src/zabrano-driv-nez-se-stavi.md is its Czech translation, naming translated_from and its source's digest. site/data/nav.toml lists both. Both relate the seats article, the monitor article and the derivation article, each of which names them back in its own language."
+why: "The owner asked on 2026-10-19 that the site's articles be developed and interlinked in every language. How several sessions share one repository without building the same thing twice is the cooperation this product exists for. The site explained it only in the rule, the ADRs and the bootstrap, which are written for the sessions that follow them."
+current_state: "No article explains how work and identifiers are claimed. The seven article groups relate each other, and none of them names it."
+desired_state: "/claimed-before-it-is-built/ and /zabrano-driv-nez-se-stavi/ are built, are counterparts of each other, are listed in the navigation, and are related both ways with three other groups. Check 21 passes, with the translation at its source's digest."
+scope:
+  - ".ai/repo/project/issues/I3080.yaml"
+  - "site/content-src/claimed-before-it-is-built.md"
+  - "site/content-src/zabrano-driv-nez-se-stavi.md"
+  - "site/content-src/seats-not-names.md"
+  - "site/content-src/kresla-ne-jmena.md"
+  - "site/content-src/everything-followed.md"
+  - "site/content-src/vsechno-v-jednom-proudu.md"
+  - "site/content-src/written-once-derived-everywhere.md"
+  - "site/content-src/napsano-jednou-odvozeno-vsude.md"
+  - "site/data/nav.toml"
+  - "scripts/ci/english-only-allow.txt"
+non_scope:
+  - "Changing the claiming rule, scripts/collision-check, scripts/case-numbers, the gates or the ADRs the article explains"
+depends_on:
+  - "I3078"
+acceptance_criteria:
+  - "Both articles are built, declare each other in [extra.translations], and the Czech one records translated_from = claimed-before-it-is-built/ and the digest check 21 computes of its source"
+  - "Each statement is one a record, script or gate on master states, and check 19 finds no count typed by hand"
+  - "scripts/site-check --articles passes the tree, counting the new related links"
+validation:
+  - "majordomus plan validate"
+  - "scripts/site-check --articles site/content-src site/data/nav.toml site/config.toml"
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3389_related_articles_answer_each_other_in_every_language"
+evidence_required: []
+serves: []
+created_at: 2026-10-19
+updated_at: 2026-10-19

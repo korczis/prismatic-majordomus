@@ -182,17 +182,15 @@ fn peers_list(ctx: &Context, input: PeerListInput) -> Result<PeerList, Capabilit
     let git = repository::git_identity(&root);
     let checkouts = server::checkouts_of(&root, git.as_ref(), input.checkouts);
 
-    let mut peers: Vec<Peer> = Vec::new();
-    let mut boards: Vec<BoardView> = Vec::with_capacity(checkouts.len());
-    let mut complete = true;
-
-    for (path, branch, _primary) in checkouts {
-        let worktree = path.canonicalize().unwrap_or(path);
+    // every checkout is asked at once, a bounded number at a time (server::each_checkout,
+    // I2987), and the answers are folded in the order git lists the checkouts
+    let read = server::each_checkout(&checkouts, |(path, branch, _primary)| {
+        let worktree = path.canonicalize().unwrap_or(path.clone());
         let this_checkout = worktree == root;
         let checkout = PeerCheckout {
             id: repository::identity(&worktree),
             worktree: worktree.clone(),
-            branch,
+            branch: branch.clone(),
             this_checkout,
         };
         // this checkout's board is in this process's memory: it is never asked over the
@@ -227,7 +225,13 @@ fn peers_list(ctx: &Context, input: PeerListInput) -> Result<PeerList, Capabilit
             };
             (standing, url, found)
         };
+        (checkout, standing, url, found)
+    });
 
+    let mut peers: Vec<Peer> = Vec::new();
+    let mut boards: Vec<BoardView> = Vec::with_capacity(read.len());
+    let mut complete = true;
+    for (checkout, standing, url, found) in read {
         let (found, reason) = match found {
             Ok(found) => (found, None),
             Err(why) => {
@@ -349,7 +353,9 @@ pub fn module() -> ModuleDescriptor {
                 exposure: Exposure { mcp: mcp("majordomus_peers"), http: get("/api/v1/peers"), cli: None },
                 tags: ["peers", "coordination"],
                 handler: peers_list,
-            },
+            }
+            // the mesh's working state, not the repository's: a loopback caller only (ADR 0220)
+            .reads_only_locally(),
             capability! {
                 id: "peers.announce",
                 kind: CapabilityKind::Command,

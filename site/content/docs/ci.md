@@ -27,11 +27,14 @@ flowchart LR
   plan --&gt; rust["rust"]
   plan --&gt; coverage["coverage"]
   plan --&gt; bench["bench (macOS)"]
-  plan --&gt; site["site"]
-  plan --&gt; interactions["interactions"]
+  plan --&gt; site["site&lt;br&gt;the build, once"]
+  site --&gt; probeshards["site-probe-shard ×6&lt;br&gt;a stride of the routes each"]
+  probeshards --&gt; probe["site-probe&lt;br&gt;every route exactly once"]
+  site --&gt; ishards["interaction-probe-shard ×6&lt;br&gt;a stride of the pages each"]
+  ishards --&gt; interactions["interactions&lt;br&gt;every page exactly once"]
   plan --&gt; ui["ui"]
   plan --&gt; macos["macos"]
-  structure &amp; suite &amp; rust &amp; coverage &amp; bench &amp; site &amp; interactions &amp; ui &amp; macos --&gt; ci["ci&lt;br&gt;the verdict; the one&lt;br&gt;required status"]
+  structure &amp; suite &amp; rust &amp; coverage &amp; bench &amp; site &amp; probe &amp; interactions &amp; ui &amp; macos --&gt; ci["ci&lt;br&gt;the verdict; the one&lt;br&gt;required status"]
 </pre>
 
 
@@ -269,6 +272,48 @@ processes finished in, and a finding still names the route, the width, the asser
 what was measured. The homepage behaviour checks (the mobile menu, the dropdown, the theme
 toggle) are unchanged. `--quick` remains the local sample.
 
+In CI the sweep is split in six (I2841). As one step of the site job it took 35-37 minutes,
+which held that job at 46-50 of its 50 minutes until one run was cancelled at its bound. The
+Czech copies then doubled the routes, and run 39317142394 stopped the single step at its
+2700 s bound. The `site-probe-shard` jobs now run side by side after the site job's build:
+
+- each one gets the files that build generated and git ignores (artifact `site-probe-inputs`);
+- each runs its own Zola build;
+- each measures `SITE_PROBE_SHARD=K/6`: every sixth route of the sorted list, starting from
+  the Kth. A stride rather than six blocks, so the expensive sections are spread across shards;
+- each writes the routes it measured (`SITE_PROBE_REPORT`).
+
+The homepage behaviour and the command routes are shard 1's, so each is reported once.
+
+The `site-probe` job is the gate's. It asks `scripts/site-probe --verify-report` whether the
+reports are shards 1..6, each once, and whether together they hold every route of the site,
+each once. Only then, and only if every shard passed, does it write the gate's receipt.
+
+Case 3602 holds the partition, the fan-in and the wiring, whatever the number of shards.
+Reproduce one shard locally with `SITE_PROBE_SHARD=2/6 SITE_PROBE_JOBS=4 scripts/site-probe`, or
+see which routes it holds with `scripts/site-probe --partition 2/6 < routes.txt`.
+
+## The interaction probe
+
+`scripts/interaction-probe` drives every control on every page with the behaviour spec that
+claims it (`project.every-link-and-control-is-tested`). As one job it rebuilt the site and drove
+every page in one step. That step reached page 1850 of 1865 at its 2400 s bound on 2026-10-12.
+After the Czech copies doubled the pages, run 39317142394 stopped it at 3300 s.
+
+Since I3602 it is split in six like the site probe, and cut by the same rule:
+
+- the site job packs its build without the composed surfaces (artifact `interaction-probe-site`,
+  about 26 MB; the mounts come from the topology);
+- each `interaction-probe-shard` job drives `MJ_PROBE_SHARD=K/6`, the stride
+  `scripts/site-probe --partition K/6` gives for the sorted pages, and writes them to
+  `MJ_PROBE_REPORT`;
+- the `interactions` job keeps the gate. It runs `scripts/site-probe --verify-report` over the
+  six reports and writes the receipt only if they are every page once and every shard passed.
+
+No page is sampled, the Czech copies included. A finding still fails the shard that drove the
+page and names the page and the spec. Case 3603 drives three shards of a fixture site in a
+browser. Reproduce one CI shard with `MJ_PROBE_SHARD=2/6 MJ_PROBE_JOBS=4 scripts/interaction-probe`.
+
 ## Caches and artifacts
 
 Caches hold reusable dependency and build state; artifacts carry a job's outputs to a
@@ -350,7 +395,8 @@ verdict and the Pages deploy that publishes it sat queued behind two pull reques
 holding all twenty slots; the site offered the previous release until a person cancelled one
 of them by hand. The release path is three kinds of run, read from what GitHub lists rather
 than from the release workflow: a run of `release.yml`, the validate run on a
-`release/record-<tag>` branch (the record's verdict), and a `pages.yml` run of master that the
+`release/record-<tag>` branch (the early reading the release dispatches, and the record pull
+request's own run once a person starts it), and a `pages.yml` run of master that the
 release's token dispatched. While any of them is queued or running:
 
 - a pull request's validate yields at the first step of its plan job, before any job of its
@@ -433,12 +479,20 @@ generator, not from a conflict marker. The design leans on `scripts/pages curren
 `.githooks/pre-commit` to refuse the stale result one command later — and **a `pre-commit`
 hook cannot run for a merge the server creates.** Merging a pull request on GitHub produces a
 commit with `committer=GitHub`, and no client-side hook exists on that path. It is not a
-bypass; it is the action this repository tells people to take. With no branch protection
-(`gh api repos/<owner>/<repo>/branches/master/protection` answers *404 Branch not protected*)
-nothing server-side compensates, and the `site` gate that does check currency is advisory and
-reports after the merge. So the first thing in the pipeline that can actually refuse is the
-Pages build, and it refuses by failing publication rather than by failing a pull request. The
-symptom is always "the site is stale" and never "the branch is red".
+bypass; it is the action this repository tells people to take. On 2026-09-10 there was no
+branch protection (`gh api repos/<owner>/<repo>/branches/master/protection` answered *404
+Branch not protected*), so nothing server-side compensated, and the `site` gate that checks
+currency was advisory and reported after the merge. The first thing in the pipeline that could
+refuse was the Pages build, and it refused by failing publication rather than by failing a
+pull request. The symptom was always "the site is stale" and never "the branch is red".
+
+What guards that path now (I1409, ADR 0101 amendment of 2026-10-15) is the ci-time freshness
+gate, and the hook plays no part in it. The `ci` check is required (`strict: false`). It runs
+`derived site data in sync` and `generate --check` on the pull request's merge ref. The forge
+runs no merge driver, so two branches that both changed a canonical input conflict on
+`source_hash` and cannot be merged by the forge at all. The merged commit is checked again on
+push, and `scripts/pages build` refuses stale site data before the `publish` step. The
+pre-commit hook guards only a merge a person commits.
 
 The vivid form: a stale recording rides through a merge untouched, so two consecutive master
 merges can carry the *same* `source_hash` — nothing regenerated between them. A guard whose
