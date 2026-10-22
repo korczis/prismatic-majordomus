@@ -375,6 +375,28 @@ impl Memory {
             }
             // read raw above, before the body is typed: a withdrawal never reaches this match
             EventBody::ReviewWithdrawn { .. } => return None,
+            // what a seat did (I2874): news, never something to act on
+            EventBody::NoticePublished {
+                session,
+                subject,
+                text,
+                bytes,
+            } => {
+                let name = self.name_of(&stream, &session);
+                let reclaimed = bytes
+                    .map(|b| format!(" ({:.1} GiB)", b as f64 / 1_073_741_824.0))
+                    .unwrap_or_default();
+                let mut s = MonitorSignal::new(
+                    event.at,
+                    MonitorSource::Mesh,
+                    "notice",
+                    MonitorSeverity::Info,
+                    &format!("{name}, {subject}: {text}{reclaimed}"),
+                );
+                s.session = Some(session);
+                s.actor = Some(name);
+                s
+            }
         };
         signal.machine = Some(machine);
         Some(signal)

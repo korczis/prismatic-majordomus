@@ -515,6 +515,114 @@ pub struct CooperationState {
     pub digest: String,
 }
 
+/// One notice, as every runtime that reads notices folds it (I2874): who said it, what it
+/// was done to, what was done and the bytes it gave back, keyed by the event's own position.
+///
+/// ```
+/// use std::sync::Arc;
+/// use majordomus_cli::mesh::identity::NodeIdentity;
+/// use majordomus_cli::mesh::journal::{EventBody, Journal};
+/// use majordomus_cli::mesh::state::{fold_notices, NoticeView};
+/// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+///     "repo".into(), None).unwrap();
+/// j.append_own(EventBody::NoticePublished { session: "s1".into(),
+///     subject: "disk-prune".into(), text: "1 build director(ies) removed: /b".into(),
+///     bytes: Some(4096) }).unwrap();
+/// let n: &NoticeView = &fold_notices(&j.events(), 64)[0];
+/// assert!(n.session.ends_with("/s1") && n.key.ends_with("/1"));
+/// assert_eq!((n.subject.as_str(), n.bytes), ("disk-prune", Some(4096)));
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct NoticeView {
+    /// `<stream>/<seq>`: the event's own position, since a notice has no id of its own.
+    pub key: String,
+    /// `<node>-<runtime>`.
+    pub runtime: String,
+    /// The publishing session's key, `<stream>/<session>`.
+    pub session: String,
+    /// What it was done to.
+    pub subject: String,
+    /// What was done.
+    pub text: String,
+    /// The bytes it reclaimed, when it reclaimed any.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub bytes: Option<u64>,
+    /// The writer's wall clock, seconds since the epoch: informational.
+    pub at: u64,
+    /// The Lamport stamp.
+    pub lamport: u64,
+}
+
+/// The notices of `events`, in causal order, the newest `per_runtime` of each runtime (its
+/// runs together). Kept
+/// apart from [`fold`] and from the digested [`CooperationState`]: a mesh whose runtimes are
+/// of different ages must keep one digest, and a notice changes nothing anyone coordinates
+/// on. The journal keeps every notice for its stream's life; `per_runtime` bounds only what
+/// is answered.
+///
+/// ```
+/// use std::sync::Arc;
+/// use majordomus_cli::mesh::identity::NodeIdentity;
+/// use majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};
+/// use majordomus_cli::mesh::state::{fold, fold_notices};
+///
+/// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+///     "repo".into(), None).unwrap();
+/// for n in 0..3 {
+///     j.append_own(EventBody::NoticePublished { session: "s1".into(),
+///         subject: "worktree-cleanup".into(), text: format!("run {n}"), bytes: None }).unwrap();
+/// }
+/// let notices = fold_notices(&j.events(), 2);
+/// assert_eq!(notices.len(), 2, "the newest two of the runtime");
+/// assert_eq!(notices[1].text, "run 2");
+/// // the coordinated state counts them as opaque, as an older runtime does
+/// assert_eq!(fold(&j.events(), &|_| StreamLiveness::Own).opaque_events, 3);
+/// ```
+pub fn fold_notices(events: &[MeshEvent], per_runtime: usize) -> Vec<NoticeView> {
+    // keyed by the causal position, as `fold` reads them: ordered and deduplicated at once
+    let ordered: BTreeMap<_, &MeshEvent> = events.iter().map(|e| (causal_key(e), e)).collect();
+    let notices: Vec<NoticeView> = ordered
+        .into_values()
+        .filter_map(|event| {
+            let Some(EventBody::NoticePublished {
+                session,
+                subject,
+                text,
+                bytes,
+            }) = event.body()
+            else {
+                return None;
+            };
+            let stream = &event.stream;
+            Some(NoticeView {
+                key: format!("{stream}/{}", event.seq),
+                runtime: stream.runtime_key(),
+                session: format!("{stream}/{session}"),
+                subject,
+                text,
+                bytes,
+                at: event.at,
+                lamport: event.lamport,
+            })
+        })
+        .collect();
+    // the newest `per_runtime` of each runtime: count each runtime's notices, then pass
+    // over the ones further than that from its end
+    let mut left: BTreeMap<String, usize> = BTreeMap::new();
+    for n in &notices {
+        *left.entry(n.runtime.clone()).or_default() += 1;
+    }
+    notices
+        .into_iter()
+        .filter(|n| {
+            let remaining = left.get_mut(&n.runtime).expect("counted above");
+            let keep = *remaining <= per_runtime;
+            *remaining -= 1;
+            keep
+        })
+        .collect()
+}
+
 /// Fold events into state. `liveness` answers for each stream; the caller supplies the
 /// journal's verdicts, a test supplies whatever it is testing.
 ///
@@ -714,6 +822,11 @@ pub fn fold(
                     view.result = note;
                 }
             }
+            // A notice is folded by `fold_notices`, outside this state, and counted here as an
+            // executable that does not know the kind counts it: so a runtime that reads
+            // notices and one older than them fold the same events into the same digest
+            // (I2874, f8's condition).
+            EventBody::NoticePublished { .. } => opaque += 1,
         }
     }
 
@@ -921,6 +1034,44 @@ pub fn admission_conflicts<'a>(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_runtime_that_reads_notices_and_one_older_than_them_fold_the_same_state() {
+        use crate::mesh::identity::NodeIdentity;
+        use crate::mesh::journal::Journal;
+        use std::sync::Arc;
+        let j = Journal::open(
+            Arc::new(NodeIdentity::ephemeral().unwrap()),
+            "0000000000000001",
+            "repo".into(),
+            None,
+        )
+        .unwrap();
+        j.append_own(EventBody::SessionOpened {
+            info: SessionInfo::named("s1", "cli"),
+        })
+        .unwrap();
+        j.append_own(EventBody::NoticePublished {
+            session: "s1".into(),
+            subject: "worktree-cleanup".into(),
+            text: "1 removed".into(),
+            bytes: None,
+        })
+        .unwrap();
+        let events = j.events();
+        // what an older executable holds: the same event, of a kind it cannot type
+        let mut older = events.clone();
+        for e in older.iter_mut() {
+            if e.kind() == "notice_published" {
+                e.body["kind"] = serde_json::json!("a_kind_from_the_future");
+            }
+        }
+        let own = |_: &StreamId| StreamLiveness::Own;
+        assert_eq!(fold(&events, &own), fold(&older, &own));
+        assert_eq!(fold(&events, &own).opaque_events, 1);
+        assert_eq!(fold_notices(&events, 64).len(), 1);
+        assert!(fold_notices(&older, 64).is_empty());
+    }
     use crate::mesh::identity::NodeIdentity;
     use crate::mesh::journal::{Journal, Rejection};
     use std::sync::Arc;

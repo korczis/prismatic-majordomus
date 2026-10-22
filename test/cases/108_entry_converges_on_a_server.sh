@@ -61,7 +61,7 @@ cp "$T/pol" .ai/repo/policy.yaml
 sed 's/^  ensure_server_on_start: false /  ensure_server_on_start: true /' .ai/repo/policy.yaml > "$T/pol2" && cp "$T/pol2" .ai/repo/policy.yaml
 out4="$(printf '{"session_id":"cc-4","hook_event_name":"SessionStart","source":"startup"}' | MAJORDOMUS_BIN="$T/nowhere" ./.claude/hooks/majordomus-session-start 2>/dev/null)"; code=$?
 [ "$code" = 0 ] || { echo "    a missing executable failed the start event ($code)"; exit 1; }
-printf '%s\n' "$out4" | grep -q '^Shared server: not ensured: the executable is not built' || { echo "    a missing executable is not named:"; printf '%s\n' "$out4"; exit 1; }
+printf '%s\n' "$out4" | grep -q '^Shared server: not ensured: the executable is absent: ' || { echo "    a missing executable is not named:"; printf '%s\n' "$out4"; exit 1; }
 [ ! -f "$lease" ] || { echo "    a server appeared without an executable"; exit 1; }
 
 echo "    entering through the provider's start event converges on one ready server, names it, and stop ends it"

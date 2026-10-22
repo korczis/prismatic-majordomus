@@ -706,7 +706,21 @@ fn reclaim(
             refused.push((b.name.clone(), why));
             continue;
         }
-        match svc.remove(&b.name, false) {
+        // The worktree goes while every cargo lock in its build output is held (I3832): a
+        // build that starts now waits on a lock, or finds no directory, and never loses its
+        // tree under it. A lock another process holds keeps the worktree.
+        let held = match crate::disk::lock_all(&crate::worktree::sweep::build_locks(
+            std::path::Path::new(&path),
+        )) {
+            Ok(h) => h,
+            Err((p, _)) => {
+                refused.push((b.name.clone(), format!("a build holds {}", p.display())));
+                continue;
+            }
+        };
+        let gone = svc.remove(&b.name, false);
+        drop(held);
+        match gone {
             Ok(_) => removed.push(b.name.clone()),
             Err(e) => refused.push((b.name.clone(), format!("{e}"))),
         }
@@ -776,9 +790,89 @@ fn refusal(svc: &WorktreeService, branch: &str, path: &str) -> Option<String> {
         Some(false) => {}
     }
     match crate::worktree::state::dirty_state(std::path::Path::new(path)) {
-        Ok(d) if d.clean => None,
-        Ok(d) => Some(format!("uncommitted work: {}", d.summary())),
-        Err(e) => Some(format!("could not read its working tree: {e}")),
+        Ok(d) if d.clean => {}
+        Ok(d) => return Some(format!("uncommitted work: {}", d.summary())),
+        Err(e) => return Some(format!("could not read its working tree: {e}")),
+    }
+    swept_refusal(svc, branch, path)
+}
+
+/// How long nothing in a worktree may have changed before cleanup removes it, in minutes:
+/// a day by default, the window within which a session that left a worktree is still likely
+/// to come back to it (I3832). `MAJORDOMUS_WORKTREE_SWEEP_IDLE_MIN` sets it; 0 removes the
+/// window, which only a fixture whose worktrees are all minutes old has reason to do.
+fn sweep_idle_minutes() -> u64 {
+    std::env::var("MAJORDOMUS_WORKTREE_SWEEP_IDLE_MIN")
+        .ok()
+        .and_then(|v| v.parse().ok())
+        .unwrap_or(24 * 60)
+}
+
+/// The readings I3832 adds: at the trunk's tip, named by the derive lock, named by a live
+/// process, changed within the idle window. Each is taken now, and one that cannot be taken
+/// refuses rather than removes.
+fn swept_refusal(svc: &WorktreeService, branch: &str, path: &str) -> Option<String> {
+    use crate::worktree::sweep;
+    let dir = std::path::Path::new(path);
+    let primary = &svc.identity().primary_worktree().path;
+    // a worktree at the remote trunk's tip is a verification tree another session may be in
+    if let Some(trunk) = svc.identity().trunk().branch.as_deref() {
+        if let Some(remote) = crate::worktree::trunk::remote_trunk_of(primary, trunk) {
+            let rev = |cwd: &std::path::Path, r: &str| {
+                crate::worktree::git::try_run(cwd, &["rev-parse", r])
+                    .ok()
+                    .filter(|o| o.status == Some(0))
+                    .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
+            };
+            if let (Some(head), Some(tip)) = (rev(dir, "HEAD"), rev(primary, &remote)) {
+                if head == tip {
+                    return Some(format!("it is at {remote}'s tip: a verification tree"));
+                }
+            }
+        }
+    }
+    if sweep::derive_lock_owner(primary).is_some_and(|o| sweep::named_by_derive_lock(&o, branch)) {
+        return Some("the derive lock names its branch".into());
+    }
+    // a session on any machine that holds a claim on its issue, branch or path is working in
+    // it; a mesh that is declared and cannot be read cannot say that nobody is
+    if crate::guard::mesh_declared_enabled(primary) {
+        match crate::guard::server_claims(primary) {
+            crate::guard::ClaimSource::Unavailable(why) => {
+                return Some(format!("cannot read the mesh claims: {why}"));
+            }
+            crate::guard::ClaimSource::Claims(claims) => {
+                let held = claims.iter().find(|c| {
+                    let slug = c
+                        .issue
+                        .as_deref()
+                        .and_then(|i| sweep::issue_slug(primary, i));
+                    sweep::claim_names(&c.scope, c.intent.as_deref(), slug.as_deref(), branch, dir)
+                });
+                if let Some(c) = held {
+                    return Some(format!(
+                        "a mesh claim names it: {} held by {}",
+                        c.key, c.session
+                    ));
+                }
+            }
+        }
+    }
+    match sweep::process_listing() {
+        None => return Some("cannot tell whether a process names it (no ps)".into()),
+        Some(ps) if sweep::named_in(&ps, dir) => {
+            return Some("a running process names it (a pinned build directory or a path)".into())
+        }
+        Some(_) => {}
+    }
+    let idle = sweep_idle_minutes();
+    if idle == 0 {
+        return None;
+    }
+    match sweep::changed_within(dir, idle) {
+        None => Some("cannot tell whether it is idle: a directory could not be read".into()),
+        Some(true) => Some(format!("something in it changed within {idle} minutes")),
+        Some(false) => None,
     }
 }
 
@@ -1159,6 +1253,29 @@ mod tests {
 
     /// A repository with its own remote and one worktree on `spare`: merged into the trunk,
     /// pushed, clean, and therefore nominated by the listing.
+    /// Every file and directory of `dir` but `.git`, changed two days ago.
+    fn age_tree(dir: &Path) {
+        let then = std::time::SystemTime::now() - std::time::Duration::from_secs(2 * 86_400);
+        let mut stack = vec![dir.to_path_buf()];
+        while let Some(d) = stack.pop() {
+            for e in std::fs::read_dir(&d).expect("read the worktree").flatten() {
+                if e.file_name() == ".git" {
+                    continue;
+                }
+                let p = e.path();
+                if p.is_dir() {
+                    stack.push(p.clone());
+                }
+                if let Ok(f) = std::fs::File::open(&p) {
+                    let _ = f.set_modified(then);
+                }
+            }
+        }
+        if let Ok(f) = std::fs::File::open(dir) {
+            let _ = f.set_modified(then);
+        }
+    }
+
     fn nominated() -> (tempfile::TempDir, WorktreeService, BranchState) {
         let tmp = tempfile::tempdir().expect("tempdir");
         let root = tmp.path().canonicalize().expect("canonical tempdir");
@@ -1187,6 +1304,9 @@ mod tests {
         let at = svc.expected_path_of("spare").expect("the path of spare");
         let at = at.to_string_lossy().to_string();
         git(&repo, &["worktree", "add", "-q", at.as_str(), "spare"]);
+        // a spare worktree is an idle one: aged past the idle window (I3832), so the
+        // readings it is nominated for are the ones a test is about
+        age_tree(Path::new(&at));
         let t = svc.topology(Detail::Full).expect("topology");
         let b = t
             .branches
