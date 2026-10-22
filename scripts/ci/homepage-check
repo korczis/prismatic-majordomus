@@ -59,8 +59,8 @@
 #               (build.json `snapshots`, the publication model's); one only a running process
 #               answers states its mount and links no copy
 #   sentence    the product sentence is declared once, as marketing.toml's [hero] title and
-#               subtitle; README.md's bold line and project.json's tagline (every page title and
-#               og:description) say exactly it
+#               subtitle; README.md's bold line, project.json's tagline (every page title and
+#               og:description) and the built homepage title say exactly it, in its own case
 #   scenarios   the hero offers the challenge first, then exactly the use cases terminal.json
 #               derives from the recorded refusals, in their order, each linking its built page
 #   nodes       each problem card and lifecycle step names exactly the features the product
@@ -297,6 +297,12 @@ kit_m = re.search(r"(?m)^## One sentence\n\n(.+?)(?:\n\n|\Z)", kit, re.S)
 kit_sentence = " ".join(kit_m.group(1).split()) if kit_m else ""
 if kit_sentence != sentence:
     st.append(f"docs/LAUNCH.md's one sentence says {kit_sentence!r}")
+# the built homepage's title carries the sentence as declared, in its own case (I3843): a filter
+# that lowercases it ("your ai agents ...") rewrites the owner's words on every search result
+title_m = re.search(r"<title>(.*?)</title>", home, re.S)
+title_text = " ".join(html.unescape(title_m.group(1)).split()) if title_m else ""
+if sentence and sentence.rstrip(".") not in title_text:
+    st.append(f"the homepage title says {title_text!r}, not the declared sentence")
 if missing_inputs.get("sentence"):
     bad("sentence", f"{', '.join(missing_inputs['sentence'])} missing, so the declared sentence is not judged")
 elif st:
