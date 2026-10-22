@@ -312,7 +312,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/economics.json` | `economics` | json | 50185 | `2520c4b91cccff18` |
 | `docs/generated/economics.md` | `economics` | markdown | 15425 | `39097c4b37ad3fa5` |
 | `docs/generated/economics.yaml` | `economics` | yaml | 41649 | `dec83f74c6a115c8` |
-| `docs/generated/graph.json` | `graph` | json | 5270562 | `e9a852c5818a1858` |
+| `docs/generated/graph.json` | `graph` | json | 5297980 | `a5f777be2f623dba` |
 | `docs/generated/graph.schema.json` | `graph-schema` | json | 7632 | `37d29841995d74d4` |
 | `docs/generated/modules/artifacts.md` | `modules/artifacts` | markdown | 1749 | `362e2d4e556b6006` |
 | `docs/generated/modules/autonomy.md` | `modules/autonomy` | markdown | 5069 | `789105da85338be4` |
@@ -440,9 +440,9 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `site/data/registry/design.json` | `site-design` | json | 11594 | `ff6803878515ab46` |
 | `site/data/registry/distribution.json` | `site-distribution` | json | 3005 | `1dc59aaebd16174a` |
 | `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 831696 | `1efe58f8caa99e0c` |
-| `site/data/registry/product-graph.json` | `site-product-graph` | json | 111829 | `a09da8b675017617` |
-| `site/data/registry/product.json` | `site-product` | json | 767819 | `be1284f16be2eb9f` |
-| `site/data/registry/registry.json` | `site-registry` | json | 7799409 | `eb8c6e0f2538c23e` |
+| `site/data/registry/product-graph.json` | `site-product-graph` | json | 111829 | `5642bcddb9d14214` |
+| `site/data/registry/product.json` | `site-product` | json | 767819 | `0c265dadb8a963d0` |
+| `site/data/registry/registry.json` | `site-registry` | json | 7811666 | `9d3b704e647a4d2f` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180170 | `300b30d3144ed604` |
 | `site/data/registry/why.json` | `site-why` | json | 349931 | `ade5e059bf55bb30` |
 | `site/static/favicon.svg` | `design-mark` | text | 911 | `d2ebe74220e5c13d` |
