@@ -156,6 +156,11 @@ pub const LOCAL: &[LocalCommand] = &[
         reason: LocalReason::ProcessLifecycle,
         note: "ends the server this checkout's lease names by signalling the process, which nothing served by that process could do to itself.",
     },
+    LocalCommand {
+        command: "self update",
+        reason: LocalReason::SessionLocal,
+        note: "reads and replaces the installation this executable was started from on this machine; a caller over a socket shares neither the machine nor the installation, and installing software is never a request.",
+    },
     // ---------------------------------------------------------------- writers
     LocalCommand {
         command: "generate",

@@ -24,6 +24,7 @@ use crate::share::Share;
 
 pub(crate) mod release;
 pub(crate) mod render;
+pub(crate) mod self_update;
 
 pub use release::{Release, Releases};
 

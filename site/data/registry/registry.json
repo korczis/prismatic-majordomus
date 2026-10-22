@@ -6,23 +6,23 @@
     "version": "0.26.0"
   },
   "registry": {
-    "fingerprint": "a562a72bd5a4ebb3d897b18fcbdddf2e8a76b18673dc64afa0d957471d02520c",
+    "fingerprint": "1bd145b11839d66a72071829569d98794469a94f9a0ad66054d785a04e3acad0",
     "summary": {
-      "total": 2378,
+      "total": 2379,
       "builtin": 199,
-      "declarative": 2179,
+      "declarative": 2180,
       "by_kind": {
         "command": 30,
         "query": 169,
-        "resource": 2179
+        "resource": 2180
       },
       "by_stability": {
         "behaviorally_verified": 139,
         "experimental": 51,
-        "implemented": 2188
+        "implemented": 2189
       },
       "mcp_tools": 190,
-      "mcp_resources": 2234,
+      "mcp_resources": 2235,
       "http_routes": 194,
       "cli_commands": 107,
       "modules": 91,
@@ -81760,7 +81760,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 481,
+        "capabilities": 482,
         "capability_ids": []
       },
       {
@@ -81850,7 +81850,7 @@
     ]
   },
   "index": {
-    "fingerprint": "94022cd3a3ad9106fb500c5a33852e0dc7a460b96f11a27d27474893d1a17eaf",
+    "fingerprint": "aad91333ac0984cf28ded284b53eabbf6a6a85dcc6323453dca3a2b699427e90",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -81904,7 +81904,7 @@
       "session": 89,
       "skill": 8,
       "taxonomy": 10,
-      "test": 481,
+      "test": 482,
       "use-case": 49,
       "workspace": 1
     },
@@ -102381,6 +102381,14 @@
         "bytes": 10373
       },
       {
+        "uri": "majordomus://test/test/cases/3034_a_node_updates_itself_through_the_one_installer.sh",
+        "kind": "test",
+        "identity": "test/cases/3034_a_node_updates_itself_through_the_one_installer.sh",
+        "path": "test/cases/3034_a_node_updates_itself_through_the_one_installer.sh",
+        "source_class": "case",
+        "bytes": 6975
+      },
+      {
         "uri": "majordomus://test/test/cases/303_one_source_serves_two_mounts.sh",
         "kind": "test",
         "identity": "test/cases/303_one_source_serves_two_mounts.sh",
@@ -105591,7 +105599,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 481
+      "objects": 482
     },
     {
       "name": "use-case",
@@ -113252,6 +113260,124 @@
                 "command": "majordomus distribution build",
                 "setup": [],
                 "expectation": "exits 0; prints version, target, commit"
+              }
+            ],
+            "subcommands": []
+          }
+        ]
+      },
+      {
+        "path": [
+          "majordomus",
+          "self"
+        ],
+        "route": "/docs/cli/self/",
+        "executable": false,
+        "usage": "majordomus self [OPTIONS] <COMMAND>",
+        "about": "This installation: report, and on --apply install, the stable release it should run, by running the published installer again — forward only, stable only, never a version the release metadata does not list (ADR 0161)",
+        "args": [
+          {
+            "name": "format",
+            "long": "format",
+            "positional": false,
+            "help": "Output shape",
+            "value_name": "FORMAT",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "text",
+                "help": "Lines for a person"
+              },
+              {
+                "name": "json",
+                "help": "One JSON document, deterministic"
+              }
+            ],
+            "defaults": [
+              "text"
+            ]
+          }
+        ],
+        "examples": [],
+        "subcommands": [
+          {
+            "path": [
+              "majordomus",
+              "self",
+              "update"
+            ],
+            "route": "/docs/cli/self/update/",
+            "executable": true,
+            "usage": "majordomus self update [OPTIONS]",
+            "about": "Whether this installation runs the stable release, and with --apply install it through the published installer; exit 10 when the update is refused, 12 when nothing could be decided or installed",
+            "args": [
+              {
+                "name": "check",
+                "long": "check",
+                "positional": false,
+                "help": "Report only: the installed version, the stable release and whether an upgrade applies (the default)",
+                "value_name": "CHECK",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "apply",
+                "long": "apply",
+                "positional": false,
+                "help": "Install the stable release by running the published installer with --version and this installation's own prefix, then read the launcher's version back",
+                "value_name": "APPLY",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "self-update-a-build",
+                "title": "Whether this installation runs the stable release",
+                "description": "Reads where the running executable was installed, the version its launcher reports, and the stable release `releases/latest.json` names, and says whether an upgrade applies; `--apply` then runs the published installer for that tag into the same prefix. A checkout's own build is not an installed copy, and is told so before anything is read from the network: this example exits 12 for that reason.",
+                "argv": [
+                  "self",
+                  "update",
+                  "--check"
+                ],
+                "command": "majordomus self update --check",
+                "setup": [],
+                "expectation": "exits 12"
               }
             ],
             "subcommands": []

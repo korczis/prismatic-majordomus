@@ -55,6 +55,9 @@ pub enum Command {
     Devtask(DevtaskArgs),
     /// How this project is packaged, published and installed: the platforms, the artifact names, the installer, the releases
     Distribution(DistributionArgs),
+    /// This installation: report, and on --apply install, the stable release it should run, by running the published installer again — forward only, stable only, never a version the release metadata does not list (ADR 0161)
+    #[command(name = "self")]
+    SelfCmd(SelfArgs),
     /// What this checkout is: the project, version control, the toolchains it declares, what the layer holds, the workflows, the provider projections and the local services
     Env(EnvArgs),
     /// Every command this repository offers, from whichever program offers it: the graph, one command, where each one is projected, and the workflow bridge derived from it
@@ -3116,6 +3119,47 @@ pub enum DevtaskCommand {
 }
 
 #[derive(Debug, Args)]
+/// `majordomus self`: this installation, not this repository, which is why it takes no
+/// `--repo`.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, SelfCommand};
+///
+/// let cli = Cli::try_parse_from(["majordomus", "self", "update", "--apply"]).unwrap();
+/// let Command::SelfCmd(args) = cli.command else { panic!("self") };
+/// assert!(matches!(args.command, SelfCommand::Update { apply: true, check: false }));
+/// // a check is the default, and the two are one or the other
+/// let cli = Cli::try_parse_from(["majordomus", "self", "update"]).unwrap();
+/// let Command::SelfCmd(args) = cli.command else { panic!("self") };
+/// assert!(matches!(args.command, SelfCommand::Update { apply: false, .. }));
+/// assert!(Cli::try_parse_from(["majordomus", "self", "update", "--check", "--apply"]).is_err());
+/// ```
+pub struct SelfArgs {
+    #[command(subcommand)]
+    /// What to do with this installation.
+    pub command: SelfCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus self`.
+pub enum SelfCommand {
+    /// Whether this installation runs the stable release, and with --apply install it through the published installer; exit 10 when the update is refused, 12 when nothing could be decided or installed
+    Update {
+        /// Report only: the installed version, the stable release and whether an upgrade applies (the default)
+        #[arg(long, conflicts_with = "apply")]
+        check: bool,
+        /// Install the stable release by running the published installer with --version and this installation's own prefix, then read the launcher's version back
+        #[arg(long)]
+        apply: bool,
+    },
+}
+
+#[derive(Debug, Args)]
 /// `majordomus distribution`.
 pub struct DistributionArgs {
     #[command(flatten)]
@@ -5799,6 +5843,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["distribution", "build"],
             setup: &[],
             expect: Expect::StdoutContains(&["version", "target", "commit"]),
+        }],
+    },
+    CommandExamples {
+        command: "self update",
+        examples: &[ExampleDoc {
+            id: "self-update-a-build",
+            title: "Whether this installation runs the stable release",
+            description: "Reads where the running executable was installed, the version its launcher reports, and the stable release `releases/latest.json` names, and says whether an upgrade applies; `--apply` then runs the published installer for that tag into the same prefix. A checkout's own build is not an installed copy, and is told so before anything is read from the network: this example exits 12 for that reason.",
+            argv: &["self", "update", "--check"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
         }],
     },
     CommandExamples {
