@@ -40860,6 +40860,46 @@
         }
       },
       {
+        "id": "majordomus://issue/I2859",
+        "kind": "issue",
+        "label": "I2859",
+        "summary": "a commit takes the derived data it was checked with",
+        "route": "/cockpit/objects/issue/i2859",
+        "source": ".ai/repo/project/issues/I2859.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A stale derived file in the index under a current working tree refuses with --staged and names the file",
+            "The plain check is unchanged for that tree",
+            "An unstaged change to a file that is not derived does not refuse"
+          ],
+          "created_at": "2026-10-19",
+          "depends_on": [],
+          "desired_state": "With --staged, after both halves pass, a derived path whose index and working tree differ refuses with exit 10 and names each path; the plain check, and every caller other than the hook, is unchanged.",
+          "evidence_required": [
+            "a_commit_takes_the_derived_data_it_was_checked_with_case"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Checking canonical inputs the same way: a partial commit of inputs is a person's choice, and the derived check already judges the tree as a whole.",
+            "Moving the hook into a typed workflow (the hook's automation disposition B)."
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "scripts/pages",
+            ".githooks/pre-commit",
+            "test/cases/3243_a_commit_takes_the_derived_data_it_was_checked_with.sh"
+          ],
+          "slug": "a-commit-takes-the-derived-data-it-was-checked-with",
+          "updated_at": "2026-10-19",
+          "validation": [
+            "bin/majordomus plan validate",
+            "bash test/run.sh 3243_a_commit_takes_the_derived_data_it_was_checked_with 56_derived_current_gate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I2882",
         "kind": "issue",
         "label": "I2882",
@@ -60710,6 +60750,13 @@
         "label": "test/cases/3242_a_claim_newer_than_the_ledger_is_not_yet_recorded.sh",
         "route": "/cockpit/objects/test/test-cases-3242-a-claim-newer-than-the-ledger-is-not-yet-recorded-sh",
         "source": "test/cases/3242_a_claim_newer_than_the_ledger_is_not_yet_recorded.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3243_a_commit_takes_the_derived_data_it_was_checked_with.sh",
+        "kind": "test",
+        "label": "test/cases/3243_a_commit_takes_the_derived_data_it_was_checked_with.sh",
+        "route": "/cockpit/objects/test/test-cases-3243-a-commit-takes-the-derived-data-it-was-checked-with-sh",
+        "source": "test/cases/3243_a_commit_takes_the_derived_data_it_was_checked_with.sh"
       },
       {
         "id": "majordomus://test/test/cases/32_refusal_lifecycle.sh",
@@ -88218,6 +88265,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2859",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2859",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I2882",
         "target": "kind:issue",
         "kind": "is_a"
@@ -93564,6 +93621,11 @@
       },
       {
         "source": "majordomus://test/test/cases/3242_a_claim_newer_than_the_ledger_is_not_yet_recorded.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3243_a_commit_takes_the_derived_data_it_was_checked_with.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -98929,8 +98991,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3078,
-      "edges": 6738,
+      "nodes": 3080,
+      "edges": 6741,
       "acyclic": false,
       "truncated": false
     }

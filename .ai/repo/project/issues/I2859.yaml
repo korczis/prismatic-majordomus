@@ -1,0 +1,30 @@
+id: I2859
+milestone: development-runtime
+title: "a commit takes the derived data it was checked with"
+slug: a-commit-takes-the-derived-data-it-was-checked-with
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "The pre-commit hook's derived-data gate refuses a commit in which a path `.gitattributes` marks `merge=derived` differs between the index and the working tree, because `scripts/pages current` judges the working tree while the commit takes the index; `scripts/pages current --staged` is that check, and only the hook passes it."
+why: "On 2026-10-19 a commit (db7a99455d4, I2858) carried derived data generated for the previous version of its own record. A refused first commit had left the first derive's output staged; the second derive rewrote those files (status MM); the staging filter took only `M` and `??`; and the hook's `pages current` read the working tree, which was current, so it passed. The stale tree was found only by reading `git status` afterwards and was corrected by a255ff14f70. Found by `/evolve` over that session's observations."
+current_state: "scripts/pages current compares the working tree's source.json with the working tree's input fingerprint and runs `generate --check` on the working tree; nothing compares what is checked with what the commit carries."
+desired_state: "With --staged, after both halves pass, a derived path whose index and working tree differ refuses with exit 10 and names each path; the plain check, and every caller other than the hook, is unchanged."
+scope:
+  - "scripts/pages"
+  - ".githooks/pre-commit"
+  - "test/cases/3243_a_commit_takes_the_derived_data_it_was_checked_with.sh"
+non_scope:
+  - "Checking canonical inputs the same way: a partial commit of inputs is a person's choice, and the derived check already judges the tree as a whole."
+  - "Moving the hook into a typed workflow (the hook's automation disposition B)."
+depends_on: []
+acceptance_criteria:
+  - "A stale derived file in the index under a current working tree refuses with --staged and names the file"
+  - "The plain check is unchanged for that tree"
+  - "An unstaged change to a file that is not derived does not refuse"
+validation:
+  - "bin/majordomus plan validate"
+  - "bash test/run.sh 3243_a_commit_takes_the_derived_data_it_was_checked_with 56_derived_current_gate"
+evidence_required:
+  - "a_commit_takes_the_derived_data_it_was_checked_with_case"
+created_at: 2026-10-19
+updated_at: 2026-10-19

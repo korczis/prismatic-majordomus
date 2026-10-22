@@ -6,7 +6,10 @@
 #   scripts/pages build [--base-url URL]  the site, without regenerating what is committed
 #   scripts/pages check                   every static check over the output, without a second generation
 #   scripts/pages fingerprint             the canonical input hash of this tree
-#   scripts/pages current                 is site/data/generated current for this tree? (exit 0/10)
+#   scripts/pages current [--staged]      is site/data/generated current for this tree? (exit 0/10)
+#                                         --staged (the pre-commit hook's): and is every derived
+#                                         file committed as it was checked, the index equal to
+#                                         the working tree for each path marked merge=derived
 #   scripts/pages paths                   the paths a push must touch for the site to be able to change
 #   scripts/pages budget [--json]         the controlled budgets, from the model
 #   scripts/pages benchmark [-n N] [--write-baseline]
@@ -231,9 +234,27 @@ record_generation() {   # <exit status of the check>
   return 0
 }
 
+# THE COMMIT. Both halves above read the working tree, and a commit takes the index. A derived
+# file staged from one derive and rewritten by the next (status MM) passed them while the
+# commit carried the older copy: the commit's derived data described the record's previous
+# version and the hook said nothing (I2859). With --staged, which only the pre-commit hook
+# passes, a path git marks `merge=derived` whose index differs from its working tree refuses
+# the commit: what was checked must be what is committed. Which paths are derived is
+# .gitattributes', written by scripts/gitattributes from the generators, not a list here.
+cmd_staged() {
+  local unstaged
+  unstaged="$(git -C "$ROOT" --no-optional-locks diff --name-only 2>/dev/null \
+    | git -C "$ROOT" check-attr --stdin merge 2>/dev/null \
+    | awk -F': ' '$3 == "derived" { print "         " $1 }')"
+  [ -z "$unstaged" ] && return 0
+  printf 'pages: derived file(s) differ between the index and the working tree, so the check\n       above read data this commit does not carry:\n%s\n       stage them (git add) and commit again.\n' "$unstaged" >&2
+  return 10
+}
+
 cmd_current_recorded() {
-  local rc=0
-  cmd_current "$@" && cmd_derived "$@" || rc=$?
+  local rc=0 staged=""
+  if [ "${1:-}" = --staged ]; then staged=1; shift; fi
+  cmd_current "$@" && cmd_derived "$@" && { [ -z "$staged" ] || cmd_staged; } || rc=$?
   record_generation "$rc"
   return "$rc"
 }

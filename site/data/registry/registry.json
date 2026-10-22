@@ -6,23 +6,23 @@
     "version": "0.30.2"
   },
   "registry": {
-    "fingerprint": "4f4f3e45ea7fd432a0563499cb825f43b4227d279fe4a9262f4a14fb02b49e82",
+    "fingerprint": "b75c3fd60dbb3590e37e1b6baa771924ca4368b8884acc6073bc3a97029986c6",
     "summary": {
-      "total": 2645,
+      "total": 2647,
       "builtin": 206,
-      "declarative": 2439,
+      "declarative": 2441,
       "by_kind": {
         "command": 31,
         "query": 175,
-        "resource": 2439
+        "resource": 2441
       },
       "by_stability": {
         "behaviorally_verified": 142,
         "experimental": 55,
-        "implemented": 2448
+        "implemented": 2450
       },
       "mcp_tools": 196,
-      "mcp_resources": 2494,
+      "mcp_resources": 2496,
       "http_routes": 201,
       "cli_commands": 111,
       "modules": 92,
@@ -85404,7 +85404,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 489,
+        "capabilities": 490,
         "capability_ids": []
       },
       {
@@ -85978,7 +85978,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 563,
+        "capabilities": 564,
         "capability_ids": []
       },
       {
@@ -86070,7 +86070,7 @@
     ]
   },
   "index": {
-    "fingerprint": "b72d65717c546ac11ad57e1c1aff27061d33c8a6afffcabef6b3190cabe9142b",
+    "fingerprint": "ddc658013f48f3826d56b5a9d2ac37cd3dfbc71000de92dca232515b55547312",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -86110,7 +86110,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 5,
-      "issue": 489,
+      "issue": 490,
       "knowledge": 4,
       "mesh-declaration": 1,
       "milestone": 42,
@@ -86124,7 +86124,7 @@
       "session": 90,
       "skill": 8,
       "taxonomy": 10,
-      "test": 563,
+      "test": 564,
       "use-case": 49,
       "workspace": 1
     },
@@ -100831,6 +100831,17 @@
         "bytes": 2837
       },
       {
+        "uri": "majordomus://issue/I2859",
+        "kind": "issue",
+        "identity": "I2859",
+        "title": "a commit takes the derived data it was checked with",
+        "description": "The pre-commit hook's derived-data gate refuses a commit in which a path `.gitattributes` marks `merge=derived` differs between the index and the working tree, because `scripts/pages current` judges the working tree while the commit takes the index; `scripts/pages current --staged` is that check, and only the hook passes it.",
+        "path": ".ai/repo/project/issues/I2859.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2456
+      },
+      {
         "uri": "majordomus://issue/I2882",
         "kind": "issue",
         "identity": "I2882",
@@ -109292,6 +109303,14 @@
         "bytes": 3687
       },
       {
+        "uri": "majordomus://test/test/cases/3243_a_commit_takes_the_derived_data_it_was_checked_with.sh",
+        "kind": "test",
+        "identity": "test/cases/3243_a_commit_takes_the_derived_data_it_was_checked_with.sh",
+        "path": "test/cases/3243_a_commit_takes_the_derived_data_it_was_checked_with.sh",
+        "source_class": "case",
+        "bytes": 3310
+      },
+      {
         "uri": "majordomus://test/test/cases/32_refusal_lifecycle.sh",
         "kind": "test",
         "identity": "test/cases/32_refusal_lifecycle.sh",
@@ -112390,7 +112409,7 @@
       "identity": [
         "id"
       ],
-      "objects": 489
+      "objects": 490
     },
     {
       "name": "knowledge",
@@ -112542,7 +112561,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 563
+      "objects": 564
     },
     {
       "name": "use-case",
