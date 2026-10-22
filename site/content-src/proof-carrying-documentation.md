@@ -4,7 +4,7 @@ description = "A claim that no test can fail is prose with good formatting. What
 template = "page.html"
 [extra]
 lang = "en"
-related = ["the-bet-on-a-layer/", "a-pasted-brief-becomes-a-plan/", "everything-followed/", "a-plan-is-attacked-before-it-is-built/", "written-once-derived-everywhere/"]
+related = ["the-bet-on-a-layer/", "a-pasted-brief-becomes-a-plan/", "everything-followed/", "a-plan-is-attacked-before-it-is-built/", "written-once-derived-everywhere/", "silence-is-not-a-verdict/"]
 [extra.translations]
 cs = "dokumentace-kterou-lze-odmitnout/"
 +++
