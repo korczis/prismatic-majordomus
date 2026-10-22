@@ -56,6 +56,49 @@ pub struct MeshHosting {
     pub advertise: Option<String>,
 }
 
+/// The key this node signs with, or the reason the mesh stays off. A hosted hub's key is its
+/// deployment's secret, the seed in the variable it names read through `var`, held in memory
+/// only: its disk is gone at every boot, and a fresh key would be one nobody trusts (ADR
+/// 0220). A checkout's server keeps its key in the file `path` names, made on first use.
+fn node_identity(
+    hosting: &MeshHosting,
+    var: impl Fn(&str) -> Option<String>,
+    path: impl FnOnce() -> Option<std::path::PathBuf>,
+) -> std::result::Result<crate::mesh::NodeIdentity, String> {
+    match hosting.node_seed_env.as_deref() {
+        Some(name) => match var(name) {
+            Some(seed) => crate::mesh::NodeIdentity::from_seed_hex(&seed, name)
+                .map_err(|e| e.to_string()),
+            None => Err(format!(
+                "{name} is not set: a hosted hub takes its node key from that secret and mints none of its own, because a fresh key is one no trust.allow lists"
+            )),
+        },
+        None => match path() {
+            Some(path) => {
+                crate::mesh::NodeIdentity::load_or_create(&path).map_err(|e| e.to_string())
+            }
+            None => Err(
+                "no HOME and no XDG_STATE_HOME: nowhere to keep a node identity".to_string(),
+            ),
+        },
+    }
+}
+
+/// The value of the environment variable `name`, when it is set and is text.
+fn environment_variable(name: &str) -> Option<String> {
+    std::env::var(name).ok()
+}
+
+/// Where peers can reach a server bound at `bound`: the URL a hosted hub advertises, else the
+/// bound address, or every interface's address when it is bound to all of them. A loopback
+/// bind is reachable from this machine only, and `mesh doctor` says so.
+fn endpoints(hosting: &MeshHosting, bound: &str) -> Vec<String> {
+    match hosting.advertise.as_deref() {
+        Some(public) => vec![public.trim_end_matches('/').to_string()],
+        None => crate::mesh::address::advertised_endpoints(bound),
+    }
+}
+
 /// Activate the mesh from the repository's declaration, when there is one and it is
 /// enabled. Every failure is a reason on `mesh.status`, never a failed server.
 fn activate_mesh(ctx: &Arc<Context>, version: &str, url: &str, hosting: &MeshHosting) {
@@ -83,51 +126,22 @@ fn activate_mesh(ctx: &Arc<Context>, version: &str, url: &str, hosting: &MeshHos
         ctx.mesh.decline("the mesh declaration is disabled");
         return;
     }
-    let identity = match hosting.node_seed_env.as_deref() {
-        // A hosted hub's key is its deployment's secret, held in memory only; its disk is
-        // gone at every boot, and a fresh key would be one nobody trusts (ADR 0220).
-        Some(var) => match std::env::var(var) {
-            Ok(seed) => match crate::mesh::NodeIdentity::from_seed_hex(&seed, var) {
-                Ok(identity) => identity,
-                Err(e) => {
-                    tracing::warn!(error = %e, "the hosted node's seed did not load; the mesh stays off");
-                    ctx.mesh.decline(&e.to_string());
-                    return;
-                }
-            },
-            Err(_) => {
-                let reason = format!(
-                    "{var} is not set: a hosted hub takes its node key from that secret and mints none of its own, because a fresh key is one no trust.allow lists"
-                );
-                tracing::warn!(reason = %reason, "the mesh stays off");
-                ctx.mesh.decline(&reason);
-                return;
-            }
-        },
-        None => {
-            let Some(identity_path) = crate::mesh::default_identity_path() else {
-                ctx.mesh
-                    .decline("no HOME and no XDG_STATE_HOME: nowhere to keep a node identity");
-                return;
-            };
-            match crate::mesh::NodeIdentity::load_or_create(&identity_path) {
-                Ok(identity) => identity,
-                Err(e) => {
-                    tracing::warn!(error = %e, "the node identity did not load; the mesh stays off");
-                    ctx.mesh.decline(&e.to_string());
-                    return;
-                }
-            }
+    let identity = match node_identity(
+        hosting,
+        environment_variable,
+        crate::mesh::default_identity_path,
+    ) {
+        Ok(identity) => identity,
+        Err(reason) => {
+            tracing::warn!(reason = %reason, "the node identity did not load; the mesh stays off");
+            ctx.mesh.decline(&reason);
+            return;
         }
     };
-    // Where peers can reach this server: the URL a hosted hub advertises, else the bound
-    // address, or every interface's address when it is bound to all of them. A loopback
-    // bind is reachable from this machine only, and `mesh doctor` says so.
-    let bound = url.trim_start_matches("http://").trim_end_matches('/');
-    let endpoints = match hosting.advertise.as_deref() {
-        Some(public) => vec![public.trim_end_matches('/').to_string()],
-        None => crate::mesh::address::advertised_endpoints(bound),
-    };
+    let endpoints = endpoints(
+        hosting,
+        url.trim_start_matches("http://").trim_end_matches('/'),
+    );
     let root = std::path::Path::new(&ctx.index.repository.root);
     // One runtime per checkout, and one repository identity per repository on every
     // machine — derived from content or declared, never from a path.
@@ -688,5 +702,92 @@ mod tests {
             Some(token),
             "the lease is still this server's"
         );
+    }
+
+    /// A hosted hub's key is the seed its variable holds and nothing else: one seed is one
+    /// node at every boot, and an unset or malformed seed keeps the mesh off with a reason
+    /// that names the variable and never its value. A checkout's key is its file, the same
+    /// node every time it is read, and with nowhere to keep one there is no node.
+    #[test]
+    fn a_node_key_is_a_hosted_seed_or_a_checkouts_file() {
+        let hosted = MeshHosting {
+            node_seed_env: Some("SEED".into()),
+            advertise: None,
+        };
+        let seed = "22".repeat(32);
+        let no_file = || -> Option<std::path::PathBuf> { panic!("a hosted hub reads no key file") };
+        let a = node_identity(&hosted, |v| (v == "SEED").then(|| seed.clone()), no_file).unwrap();
+        let b = node_identity(&hosted, |_| Some(format!("{seed}\n")), no_file).unwrap();
+        assert_eq!(a.public.node_id, b.public.node_id, "one seed, one node");
+        let unset = node_identity(&hosted, |_| None, no_file).unwrap_err();
+        assert!(unset.starts_with("SEED is not set"), "{unset}");
+        let bad = node_identity(&hosted, |_| Some("q".repeat(64)), no_file).unwrap_err();
+        assert!(bad.contains("SEED") && !bad.contains("qqqq"), "{bad}");
+
+        let checkout = MeshHosting::default();
+        let no_var = |_: &str| -> Option<String> { panic!("a checkout reads no seed") };
+        let nowhere = node_identity(&checkout, no_var, || None).unwrap_err();
+        assert!(
+            nowhere.contains("nowhere to keep a node identity"),
+            "{nowhere}"
+        );
+        let dir = tempfile::tempdir().unwrap();
+        let key = dir.path().join("node.json");
+        let first = node_identity(&checkout, no_var, || Some(key.clone())).unwrap();
+        let again = node_identity(&checkout, no_var, || Some(key.clone())).unwrap();
+        assert_eq!(
+            first.public.node_id, again.public.node_id,
+            "one file, one node"
+        );
+        assert!(node_identity(&checkout, no_var, || Some(dir.path().to_path_buf())).is_err());
+    }
+
+    /// A hosted hub advertises its public URL alone; a checkout's server, its bound address.
+    #[test]
+    fn a_hosted_hub_advertises_its_public_url_alone() {
+        let hosted = MeshHosting {
+            node_seed_env: None,
+            advertise: Some("https://hub.example/".into()),
+        };
+        assert_eq!(endpoints(&hosted, "0.0.0.0:4000"), ["https://hub.example"]);
+        assert_eq!(
+            endpoints(&MeshHosting::default(), "127.0.0.1:4000"),
+            crate::mesh::address::advertised_endpoints("127.0.0.1:4000")
+        );
+    }
+
+    /// A hosted hub whose seed variable is unset activates no mesh: `mesh.status` says why,
+    /// naming the variable, and the server goes on serving without one.
+    #[test]
+    fn a_hosted_hub_without_its_seed_keeps_the_mesh_off_and_says_why() {
+        let fixture = SyntheticRepository::small().unwrap();
+        let sources = fixture.root().join(".ai/repo/knowledge/sources.yaml");
+        let mut text = std::fs::read_to_string(&sources).unwrap();
+        text.push_str("  - id: mesh-declaration\n    kind: mesh-declaration\n    discovery: vcs\n    pathspec: ':(glob).ai/repo/mesh/*.yaml'\n    required: false\n");
+        std::fs::write(&sources, text).unwrap();
+        let dir = fixture.root().join(".ai/repo/mesh");
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(
+            dir.join("majordomus.yaml"),
+            "schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\nmulticast:\n  enabled: false\ntrust:\n  policy: deny_unknown\n",
+        )
+        .unwrap();
+        let app = App::load(&RepoArgs {
+            repo: Some(fixture.root().to_path_buf()),
+            discovery: DiscoveryMode::Filesystem,
+            share: Some(std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../share")),
+            ..Default::default()
+        })
+        .unwrap();
+        let ctx = Arc::new(app.context);
+        let var = "MAJORDOMUS_TEST_SEED_THAT_IS_NEVER_SET";
+        assert!(environment_variable(var).is_none());
+        let hosted = MeshHosting {
+            node_seed_env: Some(var.into()),
+            advertise: None,
+        };
+        activate_mesh(&ctx, crate::VERSION, "http://127.0.0.1:1", &hosted);
+        let reason = ctx.mesh.status().reason.unwrap_or_default();
+        assert!(reason.contains(&format!("{var} is not set")), "{reason}");
     }
 }
