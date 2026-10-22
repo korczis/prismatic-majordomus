@@ -863,11 +863,25 @@ pub struct MeshPeerArgs {
 }
 
 #[derive(Debug, Args)]
-/// `mesh events`: a window onto the cooperation journal, in Lamport order. `--after` is a
-/// resume point rather than a timestamp, so a caller that remembers the last stamp it saw
-/// reads each event exactly once however the clocks of the machines involved disagree;
-/// `--limit` bounds one answer. Both are optional, and saying neither asks for the newest
-/// page under the server's own default.
+/// `mesh events`: a window onto the cooperation journal, in Lamport order. `--cursor` is the
+/// resume point each answer prints: a walk that passes it back reads every event exactly
+/// once, an event a partitioned runtime delivered late included. `--after` is the older
+/// resume point, a Lamport stamp, which never returns an event stamped at or below it that
+/// arrives later. `--limit` bounds one answer. All are optional, and saying none walks from
+/// the beginning under the server's own default page.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshCommand};
+///
+/// let cursor = "0123456789abcdef:7";
+/// let cli = Cli::try_parse_from(["majordomus", "mesh", "events", "--cursor", cursor]).unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Events(events) = mesh.command else { panic!("expected `events`") };
+/// assert_eq!(events.cursor.as_deref(), Some(cursor));
+/// let both = ["majordomus", "mesh", "events", "--cursor", cursor, "--after", "3"];
+/// assert!(Cli::try_parse_from(both).is_err(), "two walks at once");
+/// ```
 ///
 /// ```
 /// use clap::Parser;
@@ -896,8 +910,11 @@ pub struct MeshPeerArgs {
 /// ```
 pub struct MeshEventsArgs {
     /// Only events whose Lamport stamp is above this
-    #[arg(long)]
+    #[arg(long, conflicts_with = "cursor")]
     pub after: Option<u64>,
+    /// Resume after the cursor the previous answer printed: every event exactly once
+    #[arg(long)]
+    pub cursor: Option<String>,
     /// At most this many (default 100, at most 1000)
     #[arg(long)]
     pub limit: Option<u64>,
