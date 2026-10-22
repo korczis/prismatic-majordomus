@@ -64,6 +64,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use super::availability::{AdvisorState, AdvisorStatus, ModeResolution, ReasoningMode};
+use super::record::ConsultationStatus;
 
 /// How much the uncertain decision could matter. Ordered from `trivial` to `critical`:
 /// with the mode it sets the review budget, and from `material` up a decision taken alone
@@ -176,6 +177,35 @@ pub struct PlanRequest {
     /// The assessment brings evidence the prior conclusion did not have.
     #[serde(default)]
     pub new_evidence: bool,
+    /// The advisors already asked about this assessment whose consultation did not
+    /// complete. A plan does not select them again: the question was put to them and no
+    /// answer came, and asking the next advisor is what the remaining budget is for.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub already_asked: Vec<AskedAdvisor>,
+}
+
+/// An advisor already asked about the assessment a plan is made for, and the status its
+/// consultation ended with. Only consultations that did not complete are carried: an
+/// advisor that answered is counted by the conclusion, not excluded by the plan.
+///
+/// The exclusion is local to the assessment. Whether the advisor can be asked about
+/// anything else is the circuit's question (`availability`), and one failure does not open
+/// it.
+///
+/// ```
+/// use majordomus_cli::reasoning::policy::AskedAdvisor;
+/// use majordomus_cli::reasoning::record::ConsultationStatus;
+///
+/// let asked: AskedAdvisor =
+///     serde_json::from_str(r#"{"advisor":"a","status":"unavailable"}"#).unwrap();
+/// assert_eq!(asked.status, ConsultationStatus::Unavailable);
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct AskedAdvisor {
+    /// The advisor id.
+    pub advisor: String,
+    /// How its consultation for this assessment ended.
+    pub status: ConsultationStatus,
 }
 
 /// What the plan decided: consult the selected advisors, decide on local evidence, or
@@ -430,6 +460,18 @@ pub fn plan(request: &PlanRequest, mode: &ModeResolution, states: &[AdvisorState
                 status: s.status,
                 reason: format!("{}: {}", s.status.as_str(), s.reason),
             });
+        } else if let Some(asked) = request.already_asked.iter().find(|a| a.advisor == s.id) {
+            // Asked for this assessment and no answer came. The advisor's standing is
+            // unchanged — one failure opens no circuit — so the reason says what happened
+            // here rather than borrowing a status the advisor does not have.
+            out.excluded.push(ExcludedAdvisor {
+                advisor: s.id.clone(),
+                status: s.status,
+                reason: format!(
+                    "already asked for this assessment: {}",
+                    asked.status.as_str()
+                ),
+            });
         } else if !s.capabilities.iter().any(|c| wanted.contains(c)) {
             out.excluded.push(ExcludedAdvisor {
                 advisor: s.id.clone(),
@@ -601,6 +643,64 @@ mod tests {
             capabilities: caps.iter().map(|c| c.to_string()).collect(),
             ..Default::default()
         }
+    }
+
+    /// I2625: a second plan for an assessment asks the next advisor, not the one whose
+    /// consultation for it just failed. Without `already_asked` the selection is the same
+    /// both times, because one failure does not move an advisor's status.
+    #[test]
+    fn a_replan_does_not_select_the_advisor_that_did_not_answer() {
+        let caps = ["independent_reasoning"];
+        let s = [
+            state("first", "x", &caps, AdvisorStatus::Available),
+            state("second", "y", &caps, AdvisorStatus::Available),
+            state("third", "z", &caps, AdvisorStatus::Available),
+        ];
+        let mut r = request(Materiality::Material, &caps);
+        let before = plan(&r, &standard(), &s);
+        assert_eq!(before.budget, 1);
+        assert_eq!(before.selected[0].advisor, "first");
+
+        r.already_asked = vec![AskedAdvisor {
+            advisor: "first".into(),
+            status: ConsultationStatus::Unavailable,
+        }];
+        let after = plan(&r, &standard(), &s);
+        assert_eq!(after.outcome, PlanOutcome::Consult);
+        assert_eq!(after.selected.len(), 1);
+        assert_eq!(after.selected[0].advisor, "second");
+        let left_out = after
+            .excluded
+            .iter()
+            .find(|e| e.advisor == "first")
+            .expect("the advisor that did not answer is named among the excluded");
+        assert_eq!(
+            left_out.reason,
+            "already asked for this assessment: unavailable"
+        );
+        // its standing is untouched: the exclusion is the assessment's, not the advisor's
+        assert_eq!(left_out.status, AdvisorStatus::Available);
+    }
+
+    /// When every available advisor was already asked and none answered, the plan selects
+    /// nobody and says so through its excluded list, rather than asking the same ones again.
+    #[test]
+    fn a_replan_with_every_advisor_already_asked_selects_nobody() {
+        let caps = ["independent_reasoning"];
+        let s = [state("only", "x", &caps, AdvisorStatus::Available)];
+        let mut r = request(Materiality::Material, &caps);
+        r.already_asked = vec![AskedAdvisor {
+            advisor: "only".into(),
+            status: ConsultationStatus::Error,
+        }];
+        let p = plan(&r, &standard(), &s);
+        assert!(p.selected.is_empty());
+        assert!(
+            p.excluded
+                .iter()
+                .any(|e| e.advisor == "only"
+                    && e.reason == "already asked for this assessment: error")
+        );
     }
 
     #[test]

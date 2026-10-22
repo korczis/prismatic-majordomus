@@ -60,7 +60,7 @@
 use std::path::{Path, PathBuf};
 
 use super::availability::{AdvisorState, ModeResolution};
-use super::policy::{plan, Materiality, PlanRequest};
+use super::policy::{plan, AskedAdvisor, Materiality, PlanRequest};
 use super::record::*;
 
 /// The store's directory, relative to the repository root.
@@ -443,6 +443,47 @@ pub fn standing_conclusion<'a>(
     })
 }
 
+/// The advisors already asked about an assessment, under any of its plans, whose
+/// consultations did not complete — each once, with the status of the last one loaded.
+/// An advisor that completed a consultation for the assessment under any plan is not
+/// among them: it answered, and the conclusion counts it.
+///
+/// This is what lets a second plan ask the next advisor (I2625). It is derived from the
+/// records alone, like everything a plan reads, so replaying the store gives the same plan.
+fn asked_without_answer(loaded: &Loaded, assessment: &str) -> Vec<AskedAdvisor> {
+    let plans: std::collections::BTreeSet<&str> = loaded
+        .records
+        .iter()
+        .filter(|r| matches!(&r.body, ReasoningBody::Plan(p) if p.assessment == assessment))
+        .map(|r| r.id.as_str())
+        .collect();
+    let mut answered: std::collections::BTreeSet<&str> = std::collections::BTreeSet::new();
+    let mut unanswered: std::collections::BTreeMap<&str, ConsultationStatus> =
+        std::collections::BTreeMap::new();
+    for r in &loaded.records {
+        let ReasoningBody::Consultation(c) = &r.body else {
+            continue;
+        };
+        if !plans.contains(c.plan.as_str()) {
+            continue;
+        }
+        if c.status == ConsultationStatus::Completed {
+            answered.insert(c.advisor.as_str());
+        } else {
+            // records are ordered by time, so the last insert is the latest attempt
+            unanswered.insert(c.advisor.as_str(), c.status);
+        }
+    }
+    unanswered
+        .into_iter()
+        .filter(|(advisor, _)| !answered.contains(advisor))
+        .map(|(advisor, status)| AskedAdvisor {
+            advisor: advisor.to_string(),
+            status,
+        })
+        .collect()
+}
+
 /// A standing conclusion on the same subject as an assessment, from any task: what a
 /// later session reuses instead of asking again.
 ///
@@ -652,6 +693,7 @@ pub fn admit(
                 capabilities: a.capabilities.clone(),
                 prior_conclusion: prior,
                 new_evidence: a.new_evidence,
+                already_asked: asked_without_answer(loaded, &p.assessment),
             };
             ReasoningBody::Plan(StoredPlan {
                 assessment: p.assessment,

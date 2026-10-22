@@ -249,6 +249,8 @@ fn reasoning_plan(ctx: &Context, input: PlanPreviewInput) -> Result<ReviewPlan, 
             .collect(),
         prior_conclusion: None,
         new_evidence: false,
+        // a preview is of no assessment, so nobody has been asked about it
+        already_asked: Vec::new(),
     };
     for w in &request.capabilities {
         if !s.catalogue.knows_capability(w) {
