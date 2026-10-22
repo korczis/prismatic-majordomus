@@ -35,10 +35,13 @@ impl App {
             Some(p) => p.clone(),
             None => std::env::current_dir().map_err(|e| Error::io(".", e))?,
         };
-        let repository = {
-            let _phase = crate::perf::phase(crate::perf::Phase::RepositoryDiscovery);
-            Repository::discover(&start)?
-        };
+        Self::load_from(args, Repository::discover(&start)?)
+    }
+
+    /// [`App::load`] for a repository the caller already discovered: `serve` and `mcp` find
+    /// the repository to elect a server before they load the layer, and pass it here rather
+    /// than have it discovered a second time (I3015).
+    pub fn load_from(args: &RepoArgs, repository: Repository) -> Result<Self> {
         tracing::info!(repository_root = %repository.root().display(), "repository found");
         let share = Share::locate(args.share.as_deref(), repository.root())?;
         tracing::info!(share = %share.dir().display(), origin = share.origin, "share directory");
