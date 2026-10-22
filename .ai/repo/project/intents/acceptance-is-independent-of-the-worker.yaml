@@ -1,0 +1,23 @@
+id: acceptance-is-independent-of-the-worker
+title: Whether a change is accepted is decided by something its author cannot edit or skip
+statement: "The scope a change is accepted against, and the checks that accept it, are recomputed by a required check the author cannot skip or edit, from tracked records and the pull request's diff, with administrators held to it."
+invariants:
+  - A worker's local state is a convenience, never the authority on what the worker may change
+  - Hooks are defence in depth; the forge's required check is the gate
+milestones:
+  - recovery-acceptance-contract
+  - recovery-forge-gate
+satisfaction:
+  - id: scope-is-not-the-workers-file
+    criterion: The scope a change is accepted against is not a file the worker can edit unseen; today it is a git-ignored file under .ai/local
+    evidence: command
+    ref: git check-ignore -v .ai/local/state/current.yaml
+  - id: the-forge-holds-the-gate
+    criterion: The trunk requires a check that recomputes scope and the finish contract from the diff, strict, with administrators included and a review required
+    evidence: command
+    ref: gh api repos/korczis/prismatic-majordomus/branches/master/protection
+non_goals:
+  - "Planning its work here: M01 and M03 of the recovery campaign are unassigned, and the integrator assigns them; this intent records the outcome they owe"
+  - Editing branch protection; that is the owner's act
+created_at: 2026-10-09
+updated_at: 2026-10-09

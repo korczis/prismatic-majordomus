@@ -1,0 +1,27 @@
+id: recovery-acceptance-contract
+title: "The scope a change is accepted against is not the worker's own file"
+slug: recovery-acceptance-contract
+order: 232
+priority: p0
+problem: "F01, confirmed at 893a79be65: adding a path by hand to the git-ignored .ai/local/state/current.yaml turns check from exit 10 to 0 and lets finish accept it; nothing recomputes the accepted scope."
+outcome: "The accepted scope is a tracked contract that CI recomputes against the pull request's diff."
+current_state: "Scope lives in local, ignored state written at start."
+desired_state: "A widened scope is refused by a check the worker does not run."
+scope:
+  - lib
+  - apps/majordomus-cli/src
+  - .github/workflows
+  - test/cases
+non_scope:
+  - Accepting an ADR; acceptance is the owner's act
+  - Bumping the version; the integrator decides it
+acceptance_criteria:
+  - "A hand-widened scope fails the required check in a fixture"
+validation:
+  - "bin/majordomus plan validate"
+evidence_required:
+  - scope_recomputed_from_the_diff
+risks:
+  - "Recovery milestone M01; unassigned. It carries no issue until a session takes it"
+created_at: 2026-10-09
+updated_at: 2026-10-09

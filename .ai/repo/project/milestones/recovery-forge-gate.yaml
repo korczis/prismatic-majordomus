@@ -1,0 +1,28 @@
+id: recovery-forge-gate
+title: "The trunk is held by a required check, not by hooks a worker can skip"
+slug: recovery-forge-gate
+order: 233
+priority: p0
+problem: "F03, confirmed at 893a79be65: git commit --no-verify skips every hook in 0.06 s; branch protection requires only the `ci` check, strict=false, enforce_admins=false, no reviews, no rulesets; nothing in CI recomputes scope or the finish contract."
+outcome: "A required check recomputes scope and the finish contract from the diff, strict and including administrators."
+current_state: "Hooks are the enforcement point."
+desired_state: "The forge refuses what the hooks refuse, observed through its API."
+scope:
+  - .github/workflows
+  - scripts/ci
+  - test/cases
+non_scope:
+  - Accepting an ADR; acceptance is the owner's act
+  - Bumping the version; the integrator decides it
+acceptance_criteria:
+  - "A change that skipped its hooks is refused by the required check in a fixture repository"
+validation:
+  - "bin/majordomus plan validate"
+evidence_required:
+  - forge_requires_the_gate
+risks:
+  - "Recovery milestone M03; unassigned. Changing branch protection is the owner's act"
+depends_on:
+  - recovery-acceptance-contract
+created_at: 2026-10-09
+updated_at: 2026-10-09
