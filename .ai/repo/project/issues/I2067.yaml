@@ -1,0 +1,27 @@
+id: I2067
+milestone: github-agrees-with-the-intent
+title: The decision is recorded: what of an intent reaches GitHub, and what does not
+slug: the-reconciliation-is-decided
+priority: p2
+profile: implementation
+parallel_safe: false
+serves:
+  - github-agrees-with-the-intent#a-body-names-what-the-issue-serves
+objective: "ADR 0116 as proposed, written before the code it decides. It says which fields the record owns and which GitHub owns, that what an issue serves is projected and where a criterion stands is not, and that a milestone's state on GitHub follows the plan. It records why a milestone is not closed or reopened from an intent's verdict, with what was found when that was planned, and maps each test the requirement lists to the case that holds it or to the reason it is not held."
+why: "ADR 0070 and ADR 0075 each name the reconciliation of GitHub with intents as a later decision. A first plan to close milestones from the verdict was reviewed and found unsound in four ways before any of it was built."
+current_state: "No ADR decides it. The claim intent-closes-github-milestones is planned and its page says it is not implemented."
+desired_state: "ADR 0116 as proposed, written before the code it decides. It says which fields the record owns and which GitHub owns, that what an issue serves is projected and where a criterion stands is not, and that a milestone's state on GitHub follows the plan. It records why a milestone is not closed or reopened from an intent's verdict, with what was found when that was planned, and maps each test the requirement lists to the case that holds it or to the reason it is not held."
+scope:
+  - .ai/repo/adrs
+  - docs/claims/intent-closes-github-milestones.md
+  - docs/PLANNING.md
+depends_on: []
+acceptance_criteria:
+  - ADR 0116 is proposed and carries the ownership table, the alternatives rejected with what was measured, and the table of the requirement's tests
+  - The page of the planned claim says what ADR 0116 proposes and that the decision is the owner's
+validation:
+  - scripts/ci/english-only-check
+evidence_required:
+  - the_reconciliation_is_decided
+created_at: 2026-10-08
+updated_at: 2026-10-08

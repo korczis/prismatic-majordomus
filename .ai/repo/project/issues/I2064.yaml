@@ -1,0 +1,33 @@
+id: I2064
+milestone: github-agrees-with-the-intent
+title: The body of an issue names what it serves
+slug: a-body-names-what-the-issue-serves
+priority: p2
+profile: implementation
+parallel_safe: false
+serves:
+  - github-agrees-with-the-intent#a-body-names-what-the-issue-serves
+objective: "The generated body of an issue gains a Serves section listing what the record declares, as authored and unjudged, with the command that shows where each criterion stands. An issue that serves nothing has no such section and its body does not move. The four issues that declare serves today are projected and in sync, so each reads behind from the moment this lands until the projection is applied from the trunk: the pull request says so, is expected red on the projection gate alone, and the integrating session applies for the milestones intent-lifecycle and intent-planning right after the merge."
+why: "An issue on GitHub says what it is and nothing of why it exists; the criterion it serves is in the record and invisible where the conversation happens."
+current_state: "mj_plan_body_issue in lib/plan.sh prints the fields, sections and evidence of an issue and no serves. Measured on 2026-10-08: I1900 to I1903 are the issues on master that declare serves, and each is in sync on GitHub."
+desired_state: "The generated body of an issue gains a Serves section listing what the record declares, as authored and unjudged, with the command that shows where each criterion stands. An issue that serves nothing has no such section and its body does not move. The four issues that declare serves today are projected and in sync, so each reads behind from the moment this lands until the projection is applied from the trunk: the pull request says so, is expected red on the projection gate alone, and the integrating session applies for the milestones intent-lifecycle and intent-planning right after the merge."
+scope:
+  - lib/plan.sh
+  - test/cases/968_an_issue_body_names_what_it_serves.sh
+  - docs/PLANNING.md
+  - docs/CLAIMS.yaml
+  - docs/claims/issue-body-names-what-it-serves.md
+  - docs/claims/github-projection.md
+depends_on: [I2067]
+acceptance_criteria:
+  - plan body and the projection render the same Serves section for an issue that declares serves, and none for one that does not
+  - The section states no criterion state and no verdict
+  - Changing an entry moves the body hash and a remote holding the old body reads behind
+  - The pull request names the issues that will read behind and who applies
+validation:
+  - bash test/run.sh 968_an_issue_body_names_what_it_serves
+  - bash test/run.sh 45_github_projection
+evidence_required:
+  - the_body_names_what_the_issue_serves
+created_at: 2026-10-08
+updated_at: 2026-10-08

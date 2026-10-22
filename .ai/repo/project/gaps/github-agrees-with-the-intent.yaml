@@ -1,0 +1,30 @@
+intent: github-agrees-with-the-intent
+observed_at: dba5422820
+recorded_by: claude-code (session fcbeae95; a read-only survey of the projection by a subagent, a first-hand read of lib/plan.sh, and scripts/github-sync --check run on 2026-10-08)
+recorded_at: 2026-10-08
+observations:
+  - id: body-has-no-serves
+    statement: The generated body of an issue prints its fields, sections and evidence and nothing of what the issue serves
+    source: file:lib/plan.sh
+  - id: serving-issues-are-in-sync
+    statement: The four issues on master that declare serves, I1900 to I1903, are projected and in sync on GitHub, so a changed body reads behind for each
+    source: file:scripts/github-sync
+  - id: decision-left-open
+    statement: ADR 0070 names the reconciliation of GitHub milestones with intents as a later slice and decides nothing about it
+    source: file:.ai/repo/adrs/0070-intent-is-a-typed-record-and-satisfaction-is-derived-from-evidence.md
+conditions:
+  - criterion: a-body-names-what-the-issue-serves
+    state: missing
+    because: the body renderer prints no serves, and nothing records what of an intent may reach GitHub
+    observations: [body-has-no-serves, serving-issues-are-in-sync, decision-left-open]
+risks:
+  - Every issue that declares serves reads behind on every branch from the merge until the projection is applied from the trunk
+work:
+  - id: the-decision
+    title: The decision is recorded - what of an intent reaches GitHub, and what does not
+    serves: [a-body-names-what-the-issue-serves]
+    issue: I2067
+  - id: the-body
+    title: The body of an issue names what it serves
+    serves: [a-body-names-what-the-issue-serves]
+    issue: I2064
