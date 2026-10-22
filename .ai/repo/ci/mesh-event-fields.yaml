@@ -61,6 +61,12 @@ fields:
   EventBody.ReviewWithdrawn.session: clear
   # mesh::cooperation::withdraw_review passes the note through redact_secrets
   EventBody.ReviewWithdrawn.note: redacted
+  EventBody.NoticePublished.session: clear
+  # mesh::cooperation::publish_notice passes subject and text through redact_secrets: both are
+  # free text a seat writes about what it did, and they cross machines (I2874, I2708)
+  EventBody.NoticePublished.subject: redacted
+  EventBody.NoticePublished.text: redacted
+  EventBody.NoticePublished.bytes: clear
   # ------------------------------------------------------------- SessionInfo (session_opened)
   SessionInfo.session: clear
   SessionInfo.client: clear

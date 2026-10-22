@@ -1438,16 +1438,23 @@ mj_validate_roadmap() {
 }
 
 mj_validate_dag() {
-  local lvl subj msg n
+  local lvl subj msg n w found
   mj_project_doctrine_load || return 0
-  mj_pj_findings | while IFS="$MJ_TAB" read -r _ lvl _ subj msg; do
-    case "$lvl" in
-      FAIL) mj_doctrine_fail dag "$subj" "$msg" "majordomus plan validate" ;;
-      *)    mj_warn dag "$subj" "$msg" "majordomus plan show $subj" ;;
-    esac
-  done
-  n="$(mj_pj_fail_count)"
-  [ "$n" = 0 ] && mj_doctrine_ok dag "$(mj_pj_rows W | wc -l | tr -d ' ') wave(s)" "acyclic, every edge resolves, nothing running ahead of a dependency"
+  # The findings, the failures among them and the waves in one pass over the model, and the
+  # findings read back from a file rather than a pipe, which bash reads one byte per system
+  # call: this repository's plan carries thousands of findings (I0820).
+  found="$MJ_PJ/dag.findings"; : > "$found"
+  n="$(awk -F'\t' -v out="$found" '$1 == "V" { print > out; if ($2 == "FAIL") f++ } $1 == "W" { w++ }
+    END { close(out); print f + 0, w + 0 }' "$MJ_PJ/model.tsv")"
+  w="${n#* }"; n="${n%% *}"
+  # in a subshell, as the pipe this replaced ran it
+  ( while IFS="$MJ_TAB" read -r _ lvl _ subj msg; do
+      case "$lvl" in
+        FAIL) mj_doctrine_fail dag "$subj" "$msg" "majordomus plan validate" ;;
+        *)    mj_warn dag "$subj" "$msg" "majordomus plan show $subj" ;;
+      esac
+    done < "$found" )
+  [ "$n" = 0 ] && mj_doctrine_ok dag "$w wave(s)" "acyclic, every edge resolves, nothing running ahead of a dependency"
   # The findings above were printed in a subshell, so the failure has to be raised here.
   [ "$n" = 0 ] || mj_doctrine_fail dag "graph" "$n dependency-graph failure(s)" "majordomus plan validate"
   return 0
@@ -1629,13 +1636,18 @@ mj_schema_allow() { # <file> [<its x-majordomus-allow, already read>]
   printf '%s' "$a"
 }
 
-# Does the tool name this schema identifier anywhere in its own source? lib/ and the crate
-# only, for the reason mj_allow_applied gives: a walk from the repository root would descend
-# into the Rust build directory, which is large, changes constantly, and can tell nobody
-# what the tool reads.
+# Does the tool name this schema identifier anywhere in its own source? lib/, the crate and
+# the Node tooling layer, and no further, for the reason mj_allow_applied gives: a walk from
+# the repository root would descend into the Rust build directory, which is large, changes
+# constantly, and can tell nobody what the tool reads.
+#
+# scripts/ is here because ADR 0025 put a reader there. This repository drives a browser and
+# that half is deliberately not Rust, so a contract applied by scripts/lib/workspace.mjs was
+# read by something real while this check called it an orphan and told the author to wire it
+# to a kind or delete the file. Where the tool may live is a fact about the tool.
 mj_schema_named_in_source() {
   [ -n "$1" ] || return 1
-  grep -rqF "$1" "$MJ_LIB_DIR" "$MJ_HOME/apps/majordomus-cli/src" 2>/dev/null
+  grep -rqF "$1" "$MJ_LIB_DIR" "$MJ_HOME/apps/majordomus-cli/src" "$MJ_HOME/scripts" 2>/dev/null
 }
 
 # The JSON parser this process can actually run: python3, jq, or none. Found once.

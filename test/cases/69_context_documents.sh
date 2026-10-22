@@ -171,6 +171,23 @@ expect_grep 'invalid-front-matter.*never closes'
 mv "$f.keep" "$f"
 bad "$f" 'invalid-front-matter.*does not parse' 's/^title: .*/ title: odd indentation/'
 bad "$f" 'broken-reference.*tracks .nowhere' 's|^tracks: .*|tracks: [nowhere/at/all]|'
+# every document's pathspecs are put to the index in one call (I0820): a file that exists
+# but was never added still satisfies nothing, and only the pathspec that matched nothing
+# is named, not the one asked beside it
+printf 'x\n' > lib/untracked.sh
+bad "$f" "broken-reference.*tracks 'lib/untracked\.sh'" 's|^tracks: .*|tracks: [lib/thing.sh, lib/untracked.sh]|'
+expect_no_grep "tracks 'lib/thing\.sh'"
+rm -f lib/untracked.sh
+# documents broken at different stages are reported in file order, as when each file was
+# read on its own: alpha's unknown key (the contract check) before beta's schema (the split)
+cp "$A/alpha/guide.md" "$T/alpha.keep"; cp "$f" "$T/beta.keep"
+sed -i.bak 's/^order: .*/order: 1\nflavour: mint/' "$A/alpha/guide.md"; sed -i.bak 's|^schema: .*|schema: context/v2|' "$f"
+rm -f "$A/alpha/guide.md.bak" "$f.bak"
+expect_exit 10 "$MJ" context validate
+[ "$(printf '%s\n' "$LAST_OUT" | grep -oE 'unknown-key|unsupported-schema' | paste -sd' ' -)" = "unknown-key unsupported-schema" ] \
+  || { echo "    two problems are not in file order:"; printf '%s\n' "$LAST_OUT"; exit 1; }
+cp "$T/alpha.keep" "$A/alpha/guide.md"; cp "$T/beta.keep" "$f"
+expect_exit 0 "$MJ" context validate
 bad "$A/gamma/only.md" 'broken-reference.*paths entry' 's|^paths: .*|paths: [.ai/repo/areas/missing]|'
 bad "$A/gamma/only.md" 'broken-reference.*outside the tree' 's|^paths: .*|paths: [lib]|'
 cp "$A/beta/guide.md" "$A/beta/twin.md"

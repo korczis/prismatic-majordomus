@@ -45,28 +45,33 @@ mj_project_load() {
   # filename. A record that does not parse, or whose id disagrees, is refused by name; two
   # files cannot claim one id because the flat directory is keyed by the filename.
   MJ_PJ_MILESTONES=""; MJ_PJ_ISSUES=""
+  # The id is the file name less .yaml, cut by parameter expansion: a basename process per
+  # record was most of the load, and every doctor and plan command loads the model. The
+  # paths collect in an array because `set -- "$@" "$f"` copies the whole list again for
+  # every record (I0820).
+  local files=() flats=()
   # the records in one collation whatever the shell's locale: a glob sorts by the locale,
   # and the row order of the model must not depend on who loaded it
-  set -- ; for f in $(cd "$dir/milestones" 2>/dev/null && ls -1 2>/dev/null | LC_ALL=C sort); do
-    case "$f" in *.yaml) [ -f "$dir/milestones/$f" ] && set -- "$@" "$dir/milestones/$f" ;; esac
+  for f in $(cd "$dir/milestones" 2>/dev/null && ls -1 2>/dev/null | LC_ALL=C sort); do
+    case "$f" in *.yaml) [ -f "$dir/milestones/$f" ] || continue ;; *) continue ;; esac
+    files+=("$dir/milestones/$f"); MJ_PJ_MILESTONES="$MJ_PJ_MILESTONES ${f%.yaml}"
   done
-  for f in "$@"; do MJ_PJ_MILESTONES="$MJ_PJ_MILESTONES $(basename "$f" .yaml)"; done
   for f in $(cd "$dir/issues" 2>/dev/null && ls -1 2>/dev/null | LC_ALL=C sort); do
     case "$f" in *.yaml) ;; *) continue ;; esac
-    f="$dir/issues/$f"
+    id="${f%.yaml}"; f="$dir/issues/$f"
     [ -f "$f" ] || continue
-    id="$(basename "$f" .yaml)"
     # one id, one record: the flat directory is keyed by the filename, so a milestone and
     # an issue with one name would otherwise collapse into one flat file silently
     case " $MJ_PJ_MILESTONES " in *" $id "*) mj_err "duplicate id $id ($f)"; rc=2; continue ;; esac
-    set -- "$@" "$f"; MJ_PJ_ISSUES="$MJ_PJ_ISSUES $id"
+    files+=("$f"); MJ_PJ_ISSUES="$MJ_PJ_ISSUES $id"
   done
-  [ $# -gt 0 ] && mj_yaml_flatten_many "$MJ_PJ/flat" "$@"
+  [ "${#files[@]}" -gt 0 ] && mj_yaml_flatten_many "$MJ_PJ/flat" "${files[@]}"
   if [ -f "$MJ_PJ/flat/.errors" ]; then
     while IFS="$MJ_TAB" read -r id msg; do mj_err "$dir/$id: does not parse ($msg)"; done < "$MJ_PJ/flat/.errors"
     rc=2
   fi
-  set -- ; for id in $MJ_PJ_MILESTONES $MJ_PJ_ISSUES; do set -- "$@" "$MJ_PJ/flat/$id"; done
+  for id in $MJ_PJ_MILESTONES $MJ_PJ_ISSUES; do flats+=("$MJ_PJ/flat/$id"); done
+  set -- ${flats[@]+"${flats[@]}"}
   awk -v ms=" $MJ_PJ_MILESTONES " 'FNR == 1 {
       if (id != "" && seen != id) { printf "%s\t%s\n", id, seen > "/dev/stderr"; bad = 1 }
       id = FILENAME; sub(/.*\//, "", id); seen = ""; tag = index(ms, " " id " ") ? "M" : "I" }
@@ -83,11 +88,14 @@ mj_project_load() {
   [ "$rc" = 0 ] || return 2
   mj_pj_seal_rows "$raw" >> "$raw" || return 2
   awk -f "$MJ_LIB_DIR/project.awk" "$raw" > "$MJ_PJ/model.tsv" || return 2
-  # every record's fields and every model row become variables once, so the readers
-  # below expand them instead of running one awk per field or per row
-  mj_yload_dir "$MJ_PJ/flat" pj
-  mj_yassign < <(awk -F'\t' '$1 == "M" || $1 == "I" { id = $2; gsub(/-/, "___", id); gsub(/\./, "__", id)
-      printf "pjrow_%s_%s\t%s\n", $1, id, $0 }' "$MJ_PJ/model.tsv")
+  # every model row becomes a variable once, so the readers below expand it instead of
+  # running one awk per row. The assignments are read from a file and not a pipe: bash
+  # reads a pipe one byte per system call. A record's own fields are not loaded at all:
+  # mj_pj_get reads the one record it is asked about, and loading every field of every
+  # record cost seconds of each load for readers that ask for a handful (I0820).
+  awk -F'\t' '$1 == "M" || $1 == "I" { id = $2; gsub(/-/, "___", id); gsub(/\./, "__", id)
+      printf "pjrow_%s_%s\t%s\n", $1, id, $0 }' "$MJ_PJ/model.tsv" > "$MJ_PJ/rows.vars"
+  mj_yassign < "$MJ_PJ/rows.vars"
   MJ_PJ_LOADED=1
   return 0
 }
@@ -251,8 +259,35 @@ mj_pj_warn_count()    { mj_pj_rows V | awk -F'\t' '$2=="WARN"' | wc -l | tr -d '
 
 # flattened canonical record of one milestone or issue, for the fields the model does not carry
 mj_pj_flat()  { printf '%s' "$MJ_PJ/flat/$1"; }
-mj_pj_get()   { local p="${1//-/___}"; mj_yv "pj_${p//./__}" "$2"; }
-mj_pj_list()  { local p="${1//-/___}"; mj_yvlist "pj_${p//./__}" "$2"; }
+# One field, or the items of one list, of one record, read from its flat file with builtins
+# when asked. A caller in a command substitution would lose anything loaded into this shell,
+# so nothing is cached: the record is a few dozen lines, and reading it costs no process.
+# As before, the last line of a key wins, an empty value prints nothing, and a list stops
+# at its first missing or empty item.
+mj_pj_get() {
+  local f="$MJ_PJ/flat/$1" line v=""
+  case "$1" in ''|*/*) return 0 ;; esac
+  [ -f "$f" ] || return 0
+  while IFS= read -r line || [ -n "$line" ]; do
+    case "$line" in "$2="*) v="${line#*=}" ;; esac
+  done < "$f"
+  [ -z "$v" ] || printf '%s\n' "$v"
+  return 0
+}
+mj_pj_list() {
+  local f="$MJ_PJ/flat/$1" line k i=0 items=()
+  case "$1" in ''|*/*) return 0 ;; esac
+  [ -f "$f" ] || return 0
+  while IFS= read -r line || [ -n "$line" ]; do
+    case "$line" in "$2."[0-9]*=*) ;; *) continue ;; esac
+    k="${line%%=*}"; k="${k#"$2."}"
+    # an index is a plain decimal: 0, or no leading zero, which arithmetic would read as octal
+    case "$k" in *[!0-9]*|0?*) continue ;; esac
+    items[k]="${line#*=}"
+  done < "$f"
+  while [ -n "${items[i]:-}" ]; do printf '%s\n' "${items[i]}"; i=$((i + 1)); done
+  return 0
+}
 
 # the next issue a worker should take: the lowest-wave READY issue of the active milestone,
 # highest priority first, then id. Derived on every call; never stored.

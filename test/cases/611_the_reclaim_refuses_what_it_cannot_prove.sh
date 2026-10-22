@@ -27,6 +27,9 @@ RB="$(rust_bin)" || rust_bin_exit $?
 command -v jq >/dev/null 2>&1 || skip "no jq"
 command -v lsof >/dev/null 2>&1 || skip "no lsof, which this case is partly about"
 MAJORDOMUS_SHARE="$ROOT/share"; export MAJORDOMUS_SHARE
+# Every worktree here is minutes old, so the idle window (I3832, a day by default) is
+# removed; the guards this case is about are the others. Case 3832 holds the window.
+MAJORDOMUS_WORKTREE_SWEEP_IDLE_MIN=0; export MAJORDOMUS_WORKTREE_SWEEP_IDLE_MIN
 
 S="$T/reclaim"
 mkdir -p "$S"
