@@ -7,7 +7,7 @@ profile: implementation
 parallel_safe: false
 objective: "Add the run record, the measured provenance, the coverage record and the crate count rule of ADR 0087 decisions 2, 6 and 12, and feed run records to the one monotone rule, so that a recording states the commit and tree its run measured and only what ran."
 why: "The recorder stamps the commit and tree at record time rather than what the run measured, a crate binary summary that says ok is read as a pass even when nothing ran, and an evidence record call leaves no record of the run beside the ledger."
-current_state: "record.rs stamps HEAD and the recorder's own tree; the crate parser reads ok as a pass without counting and without stripping colour codes; there is no run record, no coverage record, no evidence stamp and no --ledger local."
+current_state: "Landed in 62f9ec5564b (a crate binary that ran nothing is not a pass, 2026-09-28) and 0e0e9443ea7 (a recording carries what its run measured, as a typed run, 2026-09-29), re-ported in merge d0cbebcb3ea (#667, 2026-10-07); neither named I1951, so the issue stayed open until 3e recorded it on 2026-10-22. evidence record refuses a measured commit that is not HEAD and records T unknown without a measurement (record.rs); the crate parser strips colour codes and counts, so a binary that ran nothing or a filtered subset is a skip (read_crate_output, judge); every call builds an EvidenceRunRecord with commit, tree, totals, absent and dropped, returned in its output and written with --run-record (a default copy under .ai/local/evidence/runs/, ADR 0087 decision 2, is I1957's); the monotone rule caps a proven verdict at stale on a clean failing run record (run.rs weaken_by_records, applied by commands under I1953); --ledger local is advisory and the default still writes the tracked ledger (case 124)."
 desired_state: "evidence stamp measures a run's commit and tree; evidence record --provenance stamps them, refuses a measured commit that is not HEAD, and records T as unknown without a measurement; each call writes an EvidenceRunRecord; coverage is an EvidenceCoverage, current only for its own commit with a clean tree; a crate binary that ran no test or a filtered subset is a skip; --ledger local writes an advisory local ledger, and the default still writes the tracked one."
 scope:
   - apps/majordomus-cli/src/git/mod.rs
@@ -52,4 +52,32 @@ evidence_required:
   - run_records_typed
 risk: "It needs the run reference of PR #577 (with I1949) and the tree state of I1948, and it is the second capability change of the chain, so it starts only after both have landed."
 created_at: 2026-09-26
-updated_at: 2026-09-26
+updated_at: 2026-10-21T22:23:32Z
+started_at: 2026-10-21T22:22:03Z
+started_event: sha256:2a420f15a2c23e30eca3c38bf435c05c77b04e06b9e5c198263c7ed7bd28706f
+verified_at: 2026-10-21T22:22:22Z
+verified_event: sha256:c544abb148c6662c58af91f730117bcab8edd798c3018d26ff043f866b5ad126
+completed_at: 2026-10-21T22:23:32Z
+completed_event: sha256:c112f86a6f82805d96d7c8189f63bd4756aeeb219d657a18574b2c5c633f5ab2
+evidence:
+  - covers: provenance_measured_by_the_run
+    type: ci
+    command: "validate run 39645593645 (attempt 2) at master 97391192dbb: suite-shard (3) job 119428809675 ran case 505_a_recording_carries_what_its_run_measured ok (refused other commit, T unknown without a measurement, local ledger)"
+    result: "success"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39645593645"
+    commit: 97391192dbbc85ee34b1f35d9ddec55ba61832d3
+    recorded_at: 2026-10-21T22:22:51Z
+  - covers: crate_count_rule
+    type: ci
+    command: "validate run 39645593645 (attempt 2) at master 97391192dbb: suite-shard (3) job 119428809675 ran case 506_a_crate_binary_that_ran_nothing_is_not_a_pass ok; rust (1-3) jobs 119428809847 119428810163 119428809991 green incl. evidence::record crate-output tests"
+    result: "success"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39645593645"
+    commit: 97391192dbbc85ee34b1f35d9ddec55ba61832d3
+    recorded_at: 2026-10-21T22:23:05Z
+  - covers: run_records_typed
+    type: ci
+    command: "validate run 39645593645 (attempt 2) at master 97391192dbb: case 505 section 6 (run record and coverage) in job 119428809675 and case 124_evidence in suite-shard (4) job 119428811233 ok; EvidenceRunRecord in run.rs since 0e0e9443ea7"
+    result: "success"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39645593645"
+    commit: 97391192dbbc85ee34b1f35d9ddec55ba61832d3
+    recorded_at: 2026-10-21T22:23:20Z
