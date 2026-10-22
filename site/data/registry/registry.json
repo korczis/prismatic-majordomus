@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.6"
   },
   "registry": {
-    "fingerprint": "ef38b11d9bedf033ec3dd3b0585bce92890f9c1a9822a48566de22c9bafebc3d",
+    "fingerprint": "4aea633e4e9d7bcdeda145184d0a6f98e8804357f0697ecd4b18e16409cd3daa",
     "summary": {
-      "total": 3313,
+      "total": 3315,
       "builtin": 208,
-      "declarative": 3105,
+      "declarative": 3107,
       "by_kind": {
         "command": 32,
         "query": 176,
-        "resource": 3105
+        "resource": 3107
       },
       "by_stability": {
         "behaviorally_verified": 143,
         "experimental": 55,
-        "implemented": 3115
+        "implemented": 3117
       },
       "mcp_tools": 197,
-      "mcp_resources": 3160,
+      "mcp_resources": 3162,
       "http_routes": 202,
       "cli_commands": 112,
       "modules": 92,
@@ -86222,7 +86222,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 898,
+        "capabilities": 899,
         "capability_ids": []
       },
       {
@@ -86797,7 +86797,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 602,
+        "capabilities": 603,
         "capability_ids": []
       },
       {
@@ -86889,7 +86889,7 @@
     ]
   },
   "index": {
-    "fingerprint": "d7ce52574acf5ecf8311df861d65953b14a168f9491ed5cd0e1c095a980f2228",
+    "fingerprint": "9d8229473b5045801adc768cab67c687aa358fbfcc2b7088635d4b1e482d5940",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -86929,7 +86929,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 35,
-      "issue": 898,
+      "issue": 899,
       "knowledge": 58,
       "mesh-declaration": 1,
       "milestone": 102,
@@ -86943,7 +86943,7 @@
       "session": 91,
       "skill": 8,
       "taxonomy": 10,
-      "test": 602,
+      "test": 603,
       "use-case": 49,
       "workspace": 1
     },
@@ -94055,7 +94055,7 @@
         "title": "Pull-request integration",
         "path": "docs/INTEGRATION.md",
         "source_class": "document",
-        "bytes": 72184
+        "bytes": 72354
       },
       {
         "uri": "majordomus://document/docs/INTEGRATION_ROLLOUT.md",
@@ -94181,7 +94181,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 795321
+        "bytes": 797472
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -107889,6 +107889,17 @@
         "bytes": 1924
       },
       {
+        "uri": "majordomus://issue/I3963",
+        "kind": "issue",
+        "identity": "I3963",
+        "title": "A merge of master derives in one go: scripts/derive derives the staged merge with both parents as history",
+        "description": "Let scripts/derive accept a merge in progress: refuse unresolved or unstaged paths, otherwise write the staged merge as a scratch commit with both parents, derive it in a detached scratch worktree under the lock already held (MJ_DERIVE_OBSERVE naming HEAD, the executable built from the merged tree), and stage what changed back in the checkout, so the merge commits through the pages gate in one go.",
+        "path": ".ai/repo/project/issues/I3963.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2968
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -118024,7 +118035,7 @@
         "identity": "test/cases/3837_a_derive_does_not_run_mid_merge.sh",
         "path": "test/cases/3837_a_derive_does_not_run_mid_merge.sh",
         "source_class": "case",
-        "bytes": 3302
+        "bytes": 3734
       },
       {
         "uri": "majordomus://test/test/cases/383_convergence_is_enforced.sh",
@@ -118129,6 +118140,14 @@
         "path": "test/cases/391_skills_are_proven_capabilities.sh",
         "source_class": "case",
         "bytes": 9513
+      },
+      {
+        "uri": "majordomus://test/test/cases/3963_a_merge_of_master_derives_in_one_go.sh",
+        "kind": "test",
+        "identity": "test/cases/3963_a_merge_of_master_derives_in_one_go.sh",
+        "path": "test/cases/3963_a_merge_of_master_derives_in_one_go.sh",
+        "source_class": "case",
+        "bytes": 6504
       },
       {
         "uri": "majordomus://test/test/cases/400_derivation_is_one_graph.sh",
@@ -120805,7 +120824,7 @@
       "identity": [
         "id"
       ],
-      "objects": 898
+      "objects": 899
     },
     {
       "name": "knowledge",
@@ -120967,7 +120986,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 602
+      "objects": 603
     },
     {
       "name": "use-case",
