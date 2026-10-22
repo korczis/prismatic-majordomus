@@ -50,22 +50,43 @@ pages still render, say so, and remain fully usable.
 | `/cockpit` | the four questions first (is it healthy, what changed, what is broken, what needs action), then repository identity, git state, index state, the registry counted, every diagnostic, the health summary | `dashboard.overview`, `repository.info`, `health.report` |
 | `/cockpit/capabilities` | every capability, filtered by module, kind, source or text | the registry |
 | `/cockpit/capabilities/<id>` | one descriptor in full: schemas, projections, cache and benchmark policy, provenance, examples, and a form that runs it | the descriptor and its `BenchmarkCases` |
+| `/cockpit/commands` | every command this repository offers, from whichever program offers it, and where each one is projected | `commands.list` |
 | `/cockpit/executions` | what this process has run and is running, with the counts beside it; follows the live channel and updates itself | `executions.list` |
 | `/cockpit/executions/<id>` | one execution: its state, steps, progress, diagnostics, live output, output or error, and the input as it was stored; a stable URL a reload restores from | `executions.get`, `executions.events` |
 | `/cockpit/objects` | the declarative objects of the layer, by kind | `objects.list` |
 | `/cockpit/objects/<kind>` | one kind's index, at the kind's own address | `entity.kinds`, `objects.list` |
 | `/cockpit/objects/<kind>/<slug>` | one entity: what it is and where the public site publishes it, what can be said about the artefacts it names, the references it declares and the references that resolve to it, the surfaces that answer for it, its front matter, and the file as it is | `entity.show` |
 | `/cockpit/object?uri=` | the address an object had before it had one of its own; still resolves, so no published link breaks | `objects.get` |
+| `/cockpit/directories` | the layer's directory contracts: the hierarchy, what each directory owes, and for one directory its local contract beside the chain that actually applies | `directories.list` |
 | `/cockpit/graphs` | every graph this executable derives | `graph.list` |
 | `/cockpit/graphs/<id>` | one graph: the drawing, the vocabularies, and every node and edge as tables | `graph.get` |
 | `/cockpit/graphs/topology` | the registry graph in three dimensions — optional | `graph.get` (`registry`) |
 | `/cockpit/continuity` | what this checkout's lifecycle is holding, and what the subsystem around it is doing: the open episode the briefing is about, the active task, the records that resolve here with their labels, the blockers — then every open episode of the store, this process against the repository, recovery, the providers, and the tracked records | `continuity.state`, `lifecycle.episodes`, `lifecycle.runtime`, `lifecycle.recovery`, `lifecycle.providers`, `lifecycle.closed` |
+| `/cockpit/plan` | the milestones in derived order with the one that is now and the one after it, the issue the plan hands out next, and every issue filtered by milestone, status or wave | `plan.roadmap`, `plan.next`, `plan.issues` |
+| `/cockpit/plan/milestones/<id>` | one milestone as a graph of work: its outcome, every issue with its readiness and wave, the partitions, the critical blockers, what may run at the same time, and every finding | `devtask.milestone` |
+| `/cockpit/plan/issues/<id>` | one issue as a task: its intent, acceptance criteria and scope, its readiness and what blocks it, its branches and sessions, the external issue it synchronises with, every value with where it came from — and the moves `plan.transition` makes, each with the command that makes it | `devtask.issue`, `plan.transition` |
+| `/cockpit/sessions` | every open episode of this repository's session store: its standing, provider, branch, last activity and the tasks it touched | `lifecycle.episodes` |
+| `/cockpit/board` | every session of this repository, from every checkout's board, with the checkout it works in and what it announced, the checkouts whose board could not be read, every collision between their claims, and where the server of every checkout of this repository stands | `peers.list`, `server.status` |
 | `/cockpit/health` | one check per dimension, each with the engine that decided it and the command that reproduces it | `health.report` |
+| `/cockpit/quality` | the crate's own public surface as the rules hold it, every number and finding from one execution | `quality.report` |
+| `/cockpit/artifacts` | what the generator writes: every document with the encodings it is committed in, every file with its contract and its state against the working tree | `artifacts.list` |
+| `/cockpit/release` | what the public contract did since the last release, and the smallest version it allows | `release.analysis` |
+| `/cockpit/design` | the design system as this executable carries it: every role with its light and dark value, the statuses, the type scale, the layout values and the theme contract | `design.system`, `design.tokens` |
+| `/cockpit/mesh` | the discovered nodes of this process's runtime, the providers that heard them, and why the mesh is or is not running | `mesh.status`, `mesh.nodes` |
+| `/cockpit/models` | the vendors and models `share/models.yaml` declares, with each vendor's credential presence (never a value), and their routing | `models.list` |
+| `/cockpit/economics` | token economics: the verdict the evidence allows, every metric with its measurement class, the state of each suite's evidence, the pairs, the segments and the records that could not be read | `economics.summary` |
 | `/cockpit/api` | every HTTP route the registry projects, and the projection's own | the registry |
 | `/cockpit/search` | capabilities and objects matching one query | the registry, `objects.search` |
 | `/cockpit/worktrees` | the branch-to-worktree topology: container, trunk, every worktree with its standing, uncommitted work and diagnostics, every branch without a worktree, the migration plan with the command that applies it; reloads itself when the topology changes | `worktree.topology`, `worktree.migration_plan` |
 | `/cockpit/activity` | this process's counters and phases, and a running plot of them | `perf.counters` |
 | `/cockpit/assets/<file>` | the stylesheet, the scripts, the vendored libraries | `share/cockpit/` |
+
+This table is checked against the dispatcher, not kept beside it. Every plain route
+`cockpit::STATIC_ROUTES` names has a row here, and no row names a plain route the dispatcher
+does not answer; `cockpit::tests::the_documented_route_table_is_the_dispatchers` fails the
+build otherwise. Editing a row's description is free. Adding or removing a route starts in
+`STATIC_ROUTES` beside the dispatcher's `match`, and the navigation area it belongs to in
+`nav::areas()` is checked by `every_area_has_a_route_and_every_route_its_area`.
 
 Every route is a deep link: the filters are query parameters, a refresh loses nothing, and
 a page can be sent to somebody.
@@ -361,6 +382,7 @@ the same facts are as text.
 | `cockpit.js` | the one Alpine component (theme, palette state), the shared helpers | `vendor/alpine.csp.min.js` |
 | `palette.js` | the command palette (`Ctrl`/`Cmd` + `K`), entries from the registry | — |
 | `runner.js` | the generic capability runner | — |
+| `plan.js` | the moves on an issue page: sends `plan.transition` after a confirmation, shows the status it answered or the refusal as it came, and reads the page again | — |
 | `graph.js` | the Cytoscape view: pan, zoom, fit, search, neighbourhood focus, a details drawer | `vendor/cytoscape.min.js` |
 | `topology.js` | the registry graph in three dimensions | `vendor/three.module.min.js` |
 | `activity.js` | a running plot of the execution and cache counters | `vendor/p5.min.js` |
@@ -407,6 +429,11 @@ data the page also prints.
   effect, so a command that writes tracked files says so before it is sent, always as a
   `POST` from the page's origin. Every other capability either reads or changes only this
   process's own memory.
+- **One page offers a write, and it asks first.** The issue page offers `plan.transition`,
+  which stamps one field of an issue's record and appends one ledger event, as three buttons
+  that are disabled until the script loads, ask before sending, pass the same origin check as
+  every other `POST`, and show the status the capability derived from the record afterwards
+  rather than the one the button named.
 
 ## Assets
 
@@ -488,7 +515,11 @@ disposable repository:
 - a state-changing request from another origin is refused and a read is not,
 - the index answers JSON to a client and points a browser at the Cockpit,
 - repository content reaches the page as text and never as markup,
-- serving every page rebuilds nothing canonical.
+- serving every page rebuilds nothing canonical,
+- the plan pages show the statuses the plan capabilities answered, and a move made from an
+  issue page changes the record and then the page (`tests/cockpit_plan.rs`),
+- the board names every attached session and what it announced, and raises a collision as
+  one (`tests/cockpit_board.rs`).
 
 The unit tests in `src/cockpit/` cover the escaping (both contexts), the void elements, the
 status-word-to-class mapping, the asset cache and the path refusals, the CSP digest, and
@@ -535,6 +566,10 @@ cancelling one are two of those. The ones that write the repository declare the 
 `repository_mutation` in their execution policy, and that policy is what the warning on the
 Run card reads. ADR 12 requires such a capability to be its own decision, and a unit test in
 `builtin` pins the set of them, so a new one shows up in a diff.
+
+The issue page is one more caller of `plan.transition` beside MCP and the command line. The
+confirmation it shows is read from that capability's policy, and whether a move is legal is
+the capability's to decide: the page shows its refusal as it came.
 
 ## In a browser
 

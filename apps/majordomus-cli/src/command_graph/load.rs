@@ -109,16 +109,53 @@ pub fn fast(repo: &RepoArgs) -> Result<Loaded> {
 /// subprocess per request, and the cache the last materialisation wrote is exactly the
 /// answer it wants.
 pub fn fast_at(root: &Path, share: Option<&Path>) -> CommandGraph {
+    fast_with(root, share, None)
+}
+
+/// The same, for a caller that already holds a registry.
+///
+/// A server does. Building a second one to answer one page costs what building the first
+/// one cost and describes exactly the same executable: `/cockpit/commands` did that on
+/// every request whose cache was cold, which the no-rebuild sweep now refuses. `None` is
+/// for a caller with no registry of its own, which then pays for one.
+///
+/// ```
+/// use majordomus_cli::command_graph::load;
+/// let root = std::env::temp_dir().join(format!("mj-fast-with-{}", std::process::id()));
+/// std::fs::create_dir_all(&root).unwrap();
+/// // a cold cache is built from the registry the caller holds
+/// let held = load::registry();
+/// let graph = load::fast_with(&root, None, held.as_ref());
+/// // a warm cache is the answer, whichever registry is or is not held
+/// load::write_cache(&root, &graph).unwrap();
+/// assert_eq!(load::fast_with(&root, None, None), graph);
+/// std::fs::remove_dir_all(&root).unwrap();
+/// ```
+pub fn fast_with(
+    root: &Path,
+    share: Option<&Path>,
+    held: Option<&CapabilityRegistry>,
+) -> CommandGraph {
     if let Some(graph) = read_cache(root) {
         return graph;
     }
-    let registry = registry();
-    build(&Inputs {
-        registry: registry.as_ref(),
-        share,
-        workflows: None,
-        bridged: Default::default(),
-    })
+    match held {
+        Some(registry) => build(&Inputs {
+            registry: Some(registry),
+            share,
+            workflows: None,
+            bridged: Default::default(),
+        }),
+        None => {
+            let registry = registry();
+            build(&Inputs {
+                registry: registry.as_ref(),
+                share,
+                workflows: None,
+                bridged: Default::default(),
+            })
+        }
+    }
 }
 
 /// The whole graph of a repository whose root is already known.

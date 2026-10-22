@@ -35,6 +35,13 @@
 //! actually loses to the frozen picture is the commit it just made, and a commit always
 //! moves git. `git add` moves it too: the staging index is watched.
 //!
+//! One kind of unstaged edit is seen anyway: the ones this process makes. A capability whose
+//! effect is a repository mutation — `plan.transition` stamping an issue — writes a tracked
+//! file and moves no git control file, and a Cockpit page read right after the move showed
+//! the status from before it. The executor counts every such call that succeeds, whichever
+//! transport or execution made it, and outlives a reload; a generation records the count it
+//! was built after, and a count that has moved is a repository that has moved.
+//!
 //! # The obligation that comes with watching: this process must not write them
 //!
 //! `git status` and `git diff` refresh the staging index as a side effect, writing back
@@ -231,6 +238,17 @@ struct Generation {
     ctx: Arc<Context>,
     stamp: String,
     number: u64,
+    /// The executor's write count this generation was built after. A write to a tracked
+    /// file moves no git control file; a write this process made moves this.
+    writes: u64,
+}
+
+impl Generation {
+    /// Is this generation still the repository as it is: git has not moved it, and this
+    /// process has not written it since?
+    fn current(&self, taken: &str) -> bool {
+        self.stamp == taken && self.writes == self.ctx.executor.writes()
+    }
 }
 
 /// The repository a process reads, kept current.
@@ -290,12 +308,14 @@ impl Live {
     /// # }
     /// ```
     pub fn pinned(ctx: Arc<Context>) -> Live {
+        let writes = ctx.executor.writes();
         Live {
             watch: None,
             state: RwLock::new(Generation {
                 ctx,
                 stamp: String::new(),
                 number: 0,
+                writes,
             }),
             rebuilding: Mutex::new(()),
         }
@@ -342,12 +362,14 @@ impl Live {
             "following the repository: every request compares {} git control file(s) and reloads the layer when they move",
             stamp.paths().len()
         );
+        let writes = ctx.executor.writes();
         Live {
             watch: Some(Watch { args, stamp }),
             state: RwLock::new(Generation {
                 ctx,
                 stamp: taken,
                 number: 0,
+                writes,
             }),
             rebuilding: Mutex::new(()),
         }
@@ -417,7 +439,7 @@ impl Live {
         let taken = watch.stamp.take();
         {
             let state = read(&self.state);
-            if state.stamp == taken {
+            if state.current(&taken) {
                 return View {
                     generation: state.number,
                     ctx: Arc::clone(&state.ctx),
@@ -441,7 +463,7 @@ impl Live {
         };
         let previous = {
             let state = read(&self.state);
-            if state.stamp == taken {
+            if state.current(&taken) {
                 return View {
                     generation: state.number,
                     ctx: Arc::clone(&state.ctx),
@@ -449,8 +471,12 @@ impl Live {
             }
             Arc::clone(&state.ctx)
         };
+        // read before the load: a write that lands while the layer is being read is one the
+        // new generation may not carry, and it must leave the next reading stale
+        let writes = previous.executor.writes();
         let built = crate::app::App::load(&watch.args);
         let mut state = write(&self.state);
+        state.writes = writes;
         match built {
             Ok(app) => {
                 state.ctx = Arc::new(app.context.continuing(&previous));

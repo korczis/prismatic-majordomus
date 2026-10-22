@@ -39,6 +39,7 @@
 //! ```
 
 use std::collections::{HashMap, VecDeque};
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
 
@@ -53,6 +54,8 @@ use super::model::CachePolicy;
 #[derive(Debug, Default)]
 pub struct CapabilityExecutor {
     cache: Mutex<Cache>,
+    /// How many calls of a capability that writes the repository have succeeded here.
+    writes: AtomicU64,
 }
 
 #[derive(Debug, Default)]
@@ -147,6 +150,15 @@ impl CapabilityExecutor {
             let _guard = perf::phase(Phase::HandlerExecution);
             ctx.registry.dispatch(ctx, id, input)?
         };
+        // counted on the one path every transport and every execution shares, so a write
+        // made from a page, a tool, a route or an execution is seen by `crate::live` alike
+        if ctx
+            .registry
+            .get(id)
+            .is_some_and(|c| c.execution.effect == crate::capability::Effect::RepositoryMutation)
+        {
+            self.writes.fetch_add(1, Ordering::SeqCst);
+        }
         if let (Some(key), CachePolicy::Process { max_entries, .. }) = (key, policy) {
             let mut cache = lock(&self.cache);
             let Cache { entries, order } = &mut *cache;
@@ -169,6 +181,24 @@ impl CapabilityExecutor {
             );
         }
         Ok(value)
+    }
+
+    /// How many calls of a capability whose effect is a repository mutation have succeeded
+    /// through this executor.
+    ///
+    /// A write to a tracked file moves no git control file, so a long-lived process that
+    /// follows the repository by those files would go on answering from the picture it had
+    /// before its own write. The executor outlives a reload, so this number is what
+    /// `crate::live` compares: when it has moved, the process wrote, and the next reading
+    /// is a new generation.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::executor::CapabilityExecutor;
+    /// let executor = CapabilityExecutor::new();
+    /// assert_eq!(executor.writes(), 0, "an executor that has run nothing has written nothing");
+    /// ```
+    pub fn writes(&self) -> u64 {
+        self.writes.load(Ordering::SeqCst)
     }
 
     /// How many entries the cache holds, all capabilities together.
