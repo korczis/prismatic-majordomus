@@ -302,17 +302,13 @@ expect_exit 10 "$PLAN" --model shape-others.yaml --check
 expect_grep 'others must be derived'
 
 # the cases the shape keeps: every case that names the release record or reads what is offered
-# from it is in release-record-cases, and every case that gate names exists. Read from the
-# model, so the list cannot fall behind the cases silently. This case names those paths too,
-# as fixtures of the planner it is about, and is the one left out of the grep.
-runs="$(awk '/^  - id: release-record-cases$/{f=1} f && /^    runs: /{sub(/^    runs: /, ""); print; exit}' "$MODEL")"
-case "$runs" in *'test/run.sh --no-skips '*) ;; *) echo "    release-record-cases does not run named cases with --no-skips: $runs"; exit 1 ;; esac
-named=" ${runs#*--no-skips } "
-want="$(grep -l -E '\.ai/repo/releases|release-record|site/static/releases|ci/release-check|\$ROOT/(docs/INSTALL\.md|site/data/registry/distribution\.json|docs/generated/changelog)' "$ROOT"/test/cases/*.sh \
-  | sed 's#.*/##; s#\.sh$##' | grep -vx 94_ci_plan)"
-[ -n "$want" ] || { echo "    no case names a release-record path; the assertion is vacuous"; exit 1; }
-for c in $want; do has "$named" "$c" || { echo "    $c names the release record and release-record-cases does not run it"; exit 1; }; done
-for c in $named; do [ -f "$ROOT/test/cases/$c.sh" ] || { echo "    release-record-cases names $c, which is not a case"; exit 1; }; done
+# from it is in release-record-cases, and every case that gate names exists. Which cases
+# those are is defined once, in scripts/ci/release-record-cases-check, the structure gate
+# that asks it on every change to a case (I2716); this case asks the same script about this
+# tree, so the definition has one home. This case names those paths too, as fixtures of the
+# planner it is about, and the script exempts it by name.
+expect_exit 0 "$ROOT/scripts/ci/release-record-cases-check"
+expect_grep 'case\(s\) name the release record, each run by release-record-cases'
 
 # --- the verdict: green only when every selected gate's job succeeded; red on a failure, a
 #     cancellation, a selected gate whose job was skipped, a failed plan, or an empty selection
