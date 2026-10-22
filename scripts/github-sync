@@ -67,8 +67,15 @@
 # Every mutation prints one line naming what it changed and why. A mutation GitHub refuses
 # is a FAIL line, the run goes on with the next record, and the exit is 13.
 #
+# A title GitHub would refuse is refused here first. GitHub caps a milestone title at 255
+# characters and an issue title at 256, and the projected title is "<id> — <title>". --plan,
+# --render and --apply measure every title they would post, in characters rather than bytes,
+# and exit 14 naming each record over its limit, so the structure job (core-check runs --plan)
+# refuses the record before it merges. --check only reads, and does not measure.
+#
 # Exit: 0 done, 2 usage, 11 drift (--check), 12 cannot run, 13 a mutation failed,
-# 15 --apply refused (the reason and the command that reproduces it are printed).
+# 14 a projected title is over GitHub's limit, 15 --apply refused (the reason and the command
+# that reproduces it are printed).
 set -eu
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -91,7 +98,7 @@ while [ $# -gt 0 ]; do
               while [ $# -gt 0 ]; do case "$1" in -*) break ;; esac; RENDER="$RENDER $1"; shift; done ;;
     --milestone) [ $# -ge 2 ] || { echo "github-sync: --milestone needs an id" >&2; exit 2; }; ONLY="$2"; shift 2 ;;
     --force) FORCE=1; shift ;;
-    -h|--help) sed -n '2,71p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,78p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "github-sync: unknown option $1" >&2; exit 2 ;;
   esac
 done
@@ -168,6 +175,43 @@ selected_milestones() { if [ -n "$ONLY" ]; then printf '%s\n' "$ONLY"; else mj_p
 # `majordomus plan body` from being two renderings that can disagree.
 # shellcheck source=../lib/plan.sh
 . "$ROOT/lib/plan.sh"
+
+# ---------------------------------------------------------------- what GitHub accepts
+# A milestone title of 282 characters passed plan validate and every offline step, and GitHub
+# answered the projection on master with 422: the milestone never existed, so every pull
+# request's structure job was red on it until an admin landing broke the deadlock. The limits
+# are GitHub's; the count is of characters, which is what GitHub counts: a UTF-8 continuation
+# byte (0x80-0xBF) is deleted before the bytes are counted, so the em dash of the projected
+# title and a Czech letter are one each, in any locale. One pass over the model, not one
+# process per record, because --render is asked for every record at once.
+GH_MILESTONE_TITLE_MAX=255
+GH_ISSUE_TITLE_MAX=256
+forge_title_limits() {
+  local over
+  # a model that cannot be read measures nothing, and must not pass as if it measured
+  [ -r "$MJ_PJ/model.tsv" ] || { echo "github-sync: the loaded model has no model.tsv to measure" >&2; exit 12; }
+  over="$(awk -F'\t' -v only=" $* " '
+      ($1 == "M" || $1 == "I") && (only == "  " || index(only, " " $2 " ")) {
+        t = ($1 == "M") ? $6 : $9; print $1 "\t" $2 "\t" $2 " — " t }' "$MJ_PJ/model.tsv" \
+    | LC_ALL=C tr -d '\200-\277' \
+    | LC_ALL=C awk -F'\t' -v mm="$GH_MILESTONE_TITLE_MAX" -v im="$GH_ISSUE_TITLE_MAX" '
+      { n = length($3); max = ($1 == "M") ? mm : im
+        if (n > max) printf "%s\t%s\t%d\t%d\n", ($1 == "M") ? "milestone" : "issue", $2, n, max }')"
+  [ -n "$over" ] || return 0
+  while IFS="$MJ_TAB" read -r kind id n max; do
+    printf 'github-sync: %s %s: projected title is %s characters, GitHub refuses over %s %s\n' \
+      "$kind" "$id" "$n" "$max" "(.ai/repo/project/${kind}s/$id.yaml)" >&2
+  done <<< "$over"
+  printf 'github-sync: %s projected title(s) over GitHub'"'"'s limit; nothing was projected. Shorten the canonical title.\n' \
+    "$(printf '%s\n' "$over" | wc -l | tr -d ' ')" >&2
+  exit 14
+}
+if [ "$MODE" = render ]; then
+  # shellcheck disable=SC2086  # one argument per record id
+  forge_title_limits $RENDER
+elif [ "$MODE" = plan ] || [ "$MODE" = apply ]; then
+  forge_title_limits
+fi
 
 if [ "$MODE" = render ]; then
   # every id is resolved before anything is printed, so a missing record never leaves a
