@@ -220,11 +220,14 @@ fn resolve(endpoint: &Endpoint) -> std::io::Result<Vec<SocketAddr>> {
     let addrs: Vec<SocketAddr> = (endpoint.host.as_str(), endpoint.port)
         .to_socket_addrs()?
         .collect();
+    some_address(addrs, &endpoint.authority)
+}
+
+/// `addrs`, unless the resolver answered with none: that is a failure naming `authority`, so
+/// that nothing indexes an empty answer.
+fn some_address(addrs: Vec<SocketAddr>, authority: &str) -> std::io::Result<Vec<SocketAddr>> {
     if addrs.is_empty() {
-        return Err(std::io::Error::other(format!(
-            "{}: no address",
-            endpoint.authority
-        )));
+        return Err(std::io::Error::other(format!("{authority}: no address")));
     }
     Ok(addrs)
 }
@@ -288,13 +291,16 @@ fn default_tls() -> std::io::Result<Arc<ClientConfig>> {
 
 /// A client configuration that trusts `roots` and nothing else.
 fn tls_config(roots: RootCertStore) -> Result<Arc<ClientConfig>, String> {
-    let config =
-        ClientConfig::builder_with_provider(Arc::new(rustls::crypto::ring::default_provider()))
-            .with_safe_default_protocol_versions()
-            .map_err(|e| format!("the TLS configuration could not be built: {e}"))?
-            .with_root_certificates(roots)
-            .with_no_client_auth();
-    Ok(Arc::new(config))
+    ClientConfig::builder_with_provider(Arc::new(rustls::crypto::ring::default_provider()))
+        .with_safe_default_protocol_versions()
+        .map(|versions| Arc::new(versions.with_root_certificates(roots).with_no_client_auth()))
+        .map_err(unbuildable)
+}
+
+/// Why a TLS configuration could not be had: the provider offers no protocol version the
+/// safe defaults allow.
+fn unbuildable(e: rustls::Error) -> String {
+    format!("the TLS configuration could not be built: {e}")
 }
 
 /// An open connection: a socket, or a socket under TLS.
@@ -417,8 +423,7 @@ fn handshake(
     config: Arc<ClientConfig>,
     timeout: Duration,
 ) -> std::io::Result<StreamOwned<ClientConnection, TcpStream>> {
-    socket.set_read_timeout(Some(timeout))?;
-    socket.set_write_timeout(Some(timeout))?;
+    bound(&socket, timeout)?;
     let mut connection = ClientConnection::new(config, name).map_err(std::io::Error::other)?;
     // `complete_io` reports a server that closes mid-handshake as `UnexpectedEof`, so the loop
     // ends in a handshake or in an error, never in a spin
@@ -433,6 +438,13 @@ fn handshake(
     Ok(StreamOwned::new(connection, socket))
 }
 
+/// Bound every read and write on `socket` by `timeout`. A zero timeout is refused by the
+/// platform, and so here, rather than read as "no bound".
+fn bound(socket: &TcpStream, timeout: Duration) -> std::io::Result<()> {
+    socket.set_read_timeout(Some(timeout))?;
+    socket.set_write_timeout(Some(timeout))
+}
+
 /// Send one request on an open connection and read the reply. From the first byte written
 /// the server may have the request, so a failure here leaves its outcome unknown.
 fn exchange(
@@ -444,8 +456,7 @@ fn exchange(
     body: Option<&str>,
     timeout: Duration,
 ) -> std::io::Result<Reply> {
-    stream.socket().set_read_timeout(Some(timeout))?;
-    stream.socket().set_write_timeout(Some(timeout))?;
+    bound(stream.socket(), timeout)?;
     exchange_on(&mut stream, host, method, path, headers, body)
 }
 
@@ -1714,5 +1725,106 @@ mod tests {
     fn the_executable_trusts_its_compiled_in_roots() {
         let config = default_tls().expect("the default configuration builds");
         assert!(Arc::ptr_eq(&config, &default_tls().unwrap()), "built once");
+    }
+
+    /// A socket and the endpoint it is connected to, with nothing written on it yet.
+    fn connected() -> (std::net::TcpListener, TcpStream, Endpoint) {
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let addr = listener.local_addr().unwrap();
+        let socket = TcpStream::connect(addr).unwrap();
+        (
+            listener,
+            socket,
+            parse_endpoint(&format!("https://{addr}")).unwrap(),
+        )
+    }
+
+    /// Every way a connection can fail before its first byte is its own error, never a panic
+    /// or a request sent anyway: an endpoint that does not parse, a resolver that answers with
+    /// no address, a TLS configuration that could not be had, a zero bound the platform
+    /// refuses, and a configuration a connection cannot be made from.
+    #[test]
+    fn a_connection_that_cannot_be_made_fails_before_its_first_byte() {
+        let never = || -> std::io::Result<Arc<ClientConfig>> { panic!("no TLS is asked for") };
+        let scheme = connect_with("ftp://h", Duration::from_secs(1), never)
+            .err()
+            .unwrap();
+        assert!(
+            scheme.to_string().contains("neither http:// nor https://"),
+            "{scheme}"
+        );
+        assert!(unbuildable(rustls::Error::General("x".into())).contains("could not be built"));
+        let none = some_address(Vec::new(), "nowhere:1").expect_err("no address");
+        assert_eq!(none.to_string(), "nowhere:1: no address");
+
+        let (listener, _, endpoint) = connected();
+        let err = connect_with(&endpoint.url(), Duration::from_secs(5), || {
+            Err(std::io::Error::other("no configuration"))
+        })
+        .err()
+        .expect("no configuration");
+        assert_eq!(err.to_string(), "no configuration");
+        drop(listener);
+
+        let config = tls_config(RootCertStore::empty()).expect("an empty trust store builds");
+        let (_listener, socket, endpoint) = connected();
+        let name = server_name(&endpoint).unwrap();
+        assert!(handshake(
+            socket,
+            &endpoint,
+            name.clone(),
+            config.clone(),
+            Duration::ZERO
+        )
+        .is_err());
+        let mut unusable = (*config).clone();
+        unusable.max_fragment_size = Some(1);
+        let (_listener, socket, endpoint) = connected();
+        assert!(handshake(
+            socket,
+            &endpoint,
+            name,
+            Arc::new(unusable),
+            Duration::from_secs(5)
+        )
+        .is_err());
+
+        let (_listener, socket, _) = connected();
+        let err = exchange(
+            Stream::Plain(socket),
+            "h",
+            "GET",
+            "/",
+            &[],
+            None,
+            Duration::ZERO,
+        )
+        .expect_err("a zero bound");
+        assert_eq!(err.kind(), std::io::ErrorKind::InvalidInput);
+    }
+
+    /// A stream that takes every byte and cannot flush them.
+    struct Unflushable;
+
+    impl Read for Unflushable {
+        fn read(&mut self, _: &mut [u8]) -> std::io::Result<usize> {
+            Ok(0)
+        }
+    }
+
+    impl Write for Unflushable {
+        fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+            Ok(buf.len())
+        }
+        fn flush(&mut self) -> std::io::Result<()> {
+            Err(std::io::Error::other("cannot flush"))
+        }
+    }
+
+    /// A request whose bytes could not be flushed is that failure, and no reply is read.
+    #[test]
+    fn a_request_that_cannot_be_flushed_reads_no_reply() {
+        let err = exchange_on(&mut Unflushable, "h", "GET", "/", &[], None).expect_err("unflushed");
+        assert_eq!(err.to_string(), "cannot flush");
     }
 }

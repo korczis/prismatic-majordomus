@@ -282,4 +282,22 @@ mod tests {
             Err(Error::Transport(e)) if e.kind() == std::io::ErrorKind::BrokenPipe
         ));
     }
+
+    /// A repository that cannot be loaded is the command's error, and nothing is printed.
+    #[test]
+    fn a_repository_that_cannot_be_loaded_is_refused_before_anything_is_assembled() {
+        let nowhere = tempfile::tempdir().unwrap();
+        let missing = nowhere.path().join("missing");
+        let a = args(
+            &missing,
+            None,
+            &missing.join("exe"),
+            &missing.join("out"),
+            OutputFormat::Text,
+        );
+        let mut w = Vec::new();
+        assert!(run_to(a, &mut w).is_err());
+        assert!(w.is_empty());
+        assert!(!missing.exists(), "nothing was made");
+    }
 }

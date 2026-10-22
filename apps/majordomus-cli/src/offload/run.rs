@@ -387,13 +387,23 @@ pub fn offload(
     let top = git(&worktree, &["rev-parse", "--show-toplevel"])?;
     let worktree = PathBuf::from(top.trim());
 
-    let input = input_commit(&worktree)?;
     // The commit the derived files may observe: the worktree's HEAD, never the input. The
     // input of a dirty tree is a `git stash create` snapshot and that of a merge in progress
     // a `commit-tree` commit; neither reaches origin, so a derived file that named one
     // (delivery.json's observed.commit) could not be checked anywhere else, and CI's
-    // `generate-site-data --check` called it stale (#1759, I3836).
-    let observe = git(&worktree, &["rev-parse", "HEAD"])?.trim().to_string();
+    // `generate-site-data --check` called it stale (#1759, I3836). Read before the input, so
+    // a branch with no commit yet is refused here, by what it lacks, before anything is
+    // snapshot.
+    let observe = git(&worktree, &["rev-parse", "--verify", "HEAD"])
+        .map_err(|_| {
+            refuse(
+                EXIT_PRECONDITION,
+                "the worktree's branch has no commit yet: a derive observes HEAD, so commit first",
+            )
+        })?
+        .trim()
+        .to_string();
+    let input = input_commit(&worktree)?;
     let (host, probe_reports) = pick_host(d, request.host.as_deref(), log)?;
     let remote = remote_of(&host);
     // The base must be current here so the bundle carries only what the host lacks.

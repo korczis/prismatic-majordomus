@@ -1645,4 +1645,19 @@ mod tests {
             "a public key is meant to be read"
         );
     }
+
+    /// A local-only page is refused to a remote caller below its route as well, a route that
+    /// only begins with its name is not one of its pages, and a caller on this machine is
+    /// answered.
+    #[test]
+    fn a_local_only_page_covers_what_is_below_it_and_nothing_beside_it() {
+        let from = |path: &str, address: &str| {
+            crate::http::Request::parse_target("GET", path, vec![])
+                .with_remote(Some(address.parse().unwrap()))
+        };
+        assert!(Router::local_only_page(&from("/cockpit/executions/e-1", "203.0.113.9")).is_some());
+        assert!(Router::local_only_page(&from("/cockpit/mesh", "203.0.113.9")).is_some());
+        assert!(Router::local_only_page(&from("/cockpit/meshes", "203.0.113.9")).is_none());
+        assert!(Router::local_only_page(&from("/cockpit/mesh/x", "127.0.0.1")).is_none());
+    }
 }

@@ -732,7 +732,7 @@ fn stale_reason(me: &ExecutableIdentity) -> Option<String> {
 /// to a debug build — makes no claim either way and is left alone, so two legitimate
 /// binaries never fight over the lease.
 fn superseded(doc: &LeaseDocument) -> Option<String> {
-    superseded_by(doc, &executable_identity()?, crate::VERSION)
+    executable_identity().and_then(|me| superseded_by(doc, &me, crate::VERSION))
 }
 
 /// The judgement [`superseded`] makes, over the identity and version it is handed.
@@ -1797,7 +1797,29 @@ mod tests {
         fs::write(&exe, b"the newer code the server loaded").unwrap();
         let lease = lease_from(&identity_of(&exe), "1.0.0-alpha.1");
         fs::write(&exe, b"an older tree's build, written over the same path").unwrap();
-        assert_eq!(superseded_by(&lease, &identity_of(&exe), "0.30.2"), None);
+        // under a subscriber, so the warning that names both versions is written, not skipped
+        let subscriber = tracing_subscriber::fmt()
+            .with_max_level(tracing::Level::WARN)
+            .with_writer(std::io::sink)
+            .finish();
+        tracing::subscriber::with_default(subscriber, || {
+            assert_eq!(superseded_by(&lease, &identity_of(&exe), "0.30.2"), None);
+        });
+    }
+
+    #[test]
+    fn a_lease_of_this_process_as_it_runs_is_not_superseded() {
+        // the judgement over the executable this process was started from: unchanged, it
+        // takes nothing over; a lease naming another path makes no claim either way
+        let me = executable_identity().expect("a test binary knows where it is");
+        assert_eq!(superseded(&lease_from(&me, crate::VERSION)), None);
+        let dir = tempfile::tempdir().unwrap();
+        let other = dir.path().join("majordomus");
+        fs::write(&other, b"another build at another path").unwrap();
+        assert_eq!(
+            superseded(&lease_from(&identity_of(&other), crate::VERSION)),
+            None
+        );
     }
 
     #[test]

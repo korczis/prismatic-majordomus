@@ -1618,4 +1618,24 @@ mod tests {
         assert_eq!(stream(&mut reader, out.path(), &blobs).unwrap(), 3);
         assert_eq!(std::fs::read(out.path().join("f")).unwrap(), b"abc");
     }
+
+    /// A file of the slug that cannot be written is refused naming its path, and nothing is
+    /// placed beside what blocked it.
+    #[test]
+    fn a_slug_file_that_cannot_be_placed_names_its_path() {
+        let dir = tempfile::tempdir().unwrap();
+        let blocker = dir.path().join("a-file");
+        std::fs::write(&blocker, b"x").unwrap();
+        let e = place(&blocker, "sub/f", b"abc", Mode::File).unwrap_err();
+        assert!(
+            matches!(&e, SlugError::Failed(m) if m.contains("sub/f cannot be written")),
+            "{e}"
+        );
+        std::fs::create_dir(dir.path().join("a-directory")).unwrap();
+        let e = place(dir.path(), "a-directory", b"abc", Mode::File).unwrap_err();
+        assert!(
+            matches!(&e, SlugError::Failed(m) if m.contains("a-directory cannot be written")),
+            "{e}"
+        );
+    }
 }

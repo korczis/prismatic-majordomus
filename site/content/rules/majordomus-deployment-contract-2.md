@@ -75,7 +75,7 @@ interface, an unknown schema version, a missing required field, a privileged por
 `min_running` above `count`, a health route that is not a path, a duplicate identity and
 a credential in a field that exists — each refused by name; and a valid object, with and
 without a known provider, accepted. `test/cases/86_deployment_projections.sh` holds the
-generated files of this repository's own object, the provider's among them, to their
+generated files of the Majordomus repository's own object, the provider's among them, to their
 header, their port and `generate --check`, and
 `test/cases/3820_a_deployment_renders_its_providers_files.sh` renders a provider's files
 from a fixture object.

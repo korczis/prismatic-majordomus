@@ -547,6 +547,36 @@ fn a_merge_in_progress_travels_with_both_parents() {
 /// What would travel wrong is refused before anything travels: an untracked file. What
 /// comes back wrong is refused before anything is applied: a deleted tracked file. A derive
 /// that fails says so with its own exit code and keeps the host's worktree.
+/// A worktree whose branch has no commit has no HEAD for the derived files to observe
+/// (I3836): it is refused before anything is snapshot or travels.
+#[test]
+fn a_branch_with_no_commit_is_refused_before_anything_travels() {
+    let c = Cluster::new(&[("u@lundra", 50)]);
+    let d = c.declaration(&["u@lundra"]);
+    let unborn = c.root.join("unborn");
+    std::fs::create_dir_all(&unborn).unwrap();
+    c.git(&unborn, &["init", "-q"]);
+    let out = c.offload(
+        &[
+            "derive",
+            unborn.to_str().unwrap(),
+            "--declaration",
+            d.to_str().unwrap(),
+        ],
+        None,
+    );
+    assert_eq!(out.status.code(), Some(2), "{}", text(&out.stderr));
+    assert!(
+        text(&out.stderr).contains("no commit yet"),
+        "{}",
+        text(&out.stderr)
+    );
+    assert!(
+        !c.root.join("spool").exists(),
+        "something travelled before the refusal"
+    );
+}
+
 #[test]
 fn what_cannot_be_derived_faithfully_is_refused() {
     let c = Cluster::new(&[("u@lundra", 50)]);
