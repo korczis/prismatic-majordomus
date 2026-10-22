@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.6"
   },
   "registry": {
-    "fingerprint": "78441a199abdee8bb87203f79fb36c97c7948fa67e33ce570931f7dc0b398388",
+    "fingerprint": "1e9a00d6fb47f8e4847e6b8d74b4fc6f4e313fd985dd323285c50bcb16ab6278",
     "summary": {
-      "total": 3313,
+      "total": 3314,
       "builtin": 208,
-      "declarative": 3105,
+      "declarative": 3106,
       "by_kind": {
         "command": 32,
         "query": 176,
-        "resource": 3105
+        "resource": 3106
       },
       "by_stability": {
         "behaviorally_verified": 143,
         "experimental": 55,
-        "implemented": 3115
+        "implemented": 3116
       },
       "mcp_tools": 197,
-      "mcp_resources": 3160,
+      "mcp_resources": 3161,
       "http_routes": 202,
       "cli_commands": 112,
       "modules": 92,
@@ -86222,7 +86222,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 898,
+        "capabilities": 899,
         "capability_ids": []
       },
       {
@@ -86889,7 +86889,7 @@
     ]
   },
   "index": {
-    "fingerprint": "d94811859bab25ff0936493a4def1004f4b78d5fdfb78d946aadd1ee3f2e1912",
+    "fingerprint": "1da042c69c610225fb7d79f29f2d9d367e5b87049fc4656d7604b889f6e498f3",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -86929,7 +86929,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 35,
-      "issue": 898,
+      "issue": 899,
       "knowledge": 58,
       "mesh-declaration": 1,
       "milestone": 102,
@@ -94181,7 +94181,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 795321
+        "bytes": 799426
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -107889,6 +107889,17 @@
         "bytes": 1924
       },
       {
+        "uri": "majordomus://issue/I3920",
+        "kind": "issue",
+        "identity": "I3920",
+        "title": "The GitHub projection reads every issue, and a listing shorter than the repository refuses rather than reads as missing",
+        "description": "scripts/github-sync lists the repository issues with gh issue list (GraphQL, paged to the end) instead of gh api --paginate over the REST issues endpoint, and refuses as unreadable (exit 12, nothing changed) any listing shorter than the repository issues.totalCount, so a truncated read can never be taken for absent issues. The scripted forges of the cases that drive the adapter answer the new reads.",
+        "path": ".ai/repo/project/issues/I3920.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2664
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -120805,7 +120816,7 @@
       "identity": [
         "id"
       ],
-      "objects": 898
+      "objects": 899
     },
     {
       "name": "knowledge",

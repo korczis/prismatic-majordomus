@@ -64026,6 +64026,45 @@
         }
       },
       {
+        "id": "majordomus://issue/I3920",
+        "kind": "issue",
+        "label": "I3920",
+        "summary": "The GitHub projection reads every issue, and a listing shorter than the repository refuses rather than reads as missing",
+        "route": "/cockpit/objects/issue/i3920",
+        "source": ".ai/repo/project/issues/I3920.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "github-sync --check against the live repository reports no record missing that has an issue",
+            "A listing shorter than the repository issue count exits 12 and nothing is written",
+            "Cases 602, 894 and 1038 drive the adapter through issue list and api graphql"
+          ],
+          "created_at": "2026-10-22",
+          "depends_on": [],
+          "evidence_required": [
+            "truncated_listing_is_unreadable",
+            "no_duplicate_on_apply"
+          ],
+          "milestone": "work-graph-github",
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "scripts/github-sync",
+            "test/cases/894_github_sync_applies_only_the_trunk.sh",
+            "test/cases/602_a_spliced_body_is_recognised_as_its_own.sh",
+            "test/cases/1038_a_head_is_judged_against_what_it_changes.sh",
+            ".ai/repo/project/issues/I3920.yaml"
+          ],
+          "serves": [],
+          "slug": "the-projection-reads-every-issue",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "bin/majordomus plan validate",
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 894_github_sync_applies_only_the_trunk"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -123072,6 +123111,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3920",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3920",
+        "target": "majordomus://milestone/work-graph-github",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -134293,8 +134342,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3767,
-      "edges": 8710,
+      "nodes": 3768,
+      "edges": 8712,
       "acyclic": false,
       "truncated": false
     }
