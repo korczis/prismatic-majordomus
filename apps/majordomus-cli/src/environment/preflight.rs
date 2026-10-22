@@ -960,6 +960,91 @@ pub struct Observations {
     pub projections: Vec<(String, ProjectionState)>,
     /// The deployment ref.
     pub deployment: DeploymentObservation,
+    /// The browser bridges of the providers this checkout is configured for. Empty when no
+    /// such provider declares one, and then nothing is said about a browser.
+    pub browser: Vec<BrowserObservation>,
+}
+
+/// One provider whose client drives a browser beside this repository's server, and whether
+/// this machine has the native messaging host its bridge needs.
+///
+/// The capability is the declaration's (`share/providers.yaml`, `offers.browser`); the host is
+/// this machine's, written once per person by the client itself (Claude Code's `/chrome`), and
+/// a project can neither write it nor turn the bridge on.
+///
+/// ```
+/// use majordomus_cli::environment::preflight::{derive, BrowserObservation, Observations, Verdict};
+/// let mut o = Observations::empty("demo", 0);
+/// assert!(derive(&o).check("integration.browser").is_none(), "no bridge declared, nothing said");
+/// o.browser.push(BrowserObservation {
+///     provider: "claude-code".into(),
+///     title: "Claude Code".into(),
+///     host: "com.anthropic.claude_code_browser_extension".into(),
+///     setup: "in Claude Code: /chrome, Enabled by default".into(),
+///     manifest: None,
+/// });
+/// let c = derive(&o).check("integration.browser").unwrap().clone();
+/// assert_eq!(c.verdict, Verdict::Unavailable);
+/// assert!(c.next.unwrap().contains("/chrome"), "the remedy is the declaration's");
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct BrowserObservation {
+    /// The provider id.
+    pub provider: String,
+    /// The provider's title.
+    pub title: String,
+    /// The native messaging host its bridge registers with the browser.
+    pub host: String,
+    /// What the person does, once, to install it: the declaration's words.
+    pub setup: String,
+    /// The host's manifest on this machine, when there is one.
+    pub manifest: Option<std::path::PathBuf>,
+}
+
+/// The directories, under `home`, where a Chromium browser looks for a person's native
+/// messaging hosts: Chrome, Chromium, Edge and Brave, on macOS and on Linux. Both systems'
+/// paths are listed on both, because the one that does not apply never exists.
+///
+/// ```
+/// use majordomus_cli::environment::preflight::native_host_dirs;
+/// let dirs = native_host_dirs(std::path::Path::new("/home/a"));
+/// assert!(dirs.iter().any(|d| d.ends_with("Google/Chrome/NativeMessagingHosts")));
+/// assert!(dirs.iter().any(|d| d.ends_with(".config/google-chrome/NativeMessagingHosts")));
+/// ```
+pub fn native_host_dirs(home: &Path) -> Vec<std::path::PathBuf> {
+    [
+        "Library/Application Support/Google/Chrome",
+        "Library/Application Support/Chromium",
+        "Library/Application Support/Microsoft Edge",
+        "Library/Application Support/BraveSoftware/Brave-Browser",
+        ".config/google-chrome",
+        ".config/chromium",
+        ".config/microsoft-edge",
+        ".config/BraveSoftware/Brave-Browser",
+    ]
+    .iter()
+    .map(|browser| home.join(browser).join("NativeMessagingHosts"))
+    .collect()
+}
+
+/// The first manifest of the native messaging host `host` under `home`, in the order
+/// [`native_host_dirs`] lists the browsers.
+///
+/// ```
+/// use majordomus_cli::environment::preflight::native_host_manifest;
+/// let home = std::env::temp_dir().join(format!("mj-nmh-doc-{}", std::process::id()));
+/// assert_eq!(native_host_manifest(&home, "com.example.host"), None);
+/// let dir = home.join(".config/chromium/NativeMessagingHosts");
+/// std::fs::create_dir_all(&dir).unwrap();
+/// std::fs::write(dir.join("com.example.host.json"), "{}").unwrap();
+/// assert_eq!(native_host_manifest(&home, "com.example.host"), Some(dir.join("com.example.host.json")));
+/// std::fs::remove_dir_all(&home).unwrap();
+/// ```
+pub fn native_host_manifest(home: &Path, host: &str) -> Option<std::path::PathBuf> {
+    native_host_dirs(home)
+        .into_iter()
+        .map(|dir| dir.join(format!("{host}.json")))
+        .find(|manifest| manifest.is_file())
 }
 
 impl Observations {
@@ -991,6 +1076,7 @@ impl Observations {
             generation: GenerationObservation::Absent,
             projections: Vec::new(),
             deployment: DeploymentObservation::NoRef,
+            browser: Vec::new(),
         }
     }
 }
@@ -1043,13 +1129,16 @@ pub fn derive(o: &Observations) -> Preflight {
         Section {
             id: "integration".into(),
             title: "Integration".into(),
-            checks: vec![
+            checks: [
                 server_check(o),
                 surface_check(o, "mcp", "integration.mcp", "MCP"),
                 surface_check(o, "api", "integration.api", "API"),
                 surface_check(o, "cockpit", "integration.cockpit", "Cockpit"),
                 peers_check(o),
-            ],
+            ]
+            .into_iter()
+            .chain(browser_check(o))
+            .collect(),
         },
         Section {
             id: "verification".into(),
@@ -1677,6 +1766,74 @@ fn surface_check(o: &Observations, surface: &str, id: &str, title: &str) -> Chec
             vec![],
         ),
     }
+}
+
+/// Whether the browser bridge a configured provider declares can work on this machine. No
+/// check at all when none is declared: a provider without a bridge owes nothing here, and a
+/// row saying so on every machine would be noise.
+fn browser_check(o: &Observations) -> Option<Check> {
+    if o.browser.is_empty() {
+        return None;
+    }
+    let declared = |b: &BrowserObservation| {
+        Evidence::new(
+            "share/providers.yaml",
+            format!("{} offers.browser: bridge", b.provider),
+        )
+    };
+    let missing: Vec<&BrowserObservation> =
+        o.browser.iter().filter(|b| b.manifest.is_none()).collect();
+    if missing.is_empty() {
+        let names: Vec<&str> = o.browser.iter().map(|b| b.title.as_str()).collect();
+        let evidence = o
+            .browser
+            .iter()
+            .flat_map(|b| {
+                let manifest = b.manifest.as_deref().unwrap_or(Path::new(""));
+                [
+                    declared(b),
+                    Evidence::new(
+                        manifest.display().to_string(),
+                        format!("{} is installed", b.host),
+                    ),
+                ]
+            })
+            .collect();
+        return Some(Check::new(
+            "integration.browser",
+            "browser",
+            Verdict::Active,
+            format!(
+                "{} can drive a browser beside this server: the bridge's host is installed",
+                names.join(", ")
+            ),
+            evidence,
+        ));
+    }
+    let names: Vec<String> = missing
+        .iter()
+        .map(|b| format!("{} ({})", b.title, b.host))
+        .collect();
+    Some(
+        Check::new(
+            "integration.browser",
+            "browser",
+            Verdict::Unavailable,
+            format!(
+                "{} can drive a browser beside this server, and this machine has no bridge host \
+                 for it; a project cannot turn it on, the person does once",
+                names.join(", ")
+            ),
+            missing.iter().map(|b| declared(b)).collect(),
+        )
+        .next(
+            missing
+                .iter()
+                .map(|b| b.setup.as_str())
+                .collect::<Vec<_>>()
+                .join("; "),
+        ),
+    )
 }
 
 fn peers_check(o: &Observations) -> Check {
@@ -2414,7 +2571,58 @@ pub fn observe(
             .map(|p| (p.id.clone(), p.state))
             .collect(),
         deployment: observe_deployment(root),
+        browser: observe_browser(root, std::env::var_os("HOME").map(std::path::PathBuf::from)),
     }
+}
+
+/// The browser bridges of the providers this checkout is configured for, from the share
+/// this checkout resolves. A share that cannot be read declares nothing here; its own
+/// diagnostics say why.
+fn observe_browser(root: &Path, home: Option<std::path::PathBuf>) -> Vec<BrowserObservation> {
+    crate::share::Share::locate(None, root)
+        .and_then(|s| s.providers())
+        .map(|d| browser_observations(root, &d, home.as_deref()))
+        .unwrap_or_default()
+}
+
+/// One observation per provider that declares `offers.browser: bridge` with its host and
+/// whose client configuration is in the checkout at `root`, with the host's manifest looked
+/// for under `home`.
+///
+/// ```
+/// use majordomus_cli::environment::preflight::browser_observations;
+/// use majordomus_cli::share::Share;
+/// let repo = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+/// let declared = Share::locate(Some(&repo.join("share")), &repo).unwrap().providers().unwrap();
+/// let empty = std::env::temp_dir().join(format!("mj-browser-doc-{}", std::process::id()));
+/// // a checkout with no client configuration is configured for no provider
+/// assert!(browser_observations(&empty, &declared, None).is_empty());
+/// ```
+pub fn browser_observations(
+    root: &Path,
+    declarations: &crate::share::ProviderDeclarations,
+    home: Option<&Path>,
+) -> Vec<BrowserObservation> {
+    declarations
+        .providers
+        .iter()
+        .filter(|p| p.offers.browser == crate::share::BrowserSource::Bridge)
+        .filter(|p| {
+            p.client_config
+                .as_deref()
+                .is_some_and(|c| root.join(c).is_file())
+        })
+        .filter_map(|p| {
+            let host = p.offers.browser_host.clone()?;
+            Some(BrowserObservation {
+                manifest: home.and_then(|h| native_host_manifest(h, &host)),
+                setup: p.offers.browser_setup.clone().unwrap_or_default(),
+                provider: p.id.clone(),
+                title: p.title.clone(),
+                host,
+            })
+        })
+        .collect()
 }
 
 /// The flat `key: value` lines of a small state record, with quotes removed. The records

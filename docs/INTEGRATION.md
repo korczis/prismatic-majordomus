@@ -9,7 +9,7 @@ decides again from what is there now. The decision is recorded in ADR 0101, the 
 
 That is the executor. Who lands, how much at once and how often is decided by the owner, and
 the decision of 2026-10-16 is
-[rule `project.the-cooperation-model-is-the-owners-word`](../.ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v1.md)
+[rule `project.the-cooperation-model-is-the-owners-word`](../.ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md)
 and [ADR 0167](../.ai/repo/adrs/0167-work-moves-through-seats-on-the-mesh-and-lands-in-combined-tops.md).
 The rule is the one record of the seats, the scope each one claims on the mesh and what each
 does, and this document does not copy it: the site renders the rule and the decision from

@@ -1,0 +1,44 @@
+# Draft for the 2026-10-20 records sweep. The id, the case number (placeholder I3760 in case names) and the dates are
+# allocated from the granted id block when the coordinator records it; current_state was read
+# on origin/master 91c0b5d5658.
+# rehomed from a-visitor-understands-and-checks-majordomus: that milestone derives PLANNED, and the campaign covers ACTIVE milestones only (O1); public-proof is the ACTIVE milestone whose outcome is a visitor checking every claim the homepage makes
+id: "I3760"
+milestone: "public-proof"
+title: "Each evidence-chain node says its own thing, and every homepage figure links to a page that counts the same number"
+slug: "each-evidence-chain-node-says-its-own-thing"
+priority: "p1"
+profile: "implementation"
+parallel_safe: false
+objective: "Give every node of the homepage evidence chain a one-line sentence of its own, declared under the [chain] table of site/data/marketing.toml instead of borrowed from another section; point every chain node and every hero figure at a page whose own headline count is the same quantity, or relabel the figure to what its page counts; put the date and size of the newest recorded run beside the supported count, read from the product model; and have homepage-check refuse a figure whose page counts something else and a node sentence that repeats another section's copy."
+why: "A visitor who follows a figure to check it lands on a page that shows another number, and a node they open explains something else, so the page's promise that every claim can be checked fails on the first two clicks. The 0 supported claims beside the promise reads as a contradiction because nothing says how old the last recorded run is. Found by the landing audit of 2026-10-20 (L-P1-3, L-P1-5, L-P2-5; campaign defects D9 and D11). The feed of the ledger itself is I2795. index.html and marketing.toml sit under a stale claim of I2745, which is completed; ask its holder to release it before claiming."
+current_state: "site/templates/partials/evidence-chain.html:1-6 states that no word of a node is typed there and that each label and sentence is one another homepage section already renders; :21 gives the declared node m.hero.lead (the hero lead, word for word), :22 gives the registry node m.surfaces.lead and links /registry/capabilities/ while its value is model.telemetry.capabilities (3158, of which 206 are builtin, site/data/registry/product.json telemetry), :24 gives the rules node m.contract.caption (a caption about the README's recorded run) and links /doctrines/, :26 gives the use-case node m.hero.console_caption, which describes console panels the page no longer has, and :23 types its own label 'interfaces from one registry' despite the header. site/templates/index.html:166 links the hero figure 'rules a machine enforces' (blocking and enforced rules from the product model) to /doctrines/, whose site/templates/doctrines-section.html:14-16 shows the vendored package's declared, blocking and advisory counts (50, 43, 7 in the audit). site/data/marketing.toml:68-69 declares [chain] with legend only; :67 proof.plain explains declared against supported and nothing about the ledger's age, though product.json evidence.ledger carries executions 14 and newest 2026-09-17T01:14:59Z. scripts/ci/homepage-check holds providers and interfaces (:261-284, :670-697) and holds no figure to the page it links."
+desired_state: "marketing.toml [chain] declares one sentence per node id (declared, registry, surfaces, rules, claims, use-cases, evidence) and evidence-chain.html reads them, with its header comment rewritten to say so. Each node and hero figure links to the page that shows its number: the rules figure and node to the page that counts blocking, machine-enforced rules (the Rules in force page if it counts the same 68, otherwise that page gains the count), the registry node to /registry/ or a value of builtin capabilities, measured first and recorded in the PR. The proof section and the evidence node show the newest recorded run's date and the ledger's execution count from model.evidence.ledger, derived, never typed. homepage-check gains a figures check that reads each linked page from site/public and compares the number it marks with a data attribute against the figure's value, and a chain check that refuses a node sentence equal to any other marketing.toml string."
+scope:
+  - "site/templates/partials/evidence-chain.html"
+  - "site/templates/index.html"
+  - "site/templates/doctrines-section.html"
+  - "site/data/marketing.toml"
+  - "scripts/ci/homepage-check"
+  - "test/cases/3733_each_figure_links_to_the_page_that_counts_it.sh"
+  - ".ai/repo/project/issues/I3760.yaml"
+non_scope:
+  - "Feeding the evidence ledger from CI (I2795)"
+  - "The interface count and the UI surface (I3752)"
+  - "The hero card's status figures and roadmap link (I3764)"
+  - "The AI coding tools figure and the bb title (I3765)"
+  - "Czech translations of the new sentences; the translation memory is I3753's and is exported after this lands"
+acceptance_criteria:
+  - "Every evidence-chain node renders a sentence declared for it under [chain], and no node renders the hero lead, the surfaces lead, the contract caption or the console caption"
+  - "Every hero figure and chain node links to a built page whose marked count equals the figure's value"
+  - "The proof section shows the newest recorded run's date and the ledger's execution count from the product model, and homepage-check refuses the section when the model has a ledger and the page names neither"
+  - "homepage-check fails when a figure links to a page that marks another count, naming the figure, its value, the page and the page's value (negative case, planted in the case's fixture)"
+  - "homepage-check fails when a chain node's sentence equals another section's marketing.toml string, naming the node (negative case)"
+  - "homepage-check passes with the present-state prose refusal of case 3105 unchanged"
+validation:
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3733_each_figure_links_to_the_page_that_counts_it"
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 333_homepage_narrative 3105_the_homepage_states_no_present_it_does_not_read"
+  - "scripts/site-build && scripts/site-check && scripts/ci/homepage-check"
+evidence_required:
+  - "every_figure_links_to_a_page_that_counts_it"
+  - "every_chain_node_has_its_own_sentence"
+depends_on: []

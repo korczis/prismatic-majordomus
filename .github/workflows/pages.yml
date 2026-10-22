@@ -184,8 +184,11 @@ jobs:
       remedy: ${{ steps.remedy.outputs.remedy }}
     steps:
       # pages-check asks whether the published commit is on master and how far behind it is,
-      # so it needs the history and the gh-pages branch, and no file of the past
+      # so it needs the history and the gh-pages branch, and no file of the past. Bounded on
+      # its own, as every full-history checkout is (scripts/ci/step-bound-check): a fetch that
+      # stalls fails here by name instead of waiting out the job.
       - uses: actions/checkout@v4
+        timeout-minutes: 5
         with:
           fetch-depth: 0
           filter: blob:none
@@ -271,9 +274,8 @@ jobs:
   # job and never after it, so that the deploy job keeps no Rust toolchain and waits for the
   # slower of the two rather than for their sum. It is the second Rust command on this path and
   # is here for the reason the first is (ADR 0086): what it writes is published bytes. Its
-  # build cache is setup-rust's, keyed by this job's id. The job carries the one bound and no
-  # step does: test/cases/26_ci_wiring.sh sums every step bound of this file against the
-  # deploy job's, and these steps are not that job's.
+  # build cache is setup-rust's, keyed by this job's id. Its steps' bounds are its own:
+  # test/cases/26_ci_wiring.sh sums only the deploy job's steps against the deploy job's bound.
   ui-snapshot:
     needs: owed
     if: ${{ !cancelled() && (github.event_name != 'schedule' || needs.owed.outputs.remedy == 'deploy') }}
@@ -293,6 +295,7 @@ jobs:
     steps:
       # the UI reads the history too (what changed since, what was released), as the deploy does
       - uses: actions/checkout@v4
+        timeout-minutes: 10
         with:
           fetch-depth: 0
       - uses: ./.github/actions/setup-rust
@@ -387,20 +390,22 @@ jobs:
   # job at 13:56:12 — mid-wait, with the publication already done — so a deployment that had
   # succeeded was reported as `cancelled`.
   #
-  # The three controlled steps below bound 9 minutes between them, against the 96 seconds
-  # .ai/repo/ci/pages.yaml budgets them warm and the 225 it allows the whole controlled half
-  # cold; the probe bounds 11, against a wait this repository does not control and that same
-  # file says never to budget. The job's 41 covers the sum of every step's bound — the evidence
-  # read before the build, and after the probe the reads of GitHub's build, of the documentation,
-  # of the crate's public reference, of the UI's snapshot and of the release the site offers — plus the unbounded
-  # checkout, setup, download and report steps on a cold runner, and leaves the job's bound
-  # where it belongs: as the last resort behind every step's own. No sum is written here, because a step's bound changes without this
-  # comment: test/cases/26_ci_wiring.sh computes it and holds the job strictly above it.
+  # The steps that run a budgeted row (build, check, publish) are bounded from the row: at
+  # least budget.bound.percent of its warm budget in .ai/repo/ci/pages.yaml, which
+  # scripts/ci/step-bound-check holds, so a row that grows inside its budget's margin is never
+  # killed for it. The probe bounds 11, against a wait this repository does not control and
+  # that same file says never to budget. The job's bound covers the sum of every step's bound
+  # — the checkout, the evidence read before the build, and after the probe the reads of
+  # GitHub's build, of the documentation, of the crate's public reference, of the UI's snapshot
+  # and of the release the site offers — plus the unbounded setup, download and report steps on
+  # a cold runner, and leaves the job's bound where it belongs: as the last resort behind every
+  # step's own. No sum is written here, because a step's bound changes without this comment:
+  # test/cases/26_ci_wiring.sh computes it and holds the job strictly above it.
   deploy:
     needs: [owed, rustdoc, ui-snapshot]
     if: ${{ !cancelled() && needs.rustdoc.result == 'success' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 80
     steps:
       # when the push was accepted, so that queue and runner allocation are measured as what
       # they are — GitHub's latency, reported beside this repository's and never mixed into it
@@ -418,8 +423,10 @@ jobs:
       # tags cannot decide any of them — 2302 commit links undecided and six existing tags
       # reported as non-existent, on every run since, with `publish` skipped behind the refusal.
       # fetch-depth: 0 is what the checker asks for by name. scripts/site-deploy still fetches
-      # the one branch it pushes for itself.
+      # the one branch it pushes for itself. Measured at 13-15 s; the step's own bound turns a
+      # stalled fetch into a failure that names it (scripts/ci/step-bound-check).
       - uses: actions/checkout@v4
+        timeout-minutes: 5
         with:
           fetch-depth: 0
           # blob:none keeps the cost to history metadata: every commit and tag is present so the
@@ -473,17 +480,18 @@ jobs:
         run: scripts/pages evidence --commit "$GITHUB_SHA"
 
       # the committed derived data proved current by hash, then rendered; no generation. The
-      # bound followed the site's languages (ADR 0218): build 15 s on 39228746039 (English
-      # only), 173 s on 39392245576 with the Czech copy, against a bound of 180.
+      # bound follows the `build` row of .ai/repo/ci/pages.yaml (budget.bound.percent of it):
+      # 15 s on 39228746039 over the English site, 200-314 s with the Czech copy (ADR 0218).
       - name: build
-        timeout-minutes: 8
+        timeout-minutes: 11
         run: scripts/pages build
 
-      # every static check over the output; the browser probe stays in validate.yml
-      # 169 s on 39228746039 over the English site alone; with the Czech copy the pages it
-      # reads doubled and 39392245576 was killed at the old bound of 3 minutes
+      # every static check over the output; the browser probe stays in validate.yml. The bound
+      # follows the `check` row: 169 s on 39228746039 over the English site alone; with the
+      # Czech copy the pages it reads doubled, 39392245576 was killed at the old bound of 3
+      # minutes, and the runs after it took 296-517 s against the 10 that replaced it.
       - name: check
-        timeout-minutes: 10
+        timeout-minutes: 18
         run: scripts/pages check
 
       # The UI's snapshot of this commit (ADR 0141), from the ui-snapshot job of this run, placed
@@ -580,7 +588,7 @@ jobs:
       # latency, and this one runs only once the site is known to serve this commit, so what
       # it can find is a broken publication — a reference that is missing, stale or half
       # there — and a broken public reference fails the deployment.
-      - name: rustdoc
+      - name: the crate's reference it publishes
         id: rustdoc
         if: steps.public.outcome == 'success'
         timeout-minutes: 6

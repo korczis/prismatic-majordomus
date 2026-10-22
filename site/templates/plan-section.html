@@ -115,17 +115,21 @@
   </div>
 
   <h2 class="mt-12 text-2xl font-bold tracking-tight text-heading">The graph</h2>
-  <p class="mt-2 max-w-3xl text-sm text-body">Generated from the same edges the command reads, by <code class="font-mono text-heading">majordomus plan graph</code>. No diagram on this site is drawn by hand.</p>
-  {{ <plan_graph mermaid={plan.mermaid} caption="Every issue, every dependency" name="plan" /> }}
+  <p class="mt-2 max-w-3xl text-sm text-body">Generated from the same edges the command reads, by <code class="font-mono text-heading">majordomus plan graph</code>. No diagram on this site is drawn by hand. A node is a milestone and an arrow counts the issues of one that wait on issues of another; each milestone's page draws its own issues.</p>
+  {{ <plan_graph mermaid={plan.milestone_mermaid} caption="Every milestone, and the dependencies between them" name="plan-milestones" /> }}
   <p class="mt-2 text-sm text-body"><a href="{{ get_url(path="/plan/dag/", trailing_slash=true) }}" class="text-fg-brand underline">The graph on its own page</a>, with the edge list.</p>
 
   {%- if plan.findings | length > 0 %}
   <h2 class="mt-12 text-2xl font-bold tracking-tight text-heading">Findings</h2>
   <p class="mt-2 max-w-3xl text-sm text-body">What validation says about the model as published. A failure would have stopped this build; anything below is a warning the model reports and does not block.</p>
+  {#- One row per (level, code), counted, with three examples: scope_conflict is reported once
+      per pair of issues sharing a path, so printed one row each the findings grew with the
+      square of the backlog and timed the UI audit out (I3838). Every finding is in the data. -#}
+  <p class="mt-2 max-w-3xl text-sm text-body"><data value="{{ plan.findings | length }}">{{ plan.findings | length }}</data> finding(s) of <data value="{{ plan.findings_by_code | length }}">{{ plan.findings_by_code | length }}</data> kind(s). Every one of them is in <a href="{{ <source_blob path="site/data/generated/plan.json" /> }}" class="font-mono text-fg-brand underline">site/data/generated/plan.json</a>, and <code class="font-mono text-heading">majordomus plan validate</code> prints them all.</p>
   <div class="mt-4 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[32rem] text-left text-sm">
-      <thead class="bg-neutral-secondary-soft text-xs uppercase tracking-wide text-body-subtle"><tr><th scope="col" class="px-4 py-2">level</th><th scope="col" class="px-4 py-2">code</th><th scope="col" class="px-4 py-2">subject</th><th scope="col" class="px-4 py-2">message</th></tr></thead>
-      <tbody>{%- for f in plan.findings %}<tr class="border-t border-default"><td class="px-4 py-2 font-mono text-xs text-heading">{{ f.level }}</td><td class="px-4 py-2 font-mono text-xs text-body">{{ f.code }}</td><td class="px-4 py-2 font-mono text-xs text-body">{{ f.subject }}</td><td class="px-4 py-2 text-body">{{ f.message }}</td></tr>{%- endfor %}</tbody>
+      <thead class="bg-neutral-secondary-soft text-xs uppercase tracking-wide text-body-subtle"><tr><th scope="col" class="px-4 py-2">level</th><th scope="col" class="px-4 py-2">code</th><th scope="col" class="px-4 py-2">count</th><th scope="col" class="px-4 py-2">for example</th></tr></thead>
+      <tbody>{%- for g in plan.findings_by_code %}<tr class="border-t border-default"><td class="px-4 py-2 font-mono text-xs text-heading">{{ g.level }}</td><td class="px-4 py-2 font-mono text-xs text-body">{{ g.code }}</td><td class="px-4 py-2 font-mono text-xs text-body"><data value="{{ g.count }}">{{ g.count }}</data></td><td class="px-4 py-2 text-body"><ul class="space-y-1">{%- for f in g.examples %}<li class="break-words"><span class="font-mono text-xs text-heading">{{ f.subject }}</span> {{ f.message }}</li>{%- endfor %}</ul></td></tr>{%- endfor %}</tbody>
     </table>
   </div>
   {%- endif %}
