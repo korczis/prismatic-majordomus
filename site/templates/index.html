@@ -94,6 +94,19 @@
         {%- endif %}
       </div>
       <p class="mt-4 text-sm leading-relaxed text-body">{{ m.hero.reassure }} <a href="{{ get_url(path="/challenge/", trailing_slash=true) }}" data-cta="challenge" class="whitespace-nowrap font-semibold text-fg-brand hover:underline">{{ m.hero.cta_primary }} &rarr;</a></p>
+      {#- the scenarios a visitor can step into (I3223): the challenge first, refused and then
+          accepted, then every use case a recorded run refuses in, in the order of the refusals.
+          scripts/generate-site-data derives them into terminal.json `scenarios`; nothing here
+          names one, and homepage-check refuses a choice without a recorded run -#}
+      <div data-hero-scenarios class="mt-4">
+        <p class="font-mono text-xs uppercase tracking-widest text-body-subtle">{{ m.hero.scenarios_label }}</p>
+        <ul class="mt-2 space-y-1 text-sm">
+          <li><a href="{{ get_url(path="/challenge/", trailing_slash=true) }}" data-scenario="challenge" class="font-medium text-fg-brand hover:underline">{{ m.hero.scenario_challenge }}</a></li>
+          {%- for sc in term.scenarios | default(value=[]) %}
+          <li><a href="{{ get_url(path=sc.route, trailing_slash=true) }}" data-scenario="{{ sc.use_case }}" class="text-heading hover:underline">{{ sc.title }}</a></li>
+          {%- endfor %}
+        </ul>
+      </div>
       {#- who it works beside: the worker tools the policy is generated for, named by the
           product model and by nothing here (scripts/ci/homepage-check `providers`) -#}
       <dl class="mt-8 border-t border-default pt-5">
@@ -182,10 +195,19 @@
     {{ <landing_head number="01" kicker={x.problem.kicker} title={m.recognise.title} lead={m.recognise.lead} /> }}
     <ul class="grid gap-4 lg:grid-cols-3" data-problems>
       {%- for pid in home.problems %}{% set ds = [d for d in model.domains if d.id == pid and d.status == "stable"] %}{% if ds | length %}{% set d = ds[0] %}
-      <li class="min-w-0"><a href="#domain-{{ d.id }}" class="flex h-full flex-col rounded-xl border border-default bg-neutral-primary p-6 hover:border-brand-subtle hover:bg-neutral-secondary-medium" data-problem="{{ d.id }}">
-        <span class="font-mono text-xs uppercase tracking-widest text-fg-brand">{{ d.title }}</span>
-        <span class="mt-3 text-xl font-bold leading-snug tracking-tight text-heading">{{ d.problem }}</span>
-      </a></li>
+      {#- the node names the features that answer it (I3224): its domain's stable features in
+          the model's order, each linking its page with its claims' verdict; derived from
+          product.json, never declared, and homepage-check holds the list to the model -#}
+      {%- set dfs = [f for f in by_weight if f.domain == d.id and f.status == "stable"] %}
+      <li class="flex min-w-0 flex-col rounded-xl border border-default bg-neutral-primary p-6" data-problem="{{ d.id }}">
+        <a href="#domain-{{ d.id }}" class="group flex flex-col hover:underline">
+          <span class="font-mono text-xs uppercase tracking-widest text-fg-brand">{{ d.title }}</span>
+          <span class="mt-3 text-xl font-bold leading-snug tracking-tight text-heading">{{ d.problem }}</span>
+        </a>
+        <p class="mt-4 border-t border-default pt-4 text-sm text-body" data-node-features="problem:{{ d.id }}">
+          {%- for f in dfs %}{% if not loop.first %}, {% endif %}<a href="{{ base }}{{ f.route }}" data-feature="{{ f.id }}" class="font-medium text-heading hover:underline">{{ f.short_title }}</a> <span class="text-body-subtle">{{ f.evidence.claims.guaranteed }}</span>{% endfor %}
+          <span class="block text-xs text-body-subtle">{{ m.recognise.guaranteed }}</span></p>
+      </li>
       {%- endif %}{% endfor %}
     </ul>
     <p class="mt-8 max-w-3xl text-lg font-semibold leading-snug text-fg-brand-strong">{{ m.recognise.closing }}</p>
@@ -219,6 +241,13 @@
         <span class="mt-1 font-mono text-base font-semibold text-heading">{{ w.label }}</span>
         <span class="mt-2 text-xs leading-snug text-body sm:text-sm">{{ w.what }}</span>
         <a href="{{ base }}{{ w.route }}" class="mt-3 text-xs font-medium text-fg-brand hover:underline" data-recorded-run="{{ w.label }}">{{ m.workflow.recorded }} &rarr;</a>
+        {#- the features whose commands contain this step's command (I3224), or the plain fact
+            that none does -#}
+        {%- set sfs = [f for f in by_weight if f.status == "stable" and w.label in f.commands] %}
+        <p class="mt-3 border-t border-default pt-3 text-xs" data-node-features="step:{{ w.label }}">
+          {%- if sfs | length %}{% for f in sfs %}{% if not loop.first %}, {% endif %}<a href="{{ base }}{{ f.route }}" data-feature="{{ f.id }}" class="text-heading hover:underline">{{ f.short_title }}</a>{% endfor %}
+          {%- else %}<span class="text-body-subtle" data-no-feature>{{ m.workflow.no_feature }}</span>{% endif %}
+        </p>
       </li>
       {%- endfor %}
     </ol>

@@ -58,6 +58,13 @@
 #               a surface a publication carries, or the build names a snapshot of that surface
 #               (build.json `snapshots`, the publication model's); one only a running process
 #               answers states its mount and links no copy
+#   sentence    the product sentence is declared once, as marketing.toml's [hero] title and
+#               subtitle; README.md's bold line and project.json's tagline (every page title and
+#               og:description) say exactly it
+#   scenarios   the hero offers the challenge first, then exactly the use cases terminal.json
+#               derives from the recorded refusals, in their order, each linking its built page
+#   nodes       each problem card and lifecycle step names exactly the features the product
+#               model derives for it (a domain's, or those whose commands contain the step's)
 #   product     the hero opens the product: the first interface a person opens, as the data
 #               orders them — exactly once, named by its feature, at its mount when a
 #               publication holds it there and at no such address when only a running process
@@ -241,6 +248,101 @@ elif absent:
     bad("install", "the install section does not carry the distribution model's " + ", ".join(absent))
 else:
     ok("install", "the install section carries the install, next-step and verification commands the distribution model gives")
+
+# sentence: the one sentence that says what the product is, declared once as the hero's title and
+# subtitle in site/data/marketing.toml (I3134, the owner's choice of 2026-10-20). The README's bold
+# line and the generated project record's tagline, which every page title and og:description
+# read, are projections of it; one that says it in other words fails, naming both wordings.
+hero = load_toml("site/data/marketing.toml").get("hero", {})
+sentence = " ".join(x for x in (hero.get("title", ""), hero.get("subtitle", "")) if x).strip()
+readme_path = os.path.join(root, "README.md")
+readme = open(readme_path, encoding="utf-8").read() if os.path.exists(readme_path) else ""
+bold = next((m.group(1) for m in re.finditer(r"(?m)^\*\*(.+?)\*\*$", readme)), "")
+tagline = load_json("site/data/generated/project.json").get("tagline", "")
+st = []
+if not sentence:
+    st.append("site/data/marketing.toml [hero] declares no title and subtitle, the product sentence")
+if bold != sentence:
+    st.append(f"README.md's bold line says {bold!r}, the declared sentence is {sentence!r}")
+if tagline != sentence:
+    st.append(f"site/data/generated/project.json's tagline says {tagline!r}; run scripts/generate-site-data")
+site_desc = load_toml("site/config.toml").get("description", "")
+if site_desc != sentence:
+    st.append(f"site/config.toml's description (the feeds') says {site_desc!r}")
+card_path = os.path.join(root, "share/design/brand/social-card.svg")
+card = open(card_path, encoding="utf-8").read() if os.path.exists(card_path) else ""
+card_lines = " ".join(html.unescape(t) for t in re.findall(r'<text [^>]*fill="#cbd5e1"[^>]*>([^<]*)</text>', card))
+if card_lines != sentence:
+    st.append(f"the social card (og:image, share/design/brand/social-card.svg) says {card_lines!r}")
+# the launch kit's one sentence is the same declaration (I3135), as the paragraph under its heading
+kit_path = os.path.join(root, "docs/LAUNCH.md")
+kit = open(kit_path, encoding="utf-8").read() if os.path.exists(kit_path) else ""
+kit_m = re.search(r"(?m)^## One sentence\n\n(.+?)(?:\n\n|\Z)", kit, re.S)
+kit_sentence = " ".join(kit_m.group(1).split()) if kit_m else ""
+if kit_sentence != sentence:
+    st.append(f"docs/LAUNCH.md's one sentence says {kit_sentence!r}")
+if st:
+    bad("sentence", "; ".join(st))
+else:
+    ok("sentence", f"README.md's bold line and every page title read the one declared sentence: {sentence!r}")
+
+# scenarios (I3223): the hero offers the challenge first, then exactly the use cases
+# terminal.json derives from the recorded refusals, in their order, each linking its own page,
+# which the build wrote. A choice with no recorded run behind it is refused.
+term = load_json("site/data/generated/terminal.json")
+want_sc = [s["use_case"] for s in term.get("scenarios", [])]
+routes_sc = {s["use_case"]: s["route"] for s in term.get("scenarios", [])}
+block = re.search(r'<div data-hero-scenarios[^>]*>(.*?)</div>', home, re.S)
+sc = []
+if not block:
+    sc.append("the hero renders no data-hero-scenarios list")
+else:
+    links = re.findall(r'<a href="([^"]+)" data-scenario="([^"]+)"', block.group(1))
+    got = [k for _, k in links]
+    if not got or got[0] != "challenge":
+        sc.append(f"the first scenario is {got[0] if got else 'missing'!r}, not the challenge")
+    if got[1:] != want_sc:
+        sc.append(f"the hero offers {got[1:]}, terminal.json's recorded refusals derive {want_sc}")
+    for href, k in links[1:]:
+        r = routes_sc.get(k)
+        if r is None:
+            sc.append(f"{k} has no recorded refusal in terminal.json")
+        elif not href.rstrip("/").endswith(r.rstrip("/")) or not os.path.exists(os.path.join(pub, r.strip("/"), "index.html")):
+            sc.append(f"{k} does not link its built page {r}")
+if sc:
+    bad("scenarios", "; ".join(sc))
+else:
+    ok("scenarios", f"the hero offers the challenge and the {len(want_sc)} use case(s) the recorded refusals derive, each linking its page")
+
+# nodes (I3224): each problem card and each lifecycle step names exactly the features the
+# product model derives for it, in weight order: a problem its domain's stable features, a
+# step the stable features whose commands contain its command. A node no feature names says
+# so, and every named feature links a page the build wrote.
+model_nodes = load_json("site/data/registry/product.json")
+stable = sorted([f for f in model_nodes["features"] if f.get("status") == "stable"], key=lambda f: f["weight"])
+routes_f = {f["id"]: f["route"] for f in model_nodes["features"]}
+want_nodes = {"problem:" + pid: [f["id"] for f in stable if f["domain"] == pid] for pid in problems_decl}
+for w in term.get("walkthrough", []):
+    want_nodes["step:" + w["label"]] = [f["id"] for f in stable if w["label"] in (f.get("commands") or [])]
+nd = []
+for node, want_ids in want_nodes.items():
+    m_ = re.search(r'data-node-features="' + re.escape(node) + r'"[^>]*>(.*?)</(?:ul|p)>', home, re.S)
+    if not m_:
+        nd.append(f"{node} renders no feature node")
+        continue
+    got_ids = re.findall(r'data-feature="([^"]+)"', m_.group(1))
+    if got_ids != want_ids:
+        nd.append(f"{node} names {got_ids}, the product model derives {want_ids}")
+    if not want_ids and "data-no-feature" not in m_.group(1):
+        nd.append(f"{node} has no feature and does not say so")
+    for fid in got_ids:
+        r_ = routes_f.get(fid, "")
+        if not os.path.exists(os.path.join(pub, r_.strip("/"), "index.html")):
+            nd.append(f"{node}: {fid} links {r_ or 'nothing'}, which the build did not write")
+if nd:
+    bad("nodes", "; ".join(nd))
+else:
+    ok("nodes", f"{len(want_nodes)} node(s) name exactly the features the product model derives, each linking its page")
 
 # ---------------------------------------------------------------- runtime
 mermaid_src = re.compile(r'<script\b[^>]*\bsrc="[^"]*mermaid(\.min)?\.js"')
@@ -511,6 +613,17 @@ for rel in ("site/data/marketing.toml", "site/data/manifesto.toml"):
     for n, line in enumerate(open(p), 1):
         if not line.lstrip().startswith("#"):
             copy_lines.append((rel, n, line))
+# the launch kit is hand-written copy too (I3135): its prose outside code is judged by the same
+# vocabulary; a fenced block or an inline code span quotes a command, not a promise
+kit_rel = "docs/LAUNCH.md"
+if os.path.exists(os.path.join(root, kit_rel)):
+    fenced = False
+    for n, line in enumerate(open(os.path.join(root, kit_rel), encoding="utf-8"), 1):
+        if line.lstrip().startswith("```"):
+            fenced = not fenced
+            continue
+        if not fenced:
+            copy_lines.append((kit_rel, n, re.sub(r"`[^`]*`", "", line)))
 if not isinstance(promise_decl, dict) or not promise_decl:
     problems.append("site/data/homepage.toml declares no [promises], so nothing holds the hand-written copy to the claims")
 else:
