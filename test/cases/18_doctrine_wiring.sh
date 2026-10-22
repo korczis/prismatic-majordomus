@@ -90,10 +90,14 @@ expect_exit 10 "$MJ" doctor
 expect_grep 'FAIL doctrine .* lib/check.sh never calls mj_doctrine_dispatch'
 restore
 
-# 3. a blocking doctrine whose command cannot turn a finding into a non-zero exit
-sed -e 's/exit "\$MJ_EX_CONTRACT"/exit 0/g' -e 's/\[ "\$MJ_FAILS" = 0 \] \&\& exit "\$MJ_EX_OK" || exit 0/exit 0/' "$ROOT/lib/check.sh" \
-  | sed 's/MJ_FAILS/MJ_NOTHING/g' > "$LIBD/check.sh"
-gone "$LIBD/check.sh" "MJ_FAILS"
+# 3. a blocking doctrine whose command cannot turn a finding into a non-zero exit. The
+# mutation is the realistic one-line edit — the failure count still read, the failing exit
+# made 0 — and nothing else: renaming MJ_FAILS as well made an easier mutation than the one
+# that survived the audit (F04), and the parse-error `mj_die "$MJ_EX_CONTRACT"` left in the
+# module must not count as propagation.
+sed 's/|| exit "\$MJ_EX_CONTRACT"/|| exit 0/' "$ROOT/lib/check.sh" > "$LIBD/check.sh"
+took "$LIBD/check.sh" '[ "$MJ_FAILS" = 0 ] && exit "$MJ_EX_OK" || exit 0'
+took "$LIBD/check.sh" 'mj_die "$MJ_EX_CONTRACT"'
 expect_exit 10 "$MJ" doctor
 expect_grep 'FAIL doctrine .* never turns a failing finding into a non-zero exit'
 restore

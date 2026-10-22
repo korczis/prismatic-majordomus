@@ -1,0 +1,28 @@
+id: recovery-doctor-effect-proof
+title: "doctor proves a gate runs, not that its line is present"
+slug: recovery-doctor-effect-proof
+order: 234
+priority: p0
+problem: "F04, changed at 893a79be65: an `exit 0` before the invocation in pre-commit still reads 'OK wiring ... wired via .git/hooks/pre-commit', and a blocking command whose failing exit is edited to `|| exit 0` still reads as propagating; only suite cases catch either, in CI, not doctor locally."
+outcome: "A hook or blocking command neutered by a one-line edit fails doctor, and each such edit is a mutation in a suite case."
+current_state: "Wiring and propagation are decided by a grep for the invoking line and for an exit near the failure count."
+desired_state: "doctor refuses a hook that never reaches its gate or discards its status, and a command whose failure count does not decide a failing exit; behavioural probes over fixtures (M04-I02) and the fast/thorough split (M04-I05) follow."
+scope:
+  - lib/doctor.sh
+  - test/cases
+non_scope:
+  - Running a repository's hooks from doctor; diagnostics do not execute the code they judge
+  - Neutered CI gate scripts (scripts/ci/*); their self-tests in the suite are the proof today
+acceptance_criteria:
+  - "Each neutering edit in case 1003 and case 18 mutation 3 fails doctor, and case 1003 fails against the doctor it replaces"
+validation:
+  - "bash test/run.sh 1003_doctor_proves_the_hook_reaches_the_gate 18_doctrine_wiring 14_wiring_dispatcher 03_update"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - a_neutered_gate_fails_doctor
+risks:
+  - "Recovery milestone M04; a hook laid out unusually reads as deeper rather than shallower, so the error the reachability check makes is a missed survivor, never a working hook reported broken"
+depends_on:
+  - recovery-acceptance-contract
+created_at: 2026-10-09
+updated_at: 2026-10-09

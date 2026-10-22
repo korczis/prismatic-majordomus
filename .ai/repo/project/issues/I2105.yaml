@@ -1,0 +1,24 @@
+id: I2105
+milestone: recovery-doctor-effect-proof
+title: "A blocking command whose failure count does not decide a failing exit fails doctor"
+slug: a-command-whose-failure-count-does-not-decide-a-failing-exit-fails-doctor
+priority: p0
+profile: implementation
+parallel_safe: true
+scope:
+  - lib/doctor.sh
+  - test/cases/18_doctrine_wiring.sh
+serves:
+  - acceptance-is-independent-of-the-worker#a-neutered-gate-fails-doctor
+objective: "Read propagation as MJ_FAILS deciding a failing exit on one line, and make case 18 mutation 3 the realistic one-line `|| exit 0` edit."
+why: "The old reading accepted `[ \"$MJ_FAILS\" = 0 ] && exit \"$MJ_EX_OK\" || exit 0` and any unrelated `mj_die \"$MJ_EX_CONTRACT\"`; case 18 also renamed MJ_FAILS, which made its mutation easier than the one that survives."
+current_state: "propagating = MJ_FAILS.*exit | exit .*MJ_EX_CONTRACT | MJ_DOCTOR_MISSING."
+desired_state: "propagating = MJ_FAILS.*exit <contract|drift|missing> | MJ_DOCTOR_MISSING; check, doctor, finish and watch, the commands blocking doctrines are enforced by, still read as propagating."
+validation:
+  - "bash test/run.sh 18_doctrine_wiring"
+evidence_required:
+  - a_neutered_gate_fails_doctor
+acceptance_criteria:
+  - "Case 18 passes, and its mutation 3 fails against master's lib/doctor.sh"
+created_at: 2026-10-09
+updated_at: 2026-10-09

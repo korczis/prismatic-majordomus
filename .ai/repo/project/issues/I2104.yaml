@@ -1,0 +1,24 @@
+id: I2104
+milestone: recovery-doctor-effect-proof
+title: "A hook that never reaches its gate, or discards its status, fails doctor"
+slug: a-hook-that-never-reaches-its-gate-fails-doctor
+priority: p0
+profile: implementation
+parallel_safe: true
+scope:
+  - lib/doctor.sh
+  - test/cases/1003_doctor_proves_the_hook_reaches_the_gate.sh
+serves:
+  - acceptance-is-independent-of-the-worker#a-neutered-gate-fails-doctor
+objective: "Make the git-hook wiring check fail on an unconditional top-level exit, exec or return before the invocation (also in a dispatcher before <hook>.d/), on a commented-out invocation, and on `|| :`, `|| echo`, `; exit 0` and `; true`."
+why: "F04: an `exit 0` above the invoking line passed doctor; the line being present is not the line being run."
+current_state: "The check greps for the invoking line and for `|| true` / `|| exit 0` on it."
+desired_state: "Each neutering edit in case 1003 is a doctor FAIL naming the line, and each form that keeps the failure (a conditional exit, `|| exit 1`, a braced failure block, a deferred status) stays OK; every hook in the case is also run against a failing gate, so the expectation is what git does."
+validation:
+  - "bash test/run.sh 1003_doctor_proves_the_hook_reaches_the_gate 14_wiring_dispatcher 03_update"
+evidence_required:
+  - a_neutered_gate_fails_doctor
+acceptance_criteria:
+  - "Case 1003 passes, and fails against master's lib/doctor.sh at the early-exit step"
+created_at: 2026-10-09
+updated_at: 2026-10-09

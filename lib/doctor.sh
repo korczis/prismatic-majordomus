@@ -142,10 +142,11 @@ mj_validate_wiring() {
           case "$hookdir" in /*) hookfile="$hookdir/$target" ;; *) hookfile="$MJ_ROOT/$hookdir/$target" ;; esac
           # A hook is commonly a dispatcher that runs every executable in <hook>.d/; the
           # invocation then lives in one of those files, not in the hook git calls.
-          local wirefile="" cand rel
+          # A commented-out invocation is not an invocation: the line is read, never run.
+          local wirefile="" cand rel early swallow invoke_re="${prog}[[:space:]]+$arg0([[:space:]]|$)"
           if [ -f "$hookfile" ]; then
             for cand in $(mj_hook_candidates "$hookfile"); do
-              if grep -qE "${prog}[[:space:]]+$arg0([[:space:]]|$)" "$cand"; then wirefile="$cand"; break; fi
+              if grep -vE '^[[:space:]]*#' "$cand" | grep -qE "$invoke_re"; then wirefile="$cand"; break; fi
             done
           fi
           rel="${wirefile#"$MJ_ROOT"/}"
@@ -157,8 +158,15 @@ mj_validate_wiring() {
             mj_doctrine_fail wiring "$name" "$rel invokes it but is not executable, so the dispatcher skips it" "chmod +x $rel"
           elif [ -z "$resolved" ] && ! mj_hook_binary_ok "$wirefile" "$arg0" "$prog"; then
             mj_doctrine_fail wiring "$name" "'$path' is not on PATH and $rel does not name an executable $prog" "grep -n '$prog $arg0' $rel"
-          elif grep -E "${prog}[[:space:]]+$arg0" "$wirefile" | grep -qE '\|\|[[:space:]]*(true|exit[[:space:]]+0)'; then
-            mj_doctrine_fail wiring "$name" "$rel invokes it but swallows the exit code (|| true)" "grep -n '$prog $arg0' $rel"
+          # The line being present is not the line being run. An unconditional exit before
+          # it — in the file that holds it, or in a dispatcher before it reaches <hook>.d/ —
+          # leaves a hook that passes every commit and a grep that still finds the line.
+          elif early="$(mj_hook_early_exit "$wirefile" "$invoke_re")"; then
+            mj_doctrine_fail wiring "$name" "$rel never reaches the invocation: line ${early%%:*} ends the hook first (${early#*: })" "sed -n '${early%%:*}p' $rel"
+          elif [ "$wirefile" != "$hookfile" ] && early="$(mj_hook_early_exit "$hookfile" '\.d(["'"'"'/[:space:]]|$)')"; then
+            mj_doctrine_fail wiring "$name" "$hookdir/$target never reaches $target.d/: line ${early%%:*} ends the hook first (${early#*: })" "sed -n '${early%%:*}p' $hookdir/$target"
+          elif swallow="$(mj_hook_swallow "$wirefile" "$invoke_re")"; then
+            mj_doctrine_fail wiring "$name" "$rel invokes it but swallows the exit code ($swallow)" "grep -n '$prog $arg0' $rel"
           else mj_doctrine_ok wiring "$name" "wired via $rel"; fi ;;
         git-config)
           # A gate that lives in the clone's own configuration rather than in a tracked file.
@@ -479,6 +487,60 @@ EOF
 mj_hook_candidates() {
   printf '%s\n' "$1"
   if [ -d "$1.d" ]; then find "$1.d" -type f 2>/dev/null | LC_ALL=C sort; fi
+  return 0
+}
+# The first command that ends a hook unconditionally before the line matching <stop-ERE>:
+# an `exit`, `exec` or `return` at the top level of the script. Prints "<line>: <command>"
+# and succeeds when there is one. Comments and here-document bodies are not commands, and a
+# terminator inside if/case/loops/functions/braces is conditional — `[ ... ] && exit 0`
+# before a gate is a hook choosing when to run it, not a hook that never does. The nesting
+# is read line by line, so an unusual layout reads as deeper rather than shallower: the
+# error this makes is a missed survivor, never a working hook reported broken.
+mj_hook_early_exit() { # file, stop-ERE
+  awk -v stop="$2" '
+    hd != "" { t = $0; sub(/^\t+/, "", t); if (t == hd) hd = ""; next }
+    { s = $0; sub(/^[[:space:]]+/, "", s) }
+    s == "" || s ~ /^#/ { next }
+    s ~ stop { exit }
+    {
+      if (match(s, /<<-?[[:space:]]*["\047]?[A-Za-z_][A-Za-z0-9_]*/)) {
+        hd = substr(s, RSTART, RLENGTH); sub(/^<<-?[[:space:]]*["\047]?/, "", hd)
+      }
+      n = split(s, w, /[[:space:];]+/)
+      if (depth <= 0 && (w[1] == "exit" || w[1] == "exec" || w[1] == "return")) {
+        printf "%d: %s\n", NR, s; found = 1; exit
+      }
+      for (i = 1; i <= n; i++) {
+        if (w[i] ~ /^#/) break
+        if (w[i] == "if" || w[i] == "case" || w[i] == "for" || w[i] == "while" || w[i] == "until" || w[i] == "{") depth++
+        else if (w[i] == "fi" || w[i] == "esac" || w[i] == "done" || w[i] == "}") depth--
+      }
+    }
+    END { exit found ? 0 : 1 }' "$1"
+}
+# The clause on the invoking line that discards the gate's exit status, if there is one.
+# `|| exit`, `|| exit $?`, `|| exit <non-zero>`, the same for `return`, `|| false` and a
+# braced block that exits non-zero all keep the failure; `|| <name>=...` defers it to a
+# status the script exits with later (the dispatcher idiom), which a line cannot judge.
+# Anything else after `||` — `true`, `:`, `exit 0`, `echo ...` — turns a failure into a
+# pass, as does `; true`, `; :` or `; exit 0` after the command.
+mj_hook_swallow() { # file, invocation-ERE
+  local line rest rhs w arg
+  line="$(grep -vE '^[[:space:]]*#' "$1" | grep -E "$2" | head -n 1)"
+  rest="$(printf '%s' "$line" | sed -E "s/.*$2//")"
+  if printf '%s' "$rest" | grep -qE ';[[:space:]]*(true|:|exit[[:space:]]+0)([[:space:];]|$)'; then
+    printf '%s' "$(printf '%s' "$rest" | grep -oE ';[[:space:]]*(true|:|exit[[:space:]]+0)' | head -n 1)"; return 0
+  fi
+  case "$rest" in *'||'*) ;; *) return 1 ;; esac
+  rhs="$(printf '%s' "${rest#*||}" | sed -E 's/^[[:space:]]+//')"
+  w="${rhs%%[[:space:];]*}"; arg="$(printf '%s' "${rhs#"$w"}" | sed -E 's/^[[:space:]]+//; s/[[:space:];].*//')"
+  case "$w" in
+    exit|return) case "$arg" in ''|'$?'|'"$?"'|[1-9]|[1-9][0-9]|[1-9][0-9][0-9]) return 1 ;; esac ;;
+    false) return 1 ;;
+    '{') printf '%s' "$rhs" | grep -qE '(exit|return)([[:space:]]+("?\$\?"?|[1-9][0-9]*))?[[:space:]]*;' && return 1 ;;
+    *=*) return 1 ;;
+  esac
+  printf '|| %s' "$(printf '%s' "$rhs" | sed -E 's/[[:space:]]*$//')"
   return 0
 }
 # does the hook line that invokes "<prog> <arg0>" name an executable binary?
@@ -877,7 +939,12 @@ mj_validate_doctrine_wiring() {
   local fns dispatching propagating claims
   fns=" $(grep -rhoE '^mj_validate_[A-Za-z0-9_-]+\(\)' "$lib" | sed 's/()$//' | paste -sd' ' -) "
   dispatching=" $(grep -l 'mj_doctrine_dispatch' "$lib"/*.sh 2>/dev/null | paste -sd' ' -) "
-  propagating=" $(grep -lE 'MJ_FAILS.*exit|exit .*MJ_EX_CONTRACT|MJ_DOCTOR_MISSING' "$lib"/*.sh 2>/dev/null | paste -sd' ' -) "
+  # Propagation is the failure count deciding a failing exit on one line. "MJ_FAILS and an
+  # exit somewhere on the line" read `[ "$MJ_FAILS" = 0 ] && exit "$MJ_EX_OK" || exit 0` as
+  # propagating, and "any exit with the contract code anywhere in the module" read an
+  # unrelated `mj_die "$MJ_EX_CONTRACT"` on a parse error as propagating: the one-line edit
+  # that neuters a blocking command survived both (audit F04, M04-I03).
+  propagating=" $(grep -lE 'MJ_FAILS.*exit[[:space:]]+"?\$\{?MJ_EX_(CONTRACT|DRIFT|MISSING)|MJ_DOCTOR_MISSING' "$lib"/*.sh 2>/dev/null | paste -sd' ' -) "
   claims=" $(sed -n 's/^  - id: //p' "$root/docs/CLAIMS.yaml" 2>/dev/null | paste -sd' ' -) "
 
   # 1. every declared doctrine resolves, end to end
