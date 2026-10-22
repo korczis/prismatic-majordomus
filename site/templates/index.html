@@ -310,7 +310,7 @@
         <p class="mt-1 hidden text-xs leading-relaxed text-body-subtle sm:block">{{ m.interfaces.snapshot }}</p>
         <p class="mt-2 text-xs leading-relaxed text-body">{{ m.interfaces.live }} <code class="rounded-base border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading">{{ w.mount }}</code></p>
         {%- else %}
-        <p class="mt-3 text-xs leading-relaxed text-body">{{ m.interfaces.local }} <code class="rounded-base border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading">{{ w.mount }}</code></p>
+        <p class="mt-3 text-xs leading-relaxed text-body">{{ m.interfaces.live }} <code class="rounded-base border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading">{{ w.mount }}</code></p>
         {%- endif %}
         <p class="mt-auto pt-4 text-sm font-medium"><a href="{{ base }}{% if doc | length %}{{ doc[0].route }}{% else %}{{ f.route }}{% endif %}" class="text-fg-brand hover:underline">What it shows, and how to open it &rarr;</a></p>
       </li>
@@ -325,11 +325,12 @@
     </ul>
     {#- the size of the one model every interface above is generated from: the product model's
         telemetry, none of it typed (scripts/site-check holds each figure to the dataset) -#}
-    <dl class="mt-6 grid grid-cols-2 gap-3 rounded-base border border-default bg-neutral-primary-soft p-4 sm:grid-cols-4" data-model-size>
-      {%- for label, key in {"capabilities in the registry": "capabilities", "MCP tools": "mcp_tools", "HTTP routes": "http_routes", "objects of the layer": "objects"} %}
+    <dl class="mt-6 grid grid-cols-2 gap-3 rounded-base border border-default bg-neutral-primary-soft p-4 sm:grid-cols-5" data-model-size>
+      {%- for label, key in {"capabilities in the registry": "capabilities", "built-in capabilities": "builtin", "generated resources, one per object of the layer": "declarative", "MCP tools": "mcp_tools", "HTTP routes": "http_routes"} %}
       <div class="min-w-0"><dt class="text-xs text-body">{{ label }}</dt><dd class="mt-1 font-mono text-xl font-bold text-heading">{{ model.telemetry[key] }}</dd></div>
       {%- endfor %}
     </dl>
+    <p class="mt-3 text-xs leading-relaxed text-body sm:text-sm" data-model-size-note>{{ m.surfaces.size }}</p>
     <p class="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm font-medium">
       <a href="{{ get_url(path="/features/matrix/", trailing_slash=true) }}" class="text-fg-brand hover:underline">Every feature against every interface &rarr;</a>
       <a href="{{ get_url(path="/registry/", trailing_slash=true) }}" class="text-fg-brand hover:underline">The registry every interface is generated from &rarr;</a>
