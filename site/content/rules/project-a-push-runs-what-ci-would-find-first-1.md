@@ -30,7 +30,11 @@ local and certain to fail the same way, chosen from what CI measured.
 - `.githooks/pre-push` calls `scripts/ci/run-plan --before-push` after `finish --check`. The
   policy declares it (`enforcement: structure-gates-on-push`, wired by `git-hook:pre-push`),
   so `doctor`, and through it the pre-commit hook, refuses a clone whose hook stops calling it.
-- The step computes this tree's plan, as CI does, and refuses the push (exit 12) when the plan
+- The step computes the plan of the commits being pushed, as CI does: the history since the
+  merge base up to `HEAD` (`scripts/ci-plan --head HEAD`), never the working tree. An untracked
+  file is not a change a push carries; on 2026-10-22 git's `.merge_file_*` temporaries, left at
+  a checkout's root by an interrupted merge, put a push that only deleted remote refs into the
+  full plan for more than 15 minutes. The step refuses the push (exit 12) when the plan
   cannot be computed. `scripts/ci-plan` refuses a base or head that names no commit. It used
   to pipe a failing `git diff` into `sort`, whose status hid the failure, and so returned a
   plan computed from nothing with exit 0.
@@ -69,8 +73,10 @@ durations it writes. It proves:
 - a cheap gate runs, and a cheap failing gate refuses the push with its output;
 - each kind of left-out gate is named with its reason: the network, no recorded duration,
   over the per-gate limit, and past the budget;
-- a missing durations file, or a plan that cannot be computed (an unknown base), refuses the
-  push;
+- a missing durations file, or a plan that cannot be computed (an unknown base or head),
+  refuses the push;
+- the plan is computed from the commits: in a repository whose working tree holds an untracked
+  `.merge_file_*` that makes the working tree's plan full, the push's plan is not;
 - the hook calls the step, the policy declares the enforcement, and the plan carries the
   model's network flag;
 - a case that reads stdin under a pipe that never closes no longer hangs the runner.

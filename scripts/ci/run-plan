@@ -18,7 +18,9 @@
 #                                                            one job's gates of a written plan
 #   scripts/ci/run-plan --before-push                        what a push owes first: the plan's
 #                                                            structure gates and the suite's
-#                                                            fast cases, within a stated bound
+#                                                            fast cases, within a stated bound;
+#                                                            planned from the commits up to
+#                                                            HEAD, not the working tree
 #
 # BEFORE A PUSH (project.a-push-runs-what-ci-would-find-first). On 2026-10-09 CI refused a
 # release twice for what a local run finds in seconds: a structure gate (economics-claims,
@@ -88,6 +90,16 @@ while [ $# -gt 0 ]; do
     *) rest+=("$1"); shift ;;
   esac
 done
+# A push sends commits, so its plan is computed from them, as CI computes it: the history
+# since the merge base up to HEAD (`--head HEAD`), never the working tree. ci-plan's default
+# adds `git status`, untracked files included, and on 2026-10-22 three `.merge_file_XXXXXX`
+# temporaries an interrupted merge left at the root of the primary checkout were
+# "a changed path in no class of the model": a push that only deleted remote refs ran the
+# full plan for more than 15 minutes over files it did not carry. A caller that names its
+# own paths (--head, --files, --full) keeps them.
+if [ "$before_push" = 1 ] && [ -z "$given" ]; then
+  case " ${rest[*]+"${rest[*]}"} " in *" --head "*|*" --files "*|*" --full "*) ;; *) rest+=(--head HEAD) ;; esac
+fi
 if [ -n "$given" ]; then
   [ -f "$given" ] || { echo "run-plan: $given is missing; the plan job writes it (scripts/ci-plan)" >&2; exit 12; }
   plan="$given"
