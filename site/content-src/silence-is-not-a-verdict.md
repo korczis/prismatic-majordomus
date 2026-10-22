@@ -4,7 +4,7 @@ description = "In the interface a person looks at, a check that never reported a
 template = "page.html"
 [extra]
 lang = "en"
-related = ["proof-carrying-documentation/", "everything-followed/", "a-doubt-is-settled-by-an-experiment/"]
+related = ["proof-carrying-documentation/", "everything-followed/", "a-doubt-is-settled-by-an-experiment/", "a-saving-is-measured-not-claimed/"]
 [extra.translations]
 cs = "mlceni-neni-verdikt/"
 +++
