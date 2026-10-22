@@ -1,6 +1,6 @@
 +++
 title = "served.show"
-description = "The newest recorded observation of each deployment, re-judged against a commit (HEAD unless named). A record keeps proving every commit its served build contains and stops proving the moment the commit asked about is not among them; a record that received nothing proves nothing. Asks no network and writes nothing."
+description = "The newest recorded observation of each deployment, re-judged against a commit (HEAD unless named), and for a deployment the layer declares as an object its status derived from that: `active` only while it serves the commit. A record keeps proving every commit its served build contains and stops proving the moment the commit asked about is not among them; a record that received nothing proves nothing. Asks no network and writes nothing."
 weight = 184
 slug = "served-show"
 [extra]
