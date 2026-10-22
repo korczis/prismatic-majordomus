@@ -158,7 +158,7 @@ majordomus economics run --suite pilot  # live sessions; needs a Claude Code log
 majordomus economics summary            # every figure, recomputed from the recorded runs
 majordomus economics explain effective_token_reduction
 majordomus economics check              # refuse an unsupported claim
-majordomus economics tasks              # each task's wall time, refusals and episodes
+majordomus economics tasks --format json  # each task's wall time, refusals and episodes
 ```
 
 The same answers are served at `GET /api/v1/economics`, `/api/v1/economics/explain`,
