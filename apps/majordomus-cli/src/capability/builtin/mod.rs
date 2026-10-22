@@ -31,6 +31,7 @@
 //! ```
 
 pub mod artifacts;
+pub(crate) mod blackboard;
 pub(crate) mod brief;
 pub(crate) mod capabilities;
 pub mod commands;
@@ -205,6 +206,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         reasoning,
         episodes,
         peers,
+        blackboard,
         brief,
         server,
         mcp,

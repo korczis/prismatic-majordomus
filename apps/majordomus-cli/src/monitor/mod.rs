@@ -189,7 +189,7 @@ pub struct MonitorSourceState {
 }
 
 /// A page of the stream.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct MonitorPage {
     /// The signals, oldest first.
     pub signals: Vec<MonitorSignal>,

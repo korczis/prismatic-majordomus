@@ -85,7 +85,7 @@ impl BenchmarkCases for PeerListInput {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, JsonSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 /// One checkout's board, as the gather found it.
 ///
 /// Present for every checkout the answer covers, whether or not its board could be read,
@@ -106,6 +106,11 @@ pub struct BoardView {
     /// Why this board is not in the answer. `None` when it is.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub reason: Option<String>,
+    /// The mesh stream of the server whose memory holds this board, when its mesh runs: the
+    /// stream it projects the board's peers into as `board-pN` sessions. A position such as
+    /// `p1` is that server's alone, so only this stream ties a board peer to its session.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub stream: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
@@ -134,6 +139,11 @@ pub struct PeerList {
     /// could not be asked, and `BoardView::reason` says which and why — so that "nobody
     /// else is here" is never reported when the truth is "I could not ask".
     pub complete: bool,
+    /// The mesh stream of the server that answered, when its mesh runs: the stream its own
+    /// board's peers are projected into. A sibling's answer carries it so that the gatherer
+    /// can name it on that sibling's `BoardView`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub stream: Option<String>,
 }
 
 /// One sibling server's own board, over the route the registry declares for `peers.list`.
@@ -147,6 +157,13 @@ pub struct PeerList {
 /// the repository, and the two of us would ask each other until a timeout. A board that
 /// cannot be read narrowly is reported unread, with the reason.
 pub(crate) fn board_of(ctx: &Context, url: &str) -> Result<Vec<Peer>, String> {
+    answer_of(ctx, url).map(|(peers, _)| peers)
+}
+
+/// [`board_of`], with the mesh stream the sibling's server projects its board into, when it
+/// says (a server older than this field says nothing, and its peers are then joined to no
+/// session).
+fn answer_of(ctx: &Context, url: &str) -> Result<(Vec<Peer>, Option<String>), String> {
     let path = ctx
         .registry
         .get("peers.list")
@@ -171,11 +188,19 @@ pub(crate) fn board_of(ctx: &Context, url: &str) -> Result<Vec<Peer>, String> {
     }
     let value: serde_json::Value =
         serde_json::from_str(&reply.body).map_err(|e| format!("{url} answered non-JSON ({e})"))?;
-    serde_json::from_value(value["peers"].clone())
-        .map_err(|e| format!("{url} answered a board this executable cannot read ({e})"))
+    let peers = serde_json::from_value(value["peers"].clone())
+        .map_err(|e| format!("{url} answered a board this executable cannot read ({e})"))?;
+    Ok((peers, value["stream"].as_str().map(str::to_string)))
 }
 
-fn peers_list(ctx: &Context, input: PeerListInput) -> Result<PeerList, CapabilityError> {
+/// The mesh stream this process projects its own board into, when its mesh runs.
+fn own_stream(ctx: &Context) -> Option<String> {
+    ctx.mesh
+        .cooperation()
+        .map(|c| c.journal().own_stream().as_str().to_string())
+}
+
+pub(crate) fn peers_list(ctx: &Context, input: PeerListInput) -> Result<PeerList, CapabilityError> {
     let root = PathBuf::from(&ctx.index.repository.root);
     let root = root.canonicalize().unwrap_or(root);
     let local_half = server::local_half(&root);
@@ -199,12 +224,14 @@ fn peers_list(ctx: &Context, input: PeerListInput) -> Result<PeerList, Capabilit
         let (standing, url, found) = if this_checkout {
             let (standing, _, read) = server::standing_at(&worktree, &local_half);
             let url = read.document().and_then(|d| d.url.clone());
-            (standing, url, Ok(ctx.peers.list()))
+            (standing, url, Ok((ctx.peers.list(), own_stream(ctx))))
         } else {
             let (standing, reason, read) = server::standing_at(&worktree, &local_half);
             let url = read.document().and_then(|d| d.url.clone());
             let found = match (standing, url.as_deref()) {
-                (ServerStanding::Ready | ServerStanding::Outdated, Some(url)) => board_of(ctx, url),
+                (ServerStanding::Ready | ServerStanding::Outdated, Some(url)) => {
+                    answer_of(ctx, url)
+                }
                 // No server, no board, and nobody attached there — which is a complete
                 // answer about that checkout and not a failure to reach one. A stale lease
                 // belongs here too: it names a process that is gone, so its board went
@@ -213,7 +240,7 @@ fn peers_list(ctx: &Context, input: PeerListInput) -> Result<PeerList, Capabilit
                 // and a flag that is always false says nothing when it matters. `standing`
                 // already tells the reader the lease is stale, and `server.status` is the
                 // capability that explains it.
-                (ServerStanding::Absent | ServerStanding::Stale, _) => Ok(Vec::new()),
+                (ServerStanding::Absent | ServerStanding::Stale, _) => Ok((Vec::new(), None)),
                 // Starting is the genuinely unknown one: a server is binding right now and
                 // may hold peers a second from now. Brief, and reported rather than guessed.
                 _ => Err(reason.unwrap_or_else(|| {
@@ -232,11 +259,11 @@ fn peers_list(ctx: &Context, input: PeerListInput) -> Result<PeerList, Capabilit
     let mut boards: Vec<BoardView> = Vec::with_capacity(read.len());
     let mut complete = true;
     for (checkout, standing, url, found) in read {
-        let (found, reason) = match found {
-            Ok(found) => (found, None),
+        let (found, stream, reason) = match found {
+            Ok((found, stream)) => (found, stream, None),
             Err(why) => {
                 complete = false;
-                (Vec::new(), Some(why))
+                (Vec::new(), None, Some(why))
             }
         };
         boards.push(BoardView {
@@ -244,6 +271,7 @@ fn peers_list(ctx: &Context, input: PeerListInput) -> Result<PeerList, Capabilit
             url,
             attached: found.iter().filter(|p| p.attached).count(),
             reason,
+            stream,
             checkout: checkout.clone(),
         });
         // every peer is stamped by the reader, its own included and whatever the sibling
@@ -262,6 +290,7 @@ fn peers_list(ctx: &Context, input: PeerListInput) -> Result<PeerList, Capabilit
         peers,
         boards,
         complete,
+        stream: own_stream(ctx),
     })
 }
 
@@ -432,5 +461,78 @@ mod tests {
                 "{id} lost or renamed its HTTP route"
             );
         }
+    }
+
+    /// A sibling checkout whose board cannot be read is listed with the reason, and the answer
+    /// says it is not complete: a server still starting, and one that answers for the sibling
+    /// with a board this executable cannot read.
+    #[test]
+    fn a_sibling_board_that_cannot_be_read_is_named_and_the_answer_is_incomplete() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let ctx = crate::monitor::testing::context(&repo);
+        let root = repo.root().canonicalize().unwrap();
+        let git = |args: &[&str]| {
+            let ok = std::process::Command::new("git")
+                .args(["-c", "user.email=t@t", "-c", "user.name=t"])
+                .args(args)
+                .current_dir(&root)
+                .status()
+                .unwrap()
+                .success();
+            assert!(ok, "git {args:?}");
+        };
+        git(&["commit", "-q", "--allow-empty", "-m", "root"]);
+        let sibling = root.join("side");
+        git(&[
+            "worktree",
+            "add",
+            "-q",
+            "-b",
+            "side",
+            sibling.to_str().unwrap(),
+        ]);
+        let sibling = sibling.canonicalize().unwrap();
+        let lease = lease::lease_file(&sibling, &server::local_half(&root));
+        std::fs::create_dir_all(lease.parent().unwrap()).unwrap();
+        let read = || {
+            let list = peers_list(
+                &ctx,
+                PeerListInput {
+                    checkouts: Checkouts::Repository,
+                },
+            )
+            .unwrap();
+            let reason = list
+                .boards
+                .iter()
+                .find(|b| b.checkout.worktree == sibling)
+                .map(|b| b.reason.clone())
+                .expect("the sibling's board is listed");
+            (list.complete, reason.unwrap_or_default())
+        };
+
+        // a lease its owner has not written yet: the server is still starting
+        std::fs::write(&lease, "").unwrap();
+        let (complete, reason) = read();
+        assert!(!complete);
+        assert!(reason.contains("no board to read yet"), "{reason}");
+
+        // a server that answers for the sibling with a board that is not a list of peers
+        let url =
+            crate::monitor::testing::http_stub(repository::identity(&sibling), r#"{"peers": 7}"#);
+        let doc = lease::LeaseDocument {
+            schema: lease::SCHEMA.into(),
+            pid: std::process::id(),
+            token: "t".into(),
+            root: sibling.clone(),
+            url: Some(url),
+            started_at: "2026-10-18T00:00:00Z".into(),
+            executable: None,
+            version: Some(crate::VERSION.into()),
+        };
+        std::fs::write(&lease, serde_json::to_string(&doc).unwrap()).unwrap();
+        let (complete, reason) = read();
+        assert!(!complete);
+        assert!(reason.contains("cannot read"), "{reason}");
     }
 }
