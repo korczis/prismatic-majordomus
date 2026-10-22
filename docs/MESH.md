@@ -209,7 +209,8 @@ the live state plus what compaction keeps, not an unbounded history. Once marks 
 carry no events: replication stops rather than loops.
 
 `mesh.state` folds the journal: every runtime with the same events and the same liveness
-verdicts computes the same state and the same `digest`.
+verdicts computes the same state and the same `digest`. The digest covers everything but a
+claim's pins (see Claims), which a runtime older than them does not read.
 
 ## Claims and leases
 
@@ -230,6 +231,27 @@ meets `apps/majordomus-cli`; `app` does not.
   holder's claim expires instead.
 - **Advisory** claims report overlaps and refuse nothing. The peer board's announcements are
   projected as advisory claims of the announcing MCP session.
+- **Pins:** a claim taken in a checkout whose task is active and started bound to a named
+  issue or intent (`start --issue` or `--intent`, ADR 0111) carries that task's id, the names
+  and the two pins its binding answered at start — `plan_revision` and `evidence_standing` —
+  read from the task record and never recomputed. A finished, exempt, refused or unnamed task,
+  a claim naming another task than the checkout's active one, and the board's announcements
+  carry none. A claim that names no task is taken for the checkout's task whichever client
+  makes it. The pins are under the event's signature; the writer refuses pins out of their
+  bounds before signing, and a reader drops such pins and folds the claim, so no runtime
+  refuses an event for its pins. Admission, release and expiry ignore them, and the state
+  digest leaves them out, so a runtime that predates them and one that carries them agree.
+- **Where a peer's work stands:** `mesh state` (`mesh.state`) lists every held pinned claim
+  with its standing against this checkout's own `intents.binding` for the work it names,
+  through the comparison `handover --resolve` makes: `unchanged`, `evidence_moved` (a served
+  criterion's evidence changed state) or `plan_changed` (the intent, a link or the critique
+  was edited) — or `unknown` with the reason when the binding cannot be asked, refuses the work
+  here, or reaches no intent here. Where the binding answers no pin at all, `handover
+  --resolve` (one checkout, which held the work) says `plan_changed` and `mesh state` says
+  `unknown`: another checkout that does not hold the work has learned nothing about it. One
+  read folds the journal once and asks the binding once per distinct work named. Unknown is
+  never read as unchanged, and nothing is refused: a moved intent is something the workers
+  are told, not a gate.
 
 ## Handovers
 
@@ -344,6 +366,7 @@ What the mesh defends against, and how:
 | a web page driving the server (DNS rebinding) | a state-changing request from a browser is accepted only from the server's own origin and only when addressed by an IP literal or `localhost` |
 | a stranger's hellos | the replay cache and the refusal list hold only what a trusted key of this repository sent, or are capped |
 | a stale peer holding a scope forever | claims live only while the holder's beat rises |
+| a peer's pins that misstate what its worker is bound to | a standing compares what the peer's stream signed — attributed to it and expiring with it — with this checkout's binding; it is not proof of the worker's state, and a forged `unchanged` is the peer's signed assertion, never this runtime's |
 | publishing arbitrary files | handover publication reads only `.ai/local/state/handovers/` |
 | a future protocol | `protocol_unsupported` with both ranges, not a dropped connection |
 

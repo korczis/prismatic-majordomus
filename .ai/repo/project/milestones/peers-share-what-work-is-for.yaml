@@ -1,0 +1,38 @@
+id: peers-share-what-work-is-for
+title: A mesh claim carries what its task was bound to
+slug: peers-share-what-work-is-for
+order: 125
+priority: p2
+problem: "A mesh claim carries a free-text intent and issue. A worker on another machine sees a scope and a sentence, and cannot tell whether the intent that worker is working to has been rewritten, its critique reopened or its evidence moved since it started. The task record has held two pins for that since ADR 0111, and nothing publishes them; BindingDrift::between, written to compare them, has no caller outside its own module."
+outcome: "A claim carries the claiming task's pins from its record, and `mesh state` on every runtime reports each pinned claim's standing against that runtime's own binding."
+current_state: "ClaimAcquired carries claim, session, scope, intent text, mode and issue text. handover --resolve compares a handover's pins in shell; nothing compares a peer's."
+desired_state: "ClaimAcquired carries optional ClaimPins; mesh.state answers pins with a standing per held pinned claim, derived through intents.binding and BindingDrift::between."
+scope:
+  - apps/majordomus-cli/src/mesh
+  - apps/majordomus-cli/src/capability/builtin/mesh.rs
+  - apps/majordomus-cli/src/commands/mesh.rs
+  - apps/majordomus-cli/tests/mesh_cooperation.rs
+  - docs/MESH.md
+  - docs/generated
+  - site/data
+  - .ai/repo/project
+  - .ai/repo/rules/project
+non_scope:
+  - Refusing on moved pins
+  - Pins on peer-board announcements or on mesh handovers
+acceptance_criteria:
+  - "A bound task's claim carries its pins to a linked runtime as written"
+  - "mesh state reports unchanged, evidence_moved, plan_changed or unknown per pinned claim, the same on the command line and HTTP"
+  - "Runtimes with and without pins still agree on the digest"
+validation:
+  - majordomus intent validate
+  - cargo test --test mesh_cooperation a_pinned_claim
+  - cargo test --lib -- pins pinned
+evidence_required: []
+depends_on:
+  - intent-bound-work
+risks:
+  - "An older runtime reads a newer claim: the body is stored raw and folded with serde defaults, and the digest leaves the pins out, so the two still converge; tested in state.rs."
+  - "A checkout that does not hold the issue a peer named must not read the peer as unchanged; it reads unknown with the reason."
+created_at: 2026-10-09
+updated_at: 2026-10-09

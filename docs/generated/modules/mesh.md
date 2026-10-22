@@ -9,7 +9,7 @@ Stability: experimental. Capabilities: 21.
 
 ## `mesh.claim` — Claim a scope across the mesh
 
-Claim repository paths for a session. An exclusive claim that meets a live exclusive claim of another session — on this runtime or any runtime this one has heard — is refused as `claim_conflict` with the claims it meets; an advisory claim is recorded and its overlaps reported. A claim lives while its session is open and its runtime beats: a crashed holder's claim expires everywhere on its own. Writes this runtime's journal only.
+Claim repository paths for a session. An exclusive claim that meets a live exclusive claim of another session — on this runtime or any runtime this one has heard — is refused as `claim_conflict` with the claims it meets; an advisory claim is recorded and its overlaps reported. A claim lives while its session is open and its runtime beats: a crashed holder's claim expires everywhere on its own. When this checkout's task is active and started bound to a named issue or intent, the claim carries that task's id, names and two pins as its record holds them (ADR 0111); they refuse nothing. Writes this runtime's journal only.
 
 | | |
 |---|---|
@@ -248,7 +248,7 @@ Output: `PeerDetail`.
 
 ## `mesh.peers` — Who cooperates, machine by machine
 
-Machine → runtime → session → claim: every runtime this one is linked to or has heard through the journal, grouped by machine, local first; each runtime with its liveness, the milliseconds since its beat rose and its link, each session with what it said and its claims. Remote and local runtimes share one shape, and the state digest closes the answer: equal digests, equal state.
+Machine → runtime → session → claim: every runtime this one is linked to or has heard through the journal, grouped by machine, local first; each runtime with its liveness, the milliseconds since its beat rose and its link, each session with what it said and its claims. Remote and local runtimes share one shape, and the state digest closes the answer: equal digests, equal state (a claim's pins aside, which runtimes of different ages need not both read).
 
 | | |
 |---|---|
@@ -411,7 +411,7 @@ Output: `Written`.
 
 ## `mesh.state` — The state every linked runtime converges on
 
-The journal folded: every session, every claim with its standing (held, released, expired, conflicted with its winner), the advisory overlaps, every handover with who consumed it, every review request with its answers, and the digest two runtimes compare. Plus every stream's liveness on this runtime's clock.
+The journal folded: every session, every claim with its standing (held, released, expired, conflicted with its winner), the advisory overlaps, every handover with who consumed it, every review request with its answers, and the digest two runtimes compare (a claim's pins left out). Plus every stream's liveness on this runtime's clock, and `pins`: every held claim carrying the pins of the task it was taken under, with where they stand against this checkout's own `intents.binding` for the work they name — `unchanged`, `evidence_moved`, `plan_changed`, or `unknown` with the reason when the binding cannot be asked, refuses it, or reaches no intent here. Derived on every read, one binding per distinct work named, stored nowhere.
 
 | | |
 |---|---|

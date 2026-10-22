@@ -41444,7 +41444,7 @@
       "module": "mesh",
       "kind": "command",
       "title": "Claim a scope across the mesh",
-      "description": "Claim repository paths for a session. An exclusive claim that meets a live exclusive claim of another session — on this runtime or any runtime this one has heard — is refused as `claim_conflict` with the claims it meets; an advisory claim is recorded and its overlaps reported. A claim lives while its session is open and its runtime beats: a crashed holder's claim expires everywhere on its own. Writes this runtime's journal only.",
+      "description": "Claim repository paths for a session. An exclusive claim that meets a live exclusive claim of another session — on this runtime or any runtime this one has heard — is refused as `claim_conflict` with the claims it meets; an advisory claim is recorded and its overlaps reported. A claim lives while its session is open and its runtime beats: a crashed holder's claim expires everywhere on its own. When this checkout's task is active and started bound to a named issue or intent, the claim carries that task's id, names and two pins as its record holds them (ADR 0111); they refuse nothing. Writes this runtime's journal only.",
       "input": {
         "name": "ClaimInput",
         "schema": {
@@ -44452,6 +44452,17 @@
                   ],
                   "description": "The issue it is for."
                 },
+                "pins": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/ClaimPins"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "What the claiming task was bound to when it started, as its record said; absent when\nthe task named nothing or the claim came from an executable that carries none."
+                },
                 "acquired_lamport": {
                   "type": "integer",
                   "format": "uint64",
@@ -44480,7 +44491,7 @@
                 "acquired_seq",
                 "state"
               ],
-              "description": "One claim anywhere in the mesh: who took what, for what, and where it stands. The\nacquisition's Lamport stamp and sequence are carried rather than derived on demand,\nbecause they are what exclusivity is decided by — every runtime ranks two competing\nclaims by the same triple and so names the same winner, with no message passing and no\n\"last packet wins\".\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ClaimState, ClaimView};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::ClaimAcquired { claim: \"c1\".into(), session: \"s1\".into(),\n    scope: vec![\"apps/majordomus-cli\".into()], intent: Some(\"document the mesh\".into()),\n    mode: ClaimMode::Exclusive, issue: Some(\"#184\".into()) }).unwrap();\n\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nlet claim: &ClaimView = &state.claims[0];\nassert_eq!(claim.scope, [\"apps/majordomus-cli\"]);\nassert_eq!(claim.state, ClaimState::Held);\nassert!(claim.acquired_lamport > 0, \"the order exclusivity is decided in\");\n```"
+              "description": "One claim anywhere in the mesh: who took what, for what, and where it stands. The\nacquisition's Lamport stamp and sequence are carried rather than derived on demand,\nbecause they are what exclusivity is decided by — every runtime ranks two competing\nclaims by the same triple and so names the same winner, with no message passing and no\n\"last packet wins\".\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ClaimState, ClaimView};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::ClaimAcquired { claim: \"c1\".into(), session: \"s1\".into(),\n    scope: vec![\"apps/majordomus-cli\".into()], intent: Some(\"document the mesh\".into()),\n    mode: ClaimMode::Exclusive, issue: Some(\"#184\".into()), pins: None }).unwrap();\n\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nlet claim: &ClaimView = &state.claims[0];\nassert_eq!(claim.scope, [\"apps/majordomus-cli\"]);\nassert_eq!(claim.state, ClaimState::Held);\nassert!(claim.acquired_lamport > 0, \"the order exclusivity is decided in\");\n```"
             },
             "StreamId": {
               "type": "string",
@@ -44500,6 +44511,36 @@
                 }
               ],
               "description": "Whether a claim excludes others or only tells them. Both are useful and they answer\ndifferent questions: an exclusive claim is a worker saying \"do not edit this while I\nam\", an advisory one is saying \"I am here\". Exclusive is the default because a claim\ntaken without a thought about the mode is a claim somebody expects to be respected.\n\n```\nuse majordomus_cli::mesh::journal::ClaimMode;\n\nassert_eq!(ClaimMode::default(), ClaimMode::Exclusive);\nassert_eq!(serde_json::to_value(ClaimMode::Advisory).unwrap(), serde_json::json!(\"advisory\"));\n```"
+            },
+            "ClaimPins": {
+              "type": "object",
+              "properties": {
+                "task": {
+                  "type": "string",
+                  "description": "The task whose record the pins were read from."
+                },
+                "issue": {
+                  "type": "string",
+                  "description": "The issue the task said it executes (`start --issue`); empty when it named none."
+                },
+                "intent": {
+                  "type": "string",
+                  "description": "The intent the task said it serves (`start --intent`); empty when it named none."
+                },
+                "plan_revision": {
+                  "type": "string",
+                  "description": "The pin of what the work was for when the task started."
+                },
+                "evidence_standing": {
+                  "type": "string",
+                  "description": "The pin of where the served criteria's evidence stood when the task started."
+                }
+              },
+              "required": [
+                "task",
+                "plan_revision"
+              ],
+              "description": "What a claim's task was bound to when it started: the issue and the intent it named, and\nthe two pins `intents.binding` answered then (ADR 0111). Carried from the task record, never\ncomputed here — a second derivation of the same pair is how two machines come to disagree\nabout what one task was for. A reader on another machine compares the pins with what its\nown `intents.binding` answers now, and a difference says the intent, a link, the critique\nor the evidence moved since the claiming task started; it says nothing about who is right.\n\n```\nuse majordomus_cli::mesh::journal::ClaimPins;\n\nlet pins = ClaimPins {\n    task: \"t-1\".into(),\n    issue: \"I2071\".into(),\n    intent: String::new(),\n    plan_revision: \"9f2c\".into(),\n    evidence_standing: \"1ab0\".into(),\n};\nassert!(pins.validate().is_ok());\nassert_eq!(serde_json::to_value(&pins).unwrap().get(\"intent\"), None, \"empty is absent\");\n\n// a pin is one short line: it is compared, never rendered as a document\nlet long = ClaimPins { plan_revision: \"x\".repeat(200), ..pins.clone() };\nassert!(long.validate().is_err());\n\n// pins that pin nothing are not carried\nassert!(ClaimPins { plan_revision: String::new(), ..pins }.validate().is_err());\n```"
             },
             "ClaimState": {
               "oneOf": [
@@ -44745,7 +44786,7 @@
       "module": "mesh",
       "kind": "query",
       "title": "Who cooperates, machine by machine",
-      "description": "Machine → runtime → session → claim: every runtime this one is linked to or has heard through the journal, grouped by machine, local first; each runtime with its liveness, the milliseconds since its beat rose and its link, each session with what it said and its claims. Remote and local runtimes share one shape, and the state digest closes the answer: equal digests, equal state.",
+      "description": "Machine → runtime → session → claim: every runtime this one is linked to or has heard through the journal, grouped by machine, local first; each runtime with its liveness, the milliseconds since its beat rose and its link, each session with what it said and its claims. Remote and local runtimes share one shape, and the state digest closes the answer: equal digests, equal state (a claim's pins aside, which runtimes of different ages need not both read).",
       "input": {
         "name": "Empty",
         "schema": {
@@ -44804,7 +44845,7 @@
                 "string",
                 "null"
               ],
-              "description": "The digest of the cooperation state: equal digests, equal state."
+              "description": "The digest of the cooperation state: equal digests, equal state — every field but a\nclaim's pins, which an older executable does not read."
             }
           },
           "required": [
@@ -45336,6 +45377,17 @@
                   ],
                   "description": "The issue it is for."
                 },
+                "pins": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/ClaimPins"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "What the claiming task was bound to when it started, as its record said; absent when\nthe task named nothing or the claim came from an executable that carries none."
+                },
                 "acquired_lamport": {
                   "type": "integer",
                   "format": "uint64",
@@ -45364,7 +45416,7 @@
                 "acquired_seq",
                 "state"
               ],
-              "description": "One claim anywhere in the mesh: who took what, for what, and where it stands. The\nacquisition's Lamport stamp and sequence are carried rather than derived on demand,\nbecause they are what exclusivity is decided by — every runtime ranks two competing\nclaims by the same triple and so names the same winner, with no message passing and no\n\"last packet wins\".\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ClaimState, ClaimView};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::ClaimAcquired { claim: \"c1\".into(), session: \"s1\".into(),\n    scope: vec![\"apps/majordomus-cli\".into()], intent: Some(\"document the mesh\".into()),\n    mode: ClaimMode::Exclusive, issue: Some(\"#184\".into()) }).unwrap();\n\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nlet claim: &ClaimView = &state.claims[0];\nassert_eq!(claim.scope, [\"apps/majordomus-cli\"]);\nassert_eq!(claim.state, ClaimState::Held);\nassert!(claim.acquired_lamport > 0, \"the order exclusivity is decided in\");\n```"
+              "description": "One claim anywhere in the mesh: who took what, for what, and where it stands. The\nacquisition's Lamport stamp and sequence are carried rather than derived on demand,\nbecause they are what exclusivity is decided by — every runtime ranks two competing\nclaims by the same triple and so names the same winner, with no message passing and no\n\"last packet wins\".\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ClaimState, ClaimView};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::ClaimAcquired { claim: \"c1\".into(), session: \"s1\".into(),\n    scope: vec![\"apps/majordomus-cli\".into()], intent: Some(\"document the mesh\".into()),\n    mode: ClaimMode::Exclusive, issue: Some(\"#184\".into()), pins: None }).unwrap();\n\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nlet claim: &ClaimView = &state.claims[0];\nassert_eq!(claim.scope, [\"apps/majordomus-cli\"]);\nassert_eq!(claim.state, ClaimState::Held);\nassert!(claim.acquired_lamport > 0, \"the order exclusivity is decided in\");\n```"
             },
             "StreamId": {
               "type": "string",
@@ -45384,6 +45436,36 @@
                 }
               ],
               "description": "Whether a claim excludes others or only tells them. Both are useful and they answer\ndifferent questions: an exclusive claim is a worker saying \"do not edit this while I\nam\", an advisory one is saying \"I am here\". Exclusive is the default because a claim\ntaken without a thought about the mode is a claim somebody expects to be respected.\n\n```\nuse majordomus_cli::mesh::journal::ClaimMode;\n\nassert_eq!(ClaimMode::default(), ClaimMode::Exclusive);\nassert_eq!(serde_json::to_value(ClaimMode::Advisory).unwrap(), serde_json::json!(\"advisory\"));\n```"
+            },
+            "ClaimPins": {
+              "type": "object",
+              "properties": {
+                "task": {
+                  "type": "string",
+                  "description": "The task whose record the pins were read from."
+                },
+                "issue": {
+                  "type": "string",
+                  "description": "The issue the task said it executes (`start --issue`); empty when it named none."
+                },
+                "intent": {
+                  "type": "string",
+                  "description": "The intent the task said it serves (`start --intent`); empty when it named none."
+                },
+                "plan_revision": {
+                  "type": "string",
+                  "description": "The pin of what the work was for when the task started."
+                },
+                "evidence_standing": {
+                  "type": "string",
+                  "description": "The pin of where the served criteria's evidence stood when the task started."
+                }
+              },
+              "required": [
+                "task",
+                "plan_revision"
+              ],
+              "description": "What a claim's task was bound to when it started: the issue and the intent it named, and\nthe two pins `intents.binding` answered then (ADR 0111). Carried from the task record, never\ncomputed here — a second derivation of the same pair is how two machines come to disagree\nabout what one task was for. A reader on another machine compares the pins with what its\nown `intents.binding` answers now, and a difference says the intent, a link, the critique\nor the evidence moved since the claiming task started; it says nothing about who is right.\n\n```\nuse majordomus_cli::mesh::journal::ClaimPins;\n\nlet pins = ClaimPins {\n    task: \"t-1\".into(),\n    issue: \"I2071\".into(),\n    intent: String::new(),\n    plan_revision: \"9f2c\".into(),\n    evidence_standing: \"1ab0\".into(),\n};\nassert!(pins.validate().is_ok());\nassert_eq!(serde_json::to_value(&pins).unwrap().get(\"intent\"), None, \"empty is absent\");\n\n// a pin is one short line: it is compared, never rendered as a document\nlet long = ClaimPins { plan_revision: \"x\".repeat(200), ..pins.clone() };\nassert!(long.validate().is_err());\n\n// pins that pin nothing are not carried\nassert!(ClaimPins { plan_revision: String::new(), ..pins }.validate().is_err());\n```"
             },
             "ClaimState": {
               "oneOf": [
@@ -46364,7 +46446,7 @@
       "module": "mesh",
       "kind": "query",
       "title": "The state every linked runtime converges on",
-      "description": "The journal folded: every session, every claim with its standing (held, released, expired, conflicted with its winner), the advisory overlaps, every handover with who consumed it, every review request with its answers, and the digest two runtimes compare. Plus every stream's liveness on this runtime's clock.",
+      "description": "The journal folded: every session, every claim with its standing (held, released, expired, conflicted with its winner), the advisory overlaps, every handover with who consumed it, every review request with its answers, and the digest two runtimes compare (a claim's pins left out). Plus every stream's liveness on this runtime's clock, and `pins`: every held claim carrying the pins of the task it was taken under, with where they stand against this checkout's own `intents.binding` for the work they name — `unchanged`, `evidence_moved`, `plan_changed`, or `unknown` with the reason when the binding cannot be asked, refuses it, or reaches no intent here. Derived on every read, one binding per distinct work named, stored nowhere.",
       "input": {
         "name": "Empty",
         "schema": {
@@ -46407,6 +46489,13 @@
                 "$ref": "#/$defs/StreamView"
               },
               "description": "Every stream's liveness."
+            },
+            "pins": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/MeshClaimPinStanding"
+              },
+              "description": "Every held claim that carries pins, with where those pins stand against what this\ncheckout's own `intents.binding` answers now. Derived on every read, stored nowhere."
             }
           },
           "required": [
@@ -46677,6 +46766,17 @@
                   ],
                   "description": "The issue it is for."
                 },
+                "pins": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/ClaimPins"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "What the claiming task was bound to when it started, as its record said; absent when\nthe task named nothing or the claim came from an executable that carries none."
+                },
                 "acquired_lamport": {
                   "type": "integer",
                   "format": "uint64",
@@ -46705,7 +46805,7 @@
                 "acquired_seq",
                 "state"
               ],
-              "description": "One claim anywhere in the mesh: who took what, for what, and where it stands. The\nacquisition's Lamport stamp and sequence are carried rather than derived on demand,\nbecause they are what exclusivity is decided by — every runtime ranks two competing\nclaims by the same triple and so names the same winner, with no message passing and no\n\"last packet wins\".\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ClaimState, ClaimView};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::ClaimAcquired { claim: \"c1\".into(), session: \"s1\".into(),\n    scope: vec![\"apps/majordomus-cli\".into()], intent: Some(\"document the mesh\".into()),\n    mode: ClaimMode::Exclusive, issue: Some(\"#184\".into()) }).unwrap();\n\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nlet claim: &ClaimView = &state.claims[0];\nassert_eq!(claim.scope, [\"apps/majordomus-cli\"]);\nassert_eq!(claim.state, ClaimState::Held);\nassert!(claim.acquired_lamport > 0, \"the order exclusivity is decided in\");\n```"
+              "description": "One claim anywhere in the mesh: who took what, for what, and where it stands. The\nacquisition's Lamport stamp and sequence are carried rather than derived on demand,\nbecause they are what exclusivity is decided by — every runtime ranks two competing\nclaims by the same triple and so names the same winner, with no message passing and no\n\"last packet wins\".\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ClaimState, ClaimView};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::ClaimAcquired { claim: \"c1\".into(), session: \"s1\".into(),\n    scope: vec![\"apps/majordomus-cli\".into()], intent: Some(\"document the mesh\".into()),\n    mode: ClaimMode::Exclusive, issue: Some(\"#184\".into()), pins: None }).unwrap();\n\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nlet claim: &ClaimView = &state.claims[0];\nassert_eq!(claim.scope, [\"apps/majordomus-cli\"]);\nassert_eq!(claim.state, ClaimState::Held);\nassert!(claim.acquired_lamport > 0, \"the order exclusivity is decided in\");\n```"
             },
             "ClaimMode": {
               "oneOf": [
@@ -46721,6 +46821,36 @@
                 }
               ],
               "description": "Whether a claim excludes others or only tells them. Both are useful and they answer\ndifferent questions: an exclusive claim is a worker saying \"do not edit this while I\nam\", an advisory one is saying \"I am here\". Exclusive is the default because a claim\ntaken without a thought about the mode is a claim somebody expects to be respected.\n\n```\nuse majordomus_cli::mesh::journal::ClaimMode;\n\nassert_eq!(ClaimMode::default(), ClaimMode::Exclusive);\nassert_eq!(serde_json::to_value(ClaimMode::Advisory).unwrap(), serde_json::json!(\"advisory\"));\n```"
+            },
+            "ClaimPins": {
+              "type": "object",
+              "properties": {
+                "task": {
+                  "type": "string",
+                  "description": "The task whose record the pins were read from."
+                },
+                "issue": {
+                  "type": "string",
+                  "description": "The issue the task said it executes (`start --issue`); empty when it named none."
+                },
+                "intent": {
+                  "type": "string",
+                  "description": "The intent the task said it serves (`start --intent`); empty when it named none."
+                },
+                "plan_revision": {
+                  "type": "string",
+                  "description": "The pin of what the work was for when the task started."
+                },
+                "evidence_standing": {
+                  "type": "string",
+                  "description": "The pin of where the served criteria's evidence stood when the task started."
+                }
+              },
+              "required": [
+                "task",
+                "plan_revision"
+              ],
+              "description": "What a claim's task was bound to when it started: the issue and the intent it named, and\nthe two pins `intents.binding` answered then (ADR 0111). Carried from the task record, never\ncomputed here — a second derivation of the same pair is how two machines come to disagree\nabout what one task was for. A reader on another machine compares the pins with what its\nown `intents.binding` answers now, and a difference says the intent, a link, the critique\nor the evidence moved since the claiming task started; it says nothing about who is right.\n\n```\nuse majordomus_cli::mesh::journal::ClaimPins;\n\nlet pins = ClaimPins {\n    task: \"t-1\".into(),\n    issue: \"I2071\".into(),\n    intent: String::new(),\n    plan_revision: \"9f2c\".into(),\n    evidence_standing: \"1ab0\".into(),\n};\nassert!(pins.validate().is_ok());\nassert_eq!(serde_json::to_value(&pins).unwrap().get(\"intent\"), None, \"empty is absent\");\n\n// a pin is one short line: it is compared, never rendered as a document\nlet long = ClaimPins { plan_revision: \"x\".repeat(200), ..pins.clone() };\nassert!(long.validate().is_err());\n\n// pins that pin nothing are not carried\nassert!(ClaimPins { plan_revision: String::new(), ..pins }.validate().is_err());\n```"
             },
             "ClaimState": {
               "oneOf": [
@@ -46821,7 +46951,7 @@
                 "second",
                 "paths"
               ],
-              "description": "Two live claims of different sessions whose scopes meet, at least one advisory:\nreported, never refused.\n\nAn overlap is information, not a verdict — it is how two workers find out they are in\nthe same place without either being stopped. The meeting paths are listed pairwise\nrather than summarized, because the useful question is which path of mine meets which\npath of theirs.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ClaimOverlap};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nfor (claim, session, mode) in [\n    (\"c1\", \"s1\", ClaimMode::Exclusive),\n    (\"c2\", \"s2\", ClaimMode::Advisory),\n] {\n    j.append_own(EventBody::ClaimAcquired { claim: claim.into(), session: session.into(),\n        scope: vec![\"apps\".into()], intent: None, mode, issue: None }).unwrap();\n}\n\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nlet overlap: &ClaimOverlap = &state.overlaps[0];\nassert_ne!(overlap.first, overlap.second, \"two claims, two sessions\");\nassert_eq!(overlap.paths, [(\"apps\".to_string(), \"apps\".to_string())]);\n```"
+              "description": "Two live claims of different sessions whose scopes meet, at least one advisory:\nreported, never refused.\n\nAn overlap is information, not a verdict — it is how two workers find out they are in\nthe same place without either being stopped. The meeting paths are listed pairwise\nrather than summarized, because the useful question is which path of mine meets which\npath of theirs.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ClaimOverlap};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nfor (claim, session, mode) in [\n    (\"c1\", \"s1\", ClaimMode::Exclusive),\n    (\"c2\", \"s2\", ClaimMode::Advisory),\n] {\n    j.append_own(EventBody::ClaimAcquired { claim: claim.into(), session: session.into(),\n        scope: vec![\"apps\".into()], intent: None, mode, issue: None, pins: None }).unwrap();\n}\n\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nlet overlap: &ClaimOverlap = &state.overlaps[0];\nassert_ne!(overlap.first, overlap.second, \"two claims, two sessions\");\nassert_eq!(overlap.paths, [(\"apps\".to_string(), \"apps\".to_string())]);\n```"
             },
             "HandoverView": {
               "type": "object",
@@ -47077,6 +47207,44 @@
                 }
               ],
               "description": "Whether a stream is speaking now, on this runtime's clock. It is a verdict about a\nstream and not about a link: a runtime reachable only through a relay is alive, and a\nruntime that crashed stops beating for everyone at once. `Own` is kept apart from `Live`\nbecause a runtime's own stream needs no evidence — it is the thing doing the beating.\n\n```\nuse majordomus_cli::mesh::journal::StreamLiveness;\n\nassert!(StreamLiveness::Own.is_alive() && StreamLiveness::Live.is_alive());\nassert!(!StreamLiveness::Expired.is_alive());\nassert_eq!(\n    serde_json::to_value(StreamLiveness::Expired).unwrap(),\n    serde_json::json!(\"expired\"),\n);\n```"
+            },
+            "MeshClaimPinStanding": {
+              "type": "object",
+              "properties": {
+                "claim": {
+                  "type": "string",
+                  "description": "The claim's key, `<stream>/<claim>`."
+                },
+                "task": {
+                  "type": "string",
+                  "description": "The task whose record the pins came from."
+                },
+                "issue": {
+                  "type": "string",
+                  "description": "The issue that task named; empty when it named none."
+                },
+                "intent": {
+                  "type": "string",
+                  "description": "The intent that task named; empty when it named none."
+                },
+                "standing": {
+                  "type": "string",
+                  "description": "`unchanged`, `evidence_moved`, `plan_changed` or `unknown`."
+                },
+                "because": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Why the standing is `unknown`."
+                }
+              },
+              "required": [
+                "claim",
+                "task",
+                "standing"
+              ],
+              "description": "Where a held claim's pins stand against this checkout's own reading of the work the\nclaiming task named: the question a worker asks about a peer it cannot see — is it still\nworking to the intent as it reads here?\n\n`standing` is the word `crate::intent_binding::BindingDrift` gives a resumed worker —\n`unchanged`, `evidence_moved` or `plan_changed` — or `unknown` when the binding could not\nbe asked or reached no intent here, with the reason. Unknown is never read as unchanged:\na checkout that does not hold the issue the peer named has learned nothing about it."
             }
           }
         }

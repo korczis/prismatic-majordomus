@@ -27,7 +27,7 @@
 //! let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
 //!     "repo".into(), None).unwrap();
 //! j.append_own(EventBody::ClaimAcquired { claim: "c1".into(), session: "s1".into(),
-//!     scope: vec!["apps".into()], intent: None, mode: ClaimMode::Exclusive, issue: None }).unwrap();
+//!     scope: vec!["apps".into()], intent: None, mode: ClaimMode::Exclusive, issue: None, pins: None }).unwrap();
 //! let state = fold(&j.events(), &|_| StreamLiveness::Own);
 //! assert_eq!(state.claims[0].state, ClaimState::Held);
 //! ```
@@ -36,10 +36,11 @@ use std::collections::BTreeMap;
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
 use super::journal::{
-    canonical_json, causal_key, ClaimMode, EventBody, HandoverBody, MeshEvent, SessionInfo,
-    StreamId, StreamLiveness,
+    canonical_json, causal_key, ClaimMode, ClaimPins, EventBody, HandoverBody, MeshEvent,
+    SessionInfo, StreamId, StreamLiveness,
 };
 
 /// A session's standing, as every runtime of the mesh reads it. The distinction that
@@ -180,7 +181,7 @@ impl ClaimState {
 ///     "repo".into(), None).unwrap();
 /// j.append_own(EventBody::ClaimAcquired { claim: "c1".into(), session: "s1".into(),
 ///     scope: vec!["apps/majordomus-cli".into()], intent: Some("document the mesh".into()),
-///     mode: ClaimMode::Exclusive, issue: Some("#184".into()) }).unwrap();
+///     mode: ClaimMode::Exclusive, issue: Some("#184".into()), pins: None }).unwrap();
 ///
 /// let state = fold(&j.events(), &|_| StreamLiveness::Own);
 /// let claim: &ClaimView = &state.claims[0];
@@ -208,6 +209,10 @@ pub struct ClaimView {
     /// The issue it is for.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub issue: Option<String>,
+    /// What the claiming task was bound to when it started, as its record said; absent when
+    /// the task named nothing or the claim came from an executable that carries none.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub pins: Option<ClaimPins>,
     /// The Lamport stamp of the acquisition.
     pub acquired_lamport: u64,
     /// The sequence of the acquisition within its stream: with the stamp and the stream,
@@ -251,7 +256,7 @@ impl ClaimView {
 ///     ("c2", "s2", ClaimMode::Advisory),
 /// ] {
 ///     j.append_own(EventBody::ClaimAcquired { claim: claim.into(), session: session.into(),
-///         scope: vec!["apps".into()], intent: None, mode, issue: None }).unwrap();
+///         scope: vec!["apps".into()], intent: None, mode, issue: None, pins: None }).unwrap();
 /// }
 ///
 /// let state = fold(&j.events(), &|_| StreamLiveness::Own);
@@ -488,7 +493,7 @@ pub struct CooperationState {
 /// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
 ///     "repo".into(), None).unwrap();
 /// j.append_own(EventBody::ClaimAcquired { claim: "c1".into(), session: "s1".into(),
-///     scope: vec!["apps".into()], intent: None, mode: ClaimMode::Exclusive, issue: None })
+///     scope: vec!["apps".into()], intent: None, mode: ClaimMode::Exclusive, issue: None, pins: None })
 ///     .unwrap();
 ///
 /// // read where the writer is alive, the claim holds
@@ -560,6 +565,7 @@ pub fn fold(
                 intent,
                 mode,
                 issue,
+                pins,
             } => {
                 let k = key(&claim);
                 claims.insert(
@@ -573,6 +579,9 @@ pub fn fold(
                         intent,
                         mode,
                         issue,
+                        // pins out of their bounds are dropped, never the claim: the claim
+                        // must fold alike on a runtime that does not read pins at all
+                        pins: pins.filter(|p| p.validate().is_ok()),
                         acquired_lamport: event.lamport,
                         acquired_seq: event.seq,
                         state: ClaimState::Held,
@@ -742,9 +751,23 @@ pub fn fold(
     state
 }
 
+/// The digest two runtimes compare. A claim's pins are left out of it: an executable older
+/// than the pins folds the same signed events into the same sessions, claims, handovers and
+/// reviews and reads no pins at all, and a digest that counted them would call two runtimes
+/// that agree on everything they both interpret diverged. The pins are still under each
+/// event's signature; what is excluded here is only the comparison between ages.
 fn digest(state: &CooperationState) -> String {
     use sha2::{Digest, Sha256};
-    let value = serde_json::to_value(state).unwrap_or_default();
+    let mut value = serde_json::to_value(state).unwrap_or_default();
+    value
+        .get_mut("claims")
+        .and_then(Value::as_array_mut)
+        .into_iter()
+        .flatten()
+        .filter_map(Value::as_object_mut)
+        .for_each(|claim| {
+            claim.remove("pins");
+        });
     let hash = Sha256::digest(canonical_json(&value));
     hash.iter().take(16).map(|b| format!("{b:02x}")).collect()
 }
@@ -796,7 +819,7 @@ fn meeting_paths(a: &[String], b: &[String]) -> Vec<(String, String)> {
 /// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
 ///     "repo".into(), None).unwrap();
 /// j.append_own(EventBody::ClaimAcquired { claim: "c1".into(), session: "s1".into(),
-///     scope: vec!["apps".into()], intent: None, mode: ClaimMode::Exclusive, issue: None })
+///     scope: vec!["apps".into()], intent: None, mode: ClaimMode::Exclusive, issue: None, pins: None })
 ///     .unwrap();
 /// let state = fold(&j.events(), &|_| StreamLiveness::Own);
 /// let held = &state.claims[0];
@@ -858,6 +881,7 @@ mod tests {
             intent: None,
             mode,
             issue: Some("#184".into()),
+            pins: None,
         })
         .unwrap();
     }
@@ -871,6 +895,98 @@ mod tests {
 
     fn all_live(_: &StreamId) -> StreamLiveness {
         StreamLiveness::Live
+    }
+
+    /// The pins travel inside the signed event and arrive on the other runtime as written;
+    /// admission does not read them, and the digest does not count them, so a runtime that
+    /// carries pins and one that never heard of them still compare equal.
+    #[test]
+    fn a_claims_pins_cross_as_written_stay_out_of_the_digest_and_never_refuse_it() {
+        let pins = ClaimPins {
+            task: "t-1".into(),
+            issue: "I2071".into(),
+            intent: String::new(),
+            plan_revision: "9f2c".into(),
+            evidence_standing: "1ab0".into(),
+        };
+        let acquired = |pins: Option<ClaimPins>| EventBody::ClaimAcquired {
+            claim: "c1".into(),
+            session: "s1".into(),
+            scope: vec!["apps".into()],
+            intent: None,
+            mode: ClaimMode::Advisory,
+            issue: None,
+            pins,
+        };
+        let a = journal("0000000000000001");
+        let b = journal("0000000000000002");
+        a.append_own(acquired(Some(pins.clone()))).unwrap();
+        sync(&a, &b);
+        let at_b = fold(&b.events(), &all_live);
+        assert_eq!(
+            at_b.claims[0].pins,
+            Some(pins.clone()),
+            "carried, not recomputed"
+        );
+        assert!(
+            serde_json::to_value(&at_b).unwrap()["claims"][0]["pins"]["plan_revision"] == "9f2c",
+            "and a reader of the state is shown them"
+        );
+
+        // the same state without the pins has the same digest, so an executable that carries
+        // pins and one that does not still compare equal; any other field still counts
+        let mut with = fold(&a.events(), &all_live);
+        with.digest = String::new();
+        let mut without = with.clone();
+        without.claims[0].pins = None;
+        assert_eq!(
+            digest(&with),
+            digest(&without),
+            "pins are not in the digest"
+        );
+        let mut moved = with.clone();
+        moved.claims[0].scope = vec!["docs".into()];
+        assert_ne!(digest(&with), digest(&moved), "the scope is");
+
+        // pins out of their bounds never refuse the event, on any runtime: the claim folds,
+        // held, and the pins are dropped — as a runtime that does not read pins would fold it
+        for bad in [
+            ClaimPins::default(),
+            ClaimPins {
+                task: "t\n1".into(),
+                ..pins.clone()
+            },
+            ClaimPins {
+                issue: "i".repeat(65),
+                ..pins.clone()
+            },
+            ClaimPins {
+                intent: "i".repeat(129),
+                ..pins.clone()
+            },
+            ClaimPins {
+                plan_revision: "p".repeat(129),
+                ..pins.clone()
+            },
+            ClaimPins {
+                evidence_standing: "e".repeat(129),
+                ..pins.clone()
+            },
+        ] {
+            let j = journal("0000000000000003");
+            j.append_own(acquired(Some(bad.clone())))
+                .expect("the reader-side bounds ignore pins");
+            let folded = fold(&j.events(), &all_live);
+            assert_eq!(folded.claims[0].state, ClaimState::Held, "{bad:?}");
+            assert_eq!(folded.claims[0].pins, None, "{bad:?}");
+        }
+
+        // an event of an executable that predates the pins has no such key and still reads
+        let old: EventBody = serde_json::from_value(serde_json::json!({
+            "kind": "claim_acquired", "claim": "c1", "session": "s1", "scope": ["apps"],
+        }))
+        .unwrap();
+        assert!(matches!(old, EventBody::ClaimAcquired { pins: None, .. }));
     }
 
     #[test]

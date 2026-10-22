@@ -858,7 +858,7 @@ fn evidence_standing(pre: &IntentPreflight) -> String {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
     use crate::policy::ExemptionClass;
 
@@ -983,7 +983,7 @@ mod tests {
     }
     /// A synthetic repository with a plan: one intent `x` over milestone `m`, one issue
     /// serving it, one maintenance issue, and a policy that requires binding.
-    fn planned() -> crate::synthetic::SyntheticRepository {
+    pub(crate) fn planned() -> crate::synthetic::SyntheticRepository {
         let repo = crate::synthetic::SyntheticRepository::small().unwrap();
         let root = repo.root().to_path_buf();
         let write = |rel: &str, text: &str| {

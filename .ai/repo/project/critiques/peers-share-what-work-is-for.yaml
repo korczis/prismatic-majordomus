@@ -1,0 +1,120 @@
+intent: peers-share-what-work-is-for
+reviewed_at: 893a79be65
+reviewed_by: "claude-code subagent (Explore, read-only, fresh context) dispatched by session fa with the plan records, the uncommitted diff and the requirement, and none of the author's reasoning; same model and operator session as the author, so independent of the authoring context and not of its blind spots. Read only: no build, no tests run. Disposition: accept with required changes; findings 1 to 6 were required and each is planned or rejected below, with the change already made in the branch named in the reason."
+findings:
+  - id: finished-task-still-pins-claims
+    class: unproven_assumption
+    subject: I2071
+    finding: "task_pins takes .ai/local/state/current.yaml as the active task and never checks its outcome; finish rewrites the record in place and only the next start archives it, so a claim made between finish and the next start carries a finished task's pins."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2071
+      because: "task_pins requires outcome active; the in-process test writes completed and handed_over records and asserts no pins."
+  - id: unnamed-or-refused-start-is-pinned
+    class: missed_requirement
+    subject: peers-share-what-work-is-for#a-claim-carries-the-pins
+    finding: "task_pins filters only on a non-empty plan_revision; an advisory start by paths, or a refused binding with pins computed, records pins that name nothing, and every reader then prints unknown for them."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2071
+      because: "task_pins requires binding bound and a named issue or intent, as handover's mj_task_names_work does; the test covers bound without names, exempt and refused records; the criterion now says active and named."
+  - id: peer-claims-are-not-a-carrier-the-rule-names
+    class: unproven_assumption
+    subject: peers-share-what-work-is-for
+    finding: "Rule project.an-intent-outlives-its-sessions v3 lists what a task or a handover may carry and says the lineage to peer claims is stored in none of them; the plan puts names and pins on a replicated mesh event without amending the rule."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2071
+      because: "The rule is v4 in this branch: a mesh claim taken under an active bound task may carry the same names and pins copied from its record, no runtime computes a second pair, the standing is derived on read and stored nowhere; its tests name tests/mesh_cooperation.rs. ADR 0111 is unchanged: it decides what a task names; where a copy of that travels is the rule's to say."
+  - id: generated-projections-not-in-any-issue
+    class: surface_missing
+    subject: I2071
+    finding: "ClaimView and MeshStateAnswer change the OpenAPI, registry, module page and site registry projections, and the new records change the graph and plan data; neither issue's scope or validation names them."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2071
+      because: "Both issues' scopes name docs/generated and site/data; I2071 validates with majordomus generate --check; generate has been run in the branch, and the derive the release hold defers regenerates the plan and site data."
+  - id: a-validation-filter-matches-no-test
+    class: delivery_verification
+    subject: I2072
+    finding: "cargo test --lib pin_standings matches no test, and cargo test --lib pins misses the test whose name says pinned, so the unit proof that unknown is never unchanged runs under neither validation."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2072
+      because: "Every validation of the milestone and both issues is cargo test --lib -- pins pinned, which selects all five unit tests of this work (measured: 11 tests, all pass)."
+  - id: binding-derived-per-claim-per-read
+    class: regression_risk
+    subject: I2072
+    finding: "mesh_state asks intents.binding once per held pinned claim and folds the journal twice per read, so ten claims for one issue derive the same answer ten times and the pins and the state may come from different snapshots."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2072
+      because: "mesh_state folds once and asks through memoised(), one binding per distinct (issue, intent) within a read."
+  - id: reader-drops-local-standing-and-refusal
+    class: surface_missing
+    subject: peers-share-what-work-is-for#a-peer-reads-where-they-stand
+    finding: "The reason is a fixed sentence whatever the binding refused, and where the binding answers no pin handover --resolve says plan_changed while the mesh says unknown."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2072
+      because: "binding_pins carries the binding's first refusal message as the reason (the integration test asserts it names the unknown issue); the difference from handover is kept on purpose and stated in docs/MESH.md: another checkout that does not hold the work has learned nothing about it."
+  - id: malformed-pins-refuse-the-whole-claim-on-newer-runtimes
+    class: regression_risk
+    subject: peers-share-what-work-is-for
+    finding: "A newer runtime would refuse as Bounds a claim whose pins are out of bounds while an older one folds it, so admission and digests would differ by executable age."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2071
+      because: "EventBody::validate no longer judges pins; Cooperation::claim_pinned refuses them before signing and the fold drops out-of-bounds pins and keeps the claim; the state test feeds six malformed pins and asserts the claim held without pins."
+  - id: unchanged-is-the-peers-assertion
+    class: unproven_assumption
+    subject: peers-share-what-work-is-for#a-peer-reads-where-they-stand
+    finding: "A trusted peer can sign pins that copy the reader's current revision, so unchanged is the peer's assertion, not its worker's state; the security model does not say so."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2072
+      because: "docs/MESH.md's security table states it, and the intent names proving a peer's pins true as a non-goal. Bidi and other format characters in rendered peer fields are a property of every peer field, not of the pins, and are left to the mesh's own rendering."
+  - id: any-client-of-the-checkout-borrows-the-task
+    class: unproven_assumption
+    subject: I2071
+    finding: "A claim that names no task carries the checkout's task pins whichever MCP session makes it."
+    blocking: false
+    resolution:
+      state: rejected
+      because: "The pins describe what the checkout's one task record is bound to, not who made the claim; a second client of the same checkout works under the same task record. Said in task_pins' documentation and in docs/MESH.md."
+  - id: cited-ref-does-not-prove-the-whole-criterion
+    class: delivery_verification
+    subject: peers-share-what-work-is-for#a-claim-carries-the-pins
+    finding: "The ref test covers bound, unknown and unnamed claims; exempt, another-task and over-bound cases are proven only by unit tests outside the ref, and evidence_moved only against a fake."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2071
+      because: "The unit tests run under the issues' validation; the ref names the end-to-end test of the two runtimes, which is the one a recorded run of the criterion can stand on. evidence_moved needs a recorded test run to move between two reads and is proven by the pure function."
+  - id: descriptions-and-digest-claim-unchanged
+    class: surface_missing
+    subject: I2072
+    finding: "The descriptions of mesh.state and mesh.claim do not mention pins, and three places still say equal digests, equal state."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2072
+      because: "Both descriptions now describe the pins; the digest field's documentation, mesh.peers' description and docs/MESH.md say the digest leaves a claim's pins out."
+  - id: plan-hygiene
+    class: insufficient_work
+    subject: peers-share-what-work-is-for
+    finding: "The gap cites realization's text join as a cause no issue changes, and the governance omits rule project.work-serves-a-declared-intent."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I2072
+      because: "The observation is removed from the gap and offering pins.issue to realization is a non-goal of the intent; the governance names work-serves-a-declared-intent."

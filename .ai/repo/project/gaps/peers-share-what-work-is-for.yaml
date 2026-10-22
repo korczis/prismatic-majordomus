@@ -1,0 +1,35 @@
+intent: peers-share-what-work-is-for
+observed_at: 893a79be65
+recorded_by: claude-code (session fa, worktree feature/a-mesh-claim-carries-the-pins-of-its-task; read-only transition audit over master and the unlanded intent stack)
+recorded_at: 2026-10-09
+observations:
+  - id: claim-carries-text-only
+    statement: ClaimAcquired carries claim, session, scope, a free-text intent, mode and a free-text issue; nothing of what the claiming task was bound to
+    source: file:apps/majordomus-cli/src/mesh/journal.rs
+  - id: pins-stop-at-the-task-record
+    statement: start writes plan_revision and evidence_standing into the task record and handover front matter; continuity.state reads them; no mesh event carries them
+    source: file:apps/majordomus-cli/src/capability/builtin/continuity.rs
+  - id: drift-comparison-has-no-caller
+    statement: BindingDrift::between has no caller outside its own module and doctests; handover --resolve and context compare the pins in shell
+    source: file:apps/majordomus-cli/src/intent_binding.rs
+conditions:
+  - criterion: a-claim-carries-the-pins
+    state: missing
+    because: no mesh event carries a pin, and the task record that holds them is read by nothing in the mesh
+    observations: [claim-carries-text-only, pins-stop-at-the-task-record]
+  - criterion: a-peer-reads-where-they-stand
+    state: missing
+    because: there is nothing to compare, and the comparison written for it is called by nothing
+    observations: [drift-comparison-has-no-caller]
+risks:
+  - Older runtimes fold the same events; a digest that counted the pins would call two agreeing runtimes diverged
+  - A reader that does not hold the named issue must say unknown, not unchanged
+work:
+  - id: carry-pins
+    title: A mesh claim carries the pins of the task it was taken under
+    serves: [a-claim-carries-the-pins]
+    issue: I2071
+  - id: read-pins
+    title: The mesh state says where each pinned claim stands against this checkout's binding
+    serves: [a-peer-reads-where-they-stand]
+    issue: I2072

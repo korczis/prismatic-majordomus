@@ -348,6 +348,78 @@ impl SessionInfo {
     }
 }
 
+/// What a claim's task was bound to when it started: the issue and the intent it named, and
+/// the two pins `intents.binding` answered then (ADR 0111). Carried from the task record, never
+/// computed here — a second derivation of the same pair is how two machines come to disagree
+/// about what one task was for. A reader on another machine compares the pins with what its
+/// own `intents.binding` answers now, and a difference says the intent, a link, the critique
+/// or the evidence moved since the claiming task started; it says nothing about who is right.
+///
+/// ```
+/// use majordomus_cli::mesh::journal::ClaimPins;
+///
+/// let pins = ClaimPins {
+///     task: "t-1".into(),
+///     issue: "I2071".into(),
+///     intent: String::new(),
+///     plan_revision: "9f2c".into(),
+///     evidence_standing: "1ab0".into(),
+/// };
+/// assert!(pins.validate().is_ok());
+/// assert_eq!(serde_json::to_value(&pins).unwrap().get("intent"), None, "empty is absent");
+///
+/// // a pin is one short line: it is compared, never rendered as a document
+/// let long = ClaimPins { plan_revision: "x".repeat(200), ..pins.clone() };
+/// assert!(long.validate().is_err());
+///
+/// // pins that pin nothing are not carried
+/// assert!(ClaimPins { plan_revision: String::new(), ..pins }.validate().is_err());
+/// ```
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct ClaimPins {
+    /// The task whose record the pins were read from.
+    pub task: String,
+    /// The issue the task said it executes (`start --issue`); empty when it named none.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub issue: String,
+    /// The intent the task said it serves (`start --intent`); empty when it named none.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub intent: String,
+    /// The pin of what the work was for when the task started.
+    pub plan_revision: String,
+    /// The pin of where the served criteria's evidence stood when the task started.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub evidence_standing: String,
+}
+
+impl ClaimPins {
+    /// Check the bounds: one short line each, and a plan revision to compare. The writer
+    /// refuses pins that fail it before signing; a reader drops them and keeps the claim.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::journal::ClaimPins;
+    ///
+    /// let pins = ClaimPins { task: "t-1".into(), plan_revision: "9f2c".into(), ..ClaimPins::default() };
+    /// assert!(pins.validate().is_ok());
+    /// assert!(ClaimPins { task: "t\n1".into(), ..pins.clone() }.validate().is_err(), "one line");
+    /// assert!(ClaimPins { issue: "i".repeat(65), ..pins }.validate().is_err(), "bounded");
+    /// ```
+    pub fn validate(&self) -> Result<(), String> {
+        if self.plan_revision.is_empty() {
+            return Err("pins without a plan_revision pin nothing".into());
+        }
+        [
+            ("pins.task", &self.task, 64),
+            ("pins.issue", &self.issue, 64),
+            ("pins.intent", &self.intent, 128),
+            ("pins.plan_revision", &self.plan_revision, 128),
+            ("pins.evidence_standing", &self.evidence_standing, 128),
+        ]
+        .into_iter()
+        .try_for_each(|(name, value, max)| line(name, value, max))
+    }
+}
+
 /// Whether a claim excludes others or only tells them. Both are useful and they answer
 /// different questions: an exclusive claim is a worker saying "do not edit this while I
 /// am", an advisory one is saying "I am here". Exclusive is the default because a claim
@@ -498,6 +570,9 @@ pub enum EventBody {
         /// The issue the claim is for.
         #[serde(default, skip_serializing_if = "Option::is_none")]
         issue: Option<String>,
+        /// What the claiming task was bound to when it started, carried from its record.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        pins: Option<ClaimPins>,
     },
     /// A claim was released by its holder.
     ClaimReleased {
@@ -605,7 +680,7 @@ impl EventBody {
     ///
     /// // a scope that is not repository-relative is refused
     /// let escaping = EventBody::ClaimAcquired { claim: "c1".into(), session: "s1".into(),
-    ///     scope: vec!["../../etc".into()], intent: None, mode: Default::default(), issue: None };
+    ///     scope: vec!["../../etc".into()], intent: None, mode: Default::default(), issue: None, pins: None };
     /// assert!(escaping.validate().is_err());
     ///
     /// // and a handover whose id is not the digest of its body is not that handover
@@ -644,6 +719,7 @@ impl EventBody {
                 scope,
                 intent,
                 issue,
+                pins,
                 ..
             } => {
                 ident("claim", claim)?;
@@ -655,6 +731,11 @@ impl EventBody {
                 if let Some(v) = issue {
                     text("issue", v, 64)?;
                 }
+                // The pins are not judged here: this runs on the reader too, and an event a
+                // newer executable refused for its pins while an older one folded it would
+                // split the mesh by age. The writer checks them before signing
+                // (Cooperation::claim_pinned) and the fold drops pins out of their bounds.
+                let _ = pins;
                 Ok(())
             }
             EventBody::ClaimReleased { claim } => ident("claim", claim),
@@ -1457,7 +1538,7 @@ impl Journal {
     ///
     /// // out of bounds is refused before anything is signed or stored
     /// let escaping = EventBody::ClaimAcquired { claim: "c1".into(), session: "s1".into(),
-    ///     scope: vec!["/etc".into()], intent: None, mode: Default::default(), issue: None };
+    ///     scope: vec!["/etc".into()], intent: None, mode: Default::default(), issue: None, pins: None };
     /// assert!(j.append_own(escaping).is_err());
     /// assert_eq!(j.events().len(), 2, "and nothing was written");
     /// ```
@@ -2536,6 +2617,7 @@ mod tests {
             intent: None,
             mode: ClaimMode::Exclusive,
             issue: None,
+            pins: None,
         });
         assert!(err.is_err());
         assert!(j.events().is_empty());
@@ -3035,6 +3117,7 @@ mod tests {
             intent: None,
             mode: ClaimMode::Exclusive,
             issue: None,
+            pins: None,
         };
         opened(&laptop, "s1");
         laptop.append_own(claim("c1", "apps")).unwrap();
@@ -3138,6 +3221,7 @@ mod tests {
             intent: None,
             mode,
             issue: None,
+            pins: None,
         };
         out.push(j.append_own(acquired).unwrap());
         let ended = match ending {

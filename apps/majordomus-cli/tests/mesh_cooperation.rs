@@ -355,6 +355,161 @@ fn two_runtimes_link_and_share_sessions_claims_reviews_and_a_handover() {
     assert_eq!(verified["ok"], json!(true), "{verified}");
 }
 
+/// Criteria `a-claim-carries-the-pins` and `a-peer-reads-where-they-stand` of intent
+/// `peers-share-what-work-is-for`: a claim taken in a checkout whose task started bound
+/// carries that task's issue and pins to the other machine, which compares them with what
+/// its own binding answers — unchanged while both hold the same plan, plan_changed once its
+/// intent is rewritten, unknown for work it does not hold — and a claim of a task that named
+/// nothing carries no pins and is not listed.
+#[test]
+fn a_pinned_claim_tells_the_other_machine_whether_the_intent_moved() {
+    let a = Node::new();
+    let b = Node::new();
+    for node in [&a, &b] {
+        node.fixture.write(
+            ".ai/repo/project/critiques/fixture-intent.yaml",
+            "intent: fixture-intent\nreviewed_at: HEAD\nreviewed_by: the test\nfindings: []\n",
+        );
+        node.fixture.commit("the plan is critiqued");
+    }
+    a.declare("one-repository", &[&a.key, &b.key], &[]);
+    let sa = a.serve();
+    b.declare("one-repository", &[&a.key, &b.key], &[&sa]);
+    let sb = b.serve();
+    wait_until("one link", Duration::from_secs(15), || {
+        connected(&sa) == 1 && connected(&sb) == 1
+    });
+
+    // A's task started bound: its record holds what A's binding answered then
+    let (status, bound) = sa.get("/api/v1/intents/binding?issue=I0001");
+    assert_eq!(status, 200, "{bound}");
+    assert_eq!(bound["standing"], json!("bound"), "{bound}");
+    let task = |id: &str, issue: &str, plan: &str| {
+        a.fixture.write(
+            ".ai/local/state/current.yaml",
+            &format!(
+                "id: {id}\ntask: the work\noutcome: active\nissue: {issue}\nbinding: bound\n\
+                 plan_revision: {plan}\nevidence_standing: {}\n",
+                bound["evidence_standing"].as_str().unwrap()
+            ),
+        )
+    };
+    task("t-1", "I0001", bound["plan_revision"].as_str().unwrap());
+    let (status, claimed) = post(
+        &sa,
+        "/api/v1/mesh/claims",
+        json!({"session": "a1", "scope": ["lib"], "mode": "advisory"}),
+    );
+    assert_eq!(status, 200, "{claimed}");
+    let key = claimed["key"].as_str().unwrap().to_string();
+    let pins = |s: &Served| -> Vec<Value> {
+        s.get("/api/v1/mesh/state").1["pins"]
+            .as_array()
+            .cloned()
+            .unwrap_or_default()
+    };
+    let standing = |s: &Served, claim: &str| -> Option<String> {
+        pins(s)
+            .iter()
+            .find(|p| p["claim"] == json!(claim))
+            .map(|p| p["standing"].as_str().unwrap_or("").to_string())
+    };
+    wait_until(
+        "B reads A's pins unchanged",
+        Duration::from_secs(10),
+        || standing(&sb, &key).as_deref() == Some("unchanged"),
+    );
+    let seen = pins(&sb);
+    assert_eq!(seen[0]["task"], json!("t-1"));
+    assert_eq!(seen[0]["issue"], json!("I0001"));
+    let held = claims_in(&sb, "held");
+    let carried = held.iter().find(|c| c["key"] == json!(key)).unwrap();
+    assert_eq!(
+        carried["pins"]["plan_revision"], bound["plan_revision"],
+        "carried as A's record wrote it, not recomputed"
+    );
+
+    // B's intent is rewritten: the worker on A is working to a plan B no longer holds
+    b.fixture.write(
+        ".ai/repo/project/intents/fixture-intent.yaml",
+        &common::INTENT.replace(
+            "The fixture's own case passes",
+            "The fixture's own case passes on every platform",
+        ),
+    );
+    b.fixture.commit("the criterion is rewritten");
+    wait_until("B says the plan moved", Duration::from_secs(10), || {
+        standing(&sb, &key).as_deref() == Some("plan_changed")
+    });
+    assert_eq!(
+        standing(&sa, &key).as_deref(),
+        Some("unchanged"),
+        "A still holds the plan its task started under"
+    );
+
+    // work B does not hold is unknown there, never unchanged
+    task("t-2", "I0999", "0".repeat(64).as_str());
+    let (status, other) = post(
+        &sa,
+        "/api/v1/mesh/claims",
+        json!({"session": "a1", "scope": ["docs"], "mode": "advisory", "task": "t-2"}),
+    );
+    assert_eq!(status, 200, "{other}");
+    let other = other["key"].as_str().unwrap().to_string();
+    wait_until("B reads the second claim", Duration::from_secs(10), || {
+        standing(&sb, &other).is_some()
+    });
+    assert_eq!(standing(&sb, &other).as_deref(), Some("unknown"));
+    let why = pins(&sb)
+        .iter()
+        .find(|p| p["claim"] == json!(other))
+        .map(|p| p["because"].as_str().unwrap_or("").to_string())
+        .unwrap();
+    assert!(
+        why.contains("I0999"),
+        "the reason names what refused it: {why}"
+    );
+
+    // a task that named nothing pins nothing, and its claim is not listed
+    a.fixture.write(".ai/local/state/current.yaml", "id: t-3\n");
+    let (status, bare) = post(
+        &sa,
+        "/api/v1/mesh/claims",
+        json!({"session": "a1", "scope": ["test"], "mode": "advisory"}),
+    );
+    assert_eq!(status, 200, "{bare}");
+    let bare = bare["key"].as_str().unwrap().to_string();
+    wait_until("B reads the bare claim", Duration::from_secs(10), || {
+        claims_in(&sb, "held")
+            .iter()
+            .any(|c| c["key"] == json!(bare))
+    });
+    let at_b = claims_in(&sb, "held");
+    assert!(at_b.iter().find(|c| c["key"] == json!(bare)).unwrap()["pins"].is_null());
+    assert_eq!(standing(&sb, &bare), None);
+
+    // the command line answers from the same server: the same pins, one line per pinned claim
+    let (code, out, err) = run_in(
+        &b.fixture.root(),
+        &["mesh", "state", "--format", "json"],
+        "",
+    );
+    assert_eq!(code, 0, "{err}");
+    let cli: Value = serde_json::from_str(&out).expect("mesh state --format json is JSON");
+    assert_eq!(
+        cli["pins"],
+        json!(pins(&sb)),
+        "the command line and HTTP disagree"
+    );
+    let (code, out, err) = run_in(&b.fixture.root(), &["mesh", "state"], "");
+    assert_eq!(code, 0, "{out}{err}");
+    assert!(
+        out.contains(&format!("pins       {key} task t-1 for I0001 plan_changed")),
+        "{out}"
+    );
+    assert!(out.contains("unknown ("), "{out}");
+}
+
 #[test]
 fn runtimes_of_different_repositories_never_link_and_say_why() {
     // mesh-repository-isolation

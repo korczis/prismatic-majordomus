@@ -1,0 +1,34 @@
+id: peers-share-what-work-is-for
+title: A worker on another machine is told what a claim's work is for, and whether its intent moved since
+statement: "A claim taken on one machine by a task that started bound carries what that task named — its issue or intent — and the two pins its binding answered at start, as the task record holds them. Every other machine that reads the claim compares those pins with what its own binding answers now and says, in the words a resumed worker is told, whether the plan or the evidence moved under the worker it cannot see; what it cannot judge is unknown, never unchanged."
+invariants:
+  - The pins on a claim are the task record's own, carried as written; no runtime computes a second pair (ADR 0111)
+  - Admission, release and expiry of a claim are decided by its scope, session and stream exactly as before; the pins refuse nothing
+  - The standing of a claim's pins is derived on every read through intents.binding and stored nowhere
+  - Two runtimes of different ages that agree on every session, claim, handover and review compare equal; the pins stay under each event's signature and out of the convergence digest
+milestones:
+  - peers-share-what-work-is-for
+satisfaction:
+  - id: a-claim-carries-the-pins
+    criterion: A claim taken in a checkout whose task is active and started bound to a named issue or intent carries the task's id, names and both pins to every linked runtime as written; a finished, exempt, refused or unnamed task, or a claim naming another task, carries none; pins over their bounds are refused before signing and dropped, never the claim, by every reader
+    evidence: test
+    ref: apps/majordomus-cli/tests/mesh_cooperation.rs
+  - id: a-peer-reads-where-they-stand
+    criterion: The mesh state of every runtime lists each held pinned claim as unchanged, evidence_moved or plan_changed against its own binding, or unknown with the reason when its binding cannot be asked or reaches no intent there, and the command line answers the same as HTTP
+    evidence: test
+    ref: apps/majordomus-cli/tests/mesh_cooperation.rs
+governance:
+  - rule:project.work-serves-a-declared-intent
+  - rule:project.an-intent-outlives-its-sessions
+  - rule:project.derived-once
+  - rule:project.mesh-cooperation-is-authenticated
+  - adr:adr-0067
+  - adr:adr-0111
+non_goals:
+  - Refusing a claim, or anything else, because its pins moved; a moved intent is information for the workers, not a gate
+  - Carrying criterion states, a verdict or the intent text across the mesh; only names and two hashes travel
+  - Announcements on the peer board, which carry no task record; they stay unpinned advisory claims
+  - Proving a peer's pins true; a standing compares what the peer's stream signed, which is attributed and expires, not its worker's actual state
+  - Offering pins.issue to the realization join as a declared link; realization keeps reading the board's claims
+created_at: 2026-10-09
+updated_at: 2026-10-09

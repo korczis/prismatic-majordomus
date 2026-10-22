@@ -1,0 +1,35 @@
+id: I2072
+milestone: peers-share-what-work-is-for
+title: The mesh state says where each pinned claim stands against this checkout's binding
+slug: a-peer-reads-where-pins-stand
+priority: p2
+profile: implementation
+parallel_safe: false
+serves:
+  - peers-share-what-work-is-for#a-peer-reads-where-they-stand
+objective: "Answer pins on mesh.state: per held pinned claim, BindingDrift::between its pins and what intents.binding answers here, asked through the registry, or unknown with the reason; print one line per pinned claim in mesh state; document it in docs/MESH.md."
+why: "Carrying pins is useless unless a reader compares them, and a comparison written twice is two vocabularies; the handover's comparison is reused."
+current_state: "BindingDrift::between has no caller outside its module; mesh.state answers sessions, claims, overlaps, handovers, reviews and the digest."
+desired_state: "mesh.state answers pins with unchanged, evidence_moved, plan_changed or unknown; the command line and HTTP answer the same."
+scope:
+  - apps/majordomus-cli/src/capability/builtin/mesh.rs
+  - apps/majordomus-cli/src/commands/mesh.rs
+  - apps/majordomus-cli/tests/mesh_cooperation.rs
+  - docs/MESH.md
+  - docs/generated
+  - site/data
+depends_on:
+  - I2071
+acceptance_criteria:
+  - A pinned claim reads unchanged while both checkouts hold the same plan, and plan_changed once the reader's intent is rewritten
+  - A binding that cannot be asked, refuses the work, or reaches no intent here reads unknown with the reason, never unchanged
+  - One read folds the journal once and asks the binding once per distinct work named
+  - A released claim and an unpinned claim are not listed
+  - mesh state --format json answers the same pins as GET /api/v1/mesh/state
+validation:
+  - cargo test --lib -- pins pinned
+  - cargo test --test mesh_cooperation a_pinned_claim
+evidence_required:
+  - peer_reads_pin_standing
+created_at: 2026-10-09
+updated_at: 2026-10-09

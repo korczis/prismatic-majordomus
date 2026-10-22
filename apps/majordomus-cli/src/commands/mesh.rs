@@ -666,6 +666,23 @@ fn render_state(v: &Value) -> String {
                 .unwrap_or_default(),
         ));
     }
+    for p in v["pins"].as_array().into_iter().flatten() {
+        let named = [s(p, "issue"), s(p, "intent")]
+            .into_iter()
+            .find(|n| !n.is_empty())
+            .unwrap_or("-");
+        out.push_str(&format!(
+            "pins       {} task {} for {} {}{}\n",
+            s(p, "claim"),
+            s(p, "task"),
+            named,
+            s(p, "standing"),
+            p["because"]
+                .as_str()
+                .map(|b| format!(" ({b})"))
+                .unwrap_or_default(),
+        ));
+    }
     for h in st["handovers"].as_array().into_iter().flatten() {
         out.push_str(&format!(
             "handover   {} from {} branch {} consumed by {}\n",

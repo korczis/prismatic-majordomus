@@ -21,14 +21,17 @@ use crate::capability::model::{
     BenchmarkPolicy, CapabilityKind, CliExposure, Exposure, Stability, WaiverReason,
 };
 use crate::capability::module::ModuleDescriptor;
+use crate::intent_binding::BindingDrift;
 use crate::mesh::cooperation::{
     Cooperation, CooperationError, CooperationStatus, MeshVerifyReport, PeerView, RefusedView,
     Written,
 };
-use crate::mesh::journal::{ClaimMode, MeshEvent, SessionInfo, StreamId, StreamLiveness};
+use crate::mesh::journal::{
+    ClaimMode, ClaimPins, MeshEvent, SessionInfo, StreamId, StreamLiveness,
+};
 use crate::mesh::link::{LinkReply, RefusalCode, Signed, HELLO_PATH, SYNC_PATH};
 use crate::mesh::rendezvous::REGISTER_PATH;
-use crate::mesh::state::{ClaimView, CooperationState, HandoverView, SessionState};
+use crate::mesh::state::{ClaimState, ClaimView, CooperationState, HandoverView, SessionState};
 use crate::mesh::{
     default_identity_path, MeshConfig, MeshDoctorReport, MeshStatus, NodeIdentity, NodeRecord,
     PublicIdentity, RegisterAnswer,
@@ -294,7 +297,8 @@ pub struct PeerTree {
     pub machines: Vec<MachineNode>,
     /// Candidates refused, with the rule.
     pub refused: Vec<RefusedView>,
-    /// The digest of the cooperation state: equal digests, equal state.
+    /// The digest of the cooperation state: equal digests, equal state — every field but a
+    /// claim's pins, which an older executable does not read.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub digest: Option<String>,
 }
@@ -532,29 +536,162 @@ pub struct MeshStateAnswer {
     pub state: Option<CooperationState>,
     /// Every stream's liveness.
     pub streams: Vec<StreamView>,
+    /// Every held claim that carries pins, with where those pins stand against what this
+    /// checkout's own `intents.binding` answers now. Derived on every read, stored nowhere.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub pins: Vec<MeshClaimPinStanding>,
+}
+
+/// Where a held claim's pins stand against this checkout's own reading of the work the
+/// claiming task named: the question a worker asks about a peer it cannot see — is it still
+/// working to the intent as it reads here?
+///
+/// `standing` is the word [`crate::intent_binding::BindingDrift`] gives a resumed worker —
+/// `unchanged`, `evidence_moved` or `plan_changed` — or `unknown` when the binding could not
+/// be asked or reached no intent here, with the reason. Unknown is never read as unchanged:
+/// a checkout that does not hold the issue the peer named has learned nothing about it.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct MeshClaimPinStanding {
+    /// The claim's key, `<stream>/<claim>`.
+    pub claim: String,
+    /// The task whose record the pins came from.
+    pub task: String,
+    /// The issue that task named; empty when it named none.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub issue: String,
+    /// The intent that task named; empty when it named none.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub intent: String,
+    /// `unchanged`, `evidence_moved`, `plan_changed` or `unknown`.
+    pub standing: String,
+    /// Why the standing is `unknown`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub because: Option<String>,
+}
+
+/// What this checkout's binding answers for the work a claim's pins name: its two pins, or
+/// why there are none.
+type PinsAnswer = Result<(String, String), String>;
+
+/// A way to ask [`PinsAnswer`] for a claim's pins.
+type AskBinding<'a> = dyn Fn(&ClaimPins) -> PinsAnswer + 'a;
+
+/// The standing of every held, pinned claim, given a way to ask what the named work is
+/// bound to here: `ask` answers the two pins of the current binding, or why it has none.
+///
+/// A pure function of the folded claims and the answers, so that the comparison is tested
+/// without a server, and the one comparison is [`BindingDrift::between`] — the same a
+/// handover is resolved with, so a claim and a handover cannot disagree about what "moved"
+/// means.
+fn pin_standings(claims: &[ClaimView], ask: &AskBinding) -> Vec<MeshClaimPinStanding> {
+    claims
+        .iter()
+        .filter(|c| c.state == ClaimState::Held)
+        .filter_map(|c| c.pins.as_ref().map(|p| (c, p)))
+        .map(|(c, p)| {
+            let (standing, because) = ask(p)
+                .and_then(|(plan, evidence)| {
+                    Some(plan)
+                        .filter(|plan| !plan.is_empty())
+                        .map(|plan| (plan, evidence))
+                        .ok_or_else(|| "the work it names reaches no intent here".to_string())
+                })
+                .map_or_else(
+                    |why| ("unknown".to_string(), Some(why)),
+                    |(plan, evidence)| {
+                        let drift = BindingDrift::between(
+                            &p.plan_revision,
+                            &p.evidence_standing,
+                            &plan,
+                            &evidence,
+                        );
+                        (drift.as_str().to_string(), None)
+                    },
+                );
+            MeshClaimPinStanding {
+                claim: c.key.clone(),
+                task: p.task.clone(),
+                issue: p.issue.clone(),
+                intent: p.intent.clone(),
+                standing,
+                because,
+            }
+        })
+        .collect()
+}
+
+/// What the work a claim's pins name is bound to in this checkout, as `intents.binding`
+/// answers it: the two pins, or the reason there are none. Asked through the registry, the
+/// one way a handler calls another, so the mesh holds no second derivation of a binding.
+fn binding_pins(ctx: &Context, pins: &ClaimPins) -> PinsAnswer {
+    let named = |v: &str| Some(v).filter(|v| !v.is_empty()).map(str::to_string);
+    let field = |v: &serde_json::Value, k: &str| v[k].as_str().unwrap_or_default().to_string();
+    ctx.execute(
+        "intents.binding",
+        serde_json::json!({ "issue": named(&pins.issue), "intent": named(&pins.intent) }),
+    )
+    .map_err(unasked)
+    .and_then(|v| {
+        let plan = field(&v, "plan_revision");
+        let refusal = v["refusals"][0]["message"].as_str().map(str::to_string);
+        match (plan.is_empty(), refusal) {
+            (true, Some(why)) => Err(format!("the binding here refuses it: {why}")),
+            _ => Ok((plan, field(&v, "evidence_standing"))),
+        }
+    })
+}
+
+/// The reason a binding could not be asked at all, as opposed to one it refused. Every input
+/// the mesh sends today is answered or refused, so this is the registry failing; it is said
+/// rather than read as no pins.
+fn unasked(e: CapabilityError) -> String {
+    format!("the binding could not be asked: {e}")
+}
+
+/// Ask once per distinct work named in one read: ten claims for the same issue are one
+/// derivation, not ten (rule project.derived-once).
+fn memoised<'a>(ask: &'a AskBinding) -> impl Fn(&ClaimPins) -> PinsAnswer + 'a {
+    let seen: std::cell::RefCell<BTreeMap<(String, String), PinsAnswer>> =
+        std::cell::RefCell::new(BTreeMap::new());
+    move |p: &ClaimPins| {
+        let key = (p.issue.clone(), p.intent.clone());
+        if let Some(hit) = seen.borrow().get(&key) {
+            return hit.clone();
+        }
+        let answer = ask(p);
+        seen.borrow_mut().insert(key, answer.clone());
+        answer
+    }
 }
 
 fn mesh_state(ctx: &Context, _: Empty) -> Result<MeshStateAnswer, CapabilityError> {
     Ok(match ctx.mesh.cooperation() {
-        Some(c) => MeshStateAnswer {
-            active: true,
-            reason: None,
-            state: Some(c.state()),
-            streams: c
-                .streams()
-                .into_iter()
-                .map(|(stream, liveness, last_beat_ms)| StreamView {
-                    stream,
-                    liveness,
-                    last_beat_ms,
-                })
-                .collect(),
-        },
+        Some(c) => {
+            let state = c.state();
+            let ask = |p: &ClaimPins| binding_pins(ctx, p);
+            let once = memoised(&ask);
+            MeshStateAnswer {
+                active: true,
+                reason: None,
+                pins: pin_standings(&state.claims, &once),
+                state: Some(state),
+                streams: c
+                    .streams()
+                    .into_iter()
+                    .map(|(stream, liveness, last_beat_ms)| StreamView {
+                        stream,
+                        liveness,
+                        last_beat_ms,
+                    })
+                    .collect(),
+            }
+        }
         None => MeshStateAnswer {
             active: false,
             reason: ctx.mesh.cooperation_status().reason,
             state: None,
             streams: Vec::new(),
+            pins: Vec::new(),
         },
     })
 }
@@ -795,14 +932,45 @@ fn mesh_claim(ctx: &Context, input: ClaimInput) -> Result<Written, CapabilityErr
         intent: input.intent.clone(),
         ..SessionInfo::default()
     };
-    c.claim(
+    let pins = task_pins(
+        std::path::Path::new(&ctx.index.repository.root),
+        info.task.as_deref(),
+    );
+    c.claim_pinned(
         &info,
         input.scope,
         input.intent,
         input.mode.unwrap_or_default(),
         input.issue,
+        pins,
     )
     .map_err(map_error)
+}
+
+/// What the claiming task was bound to when it started, read from this checkout's task
+/// record: the pins `start` wrote there (ADR 0111), carried and never recomputed.
+///
+/// None — and the claim travels without pins — when the checkout has no task record, when
+/// that task is no longer `active` (`finish` rewrites the record in place and only the next
+/// `start` archives it, so a finished task's record is still there), when its binding was not
+/// `bound` or it named neither an issue nor an intent (an advisory start by paths records pins
+/// that name nothing, and an exempt task has none), or when the claim names a task other than
+/// the active one: this checkout holds one task record, and pins read from it would then
+/// describe somebody else's work. A claim that names no task is taken for the checkout's task,
+/// whichever client makes it: the pins say what the checkout is bound to, not who claimed.
+fn task_pins(root: &std::path::Path, named: Option<&str>) -> Option<ClaimPins> {
+    super::continuity::read_task(&crate::gates::task_path(root))
+        .filter(|t| named.is_none_or(|n| n == t.id))
+        .filter(|t| t.outcome == "active" && t.binding == "bound")
+        .filter(|t| !(t.issue.is_empty() && t.intent.is_empty()))
+        .filter(|t| !t.plan_revision.is_empty())
+        .map(|t| ClaimPins {
+            task: t.id,
+            issue: t.issue,
+            intent: t.intent,
+            plan_revision: t.plan_revision,
+            evidence_standing: t.evidence_standing,
+        })
 }
 
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
@@ -1184,7 +1352,7 @@ pub fn module() -> ModuleDescriptor {
             capability! {
                 id: "mesh.peers",
                 title: "Who cooperates, machine by machine",
-                description: "Machine → runtime → session → claim: every runtime this one is linked to or has heard through the journal, grouped by machine, local first; each runtime with its liveness, the milliseconds since its beat rose and its link, each session with what it said and its claims. Remote and local runtimes share one shape, and the state digest closes the answer: equal digests, equal state.",
+                description: "Machine → runtime → session → claim: every runtime this one is linked to or has heard through the journal, grouped by machine, local first; each runtime with its liveness, the milliseconds since its beat rose and its link, each session with what it said and its claims. Remote and local runtimes share one shape, and the state digest closes the answer: equal digests, equal state (a claim's pins aside, which runtimes of different ages need not both read).",
                 input: Empty,
                 output: PeerTree,
                 stability: Stability::Experimental,
@@ -1206,7 +1374,7 @@ pub fn module() -> ModuleDescriptor {
             capability! {
                 id: "mesh.state",
                 title: "The state every linked runtime converges on",
-                description: "The journal folded: every session, every claim with its standing (held, released, expired, conflicted with its winner), the advisory overlaps, every handover with who consumed it, every review request with its answers, and the digest two runtimes compare. Plus every stream's liveness on this runtime's clock.",
+                description: "The journal folded: every session, every claim with its standing (held, released, expired, conflicted with its winner), the advisory overlaps, every handover with who consumed it, every review request with its answers, and the digest two runtimes compare (a claim's pins left out). Plus every stream's liveness on this runtime's clock, and `pins`: every held claim carrying the pins of the task it was taken under, with where they stand against this checkout's own `intents.binding` for the work they name — `unchanged`, `evidence_moved`, `plan_changed`, or `unknown` with the reason when the binding cannot be asked, refuses it, or reaches no intent here. Derived on every read, one binding per distinct work named, stored nowhere.",
                 input: Empty,
                 output: MeshStateAnswer,
                 stability: Stability::Experimental,
@@ -1268,7 +1436,7 @@ pub fn module() -> ModuleDescriptor {
                 id: "mesh.claim",
                 kind: CapabilityKind::Command,
                 title: "Claim a scope across the mesh",
-                description: "Claim repository paths for a session. An exclusive claim that meets a live exclusive claim of another session — on this runtime or any runtime this one has heard — is refused as `claim_conflict` with the claims it meets; an advisory claim is recorded and its overlaps reported. A claim lives while its session is open and its runtime beats: a crashed holder's claim expires everywhere on its own. Writes this runtime's journal only.",
+                description: "Claim repository paths for a session. An exclusive claim that meets a live exclusive claim of another session — on this runtime or any runtime this one has heard — is refused as `claim_conflict` with the claims it meets; an advisory claim is recorded and its overlaps reported. A claim lives while its session is open and its runtime beats: a crashed holder's claim expires everywhere on its own. When this checkout's task is active and started bound to a named issue or intent, the claim carries that task's id, names and two pins as its record holds them (ADR 0111); they refuse nothing. Writes this runtime's journal only.",
                 input: ClaimInput,
                 output: Written,
                 stability: Stability::Experimental,
@@ -1373,6 +1541,217 @@ pub fn module() -> ModuleDescriptor {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// The binding a claim's pins are compared with is the one `intents.binding` answers in
+    /// this checkout: its pins for work it holds, and the refusal, as the reason, for work it
+    /// does not hold.
+    #[test]
+    fn the_pins_are_compared_with_what_this_checkouts_binding_answers() {
+        let repo = crate::intent_binding::tests::planned();
+        let ctx = repo.context().unwrap();
+        let pins = |issue: &str| ClaimPins {
+            task: "t".into(),
+            issue: issue.into(),
+            plan_revision: "p".into(),
+            ..ClaimPins::default()
+        };
+        let (plan, _) = binding_pins(&ctx, &pins("I0001")).expect("a binding with its pins");
+        assert_eq!(plan.len(), 64, "a SHA-256 pin: {plan}");
+        let why = binding_pins(&ctx, &pins("I9999")).unwrap_err();
+        assert!(why.starts_with("the binding here refuses it: "), "{why}");
+    }
+
+    /// A binding this checkout cannot answer — the issue is not in its plan — is said as the
+    /// reason there are no pins here, never read as pins that match.
+    #[test]
+    fn a_binding_that_cannot_be_answered_here_is_said_and_not_guessed() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let ctx = repo.context().unwrap();
+        let pins = ClaimPins {
+            task: "t-1".into(),
+            issue: "I9999".into(),
+            intent: String::new(),
+            plan_revision: "p".into(),
+            evidence_standing: "e".into(),
+        };
+        let answer = binding_pins(&ctx, &pins);
+        assert!(answer.is_err(), "{answer:?}");
+        assert!(answer.unwrap_err().contains("I9999"));
+        // naming nothing is refused too, with the binding's own reason
+        let nothing = ClaimPins {
+            issue: String::new(),
+            ..pins
+        };
+        assert!(binding_pins(&ctx, &nothing)
+            .unwrap_err()
+            .contains("nothing was named"));
+        // and a registry that cannot be asked is said as such
+        assert_eq!(
+            unasked(CapabilityError::NotFound("intents.binding".into())),
+            format!(
+                "the binding could not be asked: {}",
+                CapabilityError::NotFound("intents.binding".into())
+            )
+        );
+    }
+
+    /// One read asks the binding once per distinct work named: ten claims for one issue are
+    /// one derivation, and the answer — pins or the reason there are none — is the same each time.
+    #[test]
+    fn one_read_asks_the_binding_once_per_distinct_work() {
+        let asked = std::cell::Cell::new(0);
+        let ask = |p: &ClaimPins| {
+            asked.set(asked.get() + 1);
+            match p.issue.as_str() {
+                "I1" => Ok(("plan".to_string(), "ev".to_string())),
+                _ => Err("not here".to_string()),
+            }
+        };
+        let once = memoised(&ask);
+        let pins = |issue: &str| ClaimPins {
+            task: "t".into(),
+            issue: issue.into(),
+            plan_revision: "p".into(),
+            ..ClaimPins::default()
+        };
+        for _ in 0..3 {
+            assert_eq!(once(&pins("I1")), Ok(("plan".into(), "ev".into())));
+            assert_eq!(once(&pins("I2")), Err("not here".into()));
+        }
+        assert_eq!(asked.get(), 2, "two works named, two derivations");
+    }
+
+    /// A pinned claim is compared with what this checkout answers for the same work, by the
+    /// comparison a handover is resolved with; a claim that is not held or carries no pins is
+    /// not listed, and a binding that cannot be asked or reaches no intent is unknown — never
+    /// unchanged.
+    #[test]
+    fn a_pinned_claim_stands_where_the_local_binding_puts_it_and_unknown_is_not_unchanged() {
+        let view = |key: &str, issue: &str, state: ClaimState, pinned: bool| -> ClaimView {
+            serde_json::from_value(serde_json::json!({
+                "key": key, "stream": format!("{}-{}-{}", "0".repeat(32), "0".repeat(16), "0".repeat(16)),
+                "runtime": "r", "session": "s", "scope": ["apps"], "mode": "advisory",
+                "acquired_lamport": 1, "acquired_seq": 1,
+                "state": serde_json::to_value(&state).unwrap(),
+                "pins": pinned.then(|| serde_json::json!({
+                    "task": "t-1", "issue": issue,
+                    "plan_revision": "plan-1", "evidence_standing": "ev-1",
+                })),
+            }))
+            .expect("a claim view")
+        };
+        let claims = [
+            view("a/same", "I1", ClaimState::Held, true),
+            view("a/evidence", "I2", ClaimState::Held, true),
+            view("a/plan", "I3", ClaimState::Held, true),
+            view("a/nowhere", "I4", ClaimState::Held, true),
+            view("a/unasked", "I5", ClaimState::Held, true),
+            view("a/released", "I1", ClaimState::Released, true),
+            view("a/unpinned", "I1", ClaimState::Held, false),
+        ];
+        let ask = |p: &ClaimPins| match p.issue.as_str() {
+            "I1" => Ok(("plan-1".to_string(), "ev-1".to_string())),
+            "I2" => Ok(("plan-1".to_string(), "ev-2".to_string())),
+            "I3" => Ok(("plan-2".to_string(), "ev-2".to_string())),
+            "I4" => Ok((String::new(), String::new())),
+            _ => Err("the binding could not be asked: no index".to_string()),
+        };
+        let got = pin_standings(&claims, &ask);
+        let words: Vec<(&str, &str)> = got
+            .iter()
+            .map(|s| (s.claim.as_str(), s.standing.as_str()))
+            .collect();
+        assert_eq!(
+            words,
+            [
+                ("a/same", "unchanged"),
+                ("a/evidence", "evidence_moved"),
+                ("a/plan", "plan_changed"),
+                ("a/nowhere", "unknown"),
+                ("a/unasked", "unknown"),
+            ]
+        );
+        assert_eq!(got[0].because, None);
+        assert_eq!(
+            got[3].because.as_deref(),
+            Some("the work it names reaches no intent here")
+        );
+        assert!(got[4]
+            .because
+            .as_deref()
+            .unwrap()
+            .contains("could not be asked"));
+        assert_eq!((got[0].task.as_str(), got[0].issue.as_str()), ("t-1", "I1"));
+    }
+
+    /// The pins a claim carries are the task record's own, read from the one record this
+    /// checkout holds — and from nowhere when that record is absent, pins nothing, or is
+    /// another task's than the one the claim names.
+    #[test]
+    fn a_claim_carries_the_pins_of_the_checkouts_task_and_of_no_other() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        assert_eq!(task_pins(root, None), None, "no task, no pins");
+
+        let record = crate::gates::task_path(root);
+        std::fs::create_dir_all(record.parent().unwrap()).unwrap();
+        std::fs::write(&record, "id: t-1\ntask: unbound work\n").unwrap();
+        assert_eq!(
+            task_pins(root, None),
+            None,
+            "a task that named nothing pins nothing"
+        );
+
+        let write = |extra: &str| {
+            std::fs::write(
+                &record,
+                format!(
+                    "id: t-1\ntask: the work\nplan_revision: 9f2c\nevidence_standing: 1ab0\n{extra}"
+                ),
+            )
+            .unwrap()
+        };
+        // pins that name nothing, or a binding that did not stand bound, are not carried: an
+        // advisory start by paths, an exemption, a refused binding
+        for extra in [
+            "outcome: active\nbinding: bound\n",
+            "outcome: active\nbinding: exempt\nexemption: emergency\n",
+            "outcome: active\nbinding: refused\nissue: I2071\n",
+            "outcome: completed\nbinding: bound\nissue: I2071\n",
+            "outcome: handed_over\nbinding: bound\nissue: I2071\n",
+        ] {
+            write(extra);
+            assert_eq!(task_pins(root, None), None, "{extra}");
+        }
+        write("outcome: active\nbinding: bound\nissue: I2071\n");
+        let pins = task_pins(root, None).expect("the active task's pins");
+        assert_eq!(
+            (
+                pins.task.as_str(),
+                pins.issue.as_str(),
+                pins.intent.as_str()
+            ),
+            ("t-1", "I2071", "")
+        );
+        assert_eq!(
+            (pins.plan_revision.as_str(), pins.evidence_standing.as_str()),
+            ("9f2c", "1ab0")
+        );
+        assert!(
+            pins.validate().is_ok(),
+            "what is read is what may be signed"
+        );
+        assert_eq!(
+            task_pins(root, Some("t-1")),
+            Some(pins),
+            "named, and it is this one"
+        );
+        assert_eq!(
+            task_pins(root, Some("t-2")),
+            None,
+            "a claim for another task does not borrow this task's pins"
+        );
+    }
 
     /// The declaration is the only place these names exist; this is the assertion a
     /// refactor that dropped a projection would fail.

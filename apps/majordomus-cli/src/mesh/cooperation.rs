@@ -100,8 +100,8 @@ use serde::{Deserialize, Serialize};
 use super::config::{CooperationConfig, TrustConfig};
 use super::identity::{node_id_of_key, NodeIdentity};
 use super::journal::{
-    ClaimMode, EventBody, HandoverBody, Journal, JournalTallies, Marks, MeshEvent, Rejection,
-    SessionInfo, StreamId, StreamLiveness, HANDOVER_RETENTION,
+    ClaimMode, ClaimPins, EventBody, HandoverBody, Journal, JournalTallies, Marks, MeshEvent,
+    Rejection, SessionInfo, StreamId, StreamLiveness, HANDOVER_RETENTION,
 };
 use super::link::{
     fresh_token, negotiate, sign, verify_signed, Domain, Hello, LinkRefusal, LinkReply,
@@ -3305,6 +3305,56 @@ impl Cooperation {
         mode: ClaimMode,
         issue: Option<String>,
     ) -> Result<Written, CooperationError> {
+        self.claim_pinned(session, scope, intent, mode, issue, None)
+    }
+
+    /// [`Cooperation::claim`], carrying what the claiming task was bound to when it started.
+    ///
+    /// The pins are the task record's own (ADR 0111) and travel as they were written: this
+    /// runtime does not compute them, and admission does not read them — a claim is refused
+    /// for the scope it meets and for nothing else. They are there for the reader on another
+    /// machine, who can compare them with what `intents.binding` answers on its own checkout
+    /// and learn that the intent moved under a worker it cannot otherwise see.
+    ///
+    /// ```
+    /// # use std::sync::Arc;
+    /// # use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
+    /// # use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};
+    /// # use majordomus_cli::mesh::identity::NodeIdentity;
+    /// # use majordomus_cli::mesh::link::HttpTransport;
+    /// # use majordomus_cli::mesh::registry::MeshRegistry;
+    /// # use majordomus_cli::mesh::repository::of_root_commits;
+    /// # let cooperation = Cooperation::new(CooperationSetup {
+    /// #     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: "0000000000000001".into(),
+    /// #     repository: of_root_commits(&["root".into()]), endpoints: vec!["127.0.0.1:9".into()],
+    /// #     version: "doc".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),
+    /// #     journal_path: None, registry: Arc::new(MeshRegistry::new()),
+    /// #     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),
+    /// # }).unwrap();
+    /// use majordomus_cli::mesh::journal::{ClaimMode, ClaimPins, SessionInfo};
+    ///
+    /// let pins = ClaimPins { task: "t-1".into(), issue: "I2071".into(),
+    ///     plan_revision: "9f2c".into(), ..ClaimPins::default() };
+    /// cooperation.claim_pinned(&SessionInfo::named("s1", "cli"), vec!["apps".into()], None,
+    ///     ClaimMode::Advisory, None, Some(pins.clone())).unwrap();
+    /// assert_eq!(cooperation.state().claims[0].pins, Some(pins), "carried as written");
+    ///
+    /// // pins that pin nothing are refused before anything is signed
+    /// cooperation.claim_pinned(&SessionInfo::named("s1", "cli"), vec!["docs".into()], None,
+    ///     ClaimMode::Advisory, None, Some(ClaimPins::default())).expect_err("no plan revision");
+    /// ```
+    pub fn claim_pinned(
+        &self,
+        session: &SessionInfo,
+        scope: Vec<String>,
+        intent: Option<String>,
+        mode: ClaimMode,
+        issue: Option<String>,
+        pins: Option<ClaimPins>,
+    ) -> Result<Written, CooperationError> {
+        if let Some(Err(why)) = pins.as_ref().map(ClaimPins::validate) {
+            return Err(CooperationError::Invalid(why));
+        }
         // Check and append under one lock: two callers of this runtime must not both pass
         // admission for one scope and leave the fold to name a conflict it could prevent.
         let _admission = self.admission.lock().expect("claim admission");
@@ -3328,6 +3378,7 @@ impl Cooperation {
                 intent,
                 mode,
                 issue,
+                pins,
             },
             self.own(&claim),
         )
@@ -4190,6 +4241,69 @@ mod tests {
         assert!(
             state.claims.iter().all(|c| !c.state.is_live()),
             "a departed session holds nothing"
+        );
+    }
+
+    /// What a worker on one machine was bound to reaches the other machine with its claim,
+    /// and takes no part in admission: the same scope is refused or reported for the scope,
+    /// whatever either side pinned.
+    #[test]
+    fn a_pinned_claim_crosses_the_link_and_admission_ignores_the_pins() {
+        let net = Arc::new(InProcess::default());
+        let a = runtime(&net, "a:1", "root", TrustPolicy::Tofu);
+        let b = runtime(&net, "b:1", "root", TrustPolicy::Tofu);
+        let key = a.dial(&["b:1".into()]).expect("B welcomes A");
+        let pins = ClaimPins {
+            task: "t-1".into(),
+            issue: "I2071".into(),
+            plan_revision: "9f2c".into(),
+            evidence_standing: "1ab0".into(),
+            ..ClaimPins::default()
+        };
+        a.claim_pinned(
+            &session("s1"),
+            vec!["apps".into()],
+            None,
+            ClaimMode::Exclusive,
+            None,
+            Some(pins.clone()),
+        )
+        .unwrap();
+        a.sync_with(&key).unwrap();
+        a.journal.beat_own();
+        a.sync_with(&key).unwrap();
+        assert_eq!(
+            b.state().claims[0].pins,
+            Some(pins.clone()),
+            "B reads A's pins"
+        );
+        let other = ClaimPins {
+            plan_revision: "0000".into(),
+            ..pins
+        };
+        let refused = b.claim_pinned(
+            &session("s9"),
+            vec!["apps/majordomus-cli".into()],
+            None,
+            ClaimMode::Exclusive,
+            None,
+            Some(other),
+        );
+        assert!(
+            matches!(refused, Err(CooperationError::Conflict(ref c)) if c[0].pins.is_some()),
+            "refused for the scope, and the refusal names the claim with its pins: {refused:?}"
+        );
+        let unpinned = a.claim_pinned(
+            &session("s1"),
+            vec!["docs".into()],
+            None,
+            ClaimMode::Advisory,
+            None,
+            Some(ClaimPins::default()),
+        );
+        assert!(
+            matches!(unpinned, Err(CooperationError::Invalid(_))),
+            "pins that pin nothing are refused before signing: {unpinned:?}"
         );
     }
 

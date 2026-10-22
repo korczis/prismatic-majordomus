@@ -1,0 +1,37 @@
+id: I2071
+milestone: peers-share-what-work-is-for
+title: A mesh claim carries the pins of the task it was taken under
+slug: a-mesh-claim-carries-the-pins
+priority: p2
+profile: implementation
+parallel_safe: true
+serves:
+  - peers-share-what-work-is-for#a-claim-carries-the-pins
+objective: "Add optional ClaimPins (task, issue, intent, plan_revision, evidence_standing) to ClaimAcquired and ClaimView, bounded like every other field, read by mesh.claim from the checkout's task record through continuity::read_task, and kept out of the convergence digest."
+why: "A worker on another machine cannot tell what a claim's work is for beyond a sentence; the pins exist on the task record and travel nowhere."
+current_state: "ClaimAcquired carries a free-text intent and issue."
+desired_state: "A bound task's claim carries its pins; an unbound, exempt or other task's claim carries none; pins without a plan revision or over their bounds are refused before signing; mixed-age runtimes keep one digest."
+scope:
+  - apps/majordomus-cli/src/mesh/journal.rs
+  - apps/majordomus-cli/src/mesh/state.rs
+  - apps/majordomus-cli/src/mesh/cooperation.rs
+  - apps/majordomus-cli/src/capability/builtin/mesh.rs
+  - apps/majordomus-cli/tests/mesh_cooperation.rs
+  - .ai/repo/rules/project
+  - docs/generated
+  - site/data
+depends_on: []
+acceptance_criteria:
+  - A claim of a bound task carries its pins to a linked runtime as written
+  - A claim of a finished, exempt, refused or unnamed task, or naming another task than the active one, carries none
+  - Rule project.an-intent-outlives-its-sessions v4 names a mesh claim as a carrier of names and pins and nothing else
+  - Pins with no plan revision or a field over its bound are refused by the writer, and a reader drops them and folds the claim
+  - Two runtimes that differ only in carrying pins compute the same digest
+validation:
+  - majordomus generate --check
+  - cargo test --lib -- pins pinned
+  - cargo test --test mesh_cooperation a_pinned_claim
+evidence_required:
+  - claim_carries_pins
+created_at: 2026-10-09
+updated_at: 2026-10-09
