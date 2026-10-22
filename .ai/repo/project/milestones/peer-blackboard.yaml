@@ -1,7 +1,6 @@
 id: peer-blackboard
 title: The peer blackboard is one projection, pushed live to every surface
 slug: peer-blackboard
-version: "1.1"
 order: 341
 priority: p1
 problem: "Who is working on what is already recorded — the board of every checkout (peers.list, gathered per ADR 0044), the mesh journal (sessions, claims, reviews, handovers per ADR 0067) and the monitor's folded signals (ADR 0133) — but no surface shows it as one picture and none shows it live. /cockpit/peers renders peers.list once and never changes; /ui has no peers screen; /cockpit/monitor polls the whole monitor every five seconds; the only WebSocket, /events, carries executions and nothing else; and nothing between the board, the journal and the socket says that anything changed. The unmerged ADR 0162 draft proposed a board channel for the kiosk alone and was never implemented."
