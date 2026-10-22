@@ -8,8 +8,8 @@
 # fresh repository made in the runner's temporary directory from the assembled slug, whose
 # history is the provider's own — each deployment is one commit on top of whatever the
 # provider holds, so the push is always a fast-forward and never forced. The credential is a
-# workflow secret, handed to git through a netrc file written with umask 077 under a home of
-# its own, masked, removed when the step ends, and never on a command line or in a URL.
+# workflow secret, handed to git by a credential helper that reads the push step's environment:
+# masked, never written to disk, never on a command line or in a URL.
 #
 # Publication follows verification. A dispatch names a commit and is held to the same proof:
 # a successful validate run on a master push of that commit, or nothing is published.
@@ -189,15 +189,17 @@ jobs:
           fi
           echo "::add-mask::$GIGALIXIR_API_KEY"
           echo "::add-mask::$GIGALIXIR_EMAIL"
-          home="$RUNNER_TEMP/provider-home"
-          mkdir -p "$home"
-          trap 'rm -f "$home/.netrc"' EXIT
-          ( umask 077 && printf 'machine git.gigalixir.com\nlogin %s\npassword %s\n' "$GIGALIXIR_EMAIL" "$GIGALIXIR_API_KEY" > "$home/.netrc" )
-          unset GIGALIXIR_EMAIL GIGALIXIR_API_KEY
-          export HOME="$home" GIT_TERMINAL_PROMPT=0
+          # The credential reaches git through a helper that reads this step's environment:
+          # nothing is written to disk, and nothing depends on whether the runner's git
+          # consults a netrc (run 39837714659: it did not, and the push stopped at "could not
+          # read Username"). The empty helper first clears any the runner configured.
+          export GIT_TERMINAL_PROMPT=0
           remote="https://git.gigalixir.com/$APP.git"
           cd "$RUNNER_TEMP/slug"
           git init -q -b main
+          git config credential.helper ''
+          # shellcheck disable=SC2016
+          git config --add credential.helper '!f() { test "$1" = get || exit 0; echo "username=$GIGALIXIR_EMAIL"; echo "password=$GIGALIXIR_API_KEY"; }; f'
           git config user.name "majordomus provider workflow"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
