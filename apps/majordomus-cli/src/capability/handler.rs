@@ -560,6 +560,31 @@ impl Executable {
         self.capability.execution = self.capability.execution.authenticates_its_input();
         self
     }
+
+    /// The declaration, answering only a caller on this machine: a read that shows the
+    /// mesh's working state (ADR 0220 decision 4). See
+    /// [`crate::capability::ExecutionPolicy::reads_only_locally`].
+    ///
+    /// ```
+    /// use majordomus_cli::capability;
+    /// use majordomus_cli::capability::{CapabilityKind, Context, CapabilityError, Effect, Exposure, Stability};
+    /// use majordomus_cli::capability::builtin::Empty;
+    /// #[derive(serde::Serialize, schemars::JsonSchema)]
+    /// struct Board { peers: usize }
+    /// fn board(_: &Context, _: Empty) -> Result<Board, CapabilityError> { Ok(Board { peers: 0 }) }
+    /// let e = capability! {
+    ///     id: "demo.board", kind: CapabilityKind::Query, title: "Board", description: "Who works here.",
+    ///     input: Empty, output: Board, stability: Stability::Experimental,
+    ///     exposure: Exposure::default(), tags: [], handler: board,
+    /// }.reads_only_locally();
+    /// let policy = e.capability.execution;
+    /// assert!(policy.local_only && !policy.admits_remote(), "a caller beyond loopback is refused");
+    /// assert_eq!(policy.effect, Effect::Read, "it is still a read");
+    /// ```
+    pub fn reads_only_locally(mut self) -> Self {
+        self.capability.execution = self.capability.execution.reads_only_locally();
+        self
+    }
 }
 
 /// The one canonical declaration of an executable capability. From it every projection is

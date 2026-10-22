@@ -727,7 +727,10 @@ pub fn module() -> ModuleDescriptor {
                 },
                 tags: ["executions", "control-plane"],
                 handler: executions_list,
-            },
+            }
+            // this process's executions are not the repository: a caller on another host never
+            // reads them (ADR 0220 decision 4, I3842)
+            .reads_only_locally(),
             capability! {
                 id: "executions.get",
                 title: "One execution",
@@ -739,7 +742,10 @@ pub fn module() -> ModuleDescriptor {
                 tags: ["executions", "control-plane"],
                 benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::TransientState },
                 handler: executions_get,
-            },
+            }
+            // this process's executions are not the repository: a caller on another host never
+            // reads them (ADR 0220 decision 4, I3842)
+            .reads_only_locally(),
             capability! {
                 id: "executions.events",
                 title: "An execution's event history",
@@ -751,7 +757,10 @@ pub fn module() -> ModuleDescriptor {
                 tags: ["executions", "control-plane"],
                 benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::TransientState },
                 handler: executions_events,
-            },
+            }
+            // this process's executions are not the repository: a caller on another host never
+            // reads them (ADR 0220 decision 4, I3842)
+            .reads_only_locally(),
             capability! {
                 id: "executions.cancel",
                 kind: CapabilityKind::Command,
@@ -804,7 +813,9 @@ pub fn module() -> ModuleDescriptor {
                 tags: ["executions", "control-plane", "diagnostic"],
                 handler: executions_demonstrate,
             }
-            .cancellable(),
+            .cancellable()
+            // it starts an execution, which a caller on another host may not do (I3842)
+            .reads_only_locally(),
         ],
     }
 }
@@ -893,9 +904,24 @@ mod tests {
             let base = crate::capability::ExecutionPolicy::classify(*kind);
             // executions.start may run a writer, so it is declared one (ADR 0126)
             let writes = c.id.as_str() == "executions.start";
+            // what this process runs answers this machine alone (ADR 0220 decision 4, I3842)
+            let local = matches!(
+                c.id.as_str(),
+                "executions.list"
+                    | "executions.get"
+                    | "executions.events"
+                    | "executions.demonstrate"
+            );
+            let scoped = |p: crate::capability::ExecutionPolicy| {
+                if local {
+                    p.reads_only_locally()
+                } else {
+                    p
+                }
+            };
             assert!(
-                c.execution == base
-                    || c.execution == base.stoppable()
+                c.execution == scoped(base)
+                    || c.execution == scoped(base.stoppable())
                     || (writes && c.execution == base.writes_repository()),
                 "{id} carries a policy neither its kind nor a cancellation declaration gives it"
             );
