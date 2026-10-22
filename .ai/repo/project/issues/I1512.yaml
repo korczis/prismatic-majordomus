@@ -31,4 +31,25 @@ evidence_required:
   - never_reported_is_distinct_from_passed
 risk: "Medium. The failure to avoid is a reader that renders a missing verdict as a green one; this repository has already paid for that mistake twice."
 created_at: 2026-09-11
-updated_at: 2026-09-11
+updated_at: 2026-10-14T19:56:28Z
+started_at: 2026-10-14T19:54:09Z
+started_event: sha256:8c0b0b951491859febe5c46b2eb420bb43e905c99d6c635e0e2137416bd4f186
+verified_at: 2026-10-14T19:55:50Z
+verified_event: sha256:c007772b8d97bbf0641180bd51ebb17d3fd23eb5b2e60abdbb94bec395188d60
+completed_at: 2026-10-14T19:56:28Z
+completed_event: sha256:8c645bc560c4f1ab5e8dccf585ccfc40f7b46cc4735e9bf4a7d18115292444e1
+evidence:
+  - covers: gate_state_is_answerable
+    type: test
+    command: "MAJORDOMUS_BIN=<v0.26.0 libexec> bash test/run.sh 131_completion_gates 1037_the_closing_question_is_measured; GET /api/v1/gates; GET /api/v1/gates/completion"
+    result: "ok at e8505a431d, whose gate code is identical to v0.26.0 ff38297096: gates.model answers the 74 gates declared in .ai/repo/ci/gates.yaml with job, command and selection, and gates.completion answers each gate's last reported standing over the files it was taken on, read from local evidence records with no network access. Delivered by 303f8384f1c, feat(gates): the closing question is answered by measurement"
+    artifact: "apps/majordomus-cli/src/capability/builtin/gates.rs"
+    commit: e8505a431d552b9a9d6b7baebb91dfdee4451bbf
+    recorded_at: 2026-10-14T19:55:27Z
+  - covers: never_reported_is_distinct_from_passed
+    type: test
+    command: "bash test/run.sh 578_an_unknown_gate_refuses_completed 131_completion_gates; unit tests gates::judge a_planned_gate_nothing_reported_is_queued_and_not_unknown and gates::done the_ci_question_separates_refused_from_never_reported"
+    result: "ok at e8505a431d: a gate no run has reported is queued, with the reason that the change is unverified against it, which is not the same as passing; the live answer for this task was 71 queued, 3 exempt and 0 pass. An unreadable verdict is unknown and never a pass, and an unknown gate refuses finish --outcome completed, case 578"
+    artifact: "apps/majordomus-cli/src/gates/judge.rs"
+    commit: e8505a431d552b9a9d6b7baebb91dfdee4451bbf
+    recorded_at: 2026-10-14T19:55:36Z
