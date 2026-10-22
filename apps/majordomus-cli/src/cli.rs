@@ -1211,11 +1211,14 @@ pub struct MeshSessionArgs {
     pub command: MeshSessionCommand,
 }
 
+#[allow(clippy::large_enum_variant)]
 #[derive(Debug, Subcommand)]
 /// The two ends of a session's life on the mesh: `open`, which announces a session and
 /// updates what it says about itself, and `close`, which ends it and with it every claim
 /// it held on every linked runtime. There is no third verb, because everything a session
-/// does between those two ends is a claim, a handover or a review.
+/// does between those two ends is a claim, a handover or a review. `open` carries every
+/// field a session says and `close` only its id; the value is parsed once per process, so
+/// the larger variant is not boxed for the smaller one's sake.
 ///
 /// ```
 /// use clap::Parser;
@@ -1262,6 +1265,17 @@ pub enum MeshSessionCommand {
 /// assert_eq!(open.worker.as_deref(), Some("documenter"));
 /// assert_eq!(open.branch.as_deref(), Some("feature/mesh-cooperation"));
 /// assert_eq!(open.task, None, "what the session does not say stays unsaid");
+/// assert_eq!(open.client_pid, None, "and a session names its client only when asked to");
+///
+/// // a session hook names the client that ran it, so its end closes the session (I3810)
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "mesh", "session", "open", "--session", "s2", "--client-pid", "auto",
+/// ])
+/// .unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Session(session) = mesh.command else { panic!("expected `session`") };
+/// let MeshSessionCommand::Open(open) = session.command else { panic!("expected `open`") };
+/// assert_eq!(open.client_pid.as_deref(), Some("auto"));
 ///
 /// // a session without an id is not a session
 /// assert!(Cli::try_parse_from(["majordomus", "mesh", "session", "open"]).is_err());
@@ -1294,6 +1308,10 @@ pub struct MeshSessionOpenArgs {
     /// The head commit
     #[arg(long)]
     pub head: Option<String>,
+    /// The client process the session belongs to: a pid, or `auto` for the nearest
+    /// ancestor that is not a shell. The runtime closes the session once it has ended
+    #[arg(long, value_name = "PID|auto")]
+    pub client_pid: Option<String>,
     #[command(flatten)]
     /// Where the repository is and how to answer.
     pub query: MeshQueryArgs,
