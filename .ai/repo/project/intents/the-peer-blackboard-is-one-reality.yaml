@@ -37,6 +37,10 @@ satisfaction:
     criterion: An operator answers a review, takes a handover or releases their own claim from /ui/peers through the capability that owns the record, offered only where that capability admits the caller, and the page shows the result only when the blackboard does
     evidence: test
     ref: test/cases/3383_the_peers_screen_follows_the_blackboard.sh
+  - id: explained
+    criterion: The home page and the documentation say what the blackboard shows, that it is live on a running server and a labelled snapshot on the published site, and what is not built yet, naming the issues
+    evidence: test
+    ref: test/cases/3387_the_home_page_explains_the_blackboard.sh
 governance:
   - rule:project.derived-once
   - adr:adr-0044
@@ -46,4 +50,4 @@ non_goals:
   - A second board, registry or message store; the blackboard reads the records that already exist
   - Presence of a provider that cannot be observed through a supported, authenticated interface
 created_at: 2026-10-18
-updated_at: 2026-10-18
+updated_at: 2026-10-19
