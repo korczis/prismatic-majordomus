@@ -55,6 +55,13 @@ a check passed, it failed.
   the context's reading of the repository (`generation`), or the checkout's state as well
   (`checkout`: HEAD, the staging index, the refs, and every changed or untracked path).
   The switch also makes a page's reading of a source run its handler and wait for it.
+- `MAJORDOMUS_BUILD_CACHE=off` makes `majordomus mesh build-cache ensure` ask no level of
+  the build cache: neither the key marked in place, nor the local archive level under
+  `~/.cache/majordomus/build-cache`, nor the store; the command after `--` runs, and nothing
+  is saved or marked. A cold, a warm and a bypassed install leave the same files
+  (`project.cache-is-invisible`); the switch settles a doubt by installing without the
+  cache. A restore and a save also respect the build's free-space floor,
+  `MAJORDOMUS_MIN_FREE_MB` (5120 by default, 0 disables it).
 - `MAJORDOMUS_READING_PATIENCE_MS` sets how long a page waits for a source after the
   repository changed before it shows the reading it has, marked stale (50 by default; see
   [`MAJORDOMUS_UI.md`](@/docs/majordomus-ui.md#fast-and-current)). `wait` makes every read wait for

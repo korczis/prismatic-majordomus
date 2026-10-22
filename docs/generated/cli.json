@@ -22756,6 +22756,170 @@
                   }
                 ],
                 "subcommands": []
+              },
+              {
+                "path": [
+                  "majordomus",
+                  "mesh",
+                  "build-cache",
+                  "ensure"
+                ],
+                "route": "/docs/cli/mesh/build-cache/ensure/",
+                "executable": true,
+                "usage": "majordomus mesh build-cache ensure [OPTIONS] <KIND> [COMMAND]",
+                "about": "Restore a dependency install or a cold cargo build directory from the local level or this node's store, verified by its digest; on a miss run the command and save what it left. MAJORDOMUS_BUILD_CACHE=off bypasses every level",
+                "args": [
+                  {
+                    "name": "kind",
+                    "positional": true,
+                    "help": "What is cached: npm-modules, mix-deps or cargo-build-dir",
+                    "value_name": "KIND",
+                    "takes_value": true,
+                    "required": true,
+                    "global": false,
+                    "possible_values": [
+                      {
+                        "name": "cargo-build-dir",
+                        "help": "The cargo build directory of a workspace: the dependencies compiled on the way, without incremental state. Restored only into a directory that is cold"
+                      },
+                      {
+                        "name": "mix-deps",
+                        "help": "The `deps/` directory `mix deps.get` fills"
+                      },
+                      {
+                        "name": "npm-modules",
+                        "help": "The `node_modules/` directory `npm ci` fills"
+                      }
+                    ],
+                    "defaults": []
+                  },
+                  {
+                    "name": "dir",
+                    "long": "dir",
+                    "positional": false,
+                    "help": "The directory holding the lockfile, relative to the repository (default: the only one, or the current one)",
+                    "value_name": "DIR",
+                    "takes_value": true,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "command",
+                    "positional": true,
+                    "help": "The install or build command, after `--`: run on a miss (and for mix and cargo on every run)",
+                    "value_name": "COMMAND",
+                    "takes_value": true,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "repo",
+                    "long": "repo",
+                    "positional": false,
+                    "help": "Start the search for the repository root here (default: the current directory)",
+                    "value_name": "PATH",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "discovery",
+                    "long": "discovery",
+                    "positional": false,
+                    "help": "How declarative files are enumerated",
+                    "value_name": "DISCOVERY",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [
+                      {
+                        "name": "vcs",
+                        "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                      },
+                      {
+                        "name": "filesystem",
+                        "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                      }
+                    ],
+                    "defaults": [
+                      "vcs"
+                    ]
+                  },
+                  {
+                    "name": "strict",
+                    "long": "strict",
+                    "positional": false,
+                    "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                    "value_name": "STRICT",
+                    "takes_value": false,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": [
+                      "false"
+                    ]
+                  },
+                  {
+                    "name": "share",
+                    "long": "share",
+                    "positional": false,
+                    "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                    "value_name": "DIR",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "format",
+                    "long": "format",
+                    "positional": false,
+                    "help": "`text` for a person, `json` for a machine; both render the same answer",
+                    "value_name": "FORMAT",
+                    "takes_value": true,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [
+                      {
+                        "name": "text",
+                        "help": "Lines for a person"
+                      },
+                      {
+                        "name": "json",
+                        "help": "One JSON document, deterministic"
+                      }
+                    ],
+                    "defaults": [
+                      "text"
+                    ]
+                  }
+                ],
+                "examples": [
+                  {
+                    "id": "mesh-build-cache-ensure",
+                    "title": "Run an install through the build cache",
+                    "description": "The command after `--` is what the install would run anyway. With the lockfile's key already in place nothing runs; a hit is restored from the local level or this node's store after its SHA-256 matches, and npm's install is then not run; a miss runs the command and saves what it left. A repository that tracks no such lockfile runs the command uncached and says why, as here; MAJORDOMUS_BUILD_CACHE=off bypasses every level. The exit code is the command's.",
+                    "argv": [
+                      "mesh",
+                      "build-cache",
+                      "ensure",
+                      "npm-modules",
+                      "--",
+                      "true"
+                    ],
+                    "command": "majordomus mesh build-cache ensure npm-modules -- true",
+                    "setup": [],
+                    "expectation": "exits 0; prints source     uncached"
+                  }
+                ],
+                "subcommands": []
               }
             ]
           }

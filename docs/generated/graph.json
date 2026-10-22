@@ -997,6 +997,15 @@
         "status": "query"
       },
       {
+        "id": "capability:mesh.build_cache.ensure",
+        "kind": "capability",
+        "label": "mesh.build_cache.ensure",
+        "summary": "Restore an install before its command, and save it after",
+        "route": "/cockpit/capabilities/mesh.build_cache.ensure",
+        "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+        "status": "command"
+      },
+      {
         "id": "capability:mesh.build_cache.key",
         "kind": "capability",
         "label": "mesh.build_cache.key",
@@ -63772,6 +63781,9 @@
             "share/schemas/majordomus/policy",
             "share/skeleton/policy.yaml",
             ".ai/repo/rules/project/cache-is-invisible.v1.md",
+            ".ai/repo/rules/project/cache-is-invisible.v2.md",
+            ".ai/repo/rules/project/no-screen-waits-for-a-source.v1.md",
+            "apps/majordomus-cli/src/policy.rs",
             "docs/CLI.md",
             ".ai/repo/project/intents/a-build-reuses-what-the-mesh-already-built.yaml",
             "test/cases/3952_a_dependency_install_is_restored_and_saved.sh"
@@ -75364,23 +75376,24 @@
         }
       },
       {
-        "id": "majordomus://rule/project.cache-is-invisible@1",
+        "id": "majordomus://rule/project.cache-is-invisible@2",
         "kind": "rule",
-        "label": "project.cache-is-invisible@1",
+        "label": "project.cache-is-invisible@2",
         "summary": "A cache never changes what a command observes",
-        "route": "/cockpit/objects/rule/project-cache-is-invisible-1",
-        "source": ".ai/repo/rules/project/cache-is-invisible.v1.md",
+        "route": "/cockpit/objects/rule/project-cache-is-invisible-2",
+        "source": ".ai/repo/rules/project/cache-is-invisible.v2.md",
         "status": "active",
         "facts": {
           "class": "advisory",
           "depends_on": [
             "project.derived-once@1",
-            "project.no-claim-without-test@1"
+            "project.no-claim-without-test@1",
+            "project.accumulation-is-measured@2"
           ],
-          "statement": "Cache only what is semantically safe, key it by the state version, prove it byte-identical over every read-only command, and keep a switch that turns it off.",
           "tags": [
             "performance",
-            "doctrine"
+            "doctrine",
+            "cache"
           ]
         }
       },
@@ -76424,7 +76437,7 @@
           "class": "blocking",
           "depends_on": [
             "project.ui-derived-state@1",
-            "project.cache-is-invisible@1",
+            "project.cache-is-invisible@2",
             "project.interfaces-are-projections@1"
           ],
           "tags": [
@@ -86461,6 +86474,13 @@
         "source": "test/cases/3950_a_cache_key_is_a_derived_triplet.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3952_a_dependency_install_is_restored_and_saved.sh",
+        "kind": "test",
+        "label": "test/cases/3952_a_dependency_install_is_restored_and_saved.sh",
+        "route": "/cockpit/objects/test/test-cases-3952-a-dependency-install-is-restored-and-saved-sh",
+        "source": "test/cases/3952_a_dependency_install_is_restored_and_saved.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/400_derivation_is_one_graph.sh",
         "kind": "test",
         "label": "test/cases/400_derivation_is_one_graph.sh",
@@ -92433,6 +92453,16 @@
       {
         "source": "capability:mcp.projection",
         "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.build_cache.ensure",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.build_cache.ensure",
+        "target": "projection:cockpit",
         "kind": "projects"
       },
       {
@@ -99547,7 +99577,7 @@
       },
       {
         "source": "majordomus://adr/adr-0185",
-        "target": "majordomus://rule/project.cache-is-invisible@1",
+        "target": "majordomus://rule/project.cache-is-invisible@2",
         "kind": "put_in_force"
       },
       {
@@ -125281,17 +125311,22 @@
         "kind": "is_a"
       },
       {
-        "source": "majordomus://rule/project.cache-is-invisible@1",
+        "source": "majordomus://rule/project.cache-is-invisible@2",
         "target": "kind:rule",
         "kind": "is_a"
       },
       {
-        "source": "majordomus://rule/project.cache-is-invisible@1",
+        "source": "majordomus://rule/project.cache-is-invisible@2",
+        "target": "majordomus://rule/project.accumulation-is-measured@2",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.cache-is-invisible@2",
         "target": "majordomus://rule/project.derived-once@1",
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.cache-is-invisible@1",
+        "source": "majordomus://rule/project.cache-is-invisible@2",
         "target": "majordomus://rule/project.no-claim-without-test@1",
         "kind": "depends_on"
       },
@@ -125907,7 +125942,7 @@
       },
       {
         "source": "majordomus://rule/project.no-screen-waits-for-a-source@1",
-        "target": "majordomus://rule/project.cache-is-invisible@1",
+        "target": "majordomus://rule/project.cache-is-invisible@2",
         "kind": "depends_on"
       },
       {
@@ -129037,6 +129072,11 @@
       },
       {
         "source": "majordomus://test/test/cases/3950_a_cache_key_is_a_derived_triplet.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3952_a_dependency_install_is_restored_and_saved.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -133622,6 +133662,11 @@
       },
       {
         "source": "module:mesh",
+        "target": "capability:mesh.build_cache.ensure",
+        "kind": "composes"
+      },
+      {
+        "source": "module:mesh",
         "target": "capability:mesh.build_cache.key",
         "kind": "composes"
       },
@@ -134152,8 +134197,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3765,
-      "edges": 8707,
+      "nodes": 3767,
+      "edges": 8712,
       "acyclic": false,
       "truncated": false
     }

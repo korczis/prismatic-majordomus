@@ -177,6 +177,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus mesh review withdraw`](#majordomus-mesh-review-withdraw) | `/docs/cli/mesh/review/withdraw/` | Withdraw a review request this runtime asked for, with its result |
 | [`majordomus mesh build-cache`](#majordomus-mesh-build-cache) | `/docs/cli/mesh/build-cache/` | The mesh build cache: what each dependency install and build directory is cached under |
 | [`majordomus mesh build-cache key`](#majordomus-mesh-build-cache-key) | `/docs/cli/mesh/build-cache/key/` | Every lockfile the repository tracks, with the key its install or build directory is cached under: schema version, platform, toolchain and input digest |
+| [`majordomus mesh build-cache ensure`](#majordomus-mesh-build-cache-ensure) | `/docs/cli/mesh/build-cache/ensure/` | Restore a dependency install or a cold cargo build directory from the local level or this node's store, verified by its digest; on a miss run the command and save what it left. MAJORDOMUS_BUILD_CACHE=off bypasses every level |
 | [`majordomus monitor`](#majordomus-monitor) | `/docs/cli/monitor/` | Everything that happens around this repository, followed in one stream: mesh sessions, claims, handovers and reviews on every linked machine, the executor's merges and failures, and GitHub's pull requests and runs, with what is addressed to you marked |
 | [`majordomus models`](#majordomus-models) | `/docs/cli/models/` | The model catalogue the distribution declares, and the explainable routing over it: vendors, canonical model references, typed capabilities, and which model a stated need selects — with why, for every candidate |
 | [`majordomus models list`](#majordomus-models-list) | `/docs/cli/models/list/` | Every declared vendor and model, optionally narrowed; the order is the declaration's, which is routing's preference order |
@@ -5043,7 +5044,7 @@ Examples:
 
 The mesh build cache: what each dependency install and build directory is cached under
 
-Subcommands: [`majordomus mesh build-cache key`](#majordomus-mesh-build-cache-key).
+Subcommands: [`majordomus mesh build-cache key`](#majordomus-mesh-build-cache-key), [`majordomus mesh build-cache ensure`](#majordomus-mesh-build-cache-ensure).
 
 ```text
 majordomus mesh build-cache <COMMAND>
@@ -5078,6 +5079,36 @@ Examples:
   ```
 
   Verified: exits 0; prints platform.
+
+<a id="majordomus-mesh-build-cache-ensure"></a>
+## `majordomus mesh build-cache ensure`
+
+Restore a dependency install or a cold cargo build directory from the local level or this node's store, verified by its digest; on a miss run the command and save what it left. MAJORDOMUS_BUILD_CACHE=off bypasses every level
+
+```text
+majordomus mesh build-cache ensure [OPTIONS] <KIND> [COMMAND]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `<KIND>` | `cargo-build-dir` \| `mix-deps` \| `npm-modules` | required | What is cached: npm-modules, mix-deps or cargo-build-dir — `cargo-build-dir`: The cargo build directory of a workspace: the dependencies compiled on the way, without incremental state. Restored only into a directory that is cold; `mix-deps`: The `deps/` directory `mix deps.get` fills; `npm-modules`: The `node_modules/` directory `npm ci` fills |
+| `--dir` | `<DIR>` | — | The directory holding the lockfile, relative to the repository (default: the only one, or the current one) |
+| `<COMMAND>` | `<COMMAND>` | — | The install or build command, after `--`: run on a miss (and for mix and cargo on every run) |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | `text` for a person, `json` for a machine; both render the same answer — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Run an install through the build cache** — The command after `--` is what the install would run anyway. With the lockfile's key already in place nothing runs; a hit is restored from the local level or this node's store after its SHA-256 matches, and npm's install is then not run; a miss runs the command and saves what it left. A repository that tracks no such lockfile runs the command uncached and says why, as here; MAJORDOMUS_BUILD_CACHE=off bypasses every level. The exit code is the command's.
+
+  ```console
+  $ majordomus mesh build-cache ensure npm-modules -- true
+  ```
+
+  Verified: exits 0; prints source     uncached.
 
 <a id="majordomus-monitor"></a>
 ## `majordomus monitor`

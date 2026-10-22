@@ -5,7 +5,31 @@
 
 The mesh of this process: discovery — authenticated observations of other running Majordomus instances in one registry — and cooperation — authenticated links to trusted runtimes of the same repository, replicating sessions, claims, handovers and reviews through one journal every runtime folds into the same state. Discovery grants nothing; a link is admitted per peer, and nothing a peer sends executes anything here.
 
-Stability: experimental. Capabilities: 25.
+Stability: experimental. Capabilities: 26.
+
+## `mesh.build_cache.ensure` — Restore an install before its command, and save it after
+
+For one lockfile the repository tracks (npm node_modules, mix deps, or the cargo build directory), skip an install whose key is already in place; otherwise restore it from this machine's local archive level (~/.cache/majordomus/build-cache) and then from the store this node declares when its own probe finds it healthy and a credential file is present, each only after the archive's SHA-256 matches the digest recorded when it was saved and every entry is judged safe (no absolute name, no `..`, no link leaving the target). On a miss the command runs, and when it succeeds what it left is archived to the local level and the store. A failure of any level is a miss: the command runs exactly as without the cache. npm's command is not run on a hit; mix's is; a cargo build directory is restored only when cold, under cargo's own lock, without incremental state, and never saved above one PUT. A restore and a save respect the build's free-space floor (MAJORDOMUS_MIN_FREE_MB); the local level is held under the policy's build_cache.local_max_gib, oldest first. MAJORDOMUS_BUILD_CACHE=off bypasses every level. Offered on the command line only: it runs a command (ADR 0157, I3952).
+
+| | |
+|---|---|
+| kind | command |
+| stability | experimental |
+| CLI | `majordomus mesh build-cache ensure` |
+| cache | — |
+| benchmark | waived (destructive) |
+| provenance | builtin majordomus_cli::capability::builtin::mesh |
+| tags | mesh, build, cache |
+
+| input | type | required | description |
+|---|---|---|---|
+| `kind` | Kind | yes | What is cached: `npm-modules`, `mix-deps` or `cargo-build-dir`. |
+| `dir` | string or null | no | The directory holding the lockfile, relative to the repository; absent names the only
+one the repository tracks, or the one the command was started in. |
+| `command` | array | no | The install or build command, run in that directory on a miss; required for npm and
+mix, optional for a cargo build directory. |
+
+Output: `BuildCacheEnsureReport`.
 
 ## `mesh.build_cache.key` — What every dependency install and build directory is cached under
 

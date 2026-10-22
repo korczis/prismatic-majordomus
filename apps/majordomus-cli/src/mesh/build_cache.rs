@@ -30,6 +30,8 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+pub(crate) mod archive;
+pub(crate) mod ensure;
 pub mod key;
 pub(crate) mod s3;
 
