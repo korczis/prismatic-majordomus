@@ -6,7 +6,7 @@
     "version": "0.26.0"
   },
   "registry": {
-    "fingerprint": "37f101a643f12d61ce1b442b81ccd1fcf2b0b62fa82520fc6c5cb2f03839e0c2",
+    "fingerprint": "2a4f1810a200a21b92fab9d6f7ebe7193d986364f97d2b3f0276cf92ade9776f",
     "summary": {
       "total": 2379,
       "builtin": 199,
@@ -78650,6 +78650,17 @@
                       }
                     ],
                     "description": "What became of its `.envrc` under direnv once it was at its new path: the primary\ncheckout's approval carried there, or why it was not. Only on a moved step."
+                  },
+                  "hooks": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/HooksPath"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Which hooks it runs at its new path: a per-worktree `core.hooksPath` names the old\none, so a moved worktree is bound again to its own tree's (I2718). Only on a moved\nstep."
                   }
                 },
                 "required": [
@@ -79081,6 +79092,127 @@
                   }
                 ],
                 "description": "What became of the `.envrc` of a worktree that was just created, found, or moved."
+              },
+              "HooksPath": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "outcome": {
+                        "type": "string",
+                        "const": "not_configured"
+                      }
+                    },
+                    "required": [
+                      "outcome"
+                    ],
+                    "description": "The repository's configuration sets no `core.hooksPath`: git's own hooks directory\nin the common directory (or a value of the user's) serves every worktree, and there\nis no tracked directory to follow."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "path": {
+                        "type": "string",
+                        "description": "The directory git runs the hooks from."
+                      },
+                      "outcome": {
+                        "type": "string",
+                        "const": "own"
+                      }
+                    },
+                    "required": [
+                      "outcome",
+                      "path"
+                    ],
+                    "description": "Git already resolves this worktree's hooks to its own directory; nothing was set."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "path": {
+                        "type": "string",
+                        "description": "The directory it now runs the hooks from."
+                      },
+                      "enabled": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "Repository settings switched on so that a per-worktree value is honoured, as\n`key=value`; empty when they were on already."
+                      },
+                      "outcome": {
+                        "type": "string",
+                        "const": "set"
+                      }
+                    },
+                    "required": [
+                      "outcome",
+                      "path",
+                      "enabled"
+                    ],
+                    "description": "This worktree's `core.hooksPath` was set, per worktree, to its own directory."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "path": {
+                        "type": "string",
+                        "description": "The directory every worktree runs the hooks from."
+                      },
+                      "outcome": {
+                        "type": "string",
+                        "const": "shared"
+                      }
+                    },
+                    "required": [
+                      "outcome",
+                      "path"
+                    ],
+                    "description": "The hooks directory is outside the primary checkout — one directory shared on\npurpose — and every worktree runs it; nothing was set."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "missing": {
+                        "type": "string",
+                        "description": "The directory that would be the worktree's own, and is not there."
+                      },
+                      "runs": {
+                        "type": "string",
+                        "description": "The directory the worktree runs the hooks from instead."
+                      },
+                      "outcome": {
+                        "type": "string",
+                        "const": "untracked"
+                      }
+                    },
+                    "required": [
+                      "outcome",
+                      "missing",
+                      "runs"
+                    ],
+                    "description": "The primary checkout's hooks directory has no counterpart in this worktree's tree,\nso the worktree keeps running the primary's: pointing it at a directory that does\nnot exist would switch its hooks off."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "message": {
+                        "type": "string",
+                        "description": "What went wrong."
+                      },
+                      "outcome": {
+                        "type": "string",
+                        "const": "failed"
+                      }
+                    },
+                    "required": [
+                      "outcome",
+                      "message"
+                    ],
+                    "description": "Git was asked and refused, or could not be run; the message is its own."
+                  }
+                ],
+                "description": "What became of the hooks directory of a worktree that was just created, found or moved.\n\nIt travels in the JSON of `worktree create`, `ensure`, `migrate` and `repair`, tagged by\n`outcome`, so a reader branches on one word rather than parsing the line:\n\n```\nuse majordomus_cli::worktree::HooksPath;\n\nlet set = HooksPath::Set {\n    path: \"/r-wt/fix/x/.githooks\".into(),\n    enabled: vec![],\n};\nlet json = serde_json::to_value(&set).unwrap();\nassert_eq!(json[\"outcome\"], \"set\");\nassert_eq!(json[\"path\"], \"/r-wt/fix/x/.githooks\");\nlet back: HooksPath = serde_json::from_value(json).unwrap();\nassert_eq!(back, set);\n```"
               }
             }
           }
@@ -81850,7 +81982,7 @@
     ]
   },
   "index": {
-    "fingerprint": "7b8e43156bdc6d6153bca5eaf226440af1a9dd090661e7baa471caf67d1725da",
+    "fingerprint": "32aa99e527688b95a34d002a3100f3594ba2a43beec1645185697f255164ba3f",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -88100,7 +88232,7 @@
         "title": "Worktrees",
         "path": "docs/WORKTREES.md",
         "source_class": "document",
-        "bytes": 29290
+        "bytes": 31672
       },
       {
         "uri": "majordomus://document/docs/claims/a-candidate-is-routed-by-what-it-is-about.md",
@@ -91051,7 +91183,7 @@
         "identity": "lib/doctor.sh",
         "path": "lib/doctor.sh",
         "source_class": "library",
-        "bytes": 86775
+        "bytes": 89738
       },
       {
         "uri": "majordomus://implementation/lib/doctrine.sh",

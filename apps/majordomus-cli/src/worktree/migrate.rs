@@ -23,6 +23,7 @@ use super::direnv::{self, EnvrcApproval};
 use super::error::{Result, WorktreeError};
 use super::fingerprint::{self, WorktreeFingerprint};
 use super::git;
+use super::hooks::{self, HooksPath};
 use super::identity::ResolvedPath;
 use super::lock::WorktreeLock;
 use super::model::{
@@ -93,6 +94,11 @@ pub struct MigrationStep {
     /// What became of its `.envrc` under direnv once it was at its new path: the primary
     /// checkout's approval carried there, or why it was not. Only on a moved step.
     pub envrc: Option<EnvrcApproval>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// Which hooks it runs at its new path: a per-worktree `core.hooksPath` names the old
+    /// one, so a moved worktree is bound again to its own tree's (I2718). Only on a moved
+    /// step.
+    pub hooks: Option<HooksPath>,
 }
 
 /// A migration, planned or applied.
@@ -234,6 +240,7 @@ pub fn plan_from(topology: &RepositoryTopology, include_ephemeral: bool) -> Migr
                     after: None,
                     differences: Vec::new(),
                     envrc: None,
+                    hooks: None,
                 });
             }
             Standing::Missing | Standing::Detached => {
@@ -420,6 +427,7 @@ fn execute(
                 step.message =
                     Some("moved by copy across filesystems, verified, original removed".into());
                 step.envrc = Some(direnv::approve(primary, to));
+                step.hooks = Some(hooks::carry_hooks_path(primary, to));
                 return Ok(());
             }
             Err(e) => return Err(e),
@@ -474,6 +482,7 @@ fn execute(
     // one; carry it, and say what happened beside the fingerprint that says the move was
     // faithful.
     step.envrc = Some(direnv::approve(primary, to));
+    step.hooks = Some(hooks::carry_hooks_path(primary, to));
     let dangling = dangling_relative_links(to);
     if !dangling.is_empty() {
         step.message = Some(format!(
