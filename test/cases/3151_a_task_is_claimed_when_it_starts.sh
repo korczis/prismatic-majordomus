@@ -33,7 +33,7 @@ git config user.name t
 mkdir -p lib && echo a > lib/a
 mkdir -p .ai/repo/mesh
 printf 'schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\n' > .ai/repo/mesh/majordomus.yaml
-printf 'multicast:\n  enabled: false\ntrust:\n  policy: tofu\n' >> .ai/repo/mesh/majordomus.yaml
+printf 'multicast:\n  enabled: false\ntailscale:\n  enabled: false\ntrust:\n  policy: tofu\n' >> .ai/repo/mesh/majordomus.yaml
 printf 'cooperation:\n  heartbeat_seconds: 1\n  expiry_seconds: 30\n  repository: case-3151\n' >> .ai/repo/mesh/majordomus.yaml
 git add -A && git commit -qm "base, mesh enabled"
 mkdir -p "$T/state" "$T/bin"
