@@ -193,6 +193,7 @@ impl Session {
             None,
             lease,
             Some(app.share.dir()),
+            &crate::shared::MeshHosting::default(),
         )?;
         let peer = ctx.peers.attach(PeerTransport::Stdio);
         let mut server = Server::new(Surface::new(live).for_peer(peer.clone()), crate::VERSION)

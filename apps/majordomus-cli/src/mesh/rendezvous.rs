@@ -156,8 +156,9 @@ impl MeshProvider for RendezvousProvider {
     }
 }
 
-/// One registration round-trip. Plain HTTP through the same minimal client the MCP
-/// bridge uses; any non-200, timeout or unparsable body is one failure.
+/// One registration round-trip through the same minimal client the MCP bridge uses: over TLS
+/// to an `https://` hub, in cleartext only to a hub whose address is not public (ADR 0220).
+/// A refusal, a non-200, a timeout or an unparsable body is one failure.
 fn register_once(endpoint: &str, envelope: &Envelope) -> Result<RegisterAnswer, MeshError> {
     let body = serde_json::json!({ "envelope": envelope }).to_string();
     let reply = crate::mcp::bridge::request(
@@ -280,6 +281,19 @@ mod tests {
         );
         assert!(provider.status().sent >= 1);
         stop.store(true, std::sync::atomic::Ordering::SeqCst);
+    }
+
+    /// A hub declared in cleartext at a public address is never sent the envelope: the
+    /// registration fails at once, naming the address and the correction.
+    #[test]
+    fn a_public_cleartext_hub_is_refused_before_the_envelope_is_sent() {
+        let identity = crate::mesh::identity::NodeIdentity::ephemeral().unwrap();
+        let envelope = crate::mesh::protocol::advertise(&identity, 1, &[], &[], &[], "test");
+        let error = register_once("http://203.0.113.5:8791", &envelope)
+            .unwrap_err()
+            .to_string();
+        assert!(error.contains("203.0.113.5 is a public address"), "{error}");
+        assert!(error.contains("use https://203.0.113.5:8791"), "{error}");
     }
 
     #[test]

@@ -3,8 +3,15 @@
 //! and writes the answers back, one HTTP request per message, and pings on the side so
 //! that the server keeps the session. It carries no index and no registry of its own,
 //! which is why it starts in milliseconds. The HTTP client below is the few lines a
-//! loopback request needs (the server always answers with `Content-Length`, never
-//! chunked); no HTTP library is pulled in for it.
+//! request needs (the server always answers with `Content-Length`, never chunked); no HTTP
+//! library is pulled in for it.
+//!
+//! The same client carries the mesh (ADR 0220, decision 1). An `https://` endpoint is
+//! reached over TLS — rustls, with the certificate verified against the roots compiled into
+//! the executable and the host name checked against it — and an `http://` endpoint only when
+//! every address its host resolves to is loopback, private, link-local or an overlay's
+//! (100.64.0.0/10, IPv6 unique-local): a public address is refused before a byte is sent,
+//! with the correction. Plain and TLS requests share one framing over one `Read + Write`.
 //!
 //! A message is sent a second time only when the server provably did not run it: the
 //! connection was never made, or the server answered 404 (the session is unknown) or 409
@@ -16,9 +23,12 @@
 
 use std::collections::BTreeMap;
 use std::io::{Read, Write};
-use std::net::{TcpStream, ToSocketAddrs};
+use std::net::{IpAddr, Ipv4Addr, SocketAddr, TcpStream, ToSocketAddrs};
+use std::sync::{Arc, OnceLock};
 use std::time::Duration;
 
+use rustls::pki_types::ServerName;
+use rustls::{ClientConfig, ClientConnection, RootCertStore, StreamOwned};
 use serde_json::{json, Value};
 
 use crate::peers::ClientInfo;
@@ -61,7 +71,280 @@ impl Reply {
 /// rendezvous hub or a broken proxy that never stops sending costs a bounded buffer (I2147).
 pub const MAX_REPLY_BYTES: usize = 32 * 1024 * 1024;
 
-/// One HTTP/1.1 request to `base_url` (`http://host:port`), with `Connection: close`.
+/// How an endpoint's bytes travel, once [`transport`] has allowed it.
+///
+/// ```
+/// use majordomus_cli::mcp::bridge::{transport, Transport};
+/// // a hub by name over TLS; a seed on a private network in cleartext
+/// assert_eq!(transport("https://prismatic-majordomus.gigalixirapp.com").unwrap(), Transport::Tls);
+/// assert_eq!(transport("http://192.168.1.20:8742").unwrap(), Transport::Cleartext);
+/// assert_ne!(Transport::Tls, Transport::Cleartext);
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Transport {
+    /// `https://`: over TLS, the certificate and the host name verified.
+    Tls,
+    /// `http://` (or no scheme): in cleartext, to addresses that are not public.
+    Cleartext,
+}
+
+/// Whether cleartext may be sent to `ip`: loopback, RFC 1918 private, link-local, the
+/// 100.64.0.0/10 range an overlay (a tailnet) and carrier-grade NAT hand out, the unspecified
+/// address (which a connection reads as this machine), IPv6 unique-local (fc00::/7), and an
+/// IPv4-mapped IPv6 address by the IPv4 address it carries. Everything else is public.
+///
+/// ```
+/// use majordomus_cli::mcp::bridge::cleartext_allowed;
+/// assert!(cleartext_allowed("192.168.100.30".parse().unwrap()));
+/// assert!(cleartext_allowed("100.92.246.32".parse().unwrap()), "a tailnet address");
+/// assert!(cleartext_allowed("fd7a:115c:a1e0::1".parse().unwrap()), "unique-local");
+/// assert!(!cleartext_allowed("203.0.113.5".parse().unwrap()));
+/// assert!(!cleartext_allowed("2001:db8::1".parse().unwrap()));
+/// ```
+pub fn cleartext_allowed(ip: IpAddr) -> bool {
+    match ip {
+        IpAddr::V4(v4) => v4_cleartext_allowed(v4),
+        IpAddr::V6(v6) => {
+            if let Some(v4) = v6.to_ipv4_mapped() {
+                return v4_cleartext_allowed(v4);
+            }
+            let first = v6.segments()[0];
+            v6.is_loopback()
+                || v6.is_unspecified()
+                || (first & 0xfe00) == 0xfc00
+                || (first & 0xffc0) == 0xfe80
+        }
+    }
+}
+
+fn v4_cleartext_allowed(v4: Ipv4Addr) -> bool {
+    let [a, b, _, _] = v4.octets();
+    v4.is_loopback()
+        || v4.is_private()
+        || v4.is_link_local()
+        || v4.is_unspecified()
+        || (a == 100 && (b & 0xc0) == 64)
+}
+
+/// An endpoint as written: whether it is reached over TLS, the host to resolve and to name
+/// to the certificate, the port, and the authority the `Host` header carries.
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct Endpoint {
+    tls: bool,
+    host: String,
+    port: u16,
+    authority: String,
+}
+
+impl Endpoint {
+    /// The endpoint as a URL, for a message that names it.
+    fn url(&self) -> String {
+        let scheme = if self.tls { "https" } else { "http" };
+        format!("{scheme}://{}", self.authority)
+    }
+}
+
+/// Split an authority (`host`, `host:port`, `[v6]` or `[v6]:port`) into the host — without
+/// the brackets — and the port it names, if any.
+pub(crate) fn split_authority(authority: &str) -> Result<(String, Option<u16>), String> {
+    let (host, port) = match authority.strip_prefix('[') {
+        Some(v6) => {
+            let (host, rest) = v6
+                .split_once(']')
+                .ok_or_else(|| format!("'{authority}' opens a bracket it does not close"))?;
+            match rest {
+                "" => (host, None),
+                _ => (
+                    host,
+                    Some(rest.strip_prefix(':').ok_or_else(|| {
+                        format!("'{authority}' has something other than a port after its address")
+                    })?),
+                ),
+            }
+        }
+        None => match authority.rsplit_once(':') {
+            Some((host, _)) if host.contains(':') => {
+                return Err(format!(
+                    "'{authority}' is an IPv6 address without brackets: write [address]:port"
+                ))
+            }
+            Some((host, port)) => (host, Some(port)),
+            None => (authority, None),
+        },
+    };
+    if host.is_empty() {
+        return Err(format!("'{authority}' names no host"));
+    }
+    let port = match port {
+        None => None,
+        Some(p) => Some(
+            p.parse::<u16>()
+                .ok()
+                .filter(|p| *p != 0)
+                .ok_or_else(|| format!("'{authority}' does not name a port from 1 to 65535"))?,
+        ),
+    };
+    Ok((host.to_string(), port))
+}
+
+/// Read `base_url` (`https://host[:port]`, `http://host[:port]`, or `host:port`, which is
+/// http) into an [`Endpoint`]. A path after the authority is not the endpoint's and is
+/// ignored, as it always was; any other scheme is refused.
+fn parse_endpoint(base_url: &str) -> std::io::Result<Endpoint> {
+    let invalid = |reason: String| std::io::Error::new(std::io::ErrorKind::InvalidInput, reason);
+    let (tls, rest) = if let Some(rest) = base_url.strip_prefix("https://") {
+        (true, rest)
+    } else if let Some(rest) = base_url.strip_prefix("http://") {
+        (false, rest)
+    } else if base_url.contains("://") {
+        return Err(invalid(format!(
+            "{base_url}: the scheme is neither http:// nor https://"
+        )));
+    } else {
+        (false, base_url)
+    };
+    let authority = rest.split('/').next().unwrap_or_default();
+    let (host, port) =
+        split_authority(authority).map_err(|e| invalid(format!("{base_url}: {e}")))?;
+    let port = port.unwrap_or(if tls { 443 } else { 80 });
+    Ok(Endpoint {
+        tls,
+        host,
+        port,
+        authority: authority.to_string(),
+    })
+}
+
+/// Every address `endpoint`'s host resolves to, in the resolver's order.
+fn resolve(endpoint: &Endpoint) -> std::io::Result<Vec<SocketAddr>> {
+    let addrs: Vec<SocketAddr> = (endpoint.host.as_str(), endpoint.port)
+        .to_socket_addrs()?
+        .collect();
+    some_address(addrs, &endpoint.authority)
+}
+
+/// `addrs`, unless the resolver answered with none: that is a failure naming `authority`, so
+/// that nothing indexes an empty answer.
+fn some_address(addrs: Vec<SocketAddr>, authority: &str) -> std::io::Result<Vec<SocketAddr>> {
+    if addrs.is_empty() {
+        return Err(std::io::Error::other(format!("{authority}: no address")));
+    }
+    Ok(addrs)
+}
+
+/// The refusal of cleartext to `endpoint`, when one of the addresses it resolves to is
+/// public: every one must be private for the request to be sent, because the resolver, not
+/// this client, picks which of them a later connection reaches.
+fn cleartext_refusal(endpoint: &Endpoint, addrs: &[SocketAddr]) -> Option<std::io::Error> {
+    let public = addrs.iter().find(|a| !cleartext_allowed(a.ip()))?;
+    Some(std::io::Error::new(
+        std::io::ErrorKind::PermissionDenied,
+        format!(
+            "{} was not dialed: {} is a public address, and the mesh sends nothing across a public network in cleartext; use https://{} (ADR 0220)",
+            endpoint.url(),
+            public.ip(),
+            endpoint.authority
+        ),
+    ))
+}
+
+/// How `base_url` would be reached, or why it would not be: [`Transport::Tls`] for an
+/// `https://` endpoint (nothing is resolved), [`Transport::Cleartext`] for an `http://` one
+/// whose every address is not public, and an error otherwise — `PermissionDenied` naming the
+/// public address, `InvalidInput` for an endpoint that cannot be read, or the resolver's own.
+/// The check [`request`] makes before it connects, offered to a self-check that dials nothing.
+///
+/// ```
+/// use majordomus_cli::mcp::bridge::{transport, Transport};
+/// assert_eq!(transport("https://hub.example:443").unwrap(), Transport::Tls);
+/// assert_eq!(transport("http://10.0.0.2:8742").unwrap(), Transport::Cleartext);
+/// let refused = transport("http://203.0.113.5:8791").unwrap_err();
+/// assert_eq!(refused.kind(), std::io::ErrorKind::PermissionDenied);
+/// assert!(refused.to_string().contains("203.0.113.5") && refused.to_string().contains("use https://"));
+/// ```
+pub fn transport(base_url: &str) -> std::io::Result<Transport> {
+    let endpoint = parse_endpoint(base_url)?;
+    if endpoint.tls {
+        return Ok(Transport::Tls);
+    }
+    let addrs = resolve(&endpoint)?;
+    match cleartext_refusal(&endpoint, &addrs) {
+        Some(refusal) => Err(refusal),
+        None => Ok(Transport::Cleartext),
+    }
+}
+
+/// The TLS client configuration of every `https://` request: the ring provider, its safe
+/// default protocol versions, and the Mozilla roots compiled into the executable. Built on the
+/// first TLS request, never on the plain path.
+fn default_tls() -> std::io::Result<Arc<ClientConfig>> {
+    static CONFIG: OnceLock<Result<Arc<ClientConfig>, String>> = OnceLock::new();
+    CONFIG
+        .get_or_init(|| {
+            tls_config(RootCertStore {
+                roots: webpki_roots::TLS_SERVER_ROOTS.to_vec(),
+            })
+        })
+        .clone()
+        .map_err(std::io::Error::other)
+}
+
+/// A client configuration that trusts `roots` and nothing else.
+fn tls_config(roots: RootCertStore) -> Result<Arc<ClientConfig>, String> {
+    ClientConfig::builder_with_provider(Arc::new(rustls::crypto::ring::default_provider()))
+        .with_safe_default_protocol_versions()
+        .map(|versions| Arc::new(versions.with_root_certificates(roots).with_no_client_auth()))
+        .map_err(unbuildable)
+}
+
+/// Why a TLS configuration could not be had: the provider offers no protocol version the
+/// safe defaults allow.
+fn unbuildable(e: rustls::Error) -> String {
+    format!("the TLS configuration could not be built: {e}")
+}
+
+/// An open connection: a socket, or a socket under TLS.
+enum Stream {
+    Plain(TcpStream),
+    Tls(Box<StreamOwned<ClientConnection, TcpStream>>),
+}
+
+impl Stream {
+    fn socket(&self) -> &TcpStream {
+        match self {
+            Stream::Plain(s) => s,
+            Stream::Tls(s) => &s.sock,
+        }
+    }
+}
+
+impl Read for Stream {
+    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+        match self {
+            Stream::Plain(s) => s.read(buf),
+            Stream::Tls(s) => s.read(buf),
+        }
+    }
+}
+
+impl Write for Stream {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        match self {
+            Stream::Plain(s) => s.write(buf),
+            Stream::Tls(s) => s.write(buf),
+        }
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        match self {
+            Stream::Plain(s) => s.flush(),
+            Stream::Tls(s) => s.flush(),
+        }
+    }
+}
+
+/// One HTTP/1.1 request to `base_url` (`http://host:port` or `https://host[:port]`), with
+/// `Connection: close`.
 pub fn request(
     base_url: &str,
     method: &str,
@@ -74,27 +357,98 @@ pub fn request(
     exchange(stream, &host, method, path, headers, body, timeout)
 }
 
-/// Open a connection to `base_url`. Nothing has been sent when this fails, which is what
-/// lets a caller send the same message again elsewhere.
-fn connect(base_url: &str, timeout: Duration) -> std::io::Result<(TcpStream, String)> {
-    let host = base_url
-        .strip_prefix("http://")
-        .unwrap_or(base_url)
-        .trim_end_matches('/');
-    let addr = host
-        .to_socket_addrs()?
-        .next()
-        .ok_or_else(|| std::io::Error::other(format!("{host}: no address")))?;
+/// Open a connection to `base_url`. Nothing of the request has been sent when this fails,
+/// which is what lets a caller send the same message again elsewhere.
+fn connect(base_url: &str, timeout: Duration) -> std::io::Result<(Stream, String)> {
+    connect_with(base_url, timeout, default_tls)
+}
+
+/// [`connect`] with the TLS configuration `tls` returns, asked for only when the endpoint is
+/// `https://`. The tests hand it one that trusts their own authority.
+fn connect_with(
+    base_url: &str,
+    timeout: Duration,
+    tls: impl FnOnce() -> std::io::Result<Arc<ClientConfig>>,
+) -> std::io::Result<(Stream, String)> {
+    let endpoint = parse_endpoint(base_url)?;
+    // the name the certificate is checked against, read before anything is resolved
+    let name = match endpoint.tls {
+        true => Some(server_name(&endpoint)?),
+        false => None,
+    };
+    let addrs = resolve(&endpoint)?;
+    if !endpoint.tls {
+        if let Some(refusal) = cleartext_refusal(&endpoint, &addrs) {
+            return Err(refusal);
+        }
+    }
     // The connection shares the caller's budget when that is the shorter: a probe on a shell
     // prompt that allows 250 ms must not wait 2 s on a server whose accept queue is full.
-    let stream = TcpStream::connect_timeout(&addr, CONNECT_TIMEOUT.min(timeout))?;
-    Ok((stream, host.to_string()))
+    let socket = TcpStream::connect_timeout(&addrs[0], CONNECT_TIMEOUT.min(timeout))?;
+    let stream = match name {
+        Some(name) => Stream::Tls(Box::new(handshake(
+            socket,
+            &endpoint,
+            name,
+            tls()?,
+            timeout,
+        )?)),
+        None => Stream::Plain(socket),
+    };
+    Ok((stream, endpoint.authority))
+}
+
+/// The name `endpoint`'s certificate must be valid for, and the one SNI carries: its host, a
+/// DNS name or an IP address.
+fn server_name(endpoint: &Endpoint) -> std::io::Result<ServerName<'static>> {
+    ServerName::try_from(endpoint.host.clone()).map_err(|e| {
+        std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            format!(
+                "{}: '{}' is not a name a certificate can be checked against: {e}",
+                endpoint.url(),
+                endpoint.host
+            ),
+        )
+    })
+}
+
+/// Complete the TLS handshake on `socket` within `timeout` per read and write, so that a
+/// certificate that does not verify is refused here — naming the endpoint — before any byte
+/// of the request is written.
+fn handshake(
+    mut socket: TcpStream,
+    endpoint: &Endpoint,
+    name: ServerName<'static>,
+    config: Arc<ClientConfig>,
+    timeout: Duration,
+) -> std::io::Result<StreamOwned<ClientConnection, TcpStream>> {
+    bound(&socket, timeout)?;
+    let mut connection = ClientConnection::new(config, name).map_err(std::io::Error::other)?;
+    // `complete_io` reports a server that closes mid-handshake as `UnexpectedEof`, so the loop
+    // ends in a handshake or in an error, never in a spin
+    while connection.is_handshaking() {
+        connection.complete_io(&mut socket).map_err(|e| {
+            std::io::Error::new(
+                e.kind(),
+                format!("{}: the TLS handshake failed: {e}", endpoint.url()),
+            )
+        })?;
+    }
+    Ok(StreamOwned::new(connection, socket))
+}
+
+/// Bound every read and write on `socket` by `timeout`. A zero timeout is refused by the
+/// platform, and so here, rather than read as "no bound".
+fn bound(socket: &TcpStream, timeout: Duration) -> std::io::Result<()> {
+    socket.set_read_timeout(Some(timeout))?;
+    socket.set_write_timeout(Some(timeout))
 }
 
 /// Send one request on an open connection and read the reply. From the first byte written
 /// the server may have the request, so a failure here leaves its outcome unknown.
 fn exchange(
-    mut stream: TcpStream,
+    mut stream: Stream,
     host: &str,
     method: &str,
     path: &str,
@@ -102,8 +456,19 @@ fn exchange(
     body: Option<&str>,
     timeout: Duration,
 ) -> std::io::Result<Reply> {
-    stream.set_read_timeout(Some(timeout))?;
-    stream.set_write_timeout(Some(timeout))?;
+    bound(stream.socket(), timeout)?;
+    exchange_on(&mut stream, host, method, path, headers, body)
+}
+
+/// The request and its reply over any stream: the one framing plain and TLS share.
+fn exchange_on<S: Read + Write>(
+    stream: &mut S,
+    host: &str,
+    method: &str,
+    path: &str,
+    headers: &[(&str, &str)],
+    body: Option<&str>,
+) -> std::io::Result<Reply> {
     let body = body.unwrap_or("");
     let mut text = format!(
         "{method} {path} HTTP/1.1\r\nHost: {host}\r\nConnection: close\r\nAccept: application/json\r\nContent-Type: application/json\r\nContent-Length: {}\r\n",
@@ -115,17 +480,51 @@ fn exchange(
     text.push_str("\r\n");
     text.push_str(body);
     stream.write_all(text.as_bytes())?;
-    let mut raw = Vec::new();
-    (&mut stream)
-        .take(MAX_REPLY_BYTES as u64 + 1)
-        .read_to_end(&mut raw)?;
-    if raw.len() > MAX_REPLY_BYTES {
-        return Err(std::io::Error::new(
-            std::io::ErrorKind::InvalidData,
-            format!("the reply is over the {MAX_REPLY_BYTES}-byte bound and was not read"),
-        ));
-    }
+    stream.flush()?;
+    let raw = read_reply(stream)?;
     parse_reply(&raw)
+}
+
+/// Read a reply to its end, bounded by [`MAX_REPLY_BYTES`]. A TLS server that closes the
+/// socket without saying so (no `close_notify`) ends the stream with `UnexpectedEof`; what it
+/// sent is the reply when its `Content-Length` is whole, and a truncation otherwise.
+fn read_reply<S: Read>(stream: &mut S) -> std::io::Result<Vec<u8>> {
+    let mut raw = Vec::new();
+    let mut chunk = vec![0u8; 64 * 1024];
+    loop {
+        match stream.read(&mut chunk) {
+            Ok(0) => break,
+            Ok(n) => {
+                raw.extend_from_slice(&chunk[..n]);
+                if raw.len() > MAX_REPLY_BYTES {
+                    return Err(std::io::Error::new(
+                        std::io::ErrorKind::InvalidData,
+                        format!(
+                            "the reply is over the {MAX_REPLY_BYTES}-byte bound and was not read"
+                        ),
+                    ));
+                }
+            }
+            Err(e) if e.kind() == std::io::ErrorKind::Interrupted => {}
+            Err(e) if e.kind() == std::io::ErrorKind::UnexpectedEof && whole(&raw) => break,
+            Err(e) => return Err(e),
+        }
+    }
+    Ok(raw)
+}
+
+/// Whether `raw` holds a whole reply: its head, and as many body bytes as its
+/// `Content-Length` says. Without a length nothing can say, and it is not whole.
+fn whole(raw: &[u8]) -> bool {
+    let Some(end) = raw.windows(4).position(|w| w == b"\r\n\r\n") else {
+        return false;
+    };
+    let head = String::from_utf8_lossy(&raw[..end]);
+    head.lines()
+        .filter_map(|l| l.split_once(':'))
+        .find(|(k, _)| k.trim().eq_ignore_ascii_case("content-length"))
+        .and_then(|(_, v)| v.trim().parse::<usize>().ok())
+        .is_some_and(|n| raw.len() - (end + 4) >= n)
 }
 
 fn parse_reply(raw: &[u8]) -> std::io::Result<Reply> {
@@ -832,5 +1231,600 @@ mod tests {
         assert!(err.calls_for_an_election());
         assert!(!err.may_resend(&write), "a write that may have run");
         assert_eq!(server.join().unwrap().len(), 1);
+    }
+
+    // ------------------------------------------------------------ transport (ADR 0220)
+
+    #[test]
+    fn cleartext_is_allowed_to_loopback_private_link_local_and_overlay_addresses_only() {
+        for allowed in [
+            "127.0.0.1",
+            "10.1.2.3",
+            "172.16.0.1",
+            "172.31.255.254",
+            "192.168.100.30",
+            "100.64.0.1",
+            "100.127.255.254",
+            "169.254.1.1",
+            "0.0.0.0",
+            "::1",
+            "::",
+            "fc00::1",
+            "fd7a:115c:a1e0::1",
+            "fe80::1",
+            "::ffff:192.168.1.1",
+        ] {
+            assert!(cleartext_allowed(allowed.parse().unwrap()), "{allowed}");
+        }
+        for public in [
+            "203.0.113.5",
+            "8.8.8.8",
+            "172.32.0.1",
+            "100.128.0.1",
+            "100.63.255.255",
+            "192.0.2.1",
+            "2001:db8::1",
+            "2606:4700::1111",
+            "::ffff:8.8.8.8",
+        ] {
+            assert!(!cleartext_allowed(public.parse().unwrap()), "{public}");
+        }
+    }
+
+    #[test]
+    fn an_endpoint_is_read_with_its_scheme_host_and_port() {
+        let read = |url: &str| parse_endpoint(url).unwrap();
+        let tls = read("https://hub.example");
+        assert_eq!(
+            (tls.tls, tls.host.as_str(), tls.port),
+            (true, "hub.example", 443)
+        );
+        assert_eq!(tls.url(), "https://hub.example");
+        let tls = read("https://hub.example:8443/");
+        assert_eq!(
+            (tls.tls, tls.port, tls.authority.as_str()),
+            (true, 8443, "hub.example:8443")
+        );
+        let plain = read("http://10.0.0.2:8742");
+        assert_eq!(
+            (plain.tls, plain.host.as_str(), plain.port),
+            (false, "10.0.0.2", 8742)
+        );
+        assert_eq!(plain.url(), "http://10.0.0.2:8742");
+        assert_eq!(read("http://10.0.0.2").port, 80);
+        let bare = read("127.0.0.1:9");
+        assert_eq!(
+            (bare.tls, bare.port),
+            (false, 9),
+            "no scheme is http, as it always was"
+        );
+        let v6 = read("http://[::1]:8741/mcp");
+        assert_eq!(
+            (v6.host.as_str(), v6.port, v6.authority.as_str()),
+            ("::1", 8741, "[::1]:8741")
+        );
+        assert_eq!(read("https://[2001:db8::1]").port, 443);
+
+        let refused = |url: &str| {
+            let e = parse_endpoint(url).unwrap_err();
+            assert_eq!(e.kind(), std::io::ErrorKind::InvalidInput, "{url}");
+            e.to_string()
+        };
+        assert!(refused("ftp://hub.example:21").contains("neither http:// nor https://"));
+        assert!(refused("https://:443").contains("names no host"));
+        assert!(refused("http://hub.example:0").contains("from 1 to 65535"));
+        assert!(refused("http://hub.example:port").contains("from 1 to 65535"));
+        assert!(refused("http://[::1:8741").contains("does not close"));
+        assert!(refused("http://[::1]8741").contains("other than a port"));
+        assert!(refused("http://::1:8741").contains("without brackets"));
+        assert!(refused("http://[]:8741").contains("names no host"));
+    }
+
+    #[test]
+    fn the_transport_of_an_endpoint_is_said_without_dialing_it() {
+        assert_eq!(
+            transport("https://203.0.113.5:443").unwrap(),
+            Transport::Tls
+        );
+        assert_eq!(
+            transport("http://192.168.100.30:8791").unwrap(),
+            Transport::Cleartext
+        );
+        assert_eq!(
+            transport("http://100.92.246.32:8791").unwrap(),
+            Transport::Cleartext
+        );
+        assert_eq!(
+            transport("http://localhost:8791").unwrap(),
+            Transport::Cleartext
+        );
+        assert_eq!(transport("127.0.0.1:8791").unwrap(), Transport::Cleartext);
+        let public = transport("http://203.0.113.5:8791").unwrap_err();
+        assert_eq!(public.kind(), std::io::ErrorKind::PermissionDenied);
+        let text = public.to_string();
+        assert!(
+            text.contains("http://203.0.113.5:8791 was not dialed"),
+            "{text}"
+        );
+        assert!(text.contains("203.0.113.5 is a public address"), "{text}");
+        assert!(text.contains("use https://203.0.113.5:8791"), "{text}");
+        assert_eq!(
+            transport("gopher://hub.example:70").unwrap_err().kind(),
+            std::io::ErrorKind::InvalidInput
+        );
+    }
+
+    /// Cleartext to a public address is refused before a socket is opened: nothing listens at
+    /// a documentation address, so a request that were sent would time out or be unreachable,
+    /// and the refusal comes back at once with the correction instead.
+    #[test]
+    fn a_public_http_endpoint_is_refused_before_any_byte_is_sent() {
+        for (url, address) in [
+            ("http://203.0.113.5:8791", "203.0.113.5"),
+            ("http://[2001:db8::1]:8791", "2001:db8::1"),
+            ("198.51.100.7:8791", "198.51.100.7"),
+        ] {
+            let started = std::time::Instant::now();
+            let err = request(
+                url,
+                "POST",
+                "/api/v1/mesh/register",
+                &[],
+                Some("{}"),
+                Duration::from_secs(30),
+            )
+            .expect_err("refused");
+            assert_eq!(
+                err.kind(),
+                std::io::ErrorKind::PermissionDenied,
+                "{url}: {err}"
+            );
+            assert!(err.to_string().contains(address), "{err}");
+            assert!(err.to_string().contains("use https://"), "{err}");
+            assert!(
+                started.elapsed() < Duration::from_secs(5),
+                "no connection was attempted"
+            );
+        }
+        // through the bridge it is a server that was never reached: nothing ran
+        let mut bridge = Bridge::new("http://203.0.113.5:8741".into());
+        let message = call("majordomus_plan_transition");
+        let err = bridge.handle(&message).expect_err("refused");
+        assert!(
+            matches!(&err, BridgeError::Unreachable { reason, .. } if reason.contains("public address")),
+            "{err:?}"
+        );
+        assert!(err.may_resend(&message), "nothing was sent");
+    }
+
+    /// A reader that hands out scripted chunks and errors, in order.
+    struct Chunks(std::collections::VecDeque<std::io::Result<Vec<u8>>>);
+
+    impl Read for Chunks {
+        fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+            match self.0.pop_front() {
+                None => Ok(0),
+                Some(Ok(bytes)) => {
+                    buf[..bytes.len()].copy_from_slice(&bytes);
+                    Ok(bytes.len())
+                }
+                Some(Err(e)) => Err(e),
+            }
+        }
+    }
+
+    fn script(steps: Vec<std::io::Result<&[u8]>>) -> Chunks {
+        Chunks(steps.into_iter().map(|s| s.map(<[u8]>::to_vec)).collect())
+    }
+
+    fn eof() -> std::io::Error {
+        std::io::Error::new(
+            std::io::ErrorKind::UnexpectedEof,
+            "peer closed connection without sending TLS close_notify",
+        )
+    }
+
+    #[test]
+    fn a_reply_ended_without_close_notify_is_read_when_whole_and_refused_when_cut() {
+        let head = b"HTTP/1.1 200 OK\r\nContent-Length: 4\r\n\r\n";
+        let interrupted = std::io::Error::new(std::io::ErrorKind::Interrupted, "signal");
+        let raw = read_reply(&mut script(vec![
+            Ok(head),
+            Err(interrupted),
+            Ok(b"true"),
+            Err(eof()),
+        ]))
+        .unwrap();
+        assert_eq!(parse_reply(&raw).unwrap().body, "true");
+        let cut = read_reply(&mut script(vec![Ok(head), Ok(b"tr"), Err(eof())])).unwrap_err();
+        assert_eq!(
+            cut.kind(),
+            std::io::ErrorKind::UnexpectedEof,
+            "a truncation is not a reply"
+        );
+        let other = read_reply(&mut script(vec![Err(std::io::Error::other("reset"))])).unwrap_err();
+        assert_eq!(other.to_string(), "reset");
+        // a clean end is the end, whole or not, as the plain path always read it
+        let raw = read_reply(&mut script(vec![Ok(b"HTTP/1.1 204 No Content\r\n\r\n")])).unwrap();
+        assert_eq!(parse_reply(&raw).unwrap().status, 204);
+    }
+
+    #[test]
+    fn a_reply_is_whole_when_its_length_is_there() {
+        assert!(whole(b"HTTP/1.1 200 OK\r\ncontent-length: 2\r\n\r\n{}"));
+        assert!(whole(b"HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n"));
+        assert!(!whole(b"HTTP/1.1 200 OK\r\nContent-Length: 3\r\n\r\n{}"));
+        assert!(
+            !whole(b"HTTP/1.1 200 OK\r\n\r\n{}"),
+            "no length, nothing says it is whole"
+        );
+        assert!(
+            !whole(b"HTTP/1.1 200 OK\r\nContent-Length: 2\r\n"),
+            "no end of head"
+        );
+        assert!(!whole(b""));
+    }
+
+    #[test]
+    fn a_reply_over_the_bound_is_refused_unread() {
+        struct Endless;
+        impl Read for Endless {
+            fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+                buf.fill(b'x');
+                Ok(buf.len())
+            }
+        }
+        let err = read_reply(&mut Endless).unwrap_err();
+        assert_eq!(err.kind(), std::io::ErrorKind::InvalidData);
+        assert!(err.to_string().contains("byte bound"), "{err}");
+    }
+
+    // ------------------------------------------------------------ a TLS round trip, locally
+
+    use rustls::pki_types::{PrivateKeyDer, PrivatePkcs8KeyDer};
+    use rustls::{ServerConfig, ServerConnection};
+
+    /// A certificate authority minted for one test, the roots that trust it, and a server
+    /// configuration presenting a certificate it signed for `names`.
+    fn authority(names: &[&str]) -> (RootCertStore, Arc<ServerConfig>) {
+        let ca_key = rcgen::KeyPair::generate().unwrap();
+        let mut ca = rcgen::CertificateParams::new(Vec::<String>::new()).unwrap();
+        ca.is_ca = rcgen::IsCa::Ca(rcgen::BasicConstraints::Unconstrained);
+        ca.distinguished_name
+            .push(rcgen::DnType::CommonName, "majordomus test authority");
+        ca.key_usages = vec![
+            rcgen::KeyUsagePurpose::KeyCertSign,
+            rcgen::KeyUsagePurpose::DigitalSignature,
+        ];
+        let ca_cert = ca.self_signed(&ca_key).unwrap();
+        let issuer = rcgen::Issuer::new(ca, ca_key);
+        let leaf_key = rcgen::KeyPair::generate().unwrap();
+        let leaf =
+            rcgen::CertificateParams::new(names.iter().map(|n| n.to_string()).collect::<Vec<_>>())
+                .unwrap();
+        let leaf_cert = leaf.signed_by(&leaf_key, &issuer).unwrap();
+        let mut roots = RootCertStore::empty();
+        roots.add(ca_cert.der().clone()).unwrap();
+        let server =
+            ServerConfig::builder_with_provider(Arc::new(rustls::crypto::ring::default_provider()))
+                .with_safe_default_protocol_versions()
+                .unwrap()
+                .with_no_client_auth()
+                .with_single_cert(
+                    vec![leaf_cert.der().clone()],
+                    PrivateKeyDer::Pkcs8(PrivatePkcs8KeyDer::from(leaf_key.serialize_der())),
+                )
+                .unwrap();
+        (roots, Arc::new(server))
+    }
+
+    /// What a TLS server heard on one connection: the request, and the name SNI carried.
+    #[derive(Debug, Default)]
+    struct Heard {
+        request: String,
+        sni: Option<String>,
+    }
+
+    /// A TLS server on `bind` answering `connections` connections with one JSON body each,
+    /// closing with `close_notify` or without. A connection whose handshake the client
+    /// refused is heard as an empty request.
+    fn tls_server(
+        bind: &str,
+        config: Arc<ServerConfig>,
+        connections: usize,
+        close_notify: bool,
+    ) -> (SocketAddr, std::thread::JoinHandle<Vec<Heard>>) {
+        let listener = std::net::TcpListener::bind(bind).unwrap();
+        let addr = listener.local_addr().unwrap();
+        let server = std::thread::spawn(move || {
+            let mut heard = Vec::new();
+            for _ in 0..connections {
+                let (socket, _) = listener.accept().unwrap();
+                socket
+                    .set_read_timeout(Some(Duration::from_secs(30)))
+                    .unwrap();
+                let mut tls =
+                    StreamOwned::new(ServerConnection::new(config.clone()).unwrap(), socket);
+                let mut raw = Vec::new();
+                let mut buf = [0u8; 4096];
+                while !whole(&raw) {
+                    match tls.read(&mut buf) {
+                        Ok(0) | Err(_) => break,
+                        Ok(n) => raw.extend_from_slice(&buf[..n]),
+                    }
+                }
+                let sni = tls.conn.server_name().map(str::to_string);
+                if whole(&raw) {
+                    let body = r#"{"accepted":true,"candidates":[]}"#;
+                    let _ = tls.write_all(
+                        format!("HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: {}\r\n\r\n{body}", body.len())
+                            .as_bytes(),
+                    );
+                    if close_notify {
+                        tls.conn.send_close_notify();
+                    }
+                    let _ = tls.flush();
+                }
+                heard.push(Heard {
+                    request: String::from_utf8_lossy(&raw).into_owned(),
+                    sni,
+                });
+            }
+            heard
+        });
+        (addr, server)
+    }
+
+    fn trusting(roots: RootCertStore) -> impl FnOnce() -> std::io::Result<Arc<ClientConfig>> {
+        move || tls_config(roots).map_err(std::io::Error::other)
+    }
+
+    fn post_over(
+        url: &str,
+        tls: impl FnOnce() -> std::io::Result<Arc<ClientConfig>>,
+    ) -> std::io::Result<Reply> {
+        let timeout = Duration::from_secs(30);
+        let (stream, host) = connect_with(url, timeout, tls)?;
+        exchange(
+            stream,
+            &host,
+            "POST",
+            "/api/v1/mesh/register",
+            &[],
+            Some(r#"{"envelope":{}}"#),
+            timeout,
+        )
+    }
+
+    #[test]
+    fn an_https_endpoint_is_reached_over_tls_with_a_verified_certificate() {
+        for close_notify in [true, false] {
+            let (roots, server) = authority(&["127.0.0.1"]);
+            let (addr, heard) = tls_server("127.0.0.1:0", server, 1, close_notify);
+            let url = format!("https://{addr}");
+            let reply = post_over(&url, trusting(roots)).expect("answered over TLS");
+            assert_eq!(reply.status, 200);
+            assert_eq!(reply.body, r#"{"accepted":true,"candidates":[]}"#);
+            let heard = heard.join().unwrap();
+            let request = &heard[0].request;
+            assert!(
+                request.starts_with("POST /api/v1/mesh/register HTTP/1.1\r\n"),
+                "{request}"
+            );
+            assert!(request.contains(&format!("Host: {addr}\r\n")), "{request}");
+            assert!(
+                request.ends_with(r#"{"envelope":{}}"#),
+                "the same framing: {request}"
+            );
+            assert_eq!(
+                heard[0].sni, None,
+                "an IP address is verified, and never sent as SNI"
+            );
+        }
+    }
+
+    /// A host name is the name the certificate is checked against, and SNI carries it.
+    #[test]
+    fn a_host_name_is_sent_as_sni_and_checked_against_the_certificate() {
+        let Some(local) = ("localhost", 0)
+            .to_socket_addrs()
+            .ok()
+            .and_then(|mut a| a.next())
+        else {
+            return; // a machine without localhost has no name to test with
+        };
+        let (roots, server) = authority(&["localhost"]);
+        let (addr, heard) = tls_server(&local.to_string(), server, 1, true);
+        let reply = post_over(
+            &format!("https://localhost:{}", addr.port()),
+            trusting(roots),
+        )
+        .expect("answered over TLS");
+        assert_eq!(reply.status, 200);
+        let heard = heard.join().unwrap();
+        assert_eq!(heard[0].sni.as_deref(), Some("localhost"));
+        assert!(heard[0]
+            .request
+            .contains(&format!("Host: localhost:{}\r\n", addr.port())));
+    }
+
+    #[test]
+    fn an_unverifiable_certificate_is_refused_naming_the_endpoint() {
+        // signed by an authority the executable's roots do not hold: the production path
+        let (_, server) = authority(&["127.0.0.1"]);
+        let (addr, heard) = tls_server("127.0.0.1:0", server, 1, true);
+        let url = format!("https://{addr}");
+        let err = request(
+            &url,
+            "POST",
+            "/api/v1/mesh/register",
+            &[],
+            Some("{}"),
+            Duration::from_secs(30),
+        )
+        .expect_err("an unknown authority is refused");
+        let text = err.to_string();
+        assert!(
+            text.contains(&format!("{url}: the TLS handshake failed")),
+            "{text}"
+        );
+        assert!(text.contains("certificate"), "{text}");
+        assert!(
+            heard.join().unwrap()[0].request.is_empty(),
+            "no byte of the request was sent"
+        );
+
+        // trusted, but issued for another name: the host name is verified too
+        let (roots, server) = authority(&["hub.example"]);
+        let (addr, heard) = tls_server("127.0.0.1:0", server, 1, true);
+        let url = format!("https://{addr}");
+        let err = post_over(&url, trusting(roots)).expect_err("a certificate for another name");
+        let text = err.to_string();
+        assert!(
+            text.contains(&format!("{url}: the TLS handshake failed")),
+            "{text}"
+        );
+        assert!(text.contains("certificate"), "{text}");
+        assert!(heard.join().unwrap()[0].request.is_empty());
+    }
+
+    #[test]
+    fn a_server_that_closes_during_the_handshake_is_a_failed_handshake() {
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let addr = listener.local_addr().unwrap();
+        let server = std::thread::spawn(move || drop(listener.accept().unwrap()));
+        let (roots, _) = authority(&["127.0.0.1"]);
+        let err = post_over(&format!("https://{addr}"), trusting(roots)).expect_err("closed");
+        assert!(
+            err.to_string().contains("the TLS handshake failed"),
+            "{err}"
+        );
+        server.join().unwrap();
+    }
+
+    #[test]
+    fn a_host_no_certificate_can_name_is_refused_before_it_is_resolved() {
+        let err = request(
+            "https://bad..name:443",
+            "GET",
+            "/",
+            &[],
+            None,
+            Duration::from_secs(30),
+        )
+        .expect_err("not a name");
+        assert_eq!(err.kind(), std::io::ErrorKind::InvalidInput);
+        assert!(
+            err.to_string()
+                .contains("https://bad..name:443: 'bad..name' is not a name"),
+            "{err}"
+        );
+    }
+
+    #[test]
+    fn the_executable_trusts_its_compiled_in_roots() {
+        let config = default_tls().expect("the default configuration builds");
+        assert!(Arc::ptr_eq(&config, &default_tls().unwrap()), "built once");
+    }
+
+    /// A socket and the endpoint it is connected to, with nothing written on it yet.
+    fn connected() -> (std::net::TcpListener, TcpStream, Endpoint) {
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let addr = listener.local_addr().unwrap();
+        let socket = TcpStream::connect(addr).unwrap();
+        (
+            listener,
+            socket,
+            parse_endpoint(&format!("https://{addr}")).unwrap(),
+        )
+    }
+
+    /// Every way a connection can fail before its first byte is its own error, never a panic
+    /// or a request sent anyway: an endpoint that does not parse, a resolver that answers with
+    /// no address, a TLS configuration that could not be had, a zero bound the platform
+    /// refuses, and a configuration a connection cannot be made from.
+    #[test]
+    fn a_connection_that_cannot_be_made_fails_before_its_first_byte() {
+        let never = || -> std::io::Result<Arc<ClientConfig>> { panic!("no TLS is asked for") };
+        let scheme = connect_with("ftp://h", Duration::from_secs(1), never)
+            .err()
+            .unwrap();
+        assert!(
+            scheme.to_string().contains("neither http:// nor https://"),
+            "{scheme}"
+        );
+        assert!(unbuildable(rustls::Error::General("x".into())).contains("could not be built"));
+        let none = some_address(Vec::new(), "nowhere:1").expect_err("no address");
+        assert_eq!(none.to_string(), "nowhere:1: no address");
+
+        let (listener, _, endpoint) = connected();
+        let err = connect_with(&endpoint.url(), Duration::from_secs(5), || {
+            Err(std::io::Error::other("no configuration"))
+        })
+        .err()
+        .expect("no configuration");
+        assert_eq!(err.to_string(), "no configuration");
+        drop(listener);
+
+        let config = tls_config(RootCertStore::empty()).expect("an empty trust store builds");
+        let (_listener, socket, endpoint) = connected();
+        let name = server_name(&endpoint).unwrap();
+        assert!(handshake(
+            socket,
+            &endpoint,
+            name.clone(),
+            config.clone(),
+            Duration::ZERO
+        )
+        .is_err());
+        let mut unusable = (*config).clone();
+        unusable.max_fragment_size = Some(1);
+        let (_listener, socket, endpoint) = connected();
+        assert!(handshake(
+            socket,
+            &endpoint,
+            name,
+            Arc::new(unusable),
+            Duration::from_secs(5)
+        )
+        .is_err());
+
+        let (_listener, socket, _) = connected();
+        let err = exchange(
+            Stream::Plain(socket),
+            "h",
+            "GET",
+            "/",
+            &[],
+            None,
+            Duration::ZERO,
+        )
+        .expect_err("a zero bound");
+        assert_eq!(err.kind(), std::io::ErrorKind::InvalidInput);
+    }
+
+    /// A stream that takes every byte and cannot flush them.
+    struct Unflushable;
+
+    impl Read for Unflushable {
+        fn read(&mut self, _: &mut [u8]) -> std::io::Result<usize> {
+            Ok(0)
+        }
+    }
+
+    impl Write for Unflushable {
+        fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+            Ok(buf.len())
+        }
+        fn flush(&mut self) -> std::io::Result<()> {
+            Err(std::io::Error::other("cannot flush"))
+        }
+    }
+
+    /// A request whose bytes could not be flushed is that failure, and no reply is read.
+    #[test]
+    fn a_request_that_cannot_be_flushed_reads_no_reply() {
+        let err = exchange_on(&mut Unflushable, "h", "GET", "/", &[], None).expect_err("unflushed");
+        assert_eq!(err.to_string(), "cannot flush");
     }
 }
