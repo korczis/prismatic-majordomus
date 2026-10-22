@@ -11,7 +11,7 @@ use serde_json::{json, Value};
 
 use crate::app::App;
 use crate::capability::{CapabilityError, Context};
-use crate::cli::{IntentArgs, IntentCommand, OutputFormat};
+use crate::cli::{IntentArgs, IntentCommand, IntentDraftCommand, OutputFormat};
 use crate::error::{Error, Result};
 
 /// The exit code when `validate` finds a failure or `preflight` refuses.
@@ -108,6 +108,17 @@ pub fn run(args: IntentArgs) -> Result<u8> {
             emit(format, &v, explain_text)?;
             Ok(0)
         }
+        // the draft is printed and written nowhere; its only failures are the call's — an
+        // intent this repository does not hold, a repository with no commit — and the write
+        IntentCommand::Draft {
+            what: IntentDraftCommand::Gap { intent },
+        } => call(
+            &app.context,
+            &["intent", "draft", "gap"],
+            json!({ "intent": intent }),
+        )
+        .and_then(|v| emit(format, &v, draft_gap_text))
+        .map(|()| 0),
         IntentCommand::Propose {
             statement,
             title,
@@ -124,6 +135,16 @@ pub fn run(args: IntentArgs) -> Result<u8> {
                 .map(|()| 0)
         }
     }
+}
+
+/// The drafted gap as the YAML record a worker saves under `.ai/repo/project/gaps/`: the same
+/// bytes [`crate::intent_draft::to_yaml`] writes, without the final newline `emit` adds back,
+/// so the text form redirected into the file is the record and nothing else.
+fn draft_gap_text(v: &Value) -> String {
+    let yaml = serde_json::from_value::<crate::intent_draft::GapDraft>(v.clone())
+        .map(|d| crate::intent_draft::to_yaml(&d))
+        .unwrap_or_else(|_| crate::metadata::yaml::render(v));
+    yaml.trim_end_matches('\n').to_string()
 }
 
 /// The record written, and what follows from it.

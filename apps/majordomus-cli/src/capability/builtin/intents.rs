@@ -9,9 +9,11 @@
 //!
 //! Every capability here reads [`crate::intent::Intents`], built on demand from the index,
 //! the plan [`crate::plan::Plan::build`] derives from the same index, and the evidence
-//! ledger. Six are read-only: there is no intent status to write, because the stage is
+//! ledger. Seven are read-only: there is no intent status to write, because the stage is
 //! derived, and no transition, because the plan already owns the lifecycle of the work an
 //! intent is realised by (ADR 0070), and the coverage of its criteria by the plan (ADR 0073).
+//! One of the seven, `intents.draft_gap`, prints a gap record whose criterion states follow
+//! the evidence at HEAD, for a worker to save; it writes nothing ([`crate::intent_draft`]).
 //! One writes, and only a new record: `intents.propose` declares what must become true and
 //! leaves the intent unplanned, its stage still derived (ADR 0144).
 //!
@@ -21,7 +23,7 @@
 //! let ids: Vec<&str> = m.capabilities.iter().map(|e| e.capability.id.as_str()).collect();
 //! assert_eq!(ids, ["intents.list", "intents.record", "intents.validate",
 //!                  "intents.coverage", "intents.preflight", "intents.binding",
-//!                  "intents.propose"]);
+//!                  "intents.draft_gap", "intents.propose"]);
 //! ```
 
 use schemars::JsonSchema;
@@ -38,6 +40,7 @@ use crate::intent::{
     IntentFinding, IntentPreflight, IntentView, Intents, RepositoryEvidence, INTENT,
 };
 use crate::intent_binding::{bind, BindingRequest, IntentBinding};
+use crate::intent_draft::{commit_at, delivered, draft_gap, CriterionReading, GapDraft};
 use crate::intent_plan::IntentCoverage;
 use crate::intent_review::{CritiqueRecord, GapRecord};
 use crate::plan::Plan;
@@ -143,6 +146,35 @@ impl BenchmarkCases for IntentRecordInput {
                 id: id.unwrap_or_else(|| "absent".into()),
             },
         )]
+    }
+}
+
+/// Which intent to draft the gap of, by the id that is also its file name. The field is
+/// `intent` rather than `id` because the draft is of a gap, and what it names is the intent the
+/// gap analyses — the key the gap record itself carries. An id this repository does not hold
+/// is a refusal naming what was looked for, as for `intents.record`.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::intents::IntentDraftGapInput;
+/// let input: IntentDraftGapInput = serde_json::from_str(r#"{"intent": "intent-planning"}"#).unwrap();
+/// assert_eq!(input.intent, "intent-planning");
+/// // a field the input does not have is refused, never ignored
+/// assert!(serde_json::from_str::<IntentDraftGapInput>(r#"{"id": "x"}"#).is_err());
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct IntentDraftGapInput {
+    /// The intent's id, which is also its file name and the gap's.
+    pub intent: String,
+}
+
+impl BenchmarkCases for IntentDraftGapInput {
+    fn benchmark_cases(ctx: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        // the record's own cases: the first intent, or the refusal where there is none
+        IntentRecordInput::benchmark_cases(ctx)
+            .into_iter()
+            .map(|c| NamedCase::new(c.name, IntentDraftGapInput { intent: c.input.id }))
+            .collect()
     }
 }
 
@@ -401,6 +433,30 @@ fn intent_binding(
     })
 }
 
+fn intent_draft_gap(
+    ctx: &Context,
+    input: IntentDraftGapInput,
+) -> Result<GapDraft, CapabilityError> {
+    // the derivation `derived` makes, keeping the evidence: the draft cites the executions the
+    // criterion states were read from, and those are the evidence's, not the view's
+    let plan = Plan::build(&ctx.index);
+    let evidence = RepositoryEvidence::load(&ctx.index)
+        .map_err(|e| CapabilityError::Internal(e.to_string()))?;
+    let intents = Intents::build(&ctx.index, &plan, &evidence);
+    let intent = intents.intent(&input.intent).ok_or_else(|| {
+        CapabilityError::NotFound(format!(
+            "no intent '{}'; `intents.list` names every one this repository holds",
+            input.intent
+        ))
+    })?;
+    let at = commit_at(std::path::Path::new(&ctx.index.repository.root))
+        .map_err(CapabilityError::Refused)?;
+    Ok(draft_gap(intent, &at, |c| CriterionReading {
+        execution: evidence.execution(c),
+        delivered: delivered(&plan, &intent.id, &c.id),
+    }))
+}
+
 // ---------------------------------------------------------------- intents.propose
 
 /// The input of `intents.propose`: what must become true, and optionally its title and id.
@@ -463,8 +519,9 @@ fn intent_propose(
     })
 }
 
-/// The module the registry composes: six read-only capabilities over one derivation and one
-/// that proposes a new intent, each declared once here and projected to the command line,
+/// The module the registry composes: seven read-only capabilities over one derivation — one
+/// of them drafting, and printing, the evidence half of a gap — and one that proposes a new
+/// intent, each declared once here and projected to the command line,
 /// HTTP, MCP and OpenAPI from that declaration.
 ///
 /// ```
@@ -584,6 +641,22 @@ pub fn module() -> ModuleDescriptor {
                 handler: intent_binding,
             },
             capability! {
+                id: "intents.draft_gap",
+                title: "Draft the evidence half of a gap from the ledger",
+                description: "A gap record (`majordomus.gap/v1`) for one intent, drafted from the evidence at HEAD and printed, never written: one observation per criterion citing what was read — `test:<ref>` with the ledger execution's outcome, commit, time and runner, `claim:<id>`, `command:<ref>` or `deployment:<ref>` — and one condition per criterion citing it, its state by one table: current is satisfied; failing is conflicting when an issue serving the criterion is DONE and missing otherwise; not_run and unresolved are missing; stale and not_derivable are unknown. `observed_at` is HEAD, `recorded_at` its committer date and `recorded_by` this executable, so two drafts at one commit are the same bytes; a working tree that differs from HEAD is named as the one risk, and `work` is left empty for the worker. Saved as `.ai/repo/project/gaps/<intent>.yaml`, the draft passes `intent validate`'s gap checks unchanged.",
+                input: IntentDraftGapInput,
+                output: GapDraft,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_intent_draft_gap"),
+                    http: get("/api/v1/intents/draft/gap"),
+                    cli: Some(crate::capability::CliExposure { path: vec!["intent".into(), "draft".into(), "gap".into()] }),
+                },
+                tags: ["intent", "project", "planning"],
+                cache: CachePolicy::Disabled,
+                handler: intent_draft_gap,
+            },
+            capability! {
                 id: "intents.propose",
                 kind: CapabilityKind::Command,
                 title: "Propose an intent: what must become true",
@@ -659,6 +732,12 @@ mod tests {
                 &["intent", "binding"],
             ),
             (
+                "intents.draft_gap",
+                "majordomus_intent_draft_gap",
+                "/api/v1/intents/draft/gap",
+                &["intent", "draft", "gap"],
+            ),
+            (
                 "intents.propose",
                 "majordomus_intent_propose",
                 "/api/v1/intents/propose",
@@ -696,7 +775,8 @@ mod tests {
     }
 
     /// One capability writes, and it only proposes: the stage is derived, so there is no
-    /// status to record and no transition (ADR 0070, ADR 0144).
+    /// status to record and no transition (ADR 0070, ADR 0144). The gap draft prints the
+    /// record and leaves writing it to the worker, so it is not a writer either.
     #[test]
     fn only_the_proposal_writes_the_repository() {
         let writers: Vec<String> = module()

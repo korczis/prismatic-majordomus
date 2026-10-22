@@ -148,7 +148,7 @@ pub struct IntentArgs {
 
     #[command(subcommand)]
     /// `list`, `show`, `validate`, `coverage`, `preflight`, `binding`, `realization`,
-    /// `explain` or `propose`.
+    /// `explain`, `draft` or `propose`.
     pub command: IntentCommand,
 
     #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
@@ -223,6 +223,12 @@ pub enum IntentCommand {
         /// The intent's id
         id: String,
     },
+    /// Draft a record from what the repository already derives, and print it; nothing is written
+    Draft {
+        #[command(subcommand)]
+        /// What to draft: `gap`.
+        what: IntentDraftCommand,
+    },
     /// Write a new, unplanned intent: what must become true (ADR 0144)
     Propose {
         /// What must become true, kept verbatim
@@ -234,6 +240,33 @@ pub enum IntentCommand {
         /// The identity and file name; the title's slug when absent
         #[arg(long)]
         id: Option<String>,
+    },
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus intent draft`: each prints a record drafted from what the
+/// repository already derives, for a worker to read, complete and commit. Only `gap` today —
+/// the command line of `intents.draft_gap`.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, IntentCommand, IntentDraftCommand};
+///
+/// let cli = Cli::try_parse_from(["majordomus", "intent", "draft", "gap", "intent-planning"]).unwrap();
+/// let Command::Intent(args) = cli.command else { panic!("intent") };
+/// let IntentCommand::Draft { what: IntentDraftCommand::Gap { intent } } = args.command else {
+///     panic!("draft gap")
+/// };
+/// assert_eq!(intent, "intent-planning");
+/// // the group drafts nothing of its own, and a gap is of one named intent
+/// assert!(Cli::try_parse_from(["majordomus", "intent", "draft"]).is_err());
+/// assert!(Cli::try_parse_from(["majordomus", "intent", "draft", "gap"]).is_err());
+/// ```
+pub enum IntentDraftCommand {
+    /// The gap of one intent: each criterion's state derived from the evidence at HEAD, each citing the ledger execution or claim it read, printed as the record to save under .ai/repo/project/gaps/
+    Gap {
+        /// The intent's id, which is also its file name and the gap's
+        intent: String,
     },
 }
 
@@ -6646,6 +6679,31 @@ pub const EXAMPLES: &[CommandExamples] = &[
             setup: &[],
             expect: Expect::StdoutContains(&["fixture-intent", "the-case-passes"]),
         }],
+    },
+    CommandExamples {
+        command: "intent draft gap",
+        examples: &[
+            ExampleDoc {
+                id: "intent-draft-gap",
+                title: "Draft the evidence half of a gap from the ledger",
+                description: "Prints the gap record of the fixture's intent, drafted at HEAD and written nowhere: one observation per criterion naming what the ledger holds for it, and one condition per criterion whose state follows the evidence — the fixture's case has no recorded run, so it is `missing`. Saved as `.ai/repo/project/gaps/fixture-intent.yaml`, it passes `intent validate` unchanged; two drafts at one commit are the same bytes.",
+                argv: &["intent", "draft", "gap", "fixture-intent"],
+                setup: &[],
+                expect: Expect::StdoutContains(&[
+                    "intent: fixture-intent",
+                    "source: test:test/cases/00_x.sh",
+                    "state: missing",
+                ]),
+            },
+            ExampleDoc {
+                id: "intent-draft-gap-json",
+                title: "The same, as the shape the API and MCP answer with",
+                description: "What `GET /api/v1/intents/draft/gap` returns and the `majordomus_intent_draft_gap` tool answers: the record as JSON, its keys in the order the gap schema lists them.",
+                argv: &["intent", "draft", "gap", "fixture-intent", "--format", "json"],
+                setup: &[],
+                expect: Expect::Json(&["/observed_at", "/observations/0/source", "/conditions/0/state"]),
+            },
+        ],
     },
     CommandExamples {
         command: "intent propose",

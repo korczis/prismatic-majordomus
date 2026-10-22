@@ -680,6 +680,52 @@ impl<'a> RepositoryEvidence<'a> {
         })
     }
 
+    /// The ledger execution a criterion's evidence state was read from, when there is one:
+    /// for a `test` criterion the latest recorded run of the test its reference names, and
+    /// for a `claim` criterion the execution the claim join attached to that claim — the
+    /// same rows [`EvidenceLookup::test`] and [`EvidenceLookup::claim`] judged, so a reader
+    /// who is told the state can also be told what it rests on. `None` for a reference that
+    /// names no test or no claim, for one nothing was recorded for, and for `command` and
+    /// `deployment` criteria, which the ledger does not record.
+    ///
+    /// A draft of a gap cites this row (`intents.draft_gap`); nothing here judges it again.
+    ///
+    /// ```
+    /// use majordomus_cli::index::Index;
+    /// use majordomus_cli::intent::{IntentCriterion, IntentEvidenceState, RepositoryEvidence};
+    /// # fn demo(index: &Index) {
+    /// let evidence = RepositoryEvidence::load(index).expect("the ledger is readable");
+    /// let command = IntentCriterion {
+    ///     id: "it-ships".into(),
+    ///     criterion: "it ships".into(),
+    ///     evidence: "command".into(),
+    ///     reference: "just ship".into(),
+    ///     state: IntentEvidenceState::NotDerivable,
+    ///     met: false,
+    ///     proof: None,
+    ///     reproduce: Some("just ship".into()),
+    /// };
+    /// // the ledger records tests, never a command a person runs
+    /// assert!(evidence.execution(&command).is_none());
+    /// # }
+    /// ```
+    pub fn execution(&self, criterion: &IntentCriterion) -> Option<evidence::Execution> {
+        let r = criterion.reference.trim();
+        if r.is_empty() {
+            return None;
+        }
+        match criterion.evidence.as_str() {
+            "test" => test_id(r).and_then(|id| self.ledger.latest(&id.as_string()).cloned()),
+            "claim" => self
+                .claims()
+                .claims
+                .iter()
+                .find(|c| c.id == r)
+                .and_then(|c| c.execution.clone()),
+            _ => None,
+        }
+    }
+
     fn root(&self) -> &Path {
         &self.root
     }
