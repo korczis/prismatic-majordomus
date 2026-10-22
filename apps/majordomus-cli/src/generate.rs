@@ -1555,6 +1555,29 @@ pub fn graph_document(ctx: &Context, version: &str) -> Result<String> {
 /// repository declares no publication, which is every repository without a site.
 ///
 /// Refused, as the graph is, when the projection carries anything from `FORBIDDEN`.
+///
+/// ```
+/// use majordomus_cli::generate::entities_document;
+/// let root = tempfile::tempdir().unwrap();
+/// let graph = r#"{"graph": {"nodes": [
+///     {"id": "adr:0001", "kind": "adr", "label": "adr-0001", "status": "accepted",
+///      "route": "/cockpit/objects/adr/adr-0001", "source": ".ai/repo/adrs/0001.md"}
+/// ], "edges": []}}"#;
+/// // no publication declaration: a repository without a site has no projection
+/// assert_eq!(entities_document(root.path(), graph, "1.0.0").unwrap(), None);
+///
+/// let declaration = "[[kinds]]\nkind = \"adr\"\nprojection = \"entity\"\nroute = \"/adrs/\"\n";
+/// std::fs::create_dir_all(root.path().join("site/data")).unwrap();
+/// std::fs::write(root.path().join("site/data/publication.toml"), declaration).unwrap();
+/// let doc = entities_document(root.path(), graph, "1.0.0").unwrap().unwrap();
+/// let doc: serde_json::Value = serde_json::from_str(&doc).unwrap();
+/// assert_eq!(doc["generator"], "majordomus-cli 1.0.0");
+/// assert_eq!(doc["kinds"][0]["count"], 1);
+/// assert_eq!(doc["entities"][0]["slug"], "adr-0001");
+/// // a node that would publish a machine's home directory refuses the whole document
+/// let leak = graph.replace(".ai/repo/adrs/0001.md", &format!("{}someone/0001.md", "/Users/"));
+/// assert!(entities_document(root.path(), &leak, "1.0.0").is_err());
+/// ```
 pub fn entities_document(root: &Path, graph: &str, version: &str) -> Result<Option<String>> {
     let Ok(declaration) = std::fs::read_to_string(root.join(crate::entity::PUBLICATION)) else {
         return Ok(None);

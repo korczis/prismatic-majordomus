@@ -501,7 +501,20 @@ pub struct LayoutArgs {
 
 #[derive(Debug, Subcommand)]
 /// The subcommands of `majordomus layout`: `check` judges both halves of the layer against
-/// the layouts their contracts declare (I2871).
+/// the layouts their contracts declare (I2871). `check` takes no arguments: what it judges
+/// is what the contracts declare, never what a caller names.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, LayoutCommand};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "layout", "check"]).unwrap();
+/// let Command::Layout(args) = cli.command else { panic!("not the layout command") };
+/// assert!(matches!(args.command, LayoutCommand::Check));
+/// // no path to judge is accepted, and the group runs nothing of its own
+/// assert!(Cli::try_parse_from(["majordomus", "layout", "check", ".ai/local"]).is_err());
+/// assert!(Cli::try_parse_from(["majordomus", "layout"]).is_err());
+/// ```
 pub enum LayoutCommand {
     /// Refuse every path a declared layout excludes, naming the contract; exit 10 on a finding, 12 when the halves cannot be read
     Check,

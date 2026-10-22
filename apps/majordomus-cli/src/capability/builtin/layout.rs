@@ -34,7 +34,24 @@ fn check(ctx: &Context, _: Empty) -> Result<LayoutReport, CapabilityError> {
     Ok(layout::check(&repository, &ctx.index, &kinds))
 }
 
-/// The module.
+/// The `layout` module: the one capability that judges where an artifact lives against the
+/// layout each contract declares, composed into the registry by `builtin::modules`.
+///
+/// The gate refuses by its answer and never by changing anything: its one capability is a
+/// read, reached under the same name from the command line, MCP and HTTP.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::layout;
+/// use majordomus_cli::capability::Effect;
+/// let m = layout::module();
+/// assert_eq!(m.id.as_str(), "layout");
+/// let check = &m.capabilities[0].capability;
+/// assert_eq!(check.id.as_str(), "layout.check");
+/// assert_eq!(check.execution.effect, Effect::Read);
+/// assert_eq!(check.exposure.http.as_ref().unwrap().path, "/api/v1/layout/check");
+/// let tool = check.exposure.mcp.as_ref().and_then(|m| m.tool.as_deref());
+/// assert_eq!(tool, Some("majordomus_layout_check"));
+/// ```
 pub fn module() -> ModuleDescriptor {
     module! {
         id: "layout",

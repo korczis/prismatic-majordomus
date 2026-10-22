@@ -41,6 +41,29 @@ impl App {
     /// [`App::load`] for a repository the caller already discovered: `serve` and `mcp` find
     /// the repository to elect a server before they load the layer, and pass it here rather
     /// than have it discovered a second time (I3015).
+    ///
+    /// `args.repo` is not read: the repository given is the one loaded. Everything else in
+    /// `args` is — the share directory, the discovery mode and `--strict` — and a manifest
+    /// the distribution's schema refuses stops the load before anything is indexed.
+    ///
+    /// ```
+    /// use majordomus_cli::app::App;
+    /// use majordomus_cli::cli::{DiscoveryMode, RepoArgs};
+    /// use majordomus_cli::repository::Repository;
+    /// use majordomus_cli::synthetic::{crate_share, SyntheticRepository};
+    ///
+    /// let repo = SyntheticRepository::small().unwrap();
+    /// let args = RepoArgs {
+    ///     repo: Some("/nonexistent".into()),
+    ///     discovery: DiscoveryMode::Filesystem,
+    ///     share: Some(crate_share()),
+    ///     ..RepoArgs::default()
+    /// };
+    /// let app = App::load_from(&args, Repository::discover(repo.root()).unwrap()).unwrap();
+    /// assert_eq!(app.repository.root(), repo.root().canonicalize().unwrap());
+    /// let rules = app.index().objects.iter().filter(|o| o.kind == "rule").count();
+    /// assert_eq!(rules, repo.shape.rules, "every rule of the layer is indexed");
+    /// ```
     pub fn load_from(args: &RepoArgs, repository: Repository) -> Result<Self> {
         tracing::info!(repository_root = %repository.root().display(), "repository found");
         let share = Share::locate(args.share.as_deref(), repository.root())?;

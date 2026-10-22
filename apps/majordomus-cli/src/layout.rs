@@ -43,7 +43,26 @@ use crate::repository::{Lifecycle, Repository};
 /// compared by their bytes only.
 const HEAD_BYTES: u64 = 256 * 1024;
 
-/// One path a contract excludes.
+/// One misplaced artifact: a path found in a half whose declared layout excludes it, with the
+/// contract that excludes it and why, so a refusal names what to move and where it belongs.
+///
+/// It travels as the JSON of the `layout.check` capability, so its member names are the
+/// wire contract every projection reads:
+///
+/// ```
+/// use majordomus_cli::layout::LayoutFinding;
+/// let finding = LayoutFinding {
+///     path: ".ai/local/notes/rule.md".into(),
+///     contract: "manifest local".into(),
+///     excludes: "canonical".into(),
+///     reason: "a copy of .ai/repo/rules/rule.md".into(),
+/// };
+/// let json = serde_json::to_value(&finding).unwrap();
+/// assert_eq!(json["contract"], "manifest local");
+/// assert_eq!(json["excludes"], "canonical");
+/// let back: LayoutFinding = serde_json::from_value(json).unwrap();
+/// assert_eq!(back, finding);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct LayoutFinding {
     /// The path, repository-relative.
@@ -63,7 +82,19 @@ impl crate::order::Ordered for LayoutFinding {
     }
 }
 
-/// The answer of the layout check.
+/// The answer of the layout check: whether the halves were read, how many paths were
+/// judged, and every path a contract excludes. A report that could not read the halves
+/// never passes, so silence about a tree nobody measured cannot read as a clean tree.
+///
+/// ```
+/// use majordomus_cli::layout::LayoutReport;
+/// let clean = LayoutReport::of(true, None, 12, Vec::new());
+/// assert!(clean.passes);
+/// assert_eq!(clean.checked, 12);
+/// let unread = LayoutReport::of(false, Some("git could not start".into()), 0, Vec::new());
+/// assert!(!unread.passes, "nothing found because nothing was read");
+/// assert_eq!(unread.reason.as_deref(), Some("git could not start"));
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct LayoutReport {
     /// Whether the halves could be read at all. `false` is not a pass.
@@ -79,7 +110,24 @@ pub struct LayoutReport {
 }
 
 impl LayoutReport {
-    /// A report, its verdict derived from what was measured and found.
+    /// A report, its verdict derived from what was measured and found. The findings are
+    /// put in canonical order — by path, the contract breaking the tie — whatever order the
+    /// walk found them in, so two runs over one tree answer the same bytes.
+    ///
+    /// ```
+    /// use majordomus_cli::layout::{LayoutFinding, LayoutReport};
+    /// let at = |path: &str| LayoutFinding {
+    ///     path: path.into(),
+    ///     contract: "manifest local".into(),
+    ///     excludes: "canonical".into(),
+    ///     reason: "a copy".into(),
+    /// };
+    /// let found = vec![at(".ai/local/z.md"), at(".ai/local/a.md")];
+    /// let report = LayoutReport::of(true, None, 5, found);
+    /// assert!(!report.passes, "measured, but something was found");
+    /// let paths: Vec<&str> = report.findings.iter().map(|f| f.path.as_str()).collect();
+    /// assert_eq!(paths, [".ai/local/a.md", ".ai/local/z.md"]);
+    /// ```
     pub fn of(
         measured: bool,
         reason: Option<String>,
@@ -109,6 +157,48 @@ struct Declared {
 }
 
 /// Check both halves of `repository` against their declared layouts.
+///
+/// Reads git at the repository's root — the tracked half's index entries and the ones its
+/// ignore rules match — and the local half's Markdown and YAML files. A root git cannot
+/// read is answered unmeasured rather than passing; a local half the manifest does not
+/// declare `excludes: [canonical]` for is counted but not judged.
+///
+/// ```
+/// use majordomus_cli::layout;
+/// use majordomus_cli::metadata::KindSchema;
+/// use majordomus_cli::repository::Repository;
+/// use majordomus_cli::share::Share;
+/// use majordomus_cli::synthetic::{crate_share, SyntheticRepository};
+///
+/// let repo = SyntheticRepository::small().unwrap();
+/// let root = repo.root();
+/// // the local half declares that authored knowledge never lives there
+/// let manifest = root.join(".ai/manifest.yaml");
+/// let text = std::fs::read_to_string(&manifest).unwrap().replace(
+///     "  implicit_context: false\n",
+///     "  implicit_context: false\n  lifecycle: runtime\n  excludes: [canonical]\n",
+/// );
+/// std::fs::write(&manifest, text).unwrap();
+/// let git = |args: &[&str]| {
+///     let mut git = std::process::Command::new("git");
+///     assert!(git.arg("-C").arg(root).args(args).status().unwrap().success());
+/// };
+/// git(&["init", "-q"]);
+/// git(&["add", ".ai"]);
+/// // a byte copy of a tracked rule, left in the local half
+/// let rule = std::fs::read(root.join(".ai/repo/rules/project/rule-0.v1.md")).unwrap();
+/// std::fs::create_dir_all(root.join(".ai/local/notes")).unwrap();
+/// std::fs::write(root.join(".ai/local/notes/rule-0.md"), rule).unwrap();
+///
+/// let repository = Repository::discover(root).unwrap();
+/// let share = Share::locate(Some(&crate_share()), root).unwrap();
+/// let kinds = KindSchema::load(&share, &repository).unwrap();
+/// let report = layout::check(&repository, &repo.index().unwrap(), &kinds);
+/// assert!(report.measured && !report.passes);
+/// assert_eq!(report.findings.len(), 1);
+/// assert_eq!(report.findings[0].path, ".ai/local/notes/rule-0.md");
+/// assert!(report.findings[0].reason.contains(".ai/repo/rules/project/rule-0.v1.md"));
+/// ```
 pub fn check(repository: &Repository, index: &Index, kinds: &KindSchema) -> LayoutReport {
     let root = repository.root();
     let manifest = repository.manifest();
@@ -356,4 +446,136 @@ fn git_lines(root: &Path, args: &[&str]) -> Result<Vec<String>, String> {
         .filter(|l| !l.is_empty())
         .map(str::to_string)
         .collect())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::share::Share;
+    use crate::synthetic::{crate_share, SyntheticRepository};
+
+    const RULE: &str = ".ai/repo/rules/project/rule-0.v1.md";
+
+    /// A synthetic layer whose tracked half is in git's index, its local half declared to
+    /// exclude canonical knowledge when `excludes` says so.
+    fn layer(excludes: bool) -> SyntheticRepository {
+        let repo = SyntheticRepository::small().expect("a synthetic repository");
+        if excludes {
+            let manifest = repo.root().join(".ai/manifest.yaml");
+            let text = std::fs::read_to_string(&manifest).unwrap().replace(
+                "  implicit_context: false\n",
+                "  implicit_context: false\n  lifecycle: runtime\n  excludes: [canonical]\n",
+            );
+            std::fs::write(&manifest, text).unwrap();
+        }
+        git(repo.root(), &["init", "-q"]);
+        git(repo.root(), &["add", ".ai"]);
+        repo
+    }
+
+    fn git(root: &Path, args: &[&str]) {
+        let status = Command::new("git")
+            .arg("-C")
+            .arg(root)
+            .args(args)
+            .status()
+            .expect("git");
+        assert!(status.success(), "git {}", args.join(" "));
+    }
+
+    fn local(repo: &SyntheticRepository, rel: &str, body: &[u8]) {
+        let path = repo.root().join(".ai/local").join(rel);
+        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+        std::fs::write(path, body).unwrap();
+    }
+
+    fn checked(repo: &SyntheticRepository) -> LayoutReport {
+        let repository = Repository::discover(repo.root()).unwrap();
+        let share = Share::locate(Some(&crate_share()), repo.root()).unwrap();
+        let kinds = KindSchema::load(&share, &repository).unwrap();
+        check(&repository, &repo.index().unwrap(), &kinds)
+    }
+
+    #[test]
+    fn a_local_copy_of_a_tracked_file_is_refused_and_names_the_original() {
+        let repo = layer(true);
+        local(
+            &repo,
+            "notes/copied.md",
+            &std::fs::read(repo.root().join(RULE)).unwrap(),
+        );
+        local(&repo, "notes/mine.md", b"what this machine noticed today\n");
+        local(&repo, "empty.md", b"");
+
+        let report = checked(&repo);
+        assert!(report.measured, "{:?}", report.reason);
+        assert!(!report.passes);
+        assert_eq!(report.findings.len(), 1, "{:?}", report.findings);
+        let f = &report.findings[0];
+        assert_eq!(f.path, ".ai/local/notes/copied.md");
+        assert_eq!(f.contract, "manifest local");
+        assert_eq!(f.excludes, "canonical");
+        assert!(f.reason.contains(RULE), "{}", f.reason);
+        // every tracked file of the tracked half, and the two local files with content
+        let tracked = git_lines(repo.root(), &["ls-files", "--", ".ai/repo"]).unwrap();
+        assert_eq!(report.checked, tracked.len() + 2);
+    }
+
+    #[test]
+    fn a_local_file_declaring_a_canonical_schema_is_refused_and_a_runtime_one_is_not() {
+        let repo = layer(true);
+        local(
+            &repo,
+            "drafts/I9999.yaml",
+            b"schema: majordomus.issue/v1\nid: I9999\n",
+        );
+        local(
+            &repo,
+            "sessions/now.md",
+            b"---\nschema: \"majordomus.session-context/v1\"\n---\n\nruntime state\n",
+        );
+
+        let report = checked(&repo);
+        let paths: Vec<&str> = report.findings.iter().map(|f| f.path.as_str()).collect();
+        assert_eq!(paths, [".ai/local/drafts/I9999.yaml"]);
+        assert!(
+            report.findings[0]
+                .reason
+                .contains("schema: majordomus.issue/v1"),
+            "{}",
+            report.findings[0].reason
+        );
+    }
+
+    #[test]
+    fn a_local_half_that_excludes_nothing_is_not_judged() {
+        let repo = layer(false);
+        local(
+            &repo,
+            "notes/copied.md",
+            &std::fs::read(repo.root().join(RULE)).unwrap(),
+        );
+
+        let report = checked(&repo);
+        assert!(report.passes, "{:?}", report.findings);
+        let tracked = git_lines(repo.root(), &["ls-files", "--", ".ai/repo"]).unwrap();
+        assert_eq!(
+            report.checked,
+            tracked.len(),
+            "the local half is not walked"
+        );
+    }
+
+    #[test]
+    fn a_root_git_cannot_read_is_unmeasured_and_does_not_pass() {
+        let repo = SyntheticRepository::small().unwrap();
+        if git_lines(repo.root(), &["rev-parse", "--show-toplevel"]).is_ok() {
+            return; // the temporary directory lies inside a work tree; nothing to prove here
+        }
+        let report = checked(&repo);
+        assert!(!report.measured);
+        assert!(!report.passes);
+        assert_eq!(report.checked, 0);
+        assert!(report.reason.unwrap().contains("ls-files"));
+    }
 }

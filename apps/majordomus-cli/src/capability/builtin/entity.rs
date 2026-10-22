@@ -444,6 +444,38 @@ pub const HISTORY_BOUND: usize = 20;
 
 /// The commits that changed an object's file, newest first (I3314). An object that is one
 /// member of a collection file has the file's history.
+///
+/// A history that does not apply says why rather than reading as an empty one, and the
+/// members it has no value for are left out of its JSON:
+///
+/// ```
+/// use majordomus_cli::capability::builtin::entity::{History, HistoryCommit};
+/// let none = History {
+///     reason: Some("no commit has changed this file yet".into()),
+///     bound: 20,
+///     ..History::default()
+/// };
+/// let json = serde_json::to_value(&none).unwrap();
+/// assert_eq!(json["applicable"], false);
+/// assert_eq!(json["reason"], "no commit has changed this file yet");
+/// assert!(json.get("last").is_none(), "no last commit is written, not a null");
+///
+/// let commit = HistoryCommit {
+///     commit: "0123456789abcdef0123456789abcdef01234567".into(),
+///     date: "2026-10-21T12:00:00+00:00".into(),
+///     subject: "feat(entity): the entity page lists its history".into(),
+/// };
+/// let some = History {
+///     applicable: true,
+///     last: Some(commit.clone()),
+///     commits: vec![commit],
+///     bound: 20,
+///     ..History::default()
+/// };
+/// let back: History = serde_json::from_value(serde_json::to_value(&some).unwrap()).unwrap();
+/// assert_eq!(back.last, back.commits.first().cloned());
+/// assert!(back.reason.is_none() && !back.cut);
+/// ```
 #[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
 pub struct History {
     /// Whether a history applies. False when git cannot answer for the file or no commit
@@ -464,7 +496,21 @@ pub struct History {
     pub cut: bool,
 }
 
-/// One commit of a history.
+/// One commit that changed an entity's file, as `git log --follow` named it: what a reader
+/// follows from the entity page to the change itself, newest first in [`History::commits`].
+///
+/// ```
+/// use majordomus_cli::capability::builtin::entity::HistoryCommit;
+/// let c: HistoryCommit = serde_json::from_str(
+///     r#"{"commit":"0123456789abcdef0123456789abcdef01234567",
+///         "date":"2026-10-21T12:00:00+00:00",
+///         "subject":"fix(layout): a copy is named with its original"}"#,
+/// )
+/// .unwrap();
+/// assert_eq!(c.subject, "fix(layout): a copy is named with its original");
+/// // every member is required: a commit without its date or subject is not one
+/// assert!(serde_json::from_str::<HistoryCommit>(r#"{"commit":"0123"}"#).is_err());
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct HistoryCommit {
     /// The full commit id.
