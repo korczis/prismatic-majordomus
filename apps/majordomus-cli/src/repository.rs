@@ -156,8 +156,11 @@ pub struct Repository {
 impl Repository {
     /// Walk from `start` upward to the nearest directory carrying [`MANIFEST`]. A manifest
     /// that does not parse stops the search with its error: a nearer broken layer is never
-    /// skipped in favour of a farther working one.
+    /// skipped in favour of a farther working one. Every call is timed as
+    /// [`crate::perf::Phase::RepositoryDiscovery`], wherever it is made, so the count of that
+    /// phase is how many times a process discovered (I3015).
     pub fn discover(start: &Path) -> Result<Self> {
+        let _phase = crate::perf::phase(crate::perf::Phase::RepositoryDiscovery);
         let start = start.canonicalize().map_err(|e| Error::io(start, e))?;
         for dir in start.ancestors() {
             let manifest = dir.join(MANIFEST);
