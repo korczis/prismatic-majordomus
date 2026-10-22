@@ -412,8 +412,13 @@ impl Session {
 /// client shows its model, because an older client that attached in silence is how a
 /// version difference went unseen (I2163). Any other answer is relayed as it is.
 fn told_of_version(mut answer: Value, mine: &str) -> Value {
-    let served = answer["result"]["serverInfo"]["version"]
-        .as_str()
+    let Some(result) = answer.get_mut("result").and_then(Value::as_object_mut) else {
+        return answer;
+    };
+    let served = result
+        .get("serverInfo")
+        .and_then(|info| info.get("version"))
+        .and_then(Value::as_str)
         .map(str::to_string);
     if lease::version_verdict(served.as_deref(), mine) != lease::VersionVerdict::ServerNewer {
         return answer;
@@ -423,14 +428,12 @@ fn told_of_version(mut answer: Value, mine: &str) -> Value {
         "This client is majordomus {mine}; the shared server it is bridged to runs {theirs}, a newer release. Its answers are the newer server's; this client process is the older one until it is started from the newer executable."
     );
     tracing::warn!("{note}");
-    if let Some(result) = answer.get_mut("result").and_then(Value::as_object_mut) {
-        let instructions = result
-            .get("instructions")
-            .and_then(Value::as_str)
-            .map(|i| format!("{note}\n\n{i}"))
-            .unwrap_or(note);
-        result.insert("instructions".into(), Value::String(instructions));
-    }
+    let instructions = result
+        .get("instructions")
+        .and_then(Value::as_str)
+        .map(|i| format!("{note}\n\n{i}"))
+        .unwrap_or(note);
+    result.insert("instructions".into(), Value::String(instructions));
     answer
 }
 
@@ -624,6 +627,19 @@ mod tests {
     }
 
     #[test]
+    fn an_answer_without_a_result_is_relayed_and_one_without_instructions_is_told_alone() {
+        let refused = json!({"jsonrpc": "2.0", "id": 1,
+                             "error": {"code": -32600, "message": "refused"}});
+        assert_eq!(told_of_version(refused.clone(), "0.20.0"), refused);
+        let bare = json!({"jsonrpc": "2.0", "id": 1, "result": {
+            "serverInfo": {"name": "majordomus", "version": "0.21.0"}}});
+        let told = told_of_version(bare, "0.20.0");
+        let instructions = told["result"]["instructions"].as_str().unwrap();
+        assert!(instructions.starts_with("This client is majordomus 0.20.0"));
+        assert!(instructions.ends_with("started from the newer executable."));
+    }
+
+    #[test]
     fn older_client_told_test() {
         // bridged to a newer release, the client is told, before what the server said
         let told = told_of_version(initialized("0.21.0"), "0.20.0");
@@ -643,6 +659,85 @@ mod tests {
         // and an error answer has nothing to be told in
         let error = json!({"jsonrpc": "2.0", "id": 1, "error": {"code": -32600}});
         assert_eq!(told_of_version(error.clone(), "0.20.0"), error);
+    }
+
+    fn url() -> String {
+        "http://127.0.0.1:1".into()
+    }
+
+    #[test]
+    fn a_request_whose_outcome_is_unknown_is_answered_with_its_id_and_a_notification_is_not() {
+        let cause = BridgeError::Unanswered {
+            url: url(),
+            reason: "timed out".into(),
+        };
+        let request = json!({ "jsonrpc": "2.0", "id": 7, "method": "tools/call" });
+        let Some(Reply::Value(answer)) = outcome_unknown(&request, &cause) else {
+            panic!("a request is answered");
+        };
+        assert_eq!(answer["id"], 7);
+        assert_eq!(answer["error"]["code"], -32603);
+        assert_eq!(answer["error"]["data"]["outcome"], "unknown");
+        assert_eq!(answer["error"]["data"]["request_id"], 7);
+        let text = answer["error"]["message"].as_str().unwrap();
+        assert!(text.starts_with("outcome unknown: request 7"), "{text}");
+        assert!(text.contains("timed out"), "the cause is named: {text}");
+        let notification = json!({ "jsonrpc": "2.0", "method": "notifications/initialized" });
+        assert!(outcome_unknown(&notification, &cause).is_none());
+        let null_id = json!({ "jsonrpc": "2.0", "id": null, "method": "ping" });
+        assert!(outcome_unknown(&null_id, &cause).is_none());
+    }
+
+    #[test]
+    fn a_refusal_is_answered_as_that_refusal_with_its_status() {
+        let request = json!({ "jsonrpc": "2.0", "id": 9, "method": "tools/call" });
+        let answer = |cause: &BridgeError| match refused(&request, cause) {
+            Some(Reply::Value(v)) => v,
+            _ => panic!("a request is answered with a value"),
+        };
+        let too_large = answer(&BridgeError::Rejected {
+            url: url(),
+            status: 413,
+            body: "too_large".into(),
+        });
+        assert_eq!(too_large["error"]["code"], -32600);
+        assert_eq!(too_large["error"]["data"]["status"], 413);
+        let text = too_large["error"]["message"].as_str().unwrap();
+        assert!(text.starts_with("payload too large: request 9"), "{text}");
+
+        let bad = answer(&BridgeError::Rejected {
+            url: url(),
+            status: 400,
+            body: "invalid".into(),
+        });
+        assert_eq!(bad["error"]["data"]["status"], 400);
+        assert!(bad["error"]["message"]
+            .as_str()
+            .unwrap()
+            .starts_with("request 9 was refused"));
+
+        // a failure that carries no status is still named, with no status claimed for it
+        for cause in [
+            BridgeError::Unreachable {
+                url: url(),
+                reason: "connection refused".into(),
+            },
+            BridgeError::Unanswered {
+                url: url(),
+                reason: "timed out".into(),
+            },
+        ] {
+            let v = answer(&cause);
+            assert_eq!(v["error"]["data"]["status"], Value::Null, "{v}");
+            assert!(v["error"]["message"].as_str().unwrap().contains(&url()));
+        }
+        let notification = json!({ "jsonrpc": "2.0", "method": "notifications/cancelled" });
+        let rejected = BridgeError::Rejected {
+            url: url(),
+            status: 400,
+            body: String::new(),
+        };
+        assert!(refused(&notification, &rejected).is_none());
     }
 
     #[test]

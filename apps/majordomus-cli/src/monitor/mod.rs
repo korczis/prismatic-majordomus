@@ -21,6 +21,8 @@
 pub(crate) mod executor;
 pub(crate) mod github;
 pub(crate) mod mesh;
+#[cfg(test)]
+pub(crate) mod testing;
 
 use std::collections::HashMap;
 

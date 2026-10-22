@@ -979,4 +979,85 @@ mod tests {
         assert_eq!(detail, "the continuity store could not be read: no device");
         assert!(findings.is_empty());
     }
+
+    /// A layer read with an error diagnostic is served as read: readiness names it as a
+    /// reason, reports the layer as a warning, and is still ready.
+    #[test]
+    fn readiness_names_a_degraded_layer_and_is_still_ready() {
+        let repo = SyntheticRepository::new(Shape::default()).expect("a synthetic repository");
+        let ctx = repo.context().expect("a context");
+        let mut index = repo.index().expect("an index");
+        index.diagnostics.push(crate::model::Diagnostic {
+            severity: Severity::Error,
+            code: "unknown_key".into(),
+            path: Some("docs/x.md".into()),
+            message: "key(s) not in schema".into(),
+        });
+        index.state = State::Degraded;
+        let mut degraded = (*ctx).clone();
+        degraded.index = std::sync::Arc::new(index);
+        let r = readiness(&degraded, Empty {}).expect("ready");
+        assert!(r.ready, "a degraded layer is served: {r:?}");
+        assert_eq!(r.layer, HealthStatus::Warn);
+        let expected = format!(
+            "layer_degraded: the layer was read with {} diagnostic(s); it is served as read",
+            degraded.index.diagnostics.len()
+        );
+        assert!(r.reasons.contains(&expected), "{:?}", r.reasons);
+    }
+
+    /// The variable that makes a run of this test binary the child of the test below.
+    const STALE_CHILD: &str = "MAJORDOMUS_HEALTH_TEST_STALE_CHILD";
+
+    /// A process whose executable was removed under it is serving code that is no longer on
+    /// disk: readiness says it is not ready, and why. Shown in a copy of this test binary,
+    /// run as a process of its own, which removes its own executable once it has pinned it.
+    #[test]
+    fn readiness_refuses_a_process_whose_executable_was_removed_under_it() {
+        if std::env::var_os(STALE_CHILD).is_some() {
+            let repo = SyntheticRepository::new(Shape::default()).expect("a synthetic repository");
+            let ctx = repo.context().expect("a context");
+            assert_eq!(
+                crate::lease::serving_replaced_code(),
+                None,
+                "pinned while the file is there"
+            );
+            std::fs::remove_file(std::env::current_exe().expect("this executable"))
+                .expect("the copy is removed");
+            let r = readiness(&ctx, Empty {}).expect("an answer");
+            assert!(!r.ready, "{r:?}");
+            assert!(r.stale.is_some(), "{r:?}");
+            assert!(
+                r.reasons
+                    .iter()
+                    .any(|x| x.starts_with("stale: ") && x.contains("has been removed")),
+                "{:?}",
+                r.reasons
+            );
+            return;
+        }
+        let dir = tempfile::tempdir().expect("a temp dir");
+        let copy = dir.path().join("health-tests");
+        std::fs::copy(std::env::current_exe().expect("this test binary"), &copy)
+            .expect("a copy of this test binary");
+        let out = std::process::Command::new(&copy)
+            .args([
+                "--exact",
+                "capability::builtin::health::tests::readiness_refuses_a_process_whose_executable_was_removed_under_it",
+                "--nocapture",
+                "--test-threads",
+                "1",
+            ])
+            .env(STALE_CHILD, "1")
+            .output()
+            .expect("the copy runs");
+        let stdout = String::from_utf8_lossy(&out.stdout);
+        assert!(
+            out.status.success() && stdout.contains("1 passed"),
+            "{:?}\n{stdout}\n{}",
+            out.status,
+            String::from_utf8_lossy(&out.stderr)
+        );
+        assert!(!copy.exists(), "the child removed its own executable");
+    }
 }
