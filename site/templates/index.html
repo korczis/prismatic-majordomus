@@ -82,7 +82,7 @@
     <div class="flex min-w-0 flex-col">
       <p class="inline-flex max-w-full items-center gap-2 self-start rounded-full border border-default bg-neutral-primary-soft px-3 py-1 text-xs font-medium text-body">
         <span aria-hidden="true" class="h-2 w-2 rounded-full bg-success"></span>
-        {%- if offered %}<a href="{{ offered.notes_url }}" class="font-mono font-semibold text-heading hover:underline" data-release="{{ offered.version }}">{{ offered.version }}</a><span aria-hidden="true" class="text-body-subtle">&middot;</span>{% endif %}
+        {%- if offered %}{% if offered.prerelease %}<a href="{{ offered.prerelease.notes_url }}" class="font-mono font-semibold text-heading hover:underline" data-prerelease="{{ offered.prerelease.version }}">{{ offered.prerelease.version }}</a> <span class="text-body-subtle">(pre-release)</span><span aria-hidden="true" class="text-body-subtle">&middot;</span><span class="text-body-subtle">stable</span> {% endif %}<a href="{{ offered.notes_url }}" class="font-mono font-semibold text-heading hover:underline" data-release="{{ offered.version }}">{{ offered.version }}</a><span aria-hidden="true" class="text-body-subtle">&middot;</span>{% endif %}
         <span class="min-w-0 font-mono uppercase tracking-[0.18em] sm:truncate">{{ m.hero.eyebrow }}</span>
       </p>
       <h1 class="mt-5 font-serif text-4xl font-medium leading-[1.05] tracking-tight text-balance text-heading sm:text-6xl">{{ m.hero.title }}<span class="mt-2 block italic text-fg-brand sm:mt-3"> {{ m.hero.subtitle }}</span></h1>
@@ -519,6 +519,7 @@
     <dl class="mt-6 grid grid-cols-2 gap-3 md:mt-0 lg:grid-cols-4" data-trust>
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary p-4" data-trust-key="release"{% if offered %} data-release="{{ offered.version }}"{% endif %}><dt class="text-xs text-body">latest release the installer resolves</dt>
         {%- if offered %}<dd class="mt-1 font-mono text-2xl font-bold text-heading"><a href="{{ offered.notes_url }}" class="hover:underline">{{ offered.version }}</a></dd><dd class="mt-1 text-xs text-body">published {{ offered.published_at | truncate(length=10, end="") }}</dd>
+        {%- if offered.prerelease %}<dd class="mt-2 text-xs text-body" data-prerelease="{{ offered.prerelease.version }}">pre-release <a href="{{ offered.prerelease.notes_url }}" class="font-mono text-heading hover:underline">{{ offered.prerelease.version }}</a>, installed only by name{% if offered.prerelease.install_command %}: <code class="break-all font-mono text-heading">{{ offered.prerelease.install_command }}</code>{% endif %}</dd>{% endif %}
         {%- else %}<dd class="mt-1 font-mono text-2xl font-bold text-body-subtle">unknown</dd>{% endif %}</div>
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary p-4" data-trust-key="verify"><dt class="text-xs text-body">confirm what you installed</dt><dd class="mt-2 break-all font-mono text-sm text-heading">{{ dist.verify_command }}</dd></div>
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary p-4" data-trust-key="commit"><dt class="text-xs text-body">commit this page was built from</dt>
