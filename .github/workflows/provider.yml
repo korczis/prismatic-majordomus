@@ -200,6 +200,10 @@ jobs:
           git config credential.helper ''
           # shellcheck disable=SC2016
           git config --add credential.helper '!f() { test "$1" = get || exit 0; echo "username=$GIGALIXIR_EMAIL"; echo "password=$GIGALIXIR_API_KEY"; }; f'
+          # The slug is about 100 MB (an executable, the layer and its documents). Sent with
+          # git's default 1 MiB buffer it goes chunked, and the provider answered that with
+          # HTTP 500 mid-pack (run 39862104898); one sized request is what it accepts.
+          git config http.postBuffer 524288000
           git config user.name "majordomus provider workflow"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
