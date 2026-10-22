@@ -33,6 +33,7 @@ pub fn run(args: GenerateArgs) -> Result<u8> {
         GenerateTarget::Changelog => &[Target::Changelog],
         GenerateTarget::Deployment => &[Target::Deployment],
         GenerateTarget::Graph => &[Target::Graph],
+        GenerateTarget::Entities => &[Target::Entities],
         GenerateTarget::Design => &[Target::Design],
         GenerateTarget::Economics => &[Target::Economics],
     };
