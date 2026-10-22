@@ -564,6 +564,13 @@ another session's run on a current head are never cancelled. A landing on the tr
 nothing by itself: the trunk's validation runs are each their own concurrency group, and the
 publication queue never cancels the deploy in flight.
 
+The judgement is a capability, not a reading of `gh run list`. `monitor.stale-runs` (the MCP
+tool `majordomus_monitor_stale_runs`, `GET /api/v1/monitor/stale-runs`) answers every run in
+flight with one verdict and its reason. A stale run carries the command that cancels exactly
+it, and a kept run carries none. A run whose branch could not be read is kept, because not
+knowing never cancels. It cancels nothing itself: the lander runs the commands it was given.
+Its manual is [`docs/MONITOR.md`](MONITOR.md#stale-runs).
+
 A red on the trunk has one carrier, named by the integrator. A second session that builds the
 same fix costs a disk and lands nothing sooner.
 

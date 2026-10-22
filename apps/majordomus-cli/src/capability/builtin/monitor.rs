@@ -13,6 +13,7 @@ use crate::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
 use crate::capability::handler::{CapabilityError, Context};
 use crate::capability::model::{Exposure, Stability};
 use crate::capability::module::ModuleDescriptor;
+use crate::monitor::stale::{self, Listing, RunStanding, RunVerdict};
 use crate::monitor::{
     assemble, executor, github, mesh, Cursor, MonitorPage, MonitorSource, MonitorSourceHealth,
     Reader, Reads, SourceRead,
@@ -208,6 +209,125 @@ fn monitor(ctx: &Context, input: MonitorInput) -> Result<MonitorPage, Capability
     ))
 }
 
+#[derive(Debug, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+/// The input of `monitor.stale-runs`: which runs to judge, and against what.
+pub struct StaleRunsInput {
+    /// Judge only the runs of this branch (default: every run in flight).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub branch: Option<String>,
+    /// A repository-relative JSON file holding a recorded listing — `runs`, `pull_requests`
+    /// and `heads` — to judge in place of asking the forge: what a test, an example and a
+    /// second reader of one verdict use.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub snapshot: Option<String>,
+}
+
+impl BenchmarkCases for StaleRunsInput {
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        // a recorded listing, so that a benchmark never asks the network
+        vec![
+            NamedCase::new(
+                "recorded",
+                StaleRunsInput {
+                    branch: None,
+                    snapshot: Some(STALE_RUNS_EXAMPLE.into()),
+                },
+            ),
+            NamedCase::new(
+                "recorded-one-branch",
+                StaleRunsInput {
+                    branch: Some("master".into()),
+                    snapshot: Some(STALE_RUNS_EXAMPLE.into()),
+                },
+            ),
+        ]
+    }
+}
+
+/// The recorded listing the examples and the benchmark judge.
+pub(crate) const STALE_RUNS_EXAMPLE: &str = "test/fixtures/stale-runs/listing.json";
+
+/// Every run in flight with its verdict: what `monitor.stale-runs` answers.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct StaleRuns {
+    /// Whether the listing could be read.
+    pub state: MonitorSourceHealth,
+    /// Why not, when it could not: never an empty answer that reads as "nothing is stale".
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reason: Option<String>,
+    /// How many runs in flight may be cancelled.
+    pub stale: usize,
+    /// How many stay.
+    pub kept: usize,
+    /// Every run in flight, stale ones first, each in the order the forge listed it.
+    pub runs: Vec<RunVerdict>,
+}
+
+/// The recorded listing at `path` under `root`, or why it cannot be judged.
+fn recorded(root: &Path, path: &str) -> Result<Listing, (MonitorSourceHealth, String)> {
+    let relative = Path::new(path);
+    if relative.is_absolute()
+        || relative
+            .components()
+            .any(|c| !matches!(c, std::path::Component::Normal(_)))
+    {
+        return Err((
+            MonitorSourceHealth::Error,
+            format!("{path} is not a path inside the repository"),
+        ));
+    }
+    let text = std::fs::read_to_string(root.join(relative)).map_err(|e| {
+        (
+            MonitorSourceHealth::Absent,
+            format!("no recorded listing at {path}: {e}"),
+        )
+    })?;
+    serde_json::from_str(&text).map_err(|e| {
+        (
+            MonitorSourceHealth::Error,
+            format!("{path} is not a recorded listing: {e}"),
+        )
+    })
+}
+
+fn stale_runs(ctx: &Context, input: StaleRunsInput) -> Result<StaleRuns, CapabilityError> {
+    let root = Path::new(&ctx.index.repository.root);
+    let listing = match input.snapshot.as_deref() {
+        Some(path) => recorded(root, path),
+        None => stale::fetch(root),
+    };
+    let listing = match listing {
+        Ok(listing) => listing,
+        Err((state, reason)) => {
+            return Ok(StaleRuns {
+                state,
+                reason: Some(reason),
+                stale: 0,
+                kept: 0,
+                runs: Vec::new(),
+            })
+        }
+    };
+    let mut runs: Vec<RunVerdict> = stale::judge(&listing)
+        .into_iter()
+        .filter(|v| input.branch.as_deref().is_none_or(|b| v.branch == b))
+        .collect();
+    // stable: within each standing the forge's order stays
+    runs.sort_by_key(|v| v.standing != RunStanding::Stale);
+    let stale = runs
+        .iter()
+        .filter(|v| v.standing == RunStanding::Stale)
+        .count();
+    Ok(StaleRuns {
+        state: MonitorSourceHealth::Ok,
+        reason: None,
+        stale,
+        kept: runs.len() - stale,
+        runs,
+    })
+}
+
 /// The `monitor` module.
 pub fn module() -> ModuleDescriptor {
     module! {
@@ -227,6 +347,17 @@ pub fn module() -> ModuleDescriptor {
                 tags: ["monitor", "mesh", "coordination", "observability"],
                 handler: monitor,
             },
+            capability! {
+                id: "monitor.stale-runs",
+                title: "Judge which workflow runs in flight nobody will read",
+                description: "Every workflow run in flight with one verdict and its reason, stale ones first. A run is stale when the pull request of its branch is merged or closed, when its commit is no longer the head of its branch, when its branch is gone, or when an older run of the same workflow already judges the same commit; a stale run carries the command that cancels it. A release run, a deployment in flight, the trunk's only run of a commit, a run somebody dispatched and a run on a current head are kept, and so is a run whose branch could not be read: not knowing never cancels. A forge that cannot be asked is a state with its reason, never an empty answer. Cancels nothing (project.an-expedited-landing-is-the-owners-word, clause 7).",
+                input: StaleRunsInput,
+                output: StaleRuns,
+                stability: Stability::Experimental,
+                exposure: Exposure { mcp: mcp("majordomus_monitor_stale_runs"), http: get("/api/v1/monitor/stale-runs"), cli: None },
+                tags: ["monitor", "delivery", "ci", "coordination"],
+                handler: stale_runs,
+            },
         ],
     }
 }
@@ -245,6 +376,60 @@ mod tests {
         );
         let e = wanted(Some("mesh,slack")).unwrap_err();
         assert!(e.to_string().contains("unknown source \"slack\""), "{e}");
+    }
+
+    /// The recorded listing of the repository, through the capability: the stale runs come
+    /// first with their commands, the kept ones carry none, one branch can be asked for, and
+    /// a listing that is not there or not inside the repository is a state with its reason.
+    #[test]
+    fn stale_runs_are_judged_from_a_recorded_listing() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let ctx = crate::monitor::testing::context(&repo);
+        let root = Path::new(&ctx.index.repository.root);
+        let fixture = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../..")
+            .join(STALE_RUNS_EXAMPLE);
+        let at = root.join(STALE_RUNS_EXAMPLE);
+        std::fs::create_dir_all(at.parent().unwrap()).unwrap();
+        std::fs::copy(fixture, &at).unwrap();
+
+        let ask = |branch: Option<&str>, snapshot: &str| {
+            stale_runs(
+                &ctx,
+                StaleRunsInput {
+                    branch: branch.map(str::to_string),
+                    snapshot: Some(snapshot.into()),
+                },
+            )
+            .unwrap()
+        };
+        let all = ask(None, STALE_RUNS_EXAMPLE);
+        assert_eq!(all.state, MonitorSourceHealth::Ok);
+        assert_eq!((all.stale, all.kept), (3, 4), "{all:?}");
+        assert!(all.runs[..3]
+            .iter()
+            .all(|v| v.standing == RunStanding::Stale && v.cancel.is_some()));
+        assert!(all.runs[3..]
+            .iter()
+            .all(|v| v.standing == RunStanding::Kept && v.cancel.is_none()));
+        assert_eq!(all.runs[0].cancel.as_deref(), Some("gh run cancel 38392595807"));
+
+        let trunk = ask(Some("master"), STALE_RUNS_EXAMPLE);
+        assert_eq!((trunk.stale, trunk.kept), (1, 3), "{trunk:?}");
+        assert!(trunk.runs.iter().all(|v| v.branch == "master"));
+
+        let absent = ask(None, "test/fixtures/stale-runs/none.json");
+        assert_eq!(absent.state, MonitorSourceHealth::Absent);
+        assert!(absent.reason.unwrap().contains("no recorded listing"));
+        assert!(absent.runs.is_empty());
+        let outside = ask(None, "../outside.json");
+        assert_eq!(outside.state, MonitorSourceHealth::Error);
+        assert!(outside.reason.unwrap().contains("not a path inside"));
+        std::fs::write(&at, "[").unwrap();
+        let broken = ask(None, STALE_RUNS_EXAMPLE);
+        assert_eq!(broken.state, MonitorSourceHealth::Error);
+        assert!(broken.reason.unwrap().contains("not a recorded listing"));
+        assert_eq!(StaleRunsInput::benchmark_cases(&CaseContext::of(&ctx)).len(), 2);
     }
 
     #[test]

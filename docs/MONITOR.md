@@ -135,6 +135,46 @@ and `majordomus context` read only the local sources.
 Executions (`executions.events`) are not a source yet. Their sequences belong to one execution
 of one process, and nothing joins them into one feed.
 
+## Stale runs
+
+A run in flight that nobody will read still holds a runner, and the trunk's run waits behind
+it. Cancelling the wrong run is worse: the trunk's only run of a commit is the verdict a
+release is cut on. `monitor.stale-runs` makes the judgement, so that a session does not make
+it by reading a list. It is the MCP tool `majordomus_monitor_stale_runs` and
+`GET /api/v1/monitor/stale-runs`.
+
+It answers every run in flight, stale ones first, each with a `standing`, a `reason`, one
+sentence of `detail`, and for a stale run the `cancel` command.
+
+| `reason` | `standing` | When |
+| --- | --- | --- |
+| `pull_request_merged` | stale | the pull request of its branch is merged |
+| `pull_request_closed` | stale | the pull request of its branch is closed without a merge |
+| `head_moved` | stale | its commit is no longer the head of its branch |
+| `branch_gone` | stale | the forge says its branch does not exist |
+| `duplicate` | stale | an older run of the same workflow in flight judges the same commit |
+| `release` | kept | a release run |
+| `deployment` | kept | a deployment in flight: the site or an image |
+| `trunk_only_run` | kept | the trunk's only run of this commit by this workflow |
+| `asked_for` | kept | somebody dispatched it, or a workflow asked for it |
+| `current_head` | kept | its commit is the head of its branch |
+| `head_unknown` | kept | the head of its branch could not be read |
+
+What is never cancelled is decided first, so a release run of a merged branch is still kept.
+An open pull request outranks a merged one of the same branch. A newer commit on the trunk
+does not make an older commit's only run stale.
+
+It cancels nothing. The forge is asked for the 100 newest runs, the 200 newest pull requests
+and the head of at most 10 branches that no pull request decides, each call bounded to 4
+seconds. A forge that cannot be asked is a `state` with its `reason` and no runs, never an
+answer that reads as "nothing is stale". With `snapshot`, a recorded listing inside the
+repository is judged in place of the forge. `branch` narrows the answer to one branch.
+
+The rule is `project.an-expedited-landing-is-the-owners-word`, clause 7. The proof is
+`src/monitor/stale.rs` (the judgement and the fetch through a stand-in `gh`), the capability's
+test in `src/capability/builtin/monitor.rs`, and case
+`3005_a_stale_run_is_judged_before_it_is_cancelled`.
+
 ## The command
 
 ```
