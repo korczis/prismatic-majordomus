@@ -133,24 +133,37 @@ pub fn run(args: MeshArgs) -> Result<u8> {
             never,
         ),
         MeshCommand::Session(s) => match s.command {
-            MeshSessionCommand::Open(a) => ask(
-                &a.query,
-                "POST",
-                "/api/v1/mesh/sessions",
-                Some(json!({
-                    "session": a.session,
-                    "client": a.client,
-                    "worker": a.worker,
-                    "intent": a.intent,
-                    "task": a.task,
-                    "issue": a.issue,
-                    "milestone": a.milestone,
-                    "branch": a.branch,
-                    "head": a.head,
-                })),
-                render_written,
-                never,
-            ),
+            MeshSessionCommand::Open(a) => {
+                // read here, in the process the client started, and not by the server: the
+                // client is this executable's ancestor, and the server's is somebody else
+                let client = a.client_pid.as_deref().and_then(|pid| match pid {
+                    "auto" => crate::mesh::cooperation::client_process(),
+                    pid => pid.parse::<u32>().ok().and_then(|pid| {
+                        crate::mesh::cooperation::process_facts(pid).map(|p| (pid, p.started))
+                    }),
+                });
+                let (client_pid, client_started) = client.unzip();
+                ask(
+                    &a.query,
+                    "POST",
+                    "/api/v1/mesh/sessions",
+                    Some(json!({
+                        "session": a.session,
+                        "client": a.client,
+                        "worker": a.worker,
+                        "intent": a.intent,
+                        "task": a.task,
+                        "issue": a.issue,
+                        "milestone": a.milestone,
+                        "branch": a.branch,
+                        "head": a.head,
+                        "client_pid": client_pid,
+                        "client_started": client_started,
+                    })),
+                    render_written,
+                    never,
+                )
+            }
             MeshSessionCommand::Close(a) => ask(
                 &a.query,
                 "POST",
