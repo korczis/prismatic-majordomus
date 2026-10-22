@@ -225,6 +225,21 @@ detail pages: add its name to `[indexing] unlisted`.
 
 - A reference that resolves to nothing. The message names the file, the key and the
   nearest candidate, which makes it a repair rather than an investigation.
+- A `docs:` path that is not a document of the index, under the same code
+  (`unknown_reference`) and with a message that says which of these it is, because only
+  the last is a wrong path:
+  - the index was handed the file and refused it — `document reference "<path>" does not
+    resolve: the index refused the file (<code>: <message>)`, carrying every diagnostic
+    the index holds for that path (an `unknown_key` or `malformed_front_matter` from the
+    document schema, an `out_of_scope` from the repository scope). The repair is in that
+    file or in the scope, never in the feature;
+  - the index reads the file as another kind — `…: the index reads the file as kind
+    '<kind>', not as a document`;
+  - the file exists and no source class reads it — `…: the file exists and no source
+    class reads it`: it is untracked, or no `pathspec` of
+    `.ai/repo/knowledge/sources.yaml` matches it;
+  - there is no such file — `unknown document reference: "<path>" (no such file)`, with
+    the nearest document.
 - A derived key in a feature file — `surfaces`, `route`, a count, a list of moments.
 - A `featured` feature that is not `stable`; a `stable` feature that names no mechanism, or
   no document, or whose body lacks `## What it does` and `## What it does not do`.

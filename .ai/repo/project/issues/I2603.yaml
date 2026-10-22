@@ -1,0 +1,27 @@
+id: I2603
+milestone: a-second-adopter-is-served
+title: "A document the index refused is named as refused, not as unknown"
+slug: a-refused-document-is-named-as-refused
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Make a feature's `docs:` reference to a tracked file say why it does not resolve."
+why: "Observed on 2026-10-13 adopting 0.21.0 and 0.22.0 in a pnpm/TypeScript repository (docs/ADOPTION_SECOND_RUN.md, G21); read again on master e506c041a4. `product validate` said `unknown document reference` for runbooks the repository tracks; the cause was the index refusing their front matter."
+current_state: "apps/majordomus-cli/src/product.rs:1652-1661 reports any miss as unknown."
+desired_state: "The finding tells apart a file the index refused, a file no source class names, and a file that does not exist."
+scope:
+  - "apps/majordomus-cli/src/product.rs"
+  - "docs/PRODUCT.md"
+  - "test/cases"
+depends_on: []
+acceptance_criteria:
+  - "Each of the three cases produces its own message, and the refused case carries the index's diagnostic"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "refused_document_reference_case"
+created_at: 2026-10-13
+updated_at: 2026-10-13T12:26:52Z
+started_at: 2026-10-13T12:26:52Z
+started_event: sha256:d0d7e53aa128ddaad941f10bd46b973d917852454505ffb699e329b247526bfa

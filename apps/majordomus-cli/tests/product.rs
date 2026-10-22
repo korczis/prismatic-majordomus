@@ -291,6 +291,81 @@ fn an_unresolved_reference_is_an_error_with_the_nearest_candidate() {
     assert!(m.errors() > 0);
 }
 
+/// The finding about the `docs` key of a feature that names `doc`, in a repository that
+/// holds a document the index refused and a file no source class reads.
+fn docs_finding(id: &str, doc: &str) -> majordomus_cli::product::ProductFinding {
+    let f = Fixture::new();
+    // a file the document class discovers and the document schema refuses
+    f.write(
+        "docs/REFUSED.md",
+        "---\ntitle: A runbook\nowner: someone\n---\n\n# A runbook\n",
+    );
+    // a file that exists and that no source class names (`docs/*.md` is one level deep)
+    f.write("docs/guides/UNREAD.md", "# A guide nobody reads\n");
+    f.write(
+        &format!(".ai/repo/features/{id}.md"),
+        &second_feature(id).replace("docs: [docs/CLI.md]", &format!("docs: [{doc}]")),
+    );
+    f.commit(id);
+    let (_app, m) = model(&f);
+    let found = m
+        .findings()
+        .iter()
+        .find(|x| x.id.as_deref() == Some(id) && x.field.as_deref() == Some("docs"))
+        .unwrap_or_else(|| panic!("no finding about docs of {id}: {:?}", m.findings()))
+        .clone();
+    // the code and the severity are one contract for all three: a consumer that matched
+    // `unknown_reference` still matches
+    assert_eq!(found.code, "unknown_reference");
+    assert_eq!(found.severity, Severity::Error);
+    found
+}
+
+#[test]
+fn a_document_reference_the_index_refused_carries_the_diagnostic_that_refused_it() {
+    let found = docs_finding("refused", "docs/REFUSED.md");
+    assert!(
+        found.message.contains("the index refused the file"),
+        "{}",
+        found.message
+    );
+    // the index's own words, code and message: the repair is in the document, not here
+    assert!(
+        found
+            .message
+            .contains("unknown_key: key(s) not in schema 'majordomus.document/v1': owner"),
+        "{}",
+        found.message
+    );
+    assert!(!found.message.starts_with("unknown document reference"));
+    // the path is right, so no neighbour is offered in its place
+    assert_eq!(found.did_you_mean, None);
+}
+
+#[test]
+fn a_document_reference_to_a_file_no_source_class_reads_says_so() {
+    let found = docs_finding("unread", "docs/guides/UNREAD.md");
+    assert!(
+        found
+            .message
+            .contains("the file exists and no source class reads it"),
+        "{}",
+        found.message
+    );
+    assert!(!found.message.contains("refused"), "{}", found.message);
+    assert_eq!(found.did_you_mean, None);
+}
+
+#[test]
+fn a_document_reference_to_no_file_is_unknown_with_the_nearest_candidate() {
+    let found = docs_finding("missing", "docs/CLY.md");
+    assert_eq!(
+        found.message,
+        "unknown document reference: \"docs/CLY.md\" (no such file)"
+    );
+    assert_eq!(found.did_you_mean.as_deref(), Some("docs/CLI.md"));
+}
+
 #[test]
 fn a_draft_may_not_be_featured_and_a_reserved_id_is_refused() {
     let f = Fixture::new();
