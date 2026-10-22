@@ -45,6 +45,9 @@ pub fn run(args: MeshArgs) -> Result<u8> {
         MeshCommand::Identity(q) => {
             in_process(q, &["mesh", "identity"], json!({}), render_identity, never)
         }
+        MeshCommand::Enrol(q) => {
+            in_process(q, &["mesh", "enrol"], json!({}), render_enrolment, never)
+        }
         MeshCommand::Doctor(q) => doctor(q),
         // The host firewall is a fact of this machine, like the identity: answered in
         // this process. `apply` runs a privileged host tool and is offered nowhere else.
@@ -600,6 +603,20 @@ fn render_nodes(v: &Value) -> String {
         ));
     }
     out.trim_end().to_string()
+}
+
+fn render_enrolment(v: &Value) -> String {
+    format!(
+        "{}   {}\nkey        {}\nnext       {}",
+        if v["added"] == json!(true) {
+            "enrolled"
+        } else {
+            "listed  "
+        },
+        v["path"].as_str().unwrap_or_default(),
+        v["key"].as_str().unwrap_or_default(),
+        v["next"].as_str().unwrap_or_default()
+    )
 }
 
 fn render_identity(v: &Value) -> String {
@@ -1340,6 +1357,21 @@ mod tests {
             doctor.to_string().contains("/api/v1/mesh/doctor"),
             "{doctor}"
         );
+    }
+
+    #[test]
+    fn an_enrolment_says_whether_it_changed_the_declaration_and_what_is_next() {
+        let added = render_enrolment(&json!({
+            "path": ".ai/repo/mesh/mesh.yaml", "key": "ab", "added": true, "next": "commit it",
+        }));
+        assert_eq!(
+            added,
+            "enrolled   .ai/repo/mesh/mesh.yaml\nkey        ab\nnext       commit it"
+        );
+        let listed = render_enrolment(&json!({
+            "path": "p", "key": "ab", "added": false, "next": "nothing",
+        }));
+        assert!(listed.starts_with("listed     p\n"), "{listed}");
     }
 
     /// A 32-hex node key, as `<node>-<runtime>` carries it.
