@@ -433,11 +433,11 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `share/ui/favicon.svg` | `design-mark` | text | 911 | `d2ebe74220e5c13d` |
 | `share/version.txt` | `version` | text | 245 | `22aeea196cced12e` |
 | `site/data/registry/design.json` | `site-design` | json | 11594 | `ff6803878515ab46` |
-| `site/data/registry/distribution.json` | `site-distribution` | json | 3005 | `1dc59aaebd16174a` |
+| `site/data/registry/distribution.json` | `site-distribution` | json | 3314 | `dbfbebb0e6be07c9` |
 | `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 825396 | `f64d8b604b18bb32` |
 | `site/data/registry/product-graph.json` | `site-product-graph` | json | 111829 | `923e4004f1db5e57` |
 | `site/data/registry/product.json` | `site-product` | json | 767568 | `5b8d5c790865262f` |
-| `site/data/registry/registry.json` | `site-registry` | json | 7726914 | `77ed26293c57accc` |
+| `site/data/registry/registry.json` | `site-registry` | json | 7726914 | `971a93633c7ece13` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180170 | `300b30d3144ed604` |
 | `site/data/registry/why.json` | `site-why` | json | 349931 | `ade5e059bf55bb30` |
 | `site/static/favicon.svg` | `design-mark` | text | 911 | `d2ebe74220e5c13d` |

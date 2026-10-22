@@ -637,6 +637,43 @@ fn a_correctly_labelled_prerelease_is_addressable_but_not_resolved() {
 }
 
 #[test]
+fn the_newest_prerelease_is_named_until_a_final_release_passes_it() {
+    let model = real_model();
+    let mut yanked = sample_release(&model, "v1.0.0-alpha.3", Channel::Prerelease);
+    yanked.yanked = true;
+    let releases = Releases::ordered(vec![
+        sample_release(&model, "v0.30.2", Channel::Stable),
+        sample_release(&model, "v1.0.0-alpha.1", Channel::Prerelease),
+        sample_release(&model, "v1.0.0-alpha.2", Channel::Prerelease),
+        yanked,
+    ]);
+    assert_eq!(
+        releases.latest_prerelease().map(|r| r.tag.as_str()),
+        Some("v1.0.0-alpha.2"),
+        "the highest unyanked pre-release, beside the stable release"
+    );
+    assert_eq!(
+        releases.latest_stable().map(|r| r.tag.as_str()),
+        Some("v0.30.2"),
+        "and the stable pointer does not move"
+    );
+    let released = Releases::ordered(vec![
+        sample_release(&model, "v1.0.0-alpha.2", Channel::Prerelease),
+        sample_release(&model, "v1.0.0", Channel::Stable),
+    ]);
+    assert_eq!(
+        released.latest_prerelease(),
+        None,
+        "once 1.0.0 is out, its alpha is history, not what comes next"
+    );
+    let unorderable = Releases::ordered(vec![
+        sample_release(&model, "v0.30.2", Channel::Stable),
+        sample_release(&model, "v1.0.0-rc.01", Channel::Prerelease),
+    ]);
+    assert_eq!(unorderable.latest_prerelease(), None);
+}
+
+#[test]
 fn prerelease_versions_order_by_semver_precedence() {
     let model = real_model();
     // semver 2.0.0 section 11: 1.0.0-alpha < 1.0.0-alpha.1 < 1.0.0-alpha.2 < 1.0.0-alpha.10

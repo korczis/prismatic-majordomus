@@ -85,7 +85,7 @@ pub fn site_dataset(model: &Model, releases: &Releases) -> String {
             })
         })
         .collect();
-    let latest = releases.latest_stable().map(|r| {
+    let summary = |r: &super::release::Release| {
         json!({
             "tag": r.tag,
             "version": r.version,
@@ -94,7 +94,10 @@ pub fn site_dataset(model: &Model, releases: &Releases) -> String {
             "url": model.release_url(&r.tag),
             "artifacts": r.artifacts.len(),
         })
-    });
+    };
+    let latest = releases.latest_stable().map(summary);
+    // beside the stable release, never instead of it: the pre-release a reader may pin
+    let prerelease = releases.latest_prerelease().map(summary);
     let value = json!({
         "schema": "majordomus/distribution/v1",
         "generated": crate::generate::json_banner(SOURCE),
@@ -112,6 +115,7 @@ pub fn site_dataset(model: &Model, releases: &Releases) -> String {
         "supported": model.published().count(),
         "targets": targets,
         "latest": latest,
+        "prerelease": prerelease,
     });
     let mut s = serde_json::to_string_pretty(&value).unwrap_or_default();
     s.push('\n');

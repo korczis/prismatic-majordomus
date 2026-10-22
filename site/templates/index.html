@@ -465,6 +465,7 @@
     <dl class="mt-6 grid grid-cols-2 gap-3 md:mt-0 lg:grid-cols-4" data-trust>
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary p-4" data-trust-key="release"{% if offered %} data-release="{{ offered.version }}"{% endif %}><dt class="text-xs text-body">latest release the installer resolves</dt>
         {%- if offered %}<dd class="mt-1 font-mono text-2xl font-bold text-heading"><a href="{{ offered.notes_url }}" class="hover:underline">{{ offered.version }}</a></dd><dd class="mt-1 text-xs text-body">published {{ offered.published_at | truncate(length=10, end="") }}</dd>
+        {%- if offered.prerelease %}<dd class="mt-1 text-xs text-body" data-prerelease="{{ offered.prerelease.version }}">next: <a href="{{ offered.prerelease.notes_url }}" class="font-mono text-fg-brand underline">{{ offered.prerelease.version }}</a>, pre-release, <code class="break-all font-mono">--version {{ offered.prerelease.tag }}</code></dd>{% endif %}
         {%- else %}<dd class="mt-1 font-mono text-2xl font-bold text-body-subtle">unknown</dd>{% endif %}</div>
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary p-4" data-trust-key="verify"><dt class="text-xs text-body">confirm what you installed</dt><dd class="mt-2 break-all font-mono text-sm text-heading">{{ dist.verify_command }}</dd></div>
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary p-4" data-trust-key="commit"><dt class="text-xs text-body">commit this page was built from</dt>
