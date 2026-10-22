@@ -7,7 +7,7 @@ profile: implementation
 parallel_safe: false
 objective: "Rewrite the remaining validators that loop mj_yget or mj_git per item so that each reads its inputs with one pass."
 why: "Together they cost 2.3 s of doctor after the two largest validators are fixed."
-current_state: "validate:catalogue 0.8 s, validate:context 0.6 s, validate:dag 0.5 s, validate:command_surface 0.35 s."
+current_state: "validate:catalogue 0.8 s, validate:context 0.6 s, validate:dag 0.5 s, validate:command_surface 0.35 s. The catalogue now reads its use cases once (2026-10-21, lib/usecase.sh): mj_uc_load is one split awk, one mj_yaml_flatten_many and one variables awk over every use case, application and the taxonomy instead of about ten processes per file, and mj_uc_validate_all answers every reference, heading and unknown key in the shell or in one grep; validate:catalogue measured 4919, 7471 and 15977 ms before against 540, 570 and 589 ms after in three interleaved doctor runs at load 38 to 63 (285 to 345 ms at load 23 to 37), with byte-identical findings from doctor and every usecase subcommand, so it is an order of magnitude faster but not yet under 150 ms on a loaded machine."
 desired_state: "Each of the four under 150 ms on this repository, with identical findings."
 scope:
   - lib/doctor.sh
@@ -30,4 +30,4 @@ evidence_required:
   - batch_reads
 risk: "The context validator shells out to git per document; batching it must keep the tracked-only rule."
 created_at: 2026-09-05
-updated_at: 2026-09-05
+updated_at: 2026-10-21
