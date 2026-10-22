@@ -1,0 +1,25 @@
+id: I2973
+milestone: "a-session-proceeds"
+title: "The choice refuses claimed work and ranks by what it unblocks"
+slug: the-choice-is-claim-aware-and-unblocking
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Make the eligibility of a candidate a hard filter — not claimed on any board or the mesh, its scope held by no live claim, not blocked, its binding not refused — and rank the eligible by priority, then the number of distinct issues it transitively unblocks (each counted once), then wave, then id, every term returned."
+why: "ADR 0177. plan.next ranks lowest wave, priority, id and ignores claims; on 2026-10-17 I2795, case 3178 and case 3221 were each taken twice by sessions choosing by hand."
+current_state: "plan.next is not claim-aware and does not count unblocked work."
+desired_state: "The ranking is a pure function of the plan graph and the live claims, with unit tests for a claimed top issue, a held scope, a diamond dependency counted once, and a new dependency changing the order."
+scope:
+  - "apps/majordomus-cli/src/plan.rs"
+depends_on:
+  - "I2972"
+  - "I3040"
+acceptance_criteria:
+  - "A claimed issue or one whose scope a live claim holds is never selected, and the reason is named"
+  - "Adding a dependency changes the ranking and its reason; a shared downstream issue is counted once"
+validation:
+  - "majordomus plan validate"
+evidence_required:
+  - "test_the_choice_is_claim_aware_and_unblocking"
+created_at: 2026-10-18
+updated_at: 2026-10-18

@@ -1,0 +1,28 @@
+id: I3040
+milestone: "a-session-proceeds"
+title: "An id is taken by one atomic claim"
+slug: an-id-is-taken-by-one-atomic-claim
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Add `plan allocate <kind>` (issue, case, ADR; capability!) that takes the survey's candidate — scripts/case-numbers next for cases, the highest id across the tree, every worktree, every ref and the board for issues and ADRs — and reserves it with one exclusive mesh claim on the id's own key (`id:<kind>/<value>`), moving to the next candidate on a claim_conflict that names its holder, so that two sessions on one runtime or on linked runtimes never take the same number; the per-seat blocks become unnecessary."
+why: "On 2026-10-17 I2795, case 3178 and case 3221 were each taken twice in one day and renumbered three times, each found only by a 10-15 minute pre-push; the seats then agreed per-seat id blocks as a stopgap and named `plan allocate` (owned by 30, who has left) as its replacement, first after the alpha. scripts/case-numbers next (master, from feat/a-case-number-is-allocated 4645a3ca72a) says of itself that its answer is 'a best reading, not a reservation'; fix/adr-number-allocation (7c247e6199a, lib/adr.sh) and wip/case-number-allocator (9b729014e36) are earlier unlanded attempts whose survey logic this folds in. The mesh's exclusive claim already refuses a second holder on one runtime; across runtimes the fold names the winner until mesh-journal-converges adds fencing."
+current_state: "A number is surveyed and then announced in prose on the board; nothing reserves it, and the seats hold hand-assigned blocks."
+desired_state: "plan allocate answers a number that only its caller holds, reserved by an exclusive mesh claim on the id key and released when the record carrying it lands; a case races two allocations and finds two different numbers, and a third after a held one skips it naming the holder."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin"
+  - "apps/majordomus-cli/src/plan.rs"
+  - "scripts/case-numbers"
+  - "lib/adr.sh"
+  - "test/cases/3440_an_id_is_taken_by_one_atomic_claim.sh"
+depends_on: []
+acceptance_criteria:
+  - "Two allocations of the same kind at the same moment, on one runtime or two linked ones, answer different numbers"
+  - "A number held by another session's claim is skipped, and the answer names the holder"
+  - "The reservation is released when the record carrying the number lands, and a released number is never reused"
+validation:
+  - "majordomus plan validate"
+evidence_required:
+  - "case_an_id_is_taken_by_one_atomic_claim"
+created_at: 2026-10-18
+updated_at: 2026-10-18

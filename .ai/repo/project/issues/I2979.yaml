@@ -1,0 +1,24 @@
+id: I2979
+milestone: "a-session-proceeds"
+title: "A finished task hands its head and receipt to the landing seat"
+slug: a-finished-task-is-handed-to-the-lander
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "End a proceeded task, after finish --outcome completed, by publishing its branch head and a receipt derived from the finish record (sha, the cases and gates that ran with their results, ci on that head when it exists) to the landing seat on the board and the mesh; never merge, tag or release."
+why: "ADR 0177 and 0167: one landing seat lands; on 2026-10-16 eleven PRs relayed as READY went red because the receipt was a sentence, not the finish record."
+current_state: "Workers announce READY by hand with a free-text receipt."
+desired_state: "The hand-off is derived from the finish record, and a case refuses a hand-off whose receipt names no executed case or a head other than the one finished."
+scope:
+  - "test/cases/3372_a_finished_task_is_handed_to_the_lander.sh"
+depends_on:
+  - "I2974"
+acceptance_criteria:
+  - "The hand-off carries the finished head and the cases and gates that ran, read from the finish record"
+  - "Proceeding never merges, tags or releases"
+validation:
+  - "majordomus plan validate"
+evidence_required:
+  - "case_a_finished_task_is_handed_to_the_lander"
+created_at: 2026-10-18
+updated_at: 2026-10-18

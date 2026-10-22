@@ -1,0 +1,25 @@
+id: I2974
+milestone: "a-session-proceeds"
+title: "Proceeding claims and starts the chosen work once"
+slug: proceeding-claims-and-starts-once
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Add the command proceed: take proceed.plan's decision and, through the existing capabilities only, take the exclusive mesh claim for the issue and its scope, announce it on the board, create its canonical worktree and start the task bound to the issue; in a session that already holds live work, return that work and create nothing."
+why: "ADR 0177. A second start in a session opens a second task today, and every step of the claim is typed by hand."
+current_state: "Claim, announcement, worktree and start are four manual steps."
+desired_state: "One command performs them; run twice it creates nothing the second time; a case holds both on a fixture repository."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin"
+  - "test/cases/3368_proceeding_twice_creates_nothing.sh"
+depends_on:
+  - "I2973"
+acceptance_criteria:
+  - "One proceed takes the claim, announces it, creates the worktree and starts the bound task"
+  - "A second proceed with nothing changed returns the same work and creates no claim, worktree or task"
+validation:
+  - "majordomus plan validate"
+evidence_required:
+  - "case_proceeding_twice_creates_nothing"
+created_at: 2026-10-18
+updated_at: 2026-10-18

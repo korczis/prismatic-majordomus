@@ -1,0 +1,24 @@
+id: I2972
+milestone: "a-session-proceeds"
+title: "One query decides what a session proceeds with, and says why"
+slug: proceed-plan-decides-and-explains
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Declare proceed.plan (a query, capability!) that composes brief.session, the repository's board (peers.list), the live mesh claims (mesh.state) and the plan graph into one decision: the selected issue, every rejected candidate with the hard constraint it failed, the eligible ranking with each term, what the selection unblocks, the evidence that finishes it and the next step; projected as `majordomus proceed --dry-run` and `proceed explain`, MCP and HTTP."
+why: "ADR 0177. A worker's start is composed by hand today; plan.next gives one id with no reason and no view of the board or the mesh."
+current_state: "No capability composes the start; plan.next is the nearest and answers one id."
+desired_state: "proceed.plan answers the decision on every projection, writes nothing, and a case holds its shape on a fixture repository with a board and claims."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin"
+  - "test/cases/3367_a_session_is_told_what_to_proceed_with_and_why.sh"
+depends_on: []
+acceptance_criteria:
+  - "The decision names the selected issue, each rejected candidate with its failed constraint, and each ranking term"
+  - "It is one capability projected on the command line, MCP and HTTP, and writes nothing"
+validation:
+  - "majordomus plan validate"
+evidence_required:
+  - "case_a_session_is_told_what_to_proceed_with_and_why"
+created_at: 2026-10-18
+updated_at: 2026-10-18
