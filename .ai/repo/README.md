@@ -33,6 +33,7 @@ shared by every checkout. The sections, and what each one is for:
 | `applications/` | the contexts the tool suits, each composed of use cases, with when it fits and when it does not |
 | `deployments/` | one canonical object per deployment of the executable; the container definition and its ignore file are generated from it |
 | `automation/` | the migration inventory of the repository's automation: every unit, its disposition, and the exemption that lets a shell unit remain shell |
+| `autonomy/` | the owner's standing approvals for an agent client, declared once so that every machine's permission layer holds the same ones |
 | `providers/` | optional: a provider adapter this repository overrides; absent means the tool's default |
 | `templates/` | optional: record templates this repository customised |
 

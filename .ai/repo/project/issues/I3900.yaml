@@ -1,0 +1,52 @@
+id: I3900
+milestone: runtime-adapters
+title: "The owner's standing approvals are declared once, and every machine says whether it holds them"
+slug: standing-approvals-reach-every-machine
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "The standing approvals the owner gave Claude Code sessions are declared in .ai/repo/autonomy/ (kind autonomy-declaration); autonomy.approvals says over CLI, MCP and HTTP whether this machine's ~/.claude/settings.json holds each of them, the environment lines and the declared settings; the brief carries the verdict on every machine; and `majordomus autonomy apply`, a command the person runs, writes only what is declared and missing."
+why: "On 2026-10-20 the owner asked, in Czech, why this MacBook keeps asking for confirmation while the other runs autonomously through the night, and to enforce it in UI, UX, DX, tooling and the repository. Measured that evening: the other MacBook's user settings carried eight standing approvals (2026-10-14 to 10-19) and 25 environment lines in autoMode; this one carried none. The rule project.a-standing-approval-is-written-where-permissions-are-read writes an approval into the user settings of the machine it was given on, so it never reached another machine, and nothing said so. The owner had also said on 2026-10-16 \"dej souhlas vsem, zapamatuj si v .ai/\" — consent for every session, recorded in .ai/ — and no record existed there."
+current_state: "The approvals live only in one machine's ~/.claude/settings.json; no capability compares a machine with them."
+desired_state: "One declaration in the repository, a read-only parity capability on every surface, a brief line on every machine that lacks something, and an apply command that writes the declared rules without touching any other key, entry or hook."
+scope:
+  - ".ai/repo/autonomy"
+  - ".ai/repo/README.md"
+  - ".ai/repo/knowledge/sources.yaml"
+  - ".ai/repo/project/issues/I3900.yaml"
+  - ".ai/repo/project/issues/I3901.yaml"
+  - ".ai/repo/rules/project/a-standing-approval-is-written-where-permissions-are-read.v1.md"
+  - "share/skeleton/ai/repo/knowledge/sources.yaml"
+  - "share/kinds.yaml"
+  - "share/schemas/majordomus/autonomy-declaration"
+  - "lib/knowledge.awk"
+  - "lib/knowledge.sh"
+  - "apps/majordomus-cli/src/autonomy"
+  - "apps/majordomus-cli/src/capability/builtin/autonomy.rs"
+  - "apps/majordomus-cli/src/capability/builtin/brief.rs"
+  - "apps/majordomus-cli/src/commands/autonomy.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/src/cli/local.rs"
+  - "apps/majordomus-cli/src/quality/parity.rs"
+  - "test/cases/3901_a_machine_holds_the_declared_approvals.sh"
+  - "docs/AUTONOMY.md"
+non_scope:
+  - "Raising the permission mode, adding permissions.allow prefixes or touching a hook: the declaration may set only the auto-mode rules, the environment lines and crossSessionInbound."
+  - "Applying over the mesh or from a session's projection: apply is the person's command on their machine."
+  - "A fleet view of every machine's parity on the mesh: I3901."
+depends_on: ["I2790"]
+acceptance_criteria:
+  - "A machine whose user settings hold none of the declared approvals is judged none, with the apply command as the remedy, and the brief says so in its line"
+  - "apply writes $defaults first, then every declared rule and environment line that is missing, sets the declared settings, keeps every other key, entry and hook, and leaves a copy of the file as it was"
+  - "A second apply writes nothing; unreadable settings are judged unreadable and never overwritten"
+  - "An approval whose rule was edited on the machine is not held; an entry the declaration does not name is counted, never quoted"
+  - "A declaration that sets a permission mode, repeats an id or a rule, or carries a rule not beginning with the owner's prefix and date is refused"
+validation:
+  - "cargo test --lib autonomy"
+  - "cargo test --lib brief"
+  - "bash test/run.sh 3901_a_machine_holds_the_declared_approvals"
+evidence_required:
+  - "approvals_unit_tests"
+  - "case_3901"
+created_at: 2026-10-20
+updated_at: 2026-10-20

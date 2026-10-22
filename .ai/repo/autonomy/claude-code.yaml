@@ -1,0 +1,65 @@
+# The owner's standing approvals for Claude Code, declared once for every machine (I3900).
+#
+# Each entry is an approval the owner gave in a session, for the future, quoted with its date.
+# `majordomus autonomy approvals` compares this machine's user settings with this file and
+# `--apply` writes what is missing into ~/.claude/settings.json; nothing else is ever written.
+# The rule is project.a-standing-approval-is-written-where-permissions-are-read; docs/AUTONOMY.md.
+# Nothing secret belongs here: the repository is public.
+schema: autonomy-declaration/v1
+kind: autonomy-declaration
+id: claude-code
+client: claude-code
+description: The owner's standing approvals and the environment the auto-mode classifier is told, for every machine that works on this repository.
+settings:
+  crossSessionInbound: accept
+approvals:
+  - id: derive-offload-copy
+    date: 2026-10-14
+    rule: "Owner standing approval (2026-10-14): copying ~/dev/.derive-offload.sh (the shared derive-offload script) into the session's own scratchpad or job tmp directory (~/.claude/jobs/*/tmp, $CLAUDE_JOB_DIR/tmp, or a scratchpad dir) and running that private copy. Copying is the documented practice so a session never edits or runs a shared script another session may be changing."
+  - id: own-pid-stop
+    date: 2026-10-14
+    rule: "Owner standing approval (2026-10-14): inspecting (ps -p <pid>, kill -0 <pid>) and stopping (kill <pid>, kill -TERM <pid>) a process by its exact pid when that pid was started by this same session (recorded from its own launch output, pid file or background task) — e.g. its own stalled derive, cargo build or remote waiter. Never pkill/killall by name, never another session's processes, never a process group."
+  - id: pinned-admin-merge
+    date: 2026-10-16
+    rule: "Owner standing approval (2026-10-16, in Czech, answering 'Trvalé pravidlo'): in korczis/prismatic-majordomus only, landing a pull request with `gh pr merge <n> --admin --merge --match-head-commit <sha>` when <sha> is the head the PR's own `ci` check judged SUCCESS and that head contains the current origin/master; and releasing this session's own mesh claim with mcp__majordomus__majordomus_mesh_release. Pinned (--match-head-commit) is mandatory; never an unpinned, squash or rebase merge, never a PR whose ci is not SUCCESS on that exact head, never another repository."
+  - id: cluster-headless-worker
+    date: 2026-10-16
+    rule: "Owner standing approval (2026-10-16, in Czech: \"dej souhlas vsem, zapamatuj si v .ai/\" - consent for every session): for korczis/prismatic-majordomus, starting a headless Claude Code worker on a cluster host declared in .ai/repo/offload/derive.yaml (lundra korczis@100.65.22.118, macbook-2 korczis@100.108.237.68) over ssh, as `claude -p --permission-mode auto` inside a worktree of that host's checkout ~/dev/prismatic-majordomus(-wt), with its log under ~/mesh-workers/; reading those logs and checking/stopping that worker by its exact pid; recording this consent in .ai/repo/knowledge/curated/ through a pull request; and adding entries to the memory index MEMORY.md under ~/.claude/projects/-Users-korczis-dev-prismatic-majordomus/memory/. One issue per worker, claimed on the majordomus mesh first; the worker never merges, never tags, never force-pushes. Never jetson, never another repository, never --dangerously-skip-permissions."
+  - id: stale-run-cancel
+    date: 2026-10-16
+    rule: "Owner standing approval (2026-10-16, in Czech: \"pridej do autoMode.allow pravidla pro gh run cancel u zastaralych behu ve fronte\"): in korczis/prismatic-majordomus only, `gh run cancel <run-id>` for a GitHub Actions run that is queued or in_progress and is stale: its head SHA is no longer the current head of its branch or pull request (the head moved), or its head does not contain the current origin/master while a newer run of the same branch or PR does. Read the run's headSha and the branch/PR head first (gh run view / gh pr view) and cancel by exact run id. Never a run whose head is still the current head of its PR (the I2664 'cancel only when the head moved' rule), never a run on master, never a release, tag or deploy workflow run, never a bulk cancel by filter, never another repository."
+  - id: flake-rerun-failed
+    date: 2026-10-16
+    rule: "Owner standing approval (2026-10-16, in Czech: \"pridej do autoMode.allow pravidla pro gh run rerun --failed\"): in korczis/prismatic-majordomus only, `gh run rerun <run-id> --failed` to rerun the failed jobs of a completed run on a pull request branch, by exact run id, after reading the failed step's log, when the failure is a known flake or infrastructure fault (runner lost, timeout, network, a case recorded as intermittent) rather than a defect of the change. Never a rerun of a run on master or of a release, tag or deploy workflow, never more than one rerun of the same run attempt without a fix, never --debug with secrets, never another repository."
+  - id: chatgpt-project-read
+    date: 2026-10-18
+    rule: "Owner standing approval (2026-10-18, in Czech: \"Povolit cteni pres backend-api\" + \"pridej to do settings za me\"): reading the owner's own ChatGPT Project g-p-6a9afb4f933081919d2dfef5c6ce848f (declared in .ai/repo/workspaces/chatgpt-majordomus.yaml) from a tab of the owner's signed-in Chrome via mcp__claude-in-chrome__javascript_tool on https://chatgpt.com: obtaining the session's access token from /api/auth/session inside the page and using it only for GET requests to chatgpt.com/backend-api/gizmos/g-p-6a9afb4f933081919d2dfef5c6ce848f/conversations and chatgpt.com/backend-api/conversation/<id> of that project; and moving the fetched conversation text to this machine only through a receiver this same session runs on 127.0.0.1 (a page it serves that relays window.postMessage from https://chatgpt.com to its own POST endpoint) which writes only into this session's scratchpad directory, stopped by exact pid when done. The token is never printed, returned, logged, written to disk or sent anywhere but chatgpt.com; no POST/PUT/DELETE to chatgpt.com; no other project, account or origin; the receiver binds 127.0.0.1 only and accepts only https://chatgpt.com messages."
+  - id: build-output-delete
+    date: 2026-10-19
+    rule: "Owner standing approval (2026-10-19, in Czech: \"mazani je povoleno, nejen nyni ale autonomne v ramci trees a llvm cov vzdy a kdekoliv, enforce\"): for korczis/prismatic-majordomus, deleting Rust build output with rm -rf, on this machine and over ssh on the cluster hosts declared in .ai/repo/offload/derive.yaml (lundra korczis@100.65.22.118, macbook-2 korczis@100.108.237.68): every llvm-cov-target directory anywhere (e.g. ~/.asdf/installs/rust/*/build-shared/majordomus/llvm-cov-target, ~/.cache/majordomus-offload-*/llvm-cov-target, <worktree>/apps/majordomus-cli/target/llvm-cov-target); the cargo target/ and build-dir output of a worktree of this repository (~/dev/prismatic-majordomus-wt/**/apps/majordomus-cli/target, ~/.cargo/build-private/*, ~/.cache/majordomus-offload-target, ~/.cache/majordomus-offload-cov, ~/offload/verify-*, ~/offload/cov-*, profraw files), to keep the disk above its floor. Before deleting, check that no running process has files open there (lsof +D or pgrep for cargo/rustc/llvm-cov naming the path) and skip a directory in use. Never a worktree's sources or the worktree itself, never .git, never ~/.cargo/registry or a toolchain, never the shared build-shared/majordomus/debug dir while another session's cargo uses it, never another repository's files."
+environment:
+  - "### Org-wide"
+  - "**Organization**: None configured"
+  - "**Cloud provider(s)**: None configured"
+  - "**Repository visibility**: PUBLIC — korczis/prismatic-majordomus (github.com/korczis/prismatic-majordomus)"
+  - "**Internal sharing / snippet hosting**: None configured — treat public paste/gist services as outside the trust boundary"
+  - "**Secrets management**: None configured (CI references a GITHUB_TOKEN secret name only; no value or store implied)"
+  - "**Default / protected branches**: Default branch `master`; no branch protection rules or rulesets listed via gh for korczis/prismatic-majordomus"
+  - "**CI/CD deploy targets**: None configured"
+  - "**Network posture**: None configured"
+  - "**Host containment**: None configured — assume Claude Code runs on an ordinary developer machine with open internet"
+  - "**Source control**: The trusted repo (korczis/prismatic-majordomus on github.com) and its remote only — no additional orgs configured"
+  - "**Trusted internal domains**: None configured (majordomus.dev and korczis.github.io were contacted but are the project's own public doc/site hosts, not confirmed internal trust boundaries)"
+  - "**Trusted cloud buckets**: None configured"
+  - "**Key internal services**: None configured"
+  - "**Internal package registry**: None configured"
+  - "**Sensitive data locations & audiences**: any file or store holding personal data, confidential business data, credentials, regulated data, or similarly sensitive material; preserve exact handles when known and share only with audiences cleared at the [named+specifics] bar. Repo contains retention/claims docs under deploy/docs/claims/, docs/claims/, and site/content/{doctrines,guarantees}/ (record-retention.md, retention-caps.md) — treat as sensitive-looking paths pending review; also .envrc and .envrc.local (local secrets/config, not committed)."
+  - "**Data retention / declassification**: None configured"
+  - "**Sensitive remote targets**: any namespace, host, or container whose name carries `prod` or `production` as a whole word or name segment (hyphen/underscore/dot-delimited)"
+  - "**Protected deployment namespaces / environments**: None configured — fall back to the Sensitive remote targets heuristic"
+  - "**Protected IaC scopes**: IAM, RBAC, networking, quota, and node-pool resources; anything whose name or tag carries `prod` or `production` as a whole word or name segment"
+  - "### User-specific"
+  - "**Primary use of Claude Code**: software development (this repo: a supervisory control layer / CLI tool for AI-assisted work, public open-source project)"
+  - "**Trusted repo**: korczis/prismatic-majordomus (github.com), the working directory's own repo and remote; public visibility — only this repo's own work belongs here, confidential/secret material is never cleared into it by visibility alone"
+  - "**Org-specific CLIs**: majordomus (project's own CLI, used routinely — 8× in-project), just, gh, glab"
+  - "routine under korczis/prismatic-majordomus prefix: majordomus, just, bin/majordomus-mcp, scripts/collision-check invocations"

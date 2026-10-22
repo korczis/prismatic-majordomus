@@ -1,0 +1,42 @@
+id: I2790
+milestone: runtime-adapters
+title: "The autonomy a session has is read from the facts, explained per command, and its cost measured"
+slug: the-autonomy-a-session-has-is-measured
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Three read-only capabilities say how much a coding-agent session in this checkout may do unasked: autonomy.status derives a profile (conservative, balanced, trusted, isolated) and the Claude Code permission mode it launches with from the client's settings layers, the person's trust-dialog acceptance and the isolation evidence, failing closed; autonomy.explain gives one shell command a structural decision (allow, defer, require_approval); autonomy.friction counts every refusal the permission layer made in this repository's transcripts."
+why: "On 2026-10-16 the owner asked for maximum practical autonomy with bounded risk and measured friction, and against blind permission bypass. Measured from 102 transcripts of this repository (2026-10-09..10-16, 33,345 tool calls): 110 classifier denials, 31 hook blocks, 15 rejected prompts, and none of them on routine repository work; every denial was a boundary class (Interfere With Workloads 28, Self-Modification 17, Merge Without Review 8, Create Unsafe Agents 6, CI Bypass 5, Modify Shared Resources 5, Irreversible Local Destruction 4). Nothing in the repository could say which profile a checkout supports, why bypassPermissions is refused on a host with credentials in reach, or what the permission layer cost, so each session re-derived it from memory."
+current_state: "No capability reads the client's permission configuration or the isolation of the host; the friction numbers exist only as a one-off scratch script."
+desired_state: "majordomus autonomy status|explain|friction over CLI, MCP and HTTP; isolated only with a container marker and no credential in reach; trusted only with the person's acceptance recorded outside the repository; an unreadable layer or a managed default mode as a ceiling; compound commands never statically allowed; the risk boundaries held under every profile; friction counted with no payload carried."
+scope:
+  - "apps/majordomus-cli/src/autonomy/mod.rs"
+  - "apps/majordomus-cli/src/capability/builtin/autonomy.rs"
+  - "apps/majordomus-cli/src/capability/builtin/mod.rs"
+  - "apps/majordomus-cli/src/commands/autonomy.rs"
+  - "apps/majordomus-cli/src/commands/mod.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/src/lib.rs"
+  - "apps/majordomus-cli/tests/autonomy_mcp.rs"
+  - "test/cases/3900_the_autonomy_a_session_has_is_read.sh"
+  - "docs/AUTONOMY.md"
+non_scope:
+  - "Writing any settings file: granting autonomy is the person's act, and a session that judged and then granted its own would be what the profile prevents."
+  - "Launching a session with the derived mode (majordomus session start), the generated project permission rules and a PreToolUse hook on Bash: follow-up issues once this is on master."
+depends_on: []
+acceptance_criteria:
+  - "An untrusted checkout with no isolation is balanced, and names what refused isolated and trusted"
+  - "A checked-in bypassPermissions default raises no profile; the person's trust-dialog acceptance raises it to trusted"
+  - "isolated requires a container marker and no credential variable or file; a credential's value never leaves"
+  - "A layer that disables bypass, a managed default mode and an unreadable layer are ceilings"
+  - "A compound command never earns an allow; history rewrites, removal, privilege and external effects require approval under every profile"
+  - "friction counts refusals by kind, reason and tool for the primary checkout and its -wt worktrees only, and carries no command or payload"
+validation:
+  - "cargo test --lib autonomy"
+  - "cargo test --test autonomy_mcp"
+  - "bash test/run.sh 3900_the_autonomy_a_session_has_is_read"
+evidence_required:
+  - "autonomy_unit_tests"
+  - "case_3900"
+created_at: 2026-10-16
+updated_at: 2026-10-16

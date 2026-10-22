@@ -229,6 +229,12 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus entity show`](#majordomus-entity-show) | `/docs/cli/entity/show/` | One entity: its route, what it references, what references it, where it is served |
 | [`majordomus shell`](#majordomus-shell) | `/docs/cli/shell/` | The repository's shell automation against the tracked migration inventory: every shell unit declared with an exemption, and every exemption naming a unit the tree still has |
 | [`majordomus shell check`](#majordomus-shell-check) | `/docs/cli/shell/check/` | Refuse every shell unit the inventory does not declare, and every declaration whose unit is gone; exit 10 on a finding, 12 when the tree cannot be measured |
+| [`majordomus autonomy`](#majordomus-autonomy) | `/docs/cli/autonomy/` | How much a coding-agent session in this checkout may do unasked, read from the facts: the client's settings layers, the isolation evidence, the profile they support, the decision for one shell command, and what the permission layer actually cost |
+| [`majordomus autonomy status`](#majordomus-autonomy-status) | `/docs/cli/autonomy/status/` | The settings layers, the isolation evidence and the profile they support, with the recommended permission mode and what refused every stronger profile |
+| [`majordomus autonomy explain`](#majordomus-autonomy-explain) | `/docs/cli/autonomy/explain/` | What a static permission rule may do with one shell command: exit 0 when it may run unasked, 10 when the client's own permission layer decides, 11 when a person approves it under every profile |
+| [`majordomus autonomy friction`](#majordomus-autonomy-friction) | `/docs/cli/autonomy/friction/` | Every refusal the permission layer made in this repository's Claude Code transcripts, by kind, reason and tool, with the rate per thousand tool calls |
+| [`majordomus autonomy approvals`](#majordomus-autonomy-approvals) | `/docs/cli/autonomy/approvals/` | Whether this machine's Claude Code user settings hold the owner's standing approvals declared in .ai/repo/autonomy/: each approval, the environment lines and the declared settings, with the verdict (full, partial, none, undeclared, unreadable) |
+| [`majordomus autonomy apply`](#majordomus-autonomy-apply) | `/docs/cli/autonomy/apply/` | Write the declared standing approvals that this machine's ~/.claude/settings.json lacks, keeping every other key and entry and a copy of the file as it was; writes nothing when it already holds them |
 | [`majordomus pack`](#majordomus-pack) | `/docs/cli/pack/` | The tracked tree as token-bounded text shards for a language model's file search: plan what a profile carries and leaves out, build it under tmp/packs/, and verify a written pack against its manifest; never a binary, a worktree, a link or build output |
 | [`majordomus pack plan`](#majordomus-pack-plan) | `/docs/cli/pack/plan/` | What a profile would pack: files carried, files left out by reason, the shards and every finding that refuses the build; exit 10 on a finding, 12 when the tree cannot be read |
 | [`majordomus pack build`](#majordomus-pack-build) | `/docs/cli/pack/build/` | Write the pack (index, shards, pack.json) and verify what was written; exit 10 when the plan or the written pack has a finding, and nothing is built from a plan with one |
@@ -258,7 +264,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 
 Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer
 
-Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus devtask`](#majordomus-devtask), [`majordomus distribution`](#majordomus-distribution), [`majordomus env`](#majordomus-env), [`majordomus commands`](#majordomus-commands), [`majordomus completion`](#majordomus-completion), [`majordomus worktree`](#majordomus-worktree), [`majordomus prs`](#majordomus-prs), [`majordomus offload`](#majordomus-offload), [`majordomus convergence`](#majordomus-convergence), [`majordomus commit`](#majordomus-commit), [`majordomus product`](#majordomus-product), [`majordomus release`](#majordomus-release), [`majordomus quality`](#majordomus-quality), [`majordomus run`](#majordomus-run), [`majordomus executions`](#majordomus-executions), [`majordomus devcontext`](#majordomus-devcontext), [`majordomus guard`](#majordomus-guard), [`majordomus mesh`](#majordomus-mesh), [`majordomus monitor`](#majordomus-monitor), [`majordomus models`](#majordomus-models), [`majordomus reasoning`](#majordomus-reasoning), [`majordomus evidence`](#majordomus-evidence), [`majordomus served`](#majordomus-served), [`majordomus rules`](#majordomus-rules), [`majordomus intent`](#majordomus-intent), [`majordomus delivery`](#majordomus-delivery), [`majordomus plan`](#majordomus-plan), [`majordomus economics`](#majordomus-economics), [`majordomus entity`](#majordomus-entity), [`majordomus shell`](#majordomus-shell), [`majordomus pack`](#majordomus-pack), [`majordomus dashboard`](#majordomus-dashboard), [`majordomus brief`](#majordomus-brief), [`majordomus skills`](#majordomus-skills), [`majordomus knowledge`](#majordomus-knowledge), [`majordomus continuity`](#majordomus-continuity).
+Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus devtask`](#majordomus-devtask), [`majordomus distribution`](#majordomus-distribution), [`majordomus env`](#majordomus-env), [`majordomus commands`](#majordomus-commands), [`majordomus completion`](#majordomus-completion), [`majordomus worktree`](#majordomus-worktree), [`majordomus prs`](#majordomus-prs), [`majordomus offload`](#majordomus-offload), [`majordomus convergence`](#majordomus-convergence), [`majordomus commit`](#majordomus-commit), [`majordomus product`](#majordomus-product), [`majordomus release`](#majordomus-release), [`majordomus quality`](#majordomus-quality), [`majordomus run`](#majordomus-run), [`majordomus executions`](#majordomus-executions), [`majordomus devcontext`](#majordomus-devcontext), [`majordomus guard`](#majordomus-guard), [`majordomus mesh`](#majordomus-mesh), [`majordomus monitor`](#majordomus-monitor), [`majordomus models`](#majordomus-models), [`majordomus reasoning`](#majordomus-reasoning), [`majordomus evidence`](#majordomus-evidence), [`majordomus served`](#majordomus-served), [`majordomus rules`](#majordomus-rules), [`majordomus intent`](#majordomus-intent), [`majordomus delivery`](#majordomus-delivery), [`majordomus plan`](#majordomus-plan), [`majordomus economics`](#majordomus-economics), [`majordomus entity`](#majordomus-entity), [`majordomus shell`](#majordomus-shell), [`majordomus autonomy`](#majordomus-autonomy), [`majordomus pack`](#majordomus-pack), [`majordomus dashboard`](#majordomus-dashboard), [`majordomus brief`](#majordomus-brief), [`majordomus skills`](#majordomus-skills), [`majordomus knowledge`](#majordomus-knowledge), [`majordomus continuity`](#majordomus-continuity).
 
 ```text
 majordomus <COMMAND>
@@ -6574,6 +6580,171 @@ Examples:
 
   ```console
   $ majordomus shell check --format json
+  ```
+
+  Verified: exits 10.
+
+<a id="majordomus-autonomy"></a>
+## `majordomus autonomy`
+
+How much a coding-agent session in this checkout may do unasked, read from the facts: the client's settings layers, the isolation evidence, the profile they support, the decision for one shell command, and what the permission layer actually cost
+
+Subcommands: [`majordomus autonomy status`](#majordomus-autonomy-status), [`majordomus autonomy explain`](#majordomus-autonomy-explain), [`majordomus autonomy friction`](#majordomus-autonomy-friction), [`majordomus autonomy approvals`](#majordomus-autonomy-approvals), [`majordomus autonomy apply`](#majordomus-autonomy-apply).
+
+```text
+majordomus autonomy [OPTIONS] <COMMAND>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+<a id="majordomus-autonomy-status"></a>
+## `majordomus autonomy status`
+
+The settings layers, the isolation evidence and the profile they support, with the recommended permission mode and what refused every stronger profile
+
+```text
+majordomus autonomy status [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **The autonomy this checkout supports, and why no more** — The Claude Code settings layers with their default mode, rule counts and hooks (never rule text), the isolation evidence with credential variables named and never valued, and the profile the facts support as `/profile` and `/recommended_mode`, with `/refused` naming the fact that refused every stronger profile. Reads only; always exit 0.
+
+  ```console
+  $ majordomus autonomy status --format json
+  ```
+
+  Verified: exits 0.
+
+<a id="majordomus-autonomy-explain"></a>
+## `majordomus autonomy explain`
+
+What a static permission rule may do with one shell command: exit 0 when it may run unasked, 10 when the client's own permission layer decides, 11 when a person approves it under every profile
+
+```text
+majordomus autonomy explain [OPTIONS] <COMMAND>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `<COMMAND>` | `<COMMAND>` | required | The shell command, quoted as one argument |
+| `--profile` | `conservative` \| `balanced` \| `trusted` \| `isolated` | — | The profile to judge it under; the checkout's own when absent — `conservative`: Reads only run unasked; Claude Code's `default` mode; `balanced`: Reads and quality operations; `acceptEdits`, the profile of an untrusted checkout; `trusted`: Also local history; `auto`, once the person accepted the checkout's trust dialog; `isolated`: `bypassPermissions` inside a verified container with no credential in reach |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **A repository-local quality operation runs unasked** — `cargo test` under the trusted profile is a repository-local quality operation: the decision is allow, exit 0.
+
+  ```console
+  $ majordomus autonomy explain 'cargo test --lib' --profile trusted
+  ```
+
+  Verified: exits 0.
+
+- **A history rewrite needs a person even inside isolation** — `git reset --hard` is destructive: under every profile, isolated included, the decision is require_approval, exit 11.
+
+  ```console
+  $ majordomus autonomy explain 'git reset --hard' --profile isolated
+  ```
+
+  Verified: exits 11.
+
+<a id="majordomus-autonomy-friction"></a>
+## `majordomus autonomy friction`
+
+Every refusal the permission layer made in this repository's Claude Code transcripts, by kind, reason and tool, with the rate per thousand tool calls
+
+```text
+majordomus autonomy friction [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--since-days` | `<SINCE_DAYS>` | `7` | How many days back to count, 1 to 90 |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **What the permission layer cost today** — Every refusal in this repository's Claude Code transcripts of the last day, by kind, by the classifier's reason and by tool, with the rate per thousand tool calls. Counts only; a machine with no transcripts answers zero calls and no rate. Always exit 0.
+
+  ```console
+  $ majordomus autonomy friction --since-days 1 --format json
+  ```
+
+  Verified: exits 0.
+
+<a id="majordomus-autonomy-approvals"></a>
+## `majordomus autonomy approvals`
+
+Whether this machine's Claude Code user settings hold the owner's standing approvals declared in .ai/repo/autonomy/: each approval, the environment lines and the declared settings, with the verdict (full, partial, none, undeclared, unreadable)
+
+```text
+majordomus autonomy approvals [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Whether this machine holds the owner's standing approvals** — Each approval .ai/repo/autonomy/ declares, held or missing in ~/.claude/settings.json, the environment lines and settings, and the verdict as `/parity`; a repository that declares none answers `undeclared`. Only what the trunk's committed copy declares is judged. Reads only; always exit 0.
+
+  ```console
+  $ majordomus autonomy approvals --format json
+  ```
+
+  Verified: exits 0.
+
+<a id="majordomus-autonomy-apply"></a>
+## `majordomus autonomy apply`
+
+Write the declared standing approvals that this machine's ~/.claude/settings.json lacks, keeping every other key and entry and a copy of the file as it was; writes nothing when it already holds them
+
+```text
+majordomus autonomy apply [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Nothing is applied where nothing is declared** — A repository whose trunk declares no standing approval has nothing to write, and the command refuses with exit 10 rather than touch the settings; inside an agent session it refuses the same way. Run by the person at a terminal, it writes only the declared approvals that are missing.
+
+  ```console
+  $ majordomus autonomy apply
   ```
 
   Verified: exits 10.

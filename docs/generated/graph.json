@@ -12,6 +12,7 @@
       "application": "an object of kind `application`",
       "area": "an object of kind `area`",
       "audience": "an object of kind `audience`",
+      "autonomy-declaration": "an object of kind `autonomy-declaration`",
       "capability": "one capability, declared once and projected",
       "claim": "an object of kind `claim`",
       "command": "an object of kind `command`",
@@ -76,6 +77,42 @@
         "summary": "List the generated artifacts",
         "route": "/cockpit/capabilities/artifacts.list",
         "source": "apps/majordomus-cli/src/capability/builtin/artifacts.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:autonomy.approvals",
+        "kind": "capability",
+        "label": "autonomy.approvals",
+        "summary": "Whether this machine holds the owner's standing approvals",
+        "route": "/cockpit/capabilities/autonomy.approvals",
+        "source": "apps/majordomus-cli/src/capability/builtin/autonomy.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:autonomy.explain",
+        "kind": "capability",
+        "label": "autonomy.explain",
+        "summary": "Judge one shell command",
+        "route": "/cockpit/capabilities/autonomy.explain",
+        "source": "apps/majordomus-cli/src/capability/builtin/autonomy.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:autonomy.friction",
+        "kind": "capability",
+        "label": "autonomy.friction",
+        "summary": "What the permission layer cost",
+        "route": "/cockpit/capabilities/autonomy.friction",
+        "source": "apps/majordomus-cli/src/capability/builtin/autonomy.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:autonomy.status",
+        "kind": "capability",
+        "label": "autonomy.status",
+        "summary": "The autonomy this checkout supports",
+        "route": "/cockpit/capabilities/autonomy.status",
+        "source": "apps/majordomus-cli/src/capability/builtin/autonomy.rs",
         "status": "query"
       },
       {
@@ -4270,6 +4307,14 @@
         "external": true
       },
       {
+        "id": "file:share/schemas/majordomus/autonomy-declaration/autonomy-declaration.v1.schema.json",
+        "kind": "file",
+        "label": "autonomy-declaration.v1.schema.json",
+        "summary": "named by the layer; not an object of this index",
+        "source": "share/schemas/majordomus/autonomy-declaration/autonomy-declaration.v1.schema.json",
+        "external": true
+      },
+      {
         "id": "file:share/schemas/majordomus/deployment/deployment.v1.schema.json",
         "kind": "file",
         "label": "deployment.v1.schema.json",
@@ -4668,6 +4713,12 @@
         "kind": "kind",
         "label": "audience",
         "summary": "every object of kind `audience`"
+      },
+      {
+        "id": "kind:autonomy-declaration",
+        "kind": "kind",
+        "label": "autonomy-declaration",
+        "summary": "every object of kind `autonomy-declaration`"
       },
       {
         "id": "kind:claim",
@@ -9695,6 +9746,17 @@
           ],
           "weight": 10,
           "workflow": "A few sessions a day across one or two checkouts, architecture held in one head, no review step and no handover to anybody but tomorrow."
+        }
+      },
+      {
+        "id": "majordomus://autonomy-declaration/claude-code",
+        "kind": "autonomy-declaration",
+        "label": "claude-code",
+        "summary": "The owner's standing approvals and the environment the auto-mode classifier is told, for every machine that works on this repository.",
+        "route": "/cockpit/objects/autonomy-declaration/claude-code",
+        "source": ".ai/repo/autonomy/claude-code.yaml",
+        "facts": {
+          "client": "claude-code"
         }
       },
       {
@@ -14926,6 +14988,32 @@
         }
       },
       {
+        "id": "majordomus://context/ai.repo.autonomy",
+        "kind": "context",
+        "label": "ai.repo.autonomy",
+        "summary": "Standing approvals",
+        "route": "/cockpit/objects/context/ai-repo-autonomy",
+        "source": ".ai/repo/autonomy/README.md",
+        "status": "active",
+        "facts": {
+          "audience": [
+            "human",
+            "agent"
+          ],
+          "composition": "extend",
+          "order": 100,
+          "providers": [
+            "*"
+          ],
+          "scope": "subtree",
+          "tracks": [
+            "share/schemas/majordomus/autonomy-declaration/autonomy-declaration.v1.schema.json",
+            "share/kinds.yaml",
+            "docs/AUTONOMY.md"
+          ]
+        }
+      },
+      {
         "id": "majordomus://context/ai.repo.benchmarks",
         "kind": "context",
         "label": "ai.repo.benchmarks",
@@ -16345,6 +16433,14 @@
         "summary": "Archiving the repository",
         "route": "/cockpit/objects/document/docs-archive-md",
         "source": "docs/ARCHIVE.md"
+      },
+      {
+        "id": "majordomus://document/docs/AUTONOMY.md",
+        "kind": "document",
+        "label": "docs/AUTONOMY.md",
+        "summary": "Autonomy",
+        "route": "/cockpit/objects/document/docs-autonomy-md",
+        "source": "docs/AUTONOMY.md"
       },
       {
         "id": "majordomus://document/docs/BACKLOG.md",
@@ -43440,6 +43536,58 @@
         }
       },
       {
+        "id": "majordomus://issue/I2790",
+        "kind": "issue",
+        "label": "I2790",
+        "summary": "The autonomy a session has is read from the facts, explained per command, and its cost measured",
+        "route": "/cockpit/objects/issue/i2790",
+        "source": ".ai/repo/project/issues/I2790.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "An untrusted checkout with no isolation is balanced, and names what refused isolated and trusted",
+            "A checked-in bypassPermissions default raises no profile; the person's trust-dialog acceptance raises it to trusted",
+            "isolated requires a container marker and no credential variable or file; a credential's value never leaves",
+            "A layer that disables bypass, a managed default mode and an unreadable layer are ceilings",
+            "A compound command never earns an allow; history rewrites, removal, privilege and external effects require approval under every profile",
+            "friction counts refusals by kind, reason and tool for the primary checkout and its -wt worktrees only, and carries no command or payload"
+          ],
+          "created_at": "2026-10-16",
+          "current_state": "No capability reads the client's permission configuration or the isolation of the host; the friction numbers exist only as a one-off scratch script.",
+          "depends_on": [],
+          "evidence_required": [
+            "autonomy_unit_tests",
+            "case_3900"
+          ],
+          "milestone": "runtime-adapters",
+          "non_scope": [
+            "Writing any settings file: granting autonomy is the person's act, and a session that judged and then granted its own would be what the profile prevents.",
+            "Launching a session with the derived mode (majordomus session start), the generated project permission rules and a PreToolUse hook on Bash: follow-up issues once this is on master."
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/autonomy/mod.rs",
+            "apps/majordomus-cli/src/capability/builtin/autonomy.rs",
+            "apps/majordomus-cli/src/capability/builtin/mod.rs",
+            "apps/majordomus-cli/src/commands/autonomy.rs",
+            "apps/majordomus-cli/src/commands/mod.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/lib.rs",
+            "apps/majordomus-cli/tests/autonomy_mcp.rs",
+            "test/cases/3900_the_autonomy_a_session_has_is_read.sh",
+            "docs/AUTONOMY.md"
+          ],
+          "slug": "the-autonomy-a-session-has-is-measured",
+          "updated_at": "2026-10-16",
+          "validation": [
+            "cargo test --lib autonomy",
+            "cargo test --test autonomy_mcp",
+            "bash test/run.sh 3900_the_autonomy_a_session_has_is_read"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I2795",
         "kind": "issue",
         "label": "I2795",
@@ -62642,6 +62790,115 @@
           "validation": [
             "bash test/run.sh 3860_the_plan_graph_is_drawn_by_milestone"
           ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3900",
+        "kind": "issue",
+        "label": "I3900",
+        "summary": "The owner's standing approvals are declared once, and every machine says whether it holds them",
+        "route": "/cockpit/objects/issue/i3900",
+        "source": ".ai/repo/project/issues/I3900.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A machine whose user settings hold none of the declared approvals is judged none, with the apply command as the remedy, and the brief says so in its line",
+            "apply writes $defaults first, then every declared rule and environment line that is missing, sets the declared settings, keeps every other key, entry and hook, and leaves a copy of the file as it was",
+            "A second apply writes nothing; unreadable settings are judged unreadable and never overwritten",
+            "An approval whose rule was edited on the machine is not held; an entry the declaration does not name is counted, never quoted",
+            "A declaration that sets a permission mode, repeats an id or a rule, or carries a rule not beginning with the owner's prefix and date is refused"
+          ],
+          "created_at": "2026-10-20",
+          "current_state": "The approvals live only in one machine's ~/.claude/settings.json; no capability compares a machine with them.",
+          "depends_on": [
+            "I2790"
+          ],
+          "evidence_required": [
+            "approvals_unit_tests",
+            "case_3901"
+          ],
+          "milestone": "runtime-adapters",
+          "non_scope": [
+            "Raising the permission mode, adding permissions.allow prefixes or touching a hook: the declaration may set only the auto-mode rules, the environment lines and crossSessionInbound.",
+            "Applying over the mesh or from a session's projection: apply is the person's command on their machine.",
+            "A fleet view of every machine's parity on the mesh: I3901."
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/autonomy",
+            ".ai/repo/README.md",
+            ".ai/repo/knowledge/sources.yaml",
+            ".ai/repo/project/issues/I3900.yaml",
+            ".ai/repo/project/issues/I3901.yaml",
+            ".ai/repo/rules/project/a-standing-approval-is-written-where-permissions-are-read.v1.md",
+            "share/skeleton/ai/repo/knowledge/sources.yaml",
+            "share/kinds.yaml",
+            "share/schemas/majordomus/autonomy-declaration",
+            "lib/knowledge.awk",
+            "lib/knowledge.sh",
+            "apps/majordomus-cli/src/autonomy",
+            "apps/majordomus-cli/src/capability/builtin/autonomy.rs",
+            "apps/majordomus-cli/src/capability/builtin/brief.rs",
+            "apps/majordomus-cli/src/commands/autonomy.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/cli/local.rs",
+            "apps/majordomus-cli/src/quality/parity.rs",
+            "test/cases/3901_a_machine_holds_the_declared_approvals.sh",
+            "docs/AUTONOMY.md"
+          ],
+          "slug": "standing-approvals-reach-every-machine",
+          "updated_at": "2026-10-20",
+          "validation": [
+            "cargo test --lib autonomy",
+            "cargo test --lib brief",
+            "bash test/run.sh 3901_a_machine_holds_the_declared_approvals"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3901",
+        "kind": "issue",
+        "label": "I3901",
+        "summary": "Every machine's standing-approval parity is seen on the mesh, and a machine that lacks them is named",
+        "route": "/cockpit/objects/issue/i3901",
+        "source": ".ai/repo/project/issues/I3901.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A runtime's heartbeat carries its parity, held and declared counts and the declaration's digest, and no rule text",
+            "mesh.peers and /ui/mesh show each machine's parity; a machine below full is named in every brief"
+          ],
+          "created_at": "2026-10-20",
+          "current_state": "Each machine knows its own parity; no surface compares machines.",
+          "depends_on": [
+            "I3900"
+          ],
+          "desired_state": "One answer per runtime on the mesh, counts only, never a rule's text; a machine below full parity is named in the brief of every other machine and drawn on /ui/mesh.",
+          "evidence_required": [
+            "case_3902"
+          ],
+          "milestone": "runtime-adapters",
+          "non_scope": [
+            "Applying approvals on another machine: apply stays the person's command on their own machine."
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh",
+            "apps/majordomus-cli/src/capability/builtin/brief.rs",
+            "apps/majordomus-cli/src/ui",
+            "docs/AUTONOMY.md",
+            "docs/MESH.md",
+            "test/cases/3902_approval_parity_is_seen_on_the_mesh.sh"
+          ],
+          "slug": "approval-parity-is-seen-on-the-mesh",
+          "updated_at": "2026-10-20",
+          "validation": [
+            "cargo test --lib mesh",
+            "bash test/run.sh 3902_approval_parity_is_seen_on_the_mesh"
+          ],
+          "why": "I3900 lets each machine judge itself, but the owner asked on 2026-10-20 to see it everywhere (UI, UX, DX, tooling); a machine nobody opens a session on never reads its own brief."
         }
       },
       {
@@ -85011,6 +85268,20 @@
         "source": "test/cases/389_cockpit_projection.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3900_the_autonomy_a_session_has_is_read.sh",
+        "kind": "test",
+        "label": "test/cases/3900_the_autonomy_a_session_has_is_read.sh",
+        "route": "/cockpit/objects/test/test-cases-3900-the-autonomy-a-session-has-is-read-sh",
+        "source": "test/cases/3900_the_autonomy_a_session_has_is_read.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3901_a_machine_holds_the_declared_approvals.sh",
+        "kind": "test",
+        "label": "test/cases/3901_a_machine_holds_the_declared_approvals.sh",
+        "route": "/cockpit/objects/test/test-cases-3901-a-machine-holds-the-declared-approvals-sh",
+        "source": "test/cases/3901_a_machine_holds_the_declared_approvals.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/390_unresolved_relation_refuses_generation.sh",
         "kind": "test",
         "label": "test/cases/390_unresolved_relation_refuses_generation.sh",
@@ -88806,6 +89077,11 @@
         "label": "artifacts"
       },
       {
+        "id": "module:autonomy",
+        "kind": "module",
+        "label": "autonomy"
+      },
+      {
         "id": "module:brief",
         "kind": "module",
         "label": "brief"
@@ -89184,6 +89460,86 @@
       },
       {
         "source": "capability:artifacts.list",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:autonomy.approvals",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:autonomy.approvals",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:autonomy.approvals",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:autonomy.approvals",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:autonomy.explain",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:autonomy.explain",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:autonomy.explain",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:autonomy.explain",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:autonomy.friction",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:autonomy.friction",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:autonomy.friction",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:autonomy.friction",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:autonomy.status",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:autonomy.status",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:autonomy.status",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:autonomy.status",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -100223,6 +100579,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://autonomy-declaration/claude-code",
+        "target": "kind:autonomy-declaration",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://claim/a-candidate-is-routed-by-what-it-is-about",
         "target": "kind:claim",
         "kind": "is_a"
@@ -105283,6 +105644,26 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://context/ai.repo.autonomy",
+        "target": "file:share/kinds.yaml",
+        "kind": "tracks"
+      },
+      {
+        "source": "majordomus://context/ai.repo.autonomy",
+        "target": "file:share/schemas/majordomus/autonomy-declaration/autonomy-declaration.v1.schema.json",
+        "kind": "tracks"
+      },
+      {
+        "source": "majordomus://context/ai.repo.autonomy",
+        "target": "kind:context",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://context/ai.repo.autonomy",
+        "target": "majordomus://document/docs/AUTONOMY.md",
+        "kind": "tracks"
+      },
+      {
         "source": "majordomus://context/ai.repo.benchmarks",
         "target": "kind:context",
         "kind": "is_a"
@@ -106034,6 +106415,11 @@
       },
       {
         "source": "majordomus://document/docs/ARCHIVE.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/AUTONOMY.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -114833,6 +115219,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2790",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2790",
+        "target": "majordomus://milestone/runtime-adapters",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I2795",
         "target": "kind:issue",
         "kind": "is_a"
@@ -120973,6 +121369,36 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3900",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3900",
+        "target": "majordomus://issue/I2790",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3900",
+        "target": "majordomus://milestone/runtime-adapters",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3901",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3901",
+        "target": "majordomus://issue/I3900",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3901",
+        "target": "majordomus://milestone/runtime-adapters",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -126993,6 +127419,16 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3900_the_autonomy_a_session_has_is_read.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3901_a_machine_holds_the_declared_approvals.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/390_unresolved_relation_refuses_generation.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -131068,6 +131504,26 @@
         "kind": "composes"
       },
       {
+        "source": "module:autonomy",
+        "target": "capability:autonomy.approvals",
+        "kind": "composes"
+      },
+      {
+        "source": "module:autonomy",
+        "target": "capability:autonomy.explain",
+        "kind": "composes"
+      },
+      {
+        "source": "module:autonomy",
+        "target": "capability:autonomy.friction",
+        "kind": "composes"
+      },
+      {
+        "source": "module:autonomy",
+        "target": "capability:autonomy.status",
+        "kind": "composes"
+      },
+      {
         "source": "module:brief",
         "target": "capability:brief.session",
         "kind": "composes"
@@ -132094,8 +132550,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3708,
-      "edges": 8584,
+      "nodes": 3723,
+      "edges": 8620,
       "acyclic": false,
       "truncated": false
     }

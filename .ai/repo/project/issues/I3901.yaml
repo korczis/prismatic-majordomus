@@ -1,0 +1,31 @@
+id: I3901
+milestone: runtime-adapters
+title: "Every machine's standing-approval parity is seen on the mesh, and a machine that lacks them is named"
+slug: approval-parity-is-seen-on-the-mesh
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Each runtime publishes its autonomy.approvals verdict (parity, held of declared, the declaration's digest) with its heartbeat; mesh.peers, the brief and /ui/mesh show it per machine, so the owner sees from one page which machine will ask for what another was granted."
+why: "I3900 lets each machine judge itself, but the owner asked on 2026-10-20 to see it everywhere (UI, UX, DX, tooling); a machine nobody opens a session on never reads its own brief."
+current_state: "Each machine knows its own parity; no surface compares machines."
+desired_state: "One answer per runtime on the mesh, counts only, never a rule's text; a machine below full parity is named in the brief of every other machine and drawn on /ui/mesh."
+scope:
+  - "apps/majordomus-cli/src/mesh"
+  - "apps/majordomus-cli/src/capability/builtin/brief.rs"
+  - "apps/majordomus-cli/src/ui"
+  - "docs/AUTONOMY.md"
+  - "docs/MESH.md"
+  - "test/cases/3902_approval_parity_is_seen_on_the_mesh.sh"
+non_scope:
+  - "Applying approvals on another machine: apply stays the person's command on their own machine."
+depends_on: ["I3900"]
+acceptance_criteria:
+  - "A runtime's heartbeat carries its parity, held and declared counts and the declaration's digest, and no rule text"
+  - "mesh.peers and /ui/mesh show each machine's parity; a machine below full is named in every brief"
+validation:
+  - "cargo test --lib mesh"
+  - "bash test/run.sh 3902_approval_parity_is_seen_on_the_mesh"
+evidence_required:
+  - "case_3902"
+created_at: 2026-10-20
+updated_at: 2026-10-20
