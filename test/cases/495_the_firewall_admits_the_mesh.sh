@@ -113,6 +113,8 @@ id: majordomus
 enabled: true
 multicast:
   enabled: false
+tailscale:
+  enabled: false
 broadcast:
   mode: disabled
 rendezvous:
