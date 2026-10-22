@@ -255,7 +255,7 @@ mj_load_manifest() {
   local k
   MJ_MANIFEST_ERROR=""
   [ -n "$MJ_MAN_FLAT" ] && [ -f "$MJ_MAN_FLAT" ] && return 0
-  MJ_MAN_FLAT="$(mktemp "${TMPDIR:-/tmp}/mj.man.XXXXXX")"
+  MJ_MAN_FLAT="$(mktemp "$(mj_lib_tmp)/mj.man.XXXXXX")"
   if ! mj_yaml_flatten "$MJ_AI_MANIFEST" > "$MJ_MAN_FLAT" 2>/dev/null; then
     MJ_MANIFEST_ERROR="does not parse"; return 1
   fi
@@ -1080,6 +1080,10 @@ case "${MJ_TMP_ROOT:-}" in */mj."$$".*) ;; *) MJ_TMP_ROOT="" ;; esac
 mj_tmp_root_init() {
   local base="${TMPDIR:-/tmp}"
   MJ_TMP_ROOT="$(command mktemp -d "${base%/}/mj.$$.XXXXXX")"
+  mj_tmp_sweep
+}
+mj_tmp_sweep() {
+  local base="${TMPDIR:-/tmp}"
   # A root whose process is gone is removed by the next process to start. The exit trap
   # cannot be the only remover: a shell that dies of PIPE runs none, and
   # `majordomus doctor | grep -q OK` — a reader that closes the pipe once it has its
@@ -1124,6 +1128,7 @@ mj_cleanup() {
   # sets this trap for itself and keeps the root it inherited (above), so its exit would
   # otherwise remove the root its parent is still writing into.
   [ -n "${MJ_TMP_ROOT:-}" ] && [ "${BASH_SUBSHELL:-0}" = 0 ] && rm -rf "$MJ_TMP_ROOT" 2>/dev/null
+  [ -n "${MJ_LIB_TMP:-}" ] && [ "${BASH_SUBSHELL:-0}" = 0 ] && rm -rf "$MJ_LIB_TMP" 2>/dev/null
   # A lock this process is holding goes with it. Releasing here and not only at the end of
   # the critical section is what makes the lock crash-safe for every exit a command has:
   # mj_die, a failed `set -e` command, an interrupt from the test runner's bound.
@@ -1132,23 +1137,30 @@ mj_cleanup() {
 }
 trap mj_cleanup EXIT
 
-# A script that sources this library makes its root here. Before this only the entry point
-# asked for one, and every script that sources the library — the derive's generators, the
-# site build and its checks, the cases — made its files directly in TMPDIR and left them:
-# the project model's directory, the manifest's and the knowledge sources' flattenings, one
-# of each per run. On 2026-10-11 TMPDIR held 65,530 entries, the most one directory holds
-# on that volume, and every `mktemp -d` on the machine failed as if its parent were gone.
-# The entry point still makes its root only after its dispatch, because a command it hands
-# to the other program is an exec, which runs no exit trap; it sets MJ_TMP_ROOT_DEFER
-# before sourcing the library to say so. A script that replaces the exit trap leaves its
-# root to the next process that starts, as a KILL does. A root that cannot be made leaves
-# `mktemp` as it was rather than stopping the script that sourced the library. A subshell
-# makes none: it shares its parent's root, and a root of its own would be named after the
-# parent's process and outlive the subshell.
-if [ -z "${MJ_TMP_ROOT_DEFER:-}" ] && [ -z "$MJ_TMP_ROOT" ] && [ "${BASH_SUBSHELL:-0}" = 0 ]; then
-  mj_tmp_root_init 2>/dev/null || true
-  [ -d "${MJ_TMP_ROOT:-}" ] || MJ_TMP_ROOT=""
+# The library's own temporary files — the manifest's and the knowledge sources'
+# flattenings and the project model's directory, one of each per run — go under a directory
+# of this process's own, made as the library is sourced and removed by the exit trap of the
+# shell that made it; a subshell writes into its parent's and removes nothing. Before this
+# they were made directly in TMPDIR by every script that sources the library (the derive's
+# generators, the site build and its checks, the cases) and left there: on 2026-10-11 TMPDIR
+# held 65,530 entries, the most one directory holds on that volume, and every `mktemp -d`
+# on the machine failed as if its parent were gone. A directory whose process is gone (a
+# KILL, a PIPE) goes with the next process that sources the library.
+#
+# Only the library's own files move. A script's `mktemp` answers where it was asked until
+# the script asks for a root (mj_tmp_root_init): a file a script makes may be its answer to
+# whoever called it (case 991). The entry point makes neither here, because a command it
+# hands to the other program is an exec, which runs no exit trap; it sets
+# MJ_TMP_ROOT_DEFER before sourcing the library, and its root holds these files instead.
+# Sourcing the library again keeps the directory this process already has.
+case "${MJ_LIB_TMP:-}" in */mj."$$".*) ;; *) MJ_LIB_TMP="" ;; esac
+if [ -z "${MJ_TMP_ROOT_DEFER:-}" ] && [ -z "$MJ_LIB_TMP" ] && [ "${BASH_SUBSHELL:-0}" = 0 ]; then
+  mj_tmp_sweep 2>/dev/null || true
+  MJ_LIB_TMP="$(command mktemp -d "${TMPDIR:-/tmp}/mj.$$.XXXXXX" 2>/dev/null)" || MJ_LIB_TMP=""
 fi
+# Where the library makes a temporary file of its own: its directory, or TMPDIR (and so the
+# root, under the entry point) when it has none.
+mj_lib_tmp() { printf '%s' "${MJ_LIB_TMP:-${TMPDIR:-/tmp}}"; }
 
 # ---------------------------------------------------------------- mutual exclusion
 # One named lock, taken by creating a directory, which is the one filesystem operation

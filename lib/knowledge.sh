@@ -34,8 +34,8 @@ mj_knowledge_state_sources() { printf '%s' "$MJ_SHARE_DIR/knowledge-sources.yaml
 mj_ksrc_load() {
   [ -n "$MJ_KSRC_FLAT" ] && [ -f "$MJ_KSRC_FLAT" ] && return 0
   local f n=0 tmp
-  MJ_KSRC_FLAT="$(mktemp "${TMPDIR:-/tmp}/mj.ksrc.XXXXXX")"
-  tmp="$(mktemp "${TMPDIR:-/tmp}/mj.ksr.XXXXXX")"
+  MJ_KSRC_FLAT="$(mktemp "$(mj_lib_tmp)/mj.ksrc.XXXXXX")"
+  tmp="$(mktemp "$(mj_lib_tmp)/mj.ksr.XXXXXX")"
   for f in "$(mj_knowledge_repo_sources)" "$(mj_knowledge_state_sources)"; do
     [ -f "$f" ] || { [ "$f" = "$(mj_knowledge_state_sources)" ] && mj_die "$MJ_EX_INTERNAL" "knowledge source list missing: $f"; continue; }
     mj_yaml_flatten "$f" > "$tmp" 2>/dev/null || mj_die "$MJ_EX_CONTRACT" "knowledge source list does not parse: $(mj_rel "$f")"

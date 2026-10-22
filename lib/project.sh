@@ -32,7 +32,7 @@ mj_project_load() {
   mj_project_present || return 1
   local dir raw flat f id rc=0 msg
   dir="$MJ_PROJECT_DIR"
-  MJ_PJ="$(mktemp -d "${TMPDIR:-/tmp}/mj.pj.XXXXXX")"
+  MJ_PJ="$(mktemp -d "$(mj_lib_tmp)/mj.pj.XXXXXX")"
   mkdir -p "$MJ_PJ/flat"
   raw="$MJ_PJ/raw.tsv"; : > "$raw"
 
