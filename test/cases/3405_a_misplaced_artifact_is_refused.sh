@@ -1,4 +1,4 @@
-# majordomus-covers: init update layout
+# majordomus-covers: init update
 # A file in the half whose declared layout excludes it is refused, naming the path and the
 # contract (I2871, I1102). A fresh repository is adopted with `init`, whose skeleton
 # declares the tracked half canonical (excludes cache, runtime) and the local half runtime
