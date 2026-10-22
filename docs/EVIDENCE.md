@@ -474,13 +474,15 @@ every surface is derived from it ([`CAPABILITIES.md`](CAPABILITIES.md)).
 | `evidence.test` | `majordomus evidence proves <id>` | `GET /api/v1/evidence/test` | tool `majordomus_evidence_test` |
 | `evidence.record` | `majordomus evidence record` | — | — |
 | `evidence.stamp` | `majordomus evidence stamp` | — | — |
+| `evidence.subject` | `majordomus evidence subject <key>` | `GET /api/v1/evidence/subject` | tool `majordomus_evidence_subject` |
+| `evidence.coverage` | `majordomus evidence coverage` | `GET /api/v1/evidence/coverage` | tool `majordomus_evidence_coverage` |
 
-These five are subcommands of the Rust executable, and `majordomus` is the one program an
+These seven are subcommands of the Rust executable, and `majordomus` is the one program an
 installed tool puts on `PATH`. The shell tool has a command of the same name, which records
 what a task owes (`majordomus evidence --covers <token>`, `--gate <id>`;
 [`CLI.md`](CLI.md#majordomus-evidence)) and takes options only. So a word in the first
-position is never the shell tool's: the launcher hands `show`, `claim`, `proves`, `record`
-and `stamp` to the executable with every argument unchanged, the global `--repo` included
+position is never the shell tool's: the launcher hands `show`, `claim`, `proves`, `record`,
+`stamp`, `subject` and `coverage` to the executable with every argument unchanged, the global `--repo` included
 on either side of the command, and the exit code is then the executable's. Which words
 those are is read from the executable's own declaration, never listed in the launcher, and
 `majordomus evidence --help` prints both halves. Through 0.22.0 the word reached the
@@ -619,6 +621,60 @@ derivations of subject to test that came before it:
 jq '.subjects["feature:evidence"]' site/data/registry/evidence-subjects.json
 majordomus generate site --check
 ```
+
+### Asking about one subject
+
+`evidence subject <key>` answers for any subject of the index, by its key, through the
+index's own judge: the verdict over its own routes and its members' own verdicts, the totals
+by state beside it, each route with its state, the execution behind it and the command that
+runs it again, each member with its own verdict, a rule's mechanisms, and the subject's
+advisory findings. It is the capability `evidence.subject`, so the command line,
+`GET /api/v1/evidence/subject?subject=<key>` and the MCP tool `majordomus_evidence_subject`
+give the same document for the same key. It reads the working tree by default and, with
+`--presented <rev>`, the checked-out commit as committed, from the ledger that commit holds
+exactly as `evidence show --presented` reads it, so a subject never reads greener than the
+claims it is made of.
+
+A key the index does not hold is a not-found, never an empty verdict: the command line exits
+`13`, HTTP answers `404` and MCP a tool error, each naming the key and where the keys are
+listed (`subjects` in `site/data/registry/evidence-subjects.json`).
+
+<!-- majordomus:unrun it names subjects of this repository's own index, which the command-line examples' fixture does not hold; the example `evidence subject rule:project.alpha --format json`, case 508 and tests/evidence.rs run the same command against a fixture's every subject kind -->
+```sh
+majordomus evidence subject feature:evidence
+majordomus evidence subject "command:evidence show" --format json
+majordomus evidence subject rule:project.canonical-order --presented HEAD
+```
+
+### Coverage beside the verdict
+
+`evidence coverage` lists the coverage records the run records carry. A run record is what
+`evidence record --run-record <file>` writes, or the `run_record` of a CI evidence artifact's
+`record.json`; a coverage record is inside one when the recording was given a coverage
+summary. By default the records are read from `.ai/local/evidence/runs/`, the local run
+directory of ADR 0087 decision 2, which nothing writes yet but `--run-record`; `--from` names
+a run record, or a directory whose `*.json` files are read as run records, inside the
+checkout. A source outside the checkout is refused, because a network client must not choose
+a file outside the repository for this executable to read; copy a downloaded CI artifact
+under the local layer first.
+
+Each record is judged against the checked-out commit and its tree, measured ignoring the
+evidence ledger's working copy: it is `current` only when it was measured at that commit, its
+own run measured a clean tree and the checkout is clean, and otherwise `stale`, with the
+reason and its own commit. `--presented-tree` can only weaken the measured tree. Coverage is
+supporting evidence (decision 12): nothing here moves a verdict. A file of the source that is
+not a run record is listed under `unread` with the reason, and a run record without coverage
+is counted in `runs`.
+
+<!-- majordomus:unrun the second line reads a CI evidence artifact copied under the local layer, which no checkout holds until one is downloaded; the example `evidence coverage --format json`, case 508 and tests/evidence.rs run the command over a fixture's run records -->
+```sh
+majordomus evidence coverage
+majordomus evidence coverage --from .ai/local/ci-evidence --format json
+```
+
+The run index itself, `evidence runs` and `evidence run <id>`, and reading supplementary
+records into a subject's verdict through the monotone rule wait for the local run index
+(I1957).
 
 ADR 0087 (proposed) records the decision to index evidence by subject.
 

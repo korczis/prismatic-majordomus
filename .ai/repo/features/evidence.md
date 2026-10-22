@@ -27,9 +27,12 @@ recorded for its test: the proof state, the sentence that explains how that stat
 derived, the execution behind it, the files that have changed since, and the command that
 produces the proof again. `evidence claim` is one claim in full and `evidence test` is the
 reverse — one test with every claim it proves — read from the same derivation, so the two
-directions cannot disagree. `evidence record` writes what a run already reported into the
-ledger, stamped with the commit, the tree state, the digest of the test's own source, the
-time and the origin.
+directions cannot disagree. `evidence subject <key>` answers the same question for any
+subject of the index — a claim, a rule, a feature, a command, a capability, an MCP tool or a
+use case — over the command line, HTTP and MCP alike, and `evidence coverage` lists the
+coverage the run records carry, current only for its own commit on a clean tree.
+`evidence record` writes what a run already reported into the ledger, stamped with the
+commit, the tree state, the digest of the test's own source, the time and the origin.
 
 The seven states are ranked, and two of them are deliberately not one. `proven` is a
 passing run recorded against this very commit with a clean tree. `inputs unchanged` is a

@@ -40,7 +40,9 @@
 //!         "evidence.claim",
 //!         "evidence.test",
 //!         "evidence.record",
-//!         "evidence.stamp"
+//!         "evidence.stamp",
+//!         "evidence.subject",
+//!         "evidence.coverage"
 //!     ]
 //! );
 //!
@@ -64,6 +66,18 @@
 //! `evidence.stamp` writes nothing, but it reads a file whose path its caller names (the
 //! report it digests) and measures the checkout it runs in. A network client must not choose
 //! a path this executable reads, so the stamp too declares a command line and nothing else.
+//!
+//! # Any subject, and the coverage beside it
+//!
+//! `evidence.subject` answers for every kind of the subject index
+//! ([`crate::evidence::subject`]) — a claim, a rule, a feature, a command, a capability, an
+//! MCP tool or a use case — through the one judge that index already has, so a feature's
+//! verdict on the command line, over HTTP and over MCP is one derivation. `evidence.coverage`
+//! lists the coverage records the run records carry. Coverage is supporting evidence: a
+//! record reads `current` only for the checked-out commit, measured on a clean tree, with
+//! the checkout clean as well, and it never decides a verdict (ADR 0087, decision 12). It
+//! reads run records only from inside the checkout, because a network client must not
+//! choose a file outside it for this executable to read.
 
 //! # Example
 //!
@@ -74,7 +88,7 @@
 //! use majordomus_cli::capability::builtin::evidence::module;
 //! let m = module();
 //! assert_eq!(m.id.as_str(), "evidence");
-//! assert_eq!(m.capabilities.len(), 5);
+//! assert_eq!(m.capabilities.len(), 7);
 //! ```
 
 use schemars::JsonSchema;
@@ -87,10 +101,11 @@ use crate::capability::model::{
     WaiverReason,
 };
 use crate::capability::module::ModuleDescriptor;
+use crate::evidence::subject::{self, SubjectEvidence, SubjectKind};
 use crate::evidence::{
-    self, freshness, ClaimProof, EvidenceDropped, EvidenceProducer, EvidenceProvenance,
-    EvidenceReport, EvidenceRunRecord, Execution, Ledger, LedgerTarget, Origin, ProofState,
-    RecordRequest, StampRequest, TreeState,
+    self, freshness, ClaimProof, EvidenceCoverage, EvidenceDropped, EvidenceProducer,
+    EvidenceProvenance, EvidenceReport, EvidenceRunRecord, Execution, Ledger, LedgerTarget, Origin,
+    Presented, ProofState, RecordRequest, StampRequest, TreeState, RUN_RECORD_SCHEMA,
 };
 use crate::{capability, module};
 
@@ -98,6 +113,14 @@ use super::{get, mcp};
 
 /// The URI under which the whole evidence report is read as an MCP resource.
 pub const EVIDENCE_URI: &str = "majordomus://evidence";
+
+/// Where `evidence.coverage` reads run records when no source is named: the local run
+/// directory ADR 0087 (decision 2) declares, inside the ignored local layer.
+pub const RUNS_DIR: &str = ".ai/local/evidence/runs";
+
+/// How a reader that named an unknown subject finds the ones there are.
+const LIST_SUBJECTS: &str = "every subject is listed under `subjects` in \
+site/data/registry/evidence-subjects.json, which `majordomus generate site` writes";
 
 // ---------------------------------------------------------------- inputs
 
@@ -359,6 +382,127 @@ impl BenchmarkCases for EvidenceStampInput {
     }
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+/// One subject of the evidence index, by its key, and the revision to judge it at.
+///
+/// The key is required: there is no spelling of this input that means "every subject". A key
+/// the index does not hold is a not-found from the handler, never an empty verdict, because
+/// "this feature has no evidence" read off a typo is the answer this capability must not give.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::evidence::EvidenceSubjectInput;
+/// use majordomus_cli::evidence::TreeState;
+///
+/// let input: EvidenceSubjectInput =
+///     serde_json::from_str(r#"{"subject": "feature:evidence"}"#).unwrap();
+/// assert_eq!(input.subject, "feature:evidence");
+/// assert!(input.presented.is_none(), "the working tree unless a commit is named");
+///
+/// let at: EvidenceSubjectInput = serde_json::from_str(
+///     r#"{"subject": "command:evidence show", "presented": "HEAD", "presented_tree": "dirty"}"#,
+/// )
+/// .unwrap();
+/// assert_eq!(at.presented_tree, Some(TreeState::Dirty));
+///
+/// // no key is a usage error, never a request for all of them
+/// assert!(serde_json::from_str::<EvidenceSubjectInput>("{}").is_err());
+/// ```
+pub struct EvidenceSubjectInput {
+    /// The subject's key, `<kind>:<id>`: `claim:<id>`, `rule:<id>`, `feature:<id>`,
+    /// `command:<words>`, `capability:<id>`, `mcp:<tool>` or `use_case:<id>`.
+    pub subject: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// Judge at this revision, as committed, rather than at the working tree: `HEAD`, or any
+    /// name of the checked-out commit, exactly as `evidence.report` reads it. Absent: the
+    /// working tree.
+    pub presented: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// What the caller knows about the presented commit's tree (`clean`, `dirty`,
+    /// `unknown`). It can only weaken the measured state, and it means nothing without
+    /// `presented`.
+    pub presented_tree: Option<TreeState>,
+}
+
+impl BenchmarkCases for EvidenceSubjectInput {
+    /// A claim this repository declares and a capability of this module, both at the working
+    /// tree: the first measures the claim join through the index, the second a subject made
+    /// of members. No case fills `presented`, for the reason `evidence.report` gives.
+    fn benchmark_cases(ctx: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        let claim = ctx
+            .index
+            .objects
+            .iter()
+            .find(|o| o.kind == "claim")
+            .map(|o| SubjectKind::Claim.key(&o.identity))
+            .unwrap_or_else(|| SubjectKind::Claim.key("no-claim"));
+        let at = |subject: String| EvidenceSubjectInput {
+            subject,
+            presented: None,
+            presented_tree: None,
+        };
+        vec![
+            NamedCase::new("first-claim", at(claim)),
+            NamedCase::new(
+                "capability",
+                at(SubjectKind::Capability.key("evidence.report")),
+            ),
+        ]
+    }
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+/// Where the run records are read from, and what the caller knows about the checkout.
+///
+/// Saying nothing reads the local run directory, [`RUNS_DIR`], at the checked-out commit as
+/// measured.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::evidence::EvidenceCoverageInput;
+/// use majordomus_cli::evidence::TreeState;
+///
+/// let all: EvidenceCoverageInput = serde_json::from_str("{}").unwrap();
+/// assert!(all.from.is_none() && all.presented_tree.is_none());
+///
+/// let named: EvidenceCoverageInput =
+///     serde_json::from_str(r#"{"from": "ci-evidence", "presented_tree": "dirty"}"#).unwrap();
+/// assert_eq!(named.from.as_deref(), Some("ci-evidence"));
+/// assert_eq!(named.presented_tree, Some(TreeState::Dirty));
+/// assert!(serde_json::from_str::<EvidenceCoverageInput>(r#"{"form": "x"}"#).is_err());
+/// ```
+pub struct EvidenceCoverageInput {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// A run record (what `evidence record --run-record` wrote, or a CI artifact's
+    /// `record.json`), or a directory whose `*.json` files are read as run records. It must
+    /// be inside the repository: relative to its root, or absolute under it. Absent: the
+    /// local run directory, `.ai/local/evidence/runs`.
+    pub from: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// What the caller knows about the checked-out commit's tree (`clean`, `dirty`,
+    /// `unknown`). It can only weaken the measured state: a site build that knows its tree
+    /// was dirty shows no coverage as current.
+    pub presented_tree: Option<TreeState>,
+}
+
+impl BenchmarkCases for EvidenceCoverageInput {
+    /// The local run directory, and the same read with the presented tree weakened. Neither
+    /// names a path: the benchmark repository has no run record to read, and a named path it
+    /// lacks would time the refusal.
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        vec![
+            NamedCase::new("local-runs", EvidenceCoverageInput::default()),
+            NamedCase::new(
+                "presented-dirty",
+                EvidenceCoverageInput {
+                    from: None,
+                    presented_tree: Some(TreeState::Dirty),
+                },
+            ),
+        ]
+    }
+}
+
 // ---------------------------------------------------------------- outputs
 
 #[derive(Debug, Clone, Serialize, JsonSchema)]
@@ -525,6 +669,155 @@ pub struct RecordReport {
     pub run_record: EvidenceRunRecord,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+/// Whether a coverage record describes the checkout presented (ADR 0087, decision 12).
+///
+/// ```
+/// use majordomus_cli::capability::builtin::evidence::EvidenceCoverageState;
+/// assert_eq!(serde_json::to_value(EvidenceCoverageState::Stale).unwrap(), "stale");
+/// ```
+pub enum EvidenceCoverageState {
+    /// Measured at the presented commit on a clean tree, and the presented tree is clean.
+    Current,
+    /// Anything else: shown with its commit, and never as a measurement of this checkout.
+    Stale,
+}
+
+#[derive(Debug, Clone, Serialize, JsonSchema)]
+/// The checkout a coverage record is judged against: the checked-out commit and its tree,
+/// measured ignoring the evidence ledger's working copy and weakened by what the caller knew.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::evidence::EvidenceCoveragePresented;
+/// use majordomus_cli::evidence::TreeState;
+///
+/// let none = EvidenceCoveragePresented {
+///     commit: None,
+///     tree: TreeState::Unknown,
+///     reason: Some("this repository has no checked-out commit".into()),
+/// };
+/// let json = serde_json::to_value(&none).unwrap();
+/// assert!(json["commit"].is_null(), "no commit is a stated absence, never a guess");
+/// assert_eq!(json["tree"], "unknown");
+/// ```
+pub struct EvidenceCoveragePresented {
+    /// The full id of the checked-out commit, or `null` when git cannot name one.
+    pub commit: Option<String>,
+    /// That commit's tree as measured, weakened by `presented_tree`; `unknown` without a
+    /// commit.
+    pub tree: TreeState,
+    /// Why no commit is presented, when none is.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub reason: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, JsonSchema)]
+/// One coverage record, as one run record carries it, judged against the presented checkout.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::evidence::{EvidenceCoverageRecord, EvidenceCoverageState};
+/// use majordomus_cli::evidence::{CommitId, EvidenceCoverage, Origin, TreeState};
+///
+/// let one = r#"{"covered":1,"total":2,"percent":50.0}"#;
+/// let dims = format!(r#"{{"lines":{one},"functions":{one},"regions":{one}}}"#);
+/// let text = format!(
+///     r#"{{"schema":1,"measurement":"m","test_code":"excluded","crate":{dims},
+///         "domain":{{"lines":{one},"functions":{one},"regions":{one},"files":[],"missing":[]}},
+///         "files":{{}}}}"#
+/// );
+/// let commit = CommitId::parse(&"c".repeat(40)).unwrap();
+/// let coverage =
+///     EvidenceCoverage::from_summary(&text, commit, TreeState::Clean, Default::default()).unwrap();
+/// let record = EvidenceCoverageRecord {
+///     run: "local:cccccccccccc:20261022T120000Z".into(),
+///     origin: Origin::Local,
+///     recorded_at: "2026-10-22T12:00:00Z".into(),
+///     file: ".ai/local/evidence/runs/one.json".into(),
+///     state: EvidenceCoverageState::Stale,
+///     reason: "the presented tree is dirty".into(),
+///     below_floor: Vec::new(),
+///     coverage,
+/// };
+/// let json = serde_json::to_value(&record).unwrap();
+/// assert_eq!(json["state"], "stale");
+/// assert_eq!(json["coverage"]["commit"], "c".repeat(40), "shown with its own commit");
+/// ```
+pub struct EvidenceCoverageRecord {
+    /// The id of the run record that carries it.
+    pub run: String,
+    /// Where that run happened.
+    pub origin: Origin,
+    /// When it was recorded, RFC 3339 UTC.
+    pub recorded_at: String,
+    /// The file it was read from, repository-relative.
+    pub file: String,
+    /// Whether it describes the presented checkout.
+    pub state: EvidenceCoverageState,
+    /// Why, in one sentence.
+    pub reason: String,
+    /// Which of the crate and the domain are below the line floor recorded with it.
+    pub below_floor: Vec<String>,
+    /// The measurement itself, with its own commit and tree.
+    pub coverage: EvidenceCoverage,
+}
+
+#[derive(Debug, Clone, Serialize, JsonSchema)]
+/// A file of the source that was not read as a run record, and why: listed rather than
+/// skipped, so that a directory that held nothing readable never reads as one that held no
+/// coverage.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::evidence::EvidenceCoverageUnread;
+/// let u = EvidenceCoverageUnread { file: "manifest.json".into(), reason: "not a run record".into() };
+/// assert_eq!(serde_json::to_value(&u).unwrap()["file"], "manifest.json");
+/// ```
+pub struct EvidenceCoverageUnread {
+    /// The file, repository-relative.
+    pub file: String,
+    /// Why it was not read.
+    pub reason: String,
+}
+
+#[derive(Debug, Clone, Serialize, JsonSchema)]
+/// Every coverage record of the run records read, each judged against the presented checkout.
+///
+/// Coverage is supporting evidence: nothing here moves a verdict. A run record without a
+/// coverage measurement is counted in `runs` and lists nothing.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::evidence::{
+///     EvidenceCoverageAnswer, EvidenceCoveragePresented,
+/// };
+/// use majordomus_cli::evidence::TreeState;
+///
+/// let answer = EvidenceCoverageAnswer {
+///     presented: EvidenceCoveragePresented { commit: Some("c".repeat(40)), tree: TreeState::Clean, reason: None },
+///     source: ".ai/local/evidence/runs".into(),
+///     present: false,
+///     runs: 0,
+///     records: Vec::new(),
+///     unread: Vec::new(),
+/// };
+/// let json = serde_json::to_value(&answer).unwrap();
+/// assert_eq!(json["present"], false, "a source that does not exist says so");
+/// assert_eq!(json["records"], serde_json::json!([]));
+/// ```
+pub struct EvidenceCoverageAnswer {
+    /// The checkout every record is judged against.
+    pub presented: EvidenceCoveragePresented,
+    /// The file or directory read, repository-relative.
+    pub source: String,
+    /// Whether it exists. The default local run directory may not, before anything wrote it.
+    pub present: bool,
+    /// How many run records were read, with or without coverage.
+    pub runs: usize,
+    /// The coverage records, in the order of the files that carry them.
+    pub records: Vec<EvidenceCoverageRecord>,
+    /// The files of the source that are not run records.
+    pub unread: Vec<EvidenceCoverageUnread>,
+}
+
 // ---------------------------------------------------------------- handlers
 
 fn root_of(ctx: &Context) -> std::path::PathBuf {
@@ -552,25 +845,40 @@ fn report_at_commit(
     rev: &str,
     given: Option<TreeState>,
 ) -> Result<EvidenceReport, CapabilityError> {
+    let (ledger, held, presented) = committed(ctx, rev, given)?;
+    Ok(evidence::report_at(&ctx.index, &ledger, &presented, &held))
+}
+
+/// What a presented commit is judged from: the ledger it holds, the executions the working
+/// ledger holds that it does not, and the commit with its measured tree. One reading, shared
+/// by the claim report and the subject answer, so that the two cannot judge a commit apart.
+fn committed(
+    ctx: &Context,
+    rev: &str,
+    given: Option<TreeState>,
+) -> Result<(Ledger, Vec<Execution>, Presented), CapabilityError> {
     let root = root_of(ctx);
     let presented =
         freshness::presented_commit(&root, rev, given).map_err(CapabilityError::InvalidInput)?;
     let commit = presented.commit().unwrap_or_default().to_string();
     let ledger = freshness::ledger_at(&root, &commit).map_err(internal)?;
     let held = freshness::uncommitted(&root, &ledger).map_err(internal)?;
-    Ok(evidence::report_at(&ctx.index, &ledger, &presented, &held))
+    Ok((ledger, held, presented))
+}
+
+/// A tree state with no commit to weaken is refused rather than ignored.
+fn tree_without_commit() -> CapabilityError {
+    CapabilityError::InvalidInput(
+        "`presented_tree` weakens the measured tree of a presented commit, and no commit was \
+         presented: name one with `presented`"
+            .to_string(),
+    )
 }
 
 fn report(ctx: &Context, input: EvidenceReportInput) -> Result<EvidenceReport, CapabilityError> {
     let mut r = match (&input.presented, input.presented_tree) {
         (Some(rev), given) => report_at_commit(ctx, rev, given)?,
-        (None, Some(_)) => {
-            return Err(CapabilityError::InvalidInput(
-                "`presented_tree` weakens the measured tree of a presented commit, and no \
-                 commit was presented: name one with `presented`"
-                    .to_string(),
-            ))
-        }
+        (None, Some(_)) => return Err(tree_without_commit()),
         (None, None) => full_report(ctx)?,
     };
     // the tallies are taken before the filter: a filtered answer says how much of the
@@ -731,6 +1039,214 @@ fn stamp(ctx: &Context, input: EvidenceStampInput) -> Result<EvidenceProvenance,
     evidence::stamp(&root_of(ctx), &req).map_err(refused_or_internal)
 }
 
+/// One subject, judged by the subject index's own judge: at the working tree from the
+/// working ledger, or at a presented commit exactly as `evidence.report` reads it. An unknown
+/// key is a not-found that says where the keys are listed.
+fn subject_of(
+    ctx: &Context,
+    input: EvidenceSubjectInput,
+) -> Result<SubjectEvidence, CapabilityError> {
+    let (ledger, held, presented) = match (&input.presented, input.presented_tree) {
+        (Some(rev), given) => committed(ctx, rev, given)?,
+        (None, Some(_)) => return Err(tree_without_commit()),
+        (None, None) => (
+            Ledger::load(&root_of(ctx)).map_err(internal)?,
+            Vec::new(),
+            Presented::WorkingTree,
+        ),
+    };
+    subject::answer(
+        &ctx.index,
+        &ctx.product,
+        &ctx.registry,
+        &ledger,
+        &held,
+        &presented,
+        &input.subject,
+    )
+    .map_err(|unknown| CapabilityError::NotFound(format!("{unknown}; {LIST_SUBJECTS}")))
+}
+
+/// Every coverage record of the run records at the source, each judged against the
+/// checked-out commit and its measured tree.
+fn coverage(
+    ctx: &Context,
+    input: EvidenceCoverageInput,
+) -> Result<EvidenceCoverageAnswer, CapabilityError> {
+    let given = root_of(ctx);
+    // the root as the filesystem resolves it, so that a named source is compared with the
+    // same spelling of the checkout it must be inside
+    let root = given.canonicalize().unwrap_or(given);
+    let source = match &input.from {
+        Some(from) => inside(&root, from)?,
+        None => root.join(RUNS_DIR),
+    };
+    let presented = match freshness::presented_commit(&root, "HEAD", input.presented_tree) {
+        Ok(p) => EvidenceCoveragePresented {
+            commit: p.commit().map(str::to_string),
+            tree: p.tree(),
+            reason: None,
+        },
+        Err(reason) => EvidenceCoveragePresented {
+            commit: None,
+            tree: TreeState::Unknown,
+            reason: Some(reason),
+        },
+    };
+    let mut answer = EvidenceCoverageAnswer {
+        source: relative(&root, &source),
+        present: source.exists(),
+        presented,
+        runs: 0,
+        records: Vec::new(),
+        unread: Vec::new(),
+    };
+    for file in run_files(&source) {
+        let name = relative(&root, &file);
+        let run = match read_run(&file) {
+            Ok(run) => run,
+            Err(reason) => {
+                answer
+                    .unread
+                    .push(EvidenceCoverageUnread { file: name, reason });
+                continue;
+            }
+        };
+        answer.runs += 1;
+        let Some(coverage) = run.coverage else {
+            continue;
+        };
+        let (state, reason) = coverage_state(&coverage, &answer.presented);
+        answer.records.push(EvidenceCoverageRecord {
+            run: run.id,
+            origin: run.origin,
+            recorded_at: run.recorded_at,
+            file: name,
+            state,
+            reason,
+            below_floor: coverage
+                .below_floor()
+                .into_iter()
+                .map(str::to_string)
+                .collect(),
+            coverage,
+        });
+    }
+    Ok(answer)
+}
+
+/// The source a caller named, resolved inside the checkout `root` (already canonical). A
+/// path that does not exist is a not-found; one that resolves outside the checkout, through
+/// `..`, an absolute path or a link, is refused, because a network client must not choose a
+/// file outside the repository for this executable to read.
+fn inside(root: &std::path::Path, from: &str) -> Result<std::path::PathBuf, CapabilityError> {
+    let real = root
+        .join(from)
+        .canonicalize()
+        .map_err(|e| CapabilityError::NotFound(format!("`{from}` cannot be read: {e}")))?;
+    if !real.starts_with(root) {
+        return Err(CapabilityError::Refused(format!(
+            "`{from}` is outside the repository: run records are read only from inside the \
+             checkout, because a network client must not choose a file outside it for this \
+             executable to read; copy a CI evidence artifact under {RUNS_DIR} first"
+        )));
+    }
+    Ok(real)
+}
+
+/// The files a source holds: itself when it is a file, else its `*.json` files in the
+/// canonical order of their paths, not descending into subdirectories. A source that does
+/// not exist holds none.
+fn run_files(source: &std::path::Path) -> Vec<std::path::PathBuf> {
+    if source.is_file() {
+        return vec![source.to_path_buf()];
+    }
+    let mut paths: Vec<String> = std::fs::read_dir(source)
+        .into_iter()
+        .flatten()
+        .flatten()
+        .map(|e| e.path())
+        .filter(|p| p.is_file() && p.extension().is_some_and(|x| x == "json"))
+        .map(|p| p.to_string_lossy().into_owned())
+        .collect();
+    crate::order::canonical_strings(&mut paths);
+    paths.into_iter().map(std::path::PathBuf::from).collect()
+}
+
+/// One run record: a document `evidence record --run-record` wrote, or the recording's own
+/// answer that carries one under `run_record`, as a CI evidence artifact's `record.json` is.
+/// Anything else is named with the reason it is not one.
+fn read_run(file: &std::path::Path) -> Result<EvidenceRunRecord, String> {
+    let text = std::fs::read_to_string(file).map_err(|e| format!("cannot be read: {e}"))?;
+    let doc: serde_json::Value =
+        serde_json::from_str(&text).map_err(|e| format!("not JSON: {e}"))?;
+    let doc = doc.get("run_record").cloned().unwrap_or(doc);
+    let run: EvidenceRunRecord =
+        serde_json::from_value(doc).map_err(|e| format!("not a run record: {e}"))?;
+    if run.schema != RUN_RECORD_SCHEMA {
+        return Err(format!(
+            "a run record of schema {}, which this reader does not read (schema \
+             {RUN_RECORD_SCHEMA})",
+            run.schema
+        ));
+    }
+    Ok(run)
+}
+
+/// A path as the answer prints it: relative to the checkout when it is inside it.
+fn relative(root: &std::path::Path, path: &std::path::Path) -> String {
+    path.strip_prefix(root)
+        .unwrap_or(path)
+        .to_string_lossy()
+        .into_owned()
+}
+
+/// Whether one coverage record describes the presented checkout, and why: current only for
+/// its own commit, measured clean, with the presented tree clean (ADR 0087, decision 12).
+fn coverage_state(
+    coverage: &EvidenceCoverage,
+    presented: &EvidenceCoveragePresented,
+) -> (EvidenceCoverageState, String) {
+    let twelve = |c: &str| c.chars().take(12).collect::<String>();
+    let Some(commit) = presented.commit.as_deref() else {
+        return (
+            EvidenceCoverageState::Stale,
+            format!(
+                "no commit is presented ({}), so no measurement can describe it",
+                presented.reason.as_deref().unwrap_or("git named none")
+            ),
+        );
+    };
+    if coverage.is_current_for(commit, presented.tree) {
+        return (
+            EvidenceCoverageState::Current,
+            format!(
+                "measured at the presented commit {} on a clean tree, and the presented tree \
+                 is clean",
+                twelve(commit)
+            ),
+        );
+    }
+    let mut why = Vec::new();
+    if coverage.commit.as_str() != commit {
+        why.push(format!(
+            "measured at {}, not at the presented commit {}",
+            twelve(coverage.commit.as_str()),
+            twelve(commit)
+        ));
+    }
+    if coverage.working_tree != TreeState::Clean {
+        why.push(format!(
+            "its own run measured its tree as {}",
+            coverage.working_tree.as_str()
+        ));
+    }
+    if presented.tree != TreeState::Clean {
+        why.push(format!("the presented tree is {}", presented.tree.as_str()));
+    }
+    (EvidenceCoverageState::Stale, why.join("; "))
+}
+
 // ---------------------------------------------------------------- the module
 
 /// The `evidence` module: claims joined to the runs recorded against them.
@@ -864,6 +1380,38 @@ pub fn module() -> ModuleDescriptor {
                 benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::ExternalDependency },
                 handler: stamp,
             },
+            capability! {
+                id: "evidence.subject",
+                title: "What proves this subject",
+                description: "One subject of the evidence index — a claim, a rule, a feature, a command, a capability, an MCP tool or a use case, named <kind>:<id> — judged at the presented revision: the working tree by default, or the checked-out commit as committed, read from the ledger that commit holds exactly as evidence.report reads it. Its verdict is the one aggregation over its own routes and its members' own verdicts: a failing part makes it failing, otherwise the weakest part that can carry proof decides, and the totals by state are always beside it. Each route carries its state, the execution behind it and the command that runs it again; each member carries its own verdict; a rule's paths no runner drives are listed as mechanisms, and the subject's advisory findings sit beside the verdict. A key the index does not hold is a not-found that says where the keys are listed, never an empty verdict. Kept per checkout state, never longer.",
+                input: EvidenceSubjectInput,
+                output: SubjectEvidence,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_evidence_subject"),
+                    http: get("/api/v1/evidence/subject"),
+                    cli: Some(CliExposure { path: vec!["evidence".into(), "subject".into()] }),
+                },
+                tags: ["evidence", "subjects", "verification", "provenance"],
+                cache: CachePolicy::Checkout { max_entries: 32 },
+                handler: subject_of,
+            },
+            capability! {
+                id: "evidence.coverage",
+                title: "The coverage the run records carry",
+                description: "Every coverage record carried by the run records read — from the local run directory .ai/local/evidence/runs by default, or from a run record or a directory of them (a CI evidence artifact) named inside the checkout — each shown with its run, its own commit and tree, the floors recorded with it, and its state against the checked-out commit as measured: current only for its own commit, measured on a clean tree, with the checkout clean as well, and otherwise stale, with the reason. Coverage is supporting evidence and decides no verdict. A file of the source that is not a run record is listed with the reason rather than skipped, and a run record without coverage is counted. A source outside the checkout is refused, because a network client must not choose a file outside it for this executable to read.",
+                input: EvidenceCoverageInput,
+                output: EvidenceCoverageAnswer,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_evidence_coverage"),
+                    http: get("/api/v1/evidence/coverage"),
+                    cli: Some(CliExposure { path: vec!["evidence".into(), "coverage".into()] }),
+                },
+                tags: ["evidence", "coverage", "verification", "provenance"],
+                cache: CachePolicy::Disabled,
+                handler: coverage,
+            },
         ],
     }
 }
@@ -905,6 +1453,18 @@ mod tests {
             ),
             ("evidence.record", None, None, &["evidence", "record"]),
             ("evidence.stamp", None, None, &["evidence", "stamp"]),
+            (
+                "evidence.subject",
+                Some("majordomus_evidence_subject"),
+                Some("/api/v1/evidence/subject"),
+                &["evidence", "subject"],
+            ),
+            (
+                "evidence.coverage",
+                Some("majordomus_evidence_coverage"),
+                Some("/api/v1/evidence/coverage"),
+                &["evidence", "coverage"],
+            ),
         ];
         let ids: Vec<&str> = m
             .capabilities
@@ -1155,5 +1715,303 @@ mod tests {
         git(&["add", "-A"]);
         git(&["commit", "-q", "-m", "an unreadable ledger"]);
         assert!(refused(at_head).contains(LEDGER_PATH));
+    }
+
+    /// The small repository, committed, with the local layer ignored as `init` ignores it;
+    /// returns the repository and its HEAD.
+    fn committed_repo() -> (crate::synthetic::SyntheticRepository, String) {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let git = |args: &[&str]| {
+            let out = std::process::Command::new("git")
+                .arg("-C")
+                .arg(repo.root())
+                .args(args)
+                .output()
+                .unwrap();
+            assert!(out.status.success(), "git {args:?}");
+            String::from_utf8_lossy(&out.stdout).trim().to_string()
+        };
+        std::fs::write(repo.root().join(".gitignore"), ".ai/local/\n").unwrap();
+        git(&["init", "-q"]);
+        git(&["config", "user.email", "t@example.com"]);
+        git(&["config", "user.name", "t"]);
+        git(&["add", "-A"]);
+        git(&["commit", "-q", "-m", "fixture"]);
+        let head = git(&["rev-parse", "HEAD"]);
+        (repo, head)
+    }
+
+    /// A run record measured at `commit` on `tree`, carrying a coverage measurement of
+    /// `coverage` (its commit and tree) when one is given.
+    fn run_record(
+        id: &str,
+        commit: &str,
+        tree: &str,
+        coverage: Option<(&str, &str)>,
+    ) -> serde_json::Value {
+        let one = serde_json::json!({ "covered": 1, "total": 2, "percent": 50.0 });
+        let dims = serde_json::json!({ "lines": one, "functions": one, "regions": one });
+        let mut run = serde_json::json!({
+            "schema": 1, "id": id, "origin": "local", "commit": commit,
+            "working_tree": tree, "recorded_at": "2026-10-22T12:00:00Z", "ledger": "local"
+        });
+        if let Some((at, measured)) = coverage {
+            run["coverage"] = serde_json::json!({
+                "commit": at, "working_tree": measured, "measurement": "scripts/rust-coverage",
+                "test_code": "excluded", "crate": dims,
+                "domain": { "lines": one, "functions": one, "regions": one,
+                            "files": [], "missing": [] },
+                "files": {}, "floors": { "crate_lines": 90.0 }
+            });
+        }
+        run
+    }
+
+    /// Every subject kind answers through the subject index's own judge, an unknown key is a
+    /// not-found that says where the keys are, and a tree state with no commit is refused.
+    #[test]
+    fn a_subject_answers_through_the_index_and_an_unknown_one_is_not_found() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let ctx = repo.context().unwrap();
+        let ask = |input: serde_json::Value| ctx.execute("evidence.subject", input);
+
+        let v = ask(serde_json::json!({ "subject": "capability:evidence.subject" })).unwrap();
+        assert_eq!(v["kind"], "capability", "{v}");
+        assert_eq!(v["presented"]["revision"], "working_tree");
+        assert!(v["totals"].is_object() && v["members"].is_array(), "{v}");
+        let tool =
+            ask(serde_json::json!({ "subject": "mcp:majordomus_evidence_subject" })).unwrap();
+        assert_eq!(tool["members"][0]["subject"], "capability:evidence.subject");
+
+        match ask(serde_json::json!({ "subject": "feature:no-such" })) {
+            Err(CapabilityError::NotFound(m)) => {
+                assert!(m.contains("`feature:no-such` is not a subject"), "{m}");
+                assert!(m.contains("evidence-subjects.json"), "{m}");
+            }
+            other => panic!("an unknown subject was answered: {other:?}"),
+        }
+        match ask(serde_json::json!({ "subject": "claim:x", "presented_tree": "dirty" })) {
+            Err(CapabilityError::InvalidInput(m)) => assert!(m.contains("presented"), "{m}"),
+            other => panic!("a tree state with no commit was accepted: {other:?}"),
+        }
+        // the benchmark repository is not a git repository, so no revision resolves there
+        match ask(serde_json::json!({ "subject": "claim:x", "presented": "HEAD" })) {
+            Err(CapabilityError::InvalidInput(m)) => assert!(m.contains("HEAD"), "{m}"),
+            other => panic!("a revision that names nothing was judged: {other:?}"),
+        }
+    }
+
+    /// At a presented commit a subject is judged as the claim report judges it: the revision
+    /// is the commit, and a dirty tree the caller knows of weakens the measured one.
+    #[test]
+    fn a_subject_is_judged_at_a_presented_commit_as_the_report_is() {
+        let (repo, head) = committed_repo();
+        let ctx = repo.context().unwrap();
+        let key = SubjectKind::Capability.key("evidence.report");
+        let v = ctx
+            .execute(
+                "evidence.subject",
+                serde_json::json!({ "subject": key, "presented": "HEAD", "presented_tree": "dirty" }),
+            )
+            .unwrap();
+        assert_eq!(v["presented"]["revision"], head.as_str(), "{v}");
+        assert_eq!(v["presented"]["tree"], "dirty", "{v}");
+        let report = ctx
+            .execute(
+                "evidence.report",
+                serde_json::json!({ "presented": "HEAD", "presented_tree": "dirty" }),
+            )
+            .unwrap();
+        assert_eq!(v["presented"], report["presented"]);
+    }
+
+    /// Coverage is current only for its own commit measured clean with the checkout clean;
+    /// a record without coverage is counted, and a file that is not a run record is named.
+    #[test]
+    fn coverage_is_current_only_for_its_own_commit_on_a_clean_tree() {
+        let (repo, head) = committed_repo();
+        let other = "f".repeat(40);
+        let runs = repo.root().join(RUNS_DIR);
+        std::fs::create_dir_all(&runs).unwrap();
+        let write = |name: &str, v: &serde_json::Value| {
+            std::fs::write(runs.join(name), serde_json::to_string(v).unwrap()).unwrap()
+        };
+        write(
+            "a-current.json",
+            &run_record("r-a", &head, "clean", Some((head.as_str(), "clean"))),
+        );
+        write(
+            "b-other.json",
+            &run_record("r-b", &other, "clean", Some((other.as_str(), "clean"))),
+        );
+        write(
+            "c-dirty.json",
+            &run_record("r-c", &head, "dirty", Some((head.as_str(), "dirty"))),
+        );
+        write("d-bare.json", &run_record("r-d", &head, "clean", None));
+        // a CI artifact's record.json carries the run record under `run_record`
+        write(
+            "e-recording.json",
+            &serde_json::json!({ "recorded": 0,
+                "run_record": run_record("r-e", &head, "clean", Some((head.as_str(), "unknown"))) }),
+        );
+        write(
+            "f-manifest.json",
+            &serde_json::json!({ "schema": 1, "commit": head }),
+        );
+        let mut later = run_record("r-g", &head, "clean", None);
+        later["schema"] = serde_json::json!(2);
+        write("g-later.json", &later);
+        std::fs::write(runs.join("h-broken.json"), "{").unwrap();
+        std::fs::write(runs.join("notes.txt"), "not read").unwrap();
+        let ctx = repo.context().unwrap();
+
+        let v = ctx
+            .execute("evidence.coverage", serde_json::json!({}))
+            .unwrap();
+        assert_eq!(v["source"], RUNS_DIR, "{v}");
+        assert_eq!(v["present"], true);
+        assert_eq!(v["presented"]["commit"], head.as_str());
+        assert_eq!(v["presented"]["tree"], "clean");
+        assert_eq!(v["runs"], 5, "four with coverage and one without: {v}");
+        let states: Vec<(&str, &str)> = v["records"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|r| (r["run"].as_str().unwrap(), r["state"].as_str().unwrap()))
+            .collect();
+        assert_eq!(
+            states,
+            [
+                ("r-a", "current"),
+                ("r-b", "stale"),
+                ("r-c", "stale"),
+                ("r-e", "stale")
+            ]
+        );
+        let reason = |i: usize| v["records"][i]["reason"].as_str().unwrap().to_string();
+        assert!(reason(1).contains("not at the presented commit"), "{v}");
+        assert!(reason(2).contains("measured its tree as dirty"), "{v}");
+        assert!(reason(3).contains("measured its tree as unknown"), "{v}");
+        assert_eq!(v["records"][0]["below_floor"], serde_json::json!(["crate"]));
+        assert_eq!(
+            v["records"][0]["file"],
+            format!("{RUNS_DIR}/a-current.json")
+        );
+        let unread: Vec<&str> = v["unread"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|u| u["file"].as_str().unwrap())
+            .collect();
+        assert_eq!(
+            unread,
+            [
+                format!("{RUNS_DIR}/f-manifest.json"),
+                format!("{RUNS_DIR}/g-later.json"),
+                format!("{RUNS_DIR}/h-broken.json"),
+            ]
+        );
+        assert!(v["unread"][1]["reason"]
+            .as_str()
+            .unwrap()
+            .contains("schema 2"));
+
+        // what the caller knows of the tree weakens it, and a checkout that is dirty is dirty
+        let weakened = ctx
+            .execute(
+                "evidence.coverage",
+                serde_json::json!({ "presented_tree": "dirty" }),
+            )
+            .unwrap();
+        assert_eq!(weakened["records"][0]["state"], "stale");
+        assert!(weakened["records"][0]["reason"]
+            .as_str()
+            .unwrap()
+            .contains("the presented tree is dirty"));
+        std::fs::write(repo.root().join("untracked.txt"), "x").unwrap();
+        let dirty = ctx
+            .execute("evidence.coverage", serde_json::json!({}))
+            .unwrap();
+        assert_eq!(dirty["presented"]["tree"], "dirty");
+        assert_eq!(dirty["records"][0]["state"], "stale");
+    }
+
+    /// A named source is read inside the checkout only: one file reads alone, a path that is
+    /// not there is a not-found, and a path outside the checkout is refused.
+    #[test]
+    fn a_named_source_is_read_inside_the_checkout_only() {
+        let (repo, head) = committed_repo();
+        let ctx = repo.context().unwrap();
+        let none = ctx
+            .execute("evidence.coverage", serde_json::json!({}))
+            .unwrap();
+        assert_eq!(none["present"], false, "nothing wrote the local runs yet");
+        assert_eq!(none["runs"], 0);
+
+        let dir = repo.root().join(".ai/local/ci");
+        std::fs::create_dir_all(&dir).unwrap();
+        let file = dir.join("record.json");
+        std::fs::write(
+            &file,
+            serde_json::to_string(&run_record(
+                "r",
+                &head,
+                "clean",
+                Some((head.as_str(), "clean")),
+            ))
+            .unwrap(),
+        )
+        .unwrap();
+        for from in [
+            ".ai/local/ci/record.json".to_string(),
+            file.display().to_string(),
+        ] {
+            let v = ctx
+                .execute("evidence.coverage", serde_json::json!({ "from": from }))
+                .unwrap();
+            assert_eq!(v["source"], ".ai/local/ci/record.json", "{v}");
+            assert_eq!(v["records"][0]["state"], "current", "{v}");
+        }
+        match ctx.execute(
+            "evidence.coverage",
+            serde_json::json!({ "from": "no/such/run.json" }),
+        ) {
+            Err(CapabilityError::NotFound(m)) => assert!(m.contains("no/such/run.json"), "{m}"),
+            other => panic!("a source that is not there was read: {other:?}"),
+        }
+        let outside = tempfile::tempdir().unwrap();
+        for from in [outside.path().display().to_string(), "..".to_string()] {
+            match ctx.execute("evidence.coverage", serde_json::json!({ "from": from })) {
+                Err(CapabilityError::Refused(m)) => assert!(m.contains("outside"), "{m}"),
+                other => panic!("a source outside the checkout was read: {other:?}"),
+            }
+        }
+    }
+
+    /// Without a commit to present, no coverage is current, and the answer says why.
+    #[test]
+    fn coverage_without_a_commit_is_never_current() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let runs = repo.root().join(RUNS_DIR);
+        std::fs::create_dir_all(&runs).unwrap();
+        let c = "c".repeat(40);
+        std::fs::write(
+            runs.join("one.json"),
+            serde_json::to_string(&run_record("r", &c, "clean", Some((c.as_str(), "clean"))))
+                .unwrap(),
+        )
+        .unwrap();
+        let ctx = repo.context().unwrap();
+        let v = ctx
+            .execute("evidence.coverage", serde_json::json!({}))
+            .unwrap();
+        assert!(v["presented"]["commit"].is_null(), "{v}");
+        assert_eq!(v["presented"]["tree"], "unknown");
+        assert_eq!(v["records"][0]["state"], "stale");
+        assert!(v["records"][0]["reason"]
+            .as_str()
+            .unwrap()
+            .contains("no commit is presented"));
     }
 }
