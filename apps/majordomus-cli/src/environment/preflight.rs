@@ -60,7 +60,7 @@ use crate::capability::builtin::server::{standing_of, ServerStanding};
 use crate::evidence::Ledger;
 use crate::lease::{self, LeaseFile};
 use crate::policy::LoadedPolicy;
-use crate::rules::{RuleState, RulesReport};
+use crate::rules::{RuleState, RulesReport, RulesVerdict};
 
 use super::cache::{Cache, Entry};
 use super::{ProjectionState, RepositoryEnvironment, Resolution};
@@ -595,6 +595,11 @@ pub struct RulesTally {
     pub unproven: usize,
     /// Rules whose class their proof does not support.
     pub findings: usize,
+    /// The rules corpus verdict the report gave, `rules report`'s own (I1965): the
+    /// enforcement check is verified only when it is proven. Absent in a tally cached before
+    /// it was carried, which then verifies nothing.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub verdict: Option<RulesVerdict>,
 }
 
 impl RulesTally {
@@ -628,6 +633,7 @@ impl RulesTally {
             reviewed: count(RuleState::Reviewed),
             unproven: count(RuleState::Unproven),
             findings: report.findings.len(),
+            verdict: Some(report.verdict),
         }
     }
 }
@@ -720,12 +726,16 @@ pub enum LedgerObservation {
     Unreadable(String),
     /// The ledger, joined to HEAD.
     Read {
-        /// Recorded executions.
+        /// Recorded executions: the latest run of each test.
         total: usize,
-        /// Of those, made at HEAD on a clean tree, whose test still hashes as recorded.
+        /// Of those, proven at this tree by the freshness function `evidence show` judges
+        /// with (I1965): a pass recorded on a commit HEAD contains, on a clean tree, whose
+        /// test and its inputs are unchanged since.
         current: usize,
-        /// Of the current ones, those that did not pass.
+        /// Of those, a recorded failure, timeout or error, whatever commit it ran on.
         current_failing: usize,
+        /// Of those, a test that declined to run: a skip, which is not run, never a failure.
+        not_run: usize,
         /// The commit of the newest execution.
         newest_commit: String,
         /// When the newest execution was recorded.
@@ -1750,6 +1760,7 @@ fn tests_check(o: &Observations) -> Check {
             total,
             current,
             current_failing,
+            not_run,
             newest_commit,
             newest_at,
         } => {
@@ -1766,7 +1777,7 @@ fn tests_check(o: &Observations) -> Check {
                     "tests",
                     Verdict::Failed,
                     format!(
-                        "{current_failing} of the {current} run(s) recorded at HEAD did not pass"
+                        "{current_failing} of {total} test(s) failed in their latest recorded run"
                     ),
                     evidence,
                 )
@@ -1776,9 +1787,7 @@ fn tests_check(o: &Observations) -> Check {
                     "verification.tests",
                     "tests",
                     Verdict::Verified,
-                    format!(
-                        "all {total} recorded run(s) were made at HEAD on a clean tree and passed"
-                    ),
+                    format!("all {total} recorded test(s) are proven at this tree"),
                     evidence,
                 )
             } else {
@@ -1787,7 +1796,7 @@ fn tests_check(o: &Observations) -> Check {
                     "tests",
                     Verdict::Stale,
                     format!(
-                        "{current} of {total} recorded run(s) measured this tree; the rest prove another commit, a changed tree or a changed test"
+                        "{current} of {total} recorded test(s) are proven at this tree · {not_run} not run (a skip is not a failure); the rest prove another commit, a changed tree or a changed test"
                     ),
                     evidence,
                 )
@@ -1964,7 +1973,9 @@ fn enforcement_check(o: &Observations, head: Option<&str>, clean: Option<bool>) 
             format!("no rule owes an executable proof · {summary}"),
             evidence,
         )
-    } else if t.proven == owed && t.findings == 0 {
+    } else if t.verdict == Some(RulesVerdict::Proven) {
+        // the corpus verdict `rules report` gives, not a recount of its states: a blocking
+        // rule that is only inputs_unchanged leaves the corpus unproven (I1965)
         Check::new(
             "verification.enforcement",
             "enforcement",
@@ -2588,19 +2599,25 @@ fn observe_ledger(
         Ok(l) => l,
         Err(e) => return LedgerObservation::Unreadable(e.to_string()),
     };
-    // What `evidence.report` calls proven, decided by its own comparison: the tree in front
-    // of you is byte for byte the tree the run measured, the ledger's own row excluded —
-    // recording dirties the tree and committing the record moves HEAD, so without that
-    // exclusion no run could ever be current. One comparison per distinct recorded commit,
-    // two git processes each — which is most of what entry would otherwise cost, so the
-    // answers are cached under everything they depend on: HEAD, every path git reports
-    // changed, and the ledger file.
+    // What `evidence show` calls proven, decided by the one freshness function it judges
+    // with (I1965): HEAD contains the recorded commit, and the tree in front of you is byte
+    // for byte the tree the run measured, the ledger's own row excluded — recording dirties
+    // the tree and committing the record moves HEAD, so without that exclusion no run could
+    // ever be current. One comparison per distinct recorded commit (a containment test and a
+    // diff), which is most of what entry would otherwise cost, so the answer — contained and
+    // unchanged, or not — is cached under everything it depends on: HEAD, every path git
+    // reports changed, the ledger file, and the meaning of the answer itself, so an answer
+    // cached before containment was asked misses.
     // Every changed path is stat'ed, not only named: an edit to a path already changed keeps
     // the set of names and moves the file's size or modification time.
     let fingerprint = tree.map(|t| {
         let mut paths = t.changed_paths.clone();
         paths.push(crate::evidence::ledger::LEDGER_PATH.to_string());
-        super::cache::fingerprint_of(root, &paths, &[t.head.as_deref().unwrap_or("")])
+        super::cache::fingerprint_of(
+            root,
+            &paths,
+            &[t.head.as_deref().unwrap_or(""), "contained-and-unchanged"],
+        )
     });
     let cache = use_cache.then(|| Cache::load(root, local));
     let cached = match (&cache, &fingerprint) {
@@ -2618,11 +2635,17 @@ fn observe_ledger(
             let mut answers: BTreeMap<String, bool> = BTreeMap::new();
             for e in &ledger.executions {
                 answers.entry(e.commit.clone()).or_insert_with(|| {
-                    crate::evidence::changed_since(root, &e.commit).is_some_and(|changed| {
-                        changed
-                            .iter()
-                            .all(|p| p == crate::evidence::ledger::LEDGER_PATH)
-                    })
+                    let c = crate::evidence::compare(
+                        root,
+                        &e.commit,
+                        &crate::evidence::Presented::WorkingTree,
+                    );
+                    c.containment == crate::git::Containment::Contains
+                        && c.changed.is_some_and(|changed| {
+                            changed
+                                .iter()
+                                .all(|p| p == crate::evidence::ledger::LEDGER_PATH)
+                        })
                 });
             }
             if let (true, Some(f)) = (use_cache, fingerprint) {
@@ -2638,20 +2661,43 @@ fn observe_ledger(
             answers
         }
     };
-    let current: Vec<_> = ledger
-        .executions
-        .iter()
-        .filter(|e| {
-            e.working_tree == "clean"
-                && unchanged.get(e.commit.as_str()) == Some(&true)
-                && e.digest_matches(root) == Some(true)
-        })
-        .collect();
+    // Each test's latest run, judged by the truth table `evidence show` uses: a skip is not
+    // run, a failure is failing whatever commit it ran on, and only a proven pass is current.
+    let (mut current, mut current_failing, mut not_run) = (0, 0, 0);
+    for e in &ledger.executions {
+        let contained_and_unchanged = unchanged.get(e.commit.as_str()) == Some(&true);
+        let comparison = crate::evidence::Comparison {
+            containment: if contained_and_unchanged {
+                crate::git::Containment::Contains
+            } else {
+                crate::git::Containment::DoesNotContain
+            },
+            changed: Some(Default::default()),
+        };
+        // the test's own source is the input this route declares
+        let source = e.source.clone();
+        let moved = e.outcome.proves() && e.digest_matches(root) == Some(false);
+        let judgement = crate::evidence::freshness(
+            crate::evidence::Recorded::Ran(e),
+            Some(std::slice::from_ref(&source)),
+            &source,
+            moved,
+            Some(&comparison),
+            crate::evidence::TreeState::Clean,
+        );
+        match judgement.state {
+            crate::evidence::ProofState::Proven => current += 1,
+            crate::evidence::ProofState::Failing => current_failing += 1,
+            crate::evidence::ProofState::NotRun => not_run += 1,
+            _ => {}
+        }
+    }
     let newest = ledger.executions.iter().max_by(|a, b| a.at.cmp(&b.at));
     LedgerObservation::Read {
         total: ledger.executions.len(),
-        current: current.len(),
-        current_failing: current.iter().filter(|e| !e.outcome.proves()).count(),
+        current,
+        current_failing,
+        not_run,
         newest_commit: newest.map(|e| e.commit.clone()).unwrap_or_default(),
         newest_at: newest.map(|e| e.at.clone()).unwrap_or_default(),
     }
@@ -3147,6 +3193,7 @@ mod tests {
             working_tree: "clean".into(),
             rules: 2,
             proven: 2,
+            verdict: Some(RulesVerdict::Proven),
             ..Default::default()
         });
         for c in derive(&o).sections.iter().flat_map(|s| &s.checks) {
