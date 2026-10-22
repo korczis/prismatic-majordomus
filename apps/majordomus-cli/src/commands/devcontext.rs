@@ -61,6 +61,7 @@ fn request_of(r: &DevcontextRequest) -> Value {
         max_depth: r.max_depth,
         floor: r.floor,
         all_blocking_rules: r.all_blocking_rules.then_some(true),
+        source_ranges: r.source_ranges.then_some(true),
     };
     serde_json::to_value(input).unwrap_or(Value::Null)
 }
@@ -220,6 +221,53 @@ fn compiled_text(v: &Value) -> String {
         }
     }
 
+    let src = &v["sources"];
+    if src.is_object() {
+        let files = src["files"].as_array().cloned().unwrap_or_default();
+        let sum = |key: &str| -> u64 { files.iter().filter_map(|f| f[key].as_u64()).sum() };
+        o.push_str(&format!(
+            "\nSOURCES ({} file(s) outlined: {} token(s) whole, {} in selected ranges, {} saved)\n",
+            files.len(),
+            sum("whole_tokens"),
+            sum("selected_tokens"),
+            sum("saved_tokens")
+        ));
+        o.push_str(&format!("parser       {}\n", s(&src["parser"])));
+        for f in &files {
+            o.push_str(&format!(
+                "{:>6} -> {:>6}  {:>3} of {:>3} range(s)  {}  {}\n",
+                f["whole_tokens"],
+                f["selected_tokens"],
+                f["selected"],
+                f["definitions"],
+                s(&f["path"]),
+                short(s(&f["digest"]).trim_start_matches("sha256:"))
+            ));
+        }
+        for u in src["unread"].as_array().into_iter().flatten() {
+            o.push_str(&format!(
+                "unread       {}  — {}\n",
+                s(&u["path"]),
+                s(&u["reason"])
+            ));
+        }
+        if let Some(by) = src["unparsed"].as_object() {
+            let mut parts: Vec<String> = by.iter().map(|(ext, n)| format!("{ext} {n}")).collect();
+            parts.sort();
+            if !parts.is_empty() {
+                o.push_str(&format!(
+                    "unparsed     {} (no parser here; no ranges)\n",
+                    parts.join(", ")
+                ));
+            }
+        }
+        if let Some(n) = src["truncated"].as_u64() {
+            o.push_str(&format!(
+                "truncated    {n} file(s) past the per-request bound, not read\n"
+            ));
+        }
+    }
+
     let commits = git["commits"].as_array().cloned().unwrap_or_default();
     if !commits.is_empty() {
         o.push_str(&format!("\nCOMMITS THE LAYER NAMES ({})\n", commits.len()));
@@ -373,6 +421,7 @@ mod tests {
             max_depth: None,
             floor: None,
             all_blocking_rules: false,
+            source_ranges: false,
         };
         let v = request_of(&r);
         assert_eq!(v["issue"], "I0001");
@@ -382,5 +431,6 @@ mod tests {
         // executor's cache key is the canonical form
         assert!(v.get("milestone").is_none());
         assert!(v.get("all_blocking_rules").is_none());
+        assert!(v.get("source_ranges").is_none());
     }
 }

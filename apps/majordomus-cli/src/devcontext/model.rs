@@ -1084,6 +1084,130 @@ pub struct CompiledContext {
     /// hold, a session record that no longer describes this checkout. Never an error: an
     /// absent source is an answer.
     pub diagnostics: Vec<crate::model::Diagnostic>,
+    /// The source files the request's paths reach, outlined into ranges: what each whole
+    /// file would cost, what its selected ranges cost instead, and what was not read and
+    /// why. Absent when the request reaches no tracked source, so an answer about the layer
+    /// alone is unchanged.
+    #[serde(default, skip_serializing_if = "SourceCoverage::is_empty")]
+    pub sources: SourceCoverage,
+}
+
+/// What the compiler read of the source under a request's paths, and what that saved.
+///
+/// The index [`fingerprint`](CompiledContext::fingerprint) covers the layer's objects, not
+/// the source files the ranges come from, so each file carries the digest of the bytes
+/// that were parsed: a range is true of those bytes, which may be a dirty work tree's
+/// rather than any commit's, and two answers agree about a file exactly when its digests
+/// do.
+///
+/// Every number here is an estimate in the same unit as the budget ([`BYTES_PER_TOKEN`]),
+/// and the saving is measured against reading each outlined file whole — the reading this
+/// replaces — not against an ideal reader.
+///
+/// ```
+/// use majordomus_cli::devcontext::{SourceCoverage, SourceFile};
+///
+/// let file = SourceFile {
+///     path: "src/big.rs".into(),
+///     digest: "sha256:00".into(),
+///     bytes: 40_000,
+///     whole_tokens: 10_000,
+///     definitions: 120,
+///     truncated: 0,
+///     selected: 3,
+///     selected_tokens: 900,
+///     saved_tokens: 9_100,
+/// };
+/// let c = SourceCoverage { files: vec![file], ..Default::default() };
+/// assert!(!c.is_empty());
+/// assert_eq!(c.whole_tokens(), 10_000);
+/// assert_eq!(c.selected_tokens(), 900);
+/// assert_eq!(c.saved_tokens(), 9_100);
+///
+/// // an answer that read no source has no coverage section at all
+/// assert!(SourceCoverage::default().is_empty());
+/// ```
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize, JsonSchema)]
+pub struct SourceCoverage {
+    /// What parsed the files, and what that parser does not see.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub parser: String,
+    /// The files outlined, in path order.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub files: Vec<SourceFile>,
+    /// Source the paths reach and the compiler did not outline, with the reason: out of
+    /// the repository scope, a symbolic link, over the size bound, not valid syntax.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub unread: Vec<UnreadSource>,
+    /// Tracked files under the paths that no parser here covers, counted by extension.
+    /// These have no ranges; an empty outline for them would read as complete.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub unparsed: BTreeMap<String, usize>,
+    /// Source files past the per-request bound, counted and not read.
+    #[serde(default, skip_serializing_if = "is_zero")]
+    pub truncated: usize,
+}
+
+fn is_zero(n: &usize) -> bool {
+    *n == 0
+}
+
+impl SourceCoverage {
+    /// Whether the request reached no tracked file at all.
+    pub fn is_empty(&self) -> bool {
+        self.files.is_empty()
+            && self.unread.is_empty()
+            && self.unparsed.is_empty()
+            && self.truncated == 0
+    }
+
+    /// What reading every outlined file whole would cost.
+    pub fn whole_tokens(&self) -> u64 {
+        self.files.iter().map(|f| f.whole_tokens).sum()
+    }
+
+    /// What the selected ranges of those files cost.
+    pub fn selected_tokens(&self) -> u64 {
+        self.files.iter().map(|f| f.selected_tokens).sum()
+    }
+
+    /// The difference: what the ranges saved against whole-file reading.
+    pub fn saved_tokens(&self) -> u64 {
+        self.files.iter().map(|f| f.saved_tokens).sum()
+    }
+}
+
+/// One source file the compiler outlined.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct SourceFile {
+    /// Repository-relative.
+    pub path: String,
+    /// `sha256:<hex>` of the bytes parsed.
+    pub digest: String,
+    /// Its size.
+    pub bytes: u64,
+    /// What reading it whole costs, in estimated tokens.
+    pub whole_tokens: u64,
+    /// How many definitions the parser found in it.
+    pub definitions: usize,
+    /// Definitions past the per-file bound, not offered.
+    pub truncated: usize,
+    /// How many of its ranges the budget selected.
+    pub selected: usize,
+    /// What those ranges cost, in estimated tokens.
+    pub selected_tokens: u64,
+    /// `whole_tokens - selected_tokens`: what reading the selected ranges instead of the
+    /// file saves. Zero when the ranges cost as much as the file.
+    pub saved_tokens: u64,
+}
+
+/// A source file reached and not outlined.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct UnreadSource {
+    /// Repository-relative.
+    pub path: String,
+    /// Which guard refused it, or what the parser said.
+    pub reason: String,
 }
 
 /// Bytes of a file per estimated token. Four is the working figure for English prose and
