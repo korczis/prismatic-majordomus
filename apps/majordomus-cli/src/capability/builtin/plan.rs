@@ -269,6 +269,11 @@ pub struct PlanRoadmap {
     #[serde(skip_serializing_if = "Option::is_none")]
     /// The one after it, blocked or not.
     pub next: Option<String>,
+    /// The same milestones in the horizons their status derives, the releases that shipped
+    /// their work, the pace each one is measured at and what the committed facts disagree
+    /// about (ADR 0125). Served, it includes the work since the last release; the site's
+    /// committed copy is built from the published releases alone.
+    pub inferred: crate::roadmap::Roadmap,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -462,7 +467,55 @@ fn plan_roadmap(ctx: &Context, _: Empty) -> Result<PlanRoadmap, CapabilityError>
         milestones: ordered,
         now,
         next,
+        inferred: inferred(ctx, &plan, false)?,
     })
+}
+
+/// The roadmap inferred from `plan`, the changelog and the intents (ADR 0125).
+///
+/// `published_only` leaves out the work since the last release, which no committed file can
+/// carry without going stale at the next commit: the site's copy asks for it, the served
+/// capability does not.
+pub(crate) fn inferred(
+    ctx: &Context,
+    plan: &Plan,
+    published_only: bool,
+) -> Result<crate::roadmap::Roadmap, CapabilityError> {
+    let root = Path::new(&ctx.index.repository.root);
+    let log = if published_only {
+        crate::release::compose_published(root, &ctx.index.objects)
+    } else {
+        crate::release::compose(root, &ctx.index.objects)
+    };
+    let listed = ctx.execute("intents.list", serde_json::json!({}))?;
+    let intents: Vec<crate::roadmap::IntentRef> = listed["intents"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .map(|i| {
+            let words = |v: &serde_json::Value| v.as_str().unwrap_or_default().to_string();
+            let count = |v: &serde_json::Value| v.as_array().map_or(0, |a| a.len()) as u32;
+            crate::roadmap::IntentRef {
+                id: words(&i["id"]),
+                title: words(&i["title"]),
+                stage: words(&i["stage"]),
+                met: i["met"].as_u64().unwrap_or_default() as u32,
+                criteria: count(&i["satisfaction"]),
+                milestones: i["milestones"]
+                    .as_array()
+                    .into_iter()
+                    .flatten()
+                    .map(|m| words(&m["id"]))
+                    .collect(),
+            }
+        })
+        .collect();
+    Ok(crate::roadmap::infer(
+        plan,
+        &log.sections,
+        &intents,
+        &log.current,
+    ))
 }
 
 fn plan_validate(ctx: &Context, _: Empty) -> Result<PlanValidation, CapabilityError> {
@@ -1017,6 +1070,27 @@ mod tests {
 
     /// "Nothing is ready" and "there is nothing" are different answers: a plan with no
     /// issue says it declares none, and a plan whose every issue is taken says none is READY.
+    #[test]
+    fn the_roadmap_carries_its_inference_and_the_intents_its_milestones_realise() {
+        let repo = crate::intent_binding::tests::planned();
+        let roadmap = plan_roadmap(&repo.context().unwrap(), Empty::default()).unwrap();
+        let inferred = &roadmap.inferred;
+        assert_eq!(inferred.schema, crate::roadmap::SCHEMA);
+        assert_eq!(inferred.horizons.len(), 4);
+        // the intent `x` is realised by milestone `m`, and the roadmap says so on both sides
+        let x = inferred.intents.iter().find(|i| i.id == "x").unwrap();
+        assert_eq!(x.milestones, ["m"]);
+        assert_eq!(x.criteria, 1);
+        assert_eq!(x.title, "The x is true");
+        let m = inferred
+            .horizons
+            .iter()
+            .flat_map(|h| &h.milestones)
+            .find(|m| m.id == "m")
+            .unwrap();
+        assert_eq!(m.intents, ["x"]);
+    }
+
     #[test]
     fn nothing_ready_is_not_nothing_declared() {
         let repo = crate::synthetic::SyntheticRepository::small().expect("a repository");

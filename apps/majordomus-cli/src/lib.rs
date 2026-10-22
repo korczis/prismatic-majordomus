@@ -75,6 +75,7 @@ pub mod reasoning;
 pub mod redaction;
 pub mod release;
 pub mod repository;
+pub mod roadmap;
 pub mod rules;
 pub mod scope;
 pub mod served;

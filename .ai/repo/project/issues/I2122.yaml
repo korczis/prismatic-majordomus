@@ -1,0 +1,28 @@
+id: I2122
+milestone: public-proof
+title: The README roadmap doctrine stops comparing versions no milestone carries
+slug: the-readme-roadmap-doctrine-retires-versions
+priority: p3
+profile: implementation
+parallel_safe: true
+objective: "Retire the doctor's comparison between a README roadmap table and the milestone versions, now that a milestone carries no version (ADR 0125). A README that lists versions under its roadmap section becomes a second authority, and it is reported as one."
+why: "mj_validate_roadmap holds a README version table to the milestones' `version` fields. Those fields are no longer read, and this repository's records no longer carry them, so the check holds only for adopters that still declare versions. It should say what ADR 0125 says instead."
+current_state: "lib/doctor.sh compares README versions with milestone versions in both directions. Case 49 covers that comparison."
+desired_state: "A README roadmap section that lists versions fails the doctrine as a second authority, whatever the milestones declare, and case 49 covers the new refusal."
+scope:
+  - lib/doctor.sh
+  - test/cases/49_roadmap_doctrine.sh
+  - docs/ROADMAP.md
+non_scope:
+  - Removing the `version` key from the milestone schema
+depends_on:
+  - I2121
+acceptance_criteria:
+  - a README roadmap section that lists a version fails the roadmap doctrine whatever the milestones declare
+  - a README roadmap section that points at the projection passes
+validation:
+  - bash test/run.sh 49_roadmap_doctrine
+evidence_required:
+  - doctrine_retired
+created_at: 2026-10-09
+updated_at: 2026-10-09

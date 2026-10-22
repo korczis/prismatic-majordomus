@@ -1,70 +1,165 @@
 {% extends "page.html" %}
 {% block body %}
-{%- set roadmap = load_data(path="data/generated/roadmap.json") -%}
-{#- docs/PLAN_STATUS.md is a reference file with no page of its own (docs/README.md, "Reference files"); the
-    tracked file on the forge is what a reader can open -#}
-{%- set project_meta = load_data(path="data/generated/project.json") -%}
+{#- The roadmap is inferred (ADR 0125): data/registry/roadmap.json is written by `majordomus
+    generate` from the same function `plan.roadmap` answers with. Nothing here computes a
+    status, orders a milestone or assigns a version: a version is a published release, and
+    the future is the horizons the derived statuses put each milestone in. -#}
+{%- set roadmap = load_data(path="data/registry/roadmap.json") -%}
 {%- set caps = load_data(path="data/generated/capabilities.json") -%}
 {%- set graph = load_data(path="data/generated/roadmap-graph.json") -%}
 {%- set graph_id = "roadmap" -%}
 {%- set graph_rings = "" -%}
-{%- set graph_label = "The milestone graph. An arrow means the target cannot begin until the source is accepted — not a preference, a gate the engine enforces." -%}
-{%- set base = config.base_url | trim_end(pat="/") -%}
-{%- set versioned = [m for m in roadmap.milestones if m.version != ""] -%}
+{%- set graph_label = "The milestone graph. An arrow runs from a milestone to one it unblocks: the target cannot begin until the source is done — not a preference, a gate the engine enforces." -%}
+{%- set changelog_url = get_url(path="/changelog/", trailing_slash=true) -%}
+{%- set shipped = [r for r in roadmap.releases if r.work | length > 0] -%}
 
 <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_.zola-anchor]:text-inherit [&_.zola-anchor]:no-underline [&_.zola-anchor:hover]:underline">{{ page.content | safe }}</article>
 
-<ol class="mt-8 space-y-4">
-  {%- for m in versioned %}
-  <li class="min-w-0 rounded-base border p-5 {% if m.status == 'DONE' %}border-success-subtle bg-success-soft{% elif m.status == 'ACTIVE' or m.status == 'VERIFY' %}border-brand-subtle bg-brand-softer{% else %}border-default bg-neutral-primary-soft{% endif %}">
-    <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-      <span class="font-mono text-lg font-semibold text-heading">{{ m.version }}</span>
-      <span class="text-base font-medium text-heading">{{ m.title }}</span>
-      <span class="ms-auto rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading">{{ m.status }}</span>
-    </div>
-
-    {%- if m.blocked_by | length > 0 %}
-    <p class="mt-3 text-sm text-body">Blocked by
-      {%- for b in m.blocked_by %} <span class="font-mono text-heading">{{ b }}</span>{% if not loop.last %},{% endif %}{% endfor %}.
-      Finishing every issue inside this milestone would not release it; the gate is the dependency, not the workload.</p>
-    {%- elif m.status == "PLANNED" %}
-    <p class="mt-3 text-sm text-body">Nothing blocks it. Its dependencies are accepted, so it can begin.</p>
-    {%- endif %}
-
-    {%- if m.issues.total > 0 %}
-    {#- text-body, not text-body-subtle: an active milestone's card is bg-brand-softer, where the
-        subtle token falls under the contrast threshold the UI audit holds every page to -#}
-    <dl class="mt-3 flex flex-wrap gap-x-5 gap-y-1 font-mono text-xs text-body">
-      <div class="flex gap-1"><dt>done</dt><dd class="text-heading">{{ m.issues.by_status.DONE }} of {{ m.issues.required }}</dd></div>
-      {%- for k, v in m.issues.by_status %}{% if v > 0 and k != "DONE" %}<div class="flex gap-1"><dt>{{ k | lower }}</dt><dd class="text-heading">{{ v }}</dd></div>{% endif %}{% endfor %}
-    </dl>
-    {%- else %}
-    <p class="mt-3 font-mono text-xs text-body-subtle">no issues written yet — the outcome is specified, the work is not</p>
-    {%- endif %}
-
-    {%- if m.claims | length > 0 %}
-    <div class="mt-4 border-t border-default pt-3">
-      <p class="font-mono text-xs uppercase tracking-wide text-body-subtle">what this would make guaranteed</p>
-      <ul class="mt-2 space-y-1.5">
-        {%- for cid in m.claims %}{% set matches = [c for c in caps.claims if c.id == cid] %}{% if matches | length > 0 %}{% set c = matches[0] %}
-        <li class="flex min-w-0 items-start gap-2"><span class="shrink-0">{{ <badge status={c.status} /> }}</span>
-          <a href="{{ get_url(path='/guarantees/' ~ c.id ~ '/', trailing_slash=true) }}" class="min-w-0 break-words text-sm text-body hover:text-fg-brand hover:underline">{{ c.claim }}</a></li>
-        {%- endif %}{% endfor %}
-      </ul>
-    </div>
-    {%- endif %}
-  </li>
+<dl class="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6" data-roadmap-summary>
+  <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-3">
+    <dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">released</dt>
+    <dd class="mt-1 font-mono text-lg font-semibold text-heading"><a href="{{ changelog_url }}" class="hover:text-fg-brand hover:underline">{{ roadmap.current }}</a></dd>
+  </div>
+  {%- for h in roadmap.horizons %}
+  <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-3">
+    <dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">{{ h.heading | lower }}</dt>
+    <dd class="mt-1 font-mono text-lg font-semibold text-heading"><a href="#{{ h.horizon }}" class="hover:text-fg-brand hover:underline">{{ h.milestones | length }}</a></dd>
+  </div>
   {%- endfor %}
-</ol>
+  <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-3">
+    <dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">signals</dt>
+    <dd class="mt-1 font-mono text-lg font-semibold text-heading">{{ roadmap.signals }}</dd>
+  </div>
+</dl>
+
+{%- for h in roadmap.horizons %}{% if h.horizon != "done" %}
+<section class="mt-12" aria-labelledby="{{ h.horizon }}">
+  <h2 id="{{ h.horizon }}" class="scroll-mt-24 text-2xl font-bold tracking-tight text-heading">{{ h.heading }} <span class="font-mono text-base font-normal text-body-subtle">{{ h.milestones | length }}</span></h2>
+  <p class="mt-2 max-w-3xl text-body">{{ h.meaning }}</p>
+  {%- if h.milestones | length == 0 %}
+  <p class="mt-4 font-mono text-sm text-body-subtle">No milestone is in this horizon.</p>
+  {%- else %}
+  <ol class="mt-6 space-y-4">
+    {%- for m in h.milestones %}
+    <li id="m-{{ m.id }}" class="min-w-0 scroll-mt-24 rounded-base border p-5 {% if h.horizon == 'now' %}border-brand-subtle bg-brand-softer{% else %}border-default bg-neutral-primary-soft{% endif %}" data-roadmap-milestone="{{ m.id }}">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="{{ get_url(path='/plan/' ~ (m.id | lower) ~ '/', trailing_slash=true) }}" class="min-w-0 break-words text-base font-medium text-heading hover:text-fg-brand hover:underline">{{ m.title }}</a>
+        <span class="ms-auto flex flex-wrap gap-1.5">
+          <span class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading">{{ m.priority }}</span>
+          <span class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading">{{ m.status }}</span>
+        </span>
+      </div>
+      <p class="mt-1 font-mono text-xs text-body">{{ m.id }}{% if m.unblocks > 0 %} · unblocks {{ m.unblocks }}{% endif %}</p>
+
+      {%- if m.blocked_by | length > 0 %}
+      <p class="mt-3 text-sm text-body">Requires
+        {%- for b in m.blocked_by %} <a href="#m-{{ b }}" class="font-mono text-heading underline">{{ b }}</a>{% if not loop.last %},{% endif %}{% endfor %}, which {% if m.blocked_by | length == 1 %}is{% else %}are{% endif %} not done. Finishing every issue here would not release it.</p>
+      {%- endif %}
+
+      {%- if m.counts.total > 0 %}
+      {#- text-body, not text-body-subtle: a now card is bg-brand-softer, where the subtle
+          token falls under the contrast threshold the UI audit holds every page to -#}
+      <dl class="mt-3 flex flex-wrap gap-x-5 gap-y-1 font-mono text-xs text-body">
+        <div class="flex gap-1"><dt>done</dt><dd class="text-heading">{{ m.counts.by_status.DONE | default(value=0) }} of {{ m.counts.required }}</dd></div>
+        {%- for k, v in m.counts.by_status %}{% if v > 0 and k != "DONE" %}<div class="flex gap-1"><dt>{{ k | lower }}</dt><dd class="text-heading">{{ v }}</dd></div>{% endif %}{% endfor %}
+      </dl>
+      {%- endif %}
+
+      <p class="mt-2 text-sm text-body" data-roadmap-pace>
+        {%- if m.pace.window == 0 %}No release has been published, so no pace is measured.
+        {%- elif m.pace.completed == 0 %}No issue of it was completed in the last {{ m.pace.window }} releases, so no forecast is given.
+        {%- elif m.pace.remaining == 0 %}{{ m.pace.completed }} of its issues were completed in the last {{ m.pace.window }} releases, and none remains.
+        {%- else %}{{ m.pace.completed }} of its issues were completed in the last {{ m.pace.window }} releases; at that pace the {{ m.pace.remaining }} remaining take about {{ m.pace.releases }} more.{% endif %}
+        {%- if m.shipped_in | length > 0 %} Shipped work in
+        {%- for v in m.shipped_in[:4] %} <a href="{{ changelog_url }}#{{ v | slugify }}" class="font-mono underline">{{ v }}</a>{% if not loop.last %},{% endif %}{% endfor %}{% if m.shipped_in | length > 4 %} and {{ m.shipped_in | length - 4 }} earlier{% endif %}.{% endif %}
+      </p>
+
+      {%- if m.intents | length > 0 %}
+      <p class="mt-2 flex flex-wrap items-baseline gap-1.5 text-sm text-body"><span>Realises</span>
+        {%- for iid in m.intents %}{% set found = [i for i in roadmap.intents if i.id == iid] %}{% if found | length > 0 %}{% set i = found[0] %}
+        <span class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 text-xs text-heading">{{ i.title }} <span class="font-mono text-body">· {{ i.stage }} · {{ i.met }}/{{ i.criteria }} met</span></span>
+        {%- endif %}{% endfor %}
+      </p>
+      {%- endif %}
+
+      {%- if m.signals | length > 0 %}
+      <ul class="mt-3 space-y-1 border-t border-default pt-3" data-roadmap-signals>
+        {%- for s in m.signals %}
+        <li class="flex min-w-0 items-start gap-2 text-sm text-body"><span class="shrink-0 rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading">{{ s.code | replace(from="_", to=" ") }}</span><span class="min-w-0 break-words">{{ s.message }}{% if s.code == "shipped_unrecorded" %}: {% for id in s.subjects[:6] %}<a href="{{ get_url(path='/plan/' ~ (id | lower) ~ '/', trailing_slash=true) }}" class="font-mono underline">{{ id }}</a>{% if not loop.last %}, {% endif %}{% endfor %}{% if s.subjects | length > 6 %} and {{ s.subjects | length - 6 }} more{% endif %}{% endif %}.</span></li>
+        {%- endfor %}
+      </ul>
+      {%- endif %}
+
+      {%- if m.claims | length > 0 %}
+      <div class="mt-4 border-t border-default pt-3">
+        <p class="font-mono text-xs uppercase tracking-wide text-body-subtle">what this would make guaranteed</p>
+        <ul class="mt-2 space-y-1.5">
+          {%- for cid in m.claims %}{% set matches = [c for c in caps.claims if c.id == cid] %}{% if matches | length > 0 %}{% set c = matches[0] %}
+          <li class="flex min-w-0 items-start gap-2"><span class="shrink-0">{{ <badge status={c.status} /> }}</span>
+            <a href="{{ get_url(path='/guarantees/' ~ c.id ~ '/', trailing_slash=true) }}" class="min-w-0 break-words text-sm text-body hover:text-fg-brand hover:underline">{{ c.claim }}</a></li>
+          {%- endif %}{% endfor %}
+        </ul>
+      </div>
+      {%- endif %}
+    </li>
+    {%- endfor %}
+  </ol>
+  {%- endif %}
+</section>
+{%- endif %}{% endfor %}
+
+<section class="mt-12" aria-labelledby="shipped">
+  <h2 id="shipped" class="scroll-mt-24 text-2xl font-bold tracking-tight text-heading">Shipped</h2>
+  <p class="mt-2 max-w-3xl text-body">What each published release did for the plan: the issues completed between it and the release before, and the issues its commits name. A version is a release that happened; no milestone carries one ahead of time. The full record of each release is <a href="{{ changelog_url }}" class="text-fg-brand underline">the changelog</a>.</p>
+  {%- if shipped | length == 0 %}
+  <p class="mt-4 font-mono text-sm text-body-subtle">No published release completed or named a planned issue.</p>
+  {%- else %}
+  <ol class="mt-6 space-y-3">
+    {%- for r in shipped %}
+    <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4" data-roadmap-release="{{ r.version }}">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <a href="{{ changelog_url }}#{{ r.version | slugify }}" class="font-mono text-base font-semibold text-heading hover:text-fg-brand hover:underline">{{ r.version }}</a>
+        {%- if r.date %}<span class="font-mono text-xs text-body">{{ r.date | truncate(length=10, end="") }}</span>{% endif %}
+      </div>
+      <ul class="mt-2 space-y-1">
+        {%- for w in r.work %}
+        <li class="min-w-0 break-words text-sm text-body"><a href="#m-{{ w.milestone }}" class="text-heading underline">{{ w.title | default(value=w.milestone) }}</a>
+          {%- if w.completed | length > 0 %} — completed {% for id in w.completed %}<a href="{{ get_url(path='/plan/' ~ (id | lower) ~ '/', trailing_slash=true) }}" class="font-mono underline">{{ id }}</a>{% if not loop.last %}, {% endif %}{% endfor %}{% endif %}
+          {%- if w.named | length > 0 %}{% if w.completed | length > 0 %};{% else %} —{% endif %} named {% for id in w.named %}<a href="{{ get_url(path='/plan/' ~ (id | lower) ~ '/', trailing_slash=true) }}" class="font-mono underline">{{ id }}</a>{% if not loop.last %}, {% endif %}{% endfor %}{% endif %}
+        </li>
+        {%- endfor %}
+      </ul>
+    </li>
+    {%- endfor %}
+  </ol>
+  {%- endif %}
+</section>
+
+{%- for h in roadmap.horizons %}{% if h.horizon == "done" %}
+<section class="mt-12" aria-labelledby="done">
+  <h2 id="done" class="scroll-mt-24 text-2xl font-bold tracking-tight text-heading">{{ h.heading }} <span class="font-mono text-base font-normal text-body-subtle">{{ h.milestones | length }}</span></h2>
+  <p class="mt-2 max-w-3xl text-body">{{ h.meaning }}</p>
+  <ul class="mt-4 grid gap-2 sm:grid-cols-2">
+    {%- for m in h.milestones %}
+    <li id="m-{{ m.id }}" class="min-w-0 scroll-mt-24 rounded-base border border-success-subtle bg-success-soft p-3"><a href="{{ get_url(path='/plan/' ~ (m.id | lower) ~ '/', trailing_slash=true) }}" class="break-words text-sm text-heading hover:underline">{{ m.title }}</a>
+      {%- if m.shipped_in | length > 0 %} <span class="font-mono text-xs text-body">· {{ m.shipped_in | last }}{% if m.shipped_in | length > 1 %}–{{ m.shipped_in | first }}{% endif %}</span>{% endif %}</li>
+    {%- endfor %}
+  </ul>
+</section>
+{%- endif %}{% endfor %}
 
 <h2 class="mt-12 text-2xl font-bold tracking-tight text-heading">The order, and why it is not a preference</h2>
-<p class="mt-2 max-w-3xl text-body">Each version depends on the one before it, and the dependency is enforced rather than intended: a milestone whose dependencies are not accepted is <span class="font-mono">BLOCKED</span> whatever its own issues say. That is why there is no percentage anywhere on this page — a bar at 100% inside a blocked milestone would be a lie the graph can already tell you is one.</p>
+<p class="mt-2 max-w-3xl text-body">A milestone whose dependencies are not done is <span class="font-mono">BLOCKED</span> whatever its own issues say, so it stands in <em>later</em> however much of its work is finished. That is why there is no percentage anywhere on this page — a bar at 100% inside a blocked milestone would be a lie the graph can already tell you is one.</p>
 {% include "partials/graph.html" %}
 
-<p class="mt-8 text-sm text-body-subtle">
-  Generated from <code class="font-mono">.ai/repo/project/milestones/</code> through the same projection
-  <code class="font-mono">majordomus plan roadmap</code> prints. The current state as a document is
-  <a class="underline" href="{{ <source_blob path="docs/PLAN_STATUS.md" /> }}">docs/PLAN_STATUS.md</a>.
+<h2 class="mt-12 text-xl font-semibold tracking-tight text-heading">How this page is inferred</h2>
+<ul class="mt-3 max-w-3xl list-disc space-y-1 ps-5 text-sm text-body" data-roadmap-basis>
+  {%- for b in roadmap.basis %}<li>{{ b }}</li>{% endfor %}
+</ul>
+<p class="mt-6 text-sm text-body-subtle">
+  Generated from <code class="font-mono">.ai/repo/project/</code>, the release records and the intents by the
+  function <code class="font-mono">plan.roadmap</code> answers with — over HTTP at <code class="font-mono">/api/v1/plan/roadmap</code>
+  and over MCP as <code class="font-mono">majordomus_plan_roadmap</code>, where the work since the last release is included. This copy is rebuilt with every change to the trunk.
 </p>
 {% endblock body %}
 {% block scripts %}{% include "partials/graph-scripts.html" %}{% endblock scripts %}

@@ -1324,9 +1324,69 @@ pub fn product_artifacts(ctx: &Context) -> Result<Vec<crate::generate::Artifact>
     })
 }
 
+/// Where `roadmap.json` says it came from.
+pub const ROADMAP_SOURCE: &str =
+    "the roadmap inferred from the plan, the published releases and the intents";
+
+/// The roadmap as the site reads it: `site/data/registry/roadmap.json` (ADR 0125).
+///
+/// Inferred from the plan, the published releases and the intents by the same function
+/// `plan.roadmap` answers with. The work since the last release is left out: no committed
+/// file can carry it without going stale at the next commit, and the served capability adds
+/// it at request time.
+///
+/// ```
+/// let repo = majordomus_cli::synthetic::SyntheticRepository::small().unwrap();
+/// let ctx = repo.context().unwrap();
+/// let artifact = majordomus_cli::site::roadmap_artifact(&ctx).unwrap();
+/// assert!(artifact.path.ends_with("/roadmap.json"));
+/// ```
+pub fn roadmap_artifact(ctx: &Context) -> Result<crate::generate::Artifact> {
+    let plan = crate::plan::Plan::build(&ctx.index);
+    let roadmap = crate::capability::builtin::plan::inferred(ctx, &plan, true).map_err(|e| {
+        Error::Protocol {
+            reason: e.to_string(),
+        }
+    })?;
+    let mut document = serde_json::to_value(&roadmap).map_err(|e| Error::Protocol {
+        reason: format!("the roadmap does not serialise: {e}"),
+    })?;
+    // a committed JSON artifact says it is generated, and from what, like every other one
+    if let Some(o) = document.as_object_mut() {
+        o.insert(
+            "generated".into(),
+            crate::generate::json_banner(ROADMAP_SOURCE).into(),
+        );
+    }
+    Ok(crate::generate::Artifact::verbatim(
+        format!("{}/roadmap.json", crate::generate::SITE_DATA_DIR),
+        "site-roadmap",
+        crate::generate::ArtifactFormat::Json,
+        Some(crate::roadmap::SCHEMA.to_string()),
+        ROADMAP_SOURCE,
+        render_json(&document),
+    ))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn the_roadmap_artifact_leaves_out_the_unreleased_window() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let ctx = repo.context().unwrap();
+        let artifact = roadmap_artifact(&ctx).unwrap();
+        let doc: serde_json::Value = serde_json::from_str(&artifact.content).unwrap();
+        assert_eq!(doc["schema"], crate::roadmap::SCHEMA);
+        assert!(doc.get("generated").is_some());
+        assert_eq!(doc["horizons"].as_array().unwrap().len(), 4);
+        assert!(doc["releases"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .all(|r| r["unreleased"] == false));
+    }
 
     #[test]
     fn a_committed_graph_is_derived_whole_or_refused() {

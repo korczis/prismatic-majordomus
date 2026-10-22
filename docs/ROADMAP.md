@@ -27,20 +27,59 @@ They stay separate because they answer different questions for different readers
 Collapsing them would make "what should I do this morning" and "what are we building this
 year" the same query.
 
-## Identity is a slug; the version is a field
+## Identity is a slug; a version is a release that happened
 
-```yaml
-id: runtime-adapters
-version: "0.2"
-```
+A milestone is named by its slug, and nothing else. Its page URL, a claim's link to it and its
+GitHub binding all key on that slug.
 
-Versions get renumbered, split and reordered; identity must not. A milestone's page URL, a
-claim's link to it and its GitHub binding all key on the slug, so `0.2` becoming `0.3`
-changes one field and breaks no reference.
+A milestone does not carry a version (ADR 0125). Versions used to be a `version:` field typed into
+each record, `0.1` to `1.0`. They named releases that did not exist yet, two milestones said
+`0.5`, and the tool shipped `0.18.0` while the page still read `0.6`. A version is a published
+release record, and the crate manifest is the one place a version is authored (ADR 0085). The
+field is still accepted, so an adopter's records keep validating, but nothing reads it.
 
 Nothing may infer a record's kind from the shape of its id. `mj_pj_is_milestone` asks the
 loaded model, because a milestone id is a slug and an issue id is not distinguishable from
 one by spelling.
+
+## Horizons, releases and what is inferred
+
+`plan.roadmap` answers with an `inferred` roadmap, as does the site's
+`site/data/registry/roadmap.json`. Both come from one function, `roadmap::infer`.
+
+| horizon | the milestones in it |
+|---|---|
+| `now` | `ACTIVE` or `VERIFY`: work has started under it |
+| `next` | `PLANNED`: nothing it requires is unfinished, so it can begin |
+| `later` | `BLOCKED`: a milestone it requires is not `DONE` |
+| `done` | `DONE` |
+
+Inside a horizon the order is rank, then priority, then how many milestones each one unblocks.
+
+What a release shipped comes from two committed facts. One is an issue's `completed_at` falling
+between the previous release and this one. The other is a commit in the release's range naming
+the issue, which the changelog already resolves. Neither moves when an unrelated commit lands.
+
+What is inferred is labelled as inference:
+
+- **pace**: a milestone's issues completed over the last five published releases.
+- **forecast**: what remains divided by that pace. It is absent when nothing was completed,
+  because no pace was measured.
+- **signal**: two committed facts that disagree.
+
+| signal | means |
+|---|---|
+| `shipped_unrecorded` | a released commit names an issue whose record still reads not started |
+| `awaits_evidence` | every issue is done and the milestone's own evidence is not recorded |
+| `no_issues` | no issue names the milestone: the outcome is specified and the work is not |
+| `idle` | work has started, and nothing was completed or named in the window |
+
+A signal never changes a status. A record is transitioned by the worker, and a milestone is
+accepted by a person.
+
+The served capability includes the work since the last release. The site's copy leaves it out,
+because a committed file holding it would go stale at the next commit. The site is rebuilt with
+every change to the trunk.
 
 ## The gate
 
@@ -64,8 +103,8 @@ The roadmap sequence is each milestone's topological rank in the dependency grap
 `order:` field only breaks ties *within* a rank; it cannot move a milestone past something
 it requires.
 
-There is no list of versions anywhere — not in the generator, not in the site, not here.
-Adding a milestone file puts it in the roadmap.
+There is no list of versions anywhere: not in the records, not in the generator, not in the
+site, and not here. Adding a milestone file puts it in the roadmap.
 
 ## What the roadmap graph refuses
 
@@ -93,8 +132,8 @@ claims:
   - runtime-adapters
 ```
 
-Those are `docs/CLAIMS.yaml` ids. The relation is declared, never inferred from a version
-number matching some prose.
+Those are `docs/CLAIMS.yaml` ids. The relation is declared, never inferred from prose that
+happens to match.
 
 Linking a claim to a milestone does not promote it. A claim becomes `guaranteed` by the
 existing route and only that route — an implementation, a behavioural test, and CI running

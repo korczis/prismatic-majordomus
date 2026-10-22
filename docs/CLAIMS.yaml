@@ -845,7 +845,16 @@ claims:
     test: test/cases/49_roadmap_doctrine.sh
     status: guaranteed
     responsibility: plan
-    note: The sequence is the topological rank of the milestone graph, so no list of versions exists anywhere. While a hand-written roadmap table survives, the doctrine holds it to the model in both directions; once it is gone the check holds trivially, which is the regression it exists to refuse.
+    note: The sequence is the topological rank of the milestone graph, and no milestone record carries a version (ADR 0125), so no list of versions exists anywhere. While a hand-written roadmap table survives, the doctrine holds it to the model in both directions; once it is gone the check holds trivially, which is the regression it exists to refuse.
+
+  - id: roadmap-inferred-from-releases
+    claim: The roadmap places every live milestone in the horizon its derived status gives it, attributes shipped work to the published release that shipped it, and reports where the records and the released commits disagree
+    source: docs/ROADMAP.md
+    implementation: apps/majordomus-cli/src/roadmap.rs
+    test: apps/majordomus-cli/tests/roadmap.rs
+    status: guaranteed
+    responsibility: plan
+    note: "`plan.roadmap` answers with `inferred` over HTTP and MCP, and `majordomus generate` writes the same function's answer, from published releases only, to site/data/registry/roadmap.json, which /roadmap/ renders. A version is a release record; a pace is measured over the last five releases and a forecast is given only where one was measured; a signal (shipped_unrecorded, awaits_evidence, no_issues, idle) never changes a status."
 
   - id: github-projection
     claim: GitHub milestones and issues are generated from the canonical model, and a hand-edited generated region is reported rather than overwritten

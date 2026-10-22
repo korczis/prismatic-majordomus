@@ -1795,14 +1795,18 @@ if mj_project_load; then
   ( export MJ_JSON=1; mj_plan_roadmap ) > "$OUT/roadmap.json"
   # The milestone graph in the shape site/graph.js renders, so the roadmap reuses the runtime
   # /map/ and /evidence/ already use rather than adding a third picture of a dependency graph.
+  # An edge runs from the milestone that must be done to the one waiting on it, and its kind
+  # is read from the source: "foundation unblocks runtime-adapters". It was named "requires"
+  # in the same direction, and the text rendering read it backwards (ADR 0125). A node is
+  # labelled by its identity: no milestone carries a version before it ships.
   jq '{schema: 1,
        source: ".ai/repo/project/milestones/",
-       edge_kinds: {requires: "the target cannot begin until the source is accepted"},
+       edge_kinds: {unblocks: "the target cannot begin until the source is done"},
        nodes: [.milestones[] | {id: .id, kind: "milestone",
-                                label: (if .version == "" then .id else .version + "  " + .id end),
+                                label: .id,
                                 status: .status, route: ("/plan/" + (.id | ascii_downcase) + "/"),
                                 external: false, summary: .title}],
-       edges: [.milestones[] | . as $m | $m.depends_on[] | {source: ., target: $m.id, kind: "requires"}]}' \
+       edges: [.milestones[] | . as $m | $m.depends_on[] | {source: ., target: $m.id, kind: "unblocks"}]}' \
     "$OUT/roadmap.json" > "$OUT/roadmap-graph.json"
   [ -s "$OUT/roadmap.json" ] || { echo "generate-site-data: the roadmap projection produced nothing" >&2; exit 13; }
   # The gate the engine enforces: a milestone whose dependencies are not all DONE is BLOCKED,

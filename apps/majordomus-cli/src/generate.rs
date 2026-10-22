@@ -785,6 +785,9 @@ fn indexed_plan(app: &App, targets: &[Target]) -> Result<Vec<Artifact>> {
             // derived, the matrix, the providers. Index-independent like the catalogue,
             // so both `generate` passes of the derivation graph agree byte for byte.
             out.extend(crate::site::product_artifacts(&app.context)?);
+            // The roadmap inferred from the plan, the published releases and the intents
+            // (ADR 0125); index-independent like the two above.
+            out.push(crate::site::roadmap_artifact(&app.context)?);
         }
     }
     // The design and the version are the tool's own and are projected into the tool's own
