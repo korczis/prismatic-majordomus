@@ -2,8 +2,8 @@
 {% block content %}
 {#- The homepage answers five questions, in the order a visitor asks them: what this is
     (hero), why they should care (recognise), how it works (how), what they can do with it
-    (map, surfaces) and how they know it works (refuses, proof) — and then how to start
-    (install). The first screen uses no word a reader must already know the product to
+    (map, surfaces, blackboard) and how they know it works (refuses, proof) — and then how to
+    start (install). The first screen uses no word a reader must already know the product to
     understand. Detail is one click away, never one screen down: a recorded run, a transcript
     or a catalogue is linked where the story points at it, not carried inline.
 
@@ -372,7 +372,63 @@
   </div>
 </section>
 
-{#- 6. refuses — how a visitor knows it works, first half: the proof that "done" can be
+{#- 6. blackboard — what a visitor can do with it, third part: see who is working on what. The
+    peer blackboard (ADR 0176) is what a running server reads of the boards and the mesh, so
+    this page shows none of it and no figure of it. It says what the blackboard shows
+    (marketing.toml), the screens a running server follows it live on, that this site is
+    files read at one commit and follows no server, and the work the blackboard waits for:
+    the issues homepage.toml `[blackboard] waits` names, which are docs/BLACKBOARD.md's own
+    list under "Not yet", each drawn from the plan with the status its record declares (ADR
+    0166: how the work stands is the plan's to say, never a sentence here). The document it
+    leads to is the route the docs dataset gives the path homepage.toml names; a path or an
+    issue the data does not hold stops the build. The two routes are a running server's, so
+    they are named and never linked (scripts/site-check `surface`). No live marker, no socket
+    and no picture: a static page that looked live would be the claim this section exists
+    to avoid. test/cases/3387 holds it to the document, both ways. -#}
+{%- set bb = home.blackboard -%}
+{%- set docs_index = load_data(path="data/generated/docs.json") -%}
+{%- set bb_docs = [d for d in docs_index.docs if d.path == bb.doc] -%}
+{%- if not bb_docs %}{{ throw(message="site/data/homepage.toml [blackboard] doc '" ~ bb.doc ~ "' is a path data/generated/docs.json does not route") }}{% endif -%}
+<section id="blackboard" class="scroll-mt-20 border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
+    {{ <landing_head number="05" kicker={m.blackboard.kicker} title={m.blackboard.title} lead={m.blackboard.lead} /> }}
+    <div class="grid gap-4 lg:grid-cols-2">
+      <div class="flex min-w-0 flex-col rounded-xl border border-brand-subtle bg-neutral-primary p-5" data-blackboard-served>
+        <h3 class="text-lg font-bold tracking-tight text-heading">On a running server</h3>
+        <p class="mt-2 text-sm leading-relaxed text-body">{{ m.blackboard.served }}</p>
+        <dl class="mt-4 grid gap-3 sm:grid-cols-2">
+          <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-3"><dt><code class="rounded-base border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading" data-blackboard-route>/ui/peers</code></dt><dd class="mt-2 text-xs leading-relaxed text-body">the board, read again whenever it changes</dd></div>
+          <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-3"><dt><code class="rounded-base border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading" data-blackboard-route>/cockpit/monitor</code></dt><dd class="mt-2 text-xs leading-relaxed text-body">the signals behind it, as the server reads them</dd></div>
+        </dl>
+      </div>
+      <div class="flex min-w-0 flex-col rounded-xl border border-default bg-neutral-primary p-5" data-blackboard-published>
+        <h3 class="text-lg font-bold tracking-tight text-heading">On this site</h3>
+        <p class="mt-2 text-sm leading-relaxed text-body">{{ m.blackboard.published }}</p>
+        {%- if build and build.commit and build.commit != "unknown" %}
+        <p class="mt-auto pt-4 text-xs text-body-subtle">Built from <a href="{{ project.repository_url }}/commit/{{ build.commit }}" class="font-mono text-heading hover:underline" data-blackboard-commit="{{ build.commit }}">{{ build.commit | truncate(length=7, end="") }}</a>{% if build.dirty %}, with uncommitted changes{% endif %}</p>
+        {%- endif %}
+      </div>
+    </div>
+    {%- if bb.waits | length %}
+    <h3 class="mt-8 text-base font-semibold tracking-tight text-heading">The work planned for it, with the status each issue's record declares</h3>
+    <ul class="mt-3 divide-y divide-default rounded-base border border-default bg-neutral-primary" data-blackboard-waits>
+      {%- for id in bb.waits %}{% set it = [i for i in plan.issues if i.id == id] %}
+      {%- if not it %}{{ throw(message="site/data/homepage.toml [blackboard] waits names " ~ id ~ ", which is no issue of the plan") }}{% endif %}
+      <li class="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1 px-4 py-3" data-blackboard-wait="{{ id }}">
+        <a href="{{ get_url(path="/plan/" ~ (id | lower) ~ "/", trailing_slash=true) }}" class="font-mono text-xs font-semibold text-fg-brand hover:underline">{{ id }}</a>
+        {{ <plan_status status={it[0].status} /> }}
+        <span class="min-w-0 break-words text-sm text-heading">{{ it[0].title }}</span>
+      </li>
+      {%- endfor %}
+    </ul>
+    {%- endif %}
+    <p class="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm font-medium">
+      <a href="{{ get_url(path=bb_docs[0].route, trailing_slash=true) }}" class="text-fg-brand hover:underline" data-blackboard-doc="{{ bb.doc }}">How the blackboard works, and what it reads &rarr;</a>
+    </p>
+  </div>
+</section>
+
+{#- 7. refuses — how a visitor knows it works, first half: the proof that "done" can be
     refused. The challenge's recorded run, told step by step in the run's own sentences: a
     worker strays, says it is done, is refused, is refused again, and is accepted only when
     every line of the contract passes. The replay of that run — every command and its output
@@ -382,7 +438,7 @@
     exit status and the scenario page that carries its output. None of it is written here. -#}
 <section id="refuses" class="{{ stage }} relative isolate scroll-mt-20 overflow-hidden border-b border-default bg-neutral-primary">
   <div class="mx-auto max-w-screen-xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
-    {{ <landing_head number="05" kicker={m.refuses.kicker} title={m.refuses.title} lead={m.refuses.lead} /> }}
+    {{ <landing_head number="06" kicker={m.refuses.kicker} title={m.refuses.title} lead={m.refuses.lead} /> }}
     <div class="grid gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:gap-14">
     <ol class="hidden max-w-3xl min-w-0 space-y-3 sm:block" aria-label="What happened in the recorded run" data-recorded-story="{{ ch.use_case.id }}">
       {%- for s in ch.steps %}{% if s.actor == "worker" or s.argv[0] == "finish" or s.argv[0] == "check" %}
@@ -440,13 +496,13 @@
   </div>
 </section>
 
-{#- 7. proof — how a visitor knows it works, second half: evidence in place of testimonials.
+{#- 8. proof — how a visitor knows it works, second half: evidence in place of testimonials.
     First one sentence a manager can act on — what "declared" and "supported by a recorded
     run" each mean — then the two figures, counted apart; then the chain behind them, where
     this page came from, and what is not built, under the title the data gives it. -#}
 <section id="proof" class="scroll-mt-20 border-b border-default bg-neutral-primary-soft">
   <div class="mx-auto max-w-screen-xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
-    {{ <landing_head number="06" kicker={x.proof.kicker} title={x.proof.title} lead={x.proof.lead} /> }}
+    {{ <landing_head number="07" kicker={x.proof.kicker} title={x.proof.title} lead={x.proof.lead} /> }}
     <p class="mb-6 max-w-3xl rounded-base border border-brand-subtle bg-brand-softer p-4 text-base leading-relaxed text-heading" data-proof-plain>{{ m.proof.plain }}</p>
     {#- A status is what docs/CLAIMS.yaml declares; whether a recorded run supports it is the
         evidence verdict `majordomus evidence show` derives (product.json `evidence`), counted
@@ -513,12 +569,12 @@
   </div>
 </section>
 
-{#- 8. install — how to start: the one action. The commands are data/registry/distribution.json's, which
+{#- 9. install — how to start: the one action. The commands are data/registry/distribution.json's, which
     the executable generates from share/distribution.yaml; homepage-check holds this section
     to carrying all of them. -#}
 <section id="install" class="{{ stage }} relative isolate scroll-mt-20 overflow-hidden bg-neutral-primary">
   <div class="mx-auto max-w-screen-xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
-    {{ <landing_head number="07" kicker={m.install.kicker} title={m.install.title} lead={m.install.layer} /> }}
+    {{ <landing_head number="08" kicker={m.install.kicker} title={m.install.title} lead={m.install.layer} /> }}
     {{ <install command={dist.install_command} next={dist.next_command} binary={dist.binary} install_dir={dist.install_dir} docs_href={get_url(path="/docs/install/", trailing_slash=true)} /> }}
     <p class="mt-4 text-sm text-body">Confirm what was installed: <code class="rounded-base border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading">{{ dist.verify_command }}</code></p>
     <div class="mt-8 flex flex-col gap-3 sm:flex-row">
