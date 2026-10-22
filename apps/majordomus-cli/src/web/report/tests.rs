@@ -2,9 +2,11 @@
 //!
 //! The evidence is what the runs already write — `test/run.sh`'s TSV report for the
 //! behavioural cases and `cargo test`'s summary lines for the crate — and this module
-//! parses, joins and renders it. It decides nothing about what passed: a case that failed
-//! is a case the runner said failed, and a report that disagreed with the runner would be
-//! worse than no report.
+//! renders it. It reads both through the evidence adapters
+//! ([`crate::evidence::adapters`]), the same readers the recorder uses, so the page and the
+//! recorded evidence cannot read one run two ways. It decides nothing about what passed: a
+//! case that failed is a case the runner said failed, and a report that disagreed with the
+//! runner would be worse than no report.
 
 use std::path::Path;
 
@@ -12,6 +14,7 @@ use serde::{Deserialize, Serialize};
 
 use super::{html, Origin};
 use crate::error::{Error, Result};
+use crate::evidence::adapters::{read_libtest, read_suite};
 
 /// The identity of the surface this report owns.
 ///
@@ -91,7 +94,8 @@ impl Run {
 /// Parse the runner's TSV: `name <TAB> result <TAB> seconds <TAB> phase`, one case per line.
 ///
 /// A malformed line is refused rather than skipped: a report that silently dropped a case
-/// would claim a run was smaller than it was.
+/// would claim a run was smaller than it was. The rows are read by the suite adapter
+/// ([`crate::evidence::adapters::read_suite`]), the one the recorder reads them with.
 ///
 /// ```
 /// use majordomus_cli::web::report::tests::parse_cases;
@@ -101,29 +105,20 @@ impl Run {
 /// assert_eq!(run.seconds(), 15);
 /// ```
 pub fn parse_cases(text: &str) -> Result<Run> {
-    let mut cases = Vec::new();
-    for (n, line) in text.lines().enumerate() {
-        if line.trim().is_empty() {
-            continue;
-        }
-        let fields: Vec<&str> = line.split('\t').collect();
-        if fields.len() < 4 {
-            return Err(Error::InvalidSurface {
-                surface: "tests".into(),
-                reason: format!(
-                    "line {} of the run report has {} field(s); it is name<TAB>result<TAB>seconds<TAB>phase",
-                    n + 1,
-                    fields.len()
-                ),
-            });
-        }
-        cases.push(Case {
-            name: fields[0].to_string(),
-            result: fields[1].to_string(),
-            seconds: fields[2].parse().unwrap_or(0),
-            phase: fields[3].to_string(),
-        });
-    }
+    let read = read_suite(text, None).map_err(|reason| Error::InvalidSurface {
+        surface: "tests".into(),
+        reason,
+    })?;
+    let cases = read
+        .cases
+        .into_iter()
+        .map(|c| Case {
+            name: c.name,
+            result: c.word,
+            seconds: c.seconds,
+            phase: c.phase,
+        })
+        .collect();
     Ok(Run {
         cases,
         crate_tests: None,
@@ -133,7 +128,9 @@ pub fn parse_cases(text: &str) -> Result<Run> {
 /// Read `cargo test`'s human output and sum its result lines.
 ///
 /// The machine format is still unstable, so this reads what every cargo prints:
-/// `test result: ok. 93 passed; 0 failed; 0 ignored; ...`, once per test binary.
+/// `test result: ok. 93 passed; 0 failed; 0 ignored; ...`, once per test binary, through
+/// the libtest adapter ([`crate::evidence::adapters::read_libtest`]) the recorder reads it
+/// with, so a coloured run sums as the plain one does.
 ///
 /// ```
 /// use majordomus_cli::web::report::tests::parse_crate_tests;
@@ -144,25 +141,13 @@ pub fn parse_cases(text: &str) -> Result<Run> {
 /// assert_eq!(t.ignored, 2);
 /// ```
 pub fn parse_crate_tests(text: &str) -> CrateTests {
-    let mut totals = CrateTests::default();
-    for line in text.lines().filter(|l| l.contains("test result:")) {
-        // the shape is "<n> passed; <n> failed; <n> ignored": read each label with the
-        // number that precedes it, rather than assuming where in the line either sits
-        let words: Vec<&str> = line.split_whitespace().collect();
-        for (i, word) in words.iter().enumerate().skip(1) {
-            let label = word.trim_end_matches(|c: char| !c.is_ascii_alphabetic());
-            let field = match label {
-                "passed" => &mut totals.passed,
-                "failed" => &mut totals.failed,
-                "ignored" => &mut totals.ignored,
-                _ => continue,
-            };
-            if let Ok(count) = words[i - 1].parse::<usize>() {
-                *field += count;
-            }
-        }
+    let totals = read_libtest(text).totals();
+    let count = |n: u64| usize::try_from(n).unwrap_or(usize::MAX);
+    CrateTests {
+        passed: count(totals.passed),
+        failed: count(totals.failed),
+        ignored: count(totals.ignored),
     }
-    totals
 }
 
 /// Render the run into its own directory under the generated web root, and declare it.
@@ -256,6 +241,46 @@ mod unit {
         let surfaces = crate::web::discover::generated(tmp.path()).unwrap();
         assert_eq!(surfaces.len(), 1);
         assert_eq!(surfaces[0].mount.as_str(), "/tests");
+    }
+
+    /// The page and the recorder read one run the same way: the suite's rows and the
+    /// crate's totals are what the adapters read, a coloured cargo line included.
+    #[test]
+    fn the_report_reads_what_the_adapters_read() {
+        let tsv = "01_a\tok\t1\tparallel\n02_b\tTIMEOUT\t9\texclusive\n";
+        let run = parse_cases(tsv).unwrap();
+        let read = crate::evidence::adapters::read_suite(tsv, None).unwrap();
+        let ours: Vec<(&str, &str, u64, &str)> = run
+            .cases
+            .iter()
+            .map(|c| {
+                (
+                    c.name.as_str(),
+                    c.result.as_str(),
+                    c.seconds,
+                    c.phase.as_str(),
+                )
+            })
+            .collect();
+        let theirs: Vec<(&str, &str, u64, &str)> = read
+            .cases
+            .iter()
+            .map(|c| {
+                (
+                    c.name.as_str(),
+                    c.word.as_str(),
+                    c.seconds,
+                    c.phase.as_str(),
+                )
+            })
+            .collect();
+        assert_eq!(ours, theirs);
+        let e = '\u{1b}';
+        let coloured = format!(
+            "test result: {e}[32mok{e}(B{e}[m. 3 passed; 0 failed; 1 ignored; 0 measured\n"
+        );
+        let t = parse_crate_tests(&coloured);
+        assert_eq!((t.passed, t.failed, t.ignored), (3, 0, 1));
     }
 
     #[test]

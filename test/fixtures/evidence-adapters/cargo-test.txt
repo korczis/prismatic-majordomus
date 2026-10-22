@@ -1,0 +1,69 @@
+   Compiling fixture v0.1.0 (fixture)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.32s
+     Running unittests src/lib.rs (target-build/debug/deps/fixture-e494c1f507faaf7f)
+
+running 2 tests
+test tests::reaches_the_network ... ignored, needs a network
+test tests::adds ... ok
+
+test result: ok. 1 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/empty.rs (target-build/debug/deps/empty-e8ae940df719a317)
+
+running 1 test
+test only_ignored ... ignored
+
+test result: ok. 0 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/green.rs (target-build/debug/deps/green-900a094b1ff0fcea)
+
+running 3 tests
+test one ... ok
+test two ... ok
+test panics - should panic ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/red.rs (target-build/debug/deps/red-d76842de1b8c1c7d)
+
+running 4 tests
+test ignored_plain ... ignored
+test passes ... ok
+test fails_too ... FAILED
+test fails_with_output ... FAILED
+
+failures:
+
+---- fails_too stdout ----
+
+thread 'fails_too' (885719373) panicked at tests/red.rs:10:5:
+second failure
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- fails_with_output stdout ----
+a line the test printed
+
+thread 'fails_with_output' (885719374) panicked at tests/red.rs:6:5:
+assertion `left == right` failed: arithmetic is broken
+  left: 2
+ right: 3
+
+
+failures:
+    fails_too
+    fails_with_output
+
+test result: FAILED. 1 passed; 2 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `--test red`
+   Doc-tests fixture
+
+running 3 tests
+test src/lib.rs - add_one (line 13) ... ignored
+test src/lib.rs - add_one (line 9) - compile fail ... ok
+test src/lib.rs - add_one (line 5) ... ok
+
+test result: ok. 2 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.84s
+
+error: 1 target failed:
+    `--test red`

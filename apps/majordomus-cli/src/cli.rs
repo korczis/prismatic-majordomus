@@ -2794,8 +2794,15 @@ pub struct EvidenceArgs {
 /// // recording reads a report a runner already wrote; it runs no test
 /// assert!(matches!(
 ///     parse(&["majordomus", "evidence", "record", "--suite", "tmp/report.tsv"]),
-///     EvidenceCommand::Record { suite: Some(p), origin: None, .. } if p.ends_with("report.tsv")
+///     EvidenceCommand::Record { suite: Some(p), origin: None, run: None, .. }
+///         if p.ends_with("report.tsv")
 /// ));
+/// // unless it is asked to run the suite itself, as a local run
+/// assert!(matches!(
+///     parse(&["majordomus", "evidence", "record", "--run", "suite", "--case", "07_scope"]),
+///     EvidenceCommand::Record { run: Some(r), cases, .. } if r == "suite" && cases == ["07_scope"]
+/// ));
+/// assert!(Cli::try_parse_from(["majordomus", "evidence", "record", "--run", "crate"]).is_err());
 ///
 /// // a run measures the checkout it left; the recording carries that measurement
 /// assert!(matches!(
@@ -2868,6 +2875,12 @@ pub enum EvidenceCommand {
         /// Also write the run record to this file
         #[arg(long)]
         run_record: Option<PathBuf>,
+        /// Run this runner and record the run as a local run, instead of reading a report: `suite` runs test/run.sh, stamps the checkout it left and keeps the run in .ai/local/evidence/runs, never in the tracked ledger
+        #[arg(long, value_name = "RUNNER", value_parser = ["suite"])]
+        run: Option<String>,
+        /// A case for `--run suite` to run, by name (repeatable); every case when none is named
+        #[arg(long = "case", value_name = "NAME")]
+        cases: Vec<String>,
     },
     /// Measure the checkout as a run left it, for `record --provenance`
     Stamp {

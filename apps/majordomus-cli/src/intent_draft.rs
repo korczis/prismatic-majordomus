@@ -629,6 +629,8 @@ mod tests {
             origin: Origin::Local,
             command: "bash test/run.sh 00_x".into(),
             run: None,
+            cases: vec![],
+            detail: None,
         }
     }
 

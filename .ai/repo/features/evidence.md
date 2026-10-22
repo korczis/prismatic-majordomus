@@ -37,7 +37,12 @@ strengthened by the run records read, its one state is the first matching row of
 publication table, and it carries only allow-listed fields, every text through the one
 redactor.
 `evidence record` writes what a run already reported into the ledger, stamped with the
-commit, the tree state, the digest of the test's own source, the time and the origin.
+commit, the tree state, the digest of the test's own source, the time and the origin. It
+reads each runner through one adapter, which the web report's test page reads too: every
+line the runner printed is read into a per-test result or listed in the run record with
+why. `evidence record --run suite` runs the suite itself, stamps its own run and keeps it as
+a local run, in the local ledger and the local run index under `.ai/local/evidence/runs/`,
+which holds the newest fifty and never reaches the tracked ledger.
 
 The seven states are ranked, and two of them are deliberately not one. `proven` is a
 passing run recorded against this very commit with a clean tree. `inputs unchanged` is a
@@ -49,6 +54,7 @@ invalidation, which is weaker, and which is labelled as weaker everywhere it is 
 It does not prove a claim at HEAD from a run made elsewhere: the dependency model is the
 files the claim names and nothing transitive, so `inputs unchanged` is honest about the
 change it cannot see. It does not resist forgery — the ledger is a tracked file and a
-hand-edited outcome is a line in a diff, not a cryptographic failure — and it keeps no
-history and no captured output, because the question it answers only ever reads the newest
-result and a log of every case belongs where the run happened.
+hand-edited outcome is a line in a diff, not a cryptographic failure — and the ledger keeps
+no history and no captured output, because the question it answers only ever reads the
+newest result and a log of every case belongs where the run happened: in the run record, kept
+by a CI run's artifact or by the bounded local run index.

@@ -113,6 +113,9 @@
 use std::collections::BTreeMap;
 use std::path::Path;
 
+use super::adapters::{read_libtest, read_suite, EvidenceCase, LibtestRead, LibtestUnitKind};
+#[cfg(test)]
+use super::adapters::{strip_ansi, DOC_TESTS, NOT_AN_INTEGRATION_BINARY, UNATTRIBUTED, UNIT_TESTS};
 use super::coverage::{CommitId, EvidenceCoverage, EvidenceCoverageFloors};
 use super::freshness::TreeState;
 use super::ledger::{LedgerTarget, LEDGER_PATH, LOCAL_LEDGER_PATH};
@@ -123,16 +126,6 @@ use super::run::{
 };
 use super::{digest_of, Execution, Ledger, Origin, Outcome, Runner, TestId};
 use crate::error::{Error, Result};
-
-/// Why the crate's own unit-test binary is listed rather than recorded.
-const UNIT_TESTS: &str =
-    "the crate's own unit tests, which no claim can name until a runner records them one by one";
-/// Why the crate's doctests are listed rather than recorded.
-const DOC_TESTS: &str = "doctests, which no claim can name until a runner records them one by one";
-/// Why a binary that is not under `tests/` is listed rather than recorded.
-const NOT_AN_INTEGRATION_BINARY: &str = "not an integration test binary under tests/";
-/// Why a result line with no binary before it is listed rather than recorded.
-const UNATTRIBUTED: &str = "no Running line named the binary it belongs to";
 
 /// What to record, and where from.
 ///
@@ -164,6 +157,9 @@ const UNATTRIBUTED: &str = "no Running line named the binary it belongs to";
 pub struct RecordRequest {
     /// The runner's TSV report, when a suite run is being recorded.
     pub suite: Option<std::path::PathBuf>,
+    /// What the suite runner printed while it wrote that report, when it was kept: each
+    /// case's log is read into its execution's detail, and every other line is listed.
+    pub suite_output: Option<std::path::PathBuf>,
     /// `cargo test`'s output, when a crate run is being recorded.
     pub crate_output: Option<std::path::PathBuf>,
     /// Where the run happened.
@@ -201,6 +197,7 @@ impl RecordRequest {
     pub fn new(origin: Origin) -> RecordRequest {
         RecordRequest {
             suite: None,
+            suite_output: None,
             crate_output: None,
             origin,
             run: None,
@@ -314,8 +311,20 @@ pub struct RecordOutcome {
     /// line no binary owned. Listed rather than ignored, so a run is never silently smaller
     /// than it was. The same list as the run record's.
     pub dropped: Vec<EvidenceDropped>,
+    /// Where the local run index keeps the recording, repository-relative: present only
+    /// for a recording into the local ledger, which is a local run (ADR 0087, decision 2).
+    pub local_run: Option<String>,
     /// The recording as a typed run.
     pub run_record: EvidenceRunRecord,
+}
+
+/// One result a report held for a test this repository has, before it is stamped.
+struct Ran {
+    id: TestId,
+    outcome: Outcome,
+    seconds: u64,
+    cases: Vec<EvidenceCase>,
+    detail: Option<String>,
 }
 
 /// The instant, RFC 3339, UTC, to whole seconds.
@@ -404,48 +413,10 @@ pub struct CrateRead {
     pub dropped: Vec<EvidenceDropped>,
 }
 
-/// The entry a `Running` or `Doc-tests` line opened, waiting for its result line.
-enum Pending {
-    /// An integration binary under `tests/`: a claim can name it.
-    Binary(String),
-    /// Anything else: listed, with why, when it closes.
-    Dropped(String, &'static str),
-}
-
-impl CrateRead {
-    /// Close the entry that was waiting for a result line and got none before the next
-    /// `Running`, the next `Doc-tests` or the end of the output. A binary that started and
-    /// never reported is an error, because the harness could not say what ran; anything
-    /// else is listed as it is.
-    fn close(&mut self, pending: Option<Pending>) {
-        match pending {
-            None => {}
-            Some(Pending::Binary(name)) => self.binaries.push(CrateBinary {
-                name,
-                outcome: Outcome::Error,
-                seconds: 0,
-                passed: 0,
-                failed: 0,
-                ignored: 0,
-                filtered_out: 0,
-            }),
-            Some(Pending::Dropped(what, reason)) => self.dropped.push(dropped(what, reason)),
-        }
-    }
-}
-
-/// A crate entry listed rather than recorded.
-fn dropped(what: impl Into<String>, reason: &str) -> EvidenceDropped {
-    EvidenceDropped {
-        producer: EvidenceProducer::Crate,
-        what: what.into(),
-        reason: reason.to_string(),
-    }
-}
-
 /// Read `cargo test`'s output: each `Running tests/<name>.rs` line joined to the
 /// `test result:` line that follows it, judged by its counts, and everything else it ran
-/// listed rather than ignored.
+/// listed rather than ignored, with its cases. It is the libtest adapter's reading
+/// ([`super::adapters::read_libtest`]), seen as the binaries a claim can name.
 ///
 /// `cargo test`'s machine format is still unstable, so this reads what every cargo prints.
 /// The `Running` line names the binary the following result belongs to; without it a run of
@@ -490,142 +461,30 @@ fn dropped(what: impl Into<String>, reason: &str) -> EvidenceDropped {
 /// );
 /// ```
 pub fn read_crate_output(text: &str) -> CrateRead {
-    let mut read = CrateRead::default();
-    let mut pending: Option<Pending> = None;
-    for line in text.lines() {
-        let plain = strip_ansi(line);
-        let t = plain.trim();
-        if let Some(rest) = t.strip_prefix("Running ") {
-            read.close(pending.take());
-            // `tests/why.rs (target/debug/deps/why-1a2b)` — the source path is the name,
-            // never the hashed binary, which changes between builds
-            let mut words = rest.split_whitespace();
-            let first = words.next().unwrap_or("");
-            pending = Some(if first == "unittests" {
-                let path = words.next().unwrap_or("");
-                Pending::Dropped(format!("unittests {path}"), UNIT_TESTS)
-            } else if let Some(name) = first
-                .strip_prefix("tests/")
-                .and_then(|p| p.strip_suffix(".rs"))
-            {
-                Pending::Binary(name.to_string())
-            } else {
-                Pending::Dropped(first.to_string(), NOT_AN_INTEGRATION_BINARY)
-            });
-            continue;
-        }
-        if let Some(rest) = t.strip_prefix("Doc-tests ") {
-            read.close(pending.take());
-            let krate = rest.split_whitespace().next().unwrap_or("");
-            pending = Some(Pending::Dropped(format!("doc-tests {krate}"), DOC_TESTS));
-            continue;
-        }
-        if let Some(rest) = t.strip_prefix("test result: ") {
-            match pending.take() {
-                None => read.dropped.push(dropped("a result line", UNATTRIBUTED)),
-                Some(Pending::Dropped(what, reason)) => read.dropped.push(dropped(what, reason)),
-                Some(Pending::Binary(name)) => read.binaries.push(judge(name, rest)),
-            }
-        }
-    }
-    read.close(pending.take());
-    read
+    crate_read(&read_libtest(text))
 }
 
-/// A binary's result line, `<word>. <counts>; finished in <S>s`, judged by the table of
-/// [`read_crate_output`].
-fn judge(name: String, rest: &str) -> CrateBinary {
-    let (word, counts) = rest.split_once('.').unwrap_or((rest, ""));
-    let word = word.trim();
-    let (mut passed, mut failed, mut ignored, mut filtered_out) = (None, 0, 0, 0);
-    let mut seconds = 0;
-    for part in counts.split(';').map(str::trim) {
-        if let Some(s) = part.strip_prefix("finished in ") {
-            seconds = s
-                .trim_end_matches('s')
-                .trim()
-                .parse::<f64>()
-                .map(|f| f.round() as u64)
-                .unwrap_or(0);
-            continue;
-        }
-        let Some((n, label)) = part.split_once(' ') else {
-            continue;
-        };
-        let Ok(n) = n.parse::<u64>() else { continue };
-        match label.trim() {
-            "passed" => passed = Some(n),
-            "failed" => failed = n,
-            "ignored" => ignored = n,
-            "filtered out" => filtered_out = n,
-            _ => {}
-        }
-    }
-    let outcome = if failed > 0 || word == "FAILED" {
-        Outcome::Fail
-    } else if word == "ok" {
-        match passed {
-            // the line said `ok` and not what ran: nothing here can say it passed
-            None => Outcome::Error,
-            // it ran nothing, or only a subset a filter chose: a skip, not the proof
-            Some(0) => Outcome::Skip,
-            Some(_) if filtered_out > 0 => Outcome::Skip,
-            Some(_) => Outcome::Pass,
-        }
-    } else {
-        Outcome::Error
-    };
-    CrateBinary {
-        name,
-        outcome,
-        seconds,
-        passed: passed.unwrap_or(0),
-        failed,
-        ignored,
-        filtered_out,
-    }
-}
-
-/// A line with its terminal escape sequences removed: `ESC [` up to its final byte (`@`
-/// to `~`), `ESC ]` up to BEL or `ESC \`, `ESC` with intermediate bytes (space to `/`) up to
-/// the final byte after them, and any other `ESC` with the character after it.
-/// `cargo test` colours its output when it thinks a person is watching, and a coloured
-/// `Running` or `ok` is the same line as a plain one. The test harness resets its colour
-/// through the terminal's own `sgr0`, which on an xterm is `ESC ( B ESC [ m`: the `( B`
-/// selects the character set, and reading it as a two-character pair would leave its `B`
-/// behind and turn `ok` into `okB`.
-fn strip_ansi(line: &str) -> String {
-    const ESC: char = '\u{1b}';
-    let mut out = String::with_capacity(line.len());
-    let mut chars = line.chars().peekable();
-    while let Some(c) = chars.next() {
-        if c != ESC {
-            out.push(c);
-            continue;
-        }
-        match chars.next() {
-            Some('[') => {
-                for c in chars.by_ref() {
-                    if ('@'..='~').contains(&c) {
-                        break;
-                    }
-                }
-            }
-            Some(']') => {
-                let mut after_esc = false;
-                for c in chars.by_ref() {
-                    if c == '\u{7}' || (after_esc && c == '\\') {
-                        break;
-                    }
-                    after_esc = c == ESC;
-                }
-            }
-            // intermediate bytes, then the one final byte that ends the sequence
-            Some(' '..='/') => {
-                while chars.next_if(|c| (' '..='/').contains(c)).is_some() {}
-                chars.next();
-            }
-            Some(_) | None => {}
+/// The binaries a libtest reading holds that a claim can name, and the runs it cannot,
+/// listed with why and with their cases.
+fn crate_read(read: &LibtestRead) -> CrateRead {
+    let mut out = CrateRead::default();
+    for unit in &read.units {
+        match unit.kind.reason() {
+            None => out.binaries.push(CrateBinary {
+                name: unit.name.clone(),
+                outcome: unit.outcome,
+                seconds: unit.seconds,
+                passed: unit.passed,
+                failed: unit.failed,
+                ignored: unit.ignored,
+                filtered_out: unit.filtered_out,
+            }),
+            Some(reason) => out.dropped.push(EvidenceDropped {
+                producer: EvidenceProducer::Crate,
+                what: unit.name.clone(),
+                reason: reason.to_string(),
+                cases: unit.cases.clone(),
+            }),
         }
     }
     out
@@ -668,39 +527,6 @@ pub fn parse_crate_binaries(text: &str) -> Vec<(String, Outcome, u64)> {
         .into_iter()
         .map(|b| (b.name, b.outcome, b.seconds))
         .collect()
-}
-
-/// The runner's TSV: `name <TAB> result <TAB> seconds <TAB> phase`, one case per line.
-///
-/// A malformed line is refused rather than skipped, for the same reason the renderer
-/// refuses one: a recording that silently dropped a case would leave that case's claim
-/// reporting `not run` after a run that did run it, which is a lie in the safe direction
-/// and still a lie.
-fn parse_suite(text: &str) -> Result<Vec<(String, Outcome, u64)>> {
-    let mut out = Vec::new();
-    for (n, line) in text.lines().enumerate() {
-        if line.trim().is_empty() {
-            continue;
-        }
-        let f: Vec<&str> = line.split('\t').collect();
-        if f.len() < 4 {
-            return Err(Error::InvalidSurface {
-                surface: "evidence".into(),
-                reason: format!(
-                    "line {} of the run report has {} field(s); it is \
-                     name<TAB>result<TAB>seconds<TAB>phase",
-                    n + 1,
-                    f.len()
-                ),
-            });
-        }
-        out.push((
-            f[0].to_string(),
-            Outcome::parse(f[1]),
-            f[2].parse().unwrap_or(0),
-        ));
-    }
-    Ok(out)
 }
 
 /// Read the runs a request names, stamp each result with provenance, and merge into the
@@ -766,6 +592,12 @@ pub fn record(root: &Path, req: &RecordRequest) -> Result<RecordOutcome> {
     if req.suite.is_none() && req.crate_output.is_none() && req.coverage.is_none() {
         return Err(refused(
             "nothing to record: give --suite, --crate-output, --coverage or several",
+        ));
+    }
+    if req.suite_output.is_some() && req.suite.is_none() {
+        return Err(refused(
+            "the suite's output was given without its report: the output is joined to the \
+             report's cases by name, so it is read only beside the report",
         ));
     }
 
@@ -848,24 +680,39 @@ pub fn record(root: &Path, req: &RecordRequest) -> Result<RecordOutcome> {
             .map_or(TreeState::Unknown, |m| m.working_tree)
     };
 
-    let mut results: Vec<(TestId, Outcome, u64)> = Vec::new();
+    let mut results: Vec<Ran> = Vec::new();
     let mut unknown = Vec::new();
     let mut absent = Vec::new();
+    let mut lines = Vec::new();
+    let mut dropped_lines = Vec::new();
 
     if let Some(p) = &req.suite {
         let bytes = read_report(P::Suite, p)?;
         let text = String::from_utf8_lossy(&bytes);
+        let output = match &req.suite_output {
+            Some(o) => Some(
+                String::from_utf8_lossy(&std::fs::read(o).map_err(Error::Transport)?).into_owned(),
+            ),
+            None => None,
+        };
+        let read = read_suite(&text, output.as_deref()).map_err(refused)?;
         let before = results.len();
-        for (name, outcome, seconds) in parse_suite(&text)? {
+        for case in read.cases {
             // the runner names a case by its stem, which is exactly the suite test id
             let id = TestId {
                 runner: Runner::Suite,
-                name: name.clone(),
+                name: case.name.clone(),
             };
             if root.join(id.source()).exists() {
-                results.push((id, outcome, seconds));
+                results.push(Ran {
+                    id,
+                    outcome: case.outcome,
+                    seconds: case.seconds,
+                    cases: vec![case.case()],
+                    detail: case.detail(),
+                });
             } else {
-                unknown.push(format!("suite:{name}"));
+                unknown.push(format!("suite:{}", case.name));
             }
         }
         if results.len() == before {
@@ -874,6 +721,8 @@ pub fn record(root: &Path, req: &RecordRequest) -> Result<RecordOutcome> {
                 "the report named no test this repository has",
             ));
         }
+        lines.extend(read.lines);
+        dropped_lines.extend(read.dropped);
     } else {
         absent.push(absence(P::Suite, "no suite report was given"));
     }
@@ -881,26 +730,40 @@ pub fn record(root: &Path, req: &RecordRequest) -> Result<RecordOutcome> {
     let mut dropped = Vec::new();
     if let Some(p) = &req.crate_output {
         let bytes = read_report(P::Crate, p)?;
-        let read = read_crate_output(&String::from_utf8_lossy(&bytes));
-        if read.binaries.is_empty() {
+        let read = read_libtest(&String::from_utf8_lossy(&bytes));
+        // what the output held that no claim can name yet, in the order it held it
+        dropped = crate_read(&read).dropped;
+        let mut named = 0;
+        for unit in read.units {
+            if unit.kind != LibtestUnitKind::Integration {
+                continue;
+            }
+            named += 1;
+            let id = TestId {
+                runner: Runner::Crate,
+                name: unit.name.clone(),
+            };
+            if root.join(id.source()).exists() {
+                let detail = unit.detail();
+                results.push(Ran {
+                    id,
+                    outcome: unit.outcome,
+                    seconds: unit.seconds,
+                    cases: unit.cases,
+                    detail,
+                });
+            } else {
+                unknown.push(format!("crate:{}", unit.name));
+            }
+        }
+        if named == 0 {
             absent.push(absence(
                 P::Crate,
                 "the output named no integration test binary",
             ));
         }
-        for binary in read.binaries {
-            let id = TestId {
-                runner: Runner::Crate,
-                name: binary.name.clone(),
-            };
-            if root.join(id.source()).exists() {
-                results.push((id, binary.outcome, binary.seconds));
-            } else {
-                unknown.push(format!("crate:{}", binary.name));
-            }
-        }
-        // what the output held that no claim can name yet, in the order it held it
-        dropped = read.dropped;
+        lines.push(read.lines);
+        dropped_lines.extend(read.dropped);
     } else {
         absent.push(absence(P::Crate, "no crate report was given"));
     }
@@ -941,7 +804,14 @@ pub fn record(root: &Path, req: &RecordRequest) -> Result<RecordOutcome> {
     let at = now_rfc3339();
     let mut executions = Vec::with_capacity(results.len());
     let mut passed = 0;
-    for (id, outcome, seconds) in results {
+    for Ran {
+        id,
+        outcome,
+        seconds,
+        cases,
+        detail,
+    } in results
+    {
         if outcome.proves() {
             passed += 1;
         }
@@ -965,6 +835,8 @@ pub fn record(root: &Path, req: &RecordRequest) -> Result<RecordOutcome> {
             origin: req.origin,
             command: id.reproduce(),
             run: req.run.clone(),
+            cases,
+            detail,
         });
     }
 
@@ -998,9 +870,25 @@ pub fn record(root: &Path, req: &RecordRequest) -> Result<RecordOutcome> {
         totals: EvidenceRunTotals::of(&executions),
         absent,
         dropped,
+        lines,
+        dropped_lines,
         unknown,
         coverage,
         executions,
+    };
+
+    // a recording into the local ledger is a local run, and the local run index keeps it
+    // (ADR 0087, decision 2); a recording into the tracked ledger never reaches the index
+    let local_run = match req.ledger {
+        LedgerTarget::Local => Some(super::local_runs::append(root, &run_record).map_err(|e| {
+            refused(format!(
+                "the executions were recorded into {}, and the run could not be kept in the \
+                 local run index {}: {e}",
+                req.ledger.path(),
+                super::local_runs::LOCAL_RUNS_DIR
+            ))
+        })?),
+        LedgerTarget::Repo => None,
     };
 
     if let Some(out) = &req.run_record {
@@ -1021,6 +909,7 @@ pub fn record(root: &Path, req: &RecordRequest) -> Result<RecordOutcome> {
         working_tree: run_record.working_tree.as_str().to_string(),
         unknown: run_record.unknown.clone(),
         dropped: run_record.dropped.clone(),
+        local_run,
         run_record,
     })
 }
