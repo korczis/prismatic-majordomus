@@ -253,5 +253,13 @@ fn check_text(v: &Value) -> String {
             s(&f["message"])
         ));
     }
+    for f in v["history"].as_array().into_iter().flatten() {
+        out.push_str(&format!(
+            "INFO {:<9} {}: {}\n",
+            s(&f["check"]),
+            s(&f["subject"]),
+            s(&f["message"])
+        ));
+    }
     out
 }

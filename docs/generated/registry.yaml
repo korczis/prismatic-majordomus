@@ -41023,11 +41023,17 @@ capabilities:
             items:
               "$ref": "#/$defs/ReasoningFinding"
             description: What they found.
+          history:
+            type: array
+            items:
+              "$ref": "#/$defs/ReasoningFinding"
+            description: "Refused claims in accepted decision records: reported, never a finding."
+            default: []
         required:
           - ok
           - checks
           - findings
-        description: "The answer of `reasoning.check`: whether it is clean, the checks performed in order,\nand every finding. `ok` is `true` exactly when `findings` is empty.\n\n```\nuse majordomus_cli::capability::builtin::reasoning::ReasoningCheck;\n\nlet clean: ReasoningCheck = serde_json::from_value(serde_json::json!({\n    \"ok\": true, \"checks\": [\"catalogue\"], \"findings\": [],\n})).unwrap();\nassert!(clean.ok && clean.findings.is_empty());\nassert_eq!(clean.checks, [\"catalogue\"]);\n```"
+        description: "The answer of `reasoning.check`: whether it is clean, the checks performed in order,\nevery finding, and the refused claims that stand in decision records already taken.\n`ok` is `true` exactly when `findings` is empty; `history` never decides it, because an\naccepted record is the owner's past decision and rewriting it would falsify it.\n\n```\nuse majordomus_cli::capability::builtin::reasoning::ReasoningCheck;\n\nlet clean: ReasoningCheck = serde_json::from_value(serde_json::json!({\n    \"ok\": true, \"checks\": [\"catalogue\"], \"findings\": [], \"history\": [],\n})).unwrap();\nassert!(clean.ok && clean.findings.is_empty());\nassert_eq!(clean.checks, [\"catalogue\"]);\n```"
         title: ReasoningCheck
         "$defs":
           ReasoningFinding:

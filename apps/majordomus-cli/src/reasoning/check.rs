@@ -178,6 +178,161 @@ pub fn literals_naming(text: &str, names: &[String]) -> Vec<String> {
     hits
 }
 
+/// Whether a document is a decision record the owner has already taken: a file under a
+/// directory named for decision records (`adr`, `adrs`, `decisions`) whose status is
+/// accepted, approved, implemented, deprecated or superseded.
+///
+/// Such a record is history. What it said was decided when it was said, a later design
+/// does not reach back and make it wrong, and rewriting it would falsify the record; so a
+/// refused claim in it is reported, never a finding. A proposed or undeclared record is
+/// still a decision being made, and the check holds it. The status is read from the first
+/// forty lines, in every form the record formats in use write it: front matter
+/// (`status: accepted`), a bold or plain label (`**Status:** Accepted`, `Status: Accepted`)
+/// and a `## Status` heading with the word on the next non-empty line.
+///
+/// ```
+/// use std::path::Path;
+/// use majordomus_cli::reasoning::check::is_accepted_record;
+///
+/// let adr = Path::new("docs/adrs/adr-0023-ollama.md");
+/// assert!(is_accepted_record(adr, "# ADR-0023\n\n**Status:** Accepted  \n"));
+/// assert!(is_accepted_record(adr, "---\nstatus: superseded\n---\n"));
+/// assert!(is_accepted_record(adr, "# T\n\n## Status\n\nAccepted (2025-01-02)\n"));
+/// assert!(!is_accepted_record(adr, "---\nstatus: proposed\n---\n"));
+/// assert!(!is_accepted_record(adr, "# no status at all\n"));
+/// assert!(!is_accepted_record(Path::new("docs/guide.md"), "Status: Accepted\n"));
+/// ```
+pub fn is_accepted_record(path: &Path, text: &str) -> bool {
+    const DIRS: &[&str] = &["adr", "adrs", "decisions"];
+    const TAKEN: &[&str] = &[
+        "accepted",
+        "approved",
+        "implemented",
+        "deprecated",
+        "superseded",
+    ];
+    let in_decisions = path.parent().is_some_and(|p| {
+        p.components()
+            .any(|c| DIRS.contains(&c.as_os_str().to_string_lossy().to_lowercase().as_str()))
+    });
+    if !in_decisions {
+        return false;
+    }
+    let first_word = |s: &str| -> String {
+        s.trim_start_matches(|c: char| !c.is_alphabetic())
+            .chars()
+            .take_while(|c| c.is_alphabetic())
+            .collect()
+    };
+    let mut heading = false;
+    for line in text.lines().take(40) {
+        let l = line.trim().to_lowercase();
+        if l.is_empty() {
+            continue;
+        }
+        if heading {
+            return TAKEN.contains(&first_word(&l).as_str());
+        }
+        if l.starts_with('#') && l.trim_start_matches('#').trim() == "status" {
+            heading = true;
+            continue;
+        }
+        // emphasis is decoration: `**Status:** X` and `**Status**: X` are `status: x`
+        let bare: String = l.chars().filter(|c| *c != '*' && *c != '_').collect();
+        if let Some(rest) = bare
+            .trim_start_matches(['-', '>', ' '])
+            .strip_prefix("status:")
+        {
+            return TAKEN.contains(&first_word(rest).as_str());
+        }
+    }
+    false
+}
+
+/// Every (repository-relative document, refused phrase) pair the `claims` check reads:
+/// the documents under `docs`, `site/content`, `.ai/repo` and the README, the phrases the
+/// catalogue forbids and "requires <advisor>" / "<advisor> is required" for each advisor.
+/// `accepted` picks the side: `false` is the documents a claim in which is a finding,
+/// `true` the decision records already taken ([`is_accepted_record`]), which are history.
+fn refused_claims(
+    root: &Path,
+    catalogue: &AdvisorCatalogue,
+    accepted: bool,
+) -> Vec<(String, String)> {
+    let mut phrases: Vec<String> = catalogue
+        .forbidden_claims
+        .iter()
+        .map(|p| p.to_lowercase())
+        .collect();
+    for a in &catalogue.advisors {
+        let t = a.title.to_lowercase();
+        phrases.push(format!("requires {t}"));
+        phrases.push(format!("{t} is required"));
+    }
+    let mut docs = files_under(root, "docs", &["md"]);
+    docs.extend(files_under(root, "site/content", &["md"]));
+    docs.extend(files_under(root, ".ai/repo", &["md"]));
+    docs.push(root.join("README.md"));
+    let mut out = Vec::new();
+    for file in docs {
+        let Ok(text) = std::fs::read_to_string(&file) else {
+            continue;
+        };
+        let rel = file.strip_prefix(root).unwrap_or(&file);
+        if is_accepted_record(rel, &text) != accepted {
+            continue;
+        }
+        let lower = text.to_lowercase();
+        for p in &phrases {
+            if lower.contains(p.as_str()) {
+                out.push((rel.display().to_string(), p.clone()));
+            }
+        }
+    }
+    out
+}
+
+/// The refused claims that stand in decision records already taken: reported, never a
+/// finding. An accepted record is history ([`is_accepted_record`]); the answer says where
+/// such a claim stands so a reader is not misled by it, and asks for no rewrite.
+///
+/// ```
+/// use majordomus_cli::reasoning::catalogue::AdvisorCatalogue;
+/// use majordomus_cli::reasoning::check::{history, run};
+/// use majordomus_cli::reasoning::catalogue::References;
+/// use majordomus_cli::reasoning::store::Store;
+///
+/// let root = tempfile::tempdir().unwrap();
+/// let catalogue = AdvisorCatalogue {
+///     forbidden_claims: vec!["consensus guarantees correctness".into()],
+///     ..Default::default()
+/// };
+/// std::fs::create_dir_all(root.path().join("docs/adrs")).unwrap();
+/// std::fs::write(root.path().join("docs/adrs/adr-0001.md"),
+///     "**Status:** Accepted\n\nConsensus guarantees correctness.\n").unwrap();
+/// std::fs::write(root.path().join("docs/adrs/adr-0002.md"),
+///     "status: proposed\n\nConsensus guarantees correctness.\n").unwrap();
+/// let loaded = Store::at(root.path()).load();
+/// let findings = run(root.path(), &catalogue, &References::default(), &loaded);
+/// assert_eq!(findings.len(), 1);
+/// assert_eq!(findings[0].subject, "docs/adrs/adr-0002.md");
+/// let reported = history(root.path(), &catalogue);
+/// assert_eq!(reported.len(), 1);
+/// assert_eq!(reported[0].subject, "docs/adrs/adr-0001.md");
+/// ```
+pub fn history(root: &Path, catalogue: &AdvisorCatalogue) -> Vec<ReasoningFinding> {
+    refused_claims(root, catalogue, true)
+        .into_iter()
+        .map(|(subject, p)| ReasoningFinding {
+            check: "claims".into(),
+            subject,
+            message: format!(
+                "an accepted decision record says '{p}'; it is history, reported and not a finding"
+            ),
+        })
+        .collect()
+}
+
 /// Run every check over the repository at `root`, in the order of [`CHECKS`].
 ///
 /// It reads the catalogue, the adapter modules, the provider-independent sources, the CI
@@ -294,37 +449,12 @@ pub fn run(
         }
     }
 
-    let mut phrases: Vec<String> = catalogue
-        .forbidden_claims
-        .iter()
-        .map(|p| p.to_lowercase())
-        .collect();
-    for a in &catalogue.advisors {
-        let t = a.title.to_lowercase();
-        phrases.push(format!("requires {t}"));
-        phrases.push(format!("{t} is required"));
-    }
-    let mut docs = files_under(root, "docs", &["md"]);
-    docs.extend(files_under(root, "site/content", &["md"]));
-    docs.extend(files_under(root, ".ai/repo", &["md"]));
-    docs.push(root.join("README.md"));
-    for file in docs {
-        let Ok(text) = std::fs::read_to_string(&file) else {
-            continue;
-        };
-        let lower = text.to_lowercase();
-        for p in &phrases {
-            if lower.contains(p.as_str()) {
-                push(
-                    "claims",
-                    file.strip_prefix(root)
-                        .unwrap_or(&file)
-                        .display()
-                        .to_string(),
-                    format!("asserts '{p}', a claim the reasoning design refuses"),
-                );
-            }
-        }
+    for (file, p) in refused_claims(root, catalogue, false) {
+        push(
+            "claims",
+            file,
+            format!("asserts '{p}', a claim the reasoning design refuses"),
+        );
     }
 
     for u in &loaded.unreadable {

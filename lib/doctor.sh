@@ -433,6 +433,12 @@ mj_report_reasoning() {
         mj_fail reasoning "$subject" "$c: $message" "bin/majordomus-cli reasoning check"
       done
   fi
+  # an accepted decision record is history: what it says is reported, never failed, and a
+  # doctor that asked for it to be rewritten would be asking for the record to be falsified
+  [ -n "$check" ] && printf '%s' "$check" | jq -r '(.history // [])[] | [.check, .subject, .message] | @tsv' | \
+    while IFS="$(printf '\t')" read -r c subject message; do
+      mj_info reasoning "$subject" "$c: $message" "bin/majordomus-cli reasoning check"
+    done
   return 0
 }
 

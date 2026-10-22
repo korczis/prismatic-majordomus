@@ -6,7 +6,7 @@
     "version": "0.18.0"
   },
   "registry": {
-    "fingerprint": "c285118fb99a4fdd5f44e3b615aaea5a3bd0e327af8585b6d8f71d4093a7ed4d",
+    "fingerprint": "169d309e225e0516553feb68912779b7e0393c65957787257d9536e33616e7fc",
     "summary": {
       "total": 2089,
       "builtin": 184,
@@ -57174,6 +57174,14 @@
                   "$ref": "#/$defs/ReasoningFinding"
                 },
                 "description": "What they found."
+              },
+              "history": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/ReasoningFinding"
+                },
+                "description": "Refused claims in accepted decision records: reported, never a finding.",
+                "default": []
               }
             },
             "required": [
@@ -57181,7 +57189,7 @@
               "checks",
               "findings"
             ],
-            "description": "The answer of `reasoning.check`: whether it is clean, the checks performed in order,\nand every finding. `ok` is `true` exactly when `findings` is empty.\n\n```\nuse majordomus_cli::capability::builtin::reasoning::ReasoningCheck;\n\nlet clean: ReasoningCheck = serde_json::from_value(serde_json::json!({\n    \"ok\": true, \"checks\": [\"catalogue\"], \"findings\": [],\n})).unwrap();\nassert!(clean.ok && clean.findings.is_empty());\nassert_eq!(clean.checks, [\"catalogue\"]);\n```",
+            "description": "The answer of `reasoning.check`: whether it is clean, the checks performed in order,\nevery finding, and the refused claims that stand in decision records already taken.\n`ok` is `true` exactly when `findings` is empty; `history` never decides it, because an\naccepted record is the owner's past decision and rewriting it would falsify it.\n\n```\nuse majordomus_cli::capability::builtin::reasoning::ReasoningCheck;\n\nlet clean: ReasoningCheck = serde_json::from_value(serde_json::json!({\n    \"ok\": true, \"checks\": [\"catalogue\"], \"findings\": [], \"history\": [],\n})).unwrap();\nassert!(clean.ok && clean.findings.is_empty());\nassert_eq!(clean.checks, [\"catalogue\"]);\n```",
             "title": "ReasoningCheck",
             "$defs": {
               "ReasoningFinding": {
@@ -76151,7 +76159,7 @@
     ]
   },
   "index": {
-    "fingerprint": "141a08ade943bca88870686447f47cfd77e2c913b7c66b6252343bc927086042",
+    "fingerprint": "6e8cd0f5055e7753646ee2bc36be124336df0bea2b147e696356ea4bcea804af",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -81654,7 +81662,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 97316
+        "bytes": 99769
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -84662,7 +84670,7 @@
         "identity": "lib/doctor.sh",
         "path": "lib/doctor.sh",
         "source_class": "library",
-        "bytes": 80562
+        "bytes": 81014
       },
       {
         "uri": "majordomus://implementation/lib/doctrine.sh",

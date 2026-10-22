@@ -495,13 +495,15 @@ fn reasoning_explain(
 // ---------------------------------------------------------------- reasoning.check
 
 /// The answer of `reasoning.check`: whether it is clean, the checks performed in order,
-/// and every finding. `ok` is `true` exactly when `findings` is empty.
+/// every finding, and the refused claims that stand in decision records already taken.
+/// `ok` is `true` exactly when `findings` is empty; `history` never decides it, because an
+/// accepted record is the owner's past decision and rewriting it would falsify it.
 ///
 /// ```
 /// use majordomus_cli::capability::builtin::reasoning::ReasoningCheck;
 ///
 /// let clean: ReasoningCheck = serde_json::from_value(serde_json::json!({
-///     "ok": true, "checks": ["catalogue"], "findings": [],
+///     "ok": true, "checks": ["catalogue"], "findings": [], "history": [],
 /// })).unwrap();
 /// assert!(clean.ok && clean.findings.is_empty());
 /// assert_eq!(clean.checks, ["catalogue"]);
@@ -514,6 +516,9 @@ pub struct ReasoningCheck {
     pub checks: Vec<String>,
     /// What they found.
     pub findings: Vec<ReasoningFinding>,
+    /// Refused claims in accepted decision records: reported, never a finding.
+    #[serde(default)]
+    pub history: Vec<ReasoningFinding>,
 }
 
 fn reasoning_check(ctx: &Context, _: super::Empty) -> Result<ReasoningCheck, CapabilityError> {
@@ -524,10 +529,13 @@ fn reasoning_check(ctx: &Context, _: super::Empty) -> Result<ReasoningCheck, Cap
         &s.refs,
         &s.loaded,
     );
+    let history =
+        crate::reasoning::check::history(Path::new(&ctx.index.repository.root), &s.catalogue);
     Ok(ReasoningCheck {
         ok: findings.is_empty(),
         checks: CHECKS.iter().map(|c| c.to_string()).collect(),
         findings,
+        history,
     })
 }
 
