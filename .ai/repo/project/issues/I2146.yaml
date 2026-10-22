@@ -1,0 +1,35 @@
+id: I2146
+milestone: mcp-transports-are-reliable
+title: "A cancelled MCP request stops the work it started"
+slug: mcp-cancellation-stops-work
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Handle notifications/cancelled by stopping the call it names, and let the bridge forward a notification while a call of the same client is in flight."
+why: "The milestone's second acceptance criterion ('notifications/cancelled stops a running call within a bound') and its evidence cancellation_test had no issue on master: I2146 was drafted on 2026-10-09 on chore/the-runtime-pack-is-planned and chore/the-owner-packs-are-planned (PR #863, closed unmerged) and never landed, as I2148 did not. Server::notification still ignores every notification but initialized (apps/majordomus-cli/src/mcp/protocol.rs, fn notification, at master c0e3585dc8), so notifications/cancelled is dropped; the only mention of it in the code is a bridge unit test asserting that a refused cancellation produces no answer (apps/majordomus-cli/src/commands/mcp.rs, tests). A bridge could not forward one anyway until the previous answer returns, because the stdio loop is sequential and every message goes through lock(bridge).handle (apps/majordomus-cli/src/commands/mcp.rs, fn handle, Backend::Remote); the per-session server: Mutex<Server> (apps/majordomus-cli/src/http/mcp.rs, struct Session) serialises an HTTP session as well. The execution engine has its own cooperative cancel (Engine::cancel, apps/majordomus-cli/src/execution/engine.rs) that MCP cancellation does not reach. Baseline audit of 2026-10-09 at master 1fb8d6be44, lifecycle gap 12; re-measured 2026-10-15 at master c0e3585dc8."
+current_state: "A client cannot stop a call it started: notifications/cancelled is logged at debug level as an ignored notification, over stdio, the bridge and Streamable HTTP alike."
+desired_state: "notifications/cancelled maps the request id to the execution engine's cancel flag for calls that run as executions and drops the answer for others; the bridge forwards notifications on a second connection without taking the bridge mutex, and an HTTP session accepts a notification while one of its requests holds the server."
+scope:
+  - "apps/majordomus-cli/src/mcp/protocol.rs"
+  - "apps/majordomus-cli/src/mcp/bridge.rs"
+  - "apps/majordomus-cli/src/commands/mcp.rs"
+  - "apps/majordomus-cli/src/http/mcp.rs"
+  - "apps/majordomus-cli/src/execution/engine.rs"
+  - "apps/majordomus-cli/tests/mcp_conformance.rs"
+  - "docs/MCP.md"
+  - ".ai/repo/project/issues/I2146.yaml"
+non_scope:
+  - "Killing a handler that does not look at its cancellation flag; cancellation stays cooperative, as the engine documents"
+  - "Resend and at-most-once delivery, which the milestone's first criterion owns"
+depends_on: []
+acceptance_criteria:
+  - "A long tool call cancelled by the client over stdio stops within a declared bound and the client receives no answer for it"
+  - "A cancellation sent while another call of the same client is in flight reaches the server before that call returns"
+  - "A cancellation naming an id that is not running is ignored without an answer and the session goes on"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test mcp_conformance --test mcp_shared"
+evidence_required:
+  - "cancelled_call_stops_test"
+created_at: 2026-10-09
+updated_at: 2026-10-15

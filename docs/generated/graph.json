@@ -32839,6 +32839,52 @@
         }
       },
       {
+        "id": "majordomus://issue/I2146",
+        "kind": "issue",
+        "label": "I2146",
+        "summary": "A cancelled MCP request stops the work it started",
+        "route": "/cockpit/objects/issue/i2146",
+        "source": ".ai/repo/project/issues/I2146.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A long tool call cancelled by the client over stdio stops within a declared bound and the client receives no answer for it",
+            "A cancellation sent while another call of the same client is in flight reaches the server before that call returns",
+            "A cancellation naming an id that is not running is ignored without an answer and the session goes on"
+          ],
+          "created_at": "2026-10-09",
+          "current_state": "A client cannot stop a call it started: notifications/cancelled is logged at debug level as an ignored notification, over stdio, the bridge and Streamable HTTP alike.",
+          "depends_on": [],
+          "evidence_required": [
+            "cancelled_call_stops_test"
+          ],
+          "milestone": "mcp-transports-are-reliable",
+          "non_scope": [
+            "Killing a handler that does not look at its cancellation flag; cancellation stays cooperative, as the engine documents",
+            "Resend and at-most-once delivery, which the milestone's first criterion owns"
+          ],
+          "objective": "Handle notifications/cancelled by stopping the call it names, and let the bridge forward a notification while a call of the same client is in flight.",
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mcp/protocol.rs",
+            "apps/majordomus-cli/src/mcp/bridge.rs",
+            "apps/majordomus-cli/src/commands/mcp.rs",
+            "apps/majordomus-cli/src/http/mcp.rs",
+            "apps/majordomus-cli/src/execution/engine.rs",
+            "apps/majordomus-cli/tests/mcp_conformance.rs",
+            "docs/MCP.md",
+            ".ai/repo/project/issues/I2146.yaml"
+          ],
+          "slug": "mcp-cancellation-stops-work",
+          "updated_at": "2026-10-15",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --test mcp_conformance --test mcp_shared"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I2147",
         "kind": "issue",
         "label": "I2147",
@@ -77629,6 +77675,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I2146",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I2146",
+        "target": "majordomus://milestone/mcp-transports-are-reliable",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I2147",
         "target": "kind:issue",
         "kind": "is_a"
@@ -88190,8 +88246,8 @@
       }
     ],
     "metadata": {
-      "nodes": 2796,
-      "edges": 6129,
+      "nodes": 2797,
+      "edges": 6131,
       "acyclic": false,
       "truncated": false
     }
