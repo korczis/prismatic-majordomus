@@ -1,7 +1,7 @@
 +++
 title = "Advisors are optional; reasoning, governance and CI never depend on one"
 description = "Advisors are optional; reasoning, governance and CI never depend on one"
-weight = 69
+weight = 70
 [extra]
 kind = "rule"
 slug = "project-advisors-are-optional-1"

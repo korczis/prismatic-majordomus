@@ -1,7 +1,7 @@
 +++
 title = "Every finding carries a reproduce command"
 description = "Every finding carries a reproduce command"
-weight = 99
+weight = 100
 [extra]
 kind = "rule"
 slug = "project-finding-carries-reproduce-1"

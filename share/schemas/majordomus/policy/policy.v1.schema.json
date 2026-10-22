@@ -299,6 +299,28 @@
         }
       }
     },
+    "release": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "How this repository's version follows its integrated work (ADR 0106). The cadence is the least a change set that carries work advances the trunk's version by; the public contract's own requirement (ADR 0051) still applies, and the larger of the two is owed. Absent imposes no cadence.",
+      "properties": {
+        "cadence": {
+          "type": "string",
+          "enum": [
+            "none",
+            "patch",
+            "minor",
+            "major"
+          ],
+          "description": "The least advance accepted work owes over the trunk's version."
+        },
+        "trunk": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The ref the work is integrated into; origin/master when absent."
+        }
+      }
+    },
     "projections": {
       "type": "array",
       "items": {

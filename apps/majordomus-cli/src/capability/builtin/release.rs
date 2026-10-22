@@ -1,7 +1,7 @@
 //! The `release` module: the changelog, the version, and the compatibility analysis behind
 //! it — all three derived.
 //!
-//! Three capabilities, all read-only, all answered by [`crate::release`] — the same code the
+//! Four capabilities, all read-only, all answered by [`crate::release`] — the same code the
 //! command line renders, the generated document is written from, and the site page shows.
 //! Neither reads a file somebody maintains: the changelog composes the layer's own release
 //! records, decisions and the repository's commits, and the version report reads the one
@@ -23,6 +23,7 @@ use crate::capability::model::{
 use crate::capability::module::ModuleDescriptor;
 use crate::capability::registry::CapabilityRegistry;
 use crate::release::compat::VersionPlan;
+use crate::release::obligation::VersionObligation;
 use crate::release::{self, model::ProducedBy, model::VersionReport, Changelog};
 use crate::{capability, module};
 
@@ -96,6 +97,34 @@ impl BenchmarkCases for AnalysisInput {
     /// would time a refusal and be counted as coverage. The trait is still implemented
     /// because the registry asks every input type for its cases; answering "none" is the
     /// honest answer rather than a case that measures an error path.
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        Vec::new()
+    }
+}
+
+/// Which trunk to measure the version obligation against.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::release::ObligationInput;
+/// // Absent means the trunk the policy names (`release.trunk`, `origin/master` by default).
+/// assert!(ObligationInput::default().base.is_none());
+/// let ci = ObligationInput { base: Some("HEAD^1".into()) };
+/// assert_eq!(ci.base.as_deref(), Some("HEAD^1"));
+/// ```
+#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+#[schemars(rename = "ReleaseObligationInput")]
+pub struct ObligationInput {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// The ref the work is integrated into, instead of the policy's trunk: `origin/master`,
+    /// or `HEAD^1` for the first parent of a merge.
+    pub base: Option<String>,
+}
+
+impl BenchmarkCases for ObligationInput {
+    /// None, for the reason [`AnalysisInput`] has none: the obligation's contract half is
+    /// the analysis against a published release, and a benchmark fixture has published
+    /// nothing, so every case would time the unmeasured path and call it coverage.
     fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
         Vec::new()
     }
@@ -177,12 +206,36 @@ pub fn module() -> ModuleDescriptor {
                 benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::PublishedHistory },
                 handler: analysis,
             },
+            capability! {
+                id: OBLIGATION_ID,
+                title: "What integrating this tree requires the version to become",
+                description: "The version obligation of this tree against the trunk it is integrated into (ADR 0106): the larger of what the public contract requires since the last release (ADR 0051) and the completion cadence the policy declares (`release.cadence`), which a change set owes over the trunk's own version when it carries work. Every changed path is classified by what makes it machine output — a projection the trunk's .gitattributes marks derived, a release record, the manifest and lock differing only by the version — and anything else is work; a change set that carries no work owes no cadence, so the release pipeline's follow-ups never raise the version they record. The verdict is a predicate, not a count: satisfied when the declared version reaches the minimum computed against the trunk as it is now, owed when it does not, behind when the trunk already declares more, and unverified — never a pass — when the trunk cannot be read. `release advance` satisfies it through the one writer; `finish --outcome completed` asks it; the `version-obligation` gate refuses a merge that does not hold it.",
+                input: ObligationInput,
+                output: VersionObligation,
+                stability: Stability::Implemented,
+                exposure: Exposure {
+                    mcp: Some(McpExposure {
+                        tool: Some("majordomus_release_obligation".into()),
+                        resource: None,
+                    }),
+                    http: get("/api/v1/release/obligation"),
+                    // `majordomus release obligation` renders this capability for a person at
+                    // a terminal; `cli::LOCAL` declares that once.
+                    cli: None,
+                },
+                tags: ["release", "version", "lifecycle"],
+                benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::PublishedHistory },
+                handler: obligation,
+            },
         ],
     }
 }
 
 /// The compatibility analysis, named beside its declaration.
 pub const ANALYSIS_ID: &str = "release.analysis";
+
+/// The version obligation, named beside its declaration.
+pub const OBLIGATION_ID: &str = "release.obligation";
 
 /// The capability's own id. Beside its declaration, so the two cannot drift apart without
 /// the test below noticing; the document carries it so that no page has to enumerate where
@@ -281,6 +334,22 @@ fn analysis(ctx: &Context, input: AnalysisInput) -> Result<VersionPlan, Capabili
     .map_err(|e| CapabilityError::NotFound(e.to_string()))
 }
 
+/// The version obligation (ADR 0106), against the requested base or the policy's trunk.
+///
+/// Answered whatever the trunk's state: an unreadable trunk is the verdict `unverified`,
+/// carried with its reason, never an error that a caller could mistake for "nothing owed".
+fn obligation(ctx: &Context, input: ObligationInput) -> Result<VersionObligation, CapabilityError> {
+    let root = std::path::Path::new(&ctx.index.repository.root);
+    let policy = release::obligation::policy_of(root);
+    Ok(release::obligation::obligation(
+        root,
+        &ctx.registry,
+        &ctx.index.objects,
+        &policy,
+        input.base.as_deref(),
+    ))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -313,6 +382,11 @@ mod tests {
                 "release.analysis",
                 "majordomus_release_analysis",
                 "/api/v1/release/analysis",
+            ),
+            (
+                "release.obligation",
+                "majordomus_release_obligation",
+                "/api/v1/release/obligation",
             ),
         ];
         let ids: Vec<&str> = m

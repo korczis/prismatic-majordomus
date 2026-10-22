@@ -63,6 +63,17 @@ site_paths() {
   printf 'site/content/*.md\nsite/data/generated/**\n'
 }
 
+# The two files the one version writer edits (ADR 0106 §8b), read out of the writer's own
+# source — `release::version::MANIFEST` and `::LOCK` — the same way the site generator's
+# outputs are read out of it: a path renamed there is declared here the same day. They merge
+# through `release merge-version`, which takes the version line out of the merge and leaves
+# the number to `release advance`; every other line of them merges as git would.
+WRITER='apps/majordomus-cli/src/release/version.rs'
+version_paths() {
+  [ -f "$WRITER" ] || { echo "gitattributes: $WRITER is missing" >&2; exit 12; }
+  sed -nE 's/^pub const (MANIFEST|LOCK): &str = "(.*)";$/\2/p' "$WRITER" | LC_ALL=C sort -u
+}
+
 block() {
   printf '%s\n' "$BEGIN"
   printf '# %s path(s) from %s, plus the sections and documents %s publishes.\n' \
@@ -77,6 +88,12 @@ block() {
     [ -n "$p" ] || continue
     printf '%-64s merge=derived\n' "$p"
   done
+  # A writer that names neither file is a renamed constant, not an empty policy: refuse it
+  # rather than publish a block in which the version line conflicts again.
+  vp="$(version_paths)"
+  [ "$(printf '%s\n' "$vp" | grep -c .)" = 2 ] \
+    || { echo "gitattributes: $WRITER does not name MANIFEST and LOCK" >&2; exit 12; }
+  printf '%s\n' "$vp" | while IFS= read -r p; do printf '%-64s merge=version\n' "$p"; done
   printf '%s\n' "$END"
 }
 

@@ -1,7 +1,7 @@
 +++
 title = "The version is measured against the public surface, not claimed"
 description = "The version is measured against the public surface, not claimed"
-weight = 149
+weight = 151
 [extra]
 kind = "rule"
 slug = "project-the-version-is-measured-2"

@@ -41,6 +41,12 @@ provenance:
 > The measurement, the policy and the writer's floor below are unchanged. The closing remark
 > that ADR 0029 "stays `accepted`" is a slip — ADR 0029 is `proposed`, and stays so.
 
+> **Amended by [ADR 0106](0106-integrated-work-advances-the-version-by-at-least-the-cadence-over-the-trunk.md) (proposed), 2026-10-04.**
+> Where this record says an unchanged surface "owes nothing", read *owes nothing to the
+> contract*: a change set that carries work also owes the policy's completion cadence over the
+> version the trunk declares, and the larger of the two requirements is the version obligation.
+> The analysis, the policy modes, the gate and the writer's contract floor below are unchanged.
+
 ## Context
 
 ADR 0029 gave the version one *writer*, which it had never had, and that half of it stands:

@@ -1,7 +1,7 @@
 +++
 title = "A rustdoc tree built from another commit than the one it is checked or deployed as is refused, by the integrity check before publication and by the public verification after it"
 description = "The reference is stale when it was built from a commit other than the one it is presented as. That"
-weight = 173
+weight = 176
 [extra]
 claim_id = "rustdoc-verified-live"
 status = "guaranteed"

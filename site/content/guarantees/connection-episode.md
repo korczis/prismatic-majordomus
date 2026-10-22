@@ -1,7 +1,7 @@
 +++
 title = "A client with no provider hooks gets an execution episode from the MCP connection, resumes its own after a crash, and never has its prompt claimed to be captured"
 description = "Majordomus draws the episode boundary below the model, so that the episode which mattered — the one that ended in a crash, a compaction, or somebody closing the window — is recorded whether or not a model remembered to record it. Until ADR 0103 that was wired for one provider: Claude Code fires SessionStart and SessionEnd, a shim runs capture session, and the repository gets an episode. Every other client got nothing at all."
-weight = 161
+weight = 164
 [extra]
 claim_id = "connection-episode"
 status = "guaranteed"

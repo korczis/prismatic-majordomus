@@ -585,6 +585,21 @@ pub const LOCAL: &[LocalCommand] = &[
         reason: LocalReason::WritesRepository,
         note: "raises the version in the one place it is authored, and the lock's record of it; the one writer, and a deliberate act.",
     },
+    LocalCommand {
+        command: "release obligation",
+        reason: LocalReason::RendersCapability("release.obligation"),
+        note: "prints what integrating this tree requires the version to become, and why.",
+    },
+    LocalCommand {
+        command: "release merge-version",
+        reason: LocalReason::WritesRepository,
+        note: "git's merge driver for the version line: it writes the merged file over git's %A, which is a write into a merge in progress and meaningless over a socket.",
+    },
+    LocalCommand {
+        command: "release advance",
+        reason: LocalReason::WritesRepository,
+        note: "satisfies the version obligation through the one writer `release bump` uses; nothing when it already holds.",
+    },
 ];
 
 /// The entry for a command, by the words a person types after `majordomus`.

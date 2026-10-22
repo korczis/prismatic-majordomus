@@ -32,6 +32,12 @@ git config core.hooksPath .githooks
 # repairs such a stale declaration.
 git config merge.derived.name "derived artifacts: resolve to ours, regenerate before committing"
 git config merge.derived.driver "scripts/merge-derived %O %A %B %P"
+# The version line's driver (ADR 0106 §8b), declared the same way and for the same reason.
+# It never builds (MAJORDOMUS_NO_BUILD) and falls back to git's own text merge when the
+# executable cannot answer — exit 0 and 1 are the driver's verdict, anything else is not.
+git config merge.version.name "the version line: merged version-neutrally, decided by release advance"
+# shellcheck disable=SC2016  # the $s is the driver's own shell variable, expanded when git runs it
+git config merge.version.driver 'MAJORDOMUS_NO_BUILD=1 bin/majordomus-cli release merge-version %O %A %B %P; s=$?; [ $s -le 1 ] && exit $s; git merge-file %A %O %B'
 bin/majordomus doctor
 bin/majordomus watch
 # The scoped context documents: the tree validates, every projection matches its stamp, and

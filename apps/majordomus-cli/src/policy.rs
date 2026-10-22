@@ -162,6 +162,10 @@ pub struct Policy {
     /// which is what this repository's own history already satisfies.
     #[serde(default)]
     pub commit: crate::commit::CommitPolicy,
+    /// `release:` — how this repository's version follows its integrated work (ADR 0106).
+    /// Absent imposes no cadence, which is the behaviour before that decision.
+    #[serde(default)]
+    pub release: crate::release::obligation::ReleasePolicy,
 }
 
 /// `session:` — what the episode boundary does beyond drawing itself.

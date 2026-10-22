@@ -510,6 +510,144 @@ A `git log` that fails is not an error here: it yields no commits, and the calle
 the gap. That is what lets the changelog render at all in a shallow CI checkout, where
 refusing would make the document unavailable exactly where it is read from a machine.
 
+## Accepted work advances the version
+
+The contract measurement above answers a compatibility question, and it is silent about most
+work: a fix, a document, a test and a refactor behind the boundary move no contract, so a
+trunk could take a hundred of them and stay on one version while the version stopped naming
+what is served. [ADR 0106](../.ai/repo/adrs/0106-integrated-work-advances-the-version-by-at-least-the-cadence-over-the-trunk.md) adds
+a second requirement beside it, the **completion cadence** (`release.cadence` in
+`.ai/repo/policy.yaml`): a change set that carries work advances the trunk's version by at
+least that much. Neither requirement replaces the other; the obligation is the greater:
+
+```text
+  contract floor  = last release raised by what the public contract requires   (ADR 0051)
+  cadence floor   = trunk version raised by the cadence, when the change carries work
+  minimum         = max(trunk version, contract floor, cadence floor)
+```
+
+| the change set | contract | cadence | from 1.5.0 the version must reach |
+|---|---|---|---|
+| internal work only | none | minor | 1.6.0 |
+| a compatible public addition | minor | minor | 1.6.0 |
+| a breaking public change | major | minor | 2.0.0 — the major wins |
+| a release record, a projection refresh, an advance alone | — | none | 1.5.0 — nothing is owed |
+
+Below 1.0.0 a breaking change costs a minor (ADR 0051's zero-major rule), so on this
+repository the contract and the cadence agree on a minor until the first major.
+
+`majordomus release obligation [--base <trunk>]` answers the question without writing —
+the trunk, the declared version, what the change set carries and why, both floors, the
+minimum, and a state of `satisfied`, `not-owed`, `owed`, `behind` or `unverified` (exit
+0, 0, 10, 10, 12). `majordomus release advance` writes the minimum through the one writer the
+bump uses, and does nothing when the obligation is already met. `finish --outcome completed`
+judges its whole contract first and, only when nothing else is unmet, runs the advance,
+re-reads the obligation and records `release.advanced` before `task.finished` — so a
+completion that is refused advances nothing. The gate `version-obligation` refuses a pull
+request whose merge carries work without its advance.
+
+### What carries work
+
+The obligation is owed by a change set, never by a conversation, and an episode that ends —
+a provider's session closing, a terminal dying — owes nothing; only an accepted completion
+or an integration does. Every path the change set touches is classified by what makes it
+machine output: a path the trunk's `.gitattributes` marks `merge=derived` is a projection, a
+file under `.ai/repo/releases/` is publication evidence, and the manifest and lock are a
+version advance when they differ from the base exactly as the writer would have written them.
+Anything else is work. That classification is what ends the release pipeline's own follow-up
+commits: a release record landing after publication carries no work and raises nothing, so a
+merge, its advance, its derived refresh and its record terminate after one advance.
+
+### Two branches, one trunk
+
+Two branches that start from 1.10.0 each advance to 1.11.0, and only one of them can land
+with it. The obligation is therefore measured against the trunk a branch is merged into, not
+the one it started from, and a branch is brought up to date the same way every time
+(`majordomus prs drain --refresh`, `scripts/unblock`): merge the trunk in, `release advance`
+against it, derive, commit. The version line is taken out of that merge by the driver
+`merge=version` on the manifest and the lock (`majordomus release merge-version`): it
+rewrites the base and both sides to the greater of the two declared versions and merges the
+rest with git's own three-way merge, so a dependency edit still merges or conflicts as it
+always did, and the number is then decided by the advance. So:
+
+| | the trunk | the branch | the branch after its refresh |
+|---|---|---|---|
+| A advances from 1.10.0 and lands | 1.11.0 | 1.11.0 | — |
+| B also advanced from 1.10.0 | 1.11.0 | 1.11.0, `owed` against the trunk | 1.12.0 |
+| C owes a major (a breaking change) | 1.12.0 | 2.0.0 | 2.0.0, `satisfied` |
+
+A branch is never left claiming a number another branch already landed with, and a major one
+side owed is never lowered by the merge.
+
+The driver is declared per clone, like the derived one, and git merges the version line as
+text, silently, wherever it is not. `just derive-merge-driver` declares both; `core-check`
+declares both in CI; `doctor` refuses a clone without either. The declaration it writes is:
+
+```console
+git config merge.version.name "the version line: merged version-neutrally, decided by release advance"
+git config merge.version.driver 'MAJORDOMUS_NO_BUILD=1 bin/majordomus-cli release merge-version %O %A %B %P; s=$?; [ $s -le 1 ] && exit $s; git merge-file %A %O %B'
+```
+
+It never builds, and where the executable cannot answer — an older one without the
+subcommand — it falls back to git's own text merge, so it changes nothing in a checkout that
+predates it. `prs drain --refresh` and `scripts/unblock` do not depend on it: each names the
+driver with its own executable for the merge it makes, and asks for the advance only where
+the merge policy marks a file `merge=version`. The refresh records the version it advanced to
+in the integration trail as a `version_advanced` event.
+
+### A retry advances nothing
+
+The advance is idempotent by construction: it writes the minimum only when the declared
+version is below it, and once written the obligation reads `satisfied`. A second `finish`, a
+rerun of a workflow, a provider end hook firing twice and a redeploy after a failed one all
+find the obligation satisfied and write nothing. A deploy that fails therefore leaves the
+version, the integration and the record of both where they were; the retry publishes the
+same version.
+
+### The served version is the declared one
+
+Publication is verified from outside: `majordomus served observe` reads the build identity
+the site serves and judges it against the commit that was meant to be there, and
+`scripts/ci/pages-check` (the `pages-live` gate `finish` runs) asks it. Since the
+version obligation, the judgement also holds the stated version to the one the served commit
+declares: a site that serves the right commit while telling its reader another version —
+what a deploy of stale derived data publishes — is `mismatched`, a measured no, never a pass.
+
+### When work is done
+
+`finish --outcome completed` judges its whole contract first — scope, verification, state,
+blockers, continuity, the at-finish gates — and pays an owed obligation only when nothing
+else is unmet: it runs `release advance` and `generate distribution`, reads the obligation
+again (it must now hold), and records `release.advanced` before `task.finished`. A refused
+completion advances nothing, so the ledger never carries an advance for work that was not
+accepted. The at-finish gates (`publication_current`) are what make a completion wait for
+the served site: completed means the work is integrated and published, not that it was
+intended to be.
+
+### Version, deploy, tag, record
+
+Four things are kept apart, and an advance is only the first of them:
+
+| | what it is | who makes it |
+|---|---|---|
+| the declared version | the trunk's `[package] version`, raised by the obligation | `release advance`, at finish or at the landing's refresh |
+| the deployment | the site built from a master push that owes a publication | the pages workflow; verified by its commit and its `source_version` |
+| the tag | `v<version>`, the decision to publish a binary release | a person, or the lander (`docs/DISTRIBUTION.md`) |
+| the release record | `.ai/repo/releases/v<version>.yaml`, evidence of a publication | the publish job, after publication, and nothing else |
+
+The changelog composes one section per record, so the minors advanced between two records
+are listed as unreleased until the next record ships them.
+
+### Recovery
+
+| what failed | what the tree says | what to do |
+|---|---|---|
+| the version line conflicts in a merge | `merge=version` was not declared in this clone | `just derive-merge-driver`, merge again, then `majordomus release advance` |
+| a branch went stale | `release obligation` says `owed` or `behind`; the `version-obligation` gate refuses | merge the trunk (`majordomus prs drain --refresh`, `scripts/unblock <branch>`), which advances against it |
+| the merge failed | nothing advanced on the trunk | retry the landing; the obligation is recomputed against the trunk as it is |
+| the deploy failed | the version is unchanged; `pages-check` reports a publication owed | rerun the pages workflow; no advance is owed again |
+| the public verification failed | `served observe` says `stale` or `mismatched`, `scripts/pages verify --commit` refuses | rerun the deploy and verify again; the version is never bumped to recover |
+
 ## Releasing
 
 The release procedure itself — the tag, the pipeline, the build matrix, the record written
@@ -560,6 +698,13 @@ appended is refused, naming the tag.
 | gate `version-authored-once` | `bin/majordomus-cli release version`: the projection is current and no version is written by hand where the tool's files live |
 | `scripts/rust-check` (gate `rust-check`) | `generate --check`: the committed changelog and `share/version.txt` still describe the tree |
 | `scripts/release-version --check` | the shell tool prints the version the manifest declares — the question `generate --check` leaves open |
+| `apps/majordomus-cli/src/release/reconcile.rs` | the version driver: two advances from one trunk merge to the greater with no conflict, a major one side owed survives the merge, a dependency edit still merges and two competing edits of one dependency still conflict with the version line outside the conflict, the lock merges the same way, a side whose version cannot be read is merged as git would with no number invented, and the driver writes over `%A` and reports a conflict by its exit |
+| `test/cases/873_concurrent_branches_never_share_a_version.sh` | two branches advanced from 1.10.0: A lands 1.11.0 and B, refreshed by merging the trunk and advancing against it, lands 1.12.0, never A's number; a branch advanced once against a trunk that advanced twice is merged by the driver alone — without it the version line conflicts, which the case is shown to fail on — and goes one past the trunk with its dependency edit; a branch below the trunk's version is `behind` |
+| `test/cases/872_an_episode_end_is_not_a_completion.sh` | a provider's episode ending with work on the bench hands the task over and advances nothing; a completion refused by its own verification leaves the version and the ledger as they were; the same work, accepted, advances 1.4.0 to 1.5.0 once |
+| `test/cases/874_the_release_pipeline_does_not_advance_itself.sh` | one piece of work merged with its advance takes the trunk to 1.5.0, and a projection refresh, the release record and the two together each leave it there with the automation's advance run after every merge; the next piece of work takes it to 1.6.0 — and a record written where the classification does not recognise evidence makes the case fail at that step |
+| `test/cases/875_a_failed_deploy_is_retried_on_the_same_version.sh` | integrated work at 1.5.0 is `stale` while the deploy has failed, the retry writes nothing, half a deploy (the new commit with the old version) is `mismatched`, and only the integrated commit at 1.5.0 is `served` |
+| `test/cases/876_unblock_reconciles_the_version.sh` | a branch at 1.11.0 against a trunk that reached 1.12.0 conflicts under git alone; `scripts/unblock` merges it through the version driver, advances it to 1.13.0, commits that as a release advance and pushes it as a fast-forward of the branch, leaving the checkout it ran from untouched |
+| `test/cases/384_a_deployment_is_evidence.sh` | the served build is held to the version its commit declares: agreeing is `served`, stating another is `mismatched` (exit 10), and a build stating none keeps the commit's verdict |
 
 The behavioural case builds its own repository rather than reading this one, because every
 question it asks is a question about a history. A fixture whose history is real is the only

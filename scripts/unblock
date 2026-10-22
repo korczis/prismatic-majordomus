@@ -154,7 +154,12 @@ step "merge $REMOTE/$TRUNK into $BRANCH"
 # dropped commits from master in this repository once. What this merge does must be
 # decidable from what it says.
 merge_out=""
-if ! merge_out="$(git -C "$W" -c rerere.enabled=false merge --no-edit "$REMOTE/$TRUNK" 2>&1)"; then
+# The version line is merged by its own driver (ADR 0106 §8b), named here with this checkout's
+# executable rather than read from the clone: the scratch worktree is the branch's tip, whose
+# own build may predate the driver, and the clone's declaration falls back to a text merge
+# where the executable lacks it — which is right for a person's merge and wrong for this one.
+vdriver="merge.version.driver=$ROOT/bin/majordomus-cli release merge-version %O %A %B %P"
+if ! merge_out="$(git -C "$W" -c rerere.enabled=false -c "$vdriver" merge --no-edit "$REMOTE/$TRUNK" 2>&1)"; then
   # Which paths are unmerged, and which of them anybody wrote by hand. `git check-attr` is
   # asked about each path rather than .gitattributes read here, because what decides is the
   # attribute that applies to the path, however the pattern granting it happens to be spelt.
@@ -188,6 +193,24 @@ fi
 say "$merge_out"
 MERGE_SHA="$(git -C "$W" rev-parse HEAD)"
 
+# ---------------------------------------------------------------- the version the merge owes
+# The merged tree carries the greater of the two declared versions, which is a starting point
+# and not an answer: it is owed the obligation against the trunk it now contains (ADR 0106),
+# so a branch that advanced from the same trunk another branch landed from goes one past it,
+# and a major one side owed is kept. Asked only of a repository with a version writer — one
+# whose tracked files the generated merge policy marks `merge=version` — and refused, never
+# skipped, when the obligation cannot be met or read.
+if [ -n "$(git -C "$W" ls-files ':(attr:merge=version)')" ]; then
+  step "release advance against $REMOTE/$TRUNK"
+  adv_rc=0
+  adv_out="$(cd "$W" && "$ROOT/bin/majordomus-cli" release advance --base "$TRUNK_SHA" 2>&1)" || adv_rc=$?
+  if [ "$adv_rc" != 0 ]; then
+    say "$adv_out"
+    refuse "release advance refused the merged tree (exit $adv_rc); the merge was not pushed"
+  fi
+  say "unblock: $(printf '%s\n' "$adv_out" | grep -v '^ *$' | tail -1)"
+fi
+
 # ---------------------------------------------------------------- the projections follow
 # Every derived file the driver touched was resolved to ours and is therefore stale: it
 # carries a fingerprint of a tree that no longer exists. The pre-commit hook refuses a
@@ -213,7 +236,11 @@ fi
 if [ "$changed" != 0 ]; then
   step "commit"
   git -C "$W" add -A
-  git -C "$W" commit -q -m "chore(derive): the projections follow the master merge"
+  if [ -n "$(git -C "$W" status --porcelain -- ':(attr:merge=version)')" ]; then
+    git -C "$W" commit -q -m "chore(release): the version advances against the master merge, and the projections follow"
+  else
+    git -C "$W" commit -q -m "chore(derive): the projections follow the master merge"
+  fi
   MERGE_SHA="$(git -C "$W" rev-parse HEAD)"
 fi
 
