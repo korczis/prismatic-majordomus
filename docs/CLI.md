@@ -1905,8 +1905,11 @@ restrict `list`, `ready`, `blocked`, `waves` and `graph`; `--covers`, `--type`, 
   `--command` or an `--artifact`: narrative is not evidence. It appends to the issue's own
   file with the commit and the timestamp.
 - `done` refuses (`10`) while any declared evidence token is uncovered, and refuses (`15`)
-  while a dependency is not `DONE`. Every writing subcommand prints the next ready issue
-  after the graph has been recomputed.
+  while a dependency is not `DONE` or the issue is not `ACTIVE` or `VERIFY`. It is the
+  `plan.transition` capability's move, run by the executable as the MCP tool and the HTTP
+  route run it, over the records in the work tree; the shell tool writes nothing of it
+  itself, and without the executable it refuses (`10`) rather than write a second way. Every
+  writing subcommand prints the next ready issue after the graph has been recomputed.
 - Exits `12` when the record named does not exist, or when the repository has no canonical
   project model at all — the model is opt-in, and `doctor` skips it rather than failing
   where it is absent.

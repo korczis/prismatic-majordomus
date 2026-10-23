@@ -193,6 +193,80 @@ done
 [ "$("$MJ" plan list | awk '$1=="I0005"{print $2}')" = BLOCKED ] \
   || { echo "    the milestone gate does not reach the work"; exit 1; }
 
+# ---------------------------------------------------------------- one transition, end to end
+# I1504. Moving an issue to DONE is one declaration, plan.transition, and every door to it is
+# a projection of that declaration: the MCP tool, the HTTP route and its OpenAPI operation,
+# and `majordomus plan done`, which asks the executable instead of writing the record. After
+# each door is used the two engines still read one plan, byte for byte.
+#
+# The operation is a POST, the plan's one non-GET route, and it is the one the declaration
+# derives today: nobody wrote it into the document.
+jq -e '.paths["/api/v1/plan/transition"] | (keys == ["post"]) and .post.operationId == "plan.transition"' \
+  "$ROOT/docs/generated/openapi.json" >/dev/null \
+  || { echo "    the OpenAPI document has no POST-only /api/v1/plan/transition"; exit 1; }
+( cd "$ROOT" && "$RB" generate openapi --out "$S/gen" >/dev/null 2>"$S/gen.err" ) \
+  || { echo "    generate openapi failed:"; sed 's/^/    | /' "$S/gen.err"; exit 1; }
+cmp -s <(jq -S '.paths["/api/v1/plan/transition"]' "$S/gen/docs/generated/openapi.json") \
+       <(jq -S '.paths["/api/v1/plan/transition"]' "$ROOT/docs/generated/openapi.json") \
+  || { echo "    the committed transition operation is not the one the declaration derives"; exit 1; }
+
+# The shell holds no writer of its own for `done`: the stamp, the seal and the event are the
+# capability's (case 582 holds the behaviour; this holds the source to it).
+if grep -En '^[^#]*mj_plan_stamp .*plan_done' "$ROOT/lib/plan.sh" >/dev/null; then
+  echo "    lib/plan.sh stamps completed_at itself instead of asking plan.transition"; exit 1
+fi
+
+# The MCP tool moves an issue to DONE, and the ledger line is written by the move.
+LEDGER=.ai/local/state/ledger.jsonl
+for i in I0001 I0012; do
+  "$MJ" plan start "$i" >/dev/null || { echo "    plan start $i failed"; exit 1; }
+  "$MJ" plan evidence "$i" --covers proof --type test --command true --result ok >/dev/null \
+    || { echo "    attaching evidence to $i failed"; exit 1; }
+done
+git add -A >/dev/null && git commit -qm "I0001 and I0012 active"
+plan_tool "$PWD" majordomus_plan_transition '{"issue":"I0001","transition":"done"}' > "$S/moved" \
+  || exit 1
+jq -e '.issue == "I0001" and .transition == "done" and .from == "ACTIVE" and .to == "DONE"
+       and .field == "completed_at" and .event == "plan_done"' "$S/moved" >/dev/null \
+  || { echo "    tools/call majordomus_plan_transition did not move I0001 to DONE: $(cat "$S/moved")"; exit 1; }
+tail -n 1 "$LEDGER" | grep -q '"plan_done"' \
+  || { echo "    the move appended no plan_done to the ledger"; exit 1; }
+# ...and the shell's `done` is the same move through the same declaration.
+expect_exit 0 "$MJ" plan "done" I0012
+expect_grep 'plan: I0012 DONE'
+tail -n 1 "$LEDGER" | grep -q '"plan_done"' \
+  || { echo "    plan done appended no plan_done to the ledger"; exit 1; }
+git add -A >/dev/null && git commit -qm "I0001 and I0012 done"
+compare_repository "$PWD" "the fixture after done through the MCP tool and through the shell" || exit 1
+
+# The development-semantics gate (project.development-semantics-are-canonical) no longer
+# reports `plan`, and refuses the baseline entry's return: the closure is the capability's,
+# so a baseline that accepts backing:plan again is a stale line, and a registry without the
+# plan module's command makes it a regression again. The gate reads the model from MJ_ROOT,
+# so it is driven over a copy of this repository's commands and registry.
+devsem() { MJ_ROOT="$S/devsem" "$ROOT/scripts/development-semantics-check" --json > "$S/devsem.json"; }
+has() { jq -e --arg k "backing:plan" --arg f "$1" '.[$f] | index($k) != null' "$S/devsem.json" >/dev/null; }
+mkdir -p "$S/devsem/share" "$S/devsem/docs/generated" "$S/devsem/.ai/repo"
+cp "$ROOT/share/commands.yaml" "$S/devsem/share/"
+cp "$ROOT/docs/generated/registry.json" "$S/devsem/docs/generated/"
+B="$S/devsem/.ai/repo/development-semantics-baseline.txt"
+grep '^backing:' "$ROOT/.ai/repo/development-semantics-baseline.txt" > "$B" || true
+git -C "$S/devsem" init -q
+devsem || true
+if has regressions || has stale_baseline; then
+  echo "    the gate still reports backing:plan: $(cat "$S/devsem.json")"; exit 1
+fi
+grep -qx 'backing:plan' "$ROOT/.ai/repo/development-semantics-baseline.txt" \
+  && { echo "    the baseline still accepts backing:plan"; exit 1; }
+echo 'backing:plan' >> "$B"
+if devsem; then echo "    the gate accepted backing:plan back into the baseline"; exit 1; fi
+has stale_baseline || { echo "    the returned backing:plan is not reported stale: $(cat "$S/devsem.json")"; exit 1; }
+grep -vx 'backing:plan' "$B" > "$B.new"; mv "$B.new" "$B"
+jq '(.capabilities[] | select(.module == "plan" and .kind == "command") | .kind) |= "query"' \
+  "$ROOT/docs/generated/registry.json" > "$S/devsem/docs/generated/registry.json"
+devsem || true
+has regressions || { echo "    without plan.transition the gate does not report backing:plan"; exit 1; }
+
 # --- an unknown dependency: an invalid model, refused by both engines by the same name
 pj_issue I0009 M000 I9999
 git add -A >/dev/null
@@ -217,8 +291,8 @@ plan_tool "$PWD" majordomus_plan_waves '{}' \
   || { echo "    an issue inside a cycle was given a wave"; exit 1; }
 
 # ---------------------------------------------------------------- nothing was written
-# Every plan capability is a query. The registry's contract is that none of them writes to
-# the repository, and this is the assertion that would fail if one did.
+# Every plan capability but plan.transition is a query. The registry's contract is that none
+# of them writes to the repository, and this is the assertion that would fail if one did.
 before="$(git status --porcelain; git ls-files -s)"
 plan_tool "$PWD" majordomus_plan '{}' >/dev/null
 plan_tool "$PWD" majordomus_plan_record '{"id":"I0001"}' >/dev/null
