@@ -32,7 +32,7 @@ use crate::repository;
 use crate::{capability, module};
 
 use super::monitor::MonitorInput;
-use super::peers::{BoardView, PeerList, PeerListInput};
+use super::peers::{BoardView, PeerList, PeerListInput, PeerListView};
 use super::server::Checkouts;
 use super::{get, mcp};
 
@@ -377,8 +377,14 @@ pub struct Blackboard {
     pub complete: bool,
     /// Each source and how it was read.
     pub sources: Vec<BlackboardSource>,
-    /// Each checkout's board, reached or not.
+    /// Each checkout's board the summary lists: reached or not, with a server or a worker.
     pub boards: Vec<BoardView>,
+    /// How many checkouts the answer covers, listed in `boards` or counted in `omitted`.
+    pub covered: usize,
+    /// The covered checkouts `boards` does not list, counted by standing (`absent`, `stale`):
+    /// no server, nobody attached, no board.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub omitted: BTreeMap<String, usize>,
     /// How many workers are here now: attached to a board or in an active mesh session.
     pub present: usize,
     /// Every worker, this checkout's board first, then the other boards, then the mesh.
@@ -704,6 +710,8 @@ pub(crate) fn project(
         complete,
         sources,
         boards: reads.board.boards.clone(),
+        covered: reads.board.covered,
+        omitted: reads.board.omitted.clone(),
         present: workers
             .iter()
             .filter(|w| w.presence != BlackboardPresence::Departed)
@@ -897,6 +905,7 @@ fn absence(
 fn snapshot(ctx: &Context, input: BlackboardInput) -> Result<Blackboard, CapabilityError> {
     let asked = PeerListInput {
         checkouts: input.checkouts,
+        view: PeerListView::Summary,
     };
     super::peers::peers_list(ctx, asked).and_then(|board| read(ctx, input, &board))
 }
@@ -1071,7 +1080,9 @@ mod tests {
             caller: None,
             peers,
             overlaps: Vec::new(),
+            covered: 1,
             boards: vec![serde_json::from_value(board).unwrap()],
+            omitted: BTreeMap::new(),
             complete: true,
             stream: stream.map(|s| s.as_str().to_string()),
         }

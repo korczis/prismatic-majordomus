@@ -67074,6 +67074,91 @@
         }
       },
       {
+        "id": "majordomus://issue/I3960",
+        "kind": "issue",
+        "label": "I3960",
+        "summary": "The initialize instructions tell the caller about itself before the board, and the board line is bounded",
+        "route": "/cockpit/objects/issue/i3960",
+        "source": ".ai/repo/project/issues/I3960.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "With twelve peers holding five claims of several hundred characters each, the board line stays within its bound, names the first peer, counts the rest and points at majordomus_peers",
+            "The caller's own sentence (you have not announced anything) precedes the board line in the initialize instructions",
+            "A small board still names every claim, as before"
+          ],
+          "created_at": "2026-10-22",
+          "current_state": "apps/majordomus-cli/src/mcp/protocol.rs pushes board.summary() with every claim's whole intent before the caller-specific sentences; PeerBoard::summary has no bound.",
+          "depends_on": [],
+          "evidence_required": [
+            "the_summary_stays_bounded_however_large_the_board",
+            "the_caller_is_told_about_itself_before_the_board_is_listed"
+          ],
+          "milestone": "mcp-transports-are-reliable",
+          "non_scope": [
+            "The size of tool descriptions, which clients load deferred",
+            "peers.list itself (I3961)"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/peers.rs",
+            "apps/majordomus-cli/src/mcp/protocol.rs"
+          ],
+          "slug": "the-initialize-board-line-is-bounded",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- peers::tests protocol::tests",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3961",
+        "kind": "issue",
+        "label": "I3961",
+        "summary": "peers.list answers a summary by default: checkouts that hold no board are counted, not listed",
+        "route": "/cockpit/objects/issue/i3961",
+        "source": ".ai/repo/project/issues/I3961.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Under the default summary every covered checkout is listed or counted, never neither, and covered equals the two together",
+            "A board that could not be read is listed whatever its standing; this checkout is always listed",
+            "view full lists every covered checkout and counts none away",
+            "brief and the cockpit report every covered checkout, and the cockpit says how many it does not list"
+          ],
+          "created_at": "2026-10-22",
+          "current_state": "peers.list lists one BoardView per registered checkout whatever its standing; brief and the cockpit count checkouts as boards.len().",
+          "depends_on": [],
+          "evidence_required": [
+            "the_summary_counts_only_checkouts_that_hold_no_board",
+            "the_board_is_repository_wide"
+          ],
+          "milestone": "mcp-transports-are-reliable",
+          "non_scope": [
+            "Removing worktrees, which are their owners'",
+            "The cost of enumerating and probing every checkout, which is unchanged"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/peers.rs",
+            "apps/majordomus-cli/src/capability/builtin/brief.rs",
+            "apps/majordomus-cli/src/cockpit/pages.rs",
+            "test/cases/250_the_board_is_repository_wide.sh",
+            "test/cases/343_the_cockpit_shows_who_else_is_here.sh"
+          ],
+          "slug": "the-board-answers-a-summary",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- peers:: brief::tests cockpit::pages::tests::the_peers_page",
+            "bash test/run.sh 250_the_board_is_repository_wide 343_the_cockpit_shows_who_else_is_here",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I3962",
         "kind": "issue",
         "label": "I3962",
@@ -81128,12 +81213,12 @@
         }
       },
       {
-        "id": "majordomus://rule/project.the-projection-is-applied-at-landing@1",
+        "id": "majordomus://rule/project.the-projection-is-applied-at-landing@2",
         "kind": "rule",
-        "label": "project.the-projection-is-applied-at-landing@1",
+        "label": "project.the-projection-is-applied-at-landing@2",
         "summary": "A landing that changes what GitHub shows applies the change itself",
-        "route": "/cockpit/objects/rule/project-the-projection-is-applied-at-landing-1",
-        "source": ".ai/repo/rules/project/the-projection-is-applied-at-landing.v1.md",
+        "route": "/cockpit/objects/rule/project-the-projection-is-applied-at-landing-2",
+        "source": ".ai/repo/rules/project/the-projection-is-applied-at-landing.v2.md",
         "status": "active",
         "facts": {
           "class": "blocking",
@@ -90624,6 +90709,13 @@
         "label": "test/cases/3963_a_merge_of_master_derives_in_one_go.sh",
         "route": "/cockpit/objects/test/test-cases-3963-a-merge-of-master-derives-in-one-go-sh",
         "source": "test/cases/3963_a_merge_of_master_derives_in_one_go.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3970_a_pull_request_carries_its_metadata.sh",
+        "kind": "test",
+        "label": "test/cases/3970_a_pull_request_carries_its_metadata.sh",
+        "route": "/cockpit/objects/test/test-cases-3970-a-pull-request-carries-its-metadata-sh",
+        "source": "test/cases/3970_a_pull_request_carries_its_metadata.sh"
       },
       {
         "id": "majordomus://test/test/cases/3995_a_task_started_before_the_first_commit_finishes.sh",
@@ -128193,6 +128285,26 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3960",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3960",
+        "target": "majordomus://milestone/mcp-transports-are-reliable",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3961",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3961",
+        "target": "majordomus://milestone/mcp-transports-are-reliable",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I3962",
         "target": "kind:issue",
         "kind": "is_a"
@@ -131778,17 +131890,17 @@
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.the-projection-is-applied-at-landing@1",
+        "source": "majordomus://rule/project.the-projection-is-applied-at-landing@2",
         "target": "kind:rule",
         "kind": "is_a"
       },
       {
-        "source": "majordomus://rule/project.the-projection-is-applied-at-landing@1",
+        "source": "majordomus://rule/project.the-projection-is-applied-at-landing@2",
         "target": "majordomus://rule/project.github-projection-gated@1",
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.the-projection-is-applied-at-landing@1",
+        "source": "majordomus://rule/project.the-projection-is-applied-at-landing@2",
         "target": "majordomus://rule/project.no-claim-without-test@1",
         "kind": "depends_on"
       },
@@ -134619,6 +134731,11 @@
       },
       {
         "source": "majordomus://test/test/cases/3963_a_merge_of_master_derives_in_one_go.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3970_a_pull_request_carries_its_metadata.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -139759,8 +139876,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3891,
-      "edges": 8992,
+      "nodes": 3894,
+      "edges": 8997,
       "acyclic": false,
       "truncated": false
     }

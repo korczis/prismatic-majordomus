@@ -69,6 +69,22 @@ refuses to run without `MAJORDOMUS_BIN`. Its model is `.ai/repo/ci/github.yaml`,
 runs its steps against a scripted adapter. The gate in validate stays what it was: it bounds
 how late the trunk may be when that workflow fails, and names the manual apply as the remedy.
 
+A fourth keeps each pull request's metadata current. `.github/workflows/pr-meta.yml` runs on
+every `pull_request_target` event that can change what a pull request serves or carries
+(opened, edited, synchronize, labeled) and applies `scripts/github-sync --prs --pr <number>`
+to that one pull request, and once a day (or on a dispatch) to every open one. What it
+writes: the type, priority, `train` and `records` labels, the milestone, the author as
+assignee when nobody is, and the `Refs #<n>` region of the body (`docs/PLANNING.md`, "Pull
+requests"). Its token's writes start no other workflow, so the labels it adds start no
+validate run. It checks out the default branch and never the head, whose commits and records
+it reads with git as data, so `pull_request_target`'s writing token never runs a head's
+code; it holds `pull-requests: write`, `issues: read` and `contents: read`, runs one at a
+time per pull request (and one sweep at a time) and is never cancelled. It is the one run a
+pull request may start (`project.the-projection-is-applied-at-landing@2`). Its model is
+`.ai/repo/ci/pr-meta.yaml`; `test/cases/1097_the_projection_is_applied_at_landing.sh` holds
+it to the rule and `test/cases/3970_a_pull_request_carries_its_metadata.sh` to its model,
+and drives the adapter against a scripted forge.
+
 ## The model: what can affect what
 
 `.ai/repo/ci/gates.yaml` is the one place the dependency map lives. It declares the gates

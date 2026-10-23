@@ -1,0 +1,30 @@
+id: I3960
+milestone: mcp-transports-are-reliable
+title: "The initialize instructions tell the caller about itself before the board, and the board line is bounded"
+slug: the-initialize-board-line-is-bounded
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Bound PeerBoard::summary (each claim's intent cut, at most three claims a peer, the whole line capped, the rest counted with a pointer to majordomus_peers) and move it after the sentences about the caller in the MCP initialize instructions."
+why: "On 2026-10-22 five peers holding twenty claims made the board line of the initialize instructions about 6 kB. Claude Code cut the instructions inside that line, so the sentences after it — the nudge to announce, which the code calls the one that matters on every reconnect — never reached the caller. Observed in session 54f32bb3 (native-acceleration pack, P01)."
+current_state: "apps/majordomus-cli/src/mcp/protocol.rs pushes board.summary() with every claim's whole intent before the caller-specific sentences; PeerBoard::summary has no bound."
+desired_state: "The caller-specific sentences come before the board; the board line stays within SUMMARY_LINE characters whatever the board holds, counts what it does not name, and points at majordomus_peers for every word."
+scope:
+  - "apps/majordomus-cli/src/peers.rs"
+  - "apps/majordomus-cli/src/mcp/protocol.rs"
+non_scope:
+  - "The size of tool descriptions, which clients load deferred"
+  - "peers.list itself (I3961)"
+depends_on: []
+acceptance_criteria:
+  - "With twelve peers holding five claims of several hundred characters each, the board line stays within its bound, names the first peer, counts the rest and points at majordomus_peers"
+  - "The caller's own sentence (you have not announced anything) precedes the board line in the initialize instructions"
+  - "A small board still names every claim, as before"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- peers::tests protocol::tests"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "the_summary_stays_bounded_however_large_the_board"
+  - "the_caller_is_told_about_itself_before_the_board_is_listed"
+created_at: 2026-10-22
+updated_at: 2026-10-22

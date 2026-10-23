@@ -156,7 +156,12 @@ arbitrary. Most of them were paid for.
    `mj_covers_resolve` in [`lib/commands.sh`](lib/commands.sh), called by the doctor check and
    by `test/cases/31_command_coverage.sh` alike.
 8. Commit in conventional format, `type(scope): description`, small commits that each
-   leave the tree consistent.
+   leave the tree consistent. A pull request's title is a conventional commit too, and it
+   names the issue ids it serves, `(I3970)`: its labels, milestone, assignee and the
+   `Refs #<n>` links in its body are projected from those records
+   (`scripts/github-sync --prs`, `docs/PLANNING.md`). Never write a closing keyword
+   (`Closes`, `Fixes` or `Resolves` followed by an issue number) in a title, body or commit
+   message: GitHub would close the issue ahead of its canonical record. Link with `Refs #<n>`.
 8. Before marking the pull request ready, compare every capability sentence you touched
    in `README.md` or `docs/` against the tests. Wording that outruns the tests is
    downgraded or removed in the same pull request. A new capability sentence also needs

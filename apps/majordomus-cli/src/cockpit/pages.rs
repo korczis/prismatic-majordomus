@@ -5027,10 +5027,10 @@ fn peers_of(b: &Blackboard) -> Page {
             "handovers",
         ))
         .child(super::view::asked_statistic(
-            b.boards.len().to_string(),
+            b.covered.to_string(),
             "checkouts",
             BLACKBOARD,
-            "boards",
+            "covered",
         ));
 
     let identity = card(
@@ -5197,34 +5197,53 @@ fn peers_of(b: &Blackboard) -> Page {
         },
     );
 
+    let listed = table(
+        &["Checkout", "Branch", "Standing", "Server", "Attached"],
+        b.boards
+            .iter()
+            .map(|v| {
+                row(vec![
+                    cell(mono(v.checkout.worktree.display().to_string())),
+                    cell(mono(
+                        v.checkout
+                            .branch
+                            .clone()
+                            .unwrap_or_else(|| "(detached)".into()),
+                    )),
+                    cell(badge(
+                        if v.reason.is_some() { "warn" } else { "ok" },
+                        v.standing.as_str(),
+                    )),
+                    cell(match &v.url {
+                        Some(u) => mono(u),
+                        None => el("span").class("mj-note").text("—"),
+                    }),
+                    cell(el("span").text(v.attached.to_string())),
+                ])
+            })
+            .collect(),
+    );
+    // The checkouts the summary counts rather than lists are said, with their standings, so
+    // the table is never read as every checkout of the repository.
     let boards = card(
         "Checkouts",
-        table(
-            &["Checkout", "Branch", "Standing", "Server", "Attached"],
-            b.boards
+        if b.omitted.is_empty() {
+            el("div").child(listed)
+        } else {
+            let counted = b
+                .omitted
                 .iter()
-                .map(|v| {
-                    row(vec![
-                        cell(mono(v.checkout.worktree.display().to_string())),
-                        cell(mono(
-                            v.checkout
-                                .branch
-                                .clone()
-                                .unwrap_or_else(|| "(detached)".into()),
-                        )),
-                        cell(badge(
-                            if v.reason.is_some() { "warn" } else { "ok" },
-                            v.standing.as_str(),
-                        )),
-                        cell(match &v.url {
-                            Some(u) => mono(u),
-                            None => el("span").class("mj-note").text("—"),
-                        }),
-                        cell(el("span").text(v.attached.to_string())),
-                    ])
-                })
-                .collect(),
-        ),
+                .map(|(standing, n)| format!("{n} {standing}"))
+                .collect::<Vec<_>>()
+                .join(", ");
+            el("div")
+                .child(el("p").class("mj-note").text(format!(
+                    "{} more checkout(s) hold no board — no server, nobody attached ({counted}) — \
+                     and are counted, not listed: peers.list with view full lists every one.",
+                    b.omitted.values().sum::<usize>()
+                )))
+                .child(listed)
+        },
     );
 
     Page::new(
@@ -8108,7 +8127,7 @@ mod tests {
     fn blackboard(fields: Value) -> Blackboard {
         let mut answer = json!({
             "at": "2026-10-19T00:00:00Z", "checkout": "repo-a", "complete": true,
-            "sources": [], "boards": [], "present": 0, "workers": [], "conflicts": [],
+            "sources": [], "boards": [], "covered": 0, "present": 0, "workers": [], "conflicts": [],
             "conflicts_total": 0, "reviews": [], "handovers": [], "relations": [],
             "signals": [], "for_you": 0, "cursor": "",
         });
@@ -8126,6 +8145,8 @@ mod tests {
     fn the_peers_page_names_what_it_could_not_read_and_never_renders_it_as_nobody() {
         let page = peers_of(&blackboard(json!({
             "complete": false,
+            "covered": 5,
+            "omitted": { "absent": 3 },
             "sources": [
                 {
                     "source": "board", "state": "partial",
@@ -8151,6 +8172,12 @@ mod tests {
         })));
         assert_eq!(page.status, 200);
         let html = page.main.render();
+        // the checkouts the summary counts are said, so the table is not read as all of them
+        assert!(html.contains(">5<"), "the stat is every checkout covered: {html}");
+        assert!(
+            html.contains("3 more checkout(s) hold no board") && html.contains("(3 absent)"),
+            "{html}"
+        );
         assert!(html.contains("incomplete: a board or the mesh"), "{html}");
         assert!(html.contains("1 checkout(s) could not be asked"), "{html}");
         assert!(html.contains("Boards that could not be asked"), "{html}");
@@ -8246,6 +8273,7 @@ mod tests {
                     "paths": [{ "yours": "docs", "theirs": "docs/x.md" }],
                 },
             ],
+            "covered": 1,
             "conflicts_total": 3,
             "reviews": [
                 { "key": "r-1", "from": "mesh:n-r-i/s1", "subject": "read #1", "reviewer": "1b", "issue": "I1" },
@@ -8285,7 +8313,7 @@ mod tests {
             "conflicts_total",
             "reviews",
             "handovers",
-            "boards",
+            "covered",
         ] {
             assert!(
                 html.contains(&format!(

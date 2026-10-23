@@ -591,7 +591,7 @@ request's structure job was red on it until an admin landing broke the deadlock.
 
 Applying is a consequence of landing; agreement is a gate. Every push to the default branch
 starts `.github/workflows/github.yml`, which runs `--check`, then `--apply` when something is
-owed, then the gate (`project.the-projection-is-applied-at-landing@1`); a person's `--apply`
+owed, then the gate (`project.the-projection-is-applied-at-landing@2`); a person's `--apply`
 from the trunk is the fallback when that run fails. `scripts/ci/github-check` reads the
 remote on every change that can move either side, refuses the first six states outright,
 and ratchets `missing` and `adopt` against `.ai/repo/ci/github-drift-baseline.txt`, which
@@ -612,6 +612,56 @@ issue that waited for it. Drift on a record the head did not change is refused a
 The network calls live in `scripts/github-sync`, outside the tool. `bin/`, `lib/`, `share/`
 and `test/` contain no network client, and `test/cases/08_no_forbidden_constructs.sh` proves
 it.
+
+### Pull requests
+
+A pull request carries the metadata its records imply, projected by the same adapter
+(`scripts/github-sync --prs`, I3970) and kept current by GitHub itself:
+`.github/workflows/pr-meta.yml` applies it to a pull request whenever it is opened, edited,
+synchronized or labeled (on `pull_request_target`, from the default branch's checkout, never
+the head's code), and to every open one on a daily sweep, which carries what reached GitHub
+after a pull request's last event (`.ai/repo/ci/pr-meta.yaml`).
+
+What a pull request serves is derived, never typed twice: the issue ids (`I<digits>`) in its
+title and in the subject line of each of its commits, then the issue records its head
+changes. The metadata is projected from the trunk's records: an id whose record exists only
+in the head is named by its id and lends no priority and no milestone, and an id no record
+carries is reported and ignored. From the trunk's records:
+
+| field | projected | owned by the projection |
+|---|---|---|
+| labels | `type:<t>` from the conventional title (`feat`, `fix`, `perf`, `refactor`, `docs`, `test`, `chore`, `ci`, `style`, `build`); `priority:<p>`, the highest of the issues served; `train` on an `integration/train-*` head; `records` when nothing outside `.ai/repo/project/` changes but its derived projections | those four families; every other label (`hold`, `collision:accepted`, `ci:yielded`) is a person's |
+| milestone | the GitHub milestone of the first served issue's canonical milestone | when one is derived |
+| assignee | the pull request's author | only when nobody is assigned |
+| body | a region `<!-- majordomus:pr-meta begin <hash> -->` … `<!-- majordomus:pr-meta end -->` with one `Refs #<n> (<id> — <title>)` per served issue and the canonical milestone | the region; the text around it is the author's |
+
+The region follows the issue bodies' rule: its begin marker carries the hash of what was
+written, so a region a person rewrote is reported `edited` and left alone (`--force`
+overrides), and one the records moved past is `behind` and rewritten. A pull request that
+serves no recorded issue gets its type label and nothing else.
+
+A link is `Refs #<n>`, never a closing keyword. GitHub closes the issue that a merged
+`Closes`, `Fixes` or `Resolves` names, which moves the projection ahead of its source: on
+2026-10-03 one such commit closed a canonically open issue and reddened every structure job.
+An issue closes through its record (`majordomus plan done`) and the issue projection carries
+that to GitHub. So the adapter refuses to write a region that would carry a closing keyword,
+writes a `#<digit>` inside a title as `# <digit>`, and reports one a person or a commit wrote.
+
+```
+scripts/github-sync --prs                  this branch as the pull request it would open, offline
+scripts/github-sync --prs --check          every open pull request against GitHub; exit 11 on drift
+scripts/github-sync --prs --apply          write what is owed (paced by MJ_GH_PACE)
+scripts/github-sync --prs --pr <n> --apply one pull request, as the workflow runs it
+scripts/github-sync --prs --fields milestone,assignee,body --apply
+```
+
+Labels are the workflow's to write. `validate.yml` starts a run on every `labeled` event, and
+a label added with a person's token is one; a write with the workflow's own token starts no
+workflow. So a backfill from a clone passes `--fields` without `labels`, and the sweep adds
+them.
+
+Reviewers and project boards are not projected: a review request from the workflow's token is
+one nobody chose, and a user-owned project cannot be written with it.
 
 ## Working through the model
 
